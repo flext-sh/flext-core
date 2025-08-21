@@ -27,13 +27,13 @@ import contextlib
 from collections.abc import Callable
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self
+from typing import Self, override
 
 from flext_core import (
     FlextEntity,
     FlextResult,
     FlextUtilities,
-    FlextValueObject,
+    FlextValue,
     TEntityId,
     get_logger,
 )
@@ -126,11 +126,12 @@ class PaymentMethod(StrEnum):
 # =============================================================================
 
 
-class EmailAddress(FlextValueObject):
+class EmailAddress(FlextValue):
     """Email address value object with comprehensive validation."""
 
     email: str
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email address business rules."""
         # Compute first failing reason to limit number of return statements
@@ -159,11 +160,12 @@ class EmailAddress(FlextValueObject):
         return FlextResult[None].ok(None)
 
 
-class Age(FlextValueObject):
+class Age(FlextValue):
     """Age value object with business rule validation."""
 
     value: int
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate age business rules."""
         if self.value < MIN_AGE:
@@ -175,12 +177,13 @@ class Age(FlextValueObject):
         return FlextResult[None].ok(None)
 
 
-class Money(FlextValueObject):
+class Money(FlextValue):
     """Money value object with currency and amount validation."""
 
     amount: Decimal
     currency: str
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate money business rules."""
         if self.amount < 0:
@@ -245,7 +248,7 @@ class Money(FlextValueObject):
         return FlextResult[Money].ok(result)
 
 
-class Address(FlextValueObject):
+class Address(FlextValue):
     """Address value object with validation."""
 
     street: str
@@ -254,6 +257,7 @@ class Address(FlextValueObject):
     country: str
     state: str | None = None
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate address business rules."""
         if not self.street or len(self.street.strip()) < MIN_STREET_LENGTH:
@@ -286,12 +290,13 @@ class Address(FlextValueObject):
         return self.city.strip().lower() == other.city.strip().lower()
 
 
-class PhoneNumber(FlextValueObject):
+class PhoneNumber(FlextValue):
     """Phone number value object with validation."""
 
     number: str
     country_code: str | None = None
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate phone number business rules."""
         if not self.number:
@@ -500,7 +505,7 @@ class Product(FlextEntity):
             return FlextResult[Product].fail(f"Failed to update price: {e}")
 
 
-class OrderItem(FlextValueObject):
+class OrderItem(FlextValue):
     """Order item value object."""
 
     product_id: TEntityId
@@ -508,6 +513,7 @@ class OrderItem(FlextValueObject):
     quantity: int
     unit_price: Money
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate order item domain rules."""
         if not self.product_id:
@@ -598,8 +604,8 @@ class Order(FlextEntity):
                     f"Failed to calculate item total: {item_total_result.error}",
                 )
 
-            # Use unwrap_or with Zero money as fallback (though this shouldn't happen due to check above)
-            item_money = item_total_result.unwrap_or(Money(amount=0, currency=base_currency))
+            # Use value since we already checked for failure above
+            item_money = item_total_result.value
             total_amount += item_money.amount
 
         return FlextResult[Money].ok(
@@ -636,8 +642,8 @@ class Order(FlextEntity):
                 {
                     "order_id": self.id,
                     "customer_id": self.customer_id,
-                    "total_amount": str(total_result.unwrap_or(Money(amount=0, currency="USD")).amount),
-                    "currency": total_result.unwrap_or(Money(amount=0, currency="USD")).currency,
+                    "total_amount": str(total_result.value.amount),
+                    "currency": total_result.value.currency,
                     "item_count": len(self.items),
                     "confirmed_at": FlextUtilities.generate_iso_timestamp(),
                 },
@@ -779,7 +785,7 @@ class SharedDomainFactory:
                         f"Invalid item price: {money_result.error}"
                     )
 
-                # OrderItem uses FlextValueObject base, use model_validate
+                # OrderItem uses FlextValue base, use model_validate
                 order_item = OrderItem.model_validate(
                     {
                         "product_id": str(item_data["product_id"]),
@@ -913,13 +919,14 @@ class ConcreteFlextEntity(FlextEntity):
         return FlextResult[None].ok(None)
 
 
-class ConcreteValueObject(FlextValueObject):
+class ConcreteValueObject(FlextValue):
     """Concrete value object implementation for comprehensive testing."""
 
     amount: Decimal
     currency: str = "USD"
     description: str = ""
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate test value object business rules."""
         if self.amount < 0:
@@ -932,13 +939,14 @@ class ConcreteValueObject(FlextValueObject):
         return FlextResult[None].ok(None)
 
 
-class ComplexValueObject(FlextValueObject):
+class ComplexValueObject(FlextValue):
     """Value object with complex data types for testing."""
 
     name: str
     tags: list[str]
     metadata: dict[str, object]
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate complex value object business rules."""
         if not self.name.strip():
@@ -959,7 +967,11 @@ class TestDomainFactory:
         try:
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
             entity = ConcreteFlextEntity.model_validate(
-                {"id": entity_id, "name": name, "status": status}
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "status": status,
+                }
             )
             validation_result = entity.validate_domain_rules()
             if validation_result.is_failure:
@@ -982,7 +994,7 @@ class TestDomainFactory:
         """Create a concrete value object for testing."""
         try:
             description = str(kwargs.get("description", ""))
-            # ConcreteValueObject uses the __init__ from FlextValueObject
+            # ConcreteValueObject uses the __init__ from FlextValue
             vo = ConcreteValueObject.model_validate(
                 {
                     "amount": amount,
@@ -1010,7 +1022,7 @@ class TestDomainFactory:
     ) -> FlextResult[ComplexValueObject]:
         """Create a complex value object for testing."""
         try:
-            # ComplexValueObject uses the __init__ from FlextValueObject
+            # ComplexValueObject uses the __init__ from FlextValue
             vo = ComplexValueObject.model_validate(
                 {
                     "name": name,

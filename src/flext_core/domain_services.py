@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TypeVar
 
 from pydantic import ConfigDict
 
@@ -23,9 +22,6 @@ OperationType = (
 # =============================================================================
 # FLEXT DOMAIN SERVICE - Public DDD Domain Service implementation
 # =============================================================================
-
-
-TDomainResult = TypeVar("TDomainResult")
 
 
 class FlextDomainService[TDomainResult](

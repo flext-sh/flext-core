@@ -184,7 +184,8 @@ def demonstrate_configuration_merging() -> None:
     }
 
     # Merge configurations
-    merged_config = merge_configs(base_config, override_config)
+    merged_result = merge_configs(base_config, override_config)
+    merged_config = merged_result.unwrap_or({})
     for _key, _value in merged_config.items():
         pass
 
@@ -219,7 +220,8 @@ def demonstrate_configuration_merging() -> None:
         },
     }
 
-    deep_merged = merge_configs(deep_base, deep_override)
+    deep_merged_result = merge_configs(deep_base, deep_override)
+    deep_merged = deep_merged_result.unwrap_or({})
     f"   Services: {deep_merged.get('services')}"
 
 
@@ -434,7 +436,8 @@ def _print_feature_hierarchy_demo() -> None:
             "caching": {"enabled": True, "ttl": 60},
         },
     }
-    feature_merged = merge_configs(feature_config, dev_features)
+    feature_merged_result = merge_configs(feature_config, dev_features)
+    feature_merged = feature_merged_result.unwrap_or({})
     features = feature_merged.get("features", {})
     items = features.items() if isinstance(features, dict) else []
     for _feature_name, feature_details in items:
@@ -784,7 +787,7 @@ def _validate_single_REDACTED_LDAP_BIND_PASSWORD_user(user_data: object) -> Flex
             log_domain_operation(
                 "REDACTED_LDAP_BIND_PASSWORD_user_configured",
                 "SharedUser",
-                user.id.root,
+                str(user.id),
                 service="user_management",
                 config_role="REDACTED_LDAP_BIND_PASSWORD",
             )

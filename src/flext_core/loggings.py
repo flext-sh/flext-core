@@ -13,17 +13,15 @@ import structlog
 from structlog.typing import EventDict, Processor
 
 from flext_core.constants import FlextConstants, FlextLogLevel
-from flext_core.typings import TAnyDict, TContextDict, TLogMessage
+from flext_core.protocols import FlextProtocols
+from flext_core.typings import FlextTypes
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type LoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
+type LoggingServiceProtocol = FlextProtocols.Domain.Service
 
 Platform = FlextConstants.Platform
 
-# =============================================================================
-# DOMAIN-SPECIFIC TYPES - Logging Pattern Specializations
-# =============================================================================
-
-# Logging specific types for better domain modeling
-
-# Structured logging types
 
 # =============================================================================
 # FLEXT LOG CONTEXT - TypedDict
@@ -90,7 +88,7 @@ class FlextLogEntry(TypedDict):
     logger: str
     message: str
     method: str
-    context: TAnyDict
+    context: FlextTypes.Core.Dict
 
 
 # =============================================================================
@@ -321,7 +319,7 @@ class FlextLogger:
 
     # Class variables for configuration state
     _configured: ClassVar[bool] = False
-    _loggers: ClassVar[TAnyDict] = {}
+    _loggers: ClassVar[FlextTypes.Core.Dict] = {}
 
     def __init__(self, name: str, level: str = "INFO") -> None:
         """Initialize logger.
@@ -346,7 +344,7 @@ class FlextLogger:
         self._level = level.upper()
         numeric_levels = FlextLogLevel.get_numeric_levels()
         self._level_value = numeric_levels.get(self._level, numeric_levels["INFO"])
-        self._context: TContextDict = {}
+        self._context: FlextTypes.Logging.ContextDict = {}
 
         # Ensure stdlib logging level is permissive enough for structlog filtering
         # The filter_by_level processor uses stdlib logging levels
@@ -378,8 +376,8 @@ class FlextLogger:
     def _log_with_structlog(
         self,
         level: str,
-        message: TLogMessage,
-        context: TContextDict | None = None,
+        message: FlextTypes.Core.LogMessage,
+        context: FlextTypes.Logging.ContextDict | None = None,
     ) -> None:
         """Log using structlog with context merging."""
         if not self._should_log(level):
@@ -418,11 +416,11 @@ class FlextLogger:
         numeric_levels = FlextLogLevel.get_numeric_levels()
         self._level_value = numeric_levels.get(self._level, numeric_levels["INFO"])
 
-    def get_context(self) -> TContextDict:
+    def get_context(self) -> FlextTypes.Logging.ContextDict:
         """Get current context."""
         return dict(self._context)
 
-    def set_context(self, context: TContextDict) -> None:
+    def set_context(self, context: FlextTypes.Logging.ContextDict) -> None:
         """Set logger context."""
         self._context = dict(context)
 
@@ -438,43 +436,59 @@ class FlextLogger:
         new_logger._context = {**self._context, **context}
         return new_logger
 
-    def trace(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def trace(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log trace message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("TRACE", formatted_message, context)
 
-    def debug(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def debug(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log debug message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("DEBUG", formatted_message, context)
 
-    def info(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def info(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log info message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("INFO", formatted_message, context)
 
-    def warning(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def warning(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log warning message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("WARNING", formatted_message, context)
 
-    def error(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def error(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log error message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("ERROR", formatted_message, context)
 
-    def critical(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def critical(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log critical message with optional %s formatting."""
         formatted_message = self._format_message(message, args)
         self._log_with_structlog("CRITICAL", formatted_message, context)
 
-    def exception(self, message: TLogMessage, *args: object, **context: object) -> None:
+    def exception(
+        self, message: FlextTypes.Core.LogMessage, *args: object, **context: object
+    ) -> None:
         """Log exception with traceback context and optional %s formatting."""
         formatted_message = self._format_message(message, args)
         context["traceback"] = traceback.format_exc()
         self._log_with_structlog("ERROR", formatted_message, context)
 
-    def _format_message(self, message: TLogMessage, args: tuple[object, ...]) -> str:
+    def _format_message(
+        self, message: FlextTypes.Core.LogMessage, args: tuple[object, ...]
+    ) -> str:
         """Format message with %s placeholders if args are provided."""
         if not args:
             return str(message)

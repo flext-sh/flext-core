@@ -4,20 +4,26 @@ from __future__ import annotations
 
 import contextlib
 from datetime import datetime
-from typing import TypeVar, cast
+from typing import cast
 
 from pydantic import ConfigDict, TypeAdapter
 from pydantic.dataclasses import dataclass
 
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.typings import T
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type ValidatorProtocol = FlextProtocols.Foundation.Validator[object]
+type ConfigurableProtocol = FlextProtocols.Infrastructure.Configurable
 
 # =============================================================================
-# TYPE VARIABLES FOR GENERIC CONSTRAINTS
+# TYPE VARIABLES FOR GENERIC CONSTRAINTS - Use typings.py
 # =============================================================================
 
-T = TypeVar("T")
-K = TypeVar("K")
-V = TypeVar("V")
+# Create aliases from typings.py - no local type definitions
+# K = U  # Use U for key types (TypeVar cannot be used as type alias)
+# V is already imported from typings.py
 
 # =============================================================================
 # TYPE ALIASES FOR SIMPLIFIED VALIDATION
@@ -31,8 +37,7 @@ Host = str
 Port = int
 
 # Business domain types
-EmailAddress = str
-ServiceName = str
+# EmailAddress and ServiceName moved to validation.py with Pydantic validation
 ErrorCode = str
 ErrorMessage = str
 
@@ -120,9 +125,7 @@ class ValidationAdapters:
     host_adapter = TypeAdapter(Host)
     port_adapter = TypeAdapter(Port)
 
-    # Business types
-    email_adapter = TypeAdapter(EmailAddress)
-    service_name_adapter = TypeAdapter(ServiceName)
+    # Business types - moved to validation.py with proper validation
     error_code_adapter = TypeAdapter(ErrorCode)
     error_message_adapter = TypeAdapter(ErrorMessage)
 
@@ -174,52 +177,7 @@ class ValidationAdapters:
         except Exception as e:
             return FlextResult[int].fail(f"Invalid version: {e}")
 
-    @classmethod
-    def validate_email(cls, value: object) -> FlextResult[str]:
-        """Validate email address with business rules.
-
-        Args:
-            value: Value to validate
-
-        Returns:
-            FlextResult containing validated email or error
-
-        """
-        try:
-            validated = cls.email_adapter.validate_python(value)
-            # Basic email validation
-            if "@" not in validated or "." not in validated.split("@")[1]:
-                return FlextResult[str].fail("Invalid email format")
-            return FlextResult[str].ok(validated)
-        except Exception as e:
-            return FlextResult[str].fail(f"Invalid email: {e}")
-
-    @classmethod
-    def validate_service_name(cls, value: object) -> FlextResult[str]:
-        """Validate service name with business rules.
-
-        Args:
-            value: Value to validate
-
-        Returns:
-            FlextResult containing validated service name or error
-
-        """
-        try:
-            validated = cls.service_name_adapter.validate_python(value)
-            # Service name validation
-            max_service_name_length = 64
-            if len(validated) > max_service_name_length:
-                return FlextResult[str].fail(
-                    f"Service name too long (max {max_service_name_length} chars)",
-                )
-            if not validated.replace("-", "").replace("_", "").isalnum():
-                return FlextResult[str].fail(
-                    "Service name must be alphanumeric with - or _"
-                )
-            return FlextResult[str].ok(validated)
-        except Exception as e:
-            return FlextResult[str].fail(f"Invalid service name: {e}")
+    # Email and service name validation moved to validation.py with proper Pydantic validation
 
     @classmethod
     def validate_host_port(
@@ -568,24 +526,15 @@ class MigrationHelpers:
 __all__ = [
     "ConfigDict_Type",
     "ConnectionString",
-    "EmailAddress",
-    # Core types
-    "EntityId",
-    "ErrorCode",
-    "ErrorMessage",
+    # Core types - removed conflicting types that exist elsewhere with proper validation
+    # EntityId, ErrorCode, ErrorMessage, Host, Port, Metadata, Timestamp, Version moved to proper modules
     "EventList",
-    "Host",
-    "Metadata",
     "MigrationHelpers",
     "Percentage",
-    "Port",
     "SchemaHelpers",
     "SerializationHelpers",
-    "ServiceName",
-    "Timestamp",
     "TypeAdapterExamples",
     # Factory and helpers
     "TypeAdapterFactory",
     "ValidationAdapters",
-    "Version",
 ]

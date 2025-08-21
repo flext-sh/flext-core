@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ParamSpec, TypeVar, cast, override
+from typing import cast, override
 
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
@@ -75,6 +75,7 @@ from flext_core.mixins import (
 from flext_core.models import (
     FlextEntity,
     FlextFactory,
+    FlextValue,
     create_database_model,
     create_service_model,
 )
@@ -92,11 +93,7 @@ from flext_core.payload import (
     get_serialization_metrics,
     validate_cross_service_protocol,
 )
-from flext_core.protocols import (
-    FlextPlugin,
-    FlextRepository,
-)
-from flext_core.result import FlextResult
+from flext_core.result import FlextResult, safe_call
 from flext_core.root_models import (
     FlextEmailAddress,
     FlextEntityId,
@@ -116,6 +113,7 @@ from flext_core.semantic import (
     FlextSemantic,
     FlextSemanticModel,
 )
+from flext_core.typings import FlextPlugin, FlextRepository, FlextTypes, P, R, T
 from flext_core.utilities import (
     FlextConsole,
     FlextGenerators,
@@ -126,7 +124,6 @@ from flext_core.utilities import (
     generate_id,
     generate_uuid,
     is_not_none,
-    safe_call,
     truncate,
 )
 from flext_core.validation import (
@@ -138,12 +135,9 @@ from flext_core.validation import (
     flext_validate_service_name,
     flext_validate_string,
 )
-from flext_core.value_objects import FlextValueObject
 
-# Type variables for function signatures
-P = ParamSpec("P")
-R = TypeVar("R")
-T = TypeVar("T")
+# Use centralized types from FlextTypes
+ValidatorCallable = FlextTypes.Core.Validator
 
 
 class FlextCore:
@@ -351,7 +345,7 @@ class FlextCore:
 
     @staticmethod
     def when(
-        predicate: Callable[[object], bool],
+        predicate: ValidatorCallable,
         then_func: Callable[[object], FlextResult[object]],
         else_func: Callable[[object], FlextResult[object]] | None = None,
     ) -> Callable[[object], FlextResult[object]]:
@@ -471,7 +465,7 @@ class FlextCore:
             return FlextResult[float].fail(str(e))
 
     def create_validator(
-        self, validation_func: Callable[[object], bool], error_message: str
+        self, validation_func: ValidatorCallable, error_message: str
     ) -> Callable[[object], FlextResult[object]]:
         """Create custom validator function."""
 
@@ -657,9 +651,9 @@ class FlextCore:
         return FlextEntity
 
     @property
-    def value_object_base(self) -> type[FlextValueObject]:
+    def value_object_base(self) -> type[FlextValue]:
         """Access value object base class."""
-        return FlextValueObject
+        return FlextValue
 
     @property
     def aggregate_root_base(self) -> type[FlextAggregateRoot]:
@@ -912,7 +906,7 @@ class FlextCore:
         return FlextDecoratorFactory
 
     def create_validation_decorator(
-        self, validator: Callable[[object], bool]
+        self, validator: ValidatorCallable
     ) -> object:
         """Create custom validation decorator."""
         return FlextValidationDecorators.create_validation_decorator(validator)

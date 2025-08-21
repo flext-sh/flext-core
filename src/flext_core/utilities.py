@@ -2,25 +2,29 @@
 
 from __future__ import annotations
 
+import functools
+import json
 import re
 import sys
 import time
 import traceback
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from inspect import signature
-from typing import Generic, Protocol, TypeVar, cast, override
+from typing import Generic, Protocol, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
+from flext_core.typings import (
+    FlextTypes,
+    P,
+    R,
+    T,
+)
 from flext_core.validation import FlextValidators
-
-# Define TypeVars locally to avoid import issues
-T = TypeVar("T")
-TAnyDict = dict[str, object]
 
 logger = FlextLoggerFactory.get_logger(__name__)
 
@@ -38,7 +42,7 @@ SECONDS_PER_HOUR = 3600
 # =============================================================================
 # CONSTANTS
 # =============================================================================
-PERFORMANCE_METRICS: dict[str, dict[str, int | float]] = {}
+PERFORMANCE_METRICS: FlextTypes.Core.Dict = {}
 
 
 class FlextConsole:
@@ -53,13 +57,13 @@ class FlextConsole:
         """Initialize console."""
 
     @staticmethod
-    def print(*args: object, **kwargs: object) -> None:
+    def print(*args: FlextTypes.Core.Value, **kwargs: FlextTypes.Core.Value) -> None:
         """Print to console with standard print function.
 
         Supports rich-style markup but ignores it,
         focusing on the text content only.
         """
-        text_parts: list[str] = []
+        text_parts: FlextTypes.Core.List = []
         for arg in args:
             text = str(arg)
             # Remove rich-style markup tags (e.g., [red]...[/red]) for plain output
@@ -70,11 +74,15 @@ class FlextConsole:
         # Handle kwargs similar to standard print (sep, end, etc.)
         sep = str(kwargs.get("sep", " "))
         end = str(kwargs.get("end", "\n"))
-        output = sep.join(text_parts) + end
+        # Convert all parts to strings for proper joining
+        string_parts = [str(part) for part in text_parts]
+        output = sep.join(string_parts) + end
         sys.stdout.write(output)
         sys.stdout.flush()
 
-    def log(self, *args: object, **kwargs: object) -> None:
+    def log(
+        self, *args: FlextTypes.Core.Value, **kwargs: FlextTypes.Core.Value
+    ) -> None:
         """Log to console (alias for print)."""
         self.print(*args, **kwargs)
 
@@ -84,9 +92,10 @@ class FlextDecoratedFunction(Protocol):
 
     __name__: str
 
-    def __call__(self, *args: object, **kwargs: object) -> object:
+    def __call__(
+        self, *args: FlextTypes.Core.Value, **kwargs: FlextTypes.Core.Value
+    ) -> FlextTypes.Core.Value:
         """Call decorated function with provided arguments."""
-        ...
 
 
 # =============================================================================
@@ -145,7 +154,7 @@ class FlextUtilities:
     @classmethod
     def handle_cli_main_errors(
         cls,
-        cli_function: Callable[[], None],
+        cli_function: FlextTypes.Protocol.Callable[None],
         *,
         debug_mode: bool = False,
     ) -> None:
@@ -187,12 +196,12 @@ class FlextUtilities:
         return FlextGenerators.format_duration(seconds)
 
     @classmethod
-    def has_attribute(cls, obj: object, attr: str) -> bool:
+    def has_attribute(cls, obj: FlextTypes.Core.Value, attr: str) -> bool:
         """Check if an object has an attribute."""
         return hasattr(obj, attr)
 
     @classmethod
-    def is_instance_of(cls, obj: object, target_type: type) -> bool:
+    def is_instance_of(cls, obj: FlextTypes.Core.Value, target_type: type) -> bool:
         """Check if an object is an instance of a type."""
         return isinstance(obj, target_type)
 
@@ -348,13 +357,12 @@ class FlextPerformance:
     """
 
     @staticmethod
-    def track_performance(
-        category: str,
-    ) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
-        """Track function performance as decorator."""
+    def track_performance(category: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
+        """Track function performance as decorator, preserving type signatures."""
 
-        def decorator(func: FlextDecoratedFunction) -> FlextDecoratedFunction:
-            def wrapper(*args: object, **kwargs: object) -> object:
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @functools.wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 start_time = time.time()
                 try:
                     result = func(*args, **kwargs)
@@ -362,7 +370,7 @@ class FlextPerformance:
                     execution_time = time.time() - start_time
                     FlextPerformance.record_performance(
                         category,
-                        func.__name__,
+                        getattr(func, "__name__", "unknown"),
                         execution_time,
                         _success=False,
                     )
@@ -371,7 +379,7 @@ class FlextPerformance:
                     execution_time = time.time() - start_time
                     FlextPerformance.record_performance(
                         category,
-                        func.__name__,
+                        getattr(func, "__name__", "unknown"),
                         execution_time,
                         _success=True,
                     )
@@ -382,9 +390,10 @@ class FlextPerformance:
         return decorator
 
     @staticmethod
-    def get_performance_metrics() -> dict[str, TAnyDict]:
-        """Get performance metrics for observability."""
-        return {"metrics": dict(PERFORMANCE_METRICS)}
+    def get_performance_metrics() -> dict[str, dict[str, dict[str, int | float]]]:
+        """Get performance metrics for observability with precise typing."""
+        # Type cast is safe since we control the structure of PERFORMANCE_METRICS
+        return {"metrics": cast("dict[str, dict[str, int | float]]", PERFORMANCE_METRICS)}
 
     @staticmethod
     def clear_performance_metrics() -> None:
@@ -419,6 +428,40 @@ class FlextPerformance:
             else:
                 data["failure"] = int(data.get("failure", 0)) + 1
 
+    # -----------------------------
+    # Convenience helpers
+    # -----------------------------
+
+    @staticmethod
+    def get_last_duration_for_key(key: str) -> float:
+        """Return last duration (seconds) for a metric key or 0.0 if missing."""
+        data = PERFORMANCE_METRICS.get(key)
+        if isinstance(data, dict):
+            value = data.get("last_duration", 0.0)
+            try:
+                return float(value)
+            except Exception:
+                return 0.0
+        return 0.0
+
+    @staticmethod
+    def get_last_duration(category: str, function_name: str) -> float:
+        """Return last duration (seconds) for category/function."""
+        key = f"{category}.{function_name}"
+        return FlextPerformance.get_last_duration_for_key(key)
+
+    @staticmethod
+    def get_last_duration_ms(category: str, function_name: str) -> float:
+        """Return last duration (milliseconds) for category/function."""
+        return FlextPerformance.get_last_duration(category, function_name) * 1000.0
+
+    @staticmethod
+    def iter_metrics_items() -> Iterator[tuple[str, dict[str, int | float]]]:
+        """Iterate over (key, data) metric items with precise typing."""
+        # Type cast is safe since we control the structure of PERFORMANCE_METRICS
+        metrics = cast("dict[str, dict[str, int | float]]", PERFORMANCE_METRICS)
+        return iter(list(metrics.items()))
+
 
 # =============================================================================
 # FLEXT CONVERSIONS - Static class for safe conversions
@@ -447,6 +490,58 @@ class FlextConversions:
     def is_not_none(value: object | None) -> bool:
         """Type guard to check if value is not None."""
         return FlextUtilities.is_not_none_guard(value)
+
+
+# =============================================================================
+# FLEXT PROCESSING UTILS - JSON and model helpers to reduce boilerplate
+# =============================================================================
+
+
+class FlextProcessingUtils:
+    """Processing helpers to eliminate repetition in processors.
+
+    - parse_json_object: safely loads JSON string and ensures object (dict)
+    - parse_json_to_model: loads JSON and validates via Pydantic model_validate
+    """
+
+    @staticmethod
+    def parse_json_object(json_text: str) -> FlextResult[dict[str, object]]:
+        """Parse JSON string and ensure it is a dict-like object."""
+        try:
+            data = json.loads(json_text)
+            if not isinstance(data, dict):
+                return FlextResult[dict[str, object]].fail("JSON must be object")
+            # Ensure value type is object for typing consistency
+            typed: dict[str, object] = dict(data)
+            return FlextResult[dict[str, object]].ok(typed)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Invalid JSON: {e}")
+
+    @staticmethod
+    def parse_json_to_model[TModel](
+        json_text: str, model_cls: type[TModel]
+    ) -> FlextResult[TModel]:
+        """Parse JSON and validate into the provided Pydantic model class."""
+        obj_result = FlextProcessingUtils.parse_json_object(json_text)
+        if obj_result.is_failure:
+            return FlextResult[TModel].fail(obj_result.error or "Invalid JSON")
+        data = obj_result.value
+
+        try:
+            # Prefer Pydantic v2 style model_validate
+            model_validate = getattr(model_cls, "model_validate", None)
+            if callable(model_validate):
+                validated = cast("TModel", model_validate(data))
+                return FlextResult[TModel].ok(validated)
+
+            # Fallback: try to instantiate directly
+            instance = model_cls(**data)
+            return FlextResult[TModel].ok(instance)
+        except Exception as e:
+            return FlextResult[TModel].fail(f"Validation failed: {e}")
+
+
+# Service classes moved to services.py to avoid circular imports
 
 
 # =============================================================================
@@ -867,11 +962,7 @@ def is_not_none(value: object) -> bool:
     return FlextUtilities.is_not_none_guard(value)
 
 
-def safe_call(
-    func: Callable[[], object] | Callable[[object], object],
-) -> FlextResult[object]:
-    """Safe function call wrapper."""
-    return FlextUtilities.safe_call(func)
+# safe_call moved to result.py to avoid type conflicts with generic T version
 
 
 def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
@@ -879,7 +970,7 @@ def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
     return FlextTextProcessor.truncate(text, max_length, suffix)
 
 
-def flext_get_performance_metrics() -> dict[str, TAnyDict]:
+def flext_get_performance_metrics() -> dict[str, dict[str, dict[str, int | float]]]:
     """Get performance metrics."""
     return FlextPerformance.get_performance_metrics()
 
@@ -935,6 +1026,7 @@ __all__: list[str] = [
     "FlextGenericFactory",
     "FlextIdGenerator",  # ID generation only (delegates to FlextGenerators)
     "FlextPerformance",  # Performance tracking
+    "FlextProcessingUtils",  # Processing helpers (JSON/model)
     "FlextTextProcessor",  # Text processing
     "FlextTimeUtils",  # Time operations only
     "FlextTypeGuards",  # Type checking utilities
@@ -951,7 +1043,6 @@ __all__: list[str] = [
     "generate_iso_timestamp",
     "generate_uuid",
     "is_not_none",
-    "safe_call",
     "safe_int_conversion_with_default",
     "truncate",
 ]

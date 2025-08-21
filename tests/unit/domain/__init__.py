@@ -1,1 +1,0 @@
-"""Domain implementation unit tests."""

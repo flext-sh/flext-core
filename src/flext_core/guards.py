@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import Self, TypeVar
+from typing import Self
 
 from pydantic import BaseModel, ValidationError
 
@@ -12,15 +12,14 @@ from flext_core.constants import FlextConstants
 from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextValidationError
 from flext_core.mixins import FlextSerializableMixin
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import (
-    TFactory,
-)
 from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
 
-# Type variables for guards
-R = TypeVar("R")
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type GuardProtocol = FlextProtocols.Foundation.Validator[object]
+type FactoryProtocol = FlextProtocols.Foundation.Factory[object]
 
 Platform = FlextConstants.Platform
 
@@ -177,22 +176,32 @@ class FlextGuards:
         return _PureWrapper(func)
 
     @staticmethod
-    def make_factory(target_class: type) -> TFactory:
-        """Create a simple factory function for safe object construction."""
+    def make_factory(target_class: type) -> object:
+        """Create a simple factory class for safe object construction."""
 
-        def factory(*args: object, **kwargs: object) -> object:
-            return target_class(*args, **kwargs)
+        class _Factory:
+            def create(self, **kwargs: object) -> FlextResult[object]:
+                try:
+                    instance = target_class(**kwargs)
+                    return FlextResult[object].ok(instance)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Factory failed: {e}")
 
-        return factory
+        return _Factory()
 
     @staticmethod
-    def make_builder(target_class: type) -> TFactory:
-        """Create a simple builder function for fluent object construction."""
+    def make_builder(target_class: type) -> object:
+        """Create a simple builder class for fluent object construction."""
 
-        def builder(*args: object, **kwargs: object) -> object:
-            return target_class(*args, **kwargs)
+        class _Builder:
+            def create(self, **kwargs: object) -> FlextResult[object]:
+                try:
+                    instance = target_class(**kwargs)
+                    return FlextResult[object].ok(instance)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Builder failed: {e}")
 
-        return builder
+        return _Builder()
 
 
 # =============================================================================

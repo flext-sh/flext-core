@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import inspect
 from collections.abc import Callable
-from typing import ClassVar, NoReturn, Protocol, cast
+from typing import ClassVar, Protocol, cast
 
 from flext_core.exceptions import FlextOperationError, FlextTypeError
 from flext_core.loggings import FlextLoggerFactory
@@ -14,6 +14,9 @@ from flext_core.mixins import (
     FlextValidatableMixin as _BaseValidatableMixin,
 )
 from flext_core.result import FlextResult
+
+# Local type alias
+NoReturn = object  # Simplified for delegation system
 
 
 class _HasDelegator(Protocol):
@@ -218,10 +221,10 @@ class FlextMixinDelegator:
             try:
                 # Try to get the signature first to ensure it's available
                 sig = inspect.signature(method)
-                # Only set __signature__ if the method supports it
-                if hasattr(delegated_method, "__signature__"):
-                    delegated_method.__signature__ = sig
-            except (ValueError, TypeError):
+                # Use setattr to dynamically assign __signature__ attribute (avoid mypy attr-defined)
+                # Type ignore needed for dynamic attribute assignment
+                delegated_method.__signature__ = sig  # type: ignore[attr-defined]
+            except (ValueError, TypeError, AttributeError):
                 # Signature not available, skip it
                 pass
         except (AttributeError, ValueError) as e:

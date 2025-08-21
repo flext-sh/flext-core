@@ -11,7 +11,6 @@ import time
 from collections.abc import Sized
 from typing import Protocol, cast
 
-# use .shared_domain with dot to access local module
 from shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
@@ -35,7 +34,6 @@ from flext_core.mixins import (
     FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
-    FlextValueObjectMixin,
 )
 
 # =============================================================================
@@ -413,14 +411,14 @@ class AdvancedUser(
         log_domain_operation(
             "advanced_user_created",
             "AdvancedUser",
-            self._user.id.root,
+            str(self._user.id),
             role=role,
         )
 
     @property
     def id(self) -> str:
         """Get user ID from composed user."""
-        return self._user.id.root
+        return str(self._user.id)
 
     @property
     def name(self) -> str:

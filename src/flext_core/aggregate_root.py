@@ -10,6 +10,7 @@ from pydantic import ConfigDict
 from flext_core.exceptions import FlextValidationError
 from flext_core.models import FlextEntity
 from flext_core.payload import FlextEvent
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -19,6 +20,9 @@ from flext_core.root_models import (
     FlextVersion,
 )
 from flext_core.utilities import FlextGenerators
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type DomainServiceProtocol = FlextProtocols.Domain.Service
 
 
 def _coerce_metadata_to_root(meta: object | None) -> FlextMetadata | None:
@@ -364,7 +368,7 @@ class FlextAggregateRoot(FlextEntity):
 # =============================================================================
 
 # Rebuild models to resolve forward references after import
-# Note: model_rebuild() disabled due to TAnyDict circular reference issues
+# Note: model_rebuild() disabled due to FlextTypes.Core.Dict circular reference issues
 # The models work correctly without an explicit rebuild as Pydantic handles
 # forward references automatically during runtime validation
 # FlextAggregateRoot.model_rebuild()

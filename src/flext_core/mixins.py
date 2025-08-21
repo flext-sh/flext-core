@@ -11,20 +11,22 @@ from typing import Protocol, cast, runtime_checkable
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.protocols import FlextLoggerProtocol
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import (
-    TAnyDict,
-    TEntityId,
-)
+from flext_core.typings import FlextLoggerProtocol, FlextTypes
 from flext_core.utilities import FlextGenerators
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type MixinProtocol = FlextProtocols.Infrastructure.Configurable
+type TimestampMixinProtocol = FlextProtocols.Infrastructure.Configurable
+type LoggableMixinProtocol = FlextProtocols.Infrastructure.LoggerProtocol
 
 
 @runtime_checkable
 class HasToDictBasic(Protocol):
     """Runtime-checkable protocol for objects exposing to_dict_basic."""
 
-    def to_dict_basic(self) -> TAnyDict:  # pragma: no cover - typing helper
+    def to_dict_basic(self) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
         ...
 
 
@@ -32,7 +34,7 @@ class HasToDictBasic(Protocol):
 class HasToDict(Protocol):
     """Runtime-checkable protocol for objects exposing to_dict."""
 
-    def to_dict(self) -> TAnyDict:  # pragma: no cover - typing helper
+    def to_dict(self) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
         ...
 
 
@@ -98,12 +100,12 @@ class FlextAbstractIdentifiableMixin(FlextAbstractMixin):
     """Abstract identifiable mixin for entity identification."""
 
     @abstractmethod
-    def get_id(self) -> TEntityId:
+    def get_id(self) -> FlextTypes.Domain.EntityId:
         """Get entity ID - must be implemented by subclasses."""
         ...
 
     @abstractmethod
-    def set_id(self, entity_id: TEntityId) -> None:
+    def set_id(self, entity_id: FlextTypes.Domain.EntityId) -> None:
         """Set entity ID - must be implemented by subclasses."""
         ...
 
@@ -186,12 +188,12 @@ class FlextAbstractSerializableMixin(FlextAbstractMixin):
     """Abstract serializable mixin for entity serialization."""
 
     @abstractmethod
-    def to_dict(self) -> TAnyDict:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """Convert to dictionary - must be implemented by subclasses."""
         ...
 
     @abstractmethod
-    def load_from_dict(self, data: TAnyDict) -> None:
+    def load_from_dict(self, data: FlextTypes.Core.Dict) -> None:
         """Load from dictionary - must be implemented by subclasses."""
         ...
 
@@ -339,7 +341,7 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
     SOLID principles.
     """
 
-    def get_id(self) -> TEntityId:
+    def get_id(self) -> FlextTypes.Domain.EntityId:
         """Get entity ID - implements abstract method."""
         # Try _id first (private attribute)
         id_value = getattr(self, "_id", None)
@@ -355,28 +357,28 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
             return id_value
         # Generate default ID if none exists
         generated_id = self._generate_default_id()
-        self._id: TEntityId = generated_id
+        self._id: FlextTypes.Domain.EntityId = generated_id
         return generated_id
 
-    def _generate_default_id(self) -> TEntityId:
+    def _generate_default_id(self) -> FlextTypes.Domain.EntityId:
         """Generate default ID - implements abstract method."""
         return FlextGenerators.generate_id()
 
-    def get_identity(self) -> TEntityId:
+    def get_identity(self) -> FlextTypes.Domain.EntityId:
         """Get entity identity - implements abstract method."""
         return self.get_id()
 
     @property
-    def id(self) -> TEntityId:
+    def id(self) -> FlextTypes.Domain.EntityId:
         """Get ID property."""
         return self.get_id()
 
     @id.setter
-    def id(self, value: TEntityId) -> None:
+    def id(self, value: FlextTypes.Domain.EntityId) -> None:
         """Set ID property."""
         self._id = value
 
-    def set_id(self, entity_id: TEntityId) -> None:
+    def set_id(self, entity_id: FlextTypes.Domain.EntityId) -> None:
         """Set entity ID with validation."""
         if FlextValidators.is_non_empty_string(entity_id):
             self._id = entity_id
@@ -395,7 +397,7 @@ class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
         self.id = self._generate_default_id()
 
     @property
-    def entity_id(self) -> TEntityId:
+    def entity_id(self) -> FlextTypes.Domain.EntityId:
         """Get entity ID (generates if not set)."""
         return self.id
 
@@ -574,9 +576,9 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
     Provides JSON serialization capability following SOLID principles.
     """
 
-    def to_dict(self) -> TAnyDict:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         """Convert to dictionary - implements abstract method."""
-        result: TAnyDict = {}
+        result: FlextTypes.Core.Dict = {}
         for key, value in self.__dict__.items():
             if key.startswith("_"):
                 continue
@@ -596,7 +598,7 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: TAnyDict,
+        out: FlextTypes.Core.Dict,
     ) -> bool:
         """Attempt to serialize via to_dict_basic when available."""
         if isinstance(value, HasToDictBasic):
@@ -612,7 +614,7 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: TAnyDict,
+        out: FlextTypes.Core.Dict,
     ) -> bool:
         """Attempt to serialize via to_dict when available."""
         if isinstance(value, HasToDict):
@@ -628,7 +630,7 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         self,
         key: str,
         value: object,
-        out: TAnyDict,
+        out: FlextTypes.Core.Dict,
     ) -> bool:
         """Attempt to serialize a list, preserving original items when needed."""
         if not isinstance(value, list):
@@ -653,11 +655,11 @@ class FlextSerializableMixin(FlextAbstractSerializableMixin):
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), default=str)
 
-    def to_dict_basic(self) -> TAnyDict:
+    def to_dict_basic(self) -> FlextTypes.Core.Dict:
         """Alias for to_dict for convenience."""
         return self.to_dict()
 
-    def load_from_dict(self, data: TAnyDict) -> None:
+    def load_from_dict(self, data: FlextTypes.Core.Dict) -> None:
         """Load from dictionary - implements abstract method."""
         for key, value in data.items():
             if hasattr(self, key):
@@ -753,7 +755,7 @@ class FlextCacheableMixin:
     # Minimal in-memory cache utilities
     def _ensure_cache(self) -> None:
         if not hasattr(self, "_cache_store"):
-            self._cache_store: TAnyDict = {}
+            self._cache_store: FlextTypes.Core.Dict = {}
 
     def cache_set(self, key: str, value: object) -> None:
         """Store a value in the local in-memory cache."""
@@ -967,7 +969,7 @@ __all__: list[str] = [  # noqa: RUF022
     "FlextTimingMixin",
     "FlextValidatableMixin",
     # Utilities
-    "FlextValidators",
+    # "FlextValidators", - moved to validation.py to avoid conflicts
     "FlextValueObjectMixin",
     "LegacyCompatibleCacheableMixin",
     "LegacyCompatibleCommandMixin",

@@ -188,10 +188,10 @@ class OrderRepository:
 Model your domain with rich entities:
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 
 # Value Object - Immutable, no identity
-class Address(FlextValueObject):
+class Address(FlextValue):
     """Address value object."""
     street: str
     city: str

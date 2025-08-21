@@ -144,7 +144,7 @@ def verify_domain_imports():
     """Test domain pattern imports."""
 from flext_core import (
         FlextEntity,
-        FlextValueObject,
+        FlextValue,
         FlextAggregateRoot,
     )
 
@@ -335,10 +335,10 @@ if config_result.success:
 ### 3. Domain Modeling
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextResult
+from flext_core import FlextEntity, FlextValue, FlextResult
 from datetime import datetime
 
-class Email(FlextValueObject):
+class Email(FlextValue):
     """Email value object."""
     address: str
 

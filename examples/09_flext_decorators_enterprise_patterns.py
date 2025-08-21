@@ -127,17 +127,17 @@ def process_user_batch(users_data: list[dict[str, object]]) -> list[SharedUser]:
 # =============================================================================
 
 
-def safe_decorator[T](func: Callable[..., T]) -> Callable[..., object]:
+def safe_decorator[T](func: Callable[..., T]) -> Callable[..., FlextResult[T]]:
     """Convert function to return FlextResult."""
 
-    def wrapper(*args: object, **kwargs: object) -> object:
+    def wrapper(*args: object, **kwargs: object) -> FlextResult[T]:
         return FlextResult.from_exception(lambda: func(*args, **kwargs))
 
     return wrapper
 
 
 @safe_decorator
-def safe_user_creation(name: str, email: str, age: int) -> object:
+def safe_user_creation(name: str, email: str, age: int):
     """Safe user creation that returns FlextResult."""
     return create_validated_user(name, email, age)
 
@@ -179,7 +179,7 @@ def expensive_calculation(n: int) -> int:
 # =============================================================================
 
 
-def enterprise_function(func: Callable[..., object]) -> Callable[..., object]:
+def enterprise_function[T](func: Callable[..., T]) -> Callable[..., object]:
     """Composite decorator with multiple enhancements."""
     # Apply multiple decorators in order
     return with_timing(with_logging(safe_decorator(func)))
@@ -233,15 +233,15 @@ def demo_safe_decorators() -> None:
     print("\n🧪 Testing safe decorators...")
 
     # Valid user
-    result = safe_user_creation("Eve Brown", "eve@example.com", 42)
+    result: FlextResult[SharedUser] = safe_user_creation("Eve Brown", "eve@example.com", 42)
     if result.success:
         user = result.value
         print(f"✅ Safe creation: {user.name}")
 
     # Invalid user
-    result = safe_user_creation("", "invalid", -1)
-    if result.failure:
-        print(f"✅ Error handled safely: {result.error}")
+    error_result: FlextResult[SharedUser] = safe_user_creation("", "invalid", -1)
+    if error_result.failure:
+        print(f"✅ Error handled safely: {error_result.error}")
 
 
 def demo_caching_decorators() -> None:
@@ -264,7 +264,7 @@ def demo_enterprise_decorators() -> None:
     test_data = {"id": 123, "name": "Test Operation"}
 
     # This will either succeed or fail randomly
-    result = complex_business_operation(test_data)
+    result: FlextResult[dict[str, object]] = complex_business_operation(test_data)
     if result.success:
         data = result.value
         print(f"✅ Enterprise operation: {data['status']}")

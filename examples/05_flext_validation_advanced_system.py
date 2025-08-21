@@ -13,7 +13,6 @@ Key Patterns:
 
 from typing import cast
 
-# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User
 
 from flext_core import FlextResult

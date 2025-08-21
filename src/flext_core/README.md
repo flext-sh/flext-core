@@ -12,7 +12,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Foundation Layer
 
-**Core contracts and type system**
+#### Core contracts and type system
 
 | Module           | Purpose            | Key Components                    |
 | ---------------- | ------------------ | --------------------------------- |
@@ -23,7 +23,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Core Patterns
 
-**Railway-oriented programming and DI**
+#### Railway-oriented programming and DI
 
 | Module          | Purpose              | Key Components                     |
 | --------------- | -------------------- | ---------------------------------- |
@@ -34,7 +34,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Configuration & Infrastructure
 
-**Settings, logging, and integration**
+#### Settings, logging, and integration
 
 | Module             | Purpose                  | Key Components                   |
 | ------------------ | ------------------------ | -------------------------------- |
@@ -47,7 +47,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Domain Patterns
 
-**DDD building blocks**
+#### DDD building blocks
 
 | Module               | Purpose         | Key Components                  |
 | -------------------- | --------------- | ------------------------------- |
@@ -59,7 +59,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Application Patterns
 
-**CQRS and command handling**
+#### CQRS and command handling
 
 | Module               | Purpose           | Key Components           |
 | -------------------- | ----------------- | ------------------------ |
@@ -71,7 +71,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Cross-Cutting Concerns
 
-**Mixins, decorators, and utilities**
+#### Mixins, decorators, and utilities
 
 | Module          | Purpose             | Key Components                |
 | --------------- | ------------------- | ----------------------------- |
@@ -83,7 +83,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ### Specialized Modules
 
-**Domain-specific and compatibility**
+#### Domain-specific and compatibility
 
 | Module                 | Purpose              | Key Components                  |
 | ---------------------- | -------------------- | ------------------------------- |
@@ -162,7 +162,7 @@ with create_log_context(logger, request_id="123", user_id="456"):
 
 Modules follow Clean Architecture dependency rules:
 
-```
+``` ascii
 Foundation ← Core Patterns ← Configuration ← Domain ← Application ← Cross-Cutting
 ```
 
@@ -227,7 +227,7 @@ __all__ = ["Component1", "Component2"]
 
 ## File Structure Summary
 
-```
+``` ascii
 src/flext_core/
 ├── __init__.py              # Public API exports
 ├── __version__.py           # Version information

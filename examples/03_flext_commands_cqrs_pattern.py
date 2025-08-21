@@ -14,7 +14,6 @@ Key Patterns:
 from datetime import UTC, datetime
 from typing import cast
 
-# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User
 
 from flext_core import FlextCommands, FlextResult
@@ -60,8 +59,8 @@ class UserDatabase:
 
     def save(self, user: User) -> None:
         """Save user to database."""
-        self.users[user.id.root] = user
-        event_store.add_event("UserSaved", {"user_id": user.id.root, "name": user.name})
+        self.users[str(user.id)] = user
+        event_store.add_event("UserSaved", {"user_id": str(user.id), "name": user.name})
 
     def get(self, user_id: str) -> User | None:
         """Get user by ID."""

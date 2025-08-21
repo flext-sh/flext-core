@@ -3,795 +3,621 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Awaitable, Callable, Iterator
-from pathlib import Path
-from typing import Generic, Protocol, TypeVar, runtime_checkable
+from collections.abc import Awaitable, Callable
+from typing import Protocol, runtime_checkable
 
 from flext_core.result import FlextResult
-from flext_core.typings import FlextDecoratedFunction, TAnyDict, TFactory
-
-# Define TypeVars locally
-T = TypeVar("T")
+from flext_core.typings import FlextTypes
 
 # =============================================================================
-# CORE ECOSYSTEM PROTOCOLS - Layer 1 foundational protocols
+# HIERARCHICAL PROTOCOL ARCHITECTURE - Optimized with composition
 # =============================================================================
 
 
-class FlextConnectionProtocol(Protocol):
-    """Protocol for external system connections.
+class FlextProtocols:
+    """Hierarchical protocol architecture with optimized composition patterns.
 
-    Provides a consistent connection interface across all FLEXT projects
-    for databases, APIs, message queues, and other external systems.
+    This class implements a structured hierarchy where subclasses compose with each
+    other using Python 3.13+ syntax. The architecture follows Clean Architecture
+    principles with clear separation of concerns and dependency inversion.
+
+    Hierarchy Structure:
+        Foundation -> Domain -> Application -> Infrastructure -> Extensions
+
+    Composition Features:
+        - Type-safe protocol inheritance with Python 3.13+ generics
+        - Mixin composition for cross-cutting concerns
+        - Runtime checkable protocols for dynamic validation
+        - FlextResult integration for railway-oriented programming
+
+    Examples:
+        Foundation layer usage::
+
+            processor: FlextProtocols.Foundation.Callable[str] = lambda x: x.upper()
+            result = processor("test")  # Returns "TEST"
+
+        Domain composition::
+
+            class UserService(
+                FlextProtocols.Domain.Service, FlextProtocols.Foundation.Validator[User]
+            ):
+                def validate(self, user: User) -> FlextResult[None]: ...
+                def start(self) -> FlextResult[None]: ...
+
+        Application layer patterns::
+
+            handler: FlextProtocols.Application.Handler[CreateUser, str] = (
+                CreateUserHandler()
+            )
+            result = handler(CreateUser(name="John"))  # Returns FlextResult[str]
+
     """
 
-    def test_connection(self) -> FlextResult[bool]:
-        """Test connection to an external system."""
-        ...
+    # =========================================================================
+    # FOUNDATION LAYER - Core building blocks
+    # =========================================================================
 
-    def get_connection_string(self) -> str:
-        """Get connection string for an external system."""
-        ...
+    class Foundation:
+        """Foundation layer protocols - core building blocks for the ecosystem."""
 
-    def close_connection(self) -> FlextResult[None]:
-        """Close connection to an external system."""
-        ...
+        class Callable[T](Protocol):
+            """Generic callable protocol with return type safety."""
 
+            def __call__(self, *args: object, **kwargs: object) -> T:
+                """Execute the callable with given arguments."""
+                ...
 
-class FlextAuthProtocol(Protocol):
-    """Protocol for authentication and authorization systems."""
+        class Validator[T](Protocol):
+            """Generic validator protocol for type-safe validation."""
 
-    def authenticate(
-        self,
-        credentials: TAnyDict,
-    ) -> FlextResult[TAnyDict]:
-        """Authenticate user with provided credentials."""
-        ...
+            def validate(self, data: T) -> FlextResult[None]:
+                """Validate input data and return success/failure status."""
+                ...
 
-    def authorize(
-        self,
-        user_info: TAnyDict,
-        resource: str,
-    ) -> FlextResult[bool]:
-        """Authorize user access to resource."""
-        ...
+        class ErrorHandler(Protocol):
+            """Error handler protocol for exception transformation."""
 
-    def refresh_token(self, refresh_token: str) -> FlextResult[TAnyDict]:
-        """Refresh authentication token."""
-        ...
+            def handle_error(self, error: Exception) -> str:
+                """Transform an exception into an error message string."""
+                ...
 
+        class Factory[T](Protocol):
+            """Type-safe factory protocol for object creation."""
 
-@runtime_checkable
-class FlextObservabilityProtocol(Protocol):
-    """Protocol for observability and monitoring systems."""
+            def create(self, **kwargs: object) -> FlextResult[T]:
+                """Create instance of type T."""
+                ...
 
-    def record_metric(
-        self,
-        name: str,
-        value: float,
-        tags: dict[str, str] | None = None,
-    ) -> FlextResult[None]:
-        """Record metric value."""
-        ...
+        class AsyncFactory[T](Protocol):
+            """Async factory protocol for asynchronous object creation."""
 
-    def start_trace(self, operation_name: str) -> FlextResult[str]:
-        """Start distributed trace."""
-        ...
+            async def create_async(self, **kwargs: object) -> FlextResult[T]:
+                """Create instance asynchronously."""
+                ...
 
-    def health_check(self) -> FlextResult[TAnyDict]:
-        """Perform health check."""
-        ...
+    # =========================================================================
+    # DOMAIN LAYER - Business logic protocols
+    # =========================================================================
+
+    class Domain:
+        """Domain layer protocols - business logic and domain services."""
+
+        class Service(Protocol):
+            """Domain service protocol with lifecycle management and callable interface."""
+
+            def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
+                """Callable interface for service invocation."""
+                ...
+
+            @abstractmethod
+            def start(self) -> FlextResult[None]:
+                """Start the service."""
+                ...
+
+            @abstractmethod
+            def stop(self) -> FlextResult[None]:
+                """Stop the service."""
+                ...
+
+            @abstractmethod
+            def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
+                """Perform health check."""
+                ...
+
+        class Repository[T](Protocol):
+            """Repository protocol for data access patterns."""
+
+            @abstractmethod
+            def get_by_id(self, entity_id: str) -> FlextResult[T | None]:
+                """Get entity by ID."""
+                ...
+
+            @abstractmethod
+            def save(self, entity: T) -> FlextResult[T]:
+                """Save entity."""
+                ...
+
+            @abstractmethod
+            def delete(self, entity_id: str) -> FlextResult[None]:
+                """Delete entity by ID."""
+                ...
+
+            @abstractmethod
+            def find_all(self) -> FlextResult[list[T]]:
+                """Find all entities."""
+                ...
+
+        class DomainEvent(Protocol):
+            """Domain event protocol for event sourcing."""
+
+            event_id: str
+            event_type: str
+            aggregate_id: str
+            event_version: int
+            timestamp: str
+
+            def to_dict(self) -> dict[str, object]:
+                """Convert event to dictionary."""
+                ...
+
+            @classmethod
+            def from_dict(
+                cls, data: dict[str, object]
+            ) -> FlextProtocols.Domain.DomainEvent:
+                """Create event from dictionary."""
+                ...
+
+        class EventStore(Protocol):
+            """Event store protocol for domain event persistence."""
+
+            @abstractmethod
+            def save_events(
+                self,
+                aggregate_id: str,
+                events: list[FlextProtocols.Domain.DomainEvent],
+                expected_version: int,
+            ) -> FlextResult[None]:
+                """Save events for aggregate."""
+                ...
+
+            @abstractmethod
+            def get_events(
+                self, aggregate_id: str
+            ) -> FlextResult[list[FlextProtocols.Domain.DomainEvent]]:
+                """Get events for aggregate."""
+                ...
+
+    # =========================================================================
+    # APPLICATION LAYER - Use cases and handlers
+    # =========================================================================
+
+    class Application:
+        """Application layer protocols - use cases, handlers, and orchestration."""
+
+        class Handler[TInput, TOutput](Protocol):
+            """Application handler with validation and processing."""
+
+            def __call__(self, input_data: TInput) -> FlextResult[TOutput]:
+                """Process input data and return transformed output."""
+                ...
+
+            def validate(self, data: TInput) -> FlextResult[None]:
+                """Validate input before processing (Foundation.Validator composition)."""
+                ...
+
+        class MessageHandler(Protocol):
+            """Message handler for CQRS patterns."""
+
+            def handle(self, message: object) -> FlextResult[object]:
+                """Handle incoming message and return result."""
+                ...
+
+            def can_handle(self, message_type: type) -> bool:
+                """Check if handler can process a message type."""
+                ...
+
+        class ValidatingHandler(MessageHandler, Protocol):
+            """Handler with built-in validation capabilities."""
+
+            def validate(self, message: object) -> FlextResult[object]:
+                """Validate message before processing (Foundation.Validator composition)."""
+                ...
+
+        class AuthorizingHandler(MessageHandler, Protocol):
+            """Handler with authorization capabilities."""
+
+            def authorize(
+                self,
+                message: object,
+                context: dict[str, object],
+            ) -> FlextResult[bool]:
+                """Check authorization for message processing."""
+                ...
+
+        class EventProcessor(Protocol):
+            """Event processor for domain event handling."""
+
+            def process_event(self, event: dict[str, object]) -> FlextResult[None]:
+                """Process domain event."""
+                ...
+
+            def can_process(self, event_type: str) -> bool:
+                """Check if the processor can handle an event type."""
+                ...
+
+        class UnitOfWork(Protocol):
+            """Unit of Work pattern for transaction management."""
+
+            @abstractmethod
+            def begin(self) -> FlextResult[None]:
+                """Begin transaction."""
+                ...
+
+            @abstractmethod
+            def commit(self) -> FlextResult[None]:
+                """Commit transaction."""
+                ...
+
+            @abstractmethod
+            def rollback(self) -> FlextResult[None]:
+                """Rollback transaction."""
+                ...
+
+    # =========================================================================
+    # INFRASTRUCTURE LAYER - External concerns and integrations
+    # =========================================================================
+
+    class Infrastructure:
+        """Infrastructure layer protocols - external systems and cross-cutting concerns."""
+
+        class Connection(Protocol):
+            """Connection protocol for external systems with callable interface."""
+
+            def __call__(self, *args: object, **kwargs: object) -> FlextResult[bool]:
+                """Callable interface for connection operations."""
+                ...
+
+            def test_connection(self) -> FlextResult[bool]:
+                """Test connection to an external system."""
+                ...
+
+            def get_connection_string(self) -> str:
+                """Get connection string for an external system."""
+                ...
+
+            def close_connection(self) -> FlextResult[None]:
+                """Close connection to an external system."""
+                ...
+
+        class Auth(Protocol):
+            """Authentication and authorization protocol."""
+
+            def authenticate(
+                self,
+                credentials: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
+                """Authenticate user with provided credentials."""
+                ...
+
+            def authorize(
+                self,
+                user_info: FlextTypes.Core.Dict,
+                resource: str,
+            ) -> FlextResult[bool]:
+                """Authorize user access to resource."""
+                ...
+
+            def refresh_token(
+                self, refresh_token: str
+            ) -> FlextResult[FlextTypes.Core.Dict]:
+                """Refresh authentication token."""
+                ...
+
+        @runtime_checkable
+        class Configurable(Protocol):
+            """Configurable component protocol."""
+
+            def configure(self, config: dict[str, object]) -> FlextResult[None]:
+                """Configure component with provided settings."""
+                ...
+
+            def get_config(self) -> dict[str, object]:
+                """Get current configuration."""
+                ...
+
+        @runtime_checkable
+        class LoggerProtocol(Protocol):
+            """Logger protocol with standard logging methods."""
+
+            def trace(self, message: str, **kwargs: object) -> None:
+                """Log trace message."""
+                ...
+
+            def debug(self, message: str, **kwargs: object) -> None:
+                """Log debug message."""
+                ...
+
+            def info(self, message: str, **kwargs: object) -> None:
+                """Log info message."""
+                ...
+
+            def warning(self, message: str, **kwargs: object) -> None:
+                """Log warning message."""
+                ...
+
+            def error(self, message: str, **kwargs: object) -> None:
+                """Log error message."""
+                ...
+
+            def critical(self, message: str, **kwargs: object) -> None:
+                """Log critical message."""
+                ...
+
+            def exception(
+                self,
+                message: str,
+                *,
+                exc_info: bool = True,
+                **kwargs: object,
+            ) -> None:
+                """Log exception message."""
+                ...
+
+    # =========================================================================
+    # EXTENSIONS LAYER - Advanced patterns and plugins
+    # =========================================================================
+
+    class Extensions:
+        """Extensions layer protocols - plugins, middleware, and advanced patterns."""
+
+        class Plugin(Protocol):
+            """Plugin protocol with configuration support."""
+
+            def configure(self, config: dict[str, object]) -> FlextResult[None]:
+                """Configure component with provided settings (Infrastructure.Configurable composition)."""
+                ...
+
+            def get_config(self) -> dict[str, object]:
+                """Get current configuration (Infrastructure.Configurable composition)."""
+                ...
+
+            @abstractmethod
+            def initialize(
+                self, context: FlextProtocols.Extensions.PluginContext
+            ) -> FlextResult[None]:
+                """Initialize plugin with context."""
+                ...
+
+            @abstractmethod
+            def shutdown(self) -> FlextResult[None]:
+                """Shutdown plugin and cleanup resources."""
+                ...
+
+            @abstractmethod
+            def get_info(self) -> dict[str, object]:
+                """Get plugin information."""
+                ...
+
+        class PluginContext(Protocol):
+            """Plugin execution context protocol."""
+
+            def get_service(self, service_name: str) -> FlextResult[object]:
+                """Get service instance by name."""
+                ...
+
+            def get_config(self) -> dict[str, object]:
+                """Get configuration for plugin."""
+                ...
+
+            def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+                """Get logger instance for plugin."""
+                ...
+
+        class Middleware(Protocol):
+            """Middleware pipeline component protocol."""
+
+            def process(
+                self,
+                request: object,
+                next_handler: Callable[[object], FlextResult[object]],
+            ) -> FlextResult[object]:
+                """Process request with middleware logic."""
+                ...
+
+        class AsyncMiddleware(Protocol):
+            """Async middleware component protocol."""
+
+            async def process_async(
+                self,
+                request: object,
+                next_handler: Callable[[object], Awaitable[FlextResult[object]]],
+            ) -> FlextResult[object]:
+                """Process request asynchronously."""
+                ...
+
+        @runtime_checkable
+        class Observability(Protocol):
+            """Observability and monitoring protocol."""
+
+            def record_metric(
+                self,
+                name: str,
+                value: float,
+                tags: dict[str, str] | None = None,
+            ) -> FlextResult[None]:
+                """Record metric value."""
+                ...
+
+            def start_trace(self, operation_name: str) -> FlextResult[str]:
+                """Start distributed trace."""
+                ...
+
+            def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
+                """Perform health check."""
+                ...
+
+    # =========================================================================
+    # BACKWARD COMPATIBILITY - Legacy protocol definitions
+    # =========================================================================
+
+    # =========================================================================
+    # COMPATIBILITY LAYER - Optimized aliases for hierarchical access
+    # =========================================================================
+
+    # Direct access to hierarchical protocols
+    Callable = Foundation.Callable
+    Validator = Foundation.Validator
+    ErrorHandler = Foundation.ErrorHandler
+    Factory = Foundation.Factory
+    AsyncFactory = Foundation.AsyncFactory
+
+    # Domain layer access
+    Service = Domain.Service
+    Repository = Domain.Repository
+    DomainEvent = Domain.DomainEvent
+    EventStore = Domain.EventStore
+
+    # Application layer access
+    Handler = Application.Handler
+    MessageHandler = Application.MessageHandler
+    ValidatingHandler = Application.ValidatingHandler
+    AuthorizingHandler = Application.AuthorizingHandler
+    EventProcessor = Application.EventProcessor
+    UnitOfWork = Application.UnitOfWork
+
+    # Infrastructure layer access
+    Connection = Infrastructure.Connection
+    Auth = Infrastructure.Auth
+    Configurable = Infrastructure.Configurable
+    LoggerProtocol = Infrastructure.LoggerProtocol
+
+    # Extensions layer access
+    Plugin = Extensions.Plugin
+    PluginContext = Extensions.PluginContext
+    Middleware = Extensions.Middleware
+    AsyncMiddleware = Extensions.AsyncMiddleware
+    Observability = Extensions.Observability
 
 
 # =============================================================================
-# VALIDATION PROTOCOLS - Centralized from interfaces.py
+# DECORATOR PROTOCOLS - Special function patterns
+# =============================================================================
+
+# =============================================================================
+# DECORATOR PROTOCOLS - Special function patterns
 # =============================================================================
 
 
-@runtime_checkable
-class FlextValidator(Protocol):
-    """Protocol for custom validators with flexible validation implementation.
-
-    CONSOLIDATED FROM: interfaces.py FlextValidator
-    Runtime-checkable protocol for structural typing validation.
-    """
-
-    def validate(self, value: object) -> FlextResult[object]:
-        """Validate and potentially transform input value."""
-        ...
-
-
-class FlextValidationRule(Protocol):
-    """Protocol for validation rules in validation chains.
-
-    CONSOLIDATED FROM: interfaces.py (abstract base class converted to protocol)
-    """
-
-    def apply(self, value: object, field_name: str) -> FlextResult[object]:
-        """Apply validation rule to field value."""
-        ...
-
-    def get_error_message(self, field_name: str, value: object) -> str:
-        """Get an error message for validation failure."""
-        ...
-
-
-# =============================================================================
-# SERVICE PROTOCOLS - Centralized from interfaces.py
-# =============================================================================
-
-
-class FlextService(Protocol):
-    """Protocol for service lifecycle management.
-
-    CONSOLIDATED FROM: interfaces.py FlextService (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def start(self) -> FlextResult[None]:
-        """Start the service."""
-        ...
-
-    @abstractmethod
-    def stop(self) -> FlextResult[None]:
-        """Stop the service."""
-        ...
-
-    @abstractmethod
-    def health_check(self) -> FlextResult[TAnyDict]:
-        """Perform health check."""
-        ...
-
-
-@runtime_checkable
-class FlextConfigurable(Protocol):
-    """Protocol for configurable components.
-
-    CONSOLIDATED FROM: interfaces.py FlextConfigurable
-    """
-
-    def configure(self, config: dict[str, object]) -> FlextResult[None]:
-        """Configure component with provided settings."""
-        ...
-
-    def get_config(self) -> dict[str, object]:
-        """Get current configuration."""
-        ...
-
-
-# =============================================================================
-# HANDLER PROTOCOLS - Centralized from handlers.py
-# =============================================================================
-
-
-class FlextMessageHandler(Protocol):
-    """Protocol for message handling in CQRS patterns.
-
-    CONSOLIDATED FROM: handlers.py FlextHandlerProtocols.FlextMessageHandler
-    """
-
-    def handle(self, message: object) -> FlextResult[object]:
-        """Handle incoming message and return result."""
-        ...
-
-    def can_handle(self, message_type: type) -> bool:
-        """Check if handler can process a message type."""
-        ...
-
-
-class FlextValidatingHandler(Protocol):
-    """Protocol for handlers with validation capabilities.
-
-    CONSOLIDATED FROM: handlers.py FlextHandlerProtocols.ValidatingHandler
-    """
-
-    def validate(self, message: object) -> FlextResult[object]:
-        """Validate message before processing."""
-        ...
-
-    def handle(self, message: object) -> FlextResult[object]:
-        """Handle a validated message."""
-        ...
-
-
-class FlextAuthorizingHandler(Protocol):
-    """Protocol for handlers with authorization capabilities.
-
-    CONSOLIDATED FROM: handlers.py FlextHandlerProtocols.AuthorizingHandler
-    """
-
-    def authorize(
-        self,
-        message: object,
-        context: dict[str, object],
-    ) -> FlextResult[bool]:
-        """Check authorization for message processing."""
-        ...
-
-    def handle(self, message: object) -> FlextResult[object]:
-        """Handle an authorized message."""
-        ...
-
-
-class FlextEventProcessor(Protocol):
-    """Protocol for event processing capabilities.
-
-    CONSOLIDATED FROM: handlers.py FlextHandlerProtocols.EventProcessor
-    """
-
-    def process_event(self, event: dict[str, object]) -> FlextResult[None]:
-        """Process domain event."""
-        ...
-
-    def can_process(self, event_type: str) -> bool:
-        """Check if the processor can handle an event type."""
-        ...
-
-
-class FlextMetricsCollector(Protocol):
-    """Protocol for metrics collection capabilities.
-
-    CONSOLIDATED FROM: handlers.py FlextHandlerProtocols.MetricsCollector
-    """
-
-    def collect_metrics(self, operation: str, duration: float) -> FlextResult[None]:
-        """Collect performance metrics."""
-        ...
-
-    def get_metrics_summary(self) -> dict[str, object]:
-        """Get current metrics summary."""
-        ...
-
-
-# =============================================================================
-# DECORATOR PROTOCOLS - Centralized from decorators.py
-# =============================================================================
-
-
-# FlextDecoratedFunction is now imported from typings.py
-
-
-# =============================================================================
-# OBSERVABILITY PROTOCOLS - Centralized from observability.py
-# =============================================================================
-
-
-@runtime_checkable
-class FlextLoggerProtocol(Protocol):
-    """Protocol for logger objects with standard logging methods.
-
-    CONSOLIDATED FROM: observability.py FlextLoggerProtocol
-    """
-
-    def trace(self, message: str, **kwargs: object) -> None:
-        """Log trace message."""
-        ...
-
-    def debug(self, message: str, **kwargs: object) -> None:
-        """Log debug message."""
-        ...
-
-    def info(self, message: str, **kwargs: object) -> None:
-        """Log info message."""
-        ...
-
-    def warning(self, message: str, **kwargs: object) -> None:
-        """Log warning message."""
-        ...
-
-    def error(self, message: str, **kwargs: object) -> None:
-        """Log error message."""
-        ...
-
-    def critical(self, message: str, **kwargs: object) -> None:
-        """Log critical message."""
-        ...
-
-    def exception(
-        self,
-        message: str,
-        *,
-        exc_info: bool = True,
-        **kwargs: object,
-    ) -> None:
-        """Log exception message."""
-        ...
-
-
-@runtime_checkable
-class FlextSpanProtocol(Protocol):
-    """Protocol for distributed tracing spans.
-
-    CONSOLIDATED FROM: observability.py FlextSpanProtocol
-    """
-
-    def set_tag(self, key: str, value: str) -> None:
-        """Set span tag."""
-        ...
-
-    def log_event(self, event_name: str, payload: dict[str, object]) -> None:
-        """Log event in span."""
-        ...
-
-    def finish(self) -> None:
-        """Finish the span."""
-        ...
-
-
-@runtime_checkable
-class FlextTracerProtocol(Protocol):
-    """Protocol for distributed tracers.
-
-    CONSOLIDATED FROM: observability.py FlextTracerProtocol
-    """
-
-    def start_span(self, operation_name: str) -> FlextSpanProtocol:
-        """Start new tracing span."""
-        ...
-
-    def inject_context(self, headers: dict[str, str]) -> None:
-        """Inject tracing context into headers."""
-        ...
-
-
-@runtime_checkable
-class FlextMetricsProtocol(Protocol):
-    """Protocol for metrics collection systems.
-
-    CONSOLIDATED FROM: observability.py FlextMetricsProtocol
-    """
-
-    def increment_counter(self, name: str, tags: dict[str, str] | None = None) -> None:
-        """Increment counter-metric."""
-        ...
-
-    def record_gauge(
-        self,
-        name: str,
-        value: float,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        """Record gauge metric."""
-        ...
-
-    def record_histogram(
-        self,
-        name: str,
-        value: float,
-        tags: dict[str, str] | None = None,
-    ) -> None:
-        """Record histogram metric."""
-        ...
-
-
-@runtime_checkable
-class FlextAlertsProtocol(Protocol):
-    """Protocol for simple alerting systems (legacy compatibility)."""
-
-    def info(self, message: str, **kwargs: object) -> None:
-        """Send info alert."""
-        ...
-
-    def warning(self, message: str, **kwargs: object) -> None:
-        """Send a warning alert."""
-        ...
-
-    def error(self, message: str, **kwargs: object) -> None:
-        """Send error alert."""
-        ...
-
-    def critical(self, message: str, **kwargs: object) -> None:
-        """Send critical alert."""
-        ...
-
-
-# =============================================================================
-# PLUGIN PROTOCOLS - Centralized from interfaces.py
-# =============================================================================
-
-
-class FlextPlugin(Protocol):
-    """Protocol for plugin system extensions.
-
-    CONSOLIDATED FROM: interfaces.py FlextPlugin (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
-        """Initialize plugin with context."""
-        ...
-
-    @abstractmethod
-    def shutdown(self) -> FlextResult[None]:
-        """Shutdown plugin and cleanup resources."""
-        ...
-
-    @abstractmethod
-    def get_info(self) -> dict[str, object]:
-        """Get plugin information."""
-        ...
-
-
-class FlextPluginContext(Protocol):
-    """Protocol for plugin execution context.
-
-    CONSOLIDATED FROM: interfaces.py FlextPluginContext
-    """
-
-    def get_service(self, service_name: str) -> FlextResult[object]:
-        """Get service instance by name."""
-        ...
-
-    def get_config(self) -> dict[str, object]:
-        """Get configuration for plugin."""
-        ...
-
-    def get_logger(self) -> FlextLoggerProtocol:
-        """Get logger instance for plugin."""
-        ...
-
-
-class FlextPluginRegistry(Protocol):
-    """Protocol for plugin registry management.
-
-    CONSOLIDATED FROM: interfaces.py FlextPluginRegistry
-    """
-
-    def register_plugin(self, plugin: FlextPlugin) -> FlextResult[None]:
-        """Register plugin in registry."""
-        ...
-
-    def get_plugin(self, plugin_name: str) -> FlextResult[FlextPlugin]:
-        """Get plugin by name."""
-        ...
-
-    def list_plugins(self) -> list[str]:
-        """List all registered plugin names."""
-        ...
-
-
-class FlextPluginLoader(Protocol):
-    """Protocol for dynamic plugin loading.
-
-    CONSOLIDATED FROM: interfaces.py FlextPluginLoader
-    """
-
-    def load_plugin(self, plugin_path: str | Path) -> FlextResult[FlextPlugin]:
-        """Load plugin from a file path."""
-        ...
-
-    def load_plugins_from_directory(self, directory: str | Path) -> list[FlextPlugin]:
-        """Load all plugins from directory."""
-        ...
-
-    def unload_plugin(self, plugin: FlextPlugin) -> FlextResult[None]:
-        """Unload plugin and cleanup."""
-        ...
-
-
-# =============================================================================
-# REPOSITORY PROTOCOLS - Centralized from interfaces.py
-# =============================================================================
-
-
-class FlextRepository(Protocol, Generic[T]):  # noqa: UP046
-    """Protocol for repository pattern implementations.
-
-    CONSOLIDATED FROM: interfaces.py FlextRepository (ABC converted to protocol)
-     Python 3.13 generic syntax.
-    """
-
-    @abstractmethod
-    def get_by_id(self, entity_id: str) -> FlextResult[T | None]:
-        """Get entity by ID."""
-        ...
-
-    @abstractmethod
-    def save(self, entity: T) -> FlextResult[T]:
-        """Save entity."""
-        ...
-
-    @abstractmethod
-    def delete(self, entity_id: str) -> FlextResult[None]:
-        """Delete entity by ID."""
-        ...
-
-    @abstractmethod
-    def find_all(self) -> FlextResult[list[T]]:
-        """Find all entities."""
-        ...
-
-
-class FlextUnitOfWork(Protocol):
-    """Protocol for Unit of a Work pattern.
-
-    CONSOLIDATED FROM: interfaces.py FlextUnitOfWork (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def begin(self) -> FlextResult[None]:
-        """Begin transaction."""
-        ...
-
-    @abstractmethod
-    def commit(self) -> FlextResult[None]:
-        """Commit transaction."""
-        ...
-
-    @abstractmethod
-    def rollback(self) -> FlextResult[None]:
-        """Rollback transaction."""
+class DecoratedFunction[T](Protocol):
+    """Decorated function protocol returning FlextResult for railway-oriented programming."""
+
+    def __call__(self, *args: object, **kwargs: object) -> FlextResult[T]:
+        """Execute the decorated function returning FlextResult."""
         ...
 
 
 # =============================================================================
-# EVENT SOURCING PROTOCOLS - Centralized from interfaces.py
+# BACKWARD COMPATIBILITY ALIASES
 # =============================================================================
 
+# Core protocols aliases for backward compatibility
+FlextProtocol = FlextProtocols  # Legacy name
 
-class FlextDomainEvent(Protocol):
-    """Protocol for domain events in event sourcing.
+# Foundation layer aliases - commented to avoid conflicts with typings.py
+# FlextCallable = FlextProtocols.Foundation.Callable - moved to typings.py
+FlextValidator = FlextProtocols.Foundation.Validator
+# FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler - moved to typings.py
+# FlextFactory = FlextProtocols.Foundation.Factory - moved to typings.py
+# FlextAsyncFactory = FlextProtocols.Foundation.AsyncFactory - moved to typings.py
 
-    CONSOLIDATED FROM: interfaces.py FlextDomainEvent
-    """
+# Domain layer aliases
+FlextService = FlextProtocols.Domain.Service
+FlextRepository = FlextProtocols.Domain.Repository
+FlextDomainEvent = FlextProtocols.Domain.DomainEvent
+FlextEventStore = FlextProtocols.Domain.EventStore
 
-    event_id: str
-    event_type: str
-    aggregate_id: str
-    event_version: int
-    timestamp: str
+# Application layer aliases - commented to avoid conflicts with typings.py
+# FlextHandler = FlextProtocols.Application.Handler - moved to typings.py
+# FlextMessageHandler = FlextProtocols.Application.MessageHandler - moved to typings.py
+# FlextValidatingHandler = FlextProtocols.Application.ValidatingHandler - moved to typings.py
+# FlextAuthorizingHandler = FlextProtocols.Application.AuthorizingHandler - moved to typings.py
+# FlextEventProcessor = FlextProtocols.Application.EventProcessor - moved to typings.py
+# FlextUnitOfWork = FlextProtocols.Application.UnitOfWork - moved to typings.py
 
-    def to_dict(self) -> dict[str, object]:
-        """Convert event to dictionary."""
-        ...
+# Infrastructure layer aliases - commented to avoid conflicts with typings.py
+# FlextConnection = FlextProtocols.Infrastructure.Connection - moved to typings.py
+FlextAuthProtocol = FlextProtocols.Infrastructure.Auth  # Keep this one as it's specific
+# FlextConfigurable = FlextProtocols.Infrastructure.Configurable - moved to typings.py
+# FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol - moved to typings.py
 
-    @classmethod
-    def from_dict(cls, data: dict[str, object]) -> FlextDomainEvent:
-        """Create event from dictionary."""
-        ...
+# Extensions layer aliases - commented to avoid conflicts with typings.py
+# FlextPlugin = FlextProtocols.Extensions.Plugin - moved to typings.py
+# FlextPluginContext = FlextProtocols.Extensions.PluginContext - moved to typings.py
+# FlextMiddleware = FlextProtocols.Extensions.Middleware - moved to typings.py
+# FlextAsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware - moved to typings.py
+FlextObservabilityProtocol = FlextProtocols.Extensions.Observability  # Keep this one
 
+# Decorator patterns - commented to avoid conflicts with typings.py
+# FlextDecoratedFunction = DecoratedFunction - moved to typings.py
 
-class FlextEventStore(Protocol):
-    """Protocol for event store implementations.
+# Legacy aliases for removed protocols (redirected to new hierarchy)
+FlextValidationRule = (
+    FlextProtocols.Foundation.Validator
+)  # Simplified to base validator
+FlextMetricsCollector = (
+    FlextProtocols.Extensions.Observability
+)  # Metrics are part of observability
+FlextAsyncHandler = FlextProtocols.Application.Handler  # Unified with regular handler
+FlextAsyncService = FlextProtocols.Domain.Service  # Unified with regular service
 
-    CONSOLIDATED FROM: interfaces.py FlextEventStore (ABC converted to protocol)
-    """
+# Typo fixes
+FlextAuthProtocols = FlextProtocols.Infrastructure.Auth  # Fix legacy typo
 
-    @abstractmethod
-    def save_events(
-        self,
-        aggregate_id: str,
-        events: list[FlextDomainEvent],
-        expected_version: int,
-    ) -> FlextResult[None]:
-        """Save events for aggregate."""
-        ...
+# Additional legacy support
+FlextEventPublisher = (
+    FlextProtocols.Domain.EventStore
+)  # Publisher is part of event store
+FlextEventSubscriber = (
+    FlextProtocols.Application.EventProcessor
+)  # Subscriber is event processor
+FlextEventStreamReader = (
+    FlextProtocols.Domain.EventStore
+)  # Stream reader is part of event store
+FlextProjectionBuilder = (
+    FlextProtocols.Application.EventProcessor
+)  # Projection builder is event processor
 
-    @abstractmethod
-    def get_events(self, aggregate_id: str) -> FlextResult[list[FlextDomainEvent]]:
-        """Get events for aggregate."""
-        ...
+# Observability sub-protocols (consolidated into main observability)
+FlextSpanProtocol = FlextProtocols.Extensions.Observability
+FlextTracerProtocol = FlextProtocols.Extensions.Observability
+FlextMetricsProtocol = FlextProtocols.Extensions.Observability
+FlextAlertsProtocol = FlextProtocols.Extensions.Observability
 
-    @abstractmethod
-    def get_events_from_version(
-        self,
-        aggregate_id: str,
-        from_version: int,
-    ) -> FlextResult[list[FlextDomainEvent]]:
-        """Get events from a specific version."""
-        ...
-
-
-class FlextEventPublisher(Protocol):
-    """Protocol for event publishing.
-
-    CONSOLIDATED FROM: interfaces.py FlextEventPublisher (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def publish(self, event: FlextDomainEvent) -> FlextResult[None]:
-        """Publish domain event."""
-        ...
-
-    @abstractmethod
-    def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]:
-        """Publish batch of events."""
-        ...
-
-
-class FlextEventSubscriber(Protocol):
-    """Protocol for event subscription.
-
-    CONSOLIDATED FROM: interfaces.py FlextEventSubscriber (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:
-        """Handle received event."""
-        ...
-
-    @abstractmethod
-    def can_handle(self, event_type: str) -> bool:
-        """Check if subscriber can handle an event type."""
-        ...
-
-
-class FlextEventStreamReader(Protocol):
-    """Protocol for reading event streams.
-
-    CONSOLIDATED FROM: interfaces.py FlextEventStreamReader (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def read_stream(
-        self,
-        stream_name: str,
-        from_position: int = 0,
-    ) -> FlextResult[Iterator[FlextDomainEvent]]:
-        """Read events from stream."""
-        ...
-
-    @abstractmethod
-    def subscribe_to_stream(
-        self,
-        stream_name: str,
-        handler: Callable[[FlextDomainEvent], None],
-    ) -> FlextResult[None]:
-        """Subscribe to stream events."""
-        ...
-
-
-class FlextProjectionBuilder(Protocol):
-    """Protocol for building projections from events.
-
-    CONSOLIDATED FROM: interfaces.py FlextProjectionBuilder (ABC converted to protocol)
-    """
-
-    @abstractmethod
-    def build_projection(
-        self,
-        events: list[FlextDomainEvent],
-    ) -> FlextResult[dict[str, object]]:
-        """Build projection from events."""
-        ...
-
-    @abstractmethod
-    def update_projection(
-        self,
-        projection: dict[str, object],
-        event: FlextDomainEvent,
-    ) -> FlextResult[dict[str, object]]:
-        """Update projection with new event."""
-        ...
+# Plugin system legacy aliases
+FlextPluginRegistry = (
+    FlextProtocols.Extensions.PluginContext
+)  # Registry is part of context
+FlextPluginLoader = FlextProtocols.Extensions.PluginContext  # Loader is part of context
 
 
 # =============================================================================
-# ASYNC PROTOCOLS -  async patterns
-# =============================================================================
-
-
-class FlextAsyncHandler(Protocol):
-    """Protocol for async message handlers."""
-
-    async def handle_async(self, message: object) -> FlextResult[object]:
-        """Handle a message asynchronously."""
-        ...
-
-    def can_handle(self, message_type: type) -> bool:
-        """Check if handler can process a message type."""
-        ...
-
-
-class FlextAsyncService(Protocol):
-    """Protocol for async service lifecycle."""
-
-    async def start_async(self) -> FlextResult[None]:
-        """Start service asynchronously."""
-        ...
-
-    async def stop_async(self) -> FlextResult[None]:
-        """Stop service asynchronously."""
-        ...
-
-    async def health_check_async(self) -> FlextResult[TAnyDict]:
-        """Perform async health check."""
-        ...
-
-
-# =============================================================================
-# FACTORY PROTOCOLS - Type-safe factory patterns
-# =============================================================================
-
-
-class FlextFactory(Protocol, Generic[T]):  # noqa: UP046
-    """Protocol for type-safe factory implementations.
-
-    Python 3.13 generic syntax for a factory pattern.
-    """
-
-    def create(self, **kwargs: object) -> FlextResult[T]:
-        """Create instance of type T."""
-        ...
-
-
-class FlextAsyncFactory(Protocol, Generic[T]):  # noqa: UP046
-    """Protocol for async factory implementations."""
-
-    async def create_async(self, **kwargs: object) -> FlextResult[T]:
-        """Create instance asynchronously."""
-        ...
-
-
-# =============================================================================
-# MIDDLEWARE PROTOCOLS - Pipeline and middleware patterns
-# =============================================================================
-
-
-class FlextMiddleware(Protocol):
-    """Protocol for middleware pipeline components."""
-
-    def process(
-        self,
-        request: object,
-        next_handler: Callable[[object], FlextResult[object]],
-    ) -> FlextResult[object]:
-        """Process request with middleware logic."""
-        ...
-
-
-class FlextAsyncMiddleware(Protocol):
-    """Protocol for async middleware components."""
-
-    async def process_async(
-        self,
-        request: object,
-        next_handler: Callable[[object], Awaitable[FlextResult[object]]],
-    ) -> FlextResult[object]:
-        """Process request asynchronously."""
-        ...
-
-
-# =============================================================================
-# EXPORTS - All centralized protocols
+# EXPORTS - Hierarchical and legacy protocols
 # =============================================================================
 
 __all__: list[str] = [
+    # Backward compatibility only - specific concrete classes
+    "DecoratedFunction",
+    # Observability protocols
     "FlextAlertsProtocol",
-    "FlextAsyncFactory",
-    "FlextAsyncHandler",
-    "FlextAsyncMiddleware",
-    "FlextAsyncService",
+    # Specific protocol classes (not aliases)
     "FlextAuthProtocol",
-    "FlextAuthorizingHandler",
-    "FlextConfigurable",
-    "FlextConnectionProtocol",
-    "FlextDecoratedFunction",
-    "FlextDomainEvent",
-    "FlextEventProcessor",
-    "FlextEventPublisher",
-    "FlextEventStore",
-    "FlextEventStreamReader",
-    "FlextEventSubscriber",
-    "FlextFactory",
-    "FlextLoggerProtocol",
-    "FlextMessageHandler",
-    "FlextMessageHandler",
-    "FlextMetricsCollector",
     "FlextMetricsProtocol",
-    "FlextMiddleware",
     "FlextObservabilityProtocol",
-    "FlextPlugin",
-    "FlextPluginContext",
-    "FlextPluginLoader",
-    "FlextPluginRegistry",
-    "FlextProjectionBuilder",
-    "FlextRepository",
-    "FlextService",
+    # Legacy compatibility
+    "FlextProtocol",
+    # Main hierarchical class - only protocols, not type aliases
+    "FlextProtocols",
     "FlextSpanProtocol",
     "FlextTracerProtocol",
-    "FlextUnitOfWork",
-    "FlextValidatingHandler",
-    "FlextValidationRule",
     "FlextValidator",
-    "TFactory",
 ]

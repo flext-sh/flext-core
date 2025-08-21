@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """06 - Domain-Driven Design: Entity & Value Object Patterns.
 
-Shows how FlextEntity and FlextValueObject simplify DDD implementation.
+Shows how FlextEntity and FlextValue simplify DDD implementation.
 Demonstrates entity lifecycle, domain events, and value object immutability.
 
 Key Patterns:
 • FlextEntity for objects with identity
-• FlextValueObject for immutable domain concepts
+• FlextValue for immutable domain concepts
 • Domain events and entity lifecycle
 • Aggregate patterns
 """
@@ -25,7 +25,7 @@ from flext_core import (
     FlextMetadata,
     FlextResult,
     FlextTimestamp,
-    FlextValueObject,
+    FlextValue,
     FlextVersion,
 )
 
@@ -39,7 +39,7 @@ MAX_DISCOUNT_PERCENT = 100
 # =============================================================================
 
 
-class Address(FlextValueObject):
+class Address(FlextValue):
     """Address value object for customer addresses."""
 
     street: str
@@ -48,7 +48,7 @@ class Address(FlextValueObject):
     country: str = "US"
 
 
-class ProductCode(FlextValueObject):
+class ProductCode(FlextValue):
     """Product code value object."""
 
     code: str
@@ -62,7 +62,7 @@ class ProductCode(FlextValueObject):
         return FlextResult[None].ok(None)
 
 
-class Price(FlextValueObject):
+class Price(FlextValue):
     """Price value object with currency."""
 
     amount: Decimal

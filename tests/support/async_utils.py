@@ -1,0 +1,423 @@
+"""Advanced async testing utilities using pytest-asyncio and pytest-timeout.
+
+Provides comprehensive async testing patterns, concurrency testing,
+timeout management, and async context management for robust testing.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import time
+from collections.abc import Awaitable, Callable
+from contextlib import asynccontextmanager, suppress
+from typing import TYPE_CHECKING, TypeVar
+
+import pytest
+
+if TYPE_CHECKING:
+    from typing import Any
+
+T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
+
+
+class AsyncTestUtils:
+    """Comprehensive async testing utilities with timeout and concurrency support."""
+
+    @staticmethod
+    async def wait_for_condition(
+        condition: Callable[[], bool | Awaitable[bool]],
+        *,
+        timeout_seconds: float = 5.0,
+        poll_interval: float = 0.1,
+        error_message: str = "Condition not met within timeout",
+    ) -> None:
+        """Wait for a condition to become true with timeout."""
+        start_time = time.time()
+
+        while time.time() - start_time < timeout_seconds:
+            try:
+                if asyncio.iscoroutinefunction(condition):
+                    result = await condition()
+                else:
+                    result = condition()
+
+                if result:
+                    return
+
+            except Exception as e:
+                # Log exceptions during condition checking for debugging
+                logger.debug("Exception during condition check: %s", e)
+
+            await asyncio.sleep(poll_interval)
+
+        raise TimeoutError(error_message)
+
+    @staticmethod
+    async def run_with_timeout(
+        coro: Awaitable[T],
+        *,
+        timeout_seconds: float = 5.0,
+    ) -> T:
+        """Run coroutine with timeout."""
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout_seconds)
+        except TimeoutError as e:
+            msg = f"Operation timed out after {timeout_seconds} seconds"
+            raise TimeoutError(msg) from e
+
+    @staticmethod
+    async def run_concurrently(
+        *coroutines: Awaitable[T],
+        return_exceptions: bool = False,
+    ) -> list[T]:
+        """Run multiple coroutines concurrently."""
+        if not coroutines:
+            return []
+
+        return await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
+
+    @staticmethod
+    async def run_concurrent(*coroutines: Awaitable[T], return_exceptions: bool = False) -> list[T]:
+        """Alias for run_concurrently for backward compatibility."""
+        return await AsyncTestUtils.run_concurrently(*coroutines, return_exceptions=return_exceptions)
+
+    @staticmethod
+    async def sleep_with_timeout(duration: float) -> None:
+        """Sleep for specified duration (alias for asyncio.sleep)."""
+        await asyncio.sleep(duration)
+
+    @staticmethod
+    async def run_concurrent_tasks(
+        tasks: list[Awaitable[T]],
+        return_exceptions: bool = False,
+    ) -> list[T]:
+        """Run a list of coroutines concurrently."""
+        if not tasks:
+            return []
+        return await asyncio.gather(*tasks, return_exceptions=return_exceptions)
+
+    @staticmethod
+    async def retry_async(
+        coro_func: Callable[[], Awaitable[T]],
+        max_attempts: int = 3,
+        delay: float = 1.0,
+        backoff_factor: float = 2.0,
+        exceptions: tuple[type[Exception], ...] = (Exception,),
+    ) -> T:
+        """Retry async operation with exponential backoff."""
+        last_exception = None
+        current_delay = delay
+
+        for attempt in range(max_attempts):
+            try:
+                return await coro_func()
+            except exceptions as e:
+                last_exception = e
+                if attempt < max_attempts - 1:
+                    await asyncio.sleep(current_delay)
+                    current_delay *= backoff_factor
+
+        if last_exception:
+            raise last_exception
+
+        msg = "All retry attempts failed"
+        raise RuntimeError(msg)
+
+
+class AsyncContextManagers:
+    """Async context managers for testing scenarios."""
+
+    @staticmethod
+    @asynccontextmanager
+    async def async_timer(timeout: float = 5.0):
+        """Async context manager with timeout."""
+        start_time = time.time()
+
+        async def check_timeout() -> None:
+            while True:
+                if time.time() - start_time > timeout:
+                    msg = f"Operation exceeded timeout of {timeout} seconds"
+                    raise TimeoutError(msg)
+                await asyncio.sleep(0.1)
+
+        timeout_task = asyncio.create_task(check_timeout())
+
+        try:
+            yield
+        finally:
+            timeout_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await timeout_task
+
+    @staticmethod
+    @asynccontextmanager
+    async def async_resource_manager(
+        setup_func: Callable[[], Awaitable[T]],
+        cleanup_func: Callable[[T], Awaitable[None]],
+    ):
+        """Generic async resource manager."""
+        resource = await setup_func()
+        try:
+            yield resource
+        finally:
+            await cleanup_func(resource)
+
+    @staticmethod
+    @asynccontextmanager
+    async def async_background_task(
+        task_func: Callable[[], Awaitable[None]],
+    ):
+        """Run background task during test execution."""
+        task = asyncio.create_task(task_func())
+
+        try:
+            yield task
+        finally:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+    @staticmethod
+    @asynccontextmanager
+    async def async_event_waiter(
+        event: asyncio.Event,
+        timeout: float = 5.0,
+    ):
+        """Wait for event with timeout."""
+        try:
+            await asyncio.wait_for(event.wait(), timeout=timeout)
+            yield
+        except TimeoutError as e:
+            msg = f"Event not set within {timeout} seconds"
+            raise TimeoutError(msg) from e
+
+
+class AsyncMockUtils:
+    """Utilities for mocking async functions and testing async behavior."""
+
+    @staticmethod
+    def create_async_mock(return_value: Any = None, side_effect: Exception | None = None):
+        """Create async mock function."""
+        async def async_mock(*args: Any, **kwargs: Any) -> Any:
+            if side_effect:
+                raise side_effect
+            return return_value
+
+        return async_mock
+
+    @staticmethod
+    def create_delayed_async_mock(
+        return_value: Any = None,
+        delay: float = 0.1,
+        side_effect: Exception | None = None,
+    ):
+        """Create async mock with delay."""
+        async def delayed_async_mock(*args: Any, **kwargs: Any) -> Any:
+            await asyncio.sleep(delay)
+            if side_effect:
+                raise side_effect
+            return return_value
+
+        return delayed_async_mock
+
+    @staticmethod
+    def create_flaky_async_mock(
+        return_value: Any = None,
+        failure_rate: float = 0.3,
+        exception: Exception = RuntimeError("Flaky operation failed"),
+    ):
+        """Create async mock that fails randomly."""
+        import random
+
+        async def flaky_async_mock(*args: Any, **kwargs: Any) -> Any:
+            if random.random() < failure_rate:
+                raise exception
+            return return_value
+
+        return flaky_async_mock
+
+
+class AsyncFixtureUtils:
+    """Utilities for creating async fixtures."""
+
+    @staticmethod
+    async def async_setup_teardown(
+        setup: Callable[[], Awaitable[T]],
+        teardown: Callable[[T], Awaitable[None]],
+    ):
+        """Helper for async setup/teardown patterns."""
+        resource = await setup()
+        try:
+            yield resource
+        finally:
+            await teardown(resource)
+
+    @staticmethod
+    async def create_async_test_client():
+        """Create async test client (placeholder for actual implementation)."""
+        # This would typically create an async HTTP client or similar
+        class AsyncTestClient:
+            async def get(self, url: str) -> dict[str, Any]:
+                await asyncio.sleep(0.01)  # Simulate network delay
+                return {"url": url, "status": 200}
+
+            async def post(self, url: str, data: dict[str, Any]) -> dict[str, Any]:
+                await asyncio.sleep(0.01)
+                return {"url": url, "data": data, "status": 201}
+
+            async def close(self) -> None:
+                await asyncio.sleep(0.01)
+
+        client = AsyncTestClient()
+        try:
+            yield client
+        finally:
+            await client.close()
+
+    @staticmethod
+    async def create_async_event_loop():
+        """Create isolated event loop for testing."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            yield loop
+        finally:
+            loop.close()
+
+
+class AsyncConcurrencyTesting:
+    """Advanced concurrency testing patterns."""
+
+    @staticmethod
+    async def test_race_condition(
+        func1: Callable[[], Awaitable[Any]],
+        func2: Callable[[], Awaitable[Any]],
+        iterations: int = 100,
+    ) -> dict[str, Any]:
+        """Test for race conditions between two async functions."""
+        results = []
+
+        for _ in range(iterations):
+            # Start both functions simultaneously
+            task1 = asyncio.create_task(func1())
+            task2 = asyncio.create_task(func2())
+
+            # Wait for both to complete
+            result1, result2 = await asyncio.gather(task1, task2, return_exceptions=True)
+
+            results.append({
+                "result1": result1,
+                "result2": result2,
+                "error1": isinstance(result1, Exception),
+                "error2": isinstance(result2, Exception),
+            })
+
+        return {
+            "total_iterations": iterations,
+            "results": results,
+            "error_rate1": sum(1 for r in results if r["error1"]) / iterations,
+            "error_rate2": sum(1 for r in results if r["error2"]) / iterations,
+        }
+
+    @staticmethod
+    async def test_concurrent_access(
+        func: Callable[[], Awaitable[Any]],
+        concurrency_level: int = 10,
+        iterations_per_worker: int = 10,
+    ) -> dict[str, Any]:
+        """Test concurrent access to a resource."""
+        async def worker() -> list[Any]:
+            results = []
+            for _ in range(iterations_per_worker):
+                try:
+                    result = await func()
+                    results.append({"result": result, "success": True})
+                except Exception as e:
+                    results.append({"error": str(e), "success": False})
+            return results
+
+        # Start all workers concurrently
+        workers = [worker() for _ in range(concurrency_level)]
+        worker_results = await asyncio.gather(*workers)
+
+        # Flatten results
+        all_results = []
+        for worker_result in worker_results:
+            all_results.extend(worker_result)
+
+        success_count = sum(1 for r in all_results if r["success"])
+        total_operations = concurrency_level * iterations_per_worker
+
+        return {
+            "total_operations": total_operations,
+            "successful_operations": success_count,
+            "success_rate": success_count / total_operations,
+            "concurrency_level": concurrency_level,
+            "detailed_results": all_results,
+        }
+
+    @staticmethod
+    async def test_deadlock_detection(
+        operations: list[Callable[[], Awaitable[Any]]],
+        timeout: float = 5.0,
+    ) -> dict[str, Any]:
+        """Test for potential deadlocks in async operations."""
+        start_time = time.time()
+
+        try:
+            results = await asyncio.wait_for(
+                asyncio.gather(*[op() for op in operations]),
+                timeout=timeout,
+            )
+            end_time = time.time()
+
+            return {
+                "completed": True,
+                "execution_time": end_time - start_time,
+                "results": results,
+                "potential_deadlock": False,
+            }
+
+        except TimeoutError:
+            end_time = time.time()
+
+            return {
+                "completed": False,
+                "execution_time": end_time - start_time,
+                "timeout": timeout,
+                "potential_deadlock": True,
+            }
+
+
+# Pytest markers for async tests
+class AsyncMarkers:
+    """Custom pytest markers for async tests."""
+
+    asyncio = pytest.mark.asyncio
+    timeout = pytest.mark.timeout
+    concurrency = pytest.mark.concurrency
+    race_condition = pytest.mark.race_condition
+
+    @staticmethod
+    def async_timeout(seconds: float):
+        """Mark async test with specific timeout."""
+        return pytest.mark.timeout(seconds)
+
+    @staticmethod
+    def async_slow():
+        """Mark async test as slow."""
+        return pytest.mark.slow
+
+
+# Export utilities
+__all__ = [
+    "AsyncConcurrencyTesting",
+    "AsyncContextManagers",
+    "AsyncFixtureUtils",
+    "AsyncMarkers",
+    "AsyncMockUtils",
+    "AsyncTestUtils",
+]

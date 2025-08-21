@@ -30,6 +30,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 # =============================================================================
 # CONFIGURATION DEFAULTS AND CONSTANTS
@@ -151,8 +152,8 @@ class FlextSettings(BaseSettings):
     @classmethod
     def create_with_validation(
         cls,
-        overrides: Mapping[str, object] | None = None,
-        **kwargs: object,
+        overrides: Mapping[str, FlextTypes.Core.Value] | None = None,
+        **kwargs: FlextTypes.Core.Value,
     ) -> FlextResult[FlextSettings]:
         """Create settings instance with validation and proper override handling."""
         try:
@@ -160,7 +161,7 @@ class FlextSettings(BaseSettings):
             instance = cls()
 
             # Prepare overrides dict - support both overrides parameter and kwargs
-            all_overrides: dict[str, object] = {}
+            all_overrides: FlextTypes.Core.Dict = {}
             if overrides:
                 # Mapping -> dict
                 all_overrides.update(dict(overrides))

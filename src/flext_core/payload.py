@@ -7,7 +7,7 @@ import time
 import zlib
 from base64 import b64decode, b64encode
 from collections.abc import Callable, Mapping
-from typing import TypeVar, cast
+from typing import cast
 
 from pydantic import (
     BaseModel,
@@ -25,9 +25,15 @@ from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
 )
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import TValue
+from flext_core.typings import FlextTypes
 from flext_core.validation import FlextValidators
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type PayloadProtocol = FlextProtocols.Foundation.Validator[object]
+type MessageProtocol = FlextProtocols.Application.MessageHandler
+type EventProtocol = FlextProtocols.Domain.DomainEvent
 
 # =============================================================================
 # CROSS-SERVICE SERIALIZATION CONSTANTS AND TYPES
@@ -75,9 +81,6 @@ MAX_UNCOMPRESSED_SIZE = 65536
 COMPRESSION_LEVEL = 6
 
 
-T = TypeVar("T")
-
-
 class FlextPayload[T](
     BaseModel,
     FlextSerializableMixin,
@@ -109,7 +112,7 @@ class FlextPayload[T](
         description="Payload data",
         serialization_alias="payloadData",
     )
-    metadata: dict[str, object] = Field(
+    metadata: FlextTypes.Payload.Metadata = Field(
         default_factory=dict,
         description="Optional metadata",
         serialization_alias="payloadMetadata",
@@ -144,7 +147,7 @@ class FlextPayload[T](
             logger.exception("Failed to create payload")
             return FlextResult[FlextPayload[T]].fail(f"Failed to create payload: {e}")
 
-    def with_metadata(self, **additional: TValue) -> FlextPayload[T]:
+    def with_metadata(self, **additional: object) -> FlextPayload[T]:
         """Create a new payload with additional metadata.
 
         Args:
@@ -158,7 +161,9 @@ class FlextPayload[T](
         new_metadata = {**self.metadata, **additional}
         return FlextPayload(data=self.data, metadata=new_metadata)
 
-    def enrich_metadata(self, additional: dict[str, object]) -> FlextPayload[T]:
+    def enrich_metadata(
+        self, additional: FlextTypes.Payload.Metadata
+    ) -> FlextPayload[T]:
         """Create a new payload with enriched metadata from dictionary.
 
         Args:
@@ -190,7 +195,7 @@ class FlextPayload[T](
         match data_dict:
             case dict():
                 # Type narrowing: data_dict is now known to be a dict
-                validated_dict = cast("dict[str, object]", data_dict)
+                validated_dict = cast("FlextTypes.Payload.SerializedData", data_dict)
             case _:
                 return FlextResult[FlextPayload[object]].fail(
                     "Failed to create payload from dict: Input is not a dictionary",
@@ -219,7 +224,7 @@ class FlextPayload[T](
     @classmethod
     def from_dict(
         cls,
-        data_dict: dict[str, object] | Mapping[str, object] | object,
+        data_dict: FlextTypes.Payload.MappingType | object,
     ) -> FlextResult[FlextPayload[object]]:
         """Convenience wrapper ; returns FlextResult.
 
@@ -229,7 +234,7 @@ class FlextPayload[T](
         if isinstance(data_dict, Mapping):
             data_obj = dict(cast("Mapping[str, object]", data_dict))
         else:
-            data_obj = cast("dict[str, object]", data_dict)
+            data_obj = cast("FlextTypes.Payload.SerializedData", data_dict)
         return cls.create_from_dict(data_obj)
 
     def has_data(self) -> bool:
@@ -266,7 +271,7 @@ class FlextPayload[T](
 
     def transform_data(
         self,
-        transformer: Callable[[T], object],
+        transformer: FlextTypes.Payload.TransformFunction,
     ) -> FlextResult[FlextPayload[object]]:
         """Transform payload data using a function.
 
@@ -359,7 +364,7 @@ class FlextPayload[T](
             }
         return cast("dict[str, object]", data)
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Payload.SerializedData:
         """Convert payload to dictionary representation.
 
         Returns:
@@ -371,7 +376,7 @@ class FlextPayload[T](
             "metadata": self.metadata,
         }
 
-    def to_dict_basic(self) -> dict[str, object]:
+    def to_dict_basic(self) -> FlextTypes.Payload.SerializedData:
         """Convert to basic dictionary representation."""
         result: dict[str, object] = {}
 
@@ -828,8 +833,7 @@ class FlextPayload[T](
         except (ValueError, TypeError) as e6:
             logger = flext_get_logger(__name__)
             logger.warning(
-                f"Type conversion failed for {type(data).__name__} "
-                f"to {target_type.__name__}: {e6}",
+                f"Type conversion failed for {type(data).__name__} to {target_type.__name__}: {e6}"
             )
 
         return data
@@ -1624,7 +1628,7 @@ def get_serialization_metrics(
 
     # Try to get data type from payload
     if hasattr(payload, "data"):
-        data_obj = payload.data
+        data_obj = getattr(payload, "data", None)
         metrics["data_type"] = type(data_obj).__name__
     elif isinstance(payload, dict) and "data" in payload:
         data_obj = cast("dict[str, object]", payload).get("data")

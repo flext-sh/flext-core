@@ -14,9 +14,8 @@ Key Patterns:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import cast
+from typing import cast, override
 
-# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User as SharedUser
 
 from flext_core import FlextContainer, FlextResult, get_flext_container
@@ -62,11 +61,13 @@ class PostgreSQLDatabase(DatabaseService):
         self.port = port
         self._users: dict[str, SharedUser] = {}
 
+    @override
     def save_user(self, user: SharedUser) -> FlextResult[str]:
         """Save user to PostgreSQL."""
-        self._users[user.id.root] = user
-        return FlextResult[str].ok(user.id.root)
+        self._users[str(user.id)] = user
+        return FlextResult[str].ok(str(user.id))
 
+    @override
     def find_user(self, user_id: str) -> FlextResult[SharedUser]:
         """Find user in PostgreSQL."""
         if user_id in self._users:
@@ -80,6 +81,7 @@ class SMTPEmailService(EmailService):
     def __init__(self, smtp_host: str = "smtp.example.com") -> None:
         self.smtp_host = smtp_host
 
+    @override
     def send_welcome_email(self, user: SharedUser) -> FlextResult[bool]:
         """Send email via SMTP."""
         # Simulate email sending
@@ -202,6 +204,7 @@ def demo_service_replacement() -> None:
 
     # Replace email service with mock
     class MockEmailService(EmailService):
+        @override
         def send_welcome_email(self, user: SharedUser) -> FlextResult[bool]:
             print(f"📧 Mock email sent to {user.email_address.email}")
             success_value = True

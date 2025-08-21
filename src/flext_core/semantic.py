@@ -7,7 +7,11 @@ from contextlib import AbstractContextManager, nullcontext
 from typing import Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+
+# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
+type SemanticLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
 
 # =============================================================================
 # LAYER 1: MODEL SEMANTICS - Domain Foundation
@@ -466,7 +470,7 @@ FlextBusinessError = FlextSemanticError.Hierarchy.FlextBusinessError
 FlextValidationError = FlextSemanticError.Hierarchy.FlextValidationError
 
 # Most commonly used functions
-get_observability = FlextSemanticObservability.Factory.get_minimal_observability
+# get_observability moved to observability.py to avoid type conflicts
 configure_observability = FlextSemanticObservability.Factory.configure_observability
 create_business_error = FlextSemanticError.Factory.create_business_error
 create_validation_error = FlextSemanticError.Factory.create_validation_error
@@ -479,11 +483,13 @@ __all__: list[str] = [
     "FlextBusinessError",
     "FlextError",
     "FlextSemantic",
+    "FlextSemanticError",
+    "FlextSemanticModel",
+    "FlextSemanticObservability",
     "FlextValidationError",
     "configure_observability",
     "create_business_error",
     "create_validation_error",
-    "get_observability",
 ]
 
 # Total exports: 8 (vs. 93+ in previous fragmented approach)
