@@ -265,12 +265,12 @@ class TestFlextResultProperties:
     def test_fail_preserves_error(self, error: str) -> None:
         """Property: fail(error).error == error (with empty string handling)."""
         result = FlextResult[None].fail(error)
-        
+
         # FlextResult converts empty/whitespace-only errors to default message
         expected_error = error.strip() if error else ""
         if not expected_error:
             expected_error = "Unknown error occurred"
-        
+
         assert result.error == expected_error
         assert result.is_failure
 
@@ -398,7 +398,7 @@ class TestFlextResultAsync:
             return FlextResult.ok(f"processed_{value}")
 
         # Test concurrent execution
-        results = await AsyncTestUtils.run_concurrent([
+        results = await AsyncTestUtils.run_concurrent_tasks([
             create_async_result("a"),
             create_async_result("b"),
             create_async_result("c")

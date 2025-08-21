@@ -393,7 +393,9 @@ class FlextPerformance:
     def get_performance_metrics() -> dict[str, dict[str, dict[str, int | float]]]:
         """Get performance metrics for observability with precise typing."""
         # Type cast is safe since we control the structure of PERFORMANCE_METRICS
-        return {"metrics": cast("dict[str, dict[str, int | float]]", PERFORMANCE_METRICS)}
+        return {
+            "metrics": cast("dict[str, dict[str, int | float]]", PERFORMANCE_METRICS)
+        }
 
     @staticmethod
     def clear_performance_metrics() -> None:
@@ -460,7 +462,7 @@ class FlextPerformance:
         """Iterate over (key, data) metric items with precise typing."""
         # Type cast is safe since we control the structure of PERFORMANCE_METRICS
         metrics = cast("dict[str, dict[str, int | float]]", PERFORMANCE_METRICS)
-        return iter(list(metrics.items()))
+        return iter(metrics.items())
 
 
 # =============================================================================

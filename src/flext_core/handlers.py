@@ -325,11 +325,11 @@ class FlextHandlers:
             def __init__(
                 self,
                 name: str | None = None,
-                validators: list[FlextValidator] | None = None,
+                validators: list[FlextValidator[object]] | None = None,
             ) -> None:
                 """Initialize with optional validators."""
                 super().__init__(name)
-                self._validators: Final[list[FlextValidator]] = validators or []
+                self._validators: Final[list[FlextValidator[object]]] = validators or []
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle with validation - Template method pattern."""
@@ -359,7 +359,7 @@ class FlextHandlers:
 
                 return FlextResult[None].ok(None)
 
-            def add_validator(self, validator: FlextValidator) -> None:
+            def add_validator(self, validator: FlextValidator[object]) -> None:
                 """Add validator to the chain."""
                 self._validators.append(validator)
 
@@ -528,9 +528,7 @@ class FlextHandlers:
                 self._events_processed += 1
 
                 event_type = type(event).__name__
-                self._event_types[event_type] = (
-                    self._event_types.get(event_type, 0) + 1
-                )
+                self._event_types[event_type] = self._event_types.get(event_type, 0) + 1
 
                 return self._process_event(event)
 
@@ -597,7 +595,11 @@ class FlextHandlers:
 
             def get_metrics(self) -> FlextTypes.Handler.MetricsData:
                 """Get command bus metrics."""
-                return dict(self._metrics)
+                return {
+                    "commands_processed": self._commands_processed,
+                    "successful_commands": self._successful_commands,
+                    "failed_commands": self._failed_commands,
+                }
 
         class QueryBus:
             """Query bus for routing queries to handlers.
@@ -609,11 +611,10 @@ class FlextHandlers:
             def __init__(self) -> None:
                 """Initialize query bus."""
                 self._handlers: dict[type, Any] = {}
-                self._metrics: FlextTypes.Handler.MetricsData = {
-                    "queries_processed": 0,
-                    "successful_queries": 0,
-                    "failed_queries": 0,
-                }
+                # Use specific types for query metrics
+                self._queries_processed: FlextTypes.Handler.CounterMetric = 0
+                self._successful_queries: FlextTypes.Handler.CounterMetric = 0
+                self._failed_queries: FlextTypes.Handler.CounterMetric = 0
 
             def register(self, query_type: type, handler: object) -> FlextResult[None]:
                 """Register query handler."""
@@ -633,21 +634,25 @@ class FlextHandlers:
                             f"No handler registered for {query_type.__name__}"
                         )
 
-                    self._metrics["queries_processed"] += 1
+                    self._queries_processed += 1
 
                     # Execute query
                     result = handler.handle_query(query)
 
                     if result.success:
-                        self._metrics["successful_queries"] += 1
+                        self._successful_queries += 1
                     else:
-                        self._metrics["failed_queries"] += 1
+                        self._failed_queries += 1
 
                     return cast("FlextResult[object]", result)
 
             def get_metrics(self) -> FlextTypes.Handler.MetricsData:
                 """Get query bus metrics."""
-                return dict(self._metrics)
+                return {
+                    "queries_processed": self._queries_processed,
+                    "successful_queries": self._successful_queries,
+                    "failed_queries": self._failed_queries,
+                }
 
     # =========================================================================
     # Patterns Domain - Chain of Responsibility, Registry, Pipeline
@@ -676,13 +681,12 @@ class FlextHandlers:
 
             def __init__(self, name: str | None = None) -> None:
                 """Initialize handler chain."""
-                super().__init__(name or "HandlerChain")
+                self._name: str = name or "HandlerChain"
                 self._handlers: list[object] = []
-                self._chain_metrics: FlextTypes.Handler.MetricsData = {
-                    "chain_executions": 0,
-                    "successful_chains": 0,
-                    "handler_performance": {},
-                }
+                # Use specific types for chain metrics
+                self._chain_executions: FlextTypes.Handler.CounterMetric = 0
+                self._successful_chains: FlextTypes.Handler.CounterMetric = 0
+                self._handler_performance: FlextTypes.Handler.PerformanceMap = {}
 
             def add_handler(self, handler: object) -> FlextResult[None]:
                 """Add handler to chain.
@@ -698,7 +702,7 @@ class FlextHandlers:
 
                 SOLID: Single Responsibility - chain execution logic.
                 """
-                self._chain_metrics["chain_executions"] += 1
+                self._chain_executions += 1
 
                 for handler in self._handlers:
                     if handler.can_handle(request):
@@ -708,23 +712,20 @@ class FlextHandlers:
 
                         # Update handler performance metrics
                         handler_name = handler.handler_name
-                        if (
-                            handler_name
-                            not in self._chain_metrics["handler_performance"]
-                        ):
-                            self._chain_metrics["handler_performance"][handler_name] = {
+                        if handler_name not in self._handler_performance:
+                            self._handler_performance[handler_name] = {
                                 "executions": 0,
                                 "total_time": 0.0,
                                 "average_time": 0.0,
                             }
 
-                        perf = self._chain_metrics["handler_performance"][handler_name]
+                        perf = self._handler_performance[handler_name]
                         perf["executions"] += 1
                         perf["total_time"] += processing_time
                         perf["average_time"] = perf["total_time"] / perf["executions"]
 
                         if result.success:
-                            self._chain_metrics["successful_chains"] += 1
+                            self._successful_chains += 1
                             return result
 
                 return FlextResult[object].fail(
@@ -733,7 +734,11 @@ class FlextHandlers:
 
             def get_chain_metrics(self) -> FlextTypes.Handler.MetricsData:
                 """Get chain-specific metrics."""
-                return dict(self._chain_metrics)
+                return {
+                    "chain_executions": self._chain_executions,
+                    "successful_chains": self._successful_chains,
+                    "handler_performance": self._handler_performance,
+                }
 
         class HandlerRegistry:
             """Registry pattern implementation for handler management.
@@ -746,12 +751,11 @@ class FlextHandlers:
 
             def __init__(self) -> None:
                 """Initialize handler registry."""
-                self._handlers: FlextTypes.Handler.MetricsData = {}
-                self._registry_metrics: FlextTypes.Handler.MetricsData = {
-                    "registrations": 0,
-                    "lookups": 0,
-                    "successful_lookups": 0,
-                }
+                self._handlers: dict[str, object] = {}
+                # Use specific types for registry metrics
+                self._registrations: FlextTypes.Handler.CounterMetric = 0
+                self._lookups: FlextTypes.Handler.CounterMetric = 0
+                self._successful_lookups: FlextTypes.Handler.CounterMetric = 0
 
             def register(self, name: str, handler: object) -> FlextResult[object]:
                 """Register handler with name.
@@ -760,22 +764,22 @@ class FlextHandlers:
                 """
                 with FlextHandlers.thread_safe_operation():
                     self._handlers[name] = handler
-                    self._registry_metrics["registrations"] += 1
+                    self._registrations += 1
                     return FlextResult[Any].ok(handler)
 
             def get_handler(self, name: str) -> FlextResult[Any]:
                 """Get handler by name."""
                 with FlextHandlers.thread_safe_operation():
-                    self._registry_metrics["lookups"] += 1
+                    self._lookups += 1
 
                     handler = self._handlers.get(name)
                     if handler:
-                        self._registry_metrics["successful_lookups"] += 1
+                        self._successful_lookups += 1
                         return FlextResult[Any].ok(handler)
 
                     return FlextResult[Any].fail(f"Handler '{name}' not found")
 
-            def get_all_handlers(self) -> FlextTypes.Handler.MetricsData:
+            def get_all_handlers(self) -> dict[str, object]:
                 """Get all registered handlers."""
                 with FlextHandlers.thread_safe_operation():
                     return dict(self._handlers)
@@ -791,7 +795,11 @@ class FlextHandlers:
 
             def get_registry_metrics(self) -> FlextTypes.Handler.MetricsData:
                 """Get registry-specific metrics."""
-                return dict(self._registry_metrics)
+                return {
+                    "registrations": self._registrations,
+                    "lookups": self._lookups,
+                    "successful_lookups": self._successful_lookups,
+                }
 
         class Pipeline:
             """Pipeline pattern for sequential processing.
@@ -804,11 +812,10 @@ class FlextHandlers:
                 """Initialize processing pipeline."""
                 self._name: Final[str] = name or "Pipeline"
                 self._stages: list[Callable[[Any], FlextResult[Any]]] = []
-                self._pipeline_metrics: FlextTypes.Handler.MetricsData = {
-                    "pipeline_executions": 0,
-                    "successful_pipelines": 0,
-                    "stage_performance": {},
-                }
+                # Use specific types for pipeline metrics
+                self._pipeline_executions: FlextTypes.Handler.CounterMetric = 0
+                self._successful_pipelines: FlextTypes.Handler.CounterMetric = 0
+                self._stage_performance: FlextTypes.Handler.PerformanceMap = {}
 
             def add_stage(
                 self, stage: Callable[[Any], FlextResult[Any]]
@@ -820,7 +827,7 @@ class FlextHandlers:
 
             def process(self, data: object) -> FlextResult[object]:
                 """Process data through pipeline stages."""
-                self._pipeline_metrics["pipeline_executions"] += 1
+                self._pipeline_executions += 1
 
                 current_data = data
 
@@ -832,14 +839,14 @@ class FlextHandlers:
                     processing_time = time.time() - start_time
 
                     # Update stage performance metrics
-                    if stage_name not in self._pipeline_metrics["stage_performance"]:
-                        self._pipeline_metrics["stage_performance"][stage_name] = {
+                    if stage_name not in self._stage_performance:
+                        self._stage_performance[stage_name] = {
                             "executions": 0,
                             "total_time": 0.0,
                             "average_time": 0.0,
                         }
 
-                    perf = self._pipeline_metrics["stage_performance"][stage_name]
+                    perf = self._stage_performance[stage_name]
                     perf["executions"] += 1
                     perf["total_time"] += processing_time
                     perf["average_time"] = perf["total_time"] / perf["executions"]
@@ -849,12 +856,16 @@ class FlextHandlers:
 
                     current_data = result.data
 
-                self._pipeline_metrics["successful_pipelines"] += 1
+                self._successful_pipelines += 1
                 return FlextResult[Any].ok(current_data)
 
             def get_pipeline_metrics(self) -> FlextTypes.Handler.MetricsData:
                 """Get pipeline-specific metrics."""
-                return dict(self._pipeline_metrics)
+                return {
+                    "pipeline_executions": self._pipeline_executions,
+                    "successful_pipelines": self._successful_pipelines,
+                    "stage_performance": self._stage_performance,
+                }
 
     # =========================================================================
     # Decorators Domain - Cross-cutting Concerns
@@ -876,7 +887,7 @@ class FlextHandlers:
 
         @staticmethod
         def with_validation(
-            validator: FlextValidator | None = None,
+            validator: FlextValidator[object] | None = None,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
             """Decorator for adding validation to handler methods.
 
@@ -1070,7 +1081,7 @@ class FlextHandlers:
             @staticmethod
             def create_validating_handler(
                 name: str | None = None,
-                validators: list[FlextValidator] | None = None,
+                validators: list[FlextValidator[object]] | None = None,
             ) -> object:
                 """Create validating handler instance."""
                 return FlextHandlers.Base.ValidatingHandler(name, validators)
