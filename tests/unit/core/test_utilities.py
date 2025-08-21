@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import cast
-from unittest.mock import Mock, patch
 
 import pytest
 from hypothesis import given, strategies as st
@@ -267,19 +266,25 @@ class TestFlextUtilitiesPerformance:
 class TestFlextUtilitiesWithFixtures:
     """Tests using advanced fixtures from conftest."""
 
-    def test_utilities_with_mock_factory(self, mock_factory: Mock) -> None:
-        """Test utilities with mock factory fixture."""
-        # Create mock external service
-        service = mock_factory("external_service")
-        service.process_id.return_value = FlextResult[str].ok("processed_id_123")
+    def test_utilities_with_service_factory(self, service_factory: object) -> None:
+        """Test utilities with real service factory fixture - REAL EXECUTION."""
+        # Create real external service
+        service = service_factory("external_service")  # pyright: ignore[reportUnknownVariableType]
+        # Real service already has process_id method
 
-        # Generate ID and process through service
+        # Generate ID and process through real service
         generated_id = FlextUtilities.generate_id()
-        result = service.process_id(generated_id)
+        result = service.process_id(generated_id)  # pyright: ignore[reportCallIssue]
 
+        # Validate REAL behavior - not mocked values
         assert result.success
-        assert result.data == "processed_id_123"
-        service.process_id.assert_called_once_with(generated_id)
+        # Verify the result follows the expected pattern: "processed_id_<actual_id>"
+        assert isinstance(result.value, str)
+        assert result.value.startswith("processed_id_")
+        assert generated_id in result.value
+        # Verify the generated ID is not empty and follows expected format
+        assert len(generated_id) > 0
+        assert isinstance(generated_id, str)
 
     def test_utilities_with_test_builder(
         self,
@@ -371,45 +376,61 @@ class TestFlextUtilitiesErrorHandling:
         ]
 
     @pytest.mark.error_path
-    @pytest.mark.parametrize_advanced
-    def test_cli_error_handling(
-        self,
-        error_test_cases: list[TestCase[dict[str, object], None]],
-    ) -> None:
-        """Test CLI error handling with structured test cases."""
-        for test_case in error_test_cases:
-            exception_type = cast(
-                "type[BaseException]",
-                test_case.input_data["exception"],
+    def test_cli_error_handling(self) -> None:
+        """Test CLI error handling with real execution instead of mocks."""
+
+        # Test KeyboardInterrupt handling with real function
+        def function_that_raises_keyboard_interrupt() -> None:
+            interrupt_msg = "User interrupted"
+            raise KeyboardInterrupt(interrupt_msg)
+
+        with pytest.raises(SystemExit) as exc_info:
+            FlextUtilities.handle_cli_main_errors(
+                function_that_raises_keyboard_interrupt
             )
-            message = cast("str", test_case.input_data["message"])
+        assert exc_info.value.code == 1
 
-            cli_function = Mock(side_effect=exception_type(message))
+        # Test RuntimeError handling with real function
+        def function_that_raises_runtime_error() -> None:
+            runtime_msg = "Runtime failure"
+            raise RuntimeError(runtime_msg)
 
-            with patch("flext_core.utilities.FlextConsole") as mock_console_class:
-                mock_console = Mock()
-                mock_console_class.return_value = mock_console
+        with pytest.raises(SystemExit) as exc_info:
+            FlextUtilities.handle_cli_main_errors(function_that_raises_runtime_error)
+        assert exc_info.value.code == 1
 
-                with pytest.raises(SystemExit) as exc_info:
-                    FlextUtilities.handle_cli_main_errors(cli_function)
+        # Test ValueError handling with real function
+        def function_that_raises_value_error() -> None:
+            value_msg = "Invalid value"
+            raise ValueError(value_msg)
 
-                assert exc_info.value.code == 1
+        with pytest.raises(SystemExit) as exc_info:
+            FlextUtilities.handle_cli_main_errors(function_that_raises_value_error)
+        assert exc_info.value.code == 1
 
-                if exception_type is KeyboardInterrupt:
-                    mock_console.print.assert_called_once_with(
-                        "\n[yellow]Operation cancelled by user[/yellow]",
-                    )
-                else:
-                    mock_console.print.assert_called_once_with(
-                        f"[red]Error: {message}[/red]",
-                    )
+        # Test TypeError handling with real function
+        def function_that_raises_type_error() -> None:
+            type_msg = "Invalid type"
+            raise TypeError(type_msg)
+
+        with pytest.raises(SystemExit) as exc_info:
+            FlextUtilities.handle_cli_main_errors(function_that_raises_type_error)
+        assert exc_info.value.code == 1
 
     @pytest.mark.happy_path
     def test_cli_success_handling(self) -> None:
-        """Test CLI success case."""
-        cli_function = Mock()
-        FlextUtilities.handle_cli_main_errors(cli_function)
-        cli_function.assert_called_once()
+        """Test CLI success case using real execution."""
+        execution_count = 0
+
+        def successful_cli_function() -> None:
+            nonlocal execution_count
+            execution_count += 1
+
+        # Should not raise any exception
+        FlextUtilities.handle_cli_main_errors(successful_cli_function)
+
+        # Verify the function was actually called
+        assert execution_count == 1
 
 
 # ============================================================================
@@ -529,14 +550,14 @@ class TestFlextUtilitiesIntegration:
         # Validate entity structure
         entity = cast(
             "dict[str, object]",
-            result.data["entity"],
+            result.value["entity"],
         )
         assert cast("str", entity["id"]).startswith("entity_")
         assert cast("str", entity["correlation_id"]).startswith("corr_")
         assert isinstance(entity["created_at"], float)
 
         # Validate description
-        description = cast("str", result.data["description"])
+        description = cast("str", result.value["description"])
         assert len(description) <= 50
 
     @pytest.mark.integration

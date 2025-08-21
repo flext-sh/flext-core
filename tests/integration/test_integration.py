@@ -25,7 +25,6 @@ Integration Testing Strategy:
 from __future__ import annotations
 
 from typing import cast
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -36,6 +35,53 @@ from flext_core import (
     __version__,
     get_flext_container,
 )
+
+
+class FunctionalExternalService:
+    """Functional external service for integration testing - real implementation."""
+
+    def __init__(self) -> None:
+        """Initialize functional external service with processing state."""
+        self.call_count = 0
+        self.processed_items: list[str] = []
+        self.should_fail = False
+        self.failure_message = "Service unavailable"
+
+    def process(self, data: str | None = None) -> FlextResult[str]:
+        """Functional processing method - validates real behavior."""
+        self.call_count += 1
+
+        if self.should_fail:
+            return FlextResult[str].fail(self.failure_message)
+
+        processed_data = data or "processed"
+        self.processed_items.append(processed_data)
+
+        return FlextResult[str].ok(processed_data)
+
+    def set_failure_mode(
+        self, *, should_fail: bool, message: str = "Service unavailable"
+    ) -> None:
+        """Configure service to fail for testing error scenarios."""
+        self.should_fail = should_fail
+        self.failure_message = message
+
+    def get_call_count(self) -> int:
+        """Get number of times process was called."""
+        return self.call_count
+
+    def reset(self) -> None:
+        """Reset service state."""
+        self.call_count = 0
+        self.processed_items.clear()
+        self.should_fail = False
+
+
+@pytest.fixture
+def mock_external_service() -> FunctionalExternalService:
+    """Functional external service for integration testing."""
+    return FunctionalExternalService()
+
 
 pytestmark = [pytest.mark.integration]
 
@@ -75,7 +121,7 @@ class TestLibraryIntegration:
 
         # Assert - FlextResult functionality
         assert result.success is True
-        assert result.data == test_value
+        assert result.value == test_value
 
         # Act - Test FlextEntityId type system
         entity_id = FlextEntityId("entity-123")
@@ -94,7 +140,7 @@ class TestLibraryIntegration:
 
         # Assert - Service retrieval success
         assert service_result.success is True
-        assert service_result.data == test_value
+        assert service_result.value == test_value
 
         # Act - Test global container access
         global_container = get_flext_container()
@@ -107,7 +153,7 @@ class TestLibraryIntegration:
     def test_flext_result_with_container(
         self,
         clean_container: FlextContainer,
-        mock_external_service: MagicMock,
+        mock_external_service: FunctionalExternalService,
     ) -> None:
         """Test FlextResult integration with DI container factory pattern.
 
@@ -116,19 +162,15 @@ class TestLibraryIntegration:
 
         Args:
             clean_container: Isolated container fixture
-            mock_external_service: Mock external service
+            mock_external_service: Functional external service
 
         """
         # Arrange
         expected_result_data = "container_result"
 
         def create_result() -> FlextResult[str]:
-            # Simulate service processing with mock
-            mock_external_service.process.return_value = FlextResult[str].ok(
-                expected_result_data,
-            )
-            processed: FlextResult[str] = mock_external_service.process()
-            return processed
+            # Use functional service processing - real behavior
+            return mock_external_service.process(expected_result_data)
 
         # Act - Register factory in container
         register_result = clean_container.register_factory(
@@ -146,15 +188,16 @@ class TestLibraryIntegration:
         assert factory_result.success is True
 
         # Act - Verify factory produced FlextResult
-        result = factory_result.data
+        result = factory_result.value
 
         # Assert - Result type and content validation
         assert isinstance(result, FlextResult)
         assert result.success is True
-        assert result.data == expected_result_data
+        assert result.value == expected_result_data
 
-        # Assert - Mock service was called
-        mock_external_service.process.assert_called_once()
+        # Assert - Functional service was called (real validation)
+        assert mock_external_service.get_call_count() == 1
+        assert expected_result_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test FlextEntityId used in FlextResult."""
@@ -162,11 +205,11 @@ class TestLibraryIntegration:
         result = FlextResult[FlextEntityId].ok(entity_id)
 
         assert result.success
-        if result.data != "user-456":
-            msg: str = f"Expected {'user-456'}, got {result.data}"
+        if result.value != "user-456":
+            msg: str = f"Expected {'user-456'}, got {result.value}"
             raise AssertionError(msg)
         # FlextEntityId behaves like str but isinstance check causes MyPy issues
-        assert str(result.data) == "user-456"
+        assert str(result.value) == "user-456"
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""

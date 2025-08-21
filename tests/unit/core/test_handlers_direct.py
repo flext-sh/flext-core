@@ -34,7 +34,7 @@ class TestHandlersModuleDirect:
         assert handler.can_handle("test") is True
         result = handler.handle("test")
         assert result.success
-        assert result.data == "test"
+        assert result.value == "test"
 
     def test_validating_handler_direct(self) -> None:
         """Test FlextValidatingHandler directly from module."""

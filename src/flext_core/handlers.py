@@ -18,7 +18,9 @@ from os import environ
 from typing import Generic, TypeVar, cast
 
 from flext_core.constants import FlextConstants
+from flext_core.protocols import FlextValidator
 from flext_core.result import FlextResult
+from flext_core.typings import FlextCallable
 
 # Type variables for handlers
 TInput = TypeVar("TInput")
@@ -132,12 +134,35 @@ class FlextAbstractValidatingHandler(FlextAbstractHandler[TInput, TOutput]):
     - Single Responsibility: Validation behavior only
     - Open/Closed: Extensible validation strategies
     - Interface Segregation: Validation-specific operations
+
+     ENHANCEMENT:
+    - Uses FlextValidator for  type safety
+    - Maintains backward compatibility with legacy methods
     """
 
     @abstractmethod
     def validate_request(self, request: TInput) -> FlextResult[None]:
         """Validate request - Single Responsibility: validation logic."""
         ...
+
+    # VALIDATION METHOD - Validation with type safety
+    def validate_with_validator(
+        self, request: TInput, validator: FlextValidator | None = None
+    ) -> FlextResult[None]:
+        """Request validation with type-safe validator.
+
+        Uses Protocol-based validator pattern for type safety.
+        Falls back to abstract method if no validator provided.
+        """
+        if validator is not None:
+            try:
+                # Validator is expected to follow Protocol pattern
+                return validator.validate(request).map(lambda _: None)
+            except Exception as e:
+                return FlextResult[None].fail(f"Validation failed: {e}")
+
+        # Fallback to abstract method for backward compatibility
+        return self.validate_request(request)
 
 
 # Type variables for generic handlers
@@ -242,11 +267,22 @@ class FlextValidatingHandler(
     - Liskov Substitution: Proper substitution of base handler
     - Interface Segregation: Validation-specific methods
     - Dependency Inversion: Depends on validation abstractions
+
+     ENHANCEMENT:
+    - Supports both legacy and  validation patterns
+    -  constructor with optional  validator
     """
 
-    def __init__(self, name: str | None = None) -> None:
-        """Initialize validating handler."""
+    def __init__(
+        self,
+        name: str | None = None,
+        #  PARAMETER - Optional  validator
+        validator: FlextValidator | None = None,
+    ) -> None:
+        """Initialize validating handler with optional  validator."""
         self._name = name or self.__class__.__name__
+        # Store  validator for  validation methods
+        self._validator = validator
 
     @property
     def handler_name(self) -> str:
@@ -264,7 +300,7 @@ class FlextValidatingHandler(
                 validation.error or FlextConstants.Handlers.VALIDATION_FAILED,
             )
         result = self.process_message(request)
-        return self.validate_output(result.unwrap() if result.is_success else None)
+        return self.validate_output(result.value if result.is_success else None)
 
     def validate_request(self, request: object) -> FlextResult[None]:
         """Validate request."""
@@ -312,6 +348,59 @@ class FlextValidatingHandler(
                 validation_result.error or FlextConstants.Handlers.VALIDATION_FAILED,
             )
         return FlextResult[object].ok(message)
+
+    #  METHODS -  validation using  patterns
+    def validate_(
+        self, message: object, validator_override: FlextValidator | None = None
+    ) -> FlextResult[object]:
+        """:  validation with type-safe validator pattern.
+
+        Uses either provided validator, instance validator, or falls back to legacy method.
+        Provides better type safety and composability.
+        """
+        # Use override validator if provided
+        if validator_override is not None:
+            return self._validate_with_validator(validator_override, message)
+
+        # Use instance  validator if available
+        if self._validator is not None:
+            return self._validate_with_validator(self._validator, message)
+
+        # Fallback to legacy method for backward compatibility
+        return self.validate(message)
+
+    def _validate_with_validator(
+        self, validator: FlextValidator, message: object
+    ) -> FlextResult[object]:
+        """Helper method to validate message with a specific validator."""
+        try:
+            validation_result = validator.validate(message)
+            if validation_result.is_failure:
+                return FlextResult[object].fail(
+                    validation_result.error or FlextConstants.Handlers.VALIDATION_FAILED
+                )
+            return FlextResult[object].ok(message)
+        except Exception as e:
+            return FlextResult[object].fail(f"Validation failed: {e}")
+
+    def handle_(
+        self, request: object, validator: FlextValidator | None = None
+    ) -> FlextResult[object]:
+        """:  handle with optional inline validator.
+
+        Combines handling and validation in  pattern.
+        Maintains backward compatibility with legacy handle() method.
+        """
+        # Use  validation if validator provided
+        if validator is not None or self._validator is not None:
+            validation = self.validate_(request, validator)
+            if validation.is_failure:
+                return validation
+            # Process the validated request
+            return self.process_message(request)
+
+        # Fallback to legacy handle method for backward compatibility
+        return self.handle(request)
 
     @staticmethod
     def post_process(
@@ -477,7 +566,7 @@ class FlextMetricsHandler(
         self.start_metrics(request)
         result = self.process_message(request)
         if result.is_success:
-            self.stop_metrics(request, result.unwrap())
+            self.stop_metrics(request, result.value)
             # Increment processed count only on success
             self.metrics["messages_processed"] = (
                 int(current_processed) + 1
@@ -669,11 +758,15 @@ class FlextMetricsHandler(
 class FlextHandlerRegistry(
     FlextAbstractHandlerRegistry[FlextAbstractHandler[object, object]],
 ):
-    """Concrete handler registry with dual API (testing and modern).
+    """Concrete handler registry with dual API (testing and ).
 
     Exposes a simple list-based API via `_handlers`, `register(handler)`,
     and `get_handlers()` for testing convenience, while also supporting a named
     registry via `register_handler(name, handler)` and dictionary lookups.
+
+     ENHANCEMENT:
+    - Supports registration of  callable handlers
+    - Maintains backward compatibility with existing registration patterns
     """
 
     def __init__(self) -> None:
@@ -820,6 +913,86 @@ class FlextHandlerRegistry(
         """Return a copy of registered handlers as a list (convenience API)."""
         return list(self._handlers)
 
+    #  METHODS -  registration for callable patterns
+    def register_callable_handler(
+        self,
+        name: str,
+        callable_handler: FlextCallable[FlextResult[object]],
+        can_handle_func: FlextCallable[bool] | None = None,
+    ) -> FlextResult[None]:
+        """: Register a callable as a handler using  patterns.
+
+        Wraps a callable in a handler interface for  usage.
+        Maintains type safety with Protocol-based callables.
+        """
+        try:
+            # Create a wrapper handler that uses the  callable
+            class CallableHandlerWrapper(FlextAbstractHandler[object, object]):
+                def __init__(
+                    self,
+                    name: str,
+                    callable_handler: FlextCallable[FlextResult[object]],
+                ) -> None:
+                    self._name = name
+                    self._callable = callable_handler
+                    self._can_handle_func = can_handle_func
+
+                @property
+                def handler_name(self) -> str:
+                    return self._name
+
+                def handle(self, request: object) -> FlextResult[object]:
+                    try:
+                        # Use the  callable
+                        return self._callable(request)
+                    except Exception as e:
+                        return FlextResult[object].fail(f"Callable handler failed: {e}")
+
+                def can_handle(self, message_type: object) -> bool:
+                    if self._can_handle_func is not None:
+                        try:
+                            return bool(self._can_handle_func(message_type))
+                        except Exception:
+                            return False
+                    return True  # Default: can handle anything
+
+            # Create wrapper and register it
+            wrapper = CallableHandlerWrapper(name, callable_handler)
+            return self.register_handler(name, wrapper)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to register callable handler: {e}")
+
+    def get_handler_(
+        self, name: str
+    ) -> FlextResult[FlextAbstractHandler[object, object]]:
+        """:  handler retrieval with better error messages.
+
+        Provides more detailed error information and suggestions.
+        Falls back to legacy get_handler method for compatibility.
+        """
+        result = self.get_handler(name)
+        if result.is_failure:
+            #  error message with suggestions
+            available = list(self.registry.keys())
+            similar = [
+                h
+                for h in available
+                if name.lower() in h.lower() or h.lower() in name.lower()
+            ]
+
+            error_msg = f"Handler '{name}' not found."
+            if similar:
+                error_msg += f" Did you mean one of: {similar}?"
+            elif available:
+                error_msg += f" Available handlers: {available}"
+            else:
+                error_msg += " No handlers registered."
+
+            return FlextResult[FlextAbstractHandler[object, object]].fail(error_msg)
+
+        return result
+
 
 # =============================================================================
 # CHAIN OF RESPONSIBILITY - Multi-handler processing
@@ -827,14 +1000,26 @@ class FlextHandlerRegistry(
 
 
 class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, object]):
-    """Concrete chain of responsibility implementation using abstractions."""
+    """Concrete chain of responsibility implementation using abstractions.
+
+     ENHANCEMENT:
+    - Supports mixing  callables with traditional handlers
+    -  composition with functional programming patterns
+    """
 
     def __init__(
         self,
         handlers: list[FlextAbstractHandler[object, object]] | None = None,
+        #  PARAMETER - Optional list of callable handlers
+        callable_handlers: list[FlextCallable[FlextResult[object]]] | None = None,
     ) -> None:
-        """Initialize with an optional handler list using abstractions."""
+        """Initialize with optional handler and callable lists using abstractions."""
         self.handlers: list[FlextAbstractHandler[object, object]] = handlers or []
+
+        #  ENHANCEMENT - Convert callables to handler wrappers
+        if callable_handlers:
+            for i, callable_handler in enumerate(callable_handlers):
+                self._add_callable_handler(f"callable_{i}", callable_handler)
 
     @property
     def handler_name(self) -> str:
@@ -844,6 +1029,60 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
     def add_handler(self, handler: FlextAbstractHandler[object, object]) -> None:
         """Add handler to chain - implements abstract method."""
         self.handlers.append(handler)
+
+    #  METHODS -  chain composition
+    def _add_callable_handler(
+        self, name: str, callable_handler: FlextCallable[FlextResult[object]]
+    ) -> None:
+        """Internal method to convert callable to handler and add to chain."""
+
+        class CallableHandlerWrapper(FlextAbstractHandler[object, object]):
+            def __init__(
+                self, name: str, callable_handler: FlextCallable[FlextResult[object]]
+            ) -> None:
+                self._name = name
+                self._callable = callable_handler
+
+            @property
+            def handler_name(self) -> str:
+                return self._name
+
+            def handle(self, request: object) -> FlextResult[object]:
+                try:
+                    return self._callable(request)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Callable handler failed: {e}")
+
+            def can_handle(self, _message_type: object) -> bool:  # noqa: ARG002
+                return True  # Callables are assumed to handle anything
+
+        wrapper = CallableHandlerWrapper(name, callable_handler)
+        self.handlers.append(wrapper)
+
+    def add_callable_handler(
+        self,
+        callable_handler: FlextCallable[FlextResult[object]],
+        name: str | None = None,
+    ) -> None:
+        """: Add a callable as a handler to the chain.
+
+        Automatically wraps the callable in a handler interface.
+        """
+        handler_name = name or f"callable_{len(self.handlers)}"
+        self._add_callable_handler(handler_name, callable_handler)
+
+    def compose_(
+        self, *callables: FlextCallable[FlextResult[object]]
+    ) -> FlextHandlerChain:
+        """: Create a new chain by composing callables functionally.
+
+        Returns a new chain with existing handlers plus new callables.
+        Enables functional composition patterns.
+        """
+        new_chain = FlextHandlerChain(handlers=self.handlers.copy())
+        for i, callable_handler in enumerate(callables):
+            new_chain.add_callable_handler(callable_handler, f"composed_{i}")
+        return new_chain
 
     def remove_handler(self, handler: FlextAbstractHandler[object, object]) -> bool:
         """Remove handler from chain - implements abstract method."""
@@ -874,7 +1113,7 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
                 results.append(result)
 
                 if result.is_success:
-                    last_successful_result = result.data
+                    last_successful_result = result.value
                 else:
                     # Stop on first failure if desired
                     break
@@ -935,8 +1174,8 @@ class FlextHandlerChain(FlextBaseHandler, FlextAbstractHandlerChain[object, obje
         collected: list[object] = []
         for message in messages:
             result = self.process_chain(message)
-            if result.is_success and result.data is not None:
-                collected.append(result.data)
+            if result.is_success and result.value is not None:
+                collected.append(result.value)
             else:
                 # short-circuit on failure to align with conservative semantics
                 return FlextResult[list[object]].fail(
@@ -1055,7 +1294,7 @@ class FlextCommandHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
                             result = handle_method(command)
                             if hasattr(result, "is_success"):
                                 return cast("FlextResult[object]", result)
-                    except Exception:  # noqa: S110
+                    except Exception:  # nosec B110  # noqa: S110
                         pass  # SOLID: Dependency Inversion - safe fallback to default implementation
                 return FlextResult[object].ok(command)
 
@@ -1073,6 +1312,34 @@ class FlextCommandHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
                     error_msg = getattr(result, "error", None) or "Validation failed"
                     return FlextResult[object].fail(str(error_msg))
         return FlextResult[object].ok(message)
+
+    #  METHOD -  validation using  patterns
+    def validate_(
+        self, message: object, validator: FlextValidator | None = None
+    ) -> FlextResult[object]:
+        """:  validation using Protocol-based validator.
+
+        Uses provided validator or falls back to legacy validation method.
+        Provides better type safety and composability.
+        """
+        if validator is not None:
+            try:
+                validation_result = validator.validate(message)
+                if validation_result.is_failure:
+                    return FlextResult[object].fail(
+                        validation_result.error or "Validation failed"
+                    )
+                return FlextResult[object].ok(message)
+            except Exception as e:
+                return FlextResult[object].fail(f"Validation failed: {e}")
+
+        # Fallback to legacy validation for backward compatibility
+        return self.validate(message)
+
+    @property
+    def handler_name(self) -> str:
+        """Get handler name - Interface Segregation: focused method."""
+        return self._name
 
     @abstractmethod
     def handle_command(self, command: TInput) -> FlextResult[TOutput]:
@@ -1226,7 +1493,7 @@ class FlextQueryHandler(ABC, Generic[TInput, TOutput]):  # noqa: UP046
                             result = handle_method(query)
                             if hasattr(result, "is_success"):
                                 return cast("FlextResult[object]", result)
-                    except Exception:  # noqa: S110
+                    except Exception:  # nosec B110  # noqa: S110
                         pass  # SOLID: Dependency Inversion - safe fallback to default implementation
                 return FlextResult[object].ok(query)
 
@@ -1539,29 +1806,28 @@ class HandlersFacade:
 # Convenience aliases expected by multiple tests:
 # 1) Some tests assert FlextHandlers is FlextBaseHandler
 # 2) And expect nested CommandHandler/QueryHandler types accessible via FlextHandlers
-# We alias FlextHandlers to FlextBaseHandler and attach nested types onto it.
-class _ConcreteCommandHandler(FlextCommandHandler[object, object]):
-    """Concrete CommandHandler  via FlextHandlers facade."""
+# We create a proper class that includes the nested types to avoid MyPy attr-defined errors.
+class FlextHandlers(FlextBaseHandler):
+    """Convenience class that provides access to handler types for testing."""
 
-    def handle_command(self, command: object) -> FlextResult[object]:
-        return FlextResult[object].ok(command)
+    class CommandHandler(FlextCommandHandler[object, object]):
+        """Concrete CommandHandler via FlextHandlers facade."""
 
-    def can_handle(self, message_type: object) -> bool:
-        """Check if handler can process a message type."""
-        return message_type is not None
+        def handle_command(self, command: object) -> FlextResult[object]:
+            return FlextResult[object].ok(command)
 
+        def can_handle(self, message_type: object) -> bool:
+            """Check if handler can process a message type."""
+            return message_type is not None
 
-class _ConcreteQueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
-    """Concrete QueryHandler  via FlextHandlers facade."""
+    class QueryHandler(FlextQueryHandler[TQuery, TQueryResult]):
+        """Concrete QueryHandler via FlextHandlers facade."""
 
-    def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
-        return cast(
-            "FlextResult[TQueryResult]", FlextResult[object].ok(cast("object", query))
-        )
+        def handle_query(self, query: TQuery) -> FlextResult[TQueryResult]:
+            return cast(
+                "FlextResult[TQueryResult]",
+                FlextResult[object].ok(cast("object", query)),
+            )
 
-
-FlextHandlers = FlextBaseHandler
-# Attach nested types for convenience in tests using setattr to avoid mypy errors
-FlextHandlers.CommandHandler = _ConcreteCommandHandler  # type: ignore[attr-defined]
-FlextHandlers.QueryHandler = _ConcreteQueryHandler  # type: ignore[attr-defined]
-FlextHandlers.EventHandler = FlextEventHandler  # type: ignore[attr-defined]
+    class EventHandler(FlextEventHandler):
+        """Concrete EventHandler via FlextHandlers facade."""

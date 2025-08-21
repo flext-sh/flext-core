@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import override
+
 import pytest
 
 from flext_core import FlextTypes
@@ -30,6 +32,7 @@ class TestFlextTypesTypeGuards:
         class ProblematicTypeMeta(type):
             """ProblematicTypeMeta class."""
 
+            @override
             def __instancecheck__(cls, instance: object) -> bool:
                 """Instancecheck function."""
                 error_message = "Cannot check instance"

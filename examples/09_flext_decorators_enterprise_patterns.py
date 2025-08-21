@@ -17,11 +17,12 @@ import time
 from collections.abc import Callable
 from typing import TypeVar, cast
 
-from flext_core import safe_call
+# use .shared_domain with dot to access local module
+from shared_domain import SharedDomainFactory, User as SharedUser
+
+from flext_core import FlextResult
 
 T = TypeVar("T")
-
-from .shared_domain import SharedDomainFactory, User as SharedUser
 
 # Constants to avoid magic numbers
 MAX_AGE = 150
@@ -102,7 +103,7 @@ def create_validated_user(name: str, email: str, age: int) -> SharedUser:
 
     result = SharedDomainFactory.create_user(name, email, age)
     if result.success:
-        return result.unwrap()
+        return result.value
     error_msg = f"User creation failed: {result.error}"
     raise ValueError(error_msg)
 
@@ -126,11 +127,11 @@ def process_user_batch(users_data: list[dict[str, object]]) -> list[SharedUser]:
 # =============================================================================
 
 
-def safe_decorator(func: Callable[..., T]) -> Callable[..., object]:
+def safe_decorator[T](func: Callable[..., T]) -> Callable[..., object]:
     """Convert function to return FlextResult."""
 
     def wrapper(*args: object, **kwargs: object) -> object:
-        return safe_call(lambda: func(*args, **kwargs))
+        return FlextResult.from_exception(lambda: func(*args, **kwargs))
 
     return wrapper
 
@@ -234,7 +235,7 @@ def demo_safe_decorators() -> None:
     # Valid user
     result = safe_user_creation("Eve Brown", "eve@example.com", 42)
     if result.success:
-        user = result.unwrap()
+        user = result.value
         print(f"✅ Safe creation: {user.name}")
 
     # Invalid user
@@ -265,7 +266,7 @@ def demo_enterprise_decorators() -> None:
     # This will either succeed or fail randomly
     result = complex_business_operation(test_data)
     if result.success:
-        data = result.unwrap()
+        data = result.value
         print(f"✅ Enterprise operation: {data['status']}")
     else:
         print(f"✅ Error handled: {result.error}")

@@ -2,7 +2,7 @@
 
 This module provides compatibility for projects that import
 FlextValueObject directly. All new development should use FlextValue
-from flext_core.models which provides modern Pydantic patterns.
+from flext_core.models which provides standard Pydantic patterns.
 """
 
 from __future__ import annotations

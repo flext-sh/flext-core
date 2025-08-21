@@ -23,11 +23,153 @@ Testing Patterns Demonstrated:
 
 import time
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from flext_core import FlextContainer, FlextResult
+
+
+class FunctionalExternalService:
+    """Functional external service for integration testing - real implementation."""
+
+    def __init__(self) -> None:
+        """Initialize functional external service."""
+        self.call_count = 0
+        self.processed_items: list[object] = []
+        self.should_fail = False
+        self.failure_message = "Service unavailable"
+
+    def process(self, data: object = None) -> FlextResult[str]:
+        """Functional processing method - validates real behavior."""
+        self.call_count += 1
+        self.processed_items.append(data)
+
+        if self.should_fail:
+            return FlextResult[str].fail(self.failure_message)
+
+        return FlextResult[str].ok("processed")
+
+    def set_failure_mode(
+        self, *, should_fail: bool, message: str = "Service unavailable"
+    ) -> None:
+        """Configure service to fail for testing error scenarios."""
+        self.should_fail = should_fail
+        self.failure_message = message
+
+
+class FunctionalUserService:
+    """Functional user service for integration testing - real implementation."""
+
+    def __init__(self) -> None:
+        """Initialize functional user service."""
+        self.users: dict[str, dict[str, str | int | bool | list[str]]] = {}
+        self.call_count = 0
+        self.should_fail = False
+
+    def get_user(
+        self, user_id: str
+    ) -> FlextResult[dict[str, str | int | bool | list[str]]]:
+        """Get user by ID - functional implementation."""
+        self.call_count += 1
+
+        if self.should_fail:
+            return FlextResult[dict[str, str | int | bool | list[str]]].fail(
+                "User service unavailable"
+            )
+
+        if user_id in self.users:
+            return FlextResult[dict[str, str | int | bool | list[str]]].ok(
+                self.users[user_id]
+            )
+
+        # Default user data for testing
+        default_user = {
+            "id": user_id,
+            "email": f"user{user_id}@example.com",
+            "name": f"User {user_id}",
+            "active": True,
+        }
+        return FlextResult[dict[str, str | int | bool | list[str]]].ok(default_user)
+
+    def set_user_data(
+        self, user_id: str, user_data: dict[str, str | int | bool | list[str]]
+    ) -> None:
+        """Set user data for testing."""
+        self.users[user_id] = user_data
+
+    def set_failure_mode(self, *, should_fail: bool) -> None:
+        """Configure service to fail for testing error scenarios."""
+        self.should_fail = should_fail
+
+
+class FunctionalNotificationService:
+    """Functional notification service for integration testing - real implementation."""
+
+    def __init__(self) -> None:
+        """Initialize functional notification service."""
+        self.sent_notifications: list[str] = []
+        self.call_count = 0
+        self.should_fail = False
+
+    def send(self, email: str) -> FlextResult[str]:
+        """Send notification - functional implementation."""
+        self.call_count += 1
+
+        if self.should_fail:
+            return FlextResult[str].fail("Notification service unavailable")
+
+        self.sent_notifications.append(email)
+        return FlextResult[str].ok("sent")
+
+    def set_failure_mode(self, *, should_fail: bool) -> None:
+        """Configure service to fail for testing error scenarios."""
+        self.should_fail = should_fail
+
+
+class FunctionalLifecycleService:
+    """Functional lifecycle service for integration testing - real implementation."""
+
+    def __init__(self) -> None:
+        """Initialize functional lifecycle service."""
+        self.initialized = False
+        self.config: dict[str, object] | None = None
+        self.shutdown_called = False
+        self.should_fail_init = False
+        self.should_fail_shutdown = False
+
+    def initialize(self, config: dict[str, object]) -> FlextResult[str]:
+        """Initialize service - functional implementation."""
+        if self.should_fail_init:
+            return FlextResult[str].fail("Initialization failed")
+
+        self.initialized = True
+        self.config = config
+        return FlextResult[str].ok("initialized")
+
+    def is_healthy(self) -> bool:
+        """Check service health - functional implementation."""
+        return self.initialized and not self.shutdown_called
+
+    def shutdown(self) -> FlextResult[str]:
+        """Shutdown service - functional implementation."""
+        if self.should_fail_shutdown:
+            return FlextResult[str].fail("Shutdown failed")
+
+        self.shutdown_called = True
+        return FlextResult[str].ok("shutdown")
+
+    def set_failure_modes(
+        self, *, fail_init: bool = False, fail_shutdown: bool = False
+    ) -> None:
+        """Configure service to fail for testing error scenarios."""
+        self.should_fail_init = fail_init
+        self.should_fail_shutdown = fail_shutdown
+
+
+@pytest.fixture
+def mock_external_service() -> FunctionalExternalService:
+    """Functional external service for integration testing."""
+    return FunctionalExternalService()
 
 
 @pytest.mark.integration
@@ -39,7 +181,7 @@ class TestServiceIntegrationPatterns:
     def test_service_pipeline_performance(
         self,
         configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
-        mock_external_service: MagicMock,
+        mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
             str,
@@ -53,14 +195,13 @@ class TestServiceIntegrationPatterns:
 
         Args:
             configured_container: Pre-configured container with services
-            mock_external_service: Mock external service
+            mock_external_service: Functional external service
             performance_threshold: Performance threshold configuration
             benchmark_data: Benchmark data sets
 
         """
         # Arrange
         large_dataset = benchmark_data["large_dataset"]
-        mock_external_service.process.return_value = FlextResult[str].ok("processed")
 
         def process_pipeline(
             data: list[int]
@@ -81,16 +222,18 @@ class TestServiceIntegrationPatterns:
         # Assert - Performance and functionality
         assert result.success is True
         assert execution_time < performance_threshold["serialization"]
-        assert result.data is not None
-        assert "pipeline_result" in result.data
-        mock_external_service.process.assert_called_once_with(large_dataset)
+        assert result.value is not None
+        assert "pipeline_result" in result.value
+        # Functional validation - check actual service call
+        assert mock_external_service.call_count == 1
+        assert large_dataset in mock_external_service.processed_items
 
     @pytest.mark.integration
     @pytest.mark.error_path
     def test_service_error_propagation(
         self,
         configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
-        mock_external_service: MagicMock,
+        mock_external_service: FunctionalExternalService,
         error_context: dict[str, str | None],
     ) -> None:
         """Test error propagation across service boundaries.
@@ -100,17 +243,18 @@ class TestServiceIntegrationPatterns:
 
         Args:
             configured_container: Pre-configured container with services
-            mock_external_service: Mock external service
+            mock_external_service: Functional external service
             error_context: Error context fixture
 
         """
-        # Arrange - Configure mock to simulate service failure
+        # Arrange - Configure functional service to simulate failure
         error_message = f"Service error: {error_context['error_code']}"
-        mock_external_service.process.return_value = FlextResult[None].fail(error_message)
+        mock_external_service.set_failure_mode(should_fail=True, message=error_message)
 
         def failing_pipeline(data: str) -> FlextResult[str]:
             return (
-                FlextResult[str].ok(data)
+                FlextResult[str]
+                .ok(data)
                 .flat_map(mock_external_service.process)
                 .map(lambda _r: f"processed_{_r}")
             )
@@ -122,7 +266,9 @@ class TestServiceIntegrationPatterns:
         assert result.is_failure is True
         assert result.error is not None
         assert error_message in result.error
-        mock_external_service.process.assert_called_once_with("test_data")
+        # Functional validation - check actual service was called
+        assert mock_external_service.call_count == 1
+        assert "test_data" in mock_external_service.processed_items
 
     @pytest.mark.integration
     @pytest.mark.architecture
@@ -131,9 +277,9 @@ class TestServiceIntegrationPatterns:
         clean_container: FlextContainer,
         test_user_data: dict[str, str | int | bool | list[str]],
     ) -> None:
-        """Test dependency injection patterns with mock services.
+        """Test dependency injection patterns with functional services.
 
-        Demonstrates proper dependency injection testing with mock services,
+        Demonstrates proper dependency injection testing with functional services,
         service composition, and result validation.
 
         Args:
@@ -141,19 +287,19 @@ class TestServiceIntegrationPatterns:
             test_user_data: User data fixture
 
         """
-        # Arrange - Create mock services
-        mock_user_service = MagicMock()
-        mock_notification_service = MagicMock()
+        # Arrange - Create functional services
+        user_service = FunctionalUserService()
+        notification_service = FunctionalNotificationService()
 
-        # Configure mock behavior
-        mock_user_service.get_user.return_value = FlextResult[dict[str, str | int | bool | list[str]]].ok(test_user_data)
-        mock_notification_service.send.return_value = FlextResult[str].ok("sent")
+        # Configure functional service behavior with real test data
+        user_id = str(test_user_data["id"])
+        user_service.set_user_data(user_id, test_user_data)
 
         # Register services in container
-        clean_container.register("user_service", mock_user_service)
-        clean_container.register("notification_service", mock_notification_service)
+        clean_container.register("user_service", user_service)
+        clean_container.register("notification_service", notification_service)
 
-        def user_notification_workflow(user_id: str) -> FlextResult[str]:
+        def user_notification_workflow(workflow_user_id: str) -> FlextResult[str]:
             # Simulate service composition workflow
             user_service_result = clean_container.get("user_service")
             notification_service_result = clean_container.get("notification_service")
@@ -164,30 +310,28 @@ class TestServiceIntegrationPatterns:
             ):
                 return FlextResult[str].fail("Service unavailable")
 
-            user_service = user_service_result.data
-            notification_service = notification_service_result.data
+            retrieved_user_service = user_service_result.value
+            retrieved_notification_service = notification_service_result.value
 
             # Get user data first
-            user_result = user_service.get_user(user_id)  # type: ignore[attr-defined]
+            user_result = retrieved_user_service.get_user(workflow_user_id)
             if not user_result.success:
                 return FlextResult[str].fail("User not found")
 
             # Send notification
-            return notification_service.send(user_result.data["email"])  # type: ignore[attr-defined,no-any-return]
+            return retrieved_notification_service.send(str(user_result.value["email"]))
 
         # Act - Execute workflow
-        user_id = str(test_user_data["id"])
         result = user_notification_workflow(user_id)
 
         # Assert - Workflow success and service interaction
         assert result.success is True
-        assert result.data == "sent"
+        assert result.value == "sent"
 
-        # Verify service calls
-        mock_user_service.get_user.assert_called_once_with(user_id)
-        mock_notification_service.send.assert_called_once_with(
-            str(test_user_data["email"]),
-        )
+        # Functional validation - check actual service calls
+        assert user_service.call_count == 1
+        assert notification_service.call_count == 1
+        assert str(test_user_data["email"]) in notification_service.sent_notifications
 
     @pytest.mark.integration
     @pytest.mark.boundary
@@ -206,11 +350,8 @@ class TestServiceIntegrationPatterns:
             temp_directory: Temporary directory fixture
 
         """
-        # Arrange - Create lifecycle-aware mock service
-        mock_service = MagicMock()
-        mock_service.initialize.return_value = FlextResult[str].ok("initialized")
-        mock_service.is_healthy.return_value = True
-        mock_service.shutdown.return_value = FlextResult[str].ok("shutdown")
+        # Arrange - Create lifecycle-aware functional service
+        lifecycle_service = FunctionalLifecycleService()
 
         service_config = {
             "name": "test_service",
@@ -221,7 +362,7 @@ class TestServiceIntegrationPatterns:
         # Act - Register service with configuration
         registration_result = clean_container.register(
             "lifecycle_service",
-            mock_service,
+            lifecycle_service,
         )
         config_result = clean_container.register("service_config", service_config)
 
@@ -237,23 +378,23 @@ class TestServiceIntegrationPatterns:
         assert service_result.success is True
         assert config_fetch_result.success is True
 
-        service = service_result.data  # This is our MagicMock
-        config = config_fetch_result.data
+        service = service_result.value  # This is our FunctionalLifecycleService
+        config = config_fetch_result.value
 
         # Act - Test service lifecycle
-        init_result = service.initialize(config)  # type: ignore[attr-defined]
-        health_status = service.is_healthy()  # type: ignore[attr-defined]
-        shutdown_result = service.shutdown()  # type: ignore[attr-defined]
+        init_result = service.initialize(config)
+        health_status = service.is_healthy()
+        shutdown_result = service.shutdown()
 
         # Assert - Lifecycle operations
         assert init_result.success is True
         assert health_status is True
         assert shutdown_result.success is True
 
-        # Verify lifecycle method calls
-        service.initialize.assert_called_once_with(config)  # type: ignore[attr-defined]
-        service.is_healthy.assert_called_once()  # type: ignore[attr-defined]
-        service.shutdown.assert_called_once()  # type: ignore[attr-defined]
+        # Functional validation - check actual service state
+        assert service.initialized is True
+        assert service.config == config
+        assert service.shutdown_called is True
 
         # Act - Clear container
         clean_container.clear()

@@ -56,6 +56,7 @@ from flext_core.config import (
     FlextConfigFactory,
     FlextConfigOps,
     FlextConfigValidation,
+    FlextSystemDefaults,
     FlextDatabaseConfig,
     FlextBaseConfigModel,
     FlextJWTConfig,
@@ -94,23 +95,20 @@ SECONDS_PER_MINUTE = FlextConstants.Performance.SECONDS_PER_MINUTE
 SECONDS_PER_HOUR = FlextConstants.Performance.SECONDS_PER_HOUR
 
 
-# Bind the runtime objects via the module to avoid import-time cycles and
-# to keep a single runtime identity for the exported names.
-from flext_core import container as _container_module
-
-# Runtime aliases (direct attribute access is preferred over getattr with
-# constant attribute names; this keeps tools like Pylance happy.)
-FlextContainer = _container_module.FlextContainer
-FlextContainerUtils = _container_module.FlextContainerUtils
-FlextGlobalContainerManager = _container_module.FlextGlobalContainerManager
-FlextServiceKey = _container_module.FlextServiceKey
-FlextServiceRegistrar = _container_module.FlextServiceRegistrar
-FlextServiceRetriever = _container_module.FlextServiceRetriever
-configure_flext_container = _container_module.configure_flext_container
-create_module_container_utilities = _container_module.create_module_container_utilities
-get_flext_container = _container_module.get_flext_container
-get_typed = _container_module.get_typed
-register_typed = _container_module.register_typed
+# Container exports with direct imports for better type safety
+from flext_core.container import (
+    FlextContainer,
+    FlextContainerUtils,
+    FlextGlobalContainerManager,
+    FlextServiceKey,
+    FlextServiceRegistrar,
+    FlextServiceRetriever,
+    configure_flext_container,
+    create_module_container_utilities,
+    get_flext_container,
+    get_typed,
+    register_typed,
+)
 
 # Context
 from flext_core.context import FlextContext
@@ -212,6 +210,8 @@ from flext_core.typings import (
     FlextFieldId,
     FlextFieldName,
     FlextFieldTypeStr,
+    FlextCallable,
+    FlextDecoratedFunction,
 )
 
 # Protocols
@@ -311,7 +311,7 @@ from flext_core.models import (
     FlextSingerStreamModel,
     FlextValue,
     FlextValueObjectDict,
-    # Modern Python 3.13 type aliases for JSON Schema
+    #  Python 3.13 type aliases for JSON Schema
     JsonSchemaValue,
     JsonSchemaFieldInfo,
     JsonSchemaDefinition,
@@ -520,6 +520,17 @@ from flext_core.typings import (
     TValidationRule,
     TValidator,
     TValue,
+    # Business types (testing convenience)
+    TBusinessCode,
+    TBusinessId,
+    TBusinessName,
+    TBusinessStatus,
+    TBusinessType,
+    # Cache types
+    TCacheKey,
+    TCacheTTL,
+    TCacheValue,
+    # File and request types
     # Field ids and names used at runtime
     U,
     V,
@@ -532,7 +543,6 @@ from flext_core.utilities import (
     FlextBaseFactory,
     FlextConsole,
     FlextConversions,
-    FlextDecoratedFunction,
     FlextFormatters,
     FlextGenerators,
     FlextGenericFactory,
@@ -579,6 +589,7 @@ from flext_core.guards import (
     FlextValidationUtils,
     ValidatedModel,
     immutable,
+    is_dict_of,
     is_instance_of,
     is_list_of,
     make_builder,
@@ -595,12 +606,12 @@ from flext_core.guards import (
 # Value objects
 from flext_core.value_objects import FlextValueObject
 
-from flext_core import constants as _constants_module
+# Type adapters
+from flext_core.type_adapters import ValidationAdapters
 
-from contextlib import suppress
-# (typing aliases already imported above for runtime exports)
 
-constants = _constants_module  # runtime alias to module
+# Direct import for better type safety
+from flext_core import constants
 
 with suppress(
     Exception,
@@ -618,7 +629,7 @@ with suppress(
 # =============================================================================
 # CLEAN ARCHITECTURE IMPLEMENTATION
 # =============================================================================
-"""Modern FLEXT Core foundation library."""
+""" FLEXT Core foundation library."""
 
 _module_type_ref: type[_ModuleType] | None = _ModuleType
 
@@ -672,6 +683,7 @@ __all__ += [
     # Additional config classes
     "FlextAbstractConfig",
     "FlextConfigDefaults",
+    "FlextSystemDefaults",
     "FlextConfigFactory",
     "FlextConfigOps",
     "FlextConfigValidation",
@@ -710,7 +722,7 @@ __all__ += [
     "FlextOperationModel",
     "FlextServiceModel",
     "FlextSingerStreamModel",
-    # Modern Python 3.13 type aliases
+    #  Python 3.13 type aliases
     "JsonSchemaValue",
     "JsonSchemaFieldInfo",
     "JsonSchemaDefinition",
@@ -790,6 +802,16 @@ __all__ += [
     "TConnection",
     "TUserId",
     "TCorrelationId",
+    # Business types (testing convenience)
+    "TBusinessCode",
+    "TBusinessId",
+    "TBusinessName",
+    "TBusinessStatus",
+    "TBusinessType",
+    # Cache types (testing convenience)
+    "TCacheKey",
+    "TCacheValue",
+    "TCacheTTL",
     "FlextExceptions",
     "FlextExceptionMetrics",
     "FlextAbstractError",
@@ -869,8 +891,11 @@ __all__ += [
     "FlextFieldName",
     "FlextFieldRegistry",
     "FlextFieldTypeStr",
+    "FlextCallable",
+    "FlextDecoratedFunction",
     "FlextFields",
     "FlextValidator",
+    "FlextValidationRule",
     "flext_create_boolean_field",
     "flext_create_integer_field",
     "flext_create_string_field",
@@ -914,7 +939,7 @@ __all__ += [
     "FlextComparableMixin",
     "FlextCacheableMixin",
     "FlextCommandMixin",
-    # Modern mixins - no legacy compatibility needed
+    #  mixins - no legacy compatibility needed
     "FlextConsoleLogger",
     "FlextNoOpSpan",
     "FlextNoOpTracer",
@@ -935,6 +960,7 @@ __all__ += [
     "FlextValidationUtils",
     "ValidatedModel",
     "immutable",
+    "is_dict_of",
     "is_instance_of",
     "is_list_of",
     "is_not_none",
@@ -1072,8 +1098,10 @@ __all__ += [
     "validate_delegation_system",
     # Additional compatibility exports
     "FlextAbstractConfig",
-    # Modern aliases that match the updated pattern
+    #  aliases that match the updated pattern
     "FlextValue",
+    # Type adapters
+    "ValidationAdapters",
 ]
 
 # Public re-exports for compatibility

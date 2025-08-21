@@ -27,6 +27,7 @@ import contextlib
 from collections.abc import Callable
 from decimal import Decimal
 from enum import StrEnum
+from typing import Self
 
 from flext_core import (
     FlextEntity,
@@ -203,10 +204,12 @@ class Money(FlextValueObject):
             )
 
         try:
-            result = Money(
-                amount=self.amount + other.amount,
-                currency=self.currency,
-            )  # type: ignore[call-arg]
+            result = Money.model_validate(
+                {
+                    "amount": self.amount + other.amount,
+                    "currency": self.currency,
+                }
+            )
         except Exception as e:
             return FlextResult[Money].fail(f"Money creation failed: {e}")
 
@@ -224,10 +227,12 @@ class Money(FlextValueObject):
             return FlextResult[Money].fail("Factor cannot be negative")
 
         try:
-            result = Money(
-                amount=self.amount * factor,
-                currency=self.currency,
-            )  # type: ignore[call-arg]
+            result = Money.model_validate(
+                {
+                    "amount": self.amount * factor,
+                    "currency": self.currency,
+                }
+            )
         except Exception as e:
             return FlextResult[Money].fail(f"Money creation failed: {e}")
 
@@ -354,14 +359,14 @@ class User(FlextEntity):
             return FlextResult[None].fail(reason)
         return FlextResult[None].ok(None)
 
-    def activate(self) -> FlextResult[User]:
+    def activate(self) -> FlextResult[Self]:
         """Activate user account."""
         if self.status == UserStatus.ACTIVE:
-            return FlextResult[User].fail("User is already active")
+            return FlextResult[Self].fail("User is already active")
 
         result = self.copy_with(status=UserStatus.ACTIVE)
         if result.success:
-            activated_user = result.data
+            activated_user = result.value
             # Add domain event
             try:
                 activated_user.add_domain_event(
@@ -373,23 +378,23 @@ class User(FlextEntity):
                     },
                 )
             except Exception as e:
-                return FlextResult[User].fail(f"Failed to add domain event: {e}")
+                return FlextResult[Self].fail(f"Failed to add domain event: {e}")
 
         return result
 
-    def suspend(self, reason: str) -> FlextResult[User]:
+    def suspend(self, reason: str) -> FlextResult[Self]:
         """Suspend user account with reason."""
         if self.status == UserStatus.SUSPENDED:
-            return FlextResult[User].fail("User is already suspended")
+            return FlextResult[Self].fail("User is already suspended")
 
         if not reason or len(reason.strip()) < MIN_REASON_LENGTH:
-            return FlextResult[User].fail(
+            return FlextResult[Self].fail(
                 "Suspension reason must be at least 10 characters"
             )
 
         result = self.copy_with(status=UserStatus.SUSPENDED)
         if result.success:
-            suspended_user = result.data
+            suspended_user = result.value
             # Add domain event
             try:
                 suspended_user.add_domain_event(
@@ -401,37 +406,9 @@ class User(FlextEntity):
                     },
                 )
             except Exception as e:
-                return FlextResult[User].fail(f"Failed to add domain event: {e}")
+                return FlextResult[Self].fail(f"Failed to add domain event: {e}")
 
         return result
-
-    def copy_with(self, **kwargs: object) -> FlextResult[User]:
-        """Create a copy of the user with modified attributes."""
-        try:
-            # Get current model data
-            current_data = self.model_dump()
-
-            # Update with new values
-            for key, value in kwargs.items():
-                if hasattr(self, key):
-                    current_data[key] = value
-                else:
-                    return FlextResult[User].fail(f"Invalid attribute: {key}")
-
-            # Create new instance
-            new_user = User.model_validate(current_data)
-
-            # Validate the new instance
-            validation_result = new_user.validate_domain_rules()
-            if validation_result.is_failure:
-                return FlextResult[User].fail(
-                    f"Validation failed: {validation_result.error}"
-                )
-
-            return FlextResult[User].ok(new_user)
-
-        except Exception as e:
-            return FlextResult[User].fail(f"Failed to create copy: {e}")
 
 
 class Product(FlextEntity):
@@ -483,9 +460,18 @@ class Product(FlextEntity):
         if price_validation.is_failure:
             return FlextResult[Product].fail(f"Invalid price: {price_validation.error}")
 
-        result = self.copy_with(price=new_price)
-        if result.success:
-            updated_product = result.data
+        # Create updated product directly with proper type
+        try:
+            current_data = self.model_dump()
+            current_data["price"] = new_price
+
+            updated_product = Product.model_validate(current_data)
+            validation_result = updated_product.validate_domain_rules()
+            if validation_result.is_failure:
+                return FlextResult[Product].fail(
+                    f"Validation failed: {validation_result.error}"
+                )
+
             # Add domain event
             event_result = updated_product.add_domain_event(
                 "ProductPriceUpdated",
@@ -507,7 +493,9 @@ class Product(FlextEntity):
                     f"Failed to add domain event: {event_result.error}",
                 )
 
-        return result
+            return FlextResult[Product].ok(updated_product)
+        except Exception as e:
+            return FlextResult[Product].fail(f"Failed to update price: {e}")
 
 
 class OrderItem(FlextValueObject):
@@ -608,9 +596,11 @@ class Order(FlextEntity):
                     f"Failed to calculate item total: {item_total_result.error}",
                 )
 
-            total_amount += item_total_result.data.amount
+            total_amount += item_total_result.value.amount
 
-        return FlextResult[Money].ok(Money(amount=total_amount, currency=base_currency))  # type: ignore[call-arg]
+        return FlextResult[Money].ok(
+            Money.model_validate({"amount": total_amount, "currency": base_currency})
+        )
 
     def confirm(self) -> FlextResult[Order]:
         """Confirm the order."""
@@ -624,17 +614,26 @@ class Order(FlextEntity):
                 f"Cannot confirm order: {total_result.error}"
             )
 
-        result = self.copy_with(status=OrderStatus.CONFIRMED)
-        if result.success and total_result.success:
-            confirmed_order = result.data
+        # Create confirmed order directly with proper type
+        try:
+            current_data = self.model_dump()
+            current_data["status"] = OrderStatus.CONFIRMED
+
+            confirmed_order = Order.model_validate(current_data)
+            validation_result = confirmed_order.validate_domain_rules()
+            if validation_result.is_failure:
+                return FlextResult[Order].fail(
+                    f"Validation failed: {validation_result.error}"
+                )
+
             # Add domain event
             event_result = confirmed_order.add_domain_event(
                 "OrderConfirmed",
                 {
                     "order_id": self.id,
                     "customer_id": self.customer_id,
-                    "total_amount": str(total_result.data.amount),
-                    "currency": total_result.data.currency,
+                    "total_amount": str(total_result.value.amount),
+                    "currency": total_result.value.currency,
                     "item_count": len(self.items),
                     "confirmed_at": FlextUtilities.generate_iso_timestamp(),
                 },
@@ -644,7 +643,9 @@ class Order(FlextEntity):
                     f"Failed to add domain event: {event_result.error}",
                 )
 
-        return result
+            return FlextResult[Order].ok(confirmed_order)
+        except Exception as e:
+            return FlextResult[Order].fail(f"Failed to confirm order: {e}")
 
 
 # =============================================================================
@@ -664,12 +665,12 @@ class SharedDomainFactory:
     ) -> FlextResult[User]:
         """Create user with validation."""
         # Create value objects
-        email_obj = EmailAddress(email=email)  # type: ignore[call-arg]
+        email_obj = EmailAddress.model_validate({"email": email})
         email_result = email_obj.validate_business_rules()
         if email_result.is_failure:
             return FlextResult[User].fail(f"Invalid email: {email_result.error}")
 
-        age_obj = Age(value=age)  # type: ignore[call-arg]
+        age_obj = Age.model_validate({"value": age})
         age_result = age_obj.validate_business_rules()
         if age_result.is_failure:
             return FlextResult[User].fail(f"Invalid age: {age_result.error}")
@@ -716,9 +717,11 @@ class SharedDomainFactory:
             if isinstance(price_amount, str):
                 price_amount = Decimal(price_amount)
 
-            money_obj = Money(  # type: ignore[call-arg]
-                amount=price_amount,
-                currency=currency,
+            money_obj = Money.model_validate(
+                {
+                    "amount": price_amount,
+                    "currency": currency,
+                }
             )
             money_result = money_obj.validate_business_rules()
             if money_result.is_failure:
@@ -760,9 +763,11 @@ class SharedDomainFactory:
             # Create order items
             order_items: list[OrderItem] = []
             for item_data in items:
-                money_obj = Money(  # type: ignore[call-arg]
-                    amount=Decimal(str(item_data["unit_price"])),
-                    currency=str(item_data.get("currency", "USD")),
+                money_obj = Money.model_validate(
+                    {
+                        "amount": Decimal(str(item_data["unit_price"])),
+                        "currency": str(item_data.get("currency", "USD")),
+                    }
                 )
                 money_result = money_obj.validate_business_rules()
                 if money_result.is_failure:

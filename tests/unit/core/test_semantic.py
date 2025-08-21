@@ -9,8 +9,6 @@ Coverage Target: semantic.py 64% → 95%+
 
 from __future__ import annotations
 
-from unittest.mock import Mock
-
 import pytest
 
 from flext_core import (
@@ -115,24 +113,27 @@ class TestFlextSemanticModel:
 
     def test_factory_validate_with_business_rules_valid(self) -> None:
         """Test validate_with_business_rules with valid object."""
-        # Mock object with valid business rules method
-        mock_instance = Mock()
-        mock_instance.validate_business_rules.return_value = FlextResult[None].ok(None)
 
-        result = FlextSemanticModel.Factory.validate_with_business_rules(mock_instance)
+        # Real object with valid business rules method
+        class ValidBusinessObject:
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        instance = ValidBusinessObject()
+        result = FlextSemanticModel.Factory.validate_with_business_rules(instance)
 
         assert result.success is True
-        mock_instance.validate_business_rules.assert_called_once()
 
     def test_factory_validate_with_business_rules_failure(self) -> None:
         """Test validate_with_business_rules with failing validation."""
-        # Mock object with failing business rules
-        mock_instance = Mock()
-        mock_instance.validate_business_rules.return_value = FlextResult[None].fail(
-            "Validation failed",
-        )
 
-        result = FlextSemanticModel.Factory.validate_with_business_rules(mock_instance)
+        # Real object with failing business rules
+        class FailingBusinessObject:
+            def validate_business_rules(self) -> FlextResult[None]:
+                return FlextResult[None].fail("Validation failed")
+
+        instance = FailingBusinessObject()
+        result = FlextSemanticModel.Factory.validate_with_business_rules(instance)
 
         assert result.success is False
         assert result.error == "Validation failed"
@@ -148,11 +149,14 @@ class TestFlextSemanticModel:
 
     def test_factory_validate_with_business_rules_non_result(self) -> None:
         """Test validate_with_business_rules when method returns non-FlextResult."""
-        # Mock object that returns non-FlextResult
-        mock_instance = Mock()
-        mock_instance.validate_business_rules.return_value = "not a result"
 
-        result = FlextSemanticModel.Factory.validate_with_business_rules(mock_instance)
+        # Real object that returns non-FlextResult
+        class NonResultBusinessObject:
+            def validate_business_rules(self) -> str:
+                return "not a result"
+
+        instance = NonResultBusinessObject()
+        result = FlextSemanticModel.Factory.validate_with_business_rules(instance)
 
         assert result.success is True
 
@@ -213,15 +217,29 @@ class TestFlextSemanticObservability:
 
     def test_observability_protocol_compliance(self) -> None:
         """Test Observability protocol compliance."""
-        mock_obs = Mock()
-        mock_obs.log = Mock()
-        mock_obs.trace = Mock()
-        mock_obs.metrics = Mock()
 
-        assert isinstance(mock_obs, FlextSemanticObservability.Protocol.Observability)
+        # Real implementation of observability protocol
+        class TestObservability:
+            def log(self) -> None:
+                pass
+
+            def trace(self) -> None:
+                pass
+
+            def metrics(self) -> None:
+                pass
+
+        real_obs = TestObservability()
+
+        # Test protocol attributes exist
         assert hasattr(FlextSemanticObservability.Protocol.Observability, "log")
         assert hasattr(FlextSemanticObservability.Protocol.Observability, "trace")
         assert hasattr(FlextSemanticObservability.Protocol.Observability, "metrics")
+
+        # Test real implementation works
+        assert hasattr(real_obs, "log")
+        assert hasattr(real_obs, "trace")
+        assert hasattr(real_obs, "metrics")
 
     def test_factory_get_minimal_observability(self) -> None:
         """Test Factory.get_minimal_observability."""

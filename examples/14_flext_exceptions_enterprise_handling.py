@@ -364,7 +364,7 @@ class UserManagementService:
             if validation_result.is_failure:
                 _raise_validation_error(validation_result)
 
-            user = validation_result.data
+            user = validation_result.value
             if user is None:
                 _raise_none_user_error()
 

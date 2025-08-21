@@ -172,7 +172,7 @@ class TestValidationDecorators:
             return x * 2
 
         # Apply the decorator
-        decorated_function = safe(sample_function)  # type: ignore[arg-type]
+        decorated_function = safe(sample_function)
 
         # Test that the decorator returns a callable
         assert callable(decorated_function)
@@ -184,7 +184,7 @@ class TestValidationDecorators:
         """Test safe decorator functionality."""
 
         # The safe decorator is actually FlextDecorators.safe_result
-        @safe  # type: ignore[arg-type]
+        @safe
         def risky_function(x: int) -> int:
             if x == 0:
                 msg = "Cannot be zero"
@@ -194,8 +194,8 @@ class TestValidationDecorators:
         # Test successful operation
         result = risky_function(2)
         assert isinstance(result, FlextResult)
-        if result.success and result.data != 5:
-            raise AssertionError(f"Expected {5}, got {result.data}")
+        if result.success and result.value != 5:
+            raise AssertionError(f"Expected {5}, got {result.value}")
 
         # Test operation that raises exception
         result = risky_function(0)
@@ -221,12 +221,12 @@ class TestValidationDecorators:
     def test_pure_decorator(self) -> None:
         """Test pure decorator (placeholder)."""
 
-        @pure  # type: ignore[arg-type]
+        @pure
         def test_function(x: int) -> int:
             return x * 2
 
         # The decorator is a placeholder, so it just returns the function
-        test_result: int = test_function(5)  # type: ignore[call-arg]
+        test_result: int = test_function(5)
         if test_result != 10:  # Verify the function works
             msg: str = f"Expected {10}, got {test_result}"
             raise AssertionError(msg)
@@ -287,7 +287,7 @@ class TestValidatedModel:
         # Test successful creation
         result = UserModel.create(name="Alice", age=25)
         assert result.success
-        user = result.data
+        user = result.value
         assert user is not None
         if getattr(user, "name", None) != "Alice":
             msg_alice: str = f"Expected {'Alice'}, got {getattr(user, 'name', None)}"
@@ -775,8 +775,8 @@ class TestIntegrationAndComposition:
     def test_decorator_composition(self) -> None:
         """Test composing multiple decorators."""
 
-        @safe  # type: ignore[arg-type]
-        @pure  # type: ignore[arg-type]
+        @safe
+        @pure
         def composed_function(x: int) -> int:
             require_positive(x)
             return x * 2

@@ -484,7 +484,7 @@ class TestValidationSimpleIntegration:
             "test@example.com",
             "user.name@domain.org",
             "REDACTED_LDAP_BIND_PASSWORD+tag@company.co.uk",
-            "simple@test.io"
+            "simple@test.io",
         ]
         for email in valid_emails:
             result = flext_validate_email(email)
@@ -497,7 +497,7 @@ class TestValidationSimpleIntegration:
             "user@",
             "user space@example.com",
             "user@@example.com",
-            ""
+            "",
         ]
         for email in invalid_emails:
             result = flext_validate_email(email)
@@ -513,7 +513,7 @@ class TestValidationSimpleIntegration:
             "text with spaces",
             "123",
             "  text  ",  # Contains non-whitespace
-            "\ttext\n"  # Contains non-whitespace
+            "\ttext\n",  # Contains non-whitespace
         ]
         for string in valid_strings:
             result = FlextValidators.is_non_empty_string(string)
@@ -528,7 +528,7 @@ class TestValidationSimpleIntegration:
             "",
             "   ",  # Only whitespace
             "\t\n",  # Only tabs/newlines
-            "\r\n\t   "  # Mixed whitespace
+            "\r\n\t   ",  # Mixed whitespace
         ]
         for string in invalid_strings:
             result = FlextValidators.is_non_empty_string(string)

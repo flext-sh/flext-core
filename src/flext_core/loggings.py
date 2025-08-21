@@ -163,6 +163,7 @@ def _inject_trace_methods() -> None:
                 return proxy_method("trace", event, **kwargs)
         return None
 
+    # Use setattr for dynamic attribute assignment to avoid mypy errors
     try:
         if not hasattr(logging.Logger, "trace"):
             logging.Logger.trace = trace_method  # type: ignore[attr-defined]

@@ -9,8 +9,10 @@ Coverage Target: value_objects.py 63% → 95%+
 
 from __future__ import annotations
 
+import logging
 import math
 from decimal import Decimal
+from typing import override
 
 import pytest
 from pydantic import ValidationError
@@ -35,6 +37,7 @@ class SimpleValueObject(FlextValueObject):
 
     value: str
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate that value is not empty."""
         if not self.value or not self.value.strip():
@@ -47,6 +50,7 @@ class EmailAddress(FlextValueObject):
 
     address: str
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate email format."""
         if "@" not in self.address:
@@ -62,6 +66,7 @@ class MoneyAmount(FlextValueObject):
     amount: Decimal
     currency: str = "USD"
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate money amount."""
         if self.amount < 0:
@@ -79,6 +84,7 @@ class ComplexValueObject(FlextValueObject):
     tags: list[str]
     settings: dict[str, bool]
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Complex validation."""
         if len(self.name) < 2:
@@ -93,6 +99,7 @@ class InvalidValueObject(FlextValueObject):
 
     data: str
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Fail validation always."""
         return FlextResult[None].fail("Always invalid")
@@ -104,6 +111,7 @@ class SerializationTestValueObject(FlextValueObject):
     name: str
     callback: object = None  # This will cause serialization issues
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate name is not empty."""
         if not self.name:
@@ -197,7 +205,7 @@ class TestValueObjectValidation:
         vo = SimpleValueObject.model_validate({"value": "test"})
         result = vo.validate_flext()
         assert result.success is True
-        assert result.data is vo
+        assert result.value is vo
 
     def test_validate_flext_failure(self) -> None:
         """Test FlextValidation failure."""
@@ -254,7 +262,7 @@ class TestValueObjectFormatting:
         """Test dictionary formatting."""
         vo = SimpleValueObject.model_validate({"value": "test"})
         data = {"name": "test", "count": 42, "active": True}
-        formatted = vo.format_dict(data)
+        formatted = vo.format_dict(data)  # pyright: ignore[reportArgumentType]
 
         assert "name='test'" in formatted
         assert "count=42" in formatted
@@ -270,7 +278,7 @@ class TestValueObjectFormatting:
             "none_val": None,
             "list": [1, 2, 3],
         }
-        formatted = vo.format_dict(data)
+        formatted = vo.format_dict(data)  # pyright: ignore[reportArgumentType]
 
         assert "string='value'" in formatted
         assert "number=123" in formatted
@@ -321,9 +329,6 @@ class TestValueObjectPayloadConversion:
 
     def test_to_payload_with_validation_failure(self) -> None:
         """Test payload conversion with validation failure."""
-        # Use a simple value object that will pass payload creation
-        vo = SimpleValueObject.model_validate({"value": "test"})
-
         # Use InvalidValueObject which naturally fails validation
         invalid_vo = InvalidValueObject(data="test")
         payload = invalid_vo.to_payload()
@@ -349,10 +354,12 @@ class TestValueObjectPayloadConversion:
 
     def test_to_payload_complete_failure(self) -> None:
         """Test payload conversion with real failure scenario."""
+
         # Create value object with None name to trigger validation failure
         class FailingValueObject(FlextValueObject):
             name: str
 
+            @override
             def validate_business_rules(self) -> FlextResult[None]:
                 if not self.name:
                     return FlextResult[None].fail("Name required")
@@ -364,14 +371,14 @@ class TestValueObjectPayloadConversion:
             payload = vo.to_payload()
             # Should create payload even with validation failure
             assert payload is not None
-        except Exception:
+        except Exception as exc:
             # Real validation error can occur in some cases
-            pass
+            logging.getLogger(__name__).debug("Validation exception occurred: %s", exc)
 
     def test_extract_serializable_attributes_pydantic(self) -> None:
         """Test serializable attribute extraction via Pydantic."""
         vo = SimpleValueObject.model_validate({"value": "test"})
-        result = vo._extract_serializable_attributes()
+        result = vo._extract_serializable_attributes()  # pyright: ignore[reportPrivateUsage]
 
         assert isinstance(result, dict)
         assert "value" in result
@@ -382,7 +389,7 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the manual extraction method directly
-        result = vo._try_manual_extraction()
+        result = vo._try_manual_extraction()  # pyright: ignore[reportPrivateUsage]
 
         assert isinstance(result, dict)
         # Should contain the value attribute
@@ -394,7 +401,7 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the fallback info method directly
-        result = vo._get_fallback_info()
+        result = vo._get_fallback_info()  # pyright: ignore[reportPrivateUsage]
 
         assert isinstance(result, dict)
         assert "class_name" in result
@@ -412,7 +419,7 @@ class TestValueObjectPayloadConversion:
             "complex": {"nested": "object"},
         }
 
-        result = vo._process_serializable_values(data)
+        result = vo._process_serializable_values(data)  # pyright: ignore[reportArgumentType]
 
         assert result["string"] == "value"
         assert result["int"] == 42
@@ -425,26 +432,27 @@ class TestValueObjectPayloadConversion:
         """Test attribute inclusion logic."""
         vo = SimpleValueObject.model_validate({"value": "test"})
 
-        assert vo._should_include_attribute("value") is True
-        assert vo._should_include_attribute("_private") is False
-        assert vo._should_include_attribute("validate_business_rules") is False
+        assert vo._should_include_attribute("value") is True  # pyright: ignore[reportPrivateUsage]
+        assert vo._should_include_attribute("_private") is False  # pyright: ignore[reportPrivateUsage]
+        assert vo._should_include_attribute("validate_business_rules") is False  # pyright: ignore[reportPrivateUsage]
 
     def test_safely_get_attribute(self) -> None:
         """Test safe attribute retrieval."""
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test successful retrieval
-        result = vo._safely_get_attribute("value")
+        result = vo._safely_get_attribute("value")  # pyright: ignore[reportPrivateUsage]
         assert result == "test"
 
         # Test with non-existent attribute
-        result = vo._safely_get_attribute("nonexistent")
+        result = vo._safely_get_attribute("nonexistent")  # pyright: ignore[reportPrivateUsage]
         assert result is None
 
     def test_safely_get_attribute_with_str_method(self) -> None:
         """Test safe attribute retrieval with __str__ conversion."""
 
         class ObjectWithStr:
+            @override
             def __str__(self) -> str:
                 return "string_repr"
 
@@ -452,7 +460,7 @@ class TestValueObjectPayloadConversion:
         # Create a test attribute on the value object
         object.__setattr__(vo, "_test_attr", ObjectWithStr())
 
-        result = vo._safely_get_attribute("_test_attr")
+        result = vo._safely_get_attribute("_test_attr")  # pyright: ignore[reportPrivateUsage]
         assert result == "string_repr"
 
     def test_safely_get_attribute_exception(self) -> None:
@@ -460,13 +468,13 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test with a non-existent attribute - this will naturally raise AttributeError
-        result = vo._safely_get_attribute("nonexistent_attribute")
+        result = vo._safely_get_attribute("nonexistent_attribute")  # pyright: ignore[reportPrivateUsage]
         assert result is None
 
     def test_get_fallback_info(self) -> None:
         """Test fallback information generation."""
         vo = SimpleValueObject.model_validate({"value": "test"})
-        result = vo._get_fallback_info()
+        result = vo._get_fallback_info()  # pyright: ignore[reportPrivateUsage]
 
         assert "class_name" in result
         assert "module" in result
@@ -483,10 +491,12 @@ class TestValueObjectSubclassing:
 
     def test_init_subclass_logging(self) -> None:
         """Test that subclass creation works correctly."""
+
         # Create a new subclass - real execution
         class TestSubclass(FlextValueObject):
             test_field: str
 
+            @override
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
@@ -511,8 +521,7 @@ class TestFlextValueObjectFactory:
     def test_create_value_object_factory_basic(self) -> None:
         """Test basic factory creation."""
         factory = FlextValueObjectFactory.create_value_object_factory(
-            SimpleValueObject,
-            defaults={}
+            SimpleValueObject, defaults={}
         )
 
         assert callable(factory)
@@ -520,8 +529,8 @@ class TestFlextValueObjectFactory:
         # Test factory usage
         result = factory(value="test")
         assert result.success is True
-        assert isinstance(result.data, SimpleValueObject)
-        assert result.data.value == "test"
+        assert isinstance(result.value, SimpleValueObject)
+        assert result.value.value == "test"
 
     def test_create_value_object_factory_with_defaults(self) -> None:
         """Test factory creation with defaults."""
@@ -534,18 +543,17 @@ class TestFlextValueObjectFactory:
         # Test with defaults
         result = factory(amount=Decimal("10.00"))
         assert result.success is True
-        assert result.data.currency == "EUR"  # Default applied
+        assert result.value.currency == "EUR"  # Default applied
 
         # Test overriding defaults
         result = factory(amount=Decimal("20.00"), currency="USD")
         assert result.success is True
-        assert result.data.currency == "USD"  # Override applied
+        assert result.value.currency == "USD"  # Override applied
 
     def test_factory_validation_failure(self) -> None:
         """Test factory with validation failure."""
         factory = FlextValueObjectFactory.create_value_object_factory(
-            SimpleValueObject,
-            defaults={}
+            SimpleValueObject, defaults={}
         )
 
         result = factory(value="")  # Should fail validation
@@ -555,8 +563,7 @@ class TestFlextValueObjectFactory:
     def test_factory_creation_failure(self) -> None:
         """Test factory with creation failure."""
         factory = FlextValueObjectFactory.create_value_object_factory(
-            SimpleValueObject,
-            defaults={}
+            SimpleValueObject, defaults={}
         )
 
         # Pass invalid parameter - this will be handled by validation
@@ -573,7 +580,7 @@ class TestFlextValueObjectFactory:
 
         result = factory(value="test")
         assert result.success is True
-        assert result.data.value == "test"
+        assert result.value.value == "test"
 
 
 # =============================================================================
@@ -612,11 +619,11 @@ class TestValueObjectIntegration:
         assert money1 != money3
 
         # Test hashing for use in sets/dicts
-        money_set = {money1, money2, money3}
+        money_set = {money1, money2, money3}  # pyright: ignore[reportUnhashable]
         assert len(money_set) == 2  # money1 and money2 are equal
 
         # Test as dict keys
-        money_dict = {money1: "first", money2: "second", money3: "third"}
+        money_dict = {money1: "first", money2: "second", money3: "third"}  # pyright: ignore[reportUnhashable]
         assert len(money_dict) == 2  # money1 and money2 share same key
 
     def test_value_object_with_nested_structures(self) -> None:
@@ -660,7 +667,7 @@ class TestValueObjectIntegration:
         for address in test_addresses:
             result = email_factory(address=address)
             assert result.success is True
-            emails.append(result.data)
+            emails.append(result.value)
 
         # Test all emails are valid and unique
         assert len(emails) == 3
@@ -714,7 +721,7 @@ class TestValueObjectEdgeCases:
         vo = SerializationTestValueObject(name="test")
 
         # Test extraction methods handle edge cases
-        result = vo._extract_serializable_attributes()
+        result = vo._extract_serializable_attributes()  # pyright: ignore[reportPrivateUsage]
         assert isinstance(result, dict)
         assert "name" in result
 
@@ -737,7 +744,7 @@ class TestValueObjectEdgeCases:
             name="test",
             metadata={"key": "value"},
             tags=["tag1", "tag2"],
-            settings={"enabled": True}
+            settings={"enabled": True},
         )
 
         # Test real field validation

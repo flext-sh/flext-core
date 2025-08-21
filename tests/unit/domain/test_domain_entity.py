@@ -149,7 +149,7 @@ class TestFlextEntityVersioning:
             version=1,
         )
         assert entity_result.success
-        entity = entity_result.data
+        entity = entity_result.value
         assert entity is not None
         updated_entity = entity.with_version(2)
 
@@ -170,7 +170,7 @@ class TestFlextEntityVersioning:
             version=1,
         )
         assert entity_result.success
-        entity = entity_result.data
+        entity = entity_result.value
         assert entity is not None
         updated_entity = entity.with_version(100)
 

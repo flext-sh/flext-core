@@ -7,6 +7,7 @@ Comprehensive examples demonstrating all major FLEXT Core functionality.
 import contextlib
 from typing import cast
 
+# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User as SharedUser
 
 from flext_core import (
@@ -32,9 +33,9 @@ def _demo_entity_shared_domain() -> SharedUser | None:
         email="john@example.com",
         age=30,
     )
-    if user_result.is_failure or user_result.data is None:
+    if user_result.is_failure or user_result.value is None:
         return None
-    user = user_result.data
+    user = user_result.value
     (user.status.value if hasattr(user.status, "value") else str(user.status))
     user.validate_domain_rules()
     return user
@@ -62,18 +63,11 @@ def _demo_commands() -> tuple[object, object]:
 
     # Ensure Pydantic forward references are resolved for local command
     with contextlib.suppress(Exception):
-        CreateUserCommand.model_rebuild(
-            types_namespace={
-                "TEntityId": str,
-                "TServiceName": str,
-                "TUserId": str,
-                "TCorrelationId": str,
-            },
-        )
+        CreateUserCommand.model_rebuild()
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
     result = handler.execute(command)
-    if result.success and result.data is not None:
+    if result.success and result.value is not None:
         pass
     return command, handler
 
@@ -85,8 +79,8 @@ def _demo_container() -> None:
 
         def create_user(self, email: str, name: str) -> SharedUser:
             result = SharedDomainFactory.create_user(name=name, email=email, age=25)
-            if result.success and result.data is not None:
-                return result.data
+            if result.success and result.value is not None:
+                return result.value
             msg: str = f"Failed to create user: {result.error}"
             raise ValueError(msg)
 
@@ -95,7 +89,7 @@ def _demo_container() -> None:
             self.users: dict[str, SharedUser] = {}
 
         def save(self, user: SharedUser) -> SharedUser:
-            self.users[user.id] = user
+            self.users[str(user.id)] = user
             return user
 
     container = get_flext_container()
@@ -105,7 +99,7 @@ def _demo_container() -> None:
     container.register("user_service", service)
     service_result = container.get("user_service")
     if service_result.success:
-        user_service = service_result.data
+        user_service = service_result.value
         if hasattr(user_service, "create_user"):
             user_service.create_user("bob@example.com", "Bob Wilson")
 
@@ -125,9 +119,9 @@ def _demo_fields() -> None:
 def _demo_command_bus(command: object, handler: object) -> None:
     bus = FlextCommands.create_command_bus()
     bus.register_handler(cast("type", type(command)), handler)
-    bus_result = bus.execute(command)
+    bus_result = bus.execute(cast("FlextCommands.Command", command))
     if bus_result.success:
-        bus_user = bus_result.data
+        bus_user = bus_result.value
         if hasattr(bus_user, "name"):
             pass
 

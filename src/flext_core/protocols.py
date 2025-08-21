@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 from flext_core.result import FlextResult
-from flext_core.typings import TAnyDict, TFactory
+from flext_core.typings import FlextDecoratedFunction, TAnyDict, TFactory
 
 # Define TypeVars locally
 T = TypeVar("T")
@@ -248,7 +248,7 @@ class FlextMetricsCollector(Protocol):
 # =============================================================================
 
 
-FlextDecoratedFunction = Callable[..., object]  # type: ignore[explicit-any]
+# FlextDecoratedFunction is now imported from typings.py
 
 
 # =============================================================================
@@ -478,7 +478,7 @@ class FlextRepository(Protocol, Generic[T]):  # noqa: UP046
     """Protocol for repository pattern implementations.
 
     CONSOLIDATED FROM: interfaces.py FlextRepository (ABC converted to protocol)
-    Modern Python 3.13 generic syntax.
+     Python 3.13 generic syntax.
     """
 
     @abstractmethod
@@ -666,7 +666,7 @@ class FlextProjectionBuilder(Protocol):
 
 
 # =============================================================================
-# ASYNC PROTOCOLS - Advanced async patterns
+# ASYNC PROTOCOLS -  async patterns
 # =============================================================================
 
 
@@ -706,7 +706,7 @@ class FlextAsyncService(Protocol):
 class FlextFactory(Protocol, Generic[T]):  # noqa: UP046
     """Protocol for type-safe factory implementations.
 
-    Modern Python 3.13 generic syntax for a factory pattern.
+    Python 3.13 generic syntax for a factory pattern.
     """
 
     def create(self, **kwargs: object) -> FlextResult[T]:

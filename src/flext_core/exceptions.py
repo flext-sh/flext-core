@@ -80,7 +80,7 @@ class FlextErrorMixin:
       context: Additional context information
       correlation_id: Correlation ID for tracking
 
-    Follows a modern, Pydantic-style structured error pattern.
+    Follows a standard, Pydantic-style structured error pattern.
 
     """
 
@@ -320,7 +320,7 @@ class FlextNotFoundError(FlextErrorMixin, ValueError):
 class FlextError(FlextErrorMixin, Exception):
     """Base exception for all FLEXT operations.
 
-    Modern Pydantic-style error with structured error handling, context,
+     Pydantic-style error with structured error handling, context,
     and cross-service compatibility for distributed systems.
     """
 

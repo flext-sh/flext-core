@@ -1,9 +1,9 @@
-"""Modern domain validation using Pydantic functional validator patterns.
+"""domain validation using Pydantic functional validator patterns.
 
-This module provides enterprise-grade validation patterns using modern Pydantic v2
+This module provides enterprise-grade validation patterns using standard Pydantic v2
 functional validators including BeforeValidator, AfterValidator, PlainValidator,
 and WrapValidator patterns. All legacy validation patterns have been eliminated
-and replaced with modern patterns.
+and replaced with standard patterns.
 
 Key Patterns:
 - BeforeValidator: Transforms input before core validation
@@ -19,7 +19,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, TypeVar, cast
+from typing import Annotated, TypeVar, cast, override
 from uuid import uuid4
 
 from pydantic import (
@@ -53,7 +53,7 @@ class FlextAbstractValidator[T](ABC):
 
 
 # =============================================================================
-# ADVANCED PYDANTIC FUNCTIONAL VALIDATORS
+# PYDANTIC FUNCTIONAL VALIDATORS
 # =============================================================================
 
 
@@ -119,7 +119,7 @@ def format_timestamp(v: str) -> str:
 
 
 # PlainValidator functions - Replace core validation entirely
-def validate_service_name_advanced(v: object) -> str:
+def validate_service_name(v: object) -> str:
     """PlainValidator: Complete custom validation for service names."""
     if not isinstance(v, str):
         v = str(v)
@@ -140,7 +140,7 @@ def validate_service_name_advanced(v: object) -> str:
     return v
 
 
-def validate_email_address_advanced(v: object) -> str:
+def validate_email_address(v: object) -> str:
     """PlainValidator: Complete email validation with normalization."""
     if not isinstance(v, str):
         v = str(v)
@@ -186,8 +186,8 @@ def validate_entity_id_with_context(
     handler: Callable[[str], str],
     info: ValidationInfo,
 ) -> str:
-    """WrapValidator: Enhanced entity ID validation with context."""
-    # Get context for enhanced validation
+    """WrapValidator: entity ID validation with context."""
+    # Get context for validation
     context = cast("dict[str, object]", info.context or {})
     namespace = cast("str", context.get("namespace", "flext"))
     auto_generate = cast("bool", context.get("auto_generate_id", True))
@@ -272,7 +272,7 @@ def validate_list_with_deduplication(
 
 
 # =============================================================================
-# MODERN TYPE DEFINITIONS WITH FUNCTIONAL VALIDATORS
+# TYPE DEFINITIONS WITH FUNCTIONAL VALIDATORS
 # =============================================================================
 
 # BeforeValidator examples
@@ -288,8 +288,8 @@ PositiveNumber = Annotated[int, AfterValidator(ensure_positive)]
 FormattedTimestamp = Annotated[str, AfterValidator(format_timestamp)]
 
 # PlainValidator examples
-AdvancedServiceName = Annotated[str, PlainValidator(validate_service_name_advanced)]
-AdvancedEmailAddress = Annotated[str, PlainValidator(validate_email_address_advanced)]
+ServiceName = Annotated[str, PlainValidator(validate_service_name)]
+EmailAddress = Annotated[str, PlainValidator(validate_email_address)]
 VersionNumber = Annotated[int, PlainValidator(validate_version_number)]
 
 # WrapValidator examples
@@ -301,7 +301,7 @@ DeduplicatedList = Annotated[list[str], WrapValidator(validate_list_with_dedupli
 EmailWithNormalization = Annotated[
     str,
     BeforeValidator(normalize_email),
-    PlainValidator(validate_email_address_advanced),
+    PlainValidator(validate_email_address),
     AfterValidator(lambda v: v.lower()),
 ]
 
@@ -312,12 +312,12 @@ EntityIdWithGeneration = Annotated[
 ]
 
 # =============================================================================
-# MODERN VALIDATION MODELS
+# VALIDATION MODELS
 # =============================================================================
 
 
 class _ValidationConfig(BaseModel):
-    """Modern validation configuration using Pydantic."""
+    """validation configuration using Pydantic."""
 
     model_config = ConfigDict(
         frozen=True,
@@ -341,7 +341,7 @@ class _ValidationConfig(BaseModel):
 
 
 class _ValidationResult(BaseModel):
-    """Modern validation result using Pydantic."""
+    """validation result using Pydantic."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -360,7 +360,7 @@ class _ValidationResult(BaseModel):
 
 
 class _BaseValidators:
-    """Modern validation functions using validate_call decorators."""
+    """validation functions using validate_call decorators."""
 
     @staticmethod
     @validate_call
@@ -458,7 +458,7 @@ class _BaseValidators:
 
 
 class _BasePredicates:
-    """Modern predicate functions using validate_call decorators."""
+    """predicate functions using validate_call decorators."""
 
     @staticmethod
     @validate_call
@@ -495,7 +495,7 @@ def _validate_required_field(
     value: object,
     field_name: str = "field",
 ) -> _ValidationResult:
-    """Modern required field validation using validate_call decorator."""
+    """Required field validation using validate_call decorator."""
     if value is None:
         return _ValidationResult(
             is_valid=False,
@@ -520,7 +520,7 @@ def _validate_string_field(
     min_length: int = 0,
     max_length: int | None = None,
 ) -> _ValidationResult:
-    """Modern string validation using validate_call decorator."""
+    """String validation using validate_call decorator."""
     if len(value) < min_length:
         return _ValidationResult(
             is_valid=False,
@@ -545,7 +545,7 @@ def _validate_numeric_field(
     min_val: float | None = None,
     max_val: float | None = None,
 ) -> _ValidationResult:
-    """Modern numeric validation using validate_call decorator."""
+    """Numeric validation using validate_call decorator."""
     if min_val is not None and value < min_val:
         return _ValidationResult(
             is_valid=False,
@@ -568,7 +568,7 @@ def _validate_email_field(
     value: str,
     field_name: str = "field",
 ) -> _ValidationResult:
-    """Modern email validation using validate_call decorator."""
+    """Email validation using validate_call decorator."""
     # Simple but effective email validation
     email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(email_pattern, value):
@@ -582,7 +582,7 @@ def _validate_email_field(
 
 @validate_call
 def _validate_entity_id(value: str) -> bool:
-    """Modern entity ID validation using validate_call decorator."""
+    """Entity ID validation using validate_call decorator."""
     if not value.strip():
         return False
     # Basic UUID format check
@@ -592,13 +592,13 @@ def _validate_entity_id(value: str) -> bool:
 
 @validate_call
 def _validate_non_empty_string(value: str) -> bool:
-    """Modern non-empty string validation using validate_call decorator."""
+    """non-empty string validation using validate_call decorator."""
     return len(value.strip()) > 0
 
 
 @validate_call
 def _validate_service_name(name: str) -> bool:
-    """Modern service name validation using validate_call decorator."""
+    """Service name validation using validate_call decorator."""
     if not name.strip():
         return False
     if len(name) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH:
@@ -683,7 +683,7 @@ class FlextValidation(FlextValidators):
 
     @classmethod
     def validate(cls, value: object) -> FlextResult[bool]:
-        """Modern validation with automatic type detection using validate_call."""
+        """Validation with automatic type detection using validate_call."""
         try:
             if (
                 isinstance(value, str)
@@ -744,7 +744,7 @@ class FlextValidation(FlextValidators):
         min_length: int = 0,
         max_length: int | None = None,
     ) -> FlextValidationConfig:
-        """Create validation configuration using modern Pydantic patterns.
+        """Create validation configuration using standard Pydantic patterns.
 
         Args:
             field_name: Name of the field being validated
@@ -768,9 +768,9 @@ class FlextValidation(FlextValidators):
         value: object,
         validator: Callable[[object], bool],
     ) -> FlextResult[bool]:
-        """Safely validate value with FlextResult error handling using modern patterns.
+        """Safely validate value with FlextResult error handling using standard patterns.
 
-        Modern orchestration pattern combining validate_call decorated validation
+         orchestration pattern combining validate_call decorated validation
         with FlextResult patterns for comprehensive safe validation. Automatically
         captures validation errors and converts them to FlextResult failures.
 
@@ -813,7 +813,7 @@ def flext_validate_required(
     value: object,
     field_name: str = "field",
 ) -> FlextValidationResult:
-    """Modern validation for required fields with comprehensive checking.
+    """Validation for required fields with comprehensive checking.
 
     Performs null/None validation ensuring the field contains a meaningful value.
     Uses validate_call decorator for automatic type checking and error handling.
@@ -836,7 +836,7 @@ def flext_validate_string(
     min_length: int = 0,
     max_length: int | None = None,
 ) -> FlextValidationResult:
-    """Modern string field validation with comprehensive constraints.
+    """String field validation with comprehensive constraints.
 
     Performs automatic type checking via validate_call decorator, length validation,
     and content verification. Supports configurable length constraints with clear errors.
@@ -861,7 +861,7 @@ def flext_validate_numeric(
     min_val: float | None = None,
     max_val: float | None = None,
 ) -> FlextValidationResult:
-    """Modern numeric field validation with comprehensive range constraints.
+    """Numeric field validation with comprehensive range constraints.
 
     Performs automatic type checking via validate_call decorator and range validation
     for numeric values. Supports configurable range constraints with detailed errors.
@@ -884,7 +884,7 @@ def flext_validate_email(
     value: str,
     field_name: str = "field",
 ) -> FlextValidationResult:
-    """Modern email field validation with comprehensive format checking.
+    """Email field validation with comprehensive format checking.
 
     Performs automatic type checking via validate_call decorator and comprehensive
     email validation including format checking and structural verification.
@@ -902,10 +902,10 @@ def flext_validate_email(
 
 @validate_call
 def flext_validate_service_name(name: str) -> bool:
-    """Modern service name validation for container operations.
+    """Service name validation for container operations.
 
     Validates service names used in dependency injection container operations
-    with automatic type checking and enhanced validation rules.
+    with automatic type checking and validation rules.
 
     Args:
       name: Service name to validate (automatically type-checked)
@@ -918,7 +918,7 @@ def flext_validate_service_name(name: str) -> bool:
 
 
 # =============================================================================
-# MODERN VALIDATION FUNCTIONS WITH FLEXTRESULT
+# VALIDATION FUNCTIONS WITH FLEXTRESULT
 # =============================================================================
 
 
@@ -928,7 +928,7 @@ def validate_with_result(
     validator: Callable[[object], bool],
     error_message: str = "Validation failed",
 ) -> FlextResult[bool]:
-    """Modern validation function returning FlextResult."""
+    """Validation function returning FlextResult."""
     try:
         if validator(value):
             return FlextResult[bool].ok(True)  # noqa: FBT003
@@ -941,7 +941,7 @@ def validate_with_result(
 
 @validate_call
 def validate_entity_id(entity_id: str) -> FlextResult[str]:
-    """Modern entity ID validation returning FlextResult."""
+    """Entity ID validation returning FlextResult."""
     if not entity_id.strip():
         return FlextResult[str].fail("Entity ID cannot be empty")
 
@@ -954,7 +954,7 @@ def validate_entity_id(entity_id: str) -> FlextResult[str]:
 
 @validate_call
 def validate_service_name_with_result(name: str) -> FlextResult[str]:
-    """Modern service name validation returning FlextResult."""
+    """Service name validation returning FlextResult."""
     if not name.strip():
         return FlextResult[str].fail("Service name cannot be empty")
 
@@ -970,12 +970,12 @@ def validate_service_name_with_result(name: str) -> FlextResult[str]:
 
 
 # =============================================================================
-# MODERN VALIDATION PIPELINE
+# VALIDATION PIPELINE
 # =============================================================================
 
 
 class FlextValidationPipeline:
-    """Modern validation pipeline using validate_call decorators."""
+    """validation pipeline using validate_call decorators."""
 
     @validate_call
     def __init__(self) -> None:
@@ -995,7 +995,7 @@ class FlextValidationPipeline:
             result = validator(current_value)
             if not result.is_success:
                 return result
-            current_value = result.data
+            current_value = result.value
 
         return FlextResult[bool].ok(True)  # noqa: FBT003
 
@@ -1021,10 +1021,10 @@ class FlextValidationPipeline:
 
 
 class FlextDomainValidator[T](FlextAbstractValidator[T]):
-    """Modern domain-specific validation with business rules using validate_call.
+    """domain-specific validation with business rules using validate_call.
 
     SOLID compliance: Single responsibility for domain validation.
-    Uses modern Pydantic patterns for automatic validation.
+    Uses standard Pydantic patterns for automatic validation.
     """
 
     @validate_call
@@ -1034,7 +1034,7 @@ class FlextDomainValidator[T](FlextAbstractValidator[T]):
 
     @validate_call
     def validate_value(self, value: T) -> FlextResult[T]:
-        """Validate value against business rules with modern patterns."""
+        """Validate value against business rules with standard patterns."""
         try:
             for rule in self.business_rules:
                 if not rule(value):
@@ -1045,17 +1045,17 @@ class FlextDomainValidator[T](FlextAbstractValidator[T]):
         except Exception as e:
             return FlextResult[T].fail(f"Business rule error: {e}")
 
+    @override
     def validate(self, value: T) -> FlextResult[T]:
         """Alias to validate_value for compatibility with legacy code."""
         return self.validate_value(value)
 
 
 __all__: list[str] = [
-    "AdvancedEmailAddress",
-    "AdvancedServiceName",
     "AutoGeneratedId",
     "ContextualEntityId",
     "DeduplicatedList",
+    "EmailAddress",
     "EmailWithNormalization",
     "EntityIdWithGeneration",
     "FlextAbstractValidator",
@@ -1072,6 +1072,7 @@ __all__: list[str] = [
     "NormalizedEmail",
     "NormalizedString",
     "PositiveNumber",
+    "ServiceName",
     "StringList",
     "UppercaseCode",
     "add_flext_prefix",
@@ -1092,10 +1093,10 @@ __all__: list[str] = [
     "generate_id_if_missing",
     "normalize_email",
     "normalize_string",
-    "validate_email_address_advanced",
+    "validate_email_address",
     "validate_entity_id",
     "validate_list_with_deduplication",
-    "validate_service_name_advanced",
+    "validate_service_name",
     "validate_service_name_with_result",
     "validate_timestamp_with_fallback",
     "validate_version_number",

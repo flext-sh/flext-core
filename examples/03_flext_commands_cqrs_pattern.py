@@ -11,12 +11,13 @@ Key Patterns:
 • Simple event sourcing
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import FlextCommands, FlextResult
+# use .shared_domain with dot to access local module
+from shared_domain import SharedDomainFactory, User
 
-from .shared_domain import SharedDomainFactory, User
+from flext_core import FlextCommands, FlextResult
 
 # =============================================================================
 # SIMPLE EVENT STORE - For demonstration
@@ -31,7 +32,11 @@ class SimpleEventStore:
 
     def add_event(self, event_type: str, data: dict[str, object]) -> None:
         """Add event to store."""
-        event: dict[str, object] = {"type": event_type, "data": data, "timestamp": "now"}
+        event: dict[str, object] = {
+            "type": event_type,
+            "data": data,
+            "timestamp": "now",
+        }
         self.events.append(event)
 
     def get_events(self) -> list[dict[str, object]]:
@@ -136,7 +141,7 @@ class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
         """Create user with validation."""
         return SharedDomainFactory.create_user(
             command.name, command.email, command.age
-        ).map(lambda user: self._save_user(user))
+        ).map(self._save_user)
 
     def _save_user(self, user: User) -> User:
         """Save user to database."""
@@ -169,7 +174,8 @@ class DeleteUserHandler(FlextCommands.Handler[DeleteUserCommand, bool]):
         """Delete user by ID."""
         success = user_db.delete(command.target_user_id)
         if success:
-            return FlextResult[bool].ok(True)
+            success = True
+            return FlextResult[bool].ok(success)
         return FlextResult[bool].fail(f"User not found: {command.target_user_id}")
 
 
@@ -198,13 +204,15 @@ class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User
         return FlextResult[list[User]].ok(users)
 
 
-class GetEventsQueryHandler(FlextCommands.QueryHandler[GetEventsQuery, list[dict[str, object]]]):
+class GetEventsQueryHandler(
+    FlextCommands.QueryHandler[GetEventsQuery, list[dict[str, object]]]
+):
     """Handler for event listing."""
 
     def handle(self, query: GetEventsQuery) -> FlextResult[list[dict[str, object]]]:  # noqa: ARG002
         """Get all events."""
         events = event_store.get_events()
-        return FlextResult[list[dict[str, object]]].ok(cast(list[dict[str, object]], events))
+        return FlextResult[list[dict[str, object]]].ok(events)
 
 
 # =============================================================================
@@ -223,13 +231,13 @@ def setup_cqrs() -> tuple[FlextCommands.Bus, dict[str, object]]:
     bus.register_handler(DeleteUserCommand, DeleteUserHandler())
 
     # Create query handlers
-    query_handlers = {
+    query_handlers: dict[str, object] = {
         "get_user": GetUserQueryHandler(),
         "list_users": ListUsersQueryHandler(),
         "get_events": GetEventsQueryHandler(),
     }
 
-    return bus, cast(dict[str, object], query_handlers)
+    return bus, query_handlers
 
 
 # =============================================================================
@@ -249,34 +257,32 @@ class UserService:
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
         """Create a new user."""
         command = CreateUserCommand(
-            name=name, 
-            email=email, 
+            name=name,
+            email=email,
             age=age,
-            command_id="",
             command_type="",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=UTC),
             user_id=None,
-            correlation_id=""
+            correlation_id="",
         )
         result = self.bus.execute(command)
-        return result.map(lambda data: cast(User, data))
+        return result.map(lambda data: cast("User", data))
 
     def update_user(
         self, user_id: str, name: str | None = None, email: str | None = None
     ) -> FlextResult[User]:
         """Update an existing user."""
         command = UpdateUserCommand(
-            target_user_id=user_id, 
-            name=name, 
+            target_user_id=user_id,
+            name=name,
             email=email,
-            command_id="",
             command_type="",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=UTC),
             user_id=None,
-            correlation_id=""
+            correlation_id="",
         )
         result = self.bus.execute(command)
-        return result.map(lambda data: cast(User, data))
+        return result.map(lambda data: cast("User", data))
 
     def delete_user(self, user_id: str) -> FlextResult[bool]:
         """Delete a user."""
@@ -284,12 +290,12 @@ class UserService:
             target_user_id=user_id,
             command_id="",
             command_type="",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(tz=UTC),
             user_id=None,
-            correlation_id=""
+            correlation_id="",
         )
         result = self.bus.execute(command)
-        return result.map(lambda data: cast(bool, data))
+        return result.map(lambda data: cast("bool", data))
 
     def get_user(self, user_id: str) -> FlextResult[User]:
         """Get user by ID."""
@@ -300,10 +306,13 @@ class UserService:
             page_size=100,
             page_number=1,
             sort_by=None,
-            sort_order="asc"
+            sort_order="asc",
         )
         handler = self.queries["get_user"]
-        return handler.handle(query)
+        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
+            query
+        )
+        return cast("FlextResult[User]", result)
 
     def list_users(self) -> FlextResult[list[User]]:
         """List all users."""
@@ -313,10 +322,13 @@ class UserService:
             page_size=100,
             page_number=1,
             sort_by=None,
-            sort_order="asc"
+            sort_order="asc",
         )
         handler = self.queries["list_users"]
-        return handler.handle(query)
+        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
+            query
+        )
+        return cast("FlextResult[list[User]]", result)
 
     def get_events(self) -> FlextResult[list[dict[str, object]]]:
         """Get all events."""
@@ -326,10 +338,13 @@ class UserService:
             page_size=100,
             page_number=1,
             sort_by=None,
-            sort_order="asc"
+            sort_order="asc",
         )
         handler = self.queries["get_events"]
-        return handler.handle(query)
+        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
+            query
+        )
+        return cast("FlextResult[list[dict[str, object]]]", result)
 
 
 # =============================================================================
@@ -347,13 +362,13 @@ def demo_command_operations() -> None:
     # Create user
     create_result = service.create_user("Alice Johnson", "alice@example.com", 25)
     if create_result.success:
-        user = create_result.unwrap()
+        user = create_result.value
         print(f"✅ User created: {user.name} ({user.id})")
 
         # Update user
         update_result = service.update_user(str(user.id), name="Alice Smith")
         if update_result.success:
-            updated_user = update_result.unwrap()
+            updated_user = update_result.value
             print(f"✅ User updated: {updated_user.name}")
 
 
@@ -367,7 +382,7 @@ def demo_query_operations() -> None:
     # List users
     list_result = service.list_users()
     if list_result.success:
-        users = list_result.unwrap()
+        users = list_result.value
         print(f"✅ Found {len(users)} users")
         for user in users:
             print(f"  - {user.name} ({user.email_address.email})")
@@ -383,7 +398,7 @@ def demo_event_sourcing() -> None:
     # Get events
     events_result = service.get_events()
     if events_result.success:
-        events = events_result.unwrap()
+        events = events_result.value
         print(f"✅ Found {len(events)} events")
         for event in events:
             print(f"  - {event['type']}: {event.get('data', {})}")
@@ -398,7 +413,7 @@ def demo_validation_handling() -> None:
 
     # Try invalid data
     invalid_result = service.create_user("", "invalid-email", 15)
-    if invalid_result.failure:
+    if invalid_result.is_failure:
         print(f"✅ Validation caught error: {invalid_result.error}")
 
 

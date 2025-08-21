@@ -11,6 +11,13 @@ import time
 from collections.abc import Sized
 from typing import Protocol, cast
 
+# use .shared_domain with dot to access local module
+from shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -27,11 +34,6 @@ from flext_core import (
     FlextValueObjectMixin,
 )
 
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
 from .shared_example_helpers import run_example_demonstration
 
 # =============================================================================
@@ -392,7 +394,7 @@ class AdvancedUser(
             msg: str = f"Failed to create user: {user_result.error}"
             raise ValueError(msg)
 
-        shared_user = user_result.data
+        shared_user = user_result.value
         if shared_user is None:
             error_msg = "User creation returned None data"
             raise ValueError(error_msg)
@@ -739,7 +741,7 @@ class EnterpriseService(
 # =============================================================================
 
 
-class DomainEntity(FlextEntityMixin):  # type: ignore[misc]
+class DomainEntity(FlextEntityMixin):
     """Domain entity using composite entity mixin."""
 
     def __init__(self, entity_type: str, data: dict[str, object]) -> None:
@@ -752,7 +754,7 @@ class DomainEntity(FlextEntityMixin):  # type: ignore[misc]
         """
         super().__init__()
         self.entity_type = entity_type
-        self.data = data
+        self.value = data
         self._domain_events: list[tuple[str, dict[str, object]]] = []
 
     def clear_domain_events(self) -> None:
@@ -765,7 +767,7 @@ class DomainEntity(FlextEntityMixin):  # type: ignore[misc]
 
     def update_data(self, new_data: dict[str, object]) -> None:
         """Update entity data with timestamp tracking."""
-        self.data.update(new_data)
+        self.value.update(new_data)
         self._update_timestamp()
 
     def get_entity_info(self) -> dict[str, object]:
@@ -773,14 +775,14 @@ class DomainEntity(FlextEntityMixin):  # type: ignore[misc]
         return {
             "id": self.id,
             "type": self.entity_type,
-            "data": self.data,
+            "data": self.value,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "has_valid_id": self.has_id(),
         }
 
 
-class ValueObjectExample(FlextValueObjectMixin):  # type: ignore[misc]
+class ValueObjectExample(FlextValueObjectMixin):
     """Value object using composite value object mixin."""
 
     def __init__(self, name: str, value: object, unit: str | None = None) -> None:
@@ -845,7 +847,7 @@ def demonstrate_individual_mixins() -> None:
     # Create user using shared domain factory first
     user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
     if user_result.success:
-        shared_user = user_result.data
+        shared_user = user_result.value
         if shared_user is None:
             return
         user = IdentifiableUser(
@@ -1236,11 +1238,11 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
 
             # Try cache first, then storage, then handle not found
             cache_result = self._check_cache_for_user(user_id)
-            if cache_result.is_success and cache_result.data is not None:
+            if cache_result.is_success and cache_result.value is not None:
                 return cache_result
 
             storage_result = self._check_storage_for_user(user_id)
-            if storage_result.is_success and storage_result.data is not None:
+            if storage_result.is_success and storage_result.value is not None:
                 return storage_result
 
             return self._handle_user_not_found(user_id)
@@ -1281,7 +1283,7 @@ def _create_enterprise_order_service(
                     f"Failed to check user existence: {user_result.error}",
                 )
 
-            user = user_result.data
+            user = user_result.value
             if not user:
                 self.logger.error(
                     "Cannot create order: User not found",
@@ -1381,7 +1383,7 @@ def _demonstrate_repository_pattern(user_repo: UserRepositoryProtocol) -> None:
     user1_result = user_repo.find_user("user_001")  # From storage
     user_repo.find_user("user_001")  # From cache
 
-    if user1_result.is_success and user1_result.data:
+    if user1_result.is_success and user1_result.value:
         pass
 
 
@@ -1396,8 +1398,8 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
         ],
     )
 
-    if order_result.is_success and order_result.data:
-        order = order_result.data
+    if order_result.is_success and order_result.value:
+        order = order_result.value
         items = order["items"]
         items_count = len(cast("Sized", items)) if hasattr(items, "__len__") else 0
         print(f"Order has {items_count} items")

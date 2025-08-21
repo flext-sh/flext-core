@@ -14,9 +14,10 @@ Key Patterns:
 import json
 from typing import cast
 
-from flext_core import FlextResult, safe_call
+# use .shared_domain with dot to access local module
+from shared_domain import SharedDomainFactory, User as SharedUser
 
-from .shared_domain import SharedDomainFactory, User as SharedUser
+from flext_core import FlextResult, FlextResultUtils
 
 # Type aliases for clarity
 UserData = dict[str, object]
@@ -66,23 +67,30 @@ def process_user_registration(data: UserData) -> FlextResult[ProcessingResult]:
 
 
 def process_multiple_users(users_data: list[UserData]) -> FlextResult[ProcessingResult]:
-    """Batch processing with automatic aggregation."""
+    """Batch processing with FlextResultUtils - modern utility pattern."""
     results = [process_user_registration(data) for data in users_data]
-    successful = [r.data for r in results if r.success]
 
-    return FlextResult[ProcessingResult].ok({
-        "total": len(users_data),
-        "successful": len(successful),
-        "failed": len(users_data) - len(successful),
-        "success_rate": len(successful) / len(users_data) * 100 if users_data else 0,
-        "results": successful,
-    })
+    # Modern pattern: use FlextResultUtils for common operations
+    successful = FlextResultUtils.collect_successes(results)
+    success_rate = FlextResultUtils.success_rate(results)
+
+    return FlextResult[ProcessingResult].ok(
+        {
+            "total": len(users_data),
+            "successful": len(successful),
+            "failed": len(users_data) - len(successful),
+            "success_rate": success_rate,
+            "results": successful,
+        }
+    )
 
 
 def transform_and_process(json_data: str) -> FlextResult[ProcessingResult]:
     """JSON transformation and processing pipeline."""
     return (
-        safe_call(lambda: json.loads(json_data) if json_data.startswith("{") else {})
+        FlextResult.from_exception(
+            lambda: json.loads(json_data) if json_data.startswith("{") else {}
+        )
         .filter(lambda d: isinstance(d, dict), "Invalid data")
         .flat_map(lambda data: process_user_registration(cast("UserData", data)))
     )
@@ -91,9 +99,10 @@ def transform_and_process(json_data: str) -> FlextResult[ProcessingResult]:
 def process_with_retry(
     data: UserData, max_retries: int = 3
 ) -> FlextResult[ProcessingResult]:
-    """Retry pattern with automatic failure aggregation."""
+    """Retry pattern with modern unwrap_or style."""
     for _attempt in range(1, max_retries + 1):
         result = process_user_registration(data)
+        # Modern pattern: early return on success without if-check
         if result.success:
             return result
 
@@ -109,13 +118,16 @@ def demo_successful_registration() -> None:
     """Show successful registration."""
     print("\n🧪 Testing successful registration...")
 
-    result = process_user_registration({
-        "name": "Alice Johnson",
-        "email": "alice@example.com",
-        "age": 28,
-    })
+    result = process_user_registration(
+        {
+            "name": "Alice Johnson",
+            "email": "alice@example.com",
+            "age": 28,
+        }
+    )
 
-    print(f"✅ Result: {result.data if result.success else result.error}")
+    # Modern pattern: use unwrap_or for clean default handling
+    print(f"✅ Result: {result.unwrap_or(f'Error: {result.error}')}")
 
 
 def demo_batch_processing() -> None:
@@ -130,9 +142,11 @@ def demo_batch_processing() -> None:
     ]
 
     result = process_multiple_users(users)
-    if result.success and result.data:
-        stats = result.data
-        print(f"📊 Processed {stats['successful']}/{stats['total']} users")
+    # Modern pattern: unwrap_or with default message
+    stats = result.unwrap_or(
+        {"successful": 0, "total": len(users), "error": result.error}
+    )
+    print(f"📊 Processed {stats['successful']}/{stats['total']} users")
 
 
 def demo_json_transformation() -> None:
@@ -142,7 +156,8 @@ def demo_json_transformation() -> None:
     json_data = '{"name": "Frank Miller", "email": "frank@example.com", "age": 45}'
     result = transform_and_process(json_data)
 
-    print(f"✅ Result: {result.data if result.success else result.error}")
+    # Modern pattern: use unwrap_or for clean default handling
+    print(f"✅ Result: {result.unwrap_or(f'Error: {result.error}')}")
 
 
 def main() -> None:

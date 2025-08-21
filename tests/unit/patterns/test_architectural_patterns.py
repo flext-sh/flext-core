@@ -13,8 +13,9 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import (
+    FlextBaseHandler,
     FlextEntity,
-    FlextHandlers,
+    FlextEntityId,
     FlextResult,
     FlextValueObject,
     flext_core,
@@ -59,39 +60,50 @@ class TestCleanArchitecturePatterns:
             name: str
             email: str
 
-        class CreateUserHandler(FlextHandlers.CommandHandler):
+        class CreateUserHandler(FlextBaseHandler):
             """Application command handler."""
 
-            def handle(self, command: object) -> FlextResult[object]:
+            @property
+            def handler_name(self) -> str:
+                """Get handler name."""
+                return "CreateUserHandler"
+
+            def can_handle(self, request: object) -> bool:
+                """Check if handler can handle the request."""
+                return isinstance(request, CreateUserCommand)
+
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle user creation."""
-                if not isinstance(command, CreateUserCommand):
-                    return FlextResult[None].fail("Invalid command type")
+                if not isinstance(request, CreateUserCommand):
+                    return FlextResult[object].fail("Invalid command type")
+
+                command = request  # Type narrowing for readability
 
                 # Create domain objects
                 try:
                     email_obj = UserEmail.model_validate({"email": command.email})
                     email_validation = email_obj.validate_business_rules()
                     if email_validation.is_failure:
-                        return FlextResult[None].fail(
+                        return FlextResult[object].fail(
                             f"Email validation failed: {email_validation.error}",
                         )
                 except Exception as e:
-                    return FlextResult[None].fail(f"Email creation failed: {e}")
+                    return FlextResult[object].fail(f"Email creation failed: {e}")
 
                 # Create entity
                 user = User(
-                    id="user_123",
+                    id=FlextEntityId("user_123"),
                     name=command.name,
                     email_obj=email_obj,
                 )
                 user_result = user.validate_domain_rules()
 
                 if user_result.is_failure:
-                    return FlextResult[None].fail(
+                    return FlextResult[object].fail(
                         f"User validation failed: {user_result.error}",
                     )
 
-                return FlextResult[str].ok(FlextResult[None].ok("User created successfully"))
+                return FlextResult[object].ok("User created successfully")
 
         # Infrastructure Layer - Framework integration
         # Initialize core instance for framework integration
@@ -103,7 +115,7 @@ class TestCleanArchitecturePatterns:
 
         result = handler.handle(command)
         assert result.success
-        assert result.data == "User created successfully"
+        assert result.value == "User created successfully"
 
     @pytest.mark.architecture
     @pytest.mark.ddd
@@ -188,12 +200,14 @@ class TestCleanArchitecturePatterns:
                 # Create new instance with updated status (immutable pattern)
                 result = self.copy_with(status="confirmed")
                 if result.is_failure:
-                    return FlextResult[None].fail(f"Failed to confirm order: {result.error}")
+                    return FlextResult[None].fail(
+                        f"Failed to confirm order: {result.error}"
+                    )
 
                 return FlextResult[None].ok(None)
 
         return Order(
-            id="order_123",
+            id=FlextEntityId("order_123"),
             order_id=order_id,
             total=money,
         )
@@ -223,19 +237,30 @@ class TestCleanArchitecturePatterns:
             user_id: str
             name: str
 
-        class UpdateUserHandler(FlextHandlers.CommandHandler):
+        class UpdateUserHandler(FlextBaseHandler):
             """Handler for user update commands."""
 
-            def handle(self, command: object) -> FlextResult[object]:
+            @property
+            def handler_name(self) -> str:
+                """Get handler name."""
+                return "UpdateUserHandler"
+
+            def can_handle(self, request: object) -> bool:
+                """Check if handler can handle the request."""
+                return isinstance(request, UpdateUserCommand)
+
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle user update command."""
-                if not isinstance(command, UpdateUserCommand):
-                    return FlextResult[None].fail("Invalid command type")
+                if not isinstance(request, UpdateUserCommand):
+                    return FlextResult[object].fail("Invalid command type")
+
+                command = request  # Type narrowing
 
                 # Simulate business logic
                 if not command.name.strip():
-                    return FlextResult[None].fail("Name cannot be empty")
+                    return FlextResult[object].fail("Name cannot be empty")
 
-                return FlextResult[None].ok(f"User {command.user_id} updated")
+                return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
         class GetUserQuery(BaseModel):
@@ -243,13 +268,25 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(
-            FlextHandlers.QueryHandler[GetUserQuery, dict[str, object]],
-        ):
+        class GetUserHandler(FlextBaseHandler):
             """Handler for user queries."""
 
-            def handle(self, query: GetUserQuery) -> FlextResult[dict[str, object]]:
+            @property
+            def handler_name(self) -> str:
+                """Get handler name."""
+                return "GetUserHandler"
+
+            def can_handle(self, request: object) -> bool:
+                """Check if handler can handle the request."""
+                return isinstance(request, GetUserQuery)
+
+            def handle(self, request: object) -> FlextResult[object]:
                 """Handle user query."""
+                if not isinstance(request, GetUserQuery):
+                    return FlextResult[object].fail("Invalid query type")
+
+                query = request  # Type narrowing
+
                 # Simulate data retrieval
                 user_data: dict[str, object] = {
                     "id": query.user_id,
@@ -257,7 +294,7 @@ class TestCleanArchitecturePatterns:
                     "email": "john@example.com",
                 }
 
-                return FlextResult[None].ok(user_data)
+                return FlextResult[object].ok(user_data)
 
         # Test CQRS separation
         command = UpdateUserCommand(user_id="123", name="Jane Doe")
@@ -265,14 +302,14 @@ class TestCleanArchitecturePatterns:
 
         command_result = command_handler.handle(command)
         assert command_result.success
-        assert "updated" in str(command_result.data)
+        assert "updated" in str(command_result.value)
 
         query = GetUserQuery(user_id="123")
         query_handler = GetUserHandler()
 
         query_result = query_handler.handle(query)
         assert query_result.success
-        assert isinstance(query_result.data, dict)
+        assert isinstance(query_result.value, dict)
 
 
 class TestEnterprisePatterns:
@@ -286,13 +323,19 @@ class TestEnterprisePatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> FlextResult[object]:
+            def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[None].ok({"type": "email", "provider": "smtp"})
+                    return FlextResult[dict[str, str]].ok(
+                        {"type": "email", "provider": "smtp"}
+                    )
                 if service_type == "sms":
-                    return FlextResult[None].ok({"type": "sms", "provider": "twilio"})
-                return FlextResult[None].fail(f"Unknown service type: {service_type}")
+                    return FlextResult[dict[str, str]].ok(
+                        {"type": "sms", "provider": "twilio"}
+                    )
+                return FlextResult[dict[str, str]].fail(
+                    f"Unknown service type: {service_type}"
+                )
 
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
@@ -337,9 +380,11 @@ class TestEnterprisePatterns:
             def build(self) -> FlextResult[dict[str, object]]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[None].fail("Configuration cannot be empty")
+                    return FlextResult[dict[str, object]].fail(
+                        "Configuration cannot be empty"
+                    )
 
-                return FlextResult[None].ok(self._config.copy())
+                return FlextResult[dict[str, object]].ok(self._config.copy())
 
         # Test builder usage
         config_result = (
@@ -351,7 +396,7 @@ class TestEnterprisePatterns:
         )
 
         assert config_result.success
-        config = config_result.data
+        config = config_result.value
         assert isinstance(config, dict)
         config_dict = config  # Already dict[str, object] from assertion
         database_dict = cast("dict[str, object]", config_dict["database"])
@@ -384,9 +429,9 @@ class TestEnterprisePatterns:
                 self._query_count += 1
 
                 if entity_id in self._data:
-                    return FlextResult[None].ok(self._data[entity_id])
+                    return FlextResult[object].ok(self._data[entity_id])
 
-                return FlextResult[None].fail(f"Entity not found: {entity_id}")
+                return FlextResult[object].fail(f"Entity not found: {entity_id}")
 
             def get_query_count(self) -> int:
                 """Get number of queries executed."""
@@ -407,9 +452,9 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
-            result = cast("FlextResult[None]", query_result)
+            result = cast("FlextResult[object]", query_result)
             assert result.success
-            entity_data = cast("dict[str, object]", result.data)
+            entity_data = cast("dict[str, object]", result.value)
             assert entity_data["id"] == i
 
         query_duration = time.time() - start_time

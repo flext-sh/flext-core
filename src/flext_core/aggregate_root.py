@@ -76,8 +76,6 @@ class FlextAggregateRoot(FlextEntity):
 
     """
 
-    _domain_event_objects: list[FlextEvent]
-
     model_config = ConfigDict(
         # Type safety and validation
         extra="forbid",
@@ -101,7 +99,11 @@ class FlextAggregateRoot(FlextEntity):
         actual_id = self._resolve_entity_id(entity_id, data)
         domain_events_objects = self._process_domain_events(data)
         created_at = self._extract_created_at(data)
-        entity_data = {k: v for k, v in data.items() if k != "created_at"}
+        entity_data = {
+            k: v
+            for k, v in data.items()
+            if k not in {"created_at", "_domain_event_objects"}
+        }
 
         try:
             self._initialize_parent(
@@ -162,24 +164,13 @@ class FlextAggregateRoot(FlextEntity):
         entity_data: dict[str, object],
     ) -> None:
         """Initialize parent class with all parameters."""
-        # Conversão explícita dos tipos esperados
-        id_value = (
-            FlextEntityId(actual_id)
-            if not isinstance(actual_id, FlextEntityId)
-            else cast("FlextEntityId", actual_id)
-        )
-        version_value = (
-            FlextVersion(version)
-            if not isinstance(version, FlextVersion)
-            else cast("FlextVersion", version)
-        )
+        # Conversão explícita dos tipos esperados - sempre criar novos para
+        # evitar isinstance issues
+        id_value = FlextEntityId(actual_id)
+        version_value = FlextVersion(version)
         created_at_value: FlextTimestamp | None = None
         if created_at is not None:
-            created_at_value = (
-                FlextTimestamp(created_at)
-                if not isinstance(created_at, FlextTimestamp)
-                else cast("FlextTimestamp", created_at)
-            )
+            created_at_value = FlextTimestamp(created_at)
 
         # domain_events_objects is expected to be normalized by _process_domain_events
         domain_events_value = FlextEventList(domain_events_objects)
@@ -258,7 +249,7 @@ class FlextAggregateRoot(FlextEntity):
                     f"Failed to create event: {event_result.error}",
                 )
 
-            event: FlextEvent = event_result.unwrap()
+            event: FlextEvent = event_result.value
             current_events: list[FlextEvent] = getattr(
                 self,
                 "_domain_event_objects",
@@ -303,7 +294,7 @@ class FlextAggregateRoot(FlextEntity):
                     f"Failed to create event: {event_result.error}",
                 )
 
-            event: FlextEvent = event_result.unwrap()
+            event: FlextEvent = event_result.value
             event_dict: dict[str, object] = event.model_dump()
             self.domain_events.root.append(event_dict)
             return FlextResult[None].ok(None)

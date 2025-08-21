@@ -28,7 +28,7 @@ from flext_core import (
 )
 
 
-class MockEntry(FlextValueObject):
+class TestEntry(FlextValueObject):
     """Mock entry for testing."""
 
     entry_type: str
@@ -41,7 +41,7 @@ class MockEntry(FlextValueObject):
         return FlextResult[None].ok(None)
 
 
-class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
+class ConcreteRegexProcessor(RegexProcessor[TestEntry]):
     """Concrete implementation of RegexProcessor for testing."""
 
     def _create_entry(
@@ -50,10 +50,10 @@ class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[MockEntry]:
-        """Create concrete MockEntry instance."""
+    ) -> FlextResult[TestEntry]:
+        """Create concrete TestEntry instance."""
         try:
-            entry = MockEntry(
+            entry = TestEntry(
                 entry_type=entry_type,
                 clean_content=clean_content,
                 original_content=original_content,
@@ -64,7 +64,7 @@ class ConcreteRegexProcessor(RegexProcessor[MockEntry]):
             return FlextResult[None].fail(f"Failed to create entry: {e}")
 
 
-class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
+class ConcreteBaseProcessor(BaseProcessor[TestEntry]):
     """Concrete implementation of BaseProcessor for testing."""
 
     def _extract_identifier(self, content: str) -> FlextResult[str]:
@@ -82,10 +82,10 @@ class ConcreteBaseProcessor(BaseProcessor[MockEntry]):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[MockEntry]:
-        """Create concrete MockEntry instance."""
+    ) -> FlextResult[TestEntry]:
+        """Create concrete TestEntry instance."""
         try:
-            entry = MockEntry(
+            entry = TestEntry(
                 entry_type=entry_type,
                 clean_content=clean_content,
                 original_content=original_content,
@@ -104,22 +104,22 @@ class ConcreteBaseEntry(BaseEntry):
         return FlextResult[None].ok(None)
 
 
-class RealEntryValidator:
+class EntryValidator:
     """Real validator for testing actual validation logic."""
 
-    def __init__(self, *, valid_ids: set[str] | None = None, invalid_ids: set[str] | None = None) -> None:
+    def __init__(
+        self, *, valid_ids: set[str] | None = None, invalid_ids: set[str] | None = None
+    ) -> None:
         """Initialize real validator with configurable validation rules."""
         self.valid_ids = valid_ids or {"id_123", "id_456", "id_789"}
         self.invalid_ids = invalid_ids or {"invalid_id", "bad_id"}
 
-    def is_valid(self, entry: MockEntry) -> bool:
+    def is_valid(self, entry: TestEntry) -> bool:
         """Real validation logic based on entry content."""
         # Validate based on actual entry properties
         if not entry.clean_content or len(entry.clean_content.strip()) < 3:
             return False
-        if "invalid" in entry.clean_content.lower():
-            return False
-        return True
+        return "invalid" not in entry.clean_content.lower()
 
     def is_whitelisted(self, identifier: str) -> bool:
         """Real whitelist check based on identifier patterns."""
@@ -131,14 +131,14 @@ class RealEntryValidator:
         return identifier.startswith("id_")
 
 
-class MockProcessor(BaseProcessor[MockEntry]):
+class TestProcessor(BaseProcessor[TestEntry]):
     """Mock processor for testing."""
 
     def _extract_identifier(self, content: str) -> FlextResult[str]:
         """Extract mock identifier."""
         if "invalid" in content:
-            return FlextResult[None].fail("Invalid content")
-        return FlextResult[None].ok(f"id_{content.rsplit(maxsplit=1)[-1]}")
+            return FlextResult[TestEntry].fail("Invalid content")
+        return FlextResult[TestEntry].ok(f"id_{content.rsplit(maxsplit=1)[-1]}")
 
     def _create_entry(
         self,
@@ -146,12 +146,12 @@ class MockProcessor(BaseProcessor[MockEntry]):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[MockEntry]:
+    ) -> FlextResult[TestEntry]:
         """Create mock entry."""
         if "fail_create" in clean_content:
-            return FlextResult[None].fail("Creation failed")
-        return FlextResult[None].ok(
-            MockEntry(
+            return FlextResult[TestEntry].fail("Creation failed")
+        return FlextResult[TestEntry].ok(
+            TestEntry(
                 entry_type=entry_type,
                 clean_content=clean_content,
                 original_content=original_content,
@@ -160,7 +160,7 @@ class MockProcessor(BaseProcessor[MockEntry]):
         )
 
 
-class MockFileWriter(BaseFileWriter):
+class TestFileWriter(BaseFileWriter):
     """Mock file writer for testing."""
 
     def __init__(self, *, fail_write: bool = False) -> None:
@@ -276,7 +276,7 @@ class TestConfigAttributeValidator:
             ["attr1", "attr2"],
         )
         assert result.success
-        assert result.data is True
+        assert result.value is True
 
     def test_validate_required_attributes_failure(self) -> None:
         """Test validate_required_attributes fails with missing attributes."""
@@ -350,7 +350,7 @@ class TestBaseConfigManager:
 
         result = manager.validate_config(["attr1", "attr2"])
         assert result.success
-        assert result.data is True
+        assert result.value is True
 
     def test_validate_config_no_requirements(self) -> None:
         """Test validate_config succeeds with no requirements."""
@@ -363,7 +363,7 @@ class TestBaseConfigManager:
 
         result = manager.validate_config()
         assert result.success
-        assert result.data is True
+        assert result.value is True
 
     def test_validate_config_failure(self) -> None:
         """Test validate_config fails with missing attributes."""
@@ -385,30 +385,30 @@ class TestBaseProcessor:
 
     def test_init_without_validator(self) -> None:
         """Test processor initialization without validator."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         assert processor.validator is None
         assert len(processor._extracted_entries) == 0
 
     def test_init_with_validator(self) -> None:
         """Test processor initialization with validator."""
-        validator = RealEntryValidator()
-        processor = MockProcessor(validator)
+        validator = EntryValidator()
+        processor = TestProcessor(validator)
         assert processor.validator is validator
 
     def test_extract_entry_info_success(self) -> None:
         """Test successful entry extraction."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         result = processor.extract_entry_info("test content 123", "test_type")
 
         assert result.success
-        assert result.data is not None
-        assert result.data.entry_type == "test_type"
-        assert result.data.identifier == "id_123"
+        assert result.value is not None
+        assert result.value.entry_type == "test_type"
+        assert result.value.identifier == "id_123"
         assert len(processor._extracted_entries) == 1
 
     def test_extract_entry_info_with_prefix(self) -> None:
         """Test entry extraction with prefix."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         result = processor.extract_entry_info(
             "prefix: test content 456",
             "test_type",
@@ -416,12 +416,12 @@ class TestBaseProcessor:
         )
 
         assert result.success
-        assert result.data is not None
-        assert result.data.clean_content == "test content 456"
+        assert result.value is not None
+        assert result.value.clean_content == "test content 456"
 
     def test_extract_entry_info_identifier_failure(self) -> None:
         """Test entry extraction with identifier failure."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         result = processor.extract_entry_info("invalid content", "test_type")
 
         assert not result.success
@@ -429,7 +429,7 @@ class TestBaseProcessor:
 
     def test_extract_entry_info_creation_failure(self) -> None:
         """Test entry extraction with creation failure."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         result = processor.extract_entry_info("fail_create content 789", "test_type")
 
         assert not result.success
@@ -437,8 +437,8 @@ class TestBaseProcessor:
     def test_extract_entry_info_validator_not_whitelisted(self) -> None:
         """Test entry extraction with validator rejection."""
         # Use real validator with restrictive whitelist
-        validator = RealEntryValidator(valid_ids={"allowed_id"}, invalid_ids={"id_123"})
-        processor = MockProcessor(validator)
+        validator = EntryValidator(valid_ids={"allowed_id"}, invalid_ids={"id_123"})
+        processor = TestProcessor(validator)
         result = processor.extract_entry_info("test content 123", "test_type")
 
         assert not result.success
@@ -447,8 +447,8 @@ class TestBaseProcessor:
     def test_extract_entry_info_validator_not_valid(self) -> None:
         """Test entry extraction with invalid entry."""
         # Use real validator that will fail on content with "invalid"
-        validator = RealEntryValidator()
-        processor = MockProcessor(validator)
+        validator = EntryValidator()
+        processor = TestProcessor(validator)
         # Use content that will pass identifier extraction but fail validation
         # The validator fails on content containing "invalid" in clean_content
         result = processor.extract_entry_info("INVALID test content 123", "test_type")
@@ -458,7 +458,7 @@ class TestBaseProcessor:
 
     def test_process_content_lines_success(self) -> None:
         """Test processing multiple content lines successfully."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         lines = [
             "test content 111",
             "test content 222",
@@ -467,11 +467,11 @@ class TestBaseProcessor:
 
         result = processor.process_content_lines(lines, "test_type")
         assert result.success
-        assert len(result.data or []) == 3
+        assert len(result.value or []) == 3
 
     def test_process_content_lines_with_empty_lines(self) -> None:
         """Test processing with empty lines."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         lines = [
             "test content 111",
             "",
@@ -481,11 +481,11 @@ class TestBaseProcessor:
 
         result = processor.process_content_lines(lines, "test_type")
         assert result.success
-        assert len(result.data or []) == 2
+        assert len(result.value or []) == 2
 
     def test_process_content_lines_partial_failure(self) -> None:
         """Test processing with some failures."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         lines = [
             "test content 111",
             "invalid content",
@@ -494,11 +494,11 @@ class TestBaseProcessor:
 
         result = processor.process_content_lines(lines, "test_type")
         assert result.success  # Partial success allowed
-        assert len(result.data or []) == 2
+        assert len(result.value or []) == 2
 
     def test_process_content_lines_all_failure(self) -> None:
         """Test processing with all failures."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         lines = [
             "invalid content",
             "invalid content",
@@ -510,7 +510,7 @@ class TestBaseProcessor:
 
     def test_get_extracted_entries(self) -> None:
         """Test getting extracted entries."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         processor.extract_entry_info("test content 123", "test_type")
         processor.extract_entry_info("test content 456", "test_type")
 
@@ -521,7 +521,7 @@ class TestBaseProcessor:
 
     def test_clear_extracted_entries(self) -> None:
         """Test clearing extracted entries."""
-        processor = MockProcessor()
+        processor = TestProcessor()
         processor.extract_entry_info("test content 123", "test_type")
 
         assert len(processor._extracted_entries) == 1
@@ -543,7 +543,7 @@ class TestRegexProcessor:
         result = processor._extract_identifier("content with id:test123 here")
 
         assert result.success
-        assert result.data == "test123"
+        assert result.value == "test123"
 
     def test_extract_identifier_no_match(self) -> None:
         """Test identifier extraction with no regex match."""
@@ -608,7 +608,7 @@ class TestBaseFileWriter:
             def write(self, data: str) -> None:
                 self.written_data.append(data)
 
-        writer = MockFileWriter()
+        writer = TestFileWriter()
         entries = cast("list[object]", ["entry1", "entry2", "entry3"])
         output_file = TestOutputFile()
 
@@ -627,7 +627,7 @@ class TestBaseFileWriter:
             def write(self, data: str) -> None:
                 self.written_data.append(data)
 
-        writer = MockFileWriter(fail_write=True)
+        writer = TestFileWriter(fail_write=True)
         entries = cast("list[object]", ["entry1", "entry2"])
         output_file = TestOutputFile()
 
@@ -660,26 +660,26 @@ class TestProcessingPipeline:
         pipeline = ProcessingPipeline[str, str]()
 
         def step1(data: str) -> FlextResult[str]:
-            return FlextResult[None].ok(data.upper())
+            return FlextResult[str].ok(data.upper())
 
         def step2(data: str) -> FlextResult[str]:
-            return FlextResult[None].ok(f"processed_{data}")
+            return FlextResult[str].ok(f"processed_{data}")
 
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")
 
         assert result.success
-        assert result.data == "processed_HELLO"
+        assert result.value == "processed_HELLO"
 
     def test_process_failure(self) -> None:
         """Test pipeline processing with failure."""
         pipeline = ProcessingPipeline[str, str]()
 
         def step1(data: str) -> FlextResult[str]:
-            return FlextResult[None].ok(data.upper())
+            return FlextResult[str].ok(data.upper())
 
         def step2(_data: str) -> FlextResult[str]:
-            return FlextResult[None].fail("Processing failed")
+            return FlextResult[str].fail("Processing failed")
 
         pipeline.add_step(step1).add_step(step2)
         result = pipeline.process("hello")
@@ -693,7 +693,7 @@ class TestProcessingPipeline:
         result = pipeline.process("hello")
 
         assert result.success
-        assert result.data == "hello"
+        assert result.value == "hello"
 
 
 class TestEntryValidatorProtocol:
@@ -701,14 +701,14 @@ class TestEntryValidatorProtocol:
 
     def test_protocol_implementation(self) -> None:
         """Test that our real validator implements the protocol correctly."""
-        validator = RealEntryValidator()
+        validator = EntryValidator()
 
         # Should be usable as EntryValidator
         assert callable(validator.is_valid)
         assert callable(validator.is_whitelisted)
 
         # Test actual calls with real validation logic
-        valid_entry = MockEntry(
+        valid_entry = TestEntry(
             entry_type="test",
             clean_content="clean content",
             original_content="original",
@@ -719,7 +719,7 @@ class TestEntryValidatorProtocol:
         assert validator.is_whitelisted("id_123") is True
 
         # Test invalid cases
-        invalid_entry = MockEntry(
+        invalid_entry = TestEntry(
             entry_type="test",
             clean_content="invalid",  # Contains "invalid" keyword
             original_content="original",

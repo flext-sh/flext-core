@@ -18,6 +18,7 @@ from flext_core import (
     FlextUtilities,
 )
 
+# use .shared_domain with dot to access local module
 from ..shared_domain import (
     Order as SharedOrder,
     Product as SharedProduct,

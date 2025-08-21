@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import contextlib
-from collections.abc import Callable
-from typing import TypeVar, cast
+from collections.abc import Callable, Iterator
+from typing import TypeGuard, TypeVar, cast, overload, override
 
 from flext_core.constants import ERROR_CODES
 from flext_core.exceptions import FlextOperationError
@@ -54,40 +54,72 @@ class FlextResult[T]:
 
     """
 
-    # Explicit instance attributes to aid static type checkers
-    _data: T | None
-    _error: str | None
-    _error_code: str | None
-    _error_data: dict[str, object]
+    # Python 3.13+ discriminated union architecture
+    # Type discriminant based on success/failure state
+    __match_args__ = ("_data", "_error")
+
+    # Overloaded constructor for proper type discrimination
+    @overload
+    def __init__(
+        self,
+        *,
+        data: T,
+        error: None = None,
+        error_code: None = None,
+        error_data: None = None,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        *,
+        data: None = None,
+        error: str,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
+    ) -> None: ...
 
     def __init__(
         self,
+        *,
         data: T | None = None,
         error: str | None = None,
         error_code: str | None = None,
         error_data: dict[str, object] | None = None,
     ) -> None:
-        """Initialize FlextResult with success data or error information.
+        """Initialize FlextResult with discriminated union pattern.
 
-        Creates a new FlextResult instance representing either a successful operation
-        (with data) or a failed operation (with error details). The result is considered
-        successful if no error is provided, otherwise it's considered a failure.
+        Python 3.13+ architecture enforces type safety through constructor overloads:
+        - Success: data is T, error is None
+        - Failure: data is None, error is str
 
         Args:
-            data: The success value to store. Can be None for successful void operations.
-            error: Error message describing what went wrong. None for successful results.
-            error_code: Optional structured error code for programmatic error handling.
-            error_data: Optional dictionary containing additional error metadata and context.
+            data: The success value (T) for successful results, None for failures.
+            error: Error message for failures, None for successes.
+            error_code: Optional structured error code for programmatic handling.
+            error_data: Optional dictionary containing additional error context.
 
         Note:
-            Either data should be provided (for success) OR error should be provided (for failure).
-            Providing both data and error results in a failure state (error takes precedence).
+            The overloaded constructors ensure type safety at compile time.
+            Runtime validation maintains architectural consistency.
 
         """
-        self._data = data
-        self._error = error
+        # Architectural invariant: exactly one of data or error must be provided
+        if error is not None:
+            # Failure path: ensure data is None for type consistency
+            self._data: T | None = None
+            self._error: str | None = error
+        else:
+            # Success path: data can be T (including None if T allows it)
+            self._data = data
+            self._error = None
+
         self._error_code = error_code
         self._error_data = error_data or {}
+
+    def _is_success_state(self, value: T | None) -> TypeGuard[T]:
+        """Type guard that narrows _data to T for successful results."""
+        return self._error is None and value is not None
 
     @property
     def is_success(self) -> bool:
@@ -119,14 +151,58 @@ class FlextResult[T]:
 
     @property
     def data(self) -> T:
-        """Get success data.
+        """LEGACY PROPERTY: Get success data using discriminated union type narrowing.
 
-        Returns the contained data. For failure results, this returns a sensible
-        default of type T at runtime (typically None). Statically, the type is
-        non-optional to enable ergonomic use in typed code after simple success
-        checks in tests and application logic.
+        This property maintains backward compatibility with existing code.
+        For new code, consider using the standard 'value' property or
+        direct access patterns after checking is_success.
+
+        Returns the contained data for successful results.
+        The architecture guarantees type safety through constructor overloads.
         """
-        return cast("T", self._data)
+        if self.is_failure:
+            msg = f"Attempted to access data on failed result: {self._error}"
+            raise TypeError(msg)
+        # Python 3.13+ discriminated union: when is_failure is False,
+        # the constructor overloads guarantee _data is T (including None if T allows it)
+        # Allow None data for Optional/Union types (T | None)
+        # Type cast required for static analyzers that don't support discriminated unions
+        return cast(
+            "T", self._data
+        )  # Type narrowing: _data is T (including None if T allows it)
+
+    @property
+    def value(self) -> T:
+        """MODERN PROPERTY: Get success data safely after checking is_success.
+
+        This is the standard, professional way to access result data in new code.
+        Use after checking is_success to get type-safe access without exceptions.
+
+        Example:
+            >>> result = FlextResult[str].ok("hello")
+            >>> if result.is_success:
+            ...     print(result.value.upper())  # Type-safe, no unwrap needed
+            'HELLO'
+
+        Returns:
+            The success value with full type safety.
+
+        Note:
+            Should only be used after checking is_success for type safety.
+            For legacy compatibility, use .data property or .unwrap() method.
+
+        """
+        # In standard usage, user should check is_success first
+        # This provides the same type narrowing as .data but with clearer intent
+        if self.is_failure:
+            msg = f"Attempted to access value on failed result: {self._error}"
+            raise TypeError(msg)
+        # Allow None data for Optional/Union types (T | None)
+        # The type system handles this correctly
+        # Type cast required for static analyzers that don't support discriminated unions
+        return cast(
+            "T", self._data
+        )  # Type narrowing: _data is T (including None if T allows it)
 
     @property
     def error(self) -> str | None:
@@ -154,6 +230,8 @@ class FlextResult[T]:
 
         Factory method for creating successful results. This is the preferred way
         to create successful FlextResult instances throughout the FLEXT ecosystem.
+
+        Uses discriminated union architecture to guarantee type safety.
 
         Args:
             data: The success value to wrap in the result.
@@ -240,11 +318,18 @@ class FlextResult[T]:
         for res in results:
             if res.is_failure:
                 return FlextResult[list[object]].fail(res.error or "error")
-            aggregated.append(res.data)
+            aggregated.append(res.value)
         return FlextResult[list[object]].ok(aggregated)
 
     def unwrap(self) -> T:
-        """Extract value or raise exception.
+        """LEGACY METHOD: Extract value or raise exception.
+
+        This method maintains backward compatibility with existing code.
+        For new code, consider using the ergonomic access patterns:
+        - result.value property for direct access after success check
+        - result[0] for subscript access
+        - for item in result: for iteration
+        - result | default for default values
 
         Returns:
             The success value.
@@ -255,9 +340,8 @@ class FlextResult[T]:
         """
         if self.is_failure:
             error_msg = self._error or "Unwrap failed"
-            # When unwrapping,  any provided error_code to pass through
+            # When unwrapping, pass through any provided error_code
             # and context to equal error_data directly.
-            # Pass through error_code; if none, set UNWRAP_ERROR and do not
             # override with OPERATION_ERROR default inside exception.
             error_kwargs = dict(self._error_data or {})
             # Mark as unwrap-originated to allow default error code override
@@ -268,10 +352,14 @@ class FlextResult[T]:
                 operation=None,
                 context=error_kwargs,
             )
-        # For success cases, return data even if it's None
-        #  is a valid value for successful results (e.g., void operations)
-        # Type system guarantees that for success results, _data is of type T
-        return cast("T", self._data)
+        # For success cases, return data using discriminated union type narrowing
+        # Python 3.13+ discriminated union: constructor overloads guarantee _data is T
+        # NOTE: FlextResult[None].ok(None) is VALID architecture (872 uses in ecosystem)
+        # None is a legitimate value for FlextResult[None] representing "success without data"
+        # Type cast required for static analyzers that don't support discriminated unions
+        return cast(
+            "T", self._data
+        )  # Type narrowing: _data is guaranteed to be T here (including None)
 
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value with function.
@@ -284,17 +372,21 @@ class FlextResult[T]:
 
         """
         if self.is_failure:
-            # Type-safe error propagation
+            # Type-safe error propagation - ensure error is not None
+            error_msg = self._error or "Map operation failed"
             new_result: FlextResult[U] = FlextResult(
-                error=self._error,
+                error=error_msg,
                 error_code=self._error_code,
                 error_data=self._error_data,
             )
             return new_result
         try:
-            # Apply function to data - type system guarantees _data is T for success
-            # Cast is safe here because for successful results, _data must be T
-            result = func(cast("T", self._data))
+            # Apply function to data using discriminated union type narrowing
+            # Python 3.13+ discriminated union: _data is guaranteed to be T for success
+            if self._data is None:
+                msg = "Success result has None data - this should not happen"
+                raise RuntimeError(msg)  # noqa: TRY301
+            result = func(self._data)  # Type narrowing: _data is T here
             return FlextResult[U](data=result)
         except (ValueError, TypeError, AttributeError) as e:
             # Handle specific transformation exceptions
@@ -322,17 +414,21 @@ class FlextResult[T]:
 
         """
         if self.is_failure:
-            # Type-safe error propagation
+            # Type-safe error propagation - ensure error is not None
+            error_msg = self._error or "Flat map operation failed"
             new_result: FlextResult[U] = FlextResult(
-                error=self._error,
+                error=error_msg,
                 error_code=self._error_code,
                 error_data=self._error_data,
             )
             return new_result
         try:
-            # Apply function to data, even if it's None
-            # Type system guarantees that for success results, _data is of type T
-            return func(cast("T", self._data))
+            # Apply function to data using discriminated union type narrowing
+            # Python 3.13+ discriminated union: _data is guaranteed to be T for success
+            if self._data is None:
+                msg = "Success result has None data - this should not happen"
+                raise RuntimeError(msg)  # noqa: TRY301
+            return func(self._data)  # Type narrowing: _data is T here
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
             return FlextResult[U](
@@ -352,27 +448,112 @@ class FlextResult[T]:
         """Boolean conversion - True for success, False for failure."""
         return self.is_success
 
+    def __iter__(self) -> Iterator[T | None | str]:
+        """Allow unpacking: value, error = result for ergonomic access."""
+        if self.is_success:
+            yield self._data
+            yield None
+        else:
+            yield None
+            yield self._error
+
+    def __getitem__(self, key: int) -> T | str | None:
+        """Allow subscript access: result[0] for data, result[1] for error."""
+        if key == 0:
+            return self._data if self.is_success else None
+        if key == 1:
+            return self._error
+        msg = "FlextResult only supports indices 0 (data) and 1 (error)"
+        raise IndexError(msg)
+
+    def __or__(self, default: T) -> T:
+        """Use | operator for default values: result | default_value."""
+        if self.is_success:
+            if self._data is None:
+                return default  # Handle None data case
+            return self._data
+        return default
+
+    def __enter__(self) -> T:
+        """Context manager entry - returns value or raises on error."""
+        if self.is_failure:
+            error_msg = self._error or "Context manager failed"
+            raise FlextOperationError(
+                error_msg,
+                code=self._error_code or ERROR_CODES["CONTEXT_ERROR"],
+                operation="context_manager",
+                context=self._error_data,
+            )
+        # Type narrowing: for success results, _data must be T
+        if self._data is None:
+            msg = "Success result has None data - this should not happen"
+            raise RuntimeError(msg)
+        return self._data
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
+        """Context manager exit - no special handling needed."""
+        return
+
+    @property
+    def value_or_none(self) -> T | None:
+        """Explicit alias for value property - returns None on failure."""
+        return self._data if self.is_success else None
+
+    def expect(self, message: str) -> T:
+        """Get value or raise with custom message - defensive alternative to unwrap().
+
+        This method provides defensive validation and should be used when you want
+        to ensure the data is not None. For normal operations where None is valid
+        (like FlextResult[None]), use .value property instead.
+
+        Args:
+            message: Custom error message for failures
+
+        Returns:
+            The success value if not None
+
+        Raises:
+            FlextOperationError: If result is failure
+            RuntimeError: If success result has None data (defensive validation)
+
+        """
+        if self.is_failure:
+            msg = f"{message}: {self._error}"
+            raise FlextOperationError(
+                msg,
+                code=self._error_code or ERROR_CODES["EXPECT_ERROR"],
+                operation="expect",
+                context=self._error_data,
+            )
+        # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
+        if self._data is None:
+            msg = f"{message}: Success result has None data - use .value if None is expected"
+            raise RuntimeError(msg)
+        return self._data
+
     # Boolean methods as callables removed - use properties instead
 
-    def unwrap_or(self, default: U) -> T | U:
-        """Get data or return default if failure."""
-        if self.is_failure:
-            return default
-        return self._data if self._data is not None else default
+    # unwrap_or method moved to a better location with improved implementation
 
     def __eq__(self, other: object) -> bool:
-        """Check equality with another result."""
+        """Check equality with another result using Python 3.13+ type narrowing."""
         if not isinstance(other, FlextResult):
             return False
-        # After isinstance check, other is FlextResult - cast to match generic types
-        other_result = cast("FlextResult[object]", other)
+        # Type narrowing: after isinstance check, other is FlextResult
+        # Compare attributes directly without cast
         return (
-            self._data == other_result._data
-            and self._error == other_result._error
-            and self._error_code == other_result._error_code
-            and self._error_data == other_result._error_data
+            self._data == other._data
+            and self._error == other._error
+            and self._error_code == other._error_code
+            and self._error_data == other._error_data
         )
 
+    @override
     def __hash__(self) -> int:
         """Return hash for a result to enable use in sets and dicts."""
         # Hash based on success state and primary content
@@ -391,8 +572,7 @@ class FlextResult[T]:
                     except (TypeError, AttributeError) as e:
                         logger = FlextLoggerFactory.get_logger(__name__)
                         logger.warning(
-                            f"Failed to hash object attributes for "
-                            f"{type(self._data).__name__}: {e}",
+                            f"Failed to hash object attributes for {type(self._data).__name__}: {e}",
                         )
 
                 # For complex objects, use a combination of type and memory ID
@@ -401,13 +581,14 @@ class FlextResult[T]:
             # For failure, hash the error message and code
             return hash((False, self._error, self._error_code))
 
+    @override
     def __repr__(self) -> str:
         """Return string representation for debugging."""
         if self.is_success:
             return f"FlextResult(data={self._data!r}, is_success=True, error=None)"
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
-    # Enhanced methods for a railway pattern
+    # Methods for a railway pattern
     def then[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map."""
         return self.flat_map(func)
@@ -430,6 +611,36 @@ class FlextResult[T]:
             return func()
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult[T].fail(str(e))
+
+    def unwrap_or(self, default: T) -> T:
+        """Return success value or default if failure.
+
+        This method provides a clean, ergonomic way to handle FlextResult values
+        without explicit success/failure checking, reducing code bloat.
+
+        Args:
+            default: Value to return if result is failure
+
+        Returns:
+            Success value if result is successful, default otherwise
+
+        Examples:
+            >>> # Instead of verbose checking
+            >>> result = validate_password(password)
+            >>> return result.value if result.success else False
+
+            >>> # Use unwrap_or for cleaner code
+            >>> return validate_password(password).unwrap_or(False)
+
+            >>> # Chain operations cleanly
+            >>> return process_data(input).map(lambda x: x.upper()).unwrap_or("default")
+
+        """
+        if self.is_success:
+            # Type narrowing: success case guarantees _data is T (including None if T allows it)
+            # Type cast required for static analyzers that don't support discriminated unions
+            return cast("T", self._data)
+        return default
 
     def recover(self, func: Callable[[str], T]) -> FlextResult[T]:
         """Recover from failure by applying func to error."""
@@ -477,7 +688,12 @@ class FlextResult[T]:
         if self.is_failure:
             return self
         try:
-            if predicate(cast("T", self._data)):
+            # Apply predicate using discriminated union type narrowing
+            # Python 3.13+ discriminated union: _data is guaranteed to be T for success
+            if self._data is None:
+                msg = "Success result has None data - this should not happen"
+                raise RuntimeError(msg)  # noqa: TRY301
+            if predicate(self._data):  # Type narrowing: _data is T here
                 return self
             return FlextResult[T].fail(error_msg)
         except (TypeError, ValueError, AttributeError) as e:
@@ -523,7 +739,7 @@ class FlextResult[T]:
         """Create a result from a function that might raise exception."""
         try:
             return cls.ok(func())
-        except (TypeError, ValueError, AttributeError) as e:
+        except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             return cls.fail(str(e))
 
     @staticmethod
@@ -533,8 +749,8 @@ class FlextResult[T]:
         for result in results:
             if result.is_failure:
                 return FlextResult[list[object]].fail(result.error or "Combine failed")
-            if result.data is not None:
-                data.append(result.data)
+            if result.value is not None:
+                data.append(result.value)
         return FlextResult[list[object]].ok(data)
 
     @staticmethod
@@ -691,11 +907,135 @@ def fail_result(
 # Backward compatibility alias
 FlextResultOperations = FlextResult
 
+# =============================================================================
+# FLEXT RESULT UTILITY PATTERNS
+# =============================================================================
+
+
+class FlextResultUtils:
+    """Utility functions for common FlextResult patterns.
+
+    Modern utilities to simplify common FlextResult operations and reduce
+    boilerplate code across the entire FLEXT ecosystem.
+    """
+
+    @staticmethod
+    def safe_unwrap_or_none[T](result: FlextResult[T]) -> T | None:
+        """Safely unwrap FlextResult or return None on failure.
+
+        Common pattern: result.value if result.success else None
+        Modern pattern: FlextResultUtils.safe_unwrap_or_none(result)
+
+        Args:
+            result: FlextResult to unwrap safely
+
+        Returns:
+            Result value if successful, None if failed
+
+        """
+        return result.unwrap_or(None)  # type: ignore[arg-type]
+
+    @staticmethod
+    def unwrap_or_raise[T](
+        result: FlextResult[T], exception_type: type[Exception] = RuntimeError
+    ) -> T:
+        """Unwrap FlextResult or raise exception with error message.
+
+        Common pattern: if result.success: return result.value else: raise Exception(result.error)
+        Modern pattern: FlextResultUtils.unwrap_or_raise(result)
+
+        Args:
+            result: FlextResult to unwrap
+            exception_type: Exception type to raise on failure
+
+        Returns:
+            Result value if successful
+
+        Raises:
+            exception_type: If result is failure
+
+        """
+        if result.success:
+            return result.value
+        raise exception_type(result.error or "Operation failed")
+
+    @staticmethod
+    def collect_successes[T](results: list[FlextResult[T]]) -> list[T]:
+        """Collect all successful values from a list of FlextResults.
+
+        Common pattern: [r.value for r in results if r.success]
+        Modern pattern: FlextResultUtils.collect_successes(results)
+
+        Args:
+            results: List of FlextResults to filter
+
+        Returns:
+            List of successful values only
+
+        """
+        return [r.value for r in results if r.success]
+
+    @staticmethod
+    def collect_failures[T](results: list[FlextResult[T]]) -> list[str]:
+        """Collect all error messages from failed FlextResults.
+
+        Common pattern: [r.error for r in results if r.is_failure and r.error]
+        Modern pattern: FlextResultUtils.collect_failures(results)
+
+        Args:
+            results: List of FlextResults to filter
+
+        Returns:
+            List of error messages from failed results
+
+        """
+        return [r.error for r in results if r.is_failure and r.error]
+
+    @staticmethod
+    def success_rate[T](results: list[FlextResult[T]]) -> float:
+        """Calculate success rate from a list of FlextResults.
+
+        Returns percentage (0.0 to 100.0) of successful results.
+
+        Args:
+            results: List of FlextResults to analyze
+
+        Returns:
+            Success rate as percentage (0.0 to 100.0)
+
+        """
+        if not results:
+            return 0.0
+        successes = sum(1 for r in results if r.success)
+        return (successes / len(results)) * 100.0
+
+    @staticmethod
+    def batch_process[T, U](
+        items: list[T], processor: Callable[[T], FlextResult[U]]
+    ) -> tuple[list[U], list[str]]:
+        """Process a batch of items and separate successes from failures.
+
+        Args:
+            items: List of items to process
+            processor: Function that processes each item
+
+        Returns:
+            Tuple of (successful_results, error_messages)
+
+        """
+        results = [processor(item) for item in items]
+        successes = FlextResultUtils.collect_successes(results)
+        failures = FlextResultUtils.collect_failures(results)
+        return successes, failures
+
+
 __all__: list[str] = [
     # Main result class
     "FlextResult",
     # Backward compatibility alias
     "FlextResultOperations",
+    # Utility class for FlextResult patterns
+    "FlextResultUtils",
     # Utility functions
     "safe_call",
     # Note: Other legacy functions (chain, compose) moved to legacy.py

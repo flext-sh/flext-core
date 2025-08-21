@@ -175,7 +175,7 @@ python -i examples/01_flext_result_railway_pattern.py
 
 # Now you can interact with the example
 >>> result = divide(10, 2)
->>> print(result.unwrap())
+>>> print(result.value)
 5.0
 ```
 

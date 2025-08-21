@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable as _Callable
-
-# Type aliases for testing
 from typing import cast
 
 from flext_core import (
@@ -13,10 +11,6 @@ from flext_core import (
     FlextTypes,
     TAnyDict,
     TAnyList,
-    TComparable,
-    TData,
-)
-from flext_core.typings import (
     TBusinessCode,
     TBusinessId,
     TBusinessName,
@@ -29,6 +23,7 @@ from flext_core.typings import (
     TConfigValue,
     TConnectionString,
     TCorrelationId,
+    TData,
     TDirectoryPath,
     TEntityId,
     TFilePath,
@@ -351,7 +346,7 @@ class TestProtocolDefinitions:
         obj2 = TComparableInt(10)
 
         # Test that objects implement the protocol
-        def use_comparable(obj: TComparable) -> bool:
+        def use_comparable(obj: object) -> bool:
             required_methods = ["__lt__", "__le__", "__gt__", "__ge__"]
             return all(hasattr(obj, method) for method in required_methods)
 
@@ -488,7 +483,7 @@ class TestTypesCoverageImprovements:
 
     def test_is_instance_exception_handling(self) -> None:
         """Test is_instance method exception handling (lines 256-257)."""
-        from flext_core.typings import FlextTypes  # noqa: PLC0415
+        from flext_core import FlextTypes  # noqa: PLC0415
 
         # Test with invalid type that causes TypeError/AttributeError
         class BadType:

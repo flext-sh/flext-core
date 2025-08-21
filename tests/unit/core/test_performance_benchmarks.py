@@ -33,7 +33,8 @@ class TestPerformanceBenchmarks:
         def create_and_chain_results() -> FlextResult[str]:
             """Create and chain multiple FlextResult operations."""
             return (
-                FlextResult[str].ok("initial")
+                FlextResult[str]
+                .ok("initial")
                 .map(lambda x: f"{x}_step1")
                 .map(lambda x: f"{x}_step2")
                 .flat_map(lambda x: FlextResult[str].ok(f"{x}_final"))
@@ -42,7 +43,7 @@ class TestPerformanceBenchmarks:
         benchmark_func = cast("Callable[[object], object]", benchmark)
         result = cast("FlextResult[str]", benchmark_func(create_and_chain_results))
         assert result.success
-        assert result.data == "initial_step1_step2_final"
+        assert result.value == "initial_step1_step2_final"
 
     @pytest.mark.performance
     @pytest.mark.benchmark
@@ -164,7 +165,7 @@ class TestStressTests:
         for service_id in range(service_count):
             result = container.get(f"service_{service_id}")
             assert result.success
-            assert result.data == f"value_{service_id}"
+            assert result.value == f"value_{service_id}"
 
         duration = time.time() - start_time
 
@@ -190,7 +191,7 @@ class TestStressTests:
         duration = time.time() - start_time
 
         assert result.success
-        assert result.data == 10000
+        assert result.value == 10000
 
         # Should complete 10,000 chained operations in under 1 second
         assert duration < 1.0, f"Long chain took too long: {duration:.3f}s"
@@ -262,7 +263,7 @@ class TestConcurrencyPerformance:
                     lambda x: f"{x}_step2",
                 )
 
-                results.append((thread_id, final_result.data))
+                results.append((thread_id, final_result.value))
             except Exception as e:
                 errors.append((thread_id, str(e)))
 

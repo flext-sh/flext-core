@@ -905,7 +905,7 @@ class FlextFullMixin(
 # ALIASES FOR CONVENIENCE
 # =============================================================================
 
-# Convenience mixins (map to modern implementations)
+# Convenience mixins (map to standard implementations)
 CompatibleTimestampMixin = FlextTimestampMixin
 CompatibleIdentifiableMixin = FlextIdentifiableMixin
 CompatibleValidatableMixin = FlextValidatableMixin

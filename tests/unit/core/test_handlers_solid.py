@@ -101,7 +101,7 @@ class TestSOLIDPrinciples:
         original_handler = FlextHandlers.CommandHandler("original")
         result = original_handler.handle("normal_command")
         assert result.success
-        assert result.data == "normal_command"
+        assert result.value == "normal_command"
 
         # Extended handler adds functionality without breaking original
         extended_handler = ExtendedCommandHandler("extended")
@@ -113,7 +113,7 @@ class TestSOLIDPrinciples:
         # Special command gets extended handling
         special_result = extended_handler.handle("SPECIAL_test")
         assert special_result.success
-        assert "Special handling" in str(special_result.data or "")
+        assert "Special handling" in str(special_result.value or "")
 
     def test_dependency_inversion_principle(self) -> None:
         """Test DIP - handlers depend on abstractions, not concretions."""
@@ -175,7 +175,7 @@ class TestSOLIDPrinciples:
         special_handler = SpecialCommandHandler("special")
         special_result = process_with_any_handler(special_handler, "test")
         assert special_result.success
-        assert "SPECIAL:" in str(special_result.data or "")
+        assert "SPECIAL:" in str(special_result.value or "")
 
         # Both handlers have same interface contracts
         assert hasattr(base_handler, "handle_with_hooks")

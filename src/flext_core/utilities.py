@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime
 from inspect import signature
-from typing import Generic, Protocol, TypeVar, cast
+from typing import Generic, Protocol, TypeVar, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
@@ -678,9 +678,8 @@ class FlextTypeGuards:
         """Check if an object is a list of specific type."""
         if not isinstance(obj, list):
             return False
-        # Cast to list[object] after isinstance check to ensure type safety
-        typed_list = cast("list[object]", obj)
-        return all(isinstance(item, item_type) for item in typed_list)
+        # After isinstance check, obj is narrowed to list type
+        return all(isinstance(item, item_type) for item in obj)
 
     @staticmethod
     def is_not_none_guard(value: object | None) -> bool:
@@ -784,6 +783,7 @@ class FlextGenericFactory(FlextBaseFactory[object]):
         """Initialize factory with a target type."""
         self._target_type = target_type
 
+    @override
     def create(self, **kwargs: object) -> FlextResult[object]:
         """Create instance of a target type with error handling."""
         try:

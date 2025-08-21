@@ -86,10 +86,10 @@ def _demo_type_safe_payload() -> None:
         correlation_id="req_456",
         processing_stage="created",
     )
-    if order_result.success and order_result.data is not None:
-        order_payload = order_result.data
-        order_payload.data.get("order_id") if order_payload.data else None
-        order_payload.data.get("total") if order_payload.data else None
+    if order_result.success and order_result.value is not None:
+        order_payload = order_result.value
+        order_payload.value.get("order_id") if order_payload.value else None
+        order_payload.value.get("total") if order_payload.value else None
 
 
 def _demo_invalid_payload() -> None:
@@ -116,7 +116,7 @@ def _demo_payload_transformation() -> None:
     transform_result = base_payload.transform_data(
         lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
     )
-    if transform_result.success and transform_result.data is not None:
+    if transform_result.success and transform_result.value is not None:
         pass
 
 
@@ -166,17 +166,17 @@ def _display_basic_messages(
     error_message_result: FlextResult[FlextPayload[str]],
 ) -> None:
     if info_message.success:
-        info_payload = info_message.data
+        info_payload = info_message.value
         if info_payload is not None:
             pass
 
     if warning_message.success:
-        warning_payload = warning_message.data
+        warning_payload = warning_message.value
         if warning_payload is not None:
             pass
 
     if error_message_result.success:
-        error_payload = error_message_result.data
+        error_payload = error_message_result.value
         if error_payload is not None:
             pass
 
@@ -188,7 +188,7 @@ def _validate_invalid_level_message() -> None:
         source="test_service",
     )
     if invalid_level_result.success:
-        invalid_payload = invalid_level_result.data
+        invalid_payload = invalid_level_result.value
         if invalid_payload is not None:
             pass
 
@@ -200,7 +200,7 @@ def _demonstrate_message_enrichment() -> None:
         source="base_service",
     )
     if base_message_result.success:
-        base_message = base_message_result.data
+        base_message = base_message_result.value
         if base_message is not None:
             base_message.enrich_metadata(
                 {
@@ -227,7 +227,7 @@ def _process_and_filter_messages() -> None:
             source=str(msg_data["source"]),
         )
         if message_result.success:
-            message = message_result.data
+            message = message_result.value
             if message is not None:
                 created_messages.append(message)
 
@@ -250,8 +250,8 @@ def _demonstrate_message_correlation() -> None:
         correlation_id=correlation_id,
     )
     if request_message_result.success and response_message_result.success:
-        request_msg = request_message_result.data
-        response_msg = response_message_result.data
+        request_msg = request_message_result.value
+        response_msg = response_message_result.value
         if request_msg is not None and response_msg is not None:
             pass
 
@@ -301,7 +301,7 @@ def _display_user_registration_event(
 ) -> FlextResult[None]:
     """Display user registration event details."""
     if user_registration_event.success:
-        event = user_registration_event.data
+        event = user_registration_event.value
         if event is not None:
             pass
 
@@ -371,8 +371,8 @@ def _display_order_lifecycle_events(
 ) -> FlextResult[None]:
     """Display order lifecycle event details."""
     if order_created_event.success and order_confirmed_event.success:
-        created_event = order_created_event.data
-        confirmed_event = order_confirmed_event.data
+        created_event = order_created_event.value
+        confirmed_event = order_confirmed_event.value
         if (
             created_event is not None
             and confirmed_event is not None
@@ -422,13 +422,13 @@ def _handle_stock_updated_event(
 ) -> FlextResult[None]:
     """Handle stock updated event and create low stock alert if needed."""
     if stock_updated_event.success:
-        stock_event = stock_updated_event.data
+        stock_event = stock_updated_event.value
         if (
             stock_event is not None
             and hasattr(stock_event, "data")
-            and stock_event.data is not None
+            and stock_event.value is not None
         ):
-            new_quantity = stock_event.data.get("new_quantity", 0)
+            new_quantity = stock_event.value.get("new_quantity", 0)
             if isinstance(new_quantity, int) and new_quantity <= LOW_STOCK_THRESHOLD:
                 return _create_and_display_low_stock_alert(product_id, new_quantity)
 
@@ -459,9 +459,9 @@ def _create_and_display_low_stock_alert(
 
     if (
         low_stock_event.success
-        and low_stock_event.data is not None
-        and hasattr(low_stock_event.data, "event_type")
-        and getattr(low_stock_event.data, "data", None) is not None
+        and low_stock_event.value is not None
+        and hasattr(low_stock_event.value, "event_type")
+        and getattr(low_stock_event.value, "data", None) is not None
     ):
         pass
 
@@ -518,8 +518,8 @@ def _display_correlated_events(
 ) -> FlextResult[None]:
     """Display correlated event details."""
     if process_started_event.success and step_completed_event.success:
-        started_event = process_started_event.data
-        completed_event = step_completed_event.data
+        started_event = process_started_event.value
+        completed_event = step_completed_event.value
         if (
             started_event is not None
             and completed_event is not None
@@ -550,7 +550,7 @@ def _display_validation_results(
 ) -> FlextResult[None]:
     """Display event validation results."""
     if invalid_event_result.success:
-        invalid_event = invalid_event_result.data
+        invalid_event = invalid_event_result.value
         if invalid_event is not None:
             pass
 
@@ -604,7 +604,7 @@ def _message_serialization_demo() -> None:
         correlation_id="corr_789",
     )
     if message_result.success:
-        message = message_result.data
+        message = message_result.value
         if message is not None:
             message.to_dict()
 
@@ -620,7 +620,7 @@ def _event_serialization_demo(serialization_data: TUserData) -> None:
         correlation_id="corr_789",
     )
     if event_result.success:
-        event = event_result.data
+        event = event_result.value
         if event is not None:
             event.to_dict()
 
@@ -633,7 +633,7 @@ def _cross_service_transport_demo() -> None:
     transport_data = service_a_payload.to_dict()
     received_payload = FlextPayload.from_dict(transport_data)
     if received_payload.success:
-        received_data = received_payload.data
+        received_data = received_payload.value
         if received_data is not None:
             pass
 
@@ -708,9 +708,9 @@ def _request_response_pattern_demo() -> None:
             "timestamp": time.time(),
         },
     )
-    if request_payload.data is not None:
+    if request_payload.value is not None:
         pass
-    if response_payload.data is not None:
+    if response_payload.value is not None:
         pass
 
 
@@ -761,7 +761,7 @@ def _event_driven_pattern_demo() -> None:
         payment_processed_event,
     ]:
         if event_result.success:
-            event = event_result.data
+            event = event_result.value
             if event is not None:
                 events.append(event)
     for _event in events:
@@ -794,7 +794,7 @@ def _message_routing_pattern_demo() -> None:
         low_priority_result,
     ]:
         if msg_result.success:
-            message = msg_result.data
+            message = msg_result.value
             if message is not None:
                 routing_messages.append(message)
     for message in routing_messages:
@@ -829,7 +829,7 @@ def _message_correlation_tracing_demo() -> None:
     correlated_messages: list[FlextPayload[str]] = []
     for msg_result in [start_message, validation_message, completion_message]:
         if msg_result.success:
-            message = msg_result.data
+            message = msg_result.value
             if message is not None:
                 correlated_messages.append(message)
 
@@ -842,7 +842,7 @@ def _dead_letter_queue_demo() -> None:
         metadata={"retry_count": 3, "max_retries": 3, "dead_letter": True},
     )
     if problematic_message_result.success:
-        problematic_message = problematic_message_result.data
+        problematic_message = problematic_message_result.value
         if problematic_message is not None:
             retry_count_obj = problematic_message.metadata.get("retry_count", 0)
             max_retries_obj = problematic_message.metadata.get("max_retries", 0)

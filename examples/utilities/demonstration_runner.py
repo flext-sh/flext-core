@@ -19,6 +19,7 @@ from flext_core import (
     TUserData,
 )
 
+# use .shared_domain with dot to access local module
 from ..shared_domain import SharedDomainFactory
 from .complexity_helpers import (
     DemonstrationSectionHelper,
@@ -158,7 +159,7 @@ def demonstrate_shared_domain_usage() -> None:
         )
         return
 
-    shared_user = user_result.data
+    shared_user = user_result.value
     if shared_user is None:
         DemonstrationSectionHelper.log_error("User data is None")
         return
@@ -198,7 +199,7 @@ def demonstrate_business_logic() -> None:
         )
         return
 
-    product = product_result.data
+    product = product_result.value
     if product is None:
         DemonstrationSectionHelper.log_error("Product data is None")
         return
@@ -206,7 +207,7 @@ def demonstrate_business_logic() -> None:
     # Test discount calculation
     discount_result = calculate_discount_price(product, 20.0)
     if discount_result.success:
-        final_price = discount_result.data
+        final_price = discount_result.value
         if final_price is not None:
             pass
     else:

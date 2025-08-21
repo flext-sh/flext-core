@@ -6,10 +6,20 @@ Advanced patterns and enterprise scenarios using FLEXT Core with shared domain m
 
 from __future__ import annotations
 
+import contextlib
 from decimal import Decimal
 from typing import cast
 
 from pydantic_settings import SettingsConfigDict
+
+# use .shared_domain with dot to access local module
+from shared_domain import (
+    EmailAddress,
+    Money,
+    Order as SharedOrder,
+    SharedDomainFactory,
+    User as SharedUser,
+)
 
 from flext_core import (
     FlextCommands,
@@ -18,14 +28,6 @@ from flext_core import (
     FlextResult,
     FlextSettings,
     get_logger,
-)
-
-from .shared_domain import (
-    EmailAddress,
-    Money,
-    Order as SharedOrder,
-    SharedDomainFactory,
-    User as SharedUser,
 )
 
 # =============================================================================
@@ -85,7 +87,7 @@ def _create_test_user(email: EmailAddress) -> FlextResult[SharedUser]:
     )
 
     if user_result.success:
-        user = user_result.data
+        user = user_result.value
         if user is None:
             return FlextResult.fail("User creation returned None data")
         return FlextResult.ok(user)
@@ -110,7 +112,7 @@ def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrde
     )
 
     if order_result.success:
-        order = order_result.data
+        order = order_result.value
         if order is None:
             return FlextResult.fail("Order creation returned None data")
         return FlextResult.ok(order)
@@ -121,7 +123,7 @@ def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Display order information and return order for chaining."""
     total_result = order.calculate_total()
     if total_result.success:
-        total = total_result.data
+        total = total_result.value
         if total is None:
             return FlextResult.fail("Total calculation returned None data")
 
@@ -161,7 +163,7 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             if user_result.is_failure:
                 return FlextResult.fail(f"Failed to create user: {user_result.error}")
 
-            user = user_result.data
+            user = user_result.value
 
             if user is None:
                 return FlextResult.fail("User creation returned None data")
@@ -195,13 +197,13 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
 
             orders = []
             if order1_result.success:
-                order1 = order1_result.data
+                order1 = order1_result.value
 
                 if order1 is None:
                     return FlextResult.fail("Order creation returned None data")
                 orders.append(order1)
             if order2_result.success:
-                order2 = order2_result.data
+                order2 = order2_result.value
 
                 if order2 is None:
                     return FlextResult.fail("Order creation returned None data")
@@ -231,7 +233,7 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
     if validation.success:
         query_result = query_handler.handle(query)
         if query_result.success:
-            orders = query_result.data
+            orders = query_result.value
 
             if orders is None:
                 return FlextResult.fail("Orders query returned None data")
@@ -251,19 +253,17 @@ def _demonstrate_decorators() -> FlextResult[None]:
         return x / y
 
     # Apply decorator using casting for protocol compliance
-    safe_calculation = FlextDecorators.safe_result(
+    FlextDecorators.safe_result(
         cast("FlextDecoratedFunction", risky_calculation),
     )
 
     # Test safe execution - safe_result returns a function with different signature
     # The decorator transforms the function, so we test with FlextResult wrapping
-    result1 = risky_calculation(10.0, 2.0)  # Normal call
+    risky_calculation(10.0, 2.0)  # Normal call
 
     # Test error handling
-    try:
-        result2 = risky_calculation(10.0, 0.0)
-    except ValueError:
-        pass  # Expected error
+    with contextlib.suppress(ValueError):
+        risky_calculation(10.0, 0.0)  # Expected error
     return FlextResult.ok(None)
 
 
@@ -315,7 +315,7 @@ def _demonstrate_configuration() -> FlextResult[None]:
         settings_result = FlextResult.fail(f"Configuration creation failed: {e}")
 
     if settings_result.success:
-        settings = settings_result.unwrap()
+        settings = settings_result.value
 
     return FlextResult.ok(None)
 

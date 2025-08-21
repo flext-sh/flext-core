@@ -283,7 +283,7 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service("test")
         assert result.success
-        assert result.data is service
+        assert result.value is service
 
     def test_get_service_from_factory_with_caching(self) -> None:
         """Test retrieving service from factory and caching behavior."""
@@ -384,8 +384,8 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service_info("test")
         assert result.success
-        assert result.data is not None
-        info = result.data
+        assert result.value is not None
+        info = result.value
         assert isinstance(info, dict)
         if info["name"] != "test":
             raise AssertionError(f"Expected {'test'}, got {info['name']}")
@@ -408,8 +408,8 @@ class TestFlextServiceRetrivier:
 
         result = retriever.get_service_info("test")
         assert result.success
-        assert result.data is not None
-        info = result.data
+        assert result.value is not None
+        info = result.value
         assert isinstance(info, dict)
         if info["name"] != "test":
             raise AssertionError(f"Expected {'test'}, got {info['name']}")
@@ -465,8 +465,8 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.get_typed("test", SampleService)
         assert result.success
-        assert result.data is service
-        assert isinstance(result.data, SampleService)
+        assert result.value is service
+        assert isinstance(result.value, SampleService)
 
     def test_get_typed_type_mismatch(self, clean_container: FlextContainer) -> None:
         """Test type-safe service retrieval with type mismatch."""
@@ -498,7 +498,7 @@ class TestFlextContainerAdvancedFeatures:
         result = clean_container.auto_wire(DependentService)
         assert result.success
 
-        dependent = result.data
+        dependent = result.value
         assert isinstance(dependent, DependentService)
         assert dependent.test_service is test_service
         if dependent.optional_param != "default":
@@ -564,7 +564,7 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.get_or_create("test", factory)
         assert result.success
-        assert result.data is service  # Should return existing
+        assert result.value is service  # Should return existing
 
     def test_get_or_create_new_service(self, clean_container: FlextContainer) -> None:
         """Test get_or_create creates new service when not found."""
@@ -574,9 +574,9 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.get_or_create("test", factory)
         assert result.success
-        assert isinstance(result.data, SampleService)
-        if result.data.name != "created":
-            raise AssertionError(f"Expected {'created'}, got {result.data.name}")
+        assert isinstance(result.value, SampleService)
+        if result.value.name != "created":
+            raise AssertionError(f"Expected {'created'}, got {result.value.name}")
 
         # Verify service was registered
         assert clean_container.has("test")
@@ -608,9 +608,9 @@ class TestFlextContainerAdvancedFeatures:
 
         result = clean_container.batch_register(cast("dict[str, object]", services))
         assert result.success
-        if result.data != ["service1", "service2", "service3"]:
+        if result.value != ["service1", "service2", "service3"]:
             raise AssertionError(
-                f"Expected {['service1', 'service2', 'service3']}, got {result.data}",
+                f"Expected {['service1', 'service2', 'service3']}, got {result.value}",
             )
 
         # Verify all services were registered
@@ -691,7 +691,7 @@ class TestServiceKey:
 
         result = get_typed(key, SampleService)
         assert result.success
-        assert result.data is service
+        assert result.value is service
 
     def test_get_typed_service_not_found(self, clean_container: FlextContainer) -> None:  # noqa: ARG002
         """Test get_typed with FlextServiceKey for non-existent service."""
@@ -746,7 +746,8 @@ class TestContainerEdgeCases:
 
         get_result = clean_container.get("none_service")
         assert get_result.success
-        assert get_result.data is None
+        # FlextResult[None].ok(None) is valid - represents "success without data"
+        assert get_result.value is None
 
     def test_container_with_complex_objects(
         self,
@@ -766,7 +767,7 @@ class TestContainerEdgeCases:
 
         get_result = clean_container.get("complex")
         assert get_result.success
-        assert get_result.data is complex_service
+        assert get_result.value is complex_service
 
     def test_factory_with_complex_signature(
         self,
@@ -782,7 +783,7 @@ class TestContainerEdgeCases:
 
         get_result = clean_container.get("complex")
         assert get_result.success
-        assert isinstance(get_result.data, ComplexService)
+        assert isinstance(get_result.value, ComplexService)
 
     def test_service_info_edge_cases(self, clean_container: FlextContainer) -> None:
         """Test service info with edge cases."""
@@ -799,8 +800,8 @@ class TestContainerEdgeCases:
 
         result = clean_container.get_info("derived")
         assert result.success
-        assert result.data is not None
-        info = result.data
+        assert result.value is not None
+        info = result.value
         assert isinstance(info, dict)
         if info["class"] != "DerivedService":
             raise AssertionError(f"Expected {'DerivedService'}, got {info['class']}")
@@ -854,7 +855,7 @@ class TestContainerEdgeCases:
             service_name = f"service_{i}"
             get_result = clean_container.get(service_name)
             assert get_result.success
-            assert get_result.data is services[service_name]
+            assert get_result.value is services[service_name]
 
 
 @pytest.mark.unit
@@ -868,8 +869,8 @@ class TestContainerValidationIntegration:
         # Test the internal validation method directly
         result = registrar._validate_service_name("valid_name")
         assert result.success
-        if result.data != "valid_name":
-            raise AssertionError(f"Expected {'valid_name'}, got {result.data}")
+        if result.value != "valid_name":
+            raise AssertionError(f"Expected {'valid_name'}, got {result.value}")
 
         # Test invalid name
         result = registrar._validate_service_name("")
@@ -884,8 +885,8 @@ class TestContainerValidationIntegration:
         # Test the internal validation method directly
         result = retriever._validate_service_name("valid_name")
         assert result.success
-        if result.data != "valid_name":
-            raise AssertionError(f"Expected {'valid_name'}, got {result.data}")
+        if result.value != "valid_name":
+            raise AssertionError(f"Expected {'valid_name'}, got {result.value}")
 
         # Test invalid name
         result = retriever._validate_service_name("")
@@ -906,8 +907,8 @@ class TestContainerSystemIntegration:
         # Get service info
         info_result = clean_container.get_info("lifecycle")
         assert info_result.success
-        assert info_result.data is not None
-        info_data = info_result.data
+        assert info_result.value is not None
+        info_data = info_result.value
         assert isinstance(info_data, dict)
         if info_data["type"] != "instance":
             raise AssertionError(f"Expected {'instance'}, got {info_data['type']}")
@@ -915,12 +916,12 @@ class TestContainerSystemIntegration:
         # Retrieve service
         get_result = clean_container.get("lifecycle")
         assert get_result.success
-        assert get_result.data is service
+        assert get_result.value is service
 
         # Type-safe retrieval
         typed_result = clean_container.get_typed("lifecycle", SampleService)
         assert typed_result.success
-        assert typed_result.data is service
+        assert typed_result.value is service
 
         # Unregister service
         unregister_result = clean_container.unregister("lifecycle")
@@ -970,8 +971,8 @@ class TestContainerSystemIntegration:
         # Get info shows it's now an instance
         info_result = clean_container.get_info("conversion")
         assert info_result.success
-        assert info_result.data is not None
-        info_data = info_result.data
+        assert info_result.value is not None
+        info_data = info_result.value
         assert isinstance(info_data, dict)
         if info_data["type"] != "instance":
             raise AssertionError(f"Expected {'instance'}, got {info_data['type']}")

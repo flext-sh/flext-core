@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import ValidationError
 
-from flext_core import FlextAggregateRoot, FlextResult
+from flext_core import FlextAggregateRoot, FlextEntityId, FlextResult
 
 
 class TestAggregateRoot(FlextAggregateRoot):
@@ -60,7 +60,9 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
     ) -> FlextResult[None]:
         """Handle type error event simulation."""
         try:
-            return super().add_domain_event("", _event_data)  # Empty string to trigger error
+            return super().add_domain_event(
+                "", _event_data
+            )  # Empty string to trigger error
         except TypeError as e:
             return FlextResult[None].fail(f"Failed to add domain event: {e}")
 
@@ -70,10 +72,14 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
     ) -> FlextResult[None]:
         """Handle value error event simulation."""
         try:
-            invalid_data: dict[str, object] = {"__invalid__": lambda x: x}  # Non-serializable
+            invalid_data: dict[str, object] = {
+                "__invalid__": lambda x: x
+            }  # Non-serializable
             return super().add_domain_event("valid_type", invalid_data)
         except (ValueError, TypeError):
-            return FlextResult[None].fail("Failed to add domain event: Invalid event data")
+            return FlextResult[None].fail(
+                "Failed to add domain event: Invalid event data"
+            )
 
     def _handle_attribute_error_event(
         self,
@@ -83,11 +89,13 @@ class FailingEventAggregateRoot(FlextAggregateRoot):
         try:
             # Since we can't delete attributes from frozen models,
             # we'll simulate an AttributeError by trying to access non-existent attribute
-            _ = self.some_missing_attribute  # type: ignore[attr-defined] # Intentional AttributeError
+            _ = self.some_missing_attribute
             return super().add_domain_event("test", event_data)
         except (AttributeError, ValidationError):
             # Catch both AttributeError and ValidationError (from frozen model)
-            return FlextResult[None].fail("Failed to add domain event: Missing attribute")
+            return FlextResult[None].fail(
+                "Failed to add domain event: Missing attribute"
+            )
 
 
 class TestAggregateRootCoverage:
@@ -96,19 +104,19 @@ class TestAggregateRootCoverage:
     def test_add_domain_event_exception_handling(self) -> None:
         """Test add_domain_event exception handling (lines 261-262)."""
         # Use our custom aggregate that simulates TypeError
-        aggregate = FailingEventAggregateRoot(id="test-123", name="Test")
+        aggregate = FailingEventAggregateRoot(id=FlextEntityId("test-123"), name="Test")
 
         result = aggregate.add_domain_event("type_error_event", {"data": "test"})
 
         assert result.is_failure
-        # The actual error will be "Invalid event arguments" as returned by the handler
+        # The actual error message from the payload validation
         assert result.error is not None
-        assert "Invalid event arguments" in result.error or "Failed to add domain event:" in result.error
+        assert "Failed to create event: Event type cannot be empty" in result.error
 
     def test_add_domain_event_value_error_handling(self) -> None:
         """Test add_domain_event ValueError handling (lines 261-262)."""
         # Use our custom aggregate that simulates ValueError
-        aggregate = FailingEventAggregateRoot(id="test-123", name="Test")
+        aggregate = FailingEventAggregateRoot(id=FlextEntityId("test-123"), name="Test")
 
         result = aggregate.add_domain_event("value_error_event", {"invalid": None})
 
@@ -120,7 +128,7 @@ class TestAggregateRootCoverage:
     def test_add_domain_event_attribute_error_handling(self) -> None:
         """Test add_domain_event AttributeError handling (lines 261-262)."""
         # Use our custom aggregate that simulates AttributeError
-        aggregate = FailingEventAggregateRoot(id="test-123", name="Test")
+        aggregate = FailingEventAggregateRoot(id=FlextEntityId("test-123"), name="Test")
 
         result = aggregate.add_domain_event("attribute_error_event", {"data": "test"})
 

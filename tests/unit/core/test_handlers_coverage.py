@@ -50,12 +50,12 @@ class TestFlextBaseHandler:
         # Test successful handling
         result = handler.handle("test request")
         assert result.success
-        assert result.data == "test request"
+        assert result.value == "test request"
 
         # Test with different data types
         dict_result = handler.handle({"data": "test"})
         assert dict_result.success
-        assert dict_result.data == {"data": "test"}
+        assert dict_result.value == {"data": "test"}
 
     def test_base_handler_validate_request(self) -> None:
         """Test validate_request method."""
@@ -83,7 +83,7 @@ class TestFlextBaseHandler:
 
         result = handler.process_message("test message")
         assert result.success
-        assert result.data == "test message"
+        assert result.value == "test message"
 
     def test_base_handler_post_process(self) -> None:
         """Test post_process hook."""
@@ -124,7 +124,7 @@ class TestFlextValidatingHandler:
         # Test valid request
         result = handler.handle("valid request")
         assert result.success
-        assert result.data == "valid request"
+        assert result.value == "valid request"
 
         # Test None request (should fail validation)
         result = handler.handle(None)
@@ -158,7 +158,7 @@ class TestFlextValidatingHandler:
 
         result = handler.validate_output("any output")
         assert result.success
-        assert result.data == "any output"
+        assert result.value == "any output"
 
     def test_validating_handler_get_validation_rules(self) -> None:
         """Test get_validation_rules method."""
@@ -187,7 +187,7 @@ class TestFlextValidatingHandler:
         # Test valid message
         result = handler.validate("valid message")
         assert result.success
-        assert result.data == "valid message"
+        assert result.value == "valid message"
 
         # Test None message
         result = handler.validate(None)

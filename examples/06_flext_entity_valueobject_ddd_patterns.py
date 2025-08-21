@@ -14,19 +14,20 @@ Key Patterns:
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any, cast
 
-from flext_core import FlextEntity, FlextResult, FlextValueObject
-from flext_core.entities import (
+from pydantic import Field
+
+from flext_core import (
+    FlextEntity,
     FlextEntityId,
     FlextEventList,
+    FlextGenerators,
     FlextMetadata,
+    FlextResult,
     FlextTimestamp,
+    FlextValueObject,
     FlextVersion,
 )
-from flext_core.utilities import FlextGenerators
-
-from .shared_domain import Address
 
 # Constants to avoid magic numbers
 MIN_PRODUCT_CODE_LENGTH = 3
@@ -36,6 +37,15 @@ MAX_DISCOUNT_PERCENT = 100
 # =============================================================================
 # VALUE OBJECTS - Immutable domain concepts
 # =============================================================================
+
+
+class Address(FlextValueObject):
+    """Address value object for customer addresses."""
+
+    street: str
+    city: str
+    postal_code: str
+    country: str = "US"
 
 
 class ProductCode(FlextValueObject):
@@ -73,7 +83,9 @@ class Price(FlextValueObject):
                 "Cannot add prices with different currencies"
             )
         return FlextResult[Price].ok(
-            Price(amount=self.amount + other.amount, currency=self.currency)
+            Price.model_validate(
+                {"amount": self.amount + other.amount, "currency": self.currency}
+            )
         )
 
 
@@ -160,13 +172,20 @@ class ShoppingCart(FlextEntity):
     """Shopping cart aggregate root."""
 
     customer_id: str
-    total: Price = Price(amount=Decimal("0.00"))
+    total: Price = Price.model_validate({"amount": Decimal("0.00")})
+    items: list[dict[str, object]] = Field(default_factory=list)
 
-    def __init__(self, customer_id: str, **kwargs: Any) -> None:
-        """Initialize shopping cart with empty items."""
-        super().__init__(**kwargs)
-        self.customer_id = customer_id
-        self.items: list[dict[str, object]] = []
+    @classmethod
+    def create(cls, customer_id: str, **kwargs: object) -> ShoppingCart:
+        """Create a shopping cart with proper initialization."""
+        cart_id = kwargs.get("id", f"cart_{customer_id}")
+        items = kwargs.get("items", [])
+
+        return cls(
+            id=str(cart_id),
+            customer_id=customer_id,
+            items=list(items) if isinstance(items, list) else [],
+        )
 
     def add_item(
         self, product: Product, quantity: int = 1
@@ -185,15 +204,18 @@ class ShoppingCart(FlextEntity):
             "price": str(product.price.amount),
             "quantity": quantity,
         }
-        self.items.append(cast("dict[str, object]", item))
+        self.items.append(item)
 
         # Update total
-        item_total = Price(
-            amount=product.price.amount * quantity, currency=product.price.currency
+        item_total = Price.model_validate(
+            {
+                "amount": product.price.amount * quantity,
+                "currency": product.price.currency,
+            }
         )
         total_result = self.total.add(item_total)
         if total_result.success:
-            self.total = total_result.unwrap()
+            self.total = total_result.value
 
         # Raise domain event
         self.add_domain_event(
@@ -212,7 +234,7 @@ class ShoppingCart(FlextEntity):
         if not self.items:
             return FlextResult[dict[str, object]].fail("Cannot checkout empty cart")
 
-        order_data = {
+        order_data: dict[str, object] = {
             "customer_id": self.customer_id,
             "items": self.items.copy(),
             "total": str(self.total.amount),
@@ -221,14 +243,16 @@ class ShoppingCart(FlextEntity):
 
         # Clear cart after checkout
         self.items.clear()
-        self.total = Price(amount=Decimal("0.00"))
+        self.total = Price.model_validate({"amount": Decimal("0.00")})
 
         self.add_domain_event(
             "CheckoutCompleted",
             {
                 "cart_id": self.id,
                 "customer_id": self.customer_id,
-                "item_count": len(order_data["items"]),
+                "item_count": len(
+                    self.items
+                ),  # Use self.items instead of order_data["items"]
             },
         )
 
@@ -254,7 +278,9 @@ class PricingService:
         discount_amount = price.amount * (discount_percent / 100)
         final_amount = price.amount - discount_amount
 
-        return FlextResult.ok(Price(amount=final_amount, currency=price.currency))
+        return FlextResult.ok(
+            Price.model_validate({"amount": final_amount, "currency": price.currency})
+        )
 
     @staticmethod
     def apply_bulk_discount(
@@ -270,9 +296,11 @@ class PricingService:
         for item in items:
             discount_result = PricingService.calculate_discount(item.price, Decimal(10))
             if discount_result.success:
-                discounted_prices.append(discount_result.unwrap())
+                discounted_prices.append(discount_result.value)
             else:
-                return discount_result.map_error(lambda e: f"Bulk discount failed: {e}")
+                return FlextResult[list[Price]].fail(
+                    f"Bulk discount failed: {discount_result.error}"
+                )
 
         return FlextResult.ok(discounted_prices)
 
@@ -290,65 +318,75 @@ class DomainObjectFactory:
         code: str, name: str, price_amount: str, currency: str = "USD"
     ) -> FlextResult[Product]:
         """Create product with validation."""
-        return (
-            FlextResult.ok({
-                "code": code,
-                "name": name,
-                "amount": price_amount,
-                "currency": currency,
-            })
-            .flat_map(lambda data: ProductCode.create(code=data["code"]))
-            .flat_map(
-                lambda product_code: Price.create(
-                    amount=Decimal(str(price_amount)), currency=currency
-                ).map(
-                    lambda price: Product(
-                        code=product_code,
-                        name=name,
-                        price=price,
-                        id=FlextEntityId(),
-                        version=FlextVersion(),
-                        created_at=FlextTimestamp(),
-                        updated_at=FlextTimestamp(),
-                        domain_events=FlextEventList(),
-                        metadata=FlextMetadata(),
-                    )
-                )
+        try:
+            # Create value objects
+            product_code = ProductCode.model_validate({"code": code})
+            price = Price.model_validate(
+                {"amount": Decimal(str(price_amount)), "currency": currency}
             )
-            .flat_map(
-                lambda product: product.validate_business_rules().map(lambda _: product)
+
+            # Create entity with proper initialization
+            product = Product(
+                code=product_code,
+                name=name,
+                price=price,
+                id=FlextEntityId("product_" + code),
+                version=FlextVersion(1),
+                created_at=FlextTimestamp(),
+                updated_at=FlextTimestamp(),
+                domain_events=FlextEventList(),
+                metadata=FlextMetadata(),
             )
-        )
+
+            # Validate business rules
+            validation_result = product.validate_business_rules()
+            if not validation_result.success:
+                error_msg = validation_result.error or "Validation failed"
+                return FlextResult[Product].fail(error_msg)
+
+            return FlextResult[Product].ok(product)
+
+        except (ValueError, TypeError) as e:
+            return FlextResult[Product].fail(f"Failed to create product: {e}")
 
     @staticmethod
     def create_customer(
         name: str, email: str, city: str = "Unknown", country: str = "Unknown"
     ) -> FlextResult[Customer]:
         """Create customer with validation."""
-        address = Address(
-            street="123 Main St", city=city, postal_code="12345", country=country
+        address = Address.model_validate(
+            {
+                "street": "123 Main St",
+                "city": city,
+                "postal_code": "12345",
+                "country": country,
+            }
         )
 
         customer = Customer(
             name=name,
             email=email,
             address=address,
-            id=FlextEntityId(),
-            version=FlextVersion(),
+            id=FlextEntityId(f"customer_{name.replace(' ', '_').lower()}"),
+            version=FlextVersion(1),
             created_at=FlextTimestamp(),
             updated_at=FlextTimestamp(),
             domain_events=FlextEventList(),
             metadata=FlextMetadata(),
         )
-        return customer.validate_business_rules().map(lambda _: customer)
+        validation_result = customer.validate_business_rules()
+        if not validation_result.success:
+            error_msg = validation_result.error or "Validation failed"
+            return FlextResult[Customer].fail(error_msg)
+        return FlextResult[Customer].ok(customer)
 
     @staticmethod
     def create_shopping_cart(customer_id: str) -> FlextResult[ShoppingCart]:
         """Create shopping cart for customer."""
         return FlextResult.ok(
-            ShoppingCart(
-                id=f"cart_{customer_id}_{FlextGenerators.generate_uuid()[:8]}",
+            ShoppingCart.create(
                 customer_id=customer_id,
+                id=f"cart_{customer_id}_{FlextGenerators.generate_uuid()[:8]}",
             )
         )
 
@@ -363,13 +401,13 @@ def demo_value_objects() -> None:
     print("\n🧪 Testing value objects...")
 
     # Create prices
-    price1 = Price(amount=Decimal("10.99"), currency="USD")
-    price2 = Price(amount=Decimal("5.00"), currency="USD")
+    price1 = Price.model_validate({"amount": Decimal("10.99"), "currency": "USD"})
+    price2 = Price.model_validate({"amount": Decimal("5.00"), "currency": "USD"})
 
     # Add prices
     total_result = price1.add(price2)
     if total_result.success:
-        total = total_result.unwrap()
+        total = total_result.value
         print(f"✅ Total price: {total.amount} {total.currency}")
 
 
@@ -383,13 +421,13 @@ def demo_entity_lifecycle() -> None:
     )
 
     if product_result.success:
-        product = product_result.unwrap()
+        product = product_result.value
 
         # Activate product
         activate_result = product.activate()
         if activate_result.success:
             print(f"✅ Product activated: {product.name}")
-            print(f"📅 Domain events: {len(product.get_domain_events())}")
+            print(f"📅 Domain events: {len(product.domain_events)}")
 
 
 def demo_aggregate_patterns() -> None:
@@ -403,8 +441,8 @@ def demo_aggregate_patterns() -> None:
     )
 
     if cart_result.success and product_result.success:
-        cart = cart_result.unwrap()
-        product = product_result.unwrap()
+        cart = cart_result.value
+        product = product_result.value
 
         # Add item to cart
         add_result = cart.add_item(product, quantity=2)
@@ -416,7 +454,7 @@ def demo_aggregate_patterns() -> None:
         # Checkout
         checkout_result = cart.checkout()
         if checkout_result.success:
-            order_data = checkout_result.unwrap()
+            order_data = checkout_result.value
             print(f"✅ Checkout completed. Order total: {order_data.get('total')}")
 
 
@@ -424,11 +462,11 @@ def demo_domain_services() -> None:
     """Demonstrate domain services."""
     print("\n🧪 Testing domain services...")
 
-    price = Price(amount=Decimal("100.00"), currency="USD")
+    price = Price.model_validate({"amount": Decimal("100.00"), "currency": "USD"})
     discount_result = PricingService.calculate_discount(price, Decimal(20))
 
     if discount_result.success:
-        discounted_price = discount_result.unwrap()
+        discounted_price = discount_result.value
         print(
             f"✅ Discounted price: {discounted_price.amount} {discounted_price.currency}"
         )

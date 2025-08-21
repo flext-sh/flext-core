@@ -40,7 +40,7 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
         creation_msg: str = f"Failed to create {entity_class.__name__}: {result.error}"
         raise AssertionError(creation_msg)
 
-    instance = result.unwrap()
+    instance = result.value
 
     # Additional domain validation for aggregate roots
     if isinstance(instance, FlextAggregateRoot):
@@ -223,7 +223,7 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {hash(entity2)}, got {hash(entity1)}")
 
         # Test in set/dict
-        entity_set = {entity1, entity2}
+        entity_set = {entity1, entity2}  # pyright: ignore[reportUnhashable]
         if len(entity_set) != 1:  # Only one entity due to same ID
             raise AssertionError(f"Expected {1}, got {len(entity_set)}")
 
@@ -317,7 +317,7 @@ class TestFlextValueObject:
         assert hash(vo1) != hash(vo3)
 
         # Test in set
-        vo_set = {vo1, vo2, vo3}
+        vo_set = {vo1, vo2, vo3}  # pyright: ignore[reportUnhashable]
         if len(vo_set) != EXPECTED_BULK_SIZE:  # vo1 and vo2 are the same
             raise AssertionError(f"Expected {2}, got {len(vo_set)}")
 
@@ -589,6 +589,7 @@ class TestFlextAggregateRoot:
         same_id_aggregate = SampleAggregateRoot(
             id=str(aggregate.id),  # Convert FlextEntityId to string
             title="Different Title",
+            _domain_event_objects=[],
         )
         if aggregate != same_id_aggregate:
             raise AssertionError(f"Expected {same_id_aggregate}, got {aggregate}")
@@ -629,6 +630,7 @@ class TestFlextAggregateRoot:
         aggregate = SampleAggregateRoot(
             id=custom_id,
             title="Test Aggregate",
+            _domain_event_objects=[],
         )
 
         # Modern FlextEntityId wrapper - compare string representation
@@ -646,6 +648,7 @@ class TestFlextAggregateRoot:
             id="test-agg-id",
             title="Test Aggregate",
             created_at=created_time,
+            _domain_event_objects=[],
         )
 
         if aggregate.title != "Test Aggregate":
@@ -696,7 +699,7 @@ class TestFlextAggregateRoot:
             version=aggregate.version,  # FlextVersion is now just an int
         )
         assert event_result.success
-        event = event_result.unwrap()
+        event = event_result.value
 
         # Initially no events
         if len(aggregate.get_domain_events()) != 0:

@@ -13,7 +13,7 @@ from typing import Literal, cast
 
 from pydantic import Field, SecretStr
 
-from flext_core import FlextConfig, FlextEntity, FlextResult, FlextValue
+from flext_core import FlextConfig, FlextEntity, FlextEntityId, FlextResult, FlextValue
 
 # =============================================================================
 # LAYER 0: FOUNDATION PATTERNS - Core Pydantic Models
@@ -136,7 +136,7 @@ class FlextDataPipeline(FlextEntity):
 def pipeline_factory() -> FlextDataPipeline:
     """Create a default FlextDataPipeline instance."""
     return FlextDataPipeline(
-        id="default",
+        id=FlextEntityId("default"),
         name="default_pipeline",
         source_config=FlextOracleConfig(
             username="user",
@@ -229,7 +229,7 @@ class FlextPipelineService:
         ) -> FlextResult[FlextDataPipeline]:
             try:
                 instance = FlextDataPipeline(
-                    id=f"pipeline_{len(self._pipelines) + 1}",
+                    id=FlextEntityId(f"pipeline_{len(self._pipelines) + 1}"),
                     name=name,
                     source_config=cfg,
                     owner=owner,
@@ -239,25 +239,25 @@ class FlextPipelineService:
                 return FlextResult.fail(str(e))
 
         config_result = _build_config()
-        if config_result.is_failure or config_result.data is None:
+        if config_result.is_failure or config_result.value is None:
             return FlextResult.fail(
                 f"Invalid Oracle config: {config_result.error or 'None'}",
             )
 
         owner_result = _build_owner()
-        if owner_result.is_failure or owner_result.data is None:
+        if owner_result.is_failure or owner_result.value is None:
             return FlextResult.fail(
                 f"Invalid owner profile: {owner_result.error or 'None'}",
             )
 
-        pipeline_result = _build_pipeline(config_result.data, owner_result.data)
-        if pipeline_result.is_failure or pipeline_result.data is None:
+        pipeline_result = _build_pipeline(config_result.value, owner_result.value)
+        if pipeline_result.is_failure or pipeline_result.value is None:
             return FlextResult.fail(
                 f"Pipeline creation failed: {pipeline_result.error or 'None'}",
             )
 
-        pipeline = pipeline_result.data
-        self._pipelines[pipeline.id] = pipeline
+        pipeline = pipeline_result.value
+        self._pipelines[str(pipeline.id)] = pipeline
         return FlextResult.ok(pipeline)
 
     def activate_pipeline(self, pipeline_id: str) -> FlextResult[str]:
@@ -376,14 +376,14 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     # Create pipeline using unified patterns
     pipeline_result = service.create_pipeline(
         name="Customer Data ETL Pipeline",
-        oracle_config=oracle_config,
+        oracle_config=cast("dict[str, object]", oracle_config),
         owner_profile=cast("dict[str, object]", owner_profile),
     )
 
     if pipeline_result.is_failure:
         return None
 
-    pipeline = pipeline_result.data
+    pipeline = pipeline_result.value
     if pipeline is not None:
         return pipeline
     return None
@@ -395,7 +395,7 @@ def demonstrate_semantic_types() -> None:
     connection_validation = FlextUnifiedUtilities.validate_oracle_connection(
         DatabaseConnection,
     )
-    if connection_validation.success and connection_validation.data is not None:
+    if connection_validation.success and connection_validation.value is not None:
         pass
 
 
@@ -405,7 +405,7 @@ def demonstrate_domain_services(
 ) -> None:
     """Demonstrate Layer 2: Domain Services."""
     # Activate pipeline
-    activation_result = service.activate_pipeline(pipeline.id)
+    activation_result = service.activate_pipeline(str(pipeline.id))
     if activation_result.success:
         pass
 
@@ -440,8 +440,8 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         cast("dict[str, object]", sample_data),
         enhance_data,
     )
-    if transform_result.success and transform_result.data is not None:
-        for _key, _value in transform_result.data.items():
+    if transform_result.success and transform_result.value is not None:
+        for _key, _value in transform_result.value.items():
             pass
 
 
@@ -459,7 +459,7 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
     invalid_config = {"host": "invalid", "port": -1, "username": "test"}
     invalid_result = service.create_pipeline(
         "Invalid Pipeline",
-        invalid_config,
+        cast("dict[str, object]", invalid_config),
         cast("dict[str, object]", owner_profile),
     )
 

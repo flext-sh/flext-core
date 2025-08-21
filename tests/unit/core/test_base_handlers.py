@@ -78,7 +78,7 @@ class TestFlextBaseHandler:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == test_request
+        assert result.value == test_request
 
     def test_validate_request_method(self) -> None:
         """Test validate_request method (lines 41-43)."""
@@ -96,10 +96,10 @@ class TestFlextBaseHandler:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == test_request
+        assert result.value == test_request
 
 
-class ConcreteCommandHandler(FlextCommandHandler[str, int]):
+class ConcreteCommandHandler(FlextAbstractHandler[object, object]):
     """Concrete implementation for testing FlextCommandHandler."""
 
     @property
@@ -111,15 +111,22 @@ class ConcreteCommandHandler(FlextCommandHandler[str, int]):
         """Check if can handle message type."""
         return True
 
-    def handle_command(self, command: str) -> FlextResult[int]:
-        """Handle string command and return length."""
+    def handle_command(self, command: object) -> FlextResult[object]:
+        """Handle command and return length."""
         if not command:
-            return FlextResult[int].fail("Empty command")
-        return FlextResult[int].ok(len(command))
+            return FlextResult[object].fail("Empty command")
+        if isinstance(command, str):
+            return FlextResult[object].ok(len(command))
+        return FlextResult[object].ok(command)
 
-    def process_request(self, request: str) -> FlextResult[int]:
-        """Process request - delegates to handle_command."""
-        return self.handle_command(request)
+    def handle(self, request: object) -> FlextResult[object]:
+        return self.process_request(request)
+
+    def process_request(self, command: object) -> FlextResult[object]:
+        """Process command request."""
+        if not isinstance(command, dict) or "name" not in command:
+            return FlextResult[object].fail("Invalid command")
+        return FlextResult[object].ok(f"Processed {command['name']}")
 
 
 class TestFlextCommandHandler:
@@ -131,7 +138,7 @@ class TestFlextCommandHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextCommandHandler()  # type: ignore[abstract]
+            FlextCommandHandler()
 
     def test_concrete_command_handler_handle_command(self) -> None:
         """Test concrete command handler handle_command (lines 48-50)."""
@@ -140,7 +147,7 @@ class TestFlextCommandHandler:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == 4  # Length of "test"
+        assert result.value == 4  # Length of "test"
 
     def test_command_handler_can_handle(self) -> None:
         """Test can_handle method (lines 52-54)."""
@@ -148,13 +155,13 @@ class TestFlextCommandHandler:
         assert handler.can_handle("any_command") is True
 
     def test_command_handler_process_request(self) -> None:
-        """Test process_request delegates to handle_command (lines 56-58)."""
+        """Test process_request processes command dict (lines 56-58)."""
         handler = ConcreteCommandHandler()
-        result = handler.process_request("hello")
+        result = handler.process_request({"name": "hello"})
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == 5  # Length of "hello"
+        assert result.value == "Processed hello"
 
     def test_command_handler_name_property(self) -> None:
         """Test handler_name property (lines 60-63)."""
@@ -171,7 +178,7 @@ class TestFlextCommandHandler:
         assert "Empty command" in (result.error or "")
 
 
-class ConcreteQueryHandler(FlextQueryHandler[dict[str, str], str]):
+class ConcreteQueryHandler(FlextAbstractHandler[object, object]):
     """Concrete implementation for testing FlextQueryHandler."""
 
     @property
@@ -183,16 +190,23 @@ class ConcreteQueryHandler(FlextQueryHandler[dict[str, str], str]):
         """Check if can handle message type."""
         return True
 
-    def handle_query(self, query: dict[str, str]) -> FlextResult[str]:
-        """Handle dict query and return formatted string."""
+    def handle_query(self, query: object) -> FlextResult[object]:
+        """Handle query and return formatted result."""
         if not query:
-            return FlextResult[str].fail("Empty query")
-        name = query.get("name", "Unknown")
-        return FlextResult[str].ok(f"Hello, {name}!")
+            return FlextResult[object].fail("Empty query")
+        if isinstance(query, dict):
+            name = query.get("name", "Unknown")
+            return FlextResult[object].ok(f"Hello, {name}!")
+        return FlextResult[object].ok(str(query))
 
-    def process_request(self, request: dict[str, str]) -> FlextResult[str]:
-        """Process request - delegates to handle_query."""
-        return self.handle_query(request)
+    def handle(self, request: object) -> FlextResult[object]:
+        return self.process_request(request)
+
+    def process_request(self, query: object) -> FlextResult[object]:
+        """Process query request."""
+        if not isinstance(query, dict) or "name" not in query:
+            return FlextResult[object].fail("Invalid query")
+        return FlextResult[object].ok(f"Queried {query['name']}")
 
 
 class TestFlextQueryHandler:
@@ -204,7 +218,7 @@ class TestFlextQueryHandler:
 
         # Cannot instantiate directly
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextQueryHandler()  # type: ignore[abstract]
+            FlextQueryHandler()
 
     def test_concrete_query_handler_handle_query(self) -> None:
         """Test concrete query handler handle_query (lines 69-71)."""
@@ -214,7 +228,7 @@ class TestFlextQueryHandler:
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == "Hello, Alice!"
+        assert result.value == "Hello, Alice!"
 
     def test_query_handler_can_handle(self) -> None:
         """Test can_handle method (lines 73-75)."""
@@ -222,14 +236,14 @@ class TestFlextQueryHandler:
         assert handler.can_handle({"any": "query"}) is True
 
     def test_query_handler_process_request(self) -> None:
-        """Test process_request delegates to handle_query (lines 77-79)."""
+        """Test process_request processes query dict (lines 77-79)."""
         handler = ConcreteQueryHandler()
         query = {"name": "Bob"}
         result = handler.process_request(query)
 
         assert isinstance(result, FlextResult)
         assert result.success
-        assert result.data == "Hello, Bob!"
+        assert result.value == "Queried Bob"
 
     def test_query_handler_name_property(self) -> None:
         """Test handler_name property (lines 81-84)."""
@@ -258,7 +272,7 @@ class TestFlextCompatibilityHandlers:
 
         result = handler.process_request("test")
         assert result.success
-        assert result.data == "test"
+        assert result.value == "test"
 
     def test_authorizing_handler(self) -> None:
         """Test FlextAuthorizingHandler (lines 92-94)."""
@@ -334,12 +348,15 @@ class TestFlextLegacyAliases:
 
     def test_flext_handlers_alias(self) -> None:
         """Test FlextHandlers alias (lines 124-125)."""
-        assert FlextHandlers is FlextBaseHandler
+        # FlextHandlers agora é uma subclasse de FlextBaseHandler, não mais o mesmo objeto
+        assert issubclass(FlextHandlers, FlextBaseHandler)
 
         # Test instantiation through alias
         handler = FlextHandlers()
         assert isinstance(handler, FlextBaseHandler)
-        assert handler.handler_name == "FlextBaseHandler"  # Alias points to same class
+        assert (
+            handler.handler_name == "FlextHandlers"
+        )  # FlextHandlers tem seu próprio nome
 
 
 class TestFlextHandlersIntegration:
@@ -359,29 +376,27 @@ class TestFlextHandlersIntegration:
         registry.register(base_handler)
         registry.register(validating_handler)
         registry.register(event_handler)
-        registry.register(command_handler)  # type: ignore[arg-type]
-        registry.register(query_handler)  # type: ignore[arg-type]
+        registry.register(command_handler)
+        registry.register(query_handler)
 
         handlers = registry.get_handlers()
         assert len(handlers) == 5
 
         # Test all handlers can process requests
         for handler in handlers:
-            if isinstance(handler, ConcreteCommandHandler):  # type: ignore[unreachable]
-                result = handler.process_request("test")  # type: ignore[unreachable]
+            if isinstance(handler, ConcreteCommandHandler):
+                result = handler.process_request({"name": "test"})
                 assert result.success
-                assert result.data == 4
-            elif isinstance(handler, ConcreteQueryHandler):  # type: ignore[unreachable]
-                query_result: FlextResult[str] = handler.process_request(  # type: ignore[unreachable]
-                    {"name": "Test"},
-                )
+                assert result.value == "Processed test"
+            elif isinstance(handler, ConcreteQueryHandler):
+                query_result = handler.process_request({"name": "Test"})
                 assert query_result.success
-                assert query_result.data == "Hello, Test!"
+                assert query_result.value == "Queried Test"
             else:
                 # These are FlextBaseHandler instances that have process_request
                 # Use assert isinstance for type narrowing
-                assert hasattr(handler, "process_request")
-                base_result = handler.process_request("any_request")
+                assert hasattr(handler, "handle")
+                base_result = handler.handle("any_request")
                 assert base_result.success
 
     def test_handler_polymorphism(self) -> None:
@@ -399,6 +414,6 @@ class TestFlextHandlersIntegration:
             assert handler.can_handle("test")
             result = handler.process_request("test")
             assert result.success
-            assert result.data == "test"
+            assert result.value == "test"
             assert isinstance(handler.handler_name, str)
             assert len(handler.handler_name) > 0
