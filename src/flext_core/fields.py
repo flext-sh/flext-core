@@ -140,7 +140,7 @@ class FlextFieldCore(
         # FieldValidationInfo.data is a mapping of sibling fields available during
         # validation. Use safe access and explicit typing to keep linters happy.
         if v is not None:
-            data = getattr(info, "data", None)
+            data = info.data if hasattr(info, "data") else None
             if isinstance(data, dict) and "min_length" in data:
                 typed_data = cast("dict[str, object]", data)
                 min_length = typed_data.get("min_length")

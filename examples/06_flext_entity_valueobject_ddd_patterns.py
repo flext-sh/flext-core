@@ -197,7 +197,7 @@ class ShoppingCart(FlextEntity):
             return FlextResult[ShoppingCart].fail("Quantity must be positive")
 
         # Add item
-        item = {
+        item: dict[str, object] = {
             "product_id": product.id,
             "code": product.code.code,
             "name": product.name,

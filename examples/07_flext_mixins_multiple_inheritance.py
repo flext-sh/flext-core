@@ -17,14 +17,12 @@ from shared_domain import (
     User as SharedUser,
     log_domain_operation,
 )
+from shared_example_helpers import run_example_demonstration
 
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
     FlextConstants,
-    FlextEntityMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
     FlextResult,
     FlextSerializableMixin,
     FlextTimestampMixin,
@@ -33,8 +31,12 @@ from flext_core import (
     FlextValidatableMixin,
     FlextValueObjectMixin,
 )
-
-from .shared_example_helpers import run_example_demonstration
+from flext_core.mixins import (
+    FlextEntityMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
+    FlextValueObjectMixin,
+)
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns

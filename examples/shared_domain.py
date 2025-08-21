@@ -365,8 +365,9 @@ class User(FlextEntity):
             return FlextResult[Self].fail("User is already active")
 
         result = self.copy_with(status=UserStatus.ACTIVE)
+        # Use unwrap_or for cleaner code - if copy_with failed, return error
+        activated_user = result.unwrap_or(self)
         if result.success:
-            activated_user = result.value
             # Add domain event
             try:
                 activated_user.add_domain_event(
@@ -393,8 +394,9 @@ class User(FlextEntity):
             )
 
         result = self.copy_with(status=UserStatus.SUSPENDED)
+        # Use unwrap_or for cleaner code
+        suspended_user = result.unwrap_or(self)
         if result.success:
-            suspended_user = result.value
             # Add domain event
             try:
                 suspended_user.add_domain_event(
@@ -596,7 +598,9 @@ class Order(FlextEntity):
                     f"Failed to calculate item total: {item_total_result.error}",
                 )
 
-            total_amount += item_total_result.value.amount
+            # Use unwrap_or with Zero money as fallback (though this shouldn't happen due to check above)
+            item_money = item_total_result.unwrap_or(Money(amount=0, currency=base_currency))
+            total_amount += item_money.amount
 
         return FlextResult[Money].ok(
             Money.model_validate({"amount": total_amount, "currency": base_currency})
@@ -632,8 +636,8 @@ class Order(FlextEntity):
                 {
                     "order_id": self.id,
                     "customer_id": self.customer_id,
-                    "total_amount": str(total_result.value.amount),
-                    "currency": total_result.value.currency,
+                    "total_amount": str(total_result.unwrap_or(Money(amount=0, currency="USD")).amount),
+                    "currency": total_result.unwrap_or(Money(amount=0, currency="USD")).currency,
                     "item_count": len(self.items),
                     "confirmed_at": FlextUtilities.generate_iso_timestamp(),
                 },

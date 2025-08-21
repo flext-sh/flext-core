@@ -5,21 +5,21 @@ from __future__ import annotations
 import time
 
 from flext_core import (
+    FlextCacheableMixin,
+    FlextCommandMixin,
+    FlextComparableMixin,
+    FlextDataMixin,
+    FlextEntityMixin,
+    FlextFullMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
     FlextResult,
-    LegacyCompatibleCacheableMixin as FlextCacheableMixin,
-    LegacyCompatibleCommandMixin as FlextCommandMixin,
-    LegacyCompatibleComparableMixin as FlextComparableMixin,
-    LegacyCompatibleDataMixin as FlextDataMixin,
-    LegacyCompatibleEntityMixin as FlextEntityMixin,
-    LegacyCompatibleFullMixin as FlextFullMixin,
-    LegacyCompatibleIdentifiableMixin as FlextIdentifiableMixin,
-    LegacyCompatibleLoggableMixin as FlextLoggableMixin,
-    LegacyCompatibleSerializableMixin as FlextSerializableMixin,
-    LegacyCompatibleServiceMixin as FlextServiceMixin,
-    LegacyCompatibleTimestampMixin as FlextTimestampMixin,
-    LegacyCompatibleTimingMixin as FlextTimingMixin,
-    LegacyCompatibleValidatableMixin as FlextValidatableMixin,
-    LegacyCompatibleValueObjectMixin as FlextValueObjectMixin,
+    FlextSerializableMixin,
+    FlextServiceMixin,
+    FlextTimestampMixin,
+    FlextTimingMixin,
+    FlextValidatableMixin,
+    FlextValueObjectMixin,
 )
 
 

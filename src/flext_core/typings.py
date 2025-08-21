@@ -50,6 +50,11 @@ if TYPE_CHECKING:
 
         def __call__(self, *args: object, **kwargs: object) -> FlextResult[T]: ...
 
+    class FlextAnyCallable[T](Protocol):
+        """Generic callable that can return any type."""
+
+        def __call__(self, *args: object, **kwargs: object) -> T: ...
+
     class FlextHandlerProtocol[TInput, TOutput](Protocol):
         """Handler protocol for single input/output operations."""
 
@@ -77,6 +82,7 @@ if TYPE_CHECKING:
     type FlextDecoratedFunction[T] = FlextDecoratedFunctionProtocol[
         T
     ]  # Returns FlextResult
+    type FlextAnyFunction[T] = FlextAnyCallable[T]  # Generic function alias
     type FlextHandler[TInput, TOutput] = FlextHandlerProtocol[
         TInput, TOutput
     ]  # Handler interface

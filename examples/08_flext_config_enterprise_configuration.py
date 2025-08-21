@@ -13,8 +13,8 @@ and override patterns for configuration management.
 Key Components:
     - FlextConfig: Main configuration management class
     - FlextSettings: Pydantic-based settings with environment loading
-    - FlextConfigDefaults: Default configuration management
-    - FlextConfigOps: Configuration operations and transformations
+    - FlextSystemDefaults: Default configuration management
+    - Foundation utility functions: safe_get_env_var, safe_load_json_file, merge_configs
     - Configuration validation with comprehensive error reporting
 
 This example shows real-world enterprise configuration scenarios

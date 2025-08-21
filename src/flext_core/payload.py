@@ -1624,7 +1624,7 @@ def get_serialization_metrics(
 
     # Try to get data type from payload
     if hasattr(payload, "data"):
-        data_obj = getattr(payload, "data", None)
+        data_obj = payload.data
         metrics["data_type"] = type(data_obj).__name__
     elif isinstance(payload, dict) and "data" in payload:
         data_obj = cast("dict[str, object]", payload).get("data")

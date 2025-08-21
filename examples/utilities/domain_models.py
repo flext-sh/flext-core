@@ -14,7 +14,6 @@ from flext_core import (
     FlextComparableMixin,
     FlextLoggableMixin,
     FlextSerializableMixin,
-    FlextTimestampMixin,
     FlextUtilities,
 )
 
@@ -86,7 +85,6 @@ class UtilityDemoProduct(
     FlextCacheableMixin,
     FlextSerializableMixin,
     FlextComparableMixin,
-    FlextTimestampMixin,
 ):
     """Enhanced product with comprehensive mixins."""
 
@@ -135,7 +133,6 @@ class UtilityDemoOrder(
     SharedOrder,
     FlextLoggableMixin,
     FlextSerializableMixin,
-    FlextTimestampMixin,
 ):
     """Enhanced order with logging and tracking capabilities."""
 

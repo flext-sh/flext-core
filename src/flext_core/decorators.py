@@ -6,7 +6,7 @@ import functools
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import ParamSpec, Protocol, TypeVar, cast
+from typing import ParamSpec, Protocol, TypeVar, cast, overload, override
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
@@ -348,11 +348,23 @@ class FlextPerformanceDecorators(FlextAbstractPerformanceDecorator):
         return FlextPerformanceDecorators.create_cache_decorator(max_size)
 
     @staticmethod
+    @overload
     def time_execution(
         func: FlextDecoratedFunction[object],
-    ) -> FlextDecoratedFunction[object]:
-        """Time execution decorator (alias)."""
-        return _flext_timing_decorator(func)
+    ) -> FlextDecoratedFunction[object]: ...
+
+    @staticmethod
+    @overload
+    def time_execution(
+        func: Callable[..., object],
+    ) -> Callable[..., FlextResult[object]]: ...
+
+    @staticmethod
+    def time_execution(
+        func: Callable[..., object] | FlextDecoratedFunction[object],
+    ) -> Callable[..., FlextResult[object]] | FlextDecoratedFunction[object]:
+        """Time execution decorator - flexible version that accepts any callable."""
+        return _flext_timing_decorator_flexible(func)
 
 
 # =============================================================================
@@ -770,6 +782,7 @@ class FlextDecoratorFactory(FlextAbstractDecoratorFactory):
             threshold_seconds=cast("float", kwargs.get("threshold_seconds", 1.0)),
         )
 
+    @override
     def create_logging_decorator(
         self,
         **kwargs: object,
@@ -780,6 +793,7 @@ class FlextDecoratorFactory(FlextAbstractDecoratorFactory):
             log_level=cast("str", kwargs.get("log_level", "INFO")),
         )
 
+    @override
     def create_error_handling_decorator(
         self,
         **kwargs: object,
@@ -915,6 +929,47 @@ def _flext_timing_decorator(
 
     return cast(
         "FlextDecoratedFunction[object]",
+        FlextDecoratorUtils.preserve_metadata(func, wrapper),
+    )
+
+
+def _flext_timing_decorator_flexible(
+    func: Callable[..., object] | FlextDecoratedFunction[object],
+) -> Callable[..., FlextResult[object]]:
+    """Flexible timing decorator that accepts any callable and ensures FlextResult return.
+
+    Args:
+        func: Any callable function.
+
+    Returns:
+        Decorated function that returns FlextResult.
+
+    """
+    execution_times: list[float] = []
+
+    @functools.wraps(func)
+    def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
+        start_time = time.perf_counter()
+
+        try:
+            result = func(*args, **kwargs)
+            execution_time = time.perf_counter() - start_time
+            execution_times.append(execution_time)
+
+            # If result is already a FlextResult, return it
+            if isinstance(result, FlextResult):
+                return result
+
+            # Otherwise wrap in FlextResult
+            return FlextResult[object].ok(result)
+
+        except Exception as e:
+            execution_time = time.perf_counter() - start_time
+            execution_times.append(execution_time)
+            return FlextResult[object].fail(f"Function failed: {e!s}")
+
+    return cast(
+        "Callable[..., FlextResult[object]]",
         FlextDecoratorUtils.preserve_metadata(func, wrapper),
     )
 
@@ -1056,7 +1111,21 @@ class FlextDecorators:
         return decorator
 
     @staticmethod
-    def safe_result(func: FlextCallable) -> FlextCallable:
+    @overload
+    def safe_result(
+        func: FlextDecoratedFunction[object],
+    ) -> FlextDecoratedFunction[object]: ...
+
+    @staticmethod
+    @overload
+    def safe_result(
+        func: Callable[..., object],
+    ) -> Callable[..., FlextResult[object]]: ...
+
+    @staticmethod
+    def safe_result(
+        func: Callable[..., object] | FlextDecoratedFunction[object],
+    ) -> Callable[..., FlextResult[object]] | FlextDecoratedFunction[object]:
         """Safe execution decorator that returns FlextResult.
 
         Args:
@@ -1070,6 +1139,10 @@ class FlextDecorators:
         def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
             try:
                 result = func(*args, **kwargs)
+                # If result is already a FlextResult, return it
+                if isinstance(result, FlextResult):
+                    return result
+                # Otherwise wrap in FlextResult
                 return FlextResult[object].ok(result)
             except Exception as e:
                 return FlextResult[object].fail(str(e))
@@ -1218,6 +1291,7 @@ __all__: list[str] = [
     "_flext_cache_decorator",
     "_flext_safe_call_decorator",
     "_flext_timing_decorator",
+    "_flext_timing_decorator_flexible",
     "_flext_validate_input_decorator",
     "_safe_call_decorator",
     "_validate_input_decorator",

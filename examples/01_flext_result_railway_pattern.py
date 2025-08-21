@@ -127,7 +127,8 @@ def demo_successful_registration() -> None:
     )
 
     # Modern pattern: use unwrap_or for clean default handling
-    print(f"✅ Result: {result.unwrap_or(f'Error: {result.error}')}")
+    default_result: dict[str, object] = {"error": result.error or "Unknown error", "status": "failed"}
+    print(f"✅ Result: {result.unwrap_or(default_result)}")
 
 
 def demo_batch_processing() -> None:
@@ -157,7 +158,8 @@ def demo_json_transformation() -> None:
     result = transform_and_process(json_data)
 
     # Modern pattern: use unwrap_or for clean default handling
-    print(f"✅ Result: {result.unwrap_or(f'Error: {result.error}')}")
+    default_result: dict[str, object] = {"error": result.error or "Unknown error", "status": "failed"}
+    print(f"✅ Result: {result.unwrap_or(default_result)}")
 
 
 def main() -> None:

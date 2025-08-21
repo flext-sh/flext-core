@@ -20,22 +20,25 @@ from flext_core import FlextConfig, FlextEntity, FlextEntityId, FlextResult, Fle
 # =============================================================================
 
 
-class FlextOracleConfig(FlextConfig):
-    """Oracle configuration using unified patterns."""
+class DatabaseConfig(FlextConfig):
+    """Example database configuration using unified patterns.
+    
+    NOTE: This is a demonstration pattern only. Production database
+    configurations should be in domain-specific libraries (e.g., flext-db-oracle).
+    """
 
     host: str = "localhost"
-    port: int = 1521
-    service_name: str | None = None
-    sid: str | None = None
+    port: int = 5432  # Changed to PostgreSQL default for generic example
+    database_name: str = "example_db"
     username: str
     password: SecretStr
     max_connections: int = 10
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified business rule validation pattern."""
-        if not self.service_name and not self.sid:
+        if not self.database_name:
             return FlextResult.fail(
-                "Missing identifiers: both service_name and sid are empty",
+                "Database name is required",
             )
 
         min_port = 1
@@ -79,7 +82,7 @@ class FlextDataPipeline(FlextEntity):
     """Data pipeline entity using unified patterns."""
 
     name: str
-    source_config: FlextOracleConfig
+    source_config: DatabaseConfig
     owner: FlextUserProfile
     status: Literal["active", "inactive", "error"] = "inactive"
     processed_records: int = 0
@@ -138,10 +141,10 @@ def pipeline_factory() -> FlextDataPipeline:
     return FlextDataPipeline(
         id=FlextEntityId("default"),
         name="default_pipeline",
-        source_config=FlextOracleConfig(
+        source_config=DatabaseConfig(
             username="user",
             password=SecretStr("pass"),
-            service_name="DB",
+            database_name="example_db",
         ),
         owner=FlextUserProfile(
             email="user@example.com",
@@ -185,21 +188,21 @@ class FlextPipelineService:
     def create_pipeline(
         self,
         name: str,
-        oracle_config: dict[str, object],
+        database_config: dict[str, object],
         owner_profile: dict[str, object],
     ) -> FlextResult[FlextDataPipeline]:
         """Create pipeline using unified factory pattern."""
 
-        def _build_config() -> FlextResult[FlextOracleConfig]:
+        def _build_config() -> FlextResult[DatabaseConfig]:
             try:
-                port_value = oracle_config.get("port", 1521)
-                port_int = port_value if isinstance(port_value, int) else 1521
-                instance = FlextOracleConfig(
-                    host=str(oracle_config.get("host", "localhost")),
+                port_value = database_config.get("port", 5432)
+                port_int = port_value if isinstance(port_value, int) else 5432
+                instance = DatabaseConfig(
+                    host=str(database_config.get("host", "localhost")),
                     port=port_int,
-                    service_name=str(oracle_config.get("service_name", "XE")),
-                    username=str(oracle_config.get("username", "flext")),
-                    password=SecretStr(str(oracle_config.get("password", "password"))),
+                    database_name=str(database_config.get("database_name", "example_db")),
+                    username=str(database_config.get("username", "user")),
+                    password=SecretStr(str(database_config.get("password", "password"))),
                 )
                 return FlextResult.ok(instance)
             except Exception as e:
@@ -224,7 +227,7 @@ class FlextPipelineService:
                 return FlextResult.fail(str(e))
 
         def _build_pipeline(
-            cfg: FlextOracleConfig,
+            cfg: DatabaseConfig,
             owner: FlextUserProfile,
         ) -> FlextResult[FlextDataPipeline]:
             try:
@@ -355,11 +358,11 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     """Demonstrate Layer 0: Foundation Models."""
     service = FlextPipelineService()
 
-    # Create Oracle configuration
-    oracle_config = {
-        "host": "production-oracle.company.com",
-        "port": 1521,
-        "service_name": "PRODDB",
+    # Create database configuration
+    database_config = {
+        "host": "production-db.company.com",
+        "port": 5432,
+        "database_name": "production_db",
         "username": "flext_user",
         "password": SecretStr("super_secure_password_123"),
         "max_connections": 20,
@@ -376,7 +379,7 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     # Create pipeline using unified patterns
     pipeline_result = service.create_pipeline(
         name="Customer Data ETL Pipeline",
-        oracle_config=cast("dict[str, object]", oracle_config),
+        database_config=cast("dict[str, object]", database_config),
         owner_profile=cast("dict[str, object]", owner_profile),
     )
 

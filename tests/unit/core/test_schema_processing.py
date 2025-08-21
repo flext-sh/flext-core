@@ -14,13 +14,13 @@ from enum import Enum
 import pytest
 
 from flext_core import (
-    BaseConfigManager,
-    BaseEntry,
-    BaseFileWriter,
-    BaseProcessor,
-    BaseSorter,
-    ConfigAttributeValidator,
-    EntryType,
+    FlextBaseConfigManager as BaseConfigManager,  # Modern equivalent
+    FlextBaseEntry as BaseEntry,  # Modern equivalent
+    FlextBaseFileWriter as BaseFileWriter,  # Modern equivalent
+    FlextBaseProcessor as BaseProcessor,  # Modern equivalent
+    FlextBaseSorter as BaseSorter,  # Modern equivalent
+    FlextConfigAttributeValidator as ConfigAttributeValidator,  # Modern equivalent
+    FlextEntryType as EntryType,  # Modern equivalent
     FlextResult,
     FlextValueObject,
     ProcessingPipeline,

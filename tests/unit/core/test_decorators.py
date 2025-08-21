@@ -27,7 +27,7 @@ _BaseValidationDecorators = FlextValidationDecorators
 _BaseErrorHandlingDecorators = FlextErrorHandlingDecorators
 _BasePerformanceDecorators = FlextPerformanceDecorators
 _BaseLoggingDecorators = FlextLoggingDecorators
-_DecoratedFunction = FlextDecoratedFunction
+_DecoratedFunction = FlextDecoratedFunction[object]
 
 # Simple decorator functions
 flext_safe_call = FlextDecorators.safe_result
