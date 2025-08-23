@@ -35,6 +35,13 @@ from shared_domain import (
 )
 from shared_example_helpers import run_example_demonstration
 
+from .shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+from .shared_example_helpers import run_example_demonstration
+
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
 # =============================================================================

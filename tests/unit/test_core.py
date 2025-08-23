@@ -119,7 +119,7 @@ class UserManagementService(FlextDomainService[TestUser]):
         self, user_id: str, username: str, email: str, password_hash: str
     ) -> FlextResult[TestUser]:
         """Create REAL TestUser with comprehensive production validation."""
-        email_validation = ValidationAdapters.validate_email(email)
+        email_validation = FlextCore.validate_email(email)
         if email_validation.is_failure:
             return FlextResult[TestUser].fail(
                 f"Invalid email: {email_validation.error}"
