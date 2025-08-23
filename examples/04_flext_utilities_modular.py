@@ -112,11 +112,13 @@ class ValidationHelpers:
         age_result: FlextResult[int] = ValidationHelpers.validate_age(age_value)
 
         if all(r.success for r in [name_result, email_result, age_result]):
-            return FlextResult[dict[str, object]].ok({
-                "name": name_result.value,
-                "email": email_result.value,
-                "age": age_result.value,
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "name": name_result.value,
+                    "email": email_result.value,
+                    "age": age_result.value,
+                }
+            )
 
         errors = [
             r.error or "Unknown error"
@@ -160,14 +162,16 @@ class BatchProcessor:
             except Exception as e:
                 errors.append(f"Item {i}: {e!s}")
 
-        return FlextResult[dict[str, Any]].ok({
-            "total": len(items),
-            "successful": len(results),
-            "failed": len(errors),
-            "results": results,
-            "errors": errors,
-            "success_rate": (len(results) / len(items)) * 100 if items else 0,
-        })
+        return FlextResult[dict[str, Any]].ok(
+            {
+                "total": len(items),
+                "successful": len(results),
+                "failed": len(errors),
+                "results": results,
+                "errors": errors,
+                "success_rate": (len(results) / len(items)) * 100 if items else 0,
+            }
+        )
 
 
 # =============================================================================
@@ -218,12 +222,14 @@ class UserService:
         corr_result = self.id_generator.generate_correlation_id()
 
         if session_result.success and corr_result.success:
-            return FlextResult[dict[str, Any]].ok({
-                "user_id": user_id,
-                "session_token": session_result.value,
-                "correlation_id": corr_result.value,
-                "created_at": "2024-01-01T00:00:00Z",
-            })
+            return FlextResult[dict[str, Any]].ok(
+                {
+                    "user_id": user_id,
+                    "session_token": session_result.value,
+                    "correlation_id": corr_result.value,
+                    "created_at": "2024-01-01T00:00:00Z",
+                }
+            )
 
         return FlextResult[dict[str, Any]].fail("Failed to generate session data")
 

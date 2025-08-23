@@ -151,7 +151,7 @@ class TestFlextValidationProperties:
         st.text().filter(
             lambda x: x
             and not any(c.isdigit() or c in ".-+eE" for c in x)
-            and x not in ["Infinity", "-Infinity", "inf", "-inf", "nan", "NaN"]
+            and x not in {"Infinity", "-Infinity", "inf", "-inf", "nan", "NaN"}
         )
     )
     def test_non_numeric_validation(self, text: str) -> None:
@@ -159,7 +159,7 @@ class TestFlextValidationProperties:
         assume(text)  # Ensure non-empty
         assume(not any(c.isdigit() for c in text))  # No digits
         assume(
-            text not in ["Infinity", "-Infinity", "inf", "-inf", "nan", "NaN"]
+            text not in {"Infinity", "-Infinity", "inf", "-inf", "nan", "NaN"}
         )  # No special float values
 
         try:

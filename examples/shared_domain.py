@@ -207,10 +207,12 @@ class Money(FlextValue):
             )
 
         try:
-            result = Money.model_validate({
-                "amount": self.amount + other.amount,
-                "currency": self.currency,
-            })
+            result = Money.model_validate(
+                {
+                    "amount": self.amount + other.amount,
+                    "currency": self.currency,
+                }
+            )
         except Exception as e:
             return FlextResult[Money].fail(f"Money creation failed: {e}")
 
@@ -228,10 +230,12 @@ class Money(FlextValue):
             return FlextResult[Money].fail("Factor cannot be negative")
 
         try:
-            result = Money.model_validate({
-                "amount": self.amount * factor,
-                "currency": self.currency,
-            })
+            result = Money.model_validate(
+                {
+                    "amount": self.amount * factor,
+                    "currency": self.currency,
+                }
+            )
         except Exception as e:
             return FlextResult[Money].fail(f"Money creation failed: {e}")
 
@@ -692,15 +696,17 @@ class SharedDomainFactory:
             # Generate ID if not provided
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
 
-            user = User.model_validate({
-                "id": entity_id,
-                "name": name,
-                "email_address": email_obj,
-                "age": age_obj,
-                "status": kwargs.get("status", UserStatus.PENDING),
-                "phone": kwargs.get("phone"),
-                "address": kwargs.get("address"),
-            })
+            user = User.model_validate(
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "email_address": email_obj,
+                    "age": age_obj,
+                    "status": kwargs.get("status", UserStatus.PENDING),
+                    "phone": kwargs.get("phone"),
+                    "address": kwargs.get("address"),
+                }
+            )
 
             validation_result = user.validate_domain_rules()
             if validation_result.is_failure:
@@ -727,10 +733,12 @@ class SharedDomainFactory:
             if isinstance(price_amount, str):
                 price_amount = Decimal(price_amount)
 
-            money_obj = Money.model_validate({
-                "amount": price_amount,
-                "currency": currency,
-            })
+            money_obj = Money.model_validate(
+                {
+                    "amount": price_amount,
+                    "currency": currency,
+                }
+            )
             money_result = money_obj.validate_business_rules()
             if money_result.is_failure:
                 return FlextResult[Product].fail(f"Invalid price: {money_result.error}")
@@ -738,14 +746,16 @@ class SharedDomainFactory:
             # Create product entity
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
 
-            product = Product.model_validate({
-                "id": entity_id,
-                "name": name,
-                "description": description,
-                "price": money_obj,
-                "category": str(kwargs.get("category", "general")),
-                "in_stock": bool(kwargs.get("in_stock", True)),
-            })
+            product = Product.model_validate(
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "description": description,
+                    "price": money_obj,
+                    "category": str(kwargs.get("category", "general")),
+                    "in_stock": bool(kwargs.get("in_stock", True)),
+                }
+            )
 
             validation_result = product.validate_domain_rules()
             if validation_result.is_failure:
@@ -769,10 +779,12 @@ class SharedDomainFactory:
             # Create order items
             order_items: list[OrderItem] = []
             for item_data in items:
-                money_obj = Money.model_validate({
-                    "amount": Decimal(str(item_data["unit_price"])),
-                    "currency": str(item_data.get("currency", "USD")),
-                })
+                money_obj = Money.model_validate(
+                    {
+                        "amount": Decimal(str(item_data["unit_price"])),
+                        "currency": str(item_data.get("currency", "USD")),
+                    }
+                )
                 money_result = money_obj.validate_business_rules()
                 if money_result.is_failure:
                     return FlextResult[Order].fail(
@@ -780,12 +792,14 @@ class SharedDomainFactory:
                     )
 
                 # OrderItem uses FlextValue base, use model_validate
-                order_item = OrderItem.model_validate({
-                    "product_id": str(item_data["product_id"]),
-                    "product_name": str(item_data["product_name"]),
-                    "quantity": int(str(item_data["quantity"])),
-                    "unit_price": money_obj,
-                })
+                order_item = OrderItem.model_validate(
+                    {
+                        "product_id": str(item_data["product_id"]),
+                        "product_name": str(item_data["product_name"]),
+                        "quantity": int(str(item_data["quantity"])),
+                        "unit_price": money_obj,
+                    }
+                )
 
                 item_validation = order_item.validate_business_rules()
                 if item_validation.is_failure:
@@ -817,14 +831,16 @@ class SharedDomainFactory:
             ):
                 shipping_address = None
 
-            order = Order.model_validate({
-                "id": entity_id,
-                "customer_id": customer_id,
-                "items": order_items,
-                "status": status,
-                "payment_method": payment_method,
-                "shipping_address": shipping_address,
-            })
+            order = Order.model_validate(
+                {
+                    "id": entity_id,
+                    "customer_id": customer_id,
+                    "items": order_items,
+                    "status": status,
+                    "payment_method": payment_method,
+                    "shipping_address": shipping_address,
+                }
+            )
 
             validation_result = order.validate_domain_rules()
             if validation_result.is_failure:
@@ -956,11 +972,13 @@ class TestDomainFactory:
         """Create a concrete entity for testing."""
         try:
             entity_id = str(kwargs.get("id", FlextUtilities.generate_entity_id()))
-            entity = ConcreteFlextEntity.model_validate({
-                "id": entity_id,
-                "name": name,
-                "status": status,
-            })
+            entity = ConcreteFlextEntity.model_validate(
+                {
+                    "id": entity_id,
+                    "name": name,
+                    "status": status,
+                }
+            )
             validation_result = entity.validate_domain_rules()
             if validation_result.is_failure:
                 return FlextResult[ConcreteFlextEntity].fail(
@@ -983,11 +1001,13 @@ class TestDomainFactory:
         try:
             description = str(kwargs.get("description", ""))
             # ConcreteValueObject uses the __init__ from FlextValue
-            vo = ConcreteValueObject.model_validate({
-                "amount": amount,
-                "currency": currency,
-                "description": description,
-            })
+            vo = ConcreteValueObject.model_validate(
+                {
+                    "amount": amount,
+                    "currency": currency,
+                    "description": description,
+                }
+            )
             validation_result = vo.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[ConcreteValueObject].fail(
@@ -1009,11 +1029,13 @@ class TestDomainFactory:
         """Create a complex value object for testing."""
         try:
             # ComplexValueObject uses the __init__ from FlextValue
-            vo = ComplexValueObject.model_validate({
-                "name": name,
-                "tags": tags,
-                "metadata": metadata,
-            })
+            vo = ComplexValueObject.model_validate(
+                {
+                    "name": name,
+                    "tags": tags,
+                    "metadata": metadata,
+                }
+            )
             validation_result = vo.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[ComplexValueObject].fail(

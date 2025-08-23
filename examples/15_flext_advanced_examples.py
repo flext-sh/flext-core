@@ -121,7 +121,7 @@ def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
     """Display order information and return order for chaining."""
     total_result = order.calculate_total()
     if total_result.success:
-        total = total_result.value
+        pass
 
     # SharedOrder has built-in domain events
 

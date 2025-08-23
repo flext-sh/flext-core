@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import operator
+
 import pytest
 
 from flext_core import FlextResult
@@ -56,7 +58,7 @@ class TestFlextResultAdvancedOperations:
         result = FlextResult[int].ok(42)
 
         # Working transformation
-        mapped = result.map(lambda x: str(x))
+        mapped = result.map(str)
         assert mapped.is_success
         assert mapped.value == "42"
 
@@ -144,7 +146,8 @@ class TestFlextResultRecoveryOperations:
         result = FlextResult[int].fail("error")
 
         def failing_recovery(error: str) -> int:
-            raise ValueError("Recovery failed")
+            msg = "Recovery failed"
+            raise ValueError(msg)
 
         recovered = result.recover(failing_recovery)
 
@@ -180,7 +183,8 @@ class TestFlextResultRecoveryOperations:
         result = FlextResult[int].fail("error")
 
         def failing_recovery_with_exception(error: str) -> FlextResult[int]:
-            raise TypeError("Recovery function crashed")
+            msg = "Recovery function crashed"
+            raise TypeError(msg)
 
         recovered = result.recover_with(failing_recovery_with_exception)
 
@@ -224,7 +228,8 @@ class TestFlextResultSideEffectOperations:
         result = FlextResult[str].ok("test")
 
         def failing_side_effect(data: str) -> None:
-            raise ValueError("Side effect failed")
+            msg = "Side effect failed"
+            raise ValueError(msg)
 
         tapped = result.tap(failing_side_effect)
 
@@ -265,7 +270,8 @@ class TestFlextResultSideEffectOperations:
         result = FlextResult[str].fail("error")
 
         def failing_error_handler_with_type_error(error: str) -> None:
-            raise TypeError("Error handler failed")
+            msg = "Error handler failed"
+            raise TypeError(msg)
 
         tapped = result.tap_error(failing_error_handler_with_type_error)
 
@@ -278,7 +284,8 @@ class TestFlextResultSideEffectOperations:
         result = FlextResult[str].fail("error")
 
         def failing_error_handler_with_runtime_error(error: str) -> None:
-            raise RuntimeError("Error handler failed")
+            msg = "Error handler failed"
+            raise RuntimeError(msg)
 
         # RuntimeError should propagate since it's not in contextlib.suppress list
         with pytest.raises(RuntimeError, match="Error handler failed"):
@@ -326,7 +333,8 @@ class TestFlextResultFilterOperations:
         result = FlextResult[str].ok("test")
 
         def failing_predicate(x: str) -> bool:
-            raise ValueError("Predicate failed")
+            msg = "Predicate failed"
+            raise ValueError(msg)
 
         filtered = result.filter(failing_predicate, "filter error")
 
@@ -342,7 +350,7 @@ class TestFlextResultCombinationOperations:
         result1 = FlextResult[int].ok(10)
         result2 = FlextResult[int].ok(5)
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
 
         assert combined.is_success
         assert combined.value == 15
@@ -352,7 +360,7 @@ class TestFlextResultCombinationOperations:
         result1 = FlextResult[int].fail("first error")
         result2 = FlextResult[int].ok(5)
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
 
         assert combined.is_failure
         assert combined.error == "first error"
@@ -362,7 +370,7 @@ class TestFlextResultCombinationOperations:
         result1 = FlextResult[int].ok(10)
         result2 = FlextResult[int].fail("second error")
 
-        combined = result1.zip_with(result2, lambda x, y: x + y)
+        combined = result1.zip_with(result2, operator.add)
 
         assert combined.is_failure
         assert combined.error == "second error"
@@ -389,7 +397,10 @@ class TestFlextResultCombinationOperations:
         combined = result1.zip_with(result2, failing_function)
 
         assert combined.is_failure
-        assert "ZeroDivisionError" in combined.error or "division by zero" in combined.error
+        assert (
+            "ZeroDivisionError" in combined.error
+            or "division by zero" in combined.error
+        )
 
 
 class TestFlextResultUtilityOperations:
@@ -490,9 +501,9 @@ class TestFlextResultEdgeCases:
         complex_data = {
             "users": [
                 {"id": 1, "name": "Alice", "active": True},
-                {"id": 2, "name": "Bob", "active": False}
+                {"id": 2, "name": "Bob", "active": False},
             ],
-            "metadata": {"total": 2, "page": 1}
+            "metadata": {"total": 2, "page": 1},
         }
 
         result = FlextResult[dict[str, object]].ok(complex_data)
@@ -533,7 +544,9 @@ class TestFlextResultTypeNarrowing:
         """Test value access on failure raises appropriate exception."""
         result = FlextResult[str].fail("error occurred")
 
-        with pytest.raises(TypeError, match="Attempted to access value on failed result"):
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
             _ = result.value
 
 
@@ -542,8 +555,13 @@ class TestFlextResultRailwayOrientedComposition:
 
     def test_complex_railway_composition_success(self) -> None:
         """Test complex railway-oriented programming chain with all successes."""
+
         def validate_positive(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x) if x > 0 else FlextResult[int].fail("Not positive")
+            return (
+                FlextResult[int].ok(x)
+                if x > 0
+                else FlextResult[int].fail("Not positive")
+            )
 
         def double_value(x: int) -> int:
             return x * 2
@@ -552,7 +570,8 @@ class TestFlextResultRailwayOrientedComposition:
             return f"Result: {x}"
 
         result = (
-            FlextResult[int].ok(5)
+            FlextResult[int]
+            .ok(5)
             .flat_map(validate_positive)
             .map(double_value)
             .map(format_result)
@@ -563,8 +582,13 @@ class TestFlextResultRailwayOrientedComposition:
 
     def test_complex_railway_composition_with_failure(self) -> None:
         """Test complex railway-oriented programming chain with failure."""
+
         def validate_positive(x: int) -> FlextResult[int]:
-            return FlextResult[int].ok(x) if x > 0 else FlextResult[int].fail("Not positive")
+            return (
+                FlextResult[int].ok(x)
+                if x > 0
+                else FlextResult[int].fail("Not positive")
+            )
 
         def double_value(x: int) -> int:
             return x * 2
@@ -573,7 +597,8 @@ class TestFlextResultRailwayOrientedComposition:
             return f"Result: {x}"
 
         result = (
-            FlextResult[int].ok(-3)  # Negative number
+            FlextResult[int]
+            .ok(-3)  # Negative number
             .flat_map(validate_positive)  # This will fail
             .map(double_value)  # Should be skipped
             .map(format_result)  # Should be skipped
@@ -584,11 +609,17 @@ class TestFlextResultRailwayOrientedComposition:
 
     def test_railway_with_recovery_composition(self) -> None:
         """Test railway composition with recovery operations."""
+
         def risky_operation(x: int) -> FlextResult[int]:
-            return FlextResult[int].fail("Operation failed") if x == 0 else FlextResult[int].ok(x * 10)
+            return (
+                FlextResult[int].fail("Operation failed")
+                if x == 0
+                else FlextResult[int].ok(x * 10)
+            )
 
         result = (
-            FlextResult[int].ok(0)  # Will cause failure
+            FlextResult[int]
+            .ok(0)  # Will cause failure
             .flat_map(risky_operation)
             .recover(lambda error: 42)  # Recovery value
             .map(lambda x: x + 8)  # Should work on recovered value
@@ -605,7 +636,8 @@ class TestFlextResultRailwayOrientedComposition:
             processed_values.append(f"Processing {x}")
 
         result = (
-            FlextResult[int].ok(15)
+            FlextResult[int]
+            .ok(15)
             .tap(log_processing)  # Side effect
             .filter(lambda x: x > 10, "Value too small")  # Filter
             .map(lambda x: x * 2)  # Transform
@@ -618,6 +650,7 @@ class TestFlextResultRailwayOrientedComposition:
 
     def test_complex_error_propagation_chain(self) -> None:
         """Test complex error propagation through multiple operations."""
+
         def step_1(x: int) -> FlextResult[int]:
             return FlextResult[int].ok(x + 1)
 
@@ -628,7 +661,8 @@ class TestFlextResultRailwayOrientedComposition:
             return FlextResult[int].ok(x + 3)  # Should not execute
 
         result = (
-            FlextResult[int].ok(10)
+            FlextResult[int]
+            .ok(10)
             .flat_map(step_1)  # Should succeed: 10 -> 11
             .flat_map(step_2)  # Should fail
             .flat_map(step_3)  # Should be skipped due to failure

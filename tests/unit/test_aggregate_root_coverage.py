@@ -151,7 +151,7 @@ class TestAggregateRootInitializationCoverage:
         aggregate = TestAggregate(
             entity_id="param_id",
             name="test",
-            id="data_id"  # This should win
+            id="data_id",  # This should win
         )
 
         assert aggregate.id == "data_id"
@@ -163,10 +163,7 @@ class TestAggregateRootInitializationCoverage:
         class TestAggregate(FlextAggregateRoot):
             name: str
 
-        aggregate = TestAggregate(
-            entity_id="param_id",
-            name="test"
-        )
+        aggregate = TestAggregate(entity_id="param_id", name="test")
 
         assert aggregate.id == "param_id"
 
@@ -192,10 +189,7 @@ class TestAggregateRootInitializationCoverage:
             {"event_type": "AggregateCreated", "data": {"name": "test"}},
         ]
 
-        aggregate = TestAggregate(
-            name="test",
-            domain_events=events
-        )
+        aggregate = TestAggregate(name="test", domain_events=events)
 
         assert aggregate.name == "test"
         # Domain events should be processed and stored
@@ -208,10 +202,7 @@ class TestAggregateRootInitializationCoverage:
 
         created_time = datetime.now(UTC)
 
-        aggregate = TestAggregate(
-            name="test",
-            created_at=created_time
-        )
+        aggregate = TestAggregate(name="test", created_at=created_time)
 
         assert aggregate.name == "test"
         # Should use the provided created_at
@@ -224,10 +215,7 @@ class TestAggregateRootInitializationCoverage:
 
         metadata = {"source": "test", "version": 1}
 
-        aggregate = TestAggregate(
-            name="test",
-            metadata=metadata
-        )
+        aggregate = TestAggregate(name="test", metadata=metadata)
 
         assert aggregate.name == "test"
         # Metadata should be converted to FlextMetadata
@@ -260,8 +248,7 @@ class TestAggregateRootDomainEventsCoverage:
         aggregate = TestAggregate(name="test")
 
         result = aggregate.add_domain_event(
-            "UserCreated",
-            {"name": "test", "id": aggregate.id}
+            "UserCreated", {"name": "test", "id": aggregate.id}
         )
 
         assert result.success
@@ -276,7 +263,7 @@ class TestAggregateRootDomainEventsCoverage:
 
         event_dict = {
             "event_type": "UserCreated",
-            "data": {"name": "test", "id": aggregate.id}
+            "data": {"name": "test", "id": aggregate.id},
         }
 
         result = aggregate.add_domain_event(event_dict)
@@ -309,7 +296,7 @@ class TestAggregateRootEdgeCasesCoverage:
         # domain_events is not a list - should default to empty
         aggregate = TestAggregate(
             name="test",
-            domain_events="not-a-list"  # Should be ignored
+            domain_events="not-a-list",  # Should be ignored
         )
 
         assert aggregate.name == "test"
@@ -322,7 +309,7 @@ class TestAggregateRootEdgeCasesCoverage:
 
         aggregate = TestAggregate(
             name="test",
-            created_at="not-a-datetime"  # Should be ignored
+            created_at="not-a-datetime",  # Should be ignored
         )
 
         assert aggregate.name == "test"
@@ -340,9 +327,6 @@ class TestAggregateRootEdgeCasesCoverage:
             "number": 42,
         }
 
-        aggregate = TestAggregate(
-            name="test",
-            metadata=complex_meta
-        )
+        aggregate = TestAggregate(name="test", metadata=complex_meta)
 
         assert aggregate.name == "test"

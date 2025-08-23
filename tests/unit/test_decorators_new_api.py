@@ -38,7 +38,8 @@ class TestFlextDecoratorsNewAPI:
         @FlextDecorators.safe_call(handled_exceptions=(ValueError,))
         def failing_function(x: int) -> int:
             if x < 0:
-                raise ValueError("Negative not allowed")
+                msg = "Negative not allowed"
+                raise ValueError(msg)
             return x * 2
 
         result = failing_function(-1)
@@ -69,7 +70,7 @@ class TestFlextDecoratorsNewAPI:
         def cached_function(x: int) -> int:
             nonlocal call_count
             call_count += 1
-            return x ** 2
+            return x**2
 
         # First call
         result1 = cached_function(3)
@@ -92,7 +93,8 @@ class TestFlextDecoratorsNewAPI:
         @FlextDecorators.log_exceptions
         def function_that_fails(should_fail: bool) -> str:
             if should_fail:
-                raise RuntimeError("Test error")
+                msg = "Test error"
+                raise RuntimeError(msg)
             return "success"
 
         # Should work normally for success case
@@ -128,7 +130,8 @@ class TestFlextDecoratorsNewAPI:
             call_count += 1
 
             if should_fail and call_count < 2:
-                raise ConnectionError("Network error")
+                msg = "Network error"
+                raise ConnectionError(msg)
             return f"Success on attempt {call_count}"
 
         # Should succeed after retries
@@ -175,7 +178,8 @@ class TestFlextDecoratorsIntegration:
         @FlextDecorators.safe_call()
         def complex_function(x: int) -> int:
             if x == 0:
-                raise ZeroDivisionError("Division by zero")
+                msg = "Division by zero"
+                raise ZeroDivisionError(msg)
             return 100 // x
 
         # Test success case

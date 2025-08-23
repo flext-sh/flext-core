@@ -250,7 +250,7 @@ class TestFlextFieldCoreAdvanced:
             validation_result = field.validate_value(test_value)
 
             # Cast assert_helpers to access methods
-            assert_helpers_typed = cast("object", assert_helpers)
+            cast("object", assert_helpers)
             if test_case.scenario == TestScenario.HAPPY_PATH:
                 assert validation_result.success
             elif test_case.scenario == TestScenario.ERROR_CASE:
@@ -559,7 +559,9 @@ class TestFlextFieldCoreWithFixtures:
             min_length=cast("int | None", config.get("min_length")),
             max_length=cast("int | None", config.get("max_length")),
             pattern=str(config["pattern"]) if config.get("pattern") else None,
-            description=str(config["description"]) if config.get("description") else None,
+            description=str(config["description"])
+            if config.get("description")
+            else None,
             tags=cast("list[str]", config["tags"]) if config.get("tags") else [],
         )
 
@@ -809,7 +811,9 @@ class TestFlextFieldCoreIntegration:
                 min_length=cast("int | None", config.get("min_length")),
                 max_length=cast("int | None", config.get("max_length")),
                 pattern=str(config["pattern"]) if config.get("pattern") else None,
-                description=str(config["description"]) if config.get("description") else None,
+                description=str(config["description"])
+                if config.get("description")
+                else None,
             )
             registry.register_field(field)
 

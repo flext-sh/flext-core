@@ -286,7 +286,9 @@ class TestFlextEntity:
 
     def test_copy_with_explicit_version(self) -> None:
         """Test copy with explicit version provided."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
+        user = SampleUser(
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(5)
+        )
 
         result = user.copy_with(name="Jane", version=FlextVersion(10))
 
@@ -300,7 +302,9 @@ class TestFlextEntity:
 
     def test_copy_with_no_changes(self) -> None:
         """Test copy with no changes - version should not increment."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
+        user = SampleUser(
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(5)
+        )
 
         result = user.copy_with()
 
@@ -380,7 +384,9 @@ class TestFlextEntity:
             email: str
 
             def add_domain_event(
-                self, event_type_or_dict: str | dict[str, object], event_data: dict[str, object] | None = None
+                self,
+                event_type_or_dict: str | dict[str, object],
+                event_data: dict[str, object] | None = None,
             ) -> FlextResult[None]:
                 # Simulate event creation failure
                 if event_type_or_dict == "fail_event":
@@ -523,7 +529,9 @@ class TestFlextEntity:
 
     def test_with_version_success(self) -> None:
         """Test with_version method with valid version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(1))
+        user = SampleUser(
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(1)
+        )
 
         new_user = user.with_version(2)
 
@@ -536,7 +544,9 @@ class TestFlextEntity:
 
     def test_with_version_invalid_version(self) -> None:
         """Test with_version method with invalid version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
+        user = SampleUser(
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(5)
+        )
 
         # Version must be greater than current version
         with pytest.raises(FlextValidationError) as exc_info:
@@ -551,7 +561,9 @@ class TestFlextEntity:
 
     def test_with_version_equal_version(self) -> None:
         """Test with_version method with equal version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
+        user = SampleUser(
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(5)
+        )
 
         # Version must be greater, not equal
         with pytest.raises(FlextValidationError) as exc_info:

@@ -442,7 +442,9 @@ class TestContextSerialization:
         FlextContext.Serialization.set_from_context(headers)
 
         assert FlextContext.Correlation.get_correlation_id() == "header-corr-123"
-        assert FlextContext.Correlation.get_parent_correlation_id() == "header-parent-456"
+        assert (
+            FlextContext.Correlation.get_parent_correlation_id() == "header-parent-456"
+        )
         assert FlextContext.Service.get_service_name() == "header-service"
         assert FlextContext.Request.get_user_id() == "header-user-789"
 
@@ -458,7 +460,9 @@ class TestContextSerialization:
         FlextContext.Serialization.set_from_context(plain_context)
 
         assert FlextContext.Correlation.get_correlation_id() == "plain-corr-123"
-        assert FlextContext.Correlation.get_parent_correlation_id() == "plain-parent-456"
+        assert (
+            FlextContext.Correlation.get_parent_correlation_id() == "plain-parent-456"
+        )
         assert FlextContext.Service.get_service_name() == "plain-service"
         assert FlextContext.Request.get_user_id() == "plain-user-789"
 

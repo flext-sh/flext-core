@@ -264,12 +264,14 @@ class HTTPScenarioBuilder:
             status_code,
         )
 
-        self.scenarios.append({
-            "type": "success",
-            "url": url,
-            "method": method,
-            "status_code": status_code,
-        })
+        self.scenarios.append(
+            {
+                "type": "success",
+                "url": url,
+                "method": method,
+                "status_code": status_code,
+            }
+        )
 
         return self
 
@@ -289,12 +291,14 @@ class HTTPScenarioBuilder:
             error_message,
         )
 
-        self.scenarios.append({
-            "type": "error",
-            "url": url,
-            "method": method,
-            "status_code": status_code,
-        })
+        self.scenarios.append(
+            {
+                "type": "error",
+                "url": url,
+                "method": method,
+                "status_code": status_code,
+            }
+        )
 
         return self
 
@@ -323,12 +327,14 @@ class HTTPScenarioBuilder:
             final_response or {"status": "success", "retry_succeeded": True},
         )
 
-        self.scenarios.append({
-            "type": "retry",
-            "url": url,
-            "method": method,
-            "failure_count": failure_count,
-        })
+        self.scenarios.append(
+            {
+                "type": "retry",
+                "url": url,
+                "method": method,
+                "failure_count": failure_count,
+            }
+        )
 
         return self
 
@@ -362,12 +368,14 @@ class HTTPScenarioBuilder:
             },
         )
 
-        self.scenarios.append({
-            "type": "circuit_breaker",
-            "url": url,
-            "method": method,
-            "failure_threshold": failure_threshold,
-        })
+        self.scenarios.append(
+            {
+                "type": "circuit_breaker",
+                "url": url,
+                "method": method,
+                "failure_threshold": failure_threshold,
+            }
+        )
 
         return self
 

@@ -197,7 +197,9 @@ class TestValidationDecorators:
                 raise ValueError(delay_error)
             return f"Completed after {delay}s"
 
-        async_risky_operation = safe(cast("FlextCallable[object]", async_risky_operation_raw))
+        async_risky_operation = safe(
+            cast("FlextCallable[object]", async_risky_operation_raw)
+        )
 
         # Test successful async operation
         result = await async_risky_operation(0.1)
@@ -240,7 +242,7 @@ class TestValidationDecorators:
         )
 
         # Also test the pure decorator works
-        pure_computation = pure(cast("Callable[[object], int] | Callable[[], int]", pure_computation_raw))
+        pure(cast("Callable[[object], int] | Callable[[], int]", pure_computation_raw))
 
         assert complexity_result["operation"] == "pure_computation"
         assert len(complexity_result["results"]) == 4  # [100, 200, 400, 800]
@@ -342,6 +344,7 @@ class TestFlextModel:
 
         # Benchmark model creation
         from pytest_benchmark.fixture import BenchmarkFixture
+
         result = BenchmarkUtils.benchmark_with_warmup(
             cast("BenchmarkFixture", benchmark), create_model_instance, warmup_rounds=5
         )
@@ -363,10 +366,12 @@ class TestFactoryHelpers:
         param_builder = ParameterizedTestBuilder("factory_creation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"class_name": "SimpleClass", "args": [42], "expected_value": 42},
-            {"class_name": "SimpleClass", "args": [100], "expected_value": 100},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"class_name": "SimpleClass", "args": [42], "expected_value": 42},
+                {"class_name": "SimpleClass", "args": [100], "expected_value": 100},
+            ]
+        )
 
         class SimpleClass:
             def __init__(self, value: int) -> None:
@@ -623,8 +628,11 @@ class TestGuardsIntegration:
 
         # Benchmark large-scale validation
         from pytest_benchmark.fixture import BenchmarkFixture
+
         result = BenchmarkUtils.benchmark_with_warmup(
-            cast("BenchmarkFixture", benchmark), create_large_validation_scenario, warmup_rounds=3
+            cast("BenchmarkFixture", benchmark),
+            create_large_validation_scenario,
+            warmup_rounds=3,
         )
 
         assert result is True

@@ -5,12 +5,13 @@ focusing on real patterns, validation, serialization, and cross-service messagin
 
 Classes Tested:
 - FlextPayload: Generic type-safe payload container
-- FlextMessage: Specialized string message payload  
+- FlextMessage: Specialized string message payload
 - FlextEvent: Domain event payload with aggregate tracking
 """
 
 from __future__ import annotations
 
+import math
 import time
 from datetime import UTC, datetime
 
@@ -35,6 +36,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 # =============================================================================
 # FLEXT PAYLOAD TESTS - Generic Type-Safe Container
 # =============================================================================
+
 
 class TestFlextPayloadRealFunctionality:
     """Test FlextPayload real functionality with type-safe containers."""
@@ -72,15 +74,12 @@ class TestFlextPayloadRealFunctionality:
             "preferences": {
                 "theme": "dark",
                 "notifications": ["email", "push"],
-                "settings": {
-                    "language": "en",
-                    "timezone": "UTC"
-                }
+                "settings": {"language": "en", "timezone": "UTC"},
             },
             "metadata": {
                 "created_at": "2024-01-01T00:00:00Z",
-                "tags": ["premium", "beta"]
-            }
+                "tags": ["premium", "beta"],
+            },
         }
 
         result = FlextPayload.create(complex_data, operation="user_preferences_update")
@@ -108,7 +107,7 @@ class TestFlextPayloadRealFunctionality:
         enriched = original.with_metadata(
             timestamp=datetime.now(UTC).isoformat(),
             user_id="user_123",
-            operation="data_processing"
+            operation="data_processing",
         )
 
         assert enriched.value == original.value  # Same data
@@ -129,7 +128,7 @@ class TestFlextPayloadRealFunctionality:
         additional_metadata = {
             "request_id": "req_123",
             "correlation_id": "corr_456",
-            "trace_id": "trace_789"
+            "trace_id": "trace_789",
         }
 
         enriched = original.enrich_metadata(additional_metadata)
@@ -143,7 +142,7 @@ class TestFlextPayloadRealFunctionality:
         """Test FlextPayload creation from dictionary."""
         data_dict = {
             "data": {"user": "john", "action": "login"},
-            "metadata": {"timestamp": "2024-01-01T00:00:00Z"}
+            "metadata": {"timestamp": "2024-01-01T00:00:00Z"},
         }
 
         result = FlextPayload.create_from_dict(data_dict)
@@ -175,7 +174,7 @@ class TestFlextPayloadRealFunctionality:
             "id": "test_123",
             "name": "Test Object",
             "attributes": ["attr1", "attr2"],
-            "config": {"enabled": True, "timeout": 30}
+            "config": {"enabled": True, "timeout": 30},
         }
 
         result = FlextPayload.create(test_data, operation="test", timestamp=time.time())
@@ -195,6 +194,7 @@ class TestFlextPayloadRealFunctionality:
 # FLEXT MESSAGE TESTS - Specialized String Message Payload
 # =============================================================================
 
+
 class TestFlextMessageRealFunctionality:
     """Test FlextMessage real functionality with message handling."""
 
@@ -209,9 +209,7 @@ class TestFlextMessageRealFunctionality:
 
         # Warning level
         result = FlextMessage.create_message(
-            "Database connection slow",
-            level="warning",
-            source="database_monitor"
+            "Database connection slow", level="warning", source="database_monitor"
         )
         assert result.is_success
         message = result.value
@@ -221,9 +219,7 @@ class TestFlextMessageRealFunctionality:
 
         # Error level
         result = FlextMessage.create_message(
-            "Failed to authenticate user",
-            level="error",
-            source="auth_service"
+            "Failed to authenticate user", level="error", source="auth_service"
         )
         assert result.is_success
         message = result.value
@@ -233,9 +229,7 @@ class TestFlextMessageRealFunctionality:
 
         # Critical level
         result = FlextMessage.create_message(
-            "System shutdown initiated",
-            level="critical",
-            source="system_manager"
+            "System shutdown initiated", level="critical", source="system_manager"
         )
         assert result.is_success
         message = result.value
@@ -245,8 +239,7 @@ class TestFlextMessageRealFunctionality:
         """Test FlextMessage level validation with fallback to 'info'."""
         # Invalid level should fallback to 'info'
         result = FlextMessage.create_message(
-            "Test message with invalid level",
-            level="invalid_level"
+            "Test message with invalid level", level="invalid_level"
         )
         assert result.is_success
         message = result.value
@@ -285,8 +278,7 @@ class TestFlextMessageRealFunctionality:
 
         # With source
         result = FlextMessage.create_message(
-            "Test message with source",
-            source="unit_test_module"
+            "Test message with source", source="unit_test_module"
         )
         assert result.is_success
         message = result.value
@@ -294,15 +286,16 @@ class TestFlextMessageRealFunctionality:
 
     def test_message_inheritance_from_payload(self) -> None:
         """Test FlextMessage inherits FlextPayload functionality."""
-        result = FlextMessage.create_message("Test message", level="info", source="test")
+        result = FlextMessage.create_message(
+            "Test message", level="info", source="test"
+        )
         assert result.is_success
 
         message = result.value
 
         # Should inherit metadata enrichment
         enriched = message.with_metadata(
-            correlation_id="corr_123",
-            timestamp=time.time()
+            correlation_id="corr_123", timestamp=time.time()
         )
 
         assert enriched.value == "Test message"
@@ -318,9 +311,7 @@ class TestFlextMessageRealFunctionality:
 
         # Startup sequence
         result = FlextMessage.create_message(
-            "Starting application initialization",
-            level="info",
-            source="app_manager"
+            "Starting application initialization", level="info", source="app_manager"
         )
         assert result.is_success
         messages.append(result.value)
@@ -329,7 +320,7 @@ class TestFlextMessageRealFunctionality:
         result = FlextMessage.create_message(
             "Loading configuration from config.yaml",
             level="debug",
-            source="config_loader"
+            source="config_loader",
         )
         assert result.is_success
         messages.append(result.value)
@@ -338,7 +329,7 @@ class TestFlextMessageRealFunctionality:
         result = FlextMessage.create_message(
             "Configuration file missing optional section 'advanced'",
             level="warning",
-            source="config_loader"
+            source="config_loader",
         )
         assert result.is_success
         messages.append(result.value)
@@ -347,7 +338,7 @@ class TestFlextMessageRealFunctionality:
         result = FlextMessage.create_message(
             "Application started successfully on port 8080",
             level="info",
-            source="web_server"
+            source="web_server",
         )
         assert result.is_success
         messages.append(result.value)
@@ -369,6 +360,7 @@ class TestFlextMessageRealFunctionality:
 # FLEXT EVENT TESTS - Domain Event Payload with Aggregate Tracking
 # =============================================================================
 
+
 class TestFlextEventRealFunctionality:
     """Test FlextEvent real functionality with domain events."""
 
@@ -377,14 +369,11 @@ class TestFlextEventRealFunctionality:
         event_data = {
             "user_id": "user_123",
             "email": "user@example.com",
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         result = FlextEvent.create_event(
-            "UserRegistered",
-            event_data,
-            aggregate_id="user_123",
-            version=1
+            "UserRegistered", event_data, aggregate_id="user_123", version=1
         )
 
         assert result.is_success
@@ -440,14 +429,11 @@ class TestFlextEventRealFunctionality:
             "user_id": "user_456",
             "email": "john.doe@example.com",
             "name": "John Doe",
-            "registration_source": "web_app"
+            "registration_source": "web_app",
         }
 
         result = FlextEvent.create_event(
-            "UserRegistered",
-            registration_data,
-            aggregate_id="user_456",
-            version=1
+            "UserRegistered", registration_data, aggregate_id="user_456", version=1
         )
         assert result.is_success
         events.append(result.value)
@@ -456,14 +442,11 @@ class TestFlextEventRealFunctionality:
         verification_data = {
             "user_id": "user_456",
             "verification_token": "token_abc123",
-            "verified_at": datetime.now(UTC).isoformat()
+            "verified_at": datetime.now(UTC).isoformat(),
         }
 
         result = FlextEvent.create_event(
-            "EmailVerified",
-            verification_data,
-            aggregate_id="user_456",
-            version=2
+            "EmailVerified", verification_data, aggregate_id="user_456", version=2
         )
         assert result.is_success
         events.append(result.value)
@@ -474,16 +457,13 @@ class TestFlextEventRealFunctionality:
             "updates": {
                 "first_name": "John",
                 "last_name": "Doe",
-                "bio": "Software developer"
+                "bio": "Software developer",
             },
-            "updated_by": "user_456"
+            "updated_by": "user_456",
         }
 
         result = FlextEvent.create_event(
-            "ProfileUpdated",
-            profile_data,
-            aggregate_id="user_456",
-            version=3
+            "ProfileUpdated", profile_data, aggregate_id="user_456", version=3
         )
         assert result.is_success
         events.append(result.value)
@@ -492,14 +472,11 @@ class TestFlextEventRealFunctionality:
         deactivation_data = {
             "user_id": "user_456",
             "reason": "user_request",
-            "deactivated_at": datetime.now(UTC).isoformat()
+            "deactivated_at": datetime.now(UTC).isoformat(),
         }
 
         result = FlextEvent.create_event(
-            "AccountDeactivated",
-            deactivation_data,
-            aggregate_id="user_456",
-            version=4
+            "AccountDeactivated", deactivation_data, aggregate_id="user_456", version=4
         )
         assert result.is_success
         events.append(result.value)
@@ -508,13 +485,18 @@ class TestFlextEventRealFunctionality:
         assert len(events) == 4
 
         event_types = [event.metadata["event_type"] for event in events]
-        expected_types = ["UserRegistered", "EmailVerified", "ProfileUpdated", "AccountDeactivated"]
+        expected_types = [
+            "UserRegistered",
+            "EmailVerified",
+            "ProfileUpdated",
+            "AccountDeactivated",
+        ]
         assert event_types == expected_types
 
         # All should have same aggregate_id
         aggregate_ids = {event.metadata["aggregate_id"] for event in events}
         assert len(aggregate_ids) == 1
-        assert list(aggregate_ids)[0] == "user_456"
+        assert next(iter(aggregate_ids)) == "user_456"
 
         # Versions should be sequential
         versions = [event.metadata["version"] for event in events]
@@ -527,7 +509,7 @@ class TestFlextEventRealFunctionality:
             "customer": {
                 "customer_id": "customer_123",
                 "name": "Alice Smith",
-                "email": "alice@example.com"
+                "email": "alice@example.com",
             },
             "items": [
                 {
@@ -535,39 +517,36 @@ class TestFlextEventRealFunctionality:
                     "name": "Laptop",
                     "quantity": 1,
                     "unit_price": 999.99,
-                    "total_price": 999.99
+                    "total_price": 999.99,
                 },
                 {
                     "product_id": "prod_002",
                     "name": "Mouse",
                     "quantity": 2,
                     "unit_price": 29.99,
-                    "total_price": 59.98
-                }
+                    "total_price": 59.98,
+                },
             ],
             "totals": {
                 "subtotal": 1059.97,
                 "tax": 84.80,
                 "shipping": 15.00,
-                "total": 1159.77
+                "total": 1159.77,
             },
             "payment": {
                 "method": "credit_card",
                 "status": "authorized",
-                "transaction_id": "txn_abc123"
+                "transaction_id": "txn_abc123",
             },
             "fulfillment": {
                 "warehouse_id": "warehouse_west",
                 "estimated_shipping": "2024-01-15",
-                "tracking_enabled": True
-            }
+                "tracking_enabled": True,
+            },
         }
 
         result = FlextEvent.create_event(
-            "OrderPlaced",
-            complex_event_data,
-            aggregate_id="order_789",
-            version=1
+            "OrderPlaced", complex_event_data, aggregate_id="order_789", version=1
         )
 
         assert result.is_success
@@ -584,10 +563,7 @@ class TestFlextEventRealFunctionality:
         event_data = {"test": "event"}
 
         result = FlextEvent.create_event(
-            "TestEvent",
-            event_data,
-            aggregate_id="test_123",
-            version=1
+            "TestEvent", event_data, aggregate_id="test_123", version=1
         )
         assert result.is_success
 
@@ -595,8 +571,7 @@ class TestFlextEventRealFunctionality:
 
         # Should inherit metadata enrichment
         enriched = event.with_metadata(
-            correlation_id="corr_789",
-            causation_id="cause_456"
+            correlation_id="corr_789", causation_id="cause_456"
         )
 
         assert enriched.value == event_data
@@ -610,6 +585,7 @@ class TestFlextEventRealFunctionality:
 # =============================================================================
 # SERIALIZATION AND CROSS-SERVICE TESTS - Constants and Utilities
 # =============================================================================
+
 
 class TestPayloadSerializationRealFunctionality:
     """Test payload serialization constants and cross-service functionality."""
@@ -654,12 +630,12 @@ class TestPayloadSerializationRealFunctionality:
         """Test payload serialization considering Go bridge type compatibility."""
         # Create payload with types that need Go bridge conversion
         go_compatible_data = {
-            "string_field": "test string",          # string
-            "integer_field": 42,                    # int64
-            "float_field": 3.14159,                 # float64
-            "boolean_field": True,                  # bool
-            "map_field": {"nested": "object"},      # map[string]interface{}
-            "array_field": [1, 2, 3, "mixed"]      # []interface{}
+            "string_field": "test string",  # string
+            "integer_field": 42,  # int64
+            "float_field": math.pi,  # float64
+            "boolean_field": True,  # bool
+            "map_field": {"nested": "object"},  # map[string]interface{}
+            "array_field": [1, 2, 3, "mixed"],  # []interface{}
         }
 
         result = FlextPayload.create(go_compatible_data, target_service="go_service")
@@ -683,8 +659,8 @@ class TestPayloadSerializationRealFunctionality:
             "bulk_data": "x" * 60000,  # 60KB of data
             "metadata": {
                 "size_info": "approaching_compression_threshold",
-                "test_purpose": "large_payload_handling"
-            }
+                "test_purpose": "large_payload_handling",
+            },
         }
 
         result = FlextPayload.create(large_data, size_test=True)
@@ -705,6 +681,7 @@ class TestPayloadSerializationRealFunctionality:
 # INTEGRATION TESTS - Multiple Components Working Together
 # =============================================================================
 
+
 class TestPayloadIntegrationRealFunctionality:
     """Test integration scenarios with multiple payload components."""
 
@@ -712,9 +689,7 @@ class TestPayloadIntegrationRealFunctionality:
         """Test complete workflow using messages and events together."""
         # 1. Create system startup message
         startup_result = FlextMessage.create_message(
-            "System startup initiated",
-            level="info",
-            source="system_manager"
+            "System startup initiated", level="info", source="system_manager"
         )
         assert startup_result.is_success
         startup_message = startup_result.value
@@ -723,17 +698,11 @@ class TestPayloadIntegrationRealFunctionality:
         startup_event_data = {
             "system_id": "system_001",
             "startup_time": datetime.now(UTC).isoformat(),
-            "configuration": {
-                "environment": "production",
-                "version": "1.0.0"
-            }
+            "configuration": {"environment": "production", "version": "1.0.0"},
         }
 
         event_result = FlextEvent.create_event(
-            "SystemStarted",
-            startup_event_data,
-            aggregate_id="system_001",
-            version=1
+            "SystemStarted", startup_event_data, aggregate_id="system_001", version=1
         )
         assert event_result.is_success
         startup_event = event_result.value
@@ -742,7 +711,7 @@ class TestPayloadIntegrationRealFunctionality:
         completion_result = FlextMessage.create_message(
             "System startup completed successfully",
             level="info",
-            source="system_manager"
+            source="system_manager",
         )
         assert completion_result.is_success
         completion_message = completion_result.value
@@ -767,9 +736,11 @@ class TestPayloadIntegrationRealFunctionality:
             "order_id": aggregate_id,
             "customer_id": "customer_789",
             "items": [{"product": "laptop", "quantity": 1, "price": 1200.00}],
-            "total": 1200.00
+            "total": 1200.00,
         }
-        result = FlextEvent.create_event("OrderCreated", create_data, aggregate_id=aggregate_id, version=1)
+        result = FlextEvent.create_event(
+            "OrderCreated", create_data, aggregate_id=aggregate_id, version=1
+        )
         assert result.is_success
         events.append(result.value)
 
@@ -778,9 +749,11 @@ class TestPayloadIntegrationRealFunctionality:
             "order_id": aggregate_id,
             "payment_method": "credit_card",
             "amount": 1200.00,
-            "transaction_id": "txn_001"
+            "transaction_id": "txn_001",
         }
-        result = FlextEvent.create_event("PaymentAdded", payment_data, aggregate_id=aggregate_id, version=2)
+        result = FlextEvent.create_event(
+            "PaymentAdded", payment_data, aggregate_id=aggregate_id, version=2
+        )
         assert result.is_success
         events.append(result.value)
 
@@ -789,9 +762,11 @@ class TestPayloadIntegrationRealFunctionality:
             "order_id": aggregate_id,
             "tracking_number": "track_123",
             "carrier": "FedEx",
-            "shipped_at": datetime.now(UTC).isoformat()
+            "shipped_at": datetime.now(UTC).isoformat(),
         }
-        result = FlextEvent.create_event("OrderShipped", shipping_data, aggregate_id=aggregate_id, version=3)
+        result = FlextEvent.create_event(
+            "OrderShipped", shipping_data, aggregate_id=aggregate_id, version=3
+        )
         assert result.is_success
         events.append(result.value)
 
@@ -799,9 +774,11 @@ class TestPayloadIntegrationRealFunctionality:
         delivery_data = {
             "order_id": aggregate_id,
             "delivered_at": datetime.now(UTC).isoformat(),
-            "signature": "customer_signature"
+            "signature": "customer_signature",
         }
-        result = FlextEvent.create_event("OrderDelivered", delivery_data, aggregate_id=aggregate_id, version=4)
+        result = FlextEvent.create_event(
+            "OrderDelivered", delivery_data, aggregate_id=aggregate_id, version=4
+        )
         assert result.is_success
         events.append(result.value)
 
@@ -813,29 +790,34 @@ class TestPayloadIntegrationRealFunctionality:
             event_data = event.value
 
             if event_type == "OrderCreated":
-                aggregate_state.update({
-                    "customer_id": event_data["customer_id"],
-                    "items": event_data["items"],
-                    "total": event_data["total"],
-                    "status": "created"
-                })
+                aggregate_state.update(
+                    {
+                        "customer_id": event_data["customer_id"],
+                        "items": event_data["items"],
+                        "total": event_data["total"],
+                        "status": "created",
+                    }
+                )
             elif event_type == "PaymentAdded":
-                aggregate_state.update({
-                    "payment_method": event_data["payment_method"],
-                    "transaction_id": event_data["transaction_id"],
-                    "status": "paid"
-                })
+                aggregate_state.update(
+                    {
+                        "payment_method": event_data["payment_method"],
+                        "transaction_id": event_data["transaction_id"],
+                        "status": "paid",
+                    }
+                )
             elif event_type == "OrderShipped":
-                aggregate_state.update({
-                    "tracking_number": event_data["tracking_number"],
-                    "carrier": event_data["carrier"],
-                    "status": "shipped"
-                })
+                aggregate_state.update(
+                    {
+                        "tracking_number": event_data["tracking_number"],
+                        "carrier": event_data["carrier"],
+                        "status": "shipped",
+                    }
+                )
             elif event_type == "OrderDelivered":
-                aggregate_state.update({
-                    "delivered_at": event_data["delivered_at"],
-                    "status": "delivered"
-                })
+                aggregate_state.update(
+                    {"delivered_at": event_data["delivered_at"], "status": "delivered"}
+                )
 
         # Verify reconstructed state
         assert aggregate_state["order_id"] == aggregate_id
@@ -852,14 +834,14 @@ class TestPayloadIntegrationRealFunctionality:
             "request_id": "req_001",
             "operation": "user_validation",
             "user_id": "user_999",
-            "validation_rules": ["email", "age", "country"]
+            "validation_rules": ["email", "age", "country"],
         }
 
         result = FlextPayload.create(
             service_a_data,
             source_service="user_service",
             target_service="validation_service",
-            correlation_id="corr_123"
+            correlation_id="corr_123",
         )
         assert result.is_success
 
@@ -868,12 +850,8 @@ class TestPayloadIntegrationRealFunctionality:
         # Service B processes and responds
         response_data = {
             "request_id": "req_001",
-            "validation_result": {
-                "email": "valid",
-                "age": "valid",
-                "country": "valid"
-            },
-            "overall_status": "passed"
+            "validation_result": {"email": "valid", "age": "valid", "country": "valid"},
+            "overall_status": "passed",
         }
 
         response_result = FlextPayload.create(
@@ -881,13 +859,19 @@ class TestPayloadIntegrationRealFunctionality:
             source_service="validation_service",
             target_service="user_service",
             correlation_id="corr_123",
-            response_to="req_001"
+            response_to="req_001",
         )
         assert response_result.is_success
 
         response_payload = response_result.value
 
         # Verify cross-service correlation
-        assert cross_service_payload.metadata["correlation_id"] == response_payload.metadata["correlation_id"]
-        assert cross_service_payload.metadata["source_service"] != response_payload.metadata["source_service"]
+        assert (
+            cross_service_payload.metadata["correlation_id"]
+            == response_payload.metadata["correlation_id"]
+        )
+        assert (
+            cross_service_payload.metadata["source_service"]
+            != response_payload.metadata["source_service"]
+        )
         assert response_payload.metadata["response_to"] == "req_001"

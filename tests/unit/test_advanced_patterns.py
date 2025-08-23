@@ -245,15 +245,19 @@ class TestAdvancedPatterns:
         param_builder = ParameterizedTestBuilder("email_validation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"email": "test@example.com", "input": "valid_email_1"},
-            {"email": "user@domain.org", "input": "valid_email_2"},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"email": "test@example.com", "input": "valid_email_1"},
+                {"email": "user@domain.org", "input": "valid_email_2"},
+            ]
+        )
 
-        param_builder.add_failure_cases([
-            {"email": "invalid-email", "input": "invalid_email_1"},
-            {"email": "@domain.com", "input": "invalid_email_2"},
-        ])
+        param_builder.add_failure_cases(
+            [
+                {"email": "invalid-email", "input": "invalid_email_1"},
+                {"email": "@domain.com", "input": "invalid_email_2"},
+            ]
+        )
 
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()

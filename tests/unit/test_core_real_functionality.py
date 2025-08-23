@@ -73,7 +73,7 @@ class TestFlextCoreRealFunctionality:
             return {
                 "logger_id": f"logger_{counter['value']}",
                 "created_at": time.time(),
-                "level": "INFO"
+                "level": "INFO",
             }
 
         result = core.register_factory("logger_factory", logger_factory)
@@ -99,10 +99,7 @@ class TestFlextCoreRealFunctionality:
         core = FlextCore.get_instance()
 
         # Configure logging through FlextCore
-        core.configure_logging(
-            log_level="DEBUG",
-            _json_output=False
-        )
+        core.configure_logging(log_level="DEBUG", _json_output=False)
 
         # Use the logging system
         logger = FlextLoggerFactory.get_logger("test_module")
@@ -118,8 +115,7 @@ class TestFlextCoreRealFunctionality:
 
         # Create validation error through FlextCore
         result = core.create_validation_error(
-            "Test validation failed",
-            field_name="email"
+            "Test validation failed", field_name="email"
         )
 
         assert result is not None
@@ -151,9 +147,7 @@ class TestFlextCoreRealFunctionality:
 
         # Configure the container with real settings
         config_result = core.configure_container(
-            max_services=100,
-            enable_metrics=True,
-            service_timeout=30.0
+            max_services=100, enable_metrics=True, service_timeout=30.0
         )
 
         assert config_result.success
@@ -176,10 +170,7 @@ class TestFlextCoreRealFunctionality:
 
         # Create various field types
         string_field = core.create_string_field(
-            name="username",
-            min_length=3,
-            max_length=20,
-            required=True
+            name="username", min_length=3, max_length=20, required=True
         )
 
         assert string_field.name == "username"
@@ -189,9 +180,7 @@ class TestFlextCoreRealFunctionality:
 
         # Create integer field
         integer_field = core.create_integer_field(
-            name="age",
-            min_value=0,
-            max_value=150
+            name="age", min_value=0, max_value=150
         )
 
         assert integer_field.name == "age"
@@ -244,10 +233,7 @@ class TestFlextCoreEdgeCases:
         core = FlextCore.get_instance()
 
         # Try invalid log level
-        result = core.configure_logging(
-            log_level="INVALID_LEVEL",
-            _json_output=True
-        )
+        result = core.configure_logging(log_level="INVALID_LEVEL", _json_output=True)
 
         # Should handle gracefully (may succeed with fallback)
         assert isinstance(result, FlextResult)
@@ -303,8 +289,7 @@ class TestFlextCoreIntegrationScenarios:
 
         # 1. Set up logging for the workflow
         log_result = core.configure_logging(
-            log_level="INFO",
-            service_name="user_management"
+            log_level="INFO", service_name="user_management"
         )
         assert log_result.success
 
@@ -313,16 +298,20 @@ class TestFlextCoreIntegrationScenarios:
             def __init__(self) -> None:
                 self.users: dict[str, dict[str, object]] = {}
 
-            def create_user(self, name: str, email: str) -> FlextResult[dict[str, object]]:
+            def create_user(
+                self, name: str, email: str
+            ) -> FlextResult[dict[str, object]]:
                 if not name or not email:
-                    return FlextResult[dict[str, object]].fail("Name and email required")
+                    return FlextResult[dict[str, object]].fail(
+                        "Name and email required"
+                    )
 
                 user_id = generate_uuid()
                 user = {
                     "id": user_id,
                     "name": name,
                     "email": email,
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 }
 
                 self.users[user_id] = user
@@ -370,12 +359,14 @@ class TestFlextCoreIntegrationScenarios:
             def __init__(self) -> None:
                 self.events: list[dict[str, object]] = []
 
-            def process_event(self, event_type: str, data: dict[str, object]) -> FlextResult[None]:
+            def process_event(
+                self, event_type: str, data: dict[str, object]
+            ) -> FlextResult[None]:
                 event = {
                     "type": event_type,
                     "data": data,
                     "timestamp": time.time(),
-                    "event_id": generate_uuid()
+                    "event_id": generate_uuid(),
                 }
                 self.events.append(event)
                 return FlextResult[None].ok(None)
@@ -394,8 +385,12 @@ class TestFlextCoreIntegrationScenarios:
         event_processor = cast("EventProcessor", service_result.value)
 
         # Process multiple events
-        result1 = event_processor.process_event("user_created", {"user_id": "123", "name": "Alice"})
-        result2 = event_processor.process_event("user_updated", {"user_id": "123", "name": "Alice Smith"})
+        result1 = event_processor.process_event(
+            "user_created", {"user_id": "123", "name": "Alice"}
+        )
+        result2 = event_processor.process_event(
+            "user_updated", {"user_id": "123", "name": "Alice Smith"}
+        )
 
         assert result1.success
         assert result2.success

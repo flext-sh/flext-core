@@ -144,12 +144,14 @@ class ConfigurationFactory(DictFactory):  # type: ignore[misc]  # Factory inheri
     # Logging configuration
     logging = LazyFunction(
         lambda: {
-            "level": factory.fuzzy.FuzzyChoice([
-                "DEBUG",
-                "INFO",
-                "WARNING",
-                "ERROR",
-            ]).fuzz(),
+            "level": factory.fuzzy.FuzzyChoice(
+                [
+                    "DEBUG",
+                    "INFO",
+                    "WARNING",
+                    "ERROR",
+                ]
+            ).fuzz(),
             "format": "json",
             "handlers": ["console", "file"],
             "file_path": "/var/log/app.log",
@@ -294,11 +296,13 @@ class TestEntityFactory(Factory[BaseTestEntity]):
     )
 
     metadata = LazyFunction(
-        lambda: FlextMetadata({
-            "created_by": "test_user",
-            "tags": ["test", "automated"],
-            "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),
-        })
+        lambda: FlextMetadata(
+            {
+                "created_by": "test_user",
+                "tags": ["test", "automated"],
+                "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),
+            }
+        )
     )
 
     class Params:
@@ -308,10 +312,12 @@ class TestEntityFactory(Factory[BaseTestEntity]):
         )
         high_priority = Trait(
             metadata=LazyFunction(
-                lambda: FlextMetadata({
-                    "priority": "high",
-                    "urgent": True,
-                })
+                lambda: FlextMetadata(
+                    {
+                        "priority": "high",
+                        "urgent": True,
+                    }
+                )
             ),
         )
 

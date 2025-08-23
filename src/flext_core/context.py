@@ -767,10 +767,12 @@ class FlextContext:
                 # Calculate duration
                 end_time = datetime.now(UTC)
                 duration = (end_time - start_time).total_seconds()
-                operation_metadata.update({
-                    "end_time": end_time,
-                    "duration_seconds": duration,
-                })
+                operation_metadata.update(
+                    {
+                        "end_time": end_time,
+                        "duration_seconds": duration,
+                    }
+                )
 
                 # Restore previous context
                 FlextContext.Variables.Performance.OPERATION_START_TIME.reset(
