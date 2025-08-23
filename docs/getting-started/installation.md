@@ -268,7 +268,7 @@ class DatabaseConfig(FlextSettings):
 class AppConfig(FlextSettings):
     """Main application configuration."""
     app_name: str = Field("My FLEXT App", description="Application name")
-    version: str = Field("1.0.0", description="Application version")
+    version: str = Field("0.9.0", description="Application version")
     debug: bool = Field(False, description="Debug mode")
     environment: str = Field("development", pattern="^(development|staging|production)$")
 

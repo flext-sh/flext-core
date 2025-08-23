@@ -53,7 +53,7 @@ class AppSettings(FlextSettings):
 
     # Application metadata
     app_name: str = "My FLEXT App"
-    version: str = "1.0.0"
+    version: str = "0.9.0"
     debug: bool = False
     environment: str = "development"
 

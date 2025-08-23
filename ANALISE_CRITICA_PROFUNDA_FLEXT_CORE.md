@@ -4183,7 +4183,7 @@ class FlextResult(Result):
 - [ ] Coletar feedback e ajustar
 - [ ] Release 0.10.0-beta
 - [ ] Migrar remaining projects
-- [ ] Release 1.0.0 (breaking changes)
+- [ ] Release 0.9.0 (breaking changes)
 
 ---
 
@@ -4206,7 +4206,7 @@ class FlextResult(Result):
 
 - [ ] API surface < 100 funções públicas (atual: 500+)
 - [ ] Documentação completa com exemplos
-- [ ] Zero breaking changes após 1.0.0
+- [ ] Zero breaking changes após 0.9.0
 - [ ] Tempo de onboarding < 1 dia
 
 ### Adoção
