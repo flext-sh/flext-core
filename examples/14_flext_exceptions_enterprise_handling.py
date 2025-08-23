@@ -711,15 +711,9 @@ def demonstrate_base_exceptions() -> None:
     try:
         # Simulate a basic error
         _raise_service_init_error()
-    except FlextError as e:
+    except FlextError:
         # Demonstrate serialization using available attributes
-        error_info = {
-            "message": e.message,
-            "error_code": e.error_code,
-            "context": e.context,
-            "correlation_id": e.correlation_id,
-            "timestamp": e.timestamp,
-        }
+        pass
 
     # 2. Exception hierarchy demonstration
 
@@ -848,7 +842,7 @@ def demonstrate_validation_exceptions() -> None:
     # 2. Factory method demonstration
 
     # Create validation error directly
-    validation_error = FlextValidationError(
+    FlextValidationError(
         "Email domain not allowed",
         field="email",
         value="user@blocked-domain.com",

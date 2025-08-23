@@ -36,7 +36,7 @@ class TestFlextDelegatedPropertyCoverage:
         delegated_prop = FlextDelegatedProperty(
             "readonly_prop",
             mixin,
-            has_setter=False  # Read-only property
+            has_setter=False,  # Read-only property
         )
 
         # Trying to set should raise FlextOperationError
@@ -72,7 +72,7 @@ class TestFlextDelegatedPropertyCoverage:
         delegated_prop = FlextDelegatedProperty(
             "writable_prop",
             mixin,
-            has_setter=True  # Writable property
+            has_setter=True,  # Writable property
         )
 
         # Should not raise error
@@ -120,10 +120,12 @@ class TestFlextMixinDelegatorInitializationCoverage:
 
         class MixinWithFailingInit:
             def _initialize_validation(self) -> None:
-                raise ValueError("Validation init failed")
+                msg = "Validation init failed"
+                raise ValueError(msg)
 
             def _initialize_id(self) -> None:
-                raise AttributeError("ID init failed")
+                msg = "ID init failed"
+                raise AttributeError(msg)
 
         class TestHost:
             pass
@@ -135,7 +137,10 @@ class TestFlextMixinDelegatorInitializationCoverage:
         init_log = delegator._initialization_log
         error_logs = [log for log in init_log if log.startswith("✗")]
         assert len(error_logs) == 2
-        assert "MixinWithFailingInit._initialize_validation(): Validation init failed" in error_logs[0]
+        assert (
+            "MixinWithFailingInit._initialize_validation(): Validation init failed"
+            in error_logs[0]
+        )
         assert "MixinWithFailingInit._initialize_id(): ID init failed" in error_logs[1]
 
     def test_mixin_registration_failure(self) -> None:
@@ -143,7 +148,8 @@ class TestFlextMixinDelegatorInitializationCoverage:
 
         class FailingMixin:
             def __init__(self) -> None:
-                raise TypeError("Cannot initialize mixin")
+                msg = "Cannot initialize mixin"
+                raise TypeError(msg)
 
         class TestHost:
             pass
@@ -166,7 +172,8 @@ class TestFlextMixinDelegatorExceptionPathsCoverage:
         class ProblematicMixin:
             @property
             def problematic_prop(self) -> str:
-                raise AttributeError("Property access fails")
+                msg = "Property access fails"
+                raise AttributeError(msg)
 
         class TestHost:
             pass
@@ -194,7 +201,7 @@ class TestFlextMixinDelegatorExceptionPathsCoverage:
             pass
 
         host = TestHost()
-        delegator = FlextMixinDelegator(host, ProblematicMixin)
+        FlextMixinDelegator(host, ProblematicMixin)
 
         # Should have delegated the working method
         assert hasattr(host, "normal_method")
@@ -215,7 +222,7 @@ class TestFlextMixinDelegatorExceptionPathsCoverage:
             pass
 
         host = TestHost()
-        delegator = FlextMixinDelegator(host, BuiltinMethodMixin)
+        FlextMixinDelegator(host, BuiltinMethodMixin)
 
         # Should not crash even if signature can't be preserved
         assert hasattr(host, "normal_method")
@@ -238,7 +245,10 @@ class TestValidationSystemCompleteCoverage:
             assert "delegation_info" in data
         else:
             # If it fails, should be a proper failure message
-            assert "validation failed" in result.error.lower() or "test failed" in result.error.lower()
+            assert (
+                "validation failed" in result.error.lower()
+                or "test failed" in result.error.lower()
+            )
 
     def test_validation_system_type_errors(self) -> None:
         """Test validation system handles type errors properly."""

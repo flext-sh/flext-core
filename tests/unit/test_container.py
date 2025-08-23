@@ -124,7 +124,8 @@ class TestFlextContainerDI:
             if config_result.success:
                 config = config_result.value
                 return DatabaseService(config["database_url"])
-            raise ValueError("Config not found")
+            msg = "Config not found"
+            raise ValueError(msg)
 
         class UserService:
             def __init__(self, database: DatabaseService) -> None:
@@ -141,7 +142,8 @@ class TestFlextContainerDI:
             if database_result.success:
                 database = database_result.value
                 return UserService(database)
-            raise ValueError("Database not found")
+            msg = "Database not found"
+            raise ValueError(msg)
 
         container.register_factory("database", create_database)
         container.register_factory("user_service", create_user_service)
@@ -326,7 +328,8 @@ class TestFlextContainerIntegration:
             if repo_result.success:
                 repo = repo_result.value
                 return UserService(repo)
-            raise ValueError("User repository not found")
+            msg = "User repository not found"
+            raise ValueError(msg)
 
         container.register_factory("user_service", create_user_service)
 

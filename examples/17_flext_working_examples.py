@@ -69,7 +69,7 @@ def _demo_commands() -> tuple[object, object]:
     result = handler.execute(command)
     # Modern pattern: Check success and use value directly
     if result.success:
-        user_data = result.value
+        pass
         # Process the user data
     return command, handler
 

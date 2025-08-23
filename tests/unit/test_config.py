@@ -195,7 +195,9 @@ class TestConfigOperations:
             "features": config2.features,
         }
 
-        result = merge_configs(cast("dict[str, object]", dict1), cast("dict[str, object]", dict2))
+        result = merge_configs(
+            cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
+        )
 
         assert result.success
         merged = result.value
@@ -208,7 +210,9 @@ class TestConfigOperations:
         dict1 = {"key1": "value1", "key2": "value2", "shared": "from_first"}
         dict2 = {"key3": "value3", "key4": "value4", "shared": "from_second"}
 
-        result = merge_configs(cast("dict[str, object]", dict1), cast("dict[str, object]", dict2))
+        result = merge_configs(
+            cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
+        )
 
         assert result.success
         merged = result.value
@@ -353,8 +357,7 @@ class TestConfigPerformance:
                 }
 
                 result = merge_configs(
-                    cast("dict[str, object]", dict1),
-                    cast("dict[str, object]", dict2)
+                    cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
                 )
                 results.append(result)
             return results
@@ -585,8 +588,7 @@ class TestConfigIntegration:
         }
 
         merge_result = merge_configs(
-            cast("dict[str, object]", base_dict),
-            cast("dict[str, object]", prod_dict)
+            cast("dict[str, object]", base_dict), cast("dict[str, object]", prod_dict)
         )
 
         assert merge_result.success

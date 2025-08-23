@@ -467,10 +467,12 @@ class OrderProcessingService:
                 return FlextResult[tuple[object, int]].fail(
                     quantity_result.error or "Invalid quantity"
                 )
-            return FlextResult[tuple[object, int]].ok((
-                product_result.value,
-                quantity_result.value,
-            ))
+            return FlextResult[tuple[object, int]].ok(
+                (
+                    product_result.value,
+                    quantity_result.value,
+                )
+            )
 
         items_result = _ensure_items(order_data)
         if items_result.is_failure or items_result.value is None:

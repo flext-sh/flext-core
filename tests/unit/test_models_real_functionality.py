@@ -5,7 +5,7 @@ focusing on real patterns, validation, serialization, and domain modeling.
 
 Classes Tested:
 - FlextModel: Base Pydantic model with alias generation
-- FlextRootModel: Root data structure model  
+- FlextRootModel: Root data structure model
 - FlextValue: Immutable value objects with business rules
 - FlextEntity: Mutable entities with identity and lifecycle
 - FlextFactory: Factory pattern implementations
@@ -36,6 +36,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 # =============================================================================
 # REAL DOMAIN MODELS FOR TESTING
 # =============================================================================
+
 
 # Use the base classes from models.py and create test-specific implementations
 class EmailValue(FlextValue):
@@ -87,13 +88,18 @@ class UserEntity(FlextEntity):
         self.is_active = True
 
         # Add domain event
-        event_result = self.add_domain_event("UserActivated", {
-            "user_id": str(self.id),
-            "activated_at": datetime.now(UTC).isoformat(),
-        })
+        event_result = self.add_domain_event(
+            "UserActivated",
+            {
+                "user_id": str(self.id),
+                "activated_at": datetime.now(UTC).isoformat(),
+            },
+        )
 
         if event_result.is_failure:
-            return FlextResult[None].fail(f"Failed to record activation event: {event_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to record activation event: {event_result.error}"
+            )
 
         return FlextResult[None].ok(None)
 
@@ -105,13 +111,18 @@ class UserEntity(FlextEntity):
         self.is_active = False
 
         # Add domain event
-        event_result = self.add_domain_event("UserDeactivated", {
-            "user_id": str(self.id),
-            "deactivated_at": datetime.now(UTC).isoformat(),
-        })
+        event_result = self.add_domain_event(
+            "UserDeactivated",
+            {
+                "user_id": str(self.id),
+                "deactivated_at": datetime.now(UTC).isoformat(),
+            },
+        )
 
         if event_result.is_failure:
-            return FlextResult[None].fail(f"Failed to record deactivation event: {event_result.error}")
+            return FlextResult[None].fail(
+                f"Failed to record deactivation event: {event_result.error}"
+            )
 
         return FlextResult[None].ok(None)
 
@@ -137,6 +148,7 @@ class DataRootModel(FlextRootModel):
 # FLEXT MODEL TESTS - Base Pydantic Model with Aliases
 # =============================================================================
 
+
 class TestFlextModelRealFunctionality:
     """Test FlextModel real functionality and patterns."""
 
@@ -146,7 +158,7 @@ class TestFlextModelRealFunctionality:
             database_url="postgresql://localhost:5432/test",
             api_timeout=60,
             debug_mode=True,
-            features=["auth", "logging"]
+            features=["auth", "logging"],
         )
 
         assert config.database_url == "postgresql://localhost:5432/test"
@@ -161,8 +173,7 @@ class TestFlextModelRealFunctionality:
     def test_model_serialization_with_aliases(self) -> None:
         """Test FlextModel serialization uses camelCase aliases."""
         config = ConfigurationModel(
-            database_url="postgresql://localhost:5432/test",
-            api_timeout=45
+            database_url="postgresql://localhost:5432/test", api_timeout=45
         )
 
         # to_dict should use camelCase aliases
@@ -174,9 +185,7 @@ class TestFlextModelRealFunctionality:
 
     def test_model_basic_functionality(self) -> None:
         """Test FlextModel basic functionality."""
-        config = ConfigurationModel(
-            database_url="postgresql://localhost:5432/test"
-        )
+        config = ConfigurationModel(database_url="postgresql://localhost:5432/test")
 
         # Test basic serialization
         dict_data = config.to_dict()
@@ -187,9 +196,7 @@ class TestFlextModelRealFunctionality:
 
     def test_business_rules_validation(self) -> None:
         """Test FlextModel business rules validation."""
-        config = ConfigurationModel(
-            database_url="postgresql://localhost:5432/test"
-        )
+        config = ConfigurationModel(database_url="postgresql://localhost:5432/test")
 
         # Default implementation should succeed
         result = config.validate_business_rules()
@@ -200,17 +207,20 @@ class TestFlextModelRealFunctionality:
         with pytest.raises(ValidationError) as exc_info:
             ConfigurationModel(
                 database_url="postgresql://localhost:5432/test",
-                api_timeout=-1  # Should fail validation (ge=1)
+                api_timeout=-1,  # Should fail validation (ge=1)
             )
 
         errors = exc_info.value.errors()
         assert len(errors) > 0
-        assert any("greater than or equal to 1" in str(error["msg"]) for error in errors)
+        assert any(
+            "greater than or equal to 1" in str(error["msg"]) for error in errors
+        )
 
 
 # =============================================================================
 # FLEXT ROOT MODEL TESTS - Root Data Structures
 # =============================================================================
+
 
 class TestFlextRootModelRealFunctionality:
     """Test FlextRootModel real functionality."""
@@ -218,9 +228,7 @@ class TestFlextRootModelRealFunctionality:
     def test_root_model_creation(self) -> None:
         """Test FlextRootModel creation and inheritance from FlextModel."""
         root_data = DataRootModel(
-            application_name="TestApp",
-            version="1.0.0",
-            environment="production"
+            application_name="TestApp", version="1.0.0", environment="production"
         )
 
         assert root_data.application_name == "TestApp"
@@ -233,10 +241,7 @@ class TestFlextRootModelRealFunctionality:
 
     def test_root_model_serialization(self) -> None:
         """Test FlextRootModel serialization with aliases."""
-        root_data = DataRootModel(
-            application_name="TestApp",
-            version="2.1.5"
-        )
+        root_data = DataRootModel(application_name="TestApp", version="2.1.5")
 
         dict_data = root_data.to_dict()
         assert "applicationName" in dict_data
@@ -249,15 +254,13 @@ class TestFlextRootModelRealFunctionality:
 # FLEXT VALUE TESTS - Immutable Value Objects
 # =============================================================================
 
+
 class TestFlextValueRealFunctionality:
     """Test FlextValue real functionality with immutable value objects."""
 
     def test_value_object_creation_and_immutability(self) -> None:
         """Test FlextValue creation and immutability."""
-        email = EmailValue(
-            address="user@example.com",
-            domain="example.com"
-        )
+        email = EmailValue(address="user@example.com", domain="example.com")
 
         assert email.address == "user@example.com"
         assert email.domain == "example.com"
@@ -283,17 +286,14 @@ class TestFlextValueRealFunctionality:
     def test_value_object_business_rules_validation(self) -> None:
         """Test FlextValue business rules validation."""
         # Valid email should pass validation
-        valid_email = EmailValue(
-            address="user@example.com",
-            domain="example.com"
-        )
+        valid_email = EmailValue(address="user@example.com", domain="example.com")
         result = valid_email.validate_business_rules()
         assert result.is_success
 
         # Invalid email should fail validation
         invalid_email = EmailValue(
             address="invalid-email",  # No @ symbol
-            domain="example.com"
+            domain="example.com",
         )
         result = invalid_email.validate_business_rules()
         assert result.is_failure
@@ -352,16 +352,14 @@ class TestFlextValueRealFunctionality:
 # FLEXT ENTITY TESTS - Mutable Entities with Identity
 # =============================================================================
 
+
 class TestFlextEntityRealFunctionality:
     """Test FlextEntity real functionality with mutable entities."""
 
     def test_entity_creation_with_identity(self) -> None:
         """Test FlextEntity creation with automatic ID generation."""
         user = UserEntity(
-            id="user_123",
-            name="John Doe",
-            email="john@example.com",
-            age=30
+            id="user_123", name="John Doe", email="john@example.com", age=30
         )
 
         assert str(user.id) == "user_123"
@@ -378,10 +376,7 @@ class TestFlextEntityRealFunctionality:
     def test_entity_basic_properties(self) -> None:
         """Test FlextEntity basic properties and methods."""
         user = UserEntity(
-            id="user_456",
-            name="Jane Doe",
-            email="jane@example.com",
-            age=25
+            id="user_456", name="Jane Doe", email="jane@example.com", age=25
         )
 
         # Basic properties should work
@@ -393,9 +388,15 @@ class TestFlextEntityRealFunctionality:
 
     def test_entity_identity_based_equality(self) -> None:
         """Test FlextEntity identity-based equality."""
-        user1 = UserEntity(id="user_123", name="John Doe", email="john@example.com", age=30)
-        user2 = UserEntity(id="user_123", name="Jane Doe", email="jane@example.com", age=25)  # Same ID, different data
-        user3 = UserEntity(id="user_456", name="John Doe", email="john@example.com", age=30)  # Different ID, same data
+        user1 = UserEntity(
+            id="user_123", name="John Doe", email="john@example.com", age=30
+        )
+        user2 = UserEntity(
+            id="user_123", name="Jane Doe", email="jane@example.com", age=25
+        )  # Same ID, different data
+        user3 = UserEntity(
+            id="user_456", name="John Doe", email="john@example.com", age=30
+        )  # Different ID, same data
 
         # Same ID should be equal regardless of other attributes
         assert user1 == user2
@@ -408,10 +409,7 @@ class TestFlextEntityRealFunctionality:
     def test_entity_version_management(self) -> None:
         """Test FlextEntity version management and optimistic locking."""
         user = UserEntity(
-            id="user_789",
-            name="Bob Smith",
-            email="bob@example.com",
-            age=40
+            id="user_789", name="Bob Smith", email="bob@example.com", age=40
         )
 
         assert user.version == 1
@@ -428,10 +426,7 @@ class TestFlextEntityRealFunctionality:
     def test_entity_with_version_method(self) -> None:
         """Test FlextEntity with_version method."""
         user = UserEntity(
-            id="user_101",
-            name="Alice Johnson",
-            email="alice@example.com",
-            age=28
+            id="user_101", name="Alice Johnson", email="alice@example.com", age=28
         )
 
         # Set specific version
@@ -447,20 +442,17 @@ class TestFlextEntityRealFunctionality:
     def test_entity_domain_events(self) -> None:
         """Test FlextEntity domain events functionality."""
         user = UserEntity(
-            id="user_202",
-            name="Charlie Brown",
-            email="charlie@example.com",
-            age=22
+            id="user_202", name="Charlie Brown", email="charlie@example.com", age=22
         )
 
         # Initially no events
         assert len(user.domain_events) == 0
 
         # Add domain event
-        result = user.add_domain_event("UserCreated", {
-            "user_id": str(user.id),
-            "created_at": datetime.now(UTC).isoformat()
-        })
+        result = user.add_domain_event(
+            "UserCreated",
+            {"user_id": str(user.id), "created_at": datetime.now(UTC).isoformat()},
+        )
 
         assert result.is_success
         assert len(user.domain_events) == 1
@@ -472,7 +464,7 @@ class TestFlextEntityRealFunctionality:
             name="Diana Prince",
             email="diana@example.com",
             age=35,
-            is_active=False
+            is_active=False,
         )
 
         # Activate user
@@ -491,10 +483,7 @@ class TestFlextEntityRealFunctionality:
         """Test FlextEntity business rules validation."""
         # Valid user should pass
         valid_user = UserEntity(
-            id="user_404",
-            name="Valid User",
-            email="valid@example.com",
-            age=30
+            id="user_404", name="Valid User", email="valid@example.com", age=30
         )
         result = valid_user.validate_business_rules()
         assert result.is_success
@@ -505,7 +494,7 @@ class TestFlextEntityRealFunctionality:
             id="user_505",
             name=" ",  # Whitespace only name should fail business rules
             email="valid@example.com",
-            age=25
+            age=25,
         )
         result = user_empty_name.validate_business_rules()
         assert result.is_failure
@@ -514,10 +503,7 @@ class TestFlextEntityRealFunctionality:
     def test_entity_string_representations(self) -> None:
         """Test FlextEntity string representations."""
         user = UserEntity(
-            id="user_606",
-            name="Frank Castle",
-            email="frank@example.com",
-            age=45
+            id="user_606", name="Frank Castle", email="frank@example.com", age=45
         )
 
         # Test __str__
@@ -537,22 +523,16 @@ class TestFlextEntityRealFunctionality:
 # FLEXT FACTORY TESTS - Factory Pattern Implementation
 # =============================================================================
 
+
 class TestFlextFactoryRealFunctionality:
     """Test FlextFactory real functionality."""
 
     def test_factory_user_creation(self) -> None:
         """Test FlextFactory creates users with proper patterns."""
         # Create user through factory
-        user_data = {
-            "name": "Factory User",
-            "email": "factory@example.com",
-            "age": 28
-        }
+        user_data = {"name": "Factory User", "email": "factory@example.com", "age": 28}
 
-        user = UserEntity(
-            id=f"factory_{int(time.time())}",
-            **user_data
-        )
+        user = UserEntity(id=f"factory_{int(time.time())}", **user_data)
 
         assert user.name == "Factory User"
         assert user.email == "factory@example.com"
@@ -568,7 +548,7 @@ class TestFlextFactoryRealFunctionality:
                 id=f"batch_user_{i}",
                 name=f"User {i}",
                 email=f"user{i}@example.com",
-                age=20 + i
+                age=20 + i,
             )
             users.append(user)
 
@@ -587,6 +567,7 @@ class TestFlextFactoryRealFunctionality:
 # =============================================================================
 # HELPER FUNCTION TESTS - Utility Functions
 # =============================================================================
+
 
 class TestHelperFunctionsRealFunctionality:
     """Test helper functions from models.py."""
@@ -661,6 +642,7 @@ class TestHelperFunctionsRealFunctionality:
 # INTEGRATION TESTS - Multiple Components Working Together
 # =============================================================================
 
+
 class TestModelsIntegrationRealFunctionality:
     """Test integration between different model components."""
 
@@ -671,7 +653,7 @@ class TestModelsIntegrationRealFunctionality:
             id="integration_user_123",
             name="Integration User",
             email="integration@example.com",
-            age=30
+            age=30,
         )
 
         # Validate creation
@@ -679,10 +661,10 @@ class TestModelsIntegrationRealFunctionality:
         assert len(user.domain_events) == 0  # no events initially
 
         # Add business event
-        result = user.add_domain_event("UserRegistered", {
-            "registration_type": "standard",
-            "source": "integration_test"
-        })
+        result = user.add_domain_event(
+            "UserRegistered",
+            {"registration_type": "standard", "source": "integration_test"},
+        )
         assert result.is_success
         assert len(user.domain_events) == 1
 
@@ -704,10 +686,7 @@ class TestModelsIntegrationRealFunctionality:
     def test_value_object_and_entity_integration(self) -> None:
         """Test value objects working with entities."""
         # Create value object
-        email = EmailValue(
-            address="integration@example.com",
-            domain="example.com"
-        )
+        email = EmailValue(address="integration@example.com", domain="example.com")
 
         # Validate value object
         result = email.validate_business_rules()
@@ -718,7 +697,7 @@ class TestModelsIntegrationRealFunctionality:
             id="vo_integration_123",
             name="Value Object User",
             email=email.address,  # Use value object data
-            age=25
+            age=25,
         )
 
         # Both should be valid
@@ -733,14 +712,17 @@ class TestModelsIntegrationRealFunctionality:
             id="serialization_test_123",
             name="Serialization Test User",
             email="serialize@example.com",
-            age=32
+            age=32,
         )
 
         # Add domain event
-        result = user.add_domain_event("UserCreated", {
-            "source": "serialization_test",
-            "timestamp": datetime.now(UTC).isoformat()
-        })
+        result = user.add_domain_event(
+            "UserCreated",
+            {
+                "source": "serialization_test",
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+        )
         assert result.is_success
 
         # Serialize to dict

@@ -26,6 +26,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 # TEST DOMAIN CLASSES - Real business objects for testing
 # =============================================================================
 
+
 class DatabaseService:
     """Real database service for testing."""
 
@@ -71,14 +72,22 @@ class UserService:
     def create_user(self, name: str, email: str) -> FlextResult[dict[str, Any]]:
         """Create user using injected dependencies."""
         # Use database to store user
-        db_result = self.database.execute_query(f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')")
+        db_result = self.database.execute_query(
+            f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')"
+        )
         if db_result.is_failure:
-            return FlextResult[dict[str, Any]].fail(f"Database error: {db_result.error}")
+            return FlextResult[dict[str, Any]].fail(
+                f"Database error: {db_result.error}"
+            )
 
         # Send welcome email
-        email_result = self.email.send_email(email, "Welcome!", f"Hello {name}, welcome to our service!")
+        email_result = self.email.send_email(
+            email, "Welcome!", f"Hello {name}, welcome to our service!"
+        )
         if email_result.is_failure:
-            return FlextResult[dict[str, Any]].fail(f"Email error: {email_result.error}")
+            return FlextResult[dict[str, Any]].fail(
+                f"Email error: {email_result.error}"
+            )
 
         user = {"name": name, "email": email, "message_id": email_result.value}
         return FlextResult[dict[str, Any]].ok(user)
@@ -92,7 +101,7 @@ class ConfigService:
         self.config = {
             "database_url": f"{environment}_db.sqlite",
             "email_enabled": environment != "test",
-            "debug": environment == "development"
+            "debug": environment == "development",
         }
 
     def get_config(self, key: str) -> str | bool | None:
@@ -103,6 +112,7 @@ class ConfigService:
 # =============================================================================
 # FLEXT SERVICE KEY TESTS - Type-safe service keys
 # =============================================================================
+
 
 class TestFlextServiceKeyFunctionality:
     """Test FlextServiceKey type-safe service key functionality."""
@@ -122,7 +132,9 @@ class TestFlextServiceKeyFunctionality:
         email_key = FlextServiceKey[EmailService]("email")
         config_key = FlextServiceKey[ConfigService]("config")
 
-        assert all(isinstance(key, FlextServiceKey) for key in [db_key, email_key, config_key])
+        assert all(
+            isinstance(key, FlextServiceKey) for key in [db_key, email_key, config_key]
+        )
         assert str(db_key) == "db"
         assert str(email_key) == "email"
         assert str(config_key) == "config"
@@ -157,6 +169,7 @@ class TestFlextServiceKeyFunctionality:
 # =============================================================================
 # CONTAINER COMMANDS TESTS - CQRS pattern functionality
 # =============================================================================
+
 
 class TestContainerCommandsFunctionality:
     """Test container commands using CQRS patterns."""
@@ -197,7 +210,7 @@ class TestContainerCommandsFunctionality:
 
     def test_register_factory_command_creation(self) -> None:
         """Test RegisterFactoryCommand creation and validation."""
-        factory = lambda: DatabaseService()  # noqa: E731
+        factory = DatabaseService  # noqa: E731
         command = RegisterFactoryCommand.create("database_factory", factory)
 
         assert command.service_name == "database_factory"
@@ -207,7 +220,7 @@ class TestContainerCommandsFunctionality:
 
     def test_register_factory_command_validation_success(self) -> None:
         """Test RegisterFactoryCommand validation success."""
-        factory = lambda: DatabaseService()  # noqa: E731
+        factory = DatabaseService  # noqa: E731
         command = RegisterFactoryCommand.create("valid_factory", factory)
 
         result = command.validate_command()
@@ -215,7 +228,7 @@ class TestContainerCommandsFunctionality:
 
     def test_register_factory_command_validation_failures(self) -> None:
         """Test RegisterFactoryCommand validation failures."""
-        factory = lambda: DatabaseService()  # noqa: E731
+        factory = DatabaseService  # noqa: E731
 
         # Empty service name
         command = RegisterFactoryCommand.create("", factory)
@@ -224,7 +237,9 @@ class TestContainerCommandsFunctionality:
 
         # Non-callable factory
         non_callable_factory = "not_callable"  # type: ignore[assignment]
-        command_bad_factory = RegisterFactoryCommand.create("test", non_callable_factory)
+        command_bad_factory = RegisterFactoryCommand.create(
+            "test", non_callable_factory
+        )
         result = command_bad_factory.validate_command()
         assert result.is_failure
         assert "Factory must be callable" in (result.error or "")
@@ -271,7 +286,9 @@ class TestContainerCommandsFunctionality:
         assert query.query_type == "list_services"
 
         # With custom parameters
-        custom_query = ListServicesQuery.create(include_factories=False, service_type_filter="Database")
+        custom_query = ListServicesQuery.create(
+            include_factories=False, service_type_filter="Database"
+        )
         assert custom_query.include_factories is False
         assert custom_query.service_type_filter == "Database"
 
@@ -279,6 +296,7 @@ class TestContainerCommandsFunctionality:
 # =============================================================================
 # SERVICE REGISTRAR TESTS - Registration component functionality
 # =============================================================================
+
 
 class TestFlextServiceRegistrarFunctionality:
     """Test FlextServiceRegistrar registration functionality."""
@@ -435,7 +453,7 @@ class TestFlextServiceRegistrarFunctionality:
     def test_unregister_factory_success(self) -> None:
         """Test successful factory unregistration."""
         registrar = FlextServiceRegistrar()
-        factory = lambda: DatabaseService()  # noqa: E731
+        factory = DatabaseService  # noqa: E731
 
         # Register and unregister factory
         registrar.register_factory("database", factory)
@@ -460,7 +478,7 @@ class TestFlextServiceRegistrarFunctionality:
         # Register multiple services and factories
         registrar.register_service("service1", DatabaseService())
         registrar.register_service("service2", EmailService())
-        registrar.register_factory("factory1", lambda: ConfigService())  # noqa: E731
+        registrar.register_factory("factory1", ConfigService)  # noqa: E731
 
         assert registrar.get_service_count() == 3
 
@@ -475,7 +493,7 @@ class TestFlextServiceRegistrarFunctionality:
 
         # Register services
         registrar.register_service("db", DatabaseService())
-        registrar.register_factory("email", lambda: EmailService())  # noqa: E731
+        registrar.register_factory("email", EmailService)  # noqa: E731
 
         # Test utility methods
         names = registrar.get_service_names()
@@ -493,6 +511,7 @@ class TestFlextServiceRegistrarFunctionality:
 # =============================================================================
 # SERVICE RETRIEVER TESTS - Retrieval component functionality
 # =============================================================================
+
 
 class TestFlextServiceRetrieverFunctionality:
     """Test FlextServiceRetriever service retrieval functionality."""
@@ -532,8 +551,10 @@ class TestFlextServiceRetrieverFunctionality:
 
     def test_get_service_factory_failure(self) -> None:
         """Test service retrieval when factory fails."""
+
         def failing_factory() -> ConfigService:
-            raise ValueError("Factory intentionally failed")
+            msg = "Factory intentionally failed"
+            raise ValueError(msg)
 
         services: dict[str, object] = {}
         factories = {"failing": failing_factory}
@@ -585,13 +606,16 @@ class TestFlextServiceRetrieverFunctionality:
 
         assert result.is_failure
         # Check the actual error message from container
-        assert any(word in (result.error or "").lower()
-                  for word in ["expected", "databaseservice", "emailservice"])
+        assert any(
+            word in (result.error or "").lower()
+            for word in ["expected", "databaseservice", "emailservice"]
+        )
 
 
 # =============================================================================
 # FLEXT CONTAINER INTEGRATION TESTS - Full container functionality
 # =============================================================================
+
 
 class TestFlextContainerIntegrationFunctionality:
     """Test FlextContainer full integration functionality."""
@@ -666,7 +690,9 @@ class TestFlextContainerIntegrationFunctionality:
         assert result.value.connection_string == "created_on_demand"  # type: ignore[attr-defined]
 
         # Service exists now, should return existing
-        result2 = container.get_or_create("database", lambda: DatabaseService("should_not_create"))  # noqa: E731
+        result2 = container.get_or_create(
+            "database", lambda: DatabaseService("should_not_create")
+        )  # noqa: E731
         assert result2.is_success
         assert result2.value is result.value  # Same instance
 
@@ -774,7 +800,7 @@ class TestFlextContainerIntegrationFunctionality:
 
         # Register various services
         container.register("db", DatabaseService())
-        container.register_factory("email", lambda: EmailService())  # noqa: E731
+        container.register_factory("email", EmailService)  # noqa: E731
         container.register("config", ConfigService())
 
         # Test inspection methods
@@ -830,7 +856,7 @@ class TestFlextContainerIntegrationFunctionality:
         # Register multiple services and factories
         container.register("service1", DatabaseService())
         container.register("service2", EmailService())
-        container.register_factory("factory1", lambda: ConfigService())  # noqa: E731
+        container.register_factory("factory1", ConfigService)  # noqa: E731
 
         assert container.get_service_count() == 3
 
@@ -844,6 +870,7 @@ class TestFlextContainerIntegrationFunctionality:
 # =============================================================================
 # GLOBAL CONTAINER TESTS - Singleton pattern functionality
 # =============================================================================
+
 
 class TestGlobalContainerFunctionality:
     """Test global container singleton functionality."""
@@ -893,6 +920,7 @@ class TestGlobalContainerFunctionality:
 # COMPLEX INTEGRATION SCENARIOS - Real-world usage patterns
 # =============================================================================
 
+
 class TestContainerComplexIntegrationScenarios:
     """Test complex real-world integration scenarios."""
 
@@ -909,7 +937,7 @@ class TestContainerComplexIntegrationScenarios:
         # Layer 2: Domain services (depend on infrastructure)
         user_service = UserService(
             container.get("database").unwrap_or(db),
-            container.get("email").unwrap_or(EmailService())
+            container.get("email").unwrap_or(EmailService()),
         )
         container.register("user_service", user_service)
 
@@ -937,8 +965,7 @@ class TestContainerComplexIntegrationScenarios:
 
         # Application using the service
         user_service = UserService(
-            container.get("database").unwrap_or(old_db),
-            EmailService()
+            container.get("database").unwrap_or(old_db), EmailService()
         )
 
         # Migration: replace with new implementation
@@ -948,8 +975,7 @@ class TestContainerComplexIntegrationScenarios:
 
         # New application instance should get new database
         new_user_service = UserService(
-            container.get("database").unwrap_or(new_db),
-            EmailService()
+            container.get("database").unwrap_or(new_db), EmailService()
         )
 
         assert user_service.database is old_db
@@ -994,7 +1020,7 @@ class TestContainerComplexIntegrationScenarios:
                 "email": container.get("email").unwrap_or(EmailService()),
                 "config": container.get("config").unwrap_or(ConfigService()),
                 "environment": "production",
-                "features": ["user_management", "email_notifications"]
+                "features": ["user_management", "email_notifications"],
             }
 
         container.register_factory("app_context", application_context_factory)

@@ -242,7 +242,8 @@ class TestDelegationSystemCoverage:
                 pass
 
             def _initialize_validation(self) -> None:
-                raise ValueError("Initialization failed")
+                msg = "Initialization failed"
+                raise ValueError(msg)
 
         class TestHost:
             pass
@@ -266,7 +267,9 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate:
             mock_validate.side_effect = AttributeError("Attribute error")
 
             result = validate_delegation_system()
@@ -281,7 +284,9 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_method_functionality") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_method_functionality"
+        ) as mock_validate:
             mock_validate.side_effect = TypeError("Type error")
 
             result = validate_delegation_system()
@@ -296,7 +301,9 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_delegation_info") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_delegation_info"
+        ) as mock_validate:
             mock_validate.side_effect = ValueError("Value error")
 
             result = validate_delegation_system()
@@ -311,7 +318,9 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate:
             mock_validate.side_effect = RuntimeError("Runtime error")
 
             result = validate_delegation_system()
@@ -326,8 +335,12 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate:
-            mock_validate.side_effect = FlextOperationError("Operation error", operation="test")
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate:
+            mock_validate.side_effect = FlextOperationError(
+                "Operation error", operation="test"
+            )
 
             result = validate_delegation_system()
 
@@ -341,7 +354,9 @@ class TestValidateSystemExceptionHandling:
 
         from flext_core.delegation_system import validate_delegation_system
 
-        with patch("flext_core.delegation_system._validate_method_functionality") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_method_functionality"
+        ) as mock_validate:
             mock_validate.side_effect = FlextTypeError("Type error")
 
             result = validate_delegation_system()

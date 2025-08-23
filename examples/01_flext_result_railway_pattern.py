@@ -340,14 +340,14 @@ def main() -> None:
         if isinstance(data, dict) and "performance" in data:
             perf_data = data["performance"]
             if "count" in perf_data and "duration" in perf_data:
-                print(f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+                print(
+                    f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)"
+                )
             else:
                 print(f"  📊 {key}: {len(data)} metrics")
         else:
             print(f"  📊 {key}: {len(data) if isinstance(data, dict) else data}")
-    print(
-        "✅ All performance tracked automatically via FlextUtilities templates"
-    )
+    print("✅ All performance tracked automatically via FlextUtilities templates")
 
 
 if __name__ == "__main__":

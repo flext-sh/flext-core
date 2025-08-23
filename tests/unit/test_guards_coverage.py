@@ -163,7 +163,8 @@ class TestFlextGuardsCoverage:
         class FailingInitClass:
             def __init__(self, value: str) -> None:
                 if value == "fail":
-                    raise ValueError("Initialization failed")
+                    msg = "Initialization failed"
+                    raise ValueError(msg)
                 self.value = value
 
         # Create immutable version
@@ -314,7 +315,9 @@ class TestEdgeCasesAndBoundaryConditions:
     def test_complex_cache_key_scenarios(self) -> None:
         """Test complex scenarios for cache key generation."""
 
-        def complex_function(a: int, b: str, c: list = None, **kwargs: object) -> str:
+        def complex_function(
+            a: int, b: str, c: list | None = None, **kwargs: object
+        ) -> str:
             c = c or []
             return f"{a}-{b}-{len(c)}-{len(kwargs)}"
 
@@ -335,7 +338,8 @@ class TestEdgeCasesAndBoundaryConditions:
 
             def __setattr__(self, name: str, value: object) -> None:
                 if name == "__pure__":
-                    raise AttributeError("Cannot set __pure__ attribute")
+                    msg = "Cannot set __pure__ attribute"
+                    raise AttributeError(msg)
                 super().__setattr__(name, value)
 
         def test_method(self) -> str:

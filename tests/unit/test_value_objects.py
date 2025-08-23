@@ -222,7 +222,8 @@ class TestValueObjectValidation:
         # Test real validation failure - no mocking needed
         result = vo.validate_flext()
         assert result.success is False
-        assert result.error and "Always invalid" in result.error
+        assert result.error
+        assert "Always invalid" in result.error
 
     def test_validate_field_with_registry(self) -> None:
         """Test field validation using registry."""
@@ -571,7 +572,8 @@ class TestFlextFactory:
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         result = callable_factory(value="")  # Should fail validation
         assert result.success is False
-        assert result.error and "cannot be empty" in str(result.error)
+        assert result.error
+        assert "cannot be empty" in str(result.error)
 
     def test_factory_creation_failure(self) -> None:
         """Test factory with creation failure."""
@@ -589,7 +591,8 @@ class TestFlextFactory:
             value=""
         )  # Empty value should fail business validation
         assert result.success is False
-        assert result.error and "cannot be empty" in str(result.error)
+        assert result.error
+        assert "cannot be empty" in str(result.error)
 
     def test_factory_without_defaults(self) -> None:
         """Test factory creation without defaults."""

@@ -661,7 +661,6 @@ class TestFullMixin:
             def mixin_setup(self) -> None:
                 pass
 
-
         # Use factory data
         user_data = user_data_factory.build()
         config_data = configuration_factory.build()

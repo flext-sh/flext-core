@@ -60,29 +60,31 @@ class FlextStrategies:
     @staticmethod
     def phone_numbers() -> st.SearchStrategy[str]:
         """Generate phone numbers in various formats."""
-        return st.one_of([
-            # +1-555-123-4567
-            st.builds(
-                lambda area, exchange, number: f"+1-{area}-{exchange}-{number}",
-                area=st.integers(min_value=200, max_value=999).map(str),
-                exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str),
-            ),
-            # (555) 123-4567
-            st.builds(
-                lambda area, exchange, number: f"({area}) {exchange}-{number}",
-                area=st.integers(min_value=200, max_value=999).map(str),
-                exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str),
-            ),
-            # 555.123.4567
-            st.builds(
-                lambda area, exchange, number: f"{area}.{exchange}.{number}",
-                area=st.integers(min_value=200, max_value=999).map(str),
-                exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str),
-            ),
-        ])
+        return st.one_of(
+            [
+                # +1-555-123-4567
+                st.builds(
+                    lambda area, exchange, number: f"+1-{area}-{exchange}-{number}",
+                    area=st.integers(min_value=200, max_value=999).map(str),
+                    exchange=st.integers(min_value=200, max_value=999).map(str),
+                    number=st.integers(min_value=1000, max_value=9999).map(str),
+                ),
+                # (555) 123-4567
+                st.builds(
+                    lambda area, exchange, number: f"({area}) {exchange}-{number}",
+                    area=st.integers(min_value=200, max_value=999).map(str),
+                    exchange=st.integers(min_value=200, max_value=999).map(str),
+                    number=st.integers(min_value=1000, max_value=9999).map(str),
+                ),
+                # 555.123.4567
+                st.builds(
+                    lambda area, exchange, number: f"{area}.{exchange}.{number}",
+                    area=st.integers(min_value=200, max_value=999).map(str),
+                    exchange=st.integers(min_value=200, max_value=999).map(str),
+                    number=st.integers(min_value=1000, max_value=9999).map(str),
+                ),
+            ]
+        )
 
     @staticmethod
     def urls() -> st.SearchStrategy[str]:
@@ -96,17 +98,19 @@ class FlextStrategies:
                 max_size=20,
             ),
             tld=st.sampled_from(["com", "org", "net", "io", "co.uk"]),
-            path=st.one_of([
-                st.just(""),
-                st.builds(
-                    lambda p: f"/{p}",
-                    p=st.text(
-                        alphabet=string.ascii_lowercase + string.digits + "-_/",
-                        min_size=1,
-                        max_size=50,
+            path=st.one_of(
+                [
+                    st.just(""),
+                    st.builds(
+                        lambda p: f"/{p}",
+                        p=st.text(
+                            alphabet=string.ascii_lowercase + string.digits + "-_/",
+                            min_size=1,
+                            max_size=50,
+                        ),
                     ),
-                ),
-            ]),
+                ]
+            ),
         )
 
     @staticmethod
@@ -253,71 +257,91 @@ class EdgeCaseStrategies:
     @staticmethod
     def empty_or_whitespace_strings() -> st.SearchStrategy[str]:
         """Generate empty or whitespace-only strings."""
-        return st.one_of([
-            st.just(""),
-            st.text(alphabet=" \t\n\r", min_size=1, max_size=10),
-            st.builds(lambda n: " " * n, n=st.integers(min_value=1, max_value=100)),
-        ])
+        return st.one_of(
+            [
+                st.just(""),
+                st.text(alphabet=" \t\n\r", min_size=1, max_size=10),
+                st.builds(lambda n: " " * n, n=st.integers(min_value=1, max_value=100)),
+            ]
+        )
 
     @staticmethod
     def boundary_integers() -> st.SearchStrategy[int]:
         """Generate integers at common boundary values."""
-        return st.one_of([
-            st.just(0),
-            st.just(1),
-            st.just(-1),
-            st.integers(min_value=-(2**31), max_value=-(2**31) + 10),  # Near min int32
-            st.integers(min_value=2**31 - 10, max_value=2**31 - 1),  # Near max int32
-            st.integers(min_value=-(2**63), max_value=-(2**63) + 10),  # Near min int64
-            st.integers(min_value=2**63 - 10, max_value=2**63 - 1),  # Near max int64
-        ])
+        return st.one_of(
+            [
+                st.just(0),
+                st.just(1),
+                st.just(-1),
+                st.integers(
+                    min_value=-(2**31), max_value=-(2**31) + 10
+                ),  # Near min int32
+                st.integers(
+                    min_value=2**31 - 10, max_value=2**31 - 1
+                ),  # Near max int32
+                st.integers(
+                    min_value=-(2**63), max_value=-(2**63) + 10
+                ),  # Near min int64
+                st.integers(
+                    min_value=2**63 - 10, max_value=2**63 - 1
+                ),  # Near max int64
+            ]
+        )
 
     @staticmethod
     def boundary_floats() -> st.SearchStrategy[float]:
         """Generate floats at boundary values."""
-        return st.one_of([
-            st.just(0.0),
-            st.just(-0.0),
-            st.just(1.0),
-            st.just(-1.0),
-            st.floats(min_value=0.0, max_value=1e-10),  # Very small positive
-            st.floats(min_value=-1e-10, max_value=0.0),  # Very small negative
-            st.floats(min_value=1e10, max_value=1e15),  # Very large positive
-            st.floats(min_value=-1e15, max_value=-1e10),  # Very large negative
-        ])
+        return st.one_of(
+            [
+                st.just(0.0),
+                st.just(-0.0),
+                st.just(1.0),
+                st.just(-1.0),
+                st.floats(min_value=0.0, max_value=1e-10),  # Very small positive
+                st.floats(min_value=-1e-10, max_value=0.0),  # Very small negative
+                st.floats(min_value=1e10, max_value=1e15),  # Very large positive
+                st.floats(min_value=-1e15, max_value=-1e10),  # Very large negative
+            ]
+        )
 
     @staticmethod
     def unicode_edge_cases() -> st.SearchStrategy[str]:
         """Generate Unicode edge cases."""
-        return st.one_of([
-            st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
-            st.text(alphabet="áéíóúñü", min_size=1, max_size=20),  # Accented chars
-            st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),  # Greek letters
-            st.text(alphabet="中文测试", min_size=1, max_size=10),  # Chinese characters
-            st.builds(lambda: "\u200b" * 5),  # Zero-width spaces
-            st.builds(lambda: "test\x00null"),  # Null characters
-        ])
+        return st.one_of(
+            [
+                st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
+                st.text(alphabet="áéíóúñü", min_size=1, max_size=20),  # Accented chars
+                st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),  # Greek letters
+                st.text(
+                    alphabet="中文测试", min_size=1, max_size=10
+                ),  # Chinese characters
+                st.builds(lambda: "\u200b" * 5),  # Zero-width spaces
+                st.builds(lambda: "test\x00null"),  # Null characters
+            ]
+        )
 
     @staticmethod
     def malformed_data() -> st.SearchStrategy[dict[str, Any]]:
         """Generate malformed data structures."""
-        return st.one_of([
-            st.just({}),  # Empty dict
-            st.builds(dict, key1=st.none(), key2=st.none()),  # None values
-            st.builds(
-                dict,
-                **{
-                    f"key_{i}": st.one_of([st.none(), st.just(""), st.integers()])
-                    for i in range(5)
-                },
-            ),
-            st.recursive(
-                st.none() | st.booleans() | st.integers() | st.text(),
-                lambda children: st.lists(children)
-                | st.dictionaries(st.text(), children),
-                max_leaves=20,
-            ),
-        ])
+        return st.one_of(
+            [
+                st.just({}),  # Empty dict
+                st.builds(dict, key1=st.none(), key2=st.none()),  # None values
+                st.builds(
+                    dict,
+                    **{
+                        f"key_{i}": st.one_of([st.none(), st.just(""), st.integers()])
+                        for i in range(5)
+                    },
+                ),
+                st.recursive(
+                    st.none() | st.booleans() | st.integers() | st.text(),
+                    lambda children: st.lists(children)
+                    | st.dictionaries(st.text(), children),
+                    max_leaves=20,
+                ),
+            ]
+        )
 
 
 class PerformanceStrategies:
@@ -438,21 +462,25 @@ class CompositeStrategies:
             method=st.sampled_from(["GET", "POST", "PUT", "DELETE", "PATCH"]),
             url=FlextStrategies.urls(),
             headers=st.dictionaries(
-                st.sampled_from([
-                    "Content-Type",
-                    "Authorization",
-                    "Accept",
-                    "User-Agent",
-                    "X-Correlation-ID",
-                ]),
+                st.sampled_from(
+                    [
+                        "Content-Type",
+                        "Authorization",
+                        "Accept",
+                        "User-Agent",
+                        "X-Correlation-ID",
+                    ]
+                ),
                 st.text(min_size=1, max_size=100),
                 max_size=5,
             ),
-            body=st.one_of([
-                st.none(),
-                st.dictionaries(st.text(), st.text(), max_size=10),
-                st.text(max_size=1000),
-            ]),
+            body=st.one_of(
+                [
+                    st.none(),
+                    st.dictionaries(st.text(), st.text(), max_size=10),
+                    st.text(max_size=1000),
+                ]
+            ),
             correlation_id=FlextStrategies.correlation_ids(),
         )
 

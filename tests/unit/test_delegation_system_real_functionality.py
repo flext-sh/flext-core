@@ -63,7 +63,8 @@ class BusinessLogicMixin:
     def configurable_rate(self, value: float) -> None:
         """Setter for configurable rate."""
         if value < 0 or value > 100:
-            raise ValueError("Rate must be between 0 and 100")
+            msg = "Rate must be between 0 and 100"
+            raise ValueError(msg)
         self._configurable_rate = value
 
 
@@ -95,7 +96,7 @@ class DatabaseMixin:
         """Get connection information."""
         return {
             "active_connections": self.connection_count,
-            "operations_count": len(self.operations_log)
+            "operations_count": len(self.operations_log),
         }
 
 
@@ -128,7 +129,7 @@ class CacheAccessMixin:
         return {
             "hits": self.hit_count,
             "misses": self.miss_count,
-            "total_keys": len(self.cache_data)
+            "total_keys": len(self.cache_data),
         }
 
 
@@ -149,12 +150,16 @@ class RealBusinessHost:
             FlextTimestampMixin,
         )
 
-    def process_order(self, amount: float, customer_id: str) -> FlextResult[dict[str, Any]]:
+    def process_order(
+        self, amount: float, customer_id: str
+    ) -> FlextResult[dict[str, Any]]:
         """Real business process using delegated methods."""
         # Use delegated validation
         validation_result = self.validate_amount(amount)  # type: ignore[attr-defined]
         if validation_result.is_failure:
-            return FlextResult[None].fail(f"Validation failed: {validation_result.error}")
+            return FlextResult[None].fail(
+                f"Validation failed: {validation_result.error}"
+            )
 
         # Calculate discount using delegated method
         discount = self.calculate_discount(amount, 15.0)  # type: ignore[attr-defined]
@@ -164,7 +169,7 @@ class RealBusinessHost:
             "customer_id": customer_id,
             "amount": amount,
             "discount": discount,
-            "final_amount": amount - discount
+            "final_amount": amount - discount,
         }
 
         save_result = self.save_record(order_data)  # type: ignore[attr-defined]
@@ -175,11 +180,13 @@ class RealBusinessHost:
         cache_key = f"order_{customer_id}_{save_result.value}"
         self.cache_set(cache_key, order_data)  # type: ignore[attr-defined]
 
-        return FlextResult[None].ok({
-            "order_id": save_result.value,
-            "final_amount": order_data["final_amount"],
-            "discount_applied": discount
-        })
+        return FlextResult[None].ok(
+            {
+                "order_id": save_result.value,
+                "final_amount": order_data["final_amount"],
+                "discount_applied": discount,
+            }
+        )
 
 
 class TestRealDelegationFunctionality:
@@ -201,11 +208,13 @@ class TestRealDelegationFunctionality:
         # Verify delegated methods were actually called
         # Access mixin instances through the delegator
         business_mixin = next(
-            instance for cls, instance in host.delegator._mixin_instances.items()
+            instance
+            for cls, instance in host.delegator._mixin_instances.items()
             if cls.__name__ == "BusinessLogicMixin"
         )
         database_mixin = next(
-            instance for cls, instance in host.delegator._mixin_instances.items()
+            instance
+            for cls, instance in host.delegator._mixin_instances.items()
             if cls.__name__ == "DatabaseMixin"
         )
 
@@ -382,7 +391,8 @@ class TestAdvancedDelegationScenarios:
 
         # Access mixin instance to check the flag
         problematic_mixin = next(
-            instance for cls, instance in host.delegator._mixin_instances.items()
+            instance
+            for cls, instance in host.delegator._mixin_instances.items()
             if cls.__name__ == "ProblematicMixin"
         )
         assert problematic_mixin.working_method_called
@@ -410,7 +420,8 @@ class TestDelegationPropertyEdgeCases:
             @complex_property.setter
             def complex_property(self, value: int) -> None:
                 if value < 0:
-                    raise ValueError("Value must be non-negative")
+                    msg = "Value must be non-negative"
+                    raise ValueError(msg)
                 self._private_value = value // 2
 
             @property
@@ -460,7 +471,9 @@ class TestDelegationPropertyEdgeCases:
         assert host.readonly_prop == "readonly"  # type: ignore[attr-defined]
 
         # Test that setting raises appropriate error
-        with pytest.raises(FlextOperationError, match="Property 'readonly_prop' is read-only"):
+        with pytest.raises(
+            FlextOperationError, match="Property 'readonly_prop' is read-only"
+        ):
             host.readonly_prop = "new_value"  # type: ignore[attr-defined]
 
 
@@ -470,7 +483,7 @@ class TestDelegationSystemValidationReal:
     def test_validate_delegation_system_success_real(self) -> None:
         """Test successful validation with real delegation system."""
         # Create a working delegation system first
-        host = RealBusinessHost()
+        RealBusinessHost()
 
         # The validation should succeed for properly set up delegation
         result = validate_delegation_system()
@@ -488,7 +501,7 @@ class TestDelegationSystemValidationReal:
             "registered_mixins",
             "delegated_methods",
             "validation_result",
-            "initialization_log"
+            "initialization_log",
         ]
 
         for key in required_keys:
@@ -511,7 +524,7 @@ class TestDelegationSystemValidationReal:
             "save_record",
             "find_record",
             "cache_get",
-            "cache_set"
+            "cache_set",
         ]
 
         for method in expected_methods:
@@ -537,11 +550,13 @@ class TestDelegationPerformanceReal:
 
         # Verify delegation tracked all operations
         business_mixin = next(
-            instance for cls, instance in host.delegator._mixin_instances.items()
+            instance
+            for cls, instance in host.delegator._mixin_instances.items()
             if cls.__name__ == "BusinessLogicMixin"
         )
         database_mixin = next(
-            instance for cls, instance in host.delegator._mixin_instances.items()
+            instance
+            for cls, instance in host.delegator._mixin_instances.items()
             if cls.__name__ == "DatabaseMixin"
         )
 

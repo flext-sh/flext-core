@@ -33,7 +33,8 @@ class ProblematicPropertyMixin:
     @property
     def bad_property(self) -> str:
         """Property that raises exception when accessed during delegation setup."""
-        raise AttributeError("Property access failed during setup")
+        msg = "Property access failed during setup"
+        raise AttributeError(msg)
 
 
 class ProblematicMethodMixin:
@@ -103,7 +104,9 @@ class TestDelegationSystemMissingCoverage:
         host = Mock()
         delegator = FlextMixinDelegator.__new__(FlextMixinDelegator)
         delegator._host = host
-        delegator._mixin_instances = {PropertyCreationFailureMixin: PropertyCreationFailureMixin()}
+        delegator._mixin_instances = {
+            PropertyCreationFailureMixin: PropertyCreationFailureMixin()
+        }
         delegator._delegated_methods = {}
         delegator._initialization_log = []
 
@@ -161,7 +164,9 @@ class TestDelegationSystemMissingCoverage:
         host = Mock()
         delegator = FlextMixinDelegator.__new__(FlextMixinDelegator)
         delegator._host = host
-        delegator._mixin_instances = {MethodDelegationFailureMixin: MethodDelegationFailureMixin()}
+        delegator._mixin_instances = {
+            MethodDelegationFailureMixin: MethodDelegationFailureMixin()
+        }
         delegator._delegated_methods = {}
         delegator._initialization_log = []
 
@@ -184,10 +189,12 @@ class TestDelegationSystemMissingCoverage:
                 return "signature problem"
 
         host = Mock()
-        mixin_instance = SignatureProblemMixin()
+        SignatureProblemMixin()
 
         # Mock inspect.signature to raise exception
-        with patch("inspect.signature", side_effect=ValueError("Signature unavailable")):
+        with patch(
+            "inspect.signature", side_effect=ValueError("Signature unavailable")
+        ):
             delegator = FlextMixinDelegator(host, SignatureProblemMixin)
             # Should handle signature exception and continue (lines 227-232)
             assert "problem_method" in delegator._delegated_methods
@@ -204,19 +211,24 @@ class TestDelegationSystemMissingCoverage:
         host = Mock()
 
         # Mock setting __name__ to raise AttributeError
-        def mock_setattr(obj, name, value):
+        def mock_setattr(obj, name, value) -> None:
             if name == "__name__":
-                raise AttributeError("Cannot set __name__")
+                msg = "Cannot set __name__"
+                raise AttributeError(msg)
 
         with patch("builtins.setattr", side_effect=mock_setattr):
-            with patch("flext_core.delegation_system.FlextLoggerFactory") as mock_logger_factory:
+            with patch(
+                "flext_core.delegation_system.FlextLoggerFactory"
+            ) as mock_logger_factory:
                 mock_logger = Mock()
                 mock_logger_factory.get_logger.return_value = mock_logger
 
-                delegator = FlextMixinDelegator(host, AttributeErrorMixin)
+                FlextMixinDelegator(host, AttributeErrorMixin)
 
                 # Should log warning about signature setting failure (lines 231-234)
-                mock_logger_factory.get_logger.assert_called_with("flext_core.delegation_system")
+                mock_logger_factory.get_logger.assert_called_with(
+                    "flext_core.delegation_system"
+                )
                 mock_logger.warning.assert_called_once()
                 warning_call = mock_logger.warning.call_args[0][0]
                 assert "Failed to set signature" in warning_call
@@ -337,7 +349,6 @@ class TestDelegationSystemMissingCoverage:
         class HostWithoutDelegator:
             """Host without delegator attribute."""
 
-
         host = HostWithoutDelegator()
         test_results: list[str] = []
 
@@ -351,7 +362,6 @@ class TestDelegationSystemMissingCoverage:
 
         class FakeDelegator:
             """Delegator without get_delegation_info method."""
-
 
         class HostWithBadDelegator:
             """Host with delegator missing get_delegation_info."""
@@ -397,15 +407,26 @@ class TestDelegationSystemMissingCoverage:
         class CompletelyBrokenHost:
             """Host that fails all validations."""
 
-
         # Mock the validation process to raise various exceptions
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate_methods:
-            with patch("flext_core.delegation_system._validate_method_functionality") as mock_validate_functionality:
-                with patch("flext_core.delegation_system._validate_delegation_info") as mock_validate_info:
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate_methods:
+            with patch(
+                "flext_core.delegation_system._validate_method_functionality"
+            ) as mock_validate_functionality:
+                with patch(
+                    "flext_core.delegation_system._validate_delegation_info"
+                ) as mock_validate_info:
                     # Make all validation functions raise different exceptions
-                    mock_validate_methods.side_effect = AttributeError("Methods validation failed")
-                    mock_validate_functionality.side_effect = TypeError("Functionality validation failed")
-                    mock_validate_info.side_effect = ValueError("Info validation failed")
+                    mock_validate_methods.side_effect = AttributeError(
+                        "Methods validation failed"
+                    )
+                    mock_validate_functionality.side_effect = TypeError(
+                        "Functionality validation failed"
+                    )
+                    mock_validate_info.side_effect = ValueError(
+                        "Info validation failed"
+                    )
 
                     result = validate_delegation_system()
 
@@ -416,7 +437,9 @@ class TestDelegationSystemMissingCoverage:
 
     def test_validate_delegation_system_runtime_error_handling(self) -> None:
         """Test RuntimeError handling in validate_delegation_system."""
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate:
             mock_validate.side_effect = RuntimeError("Runtime error occurred")
 
             result = validate_delegation_system()
@@ -427,8 +450,12 @@ class TestDelegationSystemMissingCoverage:
 
     def test_validate_delegation_system_flext_operation_error_handling(self) -> None:
         """Test FlextOperationError handling in validate_delegation_system."""
-        with patch("flext_core.delegation_system._validate_delegation_methods") as mock_validate:
-            mock_validate.side_effect = FlextOperationError("Operation failed", operation="test")
+        with patch(
+            "flext_core.delegation_system._validate_delegation_methods"
+        ) as mock_validate:
+            mock_validate.side_effect = FlextOperationError(
+                "Operation failed", operation="test"
+            )
 
             result = validate_delegation_system()
 
@@ -438,7 +465,9 @@ class TestDelegationSystemMissingCoverage:
 
     def test_validate_delegation_system_flext_type_error_handling(self) -> None:
         """Test FlextTypeError handling in validate_delegation_system."""
-        with patch("flext_core.delegation_system._validate_method_functionality") as mock_validate:
+        with patch(
+            "flext_core.delegation_system._validate_method_functionality"
+        ) as mock_validate:
             mock_validate.side_effect = FlextTypeError("Type error occurred")
 
             result = validate_delegation_system()
@@ -475,7 +504,6 @@ class TestDelegationSystemBoundaryConditions:
         class EmptyMixin:
             """Completely empty mixin."""
 
-
         host = Mock()
         delegator = FlextMixinDelegator(host, EmptyMixin)
 
@@ -491,7 +519,8 @@ class TestDelegationSystemBoundaryConditions:
 
             @property
             def exception_property(self) -> str:
-                raise RuntimeError("Property access failed")
+                msg = "Property access failed"
+                raise RuntimeError(msg)
 
         host = Mock()
 
@@ -510,10 +539,11 @@ class TestDelegationSystemBoundaryConditions:
                     return self
                 return "descriptor_value"
 
-            def __set__(self, obj, value):
+            def __set__(self, obj, value) -> None:
                 # Complex setter logic that might fail
                 if value == "fail":
-                    raise ValueError("Setter failed")
+                    msg = "Setter failed"
+                    raise ValueError(msg)
 
         class ComplexPropertyMixin:
             """Mixin with complex property descriptor."""

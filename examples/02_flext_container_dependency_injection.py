@@ -28,7 +28,6 @@ from flext_core import (
     FlextResultUtils,
     FlextServiceProcessor,
     FlextUtilities,
-    FlextValidator,
     FlextValue,
     get_flext_container,
     validate_email_address,
@@ -290,9 +289,7 @@ class DatabaseServiceProcessor(
         )
 
         # Use FlextUtilities for timing
-        save_time_ms = (
-            FlextUtilities.get_last_duration_ms("database", "_inner") or 5.0
-        )
+        save_time_ms = FlextUtilities.get_last_duration_ms("database", "_inner") or 5.0
 
         # Create performance metrics
         performance_metrics = {
@@ -711,7 +708,9 @@ def demo_batch_processing() -> None:
         if isinstance(data, dict) and "performance" in data:
             perf_data = data["performance"]
             if "duration" in perf_data and "count" in perf_data:
-                print(f"  • {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+                print(
+                    f"  • {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)"
+                )
             else:
                 print(f"  • {key}: {len(data)} metrics")
         else:
@@ -854,7 +853,9 @@ def main() -> None:
         if isinstance(data, dict) and "performance" in data:
             perf_data = data["performance"]
             if "duration" in perf_data and "count" in perf_data:
-                print(f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+                print(
+                    f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)"
+                )
             else:
                 print(f"  📊 {key}: {len(data)} metrics")
         else:
