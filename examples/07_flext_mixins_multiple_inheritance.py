@@ -11,6 +11,13 @@ import time
 from collections.abc import Mapping, Sized
 from typing import Protocol, cast
 
+from shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+from shared_example_helpers import run_example_demonstration
+
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -27,13 +34,6 @@ from flext_core import (
     FlextValueObjectMixin,
 )
 from flext_core.mixins import FlextMixins
-
-from shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-from shared_example_helpers import run_example_demonstration
 
 from .shared_domain import (
     SharedDomainFactory,
