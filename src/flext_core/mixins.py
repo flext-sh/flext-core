@@ -882,9 +882,9 @@ class FlextSerializableMixin(_CompatibilityMixin):
 class FlextTimingMixin(_CompatibilityMixin):
     """Legacy compatibility - delegates to FlextMixins timing methods."""
 
-    def start_timing(self) -> None:
+    def start_timing(self) -> float:
         """Start timing via FlextMixins."""
-        FlextMixins.start_timing(self)
+        return FlextMixins.start_timing(self)
 
     def stop_timing(self) -> float:
         """Stop timing via FlextMixins."""

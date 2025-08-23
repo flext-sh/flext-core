@@ -11,13 +11,6 @@ import time
 from collections.abc import Mapping, Sized
 from typing import Protocol, cast
 
-from shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-from shared_example_helpers import run_example_demonstration
-
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -33,6 +26,14 @@ from flext_core import (
     FlextValidatableMixin,
     FlextValueObjectMixin,
 )
+from flext_core.mixins import FlextMixins
+
+from .shared_domain import (
+    SharedDomainFactory,
+    User as SharedUser,
+    log_domain_operation,
+)
+from .shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -210,7 +211,7 @@ class ValidatableConfiguration(FlextValidatableMixin):
         # Set validation status
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self.mark_valid()
+            FlextMixins.mark_valid(self)
 
         return is_valid
 
@@ -300,9 +301,7 @@ class TimedOperation(FlextTimingMixin):
         super().__init__()
         self.operation_name = operation_name
 
-    def _get_execution_time_seconds(self, start_time: float) -> float:
-        """Convert execution time from milliseconds to seconds."""
-        return self._get_execution_time_ms(start_time) / 1000.0
+
 
     def execute_operation(self, complexity: int = 1000) -> Mapping[str, object]:
         """Execute operation with timing measurement."""
@@ -440,7 +439,7 @@ class AdvancedUser(
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self.mark_valid()
+            FlextMixins.mark_valid(self)
 
         if is_valid:
             self.logger.info("User validation successful", username=self.name)
@@ -484,7 +483,7 @@ class AdvancedUser(
         log_domain_operation(
             "user_promoted",
             "AdvancedUser",
-            self.id,
+            self.get_id(),
             old_role=old_role,
             new_role=self.role,
         )
@@ -496,7 +495,7 @@ class AdvancedUser(
         age_seconds = time.time() - created_timestamp
 
         return {
-            "id": self.id,
+            "id": self.get_id(),
             "username": self.name,
             "email": self._user.email_address.email,
             "age": self._user.age.value,
@@ -626,14 +625,12 @@ class EnterpriseService(
         self.error_count = 0
 
         # Initialize all mixins
-        self.generate_id()
+        # ID is auto-generated when accessing self.id property
         # Validation state is initialized lazily via method calls
 
         self.logger.info("Enterprise service initialized", service_name=service_name)
 
-    def _get_execution_time_seconds(self, start_time: float) -> float:
-        """Convert execution time from milliseconds to seconds."""
-        return self._get_execution_time_ms(start_time) / 1000.0
+
 
     def validate_service(self) -> bool:
         """Validate service configuration."""
@@ -651,7 +648,7 @@ class EnterpriseService(
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self.mark_valid()
+            FlextMixins.mark_valid(self)
 
         return is_valid
 
@@ -677,7 +674,7 @@ class EnterpriseService(
             return cached_result if isinstance(cached_result, dict) else {}
 
         # Time the operation
-        start_time = self.start_timing()
+        self.start_timing()
 
         try:
             # Simulate processing
@@ -691,7 +688,7 @@ class EnterpriseService(
                 "processed_at": FlextUtilities.generate_iso_timestamp(),
             }
 
-            execution_time = self._get_execution_time_seconds(start_time)
+            execution_time = self.stop_timing()
             result["execution_time"] = execution_time
 
             # Cache successful results
@@ -703,7 +700,7 @@ class EnterpriseService(
             return result
 
         except (RuntimeError, ValueError, TypeError) as e:
-            execution_time = self._get_execution_time_seconds(start_time)
+            execution_time = self.stop_timing()
             self.error_count += 1
             self.logger.exception("Request failed", request_id=request_id)
 
@@ -765,7 +762,7 @@ class DomainEntity(FlextEntityMixin):
     def get_entity_info(self) -> Mapping[str, object]:
         """Get comprehensive entity information."""
         return {
-            "id": self.id,
+            "id": self.get_id(),
             "type": self.entity_type,
             "data": self.value,
             "created_at": self.created_at,
@@ -804,7 +801,7 @@ class ValueObjectExample(FlextValueObjectMixin):
 
         is_valid = len(self.validation_errors) == 0
         if is_valid:
-            self.mark_valid()
+            FlextMixins.mark_valid(self)
 
         return is_valid
 
@@ -992,17 +989,15 @@ def demonstrate_method_resolution_order() -> None:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self.generate_id()
+            # ID is auto-generated when accessing self.id property
             # Validation state is initialized lazily via method calls
             self.logger.info("Complex class initialized", name=name)
 
-        def _get_execution_time_seconds(self, start_time: float) -> float:
-            """Convert execution time from milliseconds to seconds."""
-            return self._get_execution_time_ms(start_time) / 1000.0
+
 
         def perform_operation(self) -> Mapping[str, object]:
             """Operation using multiple mixin capabilities."""
-            start_time = self.start_timing()
+            self.start_timing()
 
             # Validate state
             self.clear_validation_errors()
@@ -1011,15 +1006,15 @@ def demonstrate_method_resolution_order() -> None:
 
             is_valid = len(self.validation_errors) == 0
             if is_valid:
-                self.mark_valid()
+                FlextMixins.mark_valid(self)
 
             # Simulate work
             time.sleep(0.001)
 
-            execution_time = self._get_execution_time_seconds(start_time)
+            execution_time = self.stop_timing()
 
             result = {
-                "id": self.id,
+                "id": self.get_id(),
                 "name": self.name,
                 "is_valid": is_valid,
                 "execution_time": execution_time,
@@ -1069,7 +1064,7 @@ def demonstrate_performance_characteristics() -> None:
         def __init__(self, name: str) -> None:
             super().__init__()
             self.name = name
-            self.generate_id()
+            # ID is auto-generated when accessing self.id property
             # Timestamps are initialized lazily via property access
             # Validation state is initialized lazily via method calls
 
@@ -1150,18 +1145,16 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             except (RuntimeError, ValueError, TypeError) as e:
                 return FlextResult.fail(f"Failed to save user data: {e}")
 
-        def _get_execution_time_seconds(self, start_time: float) -> float:
-            """Convert execution time from milliseconds to seconds."""
-            return self._get_execution_time_ms(start_time) / 1000.0
+
 
         def _log_save_result(
             self,
             user_id: str,
-            start_time: float,
+            _start_time: float,
             result: FlextResult[str],
         ) -> FlextResult[None]:
             """Log the save operation result with execution time."""
-            _ = self._get_execution_time_seconds(start_time)
+            _ = self.stop_timing()
             if result.is_success:
                 self.logger.info("User saved", user_id=user_id)
                 return FlextResult[None].ok(None)
@@ -1258,12 +1251,10 @@ def _create_enterprise_order_service(
             super().__init__()
             self.user_repo = user_repo
             self.orders: dict[str, dict[str, object]] = {}
-            self.generate_id()
+            # ID is auto-generated when accessing self.id property
             # Validation state is initialized lazily via method calls
 
-        def _get_execution_time_seconds(self, start_time: float) -> float:
-            """Convert execution time from milliseconds to seconds."""
-            return self._get_execution_time_ms(start_time) / 1000.0
+
 
         def _validate_user_exists(self, user_id: str) -> FlextResult[dict[str, object]]:
             """Validate that user exists in repository."""
@@ -1330,11 +1321,11 @@ def _create_enterprise_order_service(
 
         def _log_order_creation(
             self,
-            start_time: float,
+            _start_time: float,
             order: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             """Log successful order creation with execution time."""
-            _ = self._get_execution_time_seconds(start_time)
+            _ = self.stop_timing()
             self.logger.info("Order created", order_id=order["order_id"])
             return FlextResult.ok(order)
 
