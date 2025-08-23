@@ -16,7 +16,7 @@ from typing import cast, override
 
 from flext_core import FlextCommands, FlextResult
 
-from .shared_domain import EmailAddress, SharedDomainFactory, User
+from shared_domain import EmailAddress, SharedDomainFactory, User
 
 # =============================================================================
 # SIMPLE EVENT STORE - For demonstration

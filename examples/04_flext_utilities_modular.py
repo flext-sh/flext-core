@@ -14,9 +14,9 @@ Key Patterns:
 from collections.abc import Callable
 from typing import Any, cast
 
-from flext_core import FlextResult, FlextUtilities
-
 from shared_domain import SharedDomainFactory, User
+
+from flext_core import FlextResult, FlextUtilities
 
 # =============================================================================
 # ID GENERATION - Simple and clean

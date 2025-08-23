@@ -846,7 +846,7 @@ class FlextPerformance:
     ) -> None:
         """Record performance metrics - delegates to FlextUtilities."""
         return FlextUtilities.record_performance(
-            category, function_name, execution_time, _success
+            category, function_name, execution_time, success=_success
         )
 
     @staticmethod

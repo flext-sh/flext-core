@@ -2220,6 +2220,14 @@ class FlextDecoratorUtils:
     def get_function_signature(func: FlextCallableProtocol) -> str:
         """Get function signature via FlextDecorators."""
         return FlextDecorators.get_function_signature(func)
+    
+    @staticmethod
+    def preserve_metadata(
+        original: FlextCallable[object],
+        wrapper: FlextCallable[object],
+    ) -> FlextDecoratedFunction[object]:
+        """Preserve function metadata via FlextDecorators."""
+        return _FlextDecoratorUtils.preserve_metadata(original, wrapper)
 
 
 class FlextDecoratorFactory:
