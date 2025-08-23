@@ -89,7 +89,7 @@ def test_data_processing_pipeline():
     assert output["status"] == "completed"
     assert output["records_processed"] == len(input_data)
     assert output["errors"] == []
-    assert output["metadata"]["pipeline_version"] == "1.0.0"
+    assert output["metadata"]["pipeline_version"] == "0.9.0"
 
     # Verify data integrity
     for record in output["data"]:
