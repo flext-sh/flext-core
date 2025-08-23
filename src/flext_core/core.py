@@ -830,12 +830,8 @@ class FlextCore:
         """Get registered handler."""
         try:
             registry = self.handler_registry
-            if hasattr(registry, "get"):
-                get_method = getattr(registry, "get", None)
-                if callable(get_method):
-                    handler: object = get_method(handler_type)
-                    if handler is not None:
-                        return FlextResult[object].ok(handler)
+            if hasattr(registry, "get_handler"):
+                return registry.get_handler(handler_type)
             return FlextResult[object].fail(f"Handler not found: {handler_type}")
         except Exception as e:
             return FlextResult[object].fail(f"Handler retrieval failed: {e}")
