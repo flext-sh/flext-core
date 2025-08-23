@@ -200,12 +200,15 @@ class FlextUtilities:
     @classmethod
     def format_duration(cls, seconds: float) -> str:
         """Format duration in human-readable format."""
-        if seconds < 60:
+        seconds_per_minute = 60
+        seconds_per_hour = 3600
+
+        if seconds < seconds_per_minute:
             return f"{seconds:.2f}s"
-        if seconds < 3600:
-            minutes = seconds / 60
+        if seconds < seconds_per_hour:
+            minutes = seconds / seconds_per_minute
             return f"{minutes:.1f}m"
-        hours = seconds / 3600
+        hours = seconds / seconds_per_hour
         return f"{hours:.1f}h"
 
     @classmethod
@@ -237,13 +240,13 @@ class FlextUtilities:
                 except (RuntimeError, ValueError, TypeError):
                     execution_time = time.time() - start_time
                     cls.record_performance(
-                        category, func.__name__, execution_time, False
+                        category, func.__name__, execution_time, success=False
                     )
                     raise
                 else:
                     execution_time = time.time() - start_time
                     cls.record_performance(
-                        category, func.__name__, execution_time, True
+                        category, func.__name__, execution_time, success=True
                     )
                     return result
 
@@ -253,7 +256,7 @@ class FlextUtilities:
 
     @classmethod
     def record_performance(
-        cls, category: str, operation: str, duration: float, success: bool = True
+        cls, category: str, operation: str, duration: float, *, success: bool = True
     ) -> None:
         """Record performance metric."""
         if category not in PERFORMANCE_METRICS:

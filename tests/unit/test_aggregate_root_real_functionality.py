@@ -433,7 +433,7 @@ class TestFlextAggregateRootEdgeCases:
         # but get_domain_events() returns only FlextEvent objects, not dict events
         events = order.get_domain_events()
         assert len(events) == 0  # No FlextEvent objects yet
-        
+
         # But domain_events dict should contain the existing events
         assert len(order.domain_events.root) == 1
         assert order.domain_events.root[0]["event_type"] == "PreExistingEvent"
@@ -445,7 +445,7 @@ class TestFlextAggregateRootEdgeCases:
         all_events = order.get_domain_events()
         assert len(all_events) == 1
         assert all_events[0].event_type == "NewEvent"
-        
+
         # And 2 events in the dict format (pre-existing + new)
         assert len(order.domain_events.root) == 2
 

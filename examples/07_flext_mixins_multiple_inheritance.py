@@ -28,12 +28,12 @@ from flext_core import (
 )
 from flext_core.mixins import FlextMixins
 
-from .shared_domain import (
+from shared_domain import (
     SharedDomainFactory,
     User as SharedUser,
     log_domain_operation,
 )
-from .shared_example_helpers import run_example_demonstration
+from shared_example_helpers import run_example_demonstration
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -300,8 +300,6 @@ class TimedOperation(FlextTimingMixin):
         """
         super().__init__()
         self.operation_name = operation_name
-
-
 
     def execute_operation(self, complexity: int = 1000) -> Mapping[str, object]:
         """Execute operation with timing measurement."""
@@ -629,8 +627,6 @@ class EnterpriseService(
         # Validation state is initialized lazily via method calls
 
         self.logger.info("Enterprise service initialized", service_name=service_name)
-
-
 
     def validate_service(self) -> bool:
         """Validate service configuration."""
@@ -993,8 +989,6 @@ def demonstrate_method_resolution_order() -> None:
             # Validation state is initialized lazily via method calls
             self.logger.info("Complex class initialized", name=name)
 
-
-
         def perform_operation(self) -> Mapping[str, object]:
             """Operation using multiple mixin capabilities."""
             self.start_timing()
@@ -1145,8 +1139,6 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             except (RuntimeError, ValueError, TypeError) as e:
                 return FlextResult.fail(f"Failed to save user data: {e}")
 
-
-
         def _log_save_result(
             self,
             user_id: str,
@@ -1253,8 +1245,6 @@ def _create_enterprise_order_service(
             self.orders: dict[str, dict[str, object]] = {}
             # ID is auto-generated when accessing self.id property
             # Validation state is initialized lazily via method calls
-
-
 
         def _validate_user_exists(self, user_id: str) -> FlextResult[dict[str, object]]:
             """Validate that user exists in repository."""
