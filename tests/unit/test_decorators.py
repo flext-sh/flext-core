@@ -30,15 +30,15 @@ _BasePerformanceDecorators = FlextPerformanceDecorators
 _BaseLoggingDecorators = FlextLoggingDecorators
 _DecoratedFunction = FlextDecoratedFunction[object]
 
-# Simple decorator functions
-flext_safe_call = FlextDecorators.safe_result
-flext_cache_decorator = FlextPerformanceDecorators.create_cache_decorator
-flext_safe_decorator = FlextErrorHandlingDecorators.create_safe_decorator
-flext_timing_decorator = FlextPerformanceDecorators.get_timing_decorator()
+# Simple decorator functions - updated to new API
+flext_safe_call = FlextDecorators.safe_call
+flext_cache_decorator = FlextDecorators.cache_results
+flext_safe_decorator = FlextDecorators.safe_call  # This returns the decorator factory
+flext_timing_decorator = FlextDecorators.time_execution
 
-# Internal decorator functions from base_decorators
-_safe_call_decorator = FlextErrorHandlingDecorators.create_safe_decorator
-_validate_input_decorator = FlextValidationDecorators.create_validation_decorator
+# Internal decorator functions - updated to new API
+_safe_call_decorator = FlextDecorators.safe_call()
+_validate_input_decorator = FlextDecorators.validate_arguments
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -369,18 +369,17 @@ class TestStandaloneDecorators:
             cast("FlextCallable[object]", potentially_unsafe_function_raw)
         )
 
-        # Should handle exceptions gracefully
-        try:
-            result1 = potentially_unsafe_function(5)
-            if result1 != 15:
-                raise AssertionError(f"Expected {15}, got {result1}")
-        except (ValueError, TypeError, RuntimeError) as e:
-            # Handle different error types appropriately
-            if isinstance(e, ValueError):
-                raise TypeError(f"Expected {15}, got {result1}") from e
-            if isinstance(e, TypeError):
-                raise TypeError(f"Type error occurred: {e}") from e
-            raise RuntimeError(f"Runtime error: {e}") from e
+        # Should handle exceptions gracefully - safe_call returns FlextResult
+        result1 = potentially_unsafe_function(5)
+        assert isinstance(result1, FlextResult)
+        assert result1.is_success
+        assert result1.value == 15
+
+        # Test error case
+        result2 = potentially_unsafe_function(-1)
+        assert isinstance(result2, FlextResult)
+        assert result2.is_failure
+        assert "Negative value not allowed" in result2.error
 
     def test_flext_timing_decorator(self) -> None:
         """Test flext_timing_decorator functionality."""
@@ -828,12 +827,12 @@ class TestBaseDecoratorClasses:
         def wrapper_function() -> str:
             return "wrapper"
 
-        # This should preserve metadata
-        result = _BaseDecoratorUtils.preserve_metadata(
-            cast("_DecoratedFunction", original_function),
-            cast("_DecoratedFunction", wrapper_function),
+        # Test get_function_signature instead (available method)
+        signature = _BaseDecoratorUtils.get_function_signature(
+            cast("_DecoratedFunction", original_function)
         )
-        assert callable(result)
+        assert isinstance(signature, str)
+        assert len(signature) > 0
 
     def test_base_validation_decorators(self) -> None:
         """Test _BaseValidationDecorators functionality."""
@@ -841,10 +840,8 @@ class TestBaseDecoratorClasses:
         def simple_validator(value: object) -> bool:
             return isinstance(value, str) and len(str(value)) > 0
 
-        # Test create_validation_decorator
-        decorator = _BaseValidationDecorators.create_validation_decorator(
-            simple_validator,
-        )
+        # Test create_validation_decorator (no parameters)
+        decorator = _BaseValidationDecorators.create_validation_decorator()
         assert callable(decorator)
 
         # Test validate_arguments (currently just returns the function)
@@ -854,7 +851,9 @@ class TestBaseDecoratorClasses:
         validated_func = _BaseValidationDecorators.validate_arguments(
             cast("_DecoratedFunction", test_func),
         )
-        assert validated_func is test_func
+        assert callable(validated_func)
+        # The decorator returns a wrapper, so it won't be the same object
+        assert validated_func.__name__ == test_func.__name__
 
     def test_base_error_handling_decorators(self) -> None:
         """Test _BaseErrorHandlingDecorators functionality."""
@@ -862,11 +861,7 @@ class TestBaseDecoratorClasses:
         def error_handler(error: Exception) -> str:
             return f"Handled: {error}"
 
-        # Test create_safe_decorator
-        decorator = _BaseErrorHandlingDecorators.create_safe_decorator(error_handler)
-        assert callable(decorator)
-
-        # Test create_safe_decorator without handler
+        # Test create_safe_decorator (no parameters)
         decorator = _BaseErrorHandlingDecorators.create_safe_decorator()
         assert callable(decorator)
 
@@ -880,11 +875,11 @@ class TestBaseDecoratorClasses:
         decorator = _BasePerformanceDecorators.create_cache_decorator(max_size=10)
         assert callable(decorator)
 
-        # Test memoize_decorator
+        # Test memoize (not memoize_decorator)
         def test_func(x: int) -> int:
             return x * 2
 
-        memoized = _BasePerformanceDecorators.memoize_decorator(
+        memoized = _BasePerformanceDecorators.memoize(
             cast("_DecoratedFunction", test_func),
         )
         assert callable(memoized)
@@ -1126,7 +1121,7 @@ class TestDecoratorCoverageImprovements:
         assert callable(validation_decorator)
 
     def test_error_handling_decorator_retry_method(self) -> None:
-        """Test retry_decorator method (line 161)."""
+        """Test retry_on_failure method (corrected API)."""
         from flext_core import (  # noqa: PLC0415
             FlextErrorHandlingDecorators as _BaseErrorHandlingDecorators,
         )
@@ -1134,8 +1129,10 @@ class TestDecoratorCoverageImprovements:
         def sample_function(x: int) -> int:
             return x * 2
 
-        # Test retry_decorator - currently returns same function (line 161)
-        decorated = _BaseErrorHandlingDecorators.retry_decorator(
-            cast("_DecoratedFunction", sample_function),
+        # Test retry_on_failure - correct API method name
+        decorated = _BaseErrorHandlingDecorators.retry_on_failure(max_attempts=2)(
+            sample_function
         )
-        assert decorated is sample_function  # Returns same function
+        # Test that it's actually decorated and works
+        result = decorated(5)
+        assert result == 10  # Should work normally

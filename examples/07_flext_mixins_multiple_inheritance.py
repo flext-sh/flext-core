@@ -127,7 +127,7 @@ class TimestampedDocument(FlextTimestampMixin):
     def update_content(self, new_content: str) -> None:
         """Update document content with timestamp tracking."""
         self.content = new_content
-        self._update_timestamp()
+        self.update_timestamp()
 
     def get_age_seconds(self) -> float:
         """Get document age in seconds."""
@@ -306,14 +306,14 @@ class TimedOperation(FlextTimingMixin):
 
     def execute_operation(self, complexity: int = 1000) -> Mapping[str, object]:
         """Execute operation with timing measurement."""
-        start_time = self._start_timing()
+        self.start_timing()
 
         # Simulate operation complexity
         total = 0
         for i in range(complexity):
             total += i * 2
 
-        execution_time = self._get_execution_time_seconds(start_time)
+        execution_time = self.stop_timing()
 
         return {
             "operation": self.operation_name,
@@ -470,7 +470,7 @@ class AdvancedUser(
         try:
             # This is a demonstration - in production use proper state management
             self.role = "admin"
-            self._update_timestamp()
+            self.update_timestamp()
         except (RuntimeError, ValueError, TypeError) as e:
             self.logger.exception("Failed to update role", error=str(e))
             return False
@@ -572,7 +572,7 @@ class SmartDocument(
     def update_content(self, new_content: str) -> None:
         """Update content and clear cache."""
         self.content = new_content
-        self._update_timestamp()
+        self.update_timestamp()
 
         # Clear cached views
         cache_key = f"view_{self.title}"
@@ -677,7 +677,7 @@ class EnterpriseService(
             return cached_result if isinstance(cached_result, dict) else {}
 
         # Time the operation
-        start_time = self._start_timing()
+        start_time = self.start_timing()
 
         try:
             # Simulate processing
@@ -760,7 +760,7 @@ class DomainEntity(FlextEntityMixin):
     def update_data(self, new_data: dict[str, object]) -> None:
         """Update entity data with timestamp tracking."""
         self.value.update(new_data)
-        self._update_timestamp()
+        self.update_timestamp()
 
     def get_entity_info(self) -> Mapping[str, object]:
         """Get comprehensive entity information."""
@@ -1002,7 +1002,7 @@ def demonstrate_method_resolution_order() -> None:
 
         def perform_operation(self) -> Mapping[str, object]:
             """Operation using multiple mixin capabilities."""
-            start_time = self._start_timing()
+            start_time = self.start_timing()
 
             # Validate state
             self.clear_validation_errors()
@@ -1178,7 +1178,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
             user_data: dict[str, object],
         ) -> FlextResult[None]:
             """Save user with caching and logging using railway-oriented programming."""
-            start_time = self._start_timing()
+            start_time = self.start_timing()
 
             return self._execute_save_operation(user_id, user_data).flat_map(
                 lambda _: self._log_save_result(
@@ -1224,7 +1224,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
 
         def find_user(self, user_id: str) -> FlextResult[dict[str, object] | None]:
             """Find user with caching and logging using railway-oriented programming."""
-            self._start_timing()
+            self.start_timing()
 
             # Try cache first, then storage, then handle not found
             cache_result = self._check_cache_for_user(user_id)
@@ -1344,7 +1344,7 @@ def _create_enterprise_order_service(
             items: list[dict[str, object]],
         ) -> FlextResult[dict[str, object]]:
             """Create order with validation and logging using railway-oriented programming."""
-            start_time = self._start_timing()
+            start_time = self.start_timing()
             self.logger.info("Creating order for user", user_id=user_id)
 
             return (

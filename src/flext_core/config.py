@@ -36,17 +36,6 @@ from flext_core.typings import FlextTypes
 # CONFIGURATION DEFAULTS AND CONSTANTS
 # =============================================================================
 
-# Constants to avoid FBT (boolean trap) violations
-_VALIDATION_SUCCESS = True
-"""Centralized configuration defaults for all FLEXT core components.
-
-This section provides sensible defaults that work out-of-the-box while
-remaining customizable for different environments and use cases.
-"""
-
-
-# Legacy compatibility layer removed - use FlextConfig.SystemDefaults directly
-
 
 # Direct constants (use FlextConfig.SystemDefaults in new code)
 MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
@@ -587,7 +576,7 @@ class FlextConfig(FlextModel):
                 result = validator(value)
                 if not result:
                     return FlextResult[bool].fail(error_message)
-                return FlextResult[bool].ok(_VALIDATION_SUCCESS)
+                return FlextResult[bool].ok(data=True)
             except Exception as e:
                 return FlextResult[bool].fail(f"Validation error: {e}")
         except Exception as e:

@@ -14,12 +14,12 @@ from pydantic import ValidationError
 
 from flext_core import (
     FlextEntity,
-    FlextFactory,
     FlextResult,
     FlextTimestamp,
     FlextValidationError,
     FlextVersion,
 )
+from flext_core.models import FlextFactory
 
 
 class EntityFactory(Protocol):

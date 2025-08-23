@@ -10,7 +10,6 @@ from pydantic import ConfigDict
 from flext_core.exceptions import FlextValidationError
 from flext_core.models import FlextEntity
 from flext_core.payload import FlextEvent
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -20,56 +19,6 @@ from flext_core.root_models import (
     FlextVersion,
 )
 from flext_core.utilities import FlextGenerators
-
-# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
-type DomainServiceProtocol = FlextProtocols.Domain.Service
-
-
-def _coerce_metadata_to_root(meta: object | None) -> FlextMetadata | None:
-    """Coerce various metadata inputs into FlextMetadata or return None.
-
-    This helper centralizes the conversion and keeps _initialize_parent small.
-    """
-    if meta is None:
-        return None
-    if isinstance(meta, FlextMetadata):
-        return meta
-    if isinstance(meta, dict):
-        coerced = {str(k): v for k, v in cast("dict[str, object]", meta).items()}
-        return FlextMetadata(coerced)
-    try:
-        # Use cast to handle dict conversion from object
-        coerced = dict(cast("dict[str, object]", meta))
-        coerced_meta = {str(k): v for k, v in coerced.items()}
-        return FlextMetadata(coerced_meta)
-    except Exception:
-        return FlextMetadata({"raw": str(meta)})
-
-
-def _normalize_domain_event_list(raw: list[object]) -> list[dict[str, object]]:
-    """Normalize a raw domain events list into list[dict[str, object]]."""
-    normalized: list[dict[str, object]] = []
-    for ev in raw:
-        if isinstance(ev, dict):
-            normalized.append(
-                {str(k): v for k, v in cast("dict[object, object]", ev).items()},
-            )
-            continue
-
-        model_dump_fn = getattr(ev, "model_dump", None)
-        if callable(model_dump_fn):
-            dumped = model_dump_fn()
-            if isinstance(dumped, dict):
-                normalized.append(
-                    {
-                        str(k): v
-                        for k, v in cast("dict[object, object]", dumped).items()
-                    },
-                )
-                continue
-
-        normalized.append({"event": str(ev)})
-    return normalized
 
 
 class FlextAggregateRoot(FlextEntity):
@@ -133,6 +82,53 @@ class FlextAggregateRoot(FlextEntity):
                 },
             ) from e
 
+    @staticmethod
+    def _coerce_metadata_to_root(meta: object | None) -> FlextMetadata | None:
+        """Coerce various metadata inputs into FlextMetadata or return None.
+
+        This helper centralizes the conversion and keeps _initialize_parent small.
+        """
+        if meta is None:
+            return None
+        if isinstance(meta, FlextMetadata):
+            return meta
+        if isinstance(meta, dict):
+            coerced = {str(k): v for k, v in cast("dict[str, object]", meta).items()}
+            return FlextMetadata(coerced)
+        try:
+            # Use cast to handle dict conversion from object
+            coerced = dict(cast("dict[str, object]", meta))
+            coerced_meta = {str(k): v for k, v in coerced.items()}
+            return FlextMetadata(coerced_meta)
+        except Exception:
+            return FlextMetadata({"raw": str(meta)})
+
+    @staticmethod
+    def _normalize_domain_event_list(raw: list[object]) -> list[dict[str, object]]:
+        """Normalize a raw domain events list into list[dict[str, object]]."""
+        normalized: list[dict[str, object]] = []
+        for ev in raw:
+            if isinstance(ev, dict):
+                normalized.append(
+                    {str(k): v for k, v in cast("dict[object, object]", ev).items()},
+                )
+                continue
+
+            model_dump_fn = getattr(ev, "model_dump", None)
+            if callable(model_dump_fn):
+                dumped = model_dump_fn()
+                if isinstance(dumped, dict):
+                    normalized.append(
+                        {
+                            str(k): v
+                            for k, v in cast("dict[object, object]", dumped).items()
+                        },
+                    )
+                    continue
+
+            normalized.append({"event": str(ev)})
+        return normalized
+
     def _resolve_entity_id(self, entity_id: str | None, data: dict[str, object]) -> str:
         """Resolve the actual entity ID from parameters and data."""
         provided_id = data.pop("id", None)
@@ -149,7 +145,9 @@ class FlextAggregateRoot(FlextEntity):
         """Process and convert domain events to the proper format."""
         domain_events_raw: object = data.pop("domain_events", [])
         if isinstance(domain_events_raw, list):
-            return _normalize_domain_event_list(cast("list[object]", domain_events_raw))
+            return self._normalize_domain_event_list(
+                cast("list[object]", domain_events_raw)
+            )
         return []
 
     def _extract_created_at(self, data: dict[str, object]) -> datetime | None:
@@ -183,7 +181,7 @@ class FlextAggregateRoot(FlextEntity):
         metadata_value = None
         if "metadata" in entity_data:
             meta = entity_data.pop("metadata")
-            metadata_value = _coerce_metadata_to_root(meta)
+            metadata_value = self._coerce_metadata_to_root(meta)
 
         # Call parent with core strongly-typed parameters.
         # Provide created_at, updated_at and metadata explicitly to satisfy
@@ -299,6 +297,13 @@ class FlextAggregateRoot(FlextEntity):
                 )
 
             event: FlextEvent = event_result.value
+            current_events: list[FlextEvent] = getattr(
+                self,
+                "_domain_event_objects",
+                [],
+            )
+            new_events: list[FlextEvent] = [*current_events, event]
+            object.__setattr__(self, "_domain_event_objects", new_events)
             event_dict: dict[str, object] = event.model_dump()
             self.domain_events.root.append(event_dict)
             return FlextResult[None].ok(None)
@@ -362,16 +367,6 @@ class FlextAggregateRoot(FlextEntity):
         """Check if aggregate has unpublished events."""
         return bool(self.domain_events)
 
-
-# =============================================================================
-# MODEL REBUILDS - Resolve forward references for Pydantic
-# =============================================================================
-
-# Rebuild models to resolve forward references after import
-# Note: model_rebuild() disabled due to FlextTypes.Core.Dict circular reference issues
-# The models work correctly without an explicit rebuild as Pydantic handles
-# forward references automatically during runtime validation
-# FlextAggregateRoot.model_rebuild()
 
 # Export API
 __all__ = ["FlextAggregateRoot"]

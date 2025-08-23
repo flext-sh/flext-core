@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 import inspect
 from collections.abc import Callable
-from typing import ClassVar, Protocol, cast
+from typing import ClassVar, NoReturn, Protocol, cast
 
 from flext_core.exceptions import FlextOperationError, FlextTypeError
 from flext_core.loggings import FlextLoggerFactory
@@ -14,9 +14,6 @@ from flext_core.mixins import (
     FlextValidatableMixin as _BaseValidatableMixin,
 )
 from flext_core.result import FlextResult
-
-# Local type alias
-NoReturn = object  # Simplified for delegation system
 
 
 class _HasDelegator(Protocol):

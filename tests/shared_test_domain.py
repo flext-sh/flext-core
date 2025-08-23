@@ -34,6 +34,12 @@ class TestUser(FlextEntity):
     email: str
     status: TestUserStatus = TestUserStatus.ACTIVE
 
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for test user."""
+        if len(self.name) < 2:
+            return FlextResult[None].fail("Name must be at least 2 characters")
+        return FlextResult[None].ok(None)
+
 
 class TestMoney(FlextValue):
     """Test money value object."""

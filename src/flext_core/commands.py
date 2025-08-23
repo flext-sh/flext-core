@@ -36,8 +36,6 @@ from flext_core.typings import (
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextValidators
 
-# TypeVars are now properly imported from typings.py
-
 
 class FlextAbstractCommand(ABC):
     """Abstract base command."""
@@ -431,7 +429,6 @@ class FlextCommands:
 
             """
 
-        @override
         def _start_timing(self) -> float:
             """Start timing operation - implements timing interface."""
             return time.perf_counter()
@@ -1112,37 +1109,6 @@ class FlextCommands:
 
         return SimpleHandler()
 
-
-# =============================================================================
-# MODEL REBUILDS - Resolve forward references for Pydantic
-# =============================================================================
-
-# Rebuild nested models to resolve forward references after import
-try:  # Defensive: avoid failing import-time on environments without Pydantic
-    _types_ns: dict[str, object] = {
-        "FlextTypes.Service.ServiceName": str,
-        "TUserId": str,
-        "TCorrelationId": str,
-        "FlextTypes.Domain.EntityId": str,
-        "FlextTypes.Core.Dict": dict[str, object],
-    }
-    # Pydantic v2 expects _types_namespace keyword
-    FlextCommands.Command.model_rebuild(_types_namespace=_types_ns)
-    FlextCommands.Query.model_rebuild(_types_namespace=_types_ns)
-except Exception as _e:  # noqa: BLE001 - import-time best effort
-    # Best-effort logging at import time without failing import
-    try:
-        _logger = FlextLoggerFactory.get_logger(__name__)
-        _logger.debug(
-            "Pydantic model_rebuild skipped",
-            error=str(_e),
-        )
-    except Exception as _inner_e:  # noqa: BLE001 - ignore logging init errors
-        # Last-resort: swallow to avoid import-time hard failure. No print.
-        from contextlib import suppress as _suppress
-
-        with _suppress(Exception):
-            _ = _inner_e
 
 # Export API
 __all__: list[str] = ["FlextCommands"]

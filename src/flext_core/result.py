@@ -182,6 +182,22 @@ class FlextResult[T]:
         )  # Type narrowing: _data is T (including None if T allows it)
 
     @property
+    def data(self) -> T:
+        """LEGACY COMPATIBILITY: Alias for .value property.
+
+        This property exists for backward compatibility with existing tests
+        and code that expects .data instead of .value. New code should use .value.
+
+        Returns:
+            The success value with full type safety.
+
+        Deprecated:
+            Use .value instead for new code.
+
+        """
+        return self.value
+
+    @property
     def error(self) -> FlextTypes.Result.ErrorMessage:
         """Get error message (None for successful results)."""
         return self._error
@@ -202,7 +218,7 @@ class FlextResult[T]:
         return self._error_data
 
     @classmethod
-    def ok(cls: type[FlextResult[T]], data: T, /) -> FlextResult[T]:
+    def ok(cls: type[FlextResult[T]], data: T) -> FlextResult[T]:
         """Create a successful FlextResult containing the provided data.
 
         Factory method for creating successful results. This is the preferred way
@@ -362,10 +378,9 @@ class FlextResult[T]:
         try:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T for success
-            if self._data is None:
-                msg = "Success result has None data - this should not happen"
-                raise RuntimeError(msg)  # noqa: TRY301
-            return func(self._data)  # Type narrowing: _data is T here
+            # Safe cast after success check - _data is T here
+            data = cast("T", self._data)
+            return func(data)
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling
             return FlextResult[U](

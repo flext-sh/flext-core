@@ -84,7 +84,8 @@ def demonstrate_complete_decorator() -> None:
 
             if random.random() > SUCCESS_THRESHOLD:  # noqa: S311
                 return {"status": "processed", "data": data, "timestamp": time.time()}
-            raise RuntimeError("Random processing failure")
+            msg = "Random processing failure"
+            raise RuntimeError(msg)
         return {"status": "invalid_input"}
 
     # Apply complete decorator
@@ -107,7 +108,8 @@ def demonstrate_safe_result_decorator() -> None:
     def risky_operation(*args: object, **_kwargs: object) -> object:
         """Risky operation that might fail."""
         if args and str(args[0]) == "fail":
-            raise ValueError("Intentional failure")
+            msg = "Intentional failure"
+            raise ValueError(msg)
         return f"Success with {len(args)} arguments"
 
     # Apply safe result decorator
@@ -145,25 +147,32 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
                 ):
                     age = int(age_val)
                 else:
-                    raise ValueError(f"Invalid age: {age_val}")
+                    msg = f"Invalid age: {age_val}"
+                    raise ValueError(msg)
 
                 # Basic validation
                 if not name or not name.strip():
-                    raise ValueError("Name required")
+                    msg = "Name required"
+                    raise ValueError(msg)
                 if "@" not in email:
-                    raise ValueError("Valid email required")
+                    msg = "Valid email required"
+                    raise ValueError(msg)
                 if age < MIN_AGE or age > MAX_AGE:
-                    raise ValueError("Valid age required")
+                    msg = "Valid age required"
+                    raise ValueError(msg)
 
                 # Create user using SharedDomainFactory
                 result = SharedDomainFactory.create_user(name, email, age)
                 if result.success:
                     return result.value
-                raise ValueError(f"User creation failed: {result.error}")
+                msg = f"User creation failed: {result.error}"
+                raise ValueError(msg)
 
             except (ValueError, TypeError) as e:
-                raise ValueError(f"Type conversion failed: {e}") from e
-        raise ValueError("Insufficient arguments")
+                msg = f"Type conversion failed: {e}"
+                raise ValueError(msg) from e
+        msg = "Insufficient arguments"
+        raise ValueError(msg)
 
     # Apply decorator
     enhanced_user_creator = user_decorator(create_user_generic)

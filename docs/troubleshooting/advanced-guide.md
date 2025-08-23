@@ -412,7 +412,7 @@ class TimedUserService:
         if not user_data.get("name") or not user_data.get("email"):
             return FlextResult[None].fail("Missing required fields")
 
-        return FlextResult[None].ok(True)
+        return FlextResult[None].ok(data=True)
 
 # Test timed operations
 service = TimedUserService()

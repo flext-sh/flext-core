@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import time
-from collections.abc import Callable
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, cast, runtime_checkable
 
+from flext_core.exceptions import FlextOperationError, FlextValidationError
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
-from flext_core.typings import FlextLoggerProtocol, FlextTypes
+from flext_core.typings import FlextDecoratedFunction, FlextLoggerProtocol, FlextTypes
 from flext_core.utilities import FlextUtilities
 
 # =============================================================================
@@ -31,6 +31,18 @@ class HasToDict(Protocol):
 
     def to_dict(self) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
         ...
+
+
+@runtime_checkable
+class SupportsDynamicAttributes(Protocol):
+    """Protocol for objects that support dynamic attribute setting.
+
+    This protocol allows mixins to set arbitrary attributes on objects
+    without triggering MyPy errors for missing attributes.
+    """
+
+    def __setattr__(self, name: str, value: object, /) -> None: ...  # noqa: ANN401
+    def __getattribute__(self, name: str, /) -> object: ...  # noqa: ANN401
 
 
 # =============================================================================
@@ -78,7 +90,7 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def create_timestamp_fields(cls, obj: object) -> None:
+    def create_timestamp_fields(cls, obj: SupportsDynamicAttributes) -> None:
         """Initialize timestamp fields on an object."""
         current_time = time.time()
         obj._created_at = current_time
@@ -86,28 +98,28 @@ class FlextMixins:
         obj._timestamp_initialized = True
 
     @classmethod
-    def update_timestamp(cls, obj: object) -> None:
+    def update_timestamp(cls, obj: SupportsDynamicAttributes) -> None:
         """Update the timestamp on an object."""
         if not hasattr(obj, "_timestamp_initialized"):
             cls.create_timestamp_fields(obj)
         obj._updated_at = time.time()
 
     @classmethod
-    def get_created_at(cls, obj: object) -> float:
+    def get_created_at(cls, obj: SupportsDynamicAttributes) -> float:
         """Get creation timestamp."""
         if not hasattr(obj, "_timestamp_initialized"):
             cls.create_timestamp_fields(obj)
         return getattr(obj, "_created_at", time.time())
 
     @classmethod
-    def get_updated_at(cls, obj: object) -> float:
+    def get_updated_at(cls, obj: SupportsDynamicAttributes) -> float:
         """Get last update timestamp."""
         if not hasattr(obj, "_timestamp_initialized"):
             cls.create_timestamp_fields(obj)
         return getattr(obj, "_updated_at", time.time())
 
     @classmethod
-    def get_age_seconds(cls, obj: object) -> float:
+    def get_age_seconds(cls, obj: SupportsDynamicAttributes) -> float:
         """Get age in seconds since creation."""
         created_at = cls.get_created_at(obj)
         return time.time() - created_at
@@ -117,7 +129,7 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def ensure_id(cls, obj: object) -> str:
+    def ensure_id(cls, obj: SupportsDynamicAttributes) -> str:
         """Ensure object has an ID, generating if needed."""
         id_value = getattr(obj, "_id", None)
         if isinstance(id_value, str) and len(id_value.strip()) > 0:
@@ -130,8 +142,12 @@ class FlextMixins:
             if isinstance(id_value, str) and len(id_value.strip()) > 0:
                 obj._id = id_value
                 return id_value
-        except Exception:
-            pass
+        except Exception as e:
+            msg = f"Failed to get ID from object: {e}"
+            raise FlextOperationError(
+                msg,
+                validation_details={"object": obj},
+            ) from e
 
         # Generate new ID
         generated_id = FlextUtilities.generate_id()
@@ -139,7 +155,9 @@ class FlextMixins:
         return generated_id
 
     @classmethod
-    def set_id(cls, obj: object, entity_id: str) -> FlextResult[None]:
+    def set_id(
+        cls, obj: SupportsDynamicAttributes, entity_id: str
+    ) -> FlextResult[None]:
         """Set entity ID with validation."""
         if not isinstance(entity_id, str) or len(entity_id.strip()) == 0:
             return FlextResult[None].fail(
@@ -150,7 +168,7 @@ class FlextMixins:
         return FlextResult[None].ok(None)
 
     @classmethod
-    def has_id(cls, obj: object) -> bool:
+    def has_id(cls, obj: SupportsDynamicAttributes) -> bool:
         """Check if object has a valid ID."""
         id_value = getattr(obj, "_id", None)
         if isinstance(id_value, str) and len(id_value.strip()) > 0:
@@ -168,15 +186,17 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def get_logger(cls, obj: object) -> FlextLoggerProtocol:
+    def get_logger(cls, obj: SupportsDynamicAttributes) -> FlextLoggerProtocol:
         """Get logger instance for an object."""
         if not hasattr(obj, "_logger"):
             logger_name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
             obj._logger = FlextLoggerFactory.get_logger(logger_name)
-        return obj._logger
+        return cast("FlextLoggerProtocol", obj._logger)
 
     @classmethod
-    def log_operation(cls, obj: object, operation: str, **kwargs: object) -> None:
+    def log_operation(
+        cls, obj: SupportsDynamicAttributes, operation: str, **kwargs: object
+    ) -> None:
         """Log an operation with context."""
         logger = cls.get_logger(obj)
         context = {
@@ -187,20 +207,26 @@ class FlextMixins:
         logger.info(f"Operation: {operation}", extra=context)
 
     @classmethod
-    def log_error(cls, obj: object, error: str, **kwargs: object) -> None:
+    def log_error(
+        cls, obj: SupportsDynamicAttributes, error: str, **kwargs: object
+    ) -> None:
         """Log an error with context."""
         logger = cls.get_logger(obj)
         context = {"error": error, "object_type": obj.__class__.__name__, **kwargs}
         logger.error(f"Error: {error}", extra=context)
 
     @classmethod
-    def log_info(cls, obj: object, message: str, **kwargs: object) -> None:
+    def log_info(
+        cls, obj: SupportsDynamicAttributes, message: str, **kwargs: object
+    ) -> None:
         """Log an info message with context."""
         logger = cls.get_logger(obj)
         logger.info(message, **kwargs)
 
     @classmethod
-    def log_debug(cls, obj: object, message: str, **kwargs: object) -> None:
+    def log_debug(
+        cls, obj: SupportsDynamicAttributes, message: str, **kwargs: object
+    ) -> None:
         """Log a debug message with context."""
         logger = cls.get_logger(obj)
         logger.debug(message, **kwargs)
@@ -210,7 +236,7 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def to_dict_basic(cls, obj: object) -> dict[str, Any]:
+    def to_dict_basic(cls, obj: SupportsDynamicAttributes) -> dict[str, object]:
         """Convert object to basic dictionary representation."""
         result = {}
 
@@ -220,8 +246,12 @@ class FlextMixins:
             for key, value in obj_dict.items():
                 if not key.startswith("_"):
                     result[key] = cls._serialize_value(value)
-        except Exception:
-            pass
+        except Exception as e:
+            msg = f"Failed to get object attributes: {e}"
+            raise FlextOperationError(
+                msg,
+                validation_details={"object": obj},
+            ) from e
 
         # Add timestamp info if available
         if hasattr(obj, "_timestamp_initialized"):
@@ -235,9 +265,9 @@ class FlextMixins:
         return result
 
     @classmethod
-    def to_dict(cls, obj: object) -> dict[str, Any]:
+    def to_dict(cls, obj: SupportsDynamicAttributes) -> dict[str, object]:
         """Convert object to dictionary with advanced serialization."""
-        result = {}
+        result: dict[str, object] = {}
 
         try:
             obj_dict = object.__getattribute__(obj, "__dict__")
@@ -250,27 +280,39 @@ class FlextMixins:
                     try:
                         result[key] = value.to_dict_basic()
                         continue
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        msg = f"Failed to get object attributes: {e}"
+                        raise FlextOperationError(
+                            msg,
+                            validation_details={"object": obj},
+                        ) from e
 
                 # Try to_dict
                 if isinstance(value, HasToDict):
                     try:
                         result[key] = value.to_dict()
                         continue
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        msg = f"Failed to get object attributes: {e}"
+                        raise FlextOperationError(
+                            msg,
+                            validation_details={"object": obj},
+                        ) from e
 
                 # Handle lists
                 if isinstance(value, list):
-                    serialized_list = []
+                    serialized_list: list[object] = []
                     for item in value:
                         if isinstance(item, HasToDictBasic):
                             try:
                                 serialized_list.append(item.to_dict_basic())
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                msg = f"Failed to get object attributes: {e}"
+                                raise FlextOperationError(
+                                    msg,
+                                    validation_details={"object": obj},
+                                ) from e
                         serialized_list.append(item)
                     result[key] = serialized_list
                     continue
@@ -280,26 +322,34 @@ class FlextMixins:
                     continue
 
                 result[key] = value
-        except Exception:
-            pass
+        except Exception as e:
+            msg = f"Failed to get object attributes: {e}"
+            raise FlextOperationError(
+                msg,
+                validation_details={"object": obj},
+            ) from e
 
         return result
 
     @classmethod
-    def to_json(cls, obj: object, indent: int | None = None) -> str:
+    def to_json(cls, obj: SupportsDynamicAttributes, indent: int | None = None) -> str:
         """Convert object to JSON string."""
         data = cls.to_dict_basic(obj)
         return json.dumps(data, indent=indent, default=str)
 
     @classmethod
-    def load_from_dict(cls, obj: object, data: dict[str, Any]) -> None:
+    def load_from_dict(
+        cls, obj: SupportsDynamicAttributes, data: dict[str, object]
+    ) -> None:
         """Load object attributes from dictionary."""
         for key, value in data.items():
             if hasattr(obj, key):
                 setattr(obj, key, value)
 
     @classmethod
-    def load_from_json(cls, obj: object, json_str: str) -> FlextResult[None]:
+    def load_from_json(
+        cls, obj: SupportsDynamicAttributes, json_str: str
+    ) -> FlextResult[None]:
         """Load object attributes from JSON string."""
         try:
             data = json.loads(json_str)
@@ -327,7 +377,7 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def initialize_validation(cls, obj: object) -> None:
+    def initialize_validation(cls, obj: SupportsDynamicAttributes) -> None:
         """Initialize validation state on an object."""
         obj._validation_errors = []
         obj._is_valid = False
@@ -335,7 +385,7 @@ class FlextMixins:
 
     @classmethod
     def validate_required_fields(
-        cls, obj: object, fields: list[str]
+        cls, obj: SupportsDynamicAttributes, fields: list[str]
     ) -> FlextResult[None]:
         """Validate that required fields are present and not empty."""
         missing_fields = []
@@ -355,7 +405,7 @@ class FlextMixins:
 
     @classmethod
     def validate_field_types(
-        cls, obj: object, field_types: dict[str, type]
+        cls, obj: SupportsDynamicAttributes, field_types: dict[str, type]
     ) -> FlextResult[None]:
         """Validate that fields match expected types."""
         type_errors = []
@@ -376,7 +426,7 @@ class FlextMixins:
         return FlextResult[None].ok(None)
 
     @classmethod
-    def add_validation_error(cls, obj: object, error: str) -> None:
+    def add_validation_error(cls, obj: SupportsDynamicAttributes, error: str) -> None:
         """Add a validation error to an object."""
         if not hasattr(obj, "_validation_initialized"):
             cls.initialize_validation(obj)
@@ -387,7 +437,7 @@ class FlextMixins:
         obj._is_valid = False
 
     @classmethod
-    def clear_validation_errors(cls, obj: object) -> None:
+    def clear_validation_errors(cls, obj: SupportsDynamicAttributes) -> None:
         """Clear all validation errors."""
         if not hasattr(obj, "_validation_initialized"):
             cls.initialize_validation(obj)
@@ -396,7 +446,7 @@ class FlextMixins:
         obj._is_valid = False
 
     @classmethod
-    def get_validation_errors(cls, obj: object) -> list[str]:
+    def get_validation_errors(cls, obj: SupportsDynamicAttributes) -> list[str]:
         """Get all validation errors."""
         if not hasattr(obj, "_validation_initialized"):
             cls.initialize_validation(obj)
@@ -404,7 +454,7 @@ class FlextMixins:
         return list(getattr(obj, "_validation_errors", []))
 
     @classmethod
-    def is_valid(cls, obj: object) -> bool:
+    def is_valid(cls, obj: SupportsDynamicAttributes) -> bool:
         """Check if object is valid (no validation errors)."""
         if not hasattr(obj, "_validation_initialized"):
             cls.initialize_validation(obj)
@@ -413,7 +463,7 @@ class FlextMixins:
         return len(errors) == 0 and getattr(obj, "_is_valid", False)
 
     @classmethod
-    def mark_valid(cls, obj: object) -> None:
+    def mark_valid(cls, obj: SupportsDynamicAttributes) -> None:
         """Mark object as valid."""
         if not hasattr(obj, "_validation_initialized"):
             cls.initialize_validation(obj)
@@ -425,21 +475,25 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def initialize_state(cls, obj: object, initial_state: str = "created") -> None:
+    def initialize_state(
+        cls, obj: SupportsDynamicAttributes, initial_state: str = "created"
+    ) -> None:
         """Initialize object state."""
         obj._state = initial_state
         obj._state_history = [initial_state]
         obj._state_initialized = True
 
     @classmethod
-    def get_state(cls, obj: object) -> str:
+    def get_state(cls, obj: SupportsDynamicAttributes) -> str:
         """Get current state."""
         if not hasattr(obj, "_state_initialized"):
             cls.initialize_state(obj)
         return getattr(obj, "_state", "created")
 
     @classmethod
-    def set_state(cls, obj: object, new_state: str) -> FlextResult[None]:
+    def set_state(
+        cls, obj: SupportsDynamicAttributes, new_state: str
+    ) -> FlextResult[None]:
         """Set new state with validation."""
         if not isinstance(new_state, str) or len(new_state.strip()) == 0:
             return FlextResult[None].fail(
@@ -461,7 +515,7 @@ class FlextMixins:
         return FlextResult[None].ok(None)
 
     @classmethod
-    def get_state_history(cls, obj: object) -> list[str]:
+    def get_state_history(cls, obj: SupportsDynamicAttributes) -> list[str]:
         """Get state change history."""
         if not hasattr(obj, "_state_initialized"):
             cls.initialize_state(obj)
@@ -472,19 +526,23 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def get_cached_value(cls, obj: object, key: str) -> FlextResult[Any]:
+    def get_cached_value(
+        cls, obj: SupportsDynamicAttributes, key: str
+    ) -> FlextResult[object]:
         """Get cached value by key."""
         if not hasattr(obj, "_cache"):
             obj._cache = {}
 
         cache = getattr(obj, "_cache", {})
         if key in cache:
-            return FlextResult[Any].ok(cache[key])
+            return FlextResult[object].ok(cache[key])
 
-        return FlextResult[Any].fail(f"Cache key not found: {key}")
+        return FlextResult[object].fail(f"Cache key not found: {key}")
 
     @classmethod
-    def set_cached_value(cls, obj: object, key: str, value: object) -> None:
+    def set_cached_value(
+        cls, obj: SupportsDynamicAttributes, key: str, value: object
+    ) -> None:
         """Set cached value by key."""
         if not hasattr(obj, "_cache"):
             obj._cache = {}
@@ -494,12 +552,12 @@ class FlextMixins:
         obj._cache = cache
 
     @classmethod
-    def clear_cache(cls, obj: object) -> None:
+    def clear_cache(cls, obj: SupportsDynamicAttributes) -> None:
         """Clear all cached values."""
         obj._cache = {}
 
     @classmethod
-    def has_cached_value(cls, obj: object, key: str) -> bool:
+    def has_cached_value(cls, obj: SupportsDynamicAttributes, key: str) -> bool:
         """Check if value is cached."""
         if not hasattr(obj, "_cache"):
             return False
@@ -508,7 +566,7 @@ class FlextMixins:
         return key in cache
 
     @classmethod
-    def get_cache_key(cls, obj: object) -> str:
+    def get_cache_key(cls, obj: SupportsDynamicAttributes) -> str:
         """Generate cache key for an object."""
         if cls.has_id(obj):
             entity_id = cls.ensure_id(obj)
@@ -520,20 +578,20 @@ class FlextMixins:
     # =============================================================================
 
     @classmethod
-    def start_timing(cls, obj: object) -> float:
+    def start_timing(cls, obj: SupportsDynamicAttributes) -> float:
         """Start timing operation and return start time."""
         start_time = time.time()
         obj._start_time = start_time
         return start_time
 
     @classmethod
-    def stop_timing(cls, obj: object) -> float:
+    def stop_timing(cls, obj: SupportsDynamicAttributes) -> float:
         """Stop timing and return elapsed seconds."""
         start_time = getattr(obj, "_start_time", None)
         if start_time is None:
             return 0.0
 
-        elapsed = time.time() - start_time
+        elapsed: float = time.time() - start_time
 
         # Store in timing history
         if not hasattr(obj, "_elapsed_times"):
@@ -547,19 +605,19 @@ class FlextMixins:
         return elapsed
 
     @classmethod
-    def get_last_elapsed_time(cls, obj: object) -> float:
+    def get_last_elapsed_time(cls, obj: SupportsDynamicAttributes) -> float:
         """Get last elapsed time."""
         elapsed_times = getattr(obj, "_elapsed_times", [])
         return elapsed_times[-1] if elapsed_times else 0.0
 
     @classmethod
-    def get_average_elapsed_time(cls, obj: object) -> float:
+    def get_average_elapsed_time(cls, obj: SupportsDynamicAttributes) -> float:
         """Get average elapsed time."""
         elapsed_times = getattr(obj, "_elapsed_times", [])
         return sum(elapsed_times) / len(elapsed_times) if elapsed_times else 0.0
 
     @classmethod
-    def clear_timing_history(cls, obj: object) -> None:
+    def clear_timing_history(cls, obj: SupportsDynamicAttributes) -> None:
         """Clear timing history."""
         obj._elapsed_times = []
 
@@ -569,7 +627,7 @@ class FlextMixins:
 
     @classmethod
     def handle_error(
-        cls, obj: object, error: Exception, context: str = ""
+        cls, obj: SupportsDynamicAttributes, error: Exception, context: str = ""
     ) -> FlextResult[None]:
         """Handle error with logging and context."""
         error_msg = f"{context}: {error!s}" if context else str(error)
@@ -582,17 +640,21 @@ class FlextMixins:
     @classmethod
     def safe_operation(
         cls,
-        obj: object,
-        operation: Callable[..., object],
+        obj: SupportsDynamicAttributes,
+        operation: FlextDecoratedFunction[object],
         *args: object,
         **kwargs: object,
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Execute operation safely with error handling."""
         try:
             result = operation(*args, **kwargs)
-            return FlextResult[Any].ok(result)
+            return FlextResult[object].ok(result)
         except Exception as e:
-            return cls.handle_error(obj, e, f"Operation {operation.__name__} failed")
+            error_msg = f"Operation {operation.__name__} failed: {e!s}"
+            cls.log_error(obj, error_msg, error_type=type(e).__name__)
+            return FlextResult[object].fail(
+                error_msg, error_code=type(e).__name__.upper()
+            )
 
     # =============================================================================
     # COMPARISON FUNCTIONALITY - Equality and ordering patterns
@@ -610,7 +672,7 @@ class FlextMixins:
         return obj1.__dict__ == obj2.__dict__
 
     @classmethod
-    def object_hash(cls, obj: object) -> int:
+    def object_hash(cls, obj: SupportsDynamicAttributes) -> int:
         """Generate hash for an object."""
         if cls.has_id(obj):
             entity_id = cls.ensure_id(obj)
@@ -624,12 +686,12 @@ class FlextMixins:
             return -1
 
         left = (
-            cls.to_dict_basic(obj1)
+            cls.to_dict_basic(cast("SupportsDynamicAttributes", obj1))
             if isinstance(obj1, HasToDictBasic)
             else obj1.__dict__
         )
         right = (
-            cls.to_dict_basic(obj2)
+            cls.to_dict_basic(cast("SupportsDynamicAttributes", obj2))
             if isinstance(obj2, HasToDictBasic)
             else obj2.__dict__
         )
@@ -744,7 +806,9 @@ class FlextIdentifiableMixin(_CompatibilityMixin):
     @id.setter
     def id(self, value: str) -> None:
         """Set ID via FlextMixins."""
-        FlextMixins.set_id(self, value)
+        result = FlextMixins.set_id(self, value)
+        if result.is_failure:
+            raise FlextValidationError(result.error or "Invalid entity ID")
 
     def get_id(self) -> str:
         """Get ID via FlextMixins."""
@@ -791,11 +855,11 @@ class FlextValidatableMixin(_CompatibilityMixin):
 class FlextSerializableMixin(_CompatibilityMixin):
     """Legacy compatibility - delegates to FlextMixins serialization methods."""
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, object]:
         """Convert to dict via FlextMixins."""
         return FlextMixins.to_dict(self)
 
-    def to_dict_basic(self) -> dict[str, Any]:
+    def to_dict_basic(self) -> dict[str, object]:
         """Convert to basic dict via FlextMixins."""
         return FlextMixins.to_dict_basic(self)
 
@@ -803,14 +867,14 @@ class FlextSerializableMixin(_CompatibilityMixin):
         """Convert to JSON via FlextMixins."""
         return FlextMixins.to_json(self)
 
-    def load_from_dict(self, data: dict[str, Any]) -> None:
+    def load_from_dict(self, data: dict[str, object]) -> None:
         """Load from dict via FlextMixins."""
         FlextMixins.load_from_dict(self, data)
 
     def load_from_json(self, json_str: str) -> None:
         """Load from JSON via FlextMixins."""
         result = FlextMixins.load_from_json(self, json_str)
-        if result.failure:
+        if result.is_failure:
             raise ValueError(result.error)
 
 

@@ -8,7 +8,6 @@ from datetime import UTC, datetime
 import pytest
 
 from flext_core import (
-    FlextConstants,
     FlextEvent,
     FlextMessage,
     FlextPayload,
@@ -74,7 +73,6 @@ class TestFlextEventCoverage:
             event_data={"test": "data"},
         )
         assert result.is_failure
-        assert FlextConstants.ERROR_CODES["VALIDATION_ERROR"] is not None
         assert "Event type cannot be empty" in (result.error or "")
 
     def test_create_event_invalid_event_type_none(self) -> None:

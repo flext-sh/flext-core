@@ -446,7 +446,7 @@ class FlextUtilities:
         """Chain multiple FlextResults into a single result with list of values."""
         values: list[T] = []
         for result in results:
-            if result.failure:
+            if result.is_failure:
                 return FlextResult[list[T]].fail(result.error or "Chain failed")
             values.append(result.value)
         return FlextResult[list[T]].ok(values)
@@ -464,7 +464,7 @@ class FlextUtilities:
     def collect_errors(cls, *results: FlextResult[T]) -> list[str]:
         """Collect all error messages from failed results."""
         errors: list[str] = [
-            result.error or "Unknown error" for result in results if result.failure
+            result.error or "Unknown error" for result in results if result.is_failure
         ]
         return errors
 

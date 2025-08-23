@@ -172,7 +172,7 @@ class TestIdentifiableMixin:
         class IdentifiableModel(FlextIdentifiableMixin):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
 
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
@@ -211,7 +211,7 @@ class TestIdentifiableMixin:
         # Test failure cases
         for case in failure_cases:
             with pytest.raises(FlextValidationError):
-                identifiable_obj.set_id(cast("str", case["input"]["id"]))
+                identifiable_obj.id = cast("str", case["input"]["id"])
 
     @given(FlextStrategies.flext_ids())
     def test_identifiable_property_based(self, generated_id: str) -> None:
@@ -226,7 +226,7 @@ class TestIdentifiableMixin:
                 pass
 
         obj = PropertyIdentifiable()
-        obj.set_id(generated_id)
+        obj.id = generated_id
 
         assert obj.id == generated_id
 
@@ -247,9 +247,9 @@ class TestTimingMixin:
                 super().__init__()
 
             def timed_operation(self) -> str:
-                start_time = self._start_timing()
+                self.start_timing()
                 time.sleep(0.001)
-                execution_time = self._get_execution_time_ms(start_time)
+                execution_time = self.stop_timing()
                 return f"completed in {execution_time:.2f}ms"
 
         def create_and_time() -> TimedModel:
@@ -272,7 +272,7 @@ class TestTimingMixin:
                 super().__init__()
 
             def quick_operation(self) -> float:
-                start_time = self._start_timing()
+                self.start_timing()
                 # Minimal operation
                 return self._get_execution_time_ms(start_time)
 
@@ -544,7 +544,7 @@ class TestEntityMixin:
         class EntityModel(FlextEntityMixin):
             def __init__(self, entity_id: str, name: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
                 self.name = name
 
             def get_id(self) -> str:
@@ -581,7 +581,7 @@ class TestEntityMixin:
         class StressEntityModel(FlextEntityMixin):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
                 self._events: list[str] = []
 
             def get_id(self) -> str:
@@ -644,7 +644,7 @@ class TestFullMixin:
                 self, entity_id: str, user_data: dict[str, Any], config: dict[str, Any]
             ) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
                 self.name = user_data["name"]
                 self.email = user_data["email"]
                 self.config = config
@@ -695,7 +695,7 @@ class TestFullMixin:
         class EnduranceFullModel(FlextFullMixin):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
                 self.value = {"counter": 0}
 
             def _comparison_key(self) -> object:
@@ -773,7 +773,7 @@ class TestMixinComposition:
         ):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
 
             async def async_operation(self) -> dict[str, Any]:
                 # Simulate async validation
@@ -830,7 +830,7 @@ class TestMixinComposition:
         ):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
-                self.set_id(entity_id)
+                self.id = entity_id
 
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
@@ -848,7 +848,7 @@ class TestMixinComposition:
                 pass
 
             def timed_cached_operation(self, key: str) -> float:
-                start_time = self._start_timing()
+                self.start_timing()
 
                 # Check cache first
                 cached = self.cache_get(key)
@@ -934,7 +934,7 @@ class TestMixinPropertyBased:
                 pass
 
         model = PropertyIdentifiable()
-        model.set_id(correlation_id)
+        model.id = correlation_id
 
         # Properties that should always hold
         assert model.id == correlation_id
