@@ -9,13 +9,6 @@ from flext_core import (
     FlextEntityId,
     FlextPayload,
     FlextTypes,
-    TAnyDict,
-)
-from flext_core.typings import (
-    TAnyList,
-    TCorrelationId,
-    TData,
-    TEntityId,
 )
 
 FlextConfigKey = str
@@ -26,8 +19,7 @@ FlextServiceName = str
 # Rebuild Pydantic models to resolve forward references
 # Make types available in the global namespace for model_rebuild()
 
-globals()["TAnyDict"] = TAnyDict
-globals()["TData"] = TData
+# Modern types - no globals needed
 
 # Now safely call model_rebuild() with types in scope
 FlextPayload.model_rebuild()
@@ -49,17 +41,17 @@ class TestTypeProtocols:
 
     def test_type_aliases_usage(self) -> None:
         """Test type aliases from types module."""
-        # Test TAnyDict
-        test_dict: TAnyDict = {"key": "value", "number": 42}
+        # Test FlextTypes.Core.Dict
+        test_dict: FlextTypes.Core.Dict = {"key": "value", "number": 42}
         assert isinstance(test_dict, dict)
         assert test_dict["key"] == "value"
 
-        # Test TAnyList
-        test_list: TAnyList = [
+        # Test FlextTypes.Core.List
+        test_list: FlextTypes.Core.List = [
             "item1",
             42,
             "item3",
-        ]  # TAnyList allows str|int|float|None only
+        ]  # FlextTypes.Core.List allows str|int|float|None only
         assert isinstance(test_list, list)
         assert len(test_list) == 3
 
@@ -69,10 +61,10 @@ class TestTypeProtocols:
         # Create a class that implements TSerializable protocol
         class TestTSerializable:
             def __init__(self, data: dict[str, object]) -> None:
-                self.data = data
+                self.value = data
 
             def serialize(self) -> dict[str, object]:
-                return self.data.copy()
+                return self.value.copy()
 
         serializable_obj = TestTSerializable({"key": "value", "data": "test"})
 
@@ -185,7 +177,7 @@ class TestTypeAliases:
 
         from typing import cast  # noqa: PLC0415
 
-        payload_data = cast("dict[str, object]", user_payload.data)
+        payload_data = cast("dict[str, object]", user_payload.value)
         assert payload_data["id"] == "123", (
             f"Expected {'123'}, got {payload_data['id']}"
         )
@@ -209,6 +201,7 @@ class TestBasicTypeOperations:
 
     def test_callable_checking(self) -> None:
         """Test callable checking."""
+
         def test_func() -> str:
             return "test"
 
@@ -258,15 +251,15 @@ class TestProtocolDefinitions:
         # Create a class that implements FlextTSerializable
         class TSerializableData:
             def __init__(self, data: dict[str, object]) -> None:
-                self.data = data
+                self.value = data
 
             def to_dict(self) -> dict[str, object]:
-                return self.data.copy()
+                return self.value.copy()
 
             def to_json(self) -> str:
                 import json  # noqa: PLC0415
 
-                return json.dumps(self.data)
+                return json.dumps(self.value)
 
         serializable_obj = TSerializableData({"key": "value", "number": 42})
 
@@ -286,9 +279,9 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        # TEntityId usage
-        user_id: TEntityId = "user-123"
-        order_id: TEntityId = "order-456"
+        # FlextTypes.Domain.EntityId usage
+        user_id: FlextTypes.Domain.EntityId = "user-123"
+        order_id: FlextTypes.Domain.EntityId = "order-456"
 
         assert isinstance(user_id, str)
         assert isinstance(order_id, str)
@@ -298,22 +291,22 @@ class TestTypeAliasComprehensive:
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
         # Test available identifiers
-        correlation_id: TCorrelationId = "corr-456"
+        correlation_id: FlextTypes.Domain.CorrelationId = "corr-456"
 
         assert isinstance(correlation_id, str)
 
     def test_available_type_aliases(self) -> None:
         """Test available type aliases."""
-        entity_id: TEntityId = "entity-123"
-        correlation_id: TCorrelationId = "corr-456"
+        entity_id: FlextTypes.Domain.EntityId = "entity-123"
+        correlation_id: FlextTypes.Domain.CorrelationId = "corr-456"
 
         assert isinstance(entity_id, str)
         assert isinstance(correlation_id, str)
 
     def test_data_type_aliases(self) -> None:
         """Test data-related type aliases."""
-        # Test TData generic
-        test_data: TData = {"key": "value"}
+        # Test FlextTypes.Core.Data generic
+        test_data: FlextTypes.Core.Data = {"key": "value"}
         assert isinstance(test_data, dict)
 
     def test_function_type_aliases(self) -> None:
@@ -348,8 +341,8 @@ class TestTypeAliasComprehensive:
     def test_basic_type_aliases(self) -> None:
         """Test basic type aliases."""
         # Test basic data types that are available
-        any_dict: TAnyDict = {"key": "value", "number": 42}
-        any_list: TAnyList = ["item1", 42, "item3"]
+        any_dict: FlextTypes.Core.Dict = {"key": "value", "number": 42}
+        any_list: FlextTypes.Core.List = ["item1", 42, "item3"]
 
         assert isinstance(any_dict, dict)
         assert isinstance(any_list, list)
@@ -368,8 +361,8 @@ class TestTypesCoverageImprovements:
         assert hasattr(FlextTypes, "Service")
 
         # Test type definitions are accessible
-        test_dict: TAnyDict = {"test": "value"}
-        test_list: TAnyList = ["item1", 42]
+        test_dict: FlextTypes.Core.Dict = {"test": "value"}
+        test_list: FlextTypes.Core.List = ["item1", 42]
 
         assert isinstance(test_dict, dict)
         assert isinstance(test_list, list)

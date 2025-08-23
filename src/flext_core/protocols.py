@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable
-from typing import Protocol, runtime_checkable
+from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
 
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# ParamSpec and TypeVar for generic callable protocols
+P = ParamSpec("P")
+T = TypeVar("T")
 
 # =============================================================================
 # HIERARCHICAL PROTOCOL ARCHITECTURE - Optimized with composition
@@ -61,11 +65,31 @@ class FlextProtocols:
         """Foundation layer protocols - core building blocks for the ecosystem."""
 
         class Callable[T](Protocol):
-            """Generic callable protocol with return type safety."""
+            """Generic callable protocol with parameter and return type safety."""
 
             def __call__(self, *args: object, **kwargs: object) -> T:
                 """Execute the callable with given arguments."""
                 ...
+
+        @runtime_checkable
+        class DecoratedCallable[T](Protocol):
+            """Callable protocol with function attributes for decorators.
+
+            This protocol represents a function that has been decorated and
+            includes all standard function attributes.
+            """
+
+            def __call__(self, *args: object, **kwargs: object) -> T:
+                """Execute the callable with given arguments."""
+                ...
+
+            __name__: str
+            __module__: str
+            __doc__: str | None
+            __qualname__: str
+            __annotations__: dict[str, object]
+            __dict__: dict[str, object]
+            __wrapped__: object | None  # Can be any callable
 
         class Validator[T](Protocol):
             """Generic validator protocol for type-safe validation."""
@@ -547,7 +571,7 @@ FlextEventStore = FlextProtocols.Domain.EventStore
 # Infrastructure layer aliases - commented to avoid conflicts with typings.py
 # FlextConnection = FlextProtocols.Infrastructure.Connection - moved to typings.py
 FlextAuthProtocol = FlextProtocols.Infrastructure.Auth  # Keep this one as it's specific
-# FlextConfigurable = FlextProtocols.Infrastructure.Configurable - moved to typings.py
+FlextConfigurable = FlextProtocols.Infrastructure.Configurable
 # FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol - moved to typings.py
 
 # Extensions layer aliases - commented to avoid conflicts with typings.py
@@ -611,6 +635,7 @@ __all__: list[str] = [
     "FlextAlertsProtocol",
     # Specific protocol classes (not aliases)
     "FlextAuthProtocol",
+    "FlextConfigurable",
     "FlextMetricsProtocol",
     "FlextObservabilityProtocol",
     # Legacy compatibility

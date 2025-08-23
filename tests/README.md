@@ -281,7 +281,7 @@ def test_railway_pattern():
     )
 
     assert result.success
-    assert result.unwrap() == 25
+    assert result.value == 25
 
 def test_error_propagation():
     """Test error propagation in chain."""
@@ -384,7 +384,7 @@ def test_division_scenarios(input, expected):
     result = divide(10, input)
     if expected.success:
         assert result.success
-        assert result.unwrap() == expected.unwrap()
+        assert result.value == expected.value
     else:
         assert result.is_failure
         assert result.error == expected.error

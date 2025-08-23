@@ -387,7 +387,9 @@ class TestFlextTestMockerFunctional:
         # Configure method behavior
         service.configure_method("get_data", return_value="configured_result")
         service.configure_method(
-            "fail_method", should_fail=True, failure_message="Test failure"
+            "fail_method",
+            should_fail=True,
+            failure_message="Test failure",
         )
 
         # Test configured return value

@@ -24,7 +24,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import UTC, datetime, timezone
-from typing import Annotated, ClassVar, Self, cast
+from typing import Annotated, ClassVar, Self, cast, override
 
 from pydantic import (
     AliasChoices,
@@ -55,6 +55,7 @@ from flext_core.root_models import (
     FlextVersion,
 )
 from flext_core.typings import (
+    FlextCallable,
     FlextTypes,
 )
 from flext_core.utilities import FlextGenerators
@@ -209,11 +210,13 @@ class FlextValue(FlextModel, ABC):
         except ImportError:
             pass  # Silently continue if logging is not available
 
+    @override
     def __hash__(self) -> int:
         """Generates a hash based on the model's attributes."""
         hashable_items = make_hashable(self.model_dump())
         return hash(hashable_items)
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Compares this Value Object with another for equality."""
         if not isinstance(other, FlextValue):
@@ -223,9 +226,11 @@ class FlextValue(FlextModel, ABC):
         return self_data == other_data
 
     @abstractmethod
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Abstract business rule validation - must be implemented."""
 
+    @override
     def __str__(self) -> str:
         """Return human-readable string representation."""
         class_name = self.__class__.__name__
@@ -636,20 +641,24 @@ class FlextEntity(FlextModel, ABC):
         """Computed field indicating if entity has pending domain events."""
         return len(self.domain_events) > 0
 
+    @override
     def __hash__(self) -> int:
         """Hash based on entity ID (identity-based)."""
         return hash(self.id)
 
+    @override
     def __eq__(self, other: object) -> bool:
         """Equality based on entity ID (identity-based)."""
         if not isinstance(other, FlextEntity):
             return False
         return str(self.id) == str(other.id)
 
+    @override
     def __str__(self) -> str:
         """Return human-readable entity representation."""
         return f"{self.__class__.__name__}(id={self.id})"
 
+    @override
     def __repr__(self) -> str:
         """Return detailed entity representation for debugging."""
         fields_repr = [f"id={self.id}", f"version={self.version}"]
@@ -939,6 +948,7 @@ class FlextEntity(FlextModel, ABC):
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
             return FlextResult[Self].fail(f"Failed to copy entity: {e}")
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules (override in subclasses for specific rules)."""
         return FlextResult[None].ok(None)
@@ -1036,13 +1046,19 @@ class FlextFactory:
     ) -> FlextResult[object]:
         """Create instance with factory."""
         # Handle model class
-        if isinstance(factory, type) and issubclass(factory, FlextModel):
-            return cls._create_model_instance(factory, kwargs)
+        if isinstance(factory, type):
+            try:
+                if issubclass(factory, FlextModel):
+                    return cls._create_model_instance(factory, kwargs)
+            except TypeError:
+                pass  # factory is not a class
 
         # Handle callable factory function
-        if callable(factory):
+        # Direct check - factory is already object type
+        if callable(factory):  # pyright: ignore[reportUnknownArgumentType]
             # Factory is already checked to be callable above
-            return cls._create_with_callable(factory, kwargs)
+            factory_callable = cast("FlextCallable[object]", factory)
+            return cls._create_with_callable(factory_callable, kwargs)
 
         return FlextResult[object].fail(f"Invalid factory type for '{name}'")
 

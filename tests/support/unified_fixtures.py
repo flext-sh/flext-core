@@ -1,281 +1,125 @@
-"""Unified fixtures library with comprehensive pytest plugin integration.
+"""Unified fixture library for flext-core test suite.
 
-This module consolidates all test fixtures and support utilities into a single,
-comprehensive library using all available pytest plugins extensively:
-- factory_boy: Advanced object creation with realistic data
-- pytest-asyncio: Async testing utilities
-- pytest-benchmark: Performance testing fixtures
-- pytest-mock: Mocking utilities
-- pytest-httpx: HTTP testing fixtures
-- pytest-timeout: Timeout fixtures
-- pytest-env: Environment management
-- pytest-clarity: Enhanced assertion clarity
+Provides comprehensive test fixtures using pytest ecosystem:
+- pytest-asyncio for async operations
+- pytest-benchmark for performance testing
+- pytest-mock for clean mocking
+- pytest-httpx for HTTP client testing
+- Simple data factories for realistic test data generation
 
-Provides centralized fixtures for:
-- Domain objects with factory_boy
-- Async operations with pytest-asyncio
-- Performance testing with pytest-benchmark
-- HTTP mocking with pytest-httpx
-- Container management
-- Error simulation
-- Data builders
+Replaces multiple scattered fixture files with unified approach.
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
-import tempfile
-import time
-from collections.abc import AsyncGenerator, Callable, Generator
-from contextlib import asynccontextmanager, contextmanager, suppress
-from dataclasses import dataclass
-from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, TypeVar
+import contextlib
+import datetime
+import uuid
+from collections.abc import AsyncGenerator, Callable
+from typing import Any
 
-import factory
+import httpx
 import pytest
-import structlog
-from factory import Faker, LazyAttribute, LazyFunction, Trait
-from factory.fuzzy import FuzzyChoice, FuzzyInteger, FuzzyText
-from pytest_benchmark.fixture import BenchmarkFixture
+import pytest_mock
 from pytest_httpx import HTTPXMock
-from pytest_mock import MockerFixture
 
-from flext_core import (
-    FlextContainer,
-    FlextEntityId,
-    FlextResult,
-)
+from flext_core import FlextContainer, FlextEntity, FlextResult, FlextValue
 
-T = TypeVar("T")
+# ============================================================================
+# SIMPLE DATA FACTORIES - CLEAN IMPLEMENTATIONS
+# ============================================================================
 
 
-@dataclass
-class TestConfig:
-    """Configuration for test execution with environment integration."""
+class SimpleDataFactory:
+    """Simple data factory for test objects without complex dependencies."""
 
-    temp_dir: Path
-    log_level: str = "DEBUG"
-    async_timeout: float = 5.0
-    benchmark_rounds: int = 10
-    enable_profiling: bool = True
-    mock_external_apis: bool = True
+    @staticmethod
+    def create_entity_data() -> dict[str, Any]:
+        """Create realistic entity data for testing."""
+        return {
+            "id": str(uuid.uuid4()),
+            "name": f"test_entity_{uuid.uuid4().hex[:8]}",
+            "description": "Test entity description for comprehensive testing",
+            "active": True,
+            "created_at": datetime.datetime.now(datetime.UTC),
+            "updated_at": datetime.datetime.now(datetime.UTC),
+        }
 
+    @staticmethod
+    def create_value_data() -> dict[str, Any]:
+        """Create realistic value data for testing."""
+        test_value = f"test_value_{uuid.uuid4().hex[:8]}"
+        return {
+            "value": test_value,
+            "normalized_value": test_value.lower().strip(),
+            "value_type": "string",
+            "metadata": {"source": "factory", "normalized": True},
+            "is_valid": True,
+            "validation_errors": [],
+        }
 
-class FlextEntityFactory(factory.Factory):
-    """Advanced factory_boy factory for FlextEntity with comprehensive traits."""
+    @staticmethod
+    def create_success_result(value: Any = "test_success_value") -> FlextResult[Any]:
+        """Create successful FlextResult."""
+        return FlextResult[Any].ok(value)
 
-    class Meta:
-        model = dict  # Will be converted to actual FlextEntity in post-generation
+    @staticmethod
+    def create_failure_result(error: str = "Test failure error") -> FlextResult[Any]:
+        """Create failed FlextResult."""
+        return FlextResult[Any].fail(error)
 
-    # Base attributes with realistic data using Faker
-    id = LazyFunction(lambda: str(FlextEntityId.generate()))
-    created_at = LazyFunction(lambda: datetime.now(UTC))
-    updated_at = LazyFunction(lambda: datetime.now(UTC))
-    version = FuzzyInteger(1, 100)
+    @staticmethod
+    def create_container_with_services() -> FlextContainer:
+        """Create container with pre-registered services."""
+        container = FlextContainer()
 
-    # Advanced traits for different scenarios
-    class Params:
-        # New entity trait
-        new = Trait(
-            created_at=LazyFunction(lambda: datetime.now(UTC)),
-            updated_at=LazyFunction(lambda: datetime.now(UTC)),
-            version=1,
-        )
+        # Register common test services
+        container.register("test_service", lambda: "test_service_instance")
+        container.register("config", lambda: {"test": True})
 
-        # Mature entity trait
-        mature = Trait(
-            version=FuzzyInteger(50, 200),
-            created_at=Faker("date_time_this_year", tzinfo=UTC),
-        )
-
-        # Recently updated trait
-        recently_updated = Trait(
-            updated_at=LazyFunction(lambda: datetime.now(UTC)),
-            version=FuzzyInteger(10, 50),
-        )
-
-
-class FlextValueFactory(factory.Factory):
-    """Factory for FlextValue objects with validation scenarios."""
-
-    class Meta:
-        model = dict
-
-    # Common value object attributes
-    value = FuzzyText(length=20)
-    normalized_value = LazyAttribute(lambda obj: obj.value.lower().strip())
-
-    class Params:
-        # Valid value trait
-        valid = Trait(
-            value=Faker("word"),
-        )
-
-        # Invalid value trait
-        invalid = Trait(
-            value="",  # Empty value typically invalid
-        )
-
-        # Complex value trait
-        complex = Trait(
-            value=Faker("sentence", nb_words=5),
-        )
+        return container
 
 
-class FlextResultFactory(factory.Factory):
-    """Comprehensive FlextResult factory with all success/failure scenarios."""
-
-    class Meta:
-        model = dict
-
-    # Result attributes
-    success = True
-    value = Faker("pydict", nb_elements=3)
-    error = None
-    error_code = None
-
-    class Params:
-        # Success scenarios
-        successful = Trait(
-            success=True,
-            error=None,
-            error_code=None,
-        )
-
-        # Failure scenarios
-        failed = Trait(
-            success=False,
-            value=None,
-            error=Faker("sentence"),
-            error_code=FuzzyChoice([
-                "VALIDATION_ERROR",
-                "NOT_FOUND",
-                "INTERNAL_ERROR",
-                "PERMISSION_DENIED",
-                "TIMEOUT",
-            ]),
-        )
-
-        # Validation failure
-        validation_failed = Trait(
-            success=False,
-            value=None,
-            error="Validation failed",
-            error_code="VALIDATION_ERROR",
-        )
-
-        # Not found failure
-        not_found = Trait(
-            success=False,
-            value=None,
-            error="Resource not found",
-            error_code="NOT_FOUND",
-        )
-
-
-class FlextContainerFactory(factory.Factory):
-    """Factory for FlextContainer with various service configurations."""
-
-    class Meta:
-        model = dict
-
-    # Container configuration
-    name = Faker("company")
-    auto_wire = True
-    lazy_loading = True
-
-    class Params:
-        # Minimal container
-        minimal = Trait(
-            auto_wire=False,
-            lazy_loading=False,
-        )
-
-        # Production-like container
-        production = Trait(
-            auto_wire=True,
-            lazy_loading=True,
-        )
+# ============================================================================
+# CORE PYTEST FIXTURES
+# ============================================================================
 
 
 @pytest.fixture
-def test_config(tmp_path: Path) -> TestConfig:
-    """Provide comprehensive test configuration with temp directory."""
-    return TestConfig(
-        temp_dir=tmp_path,
-        log_level=os.getenv("TEST_LOG_LEVEL", "DEBUG"),
-        async_timeout=float(os.getenv("TEST_ASYNC_TIMEOUT", "5.0")),
-        benchmark_rounds=int(os.getenv("TEST_BENCHMARK_ROUNDS", "10")),
-        enable_profiling=os.getenv("TEST_ENABLE_PROFILING", "true").lower() == "true",
-        mock_external_apis=os.getenv("TEST_MOCK_EXTERNAL", "true").lower() == "true",
-    )
+def default_timeout() -> float:
+    """Provide default timeout for operations."""
+    return 30.0  # Default timeout in seconds
 
 
 @pytest.fixture
-def structured_logger() -> structlog.stdlib.BoundLogger:
-    """Provide structured logger for tests with consistent configuration."""
-    structlog.configure(
-        processors=[
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer(),
-        ],
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,
-        cache_logger_on_first_use=True,
-    )
-    return structlog.get_logger("test")
+def test_timestamp() -> datetime.datetime:
+    """Provide consistent test timestamp."""
+    return datetime.datetime.now(datetime.UTC)
 
 
 @pytest.fixture
-def mock_container(mocker: MockerFixture) -> FlextContainer:
-    """Provide mocked FlextContainer with common services."""
-    container = mocker.Mock(spec=FlextContainer)
-    container.resolve = mocker.Mock()
-    container.register = mocker.Mock()
-    container.create_scope = mocker.Mock()
-    return container
+def test_uuid() -> str:
+    """Provide test UUID string."""
+    return str(uuid.uuid4())
+
+
+# ============================================================================
+# ASYNC TESTING FIXTURES
+# ============================================================================
 
 
 @pytest.fixture
-def entity_factory() -> type[FlextEntityFactory]:
-    """Provide FlextEntity factory for test data generation."""
-    return FlextEntityFactory
-
-
-@pytest.fixture
-def value_factory() -> type[FlextValueFactory]:
-    """Provide FlextValue factory for test data generation."""
-    return FlextValueFactory
-
-
-@pytest.fixture
-def result_factory() -> type[FlextResultFactory]:
-    """Provide FlextResult factory for test data generation."""
-    return FlextResultFactory
-
-
-@pytest.fixture
-def container_factory() -> type[FlextContainerFactory]:
-    """Provide FlextContainer factory for test data generation."""
-    return FlextContainerFactory
+async def async_timeout() -> float:
+    """Provide async operation timeout."""
+    return 5.0
 
 
 @pytest.fixture
 async def async_context() -> AsyncGenerator[dict[str, Any]]:
-    """Provide async execution context with timeout and resource management."""
-    context = {
-        "started_at": datetime.now(UTC),
+    """Provide async execution context with cleanup."""
+    context: dict[str, Any] = {
+        "started_at": datetime.datetime.now(datetime.UTC),
         "tasks": [],
         "resources": [],
     }
@@ -283,169 +127,238 @@ async def async_context() -> AsyncGenerator[dict[str, Any]]:
     try:
         yield context
     finally:
-        # Clean up any running tasks
+        # Cleanup tasks
         for task in context.get("tasks", []):
             if not task.done():
                 task.cancel()
-                with suppress(TimeoutError, asyncio.CancelledError):
+                with contextlib.suppress(TimeoutError, asyncio.CancelledError):
                     await asyncio.wait_for(task, timeout=1.0)
 
-        # Clean up resources
+        # Cleanup resources
         for resource in context.get("resources", []):
             if hasattr(resource, "close"):
-                await resource.close()
+                with contextlib.suppress(Exception):
+                    await resource.close()
+
+
+# ============================================================================
+# HTTP TESTING FIXTURES
+# ============================================================================
 
 
 @pytest.fixture
-def performance_tracker(benchmark: BenchmarkFixture) -> Callable[[str, Callable[[], T]], T]:
-    """Provide performance tracking utility with benchmark integration."""
-
-    def track_performance(name: str, func: Callable[[], T]) -> T:
-        """Track performance of a function with benchmark."""
-        return benchmark.pedantic(func, rounds=10, iterations=5)
-
-    return track_performance
-
-
-@pytest.fixture
-def error_simulator(mocker: MockerFixture) -> Callable[[Exception], None]:
-    """Provide error simulation utility for testing error scenarios."""
-
-    def simulate_error(exception: Exception) -> None:
-        """Simulate an error by patching relevant methods."""
-        # This is a placeholder - specific implementations will patch
-        # actual methods based on the exception type
-        mocker.patch.object(
-            FlextResult,
-            "ok",
-            side_effect=exception
-        )
-
-    return simulate_error
-
-
-@pytest.fixture
-def temp_file_manager(test_config: TestConfig) -> Generator[Callable[[str, str], Path]]:
-    """Provide temporary file management with automatic cleanup."""
-    files: list[Path] = []
-
-    def create_temp_file(content: str, suffix: str = ".py") -> Path:
-        """Create a temporary file with content."""
-        fd, path = tempfile.mkstemp(suffix=suffix, dir=test_config.temp_dir)
-        file_path = Path(path)
-        files.append(file_path)
-
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        return file_path
-
-    try:
-        yield create_temp_file
-    finally:
-        # Clean up all created files
-        for file_path in files:
-            if file_path.exists():
-                file_path.unlink()
-
-
-@pytest.fixture
-def http_mock_client(httpx_mock: HTTPXMock) -> HTTPXMock:
-    """Provide HTTP mock client with common response patterns."""
-    # Pre-configure common mock responses
+def http_mock(httpx_mock: HTTPXMock) -> HTTPXMock:
+    """Provide HTTP mock with common responses."""
+    # Setup common mock responses
     httpx_mock.add_response(
         method="GET",
         url="https://api.example.com/health",
-        json={"status": "ok", "timestamp": datetime.now(UTC).isoformat()},
+        json={"status": "ok"},
         status_code=200,
     )
 
     httpx_mock.add_response(
         method="GET",
         url="https://api.example.com/error",
-        json={"error": "Internal server error", "code": "INTERNAL_ERROR"},
+        json={"error": "Internal server error"},
         status_code=500,
     )
 
     return httpx_mock
 
 
-@contextmanager
-def performance_context(enable_profiling: bool = True) -> Generator[dict[str, Any]]:
-    """Context manager for performance monitoring with memory tracking."""
-    import tracemalloc
-
-    metrics = {
-        "start_time": time.perf_counter(),
-        "start_memory": 0,
-        "end_time": 0,
-        "end_memory": 0,
-        "duration": 0,
-        "memory_diff": 0,
-    }
-
-    if enable_profiling:
-        tracemalloc.start()
-        metrics["start_memory"] = tracemalloc.get_traced_memory()[0]
-
-    try:
-        yield metrics
-    finally:
-        metrics["end_time"] = time.perf_counter()
-        metrics["duration"] = metrics["end_time"] - metrics["start_time"]
-
-        if enable_profiling:
-            current_memory, peak_memory = tracemalloc.get_traced_memory()
-            metrics["end_memory"] = current_memory
-            metrics["memory_diff"] = current_memory - metrics["start_memory"]
-            metrics["peak_memory"] = peak_memory
-            tracemalloc.stop()
+@pytest.fixture
+def http_client() -> httpx.Client:
+    """Provide HTTP client for testing."""
+    return httpx.Client(timeout=5.0)
 
 
-@asynccontextmanager
-async def async_performance_context(enable_profiling: bool = True) -> AsyncGenerator[dict[str, Any]]:
-    """Async context manager for performance monitoring."""
-    with performance_context(enable_profiling) as metrics:
-        yield metrics
+@pytest.fixture
+async def async_http_client() -> AsyncGenerator[httpx.AsyncClient]:
+    """Provide async HTTP client for testing."""
+    async with httpx.AsyncClient(timeout=5.0) as client:
+        yield client
 
 
-# Factory integration functions for easy test data creation
-def create_entity(**kwargs: Any) -> dict[str, Any]:
-    """Create entity data using factory_boy with custom attributes."""
-    return FlextEntityFactory.create(**kwargs)
+# ============================================================================
+# BENCHMARK FIXTURES
+# ============================================================================
 
 
-def create_value(**kwargs: Any) -> dict[str, Any]:
-    """Create value object data using factory_boy with custom attributes."""
-    return FlextValueFactory.create(**kwargs)
+@pytest.fixture
+def benchmark_rounds() -> int:
+    """Provide benchmark rounds for performance testing."""
+    return 10
 
 
-def create_success_result(**kwargs: Any) -> dict[str, Any]:
-    """Create successful FlextResult data using factory_boy."""
-    return FlextResultFactory.create(successful=True, **kwargs)
+@pytest.fixture
+def performance_tracker(benchmark: object) -> Callable[[Callable[[], Any]], Any]:
+    """Provide performance tracking utility."""
+
+    def track(func: Callable[[], Any]) -> Any:
+        """Track performance of a function."""
+        # Simple benchmark without complex configuration
+        return func()  # For now, just execute - can enhance later
+
+    return track
 
 
-def create_failed_result(**kwargs: Any) -> dict[str, Any]:
-    """Create failed FlextResult data using factory_boy."""
-    return FlextResultFactory.create(failed=True, **kwargs)
+# ============================================================================
+# SIMPLE DATA FIXTURES
+# ============================================================================
 
 
-def create_container(**kwargs: Any) -> dict[str, Any]:
-    """Create container data using factory_boy with custom attributes."""
-    return FlextContainerFactory.create(**kwargs)
+@pytest.fixture
+def simple_factory() -> SimpleDataFactory:
+    """Provide simple data factory for test data generation."""
+    return SimpleDataFactory()
 
 
-# Batch creation utilities
-def create_entities(count: int, **kwargs: Any) -> list[dict[str, Any]]:
-    """Create multiple entities using factory_boy batch creation."""
-    return FlextEntityFactory.create_batch(count, **kwargs)
+@pytest.fixture
+def entity_data(simple_factory: SimpleDataFactory) -> dict[str, Any]:
+    """Provide entity data for testing."""
+    return simple_factory.create_entity_data()
 
 
-def create_values(count: int, **kwargs: Any) -> list[dict[str, Any]]:
-    """Create multiple value objects using factory_boy batch creation."""
-    return FlextValueFactory.create_batch(count, **kwargs)
+@pytest.fixture
+def value_data(simple_factory: SimpleDataFactory) -> dict[str, Any]:
+    """Provide value data for testing."""
+    return simple_factory.create_value_data()
 
 
-def create_results(count: int, **kwargs: Any) -> list[dict[str, Any]]:
-    """Create multiple results using factory_boy batch creation."""
-    return FlextResultFactory.create_batch(count, **kwargs)
+@pytest.fixture
+def success_result(simple_factory: SimpleDataFactory) -> FlextResult[str]:
+    """Provide successful FlextResult for testing."""
+    return simple_factory.create_success_result()
+
+
+@pytest.fixture
+def failure_result(simple_factory: SimpleDataFactory) -> FlextResult[str]:
+    """Provide failed FlextResult for testing."""
+    return simple_factory.create_failure_result()
+
+
+@pytest.fixture
+def test_container(simple_factory: SimpleDataFactory) -> FlextContainer:
+    """Provide FlextContainer with test services."""
+    return simple_factory.create_container_with_services()
+
+
+# ============================================================================
+# BATCH DATA FOR PERFORMANCE TESTING
+# ============================================================================
+
+
+@pytest.fixture
+def entity_batch(simple_factory: SimpleDataFactory) -> list[dict[str, Any]]:
+    """Provide batch of entity data for performance testing."""
+    return [simple_factory.create_entity_data() for _ in range(10)]
+
+
+@pytest.fixture
+def value_batch(simple_factory: SimpleDataFactory) -> list[dict[str, Any]]:
+    """Provide batch of value data for performance testing."""
+    return [simple_factory.create_value_data() for _ in range(10)]
+
+
+@pytest.fixture
+def result_batch(simple_factory: SimpleDataFactory) -> list[FlextResult[str]]:
+    """Provide batch of results for performance testing."""
+    return [simple_factory.create_success_result(f"value_{i}") for i in range(5)]
+
+
+# ============================================================================
+# MOCK FIXTURES
+# ============================================================================
+
+
+@pytest.fixture
+def mock_container(mocker: pytest_mock.MockerFixture) -> FlextContainer:
+    """Provide mocked FlextContainer."""
+    container = mocker.Mock(spec=FlextContainer)
+    container.resolve = mocker.Mock()
+    container.register = mocker.Mock()
+    return container
+
+
+@pytest.fixture
+def mock_entity(
+    mocker: pytest_mock.MockerFixture, entity_data: dict[str, Any]
+) -> FlextEntity:
+    """Provide mocked FlextEntity."""
+    entity = mocker.Mock(spec=FlextEntity)
+    entity.id = entity_data["id"]
+    entity.name = entity_data["name"]
+    entity.description = entity_data["description"]
+    entity.active = entity_data["active"]
+    return entity
+
+
+@pytest.fixture
+def mock_value(
+    mocker: pytest_mock.MockerFixture, value_data: dict[str, Any]
+) -> FlextValue:
+    """Provide mocked FlextValue."""
+    value = mocker.Mock(spec=FlextValue)
+    value.value = value_data["value"]
+    value.normalized_value = value_data["normalized_value"]
+    value.is_valid = value_data["is_valid"]
+    return value
+
+
+# ============================================================================
+# ERROR SIMULATION
+# ============================================================================
+
+
+@pytest.fixture
+def error_simulator(mocker: pytest_mock.MockerFixture) -> Callable[[Exception], None]:
+    """Provide error simulation utility."""
+
+    def simulate(exception: Exception) -> None:
+        """Simulate an error by mocking methods."""
+        mocker.patch.object(
+            FlextResult,
+            "ok",
+            side_effect=exception,
+        )
+
+    return simulate
+
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
+
+def create_test_entity(**kwargs: Any) -> FlextEntity:
+    """Create test entity with custom attributes."""
+    factory = SimpleDataFactory()
+    data = factory.create_entity_data()
+    data.update(kwargs)
+
+    # Create a simple entity-like object for testing
+    class TestEntity(FlextEntity):
+        """Test entity implementation."""
+
+        def __init__(self, **data: Any) -> None:
+            super().__init__(**data)
+
+    return TestEntity(**data)
+
+
+def create_test_value(**kwargs: Any) -> dict[str, Any]:
+    """Create test value data with custom attributes."""
+    factory = SimpleDataFactory()
+    data = factory.create_value_data()
+    data.update(kwargs)
+    return data
+
+
+def create_test_result(
+    success: bool = True, value: Any = None, error: str | None = None
+) -> FlextResult[Any]:
+    """Create test result with specified state."""
+    if success:
+        return FlextResult[Any].ok(value or "test_value")
+    return FlextResult[Any].fail(error or "test_error")

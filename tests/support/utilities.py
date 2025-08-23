@@ -489,7 +489,10 @@ class FunctionalTestService:
         return sum(1 for call in self.call_history if call[0] == method_name)
 
     def was_called_with(
-        self, method_name: str, *args: object, **kwargs: object
+        self,
+        method_name: str,
+        *args: object,
+        **kwargs: object,
     ) -> bool:
         """Check if method was called with specific arguments.
 
@@ -508,7 +511,8 @@ class FunctionalTestService:
         return False
 
     def get_calls_for_method(
-        self, method_name: str
+        self,
+        method_name: str,
     ) -> list[tuple[tuple[object, ...], dict[str, object]]]:
         """Get all calls for a specific method.
 
@@ -566,7 +570,7 @@ class FunctionalTestContext:
         elif not self.create:
             # If attribute doesn't exist and create=False, this would be an error in patch
             raise AttributeError(
-                f"'{type(self.target).__name__}' object has no attribute '{self.attribute}'"
+                f"'{type(self.target).__name__}' object has no attribute '{self.attribute}'",
             )
 
         # Check if new value was explicitly provided (including None)
@@ -600,7 +604,8 @@ class FlextTestMocker:
 
     @staticmethod
     def create_functional_service(
-        service_type: str = "generic", **config: object
+        service_type: str = "generic",
+        **config: object,
     ) -> FunctionalTestService:
         """Create a functional service implementation.
 

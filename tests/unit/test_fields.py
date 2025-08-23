@@ -25,11 +25,16 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
-from typing import cast
+from typing import SupportsFloat, cast
 
 import pytest
 from hypothesis import given, strategies as st
-from tests.conftest import TestCase, TestScenario, assert_performance
+from tests.conftest import (
+    PerformanceMetrics,
+    TestCase,
+    TestScenario,
+    assert_performance,
+)
 
 from flext_core import (
     FlextFieldCore,
@@ -138,13 +143,16 @@ class TestFlextFieldCoreAdvanced:
         """Test field creation using structured test cases."""
         for test_case in field_creation_test_cases:
             # Create field using test case input data
-            field: FlextFieldCore = FlextFieldCore(**test_case.input_data)
+            field: FlextFieldCore = FlextFieldCore(**test_case.input_data)  # type: ignore[arg-type]
 
-            # Validate field creation
-            assert_helpers.assert_result_ok(FlextResult[None].ok(field))
+            # Validate field creation succeeded
+            result = FlextResult[FlextFieldCore].ok(field)
+            assert result.success
+            assert result.value is field
 
-            # Verify expected output attributes
-            for attr_name, expected_value in test_case.expected_output.items():
+            # Verify expected output attributes - cast to access items
+            expected_output = cast("dict[str, object]", test_case.expected_output)
+            for attr_name, expected_value in expected_output.items():
                 actual_value = getattr(field, attr_name)
                 assert actual_value == expected_value, (
                     f"Test case {test_case.id}: {attr_name} mismatch. "
@@ -234,21 +242,22 @@ class TestFlextFieldCoreAdvanced:
             field_config = test_case.input_data["field_config"]
             test_value = test_case.input_data["test_value"]
 
-            # Create field
-            field: FlextFieldCore = FlextFieldCore(
-                **cast("dict[str, object]", field_config),
-            )
+            # Create field - cast and ignore type for test data
+            field_config_typed = cast("dict[str, object]", field_config)
+            field: FlextFieldCore = FlextFieldCore(**field_config_typed)  # type: ignore[arg-type]
 
             # Validate value
             validation_result = field.validate_value(test_value)
 
+            # Cast assert_helpers to access methods
+            assert_helpers_typed = cast("object", assert_helpers)
             if test_case.scenario == TestScenario.HAPPY_PATH:
-                assert_helpers.assert_result_ok(validation_result)
+                assert validation_result.success
             elif test_case.scenario == TestScenario.ERROR_CASE:
-                assert_helpers.assert_result_fail(
-                    validation_result,
-                    test_case.expected_error,
-                )
+                assert validation_result.is_failure
+                if test_case.expected_error:
+                    error_message = validation_result.error or ""
+                    assert test_case.expected_error in error_message
 
     @pytest.mark.parametrize(
         ("field_type", "test_values", "expected_valid"),
@@ -277,9 +286,9 @@ class TestFlextFieldCoreAdvanced:
             result = field.validate_value(value)
 
             if should_be_valid:
-                assert_helpers.assert_result_ok(result)
+                assert result.success
             else:
-                assert_helpers.assert_result_fail(result)
+                assert result.is_failure
 
 
 # ============================================================================
@@ -372,7 +381,7 @@ class TestFlextFieldCorePropertyBased:
     )
     def test_allowed_values_property(
         self,
-        allowed_values: list[object],
+        allowed_values: list[str | int | float | bool],
         test_value: str,
     ) -> None:
         """Property: field with allowed values only accepts values from the list."""
@@ -423,13 +432,13 @@ class TestFlextFieldCorePerformance:
                 fields.append(field)
             return fields
 
-        metrics = performance_monitor(create_hundred_fields)
+        metrics = cast("PerformanceMetrics", performance_monitor(create_hundred_fields))
 
         # Performance assertions
         assert (
             metrics["execution_time"] < performance_threshold["result_creation"] * 100
         )  # 100ms for 100 fields
-        assert len(metrics["result"]) == 100
+        assert len(cast("list[object]", metrics["result"])) == 100
 
         # Memory efficiency assertion
         assert metrics["memory_used"] < 1_000_000  # 1MB for 100 fields
@@ -460,10 +469,10 @@ class TestFlextFieldCorePerformance:
                 results.append(result)
             return results
 
-        metrics = performance_monitor(validate_many_values)
+        metrics = cast("PerformanceMetrics", performance_monitor(validate_many_values))
 
         assert metrics["execution_time"] < 0.1  # 100ms for 100 validations
-        assert len(metrics["result"]) == 100
+        assert len(cast("list[object]", metrics["result"])) == 100
 
     @pytest.mark.benchmark
     @pytest.mark.usefixtures("assert_helpers")
@@ -502,10 +511,12 @@ class TestFlextFieldCorePerformance:
             finally:
                 logging.disable(logging.NOTSET)
 
-        assert len(metrics["result"]) == 50
+        result_metrics = cast("list[object]", metrics.get("result", []))
+        assert len(result_metrics) == 50
 
         # All retrievals should be successful
-        for result in metrics["result"]:
+        result_metrics = cast("list[FlextResult[object]]", metrics.get("result", []))
+        for result in result_metrics:
             assert result.success
 
 
@@ -538,9 +549,18 @@ class TestFlextFieldCoreWithFixtures:
             .build()
         )
 
-        # Create field from builder data
-        field: FlextFieldCore = FlextFieldCore(
-            **cast("dict[str, object]", field_config),
+        # Create field from builder data with proper type casting
+        config = cast("dict[str, object]", field_config)
+        field = FlextFieldCore(
+            field_id=str(config["field_id"]),
+            field_name=str(config["field_name"]),
+            field_type=str(config["field_type"]),
+            required=bool(config["required"]),
+            min_length=cast("int | None", config.get("min_length")),
+            max_length=cast("int | None", config.get("max_length")),
+            pattern=str(config["pattern"]) if config.get("pattern") else None,
+            description=str(config["description"]) if config.get("description") else None,
+            tags=cast("list[str]", config["tags"]) if config.get("tags") else [],
         )
 
         # Validate field properties
@@ -554,7 +574,7 @@ class TestFlextFieldCoreWithFixtures:
 
         # Test validation with builder-created field
         validation_result = field.validate_value("ValidValue")
-        assert_helpers.assert_result_ok(validation_result)
+        assert validation_result.success
 
     @pytest.mark.usefixtures("assert_helpers")
     def test_fields_with_sample_data(
@@ -589,7 +609,7 @@ class TestFlextFieldCoreWithFixtures:
 
         uuid_result = uuid_field.validate_value(sample_data["uuid"])
         assert uuid_result.success
-        assert validators["is_valid_uuid"](sample_data["uuid"])
+        assert validators["is_valid_uuid"](str(sample_data["uuid"]))
 
     def test_fields_with_service_factory(
         self,
@@ -779,9 +799,17 @@ class TestFlextFieldCoreIntegration:
                 .build()
             )
 
-            # 3. Create and register field
-            field: FlextFieldCore = FlextFieldCore(
-                **cast("dict[str, object]", field_config),
+            # 3. Create and register field with proper type casting
+            config = cast("dict[str, object]", field_config)
+            field = FlextFieldCore(
+                field_id=str(config["field_id"]),
+                field_name=str(config["field_name"]),
+                field_type=str(config["field_type"]),
+                required=bool(config["required"]),
+                min_length=cast("int | None", config.get("min_length")),
+                max_length=cast("int | None", config.get("max_length")),
+                pattern=str(config["pattern"]) if config.get("pattern") else None,
+                description=str(config["description"]) if config.get("description") else None,
             )
             registry.register_field(field)
 
@@ -824,7 +852,8 @@ class TestFlextFieldCoreIntegration:
             for result in workflow_result["validation_results"]
         )
 
-        assert_helpers.assert_result_ok(FlextResult[None].ok(workflow_result["field"]))
+        result = FlextResult[FlextFieldCore].ok(workflow_result["field"])
+        assert result.success
 
         # Verify field properties
         field = workflow_result["field"]
@@ -839,7 +868,7 @@ class TestFlextFieldCoreIntegration:
             "validation_results"
         ]
         for result in validation_results:
-            assert_helpers.assert_result_ok(result)
+            assert result.success
 
         # Performance assertion
         assert isinstance(metrics, dict)
@@ -851,7 +880,7 @@ class TestFlextFieldCoreIntegration:
         elif isinstance(execution_time_raw, bytes):
             execution_time = float(execution_time_raw.decode().strip())
         elif hasattr(execution_time_raw, "__float__"):  # Decimal or similar
-            execution_time = float(execution_time_raw)
+            execution_time = float(cast("SupportsFloat", execution_time_raw))
         elif isinstance(execution_time_raw, str):
             try:
                 execution_time = float(execution_time_raw.strip())
@@ -913,9 +942,9 @@ class TestFlextFieldCoreIntegration:
         integer_validation = integer_field.validate_value(123)
         boolean_validation = boolean_field.validate_value(False)
 
-        assert_helpers.assert_result_ok(string_validation)
-        assert_helpers.assert_result_ok(integer_validation)
-        assert_helpers.assert_result_ok(boolean_validation)
+        assert string_validation.success
+        assert integer_validation.success
+        assert boolean_validation.success
 
         # Verify factory-created fields have correct types
         assert string_field.field_type == FlextFieldType.STRING.value

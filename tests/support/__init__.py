@@ -18,8 +18,6 @@ from tests.support.builders import TestBuilders
 
 from tests.support.domain_factories import (
     ConfigurationFactory,
-    ContainerFactory,
-    FieldDataFactory,
     FlextResultFactory,
     PayloadDataFactory,
     ServiceDataFactory,
@@ -54,9 +52,7 @@ __all__ = [
     "UserDataFactory",
     "ConfigurationFactory",
     "PayloadDataFactory",
-    "ContainerFactory",
     "ServiceDataFactory",
-    "FieldDataFactory",
     # Factory Boy factories
     "UserFactory",
     "AdminUserFactory",

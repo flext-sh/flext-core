@@ -1,126 +1,209 @@
-"""Test Factories usando Factory Boy para criação de objetos de teste.
+"""Test Factories para criação de objetos de teste compatível com flext-core refatorado.
 
-Integração massiva com pytest e factory_boy para criação consistente
-de objetos de teste em todo o ecosystem flext-core.
+Fornece factories simplificadas para criação consistente de objetos de teste
+sem dependências externas, utilizando apenas a biblioteca padrão Python.
 
-Utiliza:
-- factory_boy 3.3.3 para criação de objetos
-- pytest fixtures para reutilização
-- faker para dados realistas
+Compatível com:
+- flext-core nova estrutura (FlextResult.value, FlextTypes)
+- Python 3.13+ type system
+- Pytest fixtures nativas
 - SOLID principles para extensibilidade
 """
 
 from __future__ import annotations
 
+import random
+import string
+import uuid
 from datetime import UTC, datetime
-from typing import Any
-
-import factory
-from factory import Faker
+from typing import Any, override
 
 from flext_core import (
     FlextAggregateRoot,
     FlextConfig,
     FlextEntity,
+    FlextEnvironment,
     FlextFieldCore,
     FlextModel,
     FlextResult,
     FlextValue,
 )
-from flext_core.constants import FlextEnvironment
 
 
-class FlextModelFactory(factory.Factory):
-    """Factory base para FlextModel objects."""
-
-    class Meta:
-        model = FlextModel
-        abstract = True
-
-    # Campos base do FlextModel
-    created_at = factory.LazyFunction(lambda: datetime.now(UTC))
-    updated_at = factory.LazyFunction(lambda: datetime.now(UTC))
+def _generate_fake_word() -> str:
+    """Generate a fake word for testing."""
+    return "".join(random.choices(string.ascii_lowercase, k=random.randint(4, 12)))
 
 
-class FlextValueFactory(factory.Factory):
+def _generate_fake_sentence() -> str:
+    """Generate a fake sentence for testing."""
+    words = [_generate_fake_word() for _ in range(random.randint(3, 8))]
+    return " ".join(words).capitalize() + "."
+
+
+def _generate_fake_email() -> str:
+    """Generate a fake email for testing."""
+    user = _generate_fake_word()
+    domain = _generate_fake_word()
+    return f"{user}@{domain}.com"
+
+
+def _generate_fake_url() -> str:
+    """Generate a fake URL for testing."""
+    domain = _generate_fake_word()
+    return f"https://{domain}.com"
+
+
+def _generate_fake_company() -> str:
+    """Generate a fake company name for testing."""
+    return _generate_fake_word().capitalize() + " Corp"
+
+
+class FlextModelFactory:
+    """Factory base para FlextModel objects sem dependências externas."""
+
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextModel:
+        """Create FlextModel instance with default values."""
+        defaults = {
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+        defaults.update(kwargs)
+        return FlextModel(**defaults)
+
+
+class TestValueObject(FlextValue):
+    """Concrete FlextValue implementation for testing."""
+
+    value: Any = None
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
+
+
+class FlextValueFactory:
     """Factory para FlextValue objects."""
 
-    class Meta:
-        model = FlextValue
+    @classmethod
+    def create(cls, **kwargs: Any) -> TestValueObject:
+        """Create FlextValue instance with default values."""
+        defaults = {
+            "value": _generate_fake_word(),
+        }
+        defaults.update(kwargs)
+        return TestValueObject(**defaults)
 
-    value = Faker("word")
-    metadata = factory.LazyFunction(dict)
+
+class TestEntity(FlextEntity):
+    """Concrete FlextEntity implementation for testing."""
+
+    name: str = "Test Entity"
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
 
 
-class FlextEntityFactory(FlextModelFactory):
+class FlextEntityFactory:
     """Factory para FlextEntity objects."""
 
-    class Meta:
-        model = FlextEntity
-        abstract = True
+    @classmethod
+    def create(cls, **kwargs: Any) -> TestEntity:
+        """Create FlextEntity instance with default values."""
+        # FlextEntity will provide defaults for id, version, timestamps, etc.
+        defaults = {
+            "name": "Test Entity",
+        }
+        defaults.update(kwargs)
+        # Create with auto-generated ID if not provided
+        if "id" not in defaults:
+            defaults["id"] = f"test_entity_{uuid.uuid4().hex[:8]}"
+        return TestEntity(**defaults)
 
-    id = Faker("uuid4")
-    version = 1
-    created_at = factory.LazyFunction(lambda: datetime.now(UTC))
-    updated_at = factory.LazyFunction(lambda: datetime.now(UTC))
+
+class TestAggregateRoot(FlextAggregateRoot):
+    """Concrete FlextAggregateRoot implementation for testing."""
+
+    name: str = "Test Aggregate"
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
 
 
-class FlextAggregateRootFactory(FlextEntityFactory):
+class FlextAggregateRootFactory:
     """Factory para FlextAggregateRoot objects."""
 
-    class Meta:
-        model = FlextAggregateRoot
-        abstract = True
+    @classmethod
+    def create(cls, **kwargs: Any) -> TestAggregateRoot:
+        """Create FlextAggregateRoot instance with default values."""
+        defaults = {
+            "name": "Test Aggregate",
+        }
+        defaults.update(kwargs)
+        return TestAggregateRoot(**defaults)
 
-    # Domain events list vazia por padrão
-    domain_events = factory.LazyFunction(list)
 
-
-class FlextConfigFactory(factory.Factory):
+class FlextConfigFactory:
     """Factory para FlextConfig objects."""
 
-    class Meta:
-        model = FlextConfig
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextConfig:
+        """Create FlextConfig instance with default values."""
+        defaults = {
+            "name": "test-flext",
+            "version": "1.0.0",
+            "description": "Test FLEXT configuration",
+            "environment": random.choice([env.value for env in FlextEnvironment]),
+            "debug": random.choice([True, False]),
+            "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
+            "timeout": random.randint(5, 60),
+            "retries": random.randint(1, 5),
+            "page_size": random.randint(10, 500),
+            "enable_caching": random.choice([True, False]),
+            "enable_metrics": random.choice([True, False]),
+            "enable_tracing": random.choice([True, False]),
+        }
+        defaults.update(kwargs)
+        return FlextConfig(**defaults)
 
-    environment = factory.Iterator([env.value for env in FlextEnvironment])
-    debug = Faker("boolean")
-    log_level = factory.Iterator(["DEBUG", "INFO", "WARNING", "ERROR"])
-    database_url = Faker("url")
-    redis_url = Faker("url")
-    secret_key = Faker("password", length=32)
 
-
-class FlextFieldCoreFactory(factory.Factory):
+class FlextFieldCoreFactory:
     """Factory para FlextFieldCore objects."""
 
-    class Meta:
-        model = FlextFieldCore
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextFieldCore:
+        """Create FlextFieldCore instance with default values."""
+        defaults = {
+            "id": str(uuid.uuid4()),
+            "name": _generate_fake_word(),
+            "field_type": random.choice(["string", "integer", "boolean", "datetime"]),
+            "required": random.choice([True, False]),
+            "description": _generate_fake_sentence(),
+            "default_value": None,
+            "validation_rules": [],
+        }
+        defaults.update(kwargs)
+        return FlextFieldCore(**defaults)
 
-    id = Faker("uuid4")
-    name = Faker("word")
-    field_type = factory.Iterator(["string", "integer", "boolean", "datetime"])
-    required = Faker("boolean")
-    description = Faker("sentence")
-    default_value = None
-    validation_rules = factory.LazyFunction(list)
 
-
-class FlextResultFactory(factory.Factory):
+class FlextResultFactory:
     """Factory para FlextResult objects."""
-
-    class Meta:
-        model = FlextResult
-        abstract = True
 
     @classmethod
     def success(cls, value: Any = None) -> FlextResult[Any]:
         """Cria FlextResult de sucesso."""
-        return FlextResult.ok(value or Faker("word").generate())
+        return FlextResult.ok(value or _generate_fake_word())
 
     @classmethod
     def failure(cls, error: str | None = None) -> FlextResult[Any]:
         """Cria FlextResult de falha."""
-        return FlextResult.fail(error or Faker("sentence").generate())
+        return FlextResult.fail(error or _generate_fake_sentence())
 
     @classmethod
     def build_success(cls, **kwargs: Any) -> FlextResult[Any]:
@@ -139,94 +222,128 @@ class FlextResultFactory(factory.Factory):
 # DOMAIN-SPECIFIC FACTORIES
 # =============================================================================
 
-class DomainEntityFactory(FlextEntityFactory):
+
+class DomainEntityFactory:
     """Factory para entidades de domínio genéricas."""
 
-    class Meta:
-        model = FlextEntity
-        abstract = True
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextEntity:
+        """Create domain entity instance with default values."""
+        defaults = {
+            "id": str(uuid.uuid4()),
+            "version": 1,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+            "name": _generate_fake_company(),
+            "description": _generate_fake_sentence(),
+            "active": True,
+        }
+        defaults.update(kwargs)
+        return FlextEntity(**defaults)
 
-    name = Faker("company")
-    description = Faker("text", max_nb_chars=200)
-    active = True
 
-
-class UserEntityFactory(DomainEntityFactory):
+class UserEntityFactory:
     """Factory para entidade User específica."""
 
-    class Meta:
-        model = FlextEntity
-        abstract = True
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextEntity:
+        """Create user entity instance with default values."""
+        defaults = {
+            "id": str(uuid.uuid4()),
+            "version": 1,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+            "email": _generate_fake_email(),
+            "username": _generate_fake_word(),
+            "first_name": _generate_fake_word().capitalize(),
+            "last_name": _generate_fake_word().capitalize(),
+            "is_active": True,
+        }
+        defaults.update(kwargs)
+        return FlextEntity(**defaults)
 
-    email = Faker("email")
-    username = Faker("user_name")
-    first_name = Faker("first_name")
-    last_name = Faker("last_name")
-    is_active = True
 
-
-class OrganizationEntityFactory(DomainEntityFactory):
+class OrganizationEntityFactory:
     """Factory para entidade Organization."""
 
-    class Meta:
-        model = FlextEntity
-        abstract = True
-
-    name = Faker("company")
-    tax_id = Faker("ssn")
-    website = Faker("url")
-    industry = Faker("job")
+    @classmethod
+    def create(cls, **kwargs: Any) -> FlextEntity:
+        """Create organization entity instance with default values."""
+        defaults = {
+            "id": str(uuid.uuid4()),
+            "version": 1,
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+            "name": _generate_fake_company(),
+            "tax_id": "".join(random.choices(string.digits, k=9)),
+            "website": _generate_fake_url(),
+            "industry": _generate_fake_word().capitalize(),
+        }
+        defaults.update(kwargs)
+        return FlextEntity(**defaults)
 
 
 # =============================================================================
 # CONFIGURATION AND METADATA FACTORIES
 # =============================================================================
 
-class MetadataFactory(factory.DictFactory):
+
+class MetadataFactory:
     """Factory para metadata dictionaries."""
 
-    source = "test"
-    version = "1.0.0"
-    created_by = Faker("user_name")
-    environment = factory.Iterator([env.value for env in FlextEnvironment])
+    @classmethod
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create metadata dictionary with default values."""
+        defaults = {
+            "source": "test",
+            "version": "1.0.0",
+            "created_by": _generate_fake_word(),
+            "environment": random.choice([env.value for env in FlextEnvironment]),
+        }
+        defaults.update(kwargs)
+        return defaults
 
 
-class ConfigDictFactory(factory.DictFactory):
+class ConfigDictFactory:
     """Factory para configuration dictionaries."""
 
-    debug = Faker("boolean")
-    timeout = Faker("random_int", min=1, max=300)
-    max_retries = Faker("random_int", min=1, max=10)
-    batch_size = Faker("random_int", min=10, max=1000)
+    @classmethod
+    def create(cls, **kwargs: Any) -> dict[str, Any]:
+        """Create config dictionary with default values."""
+        defaults = {
+            "debug": random.choice([True, False]),
+            "timeout": random.randint(1, 300),
+            "max_retries": random.randint(1, 10),
+            "batch_size": random.randint(10, 1000),
+        }
+        defaults.update(kwargs)
+        return defaults
 
 
 # =============================================================================
 # COLLECTION FACTORIES
 # =============================================================================
 
-class EntityListFactory(factory.Factory):
-    """Factory para listas de entidades."""
 
-    class Meta:
-        model = list
+class EntityListFactory:
+    """Factory para listas de entidades."""
 
     @classmethod
     def create_batch_entities(cls, size: int = 5) -> list[FlextEntity]:
         """Cria batch de entidades."""
-        return [DomainEntityFactory() for _ in range(size)]
+        return [DomainEntityFactory.create() for _ in range(size)]
 
 
-class ResultListFactory(factory.Factory):
+class ResultListFactory:
     """Factory para listas de FlextResult."""
 
-    class Meta:
-        model = list
-
     @classmethod
-    def create_mixed_results(cls, success_count: int = 3, failure_count: int = 2) -> list[FlextResult[Any]]:
+    def create_mixed_results(
+        cls, success_count: int = 3, failure_count: int = 2
+    ) -> list[FlextResult[Any]]:
         """Cria lista mista de sucessos e falhas."""
         results = [FlextResultFactory.success() for _ in range(success_count)]
-        results.extend(FlextResultFactory.is_failure() for _ in range(failure_count))
+        results.extend(FlextResultFactory.failure() for _ in range(failure_count))
         return results
 
 
@@ -234,24 +351,25 @@ class ResultListFactory(factory.Factory):
 # UTILITY FACTORY FUNCTIONS
 # =============================================================================
 
+
 def create_test_entity(**kwargs: Any) -> FlextEntity:
     """Cria entidade de teste com parâmetros customizados."""
-    return DomainEntityFactory(**kwargs)
+    return DomainEntityFactory.create(**kwargs)
 
 
 def create_test_config(**kwargs: Any) -> FlextConfig:
     """Cria config de teste com parâmetros customizados."""
-    return FlextConfigFactory(**kwargs)
+    return FlextConfigFactory.create(**kwargs)
 
 
 def create_test_field(**kwargs: Any) -> FlextFieldCore:
     """Cria field de teste com parâmetros customizados."""
-    return FlextFieldCoreFactory(**kwargs)
+    return FlextFieldCoreFactory.create(**kwargs)
 
 
 def create_test_metadata(**kwargs: Any) -> dict[str, Any]:
     """Cria metadata de teste."""
-    base_metadata = MetadataFactory()
+    base_metadata = MetadataFactory.create()
     base_metadata.update(kwargs)
     return base_metadata
 
@@ -259,6 +377,7 @@ def create_test_metadata(**kwargs: Any) -> dict[str, Any]:
 # =============================================================================
 # BUILDER PATTERN FACTORIES
 # =============================================================================
+
 
 class FlextEntityBuilder:
     """Builder pattern para FlextEntity usando Factory Boy."""
@@ -293,7 +412,7 @@ class FlextEntityBuilder:
 
     def build(self) -> FlextEntity:
         """Constrói a entidade."""
-        return DomainEntityFactory(**self._data)
+        return DomainEntityFactory.create(**self._data)
 
 
 class FlextResultBuilder:
@@ -326,6 +445,7 @@ class FlextResultBuilder:
 # =============================================================================
 # PYTEST INTEGRATION FACTORIES
 # =============================================================================
+
 
 def pytest_entity_factory() -> type[DomainEntityFactory]:
     """Factory para uso com pytest fixtures."""

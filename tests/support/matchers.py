@@ -6,14 +6,14 @@ for comprehensive testing with clear error messages and performance insights.
 
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Callable, Sequence
 from typing import Any, TypeGuard
 
 from pytest_benchmark.fixture import BenchmarkFixture
 
-from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, FlextTypes
 
 JsonDict = FlextTypes.Core.JsonDict
 
@@ -40,15 +40,13 @@ class FlextMatchers:
             AssertionError: With clear message about failure
 
         """
-        assert result.success, (
+        assert result.is_success, (
             f"Expected successful result, but got failure: {result.error}"
-            f"\nError code: {result.error_code}"
-            f"\nError data: {result.error_data}"
         )
 
         if expected_data is not None:
-            assert result.data == expected_data, (
-                f"Expected data {expected_data!r}, got {result.data!r}"
+            assert result.value == expected_data, (
+                f"Expected data {expected_data!r}, got {result.value!r}"
             )
 
     @staticmethod
@@ -68,17 +66,20 @@ class FlextMatchers:
             AssertionError: With clear message about success
 
         """
-        assert result.is_failure, f"Expected failed result, but got success: {result.data}"
+        assert result.is_failure, (
+            f"Expected failed result, but got success: {result.value}"
+        )
 
         if expected_error is not None:
-            assert expected_error in str(result.error), (
-                f"Expected error containing {expected_error!r}, got {result.error!r}"
+            error_message = result.error or "Unknown error"
+            assert expected_error in str(error_message), (
+                f"Expected error containing {expected_error!r}, got {error_message!r}"
             )
 
         if expected_error_code is not None:
-            assert result.error_code == expected_error_code, (
-                f"Expected error code {expected_error_code!r}, "
-                f"got {result.error_code!r}"
+            actual_code = result.error_code or "UNKNOWN"
+            assert actual_code == expected_error_code, (
+                f"Expected error code {expected_error_code!r}, got {actual_code!r}"
             )
 
     @staticmethod
@@ -99,13 +100,13 @@ class FlextMatchers:
 
         """
         result = container.get(service_name)
-        assert result.success, (
+        assert result.is_success, (
             f"Expected service {service_name!r} to exist in container, "
             f"but got error: {result.error}"
         )
 
         if expected_type is not None:
-            service = result.data
+            service = result.value
             assert isinstance(service, expected_type), (
                 f"Expected service {service_name!r} to be of type "
                 f"{expected_type.__name__}, got {type(service).__name__}"
@@ -196,7 +197,7 @@ class FlextMatchers:
 
         # Get stats from benchmark
         stats = benchmark.stats
-        mean_time = stats.mean
+        mean_time = getattr(stats, "mean", 0.0)  # type: ignore[attr-defined]  # Benchmark stats
 
         assert mean_time <= max_time_seconds, (
             f"Performance test failed: mean time {mean_time:.4f}s "
@@ -230,7 +231,7 @@ class FlextMatchers:
     @staticmethod
     def assert_type_guard(
         value: Any,
-        type_guard: TypeGuard[Any],
+        type_guard: Callable[[Any], TypeGuard[Any]],
     ) -> None:
         """Assert value passes type guard.
 
@@ -303,8 +304,6 @@ class FlextMatchers:
             Uses pytest-env for environment variable testing
 
         """
-        import os
-
         assert var_name in os.environ, f"Environment variable {var_name!r} not found"
 
         if expected_value is not None:
@@ -357,7 +356,7 @@ class PerformanceMatchers:
         times = []
         for size in sizes:
             benchmark(func, size)
-            times.append(benchmark.stats.mean)
+            times.append(getattr(benchmark.stats, "mean", 0.0))  # type: ignore[attr-defined]  # Benchmark stats
 
         # Check if time growth is roughly linear
         if len(times) >= 2:

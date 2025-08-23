@@ -85,8 +85,8 @@ class FlextFieldCore(
         default=None,
         description="Regex pattern for validation",
     )
-    allowed_values: list[object] = Field(
-        default_factory=list,
+    allowed_values: list[str | int | float | bool] = Field(
+        default_factory=lambda: cast("list[str | int | float | bool]", []),
         description="Allowed value list",
     )
 
@@ -441,7 +441,9 @@ class FlextFieldMetadata(BaseModel):
     min_length: int | None = None
     max_length: int | None = None
     pattern: str | None = None
-    allowed_values: list[object] = Field(default_factory=list)
+    allowed_values: list[str | int | float | bool] = Field(
+        default_factory=lambda: cast("list[str | int | float | bool]", [])
+    )
 
     # Metadata
     description: str | None = None
@@ -723,7 +725,8 @@ def _safe_cast_string_list(value: object) -> list[str]:
         return []
     if isinstance(value, list):
         # After isinstance check, value is narrowed to list type
-        result: list[str] = [str(item) for item in value if item is not None]
+        typed_list = cast("list[object]", value)
+        result: list[str] = [str(item) for item in typed_list if item is not None]
         return result
     if isinstance(value, (str, int, float, bool)):
         return [str(value)]
@@ -747,14 +750,17 @@ def _safe_cast_int(value: object) -> int | None:
         return None
 
 
-def _safe_cast_list(value: object) -> list[object]:
+def _safe_cast_list(value: object) -> list[str | int | float | bool]:
     """Safely cast value to list."""
     if value is None:
         return []
     if isinstance(value, (list, tuple)):
         # After isinstance check, value is narrowed to list or tuple
-        return list(value)
-    return [value]
+        typed_seq = cast("list[object] | tuple[object, ...]", value)
+        return [item for item in typed_seq if isinstance(item, (str, int, float, bool))]
+    if isinstance(value, (str, int, float, bool)):
+        return [value]
+    return []
 
 
 # =============================================================================
@@ -802,7 +808,9 @@ class FlextFields:
         min_length_int: int | None = _safe_cast_int(min_length_val)
         max_length_int: int | None = _safe_cast_int(max_length_val)
         pattern_str: str | None = str(pattern_val) if pattern_val is not None else None
-        allowed_values_list: list[object] = _safe_cast_list(allowed_values_val)
+        allowed_values_list: list[str | int | float | bool] = _safe_cast_list(
+            allowed_values_val
+        )
         description_str: str | None = (
             str(description_val) if description_val is not None else None
         )
@@ -994,10 +1002,7 @@ class FlextFields:
 # IMPORTANT: Legacy convenience functions have been moved to legacy.py
 #
 # Migration guide:
-# OLD: from flext_core.fields import flext_create_string_field
-# NEW: from flext_core.legacy import flext_create_string_field
-#      (with deprecation warning)
-# MODERN: from flext_core import FlextFields; FlextFields.create_string_field()
+# Use FlextFields.create_string_field() for field creation
 #
 # For new code, use FlextFields factory methods directly
 
@@ -1045,6 +1050,7 @@ def flext_create_boolean_field(name: str, **kwargs: object) -> FlextFieldCore:
 # Export API
 __all__: list[str] = [
     "FlextFieldCore",
+    "FlextFieldCoreMetadata",  # Backward compatibility alias
     "FlextFieldMetadata",
     "FlextFieldRegistry",
     "FlextFields",

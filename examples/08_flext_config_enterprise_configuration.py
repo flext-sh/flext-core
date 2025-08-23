@@ -29,8 +29,6 @@ import tempfile
 from typing import cast
 
 from pydantic_settings import SettingsConfigDict
-
-# use .shared_domain with dot to access local module
 from shared_domain import (
     SharedDemonstrationPattern,
     SharedDomainFactory,
@@ -41,9 +39,7 @@ from flext_core import (
     FlextConstants,
     FlextResult,
     FlextSettings,
-    TAnyDict,
-    TConfigDict,
-    TErrorMessage,
+    FlextTypes,
     merge_configs,
 )
 
@@ -57,14 +53,14 @@ def demonstrate_basic_configuration() -> None:
     print(separator)
 
     # 1. Basic configuration creation
-    config_data: TConfigDict = {
+    config_data: FlextTypes.Core.Config = {
         "app_name": "MyApp",
         "debug": True,
         "max_connections": 100,
         "timeout": 30.0,
     }
 
-    # Cast TConfigDict to TAnyDict for method compatibility
+    # Cast FlextTypes.Core.Config to FlextTypes.Core.Dict for method compatibility
     # Create basic configuration using available methods
     config_result = FlextResult.ok(dict(config_data))  # Simplified for demonstration
     if config_result.success:
@@ -82,7 +78,7 @@ def demonstrate_basic_configuration() -> None:
         pass
 
     # 3. Configuration defaults
-    defaults: TConfigDict = {
+    defaults: FlextTypes.Core.Config = {
         "debug": False,
         "timeout": 30,
         "port": 8000,
@@ -161,8 +157,8 @@ def demonstrate_configuration_merging() -> None:
 
     # 1. Basic configuration merging
 
-    # Use TAnyDict for configs with nested structures
-    base_config: TAnyDict = {
+    # Use FlextTypes.Core.Dict for configs with nested structures
+    base_config: FlextTypes.Core.Dict = {
         "app_name": "MyApp",
         "debug": False,
         "port": 8000,
@@ -172,8 +168,8 @@ def demonstrate_configuration_merging() -> None:
         },
     }
 
-    # Use TAnyDict for configs with nested structures
-    override_config: TAnyDict = {
+    # Use FlextTypes.Core.Dict for configs with nested structures
+    override_config: FlextTypes.Core.Dict = {
         "debug": True,
         "port": 9000,
         "database": {
@@ -191,8 +187,8 @@ def demonstrate_configuration_merging() -> None:
 
     # 2. Deep merging demonstration
 
-    # Use TAnyDict for configs with nested structures
-    deep_base: TAnyDict = {
+    # Use FlextTypes.Core.Dict for configs with nested structures
+    deep_base: FlextTypes.Core.Dict = {
         "services": {
             "auth": {
                 "enabled": True,
@@ -205,8 +201,8 @@ def demonstrate_configuration_merging() -> None:
         },
     }
 
-    # Use TAnyDict for configs with nested structures
-    deep_override: TAnyDict = {
+    # Use FlextTypes.Core.Dict for configs with nested structures
+    deep_override: FlextTypes.Core.Dict = {
         "services": {
             "auth": {
                 "timeout": 60,
@@ -262,11 +258,11 @@ def _create_configuration_file() -> FlextResult[str]:
         return FlextResult.ok(temp_file_path)
 
     except (RuntimeError, ValueError, TypeError) as e:
-        error_message: TErrorMessage = f"Failed to create config file: {e}"
+        error_message = f"Failed to create config file: {e}"
         return FlextResult.fail(error_message)
 
 
-def _build_file_configuration_data() -> TAnyDict:
+def _build_file_configuration_data() -> FlextTypes.Core.Dict:
     """Build configuration data for file demonstration."""
     return {
         "app": {
@@ -289,22 +285,22 @@ def _build_file_configuration_data() -> TAnyDict:
 
 def _load_configuration_from_file(
     temp_file_path: str,
-) -> FlextResult[tuple[str, TAnyDict]]:
+) -> FlextResult[tuple[str, FlextTypes.Core.Dict]]:
     """Load configuration from file and display contents."""
     try:
         with pathlib.Path(temp_file_path).open(encoding="utf-8") as f:
-            loaded_config: TAnyDict = json.load(f)
+            loaded_config: FlextTypes.Core.Dict = json.load(f)
 
         _display_loaded_configuration(loaded_config)
 
         return FlextResult.ok((temp_file_path, loaded_config))
 
     except (RuntimeError, ValueError, TypeError) as e:
-        error_message: TErrorMessage = f"Failed to load config file: {e}"
+        error_message = f"Failed to load config file: {e}"
         return FlextResult.fail(error_message)
 
 
-def _display_loaded_configuration(loaded_config: TAnyDict) -> None:
+def _display_loaded_configuration(loaded_config: FlextTypes.Core.Dict) -> None:
     """Display loaded configuration with type guards."""
     # Type guard for loaded_config
     if isinstance(loaded_config, dict):
@@ -318,7 +314,7 @@ def _display_loaded_configuration(loaded_config: TAnyDict) -> None:
 
 
 def _validate_loaded_configuration(
-    config_data: tuple[str, TAnyDict],
+    config_data: tuple[str, FlextTypes.Core.Dict],
 ) -> FlextResult[str]:
     """Validate loaded configuration and return file path for cleanup."""
     temp_file_path, loaded_config = config_data
@@ -333,7 +329,7 @@ def _validate_loaded_configuration(
     return FlextResult.ok(temp_file_path)
 
 
-def _extract_app_name_from_config(loaded_config: TAnyDict) -> str | None:
+def _extract_app_name_from_config(loaded_config: FlextTypes.Core.Dict) -> str | None:
     """Extract app name from loaded configuration with type safety."""
     if isinstance(loaded_config, dict):
         app_dict = loaded_config.get("app", {})
@@ -376,7 +372,7 @@ def demonstrate_configuration_hierarchies() -> None:
     _print_feature_hierarchy_demo()
 
 
-def _build_base_hierarchy_config() -> TAnyDict:
+def _build_base_hierarchy_config() -> FlextTypes.Core.Dict:
     return {
         "app": {"name": "HierarchyApp", "version": "0.9.0"},
         "database": {"pool_size": 10, "timeout": 30},
@@ -384,7 +380,7 @@ def _build_base_hierarchy_config() -> TAnyDict:
     }
 
 
-def _build_dev_hierarchy_config() -> TAnyDict:
+def _build_dev_hierarchy_config() -> FlextTypes.Core.Dict:
     return {
         "app": {"debug": True},
         "database": {"url": "sqlite:///dev.db"},
@@ -392,7 +388,7 @@ def _build_dev_hierarchy_config() -> TAnyDict:
     }
 
 
-def _build_prod_hierarchy_config() -> TAnyDict:
+def _build_prod_hierarchy_config() -> FlextTypes.Core.Dict:
     return {
         "app": {"debug": False},
         "database": {
@@ -407,7 +403,7 @@ def _print_config_hierarchy_overview() -> None:
     pass
 
 
-def _print_merged_config(env_name: str, merged: TAnyDict) -> None:  # noqa: ARG001
+def _print_merged_config(env_name: str, merged: FlextTypes.Core.Dict) -> None:  # noqa: ARG001
     app_config = merged.get("app", {}) if isinstance(merged, dict) else {}
     app_config.get("debug") if isinstance(app_config, dict) else "N/A"
 
@@ -422,14 +418,14 @@ def _print_merged_config(env_name: str, merged: TAnyDict) -> None:  # noqa: ARG0
 
 
 def _print_feature_hierarchy_demo() -> None:
-    feature_config: TAnyDict = {
+    feature_config: FlextTypes.Core.Dict = {
         "features": {
             "new_ui": {"enabled": True, "beta": True},
             "analytics": {"enabled": True, "tracking_id": "UA-123456"},
             "caching": {"enabled": False, "ttl": 3600},
         },
     }
-    dev_features: TAnyDict = {
+    dev_features: FlextTypes.Core.Dict = {
         "features": {
             "new_ui": {"enabled": True, "beta": True},
             "analytics": {"enabled": False},
@@ -474,7 +470,7 @@ def _demonstrate_configuration_validation() -> FlextResult[None]:
     )
 
 
-def _create_complex_configuration() -> TAnyDict:
+def _create_complex_configuration() -> FlextTypes.Core.Dict:
     """Create complex configuration for validation demonstration."""
     return {
         "server": {
@@ -496,8 +492,8 @@ def _create_complex_configuration() -> TAnyDict:
 
 
 def _validate_configuration_structure(
-    config: TAnyDict,
-) -> FlextResult[tuple[bool, list[TErrorMessage]]]:
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[tuple[bool, list[str]]]:
     """Validate configuration structure and return validation results."""
     required_fields = [
         ("server.host", str),
@@ -507,7 +503,7 @@ def _validate_configuration_structure(
         ("monitoring.enabled", bool),
     ]
 
-    validation_errors: list[TErrorMessage] = []
+    validation_errors: list[str] = []
 
     for field_path, expected_type in required_fields:
         validation_result = _validate_config_field(config, field_path, expected_type)
@@ -521,7 +517,7 @@ def _validate_configuration_structure(
 
 
 def _validate_config_field(
-    config: TAnyDict,
+    config: FlextTypes.Core.Dict,
     field_path: str,
     expected_type: type,
 ) -> FlextResult[None]:
@@ -548,7 +544,7 @@ def _validate_config_field(
 
 
 def _display_validation_results(
-    validation_data: tuple[bool, list[TErrorMessage]],
+    validation_data: tuple[bool, list[str]],
 ) -> FlextResult[None]:
     """Display configuration validation results."""
     _is_valid, validation_errors = validation_data
@@ -573,7 +569,7 @@ def _demonstrate_configuration_transformation() -> FlextResult[None]:
     )
 
 
-def _create_transformation_configuration() -> TAnyDict:
+def _create_transformation_configuration() -> FlextTypes.Core.Dict:
     """Create configuration for transformation demonstration."""
     return {
         "database": {
@@ -591,9 +587,11 @@ def _create_transformation_configuration() -> TAnyDict:
     }
 
 
-def _transform_to_connection_strings(config: TAnyDict) -> FlextResult[TAnyDict]:
+def _transform_to_connection_strings(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Transform configuration to connection strings."""
-    transformed_config: TAnyDict = {}
+    transformed_config: FlextTypes.Core.Dict = {}
 
     # Transform database configuration
     db_config = config.get("database", {})
@@ -612,7 +610,7 @@ def _transform_to_connection_strings(config: TAnyDict) -> FlextResult[TAnyDict]:
     return FlextResult.ok(transformed_config)
 
 
-def _transform_database_config(db_config: TAnyDict) -> FlextResult[str]:
+def _transform_database_config(db_config: FlextTypes.Core.Dict) -> FlextResult[str]:
     """Transform database configuration to connection string."""
     required_keys = ["host", "port", "name", "user", "password"]
     if not all(key in db_config for key in required_keys):
@@ -622,7 +620,7 @@ def _transform_database_config(db_config: TAnyDict) -> FlextResult[str]:
     return FlextResult.ok(db_url)
 
 
-def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
+def _transform_redis_config(redis_config: FlextTypes.Core.Dict) -> FlextResult[str]:
     """Transform Redis configuration to connection string."""
     required_keys = ["host", "port", "db"]
     if not all(key in redis_config for key in required_keys):
@@ -635,8 +633,8 @@ def _transform_redis_config(redis_config: TAnyDict) -> FlextResult[str]:
 
 
 def _display_transformed_configuration(
-    transformed_config: TAnyDict,
-    original_config: TAnyDict,
+    transformed_config: FlextTypes.Core.Dict,
+    original_config: FlextTypes.Core.Dict,
 ) -> FlextResult[None]:
     """Display transformed configuration with masked sensitive data."""
     for value in transformed_config.values():
@@ -646,7 +644,7 @@ def _display_transformed_configuration(
     return FlextResult.ok(None)
 
 
-def _mask_sensitive_data(value: str, original_config: TAnyDict) -> str:
+def _mask_sensitive_data(value: str, original_config: FlextTypes.Core.Dict) -> str:
     """Mask sensitive data in configuration values."""
     if "password" in value:
         db_config_raw = original_config.get("database", {})
@@ -668,7 +666,7 @@ def _demonstrate_configuration_composition() -> FlextResult[None]:
     )
 
 
-def _create_configuration_sources() -> list[tuple[str, TAnyDict]]:
+def _create_configuration_sources() -> list[tuple[str, FlextTypes.Core.Dict]]:
     """Create configuration sources for composition demonstration."""
     return [
         ("defaults", {"timeout": 30, "retries": 3, "debug": False}),
@@ -678,10 +676,10 @@ def _create_configuration_sources() -> list[tuple[str, TAnyDict]]:
 
 
 def _compose_configuration_from_sources(
-    config_sources: list[tuple[str, TAnyDict]],
-) -> FlextResult[TAnyDict]:
+    config_sources: list[tuple[str, FlextTypes.Core.Dict]],
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Compose configuration from multiple sources."""
-    composed_config: TAnyDict = {}
+    composed_config: FlextTypes.Core.Dict = {}
 
     for _source_name, source_config in config_sources:
         for key, value in source_config.items():
@@ -690,7 +688,9 @@ def _compose_configuration_from_sources(
     return FlextResult.ok(composed_config)
 
 
-def _display_composed_configuration(composed_config: TAnyDict) -> FlextResult[None]:
+def _display_composed_configuration(
+    composed_config: FlextTypes.Core.Dict,
+) -> FlextResult[None]:
     """Display final composed configuration."""
     for _key, _value in composed_config.items():
         pass
@@ -720,10 +720,10 @@ def _print_domain_config_section_header(_title: str) -> None:
     _separator = "\n" + "=" * 80
 
 
-def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
+def _demonstrate_domain_model_validation() -> FlextResult[FlextTypes.Core.Dict]:
     """Demonstrate configuration with domain model validation."""
     # Configuration for user management service
-    user_service_config: TAnyDict = {
+    user_service_config: FlextTypes.Core.Dict = {
         "service_name": "user_management",
         "admin_users": [
             {
@@ -753,8 +753,8 @@ def _demonstrate_domain_model_validation() -> FlextResult[TAnyDict]:
 
 
 def _demonstrate_admin_user_validation(
-    config: TAnyDict,
-) -> FlextResult[tuple[TAnyDict, list[object]]]:
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[tuple[FlextTypes.Core.Dict, list[object]]]:
     """Demonstrate admin user validation using shared domain models."""
     admin_users = config.get("admin_users", [])
     validated_users = []
@@ -797,8 +797,8 @@ def _validate_single_admin_user(user_data: object) -> FlextResult[object]:
 
 
 def _demonstrate_user_creation_from_config(
-    validated_data: tuple[TAnyDict, list[object]],
-) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+    validated_data: tuple[FlextTypes.Core.Dict, list[object]],
+) -> FlextResult[tuple[FlextTypes.Core.Dict, list[object], list[object]]]:
     """Demonstrate configuration-driven user creation."""
     config, validated_users = validated_data
 
@@ -839,8 +839,8 @@ def _create_user_from_config(config: object) -> FlextResult[object]:
 
 
 def _demonstrate_domain_rule_validation(
-    user_data: tuple[TAnyDict, list[object], list[object]],
-) -> FlextResult[tuple[TAnyDict, list[object], list[object]]]:
+    user_data: tuple[FlextTypes.Core.Dict, list[object], list[object]],
+) -> FlextResult[tuple[FlextTypes.Core.Dict, list[object], list[object]]]:
     """Demonstrate configuration validation using domain rules."""
     config, validated_users, created_users = user_data
 
@@ -879,7 +879,7 @@ def _validate_age_against_domain_rules(test_age: int) -> FlextResult[None]:
 
 
 def _demonstrate_feature_flag_configuration(
-    validation_data: tuple[TAnyDict, list[object], list[object]],
+    validation_data: tuple[FlextTypes.Core.Dict, list[object], list[object]],
 ) -> FlextResult[None]:
     """Demonstrate configuration-based feature flags with domain context."""
     config, _validated_users, _created_users = validation_data

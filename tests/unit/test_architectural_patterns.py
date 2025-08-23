@@ -326,19 +326,15 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "email",
-                            "provider": "smtp",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "email",
+                        "provider": "smtp",
+                    })
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "sms",
-                            "provider": "twilio",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "sms",
+                        "provider": "twilio",
+                    })
                 return FlextResult[dict[str, str]].fail(
                     f"Unknown service type: {service_type}"
                 )
@@ -346,13 +342,13 @@ class TestEnterprisePatterns:
         # Test factory usage
         email_service = ServiceFactory.create_service("email")
         assert email_service.success
-        assert isinstance(email_service.data, dict)
-        assert email_service.data["type"] == "email"
+        assert isinstance(email_service.value, dict)
+        assert email_service.value["type"] == "email"
 
         sms_service = ServiceFactory.create_service("sms")
         assert sms_service.success
-        assert isinstance(sms_service.data, dict)
-        assert sms_service.data["type"] == "sms"
+        assert isinstance(sms_service.value, dict)
+        assert sms_service.value["type"] == "sms"
 
         invalid_service = ServiceFactory.create_service("invalid")
         assert invalid_service.is_failure

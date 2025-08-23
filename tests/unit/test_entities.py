@@ -7,7 +7,7 @@ domain events, and factory patterns to achieve near 100% coverage.
 
 from __future__ import annotations
 
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 import pytest
 from pydantic import ValidationError
@@ -18,6 +18,7 @@ from flext_core import (
     FlextResult,
     FlextTimestamp,
     FlextValidationError,
+    FlextVersion,
 )
 
 
@@ -250,7 +251,7 @@ class TestFlextEntity:
                 if "version" in data and data["version"] != 1:
                     error_msg = "Construction error for testing"
                     raise TypeError(error_msg)
-                super().__init__(**data)
+                super().__init__(**cast("dict[str, Any]", data))
 
         user = FailingUser(id="user_1", name="John", email="john@example.com")
         result = user.increment_version()
@@ -285,9 +286,9 @@ class TestFlextEntity:
 
     def test_copy_with_explicit_version(self) -> None:
         """Test copy with explicit version provided."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=5)
+        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
 
-        result = user.copy_with(name="Jane", version=10)
+        result = user.copy_with(name="Jane", version=FlextVersion(10))
 
         assert result.success
         new_user = cast("SampleUser", result.value)
@@ -299,7 +300,7 @@ class TestFlextEntity:
 
     def test_copy_with_no_changes(self) -> None:
         """Test copy with no changes - version should not increment."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=5)
+        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
 
         result = user.copy_with()
 
@@ -334,7 +335,7 @@ class TestFlextEntity:
                 if data.get("name") == "Jane":
                     error_msg = "Construction error for Jane"
                     raise ValueError(error_msg)
-                super().__init__(**data)
+                super().__init__(**cast("dict[str, Any]", data))
 
         user = FailingCopyUser(id="user_1", name="John", email="john@example.com")
         result = user.copy_with(name="Jane")
@@ -357,7 +358,7 @@ class TestFlextEntity:
         if event.event_type != "user_created":
             event_type_msg: str = f"Expected {'user_created'}, got {event.event_type}"
             raise AssertionError(event_type_msg)
-        assert event.data == {"action": "create"}
+        assert event.value == {"action": "create"}
         if event.aggregate_id != "user_1":
             aggregate_id_msg: str = f"Expected {'user_1'}, got {event.aggregate_id}"
             raise AssertionError(aggregate_id_msg)
@@ -379,12 +380,12 @@ class TestFlextEntity:
             email: str
 
             def add_domain_event(
-                self, event_type: str, event_data: dict[str, object]
+                self, event_type_or_dict: str | dict[str, object], event_data: dict[str, object] | None = None
             ) -> FlextResult[None]:
                 # Simulate event creation failure
-                if event_type == "fail_event":
+                if event_type_or_dict == "fail_event":
                     return FlextResult[None].fail("Event creation failed")
-                return super().add_domain_event(event_type, event_data)
+                return super().add_domain_event(event_type_or_dict, event_data)
 
         fail_user = EventFailUser(id="user_1", name="John", email="john@example.com")
         result = fail_user.add_domain_event("fail_event", {"action": "create"})
@@ -486,7 +487,7 @@ class TestFlextEntity:
             def validate_all_fields(self) -> FlextResult[None]:
                 """Override to collect field validation errors."""
                 errors = []
-                for field_name in self.model_fields:
+                for field_name in self.__class__.model_fields:
                     field_value = getattr(self, field_name, None)
                     result = self.validate_field(field_name, field_value)
                     if result.is_failure:
@@ -522,7 +523,7 @@ class TestFlextEntity:
 
     def test_with_version_success(self) -> None:
         """Test with_version method with valid version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=1)
+        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(1))
 
         new_user = user.with_version(2)
 
@@ -535,7 +536,7 @@ class TestFlextEntity:
 
     def test_with_version_invalid_version(self) -> None:
         """Test with_version method with invalid version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=5)
+        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
 
         # Version must be greater than current version
         with pytest.raises(FlextValidationError) as exc_info:
@@ -550,7 +551,7 @@ class TestFlextEntity:
 
     def test_with_version_equal_version(self) -> None:
         """Test with_version method with equal version."""
-        user = SampleUser(id="user_1", name="John", email="john@example.com", version=5)
+        user = SampleUser(id="user_1", name="John", email="john@example.com", version=FlextVersion(5))
 
         # Version must be greater, not equal
         with pytest.raises(FlextValidationError) as exc_info:
@@ -569,7 +570,7 @@ class TestFlextEntity:
             id="user_1",
             name="John",
             email="john@example.com",
-            version=1,
+            version=FlextVersion(1),
         )
 
         with pytest.raises(FlextValidationError, match="Always fails"):
@@ -588,10 +589,10 @@ class TestFlextEntity:
                 if data.get("version") == 2:
                     error_msg = "Construction error for version 2"
                     raise TypeError(error_msg)
-                super().__init__(**data)
+                super().__init__(**cast("dict[str, Any]", data))
 
         user = VersionErrorUser(
-            id="user_1", name="John", email="john@example.com", version=1
+            id="user_1", name="John", email="john@example.com", version=FlextVersion(1)
         )
 
         with pytest.raises(FlextValidationError) as exc_info:
@@ -739,7 +740,7 @@ class TestFlextFactory:
         result = cast("EntityFactory", factory)(
             name="John",
             email="john@example.com",
-            version=5,
+            version=FlextVersion(5),
         )
 
         assert result.success

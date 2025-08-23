@@ -223,7 +223,7 @@ class TestFlextResultValidation:
             raise AssertionError(f"Expected False, got {result.success}")
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
-        # Cannot access .data on failed result - should raise TypeError
+        # Cannot access .value on failed result - should raise TypeError
         with pytest.raises(
             TypeError, match="Attempted to access value on failed result"
         ):

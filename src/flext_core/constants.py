@@ -51,7 +51,7 @@ Note:
 from __future__ import annotations
 
 from enum import Enum
-from typing import ClassVar, Final
+from typing import ClassVar, Final, override
 
 # =============================================================================
 # FLEXT HIERARCHICAL CONSTANTS SYSTEM - Organized by domain and functionality
@@ -1102,10 +1102,12 @@ class FlextConstants:
             CRITICAL = "CRITICAL"
             TRACE = "TRACE"
 
+            @override
             def __hash__(self) -> int:
                 """Hash based on enum value."""
                 return hash(self.value)
 
+            @override
             def __eq__(self, other: object) -> bool:
                 """Support comparison with string values."""
                 if isinstance(other, str):
@@ -1202,16 +1204,14 @@ FlextConnectionType = FlextConstants.Enums.ConnectionType
 #   FlextConstants.Defaults.TIMEOUT
 #   FlextConstants.Patterns.EMAIL_PATTERN
 #
-# OLD USAGE (deprecated): Import from legacy.py
-#   from flext_core.legacy import ERROR_CODES, DEFAULT_TIMEOUT, EMAIL_PATTERN
+# Use FlextConstants hierarchical structure for new code
 
 # =============================================================================
 # EXPORTS - Semantic constants + compatibility
 # =============================================================================
 
-# Build legacy flat ERROR_CODES mapping with mixed strategy:
-# numeric codes for key infrastructure errors, textual identifiers otherwise.
-_special_numeric = {
+# Simplified ERROR_CODES mapping
+ERROR_CODES: dict[str, str] = {
     "GENERIC_ERROR": FlextConstants.Errors.GENERIC_ERROR,
     "VALIDATION_ERROR": "FLEXT_VALIDATION_ERROR",
     "CONNECTION_ERROR": FlextConstants.Errors.CONNECTION_ERROR,
@@ -1222,14 +1222,8 @@ _special_numeric = {
     "AUTH_ERROR": "FLEXT_AUTH_ERROR",
     "PERMISSION_ERROR": "FLEXT_PERMISSION_ERROR",
 }
-ERROR_CODES: dict[str, str] = {}
-for name in [n for n in dir(FlextConstants.Errors) if not n.startswith("_")]:
-    ERROR_CODES[name] = _special_numeric.get(name, name)
 
-# Keep a reference on the class for callers that used FlextConstants.ERROR_CODES
-FlextConstants.ERROR_CODES = ERROR_CODES
-
-# Messages namespace re-export for compatibility
+# Direct message access
 MESSAGES = FlextConstants.Messages
 SERVICE_NAME_EMPTY: Final[str] = "Service name cannot be empty"
 
@@ -1248,6 +1242,6 @@ __all__: Final[list[str]] = [
     "FlextFieldType",
     "FlextLogLevel",
     "FlextOperationStatus",
-    # Note: Legacy constants moved to legacy.py
-    # Import from flext_core.legacy if needed for compatibility
+    # Use FlextConstants hierarchical structure
+    # Use FlextConstants for hierarchical access
 ]

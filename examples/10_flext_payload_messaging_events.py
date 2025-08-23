@@ -31,7 +31,7 @@ from flext_core import (
     FlextMessage,
     FlextPayload,
     FlextResult,
-    TUserData,
+    FlextTypes,
 )
 
 # =============================================================================
@@ -59,7 +59,7 @@ def _print_generic_header() -> None:
 def _demo_basic_payloads() -> None:
     FlextPayload(data="Hello, World!")
 
-    user_data: TUserData = {
+    user_data: FlextTypes.Auth.UserData = {
         "id": "user123",
         "name": "John Doe",
         "email": "john@example.com",
@@ -71,7 +71,7 @@ def _demo_basic_payloads() -> None:
 
 
 def _demo_type_safe_payload() -> None:
-    order_data: TUserData = {
+    order_data: FlextTypes.Auth.UserData = {
         "order_id": "ORD001",
         "customer_id": "CUST123",
         "items": [
@@ -86,7 +86,8 @@ def _demo_type_safe_payload() -> None:
         correlation_id="req_456",
         processing_stage="created",
     )
-    if order_result.success and order_result.value is not None:
+    # Modern pattern: Check success and use value directly
+    if order_result.success:
         order_payload = order_result.value
         order_payload.value.get("order_id") if order_payload.value else None
         order_payload.value.get("total") if order_payload.value else None
@@ -114,10 +115,14 @@ def _demo_payload_transformation() -> None:
         metadata={"source": "base_service"},
     )
     transform_result = base_payload.transform_data(
-        lambda data: {"transformed_message": f"TRANSFORMED: {data.get('message', '')}"},
+        lambda data: {
+            "transformed_message": f"TRANSFORMED: {data.get('message', '') if isinstance(data, dict) else str(data)}"
+        },
     )
-    if transform_result.success and transform_result.value is not None:
-        pass
+    # Modern pattern: Check success and use value directly
+    if transform_result.success:
+        # Process the transformed payload - payload available at transform_result.value
+        pass  # Placeholder for transformation processing
 
 
 def demonstrate_message_payloads() -> None:
@@ -212,7 +217,7 @@ def _demonstrate_message_enrichment() -> None:
 
 
 def _process_and_filter_messages() -> None:
-    messages_data: list[TUserData] = [
+    messages_data: list[FlextTypes.Auth.UserData] = [
         {"text": "System startup", "level": "info", "source": "system"},
         {"text": "Low memory warning", "level": "warning", "source": "monitoring"},
         {"text": "Database connection lost", "level": "error", "source": "database"},
@@ -278,7 +283,7 @@ def _print_domain_events_section_header(title: str) -> None:  # noqa: ARG001
 def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
     """Demonstrate basic domain event creation patterns."""
     # Create user registration event
-    user_registration_data: TUserData = {
+    user_registration_data: FlextTypes.Auth.UserData = {
         "user_id": "user_456",
         "email": "alice@example.com",
         "registration_date": "2024-01-15T10:30:00Z",
@@ -323,7 +328,7 @@ def _create_order_created_event(
     order_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order created event."""
-    order_created_data: TUserData = {
+    order_created_data: FlextTypes.Auth.UserData = {
         "order_id": order_id,
         "customer_id": "customer_123",
         "items": [
@@ -348,7 +353,7 @@ def _create_order_confirmed_event(
     order_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order confirmed event."""
-    order_confirmed_data: TUserData = {
+    order_confirmed_data: FlextTypes.Auth.UserData = {
         "order_id": order_id,
         "confirmed_at": "2024-01-15T14:25:00Z",
         "payment_method": "credit_card",
@@ -398,7 +403,7 @@ def _create_stock_updated_event(
     product_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create stock updated event."""
-    stock_updated_data: TUserData = {
+    stock_updated_data: FlextTypes.Auth.UserData = {
         "product_id": product_id,
         "old_quantity": 50,
         "new_quantity": 35,
@@ -428,7 +433,10 @@ def _handle_stock_updated_event(
             and hasattr(stock_event, "data")
             and stock_event.value is not None
         ):
-            new_quantity = stock_event.value.get("new_quantity", 0)
+            event_data = stock_event.value
+            new_quantity = (
+                event_data.get("new_quantity", 0) if isinstance(event_data, dict) else 0
+            )
             if isinstance(new_quantity, int) and new_quantity <= LOW_STOCK_THRESHOLD:
                 return _create_and_display_low_stock_alert(product_id, new_quantity)
 
@@ -440,7 +448,7 @@ def _create_and_display_low_stock_alert(
     new_quantity: int,
 ) -> FlextResult[None]:
     """Create and display low stock alert event."""
-    low_stock_data: TUserData = {
+    low_stock_data: FlextTypes.Auth.UserData = {
         "product_id": product_id,
         "current_quantity": new_quantity,
         "threshold": LOW_STOCK_THRESHOLD,
@@ -574,8 +582,8 @@ def _print_serialization_header() -> None:
     _separator = "\n" + "=" * 80
 
 
-def _basic_serialization_demo() -> TUserData:
-    serialization_data: TUserData = {
+def _basic_serialization_demo() -> FlextTypes.Auth.UserData:
+    serialization_data: FlextTypes.Auth.UserData = {
         "user_id": "user_789",
         "action": "profile_update",
         "changes": {
@@ -609,7 +617,7 @@ def _message_serialization_demo() -> None:
             message.to_dict()
 
 
-def _event_serialization_demo(serialization_data: TUserData) -> None:
+def _event_serialization_demo(serialization_data: FlextTypes.Auth.UserData) -> None:
     event_result = FlextEvent.create(
         event_type="UserProfileUpdated",
         aggregate_id="user_789",
@@ -639,7 +647,7 @@ def _cross_service_transport_demo() -> None:
 
 
 def _payload_validation_during_serialization() -> None:
-    complex_data: TUserData = {
+    complex_data: FlextTypes.Auth.UserData = {
         "nested_object": {
             "level1": {
                 "level2": {
@@ -673,7 +681,7 @@ def _print_enterprise_header() -> None:
 
 
 def _request_response_pattern_demo() -> None:
-    request_data: TUserData = {
+    request_data: FlextTypes.Auth.UserData = {
         "request_id": "req_456",
         "user_id": "user_123",
         "action": "get_user_profile",
@@ -688,7 +696,7 @@ def _request_response_pattern_demo() -> None:
             "timestamp": time.time(),
         },
     )
-    response_data: TUserData = {
+    response_data: FlextTypes.Auth.UserData = {
         "request_id": "req_456",
         "user_profile": {
             "user_id": "user_123",

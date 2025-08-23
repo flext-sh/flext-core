@@ -515,10 +515,10 @@ class TestFlextAggregateRoot:
                 f"Expected {aggregate.id!s}, got {event.get_metadata('aggregate_id')!s}",
             )
         assert event.get_metadata("event_type") == "test.created"
-        assert event.data is not None
-        if event.data.get("action") != "created":
+        assert event.value is not None
+        if event.value.get("action") != "created":
             raise AssertionError(
-                f"Expected {'created'}, got {event.data.get('action')}",
+                f"Expected {'created'}, got {event.value.get('action')}",
             )
 
     def test_aggregate_root_multiple_events(self) -> None:
@@ -785,17 +785,17 @@ class TestEntitiesIntegration:
             )
 
         # Events should contain full audit trail
-        assert events[0].data is not None
-        assert events[1].data is not None
-        assert events[2].data is not None
-        if events[0].data.get("action") != "created":
+        assert events[0].value is not None
+        assert events[1].value is not None
+        assert events[2].value is not None
+        if events[0].value.get("action") != "created":
             raise AssertionError(
-                f"Expected {'created'}, got {events[0].data.get('action')}",
+                f"Expected {'created'}, got {events[0].value.get('action')}",
             )
-        assert events[1].data.get("action") == "updated"
-        if events[2].data.get("action") != "activated":
+        assert events[1].value.get("action") == "updated"
+        if events[2].value.get("action") != "activated":
             raise AssertionError(
-                f"Expected {'activated'}, got {events[2].data.get('action')}",
+                f"Expected {'activated'}, got {events[2].value.get('action')}",
             )
 
         # All events should be for same aggregate

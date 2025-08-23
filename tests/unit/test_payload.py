@@ -59,7 +59,7 @@ class TestFlextPayload:
     def test_payload_creation_with_various_data_types(self, test_data: object) -> None:
         """Test payload creation with various data types."""
         payload = FlextPayload(data=test_data)
-        assert payload.data == test_data
+        assert payload.value == test_data
         assert isinstance(payload.metadata, dict)
         assert len(payload.metadata) == 0
 
@@ -263,7 +263,7 @@ class TestFlextPayloadEdgeCases:
         assert result.success
         payload = result.value
         assert payload is not None
-        assert payload.data == "test"
+        assert payload.value == "test"
         assert payload.metadata == expected_metadata
 
     def test_payload_from_dict_with_exception_handling(self) -> None:

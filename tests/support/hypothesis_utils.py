@@ -35,8 +35,8 @@ class FlextStrategies:
             suffix=st.text(
                 alphabet=string.ascii_lowercase + string.digits,
                 min_size=8,
-                max_size=16
-            )
+                max_size=16,
+            ),
         )
 
     @staticmethod
@@ -47,14 +47,14 @@ class FlextStrategies:
             local=st.text(
                 alphabet=string.ascii_lowercase + string.digits + "._-",
                 min_size=1,
-                max_size=20
+                max_size=20,
             ).filter(lambda x: x[0] not in "._-" and x[-1] not in "._-"),
             domain=st.text(
                 alphabet=string.ascii_lowercase + string.digits + "-",
                 min_size=1,
-                max_size=20
+                max_size=20,
             ).filter(lambda x: x[0] != "-" and x[-1] != "-"),
-            tld=st.sampled_from(["com", "org", "net", "edu", "gov", "co.uk", "io"])
+            tld=st.sampled_from(["com", "org", "net", "edu", "gov", "co.uk", "io"]),
         )
 
     @staticmethod
@@ -66,22 +66,22 @@ class FlextStrategies:
                 lambda area, exchange, number: f"+1-{area}-{exchange}-{number}",
                 area=st.integers(min_value=200, max_value=999).map(str),
                 exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str)
+                number=st.integers(min_value=1000, max_value=9999).map(str),
             ),
             # (555) 123-4567
             st.builds(
                 lambda area, exchange, number: f"({area}) {exchange}-{number}",
                 area=st.integers(min_value=200, max_value=999).map(str),
                 exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str)
+                number=st.integers(min_value=1000, max_value=9999).map(str),
             ),
             # 555.123.4567
             st.builds(
                 lambda area, exchange, number: f"{area}.{exchange}.{number}",
                 area=st.integers(min_value=200, max_value=999).map(str),
                 exchange=st.integers(min_value=200, max_value=999).map(str),
-                number=st.integers(min_value=1000, max_value=9999).map(str)
-            )
+                number=st.integers(min_value=1000, max_value=9999).map(str),
+            ),
         ])
 
     @staticmethod
@@ -93,7 +93,7 @@ class FlextStrategies:
             domain=st.text(
                 alphabet=string.ascii_lowercase + string.digits,
                 min_size=3,
-                max_size=20
+                max_size=20,
             ),
             tld=st.sampled_from(["com", "org", "net", "io", "co.uk"]),
             path=st.one_of([
@@ -103,19 +103,19 @@ class FlextStrategies:
                     p=st.text(
                         alphabet=string.ascii_lowercase + string.digits + "-_/",
                         min_size=1,
-                        max_size=50
-                    )
-                )
-            ])
+                        max_size=50,
+                    ),
+                ),
+            ]),
         )
 
     @staticmethod
     def timestamps() -> st.SearchStrategy[datetime]:
         """Generate timestamps within reasonable ranges."""
         return st.datetimes(
-            min_value=datetime(2020, 1, 1, tzinfo=UTC),
-            max_value=datetime(2030, 12, 31, tzinfo=UTC),
-            timezones=st.just(UTC)
+            min_value=datetime(2020, 1, 1),
+            max_value=datetime(2030, 12, 31),
+            timezones=st.just(UTC),
         )
 
     @staticmethod
@@ -131,26 +131,55 @@ class BusinessDomainStrategies:
     def user_names() -> st.SearchStrategy[str]:
         """Generate realistic user names."""
         first_names = [
-            "John", "Jane", "Michael", "Sarah", "David", "Emily",
-            "Robert", "Jessica", "William", "Ashley", "James", "Amanda"
+            "John",
+            "Jane",
+            "Michael",
+            "Sarah",
+            "David",
+            "Emily",
+            "Robert",
+            "Jessica",
+            "William",
+            "Ashley",
+            "James",
+            "Amanda",
         ]
         last_names = [
-            "Smith", "Johnson", "Brown", "Davis", "Miller", "Wilson",
-            "Moore", "Taylor", "Anderson", "Thomas", "Jackson", "White"
+            "Smith",
+            "Johnson",
+            "Brown",
+            "Davis",
+            "Miller",
+            "Wilson",
+            "Moore",
+            "Taylor",
+            "Anderson",
+            "Thomas",
+            "Jackson",
+            "White",
         ]
 
         return st.builds(
             lambda first, last: f"{first} {last}",
             first=st.sampled_from(first_names),
-            last=st.sampled_from(last_names)
+            last=st.sampled_from(last_names),
         )
 
     @staticmethod
     def company_names() -> st.SearchStrategy[str]:
         """Generate company names."""
         words = [
-            "Tech", "Solutions", "Systems", "Digital", "Global", "Advanced",
-            "Innovative", "Dynamic", "Strategic", "Professional", "Enterprise"
+            "Tech",
+            "Solutions",
+            "Systems",
+            "Digital",
+            "Global",
+            "Advanced",
+            "Innovative",
+            "Dynamic",
+            "Strategic",
+            "Professional",
+            "Enterprise",
         ]
         suffixes = ["Inc", "LLC", "Corp", "Ltd", "Co"]
 
@@ -158,22 +187,48 @@ class BusinessDomainStrategies:
             lambda word1, word2, suffix: f"{word1} {word2} {suffix}",
             word1=st.sampled_from(words),
             word2=st.sampled_from(words),
-            suffix=st.sampled_from(suffixes)
-        ).filter(lambda x: len(x.split()[0]) != len(x.split()[1]))  # Avoid duplicate words
+            suffix=st.sampled_from(suffixes),
+        ).filter(
+            lambda x: len(x.split()[0]) != len(x.split()[1])
+        )  # Avoid duplicate words
 
     @staticmethod
     def addresses() -> st.SearchStrategy[dict[str, str]]:
         """Generate address objects."""
         street_names = [
-            "Main St", "Oak Ave", "Pine Rd", "First St", "Second Ave",
-            "Park Blvd", "Washington St", "Lincoln Ave", "Jefferson Rd"
+            "Main St",
+            "Oak Ave",
+            "Pine Rd",
+            "First St",
+            "Second Ave",
+            "Park Blvd",
+            "Washington St",
+            "Lincoln Ave",
+            "Jefferson Rd",
         ]
         cities = [
-            "Springfield", "Madison", "Georgetown", "Franklin", "Clinton",
-            "Riverside", "Salem", "Auburn", "Bristol", "Camden"
+            "Springfield",
+            "Madison",
+            "Georgetown",
+            "Franklin",
+            "Clinton",
+            "Riverside",
+            "Salem",
+            "Auburn",
+            "Bristol",
+            "Camden",
         ]
         states = [
-            "CA", "TX", "FL", "NY", "PA", "IL", "OH", "GA", "NC", "MI"
+            "CA",
+            "TX",
+            "FL",
+            "NY",
+            "PA",
+            "IL",
+            "OH",
+            "GA",
+            "NC",
+            "MI",
         ]
 
         return st.builds(
@@ -181,14 +236,14 @@ class BusinessDomainStrategies:
             street=st.builds(
                 lambda num, name: f"{num} {name}",
                 num=st.integers(min_value=1, max_value=9999),
-                name=st.sampled_from(street_names)
+                name=st.sampled_from(street_names),
             ),
             city=st.sampled_from(cities),
             state=st.sampled_from(states),
             zip_code=st.builds(
                 lambda z: f"{z:05d}",
-                z=st.integers(min_value=10000, max_value=99999)
-            )
+                z=st.integers(min_value=10000, max_value=99999),
+            ),
         )
 
 
@@ -201,7 +256,7 @@ class EdgeCaseStrategies:
         return st.one_of([
             st.just(""),
             st.text(alphabet=" \t\n\r", min_size=1, max_size=10),
-            st.builds(lambda n: " " * n, n=st.integers(min_value=1, max_value=100))
+            st.builds(lambda n: " " * n, n=st.integers(min_value=1, max_value=100)),
         ])
 
     @staticmethod
@@ -212,9 +267,9 @@ class EdgeCaseStrategies:
             st.just(1),
             st.just(-1),
             st.integers(min_value=-(2**31), max_value=-(2**31) + 10),  # Near min int32
-            st.integers(min_value=2**31 - 10, max_value=2**31 - 1),    # Near max int32
+            st.integers(min_value=2**31 - 10, max_value=2**31 - 1),  # Near max int32
             st.integers(min_value=-(2**63), max_value=-(2**63) + 10),  # Near min int64
-            st.integers(min_value=2**63 - 10, max_value=2**63 - 1),    # Near max int64
+            st.integers(min_value=2**63 - 10, max_value=2**63 - 1),  # Near max int64
         ])
 
     @staticmethod
@@ -228,7 +283,7 @@ class EdgeCaseStrategies:
             st.floats(min_value=0.0, max_value=1e-10),  # Very small positive
             st.floats(min_value=-1e-10, max_value=0.0),  # Very small negative
             st.floats(min_value=1e10, max_value=1e15),  # Very large positive
-            st.floats(min_value=-1e15, max_value=-1e10)  # Very large negative
+            st.floats(min_value=-1e15, max_value=-1e10),  # Very large negative
         ])
 
     @staticmethod
@@ -236,11 +291,11 @@ class EdgeCaseStrategies:
         """Generate Unicode edge cases."""
         return st.one_of([
             st.text(alphabet="🚀🎯✅❌🔧📊", min_size=1, max_size=10),  # Emojis
-            st.text(alphabet="áéíóúñü", min_size=1, max_size=20),       # Accented chars
-            st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),      # Greek letters
-            st.text(alphabet="中文测试", min_size=1, max_size=10),         # Chinese characters
-            st.builds(lambda: "\u200b" * 5),                           # Zero-width spaces
-            st.builds(lambda: "test\x00null"),                         # Null characters
+            st.text(alphabet="áéíóúñü", min_size=1, max_size=20),  # Accented chars
+            st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),  # Greek letters
+            st.text(alphabet="中文测试", min_size=1, max_size=10),  # Chinese characters
+            st.builds(lambda: "\u200b" * 5),  # Zero-width spaces
+            st.builds(lambda: "test\x00null"),  # Null characters
         ])
 
     @staticmethod
@@ -251,14 +306,17 @@ class EdgeCaseStrategies:
             st.builds(dict, key1=st.none(), key2=st.none()),  # None values
             st.builds(
                 dict,
-                **{f"key_{i}": st.one_of([st.none(), st.just(""), st.integers()])
-                   for i in range(5)}
+                **{
+                    f"key_{i}": st.one_of([st.none(), st.just(""), st.integers()])
+                    for i in range(5)
+                },
             ),
             st.recursive(
                 st.none() | st.booleans() | st.integers() | st.text(),
-                lambda children: st.lists(children) | st.dictionaries(st.text(), children),
-                max_leaves=20
-            )
+                lambda children: st.lists(children)
+                | st.dictionaries(st.text(), children),
+                max_leaves=20,
+            ),
         ])
 
 
@@ -271,7 +329,7 @@ class PerformanceStrategies:
         return st.builds(
             lambda size, char: char * size,
             size=st.integers(min_value=1000, max_value=100000),
-            char=st.sampled_from(string.ascii_letters)
+            char=st.sampled_from(string.ascii_letters),
         )
 
     @staticmethod
@@ -280,7 +338,7 @@ class PerformanceStrategies:
         return st.lists(
             st.integers(min_value=0, max_value=1000000),
             min_size=1000,
-            max_size=10000
+            max_size=10000,
         )
 
     @staticmethod
@@ -290,9 +348,9 @@ class PerformanceStrategies:
             st.builds(dict, key=st.text(), value=st.integers()),
             lambda children: st.dictionaries(
                 st.text(min_size=1, max_size=10),
-                st.one_of([children, st.lists(children, max_size=5)])
+                st.one_of([children, st.lists(children, max_size=5)]),
             ),
-            max_leaves=50
+            max_leaves=50,
         )
 
 
@@ -334,7 +392,7 @@ class PropertyTestHelpers:
     def generate_test_scenarios(
         strategy: st.SearchStrategy[T],
         scenario_name: str = "test_scenario",
-        min_examples: int = 10
+        min_examples: int = 10,
     ) -> st.SearchStrategy[dict[str, Any]]:
         """Generate test scenarios with metadata."""
         return st.builds(
@@ -342,10 +400,10 @@ class PropertyTestHelpers:
                 "scenario": scenario_name,
                 "data": data,
                 "id": id_val,
-                "timestamp": datetime.now(UTC).isoformat()
+                "timestamp": datetime.now(UTC).isoformat(),
             },
             data=strategy,
-            id_val=FlextStrategies.flext_ids()
+            id_val=FlextStrategies.flext_ids(),
         )
 
 
@@ -368,8 +426,8 @@ class CompositeStrategies:
             metadata=st.dictionaries(
                 st.text(min_size=1, max_size=20),
                 st.one_of([st.text(), st.integers(), st.booleans()]),
-                max_size=5
-            )
+                max_size=5,
+            ),
         )
 
     @staticmethod
@@ -381,18 +439,21 @@ class CompositeStrategies:
             url=FlextStrategies.urls(),
             headers=st.dictionaries(
                 st.sampled_from([
-                    "Content-Type", "Authorization", "Accept",
-                    "User-Agent", "X-Correlation-ID"
+                    "Content-Type",
+                    "Authorization",
+                    "Accept",
+                    "User-Agent",
+                    "X-Correlation-ID",
                 ]),
                 st.text(min_size=1, max_size=100),
-                max_size=5
+                max_size=5,
             ),
             body=st.one_of([
                 st.none(),
                 st.dictionaries(st.text(), st.text(), max_size=10),
-                st.text(max_size=1000)
+                st.text(max_size=1000),
             ]),
-            correlation_id=FlextStrategies.correlation_ids()
+            correlation_id=FlextStrategies.correlation_ids(),
         )
 
     @staticmethod
@@ -404,14 +465,16 @@ class CompositeStrategies:
                 lambda host, port, db: f"postgresql://{host}:{port}/{db}",
                 host=st.text(alphabet=string.ascii_lowercase, min_size=5, max_size=20),
                 port=st.integers(min_value=1000, max_value=65535),
-                db=st.text(alphabet=string.ascii_lowercase + "_", min_size=3, max_size=20)
+                db=st.text(
+                    alphabet=string.ascii_lowercase + "_", min_size=3, max_size=20
+                ),
             ),
             debug=st.booleans(),
             timeout_seconds=st.integers(min_value=1, max_value=300),
             retry_attempts=st.integers(min_value=0, max_value=10),
             features=st.lists(
                 st.text(alphabet=string.ascii_lowercase + "_", min_size=3, max_size=30),
-                max_size=10
+                max_size=10,
             ),
-            environment=st.sampled_from(["development", "staging", "production"])
+            environment=st.sampled_from(["development", "staging", "production"]),
         )

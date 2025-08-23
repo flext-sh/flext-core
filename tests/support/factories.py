@@ -13,36 +13,46 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from typing import Any, override
 
 import factory
 import factory.fuzzy
-from factory import Faker, Sequence, Trait
+from factory.base import DictFactory, Factory
+from factory.declarations import (
+    LazyAttribute,
+    LazyFunction,
+    Sequence,
+    SubFactory,
+    Trait,
+)
+from factory.faker import Faker
 
 from flext_core import FlextResult
 from flext_core.exceptions import FlextError, FlextValidationError
-from flext_core.models import FlextEntity, FlextValue
+from flext_core.models import FlextModel, FlextValue
+from flext_core.root_models import FlextMetadata, FlextVersion
 from flext_core.typings import FlextTypes
 
 JsonDict = FlextTypes.Core.JsonDict
 
 
-class BaseTestEntity(FlextEntity):
+class BaseTestEntity(FlextModel):
     """Base entity for testing with proper FlextCore integration."""
 
-    # Using proper field definitions following flext-core patterns
+    # Using proper FlextCore types for compatibility
     name: str = "test_entity"
     description: str = ""
     active: bool = True
-    version: int = 1
-    metadata: dict[str, Any] = factory.LazyFunction(dict)
+    version: FlextVersion = FlextVersion(1)
+    metadata: FlextMetadata = FlextMetadata({})
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for test entity."""
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for test entity."""
         if not self.name.strip():
             return FlextResult[None].fail(
                 "Entity name cannot be empty",
-                error_code="INVALID_NAME"
+                error_code="INVALID_NAME",
             )
         return FlextResult[None].ok(None)
 
@@ -52,25 +62,26 @@ class BaseTestValueObject(FlextValue):
 
     value: str = "test_value"
 
-    def validate_domain_rules(self) -> FlextResult[None]:
-        """Validate domain rules for test value object."""
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for test value object."""
         if not self.value:
             return FlextResult[None].fail(
                 "Value cannot be empty",
-                error_code="INVALID_VALUE"
+                error_code="INVALID_VALUE",
             )
         return FlextResult[None].ok(None)
 
 
-class UserDataFactory(factory.DictFactory):
+class UserDataFactory(DictFactory):  # type: ignore[misc]  # Factory inheritance patterns
     """Factory for generating user test data with realistic attributes."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = dict
 
-    id = factory.LazyFunction(lambda: str(uuid.uuid4()))
-    username = Sequence(lambda n: f"user_{n}")
-    email = factory.LazyAttribute(lambda obj: f"{obj['username']}@example.com")
+    id = LazyFunction(lambda: str(uuid.uuid4()))
+    username = Sequence(lambda n: f"user_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
+    email = LazyAttribute(lambda obj: f"{obj.username}@example.com")  # type: ignore[arg-type]  # Factory lazy patterns
     first_name = Faker("first_name")
     last_name = Faker("last_name")
     age = factory.fuzzy.FuzzyInteger(18, 80)
@@ -82,88 +93,101 @@ class UserDataFactory(factory.DictFactory):
         is_admin = Trait(
             is_active=True,
             permissions=["read", "write", "admin"],
-            role="administrator"
+            role="administrator",
         )
         is_guest = Trait(
             is_active=True,
             permissions=["read"],
-            role="guest"
+            role="guest",
         )
         is_inactive = Trait(
             is_active=False,
-            deactivated_at=Faker("date_time_this_month")
+            deactivated_at=Faker("date_time_this_month"),
         )
 
     # Complex nested data
-    profile = factory.LazyFunction(lambda: {
-        "bio": Faker("text", max_nb_chars=200).generate(),
-        "location": Faker("city").generate(),
-        "avatar_url": Faker("image_url").generate(),
-    })
+    profile = LazyFunction(
+        lambda: {
+            "bio": "Sample bio text",
+            "location": "Sample City",
+            "avatar_url": "https://example.com/avatar.jpg",
+        }
+    )
 
-    preferences = factory.LazyFunction(lambda: {
-        "theme": factory.fuzzy.FuzzyChoice(["light", "dark", "auto"]).fuzz(),
-        "notifications": {
-            "email": True,
-            "push": False,
-            "sms": False,
-        },
-        "language": "en_US",
-        "timezone": Faker("timezone").generate(),
-    })
+    preferences = LazyFunction(
+        lambda: {
+            "theme": factory.fuzzy.FuzzyChoice(["light", "dark", "auto"]).fuzz(),
+            "notifications": {
+                "email": True,
+                "push": False,
+                "sms": False,
+            },
+            "language": "en_US",
+            "timezone": "UTC",
+        }
+    )
 
 
-class ConfigurationFactory(factory.DictFactory):
+class ConfigurationFactory(DictFactory):  # type: ignore[misc]  # Factory inheritance patterns
     """Factory for generating configuration test data."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = dict
 
-    name = Sequence(lambda n: f"config_{n}")
+    name = Sequence(lambda n: f"config_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
     version = "1.0.0"
     debug = False
 
     # Database configuration with sub-factory
-    database = factory.SubFactory("tests.support.factories.DatabaseConfigFactory")
+    database = SubFactory("tests.support.factories.DatabaseConfigFactory")
 
     # Logging configuration
-    logging = factory.LazyFunction(lambda: {
-        "level": factory.fuzzy.FuzzyChoice(["DEBUG", "INFO", "WARNING", "ERROR"]).fuzz(),
-        "format": "json",
-        "handlers": ["console", "file"],
-        "file_path": "/var/log/app.log",
-    })
+    logging = LazyFunction(
+        lambda: {
+            "level": factory.fuzzy.FuzzyChoice([
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+            ]).fuzz(),
+            "format": "json",
+            "handlers": ["console", "file"],
+            "file_path": "/var/log/app.log",
+        }
+    )
 
     # Feature flags
-    features = factory.LazyFunction(lambda: {
-        "cache_enabled": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
-        "metrics_enabled": True,
-        "auth_required": True,
-        "rate_limiting": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
-    })
+    features = LazyFunction(
+        lambda: {
+            "cache_enabled": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
+            "metrics_enabled": True,
+            "auth_required": True,
+            "rate_limiting": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
+        }
+    )
 
     class Params:
         production = Trait(
             debug=False,
             logging__level="INFO",
-            features__cache_enabled=True
+            features__cache_enabled=True,
         )
         development = Trait(
             debug=True,
             logging__level="DEBUG",
-            features__rate_limiting=False
+            features__rate_limiting=False,
         )
 
 
-class DatabaseConfigFactory(factory.DictFactory):
+class DatabaseConfigFactory(DictFactory):  # type: ignore[misc]  # Factory inheritance patterns
     """Factory for database configuration data."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = dict
 
     host = "localhost"
     port = factory.fuzzy.FuzzyInteger(3000, 9999)
-    database = Sequence(lambda n: f"testdb_{n}")
+    database = Sequence(lambda n: f"testdb_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
     username = "testuser"
     password = "testpass"
     pool_size = factory.fuzzy.FuzzyInteger(5, 20)
@@ -171,135 +195,138 @@ class DatabaseConfigFactory(factory.DictFactory):
     ssl_enabled = False
 
     # Build URL from components
-    url = factory.LazyAttribute(
-        lambda obj: f"postgresql://{obj['username']}:{obj['password']}@{obj['host']}:{obj['port']}/{obj['database']}"
+    url = LazyAttribute(
+        lambda obj: f"postgresql://{obj.username}:{obj.password}@{obj.host}:{obj.port}/{obj.database}",  # type: ignore[arg-type]  # Factory lazy patterns
     )
 
 
-class ServiceDefinitionFactory(factory.DictFactory):
+class ServiceDefinitionFactory(DictFactory):  # type: ignore[misc]  # Factory inheritance patterns
     """Factory for service definition data."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = dict
 
-    name = Sequence(lambda n: f"service_{n}")
+    name = Sequence(lambda n: f"service_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
     version = factory.fuzzy.FuzzyChoice(["1.0.0", "1.1.0", "2.0.0"])
     description = Faker("sentence", nb_words=8)
 
-    endpoints = factory.LazyFunction(lambda: [
-        {"path": "/health", "method": "GET", "description": "Health check"},
-        {"path": "/api/v1/users", "method": "GET", "description": "List users"},
-        {"path": "/api/v1/users", "method": "POST", "description": "Create user"},
-    ])
+    endpoints = LazyFunction(
+        lambda: [
+            {"path": "/health", "method": "GET", "description": "Health check"},
+            {"path": "/api/v1/users", "method": "GET", "description": "List users"},
+            {"path": "/api/v1/users", "method": "POST", "description": "Create user"},
+        ]
+    )
 
-    dependencies = factory.LazyFunction(lambda: [
-        {"name": "database", "version": ">=1.0.0", "required": True},
-        {"name": "cache", "version": ">=2.0.0", "required": False},
-    ])
+    dependencies = LazyFunction(
+        lambda: [
+            {"name": "database", "version": ">=1.0.0", "required": True},
+            {"name": "cache", "version": ">=2.0.0", "required": False},
+        ]
+    )
 
-    health_check = factory.LazyFunction(lambda: {
-        "endpoint": "/health",
-        "interval": 30,
-        "timeout": 5,
-        "retries": 3,
-    })
+    health_check = LazyFunction(
+        lambda: {
+            "endpoint": "/health",
+            "interval": 30,
+            "timeout": 5,
+            "retries": 3,
+        }
+    )
 
 
-class FlextResultFactory(factory.Factory):
+class FlextResultFactory:
     """Factory for FlextResult objects."""
 
-    class Meta:
-        model = FlextResult
-        abstract = True
-
-    @classmethod
-    def create_success(cls, data: Any = "test_data") -> FlextResult[Any]:
+    @staticmethod
+    def create_success(data: Any = "test_data") -> FlextResult[Any]:
         """Create successful FlextResult."""
         return FlextResult[Any].ok(data)
 
-    @classmethod
+    @staticmethod
     def create_failure(
-        cls,
         error: str = "Test error",
-        error_code: str = "TEST_ERROR"
+        error_code: str = "TEST_ERROR",
     ) -> FlextResult[Any]:
         """Create failed FlextResult."""
         return FlextResult[Any].fail(error, error_code=error_code)
 
-    @classmethod
-    def create_validation_failure(cls, field: str = "test_field") -> FlextResult[Any]:
+    @staticmethod
+    def create_validation_failure(field: str = "test_field") -> FlextResult[Any]:
         """Create validation failure FlextResult."""
         return FlextResult[Any].fail(
             f"Validation failed for field: {field}",
-            error_code="VALIDATION_ERROR"
+            error_code="VALIDATION_ERROR",
         )
 
 
-class ExceptionFactory(factory.Factory):
+class ExceptionFactory:
     """Factory for creating various exception types."""
 
-    class Meta:
-        model = FlextError
-        abstract = True
-
-    @classmethod
+    @staticmethod
     def create_domain_error(
-        cls,
         message: str = "Domain error occurred",
-        error_code: str = "DOMAIN_ERROR"
-    ) -> FlextError:
+        error_code: str = "DOMAIN_ERROR",
+    ) -> FlextError:  # type: ignore[return-value]  # FlextError from dynamic generation
         """Create FlextError."""
-        return FlextError(message, error_code=error_code)
+        return FlextError(message, error_code=error_code)  # type: ignore[call-arg]  # Dynamic exception args
 
-    @classmethod
+    @staticmethod
     def create_validation_error(
-        cls,
         message: str = "Validation failed",
-        error_code: str = "VALIDATION_ERROR"
-    ) -> FlextValidationError:
+        error_code: str = "VALIDATION_ERROR",
+    ) -> FlextValidationError:  # type: ignore[return-value]  # FlextValidationError from dynamic generation
         """Create FlextValidationError."""
-        return FlextValidationError(message, error_code=error_code)
+        return FlextValidationError(message, error_code=error_code)  # type: ignore[call-arg]  # Dynamic exception args
 
 
-class TestEntityFactory(factory.Factory):
+class TestEntityFactory(Factory[BaseTestEntity]):
     """Factory for creating FlextEntity test objects."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = BaseTestEntity
 
-    name = Sequence(lambda n: f"test_entity_{n}")
+    name = Sequence(lambda n: f"test_entity_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
     description = Faker("sentence", nb_words=6)
     active = True
-    version = factory.fuzzy.FuzzyInteger(1, 10)
+    version = LazyFunction(
+        lambda: FlextVersion(factory.fuzzy.FuzzyInteger(1, 10).fuzz())
+    )
 
-    metadata = factory.LazyFunction(lambda: {
-        "created_by": "test_user",
-        "tags": ["test", "automated"],
-        "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),
-    })
+    metadata = LazyFunction(
+        lambda: FlextMetadata({
+            "created_by": "test_user",
+            "tags": ["test", "automated"],
+            "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),
+        })
+    )
 
     class Params:
         inactive = Trait(
             active=False,
-            metadata__status="deactivated"
+            metadata=LazyFunction(lambda: FlextMetadata({"status": "deactivated"})),
         )
         high_priority = Trait(
-            metadata__priority="high",
-            metadata__urgent=True
+            metadata=LazyFunction(
+                lambda: FlextMetadata({
+                    "priority": "high",
+                    "urgent": True,
+                })
+            ),
         )
 
 
-class TestValueObjectFactory(factory.Factory):
+class TestValueObjectFactory(Factory[BaseTestValueObject]):
     """Factory for creating FlextValue test objects."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]  # Factory meta compatibility
         model = BaseTestValueObject
 
-    value = Sequence(lambda n: f"test_value_{n}")
+    value = Sequence(lambda n: f"test_value_{n}")  # type: ignore[arg-type]  # Factory sequence patterns
 
     class Params:
         empty = Trait(value="")
-        long = Trait(value=factory.LazyFunction(lambda: "x" * 1000))
+        long = Trait(value=LazyFunction(lambda: "x" * 1000))
         unicode = Trait(value="🚀 Test Value 测试 مرحبا")
 
 
@@ -323,16 +350,24 @@ class BatchFactory:
         return TestEntityFactory.create_batch(count, **kwargs)
 
     @staticmethod
-    def create_mixed_results(success_count: int = 3, failure_count: int = 2) -> list[FlextResult[Any]]:
+    def create_mixed_results(
+        success_count: int = 3, failure_count: int = 2
+    ) -> list[FlextResult[Any]]:
         """Create mixed success/failure results."""
-        results = [FlextResultFactory.create_success(
-                data=Faker("sentence").generate()
-            ) for _ in range(success_count)]
+        results: list[FlextResult[Any]] = [
+            FlextResultFactory.create_success(
+                data=f"success_data_{uuid.uuid4()}",
+            )
+            for _ in range(success_count)
+        ]
 
-        results.extend(FlextResultFactory.create_failure(
+        results.extend(
+            FlextResultFactory.create_failure(
                 error=f"Error {i + 1}",
-                error_code=f"ERR_{i + 1:03d}"
-            ) for i in range(failure_count))
+                error_code=f"ERR_{i + 1:03d}",
+            )
+            for i in range(failure_count)
+        )
 
         return results
 

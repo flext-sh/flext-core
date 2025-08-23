@@ -5,7 +5,7 @@ factory_boy, and Faker patterns integrated for maximum testing capabilities.
 
 Plugin Integration:
 - pytest-asyncio: Async test support with event loops
-- pytest-benchmark: Performance benchmarking with memory profiling  
+- pytest-benchmark: Performance benchmarking with memory profiling
 - pytest-httpx: HTTP request mocking and testing
 - pytest-mock: Advanced mocking with MockerFixture
 - pytest-xdist: Parallel test execution
@@ -44,29 +44,28 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Generic, TypedDict, TypeVar
+from typing import Generic, TypedDict, TypeVar
+from unittest import mock
+
+import factory
 
 # Comprehensive pytest plugin imports
 import pytest
 import structlog
-import factory
 from _pytest.fixtures import SubRequest
 from faker import Faker
 from hypothesis import strategies as st
+from pytest import Item
 from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture
 
-# Configure factory_boy to use Faker for realistic data
-fake = Faker()
-factory.Faker._DEFAULT_LOCALE = 'en_US'
-
+# FlextCore imports
 from flext_core import (
     FlextAggregateRoot,
     FlextContainer,
     FlextEntity,
     FlextResult,
-    get_flext_container,
 )
 from flext_core.commands import FlextCommands
 from flext_core.constants import FlextEntityStatus, FlextOperationStatus
@@ -107,6 +106,10 @@ from tests.support.performance_utils import (
     MemoryProfiler,
     PerformanceProfiler,
 )
+
+# Configure factory_boy to use Faker for realistic data
+fake = Faker()
+factory.Faker._DEFAULT_LOCALE = "en_US"
 
 # Type variables for generic fixtures
 T = TypeVar("T")
@@ -198,6 +201,11 @@ def pytest_configure(config: pytest.Config) -> None:
         "handler: Message and command handler tests",
         "validation: Business rule validation tests",
         "serialization: Data serialization/deserialization tests",
+        # Missing markers
+        "advanced: Advanced pattern tests",
+        "guards: Guard and validation tests",
+        "mixins: Mixin pattern tests",
+        "decorators: Decorator pattern tests",
         # Environment and setup
         "docker: Tests requiring Docker containers",
         "postgres: Tests requiring PostgreSQL database",
@@ -243,7 +251,7 @@ def reset_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def factory_boy_session() -> TestDataBuilder:
+def factory_boy_session() -> TestDataBuilder[object]:
     """Provide factory_boy session with all factories configured."""
     return TestDataBuilder()
 
@@ -338,8 +346,8 @@ def mocker_extended(mocker: MockerFixture) -> MockerFixture:
 
     # Add custom mock helpers
     def create_async_mock(
-        return_value: Any = None, side_effect: Exception | None = None
-    ):
+        return_value: object = None, side_effect: Exception | None = None
+    ) -> mock.AsyncMock:
         """Create async mock with standard patterns."""
         async_mock = mocker.AsyncMock()
         if side_effect:
@@ -349,21 +357,15 @@ def mocker_extended(mocker: MockerFixture) -> MockerFixture:
         return async_mock
 
     def create_flext_result_mock(
-        success: bool = True, data: Any = None, error: str | None = None
-    ):
-        """Create FlextResult mock with standard patterns."""
-        mock_result = mocker.Mock()
-        mock_result.success = success
-        mock_result.is_success = success
-        mock_result.failure = not success
-        mock_result.is_failure = not success
-        mock_result.data = data
-        mock_result.value = data
-        mock_result.error = error
-        mock_result.unwrap.return_value = data if success else None
-        return mock_result
+        *, success: bool = True, data: object = None, error: str | None = None
+    ) -> FlextResult[object]:
+        """Create real FlextResult instances for testing (no mocks)."""
+        # Use real FlextResult instead of mocks for better type safety and authenticity
+        if success:
+            return FlextResult[object].ok(data)
+        return FlextResult[object].fail(error or "Test error")
 
-    # Attach helper methods
+    # Attach helper methods using setattr for PyRight compatibility
     mocker.create_async_mock = create_async_mock
     mocker.create_flext_result_mock = create_flext_result_mock
 
@@ -373,12 +375,12 @@ def mocker_extended(mocker: MockerFixture) -> MockerFixture:
 @pytest.fixture
 def benchmark_with_memory(
     benchmark: BenchmarkFixture, performance_profiler: PerformanceProfiler
-):
+) -> Callable[[Callable[..., object]], object]:
     """Provide benchmark fixture with integrated memory profiling."""
 
     def _benchmark_with_memory(
-        func: Callable[..., Any], *args: Any, **kwargs: Any
-    ) -> Any:
+        func: Callable[..., object], *args: object, **kwargs: object
+    ) -> object:
         with performance_profiler.profile_memory(f"benchmark_{func.__name__}"):
             return benchmark(func, *args, **kwargs)
 
@@ -685,7 +687,7 @@ class ExternalService:
 
     def get_data(self) -> dict[str, object]:
         """Get test data."""
-        return self._data.copy()
+        return dict(self._data)
 
     def process(self, data: object = None) -> FlextResult[str]:  # noqa: ARG002
         """Process data and return FlextResult."""
@@ -695,13 +697,13 @@ class ExternalService:
 
 
 @pytest.fixture
-def external_service() -> Generator[ExternalService]:
+def external_service() -> ExternalService:
     """Provide external service for testing.
 
     Implementation for testing service integration patterns
     and validates functionality.
 
-    Yields:
+    Returns:
       ExternalService instance for functional testing
 
     """
@@ -804,7 +806,7 @@ def aggregate_factory() -> Callable[[str], FlextAggregateRoot]:
             return FlextResult[None].ok(None)
 
     def _create_aggregate(aggregate_id: str) -> FlextAggregateRoot:
-        return TestAggregate(id=FlextEntityId(aggregate_id), _domain_event_objects=[])
+        return TestAggregate(id=FlextEntityId(aggregate_id))
 
     return _create_aggregate
 
@@ -939,12 +941,11 @@ def clean_logging_state() -> Generator[None]:
 
     # Clear structlog caches if they exist
     try:
-        if (
-            hasattr(structlog, "_CONFIG")
-            and hasattr(structlog._CONFIG, "logger_factory")
-            and hasattr(structlog._CONFIG.logger_factory, "_cache")
-        ):
-            structlog._CONFIG.logger_factory._cache.clear()
+        config = getattr(structlog, "_CONFIG", None)
+        if config is not None:
+            logger_factory = getattr(config, "logger_factory", None)
+            if logger_factory is not None and hasattr(logger_factory, "_cache"):
+                logger_factory._cache.clear()  # type: ignore[attr-defined]
     except AttributeError:
         # structlog configuration might not be set up yet
         pass
@@ -1370,39 +1371,28 @@ def e2e_environment() -> dict[str, object]:
 
 
 def pytest_collection_modifyitems(
-    config: object,
-    items: list[object],
+    config: pytest.Config,
+    items: list[Item],
 ) -> None:
     """Modify test collection to add custom markers."""
     # Mark 'config' as intentionally unused while keeping hook signature valid
     del config
     for item in items:
-        # Add markers based on test location - use hasattr for safety
-        if hasattr(item, "fspath") and "unit" in str(item.fspath):
-            if hasattr(item, "add_marker"):
-                item.add_marker(pytest.mark.unit)
-        elif hasattr(item, "fspath") and "integration" in str(item.fspath):
-            if hasattr(item, "add_marker"):
-                item.add_marker(pytest.mark.integration)
-        elif (
-            hasattr(item, "fspath")
-            and "e2e" in str(item.fspath)
-            and hasattr(item, "add_marker")
-        ):
+        # Add markers based on test location using modern path property
+        item_path = str(getattr(item, "path", getattr(item, "fspath", "")))
+
+        # Add location-based markers
+        if "unit" in item_path:
+            item.add_marker(pytest.mark.unit)
+        elif "integration" in item_path:
+            item.add_marker(pytest.mark.integration)
+        elif "e2e" in item_path:
             item.add_marker(pytest.mark.e2e)
 
         # Add markers based on test name
-        if (
-            hasattr(item, "name")
-            and "test_performance" in item.name
-            and hasattr(item, "add_marker")
-        ):
+        if "test_performance" in item.name:
             item.add_marker(pytest.mark.benchmark)
-        if (
-            hasattr(item, "name")
-            and "test_async" in item.name
-            and hasattr(item, "add_marker")
-        ):
+        if "test_async" in item.name:
             item.add_marker(pytest.mark.asyncio)
 
 
@@ -1600,7 +1590,7 @@ def factory_test_cases() -> list[dict[str, object]]:
 def setup_factory_boy() -> None:
     """Configure factory_boy with Faker for all tests."""
     # Set consistent locale and seed
-    factory.Faker._DEFAULT_LOCALE = 'en_US'
+    factory.Faker._DEFAULT_LOCALE = "en_US"
     Faker.seed(42)
     # Reset factory state between tests
     UserFactory.reset_sequence()
@@ -1632,15 +1622,19 @@ def realistic_config_data(faker_instance: Faker) -> dict[str, object]:
         "redis_url": f"redis://{faker_instance.ipv4()}:6379/0",
         "secret_key": faker_instance.sha256(),
         "api_key": faker_instance.uuid4(),
-        "environment": faker_instance.random_element(elements=("development", "staging", "production")),
-        "log_level": faker_instance.random_element(elements=("DEBUG", "INFO", "WARNING", "ERROR")),
+        "environment": faker_instance.random_element(
+            elements=("development", "staging", "production")
+        ),
+        "log_level": faker_instance.random_element(
+            elements=("DEBUG", "INFO", "WARNING", "ERROR")
+        ),
         "timeout": faker_instance.random_int(min=1, max=60),
         "max_connections": faker_instance.random_int(min=10, max=100),
         "debug": faker_instance.boolean(),
     }
 
 
-@pytest.fixture 
+@pytest.fixture
 def batch_user_data(user_factory: type[UserFactory]) -> list[object]:
     """Generate batch user data using factory_boy."""
     return user_factory.create_batch(5)
@@ -1656,6 +1650,18 @@ def parameterized_factory_data() -> list[dict[str, object]]:
     ]
 
 
+@pytest.fixture
+def test_scenarios() -> list[TestScenario]:
+    """Provide test scenarios for integration testing."""
+    # Use the local TestScenario enum instead of the support module class
+    return [
+        TestScenario.HAPPY_PATH,
+        TestScenario.ERROR_CASE,
+        TestScenario.BOUNDARY,
+        TestScenario.EDGE_CASE,
+    ]
+
+
 # ============================================================================
 # PYTEST PLUGIN ENHANCED FIXTURES
 # ============================================================================
@@ -1667,29 +1673,28 @@ def benchmark_with_factory(
     user_factory: type[UserFactory],
 ) -> object:
     """Benchmark fixture enhanced with factory_boy data generation."""
-    
+
     def _benchmark_factory_operation(
         operation: str = "create",
         count: int = 100,
     ) -> object:
         if operation == "create":
             return benchmark(lambda: user_factory.create_batch(count))
-        elif operation == "build":
+        if operation == "build":
             return benchmark(lambda: user_factory.build_batch(count))
-        else:
-            raise ValueError(f"Unknown operation: {operation}")
-    
+        raise ValueError(f"Unknown operation: {operation}")
+
     return _benchmark_factory_operation
 
 
 @pytest.fixture
 def async_faker_data(faker_instance: Faker) -> object:
     """Generate async-friendly test data using Faker."""
-    
+
     class AsyncFakerData:
         def __init__(self, faker: Faker) -> None:
             self.faker = faker
-        
+
         async def user_data(self) -> dict[str, object]:
             """Generate user data asynchronously."""
             await asyncio.sleep(0.001)  # Simulate async operation
@@ -1698,7 +1703,7 @@ def async_faker_data(faker_instance: Faker) -> object:
                 "name": self.faker.name(),
                 "email": self.faker.email(),
             }
-        
+
         async def config_data(self) -> dict[str, object]:
             """Generate config data asynchronously."""
             await asyncio.sleep(0.001)
@@ -1706,7 +1711,7 @@ def async_faker_data(faker_instance: Faker) -> object:
                 "database_url": f"postgresql://{self.faker.ipv4()}:5432/test",
                 "timeout": self.faker.random_int(min=1, max=30),
             }
-    
+
     return AsyncFakerData(faker_instance)
 
 
@@ -1716,13 +1721,13 @@ def mock_with_factory(
     user_factory: type[UserFactory],
 ) -> object:
     """Enhanced mocker with factory_boy integration."""
-    
+
     def _create_mock_service_with_data() -> object:
         mock_service = mocker.Mock()
         mock_service.get_user.return_value = user_factory.build()
         mock_service.get_users.return_value = user_factory.build_batch(3)
         mock_service.is_healthy.return_value = True
         return mock_service
-    
+
     mocker.create_service_with_factory_data = _create_mock_service_with_data
     return mocker

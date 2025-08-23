@@ -12,7 +12,7 @@ and extensibility through protocols and abstract base classes.
 
 Key Components:
     - FlextValidator: Protocol for flexible validation implementations
-    - FlextValidationRule: ABC for reusable validation rules
+    - FlextProtocols.Foundation.Validator: ABC for reusable validation rules
     - FlextService: ABC for service lifecycle management
     - FlextConfigurable: Protocol for configuration injection
     - FlextMessageHandler/FlextMiddleware: ABCs for message processing pipelines
@@ -37,16 +37,11 @@ from flext_core import (
     FlextDomainEvent,
     FlextLoggerProtocol,
     FlextMessageHandler,
-    FlextPlugin,
     FlextPluginContext,
-    FlextRepository,
+    FlextProtocols,
     FlextResult,
-    TAnyDict,
-)
-from flext_core.protocols import (
-    FlextService,
+    FlextTypes,
     FlextUnitOfWork,
-    FlextValidationRule,
 )
 
 # =============================================================================
@@ -245,8 +240,8 @@ class EmailValidator:
         return FlextResult[object].ok(email)
 
 
-class AgeRangeRule(FlextValidationRule):
-    """Age validation rule demonstrating FlextValidationRule."""
+class AgeRangeRule:
+    """Age validation rule demonstrating FlextProtocols.Foundation.Validator protocol."""
 
     def __init__(self, min_age: int = 18, max_age: int = 120) -> None:
         """Initialize AgeRangeRule.
@@ -258,6 +253,16 @@ class AgeRangeRule(FlextValidationRule):
         """
         self.min_age = min_age
         self.max_age = max_age
+
+    def validate(self, data: object) -> FlextResult[None]:
+        """Validate age data."""
+        if not isinstance(data, int):
+            return FlextResult[None].fail("Age must be an integer")
+        if not (self.min_age <= data <= self.max_age):
+            return FlextResult[None].fail(
+                f"Age must be between {self.min_age} and {self.max_age}"
+            )
+        return FlextResult[None].ok(None)
 
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
@@ -275,8 +280,14 @@ class AgeRangeRule(FlextValidationRule):
         return f"{field_name} must be between {self.min_age} and {self.max_age}"
 
 
-class NonEmptyStringRule(FlextValidationRule):
-    """Non-empty string validation rule."""
+class NonEmptyStringRule:
+    """Non-empty string validation rule implementing FlextProtocols.Foundation.Validator protocol."""
+
+    def validate(self, data: object) -> FlextResult[None]:
+        """Validate non-empty string data."""
+        if not isinstance(data, str) or len(data.strip()) == 0:
+            return FlextResult[None].fail("Must be a non-empty string")
+        return FlextResult[None].ok(None)
 
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
@@ -290,8 +301,14 @@ class NonEmptyStringRule(FlextValidationRule):
         return f"{field_name} must be a non-empty string"
 
 
-class PositiveNumberRule(FlextValidationRule):
-    """Positive number validation rule."""
+class PositiveNumberRule:
+    """Positive number validation rule implementing FlextProtocols.Foundation.Validator protocol."""
+
+    def validate(self, data: object) -> FlextResult[None]:
+        """Validate positive number data."""
+        if not isinstance(data, (int, float)) or data <= 0:
+            return FlextResult[None].fail("Must be a positive number")
+        return FlextResult[None].ok(None)
 
     def apply(self, value: object, field_name: str) -> FlextResult[object]:
         """Apply rule and return value when valid."""
@@ -310,14 +327,21 @@ class PositiveNumberRule(FlextValidationRule):
 # =============================================================================
 
 
-class UserService(FlextService):
-    """User service demonstrating FlextService lifecycle management."""
+class UserService:
+    """User service implementing FlextService protocol for lifecycle management."""
 
     def __init__(self) -> None:
         """Initialize UserService."""
         self._users: dict[str, User] = {}
         self._is_running = False
         self._next_id = 1
+
+    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
+        """Callable interface for service invocation."""
+        # Simple implementation for protocol compliance
+        if not self._is_running:
+            return FlextResult[None].fail("Service not started")
+        return FlextResult[None].ok(None)
 
     def start(self) -> FlextResult[None]:
         """Start the user service."""
@@ -335,15 +359,15 @@ class UserService(FlextService):
         self._is_running = False
         return FlextResult[None].ok(None)
 
-    def health_check(self) -> FlextResult[TAnyDict]:
+    def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Check user service health."""
-        health_status: TAnyDict = {
+        health_status: FlextTypes.Core.Dict = {
             "service": "UserService",
             "status": "healthy" if self._is_running else "stopped",
             "total_users": len(self._users),
             "uptime_status": "running" if self._is_running else "stopped",
         }
-        return FlextResult[TAnyDict].ok(health_status)
+        return FlextResult[FlextTypes.Core.Dict].ok(health_status)
 
     def create_user(
         self,
@@ -435,10 +459,10 @@ class UserCommandHandler(FlextCommandHandler):
         """
         self._user_service = user_service
 
-    def can_handle(self, message: object) -> bool:
+    def can_handle(self, message_type: object) -> bool:
         """Check if can handle user-related messages."""
-        return hasattr(message, "type") and str(
-            getattr(message, "type", ""),
+        return hasattr(message_type, "type") and str(
+            getattr(message_type, "type", ""),
         ).startswith("user")
 
     @property
@@ -498,7 +522,9 @@ class ValidationMiddleware:
 
     def __init__(self) -> None:
         """Initialize ValidationMiddleware."""
-        self._validators: dict[str, list[FlextValidationRule]] = {}
+        self._validators: dict[
+            str, list[FlextProtocols.Foundation.Validator[object]]
+        ] = {}
 
     def process(
         self,
@@ -545,8 +571,8 @@ class ValidationMiddleware:
 # =============================================================================
 
 
-class UserRepository(FlextRepository[User]):
-    """User repository demonstrating FlextRepository."""
+class UserRepository:
+    """User repository implementing FlextRepository[User] protocol."""
 
     def __init__(self) -> None:
         """Initialize UserRepository."""
@@ -597,8 +623,8 @@ class UserRepository(FlextRepository[User]):
         return FlextResult[None].ok(None)
 
 
-class DatabaseUnitOfWork(FlextUnitOfWork):
-    """Database unit of work demonstrating FlextUnitOfWork."""
+class DatabaseUnitOfWork:
+    """Database unit of work implementing FlextUnitOfWork protocol."""
 
     def __init__(self, user_repo: UserRepository) -> None:
         """Initialize DatabaseUnitOfWork.
@@ -796,8 +822,8 @@ class SimplePluginContext:
         self._services[service_name] = service
 
 
-class EmailNotificationPlugin(FlextPlugin):
-    """Email notification plugin demonstrating FlextPlugin."""
+class EmailNotificationPlugin:
+    """Email notification plugin implementing FlextPlugin protocol."""
 
     def __init__(self) -> None:
         """Initialize EmailNotificationPlugin."""
@@ -877,8 +903,8 @@ class EmailNotificationPlugin(FlextPlugin):
         )
 
 
-class AuditLogPlugin(FlextPlugin):
-    """Audit log plugin demonstrating FlextPlugin."""
+class AuditLogPlugin:
+    """Audit log plugin implementing FlextPlugin protocol."""
 
     def __init__(self) -> None:
         """Initialize AuditLogPlugin."""

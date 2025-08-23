@@ -19,10 +19,10 @@ from collections.abc import Callable
 from typing import Any
 
 from flext_core import (
+    FlextFieldType,
     FlextResult,
+    FlextTypes,
 )
-from flext_core.constants import FlextFieldType
-from flext_core.typings import FlextTypes
 
 JsonDict = FlextTypes.Core.JsonDict
 
@@ -229,6 +229,7 @@ class TestDataFactory:
             Mock validator function
 
         """
+
         def validator(value: Any) -> FlextResult[Any]:
             if should_pass:
                 return FlextResult[Any].ok(value)
@@ -259,7 +260,9 @@ class TestDataFactory:
         return json.dumps(data, indent=2)
 
     @staticmethod
-    def create_field_types_matrix() -> list[tuple[FlextFieldType, list[Any], list[bool]]]:
+    def create_field_types_matrix() -> list[
+        tuple[FlextFieldType, list[Any], list[bool]]
+    ]:
         """Create matrix of field types with test values and expected validity.
 
         Returns:
@@ -299,7 +302,11 @@ class TestDataFactory:
         """
         return {
             "empty": ["", [], {}, None],
-            "large": ["x" * 10000, list(range(1000)), {f"key_{i}": i for i in range(100)}],
+            "large": [
+                "x" * 10000,
+                list(range(1000)),
+                {f"key_{i}": i for i in range(100)},
+            ],
             "unicode": ["🚀", "测试", "مرحبا", "🔥🎯"],
             "special_chars": ["!@#$%^&*()", "\n\t\r", "\\", "'\""],
             "numeric_edge": [0, -1, 999999999, 1e-10, float("inf")],

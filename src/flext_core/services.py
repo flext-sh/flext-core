@@ -10,12 +10,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 from flext_core.mixins import FlextServiceMixin
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult, FlextResultUtils
 from flext_core.utilities import FlextPerformance, FlextProcessingUtils, FlextUtilities
-
-# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
-type ServiceProtocol = FlextProtocols.Domain.Service
 
 # =============================================================================
 # FLEXT SERVICE PROCESSOR - Template base for processors to eliminate boilerplate
@@ -114,16 +110,6 @@ class FlextServiceProcessor[ServiceRequestT, ServiceDomainT, ServiceResultT](
         return FlextResultUtils.batch_process(items, handler)
 
 
-class FlextSimpleService(FlextServiceMixin):
-    """Simple service base providing default init, name and initialize."""
-
-    def __init__(self) -> None:
-        super().__init__()
-
-    def get_service_name(self) -> str:  # pragma: no cover - simple default
-        return getattr(self, "service_name", self.__class__.__name__)
-
-    def initialize_service(
-        self,
-    ) -> FlextResult[None]:  # pragma: no cover - simple default
-        return FlextResult[None].ok(None)
+__all__ = [
+    "FlextServiceProcessor",
+]

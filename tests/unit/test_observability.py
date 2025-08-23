@@ -8,18 +8,13 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
-    FlextAlertsProtocol,
     FlextConsoleLogger as ConsoleLogger,  # Modern equivalent
     FlextInMemoryMetrics as InMemoryMetrics,  # Modern equivalent
-    FlextLoggerProtocol,
-    FlextMetricsProtocol,
     FlextMinimalObservability as MinimalObservability,  # Modern equivalent
     FlextNoOpTracer as NoOpTracer,  # Modern equivalent
     FlextSimpleAlerts as SimpleAlerts,  # Modern equivalent
-    FlextTracerProtocol,
     get_observability,
 )
-from flext_core.protocols import FlextObservabilityProtocol
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -46,9 +41,22 @@ class TestConsoleLogger:
         assert hasattr(logger, "audit")
 
     def test_logger_implements_protocol(self) -> None:
-        """Test that logger implements protocol."""
+        """Test that logger implements protocol methods."""
         logger = ConsoleLogger()
-        assert isinstance(logger, FlextLoggerProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_methods = [
+            "trace",
+            "debug",
+            "info",
+            "warning",
+            "error",
+            "critical",
+            "fatal",
+            "audit",
+        ]
+        for method in protocol_methods:
+            assert hasattr(logger, method), f"Logger missing {method} method"
+            assert callable(getattr(logger, method)), f"Logger {method} is not callable"
 
     def test_logger_basic_methods(self) -> None:
         """Test basic logging methods work."""
@@ -70,7 +78,11 @@ class TestNoOpTracer:
     def test_tracer_implements_protocol(self) -> None:
         """Test that tracer implements protocol."""
         tracer = NoOpTracer()
-        assert isinstance(tracer, FlextTracerProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_methods = ["business_span", "technical_span", "error_span"]
+        for method in protocol_methods:
+            assert hasattr(tracer, method), f"Tracer missing {method} method"
+            assert callable(getattr(tracer, method)), f"Tracer {method} is not callable"
 
     def test_business_span(self) -> None:
         """Test business span context manager."""
@@ -109,7 +121,19 @@ class TestInMemoryMetrics:
     def test_metrics_implements_protocol(self) -> None:
         """Test that metrics implements protocol."""
         metrics = InMemoryMetrics()
-        assert isinstance(metrics, FlextMetricsProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_methods = [
+            "increment",
+            "histogram",
+            "gauge",
+            "get_metrics",
+            "clear_metrics",
+        ]
+        for method in protocol_methods:
+            assert hasattr(metrics, method), f"Metrics missing {method} method"
+            assert callable(getattr(metrics, method)), (
+                f"Metrics {method} is not callable"
+            )
 
     def test_increment_counter(self) -> None:
         """Test counter increment."""
@@ -183,7 +207,11 @@ class TestSimpleAlerts:
     def test_alerts_implements_protocol(self) -> None:
         """Test that alerts implements protocol."""
         alerts = SimpleAlerts()
-        assert isinstance(alerts, FlextAlertsProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_methods = ["info", "warning", "error", "critical"]
+        for method in protocol_methods:
+            assert hasattr(alerts, method), f"Alerts missing {method} method"
+            assert callable(getattr(alerts, method)), f"Alerts {method} is not callable"
 
     def test_alert_methods_exist(self) -> None:
         """Test that all alert methods exist."""
@@ -219,7 +247,10 @@ class TestMinimalObservability:
         """Test that observability implements protocol."""
         obs = MinimalObservability()
         assert obs is not None  # Check observability instance exists
-        assert isinstance(obs, FlextObservabilityProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_attributes = ["log", "trace", "metrics", "alerts", "health"]
+        for attr in protocol_attributes:
+            assert hasattr(obs, attr), f"Observability missing {attr} attribute"
 
     def test_observability_components(self) -> None:
         """Test that all components exist."""
@@ -235,10 +266,40 @@ class TestMinimalObservability:
         """Test component type compliance."""
         obs = MinimalObservability()
 
-        assert isinstance(obs.log, FlextLoggerProtocol)
-        assert isinstance(obs.trace, FlextTracerProtocol)
-        assert isinstance(obs.metrics, FlextMetricsProtocol)
-        assert isinstance(obs.alerts, FlextAlertsProtocol)
+        # Test logger methods
+        logger_methods = [
+            "trace",
+            "debug",
+            "info",
+            "warning",
+            "error",
+            "critical",
+            "fatal",
+            "audit",
+        ]
+        for method in logger_methods:
+            assert hasattr(obs.log, method), f"Logger missing {method} method"
+
+        # Test tracer methods
+        tracer_methods = ["business_span", "technical_span", "error_span"]
+        for method in tracer_methods:
+            assert hasattr(obs.trace, method), f"Tracer missing {method} method"
+
+        # Test metrics methods
+        metrics_methods = [
+            "increment",
+            "histogram",
+            "gauge",
+            "get_metrics",
+            "clear_metrics",
+        ]
+        for method in metrics_methods:
+            assert hasattr(obs.metrics, method), f"Metrics missing {method} method"
+
+        # Test alerts methods
+        alerts_methods = ["info", "warning", "error", "critical"]
+        for method in alerts_methods:
+            assert hasattr(obs.alerts, method), f"Alerts missing {method} method"
 
     def test_observability_integration(self) -> None:
         """Test integrated usage."""
@@ -274,7 +335,10 @@ class TestFactoryFunction:
         """Test that factory returns observability protocol."""
         obs = get_observability()
         assert obs is not None  # Check observability instance exists
-        assert isinstance(obs, FlextObservabilityProtocol)
+        # Protocol compliance check via hasattr instead of isinstance
+        protocol_attributes = ["log", "trace", "metrics", "alerts", "health"]
+        for attr in protocol_attributes:
+            assert hasattr(obs, attr), f"Observability missing {attr} attribute"
 
     def test_get_observability_with_params(self) -> None:
         """Test factory with parameters."""

@@ -13,27 +13,21 @@ import math
 import time
 from decimal import Decimal
 
-from flext_core import (
-    FlextUtilities,
-    TEntityId,
-    TUserData,
-)
-
-# use .shared_domain with dot to access local module
-from ..shared_domain import SharedDomainFactory
-from .complexity_helpers import (
+from examples.shared_domain import SharedDomainFactory
+from examples.utilities.complexity_helpers import (
     DemonstrationSectionHelper,
     ValidationHelper,
 )
-from .domain_models import UtilityDemoUser
-from .formatting_helpers import (
+from examples.utilities.domain_models import UtilityDemoUser
+from examples.utilities.formatting_helpers import (
     generate_hash_id,
     generate_prefixed_id,
     generate_short_id,
 )
-from .validation_utilities import (
+from examples.utilities.validation_utilities import (
     calculate_discount_price,
 )
+from flext_core import FlextTypes, FlextUtilities
 
 # =============================================================================
 # DEMONSTRATION FUNCTIONS - Core utility demonstrations
@@ -48,27 +42,29 @@ def demonstrate_id_generation() -> None:
     DemonstrationSectionHelper.print_section_header(1, "ID Generation Strategies")
 
     # Basic entity ID generation
-    entity_id: TEntityId = FlextUtilities.generate_entity_id()
+    entity_id: FlextTypes.Domain.EntityId = FlextUtilities.generate_entity_id()
     DemonstrationSectionHelper.log_operation("Entity ID", entity_id)
 
     # UUID generation
-    uuid_id: TEntityId = FlextUtilities.generate_uuid()
+    uuid_id: FlextTypes.Domain.EntityId = FlextUtilities.generate_uuid()
     DemonstrationSectionHelper.log_operation("UUID", uuid_id)
 
     # Correlation ID generation
-    correlation_id: TEntityId = FlextUtilities.generate_correlation_id()
+    correlation_id: FlextTypes.Domain.EntityId = (
+        FlextUtilities.generate_correlation_id()
+    )
     DemonstrationSectionHelper.log_operation("Correlation ID", correlation_id)
 
     # Custom prefixed ID
-    prefixed_id: TEntityId = generate_prefixed_id("USER", 8)
+    prefixed_id: FlextTypes.Domain.EntityId = generate_prefixed_id("USER", 8)
     DemonstrationSectionHelper.log_operation("Prefixed ID", prefixed_id)
 
     # Hash-based ID
-    hash_id: TEntityId = generate_hash_id("user@example.com")
+    hash_id: FlextTypes.Domain.EntityId = generate_hash_id("user@example.com")
     DemonstrationSectionHelper.log_operation("Hash ID", hash_id)
 
     # Short ID
-    short_id: TEntityId = generate_short_id(6)
+    short_id: FlextTypes.Domain.EntityId = generate_short_id(6)
     DemonstrationSectionHelper.log_operation("Short ID", short_id)
 
     DemonstrationSectionHelper.log_success("ID generation demonstration completed")
@@ -119,13 +115,13 @@ def demonstrate_validation() -> None:
     DemonstrationSectionHelper.print_section_header(4, "Data Validation")
 
     # Test user data validation
-    valid_user_data: TUserData = {
+    valid_user_data: FlextTypes.Auth.UserData = {
         "name": "John Doe",
         "email": "john@example.com",
         "age": 30,
     }
 
-    invalid_user_data: TUserData = {
+    invalid_user_data: FlextTypes.Auth.UserData = {
         "name": "",
         "email": "invalid-email",
         "age": "not-a-number",

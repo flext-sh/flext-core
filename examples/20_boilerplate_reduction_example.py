@@ -10,7 +10,8 @@ import os
 from datetime import UTC, datetime
 from typing import cast
 
-from flext_core import FlextDomainService, FlextResult, TAnyDict, get_logger
+from flext_core import FlextDomainService, FlextResult, get_logger
+from flext_core.typings import FlextTypes
 
 logger = get_logger(__name__)
 
@@ -48,7 +49,7 @@ class TraditionalOracleService:
             logger.exception("Configuration validation failed")
             return FlextResult.fail(f"Validation failed: {e}")
 
-    def execute_query(self, query: str) -> FlextResult[TAnyDict]:
+    def execute_query(self, query: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute database query."""
         try:
             # Validate configuration first
@@ -61,7 +62,7 @@ class TraditionalOracleService:
             logger.info("Executing query: %s", query)
 
             # Simulate query execution
-            result: TAnyDict = {
+            result: FlextTypes.Core.Dict = {
                 "query": query,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
@@ -89,7 +90,7 @@ class TraditionalOracleService:
 # ==============================================================================
 
 
-class EnhancedOracleService(FlextDomainService[TAnyDict]):
+class EnhancedOracleService(FlextDomainService[FlextTypes.Core.Dict]):
     """Enhanced service using FlextDomainService - much less boilerplate."""
 
     host: str
@@ -97,13 +98,13 @@ class EnhancedOracleService(FlextDomainService[TAnyDict]):
     username: str
     password: str
 
-    def execute(self) -> FlextResult[TAnyDict]:
+    def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute the domain service operation."""
         result = self.execute_operation(
             "oracle_service_operation",
             self._perform_operation,
         )
-        return result.map(lambda x: cast("TAnyDict", x))
+        return result.map(lambda x: cast("FlextTypes.Core.Dict", x))
 
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration - override from base class."""
@@ -117,14 +118,14 @@ class EnhancedOracleService(FlextDomainService[TAnyDict]):
             return FlextResult.fail("Port must be positive")
         return FlextResult.ok(None)
 
-    def execute_query(self, query: str) -> FlextResult[TAnyDict]:
+    def execute_query(self, query: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute database query using enhanced error handling."""
         result = self.execute_operation(
             "execute_query",
             self._execute_query_impl,
             query,
         )
-        return result.map(lambda x: cast("TAnyDict", x))
+        return result.map(lambda x: cast("FlextTypes.Core.Dict", x))
 
     def _execute_query_impl(self, query: str) -> dict[str, str]:
         """Execute query implementation with proper error handling."""
@@ -182,7 +183,7 @@ def demonstrate_boilerplate_reduction() -> None:
 # ==============================================================================
 
 
-class LDAPConnectionService(FlextDomainService[TAnyDict]):
+class LDAPConnectionService(FlextDomainService[FlextTypes.Core.Dict]):
     """Real-world example: LDAP connection service."""
 
     host: str
@@ -192,13 +193,13 @@ class LDAPConnectionService(FlextDomainService[TAnyDict]):
     base_dn: str
     use_ssl: bool = False
 
-    def execute(self) -> FlextResult[TAnyDict]:
+    def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute the domain service operation."""
         result = self.execute_operation(
             "ldap_connection_test",
             self._test_connection,
         )
-        return result.map(lambda x: cast("TAnyDict", x))
+        return result.map(lambda x: cast("FlextTypes.Core.Dict", x))
 
     def validate_config(self) -> FlextResult[None]:
         """Validate LDAP configuration."""
@@ -213,14 +214,14 @@ class LDAPConnectionService(FlextDomainService[TAnyDict]):
             return FlextResult.fail(f"Port must be between 1 and {max_port}")
         return FlextResult.ok(None)
 
-    def search_users(self, filter_expr: str) -> FlextResult[TAnyDict]:
+    def search_users(self, filter_expr: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Search users in LDAP."""
         result = self.execute_operation(
             "ldap_search",
             self._search_users_impl,
             filter_expr,
         )
-        return result.map(lambda x: cast("TAnyDict", x))
+        return result.map(lambda x: cast("FlextTypes.Core.Dict", x))
 
     def _test_connection(self) -> dict[str, object]:
         """Test LDAP connection."""

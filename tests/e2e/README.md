@@ -43,7 +43,7 @@ def test_complete_user_registration_flow():
     assert result.success
 
     # Step 3: Verify user creation
-    user = result.unwrap()
+    user = result.value
     assert user.id is not None
     assert user.email == "newuser@example.com"
     assert user.is_active is False
@@ -58,7 +58,7 @@ def test_complete_user_registration_flow():
         password="SecurePass123!"
     )
     assert login_result.success
-    assert login_result.unwrap().token is not None
+    assert login_result.value.token is not None
 ```
 
 ### Data Processing Pipeline
@@ -83,7 +83,7 @@ def test_data_processing_pipeline():
 
     # Verify all stages completed
     assert result.success
-    output = result.unwrap()
+    output = result.value
 
     # Validate output
     assert output["status"] == "completed"
@@ -212,7 +212,7 @@ class TestCompleteWorkflows:
             password="secure123"
         )
         assert create_result.success
-        user_id = create_result.unwrap().id
+        user_id = create_result.value.id
 
         # Update user
         update_result = app.update_user(
@@ -226,7 +226,9 @@ class TestCompleteWorkflows:
         assert deactivate_result.success
 
         # Verify final state
-        user = app.get_user(user_id).unwrap()
+        user_result = app.get_user(user_id)
+        assert user_result.success
+        user = user_result.value
         assert user.name == "Updated Name"
         assert user.is_active is False
 ```
@@ -267,7 +269,9 @@ def test_concurrent_operations():
     assert failed <= 5
 
     # Verify data consistency
-    all_users = app.list_users().unwrap()
+    users_result = app.list_users()
+    assert users_result.success
+    all_users = users_result.value
     assert len(all_users) == successful
 ```
 
@@ -425,17 +429,23 @@ def test_state_transitions():
     app = Application()
 
     # Initial state
-    order = app.create_order({"items": ["item1", "item2"]}).unwrap()
+    order_result = app.create_order({"items": ["item1", "item2"]})
+    assert order_result.success
+    order = order_result.value
     assert order.status == "pending"
 
     # Process order
     app.process_order(order.id)
-    order = app.get_order(order.id).unwrap()
+    order_result = app.get_order(order.id)
+    assert order_result.success
+    order = order_result.value
     assert order.status == "processing"
 
     # Complete order
     app.complete_order(order.id)
-    order = app.get_order(order.id).unwrap()
+    order_result = app.get_order(order.id)
+    assert order_result.success
+    order = order_result.value
     assert order.status == "completed"
 
     # Verify state consistency
@@ -466,7 +476,8 @@ class TestWithCleanup:
     def test_with_resources(self):
         """Test that creates resources."""
         result = self.app.create_resource({"name": "test"})
-        self.created_resources.append(result.unwrap().id)
+        if result.success:
+            self.created_resources.append(result.value.id)
 
         # Test logic here
         assert result.success

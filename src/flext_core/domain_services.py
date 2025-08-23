@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import override
 
 from pydantic import ConfigDict
 
@@ -50,6 +51,7 @@ class FlextDomainService[TDomainResult](
         validation_result = self.validate_business_rules()
         return validation_result.is_success
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate domain service business rules (override in subclasses)."""
         return FlextResult[None].ok(None)

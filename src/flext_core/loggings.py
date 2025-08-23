@@ -389,7 +389,7 @@ class FlextLogger:
             merged_context.update(context)
 
         # Add our standard fields
-        log_data = {
+        log_data: dict[str, object] = {
             "logger": self._name,
             **merged_context,
         }
@@ -807,17 +807,9 @@ class FlextLogContextManager:
 
 
 # =============================================================================
-# MIGRATION NOTICE - Legacy functions moved to legacy.py
 # =============================================================================
-
-# IMPORTANT: Legacy convenience functions have been moved to legacy.py
-#
-# Migration guide:
-# OLD: from flext_core.loggings import get_logger
-# NEW: from flext_core.legacy import get_logger (with deprecation warning)
-# MODERN: from flext_core import FlextLoggerFactory; FlextLoggerFactory.get_logger()
-#
-# For new code, use FlextLoggerFactory methods directly
+# MODERN LOGGING API - Use FlextLoggerFactory directly
+# =============================================================================
 
 
 # Additional interface methods for FlextLogger class
@@ -878,21 +870,19 @@ __all__: list[str] = [
     "FlextLogLevel",
     "FlextLogger",
     "FlextLoggerFactory",
-    # Legacy function aliases
+    # Convenience functions
     "create_log_context",
     "flext_get_logger",
-    "get_logger",  # Convenience function
-    "setup_custom_trace_level",  # Keep this as it's used internally
-    # NOTE: Legacy functions moved to legacy.py
-    # Import from flext_core.legacy if needed for compatibility
+    "get_logger",
+    "setup_custom_trace_level",
 ]
 
 
 # =============================================================================
-# ADDITIONAL LEGACY FUNCTIONS - Backward compatibility
+# CONVENIENCE FUNCTIONS - Modern API
 # =============================================================================
 
 
 def flext_get_logger(name: str = "flext") -> FlextLogger:
-    """Get logger instance (legacy function)."""
+    """Get logger instance (convenience function)."""
     return get_logger(name)

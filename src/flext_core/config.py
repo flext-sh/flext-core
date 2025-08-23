@@ -17,7 +17,7 @@ import json
 import os
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import cast
+from typing import ClassVar, cast, override
 
 from pydantic import (
     Field,
@@ -45,152 +45,20 @@ remaining customizable for different environments and use cases.
 """
 
 
-class FlextSystemDefaults:
-    """Centralized system defaults for the FLEXT ecosystem."""
-
-    class Security:
-        """Security-related configuration defaults."""
-
-        MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
-        MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
-        MAX_PASSWORD_LENGTH = 64
-        MAX_USERNAME_LENGTH = 32
-        MIN_SECRET_KEY_LENGTH_STRONG = 64
-        MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
-
-    class Network:
-        """Network and service defaults."""
-
-        TIMEOUT = 30
-        RETRIES = 3
-        CONNECTION_TIMEOUT = 10
-
-    class Pagination:
-        """Pagination defaults."""
-
-        PAGE_SIZE = 100
-        MAX_PAGE_SIZE = 1000
-
-    class Logging:
-        """Logging configuration defaults."""
-
-        LOG_LEVEL = "INFO"
-
-    class Environment:
-        """Environment defaults."""
-
-        DEFAULT_ENV = "development"
+# Legacy compatibility layer removed - use FlextConfig.SystemDefaults directly
 
 
-# Backward compatibility constants (used throughout the codebase)
-MIN_PASSWORD_LENGTH_HIGH_SECURITY = (
-    FlextSystemDefaults.Security.MIN_PASSWORD_LENGTH_HIGH_SECURITY
-)
-MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = (
-    FlextSystemDefaults.Security.MIN_PASSWORD_LENGTH_MEDIUM_SECURITY
-)
-MAX_PASSWORD_LENGTH = FlextSystemDefaults.Security.MAX_PASSWORD_LENGTH
-MAX_USERNAME_LENGTH = FlextSystemDefaults.Security.MAX_USERNAME_LENGTH
-MIN_SECRET_KEY_LENGTH_STRONG = FlextSystemDefaults.Security.MIN_SECRET_KEY_LENGTH_STRONG
-MIN_SECRET_KEY_LENGTH_ADEQUATE = (
-    FlextSystemDefaults.Security.MIN_SECRET_KEY_LENGTH_ADEQUATE
-)
+# Direct constants (use FlextConfig.SystemDefaults in new code)
+MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
+MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
+MAX_PASSWORD_LENGTH = 64
+MAX_USERNAME_LENGTH = 32
+MIN_SECRET_KEY_LENGTH_STRONG = 64
+MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
 
 
-class FlextSettings(BaseSettings):
-    """Base settings class using pure Pydantic BaseSettings patterns.
-
-    This is the foundation for all environment-aware configuration across
-    the FLEXT ecosystem. Provides automatic environment variable loading
-    with type safety and validation.
-    """
-
-    model_config = SettingsConfigDict(
-        # Environment integration
-        env_prefix="FLEXT_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        # Validation and safety
-        validate_assignment=True,
-        extra="ignore",
-        str_strip_whitespace=True,
-        # JSON schema generation
-        json_schema_extra={
-            "examples": [],
-            "description": "FLEXT settings with environment variable support",
-        },
-    )
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules - override in subclasses for specific rules."""
-        # Default implementation: no business rules => success
-        return FlextResult[None].ok(None)
-
-    # Note: Do not use field_serializer for model_config; it's not a model field.
-
-    @model_serializer(mode="wrap", when_used="json")
-    def serialize_settings_for_api(
-        self,
-        serializer: Callable[[FlextSettings], dict[str, object]],
-        info: SerializationInfo,
-    ) -> dict[str, object]:
-        """Model serializer for settings API output with environment metadata."""
-        _ = info  # Acknowledge parameter for future use
-        data = serializer(self)
-        # With JSON mode, Pydantic always returns dict
-        # Add settings-specific API metadata
-        data["_settings"] = {
-            "type": "FlextSettings",
-            "env_loaded": True,
-            "validation_enabled": True,
-            "api_version": "v2",
-            "serialization_format": "json",
-        }
-        return data
-
-    @classmethod
-    def create_with_validation(
-        cls,
-        overrides: Mapping[str, FlextTypes.Core.Value] | None = None,
-        **kwargs: FlextTypes.Core.Value,
-    ) -> FlextResult[FlextSettings]:
-        """Create settings instance with validation and proper override handling."""
-        try:
-            # Start with default instance
-            instance = cls()
-
-            # Prepare overrides dict - support both overrides parameter and kwargs
-            all_overrides: FlextTypes.Core.Dict = {}
-            if overrides:
-                # Mapping -> dict
-                all_overrides.update(dict(overrides))
-            all_overrides.update(kwargs)
-
-            # Apply overrides if any provided
-            if all_overrides:
-                # Get current values as dict
-                current_data = instance.model_dump()
-                # Update with overrides
-                current_data.update(all_overrides)
-                # Create new instance with merged data
-                instance = cls.model_validate(current_data)
-
-            validation_result = instance.validate_business_rules()
-            if validation_result.is_failure:
-                return FlextResult[FlextSettings].fail(
-                    validation_result.error or "Validation failed"
-                )
-            return FlextResult[FlextSettings].ok(instance)
-        except Exception as e:
-            return FlextResult[FlextSettings].fail(f"Settings creation failed: {e}")
-
-
-class FlextBaseConfigModel(FlextSettings):
-    """Backward-compatible base for configuration models.
-
-    Subclassing this class is equivalent to subclassing ``FlextSettings``.
-    """
+# FlextSettings and FlextBaseConfigModel facades will be defined after FlextConfig class
+# to avoid circular reference issues
 
 
 class FlextConfig(FlextModel):
@@ -198,7 +66,147 @@ class FlextConfig(FlextModel):
 
     This is the core configuration model for the FLEXT ecosystem,
     providing type-safe configuration with automatic validation.
+
+    Following the [module].py + Flext[Module] pattern, this class consolidates
+    all configuration functionality while maintaining backward compatibility
+    through nested classes and facades.
     """
+
+    # =========================================================================
+    # NESTED CLASSES - Core configuration components consolidated
+    # =========================================================================
+
+    class SystemDefaults:
+        """Centralized system defaults for the FLEXT ecosystem."""
+
+        class Security:
+            """Security-related configuration defaults."""
+
+            MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
+            MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = 8
+            MAX_PASSWORD_LENGTH = 64
+            MAX_USERNAME_LENGTH = 32
+            MIN_SECRET_KEY_LENGTH_STRONG = 64
+            MIN_SECRET_KEY_LENGTH_ADEQUATE = 32
+
+        class Network:
+            """Network and service defaults."""
+
+            TIMEOUT = 30
+            RETRIES = 3
+            CONNECTION_TIMEOUT = 10
+
+        class Pagination:
+            """Pagination defaults."""
+
+            PAGE_SIZE = 100
+            MAX_PAGE_SIZE = 1000
+
+        class Logging:
+            """Logging configuration defaults."""
+
+            LOG_LEVEL = "INFO"
+
+        class Environment:
+            """Environment defaults."""
+
+            DEFAULT_ENV = "development"
+
+    class Settings(BaseSettings):
+        """Base settings class using pure Pydantic BaseSettings patterns.
+
+        This is the foundation for all environment-aware configuration across
+        the FLEXT ecosystem. Provides automatic environment variable loading
+        with type safety and validation.
+        """
+
+        model_config = SettingsConfigDict(
+            # Environment integration
+            env_prefix="FLEXT_",
+            env_file=".env",
+            env_file_encoding="utf-8",
+            case_sensitive=False,
+            # Validation and safety
+            validate_assignment=True,
+            extra="ignore",
+            str_strip_whitespace=True,
+            # JSON schema generation
+            json_schema_extra={
+                "examples": [],
+                "description": "FLEXT settings with environment variable support",
+            },
+        )
+
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate business rules - override in subclasses for specific rules."""
+            # Default implementation: no business rules => success
+            return FlextResult[None].ok(None)
+
+        # Note: Do not use field_serializer for model_config; it's not a model field.
+
+        @model_serializer(mode="wrap", when_used="json")
+        def serialize_settings_for_api(
+            self,
+            serializer: Callable[[FlextConfig.Settings], dict[str, object]],
+            info: SerializationInfo,
+        ) -> dict[str, object]:
+            """Model serializer for settings API output with environment metadata."""
+            _ = info  # Acknowledge parameter for future use
+            data = serializer(self)
+            # With JSON mode, Pydantic always returns dict
+            # Add settings-specific API metadata
+            data["_settings"] = {
+                "type": "FlextSettings",
+                "env_loaded": True,
+                "validation_enabled": True,
+                "api_version": "v2",
+                "serialization_format": "json",
+            }
+            return data
+
+        @classmethod
+        def create_with_validation(
+            cls,
+            overrides: Mapping[str, FlextTypes.Core.Value] | None = None,
+            **kwargs: FlextTypes.Core.Value,
+        ) -> FlextResult[FlextConfig.Settings]:
+            """Create settings instance with validation and proper override handling."""
+            try:
+                # Start with default instance
+                instance = cls()
+
+                # Prepare overrides dict - support both overrides parameter and kwargs
+                all_overrides: FlextTypes.Core.Dict = {}
+                if overrides:
+                    # Mapping -> dict
+                    all_overrides.update(dict(overrides))
+                all_overrides.update(kwargs)
+
+                # Apply overrides if any provided
+                if all_overrides:
+                    # Get current values as dict
+                    current_data = instance.model_dump()
+                    # Update with overrides
+                    current_data.update(all_overrides)
+                    # Create new instance with merged data
+                    instance = cls.model_validate(current_data)
+
+                validation_result = instance.validate_business_rules()
+                if validation_result.is_failure:
+                    return FlextResult[FlextConfig.Settings].fail(
+                        validation_result.error or "Validation failed"
+                    )
+                return FlextResult[FlextConfig.Settings].ok(instance)
+            except Exception as e:
+                return FlextResult[FlextConfig.Settings].fail(
+                    f"Settings creation failed: {e}"
+                )
+
+    class BaseConfigModel(Settings):
+        """Backward-compatible base for configuration models.
+
+        Subclassing this class is equivalent to subclassing ``FlextConfig.Settings``.
+        """
 
     # Core identification
     name: str = Field(default="flext", description="Configuration name")
@@ -265,6 +273,7 @@ class FlextConfig(FlextModel):
             raise ValueError(msg)
         return v
 
+    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate FLEXT-specific business rules."""
         if self.debug and self.environment == "production":
@@ -356,7 +365,7 @@ class FlextConfig(FlextModel):
         """Create complete configuration with defaults and validation."""
         try:
             # Convert config_data to dict for manipulation
-            working_config = dict(config_data)
+            working_config: dict[str, object] = dict(config_data)
 
             # Apply defaults if requested
             if apply_defaults:
@@ -611,6 +620,79 @@ class FlextConfig(FlextModel):
             "allow_reuse": allow_reuse,
         }
 
+    # =========================================================================
+    # TIER 1 MODULE PATTERN - Consolidated static interface
+    # =========================================================================
+
+    @staticmethod
+    def get_system_defaults() -> type[FlextSystemDefaults]:
+        """Access to system defaults - Tier 1 consolidated interface."""
+        return FlextSystemDefaults
+
+    @staticmethod
+    def get_env_var(
+        var_name: str,
+        default: str | None = None,
+    ) -> FlextResult[str]:
+        """Get environment variable safely - Tier 1 consolidated interface."""
+        return safe_get_env_var(var_name, default)
+
+    @staticmethod
+    def load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
+        """Load JSON file safely - Tier 1 consolidated interface."""
+        return safe_load_json_file(file_path)
+
+    @staticmethod
+    def merge_config_dicts(
+        base_config: dict[str, object],
+        override_config: dict[str, object],
+    ) -> FlextResult[dict[str, object]]:
+        """Merge configuration dictionaries - Tier 1 consolidated interface."""
+        return merge_configs(base_config, override_config)
+
+    @classmethod
+    def create_settings(
+        cls,
+        overrides: Mapping[str, FlextTypes.Core.Value] | None = None,
+        **kwargs: FlextTypes.Core.Value,
+    ) -> FlextResult[FlextConfig.Settings]:
+        """Create Settings instance - Tier 1 consolidated interface."""
+        return cls.Settings.create_with_validation(overrides, **kwargs)
+
+    # =========================================================================
+    # COMPATIBILITY FACADES - Access to all config classes
+    # =========================================================================
+
+    # Class-level access to all configuration components (updated for nested classes)
+    Defaults: ClassVar[type[SystemDefaults]] = SystemDefaults
+
+    # Backward compatibility constants
+    MIN_PASSWORD_LENGTH_HIGH_SECURITY: ClassVar[int] = (
+        SystemDefaults.Security.MIN_PASSWORD_LENGTH_HIGH_SECURITY
+    )
+    MIN_PASSWORD_LENGTH_MEDIUM_SECURITY: ClassVar[int] = (
+        SystemDefaults.Security.MIN_PASSWORD_LENGTH_MEDIUM_SECURITY
+    )
+    MAX_PASSWORD_LENGTH: ClassVar[int] = SystemDefaults.Security.MAX_PASSWORD_LENGTH
+    MAX_USERNAME_LENGTH: ClassVar[int] = SystemDefaults.Security.MAX_USERNAME_LENGTH
+    MIN_SECRET_KEY_LENGTH_STRONG: ClassVar[int] = (
+        SystemDefaults.Security.MIN_SECRET_KEY_LENGTH_STRONG
+    )
+    MIN_SECRET_KEY_LENGTH_ADEQUATE: ClassVar[int] = (
+        SystemDefaults.Security.MIN_SECRET_KEY_LENGTH_ADEQUATE
+    )
+
+
+# =============================================================================
+# COMPATIBILITY FACADES - Defined after FlextConfig to avoid circular references
+# =============================================================================
+
+
+# Compatibility facades for backward compatibility
+FlextSettings = FlextConfig.Settings
+FlextBaseConfigModel = FlextConfig.BaseConfigModel
+FlextSystemDefaults = FlextConfig.SystemDefaults
+
 
 # =============================================================================
 # UTILITY FUNCTIONS (Foundation patterns - these should remain)
@@ -681,3 +763,21 @@ def merge_configs(
         return FlextResult[dict[str, object]].ok(merged)
     except Exception as e:
         return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
+
+
+# Export only the classes and functions defined in this module
+__all__ = [
+    "MAX_PASSWORD_LENGTH",
+    "MAX_USERNAME_LENGTH",
+    "MIN_PASSWORD_LENGTH_HIGH_SECURITY",
+    "MIN_PASSWORD_LENGTH_MEDIUM_SECURITY",
+    "MIN_SECRET_KEY_LENGTH_ADEQUATE",
+    "MIN_SECRET_KEY_LENGTH_STRONG",
+    "FlextBaseConfigModel",
+    "FlextConfig",
+    "FlextSettings",
+    "FlextSystemDefaults",
+    "merge_configs",
+    "safe_get_env_var",
+    "safe_load_json_file",
+]

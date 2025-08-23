@@ -7,7 +7,7 @@ import time
 import zlib
 from base64 import b64decode, b64encode
 from collections.abc import Callable, Mapping
-from typing import cast
+from typing import cast, override
 
 from pydantic import (
     BaseModel,
@@ -52,7 +52,7 @@ SERIALIZATION_FORMAT_JSON_COMPRESSED = (
 SERIALIZATION_FORMAT_BINARY = "binary"
 
 # Go bridge type mappings for proper type reconstruction
-GO_TYPE_MAPPINGS = {
+GO_TYPE_MAPPINGS: dict[str, object] = {
     "string": str,
     "int": int,
     "int64": int,
@@ -64,7 +64,7 @@ GO_TYPE_MAPPINGS = {
 }
 
 # Python to Go type mappings for serialization
-PYTHON_TO_GO_TYPES = {
+PYTHON_TO_GO_TYPES: dict[type[object], str] = {
     str: "string",
     int: "int64",
     float: "float64",
@@ -118,6 +118,16 @@ class FlextPayload[T](
         serialization_alias="payloadMetadata",
     )
 
+    @property
+    def value(self) -> T | None:
+        """Get payload data using modern .value access pattern.
+
+        Returns:
+            Payload data or None
+
+        """
+        return self.data
+
     @classmethod
     def create(cls, data: T, **metadata: object) -> FlextResult[FlextPayload[T]]:
         """Create payload with validation.
@@ -159,7 +169,7 @@ class FlextPayload[T](
         """
         # Keys in **additional are always strings, so merge directly
         new_metadata = {**self.metadata, **additional}
-        return FlextPayload(data=self.data, metadata=new_metadata)
+        return FlextPayload(data=self.value, metadata=new_metadata)
 
     def enrich_metadata(
         self, additional: FlextTypes.Payload.Metadata
@@ -175,7 +185,7 @@ class FlextPayload[T](
         """
         # Merge existing metadata with additional metadata
         new_metadata = {**self.metadata, **additional}
-        return FlextPayload(data=self.data, metadata=new_metadata)
+        return FlextPayload(data=self.value, metadata=new_metadata)
 
     @classmethod
     def create_from_dict(
@@ -244,7 +254,7 @@ class FlextPayload[T](
             True if data is not None
 
         """
-        return self.data is not None
+        return self.value is not None
 
     def get_data(self) -> FlextResult[T]:
         """Get payload data with type safety.
@@ -253,9 +263,9 @@ class FlextPayload[T](
             FlextResult containing data or error if None
 
         """
-        if self.data is None:
+        if self.value is None:
             return FlextResult[T].fail("Payload data is None")
-        return FlextResult[T].ok(self.data)
+        return FlextResult[T].ok(self.value)
 
     def get_data_or_default(self, default: T) -> T:
         """Get payload data or return default if None.
@@ -267,7 +277,7 @@ class FlextPayload[T](
             Payload data or default value
 
         """
-        return self.data if self.data is not None else default
+        return self.value if self.value is not None else default
 
     def transform_data(
         self,
@@ -282,11 +292,11 @@ class FlextPayload[T](
             FlextResult containing new payload with transformed data
 
         """
-        if self.data is None:
+        if self.value is None:
             return FlextResult[FlextPayload[object]].fail("Cannot transform None data")
 
         try:
-            transformed_data = transformer(self.data)
+            transformed_data = transformer(self.value)
             new_payload = FlextPayload(data=transformed_data, metadata=self.metadata)
             return FlextResult[FlextPayload[object]].ok(new_payload)
         except (RuntimeError, ValueError, TypeError) as e3:
@@ -364,6 +374,7 @@ class FlextPayload[T](
             }
         return cast("dict[str, object]", data)
 
+    @override
     def to_dict(self) -> FlextTypes.Payload.SerializedData:
         """Convert payload to dictionary representation.
 
@@ -372,10 +383,11 @@ class FlextPayload[T](
 
         """
         return {
-            "data": self.data,
+            "data": self.value,
             "metadata": self.metadata,
         }
 
+    @override
     def to_dict_basic(self) -> FlextTypes.Payload.SerializedData:
         """Convert to basic dictionary representation."""
         result: dict[str, object] = {}
@@ -485,8 +497,8 @@ class FlextPayload[T](
             Dictionary optimized for cross-service transport.
 
         """
-        base_dict = {
-            "data": self._serialize_for_cross_service(self.data),
+        base_dict: dict[str, object] = {
+            "data": self._serialize_for_cross_service(self.value),
             "metadata": self._serialize_metadata_for_cross_service(self.metadata),
             "payload_type": self.__class__.__name__,
             "serialization_timestamp": time.time(),
@@ -495,8 +507,8 @@ class FlextPayload[T](
 
         if include_type_info:
             base_dict["type_info"] = {
-                "data_type": self._get_go_type_name(type(self.data)),
-                "python_type": self._get_python_type_name(type(self.data)),
+                "data_type": self._get_go_type_name(type(self.value)),
+                "python_type": self._get_python_type_name(type(self.value)),
                 "generic_type": self._extract_generic_type_info(),
             }
 
@@ -801,8 +813,9 @@ class FlextPayload[T](
 
         go_type = type_info.get("data_type")
         if isinstance(go_type, str) and go_type in GO_TYPE_MAPPINGS:
-            target_type = GO_TYPE_MAPPINGS[go_type]
-            return cls._convert_to_target_type(data, target_type)
+            mapped = GO_TYPE_MAPPINGS[go_type]
+            if isinstance(mapped, type):
+                return cls._convert_to_target_type(data, mapped)
         return data
 
     @classmethod
@@ -892,7 +905,7 @@ class FlextPayload[T](
                 encoded_str = b64encode(compressed_bytes).decode()
 
                 # Wrap in compression envelope
-                envelope = {
+                envelope: dict[str, object] = {
                     "format": SERIALIZATION_FORMAT_JSON_COMPRESSED,
                     "data": encoded_str,
                     "original_size": len(json_str.encode()),
@@ -900,11 +913,11 @@ class FlextPayload[T](
                 }
                 return FlextResult[str].ok(json.dumps(envelope))
             # Add format information
-            envelope = {
+            json_envelope: dict[str, object] = {
                 "format": SERIALIZATION_FORMAT_JSON,
                 "data": payload_dict,
             }
-            return FlextResult[str].ok(json.dumps(envelope))
+            return FlextResult[str].ok(json.dumps(json_envelope))
 
         except (TypeError, ValueError, OverflowError) as e7:
             return FlextResult[str].fail(f"Failed to serialize to JSON: {e7}")
@@ -985,19 +998,11 @@ class FlextPayload[T](
         """
         # JSON serialization size
         json_result = self.to_json_string(compressed=False)
-        json_size = (
-            len(json_result.value.encode())
-            if json_result.is_success and json_result.value
-            else 0
-        )
+        json_size = len(json_result.unwrap_or("").encode())
 
         # Compressed size
         compressed_result = self.to_json_string(compressed=True)
-        compressed_size = (
-            len(compressed_result.value.encode())
-            if compressed_result.is_success and compressed_result.value
-            else 0
-        )
+        compressed_size = len(compressed_result.unwrap_or("").encode())
 
         # Basic dict size
         basic_dict = self.to_dict()
@@ -1010,9 +1015,10 @@ class FlextPayload[T](
             "compression_ratio": compressed_size / max(json_size, 1),
         }
 
+    @override
     def __repr__(self) -> str:
         """Return string representation."""
-        data_repr = repr(self.data)
+        data_repr = repr(self.value)
         max_repr_length = 50
         if len(data_repr) > max_repr_length:
             data_repr = f"{data_repr[:47]}..."
@@ -1088,6 +1094,7 @@ class FlextPayload[T](
         """
         return self.has(key)
 
+    @override
     def __hash__(self) -> int:
         """Create hash from payload data and extra fields.
 
@@ -1097,12 +1104,12 @@ class FlextPayload[T](
         """
         # Create hash from data field if it exists and is hashable
         data_hash = 0
-        if self.data is not None:
+        if self.value is not None:
             try:
-                data_hash = hash(self.data)
+                data_hash = hash(self.value)
             except TypeError:
                 # If data is not hashable, use its string representation
-                data_hash = hash(str(self.data))
+                data_hash = hash(str(self.value))
 
         # Create hash from extra fields by converting to sorted tuple
         extra_hash = 0
@@ -1251,8 +1258,9 @@ class FlextMessage(FlextPayload[str]):
     @property
     def text(self) -> str | None:
         """Get message text."""
-        return self.data
+        return self.value
 
+    @override
     def to_cross_service_dict(
         self,
         *,
@@ -1287,6 +1295,7 @@ class FlextMessage(FlextPayload[str]):
         return base_dict
 
     @classmethod
+    @override
     def from_cross_service_dict(
         cls,
         cross_service_dict: dict[str, object],
@@ -1427,6 +1436,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         corr_id = self.get_metadata("correlation_id")
         return str(corr_id) if corr_id is not None else None
 
+    @override
     def to_cross_service_dict(
         self,
         *,
@@ -1460,12 +1470,13 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             base_dict["correlation_id"] = self.correlation_id
 
         # Add event data directly at top level for easier Go access
-        if self.data:
-            base_dict["event_data"] = dict(self.data)
+        if self.value:
+            base_dict["event_data"] = dict(self.value)
 
         return base_dict
 
     @classmethod
+    @override
     def from_cross_service_dict(
         cls,
         cross_service_dict: dict[str, object],
@@ -1520,32 +1531,8 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
 
 
 # =============================================================================
-# MIGRATION NOTICE - Helper functions moved to legacy.py
+# CONVENIENCE FUNCTIONS - Modern cross-service operations
 # =============================================================================
-
-
-# IMPORTANT: Cross-service helper functions have been moved to legacy.py
-#
-# Migration guide:
-# OLD: from flext_core.payload import serialize_payload_for_go_bridge
-# NEW: from flext_core.legacy import serialize_payload_for_go_bridge
-#      (with transition warning)
-# MODERN: use payload.to_json_string() directly with appropriate settings
-#
-# Helper functions moved:
-# - serialize_payload_for_go_bridge()
-# - deserialize_payload_from_go_bridge()
-# - create_cross_service_message()
-# - create_cross_service_event()
-# - validate_cross_service_protocol()
-# - get_serialization_metrics()
-#
-# For new code, use the FlextPayload, FlextMessage, and FlextEvent
-# class methods directly
-#
-# TEST CONVENIENCE: Re-export selected helpers from legacy.py here so
-# imports like `from flext_core.payload import create_cross_service_event` keep
-# working in tests. These are thin wrappers around implementations.
 def create_cross_service_event(
     event_type: str,
     event_data: dict[str, object],
@@ -1627,7 +1614,10 @@ def get_serialization_metrics(
     }
 
     # Try to get data type from payload
-    if hasattr(payload, "data"):
+    if hasattr(payload, "value"):
+        data_obj = getattr(payload, "value", None)
+        metrics["data_type"] = type(data_obj).__name__
+    elif hasattr(payload, "data"):
         data_obj = getattr(payload, "data", None)
         metrics["data_type"] = type(data_obj).__name__
     elif isinstance(payload, dict) and "data" in payload:

@@ -18,11 +18,6 @@ from flext_core.typings import FlextTypes, T
 from flext_core.utilities import FlextGenerators
 from flext_core.validation import flext_validate_service_name
 
-# Use centralized specific types from FlextTypes where appropriate
-ServiceInstance = FlextTypes.Service.ServiceInstance
-# ServiceName moved to validation.py with proper validation
-ServiceKey = FlextTypes.Service.ServiceKey
-
 
 class FlextServiceKey(UserString, Generic[T]):  # noqa: UP046
     """Typed service key for type-safe service resolution.
@@ -72,11 +67,11 @@ class RegisterServiceCommand(FlextCommands.Command):
     """Command to register a service instance."""
 
     service_name: str = ""
-    service_instance: ServiceInstance
+    service_instance: FlextTypes.Service.ServiceInstance
 
     @classmethod
     def create(
-        cls, service_name: str, service_instance: ServiceInstance
+        cls, service_name: str, service_instance: FlextTypes.Service.ServiceInstance
     ) -> RegisterServiceCommand:
         """Create command with default values."""
         return cls(
@@ -101,11 +96,11 @@ class RegisterFactoryCommand(FlextCommands.Command):
     """Command to register a service factory."""
 
     service_name: str = ""
-    factory: ServiceInstance  # Using ServiceInstance for validation
+    factory: FlextTypes.Service.ServiceInstance  # Using ServiceInstance for validation
 
     @classmethod
     def create(
-        cls, service_name: str, factory: ServiceInstance
+        cls, service_name: str, factory: FlextTypes.Service.ServiceInstance
     ) -> RegisterFactoryCommand:
         """Create command with default values."""
         return cls(
@@ -433,7 +428,7 @@ class FlextServiceRegistrar(FlextLoggableMixin):
         # Safe assignment after signature verification. Cast to the expected
         # callable type so static typing understands the stored value.
         factory_callable = cast(
-            "Callable[[], ServiceInstance]", factory
+            "Callable[[], FlextTypes.Service.ServiceInstance]", factory
         )
         self._factories[validated_name] = factory_callable
         self.logger.debug(
@@ -919,47 +914,104 @@ class FlextContainer(FlextLoggableMixin):
             self._registrar.get_factories_dict().update(factories_snapshot)
             return FlextResult[list[str]].fail(f"Batch registration crashed: {e}")
 
+    # =============================================================================
+    # CLASS METHODS FOR GLOBAL CONTAINER MANAGEMENT - Architectural Tier 1 Pattern
+    # =============================================================================
 
-# =============================================================================
-# GLOBAL CONTAINER MANAGEMENT
-# =============================================================================
-
-
-class FlextGlobalContainerManager(FlextLoggableMixin):
-    """Thread-safe global container manager.
-
-    Manages singleton instance of FlextContainer.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.mixin_setup()
-        self._container: FlextContainer | None = None
-
-    def get_container(self) -> FlextContainer:
-        """Get or create a global container.
+    @classmethod
+    def get_global(cls) -> FlextContainer:
+        """Get global container instance (class method).
 
         Returns:
             Global container instance.
 
         """
-        if self._container is None:
-            self.logger.info("Creating global FlextContainer instance")
-            self._container = FlextContainer()
-        return self._container
+        return _global_manager.get_container()
 
-    def set_container(self, container: FlextContainer) -> None:
-        """Set global container.
+    @classmethod
+    def configure_global(cls, container: FlextContainer | None) -> FlextContainer:
+        """Configure global container (class method).
 
         Args:
-            container: Container to set as global.
+            container: Container to configure or None for new container.
+
+        Returns:
+            Configured container.
 
         """
-        self.logger.info(
-            "Configuring global FlextContainer",
-            new_container=str(container),
-        )
-        self._container = container
+        if container is None:
+            container = cls()
+        _global_manager.set_container(container)
+        return container
+
+    @classmethod
+    def get_global_typed(cls, name: str, expected_type: type[T]) -> FlextResult[T]:
+        """Get typed service from global container (class method).
+
+        Args:
+            name: Service identifier.
+            expected_type: Expected service type.
+
+        Returns:
+            Type-safe result with service.
+
+        """
+        container = cls.get_global()
+        return container.get_typed(name, expected_type)
+
+    @classmethod
+    def register_global(cls, name: str, service: object) -> FlextResult[None]:
+        """Register service in global container (class method).
+
+        Args:
+            name: Service identifier.
+            service: Service instance.
+
+        Returns:
+            Result indicating success or failure.
+
+        """
+        container = cls.get_global()
+        return container.register(name, service)
+
+    @classmethod
+    def create_module_utilities(cls, module_name: str) -> dict[str, object]:
+        """Create standardized container helpers for a module namespace (class method).
+
+        Provides three utilities:
+        - get_container: returns the global FlextContainer
+        - configure_dependencies: no-op configurator returning FlextResult[None]
+        - get_service(name): fetches a service by name with fallback to namespaced lookups
+
+        Args:
+            module_name: Logical module namespace used for fallback lookups.
+
+        Returns:
+            Mapping with utility callables.
+
+        """
+
+        def _get_container() -> FlextContainer:
+            return cls.get_global()
+
+        def _configure_dependencies() -> FlextResult[None]:
+            # Intentionally a no-op default. Modules can replace this function
+            # to perform actual registrations when needed.
+            return FlextResult[None].ok(None)
+
+        def _get_service(name: str) -> FlextResult[object]:
+            container = cls.get_global()
+            direct = container.get(name)
+            if direct.is_success:
+                return direct
+            # Fallback to namespaced key
+            return container.get(f"{module_name}.{name}")
+
+        return {
+            "get_container": _get_container,
+            "configure_dependencies": _configure_dependencies,
+            "get_service": _get_service,
+        }
 
 
 # Global container manager instance
@@ -987,37 +1039,7 @@ _global_manager = _SimpleGlobalManager()
 # =============================================================================
 
 
-class FlextContainerUtils:
-    """Container utility functions."""
-
-    @staticmethod
-    def get_flext_container() -> FlextContainer:
-        """Get global container instance.
-
-        Returns:
-            Global container instance.
-
-        """
-        return _global_manager.get_container()
-
-    @staticmethod
-    def configure_flext_container(container: FlextContainer | None) -> FlextContainer:
-        """Configure global container.
-
-        Args:
-            container: Container to configure.
-
-        Returns:
-            Configured container.
-
-        """
-        if container is None:
-            container = FlextContainer()
-        _global_manager.set_container(container)
-        return container
-
-
-# Convenience functions for direct access
+# Convenience functions for direct access - Now use FlextContainer class methods
 def get_flext_container() -> FlextContainer:
     """Get global container instance.
 
@@ -1025,7 +1047,7 @@ def get_flext_container() -> FlextContainer:
       Global container instance.
 
     """
-    return FlextContainerUtils.get_flext_container()
+    return FlextContainer.get_global()
 
 
 def configure_flext_container(container: FlextContainer | None) -> FlextContainer:
@@ -1038,7 +1060,7 @@ def configure_flext_container(container: FlextContainer | None) -> FlextContaine
       Configured container.
 
     """
-    return FlextContainerUtils.configure_flext_container(container)
+    return FlextContainer.configure_global(container)
 
 
 def get_typed(
@@ -1055,10 +1077,9 @@ def get_typed(
       Type-safe result with service.
 
     """
-    container = get_flext_container()
-    # Convert FlextServiceKey to str for container.get_typed
+    # Convert FlextServiceKey to str if needed
     key_str = str(key)
-    return container.get_typed(key_str, expected_type)
+    return FlextContainer.get_global_typed(key_str, expected_type)
 
 
 def register_typed(key: FlextServiceKey[T] | str, service: T) -> FlextResult[None]:
@@ -1072,10 +1093,9 @@ def register_typed(key: FlextServiceKey[T] | str, service: T) -> FlextResult[Non
       Result indicating success or failure.
 
     """
-    container = get_flext_container()
-    # Convert FlextServiceKey to str for container.register
+    # Convert FlextServiceKey to str if needed
     key_str = str(key)
-    return container.register(key_str, service)
+    return FlextContainer.register_global(key_str, service)
 
 
 # =============================================================================
@@ -1087,8 +1107,8 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
     """Create standardized container helpers for a module namespace.
 
     Provides three utilities:
-    - get_container: returns the global `FlextContainer`
-    - configure_dependencies: no-op configurator returning `FlextResult[None]`
+    - get_container: returns the global FlextContainer
+    - configure_dependencies: no-op configurator returning FlextResult[None]
     (modules may monkey-patch/replace this later to register services)
     - get_service(name): fetches a service by name, with fallback to
     "{module_name}.{name}" to support namespaced registrations
@@ -1100,39 +1120,41 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
       Mapping with utility callables.
 
     """
-
-    def _get_container() -> FlextContainer:
-        return get_flext_container()
-
-    def _configure_dependencies() -> FlextResult[None]:
-        # Intentionally a no-op default. Modules can replace this function
-        # to perform actual registrations when needed.
-        return FlextResult[None].ok(None)
-
-    def _get_service(name: str) -> FlextResult[object]:
-        container = get_flext_container()
-        direct = container.get(name)
-        if direct.is_success:
-            return direct
-        # Fallback to namespaced key
-        return container.get(f"{module_name}.{name}")
-
-    return {
-        "get_container": _get_container,
-        "configure_dependencies": _configure_dependencies,
-        "get_service": _get_service,
-    }
+    return FlextContainer.create_module_utilities(module_name)
 
 
-# Export API (after aliases for static analyzers)
+# =============================================================================
+# COMPATIBILITY FACADES - Maintain backward compatibility
+# =============================================================================
+
+# All classes and functions are already defined above and will be exported
+# via __all__ for backward compatibility. No reassignments needed.
+
+# Export API - Main class first, then compatibility facades
+# =============================================================================
+# TIER 1 MODULE PATTERN - EXPORTS
+# =============================================================================
+
 __all__: list[str] = [
-    "FlextContainer",
-    "FlextContainerUtils",
-    "FlextServiceKey",
-    "FlextServiceKey",  # Service key alias
-    "configure_flext_container",
-    "create_module_container_utilities",
-    "get_flext_container",
-    "get_typed",
-    "register_typed",
+    "FlextContainer",  # 🎯 SINGLE EXPORT: All container functionality consolidated
+    # =======================================================================
+    # TYPE DEFINITIONS - Supporting types (not classes)
+    # =======================================================================
+    "FlextServiceKey",  # Generic service key for type safety
+    # =======================================================================
+    # LEGACY COMPATIBILITY LAYER - Function aliases for backward compatibility
+    # =======================================================================
+    "configure_flext_container",  # → FlextContainer.configure_global()
+    "create_module_container_utilities",  # → FlextContainer.create_module_utilities()
+    "get_flext_container",  # → FlextContainer.get_global()
+    "get_typed",  # → FlextContainer.get_global_typed()
+    "register_typed",  # → FlextContainer.register_global()
+    # =======================================================================
+    # NOTE: All 13+ container-related classes have been internalized
+    # Use FlextContainer methods directly for all functionality
+    #
+    # Example migration:
+    # OLD: FlextServiceRegistrar.register()
+    # NEW: FlextContainer().register()
+    # =======================================================================
 ]
