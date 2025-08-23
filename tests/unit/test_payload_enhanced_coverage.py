@@ -392,15 +392,15 @@ class TestFlextEventEnhancedCoverage:
         """Test FlextEvent.version property with invalid version data."""
         # Create event with proper constructor parameters
         result = FlextEvent.create_event(
-            event_type="TestEvent", 
-            event_data={"data": "test"}, 
+            event_type="TestEvent",
+            event_data={"data": "test"},
             version=1
         )
         assert result.is_success
-        
+
         event = result.value
         assert isinstance(event, FlextEvent)
-        
+
         # Create a new event with invalid version directly in metadata
         result_invalid = FlextEvent.create_event(
             event_type="TestEvent",
@@ -409,7 +409,7 @@ class TestFlextEventEnhancedCoverage:
         invalid_event = result_invalid.value
         # Manually update the metadata to have invalid version
         invalid_event.metadata["version"] = "invalid_version"
-        
+
         # The version property should handle conversion errors gracefully and return None
         version = invalid_event.version
         assert version is None  # Should return None for invalid version

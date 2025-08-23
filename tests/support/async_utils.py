@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from typing import TYPE_CHECKING, TypeVar
 
@@ -85,7 +85,7 @@ class AsyncTestUtils:
 
     @staticmethod
     async def run_concurrent(
-        coroutines: list[Awaitable[T]], return_exceptions: bool = False
+        coroutines: list[Awaitable[T]], *, return_exceptions: bool = False
     ) -> list[T]:
         """Run coroutines from a list concurrently."""
         return await AsyncTestUtils.run_concurrently(
@@ -100,6 +100,7 @@ class AsyncTestUtils:
     @staticmethod
     async def run_concurrent_tasks(
         tasks: list[Awaitable[T]],
+        *,
         return_exceptions: bool = False,
     ) -> list[T]:
         """Run a list of coroutines concurrently."""
@@ -144,7 +145,7 @@ class AsyncContextManagers:
 
     @staticmethod
     @asynccontextmanager
-    async def async_timer(timeout: float = 5.0):
+    async def async_timer(timeout: float = 5.0) -> AsyncGenerator[None]:
         """Async context manager with timeout."""
         start_time = time.time()
 
@@ -169,7 +170,7 @@ class AsyncContextManagers:
     async def async_resource_manager(
         setup_func: Callable[[], Awaitable[T]],
         cleanup_func: Callable[[T], Awaitable[None]],
-    ):
+    ) -> AsyncGenerator[T]:
         """Generic async resource manager."""
         resource = await setup_func()
         try:
@@ -181,13 +182,13 @@ class AsyncContextManagers:
     @asynccontextmanager
     async def async_background_task(
         task_func: Callable[[], Awaitable[None]],
-    ):
+    ) -> AsyncGenerator[asyncio.Task[None]]:
         """Run background task during test execution."""
         awaitable = task_func()
         # Ensure we have a coroutine for create_task
         if not asyncio.iscoroutine(awaitable):
 
-            async def _wrapper():
+            async def _wrapper() -> None:
                 return await awaitable
 
             coro = _wrapper()
@@ -206,8 +207,9 @@ class AsyncContextManagers:
     @asynccontextmanager
     async def async_event_waiter(
         event: asyncio.Event,
+        *,
         timeout: float = 5.0,
-    ):
+    ) -> AsyncGenerator[None]:
         """Wait for event with timeout."""
         try:
             await asyncio.wait_for(event.wait(), timeout=timeout)
@@ -222,11 +224,11 @@ class AsyncMockUtils:
 
     @staticmethod
     def create_async_mock(
-        return_value: Any = None, side_effect: Exception | None = None
-    ):
+        return_value: object = None, side_effect: Exception | None = None
+    ) -> Callable[..., Awaitable[object]]:
         """Create async mock function."""
 
-        async def async_mock(*args: Any, **kwargs: Any) -> Any:
+        async def async_mock(*args: object, **kwargs: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
