@@ -535,13 +535,7 @@ TQueryResult = TypeVar("TQueryResult")  # Query result types (alias for clarity)
 
 AnyCallable = FlextTypes.Core.TCallable
 
-# Define FlextDecoratedFunction early since it's used in class definitions
-# Compatible with variadic FlextCallable protocol (*args, **kwargs)
-# Using Protocol-based callable that accepts any arguments
-if TYPE_CHECKING:
-    type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
-else:
-    type FlextDecoratedFunction[T] = Callable[..., T]
+type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
 
 # =============================================================================
 # CONVENIENCE ALIASES - For backward compatibility and shorter names

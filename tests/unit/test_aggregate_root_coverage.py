@@ -11,10 +11,7 @@ from datetime import UTC, datetime
 import pytest
 
 from flext_core import FlextAggregateRoot, FlextValidationError
-from flext_core.aggregate_root import (
-    _coerce_metadata_to_root,
-    _normalize_domain_event_list,
-)
+from flext_core.aggregate_root import FlextAggregateRoot as _FlextAggregateRoot
 from flext_core.root_models import FlextMetadata
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -25,19 +22,19 @@ class TestHelperFunctionsCoverage:
 
     def test_coerce_metadata_to_root_none_input(self) -> None:
         """Test _coerce_metadata_to_root with None input."""
-        result = _coerce_metadata_to_root(None)
+        result = _FlextAggregateRoot._coerce_metadata_to_root(None)
         assert result is None
 
     def test_coerce_metadata_to_root_flext_metadata_input(self) -> None:
         """Test _coerce_metadata_to_root with FlextMetadata input."""
         original_meta = FlextMetadata({"key": "value"})
-        result = _coerce_metadata_to_root(original_meta)
+        result = _FlextAggregateRoot._coerce_metadata_to_root(original_meta)
         assert result is original_meta
 
     def test_coerce_metadata_to_root_dict_input(self) -> None:
         """Test _coerce_metadata_to_root with dict input."""
         meta_dict = {"key": "value", "number": 42}
-        result = _coerce_metadata_to_root(meta_dict)
+        result = _FlextAggregateRoot._coerce_metadata_to_root(meta_dict)
         assert isinstance(result, FlextMetadata)
         assert result.root["key"] == "value"
         assert result.root["number"] == 42
@@ -62,7 +59,7 @@ class TestHelperFunctionsCoverage:
                 return self.data.items()
 
         dict_like = DictLike()
-        result = _coerce_metadata_to_root(dict_like)
+        result = _FlextAggregateRoot._coerce_metadata_to_root(dict_like)
         assert isinstance(result, FlextMetadata)
         # Should fallback to raw conversion
         assert "raw" in result.root or "test" in result.root
@@ -75,7 +72,7 @@ class TestHelperFunctionsCoverage:
                 return "non-convertible"
 
         obj = NonConvertible()
-        result = _coerce_metadata_to_root(obj)
+        result = _FlextAggregateRoot._coerce_metadata_to_root(obj)
         assert isinstance(result, FlextMetadata)
         assert result.root["raw"] == "non-convertible"
 
@@ -86,7 +83,7 @@ class TestHelperFunctionsCoverage:
             {"event_type": "UserUpdated", "data": {"name": "updated"}},
         ]
 
-        result = _normalize_domain_event_list(raw_events)
+        result = _FlextAggregateRoot._normalize_domain_event_list(raw_events)
 
         assert len(result) == 2
         assert all(isinstance(event, dict) for event in result)
@@ -109,7 +106,7 @@ class TestHelperFunctionsCoverage:
             EventLike("UserDeleted", {"id": "123"}),
         ]
 
-        result = _normalize_domain_event_list(raw_events)
+        result = _FlextAggregateRoot._normalize_domain_event_list(raw_events)
 
         assert len(result) == 2
         assert result[0]["event_type"] == "UserCreated"
@@ -123,7 +120,7 @@ class TestHelperFunctionsCoverage:
                 return "not-a-dict"
 
         raw_events = [BadModelDump()]
-        result = _normalize_domain_event_list(raw_events)
+        result = _FlextAggregateRoot._normalize_domain_event_list(raw_events)
 
         assert len(result) == 1
         assert "event" in result[0]
@@ -133,7 +130,7 @@ class TestHelperFunctionsCoverage:
         """Test _normalize_domain_event_list with string/other objects."""
         raw_events = ["simple_string_event", 42, None]
 
-        result = _normalize_domain_event_list(raw_events)
+        result = _FlextAggregateRoot._normalize_domain_event_list(raw_events)
 
         assert len(result) == 3
         assert result[0]["event"] == "simple_string_event"

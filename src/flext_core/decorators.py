@@ -354,7 +354,7 @@ class _FlextErrorHandlingDecorators:
         func: FlextCallableProtocol,
     ) -> FlextFlextResultCallableProtocol:
         """Alias for safe_call() for backward compatibility."""
-        return FlextErrorHandlingDecorators.safe_call()(func)
+        return _FlextErrorHandlingDecorators.safe_call()(func)
 
     @staticmethod
     def retry_decorator(
@@ -783,11 +783,12 @@ class _FlextImmutabilityDecorators(FlextAbstractDecorator):
             Function with read-only result.
 
         """
-        # immutable_decorator returns FlextCallable, need to wrap properly
-        result = FlextImmutabilityDecorators.immutable_decorator(func)
-        # Add __wrapped__ attribute to satisfy FlextDecoratedFunction protocol
-        result.__wrapped__ = func  # type: ignore[attr-defined]
-        return result  # type: ignore[return-value]
+        # make_immutable returns FlextCallable, need to wrap properly
+        result = FlextImmutabilityDecorators.make_immutable(func)
+        # Cast to FlextDecoratedFunction and add __wrapped__ attribute
+        decorated_result = cast("FlextDecoratedFunction[object]", result)
+        decorated_result.__wrapped__ = func
+        return decorated_result
 
 
 # =============================================================================
@@ -863,7 +864,8 @@ class _FlextFunctionalDecorators(FlextAbstractDecorator):
             Pipeline function.
 
         """
-        return FlextFunctionalDecorators.compose_decorator(func)
+        # compose_decorator not implemented in legacy class, return unchanged
+        return func
 
 
 # =============================================================================
@@ -1003,7 +1005,7 @@ class _FlextDecoratorFactory(FlextAbstractDecoratorFactory):
             def apply_decoration(
                 self, func: FlextCallable[object]
             ) -> FlextCallable[object]:
-                decorator = FlextErrorHandlingDecorators.safe_call(
+                decorator = _FlextErrorHandlingDecorators.safe_call(
                     self.handled_exceptions
                 )
                 return decorator(func)
@@ -2072,12 +2074,24 @@ class FlextDecorators:
 
     # Aggregate all category decorators as class references for a factory pattern
     # These will be set after the classes are defined
-    Validation = None  # Will be set to FlextValidationDecorators after definition
-    ErrorHandling = None  # Will be set to FlextErrorHandlingDecorators after definition
-    Performance = None  # Will be set to FlextPerformanceDecorators after definition
-    Functional = None  # Will be set to FlextFunctionalDecorators after definition
-    Immutability = None  # Will be set to FlextImmutabilityDecorators after definition
-    Logging = None  # Will be set to FlextLoggingDecorators after definition
+    Validation: type | None = (
+        None  # Will be set to FlextValidationDecorators after definition
+    )
+    ErrorHandling: type | None = (
+        None  # Will be set to FlextErrorHandlingDecorators after definition
+    )
+    Performance: type | None = (
+        None  # Will be set to FlextPerformanceDecorators after definition
+    )
+    Functional: type | None = (
+        None  # Will be set to FlextFunctionalDecorators after definition
+    )
+    Immutability: type | None = (
+        None  # Will be set to FlextImmutabilityDecorators after definition
+    )
+    Logging: type | None = (
+        None  # Will be set to FlextLoggingDecorators after definition
+    )
 
 
 # =============================================================================
@@ -2224,6 +2238,27 @@ _BaseDecoratorFactory = FlextDecoratorFactory
 _BaseImmutabilityDecorators = FlextImmutabilityDecorators
 _decorators_base = FlextDecorators
 
+
+class _BaseDecoratorUtils:
+    """Legacy utilities holder  for presence checks."""
+
+
+# _decorators_base is already defined above as FlextDecorators
+_validate_input_decorator = _flext_validate_input_decorator
+_safe_call_decorator = _flext_safe_call_decorator
+
+# Total exports: 13 items - centralized decorator implementations
+# These are the SINGLE SOURCE OF TRUTH for all decorator patterns in FLEXT
+
+# Set the class references after all classes are defined
+FlextDecorators.Validation = FlextValidationDecorators
+FlextDecorators.ErrorHandling = FlextErrorHandlingDecorators
+FlextDecorators.Performance = FlextPerformanceDecorators
+FlextDecorators.Functional = FlextFunctionalDecorators
+FlextDecorators.Immutability = FlextImmutabilityDecorators
+FlextDecorators.Logging = FlextLoggingDecorators
+
+
 # =============================================================================
 # TIER 1 MODULE PATTERN - EXPORTS
 # =============================================================================
@@ -2259,36 +2294,3 @@ __all__: list[str] = [
     "_safe_call_decorator",
     "_validate_input_decorator",
 ]
-
-
-class _DecoratedFunction(Protocol):
-    def __call__(self, *args: object, **kwargs: object) -> object: ...
-
-
-class _BaseDecoratorUtils:
-    """Legacy utilities holder  for presence checks."""
-
-
-_decorators_base = type(
-    "_DecoratorsBase",
-    (),
-    {
-        "_DecoratedFunction": _DecoratedFunction,
-        "_BaseDecoratorUtils": _BaseDecoratorUtils,
-    },
-)
-_validate_input_decorator = _flext_validate_input_decorator
-_safe_call_decorator = _flext_safe_call_decorator
-_BaseImmutabilityDecorators = FlextImmutabilityDecorators
-_BaseDecoratorFactory = FlextDecoratorFactory
-
-# Total exports: 13 items - centralized decorator implementations
-# These are the SINGLE SOURCE OF TRUTH for all decorator patterns in FLEXT
-
-# Set the class references after all classes are defined
-FlextDecorators.Validation = FlextValidationDecorators
-FlextDecorators.ErrorHandling = FlextErrorHandlingDecorators
-FlextDecorators.Performance = FlextPerformanceDecorators
-FlextDecorators.Functional = FlextFunctionalDecorators
-FlextDecorators.Immutability = FlextImmutabilityDecorators
-FlextDecorators.Logging = FlextLoggingDecorators

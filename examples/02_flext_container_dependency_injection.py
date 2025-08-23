@@ -33,6 +33,7 @@ from flext_core import (
     get_flext_container,
     validate_email_address,
 )
+from flext_core.utilities import FlextProcessingUtils
 from flext_core.validation import FlextAbstractValidator
 
 # =============================================================================
@@ -483,7 +484,13 @@ class UserRegistrationProcessor(
         # Collect service metrics using FlextUtilities
         service_metrics = {}
         for key, data in FlextUtilities.iter_metrics_items():
-            service_metrics[key] = data["last_duration"] * 1000
+            # Handle the new metrics structure
+            if isinstance(data, dict) and "performance" in data:
+                perf_data = data["performance"]
+                if "duration" in perf_data:
+                    service_metrics[key] = perf_data["duration"] * 1000
+            else:
+                service_metrics[key] = 0.0
 
         result = RegistrationResult(
             user_id=str(domain.id),
@@ -700,9 +707,15 @@ def demo_batch_processing() -> None:
     # Show service metrics using FlextUtilities
     print("📊 Service Metrics:")
     for key, data in FlextUtilities.iter_metrics_items():
-        print(
-            f"  • {key}: {data['last_duration'] * 1000:.2f}ms ({data['count']} calls)"
-        )
+        # Handle the new metrics structure
+        if isinstance(data, dict) and "performance" in data:
+            perf_data = data["performance"]
+            if "duration" in perf_data and "count" in perf_data:
+                print(f"  • {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+            else:
+                print(f"  • {key}: {len(data)} metrics")
+        else:
+            print(f"  • {key}: {len(data) if isinstance(data, dict) else data}")
 
 
 @FlextDecorators.time_execution
@@ -724,7 +737,7 @@ def demo_json_processing() -> None:
     # Process valid JSON using FlextUtilities
     valid_json = '{"name": "JSON User", "email": "json@company.com", "age": 32, "preferred_service_tier": "premium"}'
 
-    json_result = FlextUtilities.parse_json_to_model(
+    json_result = FlextProcessingUtils.parse_json_to_model(
         valid_json, UserRegistrationRequest
     )
     if json_result.is_success:
@@ -738,7 +751,7 @@ def demo_json_processing() -> None:
     # Process invalid JSON to show validation
     invalid_json = '{"name": "Invalid User", "email": "invalid.invalid", "age": 15}'
 
-    invalid_result = FlextUtilities.parse_json_to_model(
+    invalid_result = FlextProcessingUtils.parse_json_to_model(
         invalid_json, UserRegistrationRequest
     )
     if invalid_result.is_failure:
@@ -837,9 +850,15 @@ def main() -> None:
     print("\n🚀 FlextUtilities Metrics (Auto-collected)")
     print("=" * 60)
     for key, data in FlextUtilities.iter_metrics_items():
-        print(
-            f"  📊 {key}: {data['last_duration'] * 1000:.2f}ms ({data['count']} calls)"
-        )
+        # Handle the new metrics structure
+        if isinstance(data, dict) and "performance" in data:
+            perf_data = data["performance"]
+            if "duration" in perf_data and "count" in perf_data:
+                print(f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+            else:
+                print(f"  📊 {key}: {len(data)} metrics")
+        else:
+            print(f"  📊 {key}: {len(data) if isinstance(data, dict) else data}")
 
     print("\n🎓 FlextCore Features Demonstrated:")
     print("  • FlextCore utilities for validation and entity creation")

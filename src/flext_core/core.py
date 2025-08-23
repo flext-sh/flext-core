@@ -1293,9 +1293,7 @@ class FlextCore:
             "cacheable_mixin": self.cacheable_mixin,
             # Exceptions
             "exceptions": self.exceptions,
-            # Schema & semantic
-            "semantic": self.semantic,
-            "semantic_model": self.semantic_model,
+            # Schema & semantic - removed as semantic.py no longer exists
             # Context & protocols
             "context_class": self.context_class,
             "repository_protocol": self.repository_protocol,

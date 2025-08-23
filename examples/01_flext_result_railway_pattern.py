@@ -336,9 +336,15 @@ def main() -> None:
     print("\n🚀 FlextUtilities Metrics (Auto-collected)")
     print("=" * 60)
     for key, data in FlextUtilities.iter_metrics_items():
-        print(
-            f"  📊 {key}: {data['last_duration'] * 1000:.2f}ms ({data['count']} calls)"
-        )
+        # Handle the new data structure - assume nested dict structure
+        if isinstance(data, dict) and "performance" in data:
+            perf_data = data["performance"]
+            if "count" in perf_data and "duration" in perf_data:
+                print(f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)")
+            else:
+                print(f"  📊 {key}: {len(data)} metrics")
+        else:
+            print(f"  📊 {key}: {len(data) if isinstance(data, dict) else data}")
     print(
         "✅ All performance tracked automatically via FlextUtilities templates"
     )

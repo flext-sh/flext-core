@@ -87,7 +87,7 @@ class FlextServiceProcessor[ServiceRequestT, ServiceDomainT, ServiceResultT](
         model_result = FlextProcessingUtils.parse_json_to_model(json_text, model_cls)
         if model_result.is_failure:
             error_msg = model_result.error or "Invalid JSON"
-            self.log_error("JSON parsing/validation failed", error=error_msg)
+            self.log_error(f"JSON parsing/validation failed: {error_msg}")
             return FlextResult[TRes].fail(error_msg)
 
         result = handler(model_result.value)

@@ -248,7 +248,7 @@ class FlextConfigAttributeValidator:
             return FlextResult[bool].fail(
                 f"Missing required attributes: {', '.join(missing)}",
             )
-        return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003
 
 
 class FlextBaseConfigManager:
@@ -275,7 +275,7 @@ class FlextBaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult[bool].ok(True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)  # noqa: FBT003
 
 
 class FlextBaseSorter[EntryT]:

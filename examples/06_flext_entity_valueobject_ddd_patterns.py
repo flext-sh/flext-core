@@ -21,13 +21,13 @@ from flext_core import (
     FlextEntity,
     FlextEntityId,
     FlextEventList,
-    FlextGenerators,
     FlextMetadata,
     FlextResult,
     FlextTimestamp,
     FlextValue,
     FlextVersion,
 )
+from flext_core.utilities import FlextGenerators
 
 # Constants to avoid magic numbers
 MIN_PRODUCT_CODE_LENGTH = 3

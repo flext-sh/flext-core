@@ -48,31 +48,29 @@ from typing import Generic, TypedDict, TypeVar
 from unittest import mock
 
 import factory
-
-# Comprehensive pytest plugin imports
 import pytest
 import structlog
 from _pytest.fixtures import SubRequest
 from faker import Faker
 from hypothesis import strategies as st
-from pytest import Item
 from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture
 
-# FlextCore imports
 from flext_core import (
     FlextAggregateRoot,
+    FlextBaseHandler,
+    FlextCommands,
     FlextContainer,
     FlextEntity,
+    FlextEntityId,
+    FlextEntityStatus,
+    FlextEvent,
+    FlextLoggerFactory,
+    FlextOperationStatus,
     FlextResult,
+    FlextValue,
 )
-from flext_core.commands import FlextCommands
-from flext_core.constants import FlextEntityStatus, FlextOperationStatus
-from flext_core.handlers import FlextBaseHandler
-from flext_core.loggings import FlextLoggerFactory
-from flext_core.models import FlextEntityId, FlextValue
-from flext_core.payload import FlextEvent
 from tests.support.async_utils import (
     AsyncConcurrencyTesting,
     AsyncContextManagers,
@@ -80,8 +78,6 @@ from tests.support.async_utils import (
     AsyncTestUtils,
 )
 from tests.support.builders import TestBuilders
-
-# Import all test support libraries
 from tests.support.domain_factories import (
     ConfigurationFactory,
     FlextResultFactory,
@@ -1372,7 +1368,7 @@ def e2e_environment() -> dict[str, object]:
 
 def pytest_collection_modifyitems(
     config: pytest.Config,
-    items: list[Item],
+    items: list[pytest.Item],
 ) -> None:
     """Modify test collection to add custom markers."""
     # Mark 'config' as intentionally unused while keeping hook signature valid

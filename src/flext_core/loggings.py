@@ -13,15 +13,7 @@ import structlog
 from structlog.typing import EventDict, Processor
 
 from flext_core.constants import FlextConstants, FlextLogLevel
-from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
-
-# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
-type LoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
-type LoggingServiceProtocol = FlextProtocols.Domain.Service
-
-Platform = FlextConstants.Platform
-
 
 # =============================================================================
 # FLEXT LOG CONTEXT - TypedDict
