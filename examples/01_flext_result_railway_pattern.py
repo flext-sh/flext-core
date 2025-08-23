@@ -15,6 +15,7 @@ Using Ultra-Maximum FLEXT-Core Templates:
 
 from __future__ import annotations
 
+import json
 from decimal import Decimal
 from typing import Annotated, override
 
@@ -213,9 +214,12 @@ class JSONProcessor(
     @override
     def process(self, request: str) -> FlextResult[UserRegistrationRequest]:
         """Template method: parse JSON to model."""
-        return FlextProcessingUtils.parse_json_to_model(
-            request, UserRegistrationRequest
-        )
+        try:
+            data = json.loads(request)
+            model = UserRegistrationRequest(**data)
+            return FlextResult[UserRegistrationRequest].ok(model)
+        except Exception as e:
+            return FlextResult[UserRegistrationRequest].fail(f"JSON parsing failed: {e}")
 
     @override
     def build(

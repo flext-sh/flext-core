@@ -467,7 +467,7 @@ class UserRegistrationProcessor(
         email_result = self._email_service.send_welcome_email(domain)
 
         # Collect validation warnings using FlextCore patterns
-        validation_warnings = []
+        validation_warnings: list[str] = []
         if domain.age < WARNING_AGE:
             validation_warnings.append("User is under 21")
         if ".test" in domain.email:
@@ -479,13 +479,13 @@ class UserRegistrationProcessor(
         ) + (email_result.value.processing_time_ms if email_result.is_success else 0)
 
         # Collect service metrics using FlextUtilities
-        service_metrics = {}
+        service_metrics: dict[str, float] = {}
         for key, data in FlextUtilities.iter_metrics_items():
             # Handle the new metrics structure
             if isinstance(data, dict) and "performance" in data:
                 perf_data = data["performance"]
                 if "duration" in perf_data:
-                    service_metrics[key] = perf_data["duration"] * 1000
+                    service_metrics[key] = float(perf_data["duration"]) * 1000
             else:
                 service_metrics[key] = 0.0
 
@@ -560,13 +560,15 @@ def setup_container() -> FlextResult[None]:
             )
             continue
 
-        # Create factory function
-        def create_service_factory(cls: type) -> object:
+        # Create factory function with explicit typing
+        def create_service_factory(cls: type[object]) -> object:
             return cls()
 
-        register_result = container.register_factory(
-            service_name, lambda cls=service_class: create_service_factory(cls)
-        )
+        # Create factory function instead of lambda to avoid linting issues
+        def create_factory(cls: type[object] = service_class) -> object:
+            return create_service_factory(cls)
+
+        register_result = container.register_factory(service_name, create_factory)
 
         if register_result.is_failure:
             return FlextResult[None].fail(
@@ -615,9 +617,10 @@ def log_result[T](result: FlextResult[T], success_msg: str) -> FlextResult[T]:
     if result.is_success:
         logger.info(f"✅ {success_msg}", result_type=type(result.value).__name__)
         print(f"✅ {success_msg}: {result.value}")
-    else:
-        logger.error(f"❌ {success_msg} failed", error=result.error)
-        print(f"❌ Error: {result.error}")
+        return result
+
+    logger.error(f"❌ {success_msg} failed", error=result.error)
+    print(f"❌ Error: {result.error}")
     return result
 
 
@@ -627,8 +630,7 @@ def log_result[T](result: FlextResult[T], success_msg: str) -> FlextResult[T]:
 
 
 @FlextDecorators.time_execution
-@FlextDecorators.log_calls
-def demo_service_injection() -> None:
+def demo_service_injection(*_args: object, **_kwargs: object) -> object:
     """Demonstrate service injection with FlextCore utilities."""
     print("\n🔧 Service Injection with FlextCore Utilities")
     print("=" * 50)
@@ -636,7 +638,7 @@ def demo_service_injection() -> None:
     setup_result = setup_container()
     if setup_result.is_failure:
         print(f"❌ Container setup failed: {setup_result.error}")
-        return
+        return "setup_failed"
 
     # Get service using FlextCore utilities
     registration_service = get_service_with_fallback(
@@ -651,14 +653,14 @@ def demo_service_injection() -> None:
         preferred_service_tier="premium",
     )
 
-    log_result(
+    result = log_result(
         registration_service.register_user(request), "Service injection registration"
     )
+    return result.value if result.is_success else None
 
 
 @FlextDecorators.time_execution
-@FlextDecorators.log_calls
-def demo_batch_processing() -> None:
+def demo_batch_processing(*_args: object, **_kwargs: object) -> object:
     """Demonstrate batch processing with FlextCore utilities."""
     print("\n📊 Batch Processing with FlextCore Utilities")
     print("=" * 50)
@@ -666,7 +668,7 @@ def demo_batch_processing() -> None:
     setup_result = setup_container()
     if setup_result.is_failure:
         print(f"❌ Container setup failed: {setup_result.error}")
-        return
+        return "setup_failed"
 
     registration_service = get_service_with_fallback(
         "registration_service", UserRegistrationProcessor
@@ -715,11 +717,11 @@ def demo_batch_processing() -> None:
                 print(f"  • {key}: {len(data)} metrics")
         else:
             print(f"  • {key}: {len(data) if isinstance(data, dict) else data}")
+    return "batch_processing_completed"
 
 
 @FlextDecorators.time_execution
-@FlextDecorators.log_calls
-def demo_json_processing() -> None:
+def demo_json_processing(*_args: object, **_kwargs: object) -> object:
     """Demonstrate JSON processing with FlextCore utilities."""
     print("\n🔄 JSON Processing with FlextCore Utilities")
     print("=" * 50)
@@ -727,7 +729,7 @@ def demo_json_processing() -> None:
     setup_result = setup_container()
     if setup_result.is_failure:
         print(f"❌ Container setup failed: {setup_result.error}")
-        return
+        return "setup_failed"
 
     registration_service = get_service_with_fallback(
         "registration_service", UserRegistrationProcessor
@@ -755,11 +757,11 @@ def demo_json_processing() -> None:
     )
     if invalid_result.is_failure:
         print(f"❌ JSON validation failed (expected): {invalid_result.error}")
+    return "json_processing_completed"
 
 
 @FlextDecorators.time_execution
-@FlextDecorators.log_calls
-def demo_advanced_patterns() -> None:
+def demo_advanced_patterns(*_args: object, **_kwargs: object) -> object:
     """Demonstrate advanced patterns with FlextCore utilities."""
     print("\n🔧 Advanced Patterns with FlextCore Utilities")
     print("=" * 50)
@@ -767,7 +769,7 @@ def demo_advanced_patterns() -> None:
     setup_result = setup_container()
     if setup_result.is_failure:
         print(f"❌ Container setup failed: {setup_result.error}")
-        return
+        return "setup_failed"
 
     # Use FlextCore functional programming patterns
     requests = [
@@ -816,6 +818,7 @@ def demo_advanced_patterns() -> None:
     container = get_flext_container()
     services = list(container.list_services().keys())
     print(f"📦 Container Services: {services}")
+    return "advanced_patterns_completed"
 
 
 # =============================================================================
@@ -842,8 +845,10 @@ def main() -> None:
         try:
             demo()
         except Exception as e:
-            logger.exception("Demo failed", demo_name=demo.__name__, error=str(e))
-            print(f"❌ Demo {demo.__name__} failed: {e}")
+            # Get function name safely for logging
+            demo_name = getattr(demo, "__name__", "unknown_demo")
+            logger.exception("Demo failed", demo_name=demo_name, error=str(e))
+            print(f"❌ Demo {demo_name} failed: {e}")
 
     # Show FlextUtilities metrics
     print("\n🚀 FlextUtilities Metrics (Auto-collected)")

@@ -12,11 +12,11 @@ Key Patterns:
 """
 
 from datetime import UTC, datetime
-from typing import cast
-
-from shared_domain import SharedDomainFactory, User
+from typing import cast, override
 
 from flext_core import FlextCommands, FlextResult
+
+from .shared_domain import EmailAddress, SharedDomainFactory, User
 
 # =============================================================================
 # SIMPLE EVENT STORE - For demonstration
@@ -136,6 +136,7 @@ class GetEventsQuery(FlextCommands.Query):
 class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
     """Handler for user creation."""
 
+    @override
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """Create user with validation."""
         return SharedDomainFactory.create_user(
@@ -151,16 +152,19 @@ class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
 class UpdateUserHandler(FlextCommands.Handler[UpdateUserCommand, User]):
     """Handler for user updates."""
 
+    @override
     def handle(self, command: UpdateUserCommand) -> FlextResult[User]:
         """Update existing user."""
         user = user_db.get(command.target_user_id)
         if not user:
             return FlextResult[User].fail(f"User not found: {command.target_user_id}")
-
         if command.name:
             user.name = command.name
         if command.email:
-            user.email_address.email = command.email
+            email_result = EmailAddress.create(command.email)
+            if email_result.is_failure():
+                return FlextResult[User].fail(f"Invalid email: {email_result.error}")
+            user.email_address = email_result.value
 
         user_db.save(user)
         return FlextResult[User].ok(user)
@@ -169,6 +173,7 @@ class UpdateUserHandler(FlextCommands.Handler[UpdateUserCommand, User]):
 class DeleteUserHandler(FlextCommands.Handler[DeleteUserCommand, bool]):
     """Handler for user deletion."""
 
+    @override
     def handle(self, command: DeleteUserCommand) -> FlextResult[bool]:
         """Delete user by ID."""
         success = user_db.delete(command.target_user_id)
@@ -186,6 +191,7 @@ class DeleteUserHandler(FlextCommands.Handler[DeleteUserCommand, bool]):
 class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, User]):
     """Handler for user lookup."""
 
+    @override
     def handle(self, query: GetUserQuery) -> FlextResult[User]:
         """Get user by ID."""
         user = user_db.get(query.user_id)
@@ -197,6 +203,7 @@ class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, User]):
 class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User]]):
     """Handler for user listing."""
 
+    @override
     def handle(self, query: ListUsersQuery) -> FlextResult[list[User]]:  # noqa: ARG002
         """List all users."""
         users = user_db.list_all()
@@ -208,6 +215,7 @@ class GetEventsQueryHandler(
 ):
     """Handler for event listing."""
 
+    @override
     def handle(self, query: GetEventsQuery) -> FlextResult[list[dict[str, object]]]:  # noqa: ARG002
         """Get all events."""
         events = event_store.get_events()
