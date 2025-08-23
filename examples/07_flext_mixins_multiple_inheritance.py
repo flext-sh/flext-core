@@ -8,7 +8,7 @@ and enterprise service patterns using mixin combinations.
 from __future__ import annotations
 
 import time
-from collections.abc import Sized
+from collections.abc import Mapping, Sized
 from typing import Protocol, cast
 
 from shared_domain import (
@@ -22,6 +22,9 @@ from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
     FlextConstants,
+    FlextEntityMixin,
+    FlextIdentifiableMixin,
+    FlextLoggableMixin,
     FlextResult,
     FlextSerializableMixin,
     FlextTimestampMixin,
@@ -29,11 +32,6 @@ from flext_core import (
     FlextUtilities,
     FlextValidatableMixin,
     FlextValueObjectMixin,
-)
-from flext_core.mixins import (
-    FlextEntityMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
 )
 
 # =============================================================================
@@ -275,7 +273,7 @@ class LoggableService(FlextLoggableMixin):
             }
             return error_result
 
-    def health_check(self) -> dict[str, object]:
+    def health_check(self) -> Mapping[str, object]:
         """Perform health check with logging."""
         self.logger.debug("Performing health check")
 
@@ -306,7 +304,7 @@ class TimedOperation(FlextTimingMixin):
         """Convert execution time from milliseconds to seconds."""
         return self._get_execution_time_ms(start_time) / 1000.0
 
-    def execute_operation(self, complexity: int = 1000) -> dict[str, object]:
+    def execute_operation(self, complexity: int = 1000) -> Mapping[str, object]:
         """Execute operation with timing measurement."""
         start_time = self._start_timing()
 
@@ -355,7 +353,7 @@ class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
         self.cache_set(cache_key, result)
         return result
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> Mapping[str, object]:
         """Get calculation statistics."""
         return {
             "calculations_performed": self.calculation_count,
@@ -394,13 +392,8 @@ class AdvancedUser(
             msg: str = f"Failed to create user: {user_result.error}"
             raise ValueError(msg)
 
-        shared_user = user_result.value
-        if shared_user is None:
-            error_msg = "User creation returned None data"
-            raise ValueError(error_msg)
-
         # Store user data using composition
-        self._user: SharedUser = shared_user
+        self._user: SharedUser = user_result.value
         self.role = role
 
         # Initialize mixins
@@ -415,8 +408,7 @@ class AdvancedUser(
             role=role,
         )
 
-    @property
-    def id(self) -> str:
+    def get_id(self) -> str:
         """Get user ID from composed user."""
         return str(self._user.id)
 
@@ -498,9 +490,9 @@ class AdvancedUser(
         )
         return True
 
-    def get_user_info(self) -> dict[str, object]:
+    def get_user_info(self) -> Mapping[str, object]:
         """Get comprehensive user information."""
-        created_timestamp = self._user.created_at.timestamp()
+        created_timestamp = self._user.created_at.root.timestamp()
         age_seconds = time.time() - created_timestamp
 
         return {
@@ -549,7 +541,7 @@ class SmartDocument(
         # Initialize mixins
         # Timestamps are initialized lazily via property access
 
-    def view_document(self) -> dict[str, object]:
+    def view_document(self) -> Mapping[str, object]:
         """View document with caching and statistics."""
         cache_key = f"view_{self.title}"
 
@@ -575,7 +567,7 @@ class SmartDocument(
         self.cache_set(cache_key, view_data)
         self.view_count += 1
 
-        return cast("dict[str, object]", view_data)
+        return view_data
 
     def update_content(self, new_content: str) -> None:
         """Update content and clear cache."""
@@ -588,7 +580,7 @@ class SmartDocument(
         if cached_view is not None:
             self.cache_remove(cache_key)
 
-    def compare_with(self, other: SmartDocument) -> dict[str, object]:
+    def compare_with(self, other: SmartDocument) -> Mapping[str, object]:
         """Compare documents using comparable mixin."""
         return {
             "title_match": self.title == other.title,
@@ -722,7 +714,7 @@ class EnterpriseService(
                 "execution_time": execution_time,
             }
 
-    def get_service_metrics(self) -> dict[str, object]:
+    def get_service_metrics(self) -> Mapping[str, object]:
         """Get comprehensive service metrics."""
         return {
             "service_id": self.id,
@@ -770,7 +762,7 @@ class DomainEntity(FlextEntityMixin):
         self.value.update(new_data)
         self._update_timestamp()
 
-    def get_entity_info(self) -> dict[str, object]:
+    def get_entity_info(self) -> Mapping[str, object]:
         """Get comprehensive entity information."""
         return {
             "id": self.id,
@@ -848,8 +840,6 @@ def demonstrate_individual_mixins() -> None:
     user_result = SharedDomainFactory.create_user("john_doe", "john@example.com", 25)
     if user_result.success:
         shared_user = user_result.value
-        if shared_user is None:
-            return
         user = IdentifiableUser(
             id=shared_user.id,
             name=shared_user.name,
@@ -1010,7 +1000,7 @@ def demonstrate_method_resolution_order() -> None:
             """Convert execution time from milliseconds to seconds."""
             return self._get_execution_time_ms(start_time) / 1000.0
 
-        def perform_operation(self) -> dict[str, object]:
+        def perform_operation(self) -> Mapping[str, object]:
             """Operation using multiple mixin capabilities."""
             start_time = self._start_timing()
 
@@ -1037,7 +1027,7 @@ def demonstrate_method_resolution_order() -> None:
             }
 
             self.logger.info("Operation completed", name=self.name)
-            return cast("dict[str, object]", result)
+            return result
 
     # Demonstrate MRO
     complex_obj = ComplexClass("test_object")
@@ -1194,7 +1184,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
                 lambda _: self._log_save_result(
                     user_id,
                     start_time,
-                    FlextResult.ok(None),
+                    FlextResult.ok("Save completed successfully"),
                 ),
             )
 

@@ -421,7 +421,11 @@ class TypeAdapterExamples:
 
         # Validate from dictionary
         with contextlib.suppress(Exception):
-            user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+            user_data: dict[str, object] = {
+                "name": "John Doe",
+                "email": "john@example.com",
+                "age": 30,
+            }
             user = user_adapter.validate_python(user_data)
 
         # Validate from JSON
@@ -467,7 +471,7 @@ class TypeAdapterExamples:
         config_adapter = TypeAdapter(DatabaseConfig)
 
         # Load from environment-like dictionary
-        config_data = {
+        config_data: dict[str, object] = {
             "host": "localhost",
             "port": 5432,
             "username": "postgres",

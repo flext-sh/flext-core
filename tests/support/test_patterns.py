@@ -11,7 +11,7 @@ from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -23,9 +23,9 @@ class TestScenario:
 
     name: str
     description: str
-    given: dict[str, Any] = field(default_factory=dict)
-    when: dict[str, Any] = field(default_factory=dict)
-    then: dict[str, Any] = field(default_factory=dict)
+    given: dict[str, object] = field(default_factory=dict)
+    when: dict[str, object] = field(default_factory=dict)
+    then: dict[str, object] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)
     priority: str = "medium"  # low, medium, high, critical
     estimated_duration_ms: int = 1000
@@ -52,28 +52,31 @@ class TestDataBuilder[T]:
     """Generic builder pattern for test data construction."""
 
     def __init__(self) -> None:
-        self._data: dict[str, Any] = {}
-        self._validators: list[Callable[[dict[str, Any]], bool]] = []
-        self._transformers: list[Callable[[dict[str, Any]], dict[str, Any]]] = []
+        self._data: dict[str, object] = {}
+        self._validators: list[Callable[[dict[str, object]], bool]] = []
+        self._transformers: list[Callable[[dict[str, object]], dict[str, object]]] = []
 
-    def with_field(self, name: str, value: Any) -> TestDataBuilder[T]:
+    def with_field(self, name: str, value: object) -> TestDataBuilder[T]:
         """Add a field to the builder."""
         self._data[name] = value
         return self
 
-    def with_validator(self, validator: Callable[[dict[str, Any]], bool]) -> TestDataBuilder[T]:
+    def with_validator(
+        self, validator: Callable[[dict[str, object]], bool]
+    ) -> TestDataBuilder[T]:
         """Add a validator function."""
         self._validators.append(validator)
         return self
 
     def with_transformer(
-        self, transformer: Callable[[dict[str, Any]], dict[str, Any]]
+        self,
+        transformer: Callable[[dict[str, object]], dict[str, object]],
     ) -> TestDataBuilder[T]:
         """Add a transformer function."""
         self._transformers.append(transformer)
         return self
 
-    def build(self) -> dict[str, Any]:
+    def build(self) -> dict[str, object]:
         """Build the final data object."""
         # Apply transformers
         result = self._data.copy()
@@ -87,58 +90,62 @@ class TestDataBuilder[T]:
 
         return result
 
-    def build_many(self, count: int) -> list[dict[str, Any]]:
+    def build_many(self, count: int) -> list[dict[str, object]]:
         """Build multiple instances."""
         return [self.build() for _ in range(count)]
 
 
-class FlextTestBuilder(TestDataBuilder[dict[str, Any]]):
+class FlextTestBuilder(TestDataBuilder[dict[str, object]]):
     """Specialized builder for Flext test data."""
 
     def with_id(self, id_value: str | None = None) -> FlextTestBuilder:
         """Add an ID field."""
         from uuid import uuid4
+
         actual_id = id_value or f"test_{uuid4().hex[:8]}"
-        return self.with_field("id", actual_id)
+        self.with_field("id", actual_id)
+        return self
 
     def with_correlation_id(self, corr_id: str | None = None) -> FlextTestBuilder:
         """Add a correlation ID."""
         from uuid import uuid4
+
         actual_corr_id = corr_id or f"corr_{uuid4().hex[:8]}"
-        return self.with_field("correlation_id", actual_corr_id)
+        self.with_field("correlation_id", actual_corr_id)
+        return self
 
     def with_timestamp(self, timestamp: datetime | None = None) -> FlextTestBuilder:
         """Add timestamp fields."""
         actual_timestamp = timestamp or datetime.now(UTC)
-        return (
-            self.with_field("created_at", actual_timestamp)
-            .with_field("updated_at", actual_timestamp)
-        )
+        self.with_field("created_at", actual_timestamp)
+        self.with_field("updated_at", actual_timestamp)
+        return self
 
-    def with_user_data(self, name: str | None = None, email: str | None = None) -> FlextTestBuilder:
+    def with_user_data(
+        self, name: str | None = None, email: str | None = None
+    ) -> FlextTestBuilder:
         """Add user-related data."""
         actual_name = name or "Test User"
         actual_email = email or "test.user@example.com"
-        return (
-            self.with_field("name", actual_name)
-            .with_field("email", actual_email)
-        )
+        self.with_field("name", actual_name)
+        self.with_field("email", actual_email)
+        return self
 
     def with_validation_rules(self) -> FlextTestBuilder:
         """Add common validation rules."""
-        def validate_required_fields(data: dict[str, Any]) -> bool:
+
+        def validate_required_fields(data: dict[str, object]) -> bool:
             required = ["id"] if "id" in self._data else []
             return all(field in data for field in required)
 
-        def validate_email_format(data: dict[str, Any]) -> bool:
+        def validate_email_format(data: dict[str, object]) -> bool:
             if "email" in data:
                 return "@" in str(data["email"])
             return True
 
-        return (
-            self.with_validator(validate_required_fields)
-            .with_validator(validate_email_format)
-        )
+        self.with_validator(validate_required_fields)
+        self.with_validator(validate_email_format)
+        return self
 
 
 class GivenWhenThenBuilder:
@@ -150,19 +157,19 @@ class GivenWhenThenBuilder:
         self._when_steps: list[str] = []
         self._then_steps: list[str] = []
 
-    def given(self, description: str, **context: Any) -> GivenWhenThenBuilder:
+    def given(self, description: str, **context: object) -> GivenWhenThenBuilder:
         """Add a Given step."""
         self._given_steps.append(description)
         self.scenario.given.update(context)
         return self
 
-    def when(self, description: str, **context: Any) -> GivenWhenThenBuilder:
+    def when(self, description: str, **context: object) -> GivenWhenThenBuilder:
         """Add a When step."""
         self._when_steps.append(description)
         self.scenario.when.update(context)
         return self
 
-    def then(self, description: str, **context: Any) -> GivenWhenThenBuilder:
+    def then(self, description: str, **context: object) -> GivenWhenThenBuilder:
         """Add a Then step."""
         self._then_steps.append(description)
         self.scenario.then.update(context)
@@ -199,9 +206,9 @@ class TestCaseFactory:
     @staticmethod
     def create_success_case(
         name: str,
-        input_data: dict[str, Any],
-        expected_output: dict[str, Any]
-    ) -> dict[str, Any]:
+        input_data: dict[str, object],
+        expected_output: dict[str, object],
+    ) -> dict[str, object]:
         """Create a success test case."""
         return {
             "name": name,
@@ -209,15 +216,15 @@ class TestCaseFactory:
             "input": input_data,
             "expected": expected_output,
             "should_succeed": True,
-            "tags": ["happy_path", "success"]
+            "tags": ["happy_path", "success"],
         }
 
     @staticmethod
     def create_failure_case(
         name: str,
-        input_data: dict[str, Any],
-        expected_error: str
-    ) -> dict[str, Any]:
+        input_data: dict[str, object],
+        expected_error: str,
+    ) -> dict[str, object]:
         """Create a failure test case."""
         return {
             "name": name,
@@ -225,37 +232,37 @@ class TestCaseFactory:
             "input": input_data,
             "expected_error": expected_error,
             "should_succeed": False,
-            "tags": ["error_path", "failure"]
+            "tags": ["error_path", "failure"],
         }
 
     @staticmethod
     def create_edge_case(
         name: str,
-        input_data: dict[str, Any],
-        expected_behavior: str
-    ) -> dict[str, Any]:
+        input_data: dict[str, object],
+        expected_behavior: str,
+    ) -> dict[str, object]:
         """Create an edge case test."""
         return {
             "name": name,
             "type": "edge_case",
             "input": input_data,
             "expected_behavior": expected_behavior,
-            "tags": ["edge_case", "boundary"]
+            "tags": ["edge_case", "boundary"],
         }
 
     @staticmethod
     def create_performance_case(
         name: str,
-        input_data: dict[str, Any],
-        max_duration_ms: int
-    ) -> dict[str, Any]:
+        input_data: dict[str, object],
+        max_duration_ms: int,
+    ) -> dict[str, object]:
         """Create a performance test case."""
         return {
             "name": name,
             "type": "performance",
             "input": input_data,
             "max_duration_ms": max_duration_ms,
-            "tags": ["performance", "benchmark"]
+            "tags": ["performance", "benchmark"],
         }
 
 
@@ -264,10 +271,10 @@ class ParameterizedTestBuilder:
 
     def __init__(self, test_name: str) -> None:
         self.test_name = test_name
-        self.parameters: list[dict[str, Any]] = []
+        self.parameters: list[dict[str, object]] = []
         self.parameter_names: list[str] = []
 
-    def add_case(self, **kwargs: Any) -> ParameterizedTestBuilder:
+    def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
         """Add a single test case."""
         if not self.parameter_names:
             self.parameter_names = list(kwargs.keys())
@@ -278,30 +285,39 @@ class ParameterizedTestBuilder:
         self.parameters.append(kwargs)
         return self
 
-    def add_success_cases(self, cases: list[dict[str, Any]]) -> ParameterizedTestBuilder:
+    def add_success_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
         """Add multiple success cases."""
         for case in cases:
             case["expected_success"] = True
             self.add_case(**case)
         return self
 
-    def add_failure_cases(self, cases: list[dict[str, Any]]) -> ParameterizedTestBuilder:
+    def add_failure_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
         """Add multiple failure cases."""
         for case in cases:
             case["expected_success"] = False
             self.add_case(**case)
         return self
 
-    def add_edge_cases(self, cases: list[dict[str, Any]]) -> ParameterizedTestBuilder:
+    def add_edge_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
         """Add edge cases with special handling."""
         for case in cases:
             case["is_edge_case"] = True
             self.add_case(**case)
         return self
 
-    def build_pytest_params(self) -> list[tuple[Any, ...]]:
+    def build_pytest_params(self) -> list[tuple[object, ...]]:
         """Build parameters for pytest.mark.parametrize."""
-        return [tuple(case[name] for name in self.parameter_names) for case in self.parameters]
+        return [
+            tuple(case[name] for name in self.parameter_names)
+            for case in self.parameters
+        ]
 
     def build_test_ids(self) -> list[str]:
         """Build test IDs for pytest."""
@@ -310,7 +326,7 @@ class ParameterizedTestBuilder:
             for i, case in enumerate(self.parameters)
         ]
 
-    def _generate_case_id(self, case: dict[str, Any]) -> str:
+    def _generate_case_id(self, case: dict[str, object]) -> str:
         """Generate a readable ID for a test case."""
         # Try to create meaningful ID from case data
         if "name" in case:
@@ -327,11 +343,11 @@ class TestFixtureBuilder:
     """Builder for creating test fixtures and setup data."""
 
     def __init__(self) -> None:
-        self.fixtures: dict[str, Any] = {}
+        self.fixtures: dict[str, object] = {}
         self.setup_functions: list[Callable[[], None]] = []
         self.teardown_functions: list[Callable[[], None]] = []
 
-    def add_fixture(self, name: str, value: Any) -> TestFixtureBuilder:
+    def add_fixture(self, name: str, value: object) -> TestFixtureBuilder:
         """Add a fixture value."""
         self.fixtures[name] = value
         return self
@@ -367,12 +383,12 @@ class TestFixtureBuilder:
 class TestAssertionBuilder:
     """Builder for complex assertion patterns."""
 
-    def __init__(self, actual_value: Any) -> None:
+    def __init__(self, actual_value: object) -> None:
         self.actual = actual_value
-        self.assertions: list[Callable[[Any], bool]] = []
+        self.assertions: list[Callable[[object], bool]] = []
         self.descriptions: list[str] = []
 
-    def is_equal_to(self, expected: Any) -> TestAssertionBuilder:
+    def is_equal_to(self, expected: object) -> TestAssertionBuilder:
         """Assert equality."""
         self.assertions.append(lambda x: x == expected)
         self.descriptions.append(f"should equal {expected}")
@@ -390,7 +406,7 @@ class TestAssertionBuilder:
         self.descriptions.append(f"should have length {length}")
         return self
 
-    def contains(self, item: Any) -> TestAssertionBuilder:
+    def contains(self, item: object) -> TestAssertionBuilder:
         """Assert contains item."""
         self.assertions.append(lambda x: item in x)
         self.descriptions.append(f"should contain {item}")
@@ -399,11 +415,14 @@ class TestAssertionBuilder:
     def matches_pattern(self, pattern: str) -> TestAssertionBuilder:
         """Assert regex pattern match."""
         import re
+
         self.assertions.append(lambda x: bool(re.match(pattern, str(x))))
         self.descriptions.append(f"should match pattern {pattern}")
         return self
 
-    def satisfies(self, predicate: Callable[[Any], bool], description: str) -> TestAssertionBuilder:
+    def satisfies(
+        self, predicate: Callable[[object], bool], description: str
+    ) -> TestAssertionBuilder:
         """Assert custom predicate."""
         self.assertions.append(predicate)
         self.descriptions.append(description)
@@ -411,24 +430,31 @@ class TestAssertionBuilder:
 
     def assert_all(self) -> None:
         """Execute all assertions."""
-        for i, (assertion, description) in enumerate(zip(self.assertions, self.descriptions, strict=False)):
+        for i, (assertion, description) in enumerate(
+            zip(self.assertions, self.descriptions, strict=False)
+        ):
             if not assertion(self.actual):
                 raise AssertionError(
                     f"Assertion {i + 1} failed: {description}. "
-                    f"Actual value: {self.actual}"
+                    f"Actual value: {self.actual}",
                 )
 
 
-def test_pattern(pattern_name: str):
+def mark_test_pattern(pattern_name: str):
     """Decorator to mark tests with specific patterns."""
+
     def decorator(func: Callable) -> Callable:
         func._test_pattern = pattern_name
         return func
+
     return decorator
 
 
-def arrange_act_assert(arrange_func: Callable, act_func: Callable, assert_func: Callable):
+def arrange_act_assert(
+    arrange_func: Callable, act_func: Callable, assert_func: Callable
+):
     """Decorator that enforces the Arrange-Act-Assert pattern."""
+
     def decorator(test_func: Callable) -> Callable:
         @functools.wraps(test_func)
         def wrapper(*args, **kwargs):
@@ -444,6 +470,7 @@ def arrange_act_assert(arrange_func: Callable, act_func: Callable, assert_func: 
             return result
 
         return wrapper
+
     return decorator
 
 
@@ -453,7 +480,7 @@ class TestSuiteBuilder:
     def __init__(self, suite_name: str) -> None:
         self.suite_name = suite_name
         self.test_scenarios: list[TestScenario] = []
-        self.setup_data: dict[str, Any] = {}
+        self.setup_data: dict[str, object] = {}
         self.tags: list[str] = []
 
     def add_scenario(self, scenario: TestScenario) -> TestSuiteBuilder:
@@ -466,7 +493,7 @@ class TestSuiteBuilder:
         self.test_scenarios.extend(scenarios)
         return self
 
-    def with_setup_data(self, **data: Any) -> TestSuiteBuilder:
+    def with_setup_data(self, **data: object) -> TestSuiteBuilder:
         """Add setup data for the suite."""
         self.setup_data.update(data)
         return self
@@ -478,7 +505,7 @@ class TestSuiteBuilder:
             scenario.add_tag(tag)
         return self
 
-    def build(self) -> dict[str, Any]:
+    def build(self) -> dict[str, object]:
         """Build the complete test suite."""
         return {
             "suite_name": self.suite_name,
@@ -486,5 +513,7 @@ class TestSuiteBuilder:
             "setup_data": self.setup_data,
             "tags": self.tags,
             "scenario_count": len(self.test_scenarios),
-            "estimated_duration_ms": sum(s.estimated_duration_ms for s in self.test_scenarios)
+            "estimated_duration_ms": sum(
+                s.estimated_duration_ms for s in self.test_scenarios
+            ),
         }

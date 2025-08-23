@@ -11,8 +11,6 @@ from decimal import Decimal
 from typing import cast
 
 from pydantic_settings import SettingsConfigDict
-
-# use .shared_domain with dot to access local module
 from shared_domain import (
     EmailAddress,
     Money,
@@ -124,8 +122,6 @@ def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
     total_result = order.calculate_total()
     if total_result.success:
         total = total_result.value
-        if total is None:
-            return FlextResult.fail("Total calculation returned None data")
 
     # SharedOrder has built-in domain events
 
@@ -254,7 +250,7 @@ def _demonstrate_decorators() -> FlextResult[None]:
 
     # Apply decorator using casting for protocol compliance
     FlextDecorators.safe_result(
-        cast("FlextDecoratedFunction", risky_calculation),
+        cast("FlextDecoratedFunction[float]", risky_calculation),
     )
 
     # Test safe execution - safe_result returns a function with different signature

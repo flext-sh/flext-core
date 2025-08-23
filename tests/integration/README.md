@@ -40,15 +40,21 @@ def test_service_with_container():
     container.register("repository", repository)
 
     # Create service with dependencies
-    service = UserService(
-        logger=container.get("logger").unwrap(),
-        repository=container.get("repository").unwrap()
-    )
+    logger_result = container.get("logger")
+    repository_result = container.get("repository")
+    
+    if logger_result.success and repository_result.success:
+        service = UserService(
+            logger=logger_result.value,
+            repository=repository_result.value
+        )
+    else:
+        raise RuntimeError("Failed to resolve dependencies")
 
     # Test service operations
     result = service.create_user("test@example.com")
     assert result.success
-    assert result.unwrap().email == "test@example.com"
+    assert result.value.email == "test@example.com"
 ```
 
 ### Configuration Integration
@@ -197,7 +203,7 @@ class TestServiceIntegration:
 
         # Verify complete flow
         assert result.success
-        user = result.unwrap()
+        user = result.value
         assert user.email == "user@example.com"
         assert user.is_active is False
 ```
@@ -293,7 +299,7 @@ def test_repository_with_unit_of_work():
     # Verify persistence
     found_user = user_repo.find(user.id)
     assert found_user.success
-    assert found_user.unwrap().email == "test@example.com"
+    assert found_user.value.email == "test@example.com"
 ```
 
 ### Event-Driven Testing
@@ -343,7 +349,7 @@ def test_processing_pipeline():
 
     # Verify pipeline execution
     assert result.success
-    output = result.unwrap()
+    output = result.value
     assert output["validated"] is True
     assert output["transformed"] is True
     assert output["enriched"] is True
@@ -435,8 +441,10 @@ def test_isolated_integration():
     container2.register("value", "test2")
 
     # Verify isolation
-    assert container1.get("value").unwrap() == "test1"
-    assert container2.get("value").unwrap() == "test2"
+    result1 = container1.get("value")
+    result2 = container2.get("value")
+    assert result1.success and result1.value == "test1"
+    assert result2.success and result2.value == "test2"
 ```
 
 ### Mock vs Real Boundaries

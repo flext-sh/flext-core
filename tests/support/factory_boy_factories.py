@@ -10,8 +10,8 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-import factory  # type: ignore[import-untyped]
-from factory import (  # type: ignore[import-untyped,attr-defined]
+import factory
+from factory import (
     Faker,
     LazyAttribute,
     Sequence,
@@ -20,14 +20,14 @@ from pydantic import BaseModel
 
 from flext_core import FlextResult
 from flext_core.constants import FlextFieldType
-from flext_core.models import (  # type: ignore[attr-defined]
+from flext_core.models import (
     FlextEntityId,
     FlextTimestamp,
 )
 
 
 # Base models for testing (these would typically come from domain models)
-class TestUser(BaseModel):  # type: ignore[explicit-any]
+class TestUser(BaseModel):
     """Test user model for factory testing."""
 
     id: str
@@ -70,7 +70,7 @@ class TestField(BaseModel):  # type: ignore[explicit-any]
 class UserFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for creating test users with factory_boy."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestUser
 
     id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
@@ -80,7 +80,7 @@ class UserFactory(factory.Factory):  # type: ignore[name-defined,misc]
     is_active = True
     created_at = LazyAttribute(lambda obj: datetime.now(UTC))  # type: ignore[no-untyped-call]
     metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
-        lambda: {"department": "engineering", "level": "senior", "team": "backend"}
+        lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
 
 
@@ -90,7 +90,7 @@ class AdminUserFactory(UserFactory):
     name = "Admin User"  # type: ignore[assignment]
     email = "REDACTED_LDAP_BIND_PASSWORD@example.com"  # type: ignore[assignment]
     metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
-        lambda: {"department": "REDACTED_LDAP_BIND_PASSWORD", "level": "REDACTED_LDAP_BIND_PASSWORD", "permissions": ["all"]}
+        lambda: {"department": "REDACTED_LDAP_BIND_PASSWORD", "level": "REDACTED_LDAP_BIND_PASSWORD", "permissions": ["all"]},
     )
 
 
@@ -99,14 +99,18 @@ class InactiveUserFactory(UserFactory):
 
     is_active = False
     metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
-        lambda: {"department": "archived", "level": "inactive", "archived_at": str(datetime.now(UTC))}
+        lambda: {
+            "department": "archived",
+            "level": "inactive",
+            "archived_at": str(datetime.now(UTC)),
+        },
     )
 
 
 class ConfigFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for creating test configurations."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestConfig
 
     database_url = "postgresql://test:test@localhost/test_db"
@@ -125,13 +129,15 @@ class ProductionConfigFactory(ConfigFactory):
     debug = False
     timeout = 60
     max_connections = 500
-    features = factory.LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring", "alerts"])  # type: ignore[attr-defined,no-untyped-call]
+    features = factory.LazyFunction(
+        lambda: ["auth", "cache", "metrics", "monitoring", "alerts"]
+    )  # type: ignore[attr-defined,no-untyped-call]
 
 
 class StringFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for string field testing."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
     field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
@@ -147,7 +153,7 @@ class StringFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 class IntegerFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for integer field testing."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
     field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
@@ -162,7 +168,7 @@ class IntegerFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 class BooleanFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for boolean field testing."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
     field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
@@ -176,7 +182,7 @@ class BooleanFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 class FloatFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     """Factory for float field testing."""
 
-    class Meta:
+    class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
     field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
@@ -198,7 +204,9 @@ class FlextResultFactory:
         return FlextResult[Any].ok(data or "test_success_data")
 
     @staticmethod
-    def failure(error: str = "test_error", error_code: str = "TEST_ERROR") -> FlextResult[Any]:  # type: ignore[explicit-any]
+    def failure(
+        error: str = "test_error", error_code: str = "TEST_ERROR"
+    ) -> FlextResult[Any]:  # type: ignore[explicit-any]
         """Create failed FlextResult."""
         return FlextResult[Any].fail(error, error_code=error_code)
 

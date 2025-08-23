@@ -24,7 +24,6 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextServiceKey,
-    FlextValidationError,
     ValidationAdapters,
     flext_core,
 )
@@ -504,7 +503,7 @@ class TestFlextCoreResultOperations:
 
         sequence_result = clean_flext_core.sequence(
             [
-                FlextResult[object].ok(r.data)
+                FlextResult[object].ok(r.value)
                 if r.success
                 else FlextResult[object].fail(r.error or "Error")
                 for r in results
@@ -525,7 +524,7 @@ class TestFlextCoreResultOperations:
 
         sequence_result = clean_flext_core.sequence(
             [
-                FlextResult[object].ok(r.data)
+                FlextResult[object].ok(r.value)
                 if r.success
                 else FlextResult[object].fail(r.error or "Error")
                 for r in results
@@ -548,7 +547,7 @@ class TestFlextCoreResultOperations:
 
         first_success_result = clean_flext_core.first_success(
             [
-                FlextResult[object].ok(r.data)
+                FlextResult[object].ok(r.value)
                 if r.success
                 else FlextResult[object].fail(r.error or "Error")
                 for r in results
@@ -785,7 +784,9 @@ class TestFlextCoreErrorHandling:
             "Real validation failed"
         )
 
-        assert isinstance(validation_error, FlextValidationError)
+        # Check the dynamically created class using class name and inheritance
+        assert validation_error.__class__.__name__ == "FlextValidationError"
+        assert isinstance(validation_error, ValueError)  # Base class
         assert "Real validation failed" in str(validation_error)
 
     def test_handle_error_real_processing(self) -> None:

@@ -24,11 +24,10 @@ from flext_core import (
     FlextCore,
     FlextEntity,
     FlextModel,
-    FlextPerformance,
-    FlextProcessingUtils,
     FlextResult,
     FlextResultUtils,
     FlextServiceProcessor,
+    FlextUtilities,
     FlextValue,
 )
 
@@ -122,7 +121,7 @@ class RegistrationProcessor(
     @override
     def build(self, domain: User, *, correlation_id: str) -> RegistrationResult:
         """Template method: build final result with auto-metrics."""
-        last_ms = FlextPerformance.get_last_duration_ms("registration", "_inner")
+        last_ms = FlextUtilities.get_last_duration_ms("registration", "_inner")
         return RegistrationResult(
             user_id=str(domain.id),
             status=str(domain.status),
@@ -333,15 +332,15 @@ def main() -> None:
     ]:
         demo()
 
-    # Show FlextPerformance metrics collected automatically
-    print("\n🚀 FlextPerformance Metrics (Auto-collected)")
+    # Show FlextUtilities metrics collected automatically
+    print("\n🚀 FlextUtilities Metrics (Auto-collected)")
     print("=" * 60)
-    for key, data in FlextPerformance.iter_metrics_items():
+    for key, data in FlextUtilities.iter_metrics_items():
         print(
             f"  📊 {key}: {data['last_duration'] * 1000:.2f}ms ({data['count']} calls)"
         )
     print(
-        "✅ All performance tracked automatically via FlextServiceProcessor templates"
+        "✅ All performance tracked automatically via FlextUtilities templates"
     )
 
 

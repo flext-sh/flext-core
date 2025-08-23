@@ -132,7 +132,7 @@ strict = true
 # Additional strict checks beyond default strict mode
 check_untyped_defs = true
 disallow_any_decorated = true
-disallow_any_explicit = true
+disallow_any_explicit = false  # Allow Callable[..., object] patterns in decorators
 disallow_any_expr = false
 disallow_any_generics = true
 disallow_any_unimported = true
@@ -167,6 +167,9 @@ show_traceback = true
 pretty = true
 color_output = true
 error_summary = true
+
+# Disable specific error codes for decorator patterns
+disable_error_code = ["misc", "method-assign"]  # Allow decorator patterns and dynamic method assignment
 
 # Python version and execution
 python_version = "3.13"

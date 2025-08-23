@@ -15,12 +15,13 @@ import pytest
 from flext_core import (
     FlextConfig,
     FlextContainer,
+    FlextFieldCore,
+    FlextFields,
+    FlextFieldType,
     FlextResult,
+    FlextTypes,
     get_flext_container,
 )
-from flext_core.constants import FlextFieldType
-from flext_core.fields import FlextFieldCore, FlextFields
-from flext_core.typings import FlextTypes
 from tests.support.factories import FlextResultFactory, UserDataFactory
 
 JsonDict = FlextTypes.Core.JsonDict
@@ -61,12 +62,17 @@ class FlextTestFixtures:
     @pytest.fixture
     def field_types_matrix() -> list[tuple[FlextFieldType, list[Any], list[bool]]]:
         """Field types with test values and expected validity."""
-        return [("string", ["test", ""], [True, False]), ("integer", [42, "invalid"], [True, False])]
+        return [
+            (FlextFieldType.STRING, ["test", ""], [True, False]),
+            (FlextFieldType.INTEGER, [42, "invalid"], [True, False]),
+        ]
 
     @staticmethod
     @pytest.fixture
     def temp_json_file() -> Generator[str]:
         """Temporary JSON file for file-based testing."""
+        import json
+
         content = {"test": "data", "nested": {"value": 123}}
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -74,8 +80,8 @@ class FlextTestFixtures:
             delete=False,
             encoding="utf-8",
         ) as f:
-            f.write(content)
-            return f.name
+            json.dump(content, f)
+            yield f.name
 
         # Cleanup handled by tempfile
 
@@ -154,7 +160,7 @@ class FlextTestFixtures:
         return FlextResultFactory.build(
             success=False,
             error="test_failure_message",
-            error_code="TEST_ERROR_CODE"
+            error_code="TEST_ERROR_CODE",
         )
 
     @staticmethod
@@ -240,16 +246,6 @@ class FlextTestFixtures:
 __all__ = [
     "FlextTestFixtures",
 ]
-
-
-# Convenience access to fixtures for pytest discovery
-def pytest_configure() -> None:
-    """Configure pytest with custom markers."""
-    pytest.main.add_option(
-        "--performance",
-        action="store_true",
-        help="Run performance tests",
-    )
 
 
 # Register custom markers

@@ -13,9 +13,14 @@ from unittest.mock import Mock
 
 from pytest_mock import MockerFixture
 
-from flext_core import FlextConfig, FlextContainer, FlextResult
-from flext_core.fields import FlextFieldCore, FlextFields
-from flext_core.typings import FlextTypes
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextFieldCore,
+    FlextFields,
+    FlextResult,
+    FlextTypes,
+)
 
 JsonDict = FlextTypes.Core.JsonDict
 
@@ -74,7 +79,9 @@ class TestBuilders:
             self._services: dict[str, Any] = {}
             self._factories: dict[str, Callable[[], Any]] = {}
 
-        def with_service(self, name: str, service: Any) -> TestBuilders.ContainerBuilder:
+        def with_service(
+            self, name: str, service: Any
+        ) -> TestBuilders.ContainerBuilder:
             """Add a service to the container."""
             self._services[name] = service
             return self
@@ -90,29 +97,38 @@ class TestBuilders:
 
         def with_database_service(self) -> TestBuilders.ContainerBuilder:
             """Add a mock database service."""
-            return self.with_service("database", {
-                "host": "localhost",
-                "port": 5432,
-                "name": "test_db",
-                "connected": True,
-            })
+            return self.with_service(
+                "database",
+                {
+                    "host": "localhost",
+                    "port": 5432,
+                    "name": "test_db",
+                    "connected": True,
+                },
+            )
 
         def with_cache_service(self) -> TestBuilders.ContainerBuilder:
             """Add a mock cache service."""
-            return self.with_service("cache", {
-                "host": "localhost",
-                "port": 6379,
-                "ttl": 3600,
-                "connected": True,
-            })
+            return self.with_service(
+                "cache",
+                {
+                    "host": "localhost",
+                    "port": 6379,
+                    "ttl": 3600,
+                    "connected": True,
+                },
+            )
 
         def with_logger_service(self) -> TestBuilders.ContainerBuilder:
             """Add a mock logger service."""
-            return self.with_service("logger", {
-                "level": "DEBUG",
-                "format": "json",
-                "handlers": ["console"],
-            })
+            return self.with_service(
+                "logger",
+                {
+                    "level": "DEBUG",
+                    "format": "json",
+                    "handlers": ["console"],
+                },
+            )
 
         def build(self) -> FlextContainer:
             """Build the container with all configured services."""
@@ -240,18 +256,20 @@ class TestBuilders:
             self._config_data["database_url"] = url
             return self
 
-        def with_custom_setting(self, key: str, value: Any) -> TestBuilders.ConfigBuilder:
+        def with_custom_setting(
+            self, key: str, value: Any
+        ) -> TestBuilders.ConfigBuilder:
             """Add custom configuration setting."""
             self._config_data[key] = value
             return self
 
         def build(self) -> FlextConfig:
             """Build the configuration object."""
-            # Extract known fields
+            # Extract known fields with proper type casting
             return FlextConfig(
-                log_level=self._config_data.get("log_level", "INFO"),
-                environment=self._config_data.get("environment", "test"),
-                debug=self._config_data.get("debug", False),
+                log_level=str(self._config_data.get("log_level", "INFO")),
+                environment=str(self._config_data.get("environment", "test")),
+                debug=bool(self._config_data.get("debug", False)),
                 # Add other fields as they become available in FlextConfig
             )
 
@@ -313,6 +331,7 @@ class TestBuilders:
         def with_json_content(self, data: JsonDict) -> TestBuilders.FileBuilder:
             """Set JSON content."""
             import json
+
             self._content = json.dumps(data, indent=2)
             self._suffix = ".json"
             return self
@@ -402,11 +421,7 @@ def build_string_field(
     **constraints: Any,
 ) -> FlextFieldCore:
     """Build a string field quickly."""
-    builder = (
-        TestBuilders.field("string")
-        .with_id(field_id)
-        .required(required)
-    )
+    builder = TestBuilders.field("string").with_id(field_id).required(required)
 
     if constraints:
         builder = builder.with_validation(**constraints)

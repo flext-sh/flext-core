@@ -18,11 +18,11 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import (
-    FlextFactory,
     FlextPayload,
     FlextResult,
     FlextValue,
 )
+from flext_core.models import FlextFactory
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -222,7 +222,7 @@ class TestValueObjectValidation:
         # Test real validation failure - no mocking needed
         result = vo.validate_flext()
         assert result.success is False
-        assert "Always invalid" in result.error
+        assert result.error and "Always invalid" in result.error
 
     def test_validate_field_with_registry(self) -> None:
         """Test field validation using registry."""
@@ -321,7 +321,7 @@ class TestValueObjectPayloadConversion:
         payload = vo.to_payload()
 
         assert isinstance(payload, FlextPayload)
-        payload_data = payload.data
+        payload_data = payload.value
         assert isinstance(payload_data, dict)
         assert "value_object_data" in payload_data
         assert "class_info" in payload_data
@@ -335,7 +335,7 @@ class TestValueObjectPayloadConversion:
 
         # Should still create payload but mark as invalid
         assert payload is not None
-        payload_data = payload.data
+        payload_data = payload.value
         assert isinstance(payload_data, dict)
         assert payload_data["validation_status"] == "invalid"
 
@@ -348,7 +348,7 @@ class TestValueObjectPayloadConversion:
         assert isinstance(payload, FlextPayload)
 
         # Verify payload contains serialized data
-        payload_data = payload.data
+        payload_data = payload.value
         assert isinstance(payload_data, dict)
         assert "value_object_data" in payload_data
 
@@ -526,8 +526,12 @@ class TestFlextFactory:
 
         assert callable(factory)
 
-        # Test factory usage
-        result = factory(value="test")
+        # Test factory usage - cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", factory)
+        result = callable_factory(value="test")
         assert result.success is True
         assert isinstance(result.value, SimpleValueObject)
         assert result.value.value == "test"
@@ -540,13 +544,17 @@ class TestFlextFactory:
             defaults=defaults,
         )
 
-        # Test with defaults
-        result = factory(amount=Decimal("10.00"))
+        # Test with defaults - cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", factory)
+        result = callable_factory(amount=Decimal("10.00"))
         assert result.success is True
         assert result.value.currency == "EUR"  # Default applied
 
         # Test overriding defaults
-        result = factory(amount=Decimal("20.00"), currency="USD")
+        result = callable_factory(amount=Decimal("20.00"), currency="USD")
         assert result.success is True
         assert result.value.currency == "USD"  # Override applied
 
@@ -556,9 +564,14 @@ class TestFlextFactory:
             SimpleValueObject, defaults={}
         )
 
-        result = factory(value="")  # Should fail validation
+        # Cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", factory)
+        result = callable_factory(value="")  # Should fail validation
         assert result.success is False
-        assert "cannot be empty" in result.error
+        assert result.error and "cannot be empty" in str(result.error)
 
     def test_factory_creation_failure(self) -> None:
         """Test factory with creation failure."""
@@ -566,10 +579,17 @@ class TestFlextFactory:
             SimpleValueObject, defaults={}
         )
 
+        # Cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         # Pass invalid parameter - this will be handled by validation
-        result = factory(value="")  # Empty value should fail business validation
+        result = callable_factory(
+            value=""
+        )  # Empty value should fail business validation
         assert result.success is False
-        assert "cannot be empty" in result.error
+        assert result.error and "cannot be empty" in str(result.error)
 
     def test_factory_without_defaults(self) -> None:
         """Test factory creation without defaults."""
@@ -578,7 +598,12 @@ class TestFlextFactory:
             defaults={},
         )
 
-        result = factory(value="test")
+        # Cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", factory)
+        result = callable_factory(value="test")
         assert result.success is True
         assert result.value.value == "test"
 
@@ -664,8 +689,14 @@ class TestValueObjectIntegration:
         emails = []
         test_addresses = ["user1@example.com", "user2@test.org", "REDACTED_LDAP_BIND_PASSWORD@company.net"]
 
+        # Cast to avoid type checker issues
+        from collections.abc import Callable
+        from typing import cast
+
+        callable_factory = cast("Callable[..., FlextResult[object]]", email_factory)
+
         for address in test_addresses:
-            result = email_factory(address=address)
+            result = callable_factory(address=address)
             assert result.success is True
             emails.append(result.value)
 

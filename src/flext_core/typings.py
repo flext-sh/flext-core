@@ -33,6 +33,10 @@ from collections.abc import Callable, Mapping
 from datetime import datetime
 from typing import TYPE_CHECKING, ParamSpec, TypeVar
 
+# Define ParamSpec and TypeVar for FlextCallable
+P = ParamSpec("P")
+T = TypeVar("T")
+
 if TYPE_CHECKING:
     from flext_core.protocols import (
         FlextProtocols,
@@ -40,12 +44,42 @@ if TYPE_CHECKING:
     from flext_core.result import FlextResult
 
 # =============================================================================
-# BASIC TYPE DEFINITIONS
+# DYNAMIC EXCEPTION TYPE STUBS
 # =============================================================================
 
-# Define FlextDecoratedFunction early since it's used in class definitions
-# Use explicit parameter/return types to avoid Any
-type FlextDecoratedFunction[T] = Callable[[object], T]
+# Type stubs for dynamically generated exceptions to help mypy understand them
+# These are created at runtime by FlextExceptions but need type definitions
+if TYPE_CHECKING:
+    # Base exception classes - dynamically generated
+    class FlextError(RuntimeError): ...
+
+    class FlextUserError(TypeError): ...
+
+    class FlextValidationError(ValueError): ...
+
+    class FlextConfigurationError(ValueError): ...
+
+    class FlextConnectionError(ConnectionError): ...
+
+    class FlextAuthenticationError(PermissionError): ...
+
+    class FlextPermissionError(PermissionError): ...
+
+    class FlextNotFoundError(FileNotFoundError): ...
+
+    class FlextAlreadyExistsError(FileExistsError): ...
+
+    class FlextTimeoutError(TimeoutError): ...
+
+    class FlextProcessingError(RuntimeError): ...
+
+    class FlextCriticalError(RuntimeError): ...
+
+    class FlextOperationError(RuntimeError): ...
+
+    class FlextTypeError(TypeError): ...
+
+    class FlextAttributeError(AttributeError): ...
 
 # =============================================================================
 # FLEXT HIERARCHICAL TYPE SYSTEM - Organized by domain
@@ -112,6 +146,7 @@ class FlextTypes:
 
         # Foundation layer aliases
         type Callable[T] = FlextProtocols.Foundation.Callable[T]
+        type DecoratedCallable[T] = FlextProtocols.Foundation.DecoratedCallable[T]
         type Validator[T] = FlextProtocols.Foundation.Validator[T]
         type ErrorHandler = FlextProtocols.Foundation.ErrorHandler
         type Factory[T] = FlextProtocols.Foundation.Factory[T]
@@ -210,7 +245,7 @@ class FlextTypes:
         # Validator callable types
         type Validator = Callable[[object], bool]
         type DecoratorFunction[T] = Callable[
-            [FlextDecoratedFunction[T]], FlextDecoratedFunction[T]
+            [FlextCallable[T]], FlextDecoratedFunction[T]
         ]
 
         # Serializer callable types
@@ -295,8 +330,10 @@ class FlextTypes:
         type SizeList = list[int]
         type PerformanceMap = dict[str, dict[str, int | float]]
 
+        # More flexible metrics types for compatibility
         type MetricsValue = (
-            CounterMetric | TimeMetric | ErrorCounterMap | SizeList | PerformanceMap
+            #           CounterMetric | TimeMetric | ErrorCounterMap | SizeList | PerformanceMap
+            int | float | str | dict[str, object] | list[object] | object
         )
         type MetricsData = dict[str, MetricsValue]
         type NumericMetrics = dict[str, int | float]
@@ -454,7 +491,7 @@ class FlextTypes:
 
 
 # Primary generic type variables (most commonly used)
-T = TypeVar("T")  # Primary generic type parameter
+# T and P are already defined at the top of the file (lines 37-38)
 U = TypeVar("U")  # Secondary generic type parameter
 V = TypeVar("V")  # Tertiary generic type parameter
 K = TypeVar("K")  # Key type parameter
@@ -464,9 +501,6 @@ E = TypeVar("E")  # Error type for error handling
 
 # TypeVar for preserving function signatures in decorator
 F = TypeVar("F", bound=FlextTypes.Core.TCallable)
-
-# Function type for callable operations
-P = ParamSpec("P")  # Parameter specification for decorated callables
 
 # Specialized type variables
 TData = TypeVar("TData")  # Generic data type
@@ -494,9 +528,20 @@ TDomainResult = TypeVar("TDomainResult")  # Domain result types
 TQuery = TypeVar("TQuery")  # Query types (alias for clarity)
 TQueryResult = TypeVar("TQueryResult")  # Query result types (alias for clarity)
 
-# Backward compatibility for moved types
+
+# =============================================================================
+# BASIC TYPE DEFINITIONS
+# =============================================================================
+
 AnyCallable = FlextTypes.Core.TCallable
 
+# Define FlextDecoratedFunction early since it's used in class definitions
+# Compatible with variadic FlextCallable protocol (*args, **kwargs)
+# Using Protocol-based callable that accepts any arguments
+if TYPE_CHECKING:
+    type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
+else:
+    type FlextDecoratedFunction[T] = Callable[..., T]
 
 # =============================================================================
 # CONVENIENCE ALIASES - For backward compatibility and shorter names
@@ -515,70 +560,39 @@ TValue = FlextTypes.Core.Value
 TFactory = FlextTypes.Core.Factory[object]
 
 # Protocol aliases for easy access - proper generic forms
-if TYPE_CHECKING:
-    # Foundation layer aliases
-    type FlextCallable[T] = FlextProtocols.Foundation.Callable[T]
-    type FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler
-    type FlextFactory[T] = FlextProtocols.Foundation.Factory[T]
-    type FlextAsyncFactory[T] = FlextProtocols.Foundation.AsyncFactory[T]
+# Foundation layer aliases - use protocols from FlextProtocols
+type FlextCallable[T] = FlextProtocols.Foundation.Callable[T]
+type FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler
+type FlextFactory[T] = FlextProtocols.Foundation.Factory[T]
+type FlextAsyncFactory[T] = FlextProtocols.Foundation.AsyncFactory[T]
 
-    # Domain layer aliases
-    type FlextService = FlextProtocols.Domain.Service
-    type FlextRepository[T] = FlextProtocols.Domain.Repository[T]
-    type FlextDomainEvent = FlextProtocols.Domain.DomainEvent
-    type FlextEventStore = FlextProtocols.Domain.EventStore
+# Domain layer aliases
+type FlextService = FlextProtocols.Domain.Service
+type FlextRepository[T] = FlextProtocols.Domain.Repository[T]
+type FlextDomainEvent = FlextProtocols.Domain.DomainEvent
+type FlextEventStore = FlextProtocols.Domain.EventStore
 
-    # Application layer aliases
-    type FlextHandler[TInput, TOutput] = FlextProtocols.Application.Handler[
-        TInput, TOutput
-    ]
-    type FlextMessageHandler = FlextProtocols.Application.MessageHandler
-    type FlextValidatingHandler = FlextProtocols.Application.ValidatingHandler
-    type FlextAuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
-    type FlextEventProcessor = FlextProtocols.Application.EventProcessor
-    type FlextUnitOfWork = FlextProtocols.Application.UnitOfWork
+# Application layer aliases
+type FlextHandler[TInput, TOutput] = FlextProtocols.Application.Handler[TInput, TOutput]
+type FlextMessageHandler = FlextProtocols.Application.MessageHandler
+type FlextValidatingHandler = FlextProtocols.Application.ValidatingHandler
+type FlextAuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
+type FlextEventProcessor = FlextProtocols.Application.EventProcessor
+type FlextUnitOfWork = FlextProtocols.Application.UnitOfWork
 
-    # Infrastructure layer aliases
-    type FlextConnection = FlextProtocols.Infrastructure.Connection
-    type FlextAuth = FlextProtocols.Infrastructure.Auth
-    type FlextConfigurable = FlextProtocols.Infrastructure.Configurable
-    type FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
+# Infrastructure layer aliases
+type FlextConnection = FlextProtocols.Infrastructure.Connection
+type FlextAuth = FlextProtocols.Infrastructure.Auth
+# type FlextConfigurable = FlextProtocols.Infrastructure.Configurable  # Moved to protocols.py
+type FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
 
-    # Extensions layer aliases
-    type FlextPlugin = FlextProtocols.Extensions.Plugin
-    type FlextPluginContext = FlextProtocols.Extensions.PluginContext
-    type FlextMiddleware = FlextProtocols.Extensions.Middleware
-    type FlextAsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
-    type FlextObservability = FlextProtocols.Extensions.Observability
+# Extensions layer aliases
+type FlextPlugin = FlextProtocols.Extensions.Plugin
+type FlextPluginContext = FlextProtocols.Extensions.PluginContext
+type FlextMiddleware = FlextProtocols.Extensions.Middleware
+type FlextAsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
+type FlextObservability = FlextProtocols.Extensions.Observability
 
-    # Decorator patterns imported directly
-    # FlextDecoratedFunction already imported
-else:
-    # Runtime fallback definitions
-    type FlextCallable[T] = Callable[..., T]
-    type FlextValidator[T] = Callable[[T], bool]
-    type FlextErrorHandler = Callable[[Exception], None]
-    type FlextFactory[T] = Callable[[], T]
-    type FlextAsyncFactory[T] = Callable[[], T]
-    type FlextService = object
-    type FlextRepository[T] = object
-    type FlextDomainEvent = object
-    type FlextEventStore = object
-    type FlextHandler[TInput, TOutput] = Callable[[TInput], TOutput]
-    type FlextMessageHandler = object
-    type FlextValidatingHandler = object
-    type FlextAuthorizingHandler = object
-    type FlextEventProcessor = object
-    type FlextUnitOfWork = object
-    type FlextConnection = object
-    type FlextAuth = object
-    type FlextConfigurable = object
-    type FlextLoggerProtocol = object
-    type FlextPlugin = object
-    type FlextPluginContext = object
-    type FlextMiddleware = object
-    type FlextAsyncMiddleware = object
-    type FlextObservability = object
 
 # Domain aliases
 TEntityId = FlextTypes.Domain.EntityId
@@ -649,7 +663,7 @@ __all__ = [  # noqa: RUF022
     # Infrastructure layer protocol aliases
     "FlextConnection",
     "FlextAuth",
-    "FlextConfigurable",
+    # "FlextConfigurable",  # Moved to protocols.py
     "FlextLoggerProtocol",
     # Extensions layer protocol aliases
     "FlextPlugin",

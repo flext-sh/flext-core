@@ -366,7 +366,6 @@ class TestFlextCommandHandler:
         command: UpdateUserCommand = UpdateUserCommand(
             target_user_id="123",
             updates={"name": "new_name"},
-            mixin_setup=lambda: None,
         )
 
         if handler.can_handle(cast("CreateUserCommand", command)):
@@ -391,7 +390,6 @@ class TestFlextCommandHandler:
         command: CreateUserCommand = CreateUserCommand(
             username="john",
             email="john@example.com",
-            mixin_setup=lambda: None,
         )
 
         result = handler.handle(command)
@@ -413,7 +411,6 @@ class TestFlextCommandHandler:
         command: CreateUserCommand = CreateUserCommand(
             username="jane",
             email="jane@example.com",
-            mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -431,7 +428,6 @@ class TestFlextCommandHandler:
         command: CreateUserCommand = CreateUserCommand(
             username="",
             email="invalid",
-            mixin_setup=lambda: None,
         )
 
         result = handler.process_command(command)
@@ -453,7 +449,6 @@ class TestFlextCommandHandler:
         wrong_command: UpdateUserCommand = UpdateUserCommand(
             target_user_id="123",
             updates={"name": "test"},
-            mixin_setup=lambda: None,
         )
 
         # We need to cast to the expected type to bypass type checking for this test
@@ -472,7 +467,7 @@ class TestFlextCommandHandler:
     def test_process_command_handling_failure(self) -> None:
         """Test processing when handler fails."""
         handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler()
-        command: FailingCommand = FailingCommand(mixin_setup=lambda: None)
+        command: FailingCommand = FailingCommand()
 
         result = handler.process_command(command)
 
@@ -632,7 +627,7 @@ class TestFlextCommandResult:
 
         if command_result.success:
             raise AssertionError(f"Expected False, got {command_result.success}")
-        # Cannot access .data on failed result - should raise TypeError
+        # Cannot access .value on failed result - should raise TypeError
         with pytest.raises(
             TypeError, match="Attempted to access value on failed result"
         ):
@@ -721,22 +716,18 @@ class TestCommandPatternIntegration:
             CreateUserCommand(
                 username="user1",
                 email="user1@example.com",
-                mixin_setup=lambda: None,
             ),
             CreateUserCommand(
                 username="user2",
                 email="user2@example.com",
-                mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
                 target_user_id="user1",
                 updates={"status": "active"},
-                mixin_setup=lambda: None,
             ),
             UpdateUserCommand(
                 target_user_id="user2",
                 updates={"bio": "Developer"},
-                mixin_setup=lambda: None,
             ),
         ]
 

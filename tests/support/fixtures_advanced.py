@@ -16,7 +16,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
-import logging
 import tempfile
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
@@ -28,6 +27,7 @@ import pytest_asyncio
 
 from flext_core import FlextResult, get_logger
 from flext_core.container import FlextContainer
+from flext_core.loggings import FlextLogger
 from tests.support.factories import (
     BaseTestEntity,
     ConfigurationFactory,
@@ -49,7 +49,7 @@ def event_loop_policy() -> asyncio.AbstractEventLoopPolicy:
 
 
 @pytest.fixture(scope="session")
-def logger() -> logging.Logger:
+def logger() -> FlextLogger:
     """Provide configured logger for testing."""
     return get_logger("test_logger")
 
@@ -79,6 +79,7 @@ def container() -> Generator[FlextContainer]:
 # =============================================================================
 # FACTORY FIXTURES - Generate test data
 # =============================================================================
+
 
 @pytest.fixture
 def user_data() -> dict[str, Any]:
@@ -134,6 +135,7 @@ def high_priority_entity() -> BaseTestEntity:
 # RESULT FIXTURES - For FlextResult testing
 # =============================================================================
 
+
 @pytest.fixture
 def success_result() -> FlextResult[str]:
     """Generate successful FlextResult."""
@@ -145,7 +147,7 @@ def failure_result() -> FlextResult[Any]:
     """Generate failed FlextResult."""
     return FlextResultFactory.create_failure(
         "Test failure message",
-        "TEST_FAILURE"
+        "TEST_FAILURE",
     )
 
 
@@ -164,6 +166,7 @@ def mixed_results() -> list[FlextResult[Any]]:
 # =============================================================================
 # CONFIGURATION FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def test_config() -> dict[str, Any]:
@@ -186,6 +189,7 @@ def config_batch() -> list[dict[str, Any]]:
 # =============================================================================
 # MOCK FIXTURES - For testing with mocks
 # =============================================================================
+
 
 @pytest.fixture
 def mock_service(mocker: Any) -> Mock:
@@ -217,7 +221,8 @@ def mock_logger(mocker: Any) -> Mock:
 # ASYNC FIXTURES - For asyncio testing
 # =============================================================================
 
-@pytest_asyncio.fixture
+
+@pytest_asyncio.fixture  # type: ignore[misc]
 async def async_service() -> AsyncGenerator[Any]:
     """Provide async service for testing."""
 
@@ -239,7 +244,7 @@ async def async_service() -> AsyncGenerator[Any]:
     yield service
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture  # type: ignore[misc]
 async def async_context_manager() -> AsyncGenerator[Any]:
     """Provide async context manager for testing."""
 
@@ -263,6 +268,7 @@ async def async_context_manager() -> AsyncGenerator[Any]:
 # =============================================================================
 # PERFORMANCE FIXTURES - For benchmarking
 # =============================================================================
+
 
 @pytest.fixture
 def benchmark_data() -> dict[str, Any]:
@@ -288,6 +294,7 @@ def performance_thresholds() -> dict[str, float]:
 # =============================================================================
 # FILE SYSTEM FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def test_files(temp_directory: Path) -> dict[str, Path]:
@@ -321,6 +328,7 @@ def test_files(temp_directory: Path) -> dict[str, Path]:
 # ERROR HANDLING FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def error_scenarios() -> dict[str, Exception]:
     """Provide various error scenarios for testing."""
@@ -337,9 +345,9 @@ def error_scenarios() -> dict[str, Exception]:
 def timeout_scenarios() -> dict[str, float]:
     """Provide timeout scenarios for testing."""
     return {
-        "fast": 0.1,     # 100ms
-        "normal": 1.0,   # 1 second
-        "slow": 5.0,     # 5 seconds
+        "fast": 0.1,  # 100ms
+        "normal": 1.0,  # 1 second
+        "slow": 5.0,  # 5 seconds
         "very_slow": 30.0,  # 30 seconds
     }
 
@@ -347,6 +355,7 @@ def timeout_scenarios() -> dict[str, float]:
 # =============================================================================
 # PARAMETRIZED FIXTURES - For comprehensive testing
 # =============================================================================
+
 
 @pytest.fixture(params=[1, 5, 10, 50])
 def batch_sizes(request: pytest.FixtureRequest) -> int:
@@ -370,6 +379,7 @@ def boolean_flags(request: pytest.FixtureRequest) -> bool:
 # INTEGRATION FIXTURES - For complex scenarios
 # =============================================================================
 
+
 @pytest.fixture
 def integration_scenario() -> dict[str, Any]:
     """Provide complete integration testing scenario."""
@@ -383,13 +393,14 @@ def integration_scenario() -> dict[str, Any]:
             "timeout": 30,
             "retries": 3,
             "cache_enabled": True,
-        }
+        },
     }
 
 
 # =============================================================================
 # CLEANUP FIXTURES - Auto cleanup resources
 # =============================================================================
+
 
 @pytest.fixture(autouse=True)
 def auto_cleanup() -> Generator[None]:
@@ -400,12 +411,14 @@ def auto_cleanup() -> Generator[None]:
     # Cleanup - runs after each test
     # Force garbage collection to clean up test objects
     import gc
+
     gc.collect()
 
 
 # =============================================================================
 # CONDITION FIXTURES - For conditional testing
 # =============================================================================
+
 
 @pytest.fixture
 def skip_conditions() -> dict[str, bool]:

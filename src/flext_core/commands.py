@@ -161,12 +161,6 @@ class FlextCommands:
             description="Correlation ID for tracking",
         )
 
-        legacy_mixin_setup: object | None = Field(
-            default=None,
-            alias="mixin_setup",
-            exclude=True,
-        )
-
         @model_validator(mode="before")
         @classmethod
         def set_command_type(cls, values: dict[str, object]) -> dict[str, object]:
@@ -206,7 +200,7 @@ class FlextCommands:
             # Parse timestamp if string - handle None case
             payload_dict: dict[str, object]
             # Extract dict data with explicit type handling for pyright compatibility
-            raw_data = payload.data
+            raw_data = payload.value
             if raw_data is not None:
                 # Explicit cast to satisfy pyright's type checking
                 payload_dict = {
@@ -283,6 +277,7 @@ class FlextCommands:
             )
             return FlextResult[Self].ok(command)
 
+        @override
         def validate_command(self) -> FlextResult[None]:
             """Validate command using FlextValidation."""
             # Override in subclasses for custom validation
@@ -406,6 +401,7 @@ class FlextCommands:
             # Logger now provided by FlextLoggableMixin - DRY principle applied
 
         @property
+        @override
         def handler_name(self) -> str:
             """Get handler name - implements abstract method."""
             return self._handler_name
@@ -423,6 +419,7 @@ class FlextCommands:
             return FlextResult[None].ok(None)
 
         @abstractmethod
+        @override
         def handle(self, command: CommandT) -> FlextResult[ResultT]:
             """Handle the command and return result.
 
@@ -434,6 +431,7 @@ class FlextCommands:
 
             """
 
+        @override
         def _start_timing(self) -> float:
             """Start timing operation - implements timing interface."""
             return time.perf_counter()
@@ -1057,6 +1055,7 @@ class FlextCommands:
             self._handler_name = handler_name or self.__class__.__name__
 
         @property
+        @override
         def handler_name(self) -> str:
             """Get handler name for this query handler."""
             return self._handler_name
@@ -1076,6 +1075,7 @@ class FlextCommands:
             return FlextResult[None].ok(None)
 
         @abstractmethod
+        @override
         def handle(self, query: QueryT) -> FlextResult[QueryResultT]:
             """Handle query and return result."""
 
@@ -1119,7 +1119,7 @@ class FlextCommands:
 
 # Rebuild nested models to resolve forward references after import
 try:  # Defensive: avoid failing import-time on environments without Pydantic
-    _types_ns = {
+    _types_ns: dict[str, object] = {
         "FlextTypes.Service.ServiceName": str,
         "TUserId": str,
         "TCorrelationId": str,

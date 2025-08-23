@@ -9,9 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import TErrorMessage, TUserData
+from flext_core import FlextTypes
 
-# use .shared_domain with dot to access local module
 from .validation_utilities import (
     is_email,
     is_int,
@@ -59,9 +58,9 @@ class ValidationHelper:
     """Helper to reduce repetitive validation patterns - SOLID SRP."""
 
     @staticmethod
-    def validate_user_data(user_data: TUserData) -> list[TErrorMessage]:
+    def validate_user_data(user_data: FlextTypes.Auth.UserData) -> list[str]:
         """DRY Helper: Validate user data with consistent rules."""
-        validation_errors: list[TErrorMessage] = []
+        validation_errors: list[str] = []
 
         if not is_non_empty_string(user_data.get("name")):
             validation_errors.append("Name is required")
@@ -79,15 +78,15 @@ class ValidationHelper:
         return validation_errors
 
     @staticmethod
-    def report_validation_result(validation_errors: list[TErrorMessage]) -> None:
+    def report_validation_result(validation_errors: list[str]) -> None:
         """DRY Helper: Report validation results consistently."""
         if validation_errors:
             pass
 
     @staticmethod
-    def validate_config_data(config: dict[str, object]) -> list[TErrorMessage]:
+    def validate_config_data(config: dict[str, object]) -> list[str]:
         """DRY Helper: Validate configuration data."""
-        validation_errors: list[TErrorMessage] = []
+        validation_errors: list[str] = []
 
         required_keys = ["database_url", "api_key", "timeout"]
 

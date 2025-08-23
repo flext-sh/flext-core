@@ -6,10 +6,11 @@ capabilities with memory tracking, complexity analysis, and regression detection
 
 from __future__ import annotations
 
+import concurrent.futures
 import gc
 import time
 import tracemalloc
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Any, TypeVar
 
@@ -49,7 +50,7 @@ class ComplexityAnalyzer:
                     "input_size": size,
                     "duration_seconds": duration,
                     "duration_ms": duration * 1000,
-                }
+                },
             )
 
         # Analyze complexity pattern
@@ -66,7 +67,8 @@ class ComplexityAnalyzer:
         return measurement
 
     def _analyze_complexity_pattern(
-        self, results: list[dict[str, Any]]
+        self,
+        results: list[dict[str, Any]],
     ) -> dict[str, Any]:
         """Analyze if the performance follows common complexity patterns."""
         if len(results) < 2:
@@ -210,7 +212,7 @@ class PerformanceProfiler:
                     "duration_seconds": end_time - start_time,
                     "memory_mb": memory_usage,
                     "peak_memory_stats": top_stats[:5],  # Top 5 allocations
-                }
+                },
             )
 
     def assert_memory_efficient(
@@ -279,7 +281,8 @@ class BenchmarkUtils:
 
         # Analyze complexity
         complexity_analysis = BenchmarkUtils._analyze_complexity(
-            results, expected_complexity
+            results,
+            expected_complexity,
         )
         results["complexity_analysis"] = complexity_analysis
 
@@ -359,15 +362,13 @@ class BenchmarkUtils:
         **kwargs: Any,
     ) -> dict[int, dict[str, Any]]:
         """Benchmark function with different thread counts."""
-        import concurrent.futures
-
         results = {}
 
         for thread_count in thread_counts:
 
             def parallel_execution():
                 with concurrent.futures.ThreadPoolExecutor(
-                    max_workers=thread_count
+                    max_workers=thread_count,
                 ) as executor:
                     futures = [
                         executor.submit(func, *args, **kwargs)
@@ -394,7 +395,7 @@ class MemoryProfiler:
 
     @staticmethod
     @contextmanager
-    def track_memory_leaks(max_increase_mb: float = 5.0):
+    def track_memory_leaks(max_increase_mb: float = 5.0) -> Generator[None]:
         """Context manager to detect memory leaks."""
         gc.collect()
         tracemalloc.start()
@@ -513,17 +514,17 @@ class PerformanceMarkers:
     regression = pytest.mark.regression
 
     @staticmethod
-    def complexity(expected: str):
+    def complexity(expected: str) -> pytest.MarkDecorator:
         """Mark test with expected complexity."""
         return pytest.mark.complexity(expected=expected)
 
     @staticmethod
-    def memory_limit(mb: float):
+    def memory_limit(mb: float) -> pytest.MarkDecorator:
         """Mark test with memory limit."""
         return pytest.mark.memory_limit(mb=mb)
 
     @staticmethod
-    def timeout(seconds: float):
+    def timeout(seconds: float) -> pytest.MarkDecorator:
         """Mark test with timeout."""
         return pytest.mark.timeout(seconds)
 

@@ -8,7 +8,6 @@ domain models.
 from decimal import Decimal
 from typing import cast
 
-# use .shared_domain with dot to access local module
 from shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 from flext_core import (
@@ -158,7 +157,8 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
             },
         ],
     )
-    if order2_result.success and order2_result.value is not None:
+    # Modern pattern: Check success and use value directly
+    if order2_result.success:
         order2 = order2_result.value
         repository_any = get_flext_container().get("order_repository").value
         # Hint to type checker

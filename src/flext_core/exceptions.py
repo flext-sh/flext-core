@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from collections.abc import Mapping
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 from flext_core.constants import FlextConstants
 
@@ -116,6 +116,7 @@ class FlextExceptions:
                 self.timestamp = time.time()
                 FlextExceptions.Metrics.record_exception(self.__class__.__name__)
 
+            @override
             def __str__(self) -> str:
                 """Return formatted error message."""
                 return f"[{self.code}] {self.message}"
@@ -137,36 +138,68 @@ class FlextExceptions:
             if fields is None:
                 fields = []
 
-            # Create a proper class that inherits from both base_exception and FlextErrorMixin
-            # MyPy limitation: Cannot handle dynamic inheritance properly
-            class GeneratedExceptionClass(base_exception, cls.FlextErrorMixin):  # type: ignore[valid-type,misc,name-defined] # Dynamic inheritance
-                """Dynamically generated exception class."""
+            # Build a dynamic class using type() to keep static checkers happy
 
-                def __init__(self, message: str, **kwargs: object) -> None:
-                    # Store field-specific parameters as attributes
-                    for field_name in fields:  # type: ignore[union-attr] # fields is always a list after None check
-                        if field_name in kwargs:
-                            setattr(self, field_name, kwargs[field_name])
+            def _generated_init(self: object, message: str, **kwargs: object) -> None:
+                # Store field-specific parameters as attributes
+                for field_name in fields:
+                    if field_name in kwargs:
+                        setattr(self, field_name, kwargs[field_name])
 
-                    # Initialize base exception first
-                    base_exception.__init__(self, message)
+                # Initialize base exception first
+                base_exception.__init__(cast("Exception", self), message)
 
-                    # Initialize mixin with normalized parameters
-                    mixin_kwargs = {
-                        "code": default_code,
-                        "context": kwargs,
-                    }
-                    cls.FlextErrorMixin.__init__(self, message, **mixin_kwargs)  # type: ignore[arg-type] # Dynamic kwargs handling
+                # Initialize mixin with normalized parameters
+                # Normalize error code inline
+                resolved_code = (
+                    kwargs.get("error_code") or kwargs.get("code") or default_code
+                )
+                if isinstance(resolved_code, Enum):
+                    normalized_code = str(resolved_code.value)
+                elif resolved_code is None:
+                    normalized_code = FlextConstants.Errors.GENERIC_ERROR
+                else:
+                    normalized_code = str(resolved_code)
+
+                cls.FlextErrorMixin.__init__(
+                    cast("FlextExceptions.Base.FlextErrorMixin", self),
+                    message,
+                    code=normalized_code,
+                    context=dict(kwargs),
+                )
+
+            def _generated_str(self: object) -> str:
+                mixin_self = cast("FlextExceptions.Base.FlextErrorMixin", self)
+                return cls.FlextErrorMixin.__str__(mixin_self)
+
+            generated_class = type(
+                name,
+                (base_exception, cls.FlextErrorMixin),
+                {
+                    "__init__": _generated_init,
+                    "__str__": _generated_str,
+                    "error_code": property(
+                        lambda self: str(
+                            getattr(
+                                self,
+                                "code",
+                                FlextConstants.Errors.GENERIC_ERROR,
+                            )
+                        )
+                    ),
+                },
+            )
 
             # Set class attributes
-            GeneratedExceptionClass.__name__ = name
-            GeneratedExceptionClass.__qualname__ = name
-            GeneratedExceptionClass.__doc__ = (
+            generated_class.__name__ = name
+            generated_class.__qualname__ = name
+            generated_class.__doc__ = (
                 doc or f"{name} - {base_exception.__name__} with FLEXT context."
             )
-            GeneratedExceptionClass.__module__ = __name__
+            generated_class.__module__ = __name__
+            # Class prepared
 
-            return GeneratedExceptionClass
+            return generated_class
 
         # Factory interface implementation will be added after class definition
 
@@ -175,7 +208,7 @@ class FlextExceptions:
     # =============================================================================
 
     # Exception specifications for dynamic generation - ALL EXCEPTIONS FOLLOW DRY PATTERN
-    _EXCEPTION_SPECS: ClassVar[
+    EXCEPTION_SPECS: ClassVar[
         list[tuple[str, type[Exception], str, str, list[str]]]
     ] = [
         # Base errors
@@ -303,15 +336,37 @@ class FlextExceptions:
         class ContextExceptionFactory:
             @staticmethod
             def create_error(message: str, **kwargs: object) -> Exception:
-                # Get the dynamically created exception class
-                error_class = FlextExceptions.FlextError  # type: ignore[attr-defined] # Dynamic class creation
-                return error_class(f"{module_name}: {message}", **kwargs)  # type: ignore[no-any-return] # Dynamic class instantiation
+                # Use fallback for runtime access - classes may not exist at definition time
+                try:
+                    error_class = getattr(FlextExceptions, "FlextError", None)
+                    if error_class is not None:
+                        return cast(
+                            "Exception",
+                            error_class(f"{module_name}: {message}", **kwargs),
+                        )
+                except AttributeError:
+                    pass
+                # Fallback to standard exception if dynamic class not available
+                return RuntimeError(f"{module_name}: {message}")
 
             @staticmethod
             def create_validation_error(message: str, **kwargs: object) -> Exception:
-                # Get the dynamically created exception class
-                validation_error_class = FlextExceptions.FlextValidationError  # type: ignore[attr-defined] # Dynamic class creation
-                return validation_error_class(f"{module_name}: {message}", **kwargs)  # type: ignore[no-any-return] # Dynamic class instantiation
+                # Use fallback for runtime access - classes may not exist at definition time
+                try:
+                    validation_error_class = getattr(
+                        FlextExceptions, "FlextValidationError", None
+                    )
+                    if validation_error_class is not None:
+                        return cast(
+                            "Exception",
+                            validation_error_class(
+                                f"{module_name}: {message}", **kwargs
+                            ),
+                        )
+                except AttributeError:
+                    pass
+                # Fallback to standard exception if dynamic class not available
+                return ValueError(f"{module_name}: {message}")
 
         return ContextExceptionFactory
 
@@ -345,6 +400,30 @@ class FlextExceptions:
             ),
         }
 
+    # =========================================================================
+    # ERROR CODES - formerly FlextErrorCodes
+    # =========================================================================
+
+    class ErrorCodes:
+        """Error code constants using FlextConstants for consistency."""
+
+        GENERIC_ERROR = FlextConstants.Errors.GENERIC_ERROR
+        VALIDATION_ERROR = FlextConstants.Errors.VALIDATION_ERROR
+        CONFIGURATION_ERROR = FlextConstants.Errors.CONFIGURATION_ERROR
+        CONNECTION_ERROR = FlextConstants.Errors.CONNECTION_ERROR
+        AUTHENTICATION_ERROR = FlextConstants.Errors.AUTHENTICATION_ERROR
+        PERMISSION_ERROR = FlextConstants.Errors.PERMISSION_ERROR
+        NOT_FOUND = FlextConstants.Errors.NOT_FOUND
+        ALREADY_EXISTS = FlextConstants.Errors.ALREADY_EXISTS
+        TIMEOUT_ERROR = FlextConstants.Errors.TIMEOUT_ERROR
+        PROCESSING_ERROR = FlextConstants.Errors.PROCESSING_ERROR
+        CRITICAL_ERROR = FlextConstants.Errors.CRITICAL_ERROR
+        OPERATION_ERROR = FlextConstants.Errors.OPERATION_ERROR
+        UNWRAP_ERROR = FlextConstants.Errors.UNWRAP_ERROR
+        BUSINESS_ERROR = FlextConstants.Errors.BUSINESS_RULE_ERROR
+        INFRASTRUCTURE_ERROR = FlextConstants.Errors.EXTERNAL_SERVICE_ERROR
+        TYPE_ERROR = FlextConstants.Errors.TYPE_ERROR
+
     # Abstract patterns removed - use dynamic factory instead
 
 
@@ -353,7 +432,7 @@ class FlextExceptions:
 # =============================================================================
 
 # Generate dynamic exception classes using the factory pattern
-for spec in FlextExceptions._EXCEPTION_SPECS:
+for spec in FlextExceptions.EXCEPTION_SPECS:
     name, base_exception, default_code, doc, fields = spec
     # Create the exception class using the factory
     generated_class = FlextExceptions.Base.create_exception_type(
@@ -387,26 +466,32 @@ def clear_exception_metrics() -> None:
 # =============================================================================
 
 
-# Error codes compatibility - using constants from flext_core.constants
+# Error codes compatibility - facade for FlextExceptions.ErrorCodes
 class FlextErrorCodes:
-    """Compatibility class for error codes using FlextConstants."""
+    """COMPATIBILITY FACADE: Use FlextExceptions.ErrorCodes instead.
 
-    GENERIC_ERROR = FlextConstants.Errors.GENERIC_ERROR
-    VALIDATION_ERROR = FlextConstants.Errors.VALIDATION_ERROR
-    CONFIGURATION_ERROR = FlextConstants.Errors.CONFIGURATION_ERROR
-    CONNECTION_ERROR = FlextConstants.Errors.CONNECTION_ERROR
-    AUTHENTICATION_ERROR = FlextConstants.Errors.AUTHENTICATION_ERROR
-    PERMISSION_ERROR = FlextConstants.Errors.PERMISSION_ERROR
-    NOT_FOUND = FlextConstants.Errors.NOT_FOUND
-    ALREADY_EXISTS = FlextConstants.Errors.ALREADY_EXISTS
-    TIMEOUT_ERROR = FlextConstants.Errors.TIMEOUT_ERROR
-    PROCESSING_ERROR = FlextConstants.Errors.PROCESSING_ERROR
-    CRITICAL_ERROR = FlextConstants.Errors.CRITICAL_ERROR
-    OPERATION_ERROR = FlextConstants.Errors.OPERATION_ERROR
-    UNWRAP_ERROR = FlextConstants.Errors.UNWRAP_ERROR
-    BUSINESS_ERROR = FlextConstants.Errors.BUSINESS_RULE_ERROR
-    INFRASTRUCTURE_ERROR = FlextConstants.Errors.EXTERNAL_SERVICE_ERROR
-    TYPE_ERROR = FlextConstants.Errors.TYPE_ERROR
+    This class provides backward compatibility for existing code.
+    All attributes delegate to FlextExceptions.ErrorCodes.
+
+    DEPRECATED: Use FlextExceptions.ErrorCodes.[CODE] instead of FlextErrorCodes.[CODE]
+    """
+
+    GENERIC_ERROR = FlextExceptions.ErrorCodes.GENERIC_ERROR
+    VALIDATION_ERROR = FlextExceptions.ErrorCodes.VALIDATION_ERROR
+    CONFIGURATION_ERROR = FlextExceptions.ErrorCodes.CONFIGURATION_ERROR
+    CONNECTION_ERROR = FlextExceptions.ErrorCodes.CONNECTION_ERROR
+    AUTHENTICATION_ERROR = FlextExceptions.ErrorCodes.AUTHENTICATION_ERROR
+    PERMISSION_ERROR = FlextExceptions.ErrorCodes.PERMISSION_ERROR
+    NOT_FOUND = FlextExceptions.ErrorCodes.NOT_FOUND
+    ALREADY_EXISTS = FlextExceptions.ErrorCodes.ALREADY_EXISTS
+    TIMEOUT_ERROR = FlextExceptions.ErrorCodes.TIMEOUT_ERROR
+    PROCESSING_ERROR = FlextExceptions.ErrorCodes.PROCESSING_ERROR
+    CRITICAL_ERROR = FlextExceptions.ErrorCodes.CRITICAL_ERROR
+    OPERATION_ERROR = FlextExceptions.ErrorCodes.OPERATION_ERROR
+    UNWRAP_ERROR = FlextExceptions.ErrorCodes.UNWRAP_ERROR
+    BUSINESS_ERROR = FlextExceptions.ErrorCodes.BUSINESS_ERROR
+    INFRASTRUCTURE_ERROR = FlextExceptions.ErrorCodes.INFRASTRUCTURE_ERROR
+    TYPE_ERROR = FlextExceptions.ErrorCodes.TYPE_ERROR
 
 
 # Base classes compatibility
@@ -418,24 +503,130 @@ create_module_exception_classes = FlextExceptions.create_module_exception_classe
 
 # Global aliases for all dynamically generated exception classes
 # (needed for external imports that expect global scope)
-# MyPy limitation: Cannot detect dynamically created attributes
-FlextError = FlextExceptions.FlextError  # type: ignore[attr-defined] # Dynamic class generation
-FlextOperationError = FlextExceptions.FlextOperationError  # type: ignore[attr-defined] # Dynamic class generation
-FlextProcessingError = FlextExceptions.FlextProcessingError  # type: ignore[attr-defined] # Dynamic class generation
-FlextTimeoutError = FlextExceptions.FlextTimeoutError  # type: ignore[attr-defined] # Dynamic class generation
-FlextNotFoundError = FlextExceptions.FlextNotFoundError  # type: ignore[attr-defined] # Dynamic class generation
-FlextAlreadyExistsError = FlextExceptions.FlextAlreadyExistsError  # type: ignore[attr-defined] # Dynamic class generation
-FlextPermissionError = FlextExceptions.FlextPermissionError  # type: ignore[attr-defined] # Dynamic class generation
-FlextAuthenticationError = FlextExceptions.FlextAuthenticationError  # type: ignore[attr-defined] # Dynamic class generation
-FlextTypeError = FlextExceptions.FlextTypeError  # type: ignore[attr-defined] # Dynamic class generation
-FlextAttributeError = FlextExceptions.FlextAttributeError  # type: ignore[attr-defined] # Dynamic class generation
-FlextCriticalError = FlextExceptions.FlextCriticalError  # type: ignore[attr-defined] # Dynamic class generation
+# Type annotations for dynamic classes to help static analyzers
+if TYPE_CHECKING:
+    # Type annotations for static analyzers
+    class FlextError(RuntimeError):
+        """Base FLEXT error."""
 
-# Global aliases for special exception classes (custom implementations)
-FlextUserError = FlextExceptions.FlextUserError  # type: ignore[attr-defined] # Dynamic class generation
-FlextValidationError = FlextExceptions.FlextValidationError  # type: ignore[attr-defined] # Dynamic class generation
-FlextConfigurationError = FlextExceptions.FlextConfigurationError  # type: ignore[attr-defined] # Dynamic class generation
-FlextConnectionError = FlextExceptions.FlextConnectionError  # type: ignore[attr-defined] # Dynamic class generation
+        message: str
+        code: str
+        context: dict[str, object]
+        correlation_id: str
+        timestamp: float
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+        @property
+        def error_code(self) -> str: ...
+
+    class FlextOperationError(RuntimeError):
+        """Operation failed."""
+
+        message: str
+        code: str
+        context: dict[str, object]
+        correlation_id: str
+        timestamp: float
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+        @property
+        def error_code(self) -> str: ...
+
+    class FlextValidationError(ValueError):
+        """Data validation failed."""
+
+        message: str
+        code: str
+        context: dict[str, object]
+        correlation_id: str
+        timestamp: float
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+        @property
+        def error_code(self) -> str: ...
+
+    class FlextConfigurationError(ValueError):
+        """Configuration error."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextTypeError(TypeError):
+        """Type error."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextAttributeError(AttributeError):
+        """Attribute error."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextAlreadyExistsError(ValueError):
+        """Resource already exists."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextAuthenticationError(RuntimeError):
+        """Authentication failed."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextConnectionError(RuntimeError):
+        """Connection failed."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextCriticalError(RuntimeError):
+        """Critical system error."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextNotFoundError(ValueError):
+        """Resource not found."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextPermissionError(PermissionError):
+        """Permission denied."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextProcessingError(RuntimeError):
+        """Processing failed."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextTimeoutError(TimeoutError):
+        """Operation timed out."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+    class FlextUserError(ValueError):
+        """User error."""
+
+        def __init__(self, message: str, **kwargs: object) -> None: ...
+
+else:
+    # Runtime: Use dynamically created classes
+    FlextError = FlextExceptions.FlextError
+    FlextOperationError = FlextExceptions.FlextOperationError
+    FlextValidationError = FlextExceptions.FlextValidationError
+    FlextConfigurationError = FlextExceptions.FlextConfigurationError
+    FlextTypeError = FlextExceptions.FlextTypeError
+    FlextAttributeError = FlextExceptions.FlextAttributeError
+
+    # Other dynamically generated classes
+    FlextProcessingError = FlextExceptions.FlextProcessingError
+    FlextTimeoutError = FlextExceptions.FlextTimeoutError
+    FlextNotFoundError = FlextExceptions.FlextNotFoundError
+    FlextAlreadyExistsError = FlextExceptions.FlextAlreadyExistsError
+    FlextPermissionError = FlextExceptions.FlextPermissionError
+    FlextAuthenticationError = FlextExceptions.FlextAuthenticationError
+    FlextCriticalError = FlextExceptions.FlextCriticalError
+    FlextUserError = FlextExceptions.FlextUserError
+    FlextConnectionError = FlextExceptions.FlextConnectionError
 
 # =============================================================================
 # EXPORTS - Clean public API

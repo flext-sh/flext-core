@@ -77,12 +77,20 @@ class AsyncTestUtils:
         if not coroutines:
             return []
 
-        return await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
+        results = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
+        if return_exceptions:
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]  # type: ignore[misc]
+        return results  # type: ignore[return-value]
 
     @staticmethod
-    async def run_concurrent(*coroutines: Awaitable[T], return_exceptions: bool = False) -> list[T]:
-        """Alias for run_concurrently for backward compatibility."""
-        return await AsyncTestUtils.run_concurrently(*coroutines, return_exceptions=return_exceptions)
+    async def run_concurrent(
+        coroutines: list[Awaitable[T]], return_exceptions: bool = False
+    ) -> list[T]:
+        """Run coroutines from a list concurrently."""
+        return await AsyncTestUtils.run_concurrently(
+            *coroutines, return_exceptions=return_exceptions
+        )
 
     @staticmethod
     async def sleep_with_timeout(duration: float) -> None:
@@ -97,7 +105,11 @@ class AsyncTestUtils:
         """Run a list of coroutines concurrently."""
         if not tasks:
             return []
-        return await asyncio.gather(*tasks, return_exceptions=return_exceptions)
+        results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
+        if return_exceptions:
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]  # type: ignore[misc]
+        return results  # type: ignore[return-value]
 
     @staticmethod
     async def retry_async(
@@ -171,7 +183,17 @@ class AsyncContextManagers:
         task_func: Callable[[], Awaitable[None]],
     ):
         """Run background task during test execution."""
-        task = asyncio.create_task(task_func())
+        awaitable = task_func()
+        # Ensure we have a coroutine for create_task
+        if not asyncio.iscoroutine(awaitable):
+
+            async def _wrapper():
+                return await awaitable
+
+            coro = _wrapper()
+        else:
+            coro = awaitable
+        task = asyncio.create_task(coro)
 
         try:
             yield task
@@ -199,8 +221,11 @@ class AsyncMockUtils:
     """Utilities for mocking async functions and testing async behavior."""
 
     @staticmethod
-    def create_async_mock(return_value: Any = None, side_effect: Exception | None = None):
+    def create_async_mock(
+        return_value: Any = None, side_effect: Exception | None = None
+    ):
         """Create async mock function."""
+
         async def async_mock(*args: Any, **kwargs: Any) -> Any:
             if side_effect:
                 raise side_effect
@@ -215,6 +240,7 @@ class AsyncMockUtils:
         side_effect: Exception | None = None,
     ):
         """Create async mock with delay."""
+
         async def delayed_async_mock(*args: Any, **kwargs: Any) -> Any:
             await asyncio.sleep(delay)
             if side_effect:
@@ -258,6 +284,7 @@ class AsyncFixtureUtils:
     @staticmethod
     async def create_async_test_client():
         """Create async test client (placeholder for actual implementation)."""
+
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
             async def get(self, url: str) -> dict[str, Any]:
@@ -302,18 +329,44 @@ class AsyncConcurrencyTesting:
 
         for _ in range(iterations):
             # Start both functions simultaneously
-            task1 = asyncio.create_task(func1())
-            task2 = asyncio.create_task(func2())
+            awaitable1 = func1()
+            awaitable2 = func2()
+
+            # Ensure we have coroutines for create_task
+            if not asyncio.iscoroutine(awaitable1):
+
+                async def _wrapper1():
+                    return await awaitable1
+
+                coro1 = _wrapper1()
+            else:
+                coro1 = awaitable1
+
+            if not asyncio.iscoroutine(awaitable2):
+
+                async def _wrapper2():
+                    return await awaitable2
+
+                coro2 = _wrapper2()
+            else:
+                coro2 = awaitable2
+
+            task1 = asyncio.create_task(coro1)
+            task2 = asyncio.create_task(coro2)
 
             # Wait for both to complete
-            result1, result2 = await asyncio.gather(task1, task2, return_exceptions=True)
+            result1, result2 = await asyncio.gather(
+                task1, task2, return_exceptions=True
+            )
 
-            results.append({
-                "result1": result1,
-                "result2": result2,
-                "error1": isinstance(result1, Exception),
-                "error2": isinstance(result2, Exception),
-            })
+            results.append(
+                {
+                    "result1": result1,
+                    "result2": result2,
+                    "error1": isinstance(result1, Exception),
+                    "error2": isinstance(result2, Exception),
+                }
+            )
 
         return {
             "total_iterations": iterations,
@@ -329,6 +382,7 @@ class AsyncConcurrencyTesting:
         iterations_per_worker: int = 10,
     ) -> dict[str, Any]:
         """Test concurrent access to a resource."""
+
         async def worker() -> list[Any]:
             results = []
             for _ in range(iterations_per_worker):

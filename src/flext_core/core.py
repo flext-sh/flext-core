@@ -25,7 +25,6 @@ from flext_core.decorators import (
     FlextErrorHandlingDecorators,
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
-    FlextValidationDecorators,
 )
 from flext_core.domain_services import FlextDomainService
 from flext_core.exceptions import (
@@ -46,7 +45,6 @@ from flext_core.fields import (
 from flext_core.guards import (
     FlextGuards,
     immutable,
-    is_dict_of,
     require_non_empty,
     require_not_none,
     require_positive,
@@ -109,10 +107,6 @@ from flext_core.root_models import (
 from flext_core.schema_processing import (
     FlextProcessingPipeline,
 )
-from flext_core.semantic import (
-    FlextSemantic,
-    FlextSemanticModel,
-)
 from flext_core.typings import FlextPlugin, FlextRepository, FlextTypes, P, R, T
 from flext_core.utilities import (
     FlextConsole,
@@ -127,6 +121,7 @@ from flext_core.utilities import (
     truncate,
 )
 from flext_core.validation import (
+    FlextAbstractValidator,
     FlextPredicates,
     FlextValidators,
     flext_validate_email,
@@ -477,12 +472,12 @@ class FlextCore:
         return validator
 
     @property
-    def validators(self) -> type[FlextValidators]:
+    def validators(self) -> object:
         """Access validation utilities."""
         return FlextValidators
 
     @property
-    def predicates(self) -> type[FlextPredicates]:
+    def predicates(self) -> object:
         """Access predicate functions."""
         return FlextPredicates
 
@@ -905,39 +900,22 @@ class FlextCore:
         """Access decorator factory."""
         return FlextDecoratorFactory
 
-    def create_validation_decorator(
-        self, validator: ValidatorCallable
-    ) -> object:
+    def create_validation_decorator(self, validator: ValidatorCallable) -> object:
         """Create custom validation decorator."""
-        return FlextValidationDecorators.create_validation_decorator(validator)
+        factory = FlextDecoratorFactory()
+        return factory.create_validation_decorator(validator=validator)
 
-    def create_error_handling_decorator(
-        self, **kwargs: object
-    ) -> FlextErrorHandlingDecorators:
+    def create_error_handling_decorator(self) -> type[FlextErrorHandlingDecorators]:
         """Create custom error handling decorator."""
-        name = cast("str | None", kwargs.get("name"))
-        handled_exceptions = cast(
-            "tuple[type[Exception], ...] | None", kwargs.get("handled_exceptions")
-        )
-        return FlextErrorHandlingDecorators(
-            name=name, handled_exceptions=handled_exceptions
-        )
+        return FlextErrorHandlingDecorators
 
-    def create_performance_decorator(
-        self, **kwargs: object
-    ) -> FlextPerformanceDecorators:
+    def create_performance_decorator(self) -> type[FlextPerformanceDecorators]:
         """Create performance monitoring decorator."""
-        name = cast("str | None", kwargs.get("name"))
-        threshold_seconds = cast("float", kwargs.get("threshold_seconds", 1.0))
-        return FlextPerformanceDecorators(
-            name=name, threshold_seconds=threshold_seconds
-        )
+        return FlextPerformanceDecorators
 
-    def create_logging_decorator(self, **kwargs: object) -> FlextLoggingDecorators:
+    def create_logging_decorator(self) -> type[FlextLoggingDecorators]:
         """Create logging decorator."""
-        name = cast("str | None", kwargs.get("name"))
-        log_level = cast("str", kwargs.get("log_level", "INFO"))
-        return FlextLoggingDecorators(name=name, log_level=log_level)
+        return FlextLoggingDecorators
 
     @staticmethod
     def make_immutable(target_class: type[T]) -> type[T]:
@@ -1031,14 +1009,12 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def create_error(message: str, error_code: str | None = None) -> FlextError:
+    def create_error(message: str, error_code: str | None = None) -> object:
         """Create FLEXT error."""
         return FlextError(message, error_code=error_code)
 
     @staticmethod
-    def create_validation_error(
-        message: str, field_name: str | None = None
-    ) -> FlextValidationError:
+    def create_validation_error(message: str, field_name: str | None = None) -> object:
         """Create validation error."""
         try:
             # Try different constructor patterns
@@ -1052,7 +1028,7 @@ class FlextCore:
     @staticmethod
     def create_configuration_error(
         message: str, config_key: str | None = None
-    ) -> FlextConfigurationError:
+    ) -> object:
         """Create configuration error."""
         try:
             # Try different constructor patterns
@@ -1087,16 +1063,6 @@ class FlextCore:
     def create_processing_pipeline() -> FlextProcessingPipeline[object, object]:
         """Create processing pipeline."""
         return FlextProcessingPipeline[object, object]()
-
-    @property
-    def semantic(self) -> type[FlextSemantic]:
-        """Access semantic analysis."""
-        return FlextSemantic
-
-    @property
-    def semantic_model(self) -> type[FlextSemanticModel]:
-        """Access semantic model."""
-        return FlextSemanticModel
 
     # =========================================================================
     # CONTEXT & PROTOCOLS
@@ -1184,7 +1150,7 @@ class FlextCore:
         if not isinstance(obj, dict):
             return FlextResult[dict[str, object]].fail("Expected dictionary")
 
-        if not is_dict_of(cast("dict[object, object]", obj), value_type):
+        if not FlextGuards.is_dict_of(cast("dict[object, object]", obj), value_type):
             return FlextResult[dict[str, object]].fail(
                 f"Dictionary values must be of type {value_type.__name__}"
             )
@@ -1448,6 +1414,338 @@ class FlextCore:
             return FlextResult[None].ok(None)
         except Exception as e:
             return FlextResult[None].fail(f"Cache reset failed: {e}")
+
+    # =========================================================================
+    # ENTERPRISE BUILDERS & FACTORIES (BOILERPLATE REDUCTION)
+    # =========================================================================
+
+    def create_validator_class[T](
+        self,
+        name: str,
+        validation_func: Callable[[T], FlextResult[T]],
+    ) -> type[FlextAbstractValidator[T]]:
+        """Create validator class dynamically to reduce boilerplate."""
+        # Import already at module level
+
+        class DynamicValidator(FlextAbstractValidator[T]):
+            @override
+            def validate(self, value: T) -> FlextResult[T]:
+                return validation_func(value)
+
+        DynamicValidator.__name__ = name
+        DynamicValidator.__qualname__ = name
+        return DynamicValidator
+
+    def create_service_processor(
+        self,
+        name: str,
+        process_func: Callable[[object], FlextResult[object]],
+        result_type: type[object] = object,
+        build_func: Callable[[object, str], object] | None = None,
+        decorators: list[str] | None = None,
+    ) -> type:
+        """Create service processor class dynamically to reduce boilerplate."""
+        from flext_core.services import FlextServiceProcessor  # noqa: PLC0415
+
+        class DynamicServiceProcessor(FlextServiceProcessor[object, object, object]):
+            def __init__(self) -> None:
+                super().__init__()
+                # Use class method to get logger since get_logger may not be available in instance context
+                self._logger = FlextLoggerFactory.get_logger(
+                    f"flext.services.{name.lower()}"
+                )
+
+            @override
+            def process(self, request: object) -> FlextResult[object]:
+                return process_func(request)
+
+            @override
+            def build(self, domain: object, *, correlation_id: str) -> object:
+                if build_func:
+                    return build_func(domain, correlation_id)
+                # Default: return domain if types match
+                if isinstance(domain, result_type):
+                    return domain
+                # Fallback: try to create result_type from domain
+                if hasattr(result_type, "model_validate"):
+                    # Use getattr to safely access the method with type safety
+                    model_validate = getattr(result_type, "model_validate", None)
+                    if callable(model_validate):
+                        return model_validate(domain)
+                # Final fallback: try constructor with domain attributes
+                if hasattr(domain, "__dict__"):
+                    return result_type(**domain.__dict__)
+                return result_type()
+
+        # Apply decorators if specified
+        if decorators:
+            original_process = DynamicServiceProcessor.process
+            for decorator_name in decorators:
+                if hasattr(FlextDecorators, decorator_name):
+                    decorator = getattr(FlextDecorators, decorator_name)
+                    if callable(decorator):
+                        # Create a new decorated method instead of assigning to class method
+                        decorated_method = decorator(original_process)
+                        # Use setattr to dynamically assign the method to the class
+                        # This is necessary for dynamic method decoration and is intentional
+                        setattr(DynamicServiceProcessor, "process", decorated_method)  # noqa: B010
+                        original_process = decorated_method
+
+        DynamicServiceProcessor.__name__ = f"{name}ServiceProcessor"
+        DynamicServiceProcessor.__qualname__ = f"{name}ServiceProcessor"
+        return DynamicServiceProcessor
+
+    def create_entity_with_validators(
+        self,
+        name: str,
+        fields: dict[str, tuple[type, dict[str, object]]],
+        validators: dict[str, Callable[[object], FlextResult[object]]] | None = None,
+    ) -> type[FlextEntity]:
+        """Create entity class with built-in validators to reduce boilerplate."""
+        from typing import Annotated  # noqa: PLC0415
+
+        from pydantic import Field, field_validator  # noqa: PLC0415
+
+        # Build field annotations
+        annotations = {}
+
+        for field_name, (field_type, _field_config) in fields.items():
+            # Create basic annotated field - simplified to avoid type issues
+            annotations[field_name] = Annotated[field_type, Field()]
+
+        # Create class attributes
+        class_attrs: dict[str, object] = {
+            "__annotations__": annotations,
+        }
+
+        # Add field validators if provided
+        if validators:
+            for field_name, validator_func in validators.items():
+
+                def create_validator(
+                    func: Callable[[object], FlextResult[object]],
+                    fname: str = field_name,
+                ) -> object:
+                    def validator_method(_cls: type[object], v: object) -> object:
+                        result = func(v)
+                        if result.is_failure:
+                            error_msg = result.error or f"{fname} validation failed"
+                            raise ValueError(error_msg)
+                        return result.value
+
+                    # Apply decorators to create proper validator
+                    return field_validator(fname)(classmethod(validator_method))
+
+                class_attrs[f"validate_{field_name}_field"] = create_validator(
+                    validator_func
+                )
+
+        # Create dynamic class
+        return type(name, (FlextEntity,), class_attrs)
+
+    def create_value_object_with_validators(
+        self,
+        name: str,
+        fields: dict[str, tuple[type, dict[str, object]]],
+        validators: dict[str, Callable[[object], FlextResult[object]]] | None = None,
+        business_rules: Callable[[object], FlextResult[None]] | None = None,
+    ) -> type[FlextValue]:
+        """Create value object class with built-in validators to reduce boilerplate."""
+        from typing import Annotated  # noqa: PLC0415
+
+        from pydantic import Field, field_validator  # noqa: PLC0415
+
+        # Build field annotations
+        annotations = {}
+
+        for field_name, (field_type, _field_config) in fields.items():
+            # Create basic annotated field - simplified to avoid type issues
+            annotations[field_name] = Annotated[field_type, Field()]
+
+        # Create class attributes
+        class_attrs: dict[str, object] = {
+            "__annotations__": annotations,
+        }
+
+        # Add field validators if provided
+        if validators:
+            for field_name, validator_func in validators.items():
+
+                def create_validator(
+                    func: Callable[[object], FlextResult[object]],
+                    fname: str = field_name,
+                ) -> object:
+                    def validator_method(_cls: type[object], v: object) -> object:
+                        result = func(v)
+                        if result.is_failure:
+                            error_msg = result.error or f"{fname} validation failed"
+                            raise ValueError(error_msg)
+                        return result.value
+
+                    # Apply decorators to create proper validator
+                    return field_validator(fname)(classmethod(validator_method))
+
+                class_attrs[f"validate_{field_name}_field"] = create_validator(
+                    validator_func
+                )
+
+        # Add business rules validation if provided
+        if business_rules:
+
+            def validate_business_rules_method(self: object) -> FlextResult[None]:
+                return business_rules(self)
+
+            class_attrs["validate_business_rules"] = validate_business_rules_method
+
+        # Create dynamic class
+        return type(name, (FlextValue,), class_attrs)
+
+    def setup_container_with_services(
+        self,
+        services: dict[str, type | Callable[[], object]],
+        validator: Callable[[str], FlextResult[str]] | None = None,
+    ) -> FlextResult[FlextContainer]:
+        """Setup container with multiple services, reducing boilerplate."""
+        try:
+            container = self.container
+
+            for service_name, service_factory in services.items():
+                # Validate service name if validator provided
+                if validator:
+                    validation_result = validator(service_name)
+                    if validation_result.is_failure:
+                        self.get_logger(__name__).error(
+                            "Service name validation failed",
+                            service_name=service_name,
+                            error=validation_result.error,
+                        )
+                        continue
+
+                # Register service
+                if isinstance(service_factory, type):
+                    # Class factory - use closure to capture type properly
+                    def create_factory_func(
+                        cls: type | Callable[[], object] = service_factory,
+                    ) -> object:
+                        if isinstance(cls, type):
+                            return cls()
+                        return cls()
+
+                    register_result = container.register_factory(
+                        service_name, create_factory_func
+                    )
+                else:
+                    # Callable factory
+                    register_result = container.register_factory(
+                        service_name, service_factory
+                    )
+
+                if register_result.is_failure:
+                    return FlextResult[FlextContainer].fail(
+                        f"Failed to register {service_name}: {register_result.error}"
+                    )
+
+                self.get_logger(__name__).info(
+                    "Service registered",
+                    service_name=service_name,
+                    service_class=(
+                        service_factory.__name__
+                        if hasattr(service_factory, "__name__")
+                        else str(type(service_factory))
+                    ),
+                )
+
+            self.get_logger(__name__).info(
+                "Container setup completed",
+                total_services=len(services),
+                registered_services=list(services.keys()),
+            )
+
+            return FlextResult[FlextContainer].ok(container)
+        except Exception as e:
+            return FlextResult[FlextContainer].fail(f"Container setup failed: {e}")
+
+    def create_demo_function(
+        self,
+        name: str,
+        demo_func: Callable[[], None],
+        decorators: list[str] | None = None,
+    ) -> Callable[[], None]:
+        """Create demo function with standard decorators to reduce boilerplate."""
+        # Apply decorators if specified
+        decorated_func: Callable[[], None] = demo_func
+        if decorators:
+            for decorator_name in reversed(decorators):  # Apply in reverse order
+                if hasattr(FlextDecorators, decorator_name):
+                    decorator = getattr(FlextDecorators, decorator_name)
+                    if callable(decorator):
+                        decorated_func = cast(
+                            "Callable[[], None]", decorator(decorated_func)
+                        )
+
+        decorated_func.__name__ = name
+        decorated_func.__qualname__ = name
+        return decorated_func
+
+    def log_result(
+        self, result: FlextResult[T], success_msg: str, logger_name: str | None = None
+    ) -> FlextResult[T]:
+        """Utility to log FlextResult with consistent formatting."""
+        logger = self.get_logger(logger_name or __name__)
+        if result.is_success:
+            logger.info(f"✅ {success_msg}", result_type=type(result.value).__name__)
+        else:
+            logger.error(f"❌ {success_msg} failed", error=result.error)
+        return result
+
+    def get_service_with_fallback(
+        self, service_name: str, default_factory: type[T]
+    ) -> T:
+        """Get service from container with type-safe fallback."""
+        result = self.get_service(service_name)
+        if result.is_success:
+            self.get_logger(__name__).debug(
+                "Service retrieved from container", service_name=service_name
+            )
+            return cast("T", result.value)
+
+        self.get_logger(__name__).warning(
+            "Service not found in container, using default factory",
+            service_name=service_name,
+            default_factory=default_factory.__name__,
+        )
+        return default_factory()
+
+    def create_standard_validators(
+        self,
+    ) -> dict[str, Callable[[object], FlextResult[object]]]:
+        """Create standard validators to reduce boilerplate."""
+        return {
+            "age": lambda v: cast(
+                "FlextResult[object]",
+                self.validate_numeric(v, 18, 120)
+                if isinstance(v, (int, float))
+                else FlextResult[object].fail("Age must be numeric"),
+            ),
+            "email": lambda v: cast(
+                "FlextResult[object]",
+                self.validate_email(v)
+                if isinstance(v, str)
+                else FlextResult[object].fail("Email must be string"),
+            ),
+            "name": lambda v: cast(
+                "FlextResult[object]",
+                self.validate_string(v, 2, 100)
+                if isinstance(v, str)
+                else FlextResult[object].fail("Name must be string"),
+            ),
+            "service_name": lambda v: cast(
+                "FlextResult[object]",
+                self.validate_service_name(v)
+                if isinstance(v, str)
+                else FlextResult[object].fail("Service name must be string"),
+            ),
+        }
 
     # =========================================================================
     # UTILITY METHODS

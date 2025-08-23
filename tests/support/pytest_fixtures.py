@@ -31,7 +31,7 @@ from flext_core import (
     FlextTimestamp,
     get_flext_container,
 )
-from flext_core.config import FlextCoreConfig
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextFieldType
 
 from .factory_boy_factories import (
@@ -129,9 +129,9 @@ def flext_container() -> FlextContainer:
 
 
 @pytest.fixture
-def flext_config() -> FlextCoreConfig:
-    """Provide FlextCoreConfig with test defaults."""
-    return FlextCoreConfig(
+def flext_config() -> FlextConfig:
+    """Provide FlextConfig with test defaults."""
+    return FlextConfig(
         app_name="test_app",
         environment="test",
         debug=True,
@@ -167,7 +167,7 @@ def success_result() -> FlextResult[str]:
 @pytest.fixture
 def failure_result() -> FlextResult[str]:
     """Provide failed FlextResult."""
-    return FlextResultFactory.is_failure("test_error")
+    return FlextResultFactory.failure("test_error")
 
 
 @pytest.fixture
@@ -333,7 +333,8 @@ async def async_service_mock() -> AsyncGenerator[AsyncMock]:
 
 @pytest.fixture
 def integrated_system(
-    flext_container: FlextContainer, flext_config: FlextCoreConfig
+    flext_container: FlextContainer,
+    flext_config: FlextConfig,
 ) -> dict[str, Any]:
     """Provide integrated system for end-to-end testing."""
     return {

@@ -7,7 +7,6 @@ Demonstrates SOLID principles, DI patterns, and extensive test automation.
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 from hypothesis import given, strategies as st
@@ -111,17 +110,38 @@ class TestFlextContainerDI:
         # Register dependencies in reverse order
         container.register("config", {"database_url": "localhost:5432"})
 
-        def create_database() -> Mock:
-            config = container.get("config").unwrap()
-            db = Mock()
-            db.url = config["database_url"]
-            return db
+        class DatabaseService:
+            def __init__(self, url: str) -> None:
+                self.url = url
+                self.connected = False
 
-        def create_user_service() -> Mock:
-            database = container.get("database").unwrap()
-            service = Mock()
-            service.db = database
-            return service
+            def connect(self) -> bool:
+                self.connected = True
+                return True
+
+        def create_database() -> DatabaseService:
+            config_result = container.get("config")
+            if config_result.success:
+                config = config_result.value
+                return DatabaseService(config["database_url"])
+            raise ValueError("Config not found")
+
+        class UserService:
+            def __init__(self, database: DatabaseService) -> None:
+                self.db = database
+                self.users = []
+
+            def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
+                user = {"id": len(self.users) + 1, **user_data}
+                self.users.append(user)
+                return user
+
+        def create_user_service() -> UserService:
+            database_result = container.get("database")
+            if database_result.success:
+                database = database_result.value
+                return UserService(database)
+            raise ValueError("Database not found")
 
         container.register_factory("database", create_database)
         container.register_factory("user_service", create_user_service)
@@ -241,7 +261,9 @@ class TestFlextContainerProperties:
     """Property-based tests for container invariants."""
 
     @given(st.text(min_size=1), st.text())
-    def test_register_get_roundtrip(self, service_name: str, service_value: str) -> None:
+    def test_register_get_roundtrip(
+        self, service_name: str, service_value: str
+    ) -> None:
         """Property: register then get returns the same value."""
         container = get_flext_container()
 
@@ -271,25 +293,40 @@ class TestFlextContainerProperties:
 class TestFlextContainerIntegration:
     """Integration tests using test scenarios."""
 
-    def test_user_service_integration(
-        self, user_data_factory: UserDataFactory
-    ) -> None:
+    def test_user_service_integration(self, user_data_factory: UserDataFactory) -> None:
         """Test complete user service integration."""
         container = get_flext_container()
         user_data = user_data_factory.build()
 
-        # Register user repository
-        user_repo = Mock()
-        user_repo.save.return_value = FlextResult.ok(user_data)
+        # Register real user repository
+        class UserRepository:
+            def __init__(self) -> None:
+                self.users = []
+
+            def save(self, user_data: dict[str, Any]) -> FlextResult[dict[str, Any]]:
+                user = {"id": len(self.users) + 1, **user_data}
+                self.users.append(user)
+                return FlextResult.ok(user)
+
+        user_repo = UserRepository()
         container.register("user_repository", user_repo)
 
         # Register user service factory
-        def create_user_service() -> Mock:
-            repo = container.get("user_repository").unwrap()
-            service = Mock()
-            service.repository = repo
-            service.create_user = repo.save
-            return service
+        class UserService:
+            def __init__(self, repository: UserRepository) -> None:
+                self.repository = repository
+
+            def create_user(
+                self, user_data: dict[str, Any]
+            ) -> FlextResult[dict[str, Any]]:
+                return self.repository.save(user_data)
+
+        def create_user_service() -> UserService:
+            repo_result = container.get("user_repository")
+            if repo_result.success:
+                repo = repo_result.value
+                return UserService(repo)
+            raise ValueError("User repository not found")
 
         container.register_factory("user_service", create_user_service)
 
@@ -307,10 +344,9 @@ class TestFlextContainerIntegration:
         """Test container error handling with various scenarios."""
         container = get_flext_container()
 
-        error_scenario = next(
-            (s for s in test_scenarios if s.scenario_type == "error"), None
-        )
-        if not error_scenario:
+        # Check if ERROR_CASE scenario exists
+        has_error_case = TestScenario.ERROR_CASE in test_scenarios
+        if not has_error_case:
             pytest.skip("No error scenario available")
 
         def failing_factory() -> str:
@@ -319,8 +355,9 @@ class TestFlextContainerIntegration:
 
         container.register_factory("failing_service", failing_factory)
 
-        container.get("failing_service")
-        # Depending on implementation, this might handle the error or propagate it
+        result = container.get("failing_service")
+        # Container should handle the factory error gracefully
+        assert result.is_failure
 
 
 # ============================================================================
@@ -379,10 +416,12 @@ class TestFlextContainerFactoryIntegration:
         """Test container with factory_boy user creation."""
         container = get_flext_container()
 
-        def user_service_factory() -> Mock:
-            service = Mock()
-            service.create_user = UserFactory
-            return service
+        def user_service_factory() -> object:
+            class RealUserService:
+                def create_user(self) -> object:
+                    return UserFactory()
+
+            return RealUserService()
 
         container.register_factory("user_service", user_service_factory)
 
@@ -401,10 +440,12 @@ class TestFlextContainerFactoryIntegration:
         container = get_flext_container()
         test_cases = create_validation_test_cases()
 
-        def validator_service_factory() -> Mock:
-            service = Mock()
-            service.validate_data = lambda data: data is not None
-            return service
+        def validator_service_factory() -> object:
+            class RealValidatorService:
+                def validate_data(self, data: object) -> bool:
+                    return data is not None
+
+            return RealValidatorService()
 
         container.register_factory("validator", validator_service_factory)
 

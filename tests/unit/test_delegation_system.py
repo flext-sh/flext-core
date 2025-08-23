@@ -651,7 +651,7 @@ class TestValidateDelegationSystem:
         if result.success:
             # Successful results should have similar structure
             data1 = cast("dict[str, object]", result.value)
-            data2 = cast("dict[str, object]", result2.data)
+            data2 = cast("dict[str, object]", result2.value)
             assert "test_results" in data1
             assert "test_results" in data2
         else:

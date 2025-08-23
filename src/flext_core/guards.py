@@ -4,35 +4,12 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import Self
+from typing import cast
 
-from pydantic import BaseModel, ValidationError
-
-from flext_core.constants import FlextConstants
 from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextValidationError
-from flext_core.mixins import FlextSerializableMixin
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.utilities import FlextTypeGuards, FlextUtilities
 from flext_core.validation import FlextValidators
-
-# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
-type GuardProtocol = FlextProtocols.Foundation.Validator[object]
-type FactoryProtocol = FlextProtocols.Foundation.Factory[object]
-
-Platform = FlextConstants.Platform
-
-
-# =============================================================================
-# TYPE GUARDS - Re-exported from FlextUtilities for compatibility
-# =============================================================================
-
-# All type guards are now in FlextTypeGuards class
-is_not_none = FlextUtilities.is_not_none_guard
-is_list_of = FlextTypeGuards.is_list_of
-is_instance_of = FlextTypeGuards.is_instance_of
-
 
 # =============================================================================
 # FLEXT GUARDS - Static Class for Guard Functions
@@ -96,7 +73,8 @@ class FlextGuards:
         if not isinstance(obj, dict):
             return False
         # After isinstance check, obj is narrowed to dict type
-        return all(isinstance(value, value_type) for value in obj.values())
+        dict_obj = cast("dict[object, object]", obj)
+        return all(isinstance(value, value_type) for value in dict_obj.values())
 
     @staticmethod
     def immutable(target_class: type) -> type:
@@ -205,103 +183,6 @@ class FlextGuards:
 
 
 # =============================================================================
-# AUTOMATIC VALIDATION - Custom validated model for compatibility
-# =============================================================================
-
-
-class FlextValidatedModel(BaseModel, FlextSerializableMixin):
-    """Automatic validation model with Pydantic and FLEXT integration.
-
-    Provides validated object construction with error handling
-    and compatibility for existing FLEXT patterns.
-    """
-
-    def __init__(self, **data: object) -> None:
-        """Initialize with proper mixin inheritance and error handling."""
-        try:
-            super().__init__(**data)
-        except ValidationError as e:
-            # Convert Pydantic errors to user-friendly format
-            errors: list[str] = []
-            for error in e.errors():
-                loc = ".".join(str(x) for x in error["loc"]) if error.get("loc") else ""
-                msg = error.get("msg", "Validation error")
-                # Some  messages without 'Input should be' prefix
-                normalized = (
-                    msg.replace("Input should be ", "")
-                    .replace("Input should be a ", "a ")
-                    .strip()
-                )
-                errors.append(f"{loc}: {normalized}" if loc else normalized)
-            # Join messages using '; ' consistent with expectations
-            error_msg: str = f"Invalid data: {'; '.join(errors)}"
-            raise FlextValidationError(
-                error_msg,
-                validation_details={"errors": errors},
-            ) from e
-
-    # Add FlextValidatable methods without conflicts
-    def validate_flext(self) -> FlextResult[None]:
-        """Validate the model using Pydantic validation (renamed to avoid conflicts)."""
-        try:
-            # Use Pydantic's validation
-            self.model_validate(self.model_dump())
-            return FlextResult[None].ok(None)
-        except ValidationError as e:
-            errors = [error["msg"] for error in e.errors()]
-            return FlextResult[None].fail(f"Validation failed: {'; '.join(errors)}")
-
-    @property
-    def is_valid(self) -> bool:
-        """Check if the model is valid."""
-        try:
-            self.model_validate(self.model_dump())
-            return True
-        except ValidationError:
-            return False
-
-    @property
-    def validation_errors(self) -> list[str]:
-        """Return validation errors for the model."""
-        try:
-            self.model_validate(self.model_dump())
-            return []  # No errors if validation passes
-        except ValidationError as e:
-            errors: list[str] = []
-            for error in e.errors():
-                loc = ".".join(str(x) for x in error.get("loc", []))
-                msg = error.get("msg", "Validation error")
-                errors.append(f"{loc}: {msg}" if loc else msg)
-            return errors
-
-    @classmethod
-    def create(cls, **data: object) -> FlextResult[Self]:
-        """Create instance using centralized factory.
-
-        On failure, return FlextResult with normalized 'Invalid data' message
-        instead of raising, to align with ing failure results.
-        """
-        try:
-            instance = cls(**data)
-            return FlextResult[Self].ok(instance)
-        except (ValidationError, FlextValidationError) as e:
-            errors: list[str] = []
-            if isinstance(e, ValidationError):
-                for error in e.errors():
-                    loc = ".".join(str(x) for x in error.get("loc", []))
-                    msg = error.get("msg", "Validation error")
-                    normalized = (
-                        msg.replace("Input should be ", "")
-                        .replace("Input should be a ", "a ")
-                        .strip()
-                    )
-                    errors.append(f"{loc}: {normalized}" if loc else normalized)
-                return FlextResult[Self].fail(f"Invalid data: {'; '.join(errors)}")
-            # FlextValidationError already has normalized message
-            return FlextResult[Self].fail(str(e))
-
-
-# =============================================================================
 # VALIDATION UTILITIES - Simple implementations using FlextUtilities
 # =============================================================================
 
@@ -382,18 +263,13 @@ validated = FlextDecorators.validated_with_result
 safe = FlextDecorators.safe_result
 
 # Compatibility aliases for loose functions now in FlextGuards
-is_dict_of = FlextGuards.is_dict_of
 immutable = FlextGuards.immutable
 pure = FlextGuards.pure
 make_factory = FlextGuards.make_factory
 make_builder = FlextGuards.make_builder
 require_not_none = FlextValidationUtils.require_not_none
 require_positive = FlextValidationUtils.require_positive
-require_in_range = FlextValidationUtils.require_in_range
 require_non_empty = FlextValidationUtils.require_non_empty
-
-# Backward compatibility alias for a validated model
-ValidatedModel = FlextValidatedModel
 
 
 # =============================================================================
@@ -403,21 +279,13 @@ ValidatedModel = FlextValidatedModel
 __all__: list[str] = [
     # Main static class
     "FlextGuards",
-    # Base classes
-    "FlextValidatedModel",
     # Utility classes
     "FlextValidationUtils",
     # Compatibility aliases for functions (alphabetically sorted)
-    "ValidatedModel",
     "immutable",
-    "is_dict_of",
-    "is_instance_of",
-    "is_list_of",
-    "is_not_none",
     "make_builder",
     "make_factory",
     "pure",
-    "require_in_range",
     "require_non_empty",
     "require_not_none",
     "require_positive",

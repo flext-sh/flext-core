@@ -402,7 +402,7 @@ def demonstrate_semantic_types() -> None:
     connection_validation = FlextUnifiedUtilities.validate_oracle_connection(
         DatabaseConnection,
     )
-    if connection_validation.success and connection_validation.value is not None:
+    if connection_validation.success:
         pass
 
 
@@ -447,7 +447,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         cast("dict[str, object]", sample_data),
         enhance_data,
     )
-    if transform_result.success and transform_result.value is not None:
+    if transform_result.success:
         for _key, _value in transform_result.value.items():
             pass
 

@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
-"""09 - Enterprise Decorators: Powerful Function Enhancement.
+"""09 - Enterprise Decorators: Modern FlextDecorators API Showcase.
 
-Shows how FlextDecorators simplify common enterprise patterns.
-Demonstrates validation, error handling, performance optimization, and logging.
+Demonstrates the refactored FlextDecorators API with complete type safety.
+Shows modern decorator composition patterns and FlextResult integration.
 
 Key Patterns:
-• FlextDecorators for function enhancement
-• Automatic validation and error handling
-• Performance optimization with caching
-• Structured logging integration
+• Modern FlextDecorators API usage
+• Type-safe decorator composition
+• FlextResult integration patterns
+• Enterprise-grade function enhancement
 """
 
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import TypeVar, cast
 
-# use .shared_domain with dot to access local module
-from shared_domain import SharedDomainFactory, User as SharedUser
+from shared_domain import SharedDomainFactory
 
-from flext_core import FlextResult
-
-T = TypeVar("T")
+from flext_core import FlextDecorators
 
 # Constants to avoid magic numbers
 MAX_AGE = 150
@@ -30,279 +25,228 @@ MIN_AGE = 0
 SUCCESS_THRESHOLD = 0.4
 
 # =============================================================================
-# VALIDATION DECORATORS - Simplified validation patterns
+# MODERN FLEXT DECORATORS SHOWCASE - New API
 # =============================================================================
 
 
-def validate_user_data(func: Callable[..., object]) -> Callable[..., object]:
-    """Simple validation decorator."""
+def demonstrate_cache_decorator() -> None:
+    """Demonstrate modern cache decorator usage."""
+    print("\n📝 Modern Cache Decorator:")
 
-    def wrapper(name: str, email: str, age: int) -> object:
-        # Basic validation
-        if not name or not name.strip():
-            msg = "Name required"
-            raise ValueError(msg)
-        if "@" not in email:
-            msg = "Valid email required"
-            raise ValueError(msg)
-        if age < MIN_AGE or age > MAX_AGE:
-            msg = "Valid age required"
-            raise ValueError(msg)
+    # Create cache decorator using modern API
+    cache_decorator = FlextDecorators.Performance.create_cache_decorator(max_size=100)
 
-        return func(name, email, age)
+    def expensive_calculation(*args: object, **_kwargs: object) -> object:
+        """Expensive calculation compatible with FlextCallable."""
+        if args and isinstance(args[0], (int, float)):
+            n = float(args[0])
+            time.sleep(0.1)  # Simulate expensive work
+            return n * n * n
+        return 0
 
-    return wrapper
+    # Apply cache decorator
+    cached_calculation = cache_decorator(expensive_calculation)
 
+    # Test cache functionality
+    print("First call (cache miss):")
+    start_time = time.time()
+    result1 = cached_calculation(5)
+    duration1 = time.time() - start_time
+    print(f"Result: {result1}, Duration: {duration1:.3f}s")
 
-def with_logging(func: Callable[..., object]) -> Callable[..., object]:
-    """Simple logging decorator."""
+    print("Second call (cache hit):")
+    start_time = time.time()
+    result2 = cached_calculation(5)
+    duration2 = time.time() - start_time
+    print(f"Result: {result2}, Duration: {duration2:.3f}s")
 
-    def wrapper(*args: object, **kwargs: object) -> object:
-        print(f"🔍 Calling {func.__name__} with args: {args}")
-        try:
-            result = func(*args, **kwargs)
-            print(f"✅ {func.__name__} completed successfully")
-            return result
-        except Exception as e:
-            print(f"❌ {func.__name__} failed: {e}")
-            raise
-
-    return wrapper
+    print(f"Cache speedup: {duration1 / duration2:.1f}x faster")
 
 
-def with_timing(func: Callable[..., object]) -> Callable[..., object]:
-    """Simple timing decorator."""
+def demonstrate_complete_decorator() -> None:
+    """Demonstrate complete decorator composition."""
+    print("\n📝 Complete Decorator Composition:")
 
-    def wrapper(*args: object, **kwargs: object) -> object:
-        start_time = time.time()
-        try:
-            result = func(*args, **kwargs)
-            duration = time.time() - start_time
-            print(f"⏱️  {func.__name__} took {duration:.3f}s")
-            return result
-        except Exception:
-            duration = time.time() - start_time
-            print(f"⏱️  {func.__name__} failed after {duration:.3f}s")
-            raise
+    # Create complete decorator with multiple features
+    complete_decorator = FlextDecorators.complete_decorator(
+        cache_size=64,
+        with_timing=True,
+        with_logging=False,  # Simplified for clarity
+    )
 
-    return wrapper
+    def business_operation(*args: object, **_kwargs: object) -> object:
+        """Business operation compatible with FlextCallable."""
+        data = args[0] if args else {}
+        if isinstance(data, dict):
+            # Simulate complex processing
+            time.sleep(0.05)  # Reduced for demo
+            import random  # noqa: PLC0415
 
+            if random.random() > SUCCESS_THRESHOLD:  # noqa: S311
+                return {"status": "processed", "data": data, "timestamp": time.time()}
+            raise RuntimeError("Random processing failure")
+        return {"status": "invalid_input"}
 
-# =============================================================================
-# ENHANCED BUSINESS FUNCTIONS - Using decorators
-# =============================================================================
+    # Apply complete decorator
+    enhanced_operation = complete_decorator(business_operation)
 
-
-@validate_user_data
-@with_logging
-@with_timing
-def create_validated_user(name: str, email: str, age: int) -> SharedUser:
-    """Create user with full validation and monitoring."""
-    # Simulate processing delay
-    time.sleep(0.1)
-
-    result = SharedDomainFactory.create_user(name, email, age)
-    if result.success:
-        return result.value
-    error_msg = f"User creation failed: {result.error}"
-    raise ValueError(error_msg)
-
-
-@with_logging
-def process_user_batch(users_data: list[dict[str, object]]) -> list[SharedUser]:
-    """Process multiple users with logging."""
-    users = []
-    for data in users_data:
-        try:
-            user = create_validated_user(data["name"], data["email"], data["age"])
-            users.append(user)
-        except ValueError:
-            print(f"⚠️  Skipping invalid user: {data}")
-            continue
-    return users
-
-
-# =============================================================================
-# ERROR HANDLING DECORATORS - FlextResult integration
-# =============================================================================
-
-
-def safe_decorator[T](func: Callable[..., T]) -> Callable[..., FlextResult[T]]:
-    """Convert function to return FlextResult."""
-
-    def wrapper(*args: object, **kwargs: object) -> FlextResult[T]:
-        return FlextResult.from_exception(lambda: func(*args, **kwargs))
-
-    return wrapper
-
-
-@safe_decorator
-def safe_user_creation(name: str, email: str, age: int):
-    """Safe user creation that returns FlextResult."""
-    return create_validated_user(name, email, age)
-
-
-# =============================================================================
-# CACHING DECORATORS - Performance optimization
-# =============================================================================
-
-
-def simple_cache(func: Callable[..., object]) -> Callable[..., object]:
-    """Simple caching decorator."""
-    cache: dict[str, object] = {}
-
-    def wrapper(*args: object, **kwargs: object) -> object:
-        # Create cache key from arguments
-        key = str(args) + str(sorted(kwargs.items()))
-
-        if key in cache:
-            print(f"🎯 Cache hit for {func.__name__}")
-            return cache[key]
-
-        print(f"💾 Computing {func.__name__}")
-        result = func(*args, **kwargs)
-        cache[key] = result
-        return result
-
-    return wrapper
-
-
-@simple_cache
-def expensive_calculation(n: int) -> int:
-    """Simulate expensive calculation."""
-    time.sleep(0.5)  # Simulate work
-    return n * n * n
-
-
-# =============================================================================
-# COMPOSITE DECORATORS - Multiple enhancements
-# =============================================================================
-
-
-def enterprise_function[T](func: Callable[..., T]) -> Callable[..., object]:
-    """Composite decorator with multiple enhancements."""
-    # Apply multiple decorators in order
-    return with_timing(with_logging(safe_decorator(func)))
-
-
-@enterprise_function
-def complex_business_operation(data: dict[str, object]) -> dict[str, object]:
-    """Complex business operation with full enhancement."""
-    # Simulate complex processing
-    import random  # noqa: PLC0415
-
-    if random.random() > SUCCESS_THRESHOLD:  # 60% success rate  # noqa: S311
-        return {"status": "processed", "data": data, "timestamp": time.time()}
-    error_msg = "Random processing failure"
-    raise RuntimeError(error_msg)
-
-
-# =============================================================================
-# DEMONSTRATIONS - Real-world decorator usage
-# =============================================================================
-
-
-def demo_validation_decorators() -> None:
-    """Demonstrate validation decorators."""
-    print("\n🧪 Testing validation decorators...")
-
-    try:
-        user = create_validated_user("Alice Johnson", "alice@example.com", 25)
-        print(f"✅ User created: {user.name}")
-    except ValueError as e:
-        print(f"❌ Validation failed: {e}")
-
-
-def demo_batch_processing() -> None:
-    """Demonstrate batch processing with decorators."""
-    print("\n🧪 Testing batch processing...")
-
-    users_data = [
-        {"name": "Bob Smith", "email": "bob@example.com", "age": 30},
-        {"name": "Carol Davis", "email": "carol@example.com", "age": 28},
-        {"name": "", "email": "invalid", "age": -1},  # Invalid
-        {"name": "David Wilson", "email": "david@example.com", "age": 35},
-    ]
-
-    users = cast("list[SharedUser]", process_user_batch(users_data))
-    print(f"✅ Processed {len(users)} valid users")
-
-
-def demo_safe_decorators() -> None:
-    """Demonstrate FlextResult integration."""
-    print("\n🧪 Testing safe decorators...")
-
-    # Valid user
-    result: FlextResult[SharedUser] = safe_user_creation("Eve Brown", "eve@example.com", 42)
-    if result.success:
-        user = result.value
-        print(f"✅ Safe creation: {user.name}")
-
-    # Invalid user
-    error_result: FlextResult[SharedUser] = safe_user_creation("", "invalid", -1)
-    if error_result.failure:
-        print(f"✅ Error handled safely: {error_result.error}")
-
-
-def demo_caching_decorators() -> None:
-    """Demonstrate caching performance."""
-    print("\n🧪 Testing caching decorators...")
-
-    # First call - cache miss
-    result1 = expensive_calculation(5)
-    print(f"Result: {result1}")
-
-    # Second call - cache hit
-    result2 = expensive_calculation(5)
-    print(f"Result: {result2}")
-
-
-def demo_enterprise_decorators() -> None:
-    """Demonstrate composite enterprise decorators."""
-    print("\n🧪 Testing enterprise decorators...")
-
+    # Test the enhanced operation
     test_data = {"id": 123, "name": "Test Operation"}
 
-    # This will either succeed or fail randomly
-    result: FlextResult[dict[str, object]] = complex_business_operation(test_data)
-    if result.success:
-        data = result.value
-        print(f"✅ Enterprise operation: {data['status']}")
-    else:
-        print(f"✅ Error handled: {result.error}")
+    try:
+        result = enhanced_operation(test_data)
+        print(f"✅ Enhanced operation result: {result}")
+    except Exception as e:
+        print(f"❌ Enhanced operation failed: {e}")
+
+
+def demonstrate_safe_result_decorator() -> None:
+    """Demonstrate safe result decorator."""
+    print("\n📝 Safe Result Decorator:")
+
+    def risky_operation(*args: object, **_kwargs: object) -> object:
+        """Risky operation that might fail."""
+        if args and str(args[0]) == "fail":
+            raise ValueError("Intentional failure")
+        return f"Success with {len(args)} arguments"
+
+    # Apply safe result decorator
+    safe_operation = FlextDecorators.safe_result(risky_operation)
+
+    # Test success case
+    result_success = safe_operation("success")
+    print(f"Success result: {result_success}")
+
+    # Test failure case
+    result_failure = safe_operation("fail")
+    print(f"Failure result: {result_failure}")
+
+
+def demonstrate_user_creation_with_modern_decorators() -> None:
+    """Demonstrate user creation with modern decorators."""
+    print("\n📝 User Creation with Modern Decorators:")
+
+    # Create a comprehensive decorator for user operations
+    user_decorator = FlextDecorators.complete_decorator(
+        cache_size=32, with_timing=True, with_logging=False
+    )
+
+    def create_user_generic(*args: object, **_kwargs: object) -> object:
+        """Generic user creator compatible with FlextCallable."""
+        if len(args) >= 3:
+            try:
+                name = str(args[0]) if args[0] is not None else ""
+                email = str(args[1]) if args[1] is not None else ""
+                age_val = args[2]
+
+                # Safe age conversion
+                if isinstance(age_val, (int, float)) or (
+                    isinstance(age_val, str) and age_val.isdigit()
+                ):
+                    age = int(age_val)
+                else:
+                    raise ValueError(f"Invalid age: {age_val}")
+
+                # Basic validation
+                if not name or not name.strip():
+                    raise ValueError("Name required")
+                if "@" not in email:
+                    raise ValueError("Valid email required")
+                if age < MIN_AGE or age > MAX_AGE:
+                    raise ValueError("Valid age required")
+
+                # Create user using SharedDomainFactory
+                result = SharedDomainFactory.create_user(name, email, age)
+                if result.success:
+                    return result.value
+                raise ValueError(f"User creation failed: {result.error}")
+
+            except (ValueError, TypeError) as e:
+                raise ValueError(f"Type conversion failed: {e}") from e
+        raise ValueError("Insufficient arguments")
+
+    # Apply decorator
+    enhanced_user_creator = user_decorator(create_user_generic)
+
+    # Test user creation
+    try:
+        user_result = enhanced_user_creator(
+            "Alice Modern", "alice.modern@example.com", 25
+        )
+        if hasattr(user_result, "name"):
+            print(f"✅ User created: {user_result.name}")
+        else:
+            print(f"✅ User created: {user_result}")
+    except Exception as e:
+        print(f"❌ User creation failed: {e}")
+
+    # Test validation failure
+    try:
+        invalid_result = enhanced_user_creator("", "invalid", -1)
+        print(f"❌ Should have failed: {invalid_result}")
+    except Exception as e:
+        print(f"✅ Validation correctly failed: {e}")
+
+
+def demonstrate_decorator_categories() -> None:
+    """Demonstrate different decorator categories."""
+    print("\n📝 Decorator Categories:")
+
+    # Performance decorators
+    print("🚀 Performance Category:")
+    cache_dec = FlextDecorators.Performance.create_cache_decorator(max_size=50)
+    print(f"  Cache decorator created: {cache_dec}")
+
+    # Error handling decorators
+    print("🛡️ Error Handling Category:")
+    safe_dec = FlextDecorators.ErrorHandling.get_safe_decorator()
+    print(f"  Safe decorator created: {safe_dec}")
+
+    # Complete decorator composition
+    print("🎯 Complete Decorator:")
+    complete_dec = FlextDecorators.complete_decorator(
+        cache_size=32, with_timing=True, with_logging=True
+    )
+    print(f"  Complete decorator created: {complete_dec}")
+
+
+# =============================================================================
+# DEMONSTRATIONS - Modern decorator usage
+# =============================================================================
 
 
 def main() -> None:
-    """🎯 Example 09: Enterprise Decorators."""
+    """🎯 Example 09: Modern Enterprise Decorators."""
     print("=" * 70)
-    print("🏢 EXAMPLE 09: ENTERPRISE DECORATORS (REFACTORED)")
+    print("🏢 EXAMPLE 09: MODERN ENTERPRISE DECORATORS")
     print("=" * 70)
 
-    print("\n📚 Refactoring Benefits:")
-    print("  • 90% less boilerplate code")
-    print("  • Clean decorator composition")
-    print("  • Automatic error handling integration")
-    print("  • Performance monitoring built-in")
+    print("\n📚 Modern FlextDecorators Benefits:")
+    print("  • Type-safe decorator composition")
+    print("  • Automatic FlextResult integration")
+    print("  • Performance optimization built-in")
+    print("  • Clean categorical organization")
 
-    print("\n🔍 DEMONSTRATIONS")
+    print("\n🔍 MODERN API DEMONSTRATIONS")
     print("=" * 40)
 
-    # Show the refactored decorator patterns
-    demo_validation_decorators()
-    demo_batch_processing()
-    demo_safe_decorators()
-    demo_caching_decorators()
-    demo_enterprise_decorators()
+    # Show the modern decorator patterns
+    demonstrate_cache_decorator()
+    demonstrate_complete_decorator()
+    demonstrate_safe_result_decorator()
+    demonstrate_user_creation_with_modern_decorators()
+    demonstrate_decorator_categories()
 
     print("\n" + "=" * 70)
-    print("✅ REFACTORED DECORATORS EXAMPLE COMPLETED!")
+    print("✅ MODERN DECORATORS EXAMPLE COMPLETED!")
     print("=" * 70)
 
-    print("\n🎓 Key Improvements:")
-    print("  • Type-safe decorator implementations")
-    print("  • FlextResult integration for error handling")
-    print("  • Performance optimization with caching")
-    print("  • Simplified composite decorator patterns")
+    print("\n🎓 Key Modern Improvements:")
+    print("  • Categorical organization (Performance, ErrorHandling, etc.)")
+    print("  • Type-safe FlextCallable protocol")
+    print("  • Automatic error handling with FlextResult")
+    print("  • Zero boilerplate decorator composition")
+    print("  • Built-in performance optimization")
 
 
 if __name__ == "__main__":

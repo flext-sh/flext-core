@@ -14,7 +14,7 @@ import time
 from typing import Any
 
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, given, strategies as st
 from tests.support.async_utils import AsyncTestUtils
 from tests.support.hypothesis_utils import (
     CompositeStrategies,
@@ -37,7 +37,7 @@ from tests.support.test_patterns import (
     TestFixtureBuilder,
     TestSuiteBuilder,
     arrange_act_assert,
-    test_pattern,
+    mark_test_pattern,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
@@ -63,7 +63,7 @@ class TestPropertyBasedPatterns:
         assert not email.endswith("@")
 
     @given(CompositeStrategies.user_profiles())
-    def test_user_profile_properties(self, profile: dict[str, Any]) -> None:
+    def test_user_profile_properties(self, profile: dict[str, object]) -> None:
         """Property-based test for user profiles."""
         # Verify required fields
         assert "id" in profile
@@ -129,9 +129,7 @@ class TestPerformanceAnalysis:
         # Measure across different input sizes
         input_sizes = [100, 200, 400, 800]
         result = analyzer.measure_complexity(
-            linear_operation,
-            input_sizes,
-            "linear_operation"
+            linear_operation, input_sizes, "linear_operation"
         )
 
         assert result["operation"] == "linear_operation"
@@ -148,9 +146,7 @@ class TestPerformanceAnalysis:
 
         # Run load test
         result = stress_runner.run_load_test(
-            simple_operation,
-            iterations=1000,
-            operation_name="simple_ops"
+            simple_operation, iterations=1000, operation_name="simple_ops"
         )
 
         assert result["iterations"] == 1000
@@ -168,9 +164,7 @@ class TestPerformanceAnalysis:
 
         # Run for 2 seconds
         result = stress_runner.run_endurance_test(
-            memory_operation,
-            duration_seconds=2.0,
-            operation_name="memory_ops"
+            memory_operation, duration_seconds=2.0, operation_name="memory_ops"
         )
 
         assert result["actual_duration_seconds"] >= 1.8  # Allow some variance
@@ -193,8 +187,7 @@ class TestPerformanceAnalysis:
             assert sorted_list[0] > sorted_list[-1]
 
         profiler.assert_memory_efficient(
-            max_memory_mb=20.0,
-            operation_name="list_operations"
+            max_memory_mb=20.0, operation_name="list_operations"
         )
 
 
@@ -254,12 +247,12 @@ class TestAdvancedPatterns:
         # Add various test cases
         param_builder.add_success_cases([
             {"email": "test@example.com", "input": "valid_email_1"},
-            {"email": "user@domain.org", "input": "valid_email_2"}
+            {"email": "user@domain.org", "input": "valid_email_2"},
         ])
 
         param_builder.add_failure_cases([
             {"email": "invalid-email", "input": "invalid_email_1"},
-            {"email": "@domain.com", "input": "invalid_email_2"}
+            {"email": "@domain.com", "input": "invalid_email_2"},
         ])
 
         params = param_builder.build_pytest_params()
@@ -267,32 +260,33 @@ class TestAdvancedPatterns:
 
         assert len(params) == 4
         assert len(test_ids) == 4
-        assert all(len(param) == 3 for param in params)  # email, input, expected_success
+        assert all(
+            len(param) == 3 for param in params
+        )  # email, input, expected_success
 
     def test_assertion_builder(self) -> None:
         """Demonstrate assertion builder pattern."""
         test_data = ["apple", "banana", "cherry"]
 
         # Build complex assertions
-        TestAssertionBuilder(test_data) \
-            .is_not_none() \
-            .has_length(3) \
-            .contains("banana") \
-            .satisfies(lambda x: all(isinstance(item, str) for item in x),
-                      "all items should be strings") \
-            .assert_all()
+        TestAssertionBuilder(test_data).is_not_none().has_length(3).contains(
+            "banana"
+        ).satisfies(
+            lambda x: all(isinstance(item, str) for item in x),
+            "all items should be strings",
+        ).assert_all()
 
-    @test_pattern("arrange_act_assert")
+    @mark_test_pattern("arrange_act_assert")
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*args, **kwargs) -> dict[str, Any]:
+        def arrange_data(*args: object, **kwargs: object) -> dict[str, object]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: dict[str, Any]) -> int:
+        def act_on_data(data: dict[str, object]) -> int:
             return sum(data["numbers"])
 
-        def assert_result(result: int, original_data: dict[str, Any]) -> None:
+        def assert_result(result: int, original_data: dict[str, object]) -> None:
             assert result == 15
             assert len(original_data["numbers"]) == 5
 
@@ -375,16 +369,15 @@ class TestComprehensiveIntegration:
 
         # Execute with timeout
         result = await async_test_utils.run_with_timeout(
-            async_operation(),
-            timeout_seconds=5.0
+            async_operation(), timeout_seconds=5.0
         )
 
         # Use assertion builder for verification
-        TestAssertionBuilder(result) \
-            .is_not_none() \
-            .satisfies(lambda x: "result" in x, "should have result field") \
-            .satisfies(lambda x: x["result"] == "success", "should be successful") \
-            .assert_all()
+        TestAssertionBuilder(result).is_not_none().satisfies(
+            lambda x: "result" in x, "should have result field"
+        ).satisfies(
+            lambda x: x["result"] == "success", "should be successful"
+        ).assert_all()
 
     def test_performance_with_property_testing(self, benchmark: object) -> None:
         """Combine performance testing with property-based testing."""
@@ -398,11 +391,9 @@ class TestComprehensiveIntegration:
             ]
 
         # Generate test data using our strategies
-        from hypothesis import strategies as st
+
         profiles_strategy = st.lists(
-            CompositeStrategies.user_profiles(),
-            min_size=10,
-            max_size=100
+            CompositeStrategies.user_profiles(), min_size=10, max_size=100
         )
 
         # Use one example for benchmarking
@@ -413,9 +404,7 @@ class TestComprehensiveIntegration:
             return process_user_profiles(test_profiles)
 
         results = BenchmarkUtils.benchmark_with_warmup(
-            benchmark,
-            benchmark_operation,
-            warmup_rounds=3
+            benchmark, benchmark_operation, warmup_rounds=3
         )
 
         # Verify results
@@ -461,7 +450,7 @@ class TestRealWorldScenarios:
                     "method": request["method"],
                     "url": request["url"],
                     "correlation_id": request["correlation_id"],
-                    "processed_at": time.time()
+                    "processed_at": time.time(),
                 }
 
             # Execute with performance monitoring
@@ -471,16 +460,19 @@ class TestRealWorldScenarios:
                 result = process_api_request(test_request)
 
             # Comprehensive assertions
-            TestAssertionBuilder(result) \
-                .is_not_none() \
-                .satisfies(lambda x: x["status"] == "success", "should be successful") \
-                .satisfies(lambda x: "correlation_id" in x, "should have correlation ID") \
-                .satisfies(lambda x: x["method"] in {"GET", "POST", "PUT", "DELETE", "PATCH"},
-                          "should have valid HTTP method") \
-                .assert_all()
+            TestAssertionBuilder(result).is_not_none().satisfies(
+                lambda x: x["status"] == "success", "should be successful"
+            ).satisfies(
+                lambda x: "correlation_id" in x, "should have correlation ID"
+            ).satisfies(
+                lambda x: x["method"] in {"GET", "POST", "PUT", "DELETE", "PATCH"},
+                "should have valid HTTP method",
+            ).assert_all()
 
     @given(CompositeStrategies.configuration_data())
-    def test_configuration_validation_comprehensive(self, config: dict[str, Any]) -> None:
+    def test_configuration_validation_comprehensive(
+        self, config: dict[str, Any]
+    ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure
         required_fields = ["database_url", "debug", "timeout_seconds"]

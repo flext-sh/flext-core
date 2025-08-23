@@ -6,14 +6,15 @@ patterns with automatic retry, error simulation, and performance monitoring.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 from urllib.parse import urljoin
 
+import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, FlextTypes
 
 JsonDict = FlextTypes.Core.JsonDict
 
@@ -59,7 +60,7 @@ class HTTPTestUtils:
                 "message": error_message,
                 "code": error_code,
                 "status": status_code,
-            }
+            },
         }
 
         httpx_mock.add_response(
@@ -92,8 +93,6 @@ class HTTPTestUtils:
         method: str = "GET",
     ) -> None:
         """Mock network error."""
-        import httpx
-
         httpx_mock.add_exception(
             httpx.NetworkError("Network unreachable"),
             method=method,
@@ -128,7 +127,7 @@ class HTTPTestUtils:
                     "total_items": total_items,
                     "has_next": page < total_pages,
                     "has_prev": page > 1,
-                }
+                },
             }
 
             httpx_mock.add_response(
@@ -154,7 +153,7 @@ class HTTPTestUtils:
                     "message": "Rate limit exceeded",
                     "code": "RATE_LIMIT_EXCEEDED",
                     "retry_after": retry_after,
-                }
+                },
             },
             headers={
                 "retry-after": str(retry_after),
@@ -185,7 +184,9 @@ class APITestClient:
         optional_fields: list[str] | None = None,
     ) -> FlextResult[None]:
         """Validate API response structure."""
-        missing_fields = [field for field in required_fields if field not in response_data]
+        missing_fields = [
+            field for field in required_fields if field not in response_data
+        ]
 
         if missing_fields:
             return FlextResult[None].fail(
@@ -357,7 +358,7 @@ class HTTPScenarioBuilder:
                 "error": {
                     "message": "Circuit breaker open",
                     "code": "CIRCUIT_BREAKER_OPEN",
-                }
+                },
             },
         )
 
@@ -389,8 +390,6 @@ class WebhookTestUtils:
         signature: str | None = None,
     ) -> JsonDict:
         """Create webhook payload."""
-        from datetime import datetime
-
         payload = {
             "event": event_type,
             "data": data,

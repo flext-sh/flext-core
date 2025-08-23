@@ -11,11 +11,9 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from examples.shared_domain import Order as SharedOrder, Product as SharedProduct
+from examples.utilities.formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 from flext_core import FlextResult
-
-# use .shared_domain with dot to access local module
-from ..shared_domain import Order as SharedOrder, Product as SharedProduct
-from .formatting_helpers import MAX_DISCOUNT_PERCENTAGE
 
 # =============================================================================
 # TYPE CHECKING FUNCTIONS - Using FlextTypes.TypeGuards for safety
@@ -75,8 +73,7 @@ def calculate_discount_price(
     """Calculate discounted price with validation."""
     if discount_percentage < 0 or discount_percentage > MAX_DISCOUNT_PERCENTAGE:
         return FlextResult[Decimal].fail(
-            f"Invalid discount: {discount_percentage}%. "
-            f"Must be 0-{MAX_DISCOUNT_PERCENTAGE}%",
+            f"Invalid discount: {discount_percentage}%. Must be 0-{MAX_DISCOUNT_PERCENTAGE}%",
         )
 
     try:

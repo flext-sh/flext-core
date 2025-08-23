@@ -5,9 +5,8 @@ Comprehensive examples demonstrating all major FLEXT Core functionality.
 """
 
 import contextlib
-from typing import cast
+from typing import cast, override
 
-# use .shared_domain with dot to access local module
 from shared_domain import SharedDomainFactory, User as SharedUser
 
 from flext_core import (
@@ -46,12 +45,13 @@ def _demo_commands() -> tuple[object, object]:
         email: str
         name: str
 
+        @override
         def validate_command(self) -> FlextResult[None]:
             if not self.email or "@" not in self.email:
-                return FlextResult.fail("Invalid email")
+                return FlextResult[None].fail("Invalid email")
             if not self.name.strip():
-                return FlextResult.fail("Name required")
-            return FlextResult.ok(None)
+                return FlextResult[None].fail("Name required")
+            return FlextResult[None].ok(None)
 
     class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, SharedUser]):
         def handle(self, command: CreateUserCommand) -> FlextResult[SharedUser]:
@@ -67,8 +67,10 @@ def _demo_commands() -> tuple[object, object]:
     command = CreateUserCommand(email="alice@example.com", name="Alice Smith")
     handler = CreateUserHandler()
     result = handler.execute(command)
-    if result.success and result.value is not None:
-        pass
+    # Modern pattern: Check success and use value directly
+    if result.success:
+        user_data = result.value
+        # Process the user data
     return command, handler
 
 
@@ -79,10 +81,8 @@ def _demo_container() -> None:
 
         def create_user(self, email: str, name: str) -> SharedUser:
             result = SharedDomainFactory.create_user(name=name, email=email, age=25)
-            if result.success and result.value is not None:
-                return result.value
-            msg: str = f"Failed to create user: {result.error}"
-            raise ValueError(msg)
+            # Modern pattern: Use expect() for unwrapping with custom error
+            return result.expect("User creation failed")
 
     class UserRepository:
         def __init__(self) -> None:

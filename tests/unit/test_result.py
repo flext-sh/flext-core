@@ -16,10 +16,10 @@ from tests.support.factory_boy_factories import (
     create_validation_test_cases,
 )
 from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
-from tests.support.test_patterns import TestScenario
 
+# Import TestScenario from conftest.py (local enum)
+# from tests.support.test_patterns import TestScenario
 from flext_core import FlextResult
-from flext_core.exceptions import FlextOperationError
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -151,14 +151,14 @@ class TestFlextResultErrorHandling:
         test_data = user_data_factory.build()
         result = FlextResult.ok(test_data)
 
-        assert result.unwrap() == test_data
+        assert result.value == test_data
 
-    def test_unwrap_failure_raises(self) -> None:
-        """Test unwrap raises on failure results."""
+    def test_value_failure_raises(self) -> None:
+        """Test value property raises on failure results."""
         result = FlextResult[None].fail("error")
 
-        with pytest.raises(FlextOperationError, match="error"):
-            result.unwrap()
+        with pytest.raises(TypeError, match="error"):
+            _ = result.value
 
     def test_unwrap_or_default(self, user_data_factory: UserDataFactory) -> None:
         """Test unwrap_or provides default on failure."""
@@ -277,6 +277,7 @@ class TestFlextResultProperties:
     @given(st.text(), st.text())
     def test_map_composition_law(self, value: str, prefix: str) -> None:
         """Property: result.map(f).map(g) == result.map(lambda x: g(f(x)))."""
+
         def f(x: str) -> str:
             return f"{prefix}_{x}"
 
@@ -300,9 +301,7 @@ class TestFlextResultProperties:
 class TestFlextResultIntegration:
     """Integration tests using test scenarios."""
 
-    def test_user_validation_pipeline(
-        self, user_data_factory: UserDataFactory
-    ) -> None:
+    def test_user_validation_pipeline(self, user_data_factory: UserDataFactory) -> None:
         """Test complete user validation pipeline."""
         user_data = user_data_factory.build()
 
@@ -330,12 +329,13 @@ class TestFlextResultIntegration:
         assert result.value["validated"] is True
         assert result.value["name"] == user_data["name"]
 
-    def test_error_handling_scenarios(self, test_scenarios: list[TestScenario]) -> None:
+    def test_error_handling_scenarios(self, test_scenarios: list) -> None:
         """Test various error handling scenarios."""
-        error_scenario = next(
-            (s for s in test_scenarios if s.scenario_type == "error"), None
+        # Check if we have error scenarios (look for ERROR_CASE enum value)
+        has_error_scenario = any(
+            str(scenario).endswith("ERROR_CASE") for scenario in test_scenarios
         )
-        if not error_scenario:
+        if not has_error_scenario:
             pytest.skip("No error scenario available")
 
         def process_with_validation(data: str) -> FlextResult[str]:
@@ -393,20 +393,27 @@ class TestFlextResultAsync:
     @pytest.mark.asyncio
     async def test_async_concurrency_handling(self) -> None:
         """Test concurrent async operations with FlextResult."""
+
         async def create_async_result(value: str) -> FlextResult[str]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return FlextResult.ok(f"processed_{value}")
 
         # Test concurrent execution
-        results = await AsyncTestUtils.run_concurrent_tasks([
-            create_async_result("a"),
-            create_async_result("b"),
-            create_async_result("c")
-        ])
+        results = await AsyncTestUtils.run_concurrent_tasks(
+            [
+                create_async_result("a"),
+                create_async_result("b"),
+                create_async_result("c"),
+            ]
+        )
 
         assert len(results) == 3
         assert all(r.success for r in results)
-        assert {r.value for r in results} == {"processed_a", "processed_b", "processed_c"}
+        assert {r.value for r in results} == {
+            "processed_a",
+            "processed_b",
+            "processed_c",
+        }
 
 
 # ============================================================================

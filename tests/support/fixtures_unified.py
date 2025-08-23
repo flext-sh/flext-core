@@ -15,7 +15,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import json
 import tempfile
+import time
+import uuid
 from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,84 +26,180 @@ from typing import Any
 
 import pytest
 import pytest_asyncio
-from pytest_benchmark import BenchmarkFixture
+from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_mock import MockerFixture
 
 from flext_core import (
-    FlextCommand,
+    FlextCommands,
     FlextConfig,
     FlextContainer,
     FlextEntity,
     FlextResult,
-    FlextValueObject,
+    FlextValue,
 )
 from tests.support.factories import (
-    CommandFactory,
-    ConfigurationBuilder,
-    DomainEntityFactory,
-    ErrorSimulationFactory,
-    FactoryRegistry,
-    FlextConfigFactory,
-    FlextContainerFactory,
     FlextResultFactory,
-    PerformanceDataFactory,
-    SequenceFactory,
-    ValueObjectFactory,
+    TestEntityFactory,
+    TestValueObjectFactory,
 )
+from tests.support.test_factories import (
+    DomainEntityFactory,
+)
+
+
+# Simple placeholder factories for missing ones
+class PerformanceDataFactory:
+    """Simple performance data factory."""
+
+    @staticmethod
+    def create_large_payload(size_mb: int = 1) -> dict[str, Any]:
+        """Create large test payload."""
+        return {"data": "x" * (size_mb * 1024), "size_mb": size_mb}
+
+    @staticmethod
+    def create_nested_structure(depth: int = 10) -> dict[str, Any]:
+        """Create nested data structure."""
+        result: dict[str, Any] = {"value": f"depth_{depth}"}
+        current = result
+        for i in range(depth - 1):
+            current["nested"] = {"value": f"depth_{depth - i - 1}"}
+            current = current["nested"]
+        return result
+
+
+class ErrorSimulationFactory:
+    """Simple error simulation factory."""
+
+    @staticmethod
+    def create_timeout_error() -> Exception:
+        """Create timeout error."""
+        return TimeoutError("Simulated timeout")
+
+    @staticmethod
+    def create_connection_error() -> Exception:
+        """Create connection error."""
+        return ConnectionError("Simulated connection error")
+
+    @staticmethod
+    def create_validation_error() -> Exception:
+        """Create validation error."""
+        return ValueError("Simulated validation error")
+
+
+class SequenceFactory:
+    """Simple sequence factory."""
+
+    @staticmethod
+    def create_sequence(
+        length: int = 10, prefix: str = "", count: int | None = None
+    ) -> list[str]:
+        """Create sequence with optional prefix."""
+        actual_length = count if count is not None else length
+        if prefix:
+            return [f"{prefix}_{i}" for i in range(actual_length)]
+        return [str(i) for i in range(actual_length)]
+
+
+class FactoryRegistry:
+    """Simple factory registry."""
+
+    def __init__(self) -> None:
+        self.factories: dict[str, Any] = {}
+
+    def register(self, name: str, factory: Any) -> None:
+        """Register a factory."""
+        self.factories[name] = factory
+
+    def get(self, name: str) -> Any:
+        """Get a factory."""
+        return self.factories.get(name)
+
+
+class FlextConfigFactory:
+    """Simple config factory."""
+
+    @staticmethod
+    def create_test_config() -> FlextConfig:
+        """Create test configuration."""
+        return FlextConfig()
+
+
+class CommandFactory:
+    """Simple command factory."""
+
+    @staticmethod
+    def create_test_command() -> FlextCommands.Command:
+        """Create test command."""
+        return FlextCommands.Command(command_type="test")
+
+    @staticmethod
+    def create_batch_command() -> FlextCommands.Command:
+        """Create batch command."""
+        return FlextCommands.Command(command_type="batch")
+
+    @staticmethod
+    def create_validation_command() -> FlextCommands.Command:
+        """Create validation command."""
+        return FlextCommands.Command(command_type="validation")
+
+    @staticmethod
+    def create_processing_command() -> FlextCommands.Command:
+        """Create processing command."""
+        return FlextCommands.Command(command_type="processing")
 
 
 # Core fixtures for basic testing
 @pytest.fixture
 def flext_config() -> FlextConfig:
     """Fixture providing configured FlextConfig instance."""
-    return FlextConfigFactory()
+    return FlextConfig()
 
 
 @pytest.fixture
 def flext_container() -> FlextContainer:
     """Fixture providing configured FlextContainer instance."""
-    return FlextContainerFactory()
+    return FlextContainer()
 
 
 @pytest.fixture
 def test_entity() -> FlextEntity:
     """Fixture providing test domain entity."""
-    return DomainEntityFactory()
+    return TestEntityFactory()
 
 
 @pytest.fixture
-def test_value_object() -> FlextValueObject:
+def test_value_object() -> FlextValue:
     """Fixture providing test value object."""
-    return ValueObjectFactory()
+    return TestValueObjectFactory()
 
 
 @pytest.fixture
-def test_command() -> FlextCommand:
+def test_command() -> FlextCommands.Command:
     """Fixture providing test command."""
-    return CommandFactory()
+    return FlextCommands.Command(command_type="test_command")
 
 
 # Result fixtures
 @pytest.fixture
 def success_result() -> FlextResult[str]:
     """Fixture providing successful FlextResult."""
-    return FlextResultFactory.success("test_success_data")
+    return FlextResultFactory.create_success("test_success_data")
 
 
 @pytest.fixture
 def failure_result() -> FlextResult[Any]:
     """Fixture providing failed FlextResult."""
-    return FlextResultFactory.is_failure("test_failure_message")
+    return FlextResultFactory.create_failure("test_failure_message")
 
 
 @pytest.fixture
 def result_chain() -> list[FlextResult[Any]]:
     """Fixture providing chain of results for pipeline testing."""
     return [
-        FlextResultFactory.success("step_1"),
-        FlextResultFactory.success("step_2"),
-        FlextResultFactory.is_failure("step_3_failed"),
-        FlextResultFactory.success("step_4"),
+        FlextResultFactory.create_success("step_1"),
+        FlextResultFactory.create_success("step_2"),
+        FlextResultFactory.create_failure("step_3_failed"),
+        FlextResultFactory.create_success("step_4"),
     ]
 
 
@@ -120,16 +219,16 @@ def temp_config_file(temp_directory: Path) -> Path:
         "debug": True,
         "log_level": "DEBUG",
         "database_url": "sqlite:///test.db",
-        "features": ["auth", "cache"]
+        "features": ["auth", "cache"],
     }
     config_file.write_text(json.dumps(test_config, indent=2))
     return config_file
 
 
 @pytest.fixture
-def config_builder() -> ConfigurationBuilder:
+def config_builder() -> FlextConfig:
     """Fixture providing configuration builder for custom configs."""
-    return ConfigurationBuilder()
+    return FlextConfig()
 
 
 # Performance testing fixtures
@@ -163,7 +262,7 @@ def nested_data() -> dict[str, Any]:
 
 
 # Async fixtures
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture  # type: ignore[misc]
 async def async_container() -> AsyncGenerator[FlextContainer]:
     """Async fixture providing container with async services."""
     container = FlextContainer()
@@ -178,8 +277,8 @@ async def async_container() -> AsyncGenerator[FlextContainer]:
         await container.shutdown() if hasattr(container, "shutdown") else None
 
 
-@pytest_asyncio.fixture
-async def async_executor() -> AsyncGenerator[AsyncExecutor]:
+@pytest_asyncio.fixture  # type: ignore[misc]
+async def async_executor() -> AsyncGenerator[Any]:
     """Async fixture providing executor for async operations."""
     executor = AsyncExecutor()
     try:
@@ -302,23 +401,27 @@ def mock_external_service(mocker: MockerFixture) -> Any:
 
 
 # Parametrized fixtures for comprehensive testing
-@pytest.fixture(params=[
-    "development",
-    "testing",
-    "staging",
-    "production"
-])
+@pytest.fixture(
+    params=[
+        "development",
+        "testing",
+        "staging",
+        "production",
+    ]
+)
 def environment(request: pytest.FixtureRequest) -> str:
     """Parametrized fixture providing different environments."""
     return request.param
 
 
-@pytest.fixture(params=[
-    {"debug": True, "log_level": "DEBUG"},
-    {"debug": False, "log_level": "INFO"},
-    {"debug": False, "log_level": "WARNING"},
-    {"debug": False, "log_level": "ERROR"},
-])
+@pytest.fixture(
+    params=[
+        {"debug": True, "log_level": "DEBUG"},
+        {"debug": False, "log_level": "INFO"},
+        {"debug": False, "log_level": "WARNING"},
+        {"debug": False, "log_level": "ERROR"},
+    ]
+)
 def config_variants(request: pytest.FixtureRequest) -> dict[str, Any]:
     """Parametrized fixture providing config variants."""
     return request.param
@@ -343,7 +446,7 @@ def session_container() -> FlextContainer:
 @pytest.fixture(scope="module")
 def module_config() -> FlextConfig:
     """Module-scoped config for module-level tests."""
-    return FlextConfigFactory()
+    return FlextConfigFactory.create_test_config()
 
 
 @pytest.fixture(scope="class")
@@ -352,7 +455,7 @@ def class_database() -> dict[str, Any]:
     return {
         "connection_string": "sqlite:///:memory:",
         "pool_size": 1,
-        "connected": True
+        "connected": True,
     }
 
 
@@ -410,6 +513,7 @@ def cleanup_environment() -> Generator[None]:
 
     # Teardown - restore environment
     import os
+
     for key, value in original_env.items():
         if value is None:
             os.environ.pop(key, None)
@@ -422,6 +526,7 @@ def cleanup_environment() -> Generator[None]:
 def random_data() -> dict[str, Any]:
     """Fixture providing random test data (works with pytest-randomly)."""
     import random
+
     return {
         "random_int": random.randint(1, 1000),
         "random_float": random.uniform(0.0, 100.0),
@@ -452,6 +557,7 @@ def integration_services() -> dict[str, Any]:
 def database_url() -> str:
     """Fixture providing database URL based on environment."""
     import os
+
     return os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
 
 
@@ -459,6 +565,7 @@ def database_url() -> str:
 def skip_if_no_network() -> None:
     """Fixture that skips test if no network available."""
     import socket
+
     try:
         socket.create_connection(("8.8.8.8", 53), timeout=3)
     except OSError:
@@ -467,13 +574,13 @@ def skip_if_no_network() -> None:
 
 # Advanced fixtures for specific patterns
 @pytest.fixture
-def command_pipeline() -> list[FlextCommand]:
+def command_pipeline() -> list[FlextCommands.Command]:
     """Fixture providing command pipeline for CQRS testing."""
     return [
-        CommandFactory(action="validate"),
-        CommandFactory(action="process"),
-        CommandFactory(action="store"),
-        CommandFactory(action="notify"),
+        CommandFactory.create_validation_command(),
+        CommandFactory.create_processing_command(),
+        CommandFactory.create_test_command(),
+        CommandFactory.create_batch_command(),
     ]
 
 
@@ -482,10 +589,13 @@ def event_sourcing_data() -> list[dict[str, Any]]:
     """Fixture providing event sourcing test data."""
     base_time = datetime.now(UTC)
 
-    return [{
+    return [
+        {
             "event_id": str(uuid.uuid4()),
             "event_type": f"test_event_{i}",
             "timestamp": (base_time.timestamp() + i * 60),
             "data": {"sequence": i, "action": f"action_{i}"},
-            "metadata": {"version": 1, "source": "test"}
-        } for i in range(5)]
+            "metadata": {"version": 1, "source": "test"},
+        }
+        for i in range(5)
+    ]

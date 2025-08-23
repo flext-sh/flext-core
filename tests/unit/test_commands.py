@@ -334,19 +334,19 @@ class TestFlextCommandsAdvanced:
         payload = command.to_payload()
 
         assert isinstance(payload, FlextPayload)
-        assert payload.data is not None
+        assert payload.value is not None
 
         # Type-safe expected validation
         expected_dict = cast("dict[str, object]", expected)
 
         if "payload_data_name" in expected_dict:
-            assert payload.data is not None
-            payload_dict = cast("dict[str, object]", payload.data)
+            assert payload.value is not None
+            payload_dict = cast("dict[str, object]", payload.value)
             assert payload_dict["name"] == expected_dict["payload_data_name"]
 
         if "payload_data_value" in expected_dict:
-            assert payload.data is not None
-            payload_dict = cast("dict[str, object]", payload.data)
+            assert payload.value is not None
+            payload_dict = cast("dict[str, object]", payload.value)
             assert payload_dict["value"] == expected_dict["payload_data_value"]
 
         if "payload_type" in expected_dict:
@@ -458,10 +458,16 @@ class TestFlextCommandsImmutability:
         command = SampleCommand(name="test", value=42)
 
         # Attempt to modify the command should raise ValidationError
-        with pytest.raises((ValidationError, AttributeError), match=r".*frozen.*|.*immutable.*|.*read.*only.*"):
+        with pytest.raises(
+            (ValidationError, AttributeError),
+            match=r".*frozen.*|.*immutable.*|.*read.*only.*",
+        ):
             command.name = "changed"
 
-        with pytest.raises((ValidationError, AttributeError), match=r".*frozen.*|.*immutable.*|.*read.*only.*"):
+        with pytest.raises(
+            (ValidationError, AttributeError),
+            match=r".*frozen.*|.*immutable.*|.*read.*only.*",
+        ):
             command.value = 100
 
 
