@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401, PLC0415
 """Advanced async testing utilities using pytest-asyncio and pytest-timeout.
 
 Provides comprehensive async testing patterns, concurrency testing,
@@ -228,7 +229,7 @@ class AsyncMockUtils:
     ) -> Callable[..., Awaitable[object]]:
         """Create async mock function."""
 
-        async def async_mock(*args: object, **kwargs: object) -> object:
+        async def async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
             if side_effect:
                 raise side_effect
             return return_value
@@ -243,7 +244,7 @@ class AsyncMockUtils:
     ):
         """Create async mock with delay."""
 
-        async def delayed_async_mock(*args: Any, **kwargs: Any) -> Any:
+        async def delayed_async_mock(*args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -260,8 +261,8 @@ class AsyncMockUtils:
         """Create async mock that fails randomly."""
         import random
 
-        async def flaky_async_mock(*args: Any, **kwargs: Any) -> Any:
-            if random.random() < failure_rate:
+        async def flaky_async_mock(*args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+            if random.random() < failure_rate:  # noqa: S311
                 raise exception
             return return_value
 
@@ -337,8 +338,8 @@ class AsyncConcurrencyTesting:
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
 
-                async def _wrapper1():
-                    return await awaitable1
+                async def _wrapper1(coro=awaitable1):
+                    return await coro
 
                 coro1 = _wrapper1()
             else:
@@ -346,8 +347,8 @@ class AsyncConcurrencyTesting:
 
             if not asyncio.iscoroutine(awaitable2):
 
-                async def _wrapper2():
-                    return await awaitable2
+                async def _wrapper2(coro=awaitable2):
+                    return await coro
 
                 coro2 = _wrapper2()
             else:

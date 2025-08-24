@@ -5,6 +5,8 @@ Focus on covering the specific missing lines with simple, direct tests.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from flext_core import (
@@ -17,6 +19,7 @@ from flext_core.delegation_system import (
     _validate_delegation_info,
     _validate_delegation_methods,
     _validate_method_functionality,
+    validate_delegation_system,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -263,10 +266,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_attribute_error_handling(self) -> None:
         """Test AttributeError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_delegation_methods"
         ) as mock_validate:
@@ -280,10 +279,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_type_error_handling(self) -> None:
         """Test TypeError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_method_functionality"
         ) as mock_validate:
@@ -297,10 +292,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_value_error_handling(self) -> None:
         """Test ValueError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_delegation_info"
         ) as mock_validate:
@@ -314,10 +305,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_runtime_error_handling(self) -> None:
         """Test RuntimeError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_delegation_methods"
         ) as mock_validate:
@@ -331,10 +318,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_flext_operation_error_handling(self) -> None:
         """Test FlextOperationError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_delegation_methods"
         ) as mock_validate:
@@ -350,10 +333,6 @@ class TestValidateSystemExceptionHandling:
 
     def test_flext_type_error_handling(self) -> None:
         """Test FlextTypeError handling in validate_delegation_system."""
-        from unittest.mock import patch
-
-        from flext_core.delegation_system import validate_delegation_system
-
         with patch(
             "flext_core.delegation_system._validate_method_functionality"
         ) as mock_validate:

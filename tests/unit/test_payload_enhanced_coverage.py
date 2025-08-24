@@ -1,4 +1,6 @@
+# ruff: noqa: ARG001, ARG002
 """Enhanced coverage tests for FlextPayload - targeting specific uncovered areas."""
+
 
 from __future__ import annotations
 
@@ -11,6 +13,12 @@ from flext_core import (
     FlextEvent,
     FlextMessage,
     FlextPayload,
+)
+from flext_core.payload import (
+    create_cross_service_event,
+    create_cross_service_message,
+    get_serialization_metrics,
+    validate_cross_service_protocol,
 )
 
 # Test markers
@@ -26,7 +34,7 @@ class TestFlextPayloadExceptionHandling:
         # Using invalid type for metadata field
         with pytest.raises((ValidationError, TypeError)):
             # This should work but we'll test the exception path indirectly
-            FlextPayload(data="test", metadata="invalid_metadata_type")  # type: ignore[arg-type]
+            FlextPayload(data="test", metadata="invalid_metadata_type")
 
     def test_create_from_dict_exception_handling(self) -> None:
         """Test create_from_dict exception handling paths."""
@@ -73,7 +81,8 @@ class TestFlextPayloadExceptionHandling:
         payload = FlextPayload[str](data="test", metadata={})
 
         def failing_transformer(data: str) -> str:
-            raise ValueError("Transformer failed")
+            msg = "Transformer failed"
+            raise ValueError(msg)
 
         result = payload.transform_data(failing_transformer)
         assert result.is_failure
@@ -96,12 +105,11 @@ class TestFlextPayloadCrossServiceSerialization:
         complex_data = {
             "nested": {"deep": {"value": 42}},
             "list": [1, "two", {"three": 3}],
-            "mixed": {"str": "test", "num": 123, "bool": True}
+            "mixed": {"str": "test", "num": 123, "bool": True},
         }
 
         payload = FlextPayload[dict[str, object]](
-            data=complex_data,
-            metadata={"version": "1.0", "source": "test"}
+            data=complex_data, metadata={"version": "1.0", "source": "test"}
         )
 
         result = payload.to_cross_service_dict()
@@ -153,8 +161,8 @@ class TestFlextPayloadCrossServiceSerialization:
             "protocol_version": "2.0.0",  # This version will trigger unsupported protocol error
             "type_info": {
                 "data_type": "invalid_go_type",
-                "python_type": "invalid_type"
-            }
+                "python_type": "invalid_type",
+            },
         }
 
         # Should handle reconstruction errors gracefully
@@ -162,10 +170,13 @@ class TestFlextPayloadCrossServiceSerialization:
         # The method should either succeed or fail with specific error
         if result.is_failure:
             # We expect unsupported protocol version error, not reconstruction error
-            assert any(phrase in result.error for phrase in [
-                "Unsupported protocol version",
-                "Failed to reconstruct payload"
-            ])
+            assert any(
+                phrase in result.error
+                for phrase in [
+                    "Unsupported protocol version",
+                    "Failed to reconstruct payload",
+                ]
+            )
 
 
 class TestFlextPayloadJSONProcessing:
@@ -173,6 +184,7 @@ class TestFlextPayloadJSONProcessing:
 
     def test_to_json_string_serialization_failure(self) -> None:
         """Test to_json_string with unserializable data."""
+
         # Create payload with data that might cause JSON serialization issues
         class UnserializableObject:
             def __init__(self) -> None:
@@ -201,11 +213,14 @@ class TestFlextPayloadJSONProcessing:
             result = FlextPayload.from_json_string(invalid_input)
             assert result.is_failure
             # Should contain appropriate error message
-            assert any(phrase in result.error for phrase in [
-                "Failed to parse JSON",
-                "Invalid JSON envelope",
-                "Unsupported format"
-            ])
+            assert any(
+                phrase in result.error
+                for phrase in [
+                    "Failed to parse JSON",
+                    "Invalid JSON envelope",
+                    "Unsupported format",
+                ]
+            )
 
     def test_from_json_string_compressed_invalid_data(self) -> None:
         """Test from_json_string with invalid compressed data."""
@@ -214,7 +229,7 @@ class TestFlextPayloadJSONProcessing:
             "format": "json_compressed",
             "data": "invalid_base64_data_that_cannot_be_decoded",
             "original_size": 100,
-            "compressed_size": 50
+            "compressed_size": 50,
         })
 
         result = FlextPayload.from_json_string(invalid_compressed_envelope)
@@ -224,8 +239,7 @@ class TestFlextPayloadJSONProcessing:
     def test_get_serialization_size(self) -> None:
         """Test get_serialization_size method."""
         payload = FlextPayload[dict[str, object]](
-            data={"test": "data", "number": 42},
-            metadata={"version": "1.0"}
+            data={"test": "data", "number": 42}, metadata={"version": "1.0"}
         )
 
         size_info = payload.get_serialization_size()
@@ -279,14 +293,14 @@ class TestFlextPayloadAttributeHandling:
 
         # Access extra field
         if hasattr(payload, "__pydantic_extra__") and payload.__pydantic_extra__:
-            assert payload.extra_field == "extra_value"  # type: ignore[attr-defined]
+            assert payload.extra_field == "extra_value"
 
     def test_getattr_nonexistent_attribute(self) -> None:
         """Test __getattr__ with nonexistent attributes."""
         payload = FlextPayload[str](data="test", metadata={})
 
         with pytest.raises(AttributeError) as exc_info:
-            _ = payload.nonexistent_attribute  # type: ignore[attr-defined]
+            _ = payload.nonexistent_attribute
 
         assert "has no attribute 'nonexistent_attribute'" in str(exc_info.value)
 
@@ -305,10 +319,7 @@ class TestFlextPayloadAttributeHandling:
     def test_hash_method_with_unhashable_data(self) -> None:
         """Test __hash__ method with unhashable data."""
         unhashable_data = {"list": [1, 2, 3]}  # Lists are unhashable
-        payload = FlextPayload[dict[str, object]](
-            data=unhashable_data,
-            metadata={}
-        )
+        payload = FlextPayload[dict[str, object]](data=unhashable_data, metadata={})
 
         # Should handle unhashable data gracefully by using string representation
         hash_value = hash(payload)
@@ -340,16 +351,20 @@ class TestFlextMessageEnhancedCoverage:
         # This should trigger validation error handling in create_message
         try:
             # Force a validation error by passing invalid data to constructor directly
-            result = FlextMessage.create_message("")  # Empty string should fail validation
+            result = FlextMessage.create_message(
+                ""
+            )  # Empty string should fail validation
             assert result.is_failure
             assert "Message cannot be empty" in result.error
-        except Exception:
+        except Exception:  # noqa: S110
             # If direct validation fails, that's also covered
             pass
 
     def test_message_cross_service_dict_without_correlation_id(self) -> None:
         """Test message to_cross_service_dict without correlation_id."""
-        result = FlextMessage.create_message("test message", level="info", source="test")
+        result = FlextMessage.create_message(
+            "test message", level="info", source="test"
+        )
         assert result.is_success
 
         message = result.value
@@ -384,7 +399,7 @@ class TestFlextEventEnhancedCoverage:
             result = FlextEvent.create_event("", {})  # Empty event_type
             assert result.is_failure
             assert "Event type cannot be empty" in result.error
-        except Exception:
+        except Exception:  # noqa: S110
             # Exception handling is also a valid path
             pass
 
@@ -392,9 +407,7 @@ class TestFlextEventEnhancedCoverage:
         """Test FlextEvent.version property with invalid version data."""
         # Create event with proper constructor parameters
         result = FlextEvent.create_event(
-            event_type="TestEvent",
-            event_data={"data": "test"},
-            version=1
+            event_type="TestEvent", event_data={"data": "test"}, version=1
         )
         assert result.is_success
 
@@ -403,8 +416,7 @@ class TestFlextEventEnhancedCoverage:
 
         # Create a new event with invalid version directly in metadata
         result_invalid = FlextEvent.create_event(
-            event_type="TestEvent",
-            event_data={"data": "test"}
+            event_type="TestEvent", event_data={"data": "test"}
         )
         invalid_event = result_invalid.value
         # Manually update the metadata to have invalid version
@@ -420,18 +432,25 @@ class TestFlextEventEnhancedCoverage:
             {"event_type": None},  # Invalid event type
             {"event_type": 123},  # Non-string event type
             {"event_type": "TestEvent", "event_data": "not_dict"},  # Invalid event data
-            {"event_type": "TestEvent", "event_data": {}, "event_version": "invalid"},  # Invalid version
+            {
+                "event_type": "TestEvent",
+                "event_data": {},
+                "event_version": "invalid",
+            },  # Invalid version
             {},  # Missing event type
         ]
 
         for invalid_dict in invalid_dicts:
             result = FlextEvent.from_cross_service_dict(invalid_dict)
             assert result.is_failure
-            assert any(phrase in result.error for phrase in [
-                "Invalid event type",
-                "Invalid event data",
-                "Invalid event version"
-            ])
+            assert any(
+                phrase in result.error
+                for phrase in [
+                    "Invalid event type",
+                    "Invalid event data",
+                    "Invalid event version",
+                ]
+            )
 
     def test_event_cross_service_dict_with_all_fields(self) -> None:
         """Test event to_cross_service_dict with all fields populated."""
@@ -439,23 +458,37 @@ class TestFlextEventEnhancedCoverage:
             "TestEvent",
             {"action": "create", "entity": "user"},
             aggregate_id="agg_123",
-            version=5
+            version=5,
         )
         assert result.is_success
 
         event = result.value.with_metadata(
-            correlation_id="corr_456",
-            aggregate_type="User"
+            correlation_id="corr_456", aggregate_type="User"
         )
 
         cross_dict = event.to_cross_service_dict()
 
         # Access fields from the cross_dict - they may be nested or named differently
-        assert cross_dict.get("event_type") == "TestEvent" or cross_dict["metadata"]["event_type"] == "TestEvent"
-        assert cross_dict.get("aggregate_id") == "agg_123" or cross_dict["metadata"]["aggregate_id"] == "agg_123"
-        assert cross_dict.get("event_version") == 5 or cross_dict["metadata"]["version"] == 5
-        assert cross_dict.get("correlation_id") == "corr_456" or cross_dict["metadata"]["correlation_id"] == "corr_456"
-        assert cross_dict.get("aggregate_type") == "User" or cross_dict["metadata"]["aggregate_type"] == "User"
+        assert (
+            cross_dict.get("event_type") == "TestEvent"
+            or cross_dict["metadata"]["event_type"] == "TestEvent"
+        )
+        assert (
+            cross_dict.get("aggregate_id") == "agg_123"
+            or cross_dict["metadata"]["aggregate_id"] == "agg_123"
+        )
+        assert (
+            cross_dict.get("event_version") == 5
+            or cross_dict["metadata"]["version"] == 5
+        )
+        assert (
+            cross_dict.get("correlation_id") == "corr_456"
+            or cross_dict["metadata"]["correlation_id"] == "corr_456"
+        )
+        assert (
+            cross_dict.get("aggregate_type") == "User"
+            or cross_dict["metadata"]["aggregate_type"] == "User"
+        )
         # Event data should be in the main data field
         if "event_data" in cross_dict:
             assert cross_dict["event_data"] == {"action": "create", "entity": "user"}
@@ -469,31 +502,29 @@ class TestCrossServiceConvenienceFunctions:
 
     def test_create_cross_service_event_with_invalid_params(self) -> None:
         """Test create_cross_service_event with invalid parameters."""
-        from flext_core.payload import create_cross_service_event
-
         # Test with invalid aggregate_id type
         result = create_cross_service_event(
             "TestEvent",
             {"data": "test"},
             aggregate_id=123,  # Invalid type - should be str or None
-            version="invalid"  # Invalid type - should be int or None
+            version="invalid",  # Invalid type - should be int or None
         )
 
         # Function should handle type conversion gracefully
         if result.is_success:
-            assert result.value.aggregate_id is None  # Should convert invalid types to None
+            assert (
+                result.value.aggregate_id is None
+            )  # Should convert invalid types to None
             assert result.value.version is None
         else:
             assert "Cross-service event creation failed" in result.error
 
     def test_create_cross_service_message_with_invalid_params(self) -> None:
         """Test create_cross_service_message with invalid parameters."""
-        from flext_core.payload import create_cross_service_message
-
         result = create_cross_service_message(
             "test message",
             level=123,  # Invalid type - should be str
-            source=456  # Invalid type - should be str or None
+            source=456,  # Invalid type - should be str or None
         )
 
         # Function should handle type conversion gracefully
@@ -503,8 +534,6 @@ class TestCrossServiceConvenienceFunctions:
 
     def test_get_serialization_metrics_with_various_payloads(self) -> None:
         """Test get_serialization_metrics with different payload types."""
-        from flext_core.payload import get_serialization_metrics
-
         test_cases = [
             None,  # No payload
             FlextPayload(data="test", metadata={}),  # Payload with .value
@@ -519,8 +548,6 @@ class TestCrossServiceConvenienceFunctions:
 
     def test_validate_cross_service_protocol_various_formats(self) -> None:
         """Test validate_cross_service_protocol with various input formats."""
-        from flext_core.payload import validate_cross_service_protocol
-
         valid_inputs = [
             '{"format": "json", "data": "test"}',  # Valid JSON with format
             {"format": "json", "data": "test"},  # Valid dict with format

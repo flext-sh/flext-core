@@ -708,7 +708,7 @@ def demonstrate_base_exceptions() -> None:
             },
         )
 
-    try:
+    try:  # noqa: SIM105
         # Simulate a basic error
         _raise_service_init_error()
     except FlextError:

@@ -28,12 +28,15 @@ Support Libraries:
 - builders.py: Fluent test object construction
 """
 
+# ruff: noqa: S101
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import math
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -627,7 +630,7 @@ def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
 def service_factory() -> Callable[[str], object]:
     """Service factory for testing."""
 
-    def _create_service(name: str, **kwargs: object) -> object:  # noqa: ARG001
+    def _create_service(name: str, **_kwargs: object) -> object:
         class TestService:
             def __init__(self, service_name: str) -> None:
                 self.name = service_name
@@ -653,7 +656,7 @@ def service_factory() -> Callable[[str], object]:
 def async_service_factory() -> Callable[[str], object]:
     """Async service factory for testing."""
 
-    def _create_async_service(name: str, **kwargs: object) -> object:  # noqa: ARG001
+    def _create_async_service(name: str, **_kwargs: object) -> object:
         class AsyncService:
             def __init__(self, service_name: str) -> None:
                 self.name = service_name
@@ -685,7 +688,7 @@ class ExternalService:
         """Get test data."""
         return dict(self._data)
 
-    def process(self, data: object = None) -> FlextResult[str]:  # noqa: ARG002
+    def process(self, _data: object = None) -> FlextResult[str]:
         """Process data and return FlextResult."""
         if not self._healthy:
             return FlextResult[str].fail("Service unhealthy")
@@ -862,8 +865,6 @@ def temp_directory() -> Generator[Path]:
       Path to temporary directory with automatic cleanup
 
     """
-    import shutil  # noqa: PLC0415
-
     temp_dir = Path(tempfile.mkdtemp(prefix="flext_test_"))
 
     yield temp_dir
@@ -941,7 +942,7 @@ def clean_logging_state() -> Generator[None]:
         if config is not None:
             logger_factory = getattr(config, "logger_factory", None)
             if logger_factory is not None and hasattr(logger_factory, "_cache"):
-                logger_factory._cache.clear()  # type: ignore[attr-defined]
+                logger_factory._cache.clear()
     except AttributeError:
         # structlog configuration might not be set up yet
         pass
@@ -970,8 +971,6 @@ def performance_monitor() -> Callable[[Callable[[], object]], PerformanceMetrics
         *args: object,
         **kwargs: object,
     ) -> PerformanceMetrics:
-        import gc  # noqa: PLC0415
-
         # Force garbage collection
         gc.collect()
 
@@ -1295,7 +1294,8 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
         )
         if result.is_success:
             return result.value
-        raise ValueError(f"Failed to create event: {result.error}")
+        msg = f"Failed to create event: {result.error}"
+        raise ValueError(msg)
 
     return _create_event
 
@@ -1477,8 +1477,6 @@ def assert_function_performance(
     max_duration: float = 1.0,
 ) -> object:
     """Assert that a function executes within time limit."""
-    import time  # noqa: PLC0415
-
     start = time.time()
     result = func()
     duration = time.time() - start
@@ -1678,7 +1676,8 @@ def benchmark_with_factory(
             return benchmark(lambda: user_factory.create_batch(count))
         if operation == "build":
             return benchmark(lambda: user_factory.build_batch(count))
-        raise ValueError(f"Unknown operation: {operation}")
+        msg = f"Unknown operation: {operation}"
+        raise ValueError(msg)
 
     return _benchmark_factory_operation
 

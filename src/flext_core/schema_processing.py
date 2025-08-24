@@ -6,7 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Generic, Protocol, TypeGuard, override
+from typing import Protocol, TypeGuard, override
 
 from flext_core.models import FlextValue
 from flext_core.result import FlextResult
@@ -38,7 +38,7 @@ class FlextEntryValidator(Protocol):
         ...
 
 
-class FlextBaseProcessor(ABC, Generic[EntryT]):  # noqa: UP046
+class FlextBaseProcessor[EntryT](ABC):
     """Base processor for entries with configurable validation."""
 
     def __init__(self, validator: FlextEntryValidator | None = None) -> None:
@@ -248,7 +248,7 @@ class FlextConfigAttributeValidator:
             return FlextResult[bool].fail(
                 f"Missing required attributes: {', '.join(missing)}",
             )
-        return FlextResult[bool].ok(data=True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)
 
 
 class FlextBaseConfigManager:
@@ -275,7 +275,7 @@ class FlextBaseConfigManager:
                 self.config,
                 required_attrs,
             )
-        return FlextResult[bool].ok(data=True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)
 
 
 class FlextBaseSorter[EntryT]:

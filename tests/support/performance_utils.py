@@ -4,6 +4,7 @@ Provides comprehensive performance testing, profiling, and benchmarking
 capabilities with memory tracking, complexity analysis, and regression detection.
 """
 
+# ruff: noqa: S101, ARG001, ARG002, ANN401, PLC0415
 from __future__ import annotations
 
 import concurrent.futures
@@ -366,13 +367,13 @@ class BenchmarkUtils:
 
         for thread_count in thread_counts:
 
-            def parallel_execution():
+            def parallel_execution(workers=thread_count):
                 with concurrent.futures.ThreadPoolExecutor(
-                    max_workers=thread_count,
+                    max_workers=workers,
                 ) as executor:
                     futures = [
                         executor.submit(func, *args, **kwargs)
-                        for _ in range(thread_count)
+                        for _ in range(workers)
                     ]
                     return [future.result() for future in futures]
 
@@ -482,8 +483,8 @@ class AsyncBenchmark:
 
         for concurrency in concurrency_levels:
 
-            async def concurrent_execution():
-                tasks = [func(*args, **kwargs) for _ in range(concurrency)]
+            async def concurrent_execution(workers=concurrency):
+                tasks = [func(*args, **kwargs) for _ in range(workers)]
                 return await asyncio.gather(*tasks)
 
             start_time = time.perf_counter()

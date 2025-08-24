@@ -23,7 +23,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Final, Generic, Protocol, cast, override
 
-from flext_core.commands import FlextAbstractCommandHandler
+from flext_core.commands import FlextAbstractCommandHandler, FlextCommands
 from flext_core.protocols import FlextValidator
 from flext_core.result import FlextResult
 from flext_core.typings import (
@@ -77,9 +77,7 @@ class FlextHandlers:
 
     @staticmethod
     def get_flext_commands_module() -> type:
-        """Lazy import to avoid circular dependencies."""
-        from flext_core.commands import FlextCommands  # noqa: PLC0415
-
+        """Get FlextCommands module reference."""
         return FlextCommands
 
     # =========================================================================
@@ -615,6 +613,7 @@ class FlextHandlers:
 # Maintain backward compatibility with existing code
 FlextAbstractHandler = FlextHandlers.AbstractHandler
 FlextBaseHandler = FlextHandlers.Handler
+# Import the concrete implementations from FlextHandlers
 FlextValidatingHandler = FlextHandlers.ValidatingHandler
 FlextAuthorizingHandler = FlextHandlers.AuthorizingHandler
 FlextEventHandler = FlextHandlers.EventHandler

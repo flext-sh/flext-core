@@ -165,7 +165,7 @@ class TestFlextValidationProperties:
         try:
             result = FlextValidation.validate_numeric_field(text)
             assert not result.is_valid, f"Non-numeric text should be invalid: {text}"
-        except Exception:
+        except Exception:  # noqa: S110
             # If validation raises an exception, that's also acceptable for invalid input
             pass
 
@@ -398,7 +398,7 @@ class TestFlextCustomValidationPatterns:
         try:
             email_result = FlextValidation.validate_email_field(None)
             assert not email_result.is_valid
-        except Exception:
+        except Exception:  # noqa: S110
             # If validation raises an exception, that's also acceptable for None input
             pass
 
@@ -406,7 +406,7 @@ class TestFlextCustomValidationPatterns:
         try:
             string_result = FlextValidation.validate_non_empty_string_func(None)
             assert not string_result
-        except Exception:
+        except Exception:  # noqa: S110
             # If validation raises an exception, that's also acceptable for None input
             pass
 
@@ -414,7 +414,7 @@ class TestFlextCustomValidationPatterns:
         try:
             number_result = FlextValidation.validate_numeric_field(None)
             assert not number_result.is_valid
-        except Exception:
+        except Exception:  # noqa: S110
             # If validation raises an exception, that's also acceptable for None input
             pass
 

@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001, ARG002
 """Tests for FLEXT Core Commands with modern pytest patterns.
 
 Advanced tests using parametrized fixtures, property-based testing,
@@ -232,7 +233,7 @@ class TestFlextCommandsAdvanced:
     def test_command_scenarios(
         self,
         command_test_cases: list[TestCase],
-        assert_helpers: AssertHelpers,  # noqa: ARG002
+        assert_helpers: AssertHelpers,
     ) -> None:
         """Test commands using structured parametrized approach."""
         for test_case in command_test_cases:
@@ -540,7 +541,7 @@ class TestFlextCommandsFactoryMethods:
 
         # Add middleware
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         bus.add_middleware(TestMiddleware())

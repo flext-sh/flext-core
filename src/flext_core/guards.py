@@ -54,7 +54,7 @@ class _PureWrapper[R]:
         def bound_method(*args: object, **kwargs: object) -> R:
             return self(instance, *args, **kwargs)
 
-        # Safely add the __pure__ attribute to the function using contextlib.suppress
+        # Safely add the __pure__ attribute to the function using setattr
         with contextlib.suppress(AttributeError, TypeError):
             bound_method.__pure__ = True  # type: ignore[attr-defined]
         return bound_method
@@ -75,6 +75,15 @@ class FlextGuards:
         # After isinstance check, obj is narrowed to dict type
         dict_obj = cast("dict[object, object]", obj)
         return all(isinstance(value, value_type) for value in dict_obj.values())
+
+    @staticmethod
+    def is_list_of(obj: object, item_type: type) -> bool:
+        """Check if an object is a list with items of a specific type."""
+        if not isinstance(obj, list):
+            return False
+        # After isinstance check, obj is narrowed to list type
+        list_obj = cast("list[object]", obj)
+        return all(isinstance(item, item_type) for item in list_obj)
 
     @staticmethod
     def immutable(target_class: type) -> type:

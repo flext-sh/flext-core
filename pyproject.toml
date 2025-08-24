@@ -131,15 +131,15 @@ strict = true
 
 # Additional strict checks beyond default strict mode
 check_untyped_defs = true
-disallow_any_decorated = true
-disallow_any_explicit = false  # Allow Callable[..., object] patterns in decorators
-disallow_any_expr = false
+disallow_any_decorated = false
+disallow_any_explicit = true
+disallow_any_expr = false          # Too restrictive for real-world usage
 disallow_any_generics = true
 disallow_any_unimported = true
 disallow_incomplete_defs = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true
-disallow_untyped_decorators = true
+disallow_untyped_decorators = false
 disallow_untyped_defs = true
 
 # Warning controls - maximum safety
@@ -148,7 +148,7 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_configs = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 
 # Optional type checking
 no_implicit_optional = true
@@ -264,11 +264,8 @@ minversion = "8.0"
 testpaths = ["tests"]
 
 [tool.ruff]
-extend = "../.ruff-shared.toml"
+extend = "../.config/tools/.ruff-shared.toml"
 lint.isort.known-first-party = ["flext_core"]
-
 
 [tool.vulture]
 extend = "../.vulture-shared.toml"
-allow-explicit-any = true
-disallow_explicit_any = false

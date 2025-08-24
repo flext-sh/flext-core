@@ -1,4 +1,6 @@
+# ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FLEXT command pattern."""
+
 
 from __future__ import annotations
 
@@ -211,7 +213,7 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
             and command.command_type == "failing"
         )
 
-    def handle(self, command: FailingCommand) -> FlextResult[None]:  # noqa: ARG002
+    def handle(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
         return FlextResult[None].fail("Handler processing failed")
 

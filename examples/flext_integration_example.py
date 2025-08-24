@@ -98,7 +98,7 @@ def _demo_repository_pattern(order: Order) -> object:
 
         def save(self, order: object) -> FlextResult[object]:
             if hasattr(order, "id"):
-                self.orders[order.id] = order
+                self.orders[order.id] = order  # type: ignore[attr-defined]
                 return FlextResult.ok(order)
             return FlextResult.fail("Order must have an id")
 
@@ -109,7 +109,7 @@ def _demo_repository_pattern(order: Order) -> object:
 
     repository = OrderRepository()
     repository.save(order)
-    fetch_result = repository.get_by_id(order.id.root)
+    fetch_result = repository.get_by_id(order.id.root)  # type: ignore[attr-defined]
     if fetch_result.success:
         pass
     return repository

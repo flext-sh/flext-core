@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, Self, cast, override
+from typing import Self, cast, override
 from zoneinfo import ZoneInfo
 
 from pydantic import (
@@ -46,7 +46,7 @@ class FlextAbstractCommand(ABC):
         ...
 
 
-class FlextAbstractCommandHandler(ABC, Generic[CommandT, ResultT]):  # noqa: UP046
+class FlextAbstractCommandHandler[CommandT, ResultT](ABC):
     """Abstract command handler."""
 
     @property
@@ -85,7 +85,7 @@ class FlextAbstractCommandBus(ABC):
         ...
 
 
-class FlextAbstractQueryHandler(ABC, Generic[QueryT, ResultT]):  # noqa: UP046
+class FlextAbstractQueryHandler[QueryT, ResultT](ABC):
     """Abstract query handler."""
 
     @property
@@ -382,7 +382,6 @@ class FlextCommands:
         FlextAbstractCommandHandler[CommandT, ResultT],
         FlextLoggableMixin,
         FlextTimingMixin,
-        Generic[CommandT, ResultT],
     ):
         """Base command handler interface - implements FlextAbstractCommandHandler."""
 
@@ -1040,7 +1039,6 @@ class FlextCommands:
 
     class QueryHandler(
         FlextAbstractQueryHandler[QueryT, QueryResultT],
-        Generic[QueryT, QueryResultT],
     ):
         """Base query handler built on abstract base.
 

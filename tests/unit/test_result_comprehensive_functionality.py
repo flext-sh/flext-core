@@ -1,4 +1,6 @@
+# ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FlextResult advanced functionality - Real functional testing."""
+
 
 from __future__ import annotations
 

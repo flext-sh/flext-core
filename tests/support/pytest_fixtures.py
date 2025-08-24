@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415, ANN401
 """Unified pytest fixtures for flext-core tests.
 
 Comprehensive fixture library using pytest ecosystem plugins:
@@ -12,6 +13,7 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+# ruff: noqa: S101
 from __future__ import annotations
 
 import asyncio

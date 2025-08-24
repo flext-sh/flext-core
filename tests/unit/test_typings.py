@@ -1,7 +1,9 @@
 """Tests for core type definitions - focused on essential usage patterns."""
 
+
 from __future__ import annotations
 
+import json
 from collections.abc import Callable as _Callable
 from typing import cast
 
@@ -175,8 +177,6 @@ class TestTypeAliases:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 
-        from typing import cast  # noqa: PLC0415
-
         payload_data = cast("dict[str, object]", user_payload.value)
         assert payload_data["id"] == "123", (
             f"Expected {'123'}, got {payload_data['id']}"
@@ -257,8 +257,6 @@ class TestProtocolDefinitions:
                 return self.value.copy()
 
             def to_json(self) -> str:
-                import json  # noqa: PLC0415
-
                 return json.dumps(self.value)
 
         serializable_obj = TSerializableData({"key": "value", "number": 42})

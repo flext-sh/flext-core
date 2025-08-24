@@ -10,6 +10,7 @@ Provides comprehensive test fixtures using pytest ecosystem:
 Replaces multiple scattered fixture files with unified approach.
 """
 
+# ruff: noqa: ARG001, ARG002
 from __future__ import annotations
 
 import asyncio

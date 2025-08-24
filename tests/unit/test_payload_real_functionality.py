@@ -16,6 +16,7 @@ import time
 from datetime import UTC, datetime
 
 import pytest
+from pydantic_core import ValidationError
 
 from flext_core.payload import (
     COMPRESSION_LEVEL,
@@ -160,13 +161,11 @@ class TestFlextPayloadRealFunctionality:
         payload = result.value
 
         # Should not be able to modify data or metadata directly due to frozen=True
-        from pydantic_core import ValidationError
+        with pytest.raises((AttributeError, TypeError, ValidationError)):
+            payload.data = {"modified": "data"}
 
         with pytest.raises((AttributeError, TypeError, ValidationError)):
-            payload.data = {"modified": "data"}  # type: ignore[misc]
-
-        with pytest.raises((AttributeError, TypeError, ValidationError)):
-            payload.metadata = {"modified": "metadata"}  # type: ignore[misc]
+            payload.metadata = {"modified": "metadata"}
 
     def test_payload_serialization_patterns(self) -> None:
         """Test FlextPayload serialization patterns."""
@@ -261,7 +260,7 @@ class TestFlextMessageRealFunctionality:
         assert "cannot be empty" in result.error
 
         # None message should fail
-        result = FlextMessage.create_message(None)  # type: ignore[arg-type]
+        result = FlextMessage.create_message(None)
         assert result.is_failure
 
         # Whitespace-only message should fail
@@ -406,7 +405,7 @@ class TestFlextEventRealFunctionality:
         assert "cannot be empty" in result.error
 
         # None event_type should fail
-        result = FlextEvent.create_event(None, event_data)  # type: ignore[arg-type]
+        result = FlextEvent.create_event(None, event_data)
         assert result.is_failure
 
         # Empty aggregate_id should fail
@@ -606,14 +605,14 @@ class TestPayloadSerializationRealFunctionality:
     def test_go_type_mappings_comprehensive(self) -> None:
         """Test Go type mappings for cross-service communication."""
         # Should have all basic type mappings
-        assert GO_TYPE_MAPPINGS["string"] == str
-        assert GO_TYPE_MAPPINGS["int"] == int
-        assert GO_TYPE_MAPPINGS["int64"] == int
-        assert GO_TYPE_MAPPINGS["float64"] == float
-        assert GO_TYPE_MAPPINGS["bool"] == bool
-        assert GO_TYPE_MAPPINGS["map[string]interface{}"] == dict
-        assert GO_TYPE_MAPPINGS["[]interface{}"] == list
-        assert GO_TYPE_MAPPINGS["interface{}"] == object
+        assert GO_TYPE_MAPPINGS["string"] is str
+        assert GO_TYPE_MAPPINGS["int"] is int
+        assert GO_TYPE_MAPPINGS["int64"] is int
+        assert GO_TYPE_MAPPINGS["float64"] is float
+        assert GO_TYPE_MAPPINGS["bool"] is bool
+        assert GO_TYPE_MAPPINGS["map[string]interface{}"] is dict
+        assert GO_TYPE_MAPPINGS["[]interface{}"] is list
+        assert GO_TYPE_MAPPINGS["interface{}"] is object
 
     def test_python_to_go_type_mappings(self) -> None:
         """Test Python to Go type mappings for serialization."""
@@ -790,34 +789,29 @@ class TestPayloadIntegrationRealFunctionality:
             event_data = event.value
 
             if event_type == "OrderCreated":
-                aggregate_state.update(
-                    {
-                        "customer_id": event_data["customer_id"],
-                        "items": event_data["items"],
-                        "total": event_data["total"],
-                        "status": "created",
-                    }
-                )
+                aggregate_state.update({
+                    "customer_id": event_data["customer_id"],
+                    "items": event_data["items"],
+                    "total": event_data["total"],
+                    "status": "created",
+                })
             elif event_type == "PaymentAdded":
-                aggregate_state.update(
-                    {
-                        "payment_method": event_data["payment_method"],
-                        "transaction_id": event_data["transaction_id"],
-                        "status": "paid",
-                    }
-                )
+                aggregate_state.update({
+                    "payment_method": event_data["payment_method"],
+                    "transaction_id": event_data["transaction_id"],
+                    "status": "paid",
+                })
             elif event_type == "OrderShipped":
-                aggregate_state.update(
-                    {
-                        "tracking_number": event_data["tracking_number"],
-                        "carrier": event_data["carrier"],
-                        "status": "shipped",
-                    }
-                )
+                aggregate_state.update({
+                    "tracking_number": event_data["tracking_number"],
+                    "carrier": event_data["carrier"],
+                    "status": "shipped",
+                })
             elif event_type == "OrderDelivered":
-                aggregate_state.update(
-                    {"delivered_at": event_data["delivered_at"], "status": "delivered"}
-                )
+                aggregate_state.update({
+                    "delivered_at": event_data["delivered_at"],
+                    "status": "delivered",
+                })
 
         # Verify reconstructed state
         assert aggregate_state["order_id"] == aggregate_id

@@ -811,7 +811,7 @@ def demonstrate_event_handlers() -> None:
         timestamp=time.time(),
     )
 
-    result = user_updated_handler.handle(user_updated_event)
+    result = user_updated_handler.handle(user_updated_event)  # type: ignore[attr-defined]
     if result.success:
         pass
 
@@ -825,7 +825,7 @@ def demonstrate_event_handlers() -> None:
         timestamp=time.time(),
     )
 
-    result = order_created_handler.handle(order_created_event)
+    result = order_created_handler.handle(order_created_event)  # type: ignore[attr-defined]
     if result.success:
         pass
 
@@ -868,9 +868,9 @@ def _setup_registry() -> FlextHandlerRegistry:
     registry.register("create_user", create_handler)
     registry.register("get_user", get_handler)
     registry.register("user_created_event", user_created_handler)
-    registry.register_for_type(CreateUserCommand, "create_user", create_handler)
-    registry.register_for_type(GetUserQuery, "get_user", get_handler)
-    registry.register_for_type(UserCreatedEvent, "user_created", user_created_handler)
+    registry.register_for_type(CreateUserCommand, "create_user", create_handler)  # type: ignore[attr-defined]
+    registry.register_for_type(GetUserQuery, "get_user", get_handler)  # type: ignore[attr-defined]
+    registry.register_for_type(UserCreatedEvent, "user_created", user_created_handler)  # type: ignore[attr-defined]
     return registry
 
 
@@ -884,17 +884,17 @@ def _retrieve_handlers_by_key(registry: FlextHandlerRegistry) -> None:
 
 
 def _retrieve_handlers_by_type(registry: FlextHandlerRegistry) -> None:
-    result = registry.get_handler_for_type(CreateUserCommand)
+    result = registry.get_handler_for_type(CreateUserCommand)  # type: ignore[attr-defined]
     if result.success:
         pass
-    result = registry.get_handler_for_type(GetUserQuery)
+    result = registry.get_handler_for_type(GetUserQuery)  # type: ignore[attr-defined]
     if result.success:
         pass
 
 
 def _process_with_registry(registry: FlextHandlerRegistry) -> None:
     command = CreateUserCommand(name="Registry User", email="registry@example.com")
-    handler_result = registry.get_handler_for_type(CreateUserCommand)
+    handler_result = registry.get_handler_for_type(CreateUserCommand)  # type: ignore[attr-defined]
     if handler_result.success:
         handler = handler_result.value
         if handler is None:
@@ -927,7 +927,7 @@ def _create_handler_chain() -> tuple[FlextHandlerChain, dict[str, User], str | N
 
     # Process create command and get user_id
     create_command = CreateUserCommand(name="Chain User", email="chain@example.com")
-    result = chain.process(create_command)
+    result = chain.process(create_command)  # type: ignore[attr-defined]
 
     user_id = None
     if result.success:
@@ -946,7 +946,7 @@ def _process_get_query(chain: FlextHandlerChain, user_id: str | None) -> None:
         return
 
     get_query = GetUserQuery(user_id=user_id)
-    result = chain.process(get_query)
+    result = chain.process(get_query)  # type: ignore[attr-defined]
 
     if result.success:
         user = result.value
@@ -963,7 +963,7 @@ def _process_update_command(chain: FlextHandlerChain, user_id: str | None) -> No
         user_id=user_id,
         name="Updated Chain User",
     )
-    result = chain.process(update_command)
+    result = chain.process(update_command)  # type: ignore[attr-defined]
 
     if result.success:
         user_data = result.value
@@ -980,12 +980,12 @@ def _process_event_through_all_handlers(chain: FlextHandlerChain) -> None:
         timestamp=time.time(),
     )
 
-    results: FlextResult[list[object]] = chain.process_all([user_event])
+    results: FlextResult[list[object]] = chain.process_all([user_event])  # type: ignore[attr-defined]
     result_list: list[object] = results.unwrap_or([])
 
     for result in result_list:
         # Each result in the list should be a FlextResult - need to check that
-        if (hasattr(result, "success") and result.success) or hasattr(result, "error"):
+        if (hasattr(result, "success") and result.success) or hasattr(result, "error"):  # type: ignore[attr-defined]
             pass
 
 

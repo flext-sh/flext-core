@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001, ARG002
 """Service integration testing patterns for FLEXT Core.
 
 Demonstrates enterprise-grade integration testing patterns with proper mocking,
@@ -180,7 +181,7 @@ class TestServiceIntegrationPatterns:
     @pytest.mark.performance
     def test_service_pipeline_performance(
         self,
-        configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
+        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
@@ -232,7 +233,7 @@ class TestServiceIntegrationPatterns:
     @pytest.mark.error_path
     def test_service_error_propagation(
         self,
-        configured_container: FlextContainer,  # noqa: ARG002 - provided by fixture for clarity
+        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         error_context: dict[str, str | None],
     ) -> None:

@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415, ANN401
 """Centralized pytest fixtures for flext-core testing.
 
 Provides reusable fixtures following SOLID principles and DRY patterns

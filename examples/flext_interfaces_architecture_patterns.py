@@ -336,7 +336,7 @@ class UserService:
         self._is_running = False
         self._next_id = 1
 
-    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
+    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:  # noqa: ARG002
         """Callable interface for service invocation."""
         # Simple implementation for protocol compliance
         if not self._is_running:
@@ -479,7 +479,7 @@ class UserCommandHandler(FlextCommandHandler):
         if not hasattr(request, "type"):
             return FlextResult[object].fail("Message must have type attribute")
 
-        message_type = request.type
+        message_type = request.type  # type: ignore[attr-defined]
 
         if message_type == "user_create":
             name = getattr(request, "name", "")
@@ -1350,7 +1350,7 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
 def _unit_of_work_success_flow(fresh_repo: UserRepository) -> None:
     with DatabaseUnitOfWork(fresh_repo) as uow:
         new_user = User("user_100", "Transaction User", "transaction@example.com", 40)
-        uow.add_change("save", new_user)
+        uow.add_change("save", new_user)  # type: ignore[attr-defined]
         commit_result = uow.commit()
         if commit_result.success:
             pass
@@ -1367,7 +1367,7 @@ def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
     try:
         with DatabaseUnitOfWork(fresh_repo) as uow:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
-            uow.add_change("save", failing_user)
+            uow.add_change("save", failing_user)  # type: ignore[attr-defined]
             _simulate_transaction_error()
     except ValueError:
         pass
@@ -1520,7 +1520,7 @@ def demonstrate_event_interfaces() -> None:
                 "aggregate_id": self.aggregate_id,
                 "event_version": self.event_version,
                 "timestamp": self.timestamp,
-                "data": self.value,
+                "data": self.value,  # type: ignore[attr-defined]
             }
 
         @classmethod

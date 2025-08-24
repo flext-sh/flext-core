@@ -41,8 +41,8 @@ class SupportsDynamicAttributes(Protocol):
     without triggering MyPy errors for missing attributes.
     """
 
-    def __setattr__(self, name: str, value: object, /) -> None: ...  # noqa: ANN401
-    def __getattribute__(self, name: str, /) -> object: ...  # noqa: ANN401
+    def __setattr__(self, name: str, value: object, /) -> None: ...
+    def __getattribute__(self, name: str, /) -> object: ...
 
 
 # =============================================================================

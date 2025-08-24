@@ -9,15 +9,15 @@ Built for Python 3.13+ with strict typing enforcement and no compatibility layer
 Usage:
     Import types directly from FlextTypes::
 
-        from flext_core.typings import FlextTypes
+        from flext_core.typings import FlextCoreTypes
 
         # Core types
-        config: FlextTypes.Core.Config = {"debug": True}
-        entity_id: FlextTypes.Domain.EntityId = "user_123"
+        config: FlextCoreTypes.Core.Config = {"debug": True}
+        entity_id: FlextCoreTypes.Domain.EntityId = "user_123"
 
         # Protocol types
-        validator: FlextTypes.Protocol.Validator[str] = email_validator
-        handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
+        validator: FlextCoreTypes.Protocol.Validator[str] = email_validator
+        handler: FlextCoreTypes.Protocol.Handler[Command, str] = command_handler
 
 Architecture:
     - FlextTypes: Single hierarchical class containing ALL types
@@ -86,7 +86,7 @@ if TYPE_CHECKING:
 # =============================================================================
 
 
-class FlextTypes:
+class FlextCoreTypes:
     """Hierarchical type system organizing FLEXT types by domain and functionality.
 
     This class provides a structured organization of all types used throughout
@@ -108,14 +108,14 @@ class FlextTypes:
 
             from flext_core.typings import FlextTypes
 
-            validator: FlextTypes.Protocol.Validator[str] = email_validator
-            handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
+            validator: FlextCoreTypes.Protocol.Validator[str] = email_validator
+            handler: FlextCoreTypes.Protocol.Handler[Command, str] = command_handler
 
         Using the hierarchical type system::
 
-            user_id: FlextTypes.Domain.EntityId = "user123"
-            config: FlextTypes.Config.Dict = {"debug": True}
-            event_data: FlextTypes.Domain.EventData = {"type": "UserCreated"}
+            user_id: FlextCoreTypes.Domain.EntityId = "user123"
+            config: FlextCoreTypes.Config.Dict = {"debug": True}
+            event_data: FlextCoreTypes.Domain.EventData = {"type": "UserCreated"}
 
     """
 
@@ -134,13 +134,13 @@ class FlextTypes:
             Using protocol aliases for cleaner type annotations::
 
                 # Instead of FlextProtocols.Callable[str]
-                processor: FlextTypes.Protocol.Callable[str] = string_processor
+                processor: FlextCoreTypes.Protocol.Callable[str] = string_processor
 
                 # Instead of FlextProtocols.Handler[Command, str]
-                handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
+                handler: FlextCoreTypes.Protocol.Handler[Command, str] = command_handler
 
                 # Instead of FlextProtocols.Validator[dict]
-                validator: FlextTypes.Protocol.Validator[dict] = dict_validator
+                validator: FlextCoreTypes.Protocol.Validator[dict] = dict_validator
 
         """
 
@@ -500,7 +500,7 @@ E = TypeVar("E")  # Error type for error handling
 
 
 # TypeVar for preserving function signatures in decorator
-F = TypeVar("F", bound=FlextTypes.Core.TCallable)
+F = TypeVar("F", bound=FlextCoreTypes.Core.TCallable)
 
 # Specialized type variables
 TData = TypeVar("TData")  # Generic data type
@@ -533,7 +533,7 @@ TQueryResult = TypeVar("TQueryResult")  # Query result types (alias for clarity)
 # BASIC TYPE DEFINITIONS
 # =============================================================================
 
-AnyCallable = FlextTypes.Core.TCallable
+AnyCallable = FlextCoreTypes.Core.TCallable
 
 type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
 
@@ -542,22 +542,22 @@ type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
 # =============================================================================
 
 # Field aliases for current usage
-FlextFieldId = FlextTypes.Field.Id
-FlextFieldName = FlextTypes.Field.Name
-FlextFieldTypeStr = FlextTypes.Field.TypeStr
-TFieldInfo = FlextTypes.Field.Info  # Field info type
+FlextFieldId = FlextCoreTypes.Field.Id
+FlextFieldName = FlextCoreTypes.Field.Name
+FlextFieldTypeStr = FlextCoreTypes.Field.TypeStr
+TFieldInfo = FlextCoreTypes.Field.Info  # Field info type
 
 # Core type aliases for easy access
-TAnyDict = FlextTypes.Core.Dict
-TAnyList = FlextTypes.Core.List
-TValue = FlextTypes.Core.Value
-TFactory = FlextTypes.Core.Factory[object]
+TAnyDict = FlextCoreTypes.Core.Dict
+TAnyList = FlextCoreTypes.Core.List
+TValue = FlextCoreTypes.Core.Value
+TFactory = FlextCoreTypes.Core.Factory[object]
 
 # Protocol aliases for easy access - proper generic forms
 # Foundation layer aliases - use protocols from FlextProtocols
-type FlextCallable[T] = FlextProtocols.Foundation.Callable[T]
+type FlextCallable[T] = Callable[..., T]  # type: ignore[misc,explicit-any]
 type FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler
-type FlextFactory[T] = FlextProtocols.Foundation.Factory[T]
+# type FlextFactory[T] = FlextProtocols.Foundation.Factory[T]  # Disabled: conflicts with models.FlextFactory class
 type FlextAsyncFactory[T] = FlextProtocols.Foundation.AsyncFactory[T]
 
 # Domain layer aliases
@@ -589,109 +589,118 @@ type FlextObservability = FlextProtocols.Extensions.Observability
 
 
 # Domain aliases
-TEntityId = FlextTypes.Domain.EntityId
-TEntityMetadata = FlextTypes.Domain.EntityMetadata
-TEventData = FlextTypes.Domain.EventData
+TEntityId = FlextCoreTypes.Domain.EntityId
+TEntityMetadata = FlextCoreTypes.Domain.EntityMetadata
+TEventData = FlextCoreTypes.Domain.EventData
 
 # Service aliases
-TServiceName = FlextTypes.Service.ServiceName
-TCorrelationId = FlextTypes.Service.CorrelationId
+TServiceName = FlextCoreTypes.Service.ServiceName
+TCorrelationId = FlextCoreTypes.Service.CorrelationId
 
 # Logging aliases
-TLogMessage = FlextTypes.Logging.Message
-TContextDict = FlextTypes.Logging.ContextDict
+TLogMessage = FlextCoreTypes.Logging.Message
+TContextDict = FlextCoreTypes.Logging.ContextDict
 
 # =============================================================================
 # EXPORTS - Comprehensive centralized type system
 # =============================================================================
 
-__all__ = [  # noqa: RUF022
-    # Core type variables
-    "T",
-    "U",
-    "V",
-    "K",
-    "R",
-    "E",
-    "F",
-    "P",
-    "TData",
-    "TConfig",
-    "TResultLocal",
+__all__ = [
     "AnyCallable",
     # Command and handler specific type variables
     "CommandT",
-    "ResultT",
-    "QueryT",
-    "QueryResultT",
-    "TInput",
-    "TOutput",
-    "InputT",
-    "OutputT",
-    "ServiceRequestT",
-    "ServiceDomainT",
-    "ServiceResultT",
+    "E",
     "EntryT",
-    "TDomainResult",
-    "TQuery",
-    "TQueryResult",
-    # Main hierarchical classes
-    "FlextTypes",
+    "F",
+    # "FlextFactory",  # Disabled: use models.FlextFactory class instead
+    "FlextAsyncFactory",
+    "FlextAsyncMiddleware",
+    "FlextAuth",
+    "FlextAuthorizingHandler",
     # Foundation layer protocol aliases
     "FlextCallable",
-    "FlextErrorHandler",
-    "FlextFactory",
-    "FlextAsyncFactory",
-    # Domain layer protocol aliases
-    "FlextService",
-    "FlextRepository",
-    "FlextDomainEvent",
-    "FlextEventStore",
-    # Application layer protocol aliases
-    "FlextHandler",
-    "FlextMessageHandler",
-    "FlextValidatingHandler",
-    "FlextAuthorizingHandler",
-    "FlextEventProcessor",
-    "FlextUnitOfWork",
     # Infrastructure layer protocol aliases
     "FlextConnection",
-    "FlextAuth",
-    # "FlextConfigurable",  # Moved to protocols.py
-    "FlextLoggerProtocol",
-    # Extensions layer protocol aliases
-    "FlextPlugin",
-    "FlextPluginContext",
-    "FlextMiddleware",
-    "FlextAsyncMiddleware",
-    "FlextObservability",
+    # Main hierarchical class
+    "FlextCoreTypes",
     # Decorator patterns
     "FlextDecoratedFunction",
+    "FlextDomainEvent",
+    "FlextErrorHandler",
+    "FlextEventProcessor",
+    "FlextEventStore",
     # Field aliases
     "FlextFieldId",
     "FlextFieldName",
     "FlextFieldTypeStr",
-    "TFieldInfo",
+    # Application layer protocol aliases
+    "FlextHandler",
+    # "FlextConfigurable",  # Moved to protocols.py
+    "FlextLoggerProtocol",
+    "FlextMessageHandler",
+    "FlextMiddleware",
+    "FlextObservability",
+    # Extensions layer protocol aliases
+    "FlextPlugin",
+    "FlextPluginContext",
+    "FlextRepository",
+    # Domain layer protocol aliases
+    "FlextService",
+    # Backward compatibility
+    "FlextTypes",
+    "FlextUnitOfWork",
+    "FlextValidatingHandler",
+    "InputT",
+    "K",
+    "MetricsData",
+    # Handler metrics aliases
+    "MetricsValue",
+    "OutputT",
+    "P",
+    "QueryResultT",
+    "QueryT",
+    "R",
+    "ResultT",
+    "ServiceDomainT",
+    "ServiceRequestT",
+    "ServiceResultT",
+    # Core type variables
+    "T",
     # Core type aliases
     "TAnyDict",
     "TAnyList",
-    "TValue",
-    "TFactory",
+    "TConfig",
+    "TContextDict",
+    "TCorrelationId",
+    "TData",
+    "TDomainResult",
     # Domain aliases
     "TEntityId",
     "TEntityMetadata",
     "TEventData",
-    # Service aliases
-    "TServiceName",
-    "TCorrelationId",
+    "TFactory",
+    "TFieldInfo",
+    "TInput",
     # Logging aliases
     "TLogMessage",
-    "TContextDict",
-    # Handler metrics aliases
-    "MetricsValue",
-    "MetricsData",
+    "TOutput",
+    "TQuery",
+    "TQueryResult",
+    "TResultLocal",
+    # Service aliases
+    "TServiceName",
+    "TValue",
+    "U",
+    "V",
 ]
 
 # Handler metrics aliases for easy access
-MetricsValue = FlextTypes.Handler.MetricsValue
-MetricsData = FlextTypes.Handler.MetricsData
+MetricsValue = FlextCoreTypes.Handler.MetricsValue
+MetricsData = FlextCoreTypes.Handler.MetricsData
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Legacy alias for FlextCoreTypes - maintain backward compatibility
+FlextTypes = FlextCoreTypes

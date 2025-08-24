@@ -18,6 +18,7 @@ from typing import Any, Protocol, cast
 
 import pytest
 from hypothesis import assume, given
+from pytest_benchmark.fixture import BenchmarkFixture
 from tests.support.async_utils import AsyncTestUtils
 from tests.support.domain_factories import (
     UserDataFactory,
@@ -343,8 +344,6 @@ class TestFlextModel:
             return BenchmarkModel(name="test", value=42, active=True)
 
         # Benchmark model creation
-        from pytest_benchmark.fixture import BenchmarkFixture
-
         result = BenchmarkUtils.benchmark_with_warmup(
             cast("BenchmarkFixture", benchmark), create_model_instance, warmup_rounds=5
         )
@@ -381,8 +380,12 @@ class TestFactoryHelpers:
 
         # Execute parametrized tests
         for params in param_builder.build_pytest_params():
-            _class_name, args, expected_value = params
-            obj = cast("Callable[..., object]", factory)(*args)
+            # Params format: (class_name, args, expected_value, expected_success)
+            _class_name, args, expected_value, _expected_success = params
+            # Factory has a create method that takes kwargs
+            result = factory.create(value=args[0])  # args[0] is the value parameter
+            assert result.success, f"Factory creation failed: {result.error}"
+            obj = result.value
             assert getattr(obj, "value", None) == expected_value
 
     def test_make_builder_stress_testing(self) -> None:
@@ -397,7 +400,10 @@ class TestFactoryHelpers:
         stress_runner = StressTestRunner()
 
         def create_with_builder() -> BuildableClass:
-            return cast("Callable[..., BuildableClass]", builder)(x=10, y=20)
+            result = builder.create(x=10, y=20)
+            if result.is_failure:
+                raise RuntimeError(f"Builder failed: {result.error}")
+            return cast("BuildableClass", result.value)
 
         # Stress test builder performance
         result = stress_runner.run_load_test(
@@ -627,8 +633,6 @@ class TestGuardsIntegration:
             return list_valid and dict_valid and range_valid
 
         # Benchmark large-scale validation
-        from pytest_benchmark.fixture import BenchmarkFixture
-
         result = BenchmarkUtils.benchmark_with_warmup(
             cast("BenchmarkFixture", benchmark),
             create_large_validation_scenario,

@@ -15,11 +15,11 @@ The module includes:
 Examples:
     Basic usage with hierarchical constants::
 
-        from flext_core.constants import FlextConstants
+        from flext_core.constants import FlextCoreConstants
 
-        timeout = FlextConstants.Defaults.TIMEOUT
-        error_code = FlextConstants.Errors.VALIDATION_ERROR
-        log_level = FlextConstants.Observability.DEFAULT_LOG_LEVEL
+        timeout = FlextCoreConstants.Defaults.TIMEOUT
+        error_code = FlextCoreConstants.Errors.VALIDATION_ERROR
+        log_level = FlextCoreConstants.Observability.DEFAULT_LOG_LEVEL
 
     Using enumerations for type safety::
 
@@ -31,11 +31,11 @@ Examples:
 
     Error handling with structured codes::
 
-        from flext_core.constants import FlextConstants, ERROR_CODES
+        from flext_core.constants import FlextCoreConstants, ERROR_CODES
 
         # Modern structured approach
-        error = FlextConstants.Errors.CONNECTION_ERROR
-        message = FlextConstants.Messages.DATABASE_CONNECTION_FAILED
+        error = FlextCoreConstants.Errors.CONNECTION_ERROR
+        message = FlextCoreConstants.Messages.DATABASE_CONNECTION_FAILED
 
         # Legacy flat mapping for backward compatibility
         legacy_error = ERROR_CODES["CONNECTION_ERROR"]
@@ -58,7 +58,7 @@ from typing import ClassVar, Final, override
 # =============================================================================
 
 
-class FlextConstants:
+class FlextCoreConstants:
     """Hierarchical constants system organizing FLEXT constants by domain and functionality.
 
     This class provides a structured organization of all constants used throughout
@@ -98,27 +98,27 @@ class FlextConstants:
         Using hierarchical constants for better organization::
 
             # Core system information
-            app_name = FlextConstants.Core.NAME
-            version = FlextConstants.Core.VERSION
+            app_name = FlextCoreConstants.Core.NAME
+            version = FlextCoreConstants.Core.VERSION
 
             # Network configuration
-            timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-            port = FlextConstants.Platform.FLEXT_SERVICE_PORT
+            timeout = FlextCoreConstants.Network.DEFAULT_TIMEOUT
+            port = FlextCoreConstants.Platform.FLEXT_SERVICE_PORT
 
             # Error handling
-            error_code = FlextConstants.Errors.VALIDATION_ERROR
-            error_message = FlextConstants.Messages.VALIDATION_FAILED
+            error_code = FlextCoreConstants.Errors.VALIDATION_ERROR
+            error_message = FlextCoreConstants.Messages.VALIDATION_FAILED
 
             # Performance tuning
-            batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
-            threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
+            batch_size = FlextCoreConstants.Performance.DEFAULT_BATCH_SIZE
+            threshold = FlextCoreConstants.Performance.SLOW_QUERY_THRESHOLD
 
         Type-safe constant access::
 
             # All constants are typed and validated
-            max_retries: int = FlextConstants.Defaults.MAX_RETRIES
-            error_codes: dict[str, str] = FlextConstants.Errors.MESSAGES
-            log_levels: list[str] = FlextConstants.Observability.LOG_LEVELS
+            max_retries: int = FlextCoreConstants.Defaults.MAX_RETRIES
+            error_codes: dict[str, str] = FlextCoreConstants.Errors.MESSAGES
+            log_levels: list[str] = FlextCoreConstants.Observability.LOG_LEVELS
 
     """
 
@@ -1183,13 +1183,13 @@ class FlextConstants:
             SUSPENDED = "suspended"
 
 
-FlextOperationStatus = FlextConstants.Enums.OperationStatus
-FlextLogLevel = FlextConstants.Enums.LogLevel
-FlextFieldType = FlextConstants.Enums.FieldType
-FlextEnvironment = FlextConstants.Enums.Environment
-FlextEntityStatus = FlextConstants.Enums.EntityStatus
-FlextDataFormat = FlextConstants.Enums.DataFormat
-FlextConnectionType = FlextConstants.Enums.ConnectionType
+FlextOperationStatus = FlextCoreConstants.Enums.OperationStatus
+FlextLogLevel = FlextCoreConstants.Enums.LogLevel
+FlextFieldType = FlextCoreConstants.Enums.FieldType
+FlextEnvironment = FlextCoreConstants.Enums.Environment
+FlextEntityStatus = FlextCoreConstants.Enums.EntityStatus
+FlextDataFormat = FlextCoreConstants.Enums.DataFormat
+FlextConnectionType = FlextCoreConstants.Enums.ConnectionType
 
 
 # =============================================================================
@@ -1200,9 +1200,9 @@ FlextConnectionType = FlextConstants.Enums.ConnectionType
 # pattern aliases have been moved to legacy.py with deprecation warnings.
 #
 # NEW USAGE: Use proper FlextConstants nested structure
-#   FlextConstants.Errors.VALIDATION_ERROR
-#   FlextConstants.Defaults.TIMEOUT
-#   FlextConstants.Patterns.EMAIL_PATTERN
+#   FlextCoreConstants.Errors.VALIDATION_ERROR
+#   FlextCoreConstants.Defaults.TIMEOUT
+#   FlextCoreConstants.Patterns.EMAIL_PATTERN
 #
 # Use FlextConstants hierarchical structure for new code
 
@@ -1212,22 +1212,31 @@ FlextConnectionType = FlextConstants.Enums.ConnectionType
 
 # Simplified ERROR_CODES mapping
 ERROR_CODES: dict[str, str] = {
-    "GENERIC_ERROR": FlextConstants.Errors.GENERIC_ERROR,
+    "GENERIC_ERROR": FlextCoreConstants.Errors.GENERIC_ERROR,
     "VALIDATION_ERROR": "FLEXT_VALIDATION_ERROR",
-    "CONNECTION_ERROR": FlextConstants.Errors.CONNECTION_ERROR,
-    "TIMEOUT_ERROR": FlextConstants.Errors.TIMEOUT_ERROR,
+    "CONNECTION_ERROR": FlextCoreConstants.Errors.CONNECTION_ERROR,
+    "TIMEOUT_ERROR": FlextCoreConstants.Errors.TIMEOUT_ERROR,
     "OPERATION_ERROR": "FLEXT_OPERATION_ERROR",
     "TYPE_ERROR": "FLEXT_TYPE_ERROR",
     "CONFIG_ERROR": "FLEXT_CONFIG_ERROR",
+    "CONFIGURATION_ERROR": "FLEXT_CONFIG_ERROR",  # Alias for consistency
     "AUTH_ERROR": "FLEXT_AUTH_ERROR",
     "PERMISSION_ERROR": "FLEXT_PERMISSION_ERROR",
     "BIND_ERROR": "FLEXT_BIND_ERROR",
     "CHAIN_ERROR": "FLEXT_CHAIN_ERROR",
+    "MAP_ERROR": "MAP_ERROR",
 }
 
 # Direct message access
-MESSAGES = FlextConstants.Messages
+MESSAGES = FlextCoreConstants.Messages
 SERVICE_NAME_EMPTY: Final[str] = "Service name cannot be empty"
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Legacy alias for FlextCoreConstants - maintain backward compatibility
+FlextConstants = FlextCoreConstants
 
 __all__: Final[list[str]] = [
     # Legacy constants
@@ -1236,8 +1245,10 @@ __all__: Final[list[str]] = [
     "SERVICE_NAME_EMPTY",
     # Enumerations
     "FlextConnectionType",
-    # Main constants class with nested structure
+    # Backward compatibility
     "FlextConstants",
+    # Main constants class with nested structure
+    "FlextCoreConstants",
     "FlextDataFormat",
     "FlextEntityStatus",
     "FlextEnvironment",

@@ -4,6 +4,7 @@ Leverages pytest-clarity, pytest-benchmark, pytest-mock, and other plugins
 for comprehensive testing with clear error messages and performance insights.
 """
 
+# ruff: noqa: S101, ANN401
 from __future__ import annotations
 
 import os

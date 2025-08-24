@@ -27,6 +27,7 @@ from flext_core.models import (
     create_timestamp,
     create_version,
     flext_alias_generator,
+    make_hashable,
 )
 from flext_core.result import FlextResult
 
@@ -267,7 +268,7 @@ class TestFlextValueRealFunctionality:
 
         # Should be frozen (immutable)
         with pytest.raises((ValidationError, AttributeError)):
-            email.address = "changed@example.com"  # type: ignore[misc]
+            email.address = "changed@example.com"
 
     def test_value_object_equality_by_value(self) -> None:
         """Test FlextValue equality comparison by value."""
@@ -614,8 +615,6 @@ class TestHelperFunctionsRealFunctionality:
 
     def test_make_hashable_utility_function(self) -> None:
         """Test make_hashable utility function from models.py."""
-        from flext_core.models import make_hashable
-
         # Test simple values
         assert make_hashable("string") == "string"
         assert make_hashable(42) == 42

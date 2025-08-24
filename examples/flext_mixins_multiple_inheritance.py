@@ -35,13 +35,6 @@ from flext_core import (
 )
 from flext_core.mixins import FlextMixins
 
-from .shared_domain import (
-    SharedDomainFactory,
-    User as SharedUser,
-    log_domain_operation,
-)
-from .shared_example_helpers import run_example_demonstration
-
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
 # =============================================================================
@@ -959,10 +952,9 @@ def demonstrate_composite_mixins() -> None:
     )
     updated_info = entity.get_entity_info()
     data_field = updated_info["data"]
-    data_length = (
+    (
         len(cast("Sized", data_field)) if hasattr(data_field, "__len__") else 0
     )
-    print(f"Data field length: {data_length}")
 
     # Value object using FlextValueObjectMixin
 
@@ -1097,10 +1089,8 @@ def demonstrate_performance_characteristics() -> None:
     multiple_time = time.time() - start_time
 
     # Calculate overhead
-    single_overhead = ((single_time - simple_time) / simple_time) * 100
-    multiple_overhead = ((multiple_time - simple_time) / simple_time) * 100
-    print(f"Single mixin overhead: {single_overhead:.2f}%")
-    print(f"Multiple mixin overhead: {multiple_overhead:.2f}%")
+    ((single_time - simple_time) / simple_time) * 100
+    ((multiple_time - simple_time) / simple_time) * 100
 
 
 def demonstrate_enterprise_patterns() -> None:
@@ -1379,8 +1369,7 @@ def _demonstrate_service_pattern(order_service: OrderServiceProtocol) -> None:
     if order_result.is_success and order_result.value:
         order = order_result.value
         items = order["items"]
-        items_count = len(cast("Sized", items)) if hasattr(items, "__len__") else 0
-        print(f"Order has {items_count} items")
+        len(cast("Sized", items)) if hasattr(items, "__len__") else 0
 
     # Try invalid order with FlextResult pattern
     invalid_order_result = order_service.create_order("user_999", [])

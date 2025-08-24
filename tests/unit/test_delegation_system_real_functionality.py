@@ -104,19 +104,19 @@ class CacheAccessMixin:
     """Real cache operations mixin."""
 
     def __init__(self) -> None:
-        self.cache_data: dict[str, Any] = {}
+        self.cache_data: dict[str, object] = {}
         self.hit_count = 0
         self.miss_count = 0
 
-    def cache_get(self, key: str) -> FlextResult[Any]:
+    def cache_get(self, key: str) -> FlextResult[dict[str, object]]:
         """Real cache get operation."""
         if key in self.cache_data:
             self.hit_count += 1
-            return FlextResult[None].ok(self.cache_data[key])
+            return FlextResult[dict[str, object]].ok(self.cache_data[key])
         self.miss_count += 1
-        return FlextResult[None].fail(f"Cache miss for key: {key}")
+        return FlextResult[dict[str, object]].fail(f"Cache miss for key: {key}")
 
-    def cache_set(self, key: str, value: Any) -> FlextResult[None]:
+    def cache_set(self, key: str, value: object) -> FlextResult[None]:
         """Real cache set operation."""
         if not key:
             return FlextResult[None].fail("Key cannot be empty")
@@ -155,14 +155,14 @@ class RealBusinessHost:
     ) -> FlextResult[dict[str, Any]]:
         """Real business process using delegated methods."""
         # Use delegated validation
-        validation_result = self.validate_amount(amount)  # type: ignore[attr-defined]
+        validation_result = self.validate_amount(amount)
         if validation_result.is_failure:
             return FlextResult[None].fail(
                 f"Validation failed: {validation_result.error}"
             )
 
         # Calculate discount using delegated method
-        discount = self.calculate_discount(amount, 15.0)  # type: ignore[attr-defined]
+        discount = self.calculate_discount(amount, 15.0)
 
         # Save to database using delegated method
         order_data = {
@@ -172,21 +172,19 @@ class RealBusinessHost:
             "final_amount": amount - discount,
         }
 
-        save_result = self.save_record(order_data)  # type: ignore[attr-defined]
+        save_result = self.save_record(order_data)
         if save_result.is_failure:
             return FlextResult[None].fail(f"Save failed: {save_result.error}")
 
         # Cache the result
         cache_key = f"order_{customer_id}_{save_result.value}"
-        self.cache_set(cache_key, order_data)  # type: ignore[attr-defined]
+        self.cache_set(cache_key, order_data)
 
-        return FlextResult[None].ok(
-            {
-                "order_id": save_result.value,
-                "final_amount": order_data["final_amount"],
-                "discount_applied": discount,
-            }
-        )
+        return FlextResult[None].ok({
+            "order_id": save_result.value,
+            "final_amount": order_data["final_amount"],
+            "discount_applied": discount,
+        })
 
 
 class TestRealDelegationFunctionality:
@@ -223,7 +221,7 @@ class TestRealDelegationFunctionality:
         assert len(database_mixin.operations_log) == 1
 
         # Test cache functionality
-        cache_stats = host.cache_stats()  # type: ignore[attr-defined]
+        cache_stats = host.cache_stats()
         assert cache_stats["total_keys"] == 1
         assert cache_stats["hits"] == 0
         assert cache_stats["misses"] == 0
@@ -247,16 +245,16 @@ class TestRealDelegationFunctionality:
         host = RealBusinessHost()
 
         # Test read-only property
-        discount_rate = host.discount_rate  # type: ignore[attr-defined]
+        discount_rate = host.discount_rate
         assert discount_rate == 10.5
 
         # Test property with setter
-        host.configurable_rate = 20.0  # type: ignore[attr-defined]
-        assert host.configurable_rate == 20.0  # type: ignore[attr-defined]
+        host.configurable_rate = 20.0
+        assert host.configurable_rate == 20.0
 
         # Test setter validation
         with pytest.raises(ValueError, match="Rate must be between 0 and 100"):
-            host.configurable_rate = 150.0  # type: ignore[attr-defined]
+            host.configurable_rate = 150.0
 
     def test_delegation_info_real_data(self) -> None:
         """Test delegation info provides real data."""
@@ -290,12 +288,12 @@ class TestAdvancedDelegationScenarios:
         host = AdvancedHost()
 
         # Test validation mixin
-        host.add_validation_error("test_error")  # type: ignore[attr-defined]
-        assert host.has_validation_errors()  # type: ignore[attr-defined]
-        assert not host.is_valid  # type: ignore[attr-defined]
+        host.add_validation_error("test_error")
+        assert host.has_validation_errors()
+        assert not host.is_valid
 
         # Test serializable mixin
-        basic_dict = host.to_dict_basic()  # type: ignore[attr-defined]
+        basic_dict = host.to_dict_basic()
         assert isinstance(basic_dict, dict)
 
         # Test timestamp mixin functionality
@@ -342,7 +340,7 @@ class TestAdvancedDelegationScenarios:
                 self.delegator = create_mixin_delegator(self, InitializableMixin)
 
         host = InitHost()
-        status = host.get_initialization_status()  # type: ignore[attr-defined]
+        status = host.get_initialization_status()
 
         # Verify all initialization methods were called
         assert status["validation"] is True
@@ -386,7 +384,7 @@ class TestAdvancedDelegationScenarios:
         host = ErrorRecoveryHost()
 
         # Verify delegation worked despite potential issues
-        result = host.working_method()  # type: ignore[attr-defined]
+        result = host.working_method()
         assert result == "success"
 
         # Access mixin instance to check the flag
@@ -398,7 +396,7 @@ class TestAdvancedDelegationScenarios:
         assert problematic_mixin.working_method_called
 
         # Verify property access works
-        prop_value = host.problematic_property  # type: ignore[attr-defined]
+        prop_value = host.problematic_property
         assert prop_value == "property_value"
 
 
@@ -436,19 +434,19 @@ class TestDelegationPropertyEdgeCases:
         host = PropertyHost()
 
         # Test property getter
-        assert host.complex_property == 84  # 42 * 2  # type: ignore[attr-defined]
+        assert host.complex_property == 84  # 42 * 2
 
         # Test property setter
-        host.complex_property = 100  # type: ignore[attr-defined]
-        assert host.complex_property == 100  # type: ignore[attr-defined]
+        host.complex_property = 100
+        assert host.complex_property == 100
 
         # Test read-only property
-        readonly_value = host.readonly_computed  # type: ignore[attr-defined]
+        readonly_value = host.readonly_computed
         assert readonly_value == "computed_50"  # 100 // 2
 
         # Test setter validation
         with pytest.raises(ValueError, match="Value must be non-negative"):
-            host.complex_property = -10  # type: ignore[attr-defined]
+            host.complex_property = -10
 
     def test_property_delegation_without_setter(self) -> None:
         """Test property delegation for read-only properties."""
@@ -468,13 +466,13 @@ class TestDelegationPropertyEdgeCases:
         host = ReadOnlyHost()
 
         # Test reading works
-        assert host.readonly_prop == "readonly"  # type: ignore[attr-defined]
+        assert host.readonly_prop == "readonly"
 
         # Test that setting raises appropriate error
         with pytest.raises(
             FlextOperationError, match="Property 'readonly_prop' is read-only"
         ):
-            host.readonly_prop = "new_value"  # type: ignore[attr-defined]
+            host.readonly_prop = "new_value"
 
 
 class TestDelegationSystemValidationReal:
@@ -564,7 +562,7 @@ class TestDelegationPerformanceReal:
         assert len(database_mixin.operations_log) == 100
 
         # Verify cache has all entries
-        cache_stats = host.cache_stats()  # type: ignore[attr-defined]
+        cache_stats = host.cache_stats()
         assert cache_stats["total_keys"] == 100
 
     def test_mixin_registry_persistence_real(self) -> None:

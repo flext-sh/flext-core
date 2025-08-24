@@ -75,9 +75,10 @@ class TestFlextError:
             context=context,
         )
 
-        # Context is stored directly from kwargs - no nested "context" key
-        assert error.context["component"] == "test_component"
-        assert error.context["operation"] == "test_operation"
+        # Context is nested under "context" key for consistency
+        nested_ctx = error.context["context"]
+        assert nested_ctx["component"] == "test_component"
+        assert nested_ctx["operation"] == "test_operation"
         if error.message != "Context error":
             raise AssertionError(f"Expected {'Context error'}, got {error.message}")
 
@@ -95,10 +96,11 @@ class TestFlextError:
             context=context,
         )
 
-        # Context is stored directly from kwargs - no nested "context" key
-        assert error.context["component"] == "test_component"
-        assert error.context["operation"] == "test_operation"
-        assert error.context["user_id"] == "test_user"
+        # Context is nested under "context" key for consistency
+        nested_ctx = error.context["context"]
+        assert nested_ctx["component"] == "test_component"
+        assert nested_ctx["operation"] == "test_operation"
+        assert nested_ctx["user_id"] == "test_user"
         # Error code should be mapped through ERROR_CODES system
         # When we pass FLEXT_VALIDATION_ERROR, that's what we get back
         assert error.error_code == "FLEXT_VALIDATION_ERROR"
@@ -141,8 +143,9 @@ class TestFlextError:
         context = serialized["context"]
         assert isinstance(context, dict)
         # Context parameter creates nested structure
-        # Context is stored directly - access fields directly from error.context
-        assert context["test_field"] == "test_value"
+        # Context is nested under "context" key for consistency
+        nested_ctx = context["context"]
+        assert nested_ctx["test_field"] == "test_value"
         if "timestamp" not in serialized:
             raise AssertionError(f"Expected {'timestamp'} in {serialized}")
         assert isinstance(serialized["timestamp"], float)
@@ -876,8 +879,8 @@ class TestAdditionalExceptions:
         )
         assert isinstance(type_error, FlextTypeError)
         # FlextTypeError field parameters create direct context
-        assert type_error.context["expected_type"] == str
-        assert type_error.context["actual_type"] == int
+        assert type_error.context["expected_type"] is str
+        assert type_error.context["actual_type"] is int
 
         # Test create_operation_error
         op_error = FlextExceptions.FlextOperationError(
@@ -926,8 +929,6 @@ class TestExceptionsCoverageImprovements:
 
     def test_record_exception_function(self) -> None:
         """Test exception recording through metrics system."""
-        from flext_core import FlextExceptions  # noqa: PLC0415
-
         # Clear metrics first
         FlextExceptions.Metrics.clear_metrics()
 

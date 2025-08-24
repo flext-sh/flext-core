@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001, ARG002
 """Tests for FlextFields with modern pytest patterns.
 
 Advanced tests using parametrized fixtures, factory patterns,
@@ -23,6 +24,7 @@ Usage of New Conftest Infrastructure:
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Callable
 from typing import SupportsFloat, cast
@@ -143,7 +145,7 @@ class TestFlextFieldCoreAdvanced:
         """Test field creation using structured test cases."""
         for test_case in field_creation_test_cases:
             # Create field using test case input data
-            field: FlextFieldCore = FlextFieldCore(**test_case.input_data)  # type: ignore[arg-type]
+            field: FlextFieldCore = FlextFieldCore(**test_case.input_data)
 
             # Validate field creation succeeded
             result = FlextResult[FlextFieldCore].ok(field)
@@ -244,7 +246,7 @@ class TestFlextFieldCoreAdvanced:
 
             # Create field - cast and ignore type for test data
             field_config_typed = cast("dict[str, object]", field_config)
-            field: FlextFieldCore = FlextFieldCore(**field_config_typed)  # type: ignore[arg-type]
+            field: FlextFieldCore = FlextFieldCore(**field_config_typed)
 
             # Validate value
             validation_result = field.validate_value(test_value)
@@ -503,8 +505,6 @@ class TestFlextFieldCorePerformance:
 
         with assert_performance(max_time=0.2, max_memory=5_000_000):  # 200ms, 5MB
             # Temporarily disable logging during performance test to get accurate measurements
-            import logging  # noqa: PLC0415
-
             logging.disable(logging.CRITICAL)
             try:
                 metrics = performance_monitor(registry_operations)

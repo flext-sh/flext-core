@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401, S311
 """Test Factories para criação de objetos de teste compatível com flext-core refatorado.
 
 Fornece factories simplificadas para criação consistente de objetos de teste
@@ -32,12 +33,12 @@ from flext_core import (
 
 def _generate_fake_word() -> str:
     """Generate a fake word for testing."""
-    return "".join(random.choices(string.ascii_lowercase, k=random.randint(4, 12)))
+    return "".join(random.choices(string.ascii_lowercase, k=random.randint(4, 12)))  # noqa: S311
 
 
 def _generate_fake_sentence() -> str:
     """Generate a fake sentence for testing."""
-    words = [_generate_fake_word() for _ in range(random.randint(3, 8))]
+    words = [_generate_fake_word() for _ in range(random.randint(3, 8))]  # noqa: S311
     return " ".join(words).capitalize() + "."
 
 
@@ -159,15 +160,15 @@ class FlextConfigFactory:
             "name": "test-flext",
             "version": "1.0.0",
             "description": "Test FLEXT configuration",
-            "environment": random.choice([env.value for env in FlextEnvironment]),
-            "debug": random.choice([True, False]),
-            "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
-            "timeout": random.randint(5, 60),
-            "retries": random.randint(1, 5),
-            "page_size": random.randint(10, 500),
-            "enable_caching": random.choice([True, False]),
-            "enable_metrics": random.choice([True, False]),
-            "enable_tracing": random.choice([True, False]),
+            "environment": random.choice([env.value for env in FlextEnvironment]),  # noqa: S311
+            "debug": random.choice([True, False]),  # noqa: S311
+            "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),  # noqa: S311
+            "timeout": random.randint(5, 60),  # noqa: S311
+            "retries": random.randint(1, 5),  # noqa: S311
+            "page_size": random.randint(10, 500),  # noqa: S311
+            "enable_caching": random.choice([True, False]),  # noqa: S311
+            "enable_metrics": random.choice([True, False]),  # noqa: S311
+            "enable_tracing": random.choice([True, False]),  # noqa: S311
         }
         defaults.update(kwargs)
         return FlextConfig(**defaults)
@@ -182,8 +183,8 @@ class FlextFieldCoreFactory:
         defaults = {
             "id": str(uuid.uuid4()),
             "name": _generate_fake_word(),
-            "field_type": random.choice(["string", "integer", "boolean", "datetime"]),
-            "required": random.choice([True, False]),
+            "field_type": random.choice(["string", "integer", "boolean", "datetime"]),  # noqa: S311
+            "required": random.choice([True, False]),  # noqa: S311
             "description": _generate_fake_sentence(),
             "default_value": None,
             "validation_rules": [],
@@ -275,7 +276,7 @@ class OrganizationEntityFactory:
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC),
             "name": _generate_fake_company(),
-            "tax_id": "".join(random.choices(string.digits, k=9)),
+            "tax_id": "".join(random.choices(string.digits, k=9)),  # noqa: S311
             "website": _generate_fake_url(),
             "industry": _generate_fake_word().capitalize(),
         }
@@ -298,7 +299,7 @@ class MetadataFactory:
             "source": "test",
             "version": "1.0.0",
             "created_by": _generate_fake_word(),
-            "environment": random.choice([env.value for env in FlextEnvironment]),
+            "environment": random.choice([env.value for env in FlextEnvironment]),  # noqa: S311
         }
         defaults.update(kwargs)
         return defaults
@@ -311,10 +312,10 @@ class ConfigDictFactory:
     def create(cls, **kwargs: Any) -> dict[str, Any]:
         """Create config dictionary with default values."""
         defaults = {
-            "debug": random.choice([True, False]),
-            "timeout": random.randint(1, 300),
-            "max_retries": random.randint(1, 10),
-            "batch_size": random.randint(10, 1000),
+            "debug": random.choice([True, False]),  # noqa: S311
+            "timeout": random.randint(1, 300),  # noqa: S311
+            "max_retries": random.randint(1, 10),  # noqa: S311
+            "batch_size": random.randint(10, 1000),  # noqa: S311
         }
         defaults.update(kwargs)
         return defaults
