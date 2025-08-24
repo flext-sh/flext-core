@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from decimal import Decimal
-from typing import override
+from typing import cast, override
 
 import pytest
 from pydantic import ValidationError
@@ -263,7 +264,7 @@ class TestValueObjectFormatting:
         """Test dictionary formatting."""
         vo = SimpleValueObject.model_validate({"value": "test"})
         data = {"name": "test", "count": 42, "active": True}
-        formatted = vo.format_dict(data)  # pyright: ignore[reportArgumentType]
+        formatted = vo.format_dict(data)
 
         assert "name='test'" in formatted
         assert "count=42" in formatted
@@ -279,7 +280,7 @@ class TestValueObjectFormatting:
             "none_val": None,
             "list": [1, 2, 3],
         }
-        formatted = vo.format_dict(data)  # pyright: ignore[reportArgumentType]
+        formatted = vo.format_dict(data)
 
         assert "string='value'" in formatted
         assert "number=123" in formatted
@@ -379,7 +380,7 @@ class TestValueObjectPayloadConversion:
     def test_extract_serializable_attributes_pydantic(self) -> None:
         """Test serializable attribute extraction via Pydantic."""
         vo = SimpleValueObject.model_validate({"value": "test"})
-        result = vo._extract_serializable_attributes()  # pyright: ignore[reportPrivateUsage]
+        result = vo._extract_serializable_attributes()
 
         assert isinstance(result, dict)
         assert "value" in result
@@ -390,7 +391,7 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the manual extraction method directly
-        result = vo._try_manual_extraction()  # pyright: ignore[reportPrivateUsage]
+        result = vo._try_manual_extraction()
 
         assert isinstance(result, dict)
         # Should contain the value attribute
@@ -402,7 +403,7 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test the fallback info method directly
-        result = vo._get_fallback_info()  # pyright: ignore[reportPrivateUsage]
+        result = vo._get_fallback_info()
 
         assert isinstance(result, dict)
         assert "class_name" in result
@@ -420,7 +421,7 @@ class TestValueObjectPayloadConversion:
             "complex": {"nested": "object"},
         }
 
-        result = vo._process_serializable_values(data)  # pyright: ignore[reportArgumentType]
+        result = vo._process_serializable_values(data)
 
         assert result["string"] == "value"
         assert result["int"] == 42
@@ -433,20 +434,20 @@ class TestValueObjectPayloadConversion:
         """Test attribute inclusion logic."""
         vo = SimpleValueObject.model_validate({"value": "test"})
 
-        assert vo._should_include_attribute("value") is True  # pyright: ignore[reportPrivateUsage]
-        assert vo._should_include_attribute("_private") is False  # pyright: ignore[reportPrivateUsage]
-        assert vo._should_include_attribute("validate_business_rules") is False  # pyright: ignore[reportPrivateUsage]
+        assert vo._should_include_attribute("value") is True
+        assert vo._should_include_attribute("_private") is False
+        assert vo._should_include_attribute("validate_business_rules") is False
 
     def test_safely_get_attribute(self) -> None:
         """Test safe attribute retrieval."""
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test successful retrieval
-        result = vo._safely_get_attribute("value")  # pyright: ignore[reportPrivateUsage]
+        result = vo._safely_get_attribute("value")
         assert result == "test"
 
         # Test with non-existent attribute
-        result = vo._safely_get_attribute("nonexistent")  # pyright: ignore[reportPrivateUsage]
+        result = vo._safely_get_attribute("nonexistent")
         assert result is None
 
     def test_safely_get_attribute_with_str_method(self) -> None:
@@ -461,7 +462,7 @@ class TestValueObjectPayloadConversion:
         # Create a test attribute on the value object
         object.__setattr__(vo, "_test_attr", ObjectWithStr())
 
-        result = vo._safely_get_attribute("_test_attr")  # pyright: ignore[reportPrivateUsage]
+        result = vo._safely_get_attribute("_test_attr")
         assert result == "string_repr"
 
     def test_safely_get_attribute_exception(self) -> None:
@@ -469,13 +470,13 @@ class TestValueObjectPayloadConversion:
         vo = SimpleValueObject.model_validate({"value": "test"})
 
         # Test with a non-existent attribute - this will naturally raise AttributeError
-        result = vo._safely_get_attribute("nonexistent_attribute")  # pyright: ignore[reportPrivateUsage]
+        result = vo._safely_get_attribute("nonexistent_attribute")
         assert result is None
 
     def test_get_fallback_info(self) -> None:
         """Test fallback information generation."""
         vo = SimpleValueObject.model_validate({"value": "test"})
-        result = vo._get_fallback_info()  # pyright: ignore[reportPrivateUsage]
+        result = vo._get_fallback_info()
 
         assert "class_name" in result
         assert "module" in result
@@ -528,9 +529,6 @@ class TestFlextFactory:
         assert callable(factory)
 
         # Test factory usage - cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         result = callable_factory(value="test")
         assert result.success is True
@@ -546,9 +544,6 @@ class TestFlextFactory:
         )
 
         # Test with defaults - cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         result = callable_factory(amount=Decimal("10.00"))
         assert result.success is True
@@ -566,9 +561,6 @@ class TestFlextFactory:
         )
 
         # Cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         result = callable_factory(value="")  # Should fail validation
         assert result.success is False
@@ -582,9 +574,6 @@ class TestFlextFactory:
         )
 
         # Cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         # Pass invalid parameter - this will be handled by validation
         result = callable_factory(
@@ -602,9 +591,6 @@ class TestFlextFactory:
         )
 
         # Cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", factory)
         result = callable_factory(value="test")
         assert result.success is True
@@ -647,11 +633,11 @@ class TestValueObjectIntegration:
         assert money1 != money3
 
         # Test hashing for use in sets/dicts
-        money_set = {money1, money2, money3}  # pyright: ignore[reportUnhashable]
+        money_set = {money1, money2, money3}
         assert len(money_set) == 2  # money1 and money2 are equal
 
         # Test as dict keys
-        money_dict = {money1: "first", money2: "second", money3: "third"}  # pyright: ignore[reportUnhashable]
+        money_dict = {money1: "first", money2: "second", money3: "third"}
         assert len(money_dict) == 2  # money1 and money2 share same key
 
     def test_value_object_with_nested_structures(self) -> None:
@@ -693,9 +679,6 @@ class TestValueObjectIntegration:
         test_addresses = ["user1@example.com", "user2@test.org", "REDACTED_LDAP_BIND_PASSWORD@company.net"]
 
         # Cast to avoid type checker issues
-        from collections.abc import Callable
-        from typing import cast
-
         callable_factory = cast("Callable[..., FlextResult[object]]", email_factory)
 
         for address in test_addresses:
@@ -755,7 +738,7 @@ class TestValueObjectEdgeCases:
         vo = SerializationTestValueObject(name="test")
 
         # Test extraction methods handle edge cases
-        result = vo._extract_serializable_attributes()  # pyright: ignore[reportPrivateUsage]
+        result = vo._extract_serializable_attributes()
         assert isinstance(result, dict)
         assert "name" in result
 

@@ -6,6 +6,7 @@ the integration and orchestration capabilities of FlextCore.
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import cast
 
@@ -257,8 +258,6 @@ class TestFlextCoreEdgeCases:
 
     def test_concurrent_singleton_access(self) -> None:
         """Test concurrent access to FlextCore singleton."""
-        import threading
-
         instances: list[FlextCore] = []
 
         def get_instance() -> None:

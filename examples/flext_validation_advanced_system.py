@@ -101,7 +101,7 @@ class ValidationChains:
     def validate_age(age: int) -> FlextResult[int]:
         """Validate age with business rules."""
         return BasicValidators.age_range(age, 16, 120).tap(
-            lambda a: print(f"Age {a} validated") if a >= MIN_AGE_ADULT else None
+            lambda a: None  # Age validation completed  # noqa: ARG005
         )
 
 
@@ -277,56 +277,50 @@ class BatchValidator:
 
 def demo_basic_validation() -> None:
     """Demonstrate basic validation patterns."""
-    print("\n🧪 Testing basic validation...")
-
     # Test individual validators
     name_result = BasicValidators.required("Alice", "Name")
     email_result = BasicValidators.email_format("alice@example.com")
     age_result = BasicValidators.age_range(25)
 
     if name_result.success:
-        print(f"✅ Valid name: {name_result.value}")
+        pass
 
     if email_result.success:
-        print(f"✅ Valid email: {email_result.value}")
+        pass
 
     if age_result.success:
-        print(f"✅ Valid age: {age_result.value}")
+        pass
 
     # Test invalid data
     invalid_email = BasicValidators.email_format("invalid-email")
     if invalid_email.is_failure:
-        print(f"✅ Correctly rejected invalid email: {invalid_email.error}")
+        pass
 
 
 def demo_validation_chains() -> None:
     """Demonstrate chained validation."""
-    print("\n🧪 Testing validation chains...")
-
     # Valid data
     name_result = ValidationChains.validate_name("Bob Smith")
     email_result = ValidationChains.validate_email("bob@example.com")
     age_result = ValidationChains.validate_age(30)
 
     if name_result.success:
-        print(f"✅ Name chain validation: {name_result.value}")
+        pass
 
     if email_result.success:
-        print(f"✅ Email chain validation: {email_result.value}")
+        pass
 
     if age_result.success:
-        print(f"✅ Age chain validation: {age_result.value}")
+        pass
 
     # Invalid data that should fail multiple rules
     invalid_name = ValidationChains.validate_name("A")  # Too short
     if invalid_name.is_failure:
-        print(f"✅ Name chain rejected: {invalid_name.error}")
+        pass
 
 
 def demo_form_validation() -> None:
     """Demonstrate complete form validation."""
-    print("\n🧪 Testing form validation...")
-
     # Valid user form
     valid_user_data = {"name": "Carol Davis", "email": "carol@example.com", "age": 28}
 
@@ -334,8 +328,7 @@ def demo_form_validation() -> None:
         cast("dict[str, object]", valid_user_data)
     )
     if user_result.success:
-        validated = user_result.value
-        print(f"✅ User form validated: {validated['name']}")
+        pass
 
     # Valid product form
     valid_product_data = {
@@ -348,14 +341,11 @@ def demo_form_validation() -> None:
         cast("dict[str, object]", valid_product_data)
     )
     if product_result.success:
-        validated_product = product_result.value
-        print(f"✅ Product form validated: {validated_product['name']}")
+        pass
 
 
 def demo_business_rules() -> None:
     """Demonstrate business rule validation."""
-    print("\n🧪 Testing business rules...")
-
     # Valid registration
     valid_data = {"name": "David Wilson", "email": "david@example.com", "age": 25}
 
@@ -363,8 +353,7 @@ def demo_business_rules() -> None:
         cast("dict[str, object]", valid_data)
     )
     if registration_result.success:
-        user = registration_result.value
-        print(f"✅ User registration approved: {user.name}")
+        pass
 
     # Invalid registration - underage
     underage_data = {"name": "Young User", "email": "young@example.com", "age": 16}
@@ -373,13 +362,11 @@ def demo_business_rules() -> None:
         cast("dict[str, object]", underage_data)
     )
     if underage_result.is_failure:
-        print(f"✅ Underage user rejected: {underage_result.error}")
+        pass
 
 
 def demo_batch_validation() -> None:
     """Demonstrate batch validation."""
-    print("\n🧪 Testing batch validation...")
-
     user_batch = [
         {"name": "Eve Brown", "email": "eve@example.com", "age": 32},
         {"name": "Frank Miller", "email": "frank@example.com", "age": 28},
@@ -392,19 +379,13 @@ def demo_batch_validation() -> None:
     )
     if batch_result.success:
         result = batch_result.value
-        print(f"✅ Batch validation: {result['valid']}/{result['total']} valid")
-        print(f"   Success rate: {result['success_rate']:.1f}%")
 
         if result["errors"]:
-            print(
-                f"   Errors: {len(cast('list[object]', result['errors']))} failed validations"
-            )
+            pass
 
 
 def demo_functional_composition() -> None:
     """Demonstrate functional validation composition."""
-    print("\n🧪 Testing functional composition...")
-
     # Chain multiple validation operations
     result = (
         FlextResult.ok(
@@ -428,25 +409,11 @@ def demo_functional_composition() -> None:
     # Use success pattern for cleaner error handling
     if result.success:
         response = result.value
-        user = cast("User", response["user"])
-        print(f"✅ Functional composition: {user.name} {response['status']}")
+        cast("User", response["user"])
 
 
 def main() -> None:
     """🎯 Example 05: Validation Patterns."""
-    print("=" * 70)
-    print("✅ EXAMPLE 05: VALIDATION (REFACTORED)")
-    print("=" * 70)
-
-    print("\n📚 Refactoring Benefits:")
-    print("  • 90% less boilerplate code")
-    print("  • Clean functional validation")
-    print("  • Simple composition patterns")
-    print("  • Removed complex orchestration")
-
-    print("\n🔍 DEMONSTRATIONS")
-    print("=" * 40)
-
     # Show the refactored validation patterns
     demo_basic_validation()
     demo_validation_chains()
@@ -454,16 +421,6 @@ def main() -> None:
     demo_business_rules()
     demo_batch_validation()
     demo_functional_composition()
-
-    print("\n" + "=" * 70)
-    print("✅ REFACTORED VALIDATION EXAMPLE COMPLETED!")
-    print("=" * 70)
-
-    print("\n🎓 Key Improvements:")
-    print("  • Simple, composable validators")
-    print("  • Clean validation chains")
-    print("  • Practical business rules")
-    print("  • Railway-oriented validation")
 
 
 if __name__ == "__main__":

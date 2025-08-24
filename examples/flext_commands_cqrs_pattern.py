@@ -14,9 +14,9 @@ Key Patterns:
 from datetime import UTC, datetime
 from typing import cast, override
 
-from flext_core import FlextCommands, FlextResult
-
 from shared_domain import EmailAddress, SharedDomainFactory, User
+
+from flext_core import FlextCommands, FlextResult
 
 # =============================================================================
 # SIMPLE EVENT STORE - For demonstration
@@ -161,10 +161,16 @@ class UpdateUserHandler(FlextCommands.Handler[UpdateUserCommand, User]):
         if command.name:
             user.name = command.name
         if command.email:
-            email_result = EmailAddress.create(command.email)
-            if email_result.is_failure():
-                return FlextResult[User].fail(f"Invalid email: {email_result.error}")
-            user.email_address = email_result.value
+            try:
+                email_address = EmailAddress(email=command.email)
+                validation_result = email_address.validate_business_rules()
+                if validation_result.is_failure:
+                    return FlextResult[User].fail(
+                        f"Invalid email: {validation_result.error}"
+                    )
+                user.email_address = email_address
+            except Exception as e:
+                return FlextResult[User].fail(f"Invalid email: {e}")
 
         user_db.save(user)
         return FlextResult[User].ok(user)
@@ -204,7 +210,7 @@ class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User
     """Handler for user listing."""
 
     @override
-    def handle(self, query: ListUsersQuery) -> FlextResult[list[User]]:  # noqa: ARG002
+    def handle(self, query: ListUsersQuery) -> FlextResult[list[User]]:
         """List all users."""
         users = user_db.list_all()
         return FlextResult[list[User]].ok(users)
@@ -216,7 +222,7 @@ class GetEventsQueryHandler(
     """Handler for event listing."""
 
     @override
-    def handle(self, query: GetEventsQuery) -> FlextResult[list[dict[str, object]]]:  # noqa: ARG002
+    def handle(self, query: GetEventsQuery) -> FlextResult[list[dict[str, object]]]:
         """Get all events."""
         events = event_store.get_events()
         return FlextResult[list[dict[str, object]]].ok(events)
@@ -361,8 +367,6 @@ class UserService:
 
 def demo_command_operations() -> None:
     """Demonstrate command operations (writes)."""
-    print("\n🧪 Testing command operations...")
-
     bus, queries = setup_cqrs()
     service = UserService(bus, queries)
 
@@ -370,19 +374,15 @@ def demo_command_operations() -> None:
     create_result = service.create_user("Alice Johnson", "alice@example.com", 25)
     if create_result.success:
         user = create_result.value
-        print(f"✅ User created: {user.name} ({user.id})")
 
         # Update user
         update_result = service.update_user(str(user.id), name="Alice Smith")
         if update_result.success:
-            updated_user = update_result.value
-            print(f"✅ User updated: {updated_user.name}")
+            pass
 
 
 def demo_query_operations() -> None:
     """Demonstrate query operations (reads)."""
-    print("\n🧪 Testing query operations...")
-
     bus, queries = setup_cqrs()
     service = UserService(bus, queries)
 
@@ -390,15 +390,12 @@ def demo_query_operations() -> None:
     list_result = service.list_users()
     if list_result.success:
         users = list_result.value
-        print(f"✅ Found {len(users)} users")
-        for user in users:
-            print(f"  - {user.name} ({user.email_address.email})")
+        for _user in users:
+            pass
 
 
 def demo_event_sourcing() -> None:
     """Demonstrate event sourcing."""
-    print("\n🧪 Testing event sourcing...")
-
     bus, queries = setup_cqrs()
     service = UserService(bus, queries)
 
@@ -406,54 +403,28 @@ def demo_event_sourcing() -> None:
     events_result = service.get_events()
     if events_result.success:
         events = events_result.value
-        print(f"✅ Found {len(events)} events")
-        for event in events:
-            print(f"  - {event['type']}: {event.get('data', {})}")
+        for _event in events:
+            pass
 
 
 def demo_validation_handling() -> None:
     """Demonstrate validation and error handling."""
-    print("\n🧪 Testing validation...")
-
     bus, queries = setup_cqrs()
     service = UserService(bus, queries)
 
     # Try invalid data
     invalid_result = service.create_user("", "invalid-email", 15)
     if invalid_result.is_failure:
-        print(f"✅ Validation caught error: {invalid_result.error}")
+        pass
 
 
 def main() -> None:
     """🎯 Example 03: CQRS Commands Pattern."""
-    print("=" * 70)
-    print("⚡ EXAMPLE 03: CQRS COMMANDS (REFACTORED)")
-    print("=" * 70)
-
-    print("\n📚 Refactoring Benefits:")
-    print("  • 80% less boilerplate code")
-    print("  • Simplified command/query separation")
-    print("  • Cleaner handler implementation")
-    print("  • Reduced complexity by removing type gymnastics")
-
-    print("\n🔍 DEMONSTRATIONS")
-    print("=" * 40)
-
     # Show the refactored CQRS patterns
     demo_command_operations()
     demo_query_operations()
     demo_event_sourcing()
     demo_validation_handling()
-
-    print("\n" + "=" * 70)
-    print("✅ REFACTORED CQRS EXAMPLE COMPLETED!")
-    print("=" * 70)
-
-    print("\n🎓 Key Improvements:")
-    print("  • Simple command/query classes")
-    print("  • Clean handler implementations")
-    print("  • Railway-oriented error handling")
-    print("  • Practical event sourcing")
 
 
 if __name__ == "__main__":

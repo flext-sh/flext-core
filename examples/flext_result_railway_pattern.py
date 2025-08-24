@@ -149,7 +149,7 @@ class BatchProcessor(
         list[UserRegistrationRequest], list[RegistrationResult], BatchResult
     ]
 ):
-    """Ultra-lean batch processor using FlextServiceProcessor template - ZERO custom logic."""
+    """Ultra-lean batch processor using FlextServiceProcessor template - ZERO logic."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -205,7 +205,7 @@ class BatchProcessor(
 class JSONProcessor(
     FlextServiceProcessor[str, UserRegistrationRequest, RegistrationResult]
 ):
-    """Ultra-lean JSON processor using FlextServiceProcessor template - ZERO custom logic."""
+    """Ultra-lean JSON processor using FlextServiceProcessor template - ZERO logic."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -219,7 +219,9 @@ class JSONProcessor(
             model = UserRegistrationRequest(**data)
             return FlextResult[UserRegistrationRequest].ok(model)
         except Exception as e:
-            return FlextResult[UserRegistrationRequest].fail(f"JSON parsing failed: {e}")
+            return FlextResult[UserRegistrationRequest].fail(
+                f"JSON parsing failed: {e}"
+            )
 
     @override
     def build(
@@ -250,20 +252,15 @@ class JSONProcessor(
 # =============================================================================
 
 
-def log_result[T](result: FlextResult[T], success_msg: str) -> FlextResult[T]:
+def log_result[T](result: FlextResult[T], _success_msg: str) -> FlextResult[T]:
     """Utility to log FlextResult and return it unchanged."""
     if result.is_success:
-        print(f"✅ {success_msg}: {result.value}")
-    else:
-        print(f"❌ Error: {result.error}")
+        pass
     return result
 
 
 def demo_railway_processing() -> None:
     """Demonstrate railway processing with flext-core components."""
-    print("\n🚂 Railway Processing with Maximum FLEXT-Core Usage")
-    print("=" * 60)
-
     processor = RegistrationProcessor()
 
     # Valid request using FlextValue
@@ -276,9 +273,6 @@ def demo_railway_processing() -> None:
 
 def demo_batch_processing() -> None:
     """Demonstrate batch processing with FlextResultUtils."""
-    print("\n📊 Batch Processing with FlextResultUtils")
-    print("=" * 60)
-
     batch_processor = BatchProcessor()
 
     # Create batch requests using FlextValue
@@ -293,9 +287,6 @@ def demo_batch_processing() -> None:
 
 def demo_json_processing() -> None:
     """Demonstrate JSON processing with structured validation."""
-    print("\n🔄 JSON Processing with Structured Validation")
-    print("=" * 60)
-
     json_processor = JSONProcessor()
 
     # Process valid and invalid JSON using log_result
@@ -311,19 +302,15 @@ def demo_json_processing() -> None:
 
 def demo_advanced_patterns() -> None:
     """Demonstrate advanced patterns using flext-core utilities."""
-    print("\n🔧 Advanced Patterns with FLEXT-Core Utilities")
-    print("=" * 60)
-
     # Use FlextResultUtils.batch_process for concise batch handling
     requests = [
         UserRegistrationRequest(name="User1", email="u1@co.com", age=25),
         UserRegistrationRequest(name="User2", email="u2@co.com", age=30),
     ]
     processor = RegistrationProcessor()
-    successes, failures = FlextResultUtils.batch_process(
+    _successes, _failures = FlextResultUtils.batch_process(
         requests, processor.process_registration
     )
-    print(f"🎯 Processed: {len(successes)} success, {len(failures)} failed")
 
 
 def main() -> None:
@@ -337,21 +324,12 @@ def main() -> None:
         demo()
 
     # Show FlextUtilities metrics collected automatically
-    print("\n🚀 FlextUtilities Metrics (Auto-collected)")
-    print("=" * 60)
-    for key, data in FlextUtilities.iter_metrics_items():
+    for _key, data in FlextUtilities.iter_metrics_items():
         # Handle the new data structure - assume nested dict structure
         if isinstance(data, dict) and "performance" in data:
             perf_data = data["performance"]
             if "count" in perf_data and "duration" in perf_data:
-                print(
-                    f"  📊 {key}: {perf_data['duration'] * 1000:.2f}ms ({perf_data['count']} calls)"
-                )
-            else:
-                print(f"  📊 {key}: {len(data)} metrics")
-        else:
-            print(f"  📊 {key}: {len(data) if isinstance(data, dict) else data}")
-    print("✅ All performance tracked automatically via FlextUtilities templates")
+                pass
 
 
 if __name__ == "__main__":

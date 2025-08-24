@@ -3,25 +3,21 @@
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import Callable
 from typing import Any
 
 from flext_core import FlextResult
 
 
-def run_example_demonstrations(demos: list[tuple[str, callable]]) -> None:
+def run_example_demonstrations(demos: list[tuple[str, Callable[[], None]]]) -> None:
     """Run a list of demonstration functions."""
-    print("\n🔍 DEMONSTRATIONS")
-    print("=" * 40)
-
-    for name, demo_func in demos:
-        try:
-            print(f"\n🧪 {name}...")
+    for _name, demo_func in demos:
+        with contextlib.suppress(Exception):
             demo_func()
-        except Exception as e:
-            print(f"❌ {name} failed: {e}")
 
 
-def safe_run_demonstration(demo_func: callable) -> FlextResult[None]:
+def safe_run_demonstration(demo_func: Callable[[], None]) -> FlextResult[None]:
     """Safely run a demonstration function."""
     try:
         demo_func()

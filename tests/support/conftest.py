@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 """Comprehensive test configuration with factory_boy and pytest ecosystem integration.
 
 This module provides:
@@ -127,7 +128,7 @@ def performance_matchers() -> type[PerformanceMatchers]:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
+    config: pytest.Config, items: list[pytest.Item]  # noqa: ARG001
 ) -> None:
     """Modify test collection to add markers based on test patterns."""
     for item in items:
@@ -189,7 +190,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:  # noqa: ARG001
     """Hook to customize test reports."""
     # Add factory information to test reports if applicable
     if hasattr(item, "factory_used"):

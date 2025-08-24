@@ -287,7 +287,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
         """Initialize with optional internal event storage."""
         if root is None:
             root = []
-        super().__init__(root, **data)  # pyright: ignore[reportUnknownMemberType]
+        super().__init__(root, **data)
         # Internal storage for Flext Event objects - this satisfies MyPy
         object.__setattr__(self, "_flext_events", [])
 

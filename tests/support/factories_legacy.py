@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401
 """Unified factories for flext-core tests using factory_boy and pytest ecosystem.
 
 Advanced factory patterns with comprehensive test data generation using:

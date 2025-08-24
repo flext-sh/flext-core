@@ -70,7 +70,7 @@ class FlextResult[T]:
     ) -> None: ...
 
     @overload
-    def __init__(  # noqa: F811
+    def __init__(
         self,
         *,
         data: None = None,
@@ -79,7 +79,7 @@ class FlextResult[T]:
         error_data: FlextTypes.Result.ErrorData = None,
     ) -> None: ...
 
-    def __init__(  # noqa: F811
+    def __init__(
         self,
         *,
         data: T | None = None,
@@ -951,7 +951,7 @@ def safe_call[T](func: Callable[[], T]) -> FlextResult[T]:
         return FlextResult[T].fail(str(e))
 
 
-def ok_result[TResultLocal](data: TResultLocal) -> FlextResult[TResultLocal]:  # noqa: UP047
+def ok_result[TResultLocal](data: TResultLocal) -> FlextResult[TResultLocal]:
     """Typed helper that wraps FlextResult.ok.
 
     Use this when passing literals or values whose element types are not

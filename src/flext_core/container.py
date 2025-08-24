@@ -6,7 +6,7 @@ import inspect
 from collections import UserString
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, cast, override
+from typing import cast, override
 from zoneinfo import ZoneInfo
 
 from flext_core.commands import FlextCommands
@@ -19,7 +19,7 @@ from flext_core.utilities import FlextGenerators
 from flext_core.validation import flext_validate_service_name
 
 
-class FlextServiceKey(UserString, Generic[T]):  # noqa: UP046
+class FlextServiceKey[T](UserString):
     """Typed service key for type-safe service resolution.
 
     A specialized string that acts as a plain string at runtime but provides type safety

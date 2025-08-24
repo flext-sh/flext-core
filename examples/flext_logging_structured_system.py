@@ -242,8 +242,8 @@ def _basic_exception_logging() -> None:
             numerator=10,
             denominator=0,
         )
+    data = {"name": "John"}
     try:
-        data = {"name": "John"}
         _ = data["email"]
     except KeyError:
         error_logger.exception(
@@ -252,8 +252,8 @@ def _basic_exception_logging() -> None:
             required_field="email",
             available_fields=list(data.keys()),
         )
+    number: str = "not_a_number"
     try:
-        number: str = "not_a_number"
         _ = int(number) + 10
     except Exception:
         error_logger.exception(

@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001, ARG002
 """Comprehensive tests for schema_processing module.
 
 Copyright (c) 2025 FLEXT Contributors
@@ -9,9 +10,11 @@ validators, and pipeline components for complete coverage.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, EnumMeta
+from typing import cast
 
 import pytest
+from pydantic_core import ValidationError
 
 from flext_core import (
     FlextBaseConfigManager as BaseConfigManager,  # Modern equivalent
@@ -168,13 +171,13 @@ class TestFileWriter(BaseFileWriter):
         self.fail_write = fail_write
         self.written_entries: list[object] = []
 
-    def write_header(self, output_file: object) -> None:  # noqa: ARG002
+    def write_header(self, output_file: object) -> None:
         """Write mock header."""
         if self.fail_write:
             msg = "Write failed"
             raise ValueError(msg)
 
-    def write_entry(self, output_file: object, entry: object) -> None:  # noqa: ARG002
+    def write_entry(self, output_file: object, entry: object) -> None:
         """Write mock entry."""
         self.written_entries.append(entry)
 
@@ -184,8 +187,6 @@ class TestEntryType:
 
     def test_entry_type_enum(self) -> None:
         """Test entry type enum exists."""
-        from enum import EnumMeta  # noqa: PLC0415
-
         assert isinstance(EntryType, EnumMeta)
         assert issubclass(EntryType, Enum)
 
@@ -215,8 +216,6 @@ class TestBaseEntry:
             identifier="id_123",
         )
         # Should not be able to modify (frozen Pydantic model)
-        from pydantic_core import ValidationError  # noqa: PLC0415
-
         with pytest.raises(ValidationError, match="Instance is frozen"):
             entry.entry_type = "new_type"
 
@@ -582,7 +581,7 @@ class TestBaseSorter:
     def test_sort_entries_exception_handling(self) -> None:
         """Test sort exception handling."""
 
-        def failing_key(x: object) -> object:  # noqa: ARG001
+        def failing_key(x: object) -> object:
             msg = "Sort failed"
             raise ValueError(msg)
 
@@ -599,8 +598,6 @@ class TestBaseFileWriter:
 
     def test_write_entries_success(self) -> None:
         """Test successful entries writing."""
-        from typing import cast  # noqa: PLC0415
-
         class TestOutputFile:
             def __init__(self) -> None:
                 self.written_data: list[str] = []
@@ -618,8 +615,6 @@ class TestBaseFileWriter:
 
     def test_write_entries_failure(self) -> None:
         """Test entries writing with failure."""
-        from typing import cast  # noqa: PLC0415
-
         class TestOutputFile:
             def __init__(self) -> None:
                 self.written_data: list[str] = []

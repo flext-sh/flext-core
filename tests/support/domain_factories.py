@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401
 """Domain factories for test data generation.
 
 Simple factory pattern without factory-boy complications.
@@ -62,8 +63,8 @@ class UserDataFactory:
         data = {
             "id": str(uuid.uuid4()),
             "name": f"User {random.randint(100, 999)}",  # noqa: S311
-            "email": f"user{random.randint(1, 1000)}@example.com",
-            "age": random.randint(18, 65),
+            "email": f"user{random.randint(1, 1000)}@example.com",  # noqa: S311
+            "age": random.randint(18, 65),  # noqa: S311
             "active": True,
             "created_at": "2024-01-01T00:00:00Z",
         }
@@ -106,9 +107,9 @@ class ServiceDataFactory:
     def create(**overrides: Any) -> dict[str, Any]:
         """Create service data dict."""
         data = {
-            "name": f"test_service_{random.randint(1, 100)}",
-            "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
-            "port": random.randint(8000, 9000),
+            "name": f"test_service_{random.randint(1, 100)}",  # noqa: S311
+            "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",  # noqa: S311
+            "port": random.randint(8000, 9000),  # noqa: S311
             "health_check_path": "/health",
             "dependencies": [],
         }
@@ -175,15 +176,15 @@ class RealisticData:
     def user_registration_data() -> dict[str, Any]:
         """Create realistic user registration data."""
         return {
-            "name": f"John Doe {random.randint(1, 100)}",
-            "email": f"john.doe{random.randint(1, 1000)}@company.com",
-            "age": random.randint(18, 65),
-            "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
+            "name": f"John Doe {random.randint(1, 100)}",  # noqa: S311
+            "email": f"john.doe{random.randint(1, 1000)}@company.com",  # noqa: S311
+            "age": random.randint(18, 65),  # noqa: S311
+            "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",  # noqa: S311
             "address": {
-                "street": f"{random.randint(1, 999)} Main St",
+                "street": f"{random.randint(1, 999)} Main St",  # noqa: S311
                 "city": "Test City",
                 "state": "TC",
-                "zip": f"{random.randint(10000, 99999)}",
+                "zip": f"{random.randint(10000, 99999)}",  # noqa: S311
             },
         }
 
@@ -196,9 +197,9 @@ class RealisticData:
             "items": [
                 {
                     "product_id": str(uuid.uuid4()),
-                    "name": f"Product {random.randint(1, 100)}",
-                    "quantity": random.randint(1, 5),
-                    "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(
+                    "name": f"Product {random.randint(1, 100)}",  # noqa: S311
+                    "quantity": random.randint(1, 5),  # noqa: S311
+                    "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(  # noqa: S311
                         Decimal("0.01")
                     ),
                 }

@@ -9,6 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# use .shared_domain with dot to access local module
+from examples.shared_domain import (
+    Order as SharedOrder,
+    Product as SharedProduct,
+    User as SharedUser,
+)
 from flext_core import (
     FlextCacheableMixin,
     FlextComparableMixin,
@@ -17,12 +23,6 @@ from flext_core import (
     FlextUtilities,
 )
 
-# use .shared_domain with dot to access local module
-from ..shared_domain import (
-    Order as SharedOrder,
-    Product as SharedProduct,
-    User as SharedUser,
-)
 from .formatting_helpers import (
     ADULT_AGE_THRESHOLD,
     MIDDLE_AGED_THRESHOLD,

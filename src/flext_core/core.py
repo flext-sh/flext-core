@@ -5,7 +5,9 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import cast, override
+from typing import Annotated, cast, override
+
+from pydantic import Field, field_validator
 
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.commands import FlextCommands
@@ -107,6 +109,7 @@ from flext_core.root_models import (
 from flext_core.schema_processing import (
     FlextProcessingPipeline,
 )
+from flext_core.services import FlextServiceProcessor
 from flext_core.typings import FlextPlugin, FlextRepository, FlextTypes, P, R, T
 from flext_core.utilities import (
     FlextConsole,
@@ -1194,6 +1197,7 @@ class FlextCore:
                         result = func.__call__(*args, **kwargs)
                     else:
                         _raise_not_callable()
+                        return None  # This line should never be reached
                     duration = (datetime.now(UTC) - start_time).total_seconds()
                     # Log performance metrics
                     logger = self.get_logger(__name__)
@@ -1439,7 +1443,6 @@ class FlextCore:
         decorators: list[str] | None = None,
     ) -> type:
         """Create service processor class dynamically to reduce boilerplate."""
-        from flext_core.services import FlextServiceProcessor  # noqa: PLC0415
 
         class DynamicServiceProcessor(FlextServiceProcessor[object, object, object]):
             def __init__(self) -> None:
@@ -1482,7 +1485,7 @@ class FlextCore:
                         decorated_method = decorator(original_process)
                         # Use setattr to dynamically assign the method to the class
                         # This is necessary for dynamic method decoration and is intentional
-                        setattr(DynamicServiceProcessor, "process", decorated_method)  # noqa: B010
+                        DynamicServiceProcessor.process = decorated_method  # pyright: ignore[reportAttributeAccessIssue]
                         original_process = decorated_method
 
         DynamicServiceProcessor.__name__ = f"{name}ServiceProcessor"
@@ -1496,10 +1499,6 @@ class FlextCore:
         validators: dict[str, Callable[[object], FlextResult[object]]] | None = None,
     ) -> type[FlextEntity]:
         """Create entity class with built-in validators to reduce boilerplate."""
-        from typing import Annotated  # noqa: PLC0415
-
-        from pydantic import Field, field_validator  # noqa: PLC0415
-
         # Build field annotations
         annotations = {}
 
@@ -1545,10 +1544,6 @@ class FlextCore:
         business_rules: Callable[[object], FlextResult[None]] | None = None,
     ) -> type[FlextValue]:
         """Create value object class with built-in validators to reduce boilerplate."""
-        from typing import Annotated  # noqa: PLC0415
-
-        from pydantic import Field, field_validator  # noqa: PLC0415
-
         # Build field annotations
         annotations = {}
 

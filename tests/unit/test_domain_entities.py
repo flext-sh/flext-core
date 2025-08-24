@@ -1,5 +1,6 @@
 """Comprehensive tests for entities module."""
 
+
 from __future__ import annotations
 
 import time
@@ -223,7 +224,7 @@ class TestFlextEntity:
             raise AssertionError(f"Expected {hash(entity2)}, got {hash(entity1)}")
 
         # Test in set/dict
-        entity_set = {entity1, entity2}  # pyright: ignore[reportUnhashable]
+        entity_set = {entity1, entity2}
         if len(entity_set) != 1:  # Only one entity due to same ID
             raise AssertionError(f"Expected {1}, got {len(entity_set)}")
 
@@ -317,7 +318,7 @@ class TestFlextValueObject:
         assert hash(vo1) != hash(vo3)
 
         # Test in set
-        vo_set = {vo1, vo2, vo3}  # pyright: ignore[reportUnhashable]
+        vo_set = {vo1, vo2, vo3}
         if len(vo_set) != EXPECTED_BULK_SIZE:  # vo1 and vo2 are the same
             raise AssertionError(f"Expected {2}, got {len(vo_set)}")
 

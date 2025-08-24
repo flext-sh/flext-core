@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validat
 
 from flext_core.constants import FlextFieldType
 from flext_core.exceptions import FlextValidationError
+from flext_core.loggings import FlextLoggerFactory
 from flext_core.result import FlextResult
 from flext_core.typings import (
     FlextFieldId,
@@ -48,7 +49,6 @@ class FlextFieldCore(
     model_config = ConfigDict(
         frozen=True,
         validate_assignment=True,
-        str_strip_whitespace=True,
         extra="forbid",
         arbitrary_types_allowed=True,  # Allow protocol types like FlextValidator
     )
@@ -421,7 +421,6 @@ class FlextFieldMetadata(BaseModel):
     model_config = ConfigDict(
         frozen=True,
         validate_assignment=True,
-        str_strip_whitespace=True,
         extra="forbid",
         arbitrary_types_allowed=True,  # Allow protocol types like FlextValidator
     )
@@ -585,11 +584,6 @@ class FlextFieldRegistry:
     def __init__(self) -> None:
         """Initialize empty registry."""
         self._fields: dict[str, FlextFieldCore] = {}
-        # Lazy import to avoid circular dependency
-        from flext_core.loggings import (  # noqa: PLC0415
-            FlextLoggerFactory,
-        )
-
         self._logger = FlextLoggerFactory.get_logger(__name__)
 
     def register_field(self, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:

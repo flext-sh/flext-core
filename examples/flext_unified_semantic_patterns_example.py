@@ -477,7 +477,7 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
 def demonstrate_domain_events(pipeline: FlextDataPipeline) -> None:
     """Demonstrate domain events."""
     if hasattr(pipeline, "clear_domain_events"):
-        events = pipeline.clear_domain_events()
+        events = pipeline.clear_domain_events()  # type: ignore[attr-defined]
     else:
         events = []
     for _event in events:

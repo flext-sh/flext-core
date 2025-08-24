@@ -1,9 +1,11 @@
+# ruff: noqa: PLC0415
 """HTTP testing utilities using pytest-httpx for comprehensive API testing.
 
 Provides advanced HTTP mocking, request/response validation, and API testing
 patterns with automatic retry, error simulation, and performance monitoring.
 """
 
+# ruff: noqa: S101, ARG001, ARG002
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,4 +1,6 @@
+# ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FlextDecorators and decorator functionality."""
+
 
 from __future__ import annotations
 
@@ -15,11 +17,18 @@ from flext_core import (
     FlextDecorators,
     FlextDecoratorUtils,
     FlextErrorHandlingDecorators,
+    FlextFunctionalDecorators,
+    FlextImmutabilityDecorators,
     FlextLoggingDecorators,
     FlextPerformanceDecorators,
     FlextResult,
     FlextValidationDecorators,
     FlextValidationError,
+    _BaseDecoratorFactory,
+    _BaseImmutabilityDecorators,
+    _decorators_base,
+    _safe_call_decorator,
+    _validate_input_decorator,
 )
 
 # Aliases for compatibility
@@ -31,14 +40,14 @@ _BaseLoggingDecorators = FlextLoggingDecorators
 _DecoratedFunction = FlextDecoratedFunction[object]
 
 # Simple decorator functions - updated to new API
-flext_safe_call = FlextDecorators.safe_call
+flext_safe_call = FlextDecorators.safe_call()  # Call the factory to get the decorator
 flext_cache_decorator = FlextDecorators.cache_results
-flext_safe_decorator = FlextDecorators.safe_call  # This returns the decorator factory
+flext_safe_decorator = (
+    FlextDecorators.safe_call
+)  # Factory function that returns decorator
 flext_timing_decorator = FlextDecorators.time_execution
 
-# Internal decorator functions - updated to new API
-_safe_call_decorator = FlextDecorators.safe_call()
-_validate_input_decorator = FlextDecorators.validate_arguments
+# Internal decorator functions - use imported ones from decorators module
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -59,7 +68,7 @@ class TestFlextDecorators:
     def test_safe_result_decorator_success(self) -> None:
         """Test safe_result decorator with successful function."""
 
-        @FlextDecorators.safe_result  # type: ignore[arg-type]
+        @FlextDecorators.safe_result
         def safe_function(x: int, y: int) -> int:
             return x + y
 
@@ -73,7 +82,7 @@ class TestFlextDecorators:
     def test_safe_result_decorator_failure(self) -> None:
         """Test safe_result decorator with failing function."""
 
-        @FlextDecorators.safe_result  # type: ignore[arg-type]
+        @FlextDecorators.safe_result
         def failing_function() -> int:
             msg = "Test error"
             raise ValueError(msg)
@@ -88,7 +97,7 @@ class TestFlextDecorators:
     def test_safe_result_decorator_with_none_return(self) -> None:
         """Test safe_result decorator with function returning None."""
 
-        @FlextDecorators.safe_result  # type: ignore[arg-type]
+        @FlextDecorators.safe_result
         def void_function() -> None:
             return None
 
@@ -100,7 +109,7 @@ class TestFlextDecorators:
     def test_validated_with_result_decorator_success(self) -> None:
         """Test validated_with_result decorator with valid data."""
 
-        @FlextDecorators.validated_with_result(UserModel)  # type: ignore[arg-type]
+        @FlextDecorators.validated_with_result(UserModel)
         def create_user(**kwargs: object) -> str:
             return f"Created user: {kwargs['name']}"
 
@@ -114,7 +123,7 @@ class TestFlextDecorators:
     def test_validated_with_result_decorator_validation_failure(self) -> None:
         """Test validated_with_result decorator with invalid data."""
 
-        @FlextDecorators.validated_with_result(UserModel)  # type: ignore[arg-type]
+        @FlextDecorators.validated_with_result(UserModel)
         def create_user(**kwargs: object) -> str:
             return f"Created user: {kwargs['name']}"
 
@@ -129,7 +138,7 @@ class TestFlextDecorators:
     def test_validated_with_result_decorator_execution_failure(self) -> None:
         """Test validated_with_result decorator when execution fails."""
 
-        def failing_user_creation_raw(**kwargs: object) -> str:  # noqa: ARG001
+        def failing_user_creation_raw(**kwargs: object) -> str:
             msg = "Database error"
             raise RuntimeError(msg)
 
@@ -496,7 +505,7 @@ class TestFlextValidationDecorators:
         # FlextValidationDecorators is a static class - this test appears to test non-existent methods
         # Let's test a different validation decorator method
 
-        def test_func_none(x: int) -> None:  # noqa: ARG001  # Accept parameter
+        def test_func_none(x: int) -> None:
             return None
 
         # FlextValidationDecorators doesn't have apply_decoration - using a simple test instead
@@ -890,18 +899,12 @@ class TestDecoratorCoverageImprovements:
 
     def test_decorator_imports_coverage(self) -> None:
         """Test decorator imports from TYPE_CHECKING block (lines 91-93)."""
-        from flext_core import _decorators_base  # noqa: PLC0415
-
         # Verify that TYPE_CHECKING imports are available at runtime for coverage
         assert hasattr(_decorators_base, "_DecoratedFunction")
         assert hasattr(_decorators_base, "_BaseDecoratorUtils")
 
     def test_immutability_decorators_coverage(self) -> None:
         """Test immutability decorator methods (lines 161, 276, 281)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextImmutabilityDecorators,  # noqa: PLC0415
-            _BaseImmutabilityDecorators,
-        )
 
         def sample_function(x: int) -> int:
             return x * 2
@@ -912,43 +915,40 @@ class TestDecoratorCoverageImprovements:
         )
         assert callable(decorated)  # Should return callable function
 
-        # Test freeze_args_decorator from _BaseImmutabilityDecorators - line 281
-        freeze_decorator = _BaseImmutabilityDecorators.freeze_args_decorator()
-        decorated = freeze_decorator(cast("_DecoratedFunction", sample_function))
-        assert decorated is sample_function  # Returns same function
+        # Test make_immutable from _BaseImmutabilityDecorators - line 281
+        decorated2 = _BaseImmutabilityDecorators.make_immutable(
+            cast("_DecoratedFunction", sample_function)
+        )
+        assert callable(decorated2)  # Returns callable function
 
     def test_functional_decorators_coverage(self) -> None:
         """Test functional decorator methods (lines 290, 295)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextFunctionalDecorators as _BaseFunctionalDecorators,
-        )
 
         def sample_function(x: int) -> int:
             return x * 2
 
         # Test curry_decorator - line 290
-        decorated = _BaseFunctionalDecorators.curry_decorator(
+        decorated = FlextFunctionalDecorators.curry_decorator(
             cast("_DecoratedFunction", sample_function),
         )
-        assert decorated is sample_function  # Returns same function
+        assert callable(decorated)  # Returns callable curried function
+        assert decorated(5) == 10  # Test curry functionality
 
-        # Test compose_decorator - line 295
-        decorated = _BaseFunctionalDecorators.compose_decorator(
+        # Test curry method - line 295
+        decorated2 = FlextFunctionalDecorators.curry(
             cast("_DecoratedFunction", sample_function),
         )
-        assert decorated is sample_function  # Returns same function
+        assert callable(decorated2)  # Returns callable curried function
+        assert decorated2(5) == 10  # Test curry functionality
 
     def test_logging_decorator_exception_handling(self) -> None:
         """Test logging decorator exception handling (lines 222-236)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextLoggingDecorators as _BaseLoggingDecorators,
-        )
 
         def failing_function() -> None:
             msg = "Test runtime error"
             raise RuntimeError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(
+        decorated = FlextLoggingDecorators.log_calls_decorator(
             cast("_DecoratedFunction", failing_function),
         )
 
@@ -958,15 +958,12 @@ class TestDecoratorCoverageImprovements:
 
     def test_logging_decorator_type_error_handling(self) -> None:
         """Test logging decorator with TypeError (lines 222-236)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextLoggingDecorators as _BaseLoggingDecorators,
-        )
 
         def type_error_function() -> None:
             msg = "Type error occurred"
             raise ValueError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(
+        decorated = FlextLoggingDecorators.log_calls_decorator(
             cast("_DecoratedFunction", type_error_function),
         )
 
@@ -975,15 +972,12 @@ class TestDecoratorCoverageImprovements:
 
     def test_logging_decorator_value_error_handling(self) -> None:
         """Test logging decorator with ValueError (lines 222-236)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextLoggingDecorators as _BaseLoggingDecorators,
-        )
 
         def value_error_function() -> None:
             msg = "Value error occurred"
             raise ValueError(msg)
 
-        decorated = _BaseLoggingDecorators.log_calls_decorator(
+        decorated = FlextLoggingDecorators.log_calls_decorator(
             cast("_DecoratedFunction", value_error_function),
         )
 
@@ -992,15 +986,12 @@ class TestDecoratorCoverageImprovements:
 
     def test_log_exceptions_decorator_exception_handling(self) -> None:
         """Test log_exceptions_decorator exception handling (lines 246-267)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextLoggingDecorators as _BaseLoggingDecorators,
-        )
 
         def failing_function() -> None:
             msg = "Exception for logging test"
             raise RuntimeError(msg)
 
-        decorated = _BaseLoggingDecorators.log_exceptions_decorator(
+        decorated = FlextLoggingDecorators.log_exceptions_decorator(
             cast("_DecoratedFunction", failing_function),
         )
 
@@ -1009,9 +1000,6 @@ class TestDecoratorCoverageImprovements:
 
     def test_log_exceptions_decorator_multiple_exception_types(self) -> None:
         """Test log_exceptions_decorator with different exception types (lines 246-267)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextLoggingDecorators as _BaseLoggingDecorators,
-        )
 
         def type_error_function() -> None:
             msg = "Type error in log_exceptions test"
@@ -1021,10 +1009,10 @@ class TestDecoratorCoverageImprovements:
             msg = "Value error in log_exceptions test"
             raise ValueError(msg)
 
-        decorated_type = _BaseLoggingDecorators.log_exceptions_decorator(
+        decorated_type = FlextLoggingDecorators.log_exceptions_decorator(
             cast("_DecoratedFunction", type_error_function),
         )
-        decorated_value = _BaseLoggingDecorators.log_exceptions_decorator(
+        decorated_value = FlextLoggingDecorators.log_exceptions_decorator(
             cast("_DecoratedFunction", value_error_function),
         )
 
@@ -1036,8 +1024,6 @@ class TestDecoratorCoverageImprovements:
 
     def test_safe_call_decorator_with_error_handler(self) -> None:
         """Test safe_call_decorator with error handler (lines 325-326)."""
-        from flext_core import _safe_call_decorator  # noqa: PLC0415
-
         error_handled = False
 
         def error_handler(error: Exception) -> str:
@@ -1058,9 +1044,8 @@ class TestDecoratorCoverageImprovements:
 
     def test_validate_input_decorator_validation_failure(self) -> None:
         """Test validation decorator with validation failure (lines 377-388)."""
-        from flext_core import _validate_input_decorator  # noqa: PLC0415
 
-        def always_false_validator(arg: object) -> bool:  # noqa: ARG001
+        def always_false_validator(arg: object) -> bool:
             return False
 
         def sample_function(x: int) -> int:
@@ -1074,7 +1059,6 @@ class TestDecoratorCoverageImprovements:
 
     def test_validate_input_decorator_with_multiple_args(self) -> None:
         """Test validation decorator with multiple arguments (lines 377-388)."""
-        from flext_core import _validate_input_decorator  # noqa: PLC0415
 
         def validator_requiring_positive(arg: object) -> bool:
             return isinstance(arg, int) and arg > 0
@@ -1095,24 +1079,20 @@ class TestDecoratorCoverageImprovements:
 
     def test_decorator_factory_methods_coverage(self) -> None:
         """Test decorator factory methods (lines 401, 408, 413, 420)."""
-        from flext_core import (  # noqa: PLC0415
-            _BaseDecoratorFactory,
-        )
-
         # Test create_cache_decorator - line 401
-        cache_decorator = _BaseDecoratorFactory.create_cache_decorator(size=64)
+        cache_decorator = FlextPerformanceDecorators.create_cache_decorator(max_size=64)
         assert callable(cache_decorator)
 
         # Test create_safe_decorator - line 408
-        safe_decorator = _BaseDecoratorFactory.create_safe_decorator()
+        safe_decorator = FlextErrorHandlingDecorators.create_safe_decorator()
         assert callable(safe_decorator)
 
-        # Test create_timing_decorator - line 413
-        timing_decorator = _BaseDecoratorFactory.create_timing_decorator()
+        # Test get_timing_decorator - line 413
+        timing_decorator = FlextPerformanceDecorators.get_timing_decorator()
         assert callable(timing_decorator)
 
         # Test create_validation_decorator - line 420
-        def dummy_validator(arg: object) -> bool:  # noqa: ARG001
+        def dummy_validator(arg: object) -> bool:
             return True
 
         validation_decorator = _BaseDecoratorFactory.create_validation_decorator(
@@ -1122,15 +1102,12 @@ class TestDecoratorCoverageImprovements:
 
     def test_error_handling_decorator_retry_method(self) -> None:
         """Test retry_on_failure method (corrected API)."""
-        from flext_core import (  # noqa: PLC0415
-            FlextErrorHandlingDecorators as _BaseErrorHandlingDecorators,
-        )
 
         def sample_function(x: int) -> int:
             return x * 2
 
         # Test retry_on_failure - correct API method name
-        decorated = _BaseErrorHandlingDecorators.retry_on_failure(max_attempts=2)(
+        decorated = FlextErrorHandlingDecorators.retry_on_failure(max_attempts=2)(
             sample_function
         )
         # Test that it's actually decorated and works

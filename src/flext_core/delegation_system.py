@@ -218,8 +218,7 @@ class FlextMixinDelegator:
             try:
                 # Try to get the signature first to ensure it's available
                 sig = inspect.signature(method)
-                # Use setattr to dynamically assign __signature__ attribute (avoid mypy attr-defined)
-                # Type ignore needed for dynamic attribute assignment
+                # Use setattr to dynamically assign __signature__ attribute (avoid pyright error)
                 delegated_method.__signature__ = sig  # type: ignore[attr-defined]
             except (ValueError, TypeError, AttributeError):
                 # Signature not available, skip it

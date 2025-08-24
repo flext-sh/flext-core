@@ -49,8 +49,7 @@ def demonstrate_basic_configuration() -> None:
 
     Using flext_core.typings for type safety.
     """
-    separator = "\n" + "=" * 80
-    print(separator)
+    "\n" + "=" * 80
 
     # 1. Basic configuration creation
     config_data: FlextTypes.Core.Config = {
@@ -96,8 +95,7 @@ def demonstrate_basic_configuration() -> None:
 
 def demonstrate_environment_integration() -> None:
     """Demonstrate environment variable integration using flext_core.typings."""
-    separator = "\n" + "=" * 80
-    print(separator)
+    "\n" + "=" * 80
 
     # 1. Environment-based settings
 
@@ -152,8 +150,7 @@ def demonstrate_environment_integration() -> None:
 
 def demonstrate_configuration_merging() -> None:
     """Demonstrate configuration merging patterns using flext_core.typings."""
-    separator = "\n" + "=" * 80
-    print(separator)
+    "\n" + "=" * 80
 
     # 1. Basic configuration merging
 
@@ -236,8 +233,7 @@ def demonstrate_file_configuration() -> None:
 
 def _print_file_config_section_header(_title: str) -> None:
     """Print formatted file configuration section header."""
-    separator = "\n" + "=" * 80
-    print(separator)
+    "\n" + "=" * 80
 
 
 def _create_configuration_file() -> FlextResult[str]:
@@ -403,7 +399,7 @@ def _print_config_hierarchy_overview() -> None:
     pass
 
 
-def _print_merged_config(env_name: str, merged: FlextTypes.Core.Dict) -> None:  # noqa: ARG001
+def _print_merged_config(_env_name: str, merged: FlextTypes.Core.Dict) -> None:
     app_config = merged.get("app", {}) if isinstance(merged, dict) else {}
     app_config.get("debug") if isinstance(app_config, dict) else "N/A"
 

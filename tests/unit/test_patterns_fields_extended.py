@@ -1,5 +1,6 @@
 """Extended tests for FlextFieldCore factory methods and FlextFieldRegistry."""
 
+
 from __future__ import annotations
 
 from flext_core import (

@@ -101,7 +101,7 @@ def _demo_container() -> None:
     if service_result.success:
         user_service = service_result.value
         if hasattr(user_service, "create_user"):
-            user_service.create_user("bob@example.com", "Bob Wilson")
+            user_service.create_user("bob@example.com", "Bob Wilson")  # type: ignore[attr-defined]
 
 
 def _demo_fields() -> None:

@@ -4466,7 +4466,7 @@ _global_observability: FlextMinimalObservability | None = None
 
 def get_global_observability() -> FlextMinimalObservability:
     """Get global observability instance (singleton)."""
-    global _global_observability  # noqa: PLW0603
+    global _global_observability
     if _global_observability is None:
         _global_observability = FlextMinimalObservability()
     return _global_observability

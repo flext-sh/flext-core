@@ -4,6 +4,7 @@ Provides factory_boy-based factories for creating test objects with proper
 relationships, sequences, and customization following SOLID principles.
 """
 
+# ruff: noqa: D106
 from __future__ import annotations
 
 import uuid

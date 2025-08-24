@@ -13,6 +13,8 @@ Key Patterns:
 
 from __future__ import annotations
 
+import contextlib
+import random
 import time
 
 from shared_domain import SharedDomainFactory
@@ -23,6 +25,7 @@ from flext_core import FlextDecorators
 MAX_AGE = 150
 MIN_AGE = 0
 SUCCESS_THRESHOLD = 0.4
+MIN_USER_CREATION_ARGS = 3  # name, email, age
 
 # =============================================================================
 # MODERN FLEXT DECORATORS SHOWCASE - New API
@@ -31,10 +34,9 @@ SUCCESS_THRESHOLD = 0.4
 
 def demonstrate_cache_decorator() -> None:
     """Demonstrate modern cache decorator usage."""
-    print("\n📝 Modern Cache Decorator:")
-
     # Create cache decorator using modern API
-    cache_decorator = FlextDecorators.Performance.create_cache_decorator(max_size=100)
+    performance_decorators = FlextDecorators.Performance
+    cache_decorator = performance_decorators.create_cache_decorator(max_size=100)  # type: ignore[attr-defined]
 
     def expensive_calculation(*args: object, **_kwargs: object) -> object:
         """Expensive calculation compatible with FlextCallable."""
@@ -48,25 +50,17 @@ def demonstrate_cache_decorator() -> None:
     cached_calculation = cache_decorator(expensive_calculation)
 
     # Test cache functionality
-    print("First call (cache miss):")
     start_time = time.time()
-    result1 = cached_calculation(5)
-    duration1 = time.time() - start_time
-    print(f"Result: {result1}, Duration: {duration1:.3f}s")
+    cached_calculation(5)
+    time.time() - start_time
 
-    print("Second call (cache hit):")
     start_time = time.time()
-    result2 = cached_calculation(5)
-    duration2 = time.time() - start_time
-    print(f"Result: {result2}, Duration: {duration2:.3f}s")
-
-    print(f"Cache speedup: {duration1 / duration2:.1f}x faster")
+    cached_calculation(5)
+    time.time() - start_time
 
 
 def demonstrate_complete_decorator() -> None:
     """Demonstrate complete decorator composition."""
-    print("\n📝 Complete Decorator Composition:")
-
     # Create complete decorator with multiple features
     complete_decorator = FlextDecorators.complete_decorator(
         cache_size=64,
@@ -80,8 +74,6 @@ def demonstrate_complete_decorator() -> None:
         if isinstance(data, dict):
             # Simulate complex processing
             time.sleep(0.05)  # Reduced for demo
-            import random  # noqa: PLC0415
-
             if random.random() > SUCCESS_THRESHOLD:  # noqa: S311
                 return {"status": "processed", "data": data, "timestamp": time.time()}
             msg = "Random processing failure"
@@ -94,16 +86,12 @@ def demonstrate_complete_decorator() -> None:
     # Test the enhanced operation
     test_data = {"id": 123, "name": "Test Operation"}
 
-    try:
-        result = enhanced_operation(test_data)
-        print(f"✅ Enhanced operation result: {result}")
-    except Exception as e:
-        print(f"❌ Enhanced operation failed: {e}")
+    with contextlib.suppress(Exception):
+        enhanced_operation(test_data)
 
 
 def demonstrate_safe_result_decorator() -> None:
     """Demonstrate safe result decorator."""
-    print("\n📝 Safe Result Decorator:")
 
     def risky_operation(*args: object, **_kwargs: object) -> object:
         """Risky operation that might fail."""
@@ -116,18 +104,14 @@ def demonstrate_safe_result_decorator() -> None:
     safe_operation = FlextDecorators.safe_result(risky_operation)
 
     # Test success case
-    result_success = safe_operation("success")
-    print(f"Success result: {result_success}")
+    safe_operation("success")
 
     # Test failure case
-    result_failure = safe_operation("fail")
-    print(f"Failure result: {result_failure}")
+    safe_operation("fail")
 
 
 def demonstrate_user_creation_with_modern_decorators() -> None:
     """Demonstrate user creation with modern decorators."""
-    print("\n📝 User Creation with Modern Decorators:")
-
     # Create a comprehensive decorator for user operations
     user_decorator = FlextDecorators.complete_decorator(
         cache_size=32, with_timing=True, with_logging=False
@@ -135,7 +119,7 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
 
     def create_user_generic(*args: object, **_kwargs: object) -> object:
         """Generic user creator compatible with FlextCallable."""
-        if len(args) >= 3:
+        if len(args) >= MIN_USER_CREATION_ARGS:
             try:
                 name = str(args[0]) if args[0] is not None else ""
                 email = str(args[1]) if args[1] is not None else ""
@@ -148,25 +132,25 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
                     age = int(age_val)
                 else:
                     msg = f"Invalid age: {age_val}"
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # noqa: TRY301
 
                 # Basic validation
                 if not name or not name.strip():
                     msg = "Name required"
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # noqa: TRY301
                 if "@" not in email:
                     msg = "Valid email required"
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # noqa: TRY301
                 if age < MIN_AGE or age > MAX_AGE:
                     msg = "Valid age required"
-                    raise ValueError(msg)
+                    raise ValueError(msg)  # noqa: TRY301
 
                 # Create user using SharedDomainFactory
                 result = SharedDomainFactory.create_user(name, email, age)
                 if result.success:
                     return result.value
                 msg = f"User creation failed: {result.error}"
-                raise ValueError(msg)
+                raise ValueError(msg)  # noqa: TRY301
 
             except (ValueError, TypeError) as e:
                 msg = f"Type conversion failed: {e}"
@@ -183,40 +167,29 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
             "Alice Modern", "alice.modern@example.com", 25
         )
         if hasattr(user_result, "name"):
-            print(f"✅ User created: {user_result.name}")
-        else:
-            print(f"✅ User created: {user_result}")
-    except Exception as e:
-        print(f"❌ User creation failed: {e}")
+            pass
+    except Exception:  # noqa: S110
+        pass
 
     # Test validation failure
-    try:
-        invalid_result = enhanced_user_creator("", "invalid", -1)
-        print(f"❌ Should have failed: {invalid_result}")
-    except Exception as e:
-        print(f"✅ Validation correctly failed: {e}")
+    with contextlib.suppress(Exception):
+        enhanced_user_creator("", "invalid", -1)
 
 
 def demonstrate_decorator_categories() -> None:
     """Demonstrate different decorator categories."""
-    print("\n📝 Decorator Categories:")
-
     # Performance decorators
-    print("🚀 Performance Category:")
-    cache_dec = FlextDecorators.Performance.create_cache_decorator(max_size=50)
-    print(f"  Cache decorator created: {cache_dec}")
+    performance_decorators = FlextDecorators.Performance
+    performance_decorators.create_cache_decorator(max_size=50)  # type: ignore[attr-defined]
 
     # Error handling decorators
-    print("🛡️ Error Handling Category:")
-    safe_dec = FlextDecorators.ErrorHandling.get_safe_decorator()
-    print(f"  Safe decorator created: {safe_dec}")
+    error_handling_decorators = FlextDecorators.ErrorHandling
+    error_handling_decorators.create_safe_decorator()  # type: ignore[attr-defined]
 
     # Complete decorator composition
-    print("🎯 Complete Decorator:")
-    complete_dec = FlextDecorators.complete_decorator(
+    FlextDecorators.complete_decorator(
         cache_size=32, with_timing=True, with_logging=True
     )
-    print(f"  Complete decorator created: {complete_dec}")
 
 
 # =============================================================================
@@ -226,36 +199,12 @@ def demonstrate_decorator_categories() -> None:
 
 def main() -> None:
     """🎯 Example 09: Modern Enterprise Decorators."""
-    print("=" * 70)
-    print("🏢 EXAMPLE 09: MODERN ENTERPRISE DECORATORS")
-    print("=" * 70)
-
-    print("\n📚 Modern FlextDecorators Benefits:")
-    print("  • Type-safe decorator composition")
-    print("  • Automatic FlextResult integration")
-    print("  • Performance optimization built-in")
-    print("  • Clean categorical organization")
-
-    print("\n🔍 MODERN API DEMONSTRATIONS")
-    print("=" * 40)
-
     # Show the modern decorator patterns
     demonstrate_cache_decorator()
     demonstrate_complete_decorator()
     demonstrate_safe_result_decorator()
     demonstrate_user_creation_with_modern_decorators()
     demonstrate_decorator_categories()
-
-    print("\n" + "=" * 70)
-    print("✅ MODERN DECORATORS EXAMPLE COMPLETED!")
-    print("=" * 70)
-
-    print("\n🎓 Key Modern Improvements:")
-    print("  • Categorical organization (Performance, ErrorHandling, etc.)")
-    print("  • Type-safe FlextCallable protocol")
-    print("  • Automatic error handling with FlextResult")
-    print("  • Zero boilerplate decorator composition")
-    print("  • Built-in performance optimization")
 
 
 if __name__ == "__main__":

@@ -45,24 +45,18 @@ class TestFlextValueObjectEquality:
 
     def test_equality_different_values(self) -> None:
         """Test value objects with different values are not equal."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("20.00"),
-                "currency": "USD",
-            }
-        )
-        vo3 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "EUR",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("20.00"),
+            "currency": "USD",
+        })
+        vo3 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "EUR",
+        })
 
         assert vo1 != vo2
         assert vo1 != vo3
@@ -70,12 +64,10 @@ class TestFlextValueObjectEquality:
 
     def test_equality_with_different_types(self) -> None:
         """Test value object equality with different types."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         # Test that value object is not equal to primitive types
         assert vo != "not a value object"
@@ -93,44 +85,34 @@ class TestFlextValueObjectEquality:
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = AnotherValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = AnotherValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         # Different classes should not be equal
         assert vo1.__class__.__name__ != vo2.__class__.__name__
 
     def test_equality_with_optional_fields(self) -> None:
         """Test equality with optional fields."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-                "description": "",
-            }
-        )
-        vo3 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-                "description": "Test",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+            "description": "",
+        })
+        vo3 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+            "description": "Test",
+        })
 
         if vo1 != vo2:  # Empty description = default empty description:
             raise AssertionError(
@@ -145,69 +127,57 @@ class TestFlextValueObjectHashing:
 
     def test_hash_consistency_same_values(self) -> None:
         """Test hash consistency for value objects with same values."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         if hash(vo1) != hash(vo2):
             raise AssertionError(f"Expected {hash(vo2)}, got {hash(vo1)}")
 
     def test_hash_different_values(self) -> None:
         """Test hash difference for value objects with different values."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("20.00"),
-                "currency": "USD",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("20.00"),
+            "currency": "USD",
+        })
 
         # Hashes should likely be different (not guaranteed but very probable)
         assert hash(vo1) != hash(vo2)
 
     def test_hash_with_complex_types(self) -> None:
         """Test that hashing works with complex types by converting them to hashable."""
-        vo1 = ComplexValueObject.model_validate(
-            {
-                "name": "Test",
-                "tags": ["tag1", "tag2"],  # List is unhashable but converted to tuple
-                "metadata": {
-                    "key": "value"
-                },  # Dict is unhashable but converted to frozenset
-            }
-        )
+        vo1 = ComplexValueObject.model_validate({
+            "name": "Test",
+            "tags": ["tag1", "tag2"],  # List is unhashable but converted to tuple
+            "metadata": {
+                "key": "value"
+            },  # Dict is unhashable but converted to frozenset
+        })
 
         # Value objects with complex types should now be hashable via conversion
         hash_value = hash(vo1)
         assert isinstance(hash_value, int)
 
         # Should work in collections that require hashable items
-        vo_set = {vo1}  # pyright: ignore[reportUnhashable]
+        vo_set = {vo1}
         if len(vo_set) != 1:
             raise AssertionError(f"Expected {1}, got {len(vo_set)}")
 
     def test_hash_stability(self) -> None:
         """Test hash stability across multiple calls."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         hash1 = hash(vo)
         hash2 = hash(vo)
@@ -218,33 +188,27 @@ class TestFlextValueObjectHashing:
 
     def test_hash_in_collections(self) -> None:
         """Test value objects work correctly in hash-based collections."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo3 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("20.00"),
-                "currency": "EUR",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo3 = ConcreteValueObject.model_validate({
+            "amount": Decimal("20.00"),
+            "currency": "EUR",
+        })
 
         # Test in set
-        vo_set = {vo1, vo2, vo3}  # pyright: ignore[reportUnhashable]
+        vo_set = {vo1, vo2, vo3}
         # vo1 and vo2 are equal, so only 2 unique items
         if len(vo_set) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(vo_set)}")
 
         # Test in dict as keys
-        vo_dict = {vo1: "first", vo2: "second", vo3: "third"}  # pyright: ignore[reportUnhashable]
+        vo_dict = {vo1: "first", vo2: "second", vo3: "third"}
         if len(vo_dict) != EXPECTED_BULK_SIZE:
             raise AssertionError(f"Expected {2}, got {len(vo_dict)}")
         # vo2 overwrote vo1's value
@@ -257,12 +221,10 @@ class TestFlextValueObjectStringRepresentation:
 
     def test_str_representation_simple(self) -> None:
         """Test string representation for simple value object."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         str_repr = str(vo)
 
@@ -274,15 +236,13 @@ class TestFlextValueObjectStringRepresentation:
 
     def test_str_representation_with_many_fields(self) -> None:
         """Test string representation with many fields shows ellipsis."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-                "description": (
-                    "A long description that should be shown in the string representation"
-                ),
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+            "description": (
+                "A long description that should be shown in the string representation"
+            ),
+        })
 
         str_repr = str(vo)
 
@@ -294,13 +254,11 @@ class TestFlextValueObjectStringRepresentation:
 
     def test_str_representation_complex_types(self) -> None:
         """Test string representation with complex data types."""
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "Test Object",
-                "tags": ["tag1", "tag2", "tag3"],
-                "metadata": {"key1": "value1", "key2": "value2"},
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "Test Object",
+            "tags": ["tag1", "tag2", "tag3"],
+            "metadata": {"key1": "value1", "key2": "value2"},
+        })
 
         str_repr = str(vo)
 
@@ -314,12 +272,10 @@ class TestFlextValueObjectDomainValidation:
 
     def test_domain_rules_validation_called(self) -> None:
         """Test that domain rules validation exists and can be called."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         # Should return success for valid value object
         result = vo.validate_business_rules()
@@ -327,12 +283,10 @@ class TestFlextValueObjectDomainValidation:
 
     def test_domain_rules_validation_negative_amount(self) -> None:
         """Test domain rules validation with invalid amount."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("-5.00"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("-5.00"),
+            "currency": "USD",
+        })
 
         result = vo.validate_business_rules()
         assert result.is_failure
@@ -340,12 +294,10 @@ class TestFlextValueObjectDomainValidation:
 
     def test_domain_rules_validation_invalid_currency_length(self) -> None:
         """Test domain rules validation with invalid currency length."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "INVALID",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "INVALID",
+        })
 
         result = vo.validate_business_rules()
         assert result.is_failure
@@ -353,12 +305,10 @@ class TestFlextValueObjectDomainValidation:
 
     def test_domain_rules_validation_lowercase_currency(self) -> None:
         """Test domain rules validation with lowercase currency."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "usd",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "usd",
+        })
 
         result = vo.validate_business_rules()
         assert result.is_failure
@@ -374,13 +324,11 @@ class TestFlextValueObjectDomainValidation:
 
     def test_domain_rules_validation_whitespace_name(self) -> None:
         """Test domain rules validation with whitespace-only name."""
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "   ",
-                "tags": [],
-                "metadata": {},
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "   ",
+            "tags": [],
+            "metadata": {},
+        })
 
         result = vo.validate_business_rules()
         assert result.is_failure
@@ -399,22 +347,18 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_validation_field_types(self) -> None:
         """Test Pydantic validation for field types."""
         with pytest.raises(ValidationError):
-            ConcreteValueObject.model_validate(
-                {
-                    "amount": "not_a_decimal",
-                    "currency": "USD",
-                }
-            )
+            ConcreteValueObject.model_validate({
+                "amount": "not_a_decimal",
+                "currency": "USD",
+            })
 
     def test_pydantic_model_dump(self) -> None:
         """Test Pydantic model_dump functionality."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-                "description": "Test description",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+            "description": "Test description",
+        })
 
         data = vo.model_dump()
 
@@ -429,12 +373,10 @@ class TestFlextValueObjectPydanticIntegration:
 
     def test_pydantic_immutability(self) -> None:
         """Test that value objects are immutable."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         with pytest.raises((ValidationError, AttributeError, TypeError)):
             vo.amount = Decimal("20.00")
@@ -452,13 +394,11 @@ class TestFlextValueObjectPydanticIntegration:
 
     def test_pydantic_string_stripping(self) -> None:
         """Test Pydantic string stripping configuration."""
-        vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-                "description": "  Test description  ",
-            }
-        )
+        vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+            "description": "  Test description  ",
+        })
 
         # Check if whitespace was stripped or preserved (depends on configuration)
         assert "Test description" in vo.description
@@ -466,13 +406,11 @@ class TestFlextValueObjectPydanticIntegration:
     def test_pydantic_extra_fields_forbidden(self) -> None:
         """Test that extra fields are handled appropriately."""
         try:
-            vo = ConcreteValueObject.model_validate(
-                {
-                    "amount": Decimal("10.50"),
-                    "currency": "USD",
-                    "extra_field": "not allowed",
-                }
-            )
+            vo = ConcreteValueObject.model_validate({
+                "amount": Decimal("10.50"),
+                "currency": "USD",
+                "extra_field": "not allowed",
+            })
             # If extra=forbid, this should raise ValidationError
             # If extra=ignore, this succeeds but extra_field is ignored
             # Both are valid depending on configuration
@@ -487,13 +425,11 @@ class TestFlextValueObjectEdgeCases:
 
     def test_empty_complex_collections(self) -> None:
         """Test value objects with empty complex collections."""
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "Test",
-                "tags": [],
-                "metadata": {},
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "Test",
+            "tags": [],
+            "metadata": {},
+        })
 
         if vo.name != "Test":
             raise AssertionError(f"Expected {'Test'}, got {vo.name}")
@@ -502,26 +438,22 @@ class TestFlextValueObjectEdgeCases:
             raise AssertionError(f"Expected {{}}, got {vo.metadata}")
 
         # Should work in hash-based collections
-        vo_set = {vo}  # pyright: ignore[reportUnhashable]
+        vo_set = {vo}
         if len(vo_set) != 1:
             raise AssertionError(f"Expected {1}, got {len(vo_set)}")
 
     def test_nested_complex_data_equality(self) -> None:
         """Test equality with nested complex data structures."""
-        vo1 = ComplexValueObject.model_validate(
-            {
-                "name": "Test",
-                "tags": ["a", "b", "c"],
-                "metadata": {"nested": {"key": "value"}, "list": [1, 2, 3]},
-            }
-        )
-        vo2 = ComplexValueObject.model_validate(
-            {
-                "name": "Test",
-                "tags": ["a", "b", "c"],
-                "metadata": {"nested": {"key": "value"}, "list": [1, 2, 3]},
-            }
-        )
+        vo1 = ComplexValueObject.model_validate({
+            "name": "Test",
+            "tags": ["a", "b", "c"],
+            "metadata": {"nested": {"key": "value"}, "list": [1, 2, 3]},
+        })
+        vo2 = ComplexValueObject.model_validate({
+            "name": "Test",
+            "tags": ["a", "b", "c"],
+            "metadata": {"nested": {"key": "value"}, "list": [1, 2, 3]},
+        })
 
         if vo1 != vo2:
             raise AssertionError(f"Expected {vo2}, got {vo1}")
@@ -534,13 +466,11 @@ class TestFlextValueObjectEdgeCases:
             f"key_{i}": f"value_{i}" for i in range(50)
         }
 
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "Large Object",
-                "tags": large_tags,
-                "metadata": large_metadata,
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "Large Object",
+            "tags": large_tags,
+            "metadata": large_metadata,
+        })
 
         if len(vo.tags) != 100:
             raise AssertionError(f"Expected {100}, got {len(vo.tags)}")
@@ -552,13 +482,11 @@ class TestFlextValueObjectEdgeCases:
 
     def test_special_characters_in_strings(self) -> None:
         """Test value objects with special characters."""
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "Test with üñïçödé chars and symbols: !@#$%^&*()",
-                "tags": ["tag-with-dashes", "tag_with_underscores", "tag.with.dots"],
-                "metadata": {"key with spaces": "value with spaces", "émoji": "🎉"},
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "Test with üñïçödé chars and symbols: !@#$%^&*()",
+            "tags": ["tag-with-dashes", "tag_with_underscores", "tag.with.dots"],
+            "metadata": {"key with spaces": "value with spaces", "émoji": "🎉"},
+        })
 
         if "üñïçödé" not in vo.name:
             raise AssertionError(f"Expected {'üñïçödé'} in {vo.name}")
@@ -570,18 +498,14 @@ class TestFlextValueObjectEdgeCases:
 
     def test_decimal_precision_equality(self) -> None:
         """Test decimal precision in equality comparisons."""
-        vo1 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        vo2 = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.500"),
-                "currency": "USD",
-            }
-        )
+        vo1 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        vo2 = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.500"),
+            "currency": "USD",
+        })
 
         # Decimal comparison should handle precision correctly
         if vo1 != vo2:
@@ -589,13 +513,11 @@ class TestFlextValueObjectEdgeCases:
 
     def test_model_dump_with_complex_types(self) -> None:
         """Test model_dump with complex data types."""
-        vo = ComplexValueObject.model_validate(
-            {
-                "name": "Test",
-                "tags": ["tag1", "tag2"],
-                "metadata": {"nested": {"key": "value"}},
-            }
-        )
+        vo = ComplexValueObject.model_validate({
+            "name": "Test",
+            "tags": ["tag1", "tag2"],
+            "metadata": {"nested": {"key": "value"}},
+        })
 
         data = vo.model_dump()
 
@@ -616,12 +538,10 @@ class TestFlextValueObjectInheritance:
         class SpecialValue(ConcreteValueObject):
             special_field: str = "special"
 
-        vo = SpecialValue.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        vo = SpecialValue.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         assert isinstance(vo, SpecialValue)
         assert isinstance(vo, ConcreteValueObject)
@@ -651,18 +571,14 @@ class TestFlextValueObjectInheritance:
         class SpecialValue(ConcreteValueObject):
             special_field: str = "special"
 
-        base_vo = ConcreteValueObject.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
-        special_vo = SpecialValue.model_validate(
-            {
-                "amount": Decimal("10.50"),
-                "currency": "USD",
-            }
-        )
+        base_vo = ConcreteValueObject.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
+        special_vo = SpecialValue.model_validate({
+            "amount": Decimal("10.50"),
+            "currency": "USD",
+        })
 
         # Different classes should not be equal, even with same base fields
         assert base_vo != special_vo

@@ -161,11 +161,29 @@ class FlextExceptions:
                 else:
                     normalized_code = str(resolved_code)
 
+                # Build context from field-specific parameters plus explicit context
+                context_dict: dict[str, object] = {}
+
+                # Add ALL kwargs as field parameters (except system parameters)
+                system_params = ["code", "error_code", "context"]
+                context_dict.update({
+                    field_name: field_value
+                    for field_name, field_value in kwargs.items()
+                    if field_name not in system_params
+                })
+
+                # Handle explicit context parameter
+                explicit_context = kwargs.get("context")
+                if explicit_context is not None:
+                    # Always nest explicit context under "context" key for consistency
+                    # This matches the expectation in edge case tests
+                    context_dict["context"] = explicit_context
+
                 cls.FlextErrorMixin.__init__(
                     cast("FlextExceptions.Base.FlextErrorMixin", self),
                     message,
                     code=normalized_code,
-                    context=dict(kwargs),
+                    context=context_dict,
                 )
 
             def _generated_str(self: object) -> str:

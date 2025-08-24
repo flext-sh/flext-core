@@ -45,7 +45,7 @@ from pydantic.alias_generators import to_camel, to_snake
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.payload import FlextPayload
+from flext_core.payload import FlextEvent, FlextPayload
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -136,6 +136,10 @@ class FlextModel(BaseModel):
     def to_dict(self) -> FlextTypes.Core.Dict:
         """Serializes the model to a dictionary."""
         return self.model_dump(by_alias=True, exclude_none=True)
+
+    def to_dict_basic(self) -> FlextTypes.Core.Dict:
+        """Serializes the model to a basic dictionary (alias for to_dict)."""
+        return self.to_dict()
 
     def to_json(self, **_kwargs: object) -> str:
         """Serializes the model to a JSON string."""
@@ -797,8 +801,6 @@ class FlextEntity(FlextModel, ABC):
                 event_type = event_type_or_dict
                 if event_data is None:
                     event_data = {}
-            # Import FlextEvent to avoid circular imports
-            from flext_core.payload import FlextEvent  # noqa: PLC0415
 
             # Create FlextEvent object
             event_result = FlextEvent.create_event(
@@ -1055,7 +1057,7 @@ class FlextFactory:
 
         # Handle callable factory function
         # Direct check - factory is already object type
-        if callable(factory):  # pyright: ignore[reportUnknownArgumentType]
+        if callable(factory):
             # Factory is already checked to be callable above
             factory_callable = cast("FlextCallable[object]", factory)
             return cls._create_with_callable(factory_callable, kwargs)
@@ -1392,7 +1394,7 @@ __all__: list[str] = [
     "FlextEntity",
     "FlextEntityDict",
     "FlextEntityFactory",
-    # "FlextFactory", - moved to typings.py as protocol alias to avoid conflicts
+    "FlextFactory",  # Re-enabled: class needed for entity tests
     "FlextFieldValidationInfo",
     "FlextLegacyConfig",
     "FlextModel",

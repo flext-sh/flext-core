@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001, ARG002
 """Tests to increase coverage of guards.py module.
 
 These tests target specific uncovered lines to improve coverage from 65% to higher.
@@ -168,7 +169,7 @@ class TestFlextGuardsCoverage:
                 self.value = value
 
         # Create immutable version
-        ImmutableFailingClass = FlextGuards.immutable(FailingInitClass)
+        ImmutableFailingClass = FlextGuards.immutable(FailingInitClass)  # noqa: N806
 
         # Test that it falls back to basic initialization when original init fails
         try:
@@ -185,7 +186,7 @@ class TestFlextGuardsCoverage:
             def __init__(self, value: str) -> None:
                 self.value = value
 
-        ImmutableClass = FlextGuards.immutable(SimpleClass)
+        ImmutableClass = FlextGuards.immutable(SimpleClass)  # noqa: N806
         instance = ImmutableClass("test")
 
         # Should allow access to value
@@ -205,7 +206,7 @@ class TestFlextGuardsCoverage:
                 self.unhashable_attr = {"key": "value"}  # Dict is unhashable
                 self.normal_attr = "string"
 
-        ImmutableClass = FlextGuards.immutable(UnhashableClass)
+        ImmutableClass = FlextGuards.immutable(UnhashableClass)  # noqa: N806
         instance = ImmutableClass()
 
         # Should fall back to id-based hash when attributes are unhashable
@@ -224,7 +225,7 @@ class TestFlextGuardsCoverage:
                 self.value = value
                 self.number = number
 
-        ImmutableClass = FlextGuards.immutable(HashableClass)
+        ImmutableClass = FlextGuards.immutable(HashableClass)  # noqa: N806
         instance1 = ImmutableClass("test", 42)
         instance2 = ImmutableClass("test", 42)
 
@@ -302,7 +303,7 @@ class TestEdgeCasesAndBoundaryConditions:
         class NoInitClass:
             pass
 
-        ImmutableNoInitClass = FlextGuards.immutable(NoInitClass)
+        ImmutableNoInitClass = FlextGuards.immutable(NoInitClass)  # noqa: N806
         instance = ImmutableNoInitClass()
 
         # Should be successfully created and marked as initialized

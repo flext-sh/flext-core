@@ -832,7 +832,7 @@ class FlextValidation:
             if isinstance(value, str) and not cls.is_non_empty_string(value):
                 return FlextResult[bool].fail("String cannot be empty")
 
-            return FlextResult[bool].ok(data=True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)
         except Exception as e:
             return FlextResult[bool].fail(f"Validation failed: {e}")
 
@@ -882,7 +882,7 @@ class FlextValidation:
         """Safely validate value with FlextResult error handling."""
         try:
             if validator(value):
-                return FlextResult[bool].ok(data=True)  # noqa: FBT003
+                return FlextResult[bool].ok(data=True)
             return FlextResult[bool].fail(f"Validation failed for value: {value}")
         except (
             TypeError,
@@ -1043,7 +1043,7 @@ def validate_with_result(
     """Validation function returning FlextResult."""
     try:
         if validator(value):
-            return FlextResult[bool].ok(data=True)  # noqa: FBT003
+            return FlextResult[bool].ok(data=True)
         return FlextResult[bool].fail(error_message)
     except ValidationError as e:
         return FlextResult[bool].fail(f"Validation error: {e}")
@@ -1108,7 +1108,7 @@ class FlextValidationPipeline:
                 return result
             current_value = result.value
 
-        return FlextResult[bool].ok(data=True)  # noqa: FBT003
+        return FlextResult[bool].ok(data=True)
 
 
 # =============================================================================

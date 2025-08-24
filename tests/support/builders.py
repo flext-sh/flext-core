@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401, PLC0415
 """Test builders using Builder pattern with pytest integration.
 
 Provides fluent builders for creating complex test objects with

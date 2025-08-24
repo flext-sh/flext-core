@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 """Advanced test patterns and builder utilities.
 
 Provides sophisticated test patterns including the Builder pattern, Arrange-Act-Assert,
@@ -376,7 +377,7 @@ class TestFixtureBuilder:
             for teardown_func in self.teardown_functions:
                 try:
                     teardown_func()
-                except Exception:
+                except Exception:  # noqa: S110
                     pass  # Don't let teardown errors mask test failures
 
 

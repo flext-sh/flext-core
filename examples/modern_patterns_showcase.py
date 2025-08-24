@@ -313,13 +313,10 @@ class NotificationService:
     def send_order_confirmation(
         self,
         customer: Customer,  # noqa: ARG002
-        order: Order,
+        order: Order,  # noqa: ARG002
     ) -> FlextResult[None]:
         """Send order confirmation email."""
         # Simulate email sending (send_email function not available in shared_domain)
-        print(
-            f"📧 Email sent to {customer.email_address}: Order Confirmation - Order confirmed {order.id}"
-        )
         return FlextResult[None].ok(None)
 
 
@@ -467,12 +464,10 @@ class OrderProcessingService:
                 return FlextResult[tuple[object, int]].fail(
                     quantity_result.error or "Invalid quantity"
                 )
-            return FlextResult[tuple[object, int]].ok(
-                (
-                    product_result.value,
-                    quantity_result.value,
-                )
-            )
+            return FlextResult[tuple[object, int]].ok((
+                product_result.value,
+                quantity_result.value,
+            ))
 
         items_result = _ensure_items(order_data)
         if items_result.is_failure or items_result.value is None:
@@ -620,13 +615,11 @@ def _type_system_demo(customer: Customer) -> None:
         return str(m)
 
     # Use the customer parameter
-    is_premium = validator(customer)
-    print(f"Customer is premium: {is_premium}")
+    validator(customer)
 
 
 def _print_benefits() -> None:
     """Print benefits of modern patterns."""
-    print("✅ Benefits of modern FLEXT patterns demonstrated!")
 
 
 def demonstrate_modern_patterns() -> None:

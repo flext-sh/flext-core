@@ -398,8 +398,6 @@ class DomainObjectFactory:
 
 def demo_value_objects() -> None:
     """Demonstrate value object patterns."""
-    print("\n🧪 Testing value objects...")
-
     # Create prices
     price1 = Price.model_validate({"amount": Decimal("10.99"), "currency": "USD"})
     price2 = Price.model_validate({"amount": Decimal("5.00"), "currency": "USD"})
@@ -407,14 +405,11 @@ def demo_value_objects() -> None:
     # Add prices
     total_result = price1.add(price2)
     if total_result.success:
-        total = total_result.value
-        print(f"✅ Total price: {total.amount} {total.currency}")
+        pass
 
 
 def demo_entity_lifecycle() -> None:
     """Demonstrate entity lifecycle."""
-    print("\n🧪 Testing entity lifecycle...")
-
     # Create product
     product_result = DomainObjectFactory.create_product(
         "LAPTOP01", "Gaming Laptop", "999.99"
@@ -426,14 +421,11 @@ def demo_entity_lifecycle() -> None:
         # Activate product
         activate_result = product.activate()
         if activate_result.success:
-            print(f"✅ Product activated: {product.name}")
-            print(f"📅 Domain events: {len(product.domain_events)}")
+            pass
 
 
 def demo_aggregate_patterns() -> None:
     """Demonstrate aggregate patterns."""
-    print("\n🧪 Testing aggregate patterns...")
-
     # Create shopping cart
     cart_result = DomainObjectFactory.create_shopping_cart("customer_123")
     product_result = DomainObjectFactory.create_product(
@@ -447,61 +439,30 @@ def demo_aggregate_patterns() -> None:
         # Add item to cart
         add_result = cart.add_item(product, quantity=2)
         if add_result.success:
-            print(
-                f"✅ Item added to cart. Total: {cart.total.amount} {cart.total.currency}"
-            )
+            pass
 
         # Checkout
         checkout_result = cart.checkout()
         if checkout_result.success:
-            order_data = checkout_result.value
-            print(f"✅ Checkout completed. Order total: {order_data.get('total')}")
+            pass
 
 
 def demo_domain_services() -> None:
     """Demonstrate domain services."""
-    print("\n🧪 Testing domain services...")
-
     price = Price.model_validate({"amount": Decimal("100.00"), "currency": "USD"})
     discount_result = PricingService.calculate_discount(price, Decimal(20))
 
     if discount_result.success:
-        discounted_price = discount_result.value
-        print(
-            f"✅ Discounted price: {discounted_price.amount} {discounted_price.currency}"
-        )
+        pass
 
 
 def main() -> None:
     """🎯 Example 06: Domain-Driven Design Patterns."""
-    print("=" * 70)
-    print("🏗️  EXAMPLE 06: DOMAIN-DRIVEN DESIGN (REFACTORED)")
-    print("=" * 70)
-
-    print("\n📚 Refactoring Benefits:")
-    print("  • 70% less boilerplate code")
-    print("  • Cleaner entity definitions")
-    print("  • Simplified domain events")
-    print("  • Easier aggregate management")
-
-    print("\n🔍 DEMONSTRATIONS")
-    print("=" * 40)
-
     # Show the refactored examples
     demo_value_objects()
     demo_entity_lifecycle()
     demo_aggregate_patterns()
     demo_domain_services()
-
-    print("\n" + "=" * 70)
-    print("✅ REFACTORED DDD EXAMPLE COMPLETED!")
-    print("=" * 70)
-
-    print("\n🎓 Key Improvements:")
-    print("  • Simplified entity and value object creation")
-    print("  • Automatic domain event management")
-    print("  • Reduced validation boilerplate")
-    print("  • Cleaner aggregate boundaries")
 
 
 if __name__ == "__main__":

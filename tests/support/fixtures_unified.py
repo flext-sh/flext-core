@@ -1,3 +1,4 @@
+# ruff: noqa: ANN401, PLC0415
 """Unified fixtures for flext-core tests using massive pytest ecosystem.
 
 Comprehensive fixture library using:
@@ -528,10 +529,10 @@ def random_data() -> dict[str, Any]:
     import random
 
     return {
-        "random_int": random.randint(1, 1000),
-        "random_float": random.uniform(0.0, 100.0),
-        "random_string": f"random_{random.randint(1000, 9999)}",
-        "random_bool": random.choice([True, False]),
+        "random_int": random.randint(1, 1000),  # noqa: S311
+        "random_float": random.uniform(0.0, 100.0),  # noqa: S311
+        "random_string": f"random_{random.randint(1000, 9999)}",  # noqa: S311
+        "random_bool": random.choice([True, False]),  # noqa: S311
     }
 
 

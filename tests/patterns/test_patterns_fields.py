@@ -1,5 +1,6 @@
 """Comprehensive tests for FLEXT patterns fields module."""
 
+
 from __future__ import annotations
 
 import pytest
@@ -213,7 +214,7 @@ class TestFlextFieldCoreInteger:
             "custom_properties": {"key": "value"},
         }
 
-        metadata = FlextFieldCoreMetadata.from_dict(data)  # pyright: ignore[reportArgumentType]
+        metadata = FlextFieldCoreMetadata.from_dict(data)
 
         if metadata.description != "Test field":
             raise AssertionError(f"Expected Test field, got {metadata.description}")
@@ -811,8 +812,8 @@ class TestFlextFieldCoreRegistry:
     def test_registry_creation(self) -> None:
         """Test registry creation."""
         registry = FlextFieldRegistry()
-        if registry._fields != {}:  # pyright: ignore[reportPrivateUsage]
-            raise AssertionError(f"Expected {{}}, got {registry._fields}")  # pyright: ignore[reportPrivateUsage]
+        if registry._fields != {}:
+            raise AssertionError(f"Expected {{}}, got {registry._fields}")
 
     def test_register_field(self) -> None:
         """Test registering a field."""
@@ -824,7 +825,7 @@ class TestFlextFieldCoreRegistry:
         )
 
         registry.register_field(field)
-        assert registry._fields["test_id"] is field  # pyright: ignore[reportPrivateUsage]
+        assert registry._fields["test_id"] is field
 
     def test_get_field_existing(self) -> None:
         """Test getting an existing field."""

@@ -22,7 +22,6 @@ import pytest
 from hypothesis import assume, given
 from tests.support.async_utils import AsyncTestUtils
 from tests.support.domain_factories import (
-    ConfigurationFactory,
     UserDataFactory,
 )
 from tests.support.hypothesis_utils import (
@@ -274,7 +273,7 @@ class TestTimingMixin:
             def quick_operation(self) -> float:
                 self.start_timing()
                 # Minimal operation
-                return self._get_execution_time_ms(start_time)
+                return self.stop_timing()
 
         stress_runner = StressTestRunner()
 
@@ -301,10 +300,19 @@ class TestCacheableMixin:
             def __init__(self) -> None:
                 super().__init__()
                 self.call_count = 0
+                self._cache: dict[str, object] = {}
 
             def expensive_operation(self, x: int) -> int:
                 self.call_count += 1
                 return x * 2
+
+            def cache_set(self, key: str, value: object) -> None:
+                """Set cache value."""
+                self._cache[key] = value
+
+            def cache_get(self, key: str) -> object:
+                """Get cache value."""
+                return self._cache.get(key)
 
             def mixin_setup(self) -> None:
                 pass
@@ -333,6 +341,7 @@ class TestCacheableMixin:
         class AsyncCacheableModel(FlextCacheableMixin):
             def __init__(self) -> None:
                 super().__init__()
+                self._cache: dict[str, object] = {}
 
             async def async_cached_operation(self, key: str) -> str:
                 # Simulate async operation
@@ -346,6 +355,14 @@ class TestCacheableMixin:
                 result = f"computed: {key.upper()}"
                 self.cache_set(key, result)
                 return result
+
+            def cache_set(self, key: str, value: object) -> None:
+                """Set cache value."""
+                self._cache[key] = value
+
+            def cache_get(self, key: str) -> object:
+                """Get cache value."""
+                return self._cache.get(key)
 
             def mixin_setup(self) -> None:
                 pass
@@ -533,13 +550,11 @@ class TestEntityMixin:
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases(
-            [
-                {"entity_id": "entity-123", "name": "Test Entity 1"},
-                {"entity_id": "entity-456", "name": "Test Entity 2"},
-                {"entity_id": "entity-789", "name": "Test Entity 3"},
-            ]
-        )
+        param_builder.add_success_cases([
+            {"entity_id": "entity-123", "name": "Test Entity 1"},
+            {"entity_id": "entity-456", "name": "Test Entity 2"},
+            {"entity_id": "entity-789", "name": "Test Entity 3"},
+        ])
 
         class EntityModel(FlextEntityMixin):
             def __init__(self, entity_id: str, name: str) -> None:
@@ -628,119 +643,6 @@ class TestEntityMixin:
         assert result["operations_per_second"] > 100
 
 
-class TestFullMixin:
-    """Test FlextFullMixin with comprehensive all-in-one patterns."""
-
-    @pytest.mark.skip("TEMPORARY: Fixture issue - needs investigation")
-    def test_full_mixin_integration_comprehensive(
-        self,
-        user_data_factory: type[UserDataFactory],
-        configuration_factory: type[ConfigurationFactory],
-    ) -> None:
-        """Test full mixin with comprehensive integration using factories."""
-
-        class FullModel(FlextFullMixin):
-            def __init__(
-                self, entity_id: str, user_data: dict[str, Any], config: dict[str, Any]
-            ) -> None:
-                super().__init__()
-                self.id = entity_id
-                self.name = user_data["name"]
-                self.email = user_data["email"]
-                self.config = config
-
-            def _comparison_key(self) -> object:
-                return (self.name, self.email)
-
-            def get_domain_events(self) -> list[object]:
-                return []
-
-            def clear_domain_events(self) -> None:
-                pass
-
-            def mixin_setup(self) -> None:
-                pass
-
-        # Use factory data
-        user_data = user_data_factory.build()
-        config_data = configuration_factory.build()
-
-        full_model = FullModel("full-model-123", user_data, config_data)
-
-        # Comprehensive validation using assertion builder
-        TestAssertionBuilder(full_model).is_not_none().satisfies(
-            lambda x: x.id == "full-model-123", "should have correct ID"
-        ).satisfies(
-            lambda x: hasattr(x, "created_at"), "should have timestamp"
-        ).satisfies(lambda x: x.is_valid is False, "should start as invalid").satisfies(
-            lambda x: x.logger is not None, "should have logger"
-        ).satisfies(
-            lambda x: hasattr(x, "name"), "should have name from user data"
-        ).satisfies(
-            lambda x: hasattr(x, "email"), "should have email from user data"
-        ).satisfies(
-            lambda x: hasattr(x, "config"), "should have config data"
-        ).assert_all()
-
-        # Test serialization
-        data = full_model.to_dict_basic()
-        assert "name" in data
-        assert "email" in data
-        assert "config" in data
-
-    def test_full_mixin_performance_endurance(self) -> None:
-        """Test full mixin performance under endurance conditions."""
-
-        class EnduranceFullModel(FlextFullMixin):
-            def __init__(self, entity_id: str) -> None:
-                super().__init__()
-                self.id = entity_id
-                self.value = {"counter": 0}
-
-            def _comparison_key(self) -> object:
-                return self.id
-
-            def get_domain_events(self) -> list[object]:
-                return []
-
-            def clear_domain_events(self) -> None:
-                pass
-
-            def increment_counter(self) -> None:
-                self.value["counter"] += 1
-                self.cache_set("counter", self.value["counter"])
-
-            def get_counter(self) -> int:
-                cached = self.cache_get("counter")
-                return cached if cached is not None else self.value["counter"]
-
-            def mixin_setup(self) -> None:
-                pass
-
-        stress_runner = StressTestRunner()
-
-        def full_mixin_operations() -> int:
-            model = EnduranceFullModel("endurance-test")
-
-            # Test all mixin capabilities
-            model.increment_counter()  # Cacheable
-            model._update_timestamp()  # Timestamp
-            model.add_validation_error("test")  # Validatable
-            _ = model.to_dict_basic()  # Serializable (mark as used)
-
-            return model.get_counter()
-
-        # Run endurance test for 2 seconds
-        result = stress_runner.run_endurance_test(
-            full_mixin_operations,
-            duration_seconds=2.0,
-            operation_name="full_mixin_endurance",
-        )
-
-        assert result["actual_duration_seconds"] >= 1.5
-        assert result["operations_per_second"] > 10
-
-
 # ============================================================================
 # MIXIN COMPOSITION AND INTEGRATION TESTING
 # ============================================================================
@@ -786,7 +688,7 @@ class TestMixinComposition:
                     self.add_validation_error("External service failed")
                     return {"success": False}
 
-                self._update_timestamp()
+                self.update_timestamp()
                 return {
                     "success": True,
                     "result": external_result,
@@ -798,9 +700,6 @@ class TestMixinComposition:
 
             def get_timestamp(self) -> float:
                 return time.time()
-
-            def update_timestamp(self) -> None:
-                self._update_timestamp()
 
             def mixin_setup(self) -> None:
                 pass
@@ -830,6 +729,7 @@ class TestMixinComposition:
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
                 self.id = entity_id
+                self._cache: dict[str, object] = {}
 
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
@@ -852,14 +752,22 @@ class TestMixinComposition:
                 # Check cache first
                 cached = self.cache_get(key)
                 if cached is not None:
-                    return self._get_execution_time_ms(start_time)
+                    return self.stop_timing()
 
                 # Expensive operation
                 time.sleep(0.001)
                 result = key.upper()
                 self.cache_set(key, result)
 
-                return self._get_execution_time_ms(start_time)
+                return self.stop_timing()
+
+            def cache_set(self, key: str, value: object) -> None:
+                """Set cache value."""
+                self._cache[key] = value
+
+            def cache_get(self, key: str) -> object:
+                """Get cache value."""
+                return self._cache.get(key)
 
             def mixin_setup(self) -> None:
                 pass

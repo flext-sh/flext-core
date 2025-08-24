@@ -234,7 +234,7 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             if orders is None:
                 return FlextResult.fail("Orders query returned None data")
             for o in orders:
-                if hasattr(o, "total") and o.total is not None:
+                if hasattr(o, "total") and o.total is not None:  # type: ignore[attr-defined]
                     pass
     return FlextResult.ok(None)
 

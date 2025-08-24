@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415, ANN401
 """Advanced pytest fixtures using the full pytest ecosystem.
 
 This module provides comprehensive fixtures leveraging:
