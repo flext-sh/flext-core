@@ -569,8 +569,9 @@ class FunctionalTestContext:
             self.original_value = getattr(self.target, self.attribute)
         elif not self.create:
             # If attribute doesn't exist and create=False, this would be an error in patch
+            msg = f"'{type(self.target).__name__}' object has no attribute '{self.attribute}'"
             raise AttributeError(
-                f"'{type(self.target).__name__}' object has no attribute '{self.attribute}'",
+                msg,
             )
 
         # Check if new value was explicitly provided (including None)

@@ -13,13 +13,14 @@ Key Benefits:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import cast, override
 
 from pydantic import Field, RootModel, field_validator
 
 from flext_core.exceptions import FlextValidationError
-from flext_core.payload import FlextEvent
+from flext_core.payload import FlextEvent, FlextPayload
 from flext_core.result import FlextResult
 
 # Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
@@ -27,9 +28,9 @@ from flext_core.result import FlextResult
 
 
 # Delayed import function to avoid circular imports
-def _get_flext_event_class() -> type[FlextEvent]:
-    """Get FlextEvent class with delayed import to avoid circular dependencies."""
-    return FlextEvent
+def _get_flext_event_class() -> type[FlextPayload[Mapping[str, object]]]:
+    """Get FlextPayload class for event creation with delayed import to avoid circular dependencies."""
+    return FlextPayload
 
 
 # =============================================================================
@@ -350,11 +351,16 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
                 flext_event_cls = _get_flext_event_class()
                 # Dynamic method call requires casting
                 typed_event_data = cast("dict[str, object]", event_data)
-                event_result: FlextResult[FlextEvent] = flext_event_cls.create_event(
-                    event_type=event_type,
-                    event_data=typed_event_data,
-                    aggregate_id=str(aggregate_id) if aggregate_id else None,
-                    version=int(version) if isinstance(version, (int, str)) else None,
+                event_result: FlextResult[FlextEvent] = cast(
+                    "FlextResult[FlextEvent]",
+                    flext_event_cls.create_event(
+                        event_type=event_type,
+                        event_data=typed_event_data,
+                        aggregate_id=str(aggregate_id) if aggregate_id else None,
+                        version=int(version)
+                        if isinstance(version, (int, str))
+                        else None,
+                    ),
                 )
                 if event_result.is_success:
                     # Return the FlextEvent object directly

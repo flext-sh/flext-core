@@ -61,7 +61,7 @@ class SimpleDataFactory:
         }
 
     @staticmethod
-    def create_success_result(value: Any = "test_success_value") -> FlextResult[Any]:
+    def create_success_result(value: object = "test_success_value") -> FlextResult[Any]:
         """Create successful FlextResult."""
         return FlextResult[Any].ok(value)
 
@@ -332,7 +332,7 @@ def error_simulator(mocker: pytest_mock.MockerFixture) -> Callable[[Exception], 
 # ============================================================================
 
 
-def create_test_entity(**kwargs: Any) -> FlextEntity:
+def create_test_entity(**kwargs: object) -> FlextEntity:
     """Create test entity with custom attributes."""
     factory = SimpleDataFactory()
     data = factory.create_entity_data()
@@ -342,13 +342,13 @@ def create_test_entity(**kwargs: Any) -> FlextEntity:
     class TestEntity(FlextEntity):
         """Test entity implementation."""
 
-        def __init__(self, **data: Any) -> None:
+        def __init__(self, **data: object) -> None:
             super().__init__(**data)
 
     return TestEntity(**data)
 
 
-def create_test_value(**kwargs: Any) -> dict[str, Any]:
+def create_test_value(**kwargs: object) -> dict[str, Any]:
     """Create test value data with custom attributes."""
     factory = SimpleDataFactory()
     data = factory.create_value_data()
@@ -357,7 +357,7 @@ def create_test_value(**kwargs: Any) -> dict[str, Any]:
 
 
 def create_test_result(
-    success: bool = True, value: Any = None, error: str | None = None
+    success: bool = True, value: object = None, error: str | None = None
 ) -> FlextResult[Any]:
     """Create test result with specified state."""
     if success:

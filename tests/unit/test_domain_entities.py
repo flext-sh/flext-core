@@ -1,6 +1,5 @@
 """Comprehensive tests for entities module."""
 
-
 from __future__ import annotations
 
 import time
@@ -16,6 +15,7 @@ from flext_core import (
     FlextEntity,
     FlextEvent,
     FlextFactory,
+    FlextPayload,
     FlextResult,
     FlextValue,
 )
@@ -693,7 +693,7 @@ class TestFlextAggregateRoot:
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Create a test event - convert FlextEntityId and FlextVersion to primitives
-        event_result = FlextEvent.create_event(
+        event_result = FlextPayload.create_event(
             event_type="test.direct",
             event_data={"action": "direct_add"},
             aggregate_id=str(aggregate.id),  # Convert FlextEntityId to string

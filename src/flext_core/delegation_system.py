@@ -1,4 +1,8 @@
-"""Internal delegation system for mixin composition patterns."""
+"""Internal delegation system for mixin composition patterns.
+
+SINGLE CONSOLIDATED MODULE following FLEXT architectural patterns.
+All delegation functionality consolidated into FlextDelegationSystem.
+"""
 
 from __future__ import annotations
 
@@ -16,277 +20,298 @@ from flext_core.mixins import (
 from flext_core.result import FlextResult
 
 
-class _HasDelegator(Protocol):
-    delegator: _DelegatorProtocol
+class FlextDelegationSystem:
+    """SINGLE CONSOLIDATED CLASS for all delegation functionality.
 
+    Following FLEXT architectural patterns - consolidates ALL delegation functionality
+    including protocols, delegated properties, and mixin delegation into one main class
+    with nested classes for organization.
 
-class _DelegatorProtocol(Protocol):
-    def get_delegation_info(self) -> dict[str, object]: ...
-
-
-class FlextDelegatedProperty:
-    def __init__(
-        self,
-        prop_name: str,
-        mixin_instance: object,
-        *,
-        has_setter: bool,
-        doc: str | None = None,
-    ) -> None:
-        self.prop_name = prop_name
-        self.mixin_instance = mixin_instance
-        self.has_setter = has_setter
-        self.__doc__ = doc
-
-    def __get__(self, instance: object, owner: type | None = None) -> object:
-        return getattr(self.mixin_instance, self.prop_name)
-
-    def __set__(self, instance: object, value: object) -> None:
-        if self.has_setter:
-            setattr(self.mixin_instance, self.prop_name, value)
-        else:
-            error_msg: str = f"Property '{self.prop_name}' is read-only"
-            raise FlextOperationError(
-                error_msg,
-                operation="property_setter",
-                context={"property_name": self.prop_name, "readonly": True},
-            )
-
-
-class FlextMixinDelegator:
-    """Sistema robusto de delegação de mixins com descoberta automática.
-
-    Elimina completamente múltiplas heranças através de composição inteligente
-    e delegação automática. Garante funcionalidade 100% compatível com a
-    herança múltipla original mas com arquitetura limpa e testável.
+    CONSOLIDATED CLASSES: _HasDelegator + _DelegatorProtocol + FlextDelegatedProperty + FlextMixinDelegator
     """
 
-    # Registry global de mixins disponíveis
-    _MIXIN_REGISTRY: ClassVar[dict[str, type]] = {}
+    # ==========================================================================
+    # NESTED PROTOCOLS AND CLASSES FOR ORGANIZATION
+    # ==========================================================================
 
-    def __init__(self, host_instance: object, *mixin_classes: type) -> None:
-        """Initialize a delegation system with automatic mixin discovery.
+    class HasDelegator(Protocol):
+        """Protocol for objects that have a delegator."""
 
-        Args:
-            host_instance: Instance that will receive delegated methods
-            *mixin_classes: Mixin classes to delegate from
+        delegator: FlextDelegationSystem.DelegatorProtocol
 
-        """
-        self._host = host_instance
-        self._mixin_instances: dict[type, object] = {}
-        self._delegated_methods: dict[str, Callable[[object, object], object]] = {}
-        self._initialization_log: list[str] = []
+    class DelegatorProtocol(Protocol):
+        """Protocol for delegator objects."""
 
-        # Create and initialize mixin instances
-        for mixin_class in mixin_classes:
-            self._register_mixin(mixin_class)
+        def get_delegation_info(self) -> dict[str, object]: ...
 
-        # Auto-delegate all public methods
-        self._auto_delegate_methods()
+    class DelegatedProperty:
+        """Nested delegated property descriptor."""
 
-        # Validate delegation system
-        self._validate_delegation()
+        def __init__(
+            self,
+            prop_name: str,
+            mixin_instance: object,
+            *,
+            has_setter: bool,
+            doc: str | None = None,
+        ) -> None:
+            self.prop_name = prop_name
+            self.mixin_instance = mixin_instance
+            self.has_setter = has_setter
+            self.__doc__ = doc
 
-    def _register_mixin(self, mixin_class: type) -> None:
-        """Register and initialize a mixin class for delegation."""
-        try:
-            # Create mixin instance
-            mixin_instance = mixin_class()
-            self._mixin_instances[mixin_class] = mixin_instance
+        def __get__(self, instance: object, owner: type | None = None) -> object:
+            """Get attribute from mixin instance."""
+            return getattr(self.mixin_instance, self.prop_name)
 
-            # Auto-initialize if mixin has initialization method
-            init_methods = [
-                f"_initialize_{name.lower()}"
-                for name in [
-                    "validation",
-                    "timestamps",
-                    "id",
-                    "logging",
-                    "serialization",
-                ]
-            ]
-
-            for init_method in init_methods:
-                if hasattr(mixin_instance, init_method):
-                    try:
-                        getattr(mixin_instance, init_method)()
-                        self._initialization_log.append(
-                            f"✓ {mixin_class.__name__}.{init_method}()",
-                        )
-                    except (AttributeError, TypeError, ValueError) as e:
-                        error_msg: str = (
-                            f"✗ {mixin_class.__name__}.{init_method}(): {e}"
-                        )
-                        self._initialization_log.append(error_msg)
-
-            # Register globally for reuse
-            self._MIXIN_REGISTRY[mixin_class.__name__] = mixin_class
-
-        except (AttributeError, TypeError, ValueError) as e:
-            registration_error_msg = f"✗ Failed to register {mixin_class.__name__}: {e}"
-            self._initialization_log.append(registration_error_msg)
-            raise
-
-    def _auto_delegate_methods(self) -> None:
-        """Automatically delegate all public methods from registered mixins."""
-        for mixin_instance in self._mixin_instances.values():
-            for attr_name in dir(mixin_instance):
-                # Skip private/magic methods
-                if attr_name.startswith("_"):
-                    continue
-
-                # Delegate properties first (they are also callable)
-                try:
-                    is_property = isinstance(
-                        getattr(type(mixin_instance), attr_name, None),
-                        property,
-                    )
-                except (AttributeError, TypeError, ValueError):
-                    is_property = False
-
-                if is_property:
-                    try:
-                        self._create_delegated_property(attr_name, mixin_instance)
-                    except (AttributeError, TypeError, ValueError):
-                        # Ignore properties that can't be delegated
-                        continue
-                else:
-                    try:
-                        attr = getattr(mixin_instance, attr_name)
-                    except (AttributeError, TypeError, ValueError):
-                        continue
-                    if callable(attr):
-                        try:
-                            self._create_delegated_method(
-                                attr_name,
-                                mixin_instance,
-                                attr,
-                            )
-                        except (AttributeError, TypeError, ValueError):
-                            continue
-
-    def _create_delegated_property(
-        self,
-        prop_name: str,
-        mixin_instance: object,
-    ) -> None:
-        """Create a delegated property with getter/setter preservation."""
-        prop = getattr(type(mixin_instance), prop_name)
-        has_setter = prop.fset is not None
-        delegated_prop = FlextDelegatedProperty(
-            prop_name,
-            mixin_instance,
-            has_setter=has_setter,
-            doc=prop.__doc__,
-        )
-        # Remove atributo de instância se existir
-        if hasattr(self._host, prop_name):
-            with contextlib.suppress(AttributeError):
-                delattr(self._host, prop_name)
-        setattr(type(self._host), prop_name, delegated_prop)
-
-    def _create_delegated_method(
-        self,
-        method_name: str,
-        mixin_instance: object,
-        method: Callable[[object, object], object],
-    ) -> None:
-        """Create a delegated method with full signature preservation."""
-
-        def delegated_method(*args: object, **kwargs: object) -> object:
-            try:
-                return method(*args, **kwargs)
-            except (AttributeError, TypeError, ValueError) as e1:
-                #  error with delegation context
-                error_msg = (
-                    f"Delegation error in {type(mixin_instance).__name__}."
-                    f"{method_name}: {e1}"
-                )
+        def __set__(self, instance: object, value: object) -> None:
+            """Set attribute on mixin instance if writable."""
+            if self.has_setter:
+                setattr(self.mixin_instance, self.prop_name, value)
+            else:
+                error_msg: str = f"Property '{self.prop_name}' is read-only"
                 raise FlextOperationError(
                     error_msg,
-                    operation="delegation",
-                    stage=method_name,
-                ) from e1
+                    operation="property_setter",
+                    context={"property_name": self.prop_name, "readonly": True},
+                )
 
-        # Preserve original signature and docstring
-        try:
-            delegated_method.__name__ = method_name
-            delegated_method.__doc__ = method.__doc__
+    class MixinDelegator:
+        """Nested sistema robusto de delegação de mixins com descoberta automática.
 
-            # Use setattr for dynamic signature assignment to avoid MyPy attr-defined error
-            # Note: __signature__ is a special attribute that may not be available on all callables
+        Elimina completamente múltiplas heranças através de composição inteligente
+        e delegação automática. Garante funcionalidade 100% compatível com a
+        herança múltipla original mas com arquitetura limpa e testável.
+        """
+
+        # Registry global de mixins disponíveis
+        _MIXIN_REGISTRY: ClassVar[dict[str, type]] = {}
+
+        def __init__(self, host_instance: object, *mixin_classes: type) -> None:
+            """Initialize a delegation system with automatic mixin discovery.
+
+            Args:
+                host_instance: Instance that will receive delegated methods
+                *mixin_classes: Mixin classes to delegate from
+
+            """
+            self._host = host_instance
+            self._mixin_instances: dict[type, object] = {}
+            self._delegated_methods: dict[str, Callable[[object, object], object]] = {}
+            self._initialization_log: list[str] = []
+
+            # Create and initialize mixin instances
+            for mixin_class in mixin_classes:
+                self._register_mixin(mixin_class)
+
+            # Auto-delegate all public methods
+            self._auto_delegate_methods()
+
+            # Validate delegation system
+            self._validate_delegation()
+
+        def _register_mixin(self, mixin_class: type) -> None:
+            """Register and initialize a mixin class for delegation."""
             try:
-                # Try to get the signature first to ensure it's available
-                sig = inspect.signature(method)
-                # Use setattr to dynamically assign __signature__ attribute (avoid pyright error)
-                delegated_method.__signature__ = sig  # type: ignore[attr-defined]
-            except (ValueError, TypeError, AttributeError):
-                # Signature not available, skip it
-                pass
-        except (AttributeError, ValueError) as e:
-            logger = FlextLoggerFactory.get_logger(__name__)
-            logger.warning(
-                f"Failed to set signature for delegated method {method_name}: {e}",
+                # Create mixin instance
+                mixin_instance = mixin_class()
+                self._mixin_instances[mixin_class] = mixin_instance
+
+                # Auto-initialize if mixin has initialization method
+                init_methods = [
+                    f"_initialize_{name.lower()}"
+                    for name in [
+                        "validation",
+                        "timestamps",
+                        "id",
+                        "logging",
+                        "serialization",
+                    ]
+                ]
+
+                for init_method in init_methods:
+                    if hasattr(mixin_instance, init_method):
+                        try:
+                            getattr(mixin_instance, init_method)()
+                            self._initialization_log.append(
+                                f"✓ {mixin_class.__name__}.{init_method}()",
+                            )
+                        except (AttributeError, TypeError, ValueError) as e:
+                            error_msg: str = (
+                                f"✗ {mixin_class.__name__}.{init_method}(): {e}"
+                            )
+                            self._initialization_log.append(error_msg)
+
+                # Register globally for reuse
+                self._MIXIN_REGISTRY[mixin_class.__name__] = mixin_class
+
+            except (AttributeError, TypeError, ValueError) as e:
+                registration_error_msg = (
+                    f"✗ Failed to register {mixin_class.__name__}: {e}"
+                )
+                self._initialization_log.append(registration_error_msg)
+                raise
+
+        def _auto_delegate_methods(self) -> None:
+            """Automatically delegate all public methods from registered mixins."""
+            for mixin_instance in self._mixin_instances.values():
+                for attr_name in dir(mixin_instance):
+                    # Skip private/magic methods
+                    if attr_name.startswith("_"):
+                        continue
+
+                    # Delegate properties first (they are also callable)
+                    try:
+                        is_property = isinstance(
+                            getattr(type(mixin_instance), attr_name, None),
+                            property,
+                        )
+                    except (AttributeError, TypeError, ValueError):
+                        is_property = False
+
+                    if is_property:
+                        try:
+                            self._create_delegated_property(attr_name, mixin_instance)
+                        except (AttributeError, TypeError, ValueError):
+                            # Ignore properties that can't be delegated
+                            continue
+                    else:
+                        try:
+                            attr = getattr(mixin_instance, attr_name)
+                        except (AttributeError, TypeError, ValueError):
+                            continue
+                        if callable(attr):
+                            try:
+                                self._create_delegated_method(
+                                    attr_name,
+                                    mixin_instance,
+                                    attr,
+                                )
+                            except (AttributeError, TypeError, ValueError):
+                                continue
+
+        def _create_delegated_property(
+            self,
+            prop_name: str,
+            mixin_instance: object,
+        ) -> None:
+            """Create a delegated property with getter/setter preservation."""
+            prop = getattr(type(mixin_instance), prop_name)
+            has_setter = prop.fset is not None
+            delegated_prop = FlextDelegationSystem.DelegatedProperty(
+                prop_name,
+                mixin_instance,
+                has_setter=has_setter,
+                doc=prop.__doc__,
             )
+            # Remove atributo de instância se existir
+            if hasattr(self._host, prop_name):
+                with contextlib.suppress(AttributeError):
+                    delattr(self._host, prop_name)
+            setattr(type(self._host), prop_name, delegated_prop)
 
-        # Store for access via host
-        self._delegated_methods[method_name] = delegated_method
+        def _create_delegated_method(
+            self,
+            method_name: str,
+            mixin_instance: object,
+            method: Callable[[object, object], object],
+        ) -> None:
+            """Create a delegated method with full signature preservation."""
 
-        # Try to attach to host-instance - handle frozen Pydantic models
-        try:
-            if not hasattr(self._host, method_name):
-                setattr(self._host, method_name, delegated_method)
-        except AttributeError:
-            if hasattr(self._host, "__class__"):
-                setattr(self._host.__class__, method_name, delegated_method)
+            def delegated_method(*args: object, **kwargs: object) -> object:
+                try:
+                    return method(*args, **kwargs)
+                except (AttributeError, TypeError, ValueError) as e1:
+                    #  error with delegation context
+                    error_msg = (
+                        f"Delegation error in {type(mixin_instance).__name__}."
+                        f"{method_name}: {e1}"
+                    )
+                    raise FlextOperationError(
+                        error_msg,
+                        operation="delegation",
+                        stage=method_name,
+                    ) from e1
 
-    def _validate_delegation(self) -> FlextResult[None]:
-        """Validate that delegation system is working correctly."""
-        validation_errors: list[str] = []
+            # Preserve original signature and docstring
+            try:
+                delegated_method.__name__ = method_name
+                delegated_method.__doc__ = method.__doc__
 
-        # Check that all mixins were initialized
-        if not self._mixin_instances:
-            validation_errors.append("No mixins were successfully registered")
+                # Use setattr for dynamic signature assignment to avoid MyPy attr-defined error
+                # Note: __signature__ is a special attribute that may not be available on all callables
+                try:
+                    # Try to get the signature first to ensure it's available
+                    sig = inspect.signature(method)
+                    # Use setattr to dynamically assign __signature__ attribute (avoid pyright error)
+                    delegated_method.__signature__ = sig  # type: ignore[attr-defined]
+                except (ValueError, TypeError, AttributeError):
+                    # Signature not available, skip it
+                    pass
+            except (AttributeError, ValueError) as e:
+                logger = FlextLoggerFactory.get_logger(__name__)
+                logger.warning(
+                    f"Failed to set signature for delegated method {method_name}: {e}",
+                )
 
-        # Check that methods were delegated
-        if not self._delegated_methods:
-            validation_errors.append("No methods were successfully delegated")
+            # Store for access via host
+            self._delegated_methods[method_name] = delegated_method
 
-        # Note: Due to typing, all methods in _delegated_methods are guaranteed
-        # to be callable so we skip the runtime callable check that would be unreachable
+            # Try to attach to host-instance - handle frozen Pydantic models
+            try:
+                if not hasattr(self._host, method_name):
+                    setattr(self._host, method_name, delegated_method)
+            except AttributeError:
+                if hasattr(self._host, "__class__"):
+                    setattr(self._host.__class__, method_name, delegated_method)
 
-        # Check initialization log for errors
-        failed_inits: list[str] = [
-            log for log in self._initialization_log if log.startswith("✗")
-        ]
-        if failed_inits:
-            validation_errors.extend(failed_inits)
+        def _validate_delegation(self) -> FlextResult[None]:
+            """Validate that delegation system is working correctly."""
+            validation_errors: list[str] = []
 
-        if validation_errors:
-            return FlextResult[None].fail(
-                f"Delegation validation failed: {'; '.join(validation_errors)}",
-            )
+            # Check that all mixins were initialized
+            if not self._mixin_instances:
+                validation_errors.append("No mixins were successfully registered")
 
-        return FlextResult[None].ok(None)
+            # Check that methods were delegated
+            if not self._delegated_methods:
+                validation_errors.append("No methods were successfully delegated")
 
-    def get_mixin_instance(self, mixin_class: type) -> object | None:
-        """Get a specific mixin instance for direct access if needed."""
-        return self._mixin_instances.get(mixin_class)
+            # Note: Due to typing, all methods in _delegated_methods are guaranteed
+            # to be callable so we skip the runtime callable check that would be unreachable
 
-    def get_delegation_info(self) -> dict[str, object]:
-        """Get comprehensive information about delegation state for debugging."""
-        return {
-            "registered_mixins": list(self._mixin_instances.keys()),
-            "delegated_methods": list(self._delegated_methods.keys()),
-            "initialization_log": self._initialization_log.copy(),
-            "validation_result": self._validate_delegation().is_success,
-        }
+            # Check initialization log for errors
+            failed_inits: list[str] = [
+                log for log in self._initialization_log if log.startswith("✗")
+            ]
+            if failed_inits:
+                validation_errors.extend(failed_inits)
+
+            if validation_errors:
+                return FlextResult[None].fail(
+                    f"Delegation validation failed: {'; '.join(validation_errors)}",
+                )
+
+            return FlextResult[None].ok(None)
+
+        def get_mixin_instance(self, mixin_class: type) -> object | None:
+            """Get a specific mixin instance for direct access if needed."""
+            return self._mixin_instances.get(mixin_class)
+
+        def get_delegation_info(self) -> dict[str, object]:
+            """Get comprehensive information about delegation state for debugging."""
+            return {
+                "registered_mixins": list(self._mixin_instances.keys()),
+                "delegated_methods": list(self._delegated_methods.keys()),
+                "initialization_log": self._initialization_log.copy(),
+                "validation_result": self._validate_delegation().is_success,
+            }
 
 
 def create_mixin_delegator(
     host_instance: object,
     *mixin_classes: type,
-) -> FlextMixinDelegator:
+) -> FlextDelegationSystem.MixinDelegator:
     """Create mixin delegators.
 
     Args:
@@ -297,7 +322,7 @@ def create_mixin_delegator(
       Configured delegator with all mixins registered and methods delegated
 
     """
-    return FlextMixinDelegator(host_instance, *mixin_classes)
+    return FlextDelegationSystem.MixinDelegator(host_instance, *mixin_classes)
 
 
 def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
@@ -348,7 +373,7 @@ def _validate_delegation_info(
         _raise_delegation_error("Host must have delegator attribute")
 
     # Use runtime getattr only after hasattr guard for type safety
-    host_typed = cast("_HasDelegator", host)
+    host_typed = cast("FlextDelegationSystem.HasDelegator", host)
     delegator = host_typed.delegator
     if not hasattr(delegator, "get_delegation_info"):
         _raise_delegation_error("Delegator must have get_delegation_info method")
@@ -420,8 +445,24 @@ def validate_delegation_system() -> FlextResult[
         )
 
 
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES - Consolidated approach
+# =============================================================================
+
+# Export nested classes for external access (backward compatibility)
+FlextMixinDelegator = FlextDelegationSystem.MixinDelegator
+FlextDelegatedProperty = FlextDelegationSystem.DelegatedProperty
+_HasDelegator = FlextDelegationSystem.HasDelegator
+_DelegatorProtocol = FlextDelegationSystem.DelegatorProtocol
+
+
 __all__: list[str] = [
+    "FlextDelegatedProperty",
+    # Main consolidated class
+    "FlextDelegationSystem",
+    # Backward compatibility aliases
     "FlextMixinDelegator",
+    # Factory functions
     "create_mixin_delegator",
     "validate_delegation_system",
 ]

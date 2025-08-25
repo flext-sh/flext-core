@@ -7,8 +7,8 @@ import functools
 import inspect
 import time
 from abc import ABC, abstractmethod
+from asyncio import iscoroutinefunction
 from collections.abc import Callable
-from inspect import iscoroutinefunction
 from typing import ParamSpec, Protocol, TypeVar, cast, override
 
 from flext_core.exceptions import FlextValidationError
@@ -1284,10 +1284,13 @@ def _flext_cache_decorator(
 
 
 class FlextDecorators:
-    """Unified decorator system following market standards.
+    """Tier 1 Module Pattern: Single main decorator system implementing all functionality.
 
-    All decorators are organized in this single class with static methods
-    for easy usage without instantiation. Follows standard Python decorator patterns.
+    Consolidates ALL decorator patterns from the flext-core decorators ecosystem into
+    one unified class. Implements hierarchical inheritance from FLEXT patterns.
+
+    This class serves as the SINGLE MAIN EXPORT consolidating ALL decorator functionality
+    from multiple previous classes following SOLID principles and DDD patterns.
     """
 
     # Type aliases for compatibility with tests
@@ -1295,7 +1298,167 @@ class FlextDecorators:
     _BaseDecoratorUtils: type | None = None  # Will be set later
 
     # =============================================================================
-    # PERFORMANCE DECORATORS
+    # VALIDATION DECORATORS - Consolidated from _FlextValidationDecorators
+    # =============================================================================
+
+    @staticmethod
+    def validate_arguments(func: FlextCallableProtocol) -> FlextCallableProtocol:
+        """Basic argument validation decorator.
+
+        Usage:
+            @FlextDecorators.validate_arguments
+            def my_function(arg1, arg2):
+                return arg1 + arg2
+        """
+
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            # Basic validation - ensure we have arguments
+            if not args and not kwargs:
+                msg = f"Function {getattr(func, '__name__', 'unknown')} called with no arguments"
+                raise ValueError(msg)
+
+            # Check for None in required positional arguments (first 2)
+            if len(args) >= 1 and args[0] is None:
+                msg = f"Function {getattr(func, '__name__', 'unknown')}: first argument cannot be None"
+                raise ValueError(msg)
+
+            return func(*args, **kwargs)
+
+        return cast("FlextDecoratedFunction[object]", wrapper)
+
+    @staticmethod
+    def validate_input_decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
+        """Alias for validate_arguments for backward compatibility."""
+        return FlextDecorators.validate_arguments(func)
+
+    @staticmethod
+    def validate_types(
+        **type_hints: type,
+    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
+        """Type validation decorator.
+
+        Usage:
+            @FlextDecorators.validate_types(name=str, age=int)
+            def create_user(name, age):
+                return User(name, age)
+        """
+
+        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                # Get function signature
+
+                sig = inspect.signature(func)
+                bound_args = sig.bind(*args, **kwargs)
+                bound_args.apply_defaults()
+
+                # Validate types
+                for param_name, expected_type in type_hints.items():
+                    if param_name in bound_args.arguments:
+                        value = bound_args.arguments[param_name]
+                        if value is not None and not isinstance(value, expected_type):
+                            msg = (
+                                f"Parameter '{param_name}' must be of type {expected_type.__name__}, "
+                                f"got {type(value).__name__}"
+                            )
+                            raise TypeError(msg)
+
+                return func(*args, **kwargs)
+
+            return cast("FlextDecoratedFunction[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def validate_not_none(
+        *param_names: str,
+    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
+        """Validate that specified parameters are not None.
+
+        Usage:
+            @FlextDecorators.validate_not_none('name', 'email')
+            def create_user(name, email, age=None):
+                return User(name, email, age)
+        """
+
+        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                # Get function signature
+                sig = inspect.signature(func)
+                bound_args = sig.bind(*args, **kwargs)
+                bound_args.apply_defaults()
+
+                # Check for None values
+                for param_name in param_names:
+                    if param_name in bound_args.arguments:
+                        value = bound_args.arguments[param_name]
+                        if value is None:
+                            msg = f"Parameter '{param_name}' cannot be None"
+                            raise ValueError(msg)
+
+                return func(*args, **kwargs)
+
+            return cast("FlextDecoratedFunction[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def create_validation_decorator() -> Callable[
+        [FlextCallable[object]],
+        FlextCallable[object],
+    ]:
+        """Create validation decorator for input validation."""
+
+        def decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+            return FlextDecorators.validate_arguments(func)
+
+        return decorator
+
+    @staticmethod
+    def validate_return_value(func: FlextCallableProtocol) -> FlextCallableProtocol:
+        """Validate function return value."""
+
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            result = func(*args, **kwargs)
+            if result is None:
+                msg = f"Function {getattr(func, '__name__', 'unknown')} returned None"
+                raise ValueError(msg)
+            return result
+
+        return cast("FlextDecoratedFunction[object]", wrapper)
+
+    @staticmethod
+    def require_non_none(
+        *arg_names: str,
+    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
+        """Require specific arguments to be non-None."""
+
+        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                sig = inspect.signature(func)
+                bound = sig.bind(*args, **kwargs)
+                bound.apply_defaults()
+
+                for arg_name in arg_names:
+                    if (
+                        arg_name in bound.arguments
+                        and bound.arguments[arg_name] is None
+                    ):
+                        msg = f"Argument '{arg_name}' cannot be None"
+                        raise ValueError(msg)
+
+                return func(*args, **kwargs)
+
+            return cast("FlextDecoratedFunction[object]", wrapper)
+
+        return decorator
+
+    # =============================================================================
+    # PERFORMANCE DECORATORS - Consolidated from _FlextPerformanceDecorators
     # =============================================================================
 
     @staticmethod
@@ -1390,7 +1553,375 @@ class FlextDecorators:
         return decorator
 
     # =============================================================================
-    # LOGGING DECORATORS
+    # ERROR HANDLING DECORATORS - Consolidated from _FlextErrorHandlingDecorators
+    # =============================================================================
+
+    @staticmethod
+    def safe_call(
+        handled_exceptions: tuple[type[Exception], ...] = (Exception,),
+    ) -> Callable[[FlextCallableProtocol], FlextFlextResultCallableProtocol]:
+        """Safe call decorator that catches exceptions and returns FlextResult.
+
+        Usage:
+            @FlextDecorators.safe_call()
+            def risky_function():
+                return "success"
+        """
+
+        def decorator(
+            func: FlextCallableProtocol,
+        ) -> FlextFlextResultCallableProtocol:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
+                try:
+                    result = func(*args, **kwargs)
+                    # If result is already a FlextResult, return it
+                    if hasattr(result, "is_success"):
+                        return cast("FlextResult[object]", result)
+                    # Otherwise wrap in FlextResult
+                    return FlextResult[object].ok(result)
+                except Exception as e:
+                    if isinstance(e, handled_exceptions):
+                        logger = FlextLoggerFactory.get_logger(
+                            f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
+                        )
+                        logger.exception(
+                            "Function failed with handled exception",
+                            extra={
+                                "function": getattr(func, "__name__", "unknown"),
+                                "error_type": type(e).__name__,
+                                "error_message": str(e),
+                            },
+                        )
+                        error_msg = (
+                            f"Error in {getattr(func, '__name__', 'unknown')}: {e!s}"
+                        )
+                        return FlextResult[object].fail(error_msg)
+                    raise
+
+            return cast("FlextFlextResultCallableProtocol", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def safe_execution_decorator(
+        func: FlextCallableProtocol,
+    ) -> FlextFlextResultCallableProtocol:
+        """Alias for safe_call() for backward compatibility."""
+        return FlextDecorators.safe_call()(func)
+
+    @staticmethod
+    def retry_decorator(
+        max_attempts: int = 3, delay: float = 1.0, backoff_factor: float = 2.0
+    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
+        """Retry decorator with exponential backoff.
+
+        Usage:
+            @FlextDecorators.retry_decorator(max_attempts=3, delay=1.0)
+            def unreliable_function():
+                return api_call()
+        """
+
+        def decorator(func: Callable[P, R]) -> Callable[P, R]:
+            @functools.wraps(func)
+            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                last_exception = None
+                current_delay = delay
+
+                for attempt in range(max_attempts):
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        last_exception = e
+                        if attempt < max_attempts - 1:  # Not the last attempt
+                            logger = FlextLoggerFactory.get_logger(
+                                f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
+                            )
+                            logger.warning(
+                                f"Function failed, retrying in {current_delay}s",
+                                extra={
+                                    "function": getattr(func, "__name__", "unknown"),
+                                    "attempt": attempt + 1,
+                                    "max_attempts": max_attempts,
+                                    "error": str(e),
+                                },
+                            )
+                            time.sleep(current_delay)
+                            current_delay *= backoff_factor
+
+                # All attempts failed
+                if last_exception:
+                    raise last_exception
+                msg = "No attempts made"
+                raise RuntimeError(msg)  # Should never reach here
+
+            return cast("Callable[..., R]", wrapper)  # type: ignore[explicit-any]
+
+        return decorator
+
+    @staticmethod
+    def handle_exceptions(func: FlextCallableProtocol) -> FlextCallableProtocol:
+        """Handle function exceptions with logging."""
+
+        @functools.wraps(func)
+        def wrapper(*args: object, **kwargs: object) -> object:
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                logger = FlextLoggerFactory.get_logger(
+                    f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
+                )
+                logger.exception(f"Exception in {getattr(func, '__name__', 'unknown')}")
+                raise
+
+        return cast("FlextDecoratedFunction[object]", wrapper)
+
+    @staticmethod
+    def retry_on_failure(
+        max_attempts: int = 3,
+    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
+        """Retry function on failure."""
+
+        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                for attempt in range(max_attempts):
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception:
+                        if attempt == max_attempts - 1:
+                            raise
+                        time.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                return None  # This should never be reached
+
+            return cast("FlextDecoratedFunction[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def validated_cached(
+        validator_class: type,
+        max_size: int = 128,
+    ) -> Callable[[FlextCallable[object]], FlextCallable[object]]:
+        """Combine validation with caching - returns FlextResult for safe composition.
+
+        Usage:
+            @FlextDecorators.validated_cached(UserModel, max_size=2)
+            def process_user(**kwargs):
+                return f"Processed: {kwargs['name']} ({kwargs['age']})"
+        """
+        cache: dict[str, object] = {}
+
+        def decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
+                # Create cache key
+                cache_key = str((args, tuple(sorted(kwargs.items()))))
+
+                # Check cache first
+                if cache_key in cache:
+                    cached_result = cache[cache_key]
+                    if isinstance(cached_result, FlextResult):
+                        return cached_result
+                    return FlextResult[object].ok(cached_result)
+
+                try:
+                    # Validate input using validator class
+                    if kwargs:  # Validate kwargs as model fields
+                        validator_class(**kwargs)  # This will raise if invalid
+
+                    # Execute function
+                    result = func(*args, **kwargs)
+                    success_result = FlextResult[object].ok(result)
+
+                    # Cache successful result (maintain size limit)
+                    if len(cache) >= max_size:
+                        # Remove oldest entry
+                        oldest_key = next(iter(cache))
+                        del cache[oldest_key]
+                    cache[cache_key] = success_result
+
+                    return success_result
+
+                except Exception as e:
+                    # Format error message for validation failures
+                    error_message = str(e)
+                    if "validation error" in error_message.lower():
+                        error_message = f"Validation failed: {error_message}"
+
+                    # Cache failed result to avoid recomputation
+                    error_result = FlextResult[object].fail(error_message)
+                    if len(cache) >= max_size:
+                        oldest_key = next(iter(cache))
+                        del cache[oldest_key]
+                    cache[cache_key] = error_result
+
+                    return error_result
+
+            return cast("FlextCallable[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def safe_cached(
+        max_size: int = 128,
+    ) -> Callable[[FlextCallable[object]], FlextCallable[object]]:
+        """Combine safe execution with caching - handles exceptions gracefully.
+
+        Usage:
+            @FlextDecorators.safe_cached(max_size=2)
+            def risky_operation(x):
+                if x < 0:
+                    raise ValueError("Negative input")
+                return x * 3
+        """
+        cache: dict[str, object] = {}
+
+        def decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                # Create cache key
+                cache_key = str((args, tuple(sorted(kwargs.items()))))
+
+                # Check cache first
+                if cache_key in cache:
+                    cached_result = cache[cache_key]
+                    if isinstance(cached_result, Exception):
+                        raise cached_result  # Re-raise cached exception
+                    return cached_result
+
+                try:
+                    # Execute function
+                    result = func(*args, **kwargs)
+
+                    # Cache successful result (maintain size limit)
+                    if len(cache) >= max_size:
+                        # Remove oldest entry
+                        oldest_key = next(iter(cache))
+                        del cache[oldest_key]
+                    cache[cache_key] = result
+
+                    return result
+
+                except Exception as e:
+                    # Cache the exception to avoid recomputation
+                    if len(cache) >= max_size:
+                        oldest_key = next(iter(cache))
+                        del cache[oldest_key]
+                    cache[cache_key] = e
+
+                    # Re-raise the exception
+                    raise
+
+            return cast("FlextCallable[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def retry(
+        max_attempts: int = 3,
+        delay: float = 1.0,
+    ) -> Callable[[FlextCallable[object]], FlextCallable[object]]:
+        """Retry decorator with configurable attempts and delay.
+
+        Usage:
+            @FlextDecorators.retry(max_attempts=3, delay=0.01)
+            def unreliable_operation():
+                # May fail occasionally
+                pass
+        """
+
+        def decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> object:
+                last_exception = None
+                for attempt in range(max_attempts):
+                    try:
+                        return func(*args, **kwargs)
+                    except Exception as e:
+                        last_exception = e
+                        if attempt < max_attempts - 1:
+                            time.sleep(delay)
+
+                # If we get here, all attempts failed
+                if last_exception:
+                    raise last_exception
+                error_msg = f"All {max_attempts} retry attempts failed"
+                raise RuntimeError(error_msg)
+
+            return cast("FlextCallable[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def complete_decorator(
+        validator_class: type | None = None,
+        cache_size: int = 128,
+        *,
+        with_timing: bool = False,
+        with_logging: bool = False,
+    ) -> Callable[[FlextCallable[object]], FlextCallable[object]]:
+        """Complete decorator with all features - validation, caching, timing, logging.
+
+        Usage:
+            @FlextDecorators.complete_decorator(
+                UserModel,
+                cache_size=16,
+                with_timing=True,
+                with_logging=True
+            )
+            def complex_operation(**kwargs):
+                return f"Processing: {kwargs['name']}"
+        """
+
+        def decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+            decorated_func = func
+
+            # Apply caching if cache_size > 0
+            if cache_size > 0 and validator_class:
+                decorated_func = FlextDecorators.validated_cached(
+                    validator_class, cache_size
+                )(decorated_func)
+            elif cache_size > 0:
+                # Apply simple caching without validation
+                cache: dict[str, object] = {}
+                original_func = decorated_func  # Store reference to avoid recursion
+
+                @functools.wraps(original_func)
+                def cached_wrapper(*args: object, **kwargs: object) -> object:
+                    cache_key = str((args, tuple(sorted(kwargs.items()))))
+
+                    if cache_key in cache:
+                        return cache[cache_key]
+
+                    result = original_func(
+                        *args, **kwargs
+                    )  # Call original, not decorated_func
+
+                    # Maintain cache size limit
+                    if len(cache) >= cache_size:
+                        oldest_key = next(iter(cache))
+                        del cache[oldest_key]
+                    cache[cache_key] = result
+
+                    return result
+
+                decorated_func = cast("FlextCallable[object]", cached_wrapper)
+
+            # Apply timing if requested
+            if with_timing:
+                decorated_func = FlextDecorators.time_execution(decorated_func)
+
+            # Apply logging if requested
+            if with_logging:
+                decorated_func = FlextDecorators.log_calls(decorated_func)
+
+            return decorated_func
+
+        return decorator
+
+    # =============================================================================
+    # LOGGING DECORATORS - Consolidated from _FlextLoggingDecorators
     # =============================================================================
 
     @staticmethod
@@ -1487,506 +2018,17 @@ class FlextDecorators:
         return cast("FlextDecoratedFunction[object]", wrapper)
 
     # =============================================================================
-    # ERROR HANDLING DECORATORS
+    # IMMUTABILITY AND FUNCTIONAL METHODS - Consolidated from multiple classes
     # =============================================================================
 
     @staticmethod
-    def safe_call(
-        handled_exceptions: tuple[type[Exception], ...] = (Exception,),
-    ) -> Callable[[FlextCallableProtocol], FlextFlextResultCallableProtocol]:
-        """Safe call decorator that catches exceptions and returns FlextResult.
-
-        Usage:
-            @FlextDecorators.safe_call()
-            def risky_function():
-                return "success"
-        """
-
-        def decorator(
-            func: FlextCallableProtocol,
-        ) -> FlextFlextResultCallableProtocol:
-            @functools.wraps(func)
-            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
-                try:
-                    result = func(*args, **kwargs)
-                    # If result is already a FlextResult, return it
-                    if hasattr(result, "is_success"):
-                        return cast("FlextResult[object]", result)
-                    # Otherwise wrap in FlextResult
-                    return FlextResult[object].ok(result)
-                except Exception as e:
-                    if isinstance(e, handled_exceptions):
-                        logger = FlextLoggerFactory.get_logger(
-                            f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
-                        )
-                        logger.exception(
-                            "Function failed with handled exception",
-                            extra={
-                                "function": getattr(func, "__name__", "unknown"),
-                                "error_type": type(e).__name__,
-                                "error_message": str(e),
-                            },
-                        )
-                        error_msg = (
-                            f"Error in {getattr(func, '__name__', 'unknown')}: {e!s}"
-                        )
-                        return FlextResult[object].fail(error_msg)
-                    raise
-
-            return cast("FlextFlextResultCallableProtocol", wrapper)
-
-        return decorator
-
-    @staticmethod
-    def retry(
-        max_attempts: int = 3, delay: float = 1.0, backoff_factor: float = 2.0
-    ) -> Callable[[FlextCallableGeneric[P, R]], FlextCallableGeneric[P, R]]:
-        """Retry decorator with exponential backoff.
-
-        Usage:
-            @FlextDecorators.retry(max_attempts=3, delay=1.0)
-            def unreliable_function():
-                return api_call()
-        """
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                last_exception = None
-                current_delay = delay
-
-                for attempt in range(max_attempts):
-                    try:
-                        return func(*args, **kwargs)
-                    except Exception as e:
-                        last_exception = e
-                        if attempt < max_attempts - 1:  # Not the last attempt
-                            logger = FlextLoggerFactory.get_logger(
-                                f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
-                            )
-                            logger.warning(
-                                f"Function failed, retrying in {current_delay}s",
-                                extra={
-                                    "function": getattr(func, "__name__", "unknown"),
-                                    "attempt": attempt + 1,
-                                    "max_attempts": max_attempts,
-                                    "error": str(e),
-                                },
-                            )
-                            time.sleep(current_delay)
-                            current_delay *= backoff_factor
-
-                # All attempts failed
-                if last_exception:
-                    raise last_exception
-                msg = "No attempts made"
-                raise RuntimeError(msg)  # Should never reach here
-
-            return cast("Callable[P, R]", wrapper)
-
-        return decorator
-
-        # =============================================================================
-
-    # VALIDATION DECORATORS
-    # =============================================================================
-
-    @staticmethod
-    def validate_arguments(func: FlextCallableProtocol) -> FlextCallableProtocol:
-        """Basic argument validation decorator.
-
-        Usage:
-            @FlextDecorators.validate_arguments
-            def my_function(arg1, arg2):
-                return arg1 + arg2
-        """
-
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            # Basic validation - ensure we have arguments
-            if not args and not kwargs:
-                error_msg = f"Function {getattr(func, '__name__', 'unknown')} called with no arguments"
-                raise ValueError(error_msg)
-
-            # Check for None in required positional arguments (first 2)
-            if len(args) >= 1 and args[0] is None:
-                error_msg = f"Function {getattr(func, '__name__', 'unknown')}: first argument cannot be None"
-                raise ValueError(error_msg)
-
-            return func(*args, **kwargs)
-
-        return cast("FlextDecoratedFunction[object]", wrapper)
-
-    @staticmethod
-    def validate_types(
-        **type_hints: type,
-    ) -> Callable[[FlextCallableGeneric[P, R]], FlextCallableGeneric[P, R]]:
-        """Type validation decorator.
-
-        Usage:
-            @FlextDecorators.validate_types(name=str, age=int)
-            def create_user(name, age):
-                return User(name, age)
-        """
-
-        def decorator(func: FlextCallableGeneric[P, R]) -> FlextCallableGeneric[P, R]:
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Get function signature
-
-                sig = inspect.signature(func)
-                bound_args = sig.bind(*args, **kwargs)
-                bound_args.apply_defaults()
-
-                # Validate types
-                for param_name, expected_type in type_hints.items():
-                    if param_name in bound_args.arguments:
-                        value = bound_args.arguments[param_name]
-                        if value is not None and not isinstance(value, expected_type):
-                            error_msg = (
-                                f"Parameter '{param_name}' must be of type {expected_type.__name__}, "
-                                f"got {type(value).__name__}"
-                            )
-                            raise TypeError(error_msg)
-
-                return func(*args, **kwargs)
-
-            return cast("Callable[P, R]", wrapper)
-
-        return decorator
-
-    @staticmethod
-    def validate_not_none(
-        *param_names: str,
-    ) -> Callable[[FlextCallableGeneric[P, R]], FlextCallableGeneric[P, R]]:
-        """Validate that specified parameters are not None.
-
-        Usage:
-            @FlextDecorators.validate_not_none('name', 'email')
-            def create_user(name, email, age=None):
-                return User(name, email, age)
-        """
-
-        def decorator(func: FlextCallableGeneric[P, R]) -> FlextCallableGeneric[P, R]:
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                # Get function signature
-
-                sig = inspect.signature(func)
-                bound_args = sig.bind(*args, **kwargs)
-                bound_args.apply_defaults()
-
-                # Check for None values
-                for param_name in param_names:
-                    if param_name in bound_args.arguments:
-                        value = bound_args.arguments[param_name]
-                        if value is None:
-                            error_msg = f"Parameter '{param_name}' cannot be None"
-                            raise ValueError(error_msg)
-
-                return func(*args, **kwargs)
-
-            return cast("Callable[P, R]", wrapper)
-
-        return decorator
-
-    # Legacy validation method for backward compatibility
-    @staticmethod
-    def validated_with_result(
-        model_class: object | None = None,
-    ) -> Callable[
-        [FlextCallable[object]],
-        FlextDecoratedFunction[object],
-    ]:
-        """Create a decorator that validates kwargs via Pydantic model when provided.
-
-        Without model_class, return a decorator that wraps the function result
-        into FlextResult and catches exceptions.
-        """
-
-        def decorator(
-            func: FlextCallable[object],
-        ) -> FlextDecoratedFunction[object]:
-            @functools.wraps(func)
-            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
-                try:
-                    if model_class is not None:
-                        try:
-                            # Try Pydantic model validation first
-                            model_validate = getattr(
-                                model_class,
-                                "model_validate",
-                                None,
-                            )
-                            if callable(model_validate):
-                                model_validate(kwargs)
-                            elif callable(model_class):
-                                # Best-effort validation function/class
-                                model_class(**kwargs)
-                        except Exception as ve:
-                            return FlextResult[object].fail(f"Validation failed: {ve}")
-                    result = func(*args, **kwargs)
-                    return FlextResult[object].ok(result)
-                except Exception as e:
-                    return FlextResult[object].fail(f"Execution failed: {e}")
-
-            # Add __wrapped__ attribute required by FlextDecoratedFunction protocol
-            wrapper.__wrapped__ = func
-            return cast("FlextDecoratedFunction[object]", wrapper)
-
-        return decorator
-
-    # Removed incomplete overload - keeping the generic implementation only
-
-    @staticmethod
-    def safe_result(
-        func: FlextCallable[object],
-    ) -> FlextCallable[object]:
-        """Safe execution decorator that returns FlextResult.
-
-        Args:
-            func: FlextCallableunction to execute safely.
-
-        Returns:
-            Function that returns FlextResult.
-
-        """
-        if iscoroutinefunction(func):
-            # Handle async functions
-            async def async_wrapper(
-                *args: object, **kwargs: object
-            ) -> FlextResult[object]:
-                try:
-                    result = await func(*args, **kwargs)
-                    # If result is already a FlextResult, return it
-                    if isinstance(result, FlextResult):
-                        return cast("FlextResult[object]", result)
-                    # Otherwise wrap in FlextResult
-                    return FlextResult[object].ok(result)
-                except Exception as e:
-                    return FlextResult[object].fail(str(e))
-
-            return async_wrapper
-
-        # Handle regular functions
-        def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
-            try:
-                result = func(*args, **kwargs)
-                # If result is already a FlextResult, return it
-                if isinstance(result, FlextResult):
-                    return cast("FlextResult[object]", result)
-                # Otherwise wrap in FlextResult
-                return FlextResult[object].ok(result)
-            except Exception as e:
-                return FlextResult[object].fail(str(e))
-
-        # Preserve metadata and return the wrapper
-        return cast("FlextDecoratedFunction[object]", wrapper)
-
-    # Additional composite decorators
-    @staticmethod
-    def cached_with_timing(
-        max_size: int = 128,
-    ) -> Callable[
-        [FlextCallable[object]],
-        FlextDecoratedFunction[object],
-    ]:
-        """Create cached decorator with specified cache size and timing.
-
-        Args:
-            max_size: Maximum cache size for the cache layer.
-
-        Returns:
-            A decorator that first caches results and then measures execution time.
-
-        """
-        cache = _flext_cache_decorator(max_size)
-
-        def decorator(
-            func: FlextCallable[object],
-        ) -> FlextDecoratedFunction[object]:
-            return _flext_timing_decorator(cache(func))
-
-        return decorator
-
-    @staticmethod
-    def safe_cached(
-        max_size: int = 128,
-    ) -> Callable[
-        [FlextCallable[object]],
-        FlextDecoratedFunction[object],
-    ]:
-        """Create safe cache decorator with specified cache size.
-
-        Args:
-            max_size: Maximum cache size.
-
-        Returns:
-            Cache decorator.
-
-        """
-        return _flext_cache_decorator(max_size)
-
-    @staticmethod
-    def validated_cached(
-        model_class: object,
-        max_size: int = 128,
-    ) -> Callable[
-        [FlextCallable[object]],
-        FlextDecoratedFunction[object],
-    ]:
-        """Create validated cache decorator with specified model class and cache size.
-
-        Args:
-            model_class: Validation model/class for kwargs.
-            max_size: Maximum cache size.
-
-        Returns:
-            Decorator that validates and caches.
-
-        """
-
-        def chain(
-            func: FlextCallable[object],
-        ) -> FlextDecoratedFunction[object]:
-            return FlextDecorators.validated_with_result(model_class)(
-                _flext_cache_decorator(max_size)(func),
-            )
-
-        return chain
-
-    @staticmethod
-    def complete_decorator(
-        model_class: object | None = None,
-        *,
-        cache_size: int = 128,
-        with_timing: bool = False,
-        with_logging: bool = False,
-    ) -> Callable[
-        [FlextCallable[object]],
-        FlextDecoratedFunction[object],
-    ]:
-        """Compose multiple features: cache, timing, and validation.
-
-        Args:
-            model_class: Optional validation model/class for kwargs.
-            cache_size: Cache size when caching is enabled.
-            with_timing: Whether to include timing decoration.
-            with_logging: Placeholder for future logging composition.
-
-        Returns:
-            Composed decorator with requested features.
-
-        """
-
-        def decorator(
-            func: FlextCallable[object],
-        ) -> FlextDecoratedFunction[object]:
-            # Cast to decorated function and set __wrapped__ for protocol compliance
-            decorated = cast("FlextDecoratedFunction[object]", func)
-            decorated.__wrapped__ = func
-            if cache_size:
-                decorated = _flext_cache_decorator(cache_size)(decorated)
-            if with_timing:
-                decorated = _flext_timing_decorator(decorated)
-            if model_class is not None:
-                decorated = FlextDecorators.validated_with_result(model_class)(
-                    decorated,
-                )
-            # Implement logging integration using existing log_calls_decorator
-            if with_logging:
-                result = FlextLoggingDecorators.log_calls_decorator(decorated)
-                # Ensure __wrapped__ attribute for FlextDecoratedFunction protocol
-                result_decorated = cast("FlextDecoratedFunction[object]", result)
-                result_decorated.__wrapped__ = func
-                decorated = result_decorated
-            return decorated
-
-        return decorator
+    def immutable_decorator(func: FlextCallable[object]) -> FlextCallable[object]:
+        """Enforce immutability in function (static method for compatibility)."""
+        return FlextDecorators.make_immutable(func)
 
     # =============================================================================
-    # ADDITIONAL DECORATOR METHODS - Complete functionality consolidation
+    # ADDITIONAL UTILITY METHODS - Consolidated from all classes
     # =============================================================================
-
-    @staticmethod
-    def validate_return_value(func: FlextCallableProtocol) -> FlextCallableProtocol:
-        """Validate function return value."""
-
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            result = func(*args, **kwargs)
-            if result is None:
-                msg = f"Function {getattr(func, '__name__', 'unknown')} returned None"
-                raise ValueError(msg)
-            return result
-
-        return cast("FlextDecoratedFunction[object]", wrapper)
-
-    @staticmethod
-    def require_non_none(
-        *arg_names: str,
-    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
-        """Require specific arguments to be non-None."""
-
-        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
-            @functools.wraps(func)
-            def wrapper(*args: object, **kwargs: object) -> object:
-                sig = inspect.signature(func)
-                bound = sig.bind(*args, **kwargs)
-                bound.apply_defaults()
-
-                for arg_name in arg_names:
-                    if (
-                        arg_name in bound.arguments
-                        and bound.arguments[arg_name] is None
-                    ):
-                        msg = f"Argument '{arg_name}' cannot be None"
-                        raise ValueError(msg)
-
-                return func(*args, **kwargs)
-
-            return cast("FlextDecoratedFunction[object]", wrapper)
-
-        return decorator
-
-    @staticmethod
-    def handle_exceptions(func: FlextCallableProtocol) -> FlextCallableProtocol:
-        """Handle function exceptions with logging."""
-
-        @functools.wraps(func)
-        def wrapper(*args: object, **kwargs: object) -> object:
-            try:
-                return func(*args, **kwargs)
-            except Exception:
-                logger = FlextLoggerFactory.get_logger(
-                    f"{func.__module__}.{getattr(func, '__name__', 'unknown')}"
-                )
-                logger.exception(f"Exception in {getattr(func, '__name__', 'unknown')}")
-                raise
-
-        return cast("FlextDecoratedFunction[object]", wrapper)
-
-    @staticmethod
-    def retry_on_failure(
-        max_attempts: int = 3,
-    ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
-        """Retry function on failure."""
-
-        def decorator(func: FlextCallableProtocol) -> FlextCallableProtocol:
-            @functools.wraps(func)
-            def wrapper(*args: object, **kwargs: object) -> object:
-                for attempt in range(max_attempts):
-                    try:
-                        return func(*args, **kwargs)
-                    except Exception:
-                        if attempt == max_attempts - 1:
-                            raise
-                        time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-                return None  # This should never be reached
-
-            return cast("FlextDecoratedFunction[object]", wrapper)
-
-        return decorator
 
     @staticmethod
     def memoize(func: FlextCallableProtocol) -> FlextCallableProtocol:
@@ -2033,7 +2075,6 @@ class FlextDecorators:
             return func(*args, **kwargs)
 
         # Make wrapper immutable by removing modification attributes
-
         for attr in ["__dict__", "__annotations__"]:
             if hasattr(wrapper, attr):
                 with contextlib.suppress(TypeError, AttributeError):
@@ -2069,7 +2110,7 @@ class FlextDecorators:
             return f"{getattr(func, '__name__', 'unknown')}(...)"
 
     @staticmethod
-    def create_validation_decorator(
+    def create_validation_decorator_with_validator(
         validator: Callable[[object], bool],
     ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
         """Create custom validation decorator."""
@@ -2096,6 +2137,105 @@ class FlextDecorators:
 
                 return result
 
+            return cast("FlextDecoratedFunction[object]", wrapper)
+
+        return decorator
+
+    @staticmethod
+    def safe_result(
+        func: FlextCallable[object],
+    ) -> FlextCallable[object]:
+        """Safe execution decorator that returns FlextResult."""
+        if iscoroutinefunction(func):
+            # Handle async functions
+            async def async_wrapper(
+                *args: object, **kwargs: object
+            ) -> FlextResult[object]:
+                try:
+                    result = await func(*args, **kwargs)
+                    # If result is already a FlextResult, return it
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[object]", result)
+                    # Otherwise wrap in FlextResult
+                    return FlextResult[object].ok(result)
+                except Exception as e:
+                    return FlextResult[object].fail(str(e))
+
+            return async_wrapper
+
+        # Handle regular functions
+        def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
+            try:
+                result = func(*args, **kwargs)
+                # If result is already a FlextResult, return it
+                if isinstance(result, FlextResult):
+                    return cast("FlextResult[object]", result)
+                # Otherwise wrap in FlextResult
+                return FlextResult[object].ok(result)
+            except Exception as e:
+                return FlextResult[object].fail(str(e))
+
+        # Preserve metadata and return the wrapper
+        return cast("FlextDecoratedFunction[object]", wrapper)
+
+    @staticmethod
+    def cached_with_timing(
+        max_size: int = 128,
+    ) -> Callable[
+        [FlextCallable[object]],
+        FlextDecoratedFunction[object],
+    ]:
+        """Create cached decorator with specified cache size and timing."""
+        cache = _flext_cache_decorator(max_size)
+
+        def decorator(
+            func: FlextCallable[object],
+        ) -> FlextDecoratedFunction[object]:
+            return _flext_timing_decorator(cache(func))
+
+        return decorator
+
+    @staticmethod
+    def validated_with_result(
+        model_class: object | None = None,
+    ) -> Callable[
+        [FlextCallable[object]],
+        FlextDecoratedFunction[object],
+    ]:
+        """Create a decorator that validates kwargs via Pydantic model when provided.
+
+        Without model_class, return a decorator that wraps the function result
+        into FlextResult and catches exceptions.
+        """
+
+        def decorator(
+            func: FlextCallable[object],
+        ) -> FlextDecoratedFunction[object]:
+            @functools.wraps(func)
+            def wrapper(*args: object, **kwargs: object) -> FlextResult[object]:
+                try:
+                    if model_class is not None:
+                        try:
+                            # Try Pydantic model validation first
+                            model_validate = getattr(
+                                model_class,
+                                "model_validate",
+                                None,
+                            )
+                            if callable(model_validate):
+                                model_validate(kwargs)
+                            elif callable(model_class):
+                                # Best-effort validation function/class
+                                model_class(**kwargs)
+                        except Exception as ve:
+                            return FlextResult[object].fail(f"Validation failed: {ve}")
+                    result = func(*args, **kwargs)
+                    return FlextResult[object].ok(result)
+                except Exception as e:
+                    return FlextResult[object].fail(f"Execution failed: {e}")
+
+            # Add __wrapped__ attribute required by FlextDecoratedFunction protocol
+            wrapper.__wrapped__ = func
             return cast("FlextDecoratedFunction[object]", wrapper)
 
         return decorator
@@ -2129,6 +2269,14 @@ class FlextDecorators:
 # =============================================================================
 # LEGACY COMPATIBILITY LAYER - Maintain existing imports
 # =============================================================================
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES - All classes point to FlextDecorators
+# =============================================================================
+
+# Main export alias for backward compatibility
+FlextCoreDecorators = FlextDecorators  # Backward compatibility with old name
 
 
 # All specialized decorator classes are now facades that delegate to FlextDecorators
@@ -2318,7 +2466,7 @@ class FlextLoggingDecorators:
 
 
 class FlextImmutabilityDecorators:
-    """Legacy compatibility - delegates to FlextDecorators immutability methods."""
+    """Legacy compatibility - delegates to FlextCoreDecorators immutability methods."""
 
     @staticmethod
     def make_immutable(func: FlextCallableProtocol) -> FlextCallableProtocol:
@@ -2419,7 +2567,7 @@ class FlextFunctionalDecorators:
 
 # Utility classes for compatibility
 class FlextDecoratorUtils:
-    """Legacy compatibility - delegates to FlextDecorators utility methods."""
+    """Legacy compatibility - delegates to FlextCoreDecorators utility methods."""
 
     @staticmethod
     def get_function_signature(func: FlextCallableProtocol) -> str:
@@ -2436,14 +2584,14 @@ class FlextDecoratorUtils:
 
 
 class FlextDecoratorFactory:
-    """Legacy compatibility - delegates to FlextDecorators factory methods."""
+    """Legacy compatibility - delegates to FlextCoreDecorators factory methods."""
 
     @staticmethod
     def create_validation_decorator(
         validator: Callable[[object], bool],
     ) -> Callable[[FlextCallableProtocol], FlextCallableProtocol]:
         """Create validation decorator via FlextDecorators."""
-        return FlextDecorators.create_validation_decorator(validator)
+        return FlextDecorators.create_validation_decorator_with_validator(validator)
 
 
 # Aliases for complete backward compatibility
@@ -2472,6 +2620,15 @@ FlextDecorators.Immutability = FlextImmutabilityDecorators
 FlextDecorators.Logging = FlextLoggingDecorators
 FlextDecorators._BaseDecoratorUtils = _BaseDecoratorUtils
 
+# For backward compatibility with FlextDecorators reference
+FlextDecorators.Validation = FlextValidationDecorators
+FlextDecorators.ErrorHandling = FlextErrorHandlingDecorators
+FlextDecorators.Performance = FlextPerformanceDecorators
+FlextDecorators.Functional = FlextFunctionalDecorators
+FlextDecorators.Immutability = FlextImmutabilityDecorators
+FlextDecorators.Logging = FlextLoggingDecorators
+FlextDecorators._BaseDecoratorUtils = _BaseDecoratorUtils
+
 
 # =============================================================================
 # TIER 1 MODULE PATTERN - EXPORTS
@@ -2479,22 +2636,26 @@ FlextDecorators._BaseDecoratorUtils = _BaseDecoratorUtils
 
 __all__: list[str] = [
     # =======================================================================
-    # PROTOCOLS - Type checking interfaces (not classes)
+    # PROTOCOLS - Type checking interfaces
     # =======================================================================
     "FlextCallableProtocol",  # Protocol for flexible callables
+    # =======================================================================
+    # TIER 1 MODULE PATTERN - MAIN EXPORT
+    # =======================================================================
+    "FlextDecorators",  # 🎯 MAIN EXPORT: Single class consolidating ALL decorator functionality
     "FlextDecoratedFunction",  # Type alias for decorated functions
     "FlextDecoratorFactory",
     "FlextDecoratorUtils",
-    "FlextDecorators",  # 🎯 SINGLE EXPORT: All decorator functionality consolidated
+    # =======================================================================
+    # BACKWARD COMPATIBILITY LAYER - All original class names
+    # =======================================================================
+    "FlextCoreDecorators",  # Alias to FlextDecorators for backward compatibility
     "FlextErrorHandlingDecorators",
     "FlextFlextResultCallableProtocol",  # Protocol for FlextResult callables
     "FlextFunctionalDecorators",
     "FlextImmutabilityDecorators",
     "FlextLoggingDecorators",
     "FlextPerformanceDecorators",
-    # =======================================================================
-    # LEGACY COMPATIBILITY LAYER - All original class names
-    # =======================================================================
     "FlextValidationDecorators",
     "_BaseDecoratorFactory",
     "_BaseImmutabilityDecorators",

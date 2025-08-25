@@ -1,6 +1,5 @@
 """Comprehensive tests for FLEXT patterns logging module."""
 
-
 from __future__ import annotations
 
 import time

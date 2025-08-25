@@ -45,7 +45,7 @@ from pydantic.alias_generators import to_camel, to_snake
 from flext_core.exceptions import FlextValidationError
 from flext_core.fields import FlextFields
 from flext_core.loggings import FlextLoggerFactory
-from flext_core.payload import FlextEvent, FlextPayload
+from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -803,7 +803,7 @@ class FlextEntity(FlextModel, ABC):
                     event_data = {}
 
             # Create FlextEvent object
-            event_result = FlextEvent.create_event(
+            event_result = FlextPayload.create_event(
                 event_type=event_type,
                 event_data=event_data,
                 aggregate_id=str(self.id),
@@ -1006,9 +1006,20 @@ def _get_default_registry() -> dict[str, type[FlextModel] | object]:
     return {}
 
 
-class FlextFactory:
-    """Factory for model creation across the ecosystem."""
+class FlextModels:
+    """Consolidated FLEXT Models - All model functionality in one class."""
 
+    # ==========================================================================
+    # NESTED MODEL CLASSES - Reference to existing implementations
+    # ==========================================================================
+    Model: type[BaseModel] | None = None  # Will be set after class definitions
+    RootModel: type[BaseModel] | None = None  # Will be set after class definitions
+    Value: type[BaseModel] | None = None  # Will be set after class definitions
+    Entity: type[BaseModel] | None = None  # Will be set after class definitions
+
+    # ==========================================================================
+    # FACTORY FUNCTIONALITY - Model creation and registration
+    # ==========================================================================
     _registry: ClassVar[dict[str, type[FlextModel] | object] | None] = None
 
     @classmethod
@@ -1276,7 +1287,7 @@ class FlextFactory:
 # Legacy compatibility aliases removed to satisfy linting rules.
 
 #  factory patterns - no legacy imports needed
-FlextEntityFactory = FlextFactory  # Use standard factory implementation
+# FlextEntityFactory will be set after FlextModels is defined
 
 # Python 3.13 type aliases for patterns
 
@@ -1384,6 +1395,24 @@ def model_to_dict_safe(model: object) -> dict[str, object]:
     return {}
 
 
+# =============================================================================
+# SETUP NESTED CLASS REFERENCES - Connect existing classes to FlextModels
+# =============================================================================
+
+# Set up the nested class references
+FlextModels.Model = FlextModel
+FlextModels.RootModel = FlextRootModel
+FlextModels.Value = FlextValue
+FlextModels.Entity = FlextEntity
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Factory alias for backward compatibility (FlextFactory now references FlextModels)
+FlextFactory = FlextModels
+FlextEntityFactory = FlextModels  # Entity factory also references FlextModels
+
 # Exports
 __all__: list[str] = [
     "DomainEventDict",
@@ -1394,11 +1423,12 @@ __all__: list[str] = [
     "FlextEntity",
     "FlextEntityDict",
     "FlextEntityFactory",
-    "FlextFactory",  # Re-enabled: class needed for entity tests
+    "FlextFactory",  # Now an alias to FlextModels
     "FlextFieldValidationInfo",
     "FlextLegacyConfig",
     "FlextModel",
     "FlextModelDict",
+    "FlextModels",  # 🎯 MAIN EXPORT: Single class consolidating ALL model functionality
     "FlextOperationDict",
     "FlextOperationModel",
     "FlextOracleModel",

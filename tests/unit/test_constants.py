@@ -1,6 +1,5 @@
 """Tests for FLEXT Core constants module."""
 
-
 from __future__ import annotations
 
 import pytest

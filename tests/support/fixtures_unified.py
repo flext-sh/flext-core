@@ -53,14 +53,14 @@ class PerformanceDataFactory:
     """Simple performance data factory."""
 
     @staticmethod
-    def create_large_payload(size_mb: int = 1) -> dict[str, Any]:
+    def create_large_payload(size_mb: int = 1) -> dict[str, object]:
         """Create large test payload."""
         return {"data": "x" * (size_mb * 1024), "size_mb": size_mb}
 
     @staticmethod
-    def create_nested_structure(depth: int = 10) -> dict[str, Any]:
+    def create_nested_structure(depth: int = 10) -> dict[str, object]:
         """Create nested data structure."""
-        result: dict[str, Any] = {"value": f"depth_{depth}"}
+        result: dict[str, object] = {"value": f"depth_{depth}"}
         current = result
         for i in range(depth - 1):
             current["nested"] = {"value": f"depth_{depth - i - 1}"}
@@ -105,13 +105,13 @@ class FactoryRegistry:
     """Simple factory registry."""
 
     def __init__(self) -> None:
-        self.factories: dict[str, Any] = {}
+        self.factories: dict[str, object] = {}
 
-    def register(self, name: str, factory: Any) -> None:
+    def register(self, name: str, factory: object) -> None:
         """Register a factory."""
         self.factories[name] = factory
 
-    def get(self, name: str) -> Any:
+    def get(self, name: str) -> object:
         """Get a factory."""
         return self.factories.get(name)
 
@@ -188,13 +188,13 @@ def success_result() -> FlextResult[str]:
 
 
 @pytest.fixture
-def failure_result() -> FlextResult[Any]:
+def failure_result() -> FlextResult[object]:
     """Fixture providing failed FlextResult."""
     return FlextResultFactory.create_failure("test_failure_message")
 
 
 @pytest.fixture
-def result_chain() -> list[FlextResult[Any]]:
+def result_chain() -> list[FlextResult[object]]:
     """Fixture providing chain of results for pipeline testing."""
     return [
         FlextResultFactory.create_success("step_1"),
@@ -245,7 +245,7 @@ def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:
 
 
 @pytest.fixture
-def performance_data() -> dict[str, Any]:
+def performance_data() -> dict[str, object]:
     """Fixture providing performance test data."""
     return PerformanceDataFactory.create_large_payload(size_mb=1)
 
@@ -257,7 +257,7 @@ def large_dataset() -> list[FlextEntity]:
 
 
 @pytest.fixture
-def nested_data() -> dict[str, Any]:
+def nested_data() -> dict[str, object]:
     """Fixture providing deeply nested data structure."""
     return PerformanceDataFactory.create_nested_structure(depth=10)
 
@@ -292,15 +292,15 @@ async def async_executor() -> AsyncGenerator[Any]:
 class AsyncTestService:
     """Test service for async testing."""
 
-    async def process(self, data: Any) -> FlextResult[Any]:
+    async def process(self, data: object) -> FlextResult[object]:
         """Process data asynchronously."""
         await asyncio.sleep(0.001)  # Simulate async work
-        return FlextResult[Any].ok(f"processed_{data}")
+        return FlextResult[object].ok(f"processed_{data}")
 
-    async def fail_operation(self) -> FlextResult[Any]:
+    async def fail_operation(self) -> FlextResult[object]:
         """Simulate async failure."""
         await asyncio.sleep(0.001)
-        return FlextResult[Any].fail("async_operation_failed")
+        return FlextResult[object].fail("async_operation_failed")
 
 
 class AsyncExecutor:
@@ -322,7 +322,7 @@ class AsyncExecutor:
                 task.cancel()
         await asyncio.gather(*self._tasks, return_exceptions=True)
 
-    async def execute(self, coro: Any) -> Any:
+    async def execute(self, coro: object) -> object:
         """Execute coroutine."""
         if not self._running:
             msg = "Executor not running"
@@ -335,7 +335,7 @@ class AsyncExecutor:
 
 # Error simulation fixtures
 @pytest.fixture
-def error_scenarios() -> list[dict[str, Any]]:
+def error_scenarios() -> list[dict[str, object]]:
     """Fixture providing various error scenarios."""
     return [
         ErrorSimulationFactory.create_error_scenario("ValidationError"),
@@ -345,10 +345,10 @@ def error_scenarios() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def validation_error_result() -> FlextResult[Any]:
+def validation_error_result() -> FlextResult[object]:
     """Fixture providing validation error result."""
     error_scenario = ErrorSimulationFactory.create_error_scenario("ValidationError")
-    return FlextResult[Any].fail(error_scenario["message"])
+    return FlextResult[object].fail(error_scenario["message"])
 
 
 # Sequence and batch fixtures
@@ -359,7 +359,7 @@ def item_sequence() -> list[str]:
 
 
 @pytest.fixture
-def timeline_events() -> list[dict[str, Any]]:
+def timeline_events() -> list[dict[str, object]]:
     """Fixture providing timeline events."""
     return SequenceFactory.create_timeline_events(count=10)
 
@@ -379,13 +379,13 @@ def factory_registry() -> FactoryRegistry:
 
 # Mock fixtures using pytest-mock
 @pytest.fixture
-def mock_logger(mocker: MockerFixture) -> Any:
+def mock_logger(mocker: MockerFixture) -> object:
     """Fixture providing mocked logger."""
     return mocker.patch("flext_core.loggings.get_logger")
 
 
 @pytest.fixture
-def mock_database(mocker: MockerFixture) -> Any:
+def mock_database(mocker: MockerFixture) -> object:
     """Fixture providing mocked database."""
     mock_db = mocker.MagicMock()
     mock_db.connect.return_value = True
@@ -394,7 +394,7 @@ def mock_database(mocker: MockerFixture) -> Any:
 
 
 @pytest.fixture
-def mock_external_service(mocker: MockerFixture) -> Any:
+def mock_external_service(mocker: MockerFixture) -> object:
     """Fixture providing mocked external service."""
     mock_service = mocker.MagicMock()
     mock_service.call_api.return_value = {"status": "success", "data": "test"}
@@ -423,7 +423,7 @@ def environment(request: pytest.FixtureRequest) -> str:
         {"debug": False, "log_level": "ERROR"},
     ]
 )
-def config_variants(request: pytest.FixtureRequest) -> dict[str, Any]:
+def config_variants(request: pytest.FixtureRequest) -> dict[str, object]:
     """Parametrized fixture providing config variants."""
     return request.param
 
@@ -451,7 +451,7 @@ def module_config() -> FlextConfig:
 
 
 @pytest.fixture(scope="class")
-def class_database() -> dict[str, Any]:
+def class_database() -> dict[str, object]:
     """Class-scoped database for class-level tests."""
     return {
         "connection_string": "sqlite:///:memory:",
@@ -464,13 +464,13 @@ class SessionTestService:
     """Test service for session-scoped testing."""
 
     def __init__(self) -> None:
-        self._data: dict[str, Any] = {}
+        self._data: dict[str, object] = {}
 
-    def store(self, key: str, value: Any) -> None:
+    def store(self, key: str, value: object) -> None:
         """Store data in session service."""
         self._data[key] = value
 
-    def retrieve(self, key: str) -> Any:
+    def retrieve(self, key: str) -> object:
         """Retrieve data from session service."""
         return self._data.get(key)
 
@@ -481,7 +481,7 @@ class SessionTestService:
 
 # HTTP testing fixtures using pytest-httpx
 @pytest.fixture
-def http_client() -> Any:
+def http_client() -> object:
     """Fixture providing HTTP client for testing."""
     try:
         import httpx
@@ -493,7 +493,7 @@ def http_client() -> Any:
 
 
 @pytest.fixture
-def mock_http_responses() -> dict[str, Any]:
+def mock_http_responses() -> dict[str, object]:
     """Fixture providing mock HTTP responses."""
     return {
         "success": {"status_code": 200, "json": {"result": "success"}},
@@ -524,7 +524,7 @@ def cleanup_environment() -> Generator[None]:
 
 # Randomly ordered fixtures for pytest-randomly
 @pytest.fixture
-def random_data() -> dict[str, Any]:
+def random_data() -> dict[str, object]:
     """Fixture providing random test data (works with pytest-randomly)."""
     import random
 
@@ -538,13 +538,13 @@ def random_data() -> dict[str, Any]:
 
 # Marker-based fixtures
 @pytest.fixture
-def slow_operation_data() -> dict[str, Any]:
+def slow_operation_data() -> dict[str, object]:
     """Fixture for data requiring slow operations (use with @pytest.mark.slow)."""
     return PerformanceDataFactory.create_large_payload(size_mb=10)
 
 
 @pytest.fixture
-def integration_services() -> dict[str, Any]:
+def integration_services() -> dict[str, object]:
     """Fixture for integration test services (use with @pytest.mark.integration)."""
     return {
         "database": {"url": "postgresql://test:test@localhost/integration_test"},
@@ -586,7 +586,7 @@ def command_pipeline() -> list[FlextCommands.Command]:
 
 
 @pytest.fixture
-def event_sourcing_data() -> list[dict[str, Any]]:
+def event_sourcing_data() -> list[dict[str, object]]:
     """Fixture providing event sourcing test data."""
     base_time = datetime.now(UTC)
 

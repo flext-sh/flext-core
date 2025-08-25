@@ -1,6 +1,5 @@
 """Tests for core type definitions - focused on essential usage patterns."""
 
-
 from __future__ import annotations
 
 import json

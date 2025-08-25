@@ -1,6 +1,5 @@
 """Coverage tests for aggregate_root.py module."""
 
-
 from __future__ import annotations
 
 from pydantic import ValidationError

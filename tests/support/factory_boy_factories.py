@@ -63,7 +63,7 @@ class TestField(BaseModel):  # type: ignore[explicit-any]
     max_length: int | None = None
     min_value: int | None = None
     max_value: int | None = None
-    default_value: Any = None  # type: ignore[explicit-any]
+    default_value: object = None  # type: ignore[explicit-any]
     pattern: str | None = None
 
 
@@ -74,12 +74,12 @@ class UserFactory(factory.Factory):  # type: ignore[name-defined,misc]
     class Meta:  # type: ignore[name-defined,misc]
         model = TestUser
 
-    id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
+    id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     name = Faker("name")  # type: ignore[no-untyped-call]
     email = Faker("email")  # type: ignore[no-untyped-call]
     age = Faker("random_int", min=18, max=80)  # type: ignore[no-untyped-call]
     is_active = True
-    created_at = LazyAttribute(lambda obj: datetime.now(UTC))  # type: ignore[no-untyped-call]
+    created_at = LazyAttribute(lambda _: datetime.now(UTC))  # type: ignore[no-untyped-call]
     metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
         lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
@@ -141,7 +141,7 @@ class StringFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
-    field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"string_field_{n}")  # type: ignore[no-untyped-call]
     field_type = FlextFieldType.STRING.value
     required = True
@@ -157,7 +157,7 @@ class IntegerFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
-    field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"integer_field_{n}")  # type: ignore[no-untyped-call]
     field_type = FlextFieldType.INTEGER.value
     required = True
@@ -172,7 +172,7 @@ class BooleanFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
-    field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"boolean_field_{n}")  # type: ignore[no-untyped-call]
     field_type = FlextFieldType.BOOLEAN.value
     required = True
@@ -186,7 +186,7 @@ class FloatFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
     class Meta:  # type: ignore[name-defined,misc]
         model = TestField
 
-    field_id = LazyAttribute(lambda obj: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"float_field_{n}")  # type: ignore[no-untyped-call]
     field_type = FlextFieldType.FLOAT.value
     required = True
@@ -200,9 +200,9 @@ class FlextResultFactory:
     """Factory for creating FlextResult instances for testing."""
 
     @staticmethod
-    def success(data: Any = None) -> FlextResult[Any]:  # type: ignore[explicit-any]
+    def success(data: object = None) -> FlextResult[object]:
         """Create successful FlextResult."""
-        return FlextResult[Any].ok(data or "test_success_data")
+        return FlextResult[object].ok(data or "test_success_data")
 
     @staticmethod
     def failure(

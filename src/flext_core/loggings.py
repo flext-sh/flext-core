@@ -656,6 +656,21 @@ class FlextLogger:
 # =============================================================================
 
 
+class FlextLoggings:
+    """Single consolidated class for all FLEXT Core logging functionality.
+
+    This is the single consolidated class for all FLEXT Core logging, following the
+    Flext[Area][Module] pattern where this represents FlextLoggings.
+    All other FLEXT libraries should inherit from this class to maintain hierarchy.
+
+    Encompasses all logging functionality including factory, logger instances,
+    context management, and configuration.
+    """
+
+    # Alias the factory functionality
+    Factory: type[object] | None = None  # Will be set after class definition
+
+
 class FlextLoggerFactory:
     """Consolidated factory and unified interface for logger management.
 
@@ -829,6 +844,9 @@ def get_logger(name: str = "flext", level: str = "INFO") -> FlextLogger:
 # NOTE: Legacy functions moved to legacy.py
 # Use FlextLoggerFactory methods directly for new code
 
+# Set up the consolidated class alias
+FlextLoggings.Factory = FlextLoggerFactory
+
 
 # =============================================================================
 # LEGACY FUNCTION ALIASES - Backward compatibility
@@ -878,3 +896,11 @@ __all__: list[str] = [
 def flext_get_logger(name: str = "flext") -> FlextLogger:
     """Get logger instance (convenience function)."""
     return get_logger(name)
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Legacy alias for FlextLoggings - maintain backward compatibility
+FlextCoreLogging = FlextLoggings

@@ -1,5 +1,7 @@
-"""Comprehensive tests for FlextPayload system - Consolidated and optimized with pytest advanced features."""
+"""Comprehensive tests for FlextPayload system.
 
+Consolidated and optimized with pytest advanced features.
+"""
 
 from __future__ import annotations
 
@@ -9,16 +11,13 @@ from datetime import UTC, datetime
 import pytest
 
 from flext_core import (
-    FlextEvent,
-    FlextMessage,
     FlextPayload,
     FlextResult,
 )
 
 # Rebuild Pydantic models to resolve forward references
 FlextPayload.model_rebuild()
-FlextMessage.model_rebuild()
-FlextEvent.model_rebuild()
+# FlextMessage and FlextEvent are type aliases, not models, so no need to rebuild
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -69,7 +68,7 @@ class TestFlextEventCoverage:
 
     def test_create_event_invalid_event_type_empty(self) -> None:
         """Test create_event with empty event_type (lines 793-795)."""
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="",  # Empty string
             event_data={"test": "data"},
         )
@@ -78,7 +77,7 @@ class TestFlextEventCoverage:
 
     def test_create_event_invalid_event_type_none(self) -> None:
         """Test create_event with None event_type (lines 793-795)."""
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="",  # Use empty string instead of None for type safety
             event_data={"test": "data"},
         )
@@ -87,9 +86,10 @@ class TestFlextEventCoverage:
 
     def test_create_event_invalid_aggregate_id(self) -> None:
         """Test create_event with invalid aggregate_id (lines 798-800)."""
-        # DRY REAL: código agora é 'if aggregate_id is not None and not is_non_empty_string'
+        # DRY REAL: código agora é
+        # 'if aggregate_id is not None and not is_non_empty_string'
         # String vazia "" agora será testada pois não é None
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="TestEvent",
             event_data={"test": "data"},
             aggregate_id="",  # String vazia (not None mas not is_non_empty_string)
@@ -99,7 +99,7 @@ class TestFlextEventCoverage:
 
     def test_create_event_negative_version(self) -> None:
         """Test create_event with negative version (lines 803-805)."""
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="TestEvent",
             event_data={"test": "data"},
             version=-1,  # Negative version
@@ -110,25 +110,26 @@ class TestFlextEventCoverage:
     def test_create_event_validation_error(self) -> None:
         """Test create_event with validation error (lines 823-824)."""
         # Try to create event with data that causes ValidationError
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="TestEvent",
             event_data={},  # Valid but minimal data
         )
         # Should succeed in this case, but tests the error path structure
         if result.success:
-            assert isinstance(result.value, FlextEvent)
+            assert isinstance(result.value, FlextPayload)
         else:
             assert "Failed to create event" in (result.error or "")
 
     def test_event_property_version_invalid(self) -> None:
         """Test version property with invalid version data (lines 851-853)."""
         # Create event and test version property handling
-        result = FlextEvent.create_event("TestEvent", {"data": "test"})
+        result = FlextPayload.create_event("TestEvent", {"data": "test"})
         if result.success:
             event = result.value
             assert event is not None
-            # Test the version property getter with valid data
-            assert isinstance(event.version, (int, type(None)))
+            # Test the version in metadata with valid data
+            version = event.metadata.get("version")
+            assert isinstance(version, (int, type(None)))
 
 
 class TestFlextMessageCoverage:
@@ -136,33 +137,33 @@ class TestFlextMessageCoverage:
 
     def test_create_message_empty_string(self) -> None:
         """Test create_message with empty message (lines 653-655)."""
-        result = FlextMessage.create_message("")
+        result = FlextPayload.create_message("")
         assert result.is_failure
         assert "Message cannot be empty" in (result.error or "")
 
     def test_create_message_none(self) -> None:
         """Test create_message with None message (lines 653-655)."""
-        result = FlextMessage.create_message("")  # Use empty string for type safety
+        result = FlextPayload.create_message("")  # Use empty string for type safety
         assert result.is_failure
         assert "Message cannot be empty" in (result.error or "")
 
     def test_create_message_invalid_level(self) -> None:
         """Test create_message with invalid level (lines 659-661)."""
-        result = FlextMessage.create_message("Test message", level="invalid_level")
+        result = FlextPayload.create_message("Test message", level="invalid_level")
         # Should succeed but use default level
         assert result.success
         if result.success:
             message = result.value
             assert message is not None
-            assert message.level == "info"  # Default level
+            assert message.metadata.get("level") == "info"  # Default level
 
     def test_create_message_validation_error(self) -> None:
         """Test create_message with validation error (lines 673-674)."""
-        result = FlextMessage.create_message("Valid message")
+        result = FlextPayload.create_message("Valid message")
         # Should succeed in normal case
         assert result.success
         if result.success:
-            assert isinstance(result.value, FlextMessage)
+            assert isinstance(result.value, FlextPayload)
 
 
 class TestFlextPayloadCoverage:

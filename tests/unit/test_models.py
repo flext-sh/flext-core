@@ -10,32 +10,35 @@ import uuid
 
 import pytest
 from tests.support.domain_factories import UserDataFactory
+from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 from tests.support.test_factories import (
     UserEntityFactory,
 )
 
+from flext_core import FlextEntity, FlextModel
+
 
 # Simple edge case generators for testing
 class EdgeCaseGenerators:
+    """Generators for edge case test data."""
+
     @staticmethod
-    def unicode_strings():
+    def unicode_strings() -> list[str]:
         return ["café", "测试", "niño", "مرحبا", "🚀", "🔥🎯", "🚀"]
 
     @staticmethod
-    def boundary_numbers():
+    def boundary_numbers() -> list[int | float]:
         return [0, 1, -1, 999999999, -999999999, 1e-10, float("inf"), float("-inf")]
 
 
-def create_validation_test_cases():
+def create_validation_test_cases() -> list[dict[str, bool | dict[str, str]]]:
+    """Create test cases for validation testing."""
     return [
         {"expected_valid": True, "data": {"name": "test", "email": "test@example.com"}},
         {"expected_valid": False, "data": {"name": "", "email": "invalid"}},
     ]
 
 
-from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
-
-from flext_core import FlextEntity, FlextModel
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

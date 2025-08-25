@@ -1,11 +1,10 @@
 """Version management and compatibility checking for FLEXT Core."""
 
 import sys
-from dataclasses import dataclass
 from importlib.metadata import version as _pkg_version
 from typing import NamedTuple
 
-from flext_core.typings import FlextTypes
+# from flext_core.typings import FlextTypes  # Avoid circular import
 
 __version__: str = _pkg_version("flext-core")
 
@@ -48,30 +47,45 @@ AVAILABLE_FEATURES: dict[str, bool] = {
 # =============================================================================
 
 
-class FlextVersionInfo(NamedTuple):
-    """Structured version information for programmatic access.
+class FlextVersionManager:
+    """Single consolidated class for all version management functionality.
 
-    Provides structured access to version components with comparison support
-    and feature availability detection for FLEXT applications.
+    Consolidates ALL version-related classes and operations into one class following FLEXT patterns.
+    Provides version information, compatibility checking, and utility functions.
     """
 
-    major: int
-    minor: int
-    patch: int
-    release_name: str
-    release_date: str
-    build_type: str
+    class VersionInfo(NamedTuple):
+        """Structured version information nested inside consolidated class."""
+
+        major: int
+        minor: int
+        patch: int
+        release_name: str
+        release_date: str
+        build_type: str
+
+    class CompatibilityResult:
+        """Result of Python version compatibility check nested inside consolidated class."""
+
+        def __init__(
+            self,
+            *,
+            is_compatible: bool,
+            current_version: tuple[int, ...],
+            required_version: tuple[int, ...],
+            error_message: str,
+            recommendations: list[str],
+        ) -> None:
+            self.is_compatible = is_compatible
+            self.current_version = current_version
+            self.required_version = required_version
+            self.error_message = error_message
+            self.recommendations = recommendations
 
 
-@dataclass
-class FlextCompatibilityResult:
-    """Result of Python version compatibility check."""
-
-    is_compatible: bool
-    current_version: tuple[int, ...]
-    required_version: tuple[int, ...]
-    error_message: str
-    recommendations: list[str]
+# Backward compatibility aliases
+FlextVersionInfo = FlextVersionManager.VersionInfo
+FlextCompatibilityResult = FlextVersionManager.CompatibilityResult
 
 
 def get_version_tuple() -> tuple[int, int, int]:
@@ -84,14 +98,14 @@ def get_version_tuple() -> tuple[int, int, int]:
     return VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
 
 
-def get_version_info() -> FlextVersionInfo:
+def get_version_info() -> FlextVersionManager.VersionInfo:
     """Get comprehensive version information.
 
     Returns:
-      FlextVersionInfo with complete version and metadata information.
+      FlextVersionManager.VersionInfo with complete version and metadata information.
 
     """
-    return FlextVersionInfo(
+    return FlextVersionManager.VersionInfo(
         major=VERSION_MAJOR,
         minor=VERSION_MINOR,
         patch=VERSION_PATCH,
@@ -181,7 +195,7 @@ def is_feature_available(feature_name: str) -> bool:
     return AVAILABLE_FEATURES.get(feature_name, False)
 
 
-def get_available_features() -> FlextTypes.Core.List:
+def get_available_features() -> list[str]:
     """Get a list of available features in the current version.
 
     Returns a list of feature names available in the current version enabling

@@ -8,7 +8,7 @@ patterns with automatic retry, error simulation, and performance monitoring.
 # ruff: noqa: S101, ARG001, ARG002
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urljoin
 
@@ -210,7 +210,7 @@ class APITestClient:
                 error_code="INVALID_ERROR_FORMAT",
             )
 
-        error = response_data["error"]
+        error: JsonDict = response_data["error"]  # type: ignore[assignment]
         required_error_fields = ["message", "code"]
 
         for field in required_error_fields:
@@ -230,7 +230,7 @@ class APITestClient:
 
     def assert_response_time(
         self,
-        response: Any,
+        response: object,
         max_time_ms: float = 1000.0,
     ) -> None:
         """Assert response time is within limits."""
@@ -403,7 +403,7 @@ class WebhookTestUtils:
         payload = {
             "event": event_type,
             "data": data,
-            "timestamp": timestamp or datetime.utcnow().isoformat(),
+            "timestamp": timestamp or datetime.now(UTC).isoformat(),
         }
 
         if signature:
@@ -433,8 +433,9 @@ class WebhookTestUtils:
     def mock_webhook_delivery(
         httpx_mock: HTTPXMock,
         webhook_url: str,
-        event_type: str,
-        data: JsonDict,
+        _event_type: str,
+        _data: JsonDict,
+        *,
         success: bool = True,
     ) -> None:
         """Mock webhook delivery."""

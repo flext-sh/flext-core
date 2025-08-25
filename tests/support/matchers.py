@@ -29,7 +29,7 @@ class FlextMatchers:
     @staticmethod
     def assert_result_success(
         result: FlextResult[Any],
-        expected_data: Any = None,
+        expected_data: object = None,
     ) -> None:
         """Assert FlextResult is successful with optional data check.
 
@@ -85,7 +85,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_container_has_service(
-        container: Any,
+        container: object,
         service_name: str,
         expected_type: type | None = None,
     ) -> None:
@@ -115,8 +115,8 @@ class FlextMatchers:
 
     @staticmethod
     def assert_field_validates(
-        field: Any,
-        value: Any,
+        field: object,
+        value: object,
         should_pass: bool = True,
     ) -> None:
         """Assert field validation result.
@@ -175,8 +175,8 @@ class FlextMatchers:
         benchmark: BenchmarkFixture,
         func: Callable[[], Any],
         max_time_seconds: float = 1.0,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> Any:
         """Assert function performance is within time limit.
 
@@ -231,7 +231,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_type_guard(
-        value: Any,
+        value: object,
         type_guard: Callable[[Any], TypeGuard[Any]],
     ) -> None:
         """Assert value passes type guard.
@@ -249,7 +249,7 @@ class FlextMatchers:
         )
 
     @staticmethod
-    def assert_no_deadfixtures(test_module: Any) -> None:
+    def assert_no_deadfixtures(test_module: object) -> None:
         """Assert no dead fixtures in test module (uses pytest-deadfixtures).
 
         Args:
@@ -264,7 +264,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_mock_called_with_result(
-        mock_obj: Any,
+        mock_obj: object,
         expected_result_type: type,
         call_count: int = 1,
     ) -> None:
@@ -315,7 +315,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_async_result(
-        async_result: Any,
+        async_result: object,
         timeout_seconds: float = 5.0,
     ) -> None:
         """Assert async operation completes within timeout.

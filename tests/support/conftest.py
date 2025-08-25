@@ -128,7 +128,8 @@ def performance_matchers() -> type[PerformanceMatchers]:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]  # noqa: ARG001
+    config: pytest.Config,  # noqa: ARG001
+    items: list[pytest.Item],  # noqa: ARG001
 ) -> None:
     """Modify test collection to add markers based on test patterns."""
     for item in items:

@@ -1,6 +1,5 @@
 """Test version module functionality."""
 
-
 from __future__ import annotations
 
 from flext_core import (

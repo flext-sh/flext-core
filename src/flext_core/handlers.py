@@ -38,32 +38,36 @@ from flext_core.typings import (
 HandlerName = FlextTypes.Handler.HandlerName
 
 
-# Forward reference protocols to avoid circular issues
-class QueryHandlerProtocol(Protocol):
-    """Protocol for query handlers."""
-
-    def handle_query(self, query: object) -> FlextResult[object]: ...
-
-
-class ChainHandlerProtocol(Protocol):
-    """Protocol for chain handlers."""
-
-    @property
-    def handler_name(self) -> str: ...
-    def can_handle(self, message_type: object) -> bool: ...
-    def handle(self, request: object) -> FlextResult[object]: ...
-
-
 # =============================================================================
 # FlextHandlers - Simplified Handler Management System
 # =============================================================================
 
 
 class FlextHandlers:
-    """Simplified handler management system with direct class access.
+    """Tier 1 Module Pattern: Single main handler system implementing all functionality.
 
-    All handler classes are directly accessible without intermediate namespaces.
+    Consolidates ALL handler patterns from the flext-core handlers ecosystem into
+    one unified class. Implements hierarchical inheritance from FlextCore patterns.
+
+    This class serves as the SINGLE MAIN EXPORT consolidating ALL handler functionality
+    maintaining nested class organization for complex handler patterns.
     """
+
+    # ==========================================================================
+    # NESTED PROTOCOLS - Consolidated handler protocols
+    # ==========================================================================
+    class QueryHandlerProtocol(Protocol):
+        """Protocol for query handlers."""
+
+        def handle_query(self, query: object) -> FlextResult[object]: ...
+
+    class ChainHandlerProtocol(Protocol):
+        """Protocol for chain handlers."""
+
+        @property
+        def handler_name(self) -> str: ...
+        def can_handle(self, message_type: object) -> bool: ...
+        def handle(self, request: object) -> FlextResult[object]: ...
 
     # Thread-safe handler management
     _handlers_lock: Final[threading.RLock] = threading.RLock()
@@ -357,7 +361,7 @@ class FlextHandlers:
             handler: FlextAbstractCommandHandler[object, object],
         ) -> FlextResult[None]:
             """Register command handler."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._handlers[command_type] = handler
                 return FlextResult[None].ok(None)
 
@@ -365,7 +369,7 @@ class FlextHandlers:
             """Send command to registered handler."""
             command_type = type(command)
 
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 handler = self._handlers.get(command_type)
 
                 if not handler:
@@ -405,7 +409,7 @@ class FlextHandlers:
             self, query_type: type, handler: QueryHandlerProtocol
         ) -> FlextResult[None]:
             """Register query handler."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._handlers[query_type] = handler
             return FlextResult[None].ok(None)
 
@@ -413,7 +417,7 @@ class FlextHandlers:
             """Send query to registered handler."""
             query_type = type(query)
 
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 handler = self._handlers.get(query_type)
 
                 if not handler:
@@ -456,7 +460,7 @@ class FlextHandlers:
 
         def add_handler(self, handler: ChainHandlerProtocol) -> FlextResult[None]:
             """Add handler to chain."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._handlers.append(handler)
                 return FlextResult[None].ok(None)
 
@@ -510,14 +514,14 @@ class FlextHandlers:
 
         def register(self, name: str, handler: object) -> FlextResult[object]:
             """Register handler with name."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._handlers[name] = handler
                 self._registrations += 1
                 return FlextResult[object].ok(handler)
 
         def get_handler(self, name: str) -> FlextResult[object]:
             """Get handler by name."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._lookups += 1
                 handler = self._handlers.get(name)
                 if handler:
@@ -527,12 +531,12 @@ class FlextHandlers:
 
         def get_all_handlers(self) -> dict[str, object]:
             """Get all registered handlers."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 return dict(self._handlers)
 
         def unregister(self, name: str) -> FlextResult[None]:
             """Unregister handler by name."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 if name in self._handlers:
                     del self._handlers[name]
                     return FlextResult[None].ok(None)
@@ -561,7 +565,7 @@ class FlextHandlers:
             self, stage: Callable[[object], FlextResult[object]]
         ) -> FlextResult[None]:
             """Add processing stage to pipeline."""
-            with FlextHandlers.thread_safe_operation():
+            with FlextCoreHandlers.thread_safe_operation():
                 self._stages.append(stage)
                 return FlextResult[None].ok(None)
 
@@ -618,13 +622,26 @@ FlextValidatingHandler = FlextHandlers.ValidatingHandler
 FlextAuthorizingHandler = FlextHandlers.AuthorizingHandler
 FlextEventHandler = FlextHandlers.EventHandler
 FlextMetricsHandler = FlextHandlers.MetricsHandler
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES - All classes point to FlextHandlers
+# =============================================================================
+
+# Main export alias for backward compatibility
+# FlextHandlers is now the main class
+FlextCoreHandlers = FlextHandlers  # Backward compatibility with old name
+
+# Individual class aliases for direct access
 FlextHandlerRegistry = FlextHandlers.HandlerRegistry
 FlextHandlerChain = FlextHandlers.HandlerChain
 FlextCommandHandler = FlextHandlers.CommandHandler
 FlextQueryHandler = FlextHandlers.QueryHandler
 
+# Type aliases for backward compatibility with protocols
+QueryHandlerProtocol = FlextHandlers.QueryHandlerProtocol
+ChainHandlerProtocol = FlextHandlers.ChainHandlerProtocol
 
-# Legacy facade for backward compatibility
+
+# Legacy facade aliases for backward compatibility
 class HandlersFacade:
     """Legacy facade for backward compatibility."""
 
@@ -638,14 +655,16 @@ class HandlersFacade:
 # =============================================================================
 
 __all__ = [
+    # Alphabetically sorted exports
     "FlextAbstractHandler",
     "FlextAuthorizingHandler",
     "FlextBaseHandler",
     "FlextCommandHandler",
+    "FlextCoreHandlers",
     "FlextEventHandler",
     "FlextHandlerChain",
     "FlextHandlerRegistry",
-    "FlextHandlers",
+    "FlextHandlers",  # Backward compatibility
     "FlextMetricsHandler",
     "FlextQueryHandler",
     "FlextValidatingHandler",

@@ -313,6 +313,46 @@ class FlextProtocols:
                 """Close connection to an external system."""
                 ...
 
+        class LdapConnection(Connection, Protocol):
+            """LDAP-specific connection protocol extending base Connection."""
+
+            def connect(self, uri: str, bind_dn: str, password: str) -> FlextResult[None]:
+                """Connect to LDAP server with authentication."""
+                ...
+
+            def bind(self, bind_dn: str, password: str) -> FlextResult[None]:
+                """Bind with specific credentials."""
+                ...
+
+            def unbind(self) -> FlextResult[None]:
+                """Unbind from LDAP server."""
+                ...
+
+            def search(
+                self, 
+                base_dn: str, 
+                search_filter: str, 
+                scope: str = "subtree"
+            ) -> FlextResult[list[dict[str, object]]]:
+                """Perform LDAP search operation."""
+                ...
+
+            def add(self, dn: str, attributes: dict[str, object]) -> FlextResult[None]:
+                """Add new LDAP entry."""
+                ...
+
+            def modify(self, dn: str, modifications: dict[str, object]) -> FlextResult[None]:
+                """Modify existing LDAP entry."""
+                ...
+
+            def delete(self, dn: str) -> FlextResult[None]:
+                """Delete LDAP entry."""
+                ...
+
+            def is_connected(self) -> bool:
+                """Check if connection is active."""
+                ...
+
         class Auth(Protocol):
             """Authentication and authorization protocol."""
 

@@ -6,6 +6,7 @@ and sophisticated test data generation patterns for FlextCore testing.
 
 from __future__ import annotations
 
+import math
 import string
 from datetime import UTC, datetime
 from typing import Any, TypeVar
@@ -14,6 +15,10 @@ from uuid import uuid4
 from hypothesis import strategies as st
 
 T = TypeVar("T")
+
+# Constants
+MIN_EMAIL_LENGTH = 3
+MIN_URL_LENGTH = 7
 
 
 class FlextStrategies:
@@ -117,8 +122,8 @@ class FlextStrategies:
     def timestamps() -> st.SearchStrategy[datetime]:
         """Generate timestamps within reasonable ranges."""
         return st.datetimes(
-            min_value=datetime(2020, 1, 1),
-            max_value=datetime(2030, 12, 31),
+            min_value=datetime(2020, 1, 1, tzinfo=UTC),
+            max_value=datetime(2030, 12, 31, tzinfo=UTC),
             timezones=st.just(UTC),
         )
 
@@ -386,7 +391,7 @@ class PropertyTestHelpers:
         """Check if an email meets basic validation assumptions."""
         return (
             "@" in email
-            and len(email) > 3
+            and len(email) > MIN_EMAIL_LENGTH
             and not email.startswith("@")
             and not email.endswith("@")
             and ".." not in email
@@ -400,14 +405,14 @@ class PropertyTestHelpers:
     @staticmethod
     def assume_positive_number(num: float) -> bool:
         """Check if number is positive."""
-        return num > 0 and num == num  # Not NaN
+        return num > 0 and not math.isnan(num)
 
     @staticmethod
     def assume_valid_url(url: str) -> bool:
         """Check if URL meets basic validation assumptions."""
         return (
             "://" in url
-            and len(url) > 7  # Minimum: "http://"
+            and len(url) > MIN_URL_LENGTH  # Minimum: "http://"
             and not url.endswith("://")
             and url.startswith(("http://", "https://"))
         )
@@ -416,7 +421,7 @@ class PropertyTestHelpers:
     def generate_test_scenarios(
         strategy: st.SearchStrategy[T],
         scenario_name: str = "test_scenario",
-        min_examples: int = 10,
+        _min_examples: int = 10,
     ) -> st.SearchStrategy[dict[str, Any]]:
         """Generate test scenarios with metadata."""
         return st.builds(

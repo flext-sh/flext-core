@@ -26,8 +26,6 @@ from flext_core.payload import (
     PYTHON_TO_GO_TYPES,
     SERIALIZATION_FORMAT_JSON,
     SERIALIZATION_FORMAT_JSON_COMPRESSED,
-    FlextEvent,
-    FlextMessage,
     FlextPayload,
 )
 
@@ -200,14 +198,14 @@ class TestFlextMessageRealFunctionality:
     def test_message_creation_with_levels(self) -> None:
         """Test FlextMessage creation with different message levels."""
         # Info level (default)
-        result = FlextMessage.create_message("System initialized successfully")
+        result = FlextPayload.create_message("System initialized successfully")
         assert result.is_success
         message = result.value
         assert message.value == "System initialized successfully"
         assert message.metadata["level"] == "info"
 
         # Warning level
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Database connection slow", level="warning", source="database_monitor"
         )
         assert result.is_success
@@ -217,7 +215,7 @@ class TestFlextMessageRealFunctionality:
         assert message.metadata["source"] == "database_monitor"
 
         # Error level
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Failed to authenticate user", level="error", source="auth_service"
         )
         assert result.is_success
@@ -227,7 +225,7 @@ class TestFlextMessageRealFunctionality:
         assert message.metadata["source"] == "auth_service"
 
         # Critical level
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "System shutdown initiated", level="critical", source="system_manager"
         )
         assert result.is_success
@@ -237,7 +235,7 @@ class TestFlextMessageRealFunctionality:
     def test_message_level_validation_and_fallback(self) -> None:
         """Test FlextMessage level validation with fallback to 'info'."""
         # Invalid level should fallback to 'info'
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Test message with invalid level", level="invalid_level"
         )
         assert result.is_success
@@ -247,7 +245,7 @@ class TestFlextMessageRealFunctionality:
         # Test all valid levels
         valid_levels = ["info", "warning", "error", "debug", "critical"]
         for level in valid_levels:
-            result = FlextMessage.create_message(f"Test {level} message", level=level)
+            result = FlextPayload.create_message(f"Test {level} message", level=level)
             assert result.is_success
             message = result.value
             assert message.metadata["level"] == level
@@ -255,28 +253,28 @@ class TestFlextMessageRealFunctionality:
     def test_message_validation_failures(self) -> None:
         """Test FlextMessage validation failures."""
         # Empty message should fail
-        result = FlextMessage.create_message("")
+        result = FlextPayload.create_message("")
         assert result.is_failure
         assert "cannot be empty" in result.error
 
         # None message should fail
-        result = FlextMessage.create_message(None)
+        result = FlextPayload.create_message(None)
         assert result.is_failure
 
         # Whitespace-only message should fail
-        result = FlextMessage.create_message("   ")
+        result = FlextPayload.create_message("   ")
         assert result.is_failure
 
     def test_message_source_tracking(self) -> None:
         """Test FlextMessage source tracking functionality."""
         # Without source
-        result = FlextMessage.create_message("Test message without source")
+        result = FlextPayload.create_message("Test message without source")
         assert result.is_success
         message = result.value
         assert "source" not in message.metadata
 
         # With source
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Test message with source", source="unit_test_module"
         )
         assert result.is_success
@@ -285,7 +283,7 @@ class TestFlextMessageRealFunctionality:
 
     def test_message_inheritance_from_payload(self) -> None:
         """Test FlextMessage inherits FlextPayload functionality."""
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Test message", level="info", source="test"
         )
         assert result.is_success
@@ -309,14 +307,14 @@ class TestFlextMessageRealFunctionality:
         messages = []
 
         # Startup sequence
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Starting application initialization", level="info", source="app_manager"
         )
         assert result.is_success
         messages.append(result.value)
 
         # Configuration loading
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Loading configuration from config.yaml",
             level="debug",
             source="config_loader",
@@ -325,7 +323,7 @@ class TestFlextMessageRealFunctionality:
         messages.append(result.value)
 
         # Warning during startup
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Configuration file missing optional section 'advanced'",
             level="warning",
             source="config_loader",
@@ -334,7 +332,7 @@ class TestFlextMessageRealFunctionality:
         messages.append(result.value)
 
         # Successful startup
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "Application started successfully on port 8080",
             level="info",
             source="web_server",
@@ -344,7 +342,7 @@ class TestFlextMessageRealFunctionality:
 
         # Verify the message sequence
         assert len(messages) == 4
-        assert all(isinstance(msg, FlextMessage) for msg in messages)
+        assert all(isinstance(msg, FlextPayload) for msg in messages)
         assert messages[0].metadata["level"] == "info"
         assert messages[1].metadata["level"] == "debug"
         assert messages[2].metadata["level"] == "warning"
@@ -371,7 +369,7 @@ class TestFlextEventRealFunctionality:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "UserRegistered", event_data, aggregate_id="user_123", version=1
         )
 
@@ -386,7 +384,7 @@ class TestFlextEventRealFunctionality:
         """Test FlextEvent creation without optional aggregate_id and version."""
         event_data = {"action": "system_restart", "reason": "maintenance"}
 
-        result = FlextEvent.create_event("SystemRestarted", event_data)
+        result = FlextPayload.create_event("SystemRestarted", event_data)
         assert result.is_success
 
         event = result.value
@@ -400,21 +398,21 @@ class TestFlextEventRealFunctionality:
         event_data = {"test": "data"}
 
         # Empty event_type should fail
-        result = FlextEvent.create_event("", event_data)
+        result = FlextPayload.create_event("", event_data)
         assert result.is_failure
         assert "cannot be empty" in result.error
 
         # None event_type should fail
-        result = FlextEvent.create_event(None, event_data)
+        result = FlextPayload.create_event(None, event_data)
         assert result.is_failure
 
         # Empty aggregate_id should fail
-        result = FlextEvent.create_event("TestEvent", event_data, aggregate_id="")
+        result = FlextPayload.create_event("TestEvent", event_data, aggregate_id="")
         assert result.is_failure
         assert "Invalid aggregate ID" in result.error
 
         # Negative version should fail
-        result = FlextEvent.create_event("TestEvent", event_data, version=-1)
+        result = FlextPayload.create_event("TestEvent", event_data, version=-1)
         assert result.is_failure
         assert "must be non-negative" in result.error
 
@@ -431,7 +429,7 @@ class TestFlextEventRealFunctionality:
             "registration_source": "web_app",
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "UserRegistered", registration_data, aggregate_id="user_456", version=1
         )
         assert result.is_success
@@ -444,7 +442,7 @@ class TestFlextEventRealFunctionality:
             "verified_at": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "EmailVerified", verification_data, aggregate_id="user_456", version=2
         )
         assert result.is_success
@@ -461,7 +459,7 @@ class TestFlextEventRealFunctionality:
             "updated_by": "user_456",
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "ProfileUpdated", profile_data, aggregate_id="user_456", version=3
         )
         assert result.is_success
@@ -474,7 +472,7 @@ class TestFlextEventRealFunctionality:
             "deactivated_at": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "AccountDeactivated", deactivation_data, aggregate_id="user_456", version=4
         )
         assert result.is_success
@@ -544,7 +542,7 @@ class TestFlextEventRealFunctionality:
             },
         }
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "OrderPlaced", complex_event_data, aggregate_id="order_789", version=1
         )
 
@@ -561,7 +559,7 @@ class TestFlextEventRealFunctionality:
         """Test FlextEvent inherits FlextPayload functionality."""
         event_data = {"test": "event"}
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "TestEvent", event_data, aggregate_id="test_123", version=1
         )
         assert result.is_success
@@ -687,7 +685,7 @@ class TestPayloadIntegrationRealFunctionality:
     def test_complete_message_event_workflow(self) -> None:
         """Test complete workflow using messages and events together."""
         # 1. Create system startup message
-        startup_result = FlextMessage.create_message(
+        startup_result = FlextPayload.create_message(
             "System startup initiated", level="info", source="system_manager"
         )
         assert startup_result.is_success
@@ -700,14 +698,14 @@ class TestPayloadIntegrationRealFunctionality:
             "configuration": {"environment": "production", "version": "1.0.0"},
         }
 
-        event_result = FlextEvent.create_event(
+        event_result = FlextPayload.create_event(
             "SystemStarted", startup_event_data, aggregate_id="system_001", version=1
         )
         assert event_result.is_success
         startup_event = event_result.value
 
         # 3. Create completion message
-        completion_result = FlextMessage.create_message(
+        completion_result = FlextPayload.create_message(
             "System startup completed successfully",
             level="info",
             source="system_manager",
@@ -737,7 +735,7 @@ class TestPayloadIntegrationRealFunctionality:
             "items": [{"product": "laptop", "quantity": 1, "price": 1200.00}],
             "total": 1200.00,
         }
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "OrderCreated", create_data, aggregate_id=aggregate_id, version=1
         )
         assert result.is_success
@@ -750,7 +748,7 @@ class TestPayloadIntegrationRealFunctionality:
             "amount": 1200.00,
             "transaction_id": "txn_001",
         }
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "PaymentAdded", payment_data, aggregate_id=aggregate_id, version=2
         )
         assert result.is_success
@@ -763,7 +761,7 @@ class TestPayloadIntegrationRealFunctionality:
             "carrier": "FedEx",
             "shipped_at": datetime.now(UTC).isoformat(),
         }
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "OrderShipped", shipping_data, aggregate_id=aggregate_id, version=3
         )
         assert result.is_success
@@ -775,7 +773,7 @@ class TestPayloadIntegrationRealFunctionality:
             "delivered_at": datetime.now(UTC).isoformat(),
             "signature": "customer_signature",
         }
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "OrderDelivered", delivery_data, aggregate_id=aggregate_id, version=4
         )
         assert result.is_success
@@ -789,29 +787,37 @@ class TestPayloadIntegrationRealFunctionality:
             event_data = event.value
 
             if event_type == "OrderCreated":
-                aggregate_state.update({
-                    "customer_id": event_data["customer_id"],
-                    "items": event_data["items"],
-                    "total": event_data["total"],
-                    "status": "created",
-                })
+                aggregate_state.update(
+                    {
+                        "customer_id": event_data["customer_id"],
+                        "items": event_data["items"],
+                        "total": event_data["total"],
+                        "status": "created",
+                    }
+                )
             elif event_type == "PaymentAdded":
-                aggregate_state.update({
-                    "payment_method": event_data["payment_method"],
-                    "transaction_id": event_data["transaction_id"],
-                    "status": "paid",
-                })
+                aggregate_state.update(
+                    {
+                        "payment_method": event_data["payment_method"],
+                        "transaction_id": event_data["transaction_id"],
+                        "status": "paid",
+                    }
+                )
             elif event_type == "OrderShipped":
-                aggregate_state.update({
-                    "tracking_number": event_data["tracking_number"],
-                    "carrier": event_data["carrier"],
-                    "status": "shipped",
-                })
+                aggregate_state.update(
+                    {
+                        "tracking_number": event_data["tracking_number"],
+                        "carrier": event_data["carrier"],
+                        "status": "shipped",
+                    }
+                )
             elif event_type == "OrderDelivered":
-                aggregate_state.update({
-                    "delivered_at": event_data["delivered_at"],
-                    "status": "delivered",
-                })
+                aggregate_state.update(
+                    {
+                        "delivered_at": event_data["delivered_at"],
+                        "status": "delivered",
+                    }
+                )
 
         # Verify reconstructed state
         assert aggregate_state["order_id"] == aggregate_id

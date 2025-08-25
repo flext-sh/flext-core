@@ -99,6 +99,11 @@ class AsyncTestUtils:
         await asyncio.sleep(duration)
 
     @staticmethod
+    async def simulate_delay(duration: float) -> None:
+        """Simulate delay for testing purposes (alias for asyncio.sleep)."""
+        await asyncio.sleep(duration)
+
+    @staticmethod
     async def run_concurrent_tasks(
         tasks: list[Awaitable[T]],
         *,
@@ -146,14 +151,14 @@ class AsyncContextManagers:
 
     @staticmethod
     @asynccontextmanager
-    async def async_timer(timeout: float = 5.0) -> AsyncGenerator[None]:
+    async def async_timer(duration: float = 5.0) -> AsyncGenerator[None]:
         """Async context manager with timeout."""
         start_time = time.time()
 
         async def check_timeout() -> None:
             while True:
-                if time.time() - start_time > timeout:
-                    msg = f"Operation exceeded timeout of {timeout} seconds"
+                if time.time() - start_time > duration:
+                    msg = f"Operation exceeded timeout of {duration} seconds"
                     raise TimeoutError(msg)
                 await asyncio.sleep(0.1)
 
@@ -209,14 +214,14 @@ class AsyncContextManagers:
     async def async_event_waiter(
         event: asyncio.Event,
         *,
-        timeout: float = 5.0,
+        wait_duration: float = 5.0,
     ) -> AsyncGenerator[None]:
         """Wait for event with timeout."""
         try:
-            await asyncio.wait_for(event.wait(), timeout=timeout)
+            await asyncio.wait_for(event.wait(), timeout=wait_duration)
             yield
         except TimeoutError as e:
-            msg = f"Event not set within {timeout} seconds"
+            msg = f"Event not set within {wait_duration} seconds"
             raise TimeoutError(msg) from e
 
 
@@ -238,13 +243,13 @@ class AsyncMockUtils:
 
     @staticmethod
     def create_delayed_async_mock(
-        return_value: Any = None,
+        return_value: object = None,
         delay: float = 0.1,
         side_effect: Exception | None = None,
-    ):
+    ) -> Any:
         """Create async mock with delay."""
 
-        async def delayed_async_mock(*args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+        async def delayed_async_mock(*args: object, **kwargs: object) -> Any:  # noqa: ARG001
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -254,16 +259,17 @@ class AsyncMockUtils:
 
     @staticmethod
     def create_flaky_async_mock(
-        return_value: Any = None,
+        return_value: object = None,
         failure_rate: float = 0.3,
-        exception: Exception = RuntimeError("Flaky operation failed"),
-    ):
+        exception: Exception | None = None,
+    ) -> Any:
         """Create async mock that fails randomly."""
         import random
 
-        async def flaky_async_mock(*args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+        async def flaky_async_mock(*args: object, **kwargs: object) -> Any:  # noqa: ARG001
             if random.random() < failure_rate:  # noqa: S311
-                raise exception
+                test_exception = exception or RuntimeError("Flaky operation failed")
+                raise test_exception
             return return_value
 
         return flaky_async_mock
@@ -276,7 +282,7 @@ class AsyncFixtureUtils:
     async def async_setup_teardown(
         setup: Callable[[], Awaitable[T]],
         teardown: Callable[[T], Awaitable[None]],
-    ):
+    ) -> AsyncGenerator[T]:
         """Helper for async setup/teardown patterns."""
         resource = await setup()
         try:
@@ -285,7 +291,7 @@ class AsyncFixtureUtils:
             await teardown(resource)
 
     @staticmethod
-    async def create_async_test_client():
+    async def create_async_test_client() -> Any:
         """Create async test client (placeholder for actual implementation)."""
 
         # This would typically create an async HTTP client or similar
@@ -308,7 +314,7 @@ class AsyncFixtureUtils:
             await client.close()
 
     @staticmethod
-    async def create_async_event_loop():
+    async def create_async_event_loop() -> AsyncGenerator[asyncio.AbstractEventLoop]:
         """Create isolated event loop for testing."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -338,7 +344,7 @@ class AsyncConcurrencyTesting:
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
 
-                async def _wrapper1(coro=awaitable1):
+                async def _wrapper1(coro: object = awaitable1) -> Any:
                     return await coro
 
                 coro1 = _wrapper1()
@@ -347,7 +353,7 @@ class AsyncConcurrencyTesting:
 
             if not asyncio.iscoroutine(awaitable2):
 
-                async def _wrapper2(coro=awaitable2):
+                async def _wrapper2(coro: object = awaitable2) -> Any:
                     return await coro
 
                 coro2 = _wrapper2()
@@ -419,7 +425,7 @@ class AsyncConcurrencyTesting:
     @staticmethod
     async def test_deadlock_detection(
         operations: list[Callable[[], Awaitable[Any]]],
-        timeout: float = 5.0,
+        deadline: float = 5.0,
     ) -> dict[str, Any]:
         """Test for potential deadlocks in async operations."""
         start_time = time.time()
@@ -427,7 +433,7 @@ class AsyncConcurrencyTesting:
         try:
             results = await asyncio.wait_for(
                 asyncio.gather(*[op() for op in operations]),
-                timeout=timeout,
+                timeout=deadline,
             )
             end_time = time.time()
 
@@ -444,7 +450,7 @@ class AsyncConcurrencyTesting:
             return {
                 "completed": False,
                 "execution_time": end_time - start_time,
-                "timeout": timeout,
+                "timeout": deadline,
                 "potential_deadlock": True,
             }
 
@@ -459,12 +465,12 @@ class AsyncMarkers:
     race_condition = pytest.mark.race_condition
 
     @staticmethod
-    def async_timeout(seconds: float):
+    def async_timeout(seconds: float) -> Any:
         """Mark async test with specific timeout."""
         return pytest.mark.timeout(seconds)
 
     @staticmethod
-    def async_slow():
+    def async_slow() -> Any:
         """Mark async test as slow."""
         return pytest.mark.slow
 

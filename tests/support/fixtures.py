@@ -168,13 +168,13 @@ class FlextTestFixtures:
     @pytest.fixture
     def mock_validator_success() -> Any:
         """Mock validator that always succeeds."""
-        return lambda x: True
+        return lambda _: True
 
     @staticmethod
     @pytest.fixture
     def mock_validator_failure() -> Any:
         """Mock validator that always fails."""
-        return lambda x: False
+        return lambda _: False
 
     @staticmethod
     @pytest.fixture(autouse=True)
@@ -250,7 +250,7 @@ __all__ = [
 
 
 # Register custom markers
-def pytest_configure(config: Any) -> None:
+def pytest_configure(config: object) -> None:
     """Configure custom pytest markers."""
     config.addinivalue_line("markers", "unit: Unit tests")
     config.addinivalue_line("markers", "integration: Integration tests")

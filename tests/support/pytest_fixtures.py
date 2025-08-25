@@ -451,16 +451,16 @@ batch_size_params = pytest.mark.parametrize(
 def assert_helpers() -> dict[str, Any]:
     """Provide assertion helper functions."""
 
-    def assert_success(result: Any) -> None:
+    def assert_success(result: object) -> None:
         assert result.success
 
-    def assert_failure(result: Any) -> None:
+    def assert_failure(result: object) -> None:
         assert not result.success
 
-    def assert_value_equals(result: Any, expected: Any) -> None:
+    def assert_value_equals(result: object, expected: object) -> None:
         assert result.value == expected
 
-    def assert_error_contains(result: Any, text: str) -> None:
+    def assert_error_contains(result: object, text: str) -> None:
         assert text in result.error
 
     return {

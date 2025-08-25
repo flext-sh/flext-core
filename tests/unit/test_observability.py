@@ -8,11 +8,11 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
-    FlextConsoleLogger as ConsoleLogger,  # Modern equivalent
-    FlextInMemoryMetrics as InMemoryMetrics,  # Modern equivalent
-    FlextMinimalObservability as MinimalObservability,  # Modern equivalent
-    FlextNoOpTracer as NoOpTracer,  # Modern equivalent
-    FlextSimpleAlerts as SimpleAlerts,  # Modern equivalent
+    FlextAlerts,  # Modern equivalent
+    FlextConsole,  # Modern equivalent
+    FlextMetrics,  # Modern equivalent
+    FlextObservability,  # Modern equivalent
+    FlextTracer,  # Modern equivalent
     get_observability,
 )
 
@@ -20,17 +20,17 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 class TestConsoleLogger:
-    """Test ConsoleLogger implementation."""
+    """Test FlextConsole implementation."""
 
     def test_logger_creation(self) -> None:
         """Test logger creation."""
-        logger = ConsoleLogger()
+        logger = FlextConsole()
         assert hasattr(logger, "_logger")
         assert logger._logger.name == "flext-console"
 
     def test_logger_methods_exist(self) -> None:
         """Test that all required methods exist."""
-        logger = ConsoleLogger()
+        logger = FlextConsole()
 
         assert hasattr(logger, "trace")
         assert hasattr(logger, "debug")
@@ -42,7 +42,7 @@ class TestConsoleLogger:
 
     def test_logger_implements_protocol(self) -> None:
         """Test that logger implements protocol methods."""
-        logger = ConsoleLogger()
+        logger = FlextConsole()
         # Protocol compliance check via hasattr instead of isinstance
         protocol_methods = [
             "trace",
@@ -60,7 +60,7 @@ class TestConsoleLogger:
 
     def test_logger_basic_methods(self) -> None:
         """Test basic logging methods work."""
-        logger = ConsoleLogger()
+        logger = FlextConsole()
 
         # These should not raise errors
         logger.trace("trace message")
@@ -73,11 +73,11 @@ class TestConsoleLogger:
 
 
 class TestNoOpTracer:
-    """Test NoOpTracer implementation."""
+    """Test FlextTracer implementation."""
 
     def test_tracer_implements_protocol(self) -> None:
         """Test that tracer implements protocol."""
-        tracer = NoOpTracer()
+        tracer = FlextTracer()
         # Protocol compliance check via hasattr instead of isinstance
         protocol_methods = ["business_span", "technical_span", "error_span"]
         for method in protocol_methods:
@@ -86,7 +86,7 @@ class TestNoOpTracer:
 
     def test_business_span(self) -> None:
         """Test business span context manager."""
-        tracer = NoOpTracer()
+        tracer = FlextTracer()
 
         with tracer.business_span("test-operation") as span:
             assert span is not None
@@ -97,7 +97,7 @@ class TestNoOpTracer:
 
     def test_technical_span(self) -> None:
         """Test technical span context manager."""
-        tracer = NoOpTracer()
+        tracer = FlextTracer()
 
         with tracer.technical_span("db-query", component="database") as span:
             assert span is not None
@@ -106,7 +106,7 @@ class TestNoOpTracer:
 
     def test_error_span(self) -> None:
         """Test error span context manager."""
-        tracer = NoOpTracer()
+        tracer = FlextTracer()
 
         with tracer.error_span(
             "failed-operation",
@@ -116,11 +116,11 @@ class TestNoOpTracer:
 
 
 class TestInMemoryMetrics:
-    """Test InMemoryMetrics implementation."""
+    """Test FlextMetrics implementation."""
 
     def test_metrics_implements_protocol(self) -> None:
         """Test that metrics implements protocol."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
         # Protocol compliance check via hasattr instead of isinstance
         protocol_methods = [
             "increment",
@@ -137,7 +137,7 @@ class TestInMemoryMetrics:
 
     def test_increment_counter(self) -> None:
         """Test counter increment."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         metrics.increment("test.counter", 1)
         metrics.increment("test.counter", 5)
@@ -150,7 +150,7 @@ class TestInMemoryMetrics:
 
     def test_histogram_recording(self) -> None:
         """Test histogram recording."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         metrics.histogram("test.histogram", 10.5)
         metrics.histogram("test.histogram", 20.0)
@@ -163,7 +163,7 @@ class TestInMemoryMetrics:
 
     def test_gauge_setting(self) -> None:
         """Test gauge setting."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         metrics.gauge("test.gauge", 42.0)
         metrics.gauge("test.gauge", 35.0)  # Should overwrite
@@ -176,7 +176,7 @@ class TestInMemoryMetrics:
 
     def test_metrics_with_tags(self) -> None:
         """Test metrics with tags."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         tags = {"environment": "test", "service": "api"}
         metrics.increment("tagged.counter", 1, tags)
@@ -186,7 +186,7 @@ class TestInMemoryMetrics:
 
     def test_clear_metrics(self) -> None:
         """Test clearing metrics."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         metrics.increment("test", 1)
         metrics_data = metrics.get_metrics()
@@ -202,11 +202,11 @@ class TestInMemoryMetrics:
 
 
 class TestSimpleAlerts:
-    """Test SimpleAlerts implementation."""
+    """Test FlextAlerts implementation."""
 
     def test_alerts_implements_protocol(self) -> None:
         """Test that alerts implements protocol."""
-        alerts = SimpleAlerts()
+        alerts = FlextAlerts()
         # Protocol compliance check via hasattr instead of isinstance
         protocol_methods = ["info", "warning", "error", "critical"]
         for method in protocol_methods:
@@ -215,7 +215,7 @@ class TestSimpleAlerts:
 
     def test_alert_methods_exist(self) -> None:
         """Test that all alert methods exist."""
-        alerts = SimpleAlerts()
+        alerts = FlextAlerts()
 
         assert hasattr(alerts, "info")
         assert hasattr(alerts, "warning")
@@ -224,7 +224,7 @@ class TestSimpleAlerts:
 
     def test_alert_methods_work(self) -> None:
         """Test that alert methods work without errors."""
-        alerts = SimpleAlerts()
+        alerts = FlextAlerts()
 
         # These should not raise errors
         alerts.info("Info alert")
@@ -234,18 +234,18 @@ class TestSimpleAlerts:
 
     def test_alerts_with_context(self) -> None:
         """Test alerts with context."""
-        alerts = SimpleAlerts()
+        alerts = FlextAlerts()
 
         # Should accept keyword arguments
         alerts.info("Alert with context", key="value", code=123)
 
 
 class TestMinimalObservability:
-    """Test MinimalObservability composite implementation."""
+    """Test FlextObservability composite implementation."""
 
     def test_observability_implements_protocol(self) -> None:
         """Test that observability implements protocol."""
-        obs = MinimalObservability()
+        obs = FlextObservability()
         assert obs is not None  # Check observability instance exists
         # Protocol compliance check via hasattr instead of isinstance
         protocol_attributes = ["log", "trace", "metrics", "alerts", "health"]
@@ -254,7 +254,7 @@ class TestMinimalObservability:
 
     def test_observability_components(self) -> None:
         """Test that all components exist."""
-        obs = MinimalObservability()
+        obs = FlextObservability()
 
         assert hasattr(obs, "log")
         assert hasattr(obs, "trace")
@@ -264,7 +264,7 @@ class TestMinimalObservability:
 
     def test_component_types(self) -> None:
         """Test component type compliance."""
-        obs = MinimalObservability()
+        obs = FlextObservability()
 
         # Test logger methods
         logger_methods = [
@@ -303,7 +303,7 @@ class TestMinimalObservability:
 
     def test_observability_integration(self) -> None:
         """Test integrated usage."""
-        obs = MinimalObservability()
+        obs = FlextObservability()
 
         # Test cross-component usage
         obs.log.info("Starting operation")
@@ -318,7 +318,7 @@ class TestMinimalObservability:
 
     def test_health_component(self) -> None:
         """Test health monitoring component."""
-        obs = MinimalObservability()
+        obs = FlextObservability()
 
         health_status = obs.health.health_check()
         assert isinstance(health_status, dict)
@@ -362,7 +362,7 @@ class TestErrorHandling:
 
     def test_logger_with_none_values(self) -> None:
         """Test logger handles None values gracefully."""
-        logger = ConsoleLogger()
+        logger = FlextConsole()
 
         # These should not raise errors
         try:
@@ -373,7 +373,7 @@ class TestErrorHandling:
 
     def test_metrics_edge_cases(self) -> None:
         """Test metrics with edge case values."""
-        metrics = InMemoryMetrics()
+        metrics = FlextMetrics()
 
         try:
             metrics.increment("test", 0)
@@ -384,7 +384,7 @@ class TestErrorHandling:
 
     def test_tracer_error_handling(self) -> None:
         """Test tracer handles errors gracefully."""
-        tracer = NoOpTracer()
+        tracer = FlextTracer()
 
         try:
             with tracer.business_span("test") as span:
