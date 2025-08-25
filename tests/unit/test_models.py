@@ -39,7 +39,6 @@ def create_validation_test_cases() -> list[dict[str, bool | dict[str, str]]]:
     ]
 
 
-
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 

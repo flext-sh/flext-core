@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core import (
-    FlextFieldCore,
-    FlextFieldCoreMetadata,
+    FlextField,
+    FlextFieldMetadata,
     FlextFieldRegistry,
     FlextFieldType,
     FlextResult,
@@ -16,12 +16,12 @@ from flext_core import (
 EXPECTED_BULK_SIZE = 2
 
 
-class TestFlextFieldCoreInteger:
-    """Test FlextFieldCore integer type."""
+class TestFlextFieldInteger:
+    """Test FlextField integer type."""
 
     def test_integer_field_creation_minimal(self) -> None:
         """Test integer field creation with minimal parameters."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.INTEGER.value,
@@ -40,7 +40,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_creation_with_constraints(self) -> None:
         """Test integer field creation with min/max constraints."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.INTEGER.value,
@@ -54,7 +54,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_validate_value_success(self) -> None:
         """Test integer field validation with valid value."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.INTEGER.value,
@@ -65,7 +65,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_validate_value_success_case(self) -> None:
         """Test integer field validation with valid value."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="integer",
@@ -76,7 +76,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_validate_none_value(self) -> None:
         """Test integer field validation with None value."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="integer",
@@ -88,7 +88,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_validate_non_integer_type(self) -> None:
         """Test integer field validation with non-integer type."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="integer",
@@ -104,7 +104,7 @@ class TestFlextFieldCoreInteger:
 
     def test_integer_field_serialize_value(self) -> None:
         """Test integer field serialization."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -116,7 +116,7 @@ class TestFlextFieldCoreInteger:
 
     def test_metadata_creation_with_defaults(self) -> None:
         """Test metadata creation with default values."""
-        metadata = FlextFieldCoreMetadata()
+        metadata = FlextFieldMetadata()
 
         assert metadata.description is None
         assert metadata.example is None
@@ -136,7 +136,7 @@ class TestFlextFieldCoreInteger:
 
     def test_metadata_creation_with_values(self) -> None:
         """Test metadata creation with specific values."""
-        metadata = FlextFieldCoreMetadata(
+        metadata = FlextFieldMetadata(
             description="Test field",
             example="example value",
             min_value=0.0,
@@ -180,7 +180,7 @@ class TestFlextFieldCoreInteger:
 
     def test_metadata_to_dict(self) -> None:
         """Test metadata serialization to dictionary."""
-        metadata = FlextFieldCoreMetadata(
+        metadata = FlextFieldMetadata(
             description="Test field",
             min_length=1,
             max_length=10,
@@ -213,7 +213,7 @@ class TestFlextFieldCoreInteger:
             "custom_properties": {"key": "value"},
         }
 
-        metadata = FlextFieldCoreMetadata.from_dict(data)
+        metadata = FlextFieldMetadata.from_dict(data)
 
         if metadata.description != "Test field":
             raise AssertionError(f"Expected Test field, got {metadata.description}")
@@ -230,7 +230,7 @@ class TestFlextFieldCoreInteger:
         """Test metadata creation from partial dictionary."""
         data: dict[str, object] = {"description": "Test field"}
 
-        metadata = FlextFieldCoreMetadata.from_dict(data)
+        metadata = FlextFieldMetadata.from_dict(data)
 
         if metadata.description != "Test field":
             raise AssertionError(f"Expected Test field, got {metadata.description}")
@@ -241,7 +241,7 @@ class TestFlextFieldCoreInteger:
 
     def test_metadata_round_trip(self) -> None:
         """Test metadata serialization round trip."""
-        original = FlextFieldCoreMetadata(
+        original = FlextFieldMetadata(
             description="Test field",
             min_length=1,
             max_length=10,
@@ -251,7 +251,7 @@ class TestFlextFieldCoreInteger:
         )
 
         data = original.to_dict()
-        restored = FlextFieldCoreMetadata.from_dict(data)
+        restored = FlextFieldMetadata.from_dict(data)
 
         if restored.description != original.description:
             raise AssertionError(
@@ -268,8 +268,8 @@ class TestFlextFieldCoreInteger:
         assert restored.custom_properties == original.custom_properties
 
 
-class ConcreteFlextFieldCore(FlextFieldCore):
-    """Concrete implementation for testing abstract FlextFieldCore."""
+class ConcreteFlextField(FlextField):
+    """Concrete implementation for testing abstract FlextField."""
 
     def validate_value(self, value: object) -> FlextResult[object]:
         """Validate the provided value against field requirements."""
@@ -290,12 +290,12 @@ class ConcreteFlextFieldCore(FlextFieldCore):
         return str(value)
 
 
-class TestFlextFieldCoreBase:
-    """Test FlextFieldCore base class."""
+class TestFlextFieldBase:
+    """Test FlextField base class."""
 
     def test_field_creation_minimal(self) -> None:
         """Test field creation with minimal parameters."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -313,12 +313,12 @@ class TestFlextFieldCoreBase:
                 f"Expected True, got {field.required is True}",
             )  # Default
         assert field.default_value is None
-        assert isinstance(field.metadata, FlextFieldCoreMetadata)
+        assert isinstance(field.metadata, FlextFieldMetadata)
         assert field.validator is None
 
     def test_field_creation_full(self) -> None:
         """Test field creation with all parameters."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -341,7 +341,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_get_default_value(self) -> None:
         """Test getting default value."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -353,7 +353,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_get_default_value_none(self) -> None:
         """Test getting default value when None."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -363,7 +363,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_is_required(self) -> None:
         """Test field required status."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -373,7 +373,7 @@ class TestFlextFieldCoreBase:
         if not field.is_required():
             raise AssertionError(f"Expected True, got {field.is_required()}")
 
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -385,7 +385,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_is_deprecated(self) -> None:
         """Test field deprecated status."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -395,7 +395,7 @@ class TestFlextFieldCoreBase:
         if not field.is_deprecated():
             raise AssertionError(f"Expected True, got {field.is_deprecated()}")
 
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -407,7 +407,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_is_sensitive(self) -> None:
         """Test field sensitive status."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -417,7 +417,7 @@ class TestFlextFieldCoreBase:
         if not field.is_sensitive():
             raise AssertionError(f"Expected True, got {field.is_sensitive()}")
 
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -429,7 +429,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_get_field_info(self) -> None:
         """Test getting field information."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -457,7 +457,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_get_field_info_no_validator(self) -> None:
         """Test getting field information without validator."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -474,7 +474,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_validate_value_required_success(self) -> None:
         """Test field validation with required value."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -486,7 +486,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_validate_value_required_failure(self) -> None:
         """Test field validation with required value failure."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -498,7 +498,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_serialize_value(self) -> None:
         """Test field serialization."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -510,7 +510,7 @@ class TestFlextFieldCoreBase:
 
     def test_field_deserialize_value(self) -> None:
         """Test field deserialization."""
-        field = ConcreteFlextFieldCore(
+        field = ConcreteFlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.STRING.value,
@@ -521,12 +521,12 @@ class TestFlextFieldCoreBase:
             raise AssertionError(f"Expected test_value, got {result}")
 
 
-class TestFlextFieldCoreString:
-    """Test FlextFieldCore string implementation."""
+class TestFlextFieldString:
+    """Test FlextField string implementation."""
 
     def test_string_field_creation_minimal(self) -> None:
         """Test string field creation with minimal parameters."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -545,7 +545,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_creation_with_constraints(self) -> None:
         """Test string field creation with length constraints."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -562,7 +562,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_creation_with_custom_metadata(self) -> None:
         """Test string field creation with custom metadata."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -579,7 +579,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_validate_value_success(self) -> None:
         """Test string field validation success."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -590,7 +590,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_validate_value_success_case(self) -> None:
         """Test string field validation with valid string."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -601,7 +601,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_serialize_value(self) -> None:
         """Test string field serialization."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -613,7 +613,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_deserialize_value(self) -> None:
         """Test string field deserialization."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -625,7 +625,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_deserialize_non_string(self) -> None:
         """Test string field deserialization of non-string values."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -637,7 +637,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_validate_none_value(self) -> None:
         """Test string field validation with None value."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -649,7 +649,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_validate_non_string_type(self) -> None:
         """Test string field validation with non-string type."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -662,7 +662,7 @@ class TestFlextFieldCoreString:
 
     def test_string_field_with_all_parameters(self) -> None:
         """Test string field with all parameters."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -691,12 +691,12 @@ class TestFlextFieldCoreString:
             )
 
 
-class TestFlextFieldCoreBoolean:
-    """Test FlextFieldCore boolean implementation."""
+class TestFlextFieldBoolean:
+    """Test FlextField boolean implementation."""
 
     def test_boolean_field_creation_minimal(self) -> None:
         """Test boolean field creation with minimal parameters."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="boolean",
@@ -715,7 +715,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_validate_value_success(self) -> None:
         """Test boolean field validation with valid value."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="boolean",
@@ -726,7 +726,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_validate_value_success_case(self) -> None:
         """Test boolean field validation with valid boolean."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="boolean",
@@ -738,7 +738,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_validate_non_boolean_type(self) -> None:
         """Test boolean field validation with non-boolean type."""
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="boolean",
@@ -751,7 +751,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_serialize_value(self) -> None:
         """Test boolean field serialization."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.BOOLEAN.value,
@@ -762,7 +762,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_deserialize_existing_boolean(self) -> None:
         """Test boolean field deserialization with existing boolean."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.BOOLEAN.value,
@@ -773,7 +773,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_deserialize_string_values(self) -> None:
         """Test boolean field deserialization with string values."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.BOOLEAN.value,
@@ -784,7 +784,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_deserialize_integer(self) -> None:
         """Test boolean field deserialization with integer."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.BOOLEAN.value,
@@ -795,7 +795,7 @@ class TestFlextFieldCoreBoolean:
 
     def test_boolean_field_deserialize_non_convertible(self) -> None:
         """Test boolean field deserialization with non-convertible value."""
-        FlextFieldCore(
+        FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type=FlextFieldType.BOOLEAN.value,
@@ -805,8 +805,8 @@ class TestFlextFieldCoreBoolean:
         # This test needs to be adjusted based on actual field API
 
 
-class TestFlextFieldCoreRegistry:
-    """Test FlextFieldCoreRegistry class."""
+class TestFlextFieldRegistry:
+    """Test FlextFieldRegistry class."""
 
     def test_registry_creation(self) -> None:
         """Test registry creation."""
@@ -817,7 +817,7 @@ class TestFlextFieldCoreRegistry:
     def test_register_field(self) -> None:
         """Test registering a field."""
         registry = FlextFieldRegistry()
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -829,7 +829,7 @@ class TestFlextFieldCoreRegistry:
     def test_get_field_existing(self) -> None:
         """Test getting an existing field."""
         registry = FlextFieldRegistry()
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -857,12 +857,12 @@ class TestFlextFieldCoreRegistry:
     def test_get_all_fields_with_fields(self) -> None:
         """Test getting all fields when registry has fields."""
         registry = FlextFieldRegistry()
-        field1 = FlextFieldCore(
+        field1 = FlextField(
             field_id="field1",
             field_name="test1",
             field_type="string",
         )
-        field2 = FlextFieldCore(
+        field2 = FlextField(
             field_id="field2",
             field_name="test2",
             field_type="string",
@@ -882,17 +882,17 @@ class TestFlextFieldCoreRegistry:
         registry = FlextFieldRegistry()
 
         # Register fields of different types
-        string_field1 = FlextFieldCore(
+        string_field1 = FlextField(
             field_id="str1",
             field_name="test1",
             field_type=FlextFieldType.STRING.value,
         )
-        string_field2 = FlextFieldCore(
+        string_field2 = FlextField(
             field_id="str2",
             field_name="test2",
             field_type=FlextFieldType.STRING.value,
         )
-        int_field = FlextFieldCore(
+        int_field = FlextField(
             field_id="int1",
             field_name="test3",
             field_type=FlextFieldType.INTEGER.value,
@@ -914,7 +914,7 @@ class TestFlextFieldCoreRegistry:
     def test_validate_all_fields_success(self) -> None:
         """Test validating all fields with valid data."""
         registry = FlextFieldRegistry()
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -928,7 +928,7 @@ class TestFlextFieldCoreRegistry:
     def test_validate_all_fields_required_missing(self) -> None:
         """Test validating all fields with required field missing."""
         registry = FlextFieldRegistry()
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",
@@ -945,7 +945,7 @@ class TestFlextFieldCoreRegistry:
     def test_validate_all_fields_validation_error(self) -> None:
         """Test validating all fields with validation error."""
         registry = FlextFieldRegistry()
-        field = FlextFieldCore(
+        field = FlextField(
             field_id="test_id",
             field_name="test_field",
             field_type="string",

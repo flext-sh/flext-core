@@ -13,7 +13,7 @@ from flext_core import (
     FlextMetrics,  # Modern equivalent
     FlextObservability,  # Modern equivalent
     FlextTracer,  # Modern equivalent
-    get_observability,
+    get_global_observability,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -329,25 +329,25 @@ class TestMinimalObservability:
 
 
 class TestFactoryFunction:
-    """Test get_observability factory function."""
+    """Test get_global_observability factory function."""
 
-    def test_get_observability_returns_protocol(self) -> None:
+    def test_get_global_observability_returns_protocol(self) -> None:
         """Test that factory returns observability protocol."""
-        obs = get_observability()
+        obs = get_global_observability()
         assert obs is not None  # Check observability instance exists
         # Protocol compliance check via hasattr instead of isinstance
         protocol_attributes = ["log", "trace", "metrics", "alerts", "health"]
         for attr in protocol_attributes:
             assert hasattr(obs, attr), f"Observability missing {attr} attribute"
 
-    def test_get_observability_with_params(self) -> None:
+    def test_get_global_observability_with_params(self) -> None:
         """Test factory with parameters."""
-        obs = get_observability(log_level="DEBUG", force_recreate=True)
+        obs = get_global_observability(log_level="DEBUG", force_recreate=True)
         assert obs is not None  # Check observability instance exists
 
-    def test_get_observability_components_work(self) -> None:
+    def test_get_global_observability_components_work(self) -> None:
         """Test that factory-created observability works."""
-        obs = get_observability()
+        obs = get_global_observability()
 
         # Test basic functionality
         obs.log.info("Test message")
@@ -402,7 +402,7 @@ class TestIntegrationScenarios:
 
     def test_logging_with_metrics(self) -> None:
         """Test logging and metrics integration."""
-        obs = get_observability()
+        obs = get_global_observability()
 
         # Log an operation and record metrics
         obs.log.info("Processing batch", batch_size=100)
@@ -411,7 +411,7 @@ class TestIntegrationScenarios:
 
     def test_tracing_with_logging_and_metrics(self) -> None:
         """Test full observability integration."""
-        obs = get_observability()
+        obs = get_global_observability()
 
         with obs.trace.business_span("user-registration") as span:
             obs.log.info("Starting user registration")
@@ -427,7 +427,7 @@ class TestIntegrationScenarios:
 
     def test_error_flow(self) -> None:
         """Test error handling flow across components."""
-        obs = get_observability()
+        obs = get_global_observability()
 
         with obs.trace.error_span("failed-operation", error_message="Database error"):
             obs.log.error("Database connection failed", error_code="DB001")

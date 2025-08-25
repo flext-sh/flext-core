@@ -117,6 +117,7 @@ class FlextMatchers:
     def assert_field_validates(
         field: object,
         value: object,
+        *,
         should_pass: bool = True,
     ) -> None:
         """Assert field validation result.
@@ -146,6 +147,7 @@ class FlextMatchers:
     def assert_json_structure(
         data: JsonDict,
         expected_keys: Sequence[str],
+        *,
         exact_match: bool = False,
     ) -> None:
         """Assert JSON structure has expected keys.

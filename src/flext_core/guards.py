@@ -13,7 +13,7 @@ from typing import cast
 from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextValidationError
 from flext_core.result import FlextResult
-from flext_core.validation import FlextValidators
+from flext_core.validation import FlextPredicates
 
 
 class FlextGuards:
@@ -130,7 +130,7 @@ class FlextGuards:
             message: str = "Value cannot be empty",
         ) -> object:
             """Require value is a non-empty string with comprehensive validation."""
-            if not isinstance(value, str) or not FlextValidators.is_non_empty_string(value):
+            if not isinstance(value, str) or not FlextPredicates.is_non_empty_string(value):  # type: ignore[attr-defined]
                 raise FlextValidationError(
                     message,
                     validation_details={"field": "non_empty_string", "value": value},
@@ -263,6 +263,7 @@ class FlextGuards:
                     return FlextResult[object].fail(f"Builder failed: {e}")
 
         return _Builder()
+
 
 # =============================================================================
 # BACKWARD COMPATIBILITY ALIASES - Consolidated approach

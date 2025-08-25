@@ -7,12 +7,13 @@ Given-When-Then, test data builders, and comprehensive test scenario management.
 
 from __future__ import annotations
 
+import contextlib
 import functools
-from collections.abc import Callable
+from collections.abc import Callable, Container, Generator, Sized
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -364,7 +365,7 @@ class TestFixtureBuilder:
         return self
 
     @contextmanager
-    def setup_context(self):
+    def setup_context(self) -> Generator[dict[str, object]]:
         """Context manager for test setup and teardown."""
         # Run setup
         for setup_func in self.setup_functions:
@@ -375,10 +376,8 @@ class TestFixtureBuilder:
         finally:
             # Run teardown
             for teardown_func in self.teardown_functions:
-                try:
+                with contextlib.suppress(Exception):
                     teardown_func()
-                except Exception:  # noqa: S110
-                    pass  # Don't let teardown errors mask test failures
 
 
 class TestAssertionBuilder:
@@ -403,13 +402,13 @@ class TestAssertionBuilder:
 
     def has_length(self, length: int) -> TestAssertionBuilder:
         """Assert length."""
-        self.assertions.append(lambda x: len(x) == length)
+        self.assertions.append(lambda x: len(x) == length if isinstance(x, Sized) else False)
         self.descriptions.append(f"should have length {length}")
         return self
 
     def contains(self, item: object) -> TestAssertionBuilder:
         """Assert contains item."""
-        self.assertions.append(lambda x: item in x)
+        self.assertions.append(lambda x: item in x if isinstance(x, Container) else False)
         self.descriptions.append(f"should contain {item}")
         return self
 
@@ -441,24 +440,24 @@ class TestAssertionBuilder:
                 )
 
 
-def mark_test_pattern(pattern_name: str):
+def mark_test_pattern(pattern_name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to mark tests with specific patterns."""
 
-    def decorator(func: Callable) -> Callable:
-        func._test_pattern = pattern_name
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        setattr(func, '_test_pattern', pattern_name)
         return func
 
     return decorator
 
 
 def arrange_act_assert(
-    arrange_func: Callable, act_func: Callable, assert_func: Callable
-):
+    arrange_func: Callable[..., Any], act_func: Callable[..., Any], assert_func: Callable[..., Any]
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator that enforces the Arrange-Act-Assert pattern."""
 
-    def decorator(test_func: Callable) -> Callable:
+    def decorator(test_func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(test_func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: object, **kwargs: object) -> object:
             # Arrange
             arranged_data = arrange_func(*args, **kwargs)
 

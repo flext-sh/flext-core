@@ -626,8 +626,8 @@ __all__ = [
     "FlextCallable",
     # Infrastructure layer protocol aliases
     "FlextConnection",
-    # Main hierarchical class
-    "FlextTypes",
+    # Backward compatibility
+    "FlextCoreTypes",
     # Decorator patterns
     "FlextDecoratedFunction",
     "FlextDomainEvent",
@@ -650,6 +650,8 @@ __all__ = [
     "FlextRepository",
     # Domain layer protocol aliases
     "FlextService",
+    # Main hierarchical class
+    "FlextTypes",
     # Backward compatibility
     "FlextTypes",
     "FlextUnitOfWork",
@@ -696,8 +698,6 @@ __all__ = [
     "TValue",
     "U",
     "V",
-    # Backward compatibility
-    "FlextCoreTypes",
 ]
 
 # Handler metrics aliases for easy access

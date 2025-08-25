@@ -128,7 +128,7 @@ class TestFlextResultRecoveryOperations:
         """Test recover successfully transforms error to success."""
         result = FlextResult[int].fail("calculation error")
 
-        recovered = result.recover(lambda error: 42)  # Default value
+        recovered = result.recover(lambda _: 42)  # Default value
 
         assert recovered.is_success
         assert recovered.value == 42
@@ -137,7 +137,7 @@ class TestFlextResultRecoveryOperations:
         """Test recover on successful result returns original result."""
         result = FlextResult[int].ok(10)
 
-        recovered = result.recover(lambda error: 999)
+        recovered = result.recover(lambda _: 999)
 
         assert recovered.is_success
         assert recovered.value == 10  # Original value preserved
@@ -622,7 +622,7 @@ class TestFlextResultRailwayOrientedComposition:
             FlextResult[int]
             .ok(0)  # Will cause failure
             .flat_map(risky_operation)
-            .recover(lambda error: 42)  # Recovery value
+            .recover(lambda _: 42)  # Recovery value
             .map(lambda x: x + 8)  # Should work on recovered value
         )
 

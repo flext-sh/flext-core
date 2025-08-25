@@ -137,7 +137,7 @@ from flext_core.validation import (
 ValidatorCallable = FlextTypes.Core.Validator
 
 
-class FlextCore:
+class FlextCores:
     """Comprehensive facade providing unified access to ALL FLEXT functionality.
 
     This class exposes the complete FLEXT Core ecosystem through a single interface,
@@ -147,7 +147,7 @@ class FlextCore:
     Thread-safe with lazy initialization of components.
     """
 
-    _instance: FlextCore | None = None
+    _instance: FlextCores | None = None
 
     def __init__(self) -> None:
         """Initialize FLEXT Core with all subsystems."""
@@ -162,11 +162,11 @@ class FlextCore:
         self._field_registry: FlextFieldRegistry | None = None
         self._plugin_registry: object | None = None
         self._console: FlextUtilities | None = None
-        self._observability: FlextObservability | None = None
+        self._observability: FlextObservability.Observability | None = None
 
     @classmethod
-    def get_instance(cls) -> FlextCore:
-        """Get singleton instance of FlextCore."""
+    def get_instance(cls) -> FlextCores:
+        """Get singleton instance of FlextCores."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
@@ -263,7 +263,7 @@ class FlextCore:
         return create_log_context(logger, **context)
 
     @property
-    def observability(self) -> FlextObservability:
+    def observability(self) -> FlextObservability.Observability:
         """Get observability instance."""
         if self._observability is None:
             self._observability = get_global_observability()
@@ -338,7 +338,7 @@ class FlextCore:
         *funcs: Callable[[object], FlextResult[object]],
     ) -> Callable[[object], FlextResult[object]]:
         """Compose Result-returning functions (right to left)."""
-        return FlextCore.pipe(*reversed(funcs))
+        return FlextCores.pipe(*reversed(funcs))
 
     @staticmethod
     def when(
@@ -1747,7 +1747,7 @@ class FlextCore:
             else "Unknown"
         )
         return (
-            f"FlextCore("
+            f"FlextCores("
             f"services={service_count}, "
             f"methods={len(self.list_available_methods())}, "
             f"functionality={len(self.get_all_functionality())}"
@@ -1757,26 +1757,36 @@ class FlextCore:
     @override
     def __str__(self) -> str:
         """Return user-friendly string representation."""
-        return "FlextCore - Comprehensive FLEXT ecosystem access (v2.0.0)"
+        return "FlextCores - Comprehensive FLEXT ecosystem access (v2.0.0)"
 
 
 # Convenience function for global access
-def flext_core() -> FlextCore:
-    """Get global FlextCore instance with a convenient access pattern.
+def flext_core() -> FlextCores:
+    """Get global FlextCores instance with a convenient access pattern.
 
-    Convenience function providing direct access to the global FlextCore singleton
+    Convenience function providing direct access to the global FlextCores singleton
     instance without requiring explicit class method calls. Maintains a singleton
     pattern while providing simpler access syntax.
 
     Returns:
-      Global FlextCore singleton instance
+      Global FlextCores singleton instance
 
     """
-    return FlextCore.get_instance()
+    return FlextCores.get_instance()
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Legacy alias for backward compatibility
+FlextCore = FlextCores
 
 
 # Export API
 __all__: list[str] = [
+    # Backward compatibility
     "FlextCore",
+    "FlextCores",
     "flext_core",
 ]

@@ -485,7 +485,6 @@ def http_client() -> object:
     """Fixture providing HTTP client for testing."""
     try:
         import httpx
-        from pytest_httpx import HTTPXMock
 
         return httpx.AsyncClient()
     except ImportError:

@@ -2640,16 +2640,16 @@ __all__: list[str] = [
     # =======================================================================
     "FlextCallableProtocol",  # Protocol for flexible callables
     # =======================================================================
-    # TIER 1 MODULE PATTERN - MAIN EXPORT
+    # BACKWARD COMPATIBILITY LAYER - All original class names
     # =======================================================================
-    "FlextDecorators",  # 🎯 MAIN EXPORT: Single class consolidating ALL decorator functionality
+    "FlextCoreDecorators",  # Alias to FlextDecorators for backward compatibility
     "FlextDecoratedFunction",  # Type alias for decorated functions
     "FlextDecoratorFactory",
     "FlextDecoratorUtils",
     # =======================================================================
-    # BACKWARD COMPATIBILITY LAYER - All original class names
+    # TIER 1 MODULE PATTERN - MAIN EXPORT
     # =======================================================================
-    "FlextCoreDecorators",  # Alias to FlextDecorators for backward compatibility
+    "FlextDecorators",  # 🎯 MAIN EXPORT: Single class consolidating ALL decorator functionality
     "FlextErrorHandlingDecorators",
     "FlextFlextResultCallableProtocol",  # Protocol for FlextResult callables
     "FlextFunctionalDecorators",
