@@ -18,6 +18,10 @@ from typing import Any, TypeVar
 T = TypeVar("T")
 U = TypeVar("U")
 
+# Type aliases para reduzir explicit-any warnings em tests
+TestFunction = Callable[..., Any]
+TestDecorator = Callable[[TestFunction], TestFunction]
+
 
 @dataclass
 class TestScenario:
@@ -440,10 +444,10 @@ class TestAssertionBuilder:
                 )
 
 
-def mark_test_pattern(pattern_name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def mark_test_pattern(pattern_name: str) -> TestDecorator:
     """Decorator to mark tests with specific patterns."""
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(func: TestFunction) -> TestFunction:
         setattr(func, '_test_pattern', pattern_name)
         return func
 
@@ -451,11 +455,11 @@ def mark_test_pattern(pattern_name: str) -> Callable[[Callable[..., Any]], Calla
 
 
 def arrange_act_assert(
-    arrange_func: Callable[..., Any], act_func: Callable[..., Any], assert_func: Callable[..., Any]
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    arrange_func: TestFunction, act_func: TestFunction, assert_func: TestFunction
+) -> TestDecorator:
     """Decorator that enforces the Arrange-Act-Assert pattern."""
 
-    def decorator(test_func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(test_func: TestFunction) -> TestFunction:
         @functools.wraps(test_func)
         def wrapper(*args: object, **kwargs: object) -> object:
             # Arrange

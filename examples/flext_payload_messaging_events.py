@@ -145,22 +145,25 @@ def _create_basic_messages() -> tuple[
     FlextResult[FlextPayload[str]],
     FlextResult[FlextPayload[str]],
 ]:
-    info_message = FlextMessage.create(
-        "User login successful",
-        level="info",
-        source="auth_service",
+    info_message = FlextResult[FlextPayload[str]].ok(
+        FlextPayload[str](
+            data="User login successful",
+            metadata={"level": "info", "source": "auth_service"}
+        )
     )
 
-    warning_message = FlextMessage.create(
-        "Database connection slow",
-        level="warning",
-        source="database_service",
+    warning_message = FlextResult[FlextPayload[str]].ok(
+        FlextPayload[str](
+            data="Database connection slow",
+            metadata={"level": "warning", "source": "database_service"}
+        )
     )
 
-    error_message_result = FlextMessage.create(
-        "Payment processing failed",
-        level="error",
-        source="payment_service",
+    error_message_result = FlextResult[FlextPayload[str]].ok(
+        FlextPayload[str](
+            data="Payment processing failed",
+            metadata={"level": "error", "source": "payment_service"}
+        )
     )
     return info_message, warning_message, error_message_result
 

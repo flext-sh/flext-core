@@ -244,7 +244,7 @@ class TestFlextValidationPerformance:
 
         def validate_emails() -> list[bool]:
             return [
-                FlextValidation.validate_email_field(email).is_valid for email in emails
+                FlextValidation.Validators.validate_email(email).is_valid for email in emails
             ]
 
         results = BenchmarkUtils.benchmark_with_warmup(

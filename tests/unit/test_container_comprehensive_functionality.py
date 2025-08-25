@@ -73,8 +73,7 @@ class UserService:
         """Create user using injected dependencies."""
         # Use database to store user
         db_result = self.database.execute_query(
-            "INSERT INTO users (name, email) VALUES (?, ?)",
-            (name, email)
+            f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')"
         )
         if db_result.is_failure:
             return FlextResult[dict[str, Any]].fail(
