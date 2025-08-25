@@ -64,20 +64,20 @@ class FlextModelFactory:
     """Factory base para FlextModel objects sem dependências externas."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextModel:
+    def create(cls, **kwargs: object) -> FlextModel:
         """Create FlextModel instance with default values."""
         defaults = {
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC),
         }
-        defaults.update(kwargs)
+        defaults.update(kwargs)  # type: ignore[arg-type]
         return FlextModel(**defaults)
 
 
 class TestValueObject(FlextValue):
     """Concrete FlextValue implementation for testing."""
 
-    value: Any = None
+    value: object = None
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -89,12 +89,12 @@ class FlextValueFactory:
     """Factory para FlextValue objects."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> TestValueObject:
+    def create(cls, **kwargs: object) -> TestValueObject:
         """Create FlextValue instance with default values."""
         defaults = {
             "value": _generate_fake_word(),
         }
-        defaults.update(kwargs)
+        defaults.update(kwargs)  # type: ignore[arg-type]
         return TestValueObject(**defaults)
 
 
@@ -113,17 +113,17 @@ class FlextEntityFactory:
     """Factory para FlextEntity objects."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> TestEntity:
+    def create(cls, **kwargs: object) -> TestEntity:
         """Create FlextEntity instance with default values."""
         # FlextEntity will provide defaults for id, version, timestamps, etc.
         defaults = {
             "name": "Test Entity",
         }
-        defaults.update(kwargs)
+        defaults.update(kwargs)  # type: ignore[arg-type]
         # Create with auto-generated ID if not provided
         if "id" not in defaults:
             defaults["id"] = f"test_entity_{uuid.uuid4().hex[:8]}"
-        return TestEntity(**defaults)
+        return TestEntity(**defaults)  # type: ignore[arg-type]
 
 
 class TestAggregateRoot(FlextAggregateRoot):
@@ -141,20 +141,20 @@ class FlextAggregateRootFactory:
     """Factory para FlextAggregateRoot objects."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> TestAggregateRoot:
+    def create(cls, **kwargs: object) -> TestAggregateRoot:
         """Create FlextAggregateRoot instance with default values."""
         defaults = {
             "name": "Test Aggregate",
         }
-        defaults.update(kwargs)
-        return TestAggregateRoot(**defaults)
+        defaults.update(kwargs)  # type: ignore[arg-type]
+        return TestAggregateRoot(**defaults)  # type: ignore[arg-type]
 
 
 class FlextConfigFactory:
     """Factory para FlextConfig objects."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextConfig:
+    def create(cls, **kwargs: object) -> FlextConfig:
         """Create FlextConfig instance with default values."""
         defaults = {
             "name": "test-flext",
@@ -170,15 +170,15 @@ class FlextConfigFactory:
             "enable_metrics": random.choice([True, False]),  # noqa: S311
             "enable_tracing": random.choice([True, False]),  # noqa: S311
         }
-        defaults.update(kwargs)
-        return FlextConfig(**defaults)
+        defaults.update(kwargs)  # type: ignore[arg-type]
+        return FlextConfig(**defaults)  # type: ignore[arg-type]
 
 
 class FlextFieldCoreFactory:
     """Factory para FlextFieldCore objects."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextFieldCore:
+    def create(cls, **kwargs: object) -> FlextFieldCore:
         """Create FlextFieldCore instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -190,33 +190,33 @@ class FlextFieldCoreFactory:
             "validation_rules": [],
         }
         defaults.update(kwargs)
-        return FlextFieldCore(**defaults)
+        return FlextFieldCore(**defaults)  # type: ignore[arg-type]
 
 
 class FlextResultFactory:
     """Factory para FlextResult objects."""
 
     @classmethod
-    def success(cls, value: Any = None) -> FlextResult[Any]:
+    def success(cls, value: object = None) -> FlextResult[object]:
         """Cria FlextResult de sucesso."""
         return FlextResult.ok(value or _generate_fake_word())
 
     @classmethod
-    def failure(cls, error: str | None = None) -> FlextResult[Any]:
+    def failure(cls, error: str | None = None) -> FlextResult[object]:
         """Cria FlextResult de falha."""
         return FlextResult.fail(error or _generate_fake_sentence())
 
     @classmethod
-    def build_success(cls, **kwargs: Any) -> FlextResult[Any]:
+    def build_success(cls, **kwargs: object) -> FlextResult[object]:
         """Build success result with custom value."""
         value = kwargs.get("value", "success_value")
         return FlextResult.ok(value)
 
     @classmethod
-    def build_failure(cls, **kwargs: Any) -> FlextResult[Any]:
+    def build_failure(cls, **kwargs: object) -> FlextResult[object]:
         """Build failure result with custom error."""
         error = kwargs.get("error", "test_error")
-        return FlextResult.fail(error)
+        return FlextResult.fail(str(error))
 
 
 # =============================================================================
@@ -228,7 +228,7 @@ class DomainEntityFactory:
     """Factory para entidades de domínio genéricas."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextEntity:
+    def create(cls, **kwargs: object) -> FlextEntity:
         """Create domain entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -240,14 +240,14 @@ class DomainEntityFactory:
             "active": True,
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)
+        return FlextEntity(**defaults)  # type: ignore[arg-type]
 
 
 class UserEntityFactory:
     """Factory para entidade User específica."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextEntity:
+    def create(cls, **kwargs: object) -> FlextEntity:
         """Create user entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -261,14 +261,14 @@ class UserEntityFactory:
             "is_active": True,
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)
+        return FlextEntity(**defaults)  # type: ignore[arg-type]
 
 
 class OrganizationEntityFactory:
     """Factory para entidade Organization."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> FlextEntity:
+    def create(cls, **kwargs: object) -> FlextEntity:
         """Create organization entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -281,7 +281,7 @@ class OrganizationEntityFactory:
             "industry": _generate_fake_word().capitalize(),
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)
+        return FlextEntity(**defaults)  # type: ignore[arg-type]
 
 
 # =============================================================================
@@ -293,9 +293,9 @@ class MetadataFactory:
     """Factory para metadata dictionaries."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> dict[str, Any]:
+    def create(cls, **kwargs: object) -> dict[str, object]:
         """Create metadata dictionary with default values."""
-        defaults = {
+        defaults: dict[str, object] = {
             "source": "test",
             "version": "1.0.0",
             "created_by": _generate_fake_word(),
@@ -309,9 +309,9 @@ class ConfigDictFactory:
     """Factory para configuration dictionaries."""
 
     @classmethod
-    def create(cls, **kwargs: Any) -> dict[str, Any]:
+    def create(cls, **kwargs: object) -> dict[str, object]:
         """Create config dictionary with default values."""
-        defaults = {
+        defaults: dict[str, object] = {
             "debug": random.choice([True, False]),  # noqa: S311
             "timeout": random.randint(1, 300),  # noqa: S311
             "max_retries": random.randint(1, 10),  # noqa: S311
@@ -341,7 +341,7 @@ class ResultListFactory:
     @classmethod
     def create_mixed_results(
         cls, success_count: int = 3, failure_count: int = 2
-    ) -> list[FlextResult[Any]]:
+    ) -> list[FlextResult[object]]:
         """Cria lista mista de sucessos e falhas."""
         results = [FlextResultFactory.success() for _ in range(success_count)]
         results.extend(FlextResultFactory.failure() for _ in range(failure_count))
@@ -353,22 +353,22 @@ class ResultListFactory:
 # =============================================================================
 
 
-def create_test_entity(**kwargs: Any) -> FlextEntity:
+def create_test_entity(**kwargs: object) -> FlextEntity:
     """Cria entidade de teste com parâmetros customizados."""
     return DomainEntityFactory.create(**kwargs)
 
 
-def create_test_config(**kwargs: Any) -> FlextConfig:
+def create_test_config(**kwargs: object) -> FlextConfig:
     """Cria config de teste com parâmetros customizados."""
     return FlextConfigFactory.create(**kwargs)
 
 
-def create_test_field(**kwargs: Any) -> FlextFieldCore:
+def create_test_field(**kwargs: object) -> FlextFieldCore:
     """Cria field de teste com parâmetros customizados."""
     return FlextFieldCoreFactory.create(**kwargs)
 
 
-def create_test_metadata(**kwargs: Any) -> dict[str, Any]:
+def create_test_metadata(**kwargs: object) -> dict[str, object]:
     """Cria metadata de teste."""
     base_metadata = MetadataFactory.create()
     base_metadata.update(kwargs)
@@ -384,7 +384,7 @@ class FlextEntityBuilder:
     """Builder pattern para FlextEntity usando Factory Boy."""
 
     def __init__(self) -> None:
-        self._data: dict[str, Any] = {}
+        self._data: dict[str, object] = {}
 
     def with_id(self, entity_id: str) -> FlextEntityBuilder:
         """Define ID da entidade."""
@@ -396,7 +396,7 @@ class FlextEntityBuilder:
         self._data["name"] = name
         return self
 
-    def with_metadata(self, **metadata: Any) -> FlextEntityBuilder:
+    def with_metadata(self, **metadata: object) -> FlextEntityBuilder:
         """Define metadata da entidade."""
         self._data.update(metadata)
         return self
@@ -421,10 +421,10 @@ class FlextResultBuilder:
 
     def __init__(self) -> None:
         self._success = True
-        self._value: Any = None
+        self._value: object = None
         self._error: str | None = None
 
-    def success(self, value: Any = None) -> FlextResultBuilder:
+    def success(self, value: object = None) -> FlextResultBuilder:
         """Configura como sucesso."""
         self._success = True
         self._value = value
@@ -436,7 +436,7 @@ class FlextResultBuilder:
         self._error = error
         return self
 
-    def build(self) -> FlextResult[Any]:
+    def build(self) -> FlextResult[object]:
         """Constrói o FlextResult."""
         if self._success:
             return FlextResult.ok(self._value)

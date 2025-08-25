@@ -36,7 +36,7 @@ class TestDataFactory:
     """
 
     @staticmethod
-    def create_test_user_data(**overrides: Any) -> JsonDict:
+    def create_test_user_data(**overrides: object) -> JsonDict:
         """Create test user data with sensible defaults.
 
         Args:
@@ -57,7 +57,7 @@ class TestDataFactory:
         return {**defaults, **overrides}
 
     @staticmethod
-    def create_test_config_data(**overrides: Any) -> JsonDict:
+    def create_test_config_data(**overrides: object) -> JsonDict:
         """Create test configuration data with sensible defaults.
 
         Args:
@@ -80,7 +80,7 @@ class TestDataFactory:
     @staticmethod
     def create_test_field_data(
         field_type: str = "string",
-        **overrides: Any,
+        **overrides: object,
     ) -> JsonDict:
         """Create test field data with sensible defaults.
 
@@ -123,7 +123,7 @@ class TestDataFactory:
         return {**defaults, **overrides}
 
     @staticmethod
-    def create_test_service_data(**overrides: Any) -> JsonDict:
+    def create_test_service_data(**overrides: object) -> JsonDict:
         """Create test service data with sensible defaults.
 
         Args:
@@ -143,7 +143,7 @@ class TestDataFactory:
         return {**defaults, **overrides}
 
     @staticmethod
-    def create_test_payload_data(**overrides: Any) -> JsonDict:
+    def create_test_payload_data(**overrides: object) -> JsonDict:
         """Create test payload data with sensible defaults.
 
         Args:
@@ -163,7 +163,7 @@ class TestDataFactory:
         return {**defaults, **overrides}
 
     @staticmethod
-    def create_test_validation_data(**overrides: Any) -> JsonDict:
+    def create_test_validation_data(**overrides: object) -> JsonDict:
         """Create test validation data with sensible defaults.
 
         Args:
@@ -186,7 +186,7 @@ class TestDataFactory:
     @classmethod
     def create_test_result_success(
         cls,
-        data: Any = "test_data",
+        data: object = "test_data",
     ) -> FlextResult[Any]:
         """Create successful FlextResult for testing.
 
@@ -219,6 +219,7 @@ class TestDataFactory:
 
     @staticmethod
     def create_mock_validator(
+        *,
         should_pass: bool = True,
     ) -> Callable[[Any], FlextResult[Any]]:
         """Create mock validator function for testing.
@@ -231,7 +232,7 @@ class TestDataFactory:
 
         """
 
-        def validator(value: Any) -> FlextResult[Any]:
+        def validator(value: object) -> FlextResult[Any]:
             if should_pass:
                 return FlextResult[Any].ok(value)
             return FlextResult[Any].fail(f"Validation failed for: {value}")
@@ -239,7 +240,7 @@ class TestDataFactory:
         return validator
 
     @staticmethod
-    def create_test_json_file_content(**overrides: Any) -> str:
+    def create_test_json_file_content(**overrides: object) -> str:
         """Create JSON file content for testing.
 
         Args:

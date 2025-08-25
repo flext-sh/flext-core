@@ -397,9 +397,7 @@ class TestComprehensiveIntegration:
 
         # Generate test data using our strategies
 
-        st.lists(
-            CompositeStrategies.user_profiles(), min_size=10, max_size=100
-        )
+        st.lists(CompositeStrategies.user_profiles(), min_size=10, max_size=100)
 
         # Use a fixed set of test profiles instead of Hypothesis example
         test_profiles = [
@@ -408,21 +406,31 @@ class TestComprehensiveIntegration:
                 "name": "John Smith",
                 "email": "john.smith@example.com",
                 "phone": "+1-555-123-4567",
-                "address": {"street": "123 Main St", "city": "Springfield", "state": "CA", "zip_code": "12345"},
+                "address": {
+                    "street": "123 Main St",
+                    "city": "Springfield",
+                    "state": "CA",
+                    "zip_code": "12345",
+                },
                 "created_at": "2023-01-01T00:00:00+00:00",
                 "active": True,
-                "metadata": {}
+                "metadata": {},
             },
             {
                 "id": "flext_test002",
                 "name": "Jane Doe",
                 "email": "jane.doe@example.com",
                 "phone": "+1-555-987-6543",
-                "address": {"street": "456 Oak Ave", "city": "Madison", "state": "NY", "zip_code": "54321"},
+                "address": {
+                    "street": "456 Oak Ave",
+                    "city": "Madison",
+                    "state": "NY",
+                    "zip_code": "54321",
+                },
                 "created_at": "2023-06-15T12:30:00+00:00",
                 "active": True,
-                "metadata": {"role": "REDACTED_LDAP_BIND_PASSWORD"}
-            }
+                "metadata": {"role": "REDACTED_LDAP_BIND_PASSWORD"},
+            },
         ]
 
         # Benchmark the operation
@@ -471,7 +479,7 @@ class TestRealWorldScenarios:
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",
                 "headers": {"Content-Type": "application/json"},
-                "body": {"name": "test"}
+                "body": {"name": "test"},
             }
 
             # Simulate API processing

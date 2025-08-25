@@ -246,8 +246,8 @@ class BenchmarkUtils:
         benchmark: BenchmarkFixture,
         func: Callable[..., T],
         warmup_rounds: int = 5,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> T:
         """Benchmark function with warmup rounds for consistent results."""
         # Warmup rounds
@@ -334,8 +334,8 @@ class BenchmarkUtils:
         func: Callable[..., T],
         baseline_time: float,
         tolerance_percent: float = 10.0,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> T:
         """Benchmark with regression detection."""
         result = benchmark(func, *args, **kwargs)
@@ -359,8 +359,8 @@ class BenchmarkUtils:
         benchmark: BenchmarkFixture,
         func: Callable[..., T],
         thread_counts: list[int],
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> dict[int, dict[str, Any]]:
         """Benchmark function with different thread counts."""
         results = {}
@@ -372,8 +372,7 @@ class BenchmarkUtils:
                     max_workers=workers,
                 ) as executor:
                     futures = [
-                        executor.submit(func, *args, **kwargs)
-                        for _ in range(workers)
+                        executor.submit(func, *args, **kwargs) for _ in range(workers)
                     ]
                     return [future.result() for future in futures]
 
@@ -426,8 +425,8 @@ class MemoryProfiler:
         func: Callable[..., T],
         iterations: int = 1000,
         max_memory_growth_mb: float = 10.0,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> T:
         """Stress test function for memory stability."""
         with MemoryProfiler.track_memory_leaks(max_memory_growth_mb):
@@ -447,8 +446,8 @@ class AsyncBenchmark:
     async def benchmark_async(
         func: Callable[..., Any],
         iterations: int = 100,
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> dict[str, float]:
         """Benchmark async function."""
         times = []
@@ -473,8 +472,8 @@ class AsyncBenchmark:
     async def benchmark_concurrency(
         func: Callable[..., Any],
         concurrency_levels: list[int],
-        *args: Any,
-        **kwargs: Any,
+        *args: object,
+        **kwargs: object,
     ) -> dict[int, dict[str, Any]]:
         """Benchmark async function with different concurrency levels."""
         import asyncio

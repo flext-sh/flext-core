@@ -1,6 +1,5 @@
 """Comprehensive tests for FlextContainer dependency injection system - Real functional testing."""
 
-
 from __future__ import annotations
 
 from typing import Any
@@ -543,8 +542,10 @@ class TestFlextServiceRetrieverFunctionality:
 
     def test_get_service_from_factory(self) -> None:
         """Test retrieving service from factory."""
+
         def factory():
             return ConfigService("test_env")
+
         services: dict[str, object] = {}
         factories = {"config": factory}
 
@@ -690,6 +691,7 @@ class TestFlextContainerIntegrationFunctionality:
         # Service doesn't exist, should create it
         def factory():
             return DatabaseService("created_on_demand")
+
         result = container.get_or_create("database", factory)
 
         assert result.is_success

@@ -11,10 +11,9 @@ from typing import Any
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextPayload, FlextResult
 from flext_core.aggregate_root import FlextAggregateRoot
 from flext_core.exceptions import FlextValidationError
-from flext_core.payload import FlextEvent
 
 pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.ddd]
 
@@ -357,7 +356,7 @@ class TestFlextAggregateRootRealFunctionality:
         order = OrderAggregate(customer_id="event_object_test", total_amount=0.0)
 
         # Create a FlextEvent using the correct factory method
-        event_result = FlextEvent.create_event(
+        event_result = FlextPayload.create_event(
             event_type="DirectEvent",
             event_data={"direct": True, "test": "value"},
             aggregate_id=str(order.id),

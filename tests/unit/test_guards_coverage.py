@@ -7,6 +7,8 @@ Missing lines: 34-42, 46, 50-60, 73-77, 100-103, 109-110, 114-122, 165-166, 176-
 
 from __future__ import annotations
 
+import contextlib
+
 import pytest
 
 from flext_core.guards import FlextGuards, _PureWrapper
@@ -238,7 +240,7 @@ class TestFlextGuardsCoverage:
         """Test that _PureWrapper preserves function metadata."""
 
         def documented_function(x: int) -> int:
-            """This function has documentation."""
+            """A function has documentation."""
             return x * 2
 
         documented_function.__name__ = "custom_name"
@@ -247,7 +249,7 @@ class TestFlextGuardsCoverage:
 
         # Should preserve name and docstring
         assert wrapper.__name__ == "custom_name"
-        assert wrapper.__doc__ == "This function has documentation."
+        assert wrapper.__doc__ == "A function has documentation."
 
     def test_pure_wrapper_without_metadata(self) -> None:
         """Test _PureWrapper with function without metadata."""
@@ -259,11 +261,8 @@ class TestFlextGuardsCoverage:
         # Remove metadata attributes if they exist
         for attr in ["__name__", "__doc__"]:
             if hasattr(func_without_metadata, attr):
-                try:
+                with contextlib.suppress(AttributeError, TypeError):
                     delattr(func_without_metadata, attr)
-                except (AttributeError, TypeError):
-                    # Some attributes can't be deleted, that's fine
-                    pass
 
         # Should not fail even without metadata
         wrapper = _PureWrapper(func_without_metadata)
@@ -343,7 +342,7 @@ class TestEdgeCasesAndBoundaryConditions:
                     raise AttributeError(msg)
                 super().__setattr__(name, value)
 
-        def test_method(self) -> str:
+        def test_method(self: RestrictedAttributeClass) -> str:
             return "test"
 
         wrapper = _PureWrapper(test_method)

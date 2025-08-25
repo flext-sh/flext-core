@@ -193,7 +193,7 @@ def config_batch() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def mock_service(mocker: Any) -> Mock:
+def mock_service(mocker: object) -> Mock:
     """Provide mock service for testing."""
     mock = mocker.Mock()
     mock.get_data.return_value = FlextResultFactory.create_success("mock_data")
@@ -203,7 +203,7 @@ def mock_service(mocker: Any) -> Mock:
 
 
 @pytest.fixture
-def mock_database(mocker: Any) -> Mock:
+def mock_database(mocker: object) -> Mock:
     """Provide mock database for testing."""
     mock = mocker.Mock()
     mock.connect.return_value = True
@@ -213,7 +213,7 @@ def mock_database(mocker: Any) -> Mock:
 
 
 @pytest.fixture
-def mock_logger(mocker: Any) -> Mock:
+def mock_logger(mocker: object) -> Mock:
     """Provide mock logger for testing."""
     return mocker.patch("flext_core.loggings.get_logger")
 
@@ -228,7 +228,7 @@ async def async_service() -> AsyncGenerator[Any]:
     """Provide async service for testing."""
 
     class AsyncTestService:
-        async def async_process(self, data: Any) -> FlextResult[Any]:
+        async def async_process(self, data: object) -> FlextResult[Any]:
             """Simulate async processing."""
             await asyncio.sleep(0.01)  # Simulate async work
             return FlextResultFactory.create_success(f"processed_{data}")
@@ -259,7 +259,7 @@ async def async_context_manager() -> AsyncGenerator[Any]:
             await asyncio.sleep(0.001)  # Simulate async setup
             return self
 
-        async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
             self.exited = True
             await asyncio.sleep(0.001)  # Simulate async cleanup
 

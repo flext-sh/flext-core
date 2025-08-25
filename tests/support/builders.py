@@ -37,13 +37,13 @@ class TestBuilders:
         """Builder for FlextResult objects with various scenarios."""
 
         def __init__(self) -> None:
-            self._data: Any = None
+            self._data: object = None
             self._error: str | None = None
             self._error_code: str | None = None
             self._error_data: JsonDict | None = None
             self._is_success: bool = True
 
-        def with_success_data(self, data: Any) -> TestBuilders.ResultBuilder:
+        def with_success_data(self, data: object) -> TestBuilders.ResultBuilder:
             """Set successful result data."""
             self._data = data
             self._is_success = True
@@ -81,7 +81,7 @@ class TestBuilders:
             self._factories: dict[str, Callable[[], Any]] = {}
 
         def with_service(
-            self, name: str, service: Any
+            self, name: str, service: object
         ) -> TestBuilders.ContainerBuilder:
             """Add a service to the container."""
             self._services[name] = service
@@ -166,7 +166,7 @@ class TestBuilders:
             self._field_name = field_name
             return self
 
-        def with_validation(self, **rules: Any) -> TestBuilders.FieldBuilder:
+        def with_validation(self, **rules: object) -> TestBuilders.FieldBuilder:
             """Add validation rules."""
             self._config.update(rules)
             return self
@@ -198,12 +198,12 @@ class TestBuilders:
                 self._config["max_value"] = max_value
             return self
 
-        def required(self, is_required: bool = True) -> TestBuilders.FieldBuilder:
+        def required(self, *, is_required: bool = True) -> TestBuilders.FieldBuilder:
             """Set field required status."""
             self._config["required"] = is_required
             return self
 
-        def with_default(self, default_value: Any) -> TestBuilders.FieldBuilder:
+        def with_default(self, default_value: object) -> TestBuilders.FieldBuilder:
             """Set default value."""
             self._config["default_value"] = default_value
             return self
@@ -237,7 +237,7 @@ class TestBuilders:
         def __init__(self) -> None:
             self._config_data: JsonDict = {}
 
-        def with_debug(self, debug: bool = True) -> TestBuilders.ConfigBuilder:
+        def with_debug(self, *, debug: bool = True) -> TestBuilders.ConfigBuilder:
             """Set debug mode."""
             self._config_data["debug"] = debug
             return self
@@ -258,7 +258,7 @@ class TestBuilders:
             return self
 
         def with_custom_setting(
-            self, key: str, value: Any
+            self, key: str, value: object
         ) -> TestBuilders.ConfigBuilder:
             """Add custom configuration setting."""
             self._config_data[key] = value
@@ -283,12 +283,12 @@ class TestBuilders:
             self._return_values: list[Any] = []
             self._side_effects: list[Any] = []
 
-        def returns(self, value: Any) -> TestBuilders.MockBuilder:
+        def returns(self, value: object) -> TestBuilders.MockBuilder:
             """Set return value."""
             self._return_values.append(value)
             return self
 
-        def returns_result_success(self, data: Any = None) -> TestBuilders.MockBuilder:
+        def returns_result_success(self, data: object = None) -> TestBuilders.MockBuilder:
             """Return successful FlextResult."""
             result = FlextResult[Any].ok(data)
             return self.returns(result)
@@ -395,7 +395,7 @@ class TestBuilders:
 
 
 # Convenience functions for common builders
-def build_success_result(data: Any = "test_data") -> FlextResult[Any]:
+def build_success_result(data: object = "test_data") -> FlextResult[Any]:
     """Build a successful result quickly."""
     return TestBuilders.result().with_success_data(data).build()
 
@@ -418,8 +418,9 @@ def build_test_container() -> FlextContainer:
 
 def build_string_field(
     field_id: str = "test_string",
+    *,
     required: bool = True,
-    **constraints: Any,
+    **constraints: object,
 ) -> FlextFieldCore:
     """Build a string field quickly."""
     builder = TestBuilders.field("string").with_id(field_id).required(required)

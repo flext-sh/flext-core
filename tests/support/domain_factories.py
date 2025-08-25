@@ -21,14 +21,14 @@ class FlextResultFactory:
     """Factory for creating FlextResult objects with realistic scenarios."""
 
     @staticmethod
-    def success_result(data: Any = None) -> FlextResult[Any]:
+    def success_result(data: object = None) -> FlextResult[Any]:
         """Create successful result."""
         return FlextResult[Any].ok(
             data or {"status": "success", "id": str(uuid.uuid4())}
         )
 
     @staticmethod
-    def create_success(data: Any = None) -> FlextResult[Any]:
+    def create_success(data: object = None) -> FlextResult[Any]:
         """Create successful result (alias for success_result)."""
         return FlextResultFactory.success_result(data)
 
@@ -45,7 +45,7 @@ class FlextResultFactory:
         return FlextResult[Any].fail(error, error_code="OPERATION_ERROR")
 
     @staticmethod
-    def validation_error(field: str = "unknown", value: Any = None) -> FlextResult[Any]:
+    def validation_error(field: str = "unknown", value: object = None) -> FlextResult[Any]:
         """Create validation failure FlextResult."""
         return FlextResult[Any].fail(
             f"Validation failed for field '{field}'",
@@ -58,7 +58,7 @@ class UserDataFactory:
     """Factory for creating realistic user data."""
 
     @staticmethod
-    def create(**overrides: Any) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, Any]:
         """Create user data dict."""
         data = {
             "id": str(uuid.uuid4()),
@@ -72,7 +72,7 @@ class UserDataFactory:
         return data
 
     @staticmethod
-    def build(**overrides: Any) -> dict[str, Any]:
+    def build(**overrides: object) -> dict[str, Any]:
         """Build user data dict (alias for create)."""
         return UserDataFactory.create(**overrides)
 
@@ -86,7 +86,7 @@ class ConfigurationFactory:
     """Factory for creating realistic configuration data."""
 
     @staticmethod
-    def create(**overrides: Any) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, Any]:
         """Create configuration data dict."""
         data = {
             "database_url": "postgresql://localhost:5432/test",
@@ -104,7 +104,7 @@ class ServiceDataFactory:
     """Factory for creating realistic service data."""
 
     @staticmethod
-    def create(**overrides: Any) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, Any]:
         """Create service data dict."""
         data = {
             "name": f"test_service_{random.randint(1, 100)}",  # noqa: S311
@@ -121,7 +121,7 @@ class PayloadDataFactory:
     """Factory for creating realistic message/payload data."""
 
     @staticmethod
-    def create(**overrides: Any) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, Any]:
         """Create payload data dict."""
         data = {
             "message_id": str(uuid.uuid4()),

@@ -1,4 +1,8 @@
-"""Common utility functions."""
+"""Common utility functions.
+
+SINGLE CONSOLIDATED MODULE following FLEXT architectural patterns.
+All utility functionality consolidated into FlextUtilities.
+"""
 
 from __future__ import annotations
 
@@ -28,343 +32,717 @@ from flext_core.validation import FlextValidators
 
 logger = FlextLoggerFactory.get_logger(__name__)
 
-# =============================================================================
-# CONSTANTS - Default values
-# =============================================================================
-
-BYTES_PER_KB = 1024
-BYTES_PER_MB = 1024 * 1024
-BYTES_PER_GB = 1024 * 1024 * 1024
-
-# Time constants
-SECONDS_PER_MINUTE = 60
-SECONDS_PER_HOUR = 3600
-# =============================================================================
-# CONSTANTS
-# =============================================================================
+# Global storage for performance metrics
 PERFORMANCE_METRICS: dict[str, dict[str, dict[str, float | bool]]] = {}
 
 
-# FlextConsole functionality is now part of FlextCoreUtilities class
+class FlextUtilities:
+    """SINGLE CONSOLIDATED CLASS for all utility functionality.
 
+    Following FLEXT architectural patterns - consolidates ALL utility functionality
+    including ID generation, time operations, text processing, performance tracking,
+    type conversions, formatting, and factory patterns into one main class
+    with nested classes for organization.
 
-class FlextDecoratedFunction(Protocol):
-    """Protocol for functions that can be decorated with performance tracking."""
-
-    __name__: str
-
-    def __call__(
-        self, *args: FlextTypes.Core.Value, **kwargs: FlextTypes.Core.Value
-    ) -> FlextTypes.Core.Value:
-        """Call decorated function with provided arguments."""
-
-
-# =============================================================================
-# FLEXT UTILITIES - Single class consolidating all functionality
-# =============================================================================
-
-
-class FlextCoreUtilities:
-    """Unified utility system implementing Tier 1 Module Pattern.
-
-    This class serves as the single main export consolidating ALL utility
-    functionality from the flext-core utilities ecosystem. Provides comprehensive
-    utilities while maintaining backward compatibility.
-
-    Tier 1 Module Pattern: utilities.py -> FlextCoreUtilities
-    All utility functionality is accessible through this single interface.
-
-    Consolidated Functionality:
-    - ID Generation (from FlextGenerators, FlextIdGenerator)
-    - Time Operations (from FlextTimeUtils)
-    - Text Processing (from FlextTextProcessor)
-    - Performance Tracking (from FlextPerformance)
-    - Type Conversions (from FlextConversions)
-    - Type Guards (from FlextTypeGuards)
-    - Formatting (from FlextFormatters)
-    - Processing Utils (from FlextProcessingUtils)
-    - Console Operations (from FlextConsole)
-    - Factory Patterns (from FlextBaseFactory, FlextGenericFactory, FlextUtilityFactory)
-    - Result Operations (from FlextResultUtilities)
-    - Core Utilities (from FlextCoreUtilities)
-    - Type Utilities (from FlextTypeUtilities)
+    CONSOLIDATED CLASSES: FlextGenerators + FlextPerformance + FlextConversions +
+    FlextProcessingUtils + FlextTextProcessor + FlextTimeUtils + FlextIdGenerator +
+    FlextTypeGuards + FlextFormatters + FlextBaseFactory + FlextGenericFactory +
+    FlextUtilityFactory + FlextResultUtilities + FlextTypeUtilities
     """
 
-    # =============================================================================
-    # CONSTANTS - Time and sizing constants
-    # =============================================================================
+    # ==========================================================================
+    # NESTED CLASSES FOR ORGANIZATION
+    # ==========================================================================
+
+    class DecoratedFunction(Protocol):
+        """Protocol for functions that can be decorated with performance tracking."""
+
+        __name__: str
+
+        def __call__(
+            self, *args: FlextTypes.Core.Value, **kwargs: FlextTypes.Core.Value
+        ) -> FlextTypes.Core.Value:
+            """Call decorated function with provided arguments."""
+
+    class Generators:
+        """Nested ID and timestamp generation utilities."""
+
+        @staticmethod
+        def generate_uuid() -> str:
+            """Generate standard UUID4."""
+            return str(uuid.uuid4())
+
+        @staticmethod
+        def generate_id() -> str:
+            """Generate unique ID with flext_ prefix."""
+            return f"flext_{uuid.uuid4().hex[:8]}"
+
+        @staticmethod
+        def generate_timestamp() -> float:
+            """Generate Unix timestamp."""
+            return time.time()
+
+        @staticmethod
+        def generate_iso_timestamp() -> str:
+            """Generate ISO 8601 timestamp."""
+            return datetime.now(UTC).isoformat()
+
+        @staticmethod
+        def generate_correlation_id() -> str:
+            """Generate correlation ID with corr_ prefix."""
+            return f"corr_{uuid.uuid4().hex[:16]}"
+
+        @staticmethod
+        def generate_entity_id() -> str:
+            """Generate entity ID with entity_ prefix."""
+            return f"entity_{uuid.uuid4().hex[:12]}"
+
+        @staticmethod
+        def generate_session_id() -> str:
+            """Generate session ID with sess_ prefix."""
+            return f"sess_{uuid.uuid4().hex[:10]}"
+
+        @staticmethod
+        def generate_request_id() -> str:
+            """Generate request ID with req_ prefix."""
+            return f"req_{uuid.uuid4().hex[:10]}"
+
+    class LdapConverters:
+        """Nested LDAP data conversion utilities."""
+
+        @staticmethod
+        def safe_convert_value_to_str(value: object) -> str:
+            """Safely convert any value to string, handling bytes properly."""
+            if isinstance(value, bytes):
+                return value.decode('utf-8', errors='replace')
+            return str(value)
+
+        @staticmethod
+        def safe_convert_list_to_strings(values: list[object]) -> list[str]:
+            """Safely convert list of values to list of strings."""
+            result: list[str] = []
+            for item in values:
+                try:
+                    str_item = FlextUtilities.LdapConverters.safe_convert_value_to_str(item)
+                    if str_item:  # Only add non-empty strings
+                        result.append(str_item)
+                except Exception:
+                    # Skip items that can't be converted
+                    continue
+            return result
+
+        @staticmethod
+        def safe_convert_to_ldap_attribute_list(source_value: object) -> list[str]:
+            """Safely convert unknown value to list of strings for LDAP attributes."""
+            if isinstance(source_value, list):
+                typed_list: list[object] = cast("list[object]", source_value)
+                return FlextUtilities.LdapConverters.safe_convert_list_to_strings(typed_list)
+            else:
+                str_value = FlextUtilities.LdapConverters.safe_convert_value_to_str(source_value)
+                return [str_value] if str_value else []
+
+        @staticmethod
+        def safe_convert_external_dict_to_ldap_attributes(
+            source_dict: object
+        ) -> dict[str, str | list[str]]:
+            """Safely convert unknown dict to typed LDAP attributes.
+            
+            Handles the common case where external systems provide dictionaries
+            with unknown value types that need to be converted to LDAP-compatible
+            string or list[str] format.
+            
+            Args:
+                source_dict: Dictionary from external source with unknown value types
+                
+            Returns:
+                Dictionary with string keys and string/list[str] values
+                
+            Example:
+                # Input from external system
+                external_data = {
+                    'uid': 'john',
+                    'cn': ['John', 'Doe'],  
+                    'mail': 'john@example.com',
+                    'binary_attr': b'binary_data'
+                }
+                
+                # Safe conversion
+                ldap_attrs = safe_convert_external_dict_to_ldap_attributes(external_data)
+                # Result: {'uid': 'john', 'cn': ['John', 'Doe'], 'mail': 'john@example.com', 'binary_attr': 'binary_data'}
+            """
+            if not isinstance(source_dict, dict):
+                return {}
+            
+            result: dict[str, str | list[str]] = {}
+            for key, value in source_dict.items():
+                str_key = str(key)  # Ensure key is string
+                if isinstance(value, list):
+                    # Convert list values to strings
+                    converted_list = FlextUtilities.LdapConverters.safe_convert_list_to_strings(value)
+                    if len(converted_list) == 1:
+                        result[str_key] = converted_list[0]  # Single item as string
+                    elif converted_list:
+                        result[str_key] = converted_list  # Multiple items as list
+                    # Skip empty lists
+                else:
+                    # Convert single value to string
+                    converted_str = FlextUtilities.LdapConverters.safe_convert_value_to_str(value)
+                    if converted_str:  # Only add non-empty strings
+                        result[str_key] = converted_str
+            
+            return result
+
+        @staticmethod
+        def normalize_attributes(attrs: dict[str, object]) -> dict[str, str | list[str]]:
+            """Normalize mapping: lists -> list[str], scalars -> str."""
+            if not isinstance(attrs, dict) or not attrs:
+                return {}
+
+            # Optimized with dictionary comprehension for better performance
+            def coerce_value(value: object) -> str | list[str]:
+                """Normalize attribute value to str or list[str]."""
+                if isinstance(value, list):
+                    return [str(item) for item in cast("list[object]", value)]
+                return str(value)
+
+            return {
+                key: coerce_value(value)
+                for key, value in attrs.items()
+            }
+
+    class TextProcessor:
+        """Nested text processing utilities."""
+
+        @staticmethod
+        def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
+            """Truncate text to maximum length with suffix."""
+            if len(text) <= max_length:
+                return text
+            if max_length <= 0:
+                return ""  # Return empty string for zero or negative max_length
+            if max_length < len(suffix):
+                return text[:max_length]  # Can't fit suffix, just truncate
+            cut = max(0, max_length - len(suffix))
+            return text[:cut] + suffix
+
+        @staticmethod
+        def clean_text(text: str) -> str:
+            """Clean text by removing extra whitespace and normalizing."""
+            return re.sub(r"\s+", " ", text.strip())
+
+        @staticmethod
+        def extract_numbers(text: str) -> list[str]:
+            """Extract all numbers from text."""
+            return re.findall(r"\d+", text)
+
+        @staticmethod
+        def sanitize_filename(text: str) -> str:
+            """Sanitize filename by removing invalid characters."""
+            return re.sub(r'[<>:"/\\|?*]', "_", text)
+
+        @staticmethod
+        def slugify(text: str) -> str:
+            """Convert text to URL-friendly slug."""
+            slug = re.sub(r"[^\w\s-]", "", text.lower())
+            return re.sub(r"[-\s]+", "-", slug).strip("-")
+
+        @staticmethod
+        def mask_sensitive(
+            text: str,
+            *,
+            mask_char: str = "*",
+            show_first: int = 2,
+            show_last: int = 2,
+        ) -> str:
+            """Mask sensitive information in text."""
+            if len(text) <= show_first + show_last:
+                return mask_char * len(text)
+            masked_part = mask_char * (len(text) - show_first - show_last)
+            return text[:show_first] + masked_part + text[-show_last:]
+
+    class TimeUtils:
+        """Nested time operations utilities."""
+
+        # Constants for time formatting
+        SECONDS_PER_MINUTE = 60
+        SECONDS_PER_HOUR = 3600
+
+        @staticmethod
+        def format_duration(seconds: float) -> str:
+            """Format duration in human-readable format."""
+            if seconds < FlextUtilities.TimeUtils.SECONDS_PER_MINUTE:
+                return f"{seconds:.2f}s"
+            if seconds < FlextUtilities.TimeUtils.SECONDS_PER_HOUR:
+                minutes = seconds / FlextUtilities.TimeUtils.SECONDS_PER_MINUTE
+                return f"{minutes:.1f}m"
+            hours = seconds / FlextUtilities.TimeUtils.SECONDS_PER_HOUR
+            return f"{hours:.1f}h"
+
+        @staticmethod
+        def parse_iso_timestamp(timestamp: str) -> datetime:
+            """Parse ISO timestamp to datetime object."""
+            return datetime.fromisoformat(timestamp)
+
+        @staticmethod
+        def get_elapsed_time(start_time: float) -> float:
+            """Get elapsed time from start timestamp."""
+            return time.time() - start_time
+
+    class Performance:
+        """Nested performance tracking utilities."""
+
+        @staticmethod
+        def track_performance(
+            category: str,
+        ) -> Callable[[Callable[P, R]], Callable[P, R]]:
+            """Track function performance as decorator."""
+
+            def decorator(func: Callable[P, R]) -> Callable[P, R]:
+                @functools.wraps(func)
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                    start_time = time.time()
+                    try:
+                        result = func(*args, **kwargs)
+                    except (RuntimeError, ValueError, TypeError):
+                        execution_time = time.time() - start_time
+                        FlextUtilities.Performance.record_performance(
+                            category, func.__name__, execution_time, success=False
+                        )
+                        raise
+                    else:
+                        execution_time = time.time() - start_time
+                        FlextUtilities.Performance.record_performance(
+                            category, func.__name__, execution_time, success=True
+                        )
+                        return result
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def record_performance(
+            category: str, operation: str, duration: float, *, success: bool = True
+        ) -> None:
+            """Record performance metric."""
+            if category not in PERFORMANCE_METRICS:
+                PERFORMANCE_METRICS[category] = {}
+            PERFORMANCE_METRICS[category][operation] = {
+                "duration": duration,
+                "success": success,
+                "timestamp": time.time(),
+            }
+
+        @staticmethod
+        def get_performance_metrics() -> dict[
+            str, dict[str, dict[str, dict[str, float | bool]]]
+        ]:
+            """Get all performance metrics."""
+            return {"metrics": PERFORMANCE_METRICS}
+
+        @staticmethod
+        def clear_performance_metrics() -> None:
+            """Clear all performance metrics."""
+            PERFORMANCE_METRICS.clear()
+
+    class Conversions:
+        """Nested type conversion utilities."""
+
+        @staticmethod
+        def safe_int(value: FlextTypes.Core.Value, default: int = 0) -> int:
+            """Safely convert value to integer."""
+            try:
+                if value is None:
+                    return default
+                if isinstance(value, str):
+                    return int(float(value))  # Handle "3.14" -> 3
+                return int(value)
+            except (ValueError, TypeError):
+                return default
+
+        @staticmethod
+        def safe_float(value: FlextTypes.Core.Value, default: float = 0.0) -> float:
+            """Safely convert value to float."""
+            try:
+                if value is None:
+                    return default
+                return float(value)
+            except (ValueError, TypeError):
+                return default
+
+        @staticmethod
+        def safe_str(value: FlextTypes.Core.Value, default: str = "") -> str:
+            """Safely convert value to string."""
+            try:
+                return str(value)
+            except Exception:
+                return default
+
+        @staticmethod
+        def to_bool(value: FlextTypes.Core.Value) -> bool:
+            """Convert value to boolean with intelligent parsing."""
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                return value.lower() in {"true", "yes", "1", "on", "enabled"}
+            return bool(value)
+
+    class TypeGuards:
+        """Nested type guard utilities."""
+
+        @staticmethod
+        def is_not_none(value: object) -> bool:
+            """Check if value is not None."""
+            return value is not None
+
+        @staticmethod
+        def is_string(value: object) -> bool:
+            """Check if value is a string."""
+            return isinstance(value, str)
+
+        @staticmethod
+        def is_non_empty_string(value: object) -> bool:
+            """Check if value is a non-empty string."""
+            return isinstance(value, str) and len(value.strip()) > 0
+
+        @staticmethod
+        def is_numeric(value: object) -> bool:
+            """Check if value is numeric (int or float)."""
+            return isinstance(value, (int, float))
+
+        @staticmethod
+        def is_list(value: object) -> bool:
+            """Check if value is a list."""
+            return isinstance(value, list)
+
+        @staticmethod
+        def is_dict(value: object) -> bool:
+            """Check if value is a dictionary."""
+            return isinstance(value, dict)
+
+        @staticmethod
+        def is_list_of(obj: object, item_type: type) -> bool:
+            """Check if an object is a list of specific type."""
+            if not isinstance(obj, list):
+                return False
+            typed_list = cast("list[object]", obj)
+            return all(isinstance(item, item_type) for item in typed_list)
+
+    class Formatters:
+        """Nested formatting utilities."""
+
+        # Constants for byte formatting
+        BYTES_PER_KB = 1024
+        BYTES_PER_MB = 1024 * 1024
+        BYTES_PER_GB = 1024 * 1024 * 1024
+
+        @staticmethod
+        def format_bytes(bytes_count: int) -> str:
+            """Format byte count in human-readable format."""
+            if bytes_count < FlextUtilities.Formatters.BYTES_PER_KB:
+                return f"{bytes_count} B"
+            if bytes_count < FlextUtilities.Formatters.BYTES_PER_MB:
+                return f"{bytes_count / FlextUtilities.Formatters.BYTES_PER_KB:.1f} KB"
+            if bytes_count < FlextUtilities.Formatters.BYTES_PER_GB:
+                return f"{bytes_count / FlextUtilities.Formatters.BYTES_PER_MB:.1f} MB"
+            return f"{bytes_count / FlextUtilities.Formatters.BYTES_PER_GB:.1f} GB"
+
+        @staticmethod
+        def format_number(number: float, precision: int = 2) -> str:
+            """Format number with thousand separators."""
+            return f"{number:,.{precision}f}"
+
+        @staticmethod
+        def format_percentage(value: float, precision: int = 1) -> str:
+            """Format value as percentage."""
+            return f"{value * 100:.{precision}f}%"
+
+    class ProcessingUtils:
+        """Nested processing utilities for JSON and models."""
+
+        @staticmethod
+        def safe_json_parse(
+            json_str: str, default: dict[str, object] | None = None
+        ) -> dict[str, object]:
+            """Safely parse JSON string."""
+            try:
+                result = json.loads(json_str)
+                return result if isinstance(result, dict) else default or {}
+            except (json.JSONDecodeError, TypeError):
+                return default or {}
+
+        @staticmethod
+        def safe_json_stringify(obj: object, default: str = "{}") -> str:
+            """Safely stringify object to JSON."""
+            try:
+                return json.dumps(obj, default=str)
+            except (TypeError, ValueError):
+                return default
+
+        @staticmethod
+        def extract_model_data(obj: object) -> dict[str, object]:
+            """Extract data from Pydantic model or dict."""
+            if hasattr(obj, "model_dump"):
+                return obj.model_dump()  # type: ignore[no-any-return]
+            if hasattr(obj, "dict"):
+                return obj.dict()  # type: ignore[no-any-return]
+            if isinstance(obj, dict):
+                return obj
+            return {}
+
+    class ResultUtils:
+        """Nested FlextResult utilities."""
+
+        @staticmethod
+        def chain_results(*results: FlextResult[T]) -> FlextResult[list[T]]:
+            """Chain multiple FlextResults into a single result with list of values."""
+            values: list[T] = []
+            for result in results:
+                if result.is_failure:
+                    return FlextResult[list[T]].fail(result.error or "Chain failed")
+                values.append(result.value)
+            return FlextResult[list[T]].ok(values)
+
+        @staticmethod
+        def first_success(*results: FlextResult[T]) -> FlextResult[T]:
+            """Return the first successful result, or the last failure."""
+            for result in results:
+                if result.success:
+                    return result
+            return (
+                results[-1] if results else FlextResult[T].fail("No results provided")
+            )
+
+        @staticmethod
+        def collect_errors(*results: FlextResult[T]) -> list[str]:
+            """Collect all error messages from failed results."""
+            errors: list[str] = [
+                result.error or "Unknown error"
+                for result in results
+                if result.is_failure
+            ]
+            return errors
+
+        @staticmethod
+        def partition_results(
+            results: list[FlextResult[T]],
+        ) -> tuple[list[T], list[str]]:
+            """Partition results into successes and failures."""
+            successes: list[T] = []
+            failures: list[str] = []
+            for result in results:
+                if result.success:
+                    successes.append(result.value)
+                else:
+                    failures.append(result.error or "Unknown error")
+            return successes, failures
+
+    class BaseFactory[TFactory](ABC):
+        """Nested abstract base factory."""
+
+        @abstractmethod
+        def create(self, **kwargs: object) -> FlextResult[object]:
+            """Abstract creation method."""
+
+    class GenericFactory(BaseFactory[object]):
+        """Nested generic factory for object creation."""
+
+        def __init__(self, target_type: type[object]) -> None:
+            """Initialize factory with a target type."""
+            self._target_type = target_type
+
+        @override
+        def create(self, **kwargs: object) -> FlextResult[object]:
+            """Create instance of target type with error handling."""
+            try:
+                instance = self._target_type(**kwargs)
+                return FlextResult[object].ok(instance)
+            except (TypeError, ValueError, AttributeError, RuntimeError, OSError) as e:
+                return FlextResult[object].fail(f"Factory creation failed: {e}")
+
+    # ==========================================================================
+    # CONSTANTS - Class constants
+    # ==========================================================================
     SECONDS_PER_MINUTE = 60
     SECONDS_PER_HOUR = 3600
     BYTES_PER_KB = 1024
     BYTES_PER_MB = 1024 * 1024
     BYTES_PER_GB = 1024 * 1024 * 1024
 
-    # =============================================================================
-    # ID GENERATION - Consolidated from FlextGenerators, FlextIdGenerator
-    # =============================================================================
+    # ==========================================================================
+    # MAIN UTILITY FUNCTIONALITY - Access to nested classes
+    # ==========================================================================
 
     @classmethod
     def generate_uuid(cls) -> str:
-        """Generate standard UUID4."""
-        return str(uuid.uuid4())
+        """Generate UUID - delegates to nested Generators."""
+        return cls.Generators.generate_uuid()
 
     @classmethod
     def generate_id(cls) -> str:
-        """Generate unique ID with flext_ prefix."""
-        return f"flext_{uuid.uuid4().hex[:8]}"
+        """Generate unique ID - delegates to nested Generators."""
+        return cls.Generators.generate_id()
 
     @classmethod
     def generate_timestamp(cls) -> float:
-        """Generate Unix timestamp."""
-        return time.time()
+        """Generate timestamp - delegates to nested Generators."""
+        return cls.Generators.generate_timestamp()
 
     @classmethod
     def generate_iso_timestamp(cls) -> str:
-        """Generate ISO 8601 timestamp."""
-        return datetime.now(UTC).isoformat()
+        """Generate ISO timestamp - delegates to nested Generators."""
+        return cls.Generators.generate_iso_timestamp()
 
     @classmethod
     def generate_correlation_id(cls) -> str:
-        """Generate correlation ID with corr_ prefix."""
-        return f"corr_{uuid.uuid4().hex[:16]}"
+        """Generate correlation ID - delegates to nested Generators."""
+        return cls.Generators.generate_correlation_id()
 
     @classmethod
     def generate_entity_id(cls) -> str:
-        """Generate entity ID with entity_ prefix."""
-        return f"entity_{uuid.uuid4().hex[:12]}"
+        """Generate entity ID - delegates to nested Generators."""
+        return cls.Generators.generate_entity_id()
 
     @classmethod
     def generate_session_id(cls) -> str:
-        """Generate session ID with sess_ prefix."""
-        return f"sess_{uuid.uuid4().hex[:10]}"
+        """Generate session ID - delegates to nested Generators."""
+        return cls.Generators.generate_session_id()
 
     @classmethod
     def generate_request_id(cls) -> str:
-        """Generate request ID with req_ prefix."""
-        return f"req_{uuid.uuid4().hex[:10]}"
-
-    # =============================================================================
-    # TEXT PROCESSING - Consolidated from FlextTextProcessor
-    # =============================================================================
+        """Generate request ID - delegates to nested Generators."""
+        return cls.Generators.generate_request_id()
 
     @classmethod
     def truncate(cls, text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """Truncate text to maximum length with suffix."""
-        if len(text) <= max_length:
-            return text
-        if max_length <= 0:
-            return ""  # Return empty string for zero or negative max_length
-        if max_length < len(suffix):
-            return text[:max_length]  # Can't fit suffix, just truncate
-        cut = max(0, max_length - len(suffix))
-        return text[:cut] + suffix
+        """Truncate text - delegates to nested TextProcessor."""
+        return cls.TextProcessor.truncate(text, max_length, suffix)
 
     @classmethod
     def clean_text(cls, text: str) -> str:
-        """Clean text by removing extra whitespace and normalizing."""
-        return re.sub(r"\s+", " ", text.strip())
+        """Clean text - delegates to nested TextProcessor."""
+        return cls.TextProcessor.clean_text(text)
 
     @classmethod
     def extract_numbers(cls, text: str) -> list[str]:
-        """Extract all numbers from text."""
-        return re.findall(r"\d+", text)
+        """Extract numbers - delegates to nested TextProcessor."""
+        return cls.TextProcessor.extract_numbers(text)
 
     @classmethod
     def sanitize_filename(cls, filename: str) -> str:
-        """Sanitize filename by removing invalid characters."""
-        return re.sub(r'[<>:"/\\|?*]', "_", filename)
-
-    # =============================================================================
-    # TIME OPERATIONS - Consolidated from FlextTimeUtils
-    # =============================================================================
+        """Sanitize filename - delegates to nested TextProcessor."""
+        return cls.TextProcessor.sanitize_filename(filename)
 
     @classmethod
     def format_duration(cls, seconds: float) -> str:
-        """Format duration in human-readable format."""
-        seconds_per_minute = 60
-        seconds_per_hour = 3600
-
-        if seconds < seconds_per_minute:
-            return f"{seconds:.2f}s"
-        if seconds < seconds_per_hour:
-            minutes = seconds / seconds_per_minute
-            return f"{minutes:.1f}m"
-        hours = seconds / seconds_per_hour
-        return f"{hours:.1f}h"
+        """Format duration - delegates to nested TimeUtils."""
+        return cls.TimeUtils.format_duration(seconds)
 
     @classmethod
     def parse_iso_timestamp(cls, timestamp: str) -> datetime:
-        """Parse ISO timestamp to datetime object."""
-        return datetime.fromisoformat(timestamp)
+        """Parse ISO timestamp - delegates to nested TimeUtils."""
+        return cls.TimeUtils.parse_iso_timestamp(timestamp)
 
     @classmethod
     def get_elapsed_time(cls, start_time: float) -> float:
-        """Get elapsed time from start timestamp."""
-        return time.time() - start_time
-
-    # =============================================================================
-    # PERFORMANCE TRACKING - Consolidated from FlextPerformance
-    # =============================================================================
+        """Get elapsed time - delegates to nested TimeUtils."""
+        return cls.TimeUtils.get_elapsed_time(start_time)
 
     @classmethod
     def track_performance(
         cls, category: str
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Track function performance as decorator."""
-
-        def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            @functools.wraps(func)
-            def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                start_time = time.time()
-                try:
-                    result = func(*args, **kwargs)
-                except (RuntimeError, ValueError, TypeError):
-                    execution_time = time.time() - start_time
-                    cls.record_performance(
-                        category, func.__name__, execution_time, success=False
-                    )
-                    raise
-                else:
-                    execution_time = time.time() - start_time
-                    cls.record_performance(
-                        category, func.__name__, execution_time, success=True
-                    )
-                    return result
-
-            return wrapper
-
-        return decorator
+        """Track performance - delegates to nested Performance."""
+        return cls.Performance.track_performance(category)
 
     @classmethod
     def record_performance(
         cls, category: str, operation: str, duration: float, *, success: bool = True
     ) -> None:
-        """Record performance metric."""
-        if category not in PERFORMANCE_METRICS:
-            PERFORMANCE_METRICS[category] = {}
-
-        PERFORMANCE_METRICS[category][operation] = {
-            "duration": duration,
-            "success": success,
-            "timestamp": time.time(),
-        }
+        """Record performance - delegates to nested Performance."""
+        return cls.Performance.record_performance(
+            category, operation, duration, success=success
+        )
 
     @classmethod
     def get_performance_metrics(
         cls,
     ) -> dict[str, dict[str, dict[str, dict[str, float | bool]]]]:
-        """Get all performance metrics."""
-        return {"metrics": PERFORMANCE_METRICS}
+        """Get performance metrics - delegates to nested Performance."""
+        return cls.Performance.get_performance_metrics()
 
     @classmethod
     def clear_performance_metrics(cls) -> None:
-        """Clear all performance metrics."""
-        PERFORMANCE_METRICS.clear()
-
-    # =============================================================================
-    # TYPE CONVERSIONS - Consolidated from FlextConversions
-    # =============================================================================
+        """Clear performance metrics - delegates to nested Performance."""
+        return cls.Performance.clear_performance_metrics()
 
     @classmethod
     def safe_int(cls, value: FlextTypes.Core.Value, default: int = 0) -> int:
-        """Safely convert value to integer."""
-        try:
-            if value is None:
-                return default
-            if isinstance(value, str):
-                return int(float(value))  # Handle "3.14" -> 3
-            return int(value)
-        except (ValueError, TypeError):
-            return default
+        """Safe int conversion - delegates to nested Conversions."""
+        return cls.Conversions.safe_int(value, default)
 
     @classmethod
     def safe_float(cls, value: FlextTypes.Core.Value, default: float = 0.0) -> float:
-        """Safely convert value to float."""
-        try:
-            if value is None:
-                return default
-            return float(value)
-        except (ValueError, TypeError):
-            return default
+        """Safe float conversion - delegates to nested Conversions."""
+        return cls.Conversions.safe_float(value, default)
 
     @classmethod
     def safe_str(cls, value: FlextTypes.Core.Value, default: str = "") -> str:
-        """Safely convert value to string."""
-        try:
-            return str(value)
-        except Exception:
-            return default
+        """Safe string conversion - delegates to nested Conversions."""
+        return cls.Conversions.safe_str(value, default)
 
     @classmethod
     def to_bool(cls, value: FlextTypes.Core.Value) -> bool:
-        """Convert value to boolean with intelligent parsing."""
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in {"true", "yes", "1", "on", "enabled"}
-        return bool(value)
-
-    # =============================================================================
-    # TYPE GUARDS - Consolidated from FlextTypeGuards
-    # =============================================================================
+        """Boolean conversion - delegates to nested Conversions."""
+        return cls.Conversions.to_bool(value)
 
     @classmethod
     def is_not_none(cls, value: object) -> bool:
-        """Check if value is not None."""
-        return value is not None
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_not_none(value)
 
     @classmethod
     def is_string(cls, value: object) -> bool:
-        """Check if value is a string."""
-        return isinstance(value, str)
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_string(value)
 
     @classmethod
     def is_non_empty_string(cls, value: object) -> bool:
-        """Check if value is a non-empty string."""
-        return isinstance(value, str) and len(value.strip()) > 0
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_non_empty_string(value)
 
     @classmethod
     def is_numeric(cls, value: object) -> bool:
-        """Check if value is numeric (int or float)."""
-        return isinstance(value, (int, float))
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_numeric(value)
 
     @classmethod
     def is_list(cls, value: object) -> bool:
-        """Check if value is a list."""
-        return isinstance(value, list)
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_list(value)
 
     @classmethod
     def is_dict(cls, value: object) -> bool:
-        """Check if value is a dictionary."""
-        return isinstance(value, dict)
-
-    # =============================================================================
-    # FORMATTING - Consolidated from FlextFormatters
-    # =============================================================================
+        """Type guard - delegates to nested TypeGuards."""
+        return cls.TypeGuards.is_dict(value)
 
     @classmethod
     def format_bytes(cls, bytes_count: int) -> str:
-        """Format byte count in human-readable format."""
-        if bytes_count < cls.BYTES_PER_KB:
-            return f"{bytes_count} B"
-        if bytes_count < cls.BYTES_PER_MB:
-            return f"{bytes_count / cls.BYTES_PER_KB:.1f} KB"
-        if bytes_count < cls.BYTES_PER_GB:
-            return f"{bytes_count / cls.BYTES_PER_MB:.1f} MB"
-        return f"{bytes_count / cls.BYTES_PER_GB:.1f} GB"
+        """Format bytes - delegates to nested Formatters."""
+        return cls.Formatters.format_bytes(bytes_count)
 
     @classmethod
     def format_number(cls, number: float, precision: int = 2) -> str:
-        """Format number with thousand separators."""
-        return f"{number:,.{precision}f}"
+        """Format number - delegates to nested Formatters."""
+        return cls.Formatters.format_number(number, precision)
 
     @classmethod
     def format_percentage(cls, value: float, precision: int = 1) -> str:
-        """Format value as percentage."""
-        return f"{value * 100:.{precision}f}%"
+        """Format percentage - delegates to nested Formatters."""
+        return cls.Formatters.format_percentage(value, precision)
 
     # =============================================================================
-    # CONSOLE OPERATIONS - Consolidated from FlextConsole
+    # CONSOLE OPERATIONS - Consolidated from FlextUtilities
     # =============================================================================
 
     @classmethod
@@ -741,14 +1119,14 @@ class FlextCoreUtilities:
     @classmethod
     def clear_performance_metrics_duplicate(cls) -> None:
         """Clear performance metrics - REMOVED DUPLICATE METHOD."""
-        # This method was duplicated - the real implementation is in the main FlextCoreUtilities class above
+        # This method was duplicated - the real implementation is in the main FlextUtilities class above
         PERFORMANCE_METRICS.clear()
 
     # =================================================================
     # LEGACY DUPLICATE METHODS REMOVED
     # =================================================================
     # All duplicate methods that were delegating back to facades have been removed.
-    # The correct implementations are in the main FlextCoreUtilities class above.
+    # The correct implementations are in the main FlextUtilities class above.
 
     @classmethod
     def truncate_text_legacy(
@@ -791,6 +1169,125 @@ class FlextCoreUtilities:
         metrics = PERFORMANCE_METRICS
         return iter(metrics.items())
 
+    # =============================================================================
+    # ADVANCED UTILITIES - From consolidated duplicate class
+    # =============================================================================
+
+    @classmethod
+    def safe_unwrap_or(cls, result: FlextResult[T], default: T) -> T:
+        """Safely unwrap FlextResult with default value.
+
+        Modern pattern replacing .unwrap_or() calls for cleaner code.
+
+        Args:
+            result: FlextResult to unwrap
+            default: Default value if result is failure
+
+        Returns:
+            Success value or default
+
+        """
+        return result.unwrap_or(default)
+
+    @classmethod
+    def validate_and_convert[TConvert](
+        cls,
+        value: object,
+        converter: Callable[[object], TConvert],
+        error_message: str = "Conversion failed",
+    ) -> FlextResult[TConvert]:
+        """Validate and convert value with error handling.
+
+        Args:
+            value: Value to convert
+            converter: Conversion function
+            error_message: Error message if conversion fails
+
+        Returns:
+            FlextResult containing converted value or error
+
+        """
+        try:
+            converted = converter(value)
+            return FlextResult[TConvert].ok(converted)
+        except Exception as e:
+            return FlextResult[TConvert].fail(f"{error_message}: {e}")
+
+    @classmethod
+    def safe_dict_get[TDict](
+        cls,
+        data: dict[str, object],
+        key: str,
+        expected_type: type[TDict],
+        default: TDict,
+    ) -> TDict:
+        """Safely get and convert value from dict with type checking.
+
+        Args:
+            data: Dictionary to extract from
+            key: Key to look up
+            expected_type: Expected type for casting
+            default: Default value if key missing or wrong type
+
+        Returns:
+            Typed value or default
+
+        """
+        value = data.get(key, default)
+        if isinstance(value, expected_type):
+            return value
+        return default
+
+    @classmethod
+    def create_logger_with_context(
+        cls, module_name: str, context: dict[str, object] | None = None
+    ) -> object:
+        """Create logger with contextual information.
+
+        Args:
+            module_name: Module name for logger
+            context: Optional context dict to include in logs
+
+        Returns:
+            Configured logger instance
+
+        """
+        logger_instance = FlextLoggerFactory.get_logger(module_name)
+        if context:
+            # Add context to logger if supported
+            # For now, just return the logger - context can be added to individual log calls
+            pass
+        return logger_instance
+
+    @classmethod
+    def benchmark_operation[TBench](
+        cls,
+        operation: Callable[[], TBench],
+        description: str = "Operation",
+        *,
+        log_results: bool = True,
+    ) -> tuple[TBench, float]:
+        """Benchmark an operation and optionally log results.
+
+        Args:
+            operation: Function to benchmark
+            description: Description for logging
+            log_results: Whether to log timing results
+
+        Returns:
+            Tuple of (result, duration_seconds)
+
+        """
+        start_time = time.perf_counter()
+        result = operation()
+        end_time = time.perf_counter()
+        duration = end_time - start_time
+
+        if log_results:
+            logger.info(f"{description} completed in {duration:.4f}s")
+
+        return result, duration
+
 
 # =============================================================================
 # FLEXT PERFORMANCE - Static class for performance tracking
@@ -800,26 +1297,26 @@ class FlextCoreUtilities:
 class FlextPerformance:
     """Performance monitoring utilities - Tier 1 Compatibility Facade.
 
-    This class provides backward compatibility by delegating to FlextCoreUtilities.
-    For new code, use FlextCoreUtilities.track_performance() directly.
+    This class provides backward compatibility by delegating to FlextUtilities.
+    For new code, use FlextUtilities.track_performance() directly.
     """
 
     @staticmethod
     def track_performance(category: str) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Track function performance - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.track_performance(category)
+        """Track function performance - delegates to FlextUtilities."""
+        return FlextUtilities.track_performance(category)
 
     @staticmethod
     def get_performance_metrics() -> dict[
         str, dict[str, dict[str, dict[str, float | bool]]]
     ]:
-        """Get performance metrics - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.get_performance_metrics()
+        """Get performance metrics - delegates to FlextUtilities."""
+        return FlextUtilities.get_performance_metrics()
 
     @staticmethod
     def clear_performance_metrics() -> None:
-        """Clear performance metrics - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.clear_performance_metrics()
+        """Clear performance metrics - delegates to FlextUtilities."""
+        return FlextUtilities.clear_performance_metrics()
 
     @staticmethod
     def record_performance(
@@ -829,8 +1326,8 @@ class FlextPerformance:
         *,
         _success: bool = True,
     ) -> None:
-        """Record performance metrics - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.record_performance(
+        """Record performance metrics - delegates to FlextUtilities."""
+        return FlextUtilities.record_performance(
             category, function_name, execution_time, success=_success
         )
 
@@ -886,12 +1383,12 @@ class FlextConversions:
         func: Callable[[], object] | Callable[[object], object],
     ) -> FlextResult[object]:
         """Safely call function with FlextResult error handling."""
-        return FlextCoreUtilities.safe_call(func)
+        return FlextUtilities.safe_call(func)
 
     @staticmethod
     def is_not_none(value: object | None) -> bool:
         """Type guard to check if value is not None."""
-        return FlextCoreUtilities.is_not_none_guard(value)
+        return FlextUtilities.is_not_none_guard(value)
 
 
 # =============================================================================
@@ -1068,22 +1565,22 @@ class FlextIdGenerator:
     @staticmethod
     def generate_id() -> str:
         """Generate unique ID."""
-        return FlextCoreUtilities.generate_id()
+        return FlextUtilities.generate_id()
 
     @staticmethod
     def generate_correlation_id() -> str:
         """Generate correlation ID."""
-        return FlextCoreUtilities.generate_correlation_id()
+        return FlextUtilities.generate_correlation_id()
 
     @staticmethod
     def generate_entity_id() -> str:
         """Generate entity ID."""
-        return FlextCoreUtilities.generate_entity_id()
+        return FlextUtilities.generate_entity_id()
 
     @staticmethod
     def generate_uuid() -> str:
         """Generate UUID."""
-        return FlextCoreUtilities.generate_uuid()
+        return FlextUtilities.generate_uuid()
 
     @staticmethod
     def safe_int_conversion(value: object, default: int | None = None) -> int | None:
@@ -1099,7 +1596,7 @@ class FlextIdGenerator:
             Converted integer, default, or None if conversion fails
 
         """
-        return FlextCoreUtilities.safe_int_conversion(value, default)
+        return FlextUtilities.safe_int_conversion(value, default)
 
     @staticmethod
     def safe_int_conversion_with_default(value: object, default: int) -> int:
@@ -1115,7 +1612,7 @@ class FlextIdGenerator:
             Converted integer or default (never None)
 
         """
-        return FlextCoreUtilities.safe_int_conversion_with_default(value, default)
+        return FlextUtilities.safe_int_conversion_with_default(value, default)
 
     # =============================================================================
     # SEMANTIC PATTERN UTILITIES - Following domain-specific naming
@@ -1188,8 +1685,8 @@ class FlextTypeGuards:
 class FlextGenerators:
     """ID and timestamp generation utilities - Tier 1 Compatibility Facade.
 
-    This class provides backward compatibility by delegating to FlextCoreUtilities.
-    For new code, use FlextCoreUtilities.generate_*() methods directly.
+    This class provides backward compatibility by delegating to FlextUtilities.
+    For new code, use FlextUtilities.generate_*() methods directly.
     """
 
     # Constants for compatibility
@@ -1198,71 +1695,71 @@ class FlextGenerators:
 
     @classmethod
     def generate_uuid(cls) -> str:
-        """Generate UUID - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_uuid()
+        """Generate UUID - delegates to FlextUtilities."""
+        return FlextUtilities.generate_uuid()
 
     @classmethod
     def generate_id(cls) -> str:
-        """Generate unique ID - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_id()
+        """Generate unique ID - delegates to FlextUtilities."""
+        return FlextUtilities.generate_id()
 
     @classmethod
     def generate_timestamp(cls) -> float:
-        """Generate timestamp - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_timestamp()
+        """Generate timestamp - delegates to FlextUtilities."""
+        return FlextUtilities.generate_timestamp()
 
     @classmethod
     def generate_iso_timestamp(cls) -> str:
-        """Generate ISO format timestamp - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_iso_timestamp()
+        """Generate ISO format timestamp - delegates to FlextUtilities."""
+        return FlextUtilities.generate_iso_timestamp()
 
     @classmethod
     def generate_correlation_id(cls) -> str:
-        """Generate correlation ID - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_correlation_id()
+        """Generate correlation ID - delegates to FlextUtilities."""
+        return FlextUtilities.generate_correlation_id()
 
     @classmethod
     def generate_entity_id(cls) -> str:
-        """Generate entity ID - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_entity_id()
+        """Generate entity ID - delegates to FlextUtilities."""
+        return FlextUtilities.generate_entity_id()
 
     @classmethod
     def generate_session_id(cls) -> str:
-        """Generate session ID - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.generate_session_id()
+        """Generate session ID - delegates to FlextUtilities."""
+        return FlextUtilities.generate_session_id()
 
     @classmethod
     def format_duration(cls, seconds: float) -> str:
-        """Format duration - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.format_duration(seconds)
+        """Format duration - delegates to FlextUtilities."""
+        return FlextUtilities.format_duration(seconds)
 
 
 class FlextFormatters:
     """Text formatting utilities - Tier 1 Compatibility Facade.
 
-    This class provides backward compatibility by delegating to FlextCoreUtilities.
-    For new code, use FlextCoreUtilities.truncate(), FlextCoreUtilities.format_*() directly.
+    This class provides backward compatibility by delegating to FlextUtilities.
+    For new code, use FlextUtilities.truncate(), FlextUtilities.format_*() directly.
     """
 
     @staticmethod
     def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """Truncate text - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.truncate(text, max_length, suffix)
+        """Truncate text - delegates to FlextUtilities."""
+        return FlextUtilities.truncate(text, max_length, suffix)
 
     @staticmethod
     def format_duration(seconds: float) -> str:
-        """Format duration - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.format_duration(seconds)
+        """Format duration - delegates to FlextUtilities."""
+        return FlextUtilities.format_duration(seconds)
 
     @staticmethod
     def format_bytes(bytes_count: int) -> str:
-        """Format bytes - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.format_bytes(bytes_count)
+        """Format bytes - delegates to FlextUtilities."""
+        return FlextUtilities.format_bytes(bytes_count)
 
     @staticmethod
     def format_number(number: float, precision: int = 2) -> str:
-        """Format number - delegates to FlextCoreUtilities."""
-        return FlextCoreUtilities.format_number(number, precision)
+        """Format number - delegates to FlextUtilities."""
+        return FlextUtilities.format_number(number, precision)
 
 
 # =============================================================================
@@ -1342,7 +1839,7 @@ class FlextUtilityFactory:
 
 def flext_safe_int_conversion(value: object, default: int | None = None) -> int | None:
     """Alias for safe_int_conversion (convenience function)."""
-    return FlextCoreUtilities.safe_int_conversion(value, default)
+    return FlextUtilities.safe_int_conversion(value, default)
 
 
 def generate_correlation_id() -> str:
@@ -1352,12 +1849,12 @@ def generate_correlation_id() -> str:
 
 def safe_int_conversion_with_default(value: object, default: int) -> int:
     """Safe int conversion with guaranteed default."""
-    return FlextCoreUtilities.safe_int_conversion_with_default(value, default)
+    return FlextUtilities.safe_int_conversion_with_default(value, default)
 
 
 def flext_clear_performance_metrics() -> None:
     """Clear all performance metrics."""
-    FlextCoreUtilities.clear_performance_metrics()
+    FlextUtilities.clear_performance_metrics()
 
 
 def generate_id() -> str:
@@ -1372,7 +1869,7 @@ def generate_uuid() -> str:
 
 def is_not_none(value: object) -> bool:
     """Check if the value is not None."""
-    return FlextCoreUtilities.is_not_none_guard(value)
+    return FlextUtilities.is_not_none_guard(value)
 
 
 # safe_call moved to result.py to avoid type conflicts with generic T version
@@ -1415,7 +1912,7 @@ def flext_record_performance(
 
 def flext_track_performance(
     category: str,
-) -> Callable[[FlextDecoratedFunction], FlextDecoratedFunction]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Track performance decorator."""
     return FlextPerformance.track_performance(category)
 
@@ -1425,154 +1922,18 @@ def generate_iso_timestamp() -> str:
     return FlextGenerators.generate_iso_timestamp()
 
 
-# FlextConsole functionality moved to FlextCoreUtilities
-# Back-compat alias: some modules/tests import `Console`
-# Console = FlextCoreUtilities  # Legacy support if needed
+# FlextUtilities functionality moved to FlextUtilities
+# Back-compat alias: some modules/tests import `Console` and `FlextUtilities`
+Console = FlextUtilities  # Legacy support if needed
+# FlextUtilities already defined above - no need to redefine
 
 
 # =============================================================================
-# FLEXT CORE UTILITIES - Common patterns for codebase consistency
+# ADDITIONAL METHODS CONSOLIDATED - Into main FlextUtilities
 # =============================================================================
 
-
-class FlextCoreUtilities:
-    """Utility methods for common patterns throughout the FLEXT ecosystem.
-
-    This class provides static methods for frequently used operations
-    to reduce code duplication and maintain consistency.
-    """
-
-    @staticmethod
-    def safe_unwrap_or[T](result: FlextResult[T], default: T) -> T:
-        """Safely unwrap FlextResult with default value.
-
-        Modern pattern replacing .unwrap_or() calls for cleaner code.
-
-        Args:
-            result: FlextResult to unwrap
-            default: Default value if result is failure
-
-        Returns:
-            Success value or default
-
-        Example:
-            value = FlextCoreUtilities.safe_unwrap_or(result, "default")
-
-        """
-        return result.unwrap_or(default)
-
-    @staticmethod
-    def validate_and_convert[T](
-        value: object,
-        converter: Callable[[object], T],
-        error_message: str = "Conversion failed",
-    ) -> FlextResult[T]:
-        """Validate and convert value with error handling.
-
-        Args:
-            value: Value to convert
-            converter: Conversion function
-            error_message: Error message if conversion fails
-
-        Returns:
-            FlextResult containing converted value or error
-
-        Example:
-            result = FlextCoreUtilities.validate_and_convert(
-                "123", int, "Invalid integer"
-            )
-
-        """
-        try:
-            converted = converter(value)
-            return FlextResult[T].ok(converted)
-        except Exception as e:
-            return FlextResult[T].fail(f"{error_message}: {e}")
-
-    @staticmethod
-    def safe_dict_get[T](
-        data: dict[str, object], key: str, expected_type: type[T], default: T
-    ) -> T:
-        """Safely get and convert value from dict with type checking.
-
-        Args:
-            data: Dictionary to extract from
-            key: Key to look up
-            expected_type: Expected type for casting
-            default: Default value if key missing or wrong type
-
-        Returns:
-            Typed value or default
-
-        Example:
-            log_level = FlextCoreUtilities.safe_dict_get(
-                config, "log_level", str, "INFO"
-            )
-
-        """
-        value = data.get(key, default)
-        if isinstance(value, expected_type):
-            return value
-        return default
-
-    @staticmethod
-    def create_logger_with_context(
-        module_name: str, context: dict[str, object] | None = None
-    ) -> object:
-        """Create logger with contextual information.
-
-        Args:
-            module_name: Module name for logger
-            context: Optional context dict to include in logs
-
-        Returns:
-            Configured logger instance
-
-        Example:
-            logger = FlextCoreUtilities.create_logger_with_context(
-                __name__, {"service": "api", "version": "1.0"}
-            )
-
-        """
-        logger = FlextLoggerFactory.get_logger(module_name)
-        if context:
-            # Add context to logger if supported
-            # For now, just return the logger - context can be added to individual log calls
-            pass
-        return logger
-
-    @staticmethod
-    def benchmark_operation[T](
-        operation: Callable[[], T],
-        description: str = "Operation",
-        *,
-        log_results: bool = True,
-    ) -> tuple[T, float]:
-        """Benchmark an operation and optionally log results.
-
-        Args:
-            operation: Function to benchmark
-            description: Description for logging
-            log_results: Whether to log timing results
-
-        Returns:
-            Tuple of (result, duration_seconds)
-
-        Example:
-            result, duration = FlextCoreUtilities.benchmark_operation(
-                lambda: expensive_calculation(), "Calculation"
-            )
-
-        """
-        start_time = time.perf_counter()
-        result = operation()
-        end_time = time.perf_counter()
-        duration = end_time - start_time
-
-        if log_results:
-            logger.info(f"{description} completed in {duration:.4f}s")
-
-        return result, duration
+# Methods from duplicate FlextUtilities have been added to the main class above
+# This ensures single class with ALL functionality consolidated
 
 
 # =============================================================================
@@ -1641,30 +2002,42 @@ class FlextTypeUtilities:
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextCoreUtilities",  # 🎯 SINGLE EXPORT: All utility functionality consolidated
-    # Backward compatibility aliases
-    "FlextUtilities",
-    "FlextConsole",  # Legacy support - core.py imports FlextConsole
     "FlextGenerators",  # Legacy support for generators
     "FlextPerformance",  # Legacy support for performance
     "FlextTypeGuards",  # Legacy support for type guards
     # =======================================================================
+    # BACKWARD COMPATIBILITY ALIASES - Classes
+    # =======================================================================
+    "FlextUtilities",  # Legacy support - core.py imports FlextUtilities
+    # =======================================================================
+    # PRIMARY EXPORT - Single class consolidating all functionality
+    # =======================================================================
+    "FlextUtilities",  # 🎯 SINGLE EXPORT: All utility functionality consolidated
+    "FlextUtilities",  # Main backward compatibility alias
+    # =======================================================================
     # LEGACY COMPATIBILITY - Function aliases only (not classes)
     # =======================================================================
-    "flext_clear_performance_metrics",  # → FlextCoreUtilities.clear_performance_metrics()
-    "flext_get_performance_metrics",  # → FlextCoreUtilities.get_performance_metrics()
-    "flext_record_performance",  # → FlextCoreUtilities.record_performance()
-    "flext_safe_int_conversion",  # → FlextCoreUtilities.safe_int_conversion()
-    "flext_track_performance",  # → FlextCoreUtilities.track_performance()
-    "generate_correlation_id",  # → FlextCoreUtilities.generate_correlation_id()
-    "generate_id",  # → FlextCoreUtilities.generate_id()
-    "generate_iso_timestamp",  # → FlextCoreUtilities.generate_iso_timestamp()
-    "generate_uuid",  # → FlextCoreUtilities.generate_uuid()
-    "is_not_none",  # → FlextCoreUtilities.is_not_none()
-    "safe_int_conversion_with_default",  # → FlextCoreUtilities.safe_int_conversion_with_default()
-    "truncate",  # → FlextCoreUtilities.truncate()
+    "flext_clear_performance_metrics",  # → FlextUtilities.clear_performance_metrics()
+    "flext_get_performance_metrics",  # → FlextUtilities.get_performance_metrics()
+    "flext_record_performance",  # → FlextUtilities.record_performance()
+    "flext_safe_int_conversion",  # → FlextUtilities.safe_int_conversion()
+    "flext_track_performance",  # → FlextUtilities.track_performance()
+    "generate_correlation_id",  # → FlextUtilities.generate_correlation_id()
+    "generate_id",  # → FlextUtilities.generate_id()
+    "generate_iso_timestamp",  # → FlextUtilities.generate_iso_timestamp()
+    "generate_uuid",  # → FlextUtilities.generate_uuid()
+    "is_not_none",  # → FlextUtilities.is_not_none()
+    "safe_int_conversion_with_default",  # → FlextUtilities.safe_int_conversion_with_default()
+    "truncate",  # → FlextUtilities.truncate()
     # =======================================================================
-    # NOTE: All FlextXxx classes have been internalized into FlextCoreUtilities
-    # Use FlextCoreUtilities methods directly for all functionality
+    # NOTE: All FlextXxx classes have been internalized into FlextUtilities
+    # Use FlextUtilities methods directly for all functionality
     # =======================================================================
 ]
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES - Preserve existing APIs
+# =============================================================================
+
+# Main class is now FlextUtilities directly (no alias needed)
+# All utility functionality consolidated in FlextUtilities class above

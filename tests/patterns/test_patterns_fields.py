@@ -1,6 +1,5 @@
 """Comprehensive tests for FLEXT patterns fields module."""
 
-
 from __future__ import annotations
 
 import pytest

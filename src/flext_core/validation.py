@@ -682,6 +682,84 @@ def flext_validate_service_name(name: str) -> bool:
 
 
 # =============================================================================
+# LDAP-SPECIFIC VALIDATORS - Domain-specific LDAP validation patterns
+# =============================================================================
+
+
+def validate_ldap_dn(dn: object) -> str:
+    """PlainValidator: Complete DN validation with RFC 2253 compliance."""
+    if not isinstance(dn, str):
+        dn = str(dn)
+    
+    dn = dn.strip()
+    if not dn:
+        msg = "Distinguished Name cannot be empty"
+        raise ValueError(msg)
+    
+    # Basic DN format validation (simplified for practical use)
+    if not re.match(r"^[a-zA-Z]+=[^,]+(?:,[a-zA-Z]+=[^,]+)*$", dn):
+        msg = f"Invalid DN format: {dn}. Must follow RFC 2253"
+        raise ValueError(msg)
+    
+    return dn
+
+
+def validate_ldap_filter(filter_str: object) -> str:
+    """PlainValidator: Complete LDAP filter validation with RFC 4515 compliance."""
+    if not isinstance(filter_str, str):
+        filter_str = str(filter_str)
+    
+    filter_str = filter_str.strip()
+    if not filter_str:
+        msg = "LDAP filter cannot be empty"
+        raise ValueError(msg)
+    
+    # Must be enclosed in parentheses
+    if not (filter_str.startswith("(") and filter_str.endswith(")")):
+        msg = f"LDAP filter must be enclosed in parentheses: {filter_str}"
+        raise ValueError(msg)
+    
+    return filter_str
+
+
+def validate_ldap_scope(scope: object) -> str:
+    """PlainValidator: LDAP search scope validation per RFC 4511."""
+    if not isinstance(scope, str):
+        scope = str(scope)
+    
+    scope = scope.strip().lower()
+    valid_scopes = {"base", "one", "sub", "onelevel", "subtree", "children"}
+    
+    if scope not in valid_scopes:
+        msg = f"Invalid LDAP scope: {scope}. Must be one of {valid_scopes}"
+        raise ValueError(msg)
+    
+    return scope
+
+
+def normalize_ldap_attributes(attrs: object) -> dict[str, str | list[str]]:
+    """BeforeValidator: Normalize LDAP attributes dictionary."""
+    if not isinstance(attrs, dict):
+        return {}
+    
+    normalized: dict[str, str | list[str]] = {}
+    for key, value in attrs.items():
+        if isinstance(value, list):
+            normalized[key] = [str(item) for item in value]
+        else:
+            normalized[key] = str(value)
+    
+    return normalized
+
+
+# LDAP-specific annotated types
+LdapDistinguishedName = Annotated[str, PlainValidator(validate_ldap_dn)]
+LdapFilter = Annotated[str, PlainValidator(validate_ldap_filter)]
+LdapScope = Annotated[str, PlainValidator(validate_ldap_scope)]
+LdapAttributes = Annotated[dict[str, str | list[str]], BeforeValidator(normalize_ldap_attributes)]
+
+
+# =============================================================================
 # FLEXT VALIDATION - Main validation interface inheriting from base
 # =============================================================================
 
@@ -789,6 +867,42 @@ class FlextValidation:
     def is_in_range(value: float, min_val: float, max_val: float) -> bool:
         """Check if value is within range."""
         return _BasePredicates.is_in_range(value, min_val, max_val)
+
+    # =========================================================================
+    # LDAP VALIDATION METHODS - Domain-specific LDAP validation
+    # =========================================================================
+
+    @staticmethod
+    def is_valid_ldap_dn(value: object) -> bool:
+        """Check if value is a valid LDAP Distinguished Name."""
+        try:
+            validate_ldap_dn(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_valid_ldap_filter(value: object) -> bool:
+        """Check if value is a valid LDAP filter."""
+        try:
+            validate_ldap_filter(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def is_valid_ldap_scope(value: object) -> bool:
+        """Check if value is a valid LDAP scope."""
+        try:
+            validate_ldap_scope(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def normalize_ldap_attrs(value: object) -> dict[str, str | list[str]]:
+        """Normalize LDAP attributes dictionary."""
+        return normalize_ldap_attributes(value)
 
     # =========================================================================
     # VALIDATION FUNCTIONS - Direct access to core validation functions
@@ -1189,6 +1303,10 @@ __all__: list[str] = [
     "EntityIdWithGeneration",
     "FlextValidation",  # 🎯 SINGLE EXPORT: All validation functionality consolidated
     "FormattedTimestamp",
+    "LdapAttributes",
+    "LdapDistinguishedName", 
+    "LdapFilter",
+    "LdapScope",
     "NormalizedEmail",
     "NormalizedString",
     "PositiveNumber",
@@ -1213,8 +1331,12 @@ __all__: list[str] = [
     "format_timestamp",
     "generate_id_if_missing",
     "normalize_email",
+    "normalize_ldap_attributes",
     "normalize_string",
     "validate_email_address",
+    "validate_ldap_dn",
+    "validate_ldap_filter",
+    "validate_ldap_scope",
     # FlextResult-based validation functions
     "validate_entity_id",
     "validate_list_with_deduplication",
@@ -1263,3 +1385,70 @@ FlextValidation.validate_service_name_with_result = staticmethod(
 
 # Now that FlextValidationPipeline is defined, add it to the FlextValidation class
 FlextValidation.Pipeline = FlextValidationPipeline  # type: ignore[attr-defined]
+
+
+# =============================================================================
+# CONSOLIDATED VALIDATION CLASS - Following FLEXT Patterns
+# =============================================================================
+
+
+class FlextValidations:
+    """Consolidated validation system following FLEXT[Module]s pattern.
+    
+    Single class consolidating ALL validation functionality including:
+    - Core validation operations
+    - Pipeline validation
+    - Domain validation
+    - Predicate-based validation
+    """
+
+    # Consolidated nested classes
+    Validation = FlextValidation
+    Pipeline = FlextValidationPipeline
+    DomainValidator = FlextDomainValidator
+    AbstractValidator = FlextAbstractValidator
+
+    # Predicate constants and functions as nested namespace
+    class Predicates:
+        """Validation predicates namespace."""
+        
+        # Core predicates - static methods
+        is_not_none = staticmethod(is_not_none)
+        is_numeric = staticmethod(is_numeric)
+        is_non_empty_string = staticmethod(is_non_empty_string)
+        is_valid_email = staticmethod(is_valid_email)
+        is_valid_service_name = staticmethod(is_valid_service_name)
+        is_non_empty = staticmethod(is_non_empty)
+        is_valid_percentage = staticmethod(is_valid_percentage)
+
+    # Validators namespace
+    class Validators:
+        """Core validators namespace."""
+        
+        # Pydantic functional validators
+        normalize_string = staticmethod(normalize_string)
+        normalize_email = staticmethod(normalize_email)
+        ensure_string_list = staticmethod(ensure_string_list)
+        generate_id_if_missing = staticmethod(generate_id_if_missing)
+        uppercase_code = staticmethod(uppercase_code)
+        validate_percentage_range = staticmethod(validate_percentage_range)
+        validate_positive_number = staticmethod(validate_positive_number)
+        
+        # Flext validation functions
+        validate_required = staticmethod(flext_validate_required)
+        validate_string = staticmethod(flext_validate_string) 
+        validate_numeric = staticmethod(flext_validate_numeric)
+        validate_email = staticmethod(flext_validate_email)
+        validate_service_name = staticmethod(flext_validate_service_name)
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Main backward compatibility
+FlextCoreValidation = FlextValidations  # Legacy name support
+
+# Individual class aliases maintained for compatibility  
+FlextPredicates = FlextValidations.Predicates
+FlextValidators = FlextValidations.Validators

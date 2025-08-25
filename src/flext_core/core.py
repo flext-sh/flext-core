@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Annotated, cast, override
 
@@ -80,7 +80,7 @@ from flext_core.models import (
     create_service_model,
 )
 from flext_core.observability import (
-    FlextMinimalObservability,
+    FlextObservability,
     get_global_observability,
     reset_global_observability,
 )
@@ -112,7 +112,6 @@ from flext_core.schema_processing import (
 from flext_core.services import FlextServiceProcessor
 from flext_core.typings import FlextPlugin, FlextRepository, FlextTypes, P, R, T
 from flext_core.utilities import (
-    FlextConsole,
     FlextGenerators,
     FlextPerformance,
     FlextTypeGuards,
@@ -162,8 +161,8 @@ class FlextCore:
         self._handler_registry: FlextHandlerRegistry | None = None
         self._field_registry: FlextFieldRegistry | None = None
         self._plugin_registry: object | None = None
-        self._console: FlextConsole | None = None
-        self._observability: FlextMinimalObservability | None = None
+        self._console: FlextUtilities | None = None
+        self._observability: FlextObservability | None = None
 
     @classmethod
     def get_instance(cls) -> FlextCore:
@@ -264,7 +263,7 @@ class FlextCore:
         return create_log_context(logger, **context)
 
     @property
-    def observability(self) -> FlextMinimalObservability:
+    def observability(self) -> FlextObservability:
         """Get observability instance."""
         if self._observability is None:
             self._observability = get_global_observability()
@@ -701,10 +700,10 @@ class FlextCore:
         return is_not_none(value)
 
     @property
-    def console(self) -> FlextConsole:
+    def console(self) -> FlextUtilities:
         """Get console instance."""
         if self._console is None:
-            self._console = FlextConsole()
+            self._console = FlextUtilities()
         return self._console
 
     @property
@@ -746,7 +745,7 @@ class FlextCore:
                 return FlextResult[FlextMessage].fail(
                     message_result.error or "Message creation failed"
                 )
-            return message_result
+            return cast("FlextResult[FlextMessage]", message_result)
         except Exception as e:
             return FlextResult[FlextMessage].fail(f"Message creation failed: {e}")
 
@@ -768,7 +767,7 @@ class FlextCore:
                 return FlextResult[FlextEvent].fail(
                     event_result.error or "Event creation failed"
                 )
-            return event_result
+            return cast("FlextResult[FlextEvent]", event_result)
         except Exception as e:
             return FlextResult[FlextEvent].fail(f"Event creation failed: {e}")
 
@@ -793,14 +792,14 @@ class FlextCore:
         return FlextPayload[object]
 
     @property
-    def message_base(self) -> type[FlextMessage]:
+    def message_base(self) -> type[FlextPayload[str]]:
         """Access message base class."""
-        return FlextMessage
+        return FlextPayload
 
     @property
-    def event_base(self) -> type[FlextEvent]:
+    def event_base(self) -> type[FlextPayload[Mapping[str, object]]]:
         """Access event base class."""
-        return FlextEvent
+        return FlextPayload
 
     # =========================================================================
     # HANDLERS & CQRS
@@ -1485,8 +1484,7 @@ class FlextCore:
                         decorated_method = decorator(original_process)
                         # Use setattr to dynamically assign the method to the class
                         # This is necessary for dynamic method decoration and is intentional
-                        DynamicServiceProcessor.process = decorated_method  # pyright: ignore[reportAttributeAccessIssue]
-                        original_process = decorated_method
+                        setattr(DynamicServiceProcessor, "process", decorated_method)  # noqa: B010
 
         DynamicServiceProcessor.__name__ = f"{name}ServiceProcessor"
         DynamicServiceProcessor.__qualname__ = f"{name}ServiceProcessor"

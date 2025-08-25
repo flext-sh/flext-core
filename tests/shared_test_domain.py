@@ -36,7 +36,8 @@ class TestUser(FlextEntity):
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules for test user."""
-        if len(self.name) < 2:
+        min_name_length = 2
+        if len(self.name) < min_name_length:
             return FlextResult[None].fail("Name must be at least 2 characters")
         return FlextResult[None].ok(None)
 
@@ -52,7 +53,8 @@ class TestMoney(FlextValue):
         """Validate business rules for money."""
         if self.amount < 0:
             return FlextResult[None].fail("Amount cannot be negative")
-        if len(self.currency) != 3:
+        currency_length = 3
+        if len(self.currency) != currency_length:
             return FlextResult[None].fail("Currency must be 3 characters")
         if self.currency != self.currency.upper():
             return FlextResult[None].fail("Currency must be uppercase")

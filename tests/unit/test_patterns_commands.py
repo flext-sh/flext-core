@@ -1,7 +1,6 @@
 # ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FLEXT command pattern."""
 
-
 from __future__ import annotations
 
 from typing import cast, override

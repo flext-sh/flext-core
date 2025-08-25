@@ -1067,6 +1067,10 @@ class FlextPayload[T](
         ):
             return self.__pydantic_extra__[name]
 
+        # Handle metadata fields
+        if self.metadata and name in self.metadata:
+            return self.metadata[name]
+
         error_msg: str = f"'{self.__class__.__name__}' object has no attribute '{name}'"
         available_fields = (
             list(self.__pydantic_extra__.keys())
@@ -1178,20 +1182,6 @@ class FlextPayload[T](
             return list(self.__pydantic_extra__.items())
         return []
 
-
-# =============================================================================
-# SPECIALIZED PAYLOAD TYPES - Message and Event patterns
-# =============================================================================
-
-
-class FlextMessage(FlextPayload[str]):
-    """Specialized string message payload with level validation and source tracking.
-
-    Purpose-built payload for text messages with structured metadata including
-    message level classification and source identification. Extends FlextPayload[str]
-    with message-specific validation and factory methods.
-    """
-
     @classmethod
     def create_message(
         cls,
@@ -1199,7 +1189,7 @@ class FlextMessage(FlextPayload[str]):
         *,
         level: str = "info",
         source: str | None = None,
-    ) -> FlextResult[FlextMessage]:
+    ) -> FlextResult[FlextPayload[object]]:
         """Create message payload.
 
         Args:
@@ -1216,7 +1206,7 @@ class FlextMessage(FlextPayload[str]):
         # Validate message using FlextValidation
         if not FlextValidators.is_non_empty_string(message):
             logger.error("Invalid message - empty or not string")
-            return FlextResult[FlextMessage].fail("Message cannot be empty")
+            return FlextResult[FlextPayload[object]].fail("Message cannot be empty")
 
         # Validate level
         valid_levels = ["info", "warning", "error", "debug", "critical"]
@@ -1230,114 +1220,14 @@ class FlextMessage(FlextPayload[str]):
 
         logger.debug("Creating message payload", level=level, source=source)
 
-        # Create FlextMessage instance directly
+        # Create FlextPayload[str] instance directly
         try:
-            instance = cls(data=message, metadata=metadata)
-            return FlextResult[FlextMessage].ok(instance)
+            instance = cls(data=message, metadata=metadata)  # type: ignore[arg-type]
+            return FlextResult[FlextPayload[object]].ok(instance)
         except (ValidationError, FlextValidationError) as e:
-            return FlextResult[FlextMessage].fail(f"Failed to create message: {e}")
-
-    @property
-    def level(self) -> str:
-        """Get message level."""
-        level = self.get_metadata("level", "info")
-        return str(level) if level is not None else "info"
-
-    @property
-    def source(self) -> str | None:
-        """Get a message source."""
-        source = self.get_metadata("source")
-        return str(source) if source is not None else None
-
-    @property
-    def correlation_id(self) -> str | None:
-        """Get message correlation ID."""
-        corr_id = self.get_metadata("correlation_id")
-        return str(corr_id) if corr_id is not None else None
-
-    @property
-    def text(self) -> str | None:
-        """Get message text."""
-        return self.value
-
-    @override
-    def to_cross_service_dict(
-        self,
-        *,
-        include_type_info: bool = True,
-        protocol_version: str = FLEXT_SERIALIZATION_VERSION,
-    ) -> dict[str, object]:
-        """Convert a message to cross-service dictionary.
-
-         for FlextMessage with message-specific metadata.
-
-        Args:
-            include_type_info: Whether to include type information
-            protocol_version: Serialization protocol version
-
-        Returns:
-            Cross-service dictionary for message transport
-
-        """
-        base_dict = super().to_cross_service_dict(
-            include_type_info=include_type_info,
-            protocol_version=protocol_version,
-        )
-
-        # Add message-specific information
-        base_dict["message_level"] = self.level
-        base_dict["message_source"] = self.source
-        base_dict["message_text"] = self.text
-
-        if self.correlation_id:
-            base_dict["correlation_id"] = self.correlation_id
-
-        return base_dict
-
-    @classmethod
-    @override
-    def from_cross_service_dict(
-        cls,
-        cross_service_dict: dict[str, object],
-    ) -> FlextResult[FlextPayload[str]]:
-        """Create FlextMessage from cross-service dictionary.
-
-        Args:
-            cross_service_dict: Cross-service serialized dictionary
-
-        Returns:
-            FlextResult containing FlextMessage or error
-
-        """
-        # Extract message-specific fields
-        message_text = cross_service_dict.get("message_text")
-        message_level = cross_service_dict.get("message_level", "info")
-        message_source = cross_service_dict.get("message_source")
-
-        if not message_text or not isinstance(message_text, str):
-            return FlextResult[FlextPayload[str]].fail(
-                "Invalid message text in cross-service data",
+            return FlextResult[FlextPayload[object]].fail(
+                f"Failed to create message: {e}"
             )
-
-        # Create a message using factory method
-        result: FlextResult[FlextPayload[str]] = cast(
-            "FlextResult[FlextPayload[str]]",
-            cls.create_message(
-                message_text,
-                level=str(message_level),
-                source=str(message_source) if message_source else None,
-            ),
-        )
-        # Cast to match parent class return type
-        return result
-
-
-class FlextEvent(FlextPayload[Mapping[str, object]]):
-    """Domain event payload with aggregate tracking and versioning.
-
-    Specialized payload for DDD events with event sourcing support,
-    aggregate correlation, and version tracking for event ordering.
-    """
 
     @classmethod
     def create_event(
@@ -1347,7 +1237,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         *,
         aggregate_id: str | None = None,
         version: int | None = None,
-    ) -> FlextResult[FlextEvent]:
+    ) -> FlextResult[FlextPayload[object]]:
         """Create event payload.
 
         Args:
@@ -1365,19 +1255,23 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         # Validate event_type using FlextValidation
         if not FlextValidators.is_non_empty_string(event_type):
             logger.error("Invalid event type - empty or not string")
-            return FlextResult[FlextEvent].fail("Event type cannot be empty")
+            return FlextResult[FlextPayload[object]].fail("Event type cannot be empty")
 
-        # Validate aggregate_id if provided (not None)
+        # Validate aggregate_id if provided
         if aggregate_id is not None and not FlextValidators.is_non_empty_string(
-            aggregate_id,
+            aggregate_id
         ):
-            logger.error("Invalid aggregate ID - empty or not string")
-            return FlextResult[FlextEvent].fail("Invalid aggregate ID")
+            logger.error("Invalid aggregate ID - empty string")
+            return FlextResult[FlextPayload[object]].fail("Invalid aggregate ID")
 
         # Validate version if provided
         if version is not None and version < 0:
-            logger.error("Invalid event version", version=version)
-            return FlextResult[FlextEvent].fail("Event version must be non-negative")
+            logger.error("Invalid event version - must be non-negative")
+            return FlextResult[FlextPayload[object]].fail(
+                "Event version must be non-negative"
+            )
+
+        # Note: event_data validation handled by Pydantic at runtime
 
         metadata: dict[str, object] = {"event_type": event_type}
         if aggregate_id:
@@ -1391,154 +1285,39 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
             aggregate_id=aggregate_id,
             version=version,
         )
-        # Create FlextEvent instance directly for correct return type
+
+        # Create FlextPayload[Mapping[str, object]] instance directly
         try:
-            instance = cls(data=dict(event_data), metadata=metadata)
-            return FlextResult[FlextEvent].ok(instance)
-        except (ValidationError, FlextValidationError) as e12:
-            # Create failed result directly with correct type
-            return FlextResult[FlextEvent](error=f"Failed to create event: {e12}")
-
-    @property
-    def event_type(self) -> str | None:
-        """Get an event type."""
-        event_type = self.get_metadata("event_type")
-        return str(event_type) if event_type is not None else None
-
-    @property
-    def aggregate_id(self) -> str | None:
-        """Get aggregate ID."""
-        agg_id = self.get_metadata("aggregate_id")
-        return str(agg_id) if agg_id is not None else None
-
-    @property
-    def aggregate_type(self) -> str | None:
-        """Get aggregate type."""
-        agg_type = self.get_metadata("aggregate_type")
-        return str(agg_type) if agg_type is not None else None
-
-    @property
-    def version(self) -> int | None:
-        """Get an event version."""
-        version = self.get_metadata("version")
-        if version is None:
-            return None
-        try:
-            return int(str(version))
-        except (ValueError, TypeError) as e:
-            logger = flext_get_logger(__name__)
-            logger.warning(f"Failed to convert version to int: {version} - {e}")
-            return None
-
-    @property
-    def correlation_id(self) -> str | None:
-        """Get event correlation ID."""
-        corr_id = self.get_metadata("correlation_id")
-        return str(corr_id) if corr_id is not None else None
-
-    @override
-    def to_cross_service_dict(
-        self,
-        *,
-        include_type_info: bool = True,
-        protocol_version: str = FLEXT_SERIALIZATION_VERSION,
-    ) -> dict[str, object]:
-        """Convert event to cross-service dictionary.
-
-         for FlextEvent with event sourcing metadata.
-
-        Args:
-            include_type_info: Whether to include type information
-            protocol_version: Serialization protocol version
-
-        Returns:
-            Cross-service dictionary for event transport
-
-        """
-        base_dict = super().to_cross_service_dict(
-            include_type_info=include_type_info,
-            protocol_version=protocol_version,
-        )
-
-        # Add event-specific information
-        base_dict["event_type"] = self.event_type
-        base_dict["aggregate_id"] = self.aggregate_id
-        base_dict["aggregate_type"] = self.aggregate_type
-        base_dict["event_version"] = self.version
-
-        if self.correlation_id:
-            base_dict["correlation_id"] = self.correlation_id
-
-        # Add event data directly at top level for easier Go access
-        if self.value:
-            base_dict["event_data"] = dict(self.value)
-
-        return base_dict
-
-    @classmethod
-    @override
-    def from_cross_service_dict(
-        cls,
-        cross_service_dict: dict[str, object],
-    ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
-        """Create FlextEvent from cross-service dictionary.
-
-        Args:
-            cross_service_dict: Cross-service serialized dictionary
-
-        Returns:
-            FlextResult containing FlextEvent or error
-
-        """
-        # Extract event-specific fields
-        event_type = cross_service_dict.get("event_type")
-        event_data = cross_service_dict.get("event_data", {})
-        aggregate_id = cross_service_dict.get("aggregate_id")
-        event_version = cross_service_dict.get("event_version")
-
-        if not event_type or not isinstance(event_type, str):
-            return FlextResult[FlextPayload[Mapping[str, object]]].fail(
-                "Invalid event type in cross-service data",
+            instance = cls(data=event_data, metadata=metadata)  # type: ignore[arg-type]
+            return FlextResult[FlextPayload[object]].ok(instance)
+        except (ValidationError, FlextValidationError) as e:
+            return FlextResult[FlextPayload[object]].fail(
+                f"Failed to create event: {e}"
             )
-
-        if not isinstance(event_data, dict):
-            return FlextResult[FlextPayload[Mapping[str, object]]].fail(
-                "Invalid event data in cross-service data",
-            )
-
-        # Convert a version to int if provided
-        version_int = None
-        if event_version is not None:
-            try:
-                version_int = int(str(event_version))
-            except (ValueError, TypeError):
-                return FlextResult[FlextPayload[Mapping[str, object]]].fail(
-                    "Invalid event version format",
-                )
-
-        # Create event using factory method
-        result: FlextResult[FlextPayload[Mapping[str, object]]] = cast(
-            "FlextResult[FlextPayload[Mapping[str, object]]]",
-            cls.create_event(
-                event_type=str(event_type),
-                event_data=cast("dict[str, object]", event_data),
-                aggregate_id=str(aggregate_id) if aggregate_id else None,
-                version=version_int,
-            ),
-        )
-        # Cast to match parent class return type
-        return result
 
 
 # =============================================================================
-# CONVENIENCE FUNCTIONS - Modern cross-service operations
+# TYPE ALIASES - Backward compatibility for specialized payloads
+# =============================================================================
+
+# Type aliases for specialized payload types - maintains API compatibility
+type FlextMessage = FlextPayload[str]
+type FlextEvent = FlextPayload[Mapping[str, object]]
+
+# Legacy class references for isinstance checks (if needed)
+FlextMessageType = FlextPayload[str]
+FlextEventType = FlextPayload[Mapping[str, object]]
+
+
+# =============================================================================
+# CROSS-SERVICE HELPERS - Message and event creation utilities
 # =============================================================================
 def create_cross_service_event(
     event_type: str,
     event_data: dict[str, object],
     correlation_id: str | None = None,
     **kwargs: object,
-) -> FlextResult[FlextEvent]:
+) -> FlextResult[FlextPayload[object]]:
     """Create a cross-service event."""
     try:
         # Extract known parameters for create_event
@@ -1549,7 +1328,7 @@ def create_cross_service_event(
         aggregate_id_str = aggregate_id if isinstance(aggregate_id, str) else None
         version_int = version if isinstance(version, int) else None
 
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type,
             event_data,
             aggregate_id=aggregate_id_str,
@@ -1561,18 +1340,20 @@ def create_cross_service_event(
             # reads from metadata)
             event = result.value
             new_event = event.with_metadata(correlation_id=correlation_id)
-            return FlextResult[FlextEvent].ok(cast("FlextEvent", new_event))
+            return FlextResult[FlextPayload[object]].ok(new_event)
 
         return result
     except (TypeError, ValueError, AttributeError, KeyError) as e:
-        return FlextResult[FlextEvent].fail(f"Cross-service event creation failed: {e}")
+        return FlextResult[FlextPayload[object]].fail(
+            f"Cross-service event creation failed: {e}"
+        )
 
 
 def create_cross_service_message(
     message_text: str,
     correlation_id: str | None = None,
     **kwargs: object,
-) -> FlextResult[FlextMessage]:
+) -> FlextResult[FlextPayload[object]]:
     """Create a cross-service message."""
     try:
         # Extract known parameters for create_message with type safety
@@ -1584,7 +1365,7 @@ def create_cross_service_message(
         source_str = source if isinstance(source, str) else None
 
         # Create a message with supported parameters only
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             message_text,
             level=level_str,
             source=source_str,
@@ -1595,11 +1376,11 @@ def create_cross_service_message(
             # reads from metadata)
             message = result.value
             new_message = message.with_metadata(correlation_id=correlation_id)
-            return FlextResult[FlextMessage].ok(cast("FlextMessage", new_message))
+            return FlextResult[FlextPayload[object]].ok(new_message)
 
         return result
     except (TypeError, ValueError, AttributeError, KeyError) as e:
-        return FlextResult[FlextMessage].fail(
+        return FlextResult[FlextPayload[object]].fail(
             f"Cross-service message creation failed: {e}"
         )
 
@@ -1658,8 +1439,7 @@ def validate_cross_service_protocol(payload: object) -> FlextResult[None]:
 # in test environment to avoid "not fully defined" errors.
 try:
     FlextPayload.model_rebuild()
-    FlextMessage.model_rebuild()
-    FlextEvent.model_rebuild()
+    # Type aliases don't need model rebuild
 except (
     TypeError,
     ValueError,
@@ -1673,6 +1453,30 @@ except (
         "Model rebuild failed, continuing with runtime functionality",
         error=str(except_data),
         models=["FlextPayload", "FlextMessage", "FlextEvent"],
+    )
+
+# =============================================================================
+# MODEL REBUILDS - Resolve forward references for Pydantic
+# =============================================================================
+
+# CRITICAL: Model rebuild enabled for test functionality
+# The models need explicit rebuild to work correctly with generic types
+# in test environment to avoid "not fully defined" errors.
+try:
+    FlextPayload.model_rebuild()
+except (
+    TypeError,
+    ValueError,
+    AttributeError,
+    ImportError,
+    RuntimeError,
+) as except_data:
+    # Log rebuild errors but maintain runtime functionality
+    logger = flext_get_logger(__name__)
+    logger.warning(
+        "Model rebuild failed, continuing with runtime functionality",
+        error=str(except_data),
+        models=["FlextPayload"],
     )
 
 # Export API

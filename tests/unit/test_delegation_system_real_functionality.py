@@ -32,7 +32,7 @@ class BusinessLogicMixin:
 
     def __init__(self) -> None:
         self.calculations_count = 0
-        self.last_result = 0
+        self.last_result = 0.0
 
     def calculate_discount(self, amount: float, percentage: float) -> float:
         """Real business calculation."""
@@ -180,11 +180,13 @@ class RealBusinessHost:
         cache_key = f"order_{customer_id}_{save_result.value}"
         self.cache_set(cache_key, order_data)
 
-        return FlextResult[None].ok({
-            "order_id": save_result.value,
-            "final_amount": order_data["final_amount"],
-            "discount_applied": discount,
-        })
+        return FlextResult[None].ok(
+            {
+                "order_id": save_result.value,
+                "final_amount": order_data["final_amount"],
+                "discount_applied": discount,
+            }
+        )
 
 
 class TestRealDelegationFunctionality:

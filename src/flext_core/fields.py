@@ -765,16 +765,22 @@ def _safe_cast_list(value: object) -> list[str | int | float | bool]:
 class FlextFields:
     """Consolidated fields factory and management interface.
 
-    Serves as the primary public API for field creation, registration, and
-    management. Combines factory methods with registry operations in a
-    unified interface.
-
-    Comprehensive field factory providing type-safe field creation,
-    registration, and lookup capabilities following SOLID principles.
+    SINGLE CONSOLIDATED CLASS containing all field functionality.
+    Consolidates ALL field classes into one class following FLEXT patterns.
+    Serves as the primary public API for field creation, registration, and management.
     """
 
-    # Registry singleton
-    _registry = FlextFieldRegistry()
+    # =====================================================================
+    # NESTED CLASSES - Consolidated within FlextFields
+    # =====================================================================
+
+    # Import nested classes from outer scope for consolidation
+    FieldCore: type | None = None  # Will be set after class definitions
+    FieldMetadata: type | None = None  # Will be set after class definitions
+    FieldRegistry: type | None = None  # Will be set after class definitions
+
+    # Registry singleton (will be initialized after nested classes)
+    _registry: FlextFieldRegistry | None = None
 
     @classmethod
     def create_string_field(
@@ -935,11 +941,15 @@ class FlextFields:
     @classmethod
     def register_field(cls, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
         """Register field in global registry (returns FlextResult)."""
+        if cls._registry is None:
+            return FlextResult[FlextFieldCore].fail("Registry not initialized")
         return cls._registry.register_field(field)
 
     @classmethod
     def get_field_by_id(cls, field_id: FlextFieldId) -> FlextResult[FlextFieldCore]:
         """Get field by ID from global registry (returns FlextResult)."""
+        if cls._registry is None:
+            return FlextResult[FlextFieldCore].fail("Registry not initialized")
         return cls._registry.get_field_by_id(field_id)
 
     @classmethod
@@ -948,22 +958,29 @@ class FlextFields:
         field_name: FlextFieldName,
     ) -> FlextResult[FlextFieldCore]:
         """Get field by name from global registry (returns FlextResult)."""
+        if cls._registry is None:
+            return FlextResult[FlextFieldCore].fail("Registry not initialized")
         return cls._registry.get_field_by_name(field_name)
 
     @classmethod
     def list_field_names(cls) -> list[str]:
         """List all registered field names."""
+        if cls._registry is None:
+            return []
         return cls._registry.list_field_names()
 
     @classmethod
     def get_field_count(cls) -> int:
         """Get the total number of registered fields."""
+        if cls._registry is None:
+            return 0
         return cls._registry.get_field_count()
 
     @classmethod
     def clear_registry(cls) -> None:
         """Clear all registered fields."""
-        cls._registry.clear_registry()
+        if cls._registry is not None:
+            cls._registry.clear_registry()
 
     # Convenience wrapper methods
     @classmethod
@@ -1038,16 +1055,33 @@ def flext_create_boolean_field(name: str, **kwargs: object) -> FlextFieldCore:
 
 
 # =============================================================================
+# POST-DEFINITION SETUP - Link nested classes for consolidation
+# =============================================================================
+
+# Link the outer classes to FlextFields for consolidated access
+FlextFields.FieldCore = FlextFieldCore
+FlextFields.FieldMetadata = FlextFieldMetadata
+FlextFields.FieldRegistry = FlextFieldRegistry
+
+# Initialize registry singleton now that classes are defined
+FlextFields._registry = FlextFieldRegistry()
+
+# Backward compatibility aliases (maintain existing imports)
+FlextFieldCoreConsolidated = FlextFields  # New consolidated approach
+# FlextFieldCoreMetadata = FlextFieldMetadata  # Backward compatibility - removed duplicate
+
+# =============================================================================
 # EXPORTS - Clean public API following guidelines
 # =============================================================================
 
-# Export API
+# Export API - consolidated approach
 __all__: list[str] = [
-    "FlextFieldCore",
+    "FlextFieldCore",  # Direct access (backward compatibility)
+    "FlextFieldCoreConsolidated",  # Alias for new approach
     "FlextFieldCoreMetadata",  # Backward compatibility alias
-    "FlextFieldMetadata",
-    "FlextFieldRegistry",
-    "FlextFields",
+    "FlextFieldMetadata",  # Direct access (backward compatibility)
+    "FlextFieldRegistry",  # Direct access (backward compatibility)
+    "FlextFields",  # Main consolidated class
     "JsonDict",
     # Legacy field creation functions
     "flext_create_boolean_field",

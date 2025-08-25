@@ -598,6 +598,7 @@ class TestBaseFileWriter:
 
     def test_write_entries_success(self) -> None:
         """Test successful entries writing."""
+
         class TestOutputFile:
             def __init__(self) -> None:
                 self.written_data: list[str] = []
@@ -615,6 +616,7 @@ class TestBaseFileWriter:
 
     def test_write_entries_failure(self) -> None:
         """Test entries writing with failure."""
+
         class TestOutputFile:
             def __init__(self) -> None:
                 self.written_data: list[str] = []

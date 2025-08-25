@@ -550,11 +550,13 @@ class TestEntityMixin:
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"entity_id": "entity-123", "name": "Test Entity 1"},
-            {"entity_id": "entity-456", "name": "Test Entity 2"},
-            {"entity_id": "entity-789", "name": "Test Entity 3"},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"entity_id": "entity-123", "name": "Test Entity 1"},
+                {"entity_id": "entity-456", "name": "Test Entity 2"},
+                {"entity_id": "entity-789", "name": "Test Entity 3"},
+            ]
+        )
 
         class EntityModel(FlextEntityMixin):
             def __init__(self, entity_id: str, name: str) -> None:

@@ -4353,7 +4353,7 @@ Recomendo **aprovação urgente** desta proposta pois:
 #### 1. Implementações No-Op que Fingem Funcionar
 
 ```python
-class FlextNoOpSpan:
+class FlextSpan:
     """No-operation span implementing FlextSpanProtocol."""
     
     def set_tag(self, key: str, value: str) -> None:
@@ -4365,7 +4365,7 @@ class FlextNoOpSpan:
     def finish(self) -> None:
         """No-op finish span."""  # NÃO FAZ NADA!
 
-class FlextNoOpTracer:
+class FlextTracer:
     """No-operation tracer implementing FlextTracerProtocol."""
     
     def inject_context(self, headers: dict[str, str]) -> None:
@@ -4377,7 +4377,7 @@ class FlextNoOpTracer:
 #### 2. Métricas In-Memory que Perdem Dados
 
 ```python
-class FlextInMemoryMetrics:
+class FlextMetrics:
     def __init__(self) -> None:
         self._counters: dict[str, int] = {}  # Perdidos quando processo morre!
         self._gauges: dict[str, float] = {}  # Sem persistência!
@@ -4389,7 +4389,7 @@ class FlextInMemoryMetrics:
 #### 3. Logger que Não É Logger
 
 ```python
-class FlextConsoleLogger:
+class FlextConsole:
     def __init__(self, name: str = "flext-console") -> None:
         self._logger = logging.getLogger(name)  # Usa stdlib logging
         self.name = name
@@ -4462,13 +4462,13 @@ def health_check(self) -> FlextResult[dict[str, object]]:
 #### 7. Global Singleton Anti-Pattern
 
 ```python
-_global_observability: FlextMinimalObservability | None = None
+_global_observability: FlextObservability | None = None
 
-def get_global_observability() -> FlextMinimalObservability:
+def get_global_observability() -> FlextObservability:
     """Get global observability instance (singleton)."""
     global _global_observability
     if _global_observability is None:
-        _global_observability = FlextMinimalObservability()
+        _global_observability = FlextObservability()
     return _global_observability
 ```
 
@@ -4482,7 +4482,7 @@ class _SimpleHealth:  # Classe privada
     def health_check() -> dict[str, object]:
         return {"status": "healthy"}
 
-class FlextMinimalObservability:
+class FlextObservability:
     def __init__(self) -> None:
         self.health = _SimpleHealth()  # Expondo classe privada!
 ```
@@ -4505,27 +4505,27 @@ def start_trace(self, operation_name: str) -> FlextResult[str]:
 
 ```python
 __all__: list[str] = [
-    "ConsoleLogger",  # Alias
-    "FlextConsoleLogger",  # Original
-    "FlextInMemoryMetrics",
-    "FlextMinimalObservability",
-    "FlextNoOpSpan",
-    "FlextNoOpTracer",
-    "FlextSimpleAlerts",
-    "FlextSimpleObservability",
-    "InMemoryMetrics",  # Alias
-    "MinimalObservability",  # Alias
-    "NoOpTracer",  # Alias
-    "SimpleAlerts",  # Alias
+    "FlextConsole",  # Alias
+    "FlextConsole",  # Original
+    "FlextMetrics",
+    "FlextObservability",
+    "FlextSpan",
+    "FlextTracer",
+    "FlextAlerts",
+    "FlextObservability",
+    "FlextMetrics",  # Alias
+    "FlextObservability",  # Alias
+    "FlextTracer",  # Alias
+    "FlextAlerts",  # Alias
     # ... 14 exports para 11 classes!
 ]
 
 # Aliases desnecessários
-ConsoleLogger = FlextConsoleLogger
-NoOpTracer = FlextNoOpTracer
-InMemoryMetrics = FlextInMemoryMetrics
-SimpleAlerts = FlextSimpleAlerts
-MinimalObservability = FlextMinimalObservability
+FlextConsole = FlextConsole
+FlextTracer = FlextTracer
+FlextMetrics = FlextMetrics
+FlextAlerts = FlextAlerts
+FlextObservability = FlextObservability
 ```
 
 ### Violações Identificadas

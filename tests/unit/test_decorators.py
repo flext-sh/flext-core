@@ -1,7 +1,6 @@
 # ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FlextDecorators and decorator functionality."""
 
-
 from __future__ import annotations
 
 import contextlib

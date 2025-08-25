@@ -91,19 +91,19 @@ class TestFlextDecoratorsNewAPI:
         """Test log_exceptions decorator."""
 
         @FlextDecorators.log_exceptions
-        def function_that_fails(should_fail: bool) -> str:
+        def function_that_fails(*, should_fail: bool) -> str:
             if should_fail:
                 msg = "Test error"
                 raise RuntimeError(msg)
             return "success"
 
         # Should work normally for success case
-        result = function_that_fails(False)
+        result = function_that_fails(should_fail=False)
         assert result == "success"
 
         # Should re-raise exceptions but log them
         with pytest.raises(RuntimeError, match="Test error"):
-            function_that_fails(True)
+            function_that_fails(should_fail=True)
 
     def test_validate_arguments_decorator(self) -> None:
         """Test validate_arguments decorator."""
@@ -125,7 +125,7 @@ class TestFlextDecoratorsNewAPI:
         call_count = 0
 
         @FlextDecorators.retry(max_attempts=3, delay=0.01)
-        def unreliable_function(should_fail: bool) -> str:
+        def unreliable_function(*, should_fail: bool) -> str:
             nonlocal call_count
             call_count += 1
 
@@ -135,7 +135,7 @@ class TestFlextDecoratorsNewAPI:
             return f"Success on attempt {call_count}"
 
         # Should succeed after retries
-        result = unreliable_function(True)
+        result = unreliable_function(should_fail=True)
         assert result == "Success on attempt 2"
         assert call_count == 2
 

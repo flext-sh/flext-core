@@ -9,7 +9,7 @@ from pydantic import ConfigDict
 
 from flext_core.exceptions import FlextValidationError
 from flext_core.models import FlextEntity
-from flext_core.payload import FlextEvent
+from flext_core.payload import FlextEvent, FlextPayload
 from flext_core.result import FlextResult
 from flext_core.root_models import (
     FlextEntityId,
@@ -240,11 +240,14 @@ class FlextAggregateRoot(FlextEntity):
                     else {}
                 )
 
-            event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
-                event_type=event_type,
-                event_data=data,
-                aggregate_id=str(self.id),
-                version=int(self.version),
+            event_result: FlextResult[FlextEvent] = cast(
+                "FlextResult[FlextEvent]",
+                FlextPayload.create_event(
+                    event_type=event_type,
+                    event_data=data,
+                    aggregate_id=str(self.id),
+                    version=int(self.version),
+                ),
             )
             if event_result.is_failure:
                 return FlextResult[None].fail(
@@ -285,11 +288,14 @@ class FlextAggregateRoot(FlextEntity):
 
         """
         try:
-            event_result: FlextResult[FlextEvent] = FlextEvent.create_event(
-                event_type=event_type,
-                event_data=event_data,
-                aggregate_id=str(self.id),
-                version=int(self.version),
+            event_result: FlextResult[FlextEvent] = cast(
+                "FlextResult[FlextEvent]",
+                FlextPayload.create_event(
+                    event_type=event_type,
+                    event_data=event_data,
+                    aggregate_id=str(self.id),
+                    version=int(self.version),
+                ),
             )
             if event_result.is_failure:
                 return FlextResult[None].fail(

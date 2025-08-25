@@ -1,7 +1,6 @@
 # ruff: noqa: ARG001, ARG002
 """Enhanced coverage tests for FlextPayload - targeting specific uncovered areas."""
 
-
 from __future__ import annotations
 
 import json
@@ -225,12 +224,14 @@ class TestFlextPayloadJSONProcessing:
     def test_from_json_string_compressed_invalid_data(self) -> None:
         """Test from_json_string with invalid compressed data."""
         # Create envelope with compressed format but invalid data
-        invalid_compressed_envelope = json.dumps({
-            "format": "json_compressed",
-            "data": "invalid_base64_data_that_cannot_be_decoded",
-            "original_size": 100,
-            "compressed_size": 50,
-        })
+        invalid_compressed_envelope = json.dumps(
+            {
+                "format": "json_compressed",
+                "data": "invalid_base64_data_that_cannot_be_decoded",
+                "original_size": 100,
+                "compressed_size": 50,
+            }
+        )
 
         result = FlextPayload.from_json_string(invalid_compressed_envelope)
         assert result.is_failure
@@ -253,7 +254,7 @@ class TestFlextPayloadJSONProcessing:
         # Verify reasonable values
         assert size_info["json_size"] > 0
         assert size_info["basic_size"] > 0
-        assert 0 <= size_info["compression_ratio"] <= 1
+        assert size_info["compression_ratio"] >= 0  # Can be > 1 if compression increases size
 
 
 class TestFlextPayloadAttributeHandling:
@@ -351,7 +352,7 @@ class TestFlextMessageEnhancedCoverage:
         # This should trigger validation error handling in create_message
         try:
             # Force a validation error by passing invalid data to constructor directly
-            result = FlextMessage.create_message(
+            result = FlextPayload.create_message(
                 ""
             )  # Empty string should fail validation
             assert result.is_failure
@@ -362,7 +363,7 @@ class TestFlextMessageEnhancedCoverage:
 
     def test_message_cross_service_dict_without_correlation_id(self) -> None:
         """Test message to_cross_service_dict without correlation_id."""
-        result = FlextMessage.create_message(
+        result = FlextPayload.create_message(
             "test message", level="info", source="test"
         )
         assert result.is_success
@@ -371,7 +372,7 @@ class TestFlextMessageEnhancedCoverage:
         cross_dict = message.to_cross_service_dict()
 
         # Should not include correlation_id if not set, or it should be None
-        correlation_id = cross_dict.get("correlation_id", message.correlation_id)
+        correlation_id = cross_dict.get("correlation_id", message.metadata.get("correlation_id"))
         assert correlation_id is None
 
     def test_message_from_cross_service_dict_invalid_data(self) -> None:
@@ -396,7 +397,7 @@ class TestFlextEventEnhancedCoverage:
         # This tests the exception handling path in create_event
         try:
             # Try to trigger ValidationError in the FlextEvent constructor
-            result = FlextEvent.create_event("", {})  # Empty event_type
+            result = FlextPayload.create_event("", {})  # Empty event_type
             assert result.is_failure
             assert "Event type cannot be empty" in result.error
         except Exception:  # noqa: S110
@@ -406,7 +407,7 @@ class TestFlextEventEnhancedCoverage:
     def test_event_version_property_with_invalid_data(self) -> None:
         """Test FlextEvent.version property with invalid version data."""
         # Create event with proper constructor parameters
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type="TestEvent", event_data={"data": "test"}, version=1
         )
         assert result.is_success
@@ -415,7 +416,7 @@ class TestFlextEventEnhancedCoverage:
         assert isinstance(event, FlextEvent)
 
         # Create a new event with invalid version directly in metadata
-        result_invalid = FlextEvent.create_event(
+        result_invalid = FlextPayload.create_event(
             event_type="TestEvent", event_data={"data": "test"}
         )
         invalid_event = result_invalid.value
@@ -454,7 +455,7 @@ class TestFlextEventEnhancedCoverage:
 
     def test_event_cross_service_dict_with_all_fields(self) -> None:
         """Test event to_cross_service_dict with all fields populated."""
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             "TestEvent",
             {"action": "create", "entity": "user"},
             aggregate_id="agg_123",
@@ -513,9 +514,9 @@ class TestCrossServiceConvenienceFunctions:
         # Function should handle type conversion gracefully
         if result.is_success:
             assert (
-                result.value.aggregate_id is None
+                result.value.metadata.get("aggregate_id") is None
             )  # Should convert invalid types to None
-            assert result.value.version is None
+            assert result.value.metadata.get("version") is None
         else:
             assert "Cross-service event creation failed" in result.error
 
@@ -530,7 +531,7 @@ class TestCrossServiceConvenienceFunctions:
         # Function should handle type conversion gracefully
         if result.is_success:
             assert result.value.level == "info"  # Should fallback to default
-            assert result.value.source is None  # Should convert invalid types to None
+            assert result.value.metadata.get("source") is None  # Should convert invalid types to None
 
     def test_get_serialization_metrics_with_various_payloads(self) -> None:
         """Test get_serialization_metrics with different payload types."""

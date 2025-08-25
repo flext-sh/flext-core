@@ -58,7 +58,7 @@ def sample_data() -> dict[str, Any]:
 
 
 # Helper functions for creating test objects
-def create_test_entity_data(**kwargs: Any) -> dict[str, Any]:
+def create_test_entity_data(**kwargs: object) -> dict[str, Any]:
     """Create test entity data with defaults."""
     defaults = {
         "id": str(uuid.uuid4()),
@@ -70,7 +70,7 @@ def create_test_entity_data(**kwargs: Any) -> dict[str, Any]:
     return defaults
 
 
-def create_test_result_success(data: Any = None) -> FlextResult[Any]:
+def create_test_result_success(data: object = None) -> FlextResult[Any]:
     """Create a successful test result."""
     return FlextResult[Any].ok(data or "test_data")
 

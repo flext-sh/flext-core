@@ -71,6 +71,7 @@ from flext_core import (
     FlextEvent,
     FlextLoggerFactory,
     FlextOperationStatus,
+    FlextPayload,
     FlextResult,
     FlextValue,
 )
@@ -1138,8 +1139,9 @@ async def async_client() -> object:
 @pytest.fixture
 def validators() -> dict[str, Callable[[object], bool]]:
     """Collection of validation functions for testing."""
+    uuid_length = 36
     return {
-        "is_valid_uuid": lambda x: len(str(x)) == 36 and "-" in str(x),
+        "is_valid_uuid": lambda x: len(str(x)) == uuid_length and "-" in str(x),
         "is_valid_email": lambda x: "@" in str(x) and "." in str(x),
         "is_valid_result": lambda x: hasattr(x, "success") and hasattr(x, "data"),
         "is_valid_entity": lambda x: hasattr(x, "id") and hasattr(x, "version"),
@@ -1176,7 +1178,8 @@ def assert_helpers() -> object:
         def assert_entity_valid(entity: FlextEntity) -> None:
             """Assert entity is valid according to business rules."""
             assert entity.id, "Entity must have ID"
-            # Basic entity validation - status check removed as not all entities have status
+            # Basic entity validation - status check removed
+            # as not all entities have status
 
     return AssertHelpers()
 
@@ -1288,7 +1291,7 @@ def event_factory() -> Callable[[str, dict[str, object]], FlextEvent]:
         event_type: str,
         data: dict[str, object] | None = None,
     ) -> FlextEvent:
-        result = FlextEvent.create_event(
+        result = FlextPayload.create_event(
             event_type=event_type,
             event_data=data or {},
         )
