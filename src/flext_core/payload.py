@@ -28,7 +28,7 @@ from flext_core.mixins import (
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-from flext_core.validation import FlextValidators
+from flext_core.validation import FlextPredicates
 
 # Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
 type PayloadProtocol = FlextProtocols.Foundation.Validator[object]
@@ -1204,7 +1204,7 @@ class FlextPayload[T](
         logger = flext_get_logger(__name__)
 
         # Validate message using FlextValidation
-        if not FlextValidators.is_non_empty_string(message):
+        if not FlextPredicates.is_non_empty_string(message):  # type: ignore[attr-defined]
             logger.error("Invalid message - empty or not string")
             return FlextResult[FlextPayload[object]].fail("Message cannot be empty")
 
@@ -1223,7 +1223,7 @@ class FlextPayload[T](
         # Create FlextPayload[str] instance directly
         try:
             instance = cls(data=message, metadata=metadata)  # type: ignore[arg-type]
-            return FlextResult[FlextPayload[object]].ok(instance)
+            return FlextResult[FlextPayload[object]].ok(instance)  # type: ignore[arg-type]
         except (ValidationError, FlextValidationError) as e:
             return FlextResult[FlextPayload[object]].fail(
                 f"Failed to create message: {e}"
@@ -1253,12 +1253,12 @@ class FlextPayload[T](
         logger = flext_get_logger(__name__)
 
         # Validate event_type using FlextValidation
-        if not FlextValidators.is_non_empty_string(event_type):
+        if not FlextPredicates.is_non_empty_string(event_type):  # type: ignore[attr-defined]
             logger.error("Invalid event type - empty or not string")
             return FlextResult[FlextPayload[object]].fail("Event type cannot be empty")
 
         # Validate aggregate_id if provided
-        if aggregate_id is not None and not FlextValidators.is_non_empty_string(
+        if aggregate_id is not None and not FlextPredicates.is_non_empty_string(  # type: ignore[attr-defined]
             aggregate_id
         ):
             logger.error("Invalid aggregate ID - empty string")
@@ -1289,7 +1289,7 @@ class FlextPayload[T](
         # Create FlextPayload[Mapping[str, object]] instance directly
         try:
             instance = cls(data=event_data, metadata=metadata)  # type: ignore[arg-type]
-            return FlextResult[FlextPayload[object]].ok(instance)
+            return FlextResult[FlextPayload[object]].ok(instance)  # type: ignore[arg-type]
         except (ValidationError, FlextValidationError) as e:
             return FlextResult[FlextPayload[object]].fail(
                 f"Failed to create event: {e}"

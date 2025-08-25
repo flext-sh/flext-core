@@ -7,7 +7,7 @@ focusing on real-world DDD scenarios and increasing coverage significantly.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -25,7 +25,7 @@ class OrderAggregate(FlextAggregateRoot):
     customer_id: str
     total_amount: float
     status: str = "pending"
-    items: list[dict[str, Any]] = []
+    items: ClassVar[list[dict[str, Any]]] = []
 
     def place_order(self, items: list[dict[str, Any]]) -> FlextResult[None]:
         """Real business logic - place an order."""
@@ -111,7 +111,7 @@ class UserAggregate(FlextAggregateRoot):
     email: str
     username: str
     is_active: bool = True
-    profile_data: dict[str, Any] = {}
+    profile_data: ClassVar[dict[str, Any]] = {}
 
     def activate_user(self) -> FlextResult[None]:
         """Real business logic - activate user."""

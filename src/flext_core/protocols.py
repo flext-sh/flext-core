@@ -329,9 +329,9 @@ class FlextProtocols:
                 ...
 
             def search(
-                self, 
-                base_dn: str, 
-                search_filter: str, 
+                self,
+                base_dn: str,
+                search_filter: str,
                 scope: str = "subtree"
             ) -> FlextResult[list[dict[str, object]]]:
                 """Perform LDAP search operation."""

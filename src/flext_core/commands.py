@@ -34,7 +34,7 @@ from flext_core.typings import (
     ResultT,
 )
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
-from flext_core.validation import FlextValidators
+from flext_core.validation import FlextPredicates
 
 
 class FlextAbstractCommand(ABC):
@@ -765,10 +765,10 @@ class FlextCommands:
             handler_obj = handler
 
             # Use BASE validators directly - MAXIMIZE base usage
-            if not FlextValidators.is_not_none(command_type):
+            if not FlextPredicates.is_not_none(command_type):  # type: ignore[attr-defined]
                 return FlextResult[None].fail("Command type cannot be None")
 
-            if not FlextValidators.is_not_none(handler_obj):
+            if not FlextPredicates.is_not_none(handler_obj):  # type: ignore[attr-defined]
                 return FlextResult[None].fail("Handler cannot be None")
 
             # Check if already registered

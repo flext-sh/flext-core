@@ -73,7 +73,8 @@ class UserService:
         """Create user using injected dependencies."""
         # Use database to store user
         db_result = self.database.execute_query(
-            f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')"
+            "INSERT INTO users (name, email) VALUES (?, ?)",
+            (name, email)
         )
         if db_result.is_failure:
             return FlextResult[dict[str, Any]].fail(
@@ -362,7 +363,7 @@ class TestFlextServiceRegistrarFunctionality:
         """Test successful factory registration."""
         registrar = FlextServiceRegistrar()
 
-        def factory():
+        def factory() -> DatabaseService:
             return DatabaseService("factory_db")
 
         result = registrar.register_factory("database_factory", factory)
@@ -423,7 +424,7 @@ class TestFlextServiceRegistrarFunctionality:
         registrar = FlextServiceRegistrar()
         service = DatabaseService()
 
-        def factory():
+        def factory() -> DatabaseService:
             return DatabaseService("factory_created")
 
         # Register service first
@@ -543,7 +544,7 @@ class TestFlextServiceRetrieverFunctionality:
     def test_get_service_from_factory(self) -> None:
         """Test retrieving service from factory."""
 
-        def factory():
+        def factory() -> ConfigService:
             return ConfigService("test_env")
 
         services: dict[str, object] = {}
@@ -689,7 +690,7 @@ class TestFlextContainerIntegrationFunctionality:
         container = FlextContainer()
 
         # Service doesn't exist, should create it
-        def factory():
+        def factory() -> DatabaseService:
             return DatabaseService("created_on_demand")
 
         result = container.get_or_create("database", factory)

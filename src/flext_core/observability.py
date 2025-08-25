@@ -177,9 +177,9 @@ FlextSpan = FlextObservability.Span
 FlextTracer = FlextObservability.Tracer
 FlextMetrics = FlextObservability.Metrics
 FlextObservabilitySystem = FlextObservability  # Backward compatibility with old name
-FlextAlerts = Alerts()
+FlextAlerts = FlextObservability.Alerts()
 FlextCoreObservability = FlextObservability.Observability
-_SimpleHealth = Alerts()  # Simple fallback
+_SimpleHealth = FlextObservability.Alerts()  # Simple fallback
 
 
 # Global instance for compatibility - using singleton pattern

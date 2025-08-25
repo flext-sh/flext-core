@@ -17,7 +17,7 @@ import random
 import string
 import uuid
 from datetime import UTC, datetime
-from typing import Any, override
+from typing import override
 
 from flext_core import (
     FlextAggregateRoot,

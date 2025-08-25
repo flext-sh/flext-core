@@ -28,7 +28,7 @@ from flext_core.typings import (
     R,
     T,
 )
-from flext_core.validation import FlextValidators
+from flext_core.validation import FlextPredicates
 
 logger = FlextLoggerFactory.get_logger(__name__)
 
@@ -114,7 +114,7 @@ class FlextUtilities:
         def safe_convert_value_to_str(value: object) -> str:
             """Safely convert any value to string, handling bytes properly."""
             if isinstance(value, bytes):
-                return value.decode('utf-8', errors='replace')
+                return value.decode("utf-8", errors="replace")
             return str(value)
 
         @staticmethod
@@ -126,8 +126,9 @@ class FlextUtilities:
                     str_item = FlextUtilities.LdapConverters.safe_convert_value_to_str(item)
                     if str_item:  # Only add non-empty strings
                         result.append(str_item)
-                except Exception:
-                    # Skip items that can't be converted
+                except Exception as e:
+                    # Log conversion failure and skip items that can't be converted
+                    logger.debug(f"Failed to convert item to string: {item!r} - {e}")
                     continue
             return result
 
@@ -137,42 +138,42 @@ class FlextUtilities:
             if isinstance(source_value, list):
                 typed_list: list[object] = cast("list[object]", source_value)
                 return FlextUtilities.LdapConverters.safe_convert_list_to_strings(typed_list)
-            else:
-                str_value = FlextUtilities.LdapConverters.safe_convert_value_to_str(source_value)
-                return [str_value] if str_value else []
+            str_value = FlextUtilities.LdapConverters.safe_convert_value_to_str(source_value)
+            return [str_value] if str_value else []
 
         @staticmethod
         def safe_convert_external_dict_to_ldap_attributes(
             source_dict: object
         ) -> dict[str, str | list[str]]:
             """Safely convert unknown dict to typed LDAP attributes.
-            
+
             Handles the common case where external systems provide dictionaries
             with unknown value types that need to be converted to LDAP-compatible
             string or list[str] format.
-            
+
             Args:
                 source_dict: Dictionary from external source with unknown value types
-                
+
             Returns:
                 Dictionary with string keys and string/list[str] values
-                
+
             Example:
                 # Input from external system
                 external_data = {
                     'uid': 'john',
-                    'cn': ['John', 'Doe'],  
+                    'cn': ['John', 'Doe'],
                     'mail': 'john@example.com',
                     'binary_attr': b'binary_data'
                 }
-                
+
                 # Safe conversion
                 ldap_attrs = safe_convert_external_dict_to_ldap_attributes(external_data)
                 # Result: {'uid': 'john', 'cn': ['John', 'Doe'], 'mail': 'john@example.com', 'binary_attr': 'binary_data'}
+
             """
             if not isinstance(source_dict, dict):
                 return {}
-            
+
             result: dict[str, str | list[str]] = {}
             for key, value in source_dict.items():
                 str_key = str(key)  # Ensure key is string
@@ -189,7 +190,7 @@ class FlextUtilities:
                     converted_str = FlextUtilities.LdapConverters.safe_convert_value_to_str(value)
                     if converted_str:  # Only add non-empty strings
                         result[str_key] = converted_str
-            
+
             return result
 
         @staticmethod
@@ -1003,7 +1004,7 @@ class FlextUtilities:
     @classmethod
     def is_not_none_guard(cls, value: object | None) -> bool:
         """Type guard for not None values."""
-        return FlextValidators.is_not_none(value)
+        return FlextPredicates.is_not_none(value)  # type: ignore[attr-defined,no-any-return]
 
     # =================================================================
     # INTEGER CONVERSION UTILITIES - DRY REFACTORING

@@ -6,6 +6,7 @@ focusing on real-world scenarios and increasing coverage to near 100%.
 
 from __future__ import annotations
 
+import ast
 from typing import Any
 
 import pytest
@@ -89,7 +90,7 @@ class DatabaseMixin:
         for entry in self.operations_log:
             if f"SAVE:{record_id}:" in entry:
                 data_part = entry.split(":", 2)[2]
-                return FlextResult[None].ok(eval(data_part))  # Safe in tests
+                return FlextResult[None].ok(ast.literal_eval(data_part))
         return FlextResult[None].fail(f"Record {record_id} not found")
 
     def get_connection_info(self) -> dict[str, Any]:

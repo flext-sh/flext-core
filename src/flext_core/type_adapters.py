@@ -51,57 +51,65 @@ ConnectionString = str
 Percentage = float
 
 # =============================================================================
-# TYPEADAPTER FACTORY FOR CONSISTENT CREATION
+# FLEXT TIER 1 CONSOLIDATION PATTERN - SINGLE MAIN EXPORT
 # =============================================================================
 
 
-class TypeAdapterFactory:
-    """Factory for creating TypeAdapter instances with consistent configuration.
+class FlextTypeAdapters:
+    """FLEXT Tier 1 consolidated class for type adapter patterns.
 
-    This centralizes TypeAdapter creation with standard configuration
-    across the FLEXT ecosystem, ensuring consistent validation behavior.
+    Consolidates ALL type adapter functionality following FLEXT architectural patterns.
+    Provides centralized access to type adapters, validation, serialization, and schema generation.
     """
 
-    @staticmethod
-    def create_adapter[T](type_: type[T]) -> TypeAdapter[T]:
-        """Create TypeAdapter with standard FLEXT configuration.
+    # Nested consolidated classes for organization
+    class Factory:
+        """Factory for creating TypeAdapter instances with consistent configuration.
 
-        Args:
-            type_: The type to create an adapter for
-
-        Returns:
-            Configured TypeAdapter instance
-
+        This centralizes TypeAdapter creation with standard configuration
+        across the FLEXT ecosystem, ensuring consistent validation behavior.
         """
-        return TypeAdapter(type_)
 
-    @staticmethod
-    def create_list_adapter(_item_type: type) -> TypeAdapter[list[object]]:
-        """Create TypeAdapter for lists.
+        @staticmethod
+        def create_adapter[T](type_: type[T]) -> TypeAdapter[T]:
+            """Create TypeAdapter with standard FLEXT configuration.
 
-        Args:
-            item_type: The type of items in the list
+            Args:
+                type_: The type to create an adapter for
 
-        Returns:
-            TypeAdapter for List[T]
+            Returns:
+                Configured TypeAdapter instance
 
-        """
-        # Use list[object] as the runtime type since we can't use variables as types
-        return TypeAdapter(list[object])
+            """
+            return TypeAdapter(type_)
 
-    @staticmethod
-    def create_dict_adapter(_value_type: type) -> TypeAdapter[dict[str, object]]:
-        """Create TypeAdapter for dictionaries.
+        @staticmethod
+        def create_list_adapter(_item_type: type) -> TypeAdapter[list[object]]:
+            """Create TypeAdapter for lists.
 
-        Args:
-            value_type: The type of values in the dict
+            Args:
+                item_type: The type of items in the list
 
-        Returns:
-            TypeAdapter for Dict[str, T]
+            Returns:
+                TypeAdapter for List[T]
 
-        """
-        # Use dict[str, object] as the runtime type since we can't use variables as types
-        return TypeAdapter(dict[str, object])
+            """
+            # Use list[object] as the runtime type since we can't use variables as types
+            return TypeAdapter(list[object])
+
+        @staticmethod
+        def create_dict_adapter(_value_type: type) -> TypeAdapter[dict[str, object]]:
+            """Create TypeAdapter for dictionaries.
+
+            Args:
+                value_type: The type of values in the dict
+
+            Returns:
+                TypeAdapter for Dict[str, T]
+
+            """
+            # Use dict[str, object] as the runtime type since we can't use variables as types
+            return TypeAdapter(dict[str, object])
 
 
 # =============================================================================
@@ -533,12 +541,12 @@ __all__ = [
     # Core types - removed conflicting types that exist elsewhere with proper validation
     # EntityId, ErrorCode, ErrorMessage, Host, Port, Metadata, Timestamp, Version moved to proper modules
     "EventList",
+    # Factory and helpers
+    "FlextTypeAdapters",
     "MigrationHelpers",
     "Percentage",
     "SchemaHelpers",
     "SerializationHelpers",
     "TypeAdapterExamples",
-    # Factory and helpers
-    "TypeAdapterFactory",
     "ValidationAdapters",
 ]

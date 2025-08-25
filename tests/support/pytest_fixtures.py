@@ -102,19 +102,19 @@ def edge_cases() -> type[EdgeCaseGenerators]:
 
 
 @pytest.fixture
-def test_user():
+def test_user() -> object:
     """Provide single test user instance."""
     return UserFactory()
 
 
 @pytest.fixture
-def test_users():
+def test_users() -> list[object]:
     """Provide batch of test users."""
     return UserFactory.create_batch(5)
 
 
 @pytest.fixture
-def test_config():
+def test_config() -> object:
     """Provide test configuration instance."""
     return ConfigFactory()
 

@@ -106,6 +106,7 @@ class StressTestRunner:
         self,
         function: Callable[[], Any],
         iterations: int = 1000,
+        *,  # concurrent is keyword-only to avoid boolean trap
         concurrent: bool = False,
         operation_name: str = "load_test",
     ) -> dict[str, Any]:
@@ -188,7 +189,7 @@ class PerformanceProfiler:
         self.measurements: list[dict[str, Any]] = []
 
     @contextmanager
-    def profile_memory(self, operation_name: str = "operation"):
+    def profile_memory(self, operation_name: str = "operation") -> Generator[None]:
         """Profile memory usage during operation."""
         tracemalloc.start()
         gc.collect()  # Clean up before measurement
@@ -367,7 +368,7 @@ class BenchmarkUtils:
 
         for thread_count in thread_counts:
 
-            def parallel_execution(workers=thread_count):
+            def parallel_execution(workers: int = thread_count) -> list[T]:
                 with concurrent.futures.ThreadPoolExecutor(
                     max_workers=workers,
                 ) as executor:
@@ -482,7 +483,7 @@ class AsyncBenchmark:
 
         for concurrency in concurrency_levels:
 
-            async def concurrent_execution(workers=concurrency):
+            async def concurrent_execution(workers: int = concurrency) -> list[Any]:
                 tasks = [func(*args, **kwargs) for _ in range(workers)]
                 return await asyncio.gather(*tasks)
 

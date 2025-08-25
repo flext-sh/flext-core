@@ -46,16 +46,16 @@ class TestHelperFunctionsCoverage:
             def __init__(self) -> None:
                 self.data = {"test": "value"}
 
-            def __iter__(self):
+            def __iter__(self) -> object:
                 return iter(self.data)
 
-            def keys(self):
+            def keys(self) -> object:
                 return self.data.keys()
 
-            def __getitem__(self, key):
+            def __getitem__(self, key: str) -> object:
                 return self.data[key]
 
-            def items(self):
+            def items(self) -> object:
                 return self.data.items()
 
         dict_like = DictLike()

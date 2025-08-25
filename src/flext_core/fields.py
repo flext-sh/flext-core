@@ -37,7 +37,7 @@ JsonDict = FlextTypes.Core.JsonDict
 # =============================================================================
 
 
-class FlextFieldCore(
+class FlextField(
     BaseModel,
 ):
     """Immutable field definition with validation and metadata.
@@ -518,8 +518,8 @@ class FlextFieldMetadata(BaseModel):
         )
 
     @classmethod
-    def from_field(cls, field: FlextFieldCore) -> FlextFieldMetadata:
-        """Create metadata from a FlextFieldCore instance."""
+    def from_field(cls, field: FlextField) -> FlextFieldMetadata:
+        """Create metadata from a FlextField instance."""
         return cls(
             field_id=field.field_id,
             field_name=field.field_name,
@@ -583,10 +583,10 @@ class FlextFieldRegistry:
 
     def __init__(self) -> None:
         """Initialize empty registry."""
-        self._fields: dict[str, FlextFieldCore] = {}
+        self._fields: dict[str, FlextField] = {}
         self._logger = FlextLoggerFactory.get_logger(__name__)
 
-    def register_field(self, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
+    def register_field(self, field: FlextField) -> FlextResult[FlextField]:
         """Register field in registry.
 
         Backwards compatible: return FlextResult with the registered field on success.
@@ -594,29 +594,29 @@ class FlextFieldRegistry:
         try:
             self._fields[field.field_id] = field
             self._logger.info(f"Registered field: {field.field_id}")
-            return FlextResult[FlextFieldCore].ok(field)
+            return FlextResult[FlextField].ok(field)
         except Exception as exc:  # pragma: no cover - defensive
             self._logger.exception(f"Failed to register field {field.field_id}")
-            return FlextResult[FlextFieldCore].fail(str(exc))
+            return FlextResult[FlextField].fail(str(exc))
 
-    def get_field_by_id(self, field_id: str) -> FlextResult[FlextFieldCore]:
+    def get_field_by_id(self, field_id: str) -> FlextResult[FlextField]:
         """Get field by ID from registry.
 
         Returns FlextResult with the field on success or failure message.
         """
         if field_id not in self._fields:
-            return FlextResult[FlextFieldCore].fail(f"Field not found: {field_id}")
-        return FlextResult[FlextFieldCore].ok(self._fields[field_id])
+            return FlextResult[FlextField].fail(f"Field not found: {field_id}")
+        return FlextResult[FlextField].ok(self._fields[field_id])
 
-    def get_field_by_name(self, field_name: str) -> FlextResult[FlextFieldCore]:
+    def get_field_by_name(self, field_name: str) -> FlextResult[FlextField]:
         """Get field by name from registry.
 
         Returns FlextResult with the field on success or failure message.
         """
         for field in self._fields.values():
             if field.field_name == field_name:
-                return FlextResult[FlextFieldCore].ok(field)
-        return FlextResult[FlextFieldCore].fail(f"Field not found: {field_name}")
+                return FlextResult[FlextField].ok(field)
+        return FlextResult[FlextField].fail(f"Field not found: {field_name}")
 
     def list_field_names(self) -> list[str]:
         """List all registered field names."""
@@ -647,9 +647,9 @@ class FlextFieldRegistry:
             return True
         return False
 
-    def get_fields_by_type(self, type_str: str) -> list[FlextFieldCore]:
+    def get_fields_by_type(self, type_str: str) -> list[FlextField]:
         """Get all fields of a specific type."""
-        matching_fields: list[FlextFieldCore] = []
+        matching_fields: list[FlextField] = []
         for field in self._fields.values():
             if isinstance(field.field_type, FlextFieldType):
                 field_type_str = field.field_type.value
@@ -660,12 +660,12 @@ class FlextFieldRegistry:
 
         return matching_fields
 
-    def get_field(self, field_id: str) -> FlextFieldCore | None:
+    def get_field(self, field_id: str) -> FlextField | None:
         # Backwards compatible variant: return the raw field object or None.
         # Keep a thin wrapper method `get_field_by_id` that returns FlextResult.
         return self._fields.get(field_id)
 
-    def get_all_fields(self) -> dict[str, FlextFieldCore]:
+    def get_all_fields(self) -> dict[str, FlextField]:
         return dict(self._fields)
 
     def validate_all_fields(self, data: dict[str, object]) -> FlextResult[None]:
@@ -788,7 +788,7 @@ class FlextFields:
         field_id: FlextFieldId,
         field_name: FlextFieldName,
         **field_config: object,
-    ) -> FlextFieldCore:
+    ) -> FlextField:
         """Create string field with validation."""
         # Extract and validate field configuration values with type safety
         min_length_val = field_config.get("min_length")
@@ -830,7 +830,7 @@ class FlextFields:
             example_val
         )
 
-        return FlextFieldCore(
+        return FlextField(
             field_id=field_id,
             field_name=field_name,
             field_type=FlextFieldType.STRING.value,
@@ -854,7 +854,7 @@ class FlextFields:
         field_id: FlextFieldId,
         field_name: FlextFieldName,
         **field_config: object,
-    ) -> FlextFieldCore:
+    ) -> FlextField:
         """Create integer field with validation."""
         # Extract and validate field configuration values with type safety
         min_value_val = field_config.get("min_value")
@@ -880,7 +880,7 @@ class FlextFields:
         default_value_safe = _safe_cast_default_value(default_val)
         example_safe = _safe_cast_default_value(example_val)
 
-        return FlextFieldCore(
+        return FlextField(
             field_id=field_id,
             field_name=field_name,
             field_type=FlextFieldType.INTEGER.value,
@@ -902,7 +902,7 @@ class FlextFields:
         field_id: FlextFieldId,
         field_name: FlextFieldName,
         **field_config: object,
-    ) -> FlextFieldCore:
+    ) -> FlextField:
         """Create boolean field with validation."""
         # Extract and validate field configuration values with type safety
         description_val = field_config.get("description")
@@ -924,7 +924,7 @@ class FlextFields:
         default_value_safe = _safe_cast_default_value(default_val)
         example_safe = _safe_cast_default_value(example_val)
 
-        return FlextFieldCore(
+        return FlextField(
             field_id=field_id,
             field_name=field_name,
             field_type=FlextFieldType.BOOLEAN.value,
@@ -939,27 +939,27 @@ class FlextFields:
         )
 
     @classmethod
-    def register_field(cls, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
+    def register_field(cls, field: FlextField) -> FlextResult[FlextField]:
         """Register field in global registry (returns FlextResult)."""
         if cls._registry is None:
-            return FlextResult[FlextFieldCore].fail("Registry not initialized")
+            return FlextResult[FlextField].fail("Registry not initialized")
         return cls._registry.register_field(field)
 
     @classmethod
-    def get_field_by_id(cls, field_id: FlextFieldId) -> FlextResult[FlextFieldCore]:
+    def get_field_by_id(cls, field_id: FlextFieldId) -> FlextResult[FlextField]:
         """Get field by ID from global registry (returns FlextResult)."""
         if cls._registry is None:
-            return FlextResult[FlextFieldCore].fail("Registry not initialized")
+            return FlextResult[FlextField].fail("Registry not initialized")
         return cls._registry.get_field_by_id(field_id)
 
     @classmethod
     def get_field_by_name(
         cls,
         field_name: FlextFieldName,
-    ) -> FlextResult[FlextFieldCore]:
+    ) -> FlextResult[FlextField]:
         """Get field by name from global registry (returns FlextResult)."""
         if cls._registry is None:
-            return FlextResult[FlextFieldCore].fail("Registry not initialized")
+            return FlextResult[FlextField].fail("Registry not initialized")
         return cls._registry.get_field_by_name(field_name)
 
     @classmethod
@@ -984,17 +984,17 @@ class FlextFields:
 
     # Convenience wrapper methods
     @classmethod
-    def string_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+    def string_field(cls, name: str, **kwargs: object) -> FlextField:
         """Create string field with name (convenience method)."""
         return cls.create_string_field(field_id=name, field_name=name, **kwargs)
 
     @classmethod
-    def integer_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+    def integer_field(cls, name: str, **kwargs: object) -> FlextField:
         """Create integer field with name (convenience method)."""
         return cls.create_integer_field(field_id=name, field_name=name, **kwargs)
 
     @classmethod
-    def boolean_field(cls, name: str, **kwargs: object) -> FlextFieldCore:
+    def boolean_field(cls, name: str, **kwargs: object) -> FlextField:
         """Create boolean field with name (convenience method)."""
         return cls.create_boolean_field(field_id=name, field_name=name, **kwargs)
 
@@ -1032,24 +1032,24 @@ class FlextFields:
 # =============================================================================
 
 # Backward compatibility for renamed classes
-FlextFieldCoreMetadata = FlextFieldMetadata
+# FlextFieldMetadata already exists - no aliasing needed
 
 # =============================================================================
 # LEGACY FIELD CREATION FUNCTIONS - Backward compatibility
 # =============================================================================
 
 
-def flext_create_string_field(name: str, **kwargs: object) -> FlextFieldCore:
+def flext_create_string_field(name: str, **kwargs: object) -> FlextField:
     """Create string field (legacy function)."""
     return FlextFields.string_field(name, **kwargs)
 
 
-def flext_create_integer_field(name: str, **kwargs: object) -> FlextFieldCore:
+def flext_create_integer_field(name: str, **kwargs: object) -> FlextField:
     """Create integer field (legacy function)."""
     return FlextFields.integer_field(name, **kwargs)
 
 
-def flext_create_boolean_field(name: str, **kwargs: object) -> FlextFieldCore:
+def flext_create_boolean_field(name: str, **kwargs: object) -> FlextField:
     """Create boolean field (legacy function)."""
     return FlextFields.boolean_field(name, **kwargs)
 
@@ -1059,7 +1059,7 @@ def flext_create_boolean_field(name: str, **kwargs: object) -> FlextFieldCore:
 # =============================================================================
 
 # Link the outer classes to FlextFields for consolidated access
-FlextFields.FieldCore = FlextFieldCore
+FlextFields.FieldCore = FlextField
 FlextFields.FieldMetadata = FlextFieldMetadata
 FlextFields.FieldRegistry = FlextFieldRegistry
 
@@ -1067,8 +1067,9 @@ FlextFields.FieldRegistry = FlextFieldRegistry
 FlextFields._registry = FlextFieldRegistry()
 
 # Backward compatibility aliases (maintain existing imports)
-FlextFieldCoreConsolidated = FlextFields  # New consolidated approach
-# FlextFieldCoreMetadata = FlextFieldMetadata  # Backward compatibility - removed duplicate
+FlextFieldCore = FlextField  # CRITICAL: Backward compatibility for renamed class
+FlextFieldConsolidated = FlextFields  # New consolidated approach
+# FlextFieldMetadata = FlextFieldMetadata  # Backward compatibility - removed duplicate
 
 # =============================================================================
 # EXPORTS - Clean public API following guidelines
@@ -1076,9 +1077,9 @@ FlextFieldCoreConsolidated = FlextFields  # New consolidated approach
 
 # Export API - consolidated approach
 __all__: list[str] = [
-    "FlextFieldCore",  # Direct access (backward compatibility)
-    "FlextFieldCoreConsolidated",  # Alias for new approach
-    "FlextFieldCoreMetadata",  # Backward compatibility alias
+    "FlextField",  # Direct access (backward compatibility)
+    "FlextFieldConsolidated",  # Alias for new approach
+    "FlextFieldCore",  # CRITICAL: Backward compatibility for renamed class
     "FlextFieldMetadata",  # Direct access (backward compatibility)
     "FlextFieldRegistry",  # Direct access (backward compatibility)
     "FlextFields",  # Main consolidated class
