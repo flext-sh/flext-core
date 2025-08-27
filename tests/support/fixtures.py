@@ -19,7 +19,6 @@ from flext_core import (
     FlextFieldType,
     FlextResult,
     FlextTypes,
-    get_flext_container,
 )
 from tests.support.factories import FlextResultFactory, UserDataFactory
 
@@ -194,7 +193,7 @@ class FlextTestFixtures:
     def clear_global_container() -> Generator[None]:
         """Clear global container before each test for isolation."""
         # Reset global container state
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         container.clear()
 
         yield

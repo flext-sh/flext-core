@@ -340,9 +340,7 @@ class TestConfigPerformance:
     def test_merge_performance(self, benchmark: object) -> None:
         """Benchmark config merging performance."""
 
-        def merge_many_configs() -> list[
-            FlextResult[dict[str, object]]
-        ]:
+        def merge_many_configs() -> list[FlextResult[dict[str, object]]]:
             results = []
             for _i in range(50):
                 config1 = ConfigFactory()

@@ -60,7 +60,6 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import Final, cast, override
 
-# FLEXT Core imports - carefully ordered to avoid circular dependencies
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -168,49 +167,59 @@ class FlextHandlers:
         # Add handler-specific constant categories
 
         class Handler:
-            """Handler-specific execution constants."""
+            """Handler-specific execution constants from FlextConstants."""
 
-            # Execution parameters
+            # Execution parameters from centralized constants
             DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
             MAX_RETRIES: Final[int] = FlextConstants.Defaults.MAX_RETRIES
-            RETRY_DELAY: Final[float] = 1.0
+            RETRY_DELAY: Final[float] = FlextConstants.Handlers.RETRY_DELAY
             DEFAULT_BATCH_SIZE: Final[int] = (
                 FlextConstants.Performance.DEFAULT_BATCH_SIZE
             )
 
-            # Chain limits
-            MAX_CHAIN_HANDLERS: Final[int] = 50
-            MAX_PIPELINE_STAGES: Final[int] = 20
-
-            # Performance thresholds
-            SLOW_HANDLER_THRESHOLD: Final[float] = (
-                FlextConstants.Performance.SLOW_QUERY_THRESHOLD
+            # Chain limits from centralized constants
+            MAX_CHAIN_HANDLERS: Final[int] = FlextConstants.Handlers.MAX_CHAIN_HANDLERS
+            MAX_PIPELINE_STAGES: Final[int] = (
+                FlextConstants.Handlers.MAX_PIPELINE_STAGES
             )
-            MEMORY_THRESHOLD_MB: Final[int] = 100
-            METRICS_COLLECTION_INTERVAL: Final[int] = 60
+
+            # Performance thresholds from centralized constants
+            SLOW_HANDLER_THRESHOLD: Final[float] = (
+                FlextConstants.Handlers.SLOW_HANDLER_THRESHOLD
+            )
+            MEMORY_THRESHOLD_MB: Final[int] = (
+                FlextConstants.Handlers.MEMORY_THRESHOLD_MB
+            )
+            METRICS_COLLECTION_INTERVAL: Final[int] = (
+                FlextConstants.Handlers.METRICS_COLLECTION_INTERVAL
+            )
 
             class States:
-                """Handler execution state constants."""
+                """Handler execution state constants from FlextConstants."""
 
-                IDLE: Final[str] = "idle"
-                PROCESSING: Final[str] = "processing"
-                COMPLETED: Final[str] = "completed"
-                FAILED: Final[str] = "failed"
-                TIMEOUT: Final[str] = "timeout"
-                PAUSED: Final[str] = "paused"
+                IDLE: Final[str] = FlextConstants.Handlers.HANDLER_STATE_IDLE
+                PROCESSING: Final[str] = (
+                    FlextConstants.Handlers.HANDLER_STATE_PROCESSING
+                )
+                COMPLETED: Final[str] = FlextConstants.Handlers.HANDLER_STATE_COMPLETED
+                FAILED: Final[str] = FlextConstants.Handlers.HANDLER_STATE_FAILED
+                TIMEOUT: Final[str] = FlextConstants.Handlers.HANDLER_STATE_TIMEOUT
+                PAUSED: Final[str] = FlextConstants.Handlers.HANDLER_STATE_PAUSED
 
             class Types:
-                """Handler classification constants."""
+                """Handler classification constants from FlextConstants."""
 
-                BASIC: Final[str] = "basic"
-                VALIDATING: Final[str] = "validating"
-                AUTHORIZING: Final[str] = "authorizing"
-                METRICS: Final[str] = "metrics"
-                COMMAND: Final[str] = "command"
-                QUERY: Final[str] = "query"
-                EVENT: Final[str] = "event"
-                PIPELINE: Final[str] = "pipeline"
-                CHAIN: Final[str] = "chain"
+                BASIC: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_BASIC
+                VALIDATING: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_VALIDATING
+                AUTHORIZING: Final[str] = (
+                    FlextConstants.Handlers.HANDLER_TYPE_AUTHORIZING
+                )
+                METRICS: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_METRICS
+                COMMAND: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_COMMAND
+                QUERY: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_QUERY
+                EVENT: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_EVENT
+                PIPELINE: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_PIPELINE
+                CHAIN: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_CHAIN
 
     # =========================================================================
     # TYPES - Handler type definitions extending FlextTypes

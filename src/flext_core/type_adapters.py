@@ -330,8 +330,8 @@ class FlextTypeAdapters:
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
 
-                min_port = 1
-                max_port = 65535
+                min_port = FlextConstants.Network.MIN_PORT
+                max_port = FlextConstants.Network.MAX_PORT
                 if not (min_port <= port <= max_port):
                     return FlextResult[tuple[str, int]].fail(
                         f"Port must be between {min_port} and {max_port}",

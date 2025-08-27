@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult, get_flext_container
+from flext_core import FlextContainer, FlextResult
 from flext_core.legacy import (
     FlextServiceKey,
     FlextServiceRegistrar,
@@ -39,12 +39,16 @@ class DatabaseService:
         self.connected = True
         return FlextResult[None].ok(None)
 
-    def execute_query(self, query: str, *args: object) -> FlextResult[list[dict[str, Any]]]:
+    def execute_query(
+        self, query: str, *args: object
+    ) -> FlextResult[list[dict[str, Any]]]:
         """Execute database query with parameters."""
         if not self.connected:
             return FlextResult[list[dict[str, Any]]].fail("Database not connected")
         params_str = ", ".join(str(arg) for arg in args) if args else ""
-        result_msg = f"Executed: {query}" + (f" with params: [{params_str}]" if params_str else "")
+        result_msg = f"Executed: {query}" + (
+            f" with params: [{params_str}]" if params_str else ""
+        )
         return FlextResult[list[dict[str, Any]]].ok([{"result": result_msg}])
 
 
@@ -890,8 +894,8 @@ class TestGlobalContainerFunctionality:
 
     def test_get_flext_container_singleton(self) -> None:
         """Test get_flext_container returns singleton instance."""
-        container1 = get_flext_container()
-        container2 = get_flext_container()
+        container1 = FlextContainer.get_global()
+        container2 = FlextContainer.get_global()
 
         assert container1 is container2
         assert isinstance(container1, FlextContainer)
@@ -899,16 +903,16 @@ class TestGlobalContainerFunctionality:
     def test_global_container_persistence(self) -> None:
         """Test global container persists services across calls."""
         # Clear any existing services first
-        global_container = get_flext_container()
+        global_container = FlextContainer.get_global()
         global_container.clear()
 
         # Register service through first reference
-        container1 = get_flext_container()
+        container1 = FlextContainer.get_global()
         service = DatabaseService("global_test")
         container1.register("global_db", service)
 
         # Retrieve service through second reference
-        container2 = get_flext_container()
+        container2 = FlextContainer.get_global()
         retrieved = container2.get("global_db")
 
         assert retrieved.is_success
@@ -917,7 +921,7 @@ class TestGlobalContainerFunctionality:
     def test_global_container_isolation_per_test(self) -> None:
         """Test that each test can use global container independently."""
         # Note: This test assumes test isolation is handled by test framework
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Register test-specific service
         test_service = EmailService("test_isolation")

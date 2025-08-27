@@ -10,7 +10,7 @@ from typing import Protocol, TypeGuard, override
 
 from flext_core.models import FlextValue
 from flext_core.result import FlextResult
-from flext_core.typings import EntryT
+from flext_core.typings import TEntry
 
 
 class FlextEntryType(Enum):
@@ -38,13 +38,13 @@ class FlextEntryValidator(Protocol):
         ...
 
 
-class FlextBaseProcessor[EntryT](ABC):
+class FlextBaseProcessor[TEntry](ABC):
     """Base processor for entries with configurable validation."""
 
     def __init__(self, validator: FlextEntryValidator | None = None) -> None:
         """Initialize processor with optional validator."""
         self.validator = validator
-        self._extracted_entries: list[EntryT] = []
+        self._extracted_entries: list[TEntry] = []
 
     @abstractmethod
     def _extract_identifier(self, content: str) -> FlextResult[str]:
@@ -58,7 +58,7 @@ class FlextBaseProcessor[EntryT](ABC):
         clean_content: str,
         original_content: str,
         identifier: str,
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[TEntry]:
         """Create concrete entry instance."""
         ...
 
@@ -67,12 +67,12 @@ class FlextBaseProcessor[EntryT](ABC):
         content: str,
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[TEntry]:
         """Extract entry information from content with type safety."""
         # Step 1: Extract and validate identifier
         identifier_validation = self._validate_identifier_extraction(content)
         if identifier_validation.is_failure:
-            return FlextResult[EntryT].fail(
+            return FlextResult[TEntry].fail(
                 identifier_validation.error or "Identifier validation failed",
             )
 
@@ -94,10 +94,10 @@ class FlextBaseProcessor[EntryT](ABC):
 
         entry = entry_validation.value
         if entry is None:
-            return FlextResult[EntryT].fail("Entry validation returned None")
+            return FlextResult[TEntry].fail("Entry validation returned None")
 
         self._extracted_entries.append(entry)
-        return FlextResult[EntryT].ok(entry)
+        return FlextResult[TEntry].ok(entry)
 
     def _validate_identifier_extraction(self, content: str) -> FlextResult[str]:
         """Validate identifier extraction step."""
@@ -120,7 +120,7 @@ class FlextBaseProcessor[EntryT](ABC):
         clean_content: str,
         content: str,
         identifier: str,
-    ) -> FlextResult[EntryT]:
+    ) -> FlextResult[TEntry]:
         """Validate an entry creation step."""
         entry_result = self._create_entry(
             entry_type,
@@ -133,28 +133,28 @@ class FlextBaseProcessor[EntryT](ABC):
 
         entry = entry_result.value
         if entry is None:
-            return FlextResult[EntryT].fail("Entry creation returned None")
+            return FlextResult[TEntry].fail("Entry creation returned None")
 
         if self.validator and not self.validator.is_valid(entry):
-            return FlextResult[EntryT].fail(f"Entry validation failed for {identifier}")
+            return FlextResult[TEntry].fail(f"Entry validation failed for {identifier}")
 
-        return FlextResult[EntryT].ok(entry)
+        return FlextResult[TEntry].ok(entry)
 
     def process_content_lines(
         self,
         lines: list[str],
         entry_type: str,
         prefix: str = "",
-    ) -> FlextResult[list[EntryT]]:
+    ) -> FlextResult[list[TEntry]]:
         """Process multiple content lines and return successful entries."""
-        results: list[EntryT] = []
+        results: list[TEntry] = []
         errors: list[str] = []
 
         for line in lines:
             if not line.strip():
                 continue
 
-            result: FlextResult[EntryT] = self.extract_entry_info(
+            result: FlextResult[TEntry] = self.extract_entry_info(
                 line,
                 entry_type,
                 prefix,
@@ -166,14 +166,14 @@ class FlextBaseProcessor[EntryT](ABC):
                 errors.append(f"Line '{line[:50]}...': {result.error}")
 
         if errors and not results:
-            return FlextResult[list[EntryT]].fail(
+            return FlextResult[list[TEntry]].fail(
                 f"All entries failed: {'; '.join(errors[:3])}"
             )
 
         # Return success even if some entries failed (partial success)
-        return FlextResult[list[EntryT]].ok(results)
+        return FlextResult[list[TEntry]].ok(results)
 
-    def get_extracted_entries(self) -> list[EntryT]:
+    def get_extracted_entries(self) -> list[TEntry]:
         """Get all successfully extracted entries."""
         return self._extracted_entries.copy()
 
@@ -182,7 +182,7 @@ class FlextBaseProcessor[EntryT](ABC):
         self._extracted_entries.clear()
 
 
-class FlextRegexProcessor(FlextBaseProcessor[EntryT]):
+class FlextRegexProcessor(FlextBaseProcessor[TEntry]):
     """Regex-based processor for entries with pattern matching."""
 
     def __init__(
@@ -278,14 +278,14 @@ class FlextBaseConfigManager:
         return FlextResult[bool].ok(data=True)
 
 
-class FlextBaseSorter[EntryT]:
+class FlextBaseSorter[TEntry]:
     """Base sorter for entries with configurable sort key extraction."""
 
-    def __init__(self, key_extractor: Callable[[EntryT], object] | None = None) -> None:
+    def __init__(self, key_extractor: Callable[[TEntry], object] | None = None) -> None:
         """Initialize with optional key extractor function."""
-        self.key_extractor: Callable[[EntryT], object] = key_extractor or (lambda x: x)
+        self.key_extractor: Callable[[TEntry], object] = key_extractor or (lambda x: x)
 
-    def sort_entries(self, entries: list[EntryT]) -> list[EntryT]:
+    def sort_entries(self, entries: list[TEntry]) -> list[TEntry]:
         """Sort entries using the configured key extractor."""
         try:
             entries.sort(key=self.key_extractor)  # type: ignore[arg-type]

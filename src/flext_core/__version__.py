@@ -22,6 +22,9 @@ RELEASE_DATE: str = "2025-06-27"
 BUILD_TYPE: str = "stable"
 
 # Compatibility information
+# These need to be defined here to avoid circular imports
+# since __version__ is imported before constants in __init__.py
+# The values are duplicated in FlextConstants.Core for reference
 MIN_PYTHON_VERSION: tuple[int, int, int] = (3, 13, 0)
 MAX_PYTHON_VERSION: tuple[int, int, int] = (3, 14, 0)
 

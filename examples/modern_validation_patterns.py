@@ -15,17 +15,15 @@ Key Benefits:
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import (
     FlextResult,
     FlextTypes,
-    get_logger,
 )
 from flext_core.legacy import validate_length
+from flext_core.loggings import FlextLogger
 
 # Logger using centralized logging
-logger = get_logger("flext.examples.validation")
+logger = FlextLogger("flext.examples.validation")
 
 
 def flext_validate_string(
@@ -35,13 +33,7 @@ def flext_validate_string(
     max_length: FlextTypes.Core.Integer = 1000,
 ) -> FlextResult[FlextTypes.Core.String]:
     """Validate string with length constraints."""
-    if not isinstance(value, str):
-        return FlextResult[FlextTypes.Core.String].fail(
-            f"{field_name} must be a string"
-        )
-    length_result = cast(
-        "FlextResult[str]", validate_length(value, min_length, max_length)
-    )
+    length_result = validate_length(value, min_length, max_length)
     if length_result.is_success:
         return FlextResult[FlextTypes.Core.String].ok(value)
     return FlextResult[FlextTypes.Core.String].fail(str(length_result.error))
@@ -54,8 +46,6 @@ def flext_validate_numeric(
     max_val: FlextTypes.Core.Float = 1000.0,
 ) -> FlextResult[FlextTypes.Core.Float]:
     """Validate numeric value with range constraints."""
-    if not isinstance(value, (int, float)):
-        return FlextResult[FlextTypes.Core.Float].fail(f"{field_name} must be numeric")
     if value < min_val or value > max_val:
         return FlextResult[FlextTypes.Core.Float].fail(
             f"{field_name} must be between {min_val} and {max_val}"
@@ -67,9 +57,6 @@ def flext_validate_email(
     email: FlextTypes.Core.String, _field_name: FlextTypes.Core.String
 ) -> FlextResult[FlextTypes.Core.String]:
     """Validate email address using centralized patterns."""
-    if not isinstance(email, str):
-        return FlextResult[FlextTypes.Core.String].fail("Email must be a string")
-
     email_clean = email.strip().lower()
 
     if not email_clean:

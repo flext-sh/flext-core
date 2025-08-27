@@ -23,15 +23,15 @@ from flext_core import (
     FlextConstants,
     FlextCore,
     FlextDecorators,
+    FlextLogger,
     FlextProtocols,
     FlextResult,
     FlextTypes,
 )
-from flext_core.loggings import get_logger
 
 # Singleton FlextCore instance for all utilities
 core = FlextCore.get_instance()
-logger = get_logger("flext.examples.decorators")
+logger = FlextLogger("flext.examples.decorators")
 
 # Constants using FlextConstants hierarchical access
 MAX_AGE: FlextTypes.Core.Integer = 150

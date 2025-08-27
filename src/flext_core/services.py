@@ -25,10 +25,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
-from flext_core.mixins import FlextServiceMixin
+from flext_core.mixins import FlextMixins
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult, FlextResultUtils
-from flext_core.utilities import FlextPerformance, FlextProcessingUtils, FlextUtilities
+from flext_core.utilities import FlextUtilities
 
 
 class FlextServices:
@@ -54,7 +54,7 @@ class FlextServices:
     layering and separation of concerns through protocol-based interfaces.
     """
 
-    class ServiceProcessor[TRequest, TDomain, TResult](FlextServiceMixin, ABC):
+    class ServiceProcessor[TRequest, TDomain, TResult](FlextMixins.Service, ABC):
         """Template base processor with boilerplate elimination patterns.
 
         Provides enterprise-grade service processing capabilities with:
@@ -90,7 +90,7 @@ class FlextServices:
             following the template method pattern for extensibility.
             """
             super().__init__()
-            self._performance_tracker = FlextPerformance()
+            self._performance_tracker = FlextUtilities()
             self._correlation_generator = FlextUtilities()
 
         def get_service_name(self) -> str:
@@ -215,9 +215,7 @@ class FlextServices:
             correlation_id = self._correlation_generator.generate_correlation_id()
             self.log_info("Processing JSON", **{correlation_label: correlation_id})
 
-            model_result = FlextProcessingUtils.parse_json_to_model(
-                json_text, model_cls
-            )
+            model_result = FlextUtilities.parse_json_to_model(json_text, model_cls)
             if model_result.is_failure:
                 error_msg = model_result.error or "Invalid JSON"
                 self.log_error(f"JSON parsing/validation failed: {error_msg}")
@@ -229,9 +227,9 @@ class FlextServices:
                     "Operation successful", **{correlation_label: correlation_id}
                 )
             else:
+                error_details = handler_result.error or "Unknown error"
                 self.log_error(
-                    "Operation failed",
-                    error=handler_result.error,
+                    f"Operation failed: {error_details}",
                     **{correlation_label: correlation_id},
                 )
 
@@ -410,7 +408,7 @@ class FlextServices:
 
         def __init__(self) -> None:
             """Initialize service metrics with observability patterns."""
-            self._metrics_collector = FlextPerformance()
+            self._metrics_collector = FlextUtilities()
             self._trace_context: object | None = None  # Will be initialized on demand
 
         def track_service_call(

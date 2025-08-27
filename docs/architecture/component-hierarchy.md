@@ -55,7 +55,7 @@ class FlextResult[T]:
 
 **Configuration Modules**
 
-- `config.py` - FlextSettings implementation
+- `config.py` - FlextConfig implementation
 - (config_hierarchical.py was removed in the current codebase)
 - `config_models.py` - Configuration data models
 - `payload.py` - Message/payload patterns
@@ -132,7 +132,7 @@ FlextResult (result.py)
     ↓
 FlextContainer (container.py) - uses FlextResult
     ↓
-FlextSettings (config.py) - uses FlextResult and FlextContainer
+FlextConfig (config.py) - uses FlextResult and FlextContainer
     ↓
 Domain Classes (entities.py, etc.) - use all above
     ↓
@@ -166,11 +166,11 @@ FlextResult[None].fail(...) -> FlextResult[T]
 result.unwrap() -> T  # May raise if failure
 ```
 
-### FlextSettings (From config.py)
+### FlextConfig (From config.py)
 
 ```python
 # Environment integration
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     field: str = Field(default="value")
 
     class Config:

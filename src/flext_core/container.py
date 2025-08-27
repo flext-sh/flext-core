@@ -43,7 +43,7 @@ Examples:
         # Convenient global access
         from flext_core.container import get_flext_container
 
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
 Note:
     This module follows strict FLEXT refactoring requirements with nested classes,
@@ -66,7 +66,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
-from flext_core.utilities import FlextGenerators
+from flext_core.utilities import FlextUtilities
 from flext_core.validation import flext_validate_service_name
 
 
@@ -127,7 +127,7 @@ class FlextContainer:
             global_container.register("metrics", metrics_service)
 
             # Convenient functions
-            container = get_flext_container()
+            container = FlextContainer.get_global()
             result = register_typed("cache", cache_service)
 
     """
@@ -227,10 +227,14 @@ class FlextContainer:
                 self.service_name = service_name
                 self.service_instance = service_instance
                 self.command_type = command_type
-                self.command_id = command_id or FlextGenerators.generate_uuid()
+                self.command_id = (
+                    command_id or FlextUtilities.Generators.generate_uuid()
+                )
                 self.timestamp = timestamp or datetime.now(tz=ZoneInfo("UTC"))
                 self.user_id = user_id
-                self.correlation_id = correlation_id or FlextGenerators.generate_uuid()
+                self.correlation_id = (
+                    correlation_id or FlextUtilities.Generators.generate_uuid()
+                )
 
             @classmethod
             def create(
@@ -252,10 +256,10 @@ class FlextContainer:
                     service_name=service_name,
                     service_instance=service_instance,
                     command_type="register_service",
-                    command_id=FlextGenerators.generate_uuid(),
+                    command_id=FlextUtilities.Generators.generate_uuid(),
                     timestamp=datetime.now(tz=ZoneInfo("UTC")),
                     user_id=None,
-                    correlation_id=FlextGenerators.generate_uuid(),
+                    correlation_id=FlextUtilities.Generators.generate_uuid(),
                 )
 
             def validate_command(self) -> FlextResult[None]:
@@ -299,10 +303,14 @@ class FlextContainer:
                 self.service_name = service_name
                 self.factory = factory
                 self.command_type = command_type
-                self.command_id = command_id or FlextGenerators.generate_uuid()
+                self.command_id = (
+                    command_id or FlextUtilities.Generators.generate_uuid()
+                )
                 self.timestamp = timestamp or datetime.now(tz=ZoneInfo("UTC"))
                 self.user_id = user_id
-                self.correlation_id = correlation_id or FlextGenerators.generate_uuid()
+                self.correlation_id = (
+                    correlation_id or FlextUtilities.Generators.generate_uuid()
+                )
 
             @classmethod
             def create(
@@ -322,10 +330,10 @@ class FlextContainer:
                     service_name=service_name,
                     factory=factory,
                     command_type="register_factory",
-                    command_id=FlextGenerators.generate_uuid(),
+                    command_id=FlextUtilities.Generators.generate_uuid(),
                     timestamp=datetime.now(tz=ZoneInfo("UTC")),
                     user_id=None,
-                    correlation_id=FlextGenerators.generate_uuid(),
+                    correlation_id=FlextUtilities.Generators.generate_uuid(),
                 )
 
             def validate_command(self) -> FlextResult[None]:
@@ -368,10 +376,14 @@ class FlextContainer:
                 """
                 self.service_name = service_name
                 self.command_type = command_type
-                self.command_id = command_id or FlextGenerators.generate_uuid()
+                self.command_id = (
+                    command_id or FlextUtilities.Generators.generate_uuid()
+                )
                 self.timestamp = timestamp or datetime.now(tz=ZoneInfo("UTC"))
                 self.user_id = user_id
-                self.correlation_id = correlation_id or FlextGenerators.generate_uuid()
+                self.correlation_id = (
+                    correlation_id or FlextUtilities.Generators.generate_uuid()
+                )
 
             @classmethod
             def create(
@@ -389,10 +401,10 @@ class FlextContainer:
                 return cls(
                     service_name=service_name,
                     command_type="unregister_service",
-                    command_id=FlextGenerators.generate_uuid(),
+                    command_id=FlextUtilities.Generators.generate_uuid(),
                     timestamp=datetime.now(tz=ZoneInfo("UTC")),
                     user_id=None,
-                    correlation_id=FlextGenerators.generate_uuid(),
+                    correlation_id=FlextUtilities.Generators.generate_uuid(),
                 )
 
             def validate_command(self) -> FlextResult[None]:
@@ -424,7 +436,7 @@ class FlextContainer:
                 expected_type: str | None = None,
                 query_type: str = "get_service",
                 query_id: str = "",
-                page_size: int = 100,
+                page_size: int = FlextConstants.Defaults.PAGE_SIZE,
                 page_number: int = 1,
                 sort_by: str | None = None,
                 sort_order: str = "asc",
@@ -499,7 +511,7 @@ class FlextContainer:
                 service_type_filter: str | None = None,
                 query_type: str = "list_services",
                 query_id: str = "",
-                page_size: int = 100,
+                page_size: int = FlextConstants.Defaults.PAGE_SIZE,
                 page_number: int = 1,
                 sort_by: str | None = None,
                 sort_order: str = "asc",
@@ -1419,90 +1431,47 @@ _global_manager = FlextContainer.GlobalManager()
 
 
 # =============================================================================
-# CONVENIENCE FUNCTIONS - Legacy compatibility layer
+# NO HELPER FUNCTIONS - Use FlextContainer class methods directly
+# =============================================================================
+# All functionality is accessed via FlextContainer class methods:
+# - FlextContainer.get_global() instead of FlextContainer.get_global()
+# - FlextContainer.configure_global() instead of configure_flext_container()
+# - FlextContainer.get_global_typed() instead of get_typed()
+# - FlextContainer.register_global() instead of register_typed()
+# - FlextContainer.create_module_utilities() instead of create_module_container_utilities()
+#
+# For backward compatibility, use aliases from flext_core.legacy module.
+
+
+# =============================================================================
+# CONVENIENCE FUNCTIONS - Backward compatibility and ease of use
 # =============================================================================
 
 
 def get_flext_container() -> FlextContainer:
-    """Get global container instance.
+    """Get the global FlextContainer instance.
 
     Returns:
-      Global container instance.
+        Global FlextContainer singleton instance.
+
+    Examples:
+        Basic usage::
+
+            container = get_flext_container()
+            result = container.register("service", my_service)
+
+        Type-safe retrieval::
+
+            container = get_flext_container()
+            service_result = container.get("service")
+            if service_result.is_success:
+                service = service_result.unwrap()
+
+    Note:
+        This is a convenience function equivalent to FlextContainer.get_global().
 
     """
     return FlextContainer.get_global()
-
-
-def configure_flext_container(
-    container: FlextContainer | None = None,
-) -> FlextContainer:
-    """Configure global container (convenience function).
-
-    Args:
-      container: Container to configure or None for new container.
-
-    Returns:
-      Configured container.
-
-    """
-    return FlextContainer.configure_global(container)
-
-
-def get_typed(
-    key: FlextContainer.ServiceKey[T] | str,
-    expected_type: type[T],
-) -> FlextResult[T]:
-    """Get typed service from global container.
-
-    Args:
-      key: Service identifier.
-      expected_type: Expected service type.
-
-    Returns:
-      Type-safe result with service.
-
-    """
-    # Convert ServiceKey to str if needed
-    key_str = str(key)
-    return FlextContainer.get_global_typed(key_str, expected_type)
-
-
-def register_typed(
-    key: FlextContainer.ServiceKey[T] | str, service: T
-) -> FlextResult[None]:
-    """Register service in global container.
-
-    Args:
-      key: Service identifier.
-      service: Service instance.
-
-    Returns:
-      FlextResult indicating success or failure.
-
-    """
-    # Convert ServiceKey to str if needed
-    key_str = str(key)
-    return FlextContainer.register_global(key_str, service)
-
-
-def create_module_container_utilities(module_name: str) -> dict[str, object]:
-    """Create standardized container helpers for a module namespace.
-
-    Provides three utilities:
-    - get_container: returns the global FlextContainer
-    - configure_dependencies: no-op configurator returning FlextResult[None]
-    (modules may monkey-patch/replace this later to register services)
-    - get_service(name): fetches a service by name, with fallback to
-    "{module_name}.{name}" to support namespaced registrations
-
-    Args:
-      module_name: Logical module namespace used for fallback lookups.
-
-    Returns:
-      Mapping with utility callables.
-
-    """
-    return FlextContainer.create_module_utilities(module_name)
 
 
 # =============================================================================
@@ -1510,5 +1479,6 @@ def create_module_container_utilities(module_name: str) -> dict[str, object]:
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextContainer",  # ONLY main class exported
+    "FlextContainer",  # Main container class - all functionality via class methods
+    "get_flext_container",  # Convenience function for global access
 ]

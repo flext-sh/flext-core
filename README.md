@@ -68,7 +68,7 @@ else:
 from flext_core import get_flext_container
 
 # Get global container instance
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register services
 container.register("database", DatabaseService())

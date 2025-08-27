@@ -349,7 +349,7 @@ class TestFlextMixinDelegator:
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
-        # Test that setting readonly property raises FlextExceptions.OperationError
+        # Test that setting readonly property raises FlextExceptions
         # (custom behavior)
         with pytest.raises(
             getattr(FlextExceptions, "FlextOperationError"),  # noqa: B009

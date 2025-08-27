@@ -30,46 +30,62 @@ from enum import StrEnum
 from typing import Self, override
 
 from flext_core import (
+    FlextConstants,
     FlextEntity,
+    FlextLogger,
     FlextResult,
     FlextTypes,
     FlextUtilities,
     FlextValue,
-    get_logger,
 )
 
 # =============================================================================
-# BUSINESS CONSTANTS - Using FlextConstants and FlextTypes patterns
+# BUSINESS CONSTANTS - Using FlextConstants directly
 # =============================================================================
 
-# Age validation - following FlextTypes pattern
-MIN_AGE: FlextTypes.Core.Integer = 18
-MAX_AGE: FlextTypes.Core.Integer = 120
+# Age validation - using FlextConstants directly
+MIN_AGE: FlextTypes.Core.Integer = FlextConstants.Validation.MIN_AGE
+MAX_AGE: FlextTypes.Core.Integer = FlextConstants.Validation.MAX_AGE
 
 # Email validation
-MAX_EMAIL_LENGTH: FlextTypes.Core.Integer = 254
+MAX_EMAIL_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MAX_EMAIL_LENGTH
 
 # Name validation
-MIN_NAME_LENGTH: FlextTypes.Core.Integer = 2
-MAX_NAME_LENGTH: FlextTypes.Core.Integer = 100
+MIN_NAME_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MIN_NAME_LENGTH
+MAX_NAME_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MAX_NAME_LENGTH
 
 # Address validation
-MIN_STREET_LENGTH: FlextTypes.Core.Integer = 5
-MIN_CITY_LENGTH: FlextTypes.Core.Integer = 2
-MIN_POSTAL_CODE_LENGTH: FlextTypes.Core.Integer = 3
-MIN_COUNTRY_LENGTH: FlextTypes.Core.Integer = 2
+MIN_STREET_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MIN_STREET_LENGTH
+MIN_CITY_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MIN_CITY_LENGTH
+MIN_POSTAL_CODE_LENGTH: FlextTypes.Core.Integer = (
+    FlextConstants.Validation.MIN_POSTAL_CODE_LENGTH
+)
+MIN_COUNTRY_LENGTH: FlextTypes.Core.Integer = (
+    FlextConstants.Validation.MIN_COUNTRY_LENGTH
+)
 
 # Currency validation
-CURRENCY_CODE_LENGTH: FlextTypes.Core.Integer = 3
-SUPPORTED_CURRENCIES: set[FlextTypes.Core.String] = {"USD", "EUR", "GBP", "JPY", "CAD", "BRL"}
+CURRENCY_CODE_LENGTH: FlextTypes.Core.Integer = (
+    FlextConstants.Validation.CURRENCY_CODE_LENGTH
+)
+SUPPORTED_CURRENCIES: set[FlextTypes.Core.String] = {
+    "USD",
+    "EUR",
+    "GBP",
+    "JPY",
+    "CAD",
+    "BRL",
+}
 
 # Phone validation
-MIN_PHONE_LENGTH: FlextTypes.Core.Integer = 10
-MAX_PHONE_LENGTH: FlextTypes.Core.Integer = 15
+MIN_PHONE_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MIN_PHONE_LENGTH
+MAX_PHONE_LENGTH: FlextTypes.Core.Integer = FlextConstants.Validation.MAX_PHONE_LENGTH
 
 # Product validation
-MIN_PRODUCT_NAME_LENGTH: FlextTypes.Core.Integer = 3
-MAX_PRODUCT_PRICE: FlextTypes.Core.Integer = 100000
+MIN_PRODUCT_NAME_LENGTH: FlextTypes.Core.Integer = (
+    FlextConstants.Validation.MIN_PRODUCT_NAME_LENGTH
+)
+MAX_PRODUCT_PRICE: FlextTypes.Core.Integer = FlextConstants.Validation.MAX_PRODUCT_PRICE
 
 # Order validation
 MIN_ORDER_ITEMS: FlextTypes.Core.Integer = 1
@@ -877,7 +893,7 @@ def log_domain_operation(
     **context: FlextTypes.Core.Object,
 ) -> None:
     """Log domain operation with structured context."""
-    logger = get_logger("shared_domain")
+    logger = FlextLogger("shared_domain")
     logger.info(
         "Domain operation: %s",
         operation,

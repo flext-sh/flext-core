@@ -253,7 +253,9 @@ class TestFlextPayloadJSONProcessing:
         # Verify reasonable values
         assert size_info["json_size"] > 0
         assert size_info["basic_size"] > 0
-        assert size_info["compression_ratio"] >= 0  # Can be > 1 if compression increases size
+        assert (
+            size_info["compression_ratio"] >= 0
+        )  # Can be > 1 if compression increases size
 
 
 class TestFlextPayloadAttributeHandling:
@@ -371,7 +373,9 @@ class TestFlextMessageEnhancedCoverage:
         cross_dict = message.to_cross_service_dict()
 
         # Should not include correlation_id if not set, or it should be None
-        correlation_id = cross_dict.get("correlation_id", message.metadata.get("correlation_id"))
+        correlation_id = cross_dict.get(
+            "correlation_id", message.metadata.get("correlation_id")
+        )
         assert correlation_id is None
 
     def test_message_from_cross_service_dict_invalid_data(self) -> None:
@@ -385,8 +389,10 @@ class TestFlextMessageEnhancedCoverage:
         for invalid_dict in invalid_dicts:
             result = FlextPayload[str].from_cross_service_dict(invalid_dict)
             assert result.is_failure
-            assert ("Invalid message text" in result.error or
-                    "Invalid cross-service dictionary" in result.error)
+            assert (
+                "Invalid message text" in result.error
+                or "Invalid cross-service dictionary" in result.error
+            )
 
 
 class TestFlextEventEnhancedCoverage:
@@ -442,7 +448,9 @@ class TestFlextEventEnhancedCoverage:
         ]
 
         for invalid_dict in invalid_dicts:
-            result = FlextPayload[Mapping[str, object]].from_cross_service_dict(invalid_dict)
+            result = FlextPayload[Mapping[str, object]].from_cross_service_dict(
+                invalid_dict
+            )
             assert result.is_failure
             assert any(
                 phrase in result.error
@@ -532,7 +540,9 @@ class TestCrossServiceConvenienceFunctions:
         # Function should handle type conversion gracefully
         if result.is_success:
             assert result.value.level == "info"  # Should fallback to default
-            assert result.value.metadata.get("source") is None  # Should convert invalid types to None
+            assert (
+                result.value.metadata.get("source") is None
+            )  # Should convert invalid types to None
 
     def test_get_serialization_metrics_with_various_payloads(self) -> None:
         """Test get_serialization_metrics with different payload types."""

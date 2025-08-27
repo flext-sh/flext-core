@@ -20,13 +20,15 @@ from pydantic import Field
 from flext_core import (
     FlextEntity,
     FlextEntityId,
-    FlextEventList,
     FlextGenerators,
-    FlextMetadata,
     FlextResult,
-    FlextTimestamp,
     FlextValue,
     FlextVersion,
+)
+from flext_core.root_models import (
+    FlextEventList,
+    FlextMetadata,
+    FlextTimestamp,
 )
 
 # Constants to avoid magic numbers

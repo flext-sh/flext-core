@@ -9,19 +9,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-# use .shared_domain with dot to access local module
-from examples.shared_domain import (
+from flext_core import FlextUtilities
+from flext_core.legacy import (
+    FlextCacheableMixin,
+    FlextSerializableMixin,
+)
+
+from ..shared_domain import (
     Order as SharedOrder,
     Product as SharedProduct,
     User as SharedUser,
 )
-from flext_core import (
-    FlextCacheableMixin,
-    FlextComparableMixin,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextUtilities,
-)
+
 
 from .formatting_helpers import (
     ADULT_AGE_THRESHOLD,
@@ -29,7 +28,12 @@ from .formatting_helpers import (
     YOUNG_ADULT_AGE_THRESHOLD,
 )
 
-# =============================================================================
+# =========
+
+# For mixins not available in legacy, alias to available ones
+FlextComparableMixin = FlextSerializableMixin
+FlextLoggableMixin = object  # Simple base class for now
+====================================================================
 # ENHANCED DOMAIN MODELS - Using mixins for advanced functionality
 # =============================================================================
 
@@ -56,7 +60,9 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
             "name": self.name,
             "email": self.email_address.email,
             "age": self.age.value,
-            "status": self.status.value,
+            "status": self.status.value
+            if hasattr(self.status, "value")
+            else str(self.status),
             "phone": self.phone.number if self.phone else None,
             "created_at": self.created_at,
         }
@@ -64,7 +70,9 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
             **base_data,
             "cache_key": self.get_cache_key(),
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
-            "status_display": self.status.value.title(),
+            "status_display": (
+                self.status.value if hasattr(self.status, "value") else str(self.status)
+            ).title(),
             "age_category": self._get_age_category(),
         }
 
@@ -84,7 +92,6 @@ class UtilityDemoProduct(
     SharedProduct,
     FlextCacheableMixin,
     FlextSerializableMixin,
-    FlextComparableMixin,
 ):
     """Enhanced product with comprehensive mixins."""
 
@@ -131,7 +138,6 @@ class UtilityDemoProduct(
 
 class UtilityDemoOrder(
     SharedOrder,
-    FlextLoggableMixin,
     FlextSerializableMixin,
 ):
     """Enhanced order with logging and tracking capabilities."""
@@ -148,7 +154,9 @@ class UtilityDemoOrder(
             "customer_id": self.customer_id,
             "total_amount": str(calculated_total),
             "items_count": len(self.items),
-            "status": self.status.value,
+            "status": self.status.value
+            if hasattr(self.status, "value")
+            else str(self.status),
         }
 
     def serialize_key(self) -> str:
@@ -180,12 +188,18 @@ class UtilityDemoOrder(
                 "amount": str(calculated_total),
                 "currency": currency,
             },
-            "status": self.status.value,
+            "status": self.status.value
+            if hasattr(self.status, "value")
+            else str(self.status),
             "created_at": self.created_at,
             "serialized_at": FlextUtilities.generate_iso_timestamp(),
             "summary": {
                 "items_count": len(self.items),
                 "total_display": f"{currency} {calculated_total}",
-                "status_display": self.status.value.title(),
+                "status_display": (
+                    self.status.value
+                    if hasattr(self.status, "value")
+                    else str(self.status)
+                ).title(),
             },
         }

@@ -432,11 +432,7 @@ class FlextResult[T]:
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise FlextExceptions.OperationError(  # type: ignore[call-arg]
-                error_msg,
-                error_code=self._error_code or FlextConstants.Errors.CONTEXT_ERROR,
-                operation="context_manager",
-            )
+            raise FlextExceptions.CriticalError(error_msg)
         # Type narrowing: for success results, _data must be T
         if self._data is None:
             msg = "Success result has None data - this should not happen"
@@ -471,17 +467,13 @@ class FlextResult[T]:
             The success value if not None
 
         Raises:
-            FlextExceptions.OperationError: If result is failure
+            FlextExceptions: If result is failure
             RuntimeError: If success result has None data (defensive validation)
 
         """
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise FlextExceptions.OperationError(  # type: ignore[call-arg]
-                msg,
-                error_code=self._error_code or FlextConstants.Errors.EXPECTATION_ERROR,
-                operation="expect",
-            )
+            raise FlextExceptions.CriticalError(msg, operation="expect")
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = f"{message}: Success result has None data - use .value if None is expected"
@@ -721,8 +713,8 @@ class FlextResult[T]:
             return None
 
         error_msg = self._error or "Result failed"
-        return FlextExceptions.OperationError(  # type: ignore[call-arg]
-            error_msg, error_code=FlextConstants.Errors.OPERATION_ERROR
+        return cast(
+            "Exception", FlextExceptions(error_msg, operation="result_to_exception")
         )
 
     @classmethod

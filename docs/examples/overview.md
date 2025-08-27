@@ -21,7 +21,7 @@ from flext_core import FlextContainer, get_flext_container
 from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 
 # Configuration management
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
 # Utilities
 from flext_core.utilities import generate_id, generate_uuid
@@ -510,20 +510,20 @@ if checkout_result.success:
         print(f"Event: {event}")
 ```
 
-## Example 4: Configuration Management with FlextSettings
+## Example 4: Configuration Management with FlextConfig
 
 ### Environment-Based Configuration
 
 ```python
 """
-Example using FlextSettings — FLEXT Core configuration system.
+Example using FlextConfig — FLEXT Core configuration system.
 Based on the current implementation.
 """
 
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from typing import Optional
 
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     """Application configuration using FLEXT Core settings."""
 
     # Basic settings with defaults
@@ -860,7 +860,7 @@ python example_events.py
 #!/usr/bin/env python3
 """Template for FLEXT Core examples."""
 
-from flext_core import FlextResult, FlextContainer, FlextSettings
+from flext_core import FlextResult, FlextContainer, FlextConfig
 from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
 
 def main():

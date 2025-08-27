@@ -406,13 +406,17 @@ class TestAssertionBuilder:
 
     def has_length(self, length: int) -> TestAssertionBuilder:
         """Assert length."""
-        self.assertions.append(lambda x: len(x) == length if isinstance(x, Sized) else False)
+        self.assertions.append(
+            lambda x: len(x) == length if isinstance(x, Sized) else False
+        )
         self.descriptions.append(f"should have length {length}")
         return self
 
     def contains(self, item: object) -> TestAssertionBuilder:
         """Assert contains item."""
-        self.assertions.append(lambda x: item in x if isinstance(x, Container) else False)
+        self.assertions.append(
+            lambda x: item in x if isinstance(x, Container) else False
+        )
         self.descriptions.append(f"should contain {item}")
         return self
 

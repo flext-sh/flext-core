@@ -38,7 +38,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 | Module             | Purpose                  | Key Components                   |
 | ------------------ | ------------------------ | -------------------------------- |
-| `config.py`        | Configuration management | `FlextSettings`, env loading     |
+| `config.py`        | Configuration management | `FlextConfig`, env loading     |
 | `config_base.py`   | Base configuration       | Configuration patterns           |
 | `config_models.py` | Config models            | Database, cache, service configs |
 | `loggings.py`      | Structured logging       | Logger factory, correlation IDs  |
@@ -139,7 +139,7 @@ class User(FlextEntity):
 
 ```python
 # Environment-aware configuration management
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     database_url: str = "postgresql://localhost/app"
     log_level: str = "INFO"
 

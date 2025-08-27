@@ -64,7 +64,7 @@ Manage services with a global, type-safe container:
 from flext_core import get_flext_container
 
 # Get singleton container
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register services
 class DatabaseService:
@@ -102,9 +102,9 @@ class OrderService:
 Environment-aware settings with validation:
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     """Application configuration."""
     app_name: str = "MyApp"
     debug: bool = False
@@ -226,13 +226,13 @@ from flext_core import (
     FlextResult,
     get_flext_container,
     FlextEntity,
-    FlextSettings
+    FlextConfig
 )
 import hashlib
 from datetime import datetime
 
 # Configuration
-class AppConfig(FlextSettings):
+class AppConfig(FlextConfig):
     database_url: str = "sqlite:///users.db"
     smtp_host: str = "localhost"
     smtp_port: int = 587
@@ -313,7 +313,7 @@ class UserRepository:
 # Use Case
 class UserRegistrationService:
     def __init__(self):
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         self.config = AppConfig()
         self.password_service = PasswordService()
         self.email_service = EmailService(self.config)

@@ -11,10 +11,10 @@ and structured context management for robust error handling.
     - Error recovery patterns and best practices
 
 Key Components:
-    - FlextExceptions.Error: Base exception with observability and context management
-    - FlextExceptions.ValidationError: Field validation failures with detailed context
+    - FlextExceptions: Base exception with observability and context management
+    - FlextExceptions: Field validation failures with detailed context
     - FlextExceptions.TypeError: Type mismatch errors with expected/actual type info
-    - FlextExceptions.OperationError: Operation failures with stage tracking
+    - FlextExceptions: Operation failures with stage tracking
     - Domain-specific exceptions: Configuration, connection, authentication, etc.
     - FlextExceptions: Unified factory interface for exception creation
     - Global metrics tracking for operational insights
@@ -37,9 +37,6 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-
-# Initialize FlextExceptions for dynamic class generation
-FlextExceptions.initialize()  # MANDATORY: Generate exception classes before usage
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Using FlextConstants centralized approach
@@ -218,7 +215,7 @@ class UserValidationService:
         """Validate email format and type."""
         if not isinstance(email, str) or "@" not in email:
             msg = "Email must be a valid email address"
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             raise validation_error_class(  # noqa: TRY301
                 msg,
                 validation_details={
@@ -245,7 +242,7 @@ class UserValidationService:
         """Validate age range."""
         if age < MIN_USER_AGE or age > MAX_USER_AGE:
             msg: str = f"Age must be between {MIN_USER_AGE} and {MAX_USER_AGE}"
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             raise validation_error_class(  # noqa: TRY301
                 msg,
                 validation_details={
@@ -265,12 +262,14 @@ class UserValidationService:
     def _handle_validation_failure(self, result: FlextResult[None]) -> None:
         """Handle validation failure by raising appropriate exception."""
         if result.is_failure:
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             raise validation_error_class(result.error or "Validation failed")  # noqa: TRY301
 
-    def _raise_name_format_error(self, result: FlextResult[FlextTypes.Core.String]) -> None:
+    def _raise_name_format_error(
+        self, result: FlextResult[FlextTypes.Core.String]
+    ) -> None:
         """Raise name format validation error."""
-        validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+        validation_error_class = FlextExceptions  # noqa: B009
         raise validation_error_class(result.error or "Name format validation failed")  # noqa: TRY301
 
     def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:
@@ -327,7 +326,7 @@ class UserValidationService:
 
         except Exception as e:
             # Check if it's one of our expected exception types using dynamic access
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             type_error_class = FlextExceptions.TypeError  # noqa: B009
 
             if isinstance(e, (validation_error_class, type_error_class)):
@@ -363,13 +362,13 @@ class UserManagementService:
         def _raise_validation_error(validation_result: FlextResult[User]) -> None:
             """Raise validation error with proper context."""
             msg = validation_result.error or "User validation failed"
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             raise validation_error_class(msg)  # noqa: TRY301
 
         def _raise_user_id_exists_error(user: User) -> None:
             """Raise error for existing user ID."""
             msg: str = f"User with ID {user.user_id} already exists"
-            already_exists_error_class = FlextExceptions.AlreadyExistsError  # noqa: B009
+            already_exists_error_class = FlextExceptions  # noqa: B009
             raise already_exists_error_class(  # noqa: TRY301
                 msg,
                 resource_id=user.user_id,
@@ -382,7 +381,7 @@ class UserManagementService:
             msg: str = (
                 f"Email {user.email} is already used by user {existing_user.user_id}"
             )
-            already_exists_error_class = FlextExceptions.AlreadyExistsError  # noqa: B009
+            already_exists_error_class = FlextExceptions  # noqa: B009
             raise already_exists_error_class(  # noqa: TRY301
                 msg,
                 resource_id=user.user_id,
@@ -396,7 +395,7 @@ class UserManagementService:
         def _raise_none_user_error() -> None:
             """Raise error for None user."""
             msg = "Validation returned None user"
-            validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+            validation_error_class = FlextExceptions  # noqa: B009
             raise validation_error_class(msg)  # noqa: TRY301
 
         try:
@@ -427,15 +426,12 @@ class UserManagementService:
             self._users[user.user_id] = user
             return FlextResult[User].ok(user)
 
-        except (
-            FlextExceptions.ValidationError,  # noqa: B009
-            FlextExceptions.AlreadyExistsError,  # noqa: B009
-        ) as e:
+        except FlextExceptions as e:
             return FlextResult[User].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             # Wrap unexpected exceptions
             msg = "User creation failed unexpectedly"
-            operation_error_class = FlextExceptions.OperationError  # noqa: B009
+            operation_error_class = FlextExceptions  # noqa: B009
             raise operation_error_class(  # noqa: TRY301
                 msg,
                 operation="user_creation",
@@ -480,7 +476,7 @@ class UserManagementService:
             return FlextResult[User].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "User retrieval failed unexpectedly"
-            operation_error_class = FlextExceptions.OperationError  # noqa: B009
+            operation_error_class = FlextExceptions  # noqa: B009
             raise operation_error_class(  # noqa: TRY301
                 msg,
                 operation="user_retrieval",
@@ -493,7 +489,7 @@ class UserManagementService:
         def _raise_permission_error(requester_id: str, user_id: str) -> None:
             """Raise permission error for unauthorized deletion."""
             msg = "Insufficient permissions to delete user"
-            permission_error_class = FlextExceptions.PermissionError  # noqa: B009
+            permission_error_class = FlextExceptions  # noqa: B009
             raise permission_error_class(  # noqa: TRY301
                 msg,
                 service="user_management",
@@ -531,13 +527,13 @@ class UserManagementService:
             return FlextResult[None].ok(None)
 
         except (
-            FlextExceptions.PermissionError,  # noqa: B009
+            FlextExceptions,  # noqa: B009
             FlextExceptions.NotFoundError,  # noqa: B009
         ) as e:
             return FlextResult[None].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "User deletion failed unexpectedly"
-            operation_error_class = FlextExceptions.OperationError  # noqa: B009
+            operation_error_class = FlextExceptions  # noqa: B009
             raise operation_error_class(  # noqa: TRY301
                 msg,
                 operation="user_deletion",
@@ -562,7 +558,7 @@ class ConfigurationService:
         ) -> None:
             """Raise error for missing configuration key."""
             msg: str = f"Missing required configuration: {key}"
-            configuration_error_class = FlextExceptions.ConfigurationError  # noqa: B009
+            configuration_error_class = FlextExceptions  # noqa: B009
             raise configuration_error_class(  # noqa: TRY301
                 msg,
                 config_key=key,
@@ -576,7 +572,7 @@ class ConfigurationService:
         def _raise_invalid_db_url_error(db_url: object) -> None:
             """Raise error for invalid database URL format."""
             msg = "Invalid database URL format"
-            configuration_error_class = FlextExceptions.ConfigurationError  # noqa: B009
+            configuration_error_class = FlextExceptions  # noqa: B009
             raise configuration_error_class(  # noqa: TRY301
                 msg,
                 config_key="database_url",
@@ -592,7 +588,7 @@ class ConfigurationService:
         ) -> None:
             """Raise error for invalid log level."""
             msg: str = f"Invalid log level: {log_level}"
-            configuration_error_class = FlextExceptions.ConfigurationError  # noqa: B009
+            configuration_error_class = FlextExceptions  # noqa: B009
             raise configuration_error_class(  # noqa: TRY301
                 msg,
                 config_key="log_level",
@@ -627,7 +623,7 @@ class ConfigurationService:
             self._config = dict(config_data)
             return FlextResult[None].ok(None)
 
-        except FlextExceptions.ConfigurationError as e:
+        except FlextExceptions as e:
             return FlextResult[None].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "Critical configuration loading failure"
@@ -662,7 +658,7 @@ class ExternalAPIService:
         def _raise_connection_error() -> None:
             """Raise connection error for unreachable API."""
             msg = "Cannot connect to external API"
-            connection_error_class = FlextExceptions.ConnectionError
+            connection_error_class = FlextExceptions
             raise connection_error_class(  # noqa: TRY301
                 msg,
                 service="external_api",
@@ -677,7 +673,7 @@ class ExternalAPIService:
         def _raise_timeout_error() -> None:
             """Raise timeout error for slow API."""
             msg = "API request timed out"
-            timeout_error_class = FlextExceptions.TimeoutError
+            timeout_error_class = FlextExceptions
             raise timeout_error_class(  # noqa: TRY301
                 msg,
                 service="external_api",
@@ -691,7 +687,7 @@ class ExternalAPIService:
         def _raise_authentication_error() -> None:
             """Raise authentication error for unauthorized API."""
             msg = "API authentication failed"
-            authentication_error_class = FlextExceptions.AuthenticationError
+            authentication_error_class = FlextExceptions
             raise authentication_error_class(  # noqa: TRY301
                 msg,
                 service="external_api",
@@ -728,11 +724,7 @@ class ExternalAPIService:
 
             return FlextResult[dict[str, object]].ok(profile_data)
 
-        except (
-            FlextExceptions.ConnectionError,
-            FlextExceptions.TimeoutError,
-            FlextExceptions.AuthenticationError,
-        ) as e:
+        except FlextExceptions as e:
             return FlextResult[dict[str, object]].fail(str(e))
         except (ValueError, TypeError, KeyError, AttributeError) as e:
             msg = "External API call failed unexpectedly"
@@ -757,12 +749,12 @@ def demonstrate_base_exceptions() -> None:
     # Clear metrics for clean demo
     FlextExceptions.clear_metrics()
 
-    # 1. Basic FlextExceptions.Error usage
+    # 1. Basic FlextExceptions usage
 
     def _raise_service_init_error() -> None:
         """Simulate a service initialization error."""
         msg = "Service initialization failed"
-        error_class = FlextExceptions.Error
+        error_class = FlextExceptions
         raise error_class(  # noqa: TRY301
             msg,
             error_code="SERVICE_INIT_ERROR",
@@ -779,22 +771,25 @@ def demonstrate_base_exceptions() -> None:
         _raise_service_init_error()
     except Exception as e:
         # Demonstrate serialization using available attributes
-        if hasattr(e, "error_code") and getattr(e, "error_code", None) == "SERVICE_INIT_ERROR":
+        if (
+            hasattr(e, "error_code")
+            and getattr(e, "error_code", None) == "SERVICE_INIT_ERROR"
+        ):
             pass
 
     # 2. Exception hierarchy demonstration
 
     # Create different types of exceptions using dynamic class access
-    validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+    validation_error_class = FlextExceptions  # noqa: B009
     type_error_class = FlextExceptions.TypeError
-    operation_error_class = FlextExceptions.OperationError
-    configuration_error_class = FlextExceptions.ConfigurationError
-    connection_error_class = FlextExceptions.ConnectionError
-    authentication_error_class = FlextExceptions.AuthenticationError
-    permission_error_class = FlextExceptions.PermissionError
+    operation_error_class = FlextExceptions
+    configuration_error_class = FlextExceptions
+    connection_error_class = FlextExceptions
+    authentication_error_class = FlextExceptions
+    permission_error_class = FlextExceptions
     not_found_error_class = FlextExceptions.NotFoundError
-    already_exists_error_class = FlextExceptions.AlreadyExistsError
-    timeout_error_class = FlextExceptions.TimeoutError
+    already_exists_error_class = FlextExceptions
+    timeout_error_class = FlextExceptions
     processing_error_class = FlextExceptions.ProcessingError
     critical_error_class = FlextExceptions.CriticalError
 
@@ -830,17 +825,13 @@ def demonstrate_base_exceptions() -> None:
             context={"resource": "user_data", "action": "read"},
         ),
         not_found_error_class("User not found", resource_id="user_123"),
-        already_exists_error_class(
-            "User already exists", resource_id="user_123"
-        ),
+        already_exists_error_class("User already exists", resource_id="user_123"),
         timeout_error_class(
             "Operation timed out",
             service="data_sync",
             timeout_seconds=30,
         ),
-        processing_error_class(
-            "Data processing failed", operation="data_transform"
-        ),
+        processing_error_class("Data processing failed", operation="data_transform"),
         critical_error_class(
             "System overload",
             service="database",
@@ -916,24 +907,30 @@ def demonstrate_validation_exceptions() -> None:
 
     for test_case in test_cases:
         data = test_case["data"]
-        if isinstance(data, Mapping):
-            # Convert Mapping to dict for proper type compatibility
-            data_dict = dict(data) if not isinstance(data, dict) else data
-            result = validation_service.validate_user_data(data_dict)
-        else:
-            result = FlextResult[User].fail("Invalid data type")
+        try:
+            if isinstance(data, Mapping):
+                # Convert Mapping to dict for proper type compatibility
+                data_dict = dict(data) if not isinstance(data, dict) else data
+                result = validation_service.validate_user_data(data_dict)
+            else:
+                result = FlextResult[User].fail("Invalid data type")
 
-        if (result.success and test_case["should_pass"]) or (
-            result.is_failure and not test_case["should_pass"]
-        ):
-            pass
-        else:
-            "pass" if test_case["should_pass"] else "fail"
+            # If we get here, validation passed
+            if test_case["should_pass"]:
+                pass  # Expected success
+            else:
+                pass  # Unexpected success - should have raised exception
+        except FlextExceptions.FlextExceptionBaseError:
+            # Exception was raised as expected for invalid data
+            if not test_case["should_pass"]:
+                pass  # Expected failure via exception
+            else:
+                pass  # Unexpected failure via exception
 
     # 2. Factory method demonstration
 
     # Create validation error directly using dynamic class access
-    validation_error_class = FlextExceptions.ValidationError  # noqa: B009
+    validation_error_class = FlextExceptions  # noqa: B009
     validation_error_class(
         "Email domain not allowed",
         field="email",
@@ -1080,9 +1077,9 @@ def _demo_database_scenarios() -> None:
             if auth_result.success:
                 pass
 
-    except FlextExceptions.ConnectionError:
+    except FlextExceptions:
         pass
-    except FlextExceptions.AuthenticationError:
+    except FlextExceptions:
         pass
 
     # Connection failure
@@ -1138,7 +1135,7 @@ def _complex_operation() -> FlextResult[str]:
 
     def _raise_config_error(_: FlextResult[None]) -> None:
         msg = "Complex operation failed at configuration stage"
-        operation_error_class = FlextExceptions.OperationError
+        operation_error_class = FlextExceptions
         raise operation_error_class(  # noqa: TRY301
             msg,
             operation="complex_operation",
@@ -1147,7 +1144,7 @@ def _complex_operation() -> FlextResult[str]:
 
     def _raise_validation_error(_: FlextResult[User]) -> None:
         msg = "Complex operation failed at validation stage"
-        operation_error_class = FlextExceptions.OperationError
+        operation_error_class = FlextExceptions
         raise operation_error_class(  # noqa: TRY301
             msg,
             operation="complex_operation",
@@ -1156,7 +1153,7 @@ def _complex_operation() -> FlextResult[str]:
 
     def _raise_api_error(_: FlextResult[dict[str, object]]) -> None:
         msg = "Complex operation failed at API stage"
-        operation_error_class = FlextExceptions.OperationError
+        operation_error_class = FlextExceptions
         raise operation_error_class(  # noqa: TRY301
             msg,
             operation="complex_operation",
@@ -1189,7 +1186,7 @@ def _complex_operation() -> FlextResult[str]:
 
         return FlextResult[str].ok("Complex operation completed successfully")
 
-    except FlextExceptions.OperationError as e:
+    except FlextExceptions as e:
         return FlextResult[str].fail(str(e))
     except (ValueError, TypeError, KeyError, AttributeError) as e:
         msg = "Critical failure in complex operation"
@@ -1211,7 +1208,7 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
 
     def _simulate_operation_failure(attempt: int, max_retries: int) -> None:
         msg: str = f"Simulated failure on attempt {attempt + 1}"
-        connection_error_class = FlextExceptions.ConnectionError
+        connection_error_class = FlextExceptions
         raise connection_error_class(  # noqa: TRY301
             msg,
             service="retry_operation",
@@ -1227,7 +1224,7 @@ def _operation_with_retry(max_retries: int = 3) -> FlextResult[str]:
             if attempt < MAX_RETRY_ATTEMPTS:
                 _simulate_operation_failure(attempt, max_retries)
             return FlextResult[str].ok(f"Operation succeeded on attempt {attempt + 1}")
-        except FlextExceptions.ConnectionError as e:
+        except FlextExceptions as e:
             last_exception = e
             if attempt < max_retries:
                 time.sleep(0.01)
@@ -1270,7 +1267,9 @@ def main() -> None:
 
         # Final metrics summary
         final_metrics = FlextExceptions.get_metrics()
-        _ = sum(cast("FlextTypes.Core.Integer", count) for count in final_metrics.values())
+        _ = sum(
+            cast("FlextTypes.Core.Integer", count) for count in final_metrics.values()
+        )
 
     except (ValueError, TypeError, ImportError, AttributeError):
         traceback.print_exc()

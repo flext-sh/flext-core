@@ -76,13 +76,13 @@ diagnose_container_basic()
 
 ### Configuration Debugging
 
-Debug configuration using actual FlextSettings:
+Debug configuration using actual FlextConfig:
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 import os
 
-class DiagnosticSettings(FlextSettings):
+class DiagnosticSettings(FlextConfig):
     """Settings for debugging configuration issues."""
 
     # Basic settings
@@ -233,10 +233,10 @@ debug_container_services()
 **Solution**: Verify environment variable naming and loading:
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 import os
 
-class EnvTestSettings(FlextSettings):
+class EnvTestSettings(FlextConfig):
     """Test environment variable loading."""
 
     test_value: str = "default"
@@ -433,7 +433,7 @@ result3 = service.create_user("Jane", "invalid-email")
 Simple health check for FLEXT Core components:
 
 ```python
-from flext_core import FlextResult, FlextContainer, FlextSettings
+from flext_core import FlextResult, FlextContainer, FlextConfig
 
 class HealthChecker:
     """Basic health checker for FLEXT Core components."""
@@ -481,9 +481,9 @@ class HealthChecker:
             return FlextResult[None].fail(f"FlextContainer health check error: {e}")
 
     def check_flext_settings(self) -> FlextResult[str]:
-        """Check FlextSettings functionality."""
+        """Check FlextConfig functionality."""
         try:
-            class HealthSettings(FlextSettings):
+            class HealthSettings(FlextConfig):
                 test_field: str = "default_value"
 
                 class Config:
@@ -493,10 +493,10 @@ class HealthChecker:
             if settings.test_field != "default_value":
                 return FlextResult[None].fail("Settings default value failed")
 
-            return FlextResult[None].ok("FlextSettings health check passed")
+            return FlextResult[None].ok("FlextConfig health check passed")
 
         except Exception as e:
-            return FlextResult[None].fail(f"FlextSettings health check error: {e}")
+            return FlextResult[None].fail(f"FlextConfig health check error: {e}")
 
     def run_all_checks(self) -> FlextResult[dict]:
         """Run all health checks."""

@@ -768,13 +768,13 @@ def _flext_timing_decorator(func: FlextDecoratedFunction[object]) -> FlextDecora
         try:
             result = func(*args, **kwargs)
             execution_time = time.time() - start_time
-            logger = FlextLoggerFactory.get_logger("flext_core.decorators")
+            logger = FlextLogger("flext_core.decorators")
             logger.debug("Function execution completed", 
                         function=func.__name__, execution_time_ms=execution_time * 1000)
             return result
         except Exception as e:
             execution_time = time.time() - start_time
-            logger = FlextLoggerFactory.get_logger("flext_core.decorators")
+            logger = FlextLogger("flext_core.decorators")
             logger.error("Function execution failed", 
                         function=func.__name__, execution_time_ms=execution_time * 1000, error=str(e))
             raise
@@ -1070,7 +1070,7 @@ class FlextFactory:                # Factory Pattern (não deveria estar aqui)
 O `FlextResult` que deveria ser um **pattern puro** está poluído com:
 
 ```python
-from flext_core.loggings import FlextLoggerFactory  # Por que logging?
+from flext_core.loggings import FlextLogger  # Por que logging?
 from flext_core.exceptions import FlextExceptions.OperationError  # Acoplamento
 from flext_core.constants import ERROR_CODES  # Mais acoplamento
 ```
@@ -1317,7 +1317,7 @@ class FlextProtocols:
 **Evidência**: Dependência de concretos
 
 ```python
-from flext_core.loggings import FlextLoggerFactory  # Concreto!
+from flext_core.loggings import FlextLogger  # Concreto!
 # Deveria ser:
 from flext_core.protocols import LoggerProtocol  # Abstração
 ```
@@ -1429,7 +1429,7 @@ src/flext_core/
 
 ```python
 # models.py (Domain) importa:
-from flext_core.loggings import FlextLoggerFactory  # Infrastructure!
+from flext_core.loggings import FlextLogger  # Infrastructure!
 ```
 
 ### Clean Architecture Score: 2/10 ❌
@@ -2278,7 +2278,7 @@ class FlextLogContextManager:
 #### Implementação Pydantic v2 Correta
 
 ```python
-class FlextSettings(BaseSettings):
+class FlextConfig(BaseSettings):
     """Base settings class using pure Pydantic BaseSettings patterns."""
     
     model_config = SettingsConfigDict(
@@ -2316,14 +2316,6 @@ class FlextConfig(FlextModel):
             raise ValueError(f"Environment must be one of: {allowed}")
         return normalized
 
-class FlextSystemDefaults:
-    """Centralized system defaults."""
-    class Security:
-        MIN_PASSWORD_LENGTH_HIGH_SECURITY = 12
-        MIN_SECRET_KEY_LENGTH_STRONG = 64
-    class Network:
-        TIMEOUT = 30
-        RETRIES = 3
 ```
 
 #### Funcionalidades Enterprise Implementadas
@@ -2336,7 +2328,7 @@ def create_with_validation(
     cls,
     overrides: Mapping[str, FlextTypes.Core.Value] | None = None,
     **kwargs: FlextTypes.Core.Value,
-) -> FlextResult[FlextSettings]:
+) -> FlextResult[FlextConfig]:
     """Create settings with validation and override handling."""
     try:
         instance = cls()
@@ -2352,10 +2344,10 @@ def create_with_validation(
         
         validation_result = instance.validate_business_rules()
         if validation_result.is_failure:
-            return FlextResult[FlextSettings].fail(validation_result.error)
-        return FlextResult[FlextSettings].ok(instance)
+            return FlextResult[FlextConfig].fail(validation_result.error)
+        return FlextResult[FlextConfig].ok(instance)
     except Exception as e:
-        return FlextResult[FlextSettings].fail(f"Settings creation failed: {e}")
+        return FlextResult[FlextConfig].fail(f"Settings creation failed: {e}")
 ```
 
 **2. Environment Variable Integration:**
@@ -2404,7 +2396,7 @@ def merge_and_validate_configs(
 ### Arquitetura Bem Estruturada
 
 - **FlextSystemDefaults**: Constantes organizadas por domínio
-- **FlextSettings**: Base para configurações environment-aware
+- **FlextConfig**: Base para configurações environment-aware
 - **FlextConfig**: Configuração principal com validação de negócio
 - **Utility Functions**: Funções foundation para toda a ecosystem
 
@@ -2970,7 +2962,7 @@ class FlextFieldRegistry:
     def __init__(self) -> None:
         """Initialize empty registry com structured logging."""
         self._fields: dict[str, FlextFieldCore] = {}
-        self._logger = FlextLoggerFactory.get_logger(__name__)
+        self._logger = FlextLogger(__name__)
     
     def register_field(self, field: FlextFieldCore) -> FlextResult[FlextFieldCore]:
         """Register field com duplicate checking e logging."""
@@ -6192,7 +6184,7 @@ A biblioteca flext-core é um caso extremo de **overengineering** com violaçõe
 
 # models.py (Domain) importa
 
-from flext_core.loggings import FlextLoggerFactory  # Infrastructure!
+from flext_core.loggings import FlextLogger  # Infrastructure!
 
 ```
 

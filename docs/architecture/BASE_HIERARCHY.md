@@ -25,7 +25,7 @@ this repository today.
 
 ### Level 3: Configuration
 
-- `config.py` — FlextSettings and config management
+- `config.py` — FlextConfig and config management
 - `config_base.py` — Base configuration building blocks
 - `config_models.py` — Shared configuration models
 

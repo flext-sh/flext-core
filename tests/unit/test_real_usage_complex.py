@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult, FlextTypes, get_flext_container
+from flext_core import FlextContainer, FlextResult, FlextTypes
 
 pytestmark = [pytest.mark.e2e]
 
@@ -194,14 +194,14 @@ class TestUsagePatterns:
     def test_global_container_usage(self) -> None:
         """Test global container usage (application-wide pattern)."""
         # Setup global services (application startup)
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         database = TestDatabase()
         register_result = container.register("global_database", database)
         assert register_result.success
 
         # Access from anywhere in application
-        container2 = get_flext_container()
+        container2 = FlextContainer.get_global()
         assert container2 is container  # Same instance
 
         db_result = container2.get("global_database")

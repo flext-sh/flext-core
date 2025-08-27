@@ -14,7 +14,7 @@ import pytest
 
 from flext_core import (
     FlextCore,
-    FlextLoggerFactory,
+    FlextLogger,
     FlextResult,
     generate_uuid,
 )
@@ -105,7 +105,7 @@ class TestFlextCoreRealFunctionality:
         core.configure_logging(log_level="DEBUG", _json_output=False)
 
         # Use the logging system
-        logger = FlextLoggerFactory.get_logger("test_module")
+        logger = FlextLogger("test_module")
 
         # Should not raise exceptions
         logger.info("Test message from FlextCore integration")
@@ -176,19 +176,26 @@ class TestFlextCoreRealFunctionality:
             name="username", min_length=3, max_length=20, required=True
         )
 
-        assert string_field.field_name == "username"
-        assert string_field.min_length == 3
-        assert string_field.max_length == 20
-        assert string_field.required is True
+        assert hasattr(string_field, "name")
+        assert string_field.name == "username"  # type: ignore[attr-defined]
+        assert hasattr(string_field, "min_length")
+        assert string_field.min_length == 3  # type: ignore[attr-defined]
+        assert hasattr(string_field, "max_length")
+        assert string_field.max_length == 20  # type: ignore[attr-defined]
+        assert hasattr(string_field, "required")
+        assert string_field.required is True  # type: ignore[attr-defined]
 
         # Create integer field
         integer_field = core.create_integer_field(
             name="age", min_value=0, max_value=150
         )
 
-        assert integer_field.field_name == "age"
-        assert integer_field.min_value == 0
-        assert integer_field.max_value == 150
+        assert hasattr(integer_field, "name")
+        assert integer_field.name == "age"  # type: ignore[attr-defined]
+        assert hasattr(integer_field, "min_value")
+        assert integer_field.min_value == 0  # type: ignore[attr-defined]
+        assert hasattr(integer_field, "max_value")
+        assert integer_field.max_value == 150  # type: ignore[attr-defined]
 
     def test_handler_registration_integration(self) -> None:
         """Test FlextCore handler registration functionality."""
@@ -229,6 +236,7 @@ class TestFlextCoreEdgeCases:
         result = core.get_service("non_existent_service")
 
         assert result.is_failure
+        assert result.error is not None
         assert "Service not found" in result.error or "not found" in result.error
 
     def test_invalid_logging_configuration(self) -> None:
@@ -341,7 +349,7 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(user["id"], str)
 
         # 5. Retrieve user
-        user_id = cast("str", user["id"])
+        user_id = str(user["id"])
         get_result = service.get_user(user_id)
         assert get_result.success
 

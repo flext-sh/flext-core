@@ -33,7 +33,6 @@ from flext_core import (
     FlextEntityId,
     FlextResult,
     __version__,
-    get_flext_container,
 )
 
 
@@ -143,7 +142,7 @@ class TestLibraryIntegration:
         assert service_result.value == test_value
 
         # Act - Test global container access
-        global_container = get_flext_container()
+        global_container = FlextContainer.get_global()
 
         # Assert - Global container availability
         assert isinstance(global_container, FlextContainer)

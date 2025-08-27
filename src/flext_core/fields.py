@@ -72,6 +72,7 @@ from typing import Final, cast, override
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 # =============================================================================
 # FLEXT FIELDS HIERARCHICAL SYSTEM - Complete field management ecosystem
@@ -516,7 +517,10 @@ class FlextFields:
 
                 """
                 if value is None and not self.required:
-                    return FlextResult[str].ok(self.default or str(uuid.uuid4()))
+                    # Use centralized UUID generation
+                    if self.default:
+                        return FlextResult[str].ok(self.default)
+                    return FlextResult[str].ok(FlextUtilities.Generators.generate_uuid())
 
                 if not isinstance(value, str):
                     return FlextResult[str].fail(
@@ -884,17 +888,19 @@ class FlextFields:
                 # Extract field definitions
                 fields_data_raw = schema.get("fields", [])
                 if isinstance(fields_data_raw, list):
-                    fields_list = processed_schema["fields"]
-                    if isinstance(fields_list, list):
-                        # Type cast the list to help Pyright inference
-                        fields_data = cast("list[dict[str, object]]", fields_data_raw)
-                        for field_def_raw in fields_data:
-                            # field_def_raw is guaranteed dict[str, object] from cast
-                            field_result = self._extract_field_definition(field_def_raw)
-                            if field_result.success:
-                                # Type cast for Pyright compatibility
-                                typed_value = cast("object", field_result.value)
-                                fields_list.append(typed_value)
+                    # Create a properly typed list for field definitions
+                    field_definitions: list[object] = []
+
+                    # Type cast the list to help Pyright inference
+                    fields_data = cast("list[dict[str, object]]", fields_data_raw)
+                    for field_def_raw in fields_data:
+                        # field_def_raw is guaranteed dict[str, object] from cast
+                        field_result = self._extract_field_definition(field_def_raw)
+                        if field_result.success:
+                            field_definitions.append(field_result.value)
+
+                    # Assign the typed list to the processed schema
+                    processed_schema["fields"] = field_definitions
 
                 # Extract metadata
                 metadata = schema.get("metadata", {})
@@ -1452,31 +1458,33 @@ class FlextFields:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
-            # Type annotation for schema_fields iteration
-            typed_schema_fields: list[object] = schema_fields
-            for field_def in typed_schema_fields:
-                if not isinstance(field_def, dict):
-                    errors.append("Field definition must be dictionary")
-                    continue
+            for field_def_obj in schema_fields:
+                # Anotação explícita para o Pylance
+                field_def_typed: dict[str, object] = cast(
+                    "dict[str, object]", field_def_obj
+                )
+                field_def = field_def_typed
+                field_type_obj = field_def.get("type")
+                field_name_obj = field_def.get("name")
 
-                # Type cast after isinstance check for Pyright compatibility
-                field_def_dict = cast("dict[str, object]", field_def)
-
-                field_type = field_def_dict.get("type")
-                field_name = field_def_dict.get("name")
-
-                if not field_type or not field_name:
+                # Checagem de None
+                if field_type_obj is None or field_name_obj is None:
                     errors.append("Field definition must have 'type' and 'name'")
                     continue
 
-                # Type guard to ensure field_type and field_name are strings
-                if not isinstance(field_type, str) or not isinstance(field_name, str):
+                # Checagem de tipo
+                if not isinstance(field_type_obj, str) or not isinstance(
+                    field_name_obj, str
+                ):
                     errors.append("Field 'type' and 'name' must be strings")
                     continue
 
-                # Extract configuration
-                config = {
-                    k: v for k, v in field_def_dict.items() if k not in {"type", "name"}
+                field_type: str = field_type_obj
+                field_name: str = field_name_obj
+
+                # Extração de configuração com tipos explícitos
+                config: dict[str, object] = {
+                    k: v for k, v in field_def.items() if k not in {"type", "name"}
                 }
 
                 result = FlextFields.Factory.create_field(
@@ -1789,172 +1797,6 @@ class FlextFields:
             }
 
             return FlextResult[dict[str, object]].ok(summary)
-
-
-# =============================================================================
-# CONVENIENCE FUNCTIONS - Module-level functions for common operations
-# =============================================================================
-
-
-def create_field(
-    field_type: str,
-    name: str,
-    **config: object,
-) -> FlextResult[FlextFields.Core.BaseField[object]]:
-    """Create field instance using factory pattern.
-
-    Args:
-        field_type: Type of field to create
-        name: Name for the field
-        **config: Configuration parameters for the field
-
-    Returns:
-        FlextResult with created field instance or error
-
-    """
-    result = FlextFields.Factory.create_field(field_type, name, **config)
-    if result.success:
-        return FlextResult[FlextFields.Core.BaseField[object]].ok(
-            cast("FlextFields.Core.BaseField[object]", result.value)
-        )
-    return FlextResult[FlextFields.Core.BaseField[object]].fail(
-        result.error or "Unknown error", error_code=result.error_code
-    )
-
-
-def validate_field_value(
-    field: FlextFields.Core.BaseField[object],
-    value: object,
-) -> FlextResult[object]:
-    """Validate value using field's validation logic.
-
-    Args:
-        field: Field instance to use for validation
-        value: Value to validate
-
-    Returns:
-        FlextResult with validated value or error
-
-    """
-    return FlextFields.Validation.validate_field(field, value)
-
-
-class _RegistrySingleton:
-    """Thread-safe singleton for field registry."""
-
-    _instance: FlextFields.Registry.FieldRegistry | None = None
-
-    @classmethod
-    def get_instance(cls) -> FlextFields.Registry.FieldRegistry:
-        if cls._instance is None:
-            cls._instance = FlextFields.Registry.FieldRegistry()
-        return cls._instance
-
-
-def get_global_field_registry() -> FlextFields.Registry.FieldRegistry:
-    """Get global field registry instance.
-
-    Returns:
-        Global field registry instance
-
-    """
-    return _RegistrySingleton.get_instance()
-
-
-# =============================================================================
-# BUILDER SHORTCUTS - Convenience functions for common field types
-# =============================================================================
-
-
-def string_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create string field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        String field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("string", name)
-
-
-def integer_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create integer field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        Integer field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("integer", name)
-
-
-def float_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create float field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        Float field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("float", name)
-
-
-def boolean_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create boolean field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        Boolean field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("boolean", name)
-
-
-def email_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create email field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        Email field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("email", name)
-
-
-def uuid_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create UUID field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        UUID field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("uuid", name)
-
-
-def datetime_field(name: str) -> FlextFields.Factory.FieldBuilder:
-    """Create datetime field builder.
-
-    Args:
-        name: Field name
-
-    Returns:
-        Datetime field builder
-
-    """
-    return FlextFields.Factory.FieldBuilder("datetime", name)
 
 
 # =============================================================================

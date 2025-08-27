@@ -190,9 +190,9 @@ External concerns and framework integrations:
 **Infrastructure Example:**
 
 ```python
-from flext_core import FlextSettings, get_logger
+from flext_core import FlextConfig, get_logger
 
-class DatabaseSettings(FlextSettings):
+class DatabaseSettings(FlextConfig):
     """Configuration with environment support."""
     database_url: str
     pool_size: int = 5
@@ -242,7 +242,7 @@ Global container pattern for service management:
 from flext_core import get_flext_container
 
 # Register services at startup
-container = get_flext_container()
+container = FlextContainer.get_global()
 container.register("database", DatabaseService())
 container.register("cache", CacheService())
 container.register("email", EmailService())

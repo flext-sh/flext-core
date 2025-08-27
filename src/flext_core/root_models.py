@@ -590,6 +590,7 @@ ErrorMessage = FlextErrorMessage
 __all__ = [
     "FlextEmailAddress",  # Email root model
     "FlextEntityId",  # Entity ID root model
+    "FlextTimestamp",  # Timestamp root model
     # NOTE: FlextRootModels class not yet implemented
     "FlextVersion",
     # Removed conflicting aliases that exist in validation.py with proper validation:

@@ -45,7 +45,9 @@ class FlextResultFactory:
         return FlextResult[Any].fail(error, error_code="OPERATION_ERROR")
 
     @staticmethod
-    def validation_error(field: str = "unknown", value: object = None) -> FlextResult[Any]:
+    def validation_error(
+        field: str = "unknown", value: object = None
+    ) -> FlextResult[Any]:
         """Create validation failure FlextResult."""
         return FlextResult[Any].fail(
             f"Validation failed for field '{field}'",

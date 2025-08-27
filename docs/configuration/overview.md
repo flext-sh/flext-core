@@ -30,7 +30,7 @@ FLEXT Core provides enterprise-grade configuration management through Pydantic v
 
 ```python
 # Primary import for most use cases
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
 # Advanced configuration imports
 from flext_core.config import FlextConfig, FlextBaseSettings
@@ -45,10 +45,10 @@ from flext_core.config_base import ConfigurationManager
 ### Basic Usage
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from typing import Optional
 
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     """Application configuration with sensible defaults."""
 
     # Application metadata
@@ -131,12 +131,12 @@ export MYAPP_ENABLE_METRICS=true
 ### Advanced Validation
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from pydantic import field_validator, Field, model_validator
 from typing import Optional
 import re
 
-class DatabaseSettings(FlextSettings):
+class DatabaseSettings(FlextConfig):
     """Database configuration with comprehensive validation."""
 
     # Connection parameters
@@ -243,11 +243,11 @@ def setup_database():
 Configuration for multiple services.
 """
 
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from pydantic import Field
 from typing import Optional
 
-class ServiceConfig(FlextSettings):
+class ServiceConfig(FlextConfig):
     """Base configuration for services."""
 
     service_name: str = Field(..., description="Service name")
@@ -346,12 +346,12 @@ Testing configuration patterns.
 
 import pytest
 import os
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
 def test_default_configuration():
     """Test default configuration values."""
 
-    class TestSettings(FlextSettings):
+    class TestSettings(FlextConfig):
         app_name: str = "test-app"
         debug: bool = True
         port: int = 8000
@@ -364,7 +364,7 @@ def test_default_configuration():
 def test_environment_override():
     """Test environment variable override."""
 
-    class TestSettings(FlextSettings):
+    class TestSettings(FlextConfig):
         app_name: str = "test-app"
         port: int = 8000
 
@@ -387,7 +387,7 @@ def test_environment_override():
 def test_validation_error():
     """Test configuration validation."""
 
-    class TestSettings(FlextSettings):
+    class TestSettings(FlextConfig):
         port: int = Field(..., ge=1, le=65535)
 
     # This should fail validation
@@ -422,10 +422,10 @@ config/
 ### 2. Secret Management
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from pydantic import Field, SecretStr
 
-class SecureSettings(FlextSettings):
+class SecureSettings(FlextConfig):
     """Configuration with secure secret handling."""
 
     # Sensitive values use SecretStr
@@ -444,7 +444,7 @@ class SecureSettings(FlextSettings):
 ### 3. Configuration Validation
 
 ```python
-def validate_configuration(settings: FlextSettings) -> FlextResult[None]:
+def validate_configuration(settings: FlextConfig) -> FlextResult[None]:
     """Validate configuration at startup."""
     errors = []
 
@@ -467,7 +467,7 @@ def validate_configuration(settings: FlextSettings) -> FlextResult[None]:
 Always document configuration options:
 
 ```python
-class DocumentedSettings(FlextSettings):
+class DocumentedSettings(FlextConfig):
     """Application settings with comprehensive documentation.
 
     Environment Variables:
@@ -510,7 +510,7 @@ class DocumentedSettings(FlextSettings):
 ### Service Discovery
 
 ```python
-class ServiceDiscoverySettings(FlextSettings):
+class ServiceDiscoverySettings(FlextConfig):
     """Configuration for service discovery."""
 
     # Service registry
@@ -534,7 +534,7 @@ class ServiceDiscoverySettings(FlextSettings):
 ### Feature Flags
 
 ```python
-class FeatureFlags(FlextSettings):
+class FeatureFlags(FlextConfig):
     """Feature flag configuration."""
 
     # Feature toggles
@@ -579,7 +579,7 @@ class FeatureFlags(FlextSettings):
 
 ```python
 import os
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
 def debug_configuration():
     """Debug configuration loading."""

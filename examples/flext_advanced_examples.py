@@ -1,318 +1,324 @@
 #!/usr/bin/env python3
 """FLEXT Core - Advanced Examples.
 
-Advanced patterns and enterprise scenarios using FLEXT Core with shared domain models.
+Advanced patterns and enterprise scenarios using FLEXT Core.
+This module demonstrates advanced usage patterns and can be run independently
+when flext_core is properly installed.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import contextlib
+import sys
 from decimal import Decimal
-from typing import cast
+from typing import override
 
 from pydantic_settings import SettingsConfigDict
-from shared_domain import (
-    EmailAddress,
-    Money,
-    Order as SharedOrder,
-    SharedDomainFactory,
-    User as SharedUser,
-)
 
-from flext_core import (
-    FlextCommands,
-    FlextDecoratedFunction,
-    FlextResult,
-    FlextSettings,
-    get_logger,
-)
+from flext_core import FlextConfig, FlextResult
+
+# =============================================================================
+# TYPE ALIASES - For better type safety
+# =============================================================================
+
+OrderData = dict[str, object]
+ItemData = dict[str, object]
+
 
 # =============================================================================
 # VALIDATION CONSTANTS - Domain rule constraints
 # =============================================================================
 
-# Currency validation constants
-CURRENCY_CODE_LENGTH = 3  # Standard ISO 4217 currency code length
+MAX_ORDER_ITEMS = 100
+MIN_ORDER_VALUE = Decimal("0.01")
+MAX_ORDER_VALUE = Decimal("100000.00")
 
 
-def main() -> None:
-    """Execute main function for advanced examples using railway-oriented programming."""
-    # Chain all demonstration functions using railway-oriented programming
-    result = (
-        _demonstrate_value_objects()
-        .flat_map(lambda _: _demonstrate_aggregate_root())
-        .flat_map(_demonstrate_query_pattern)
-        .flat_map(lambda _: _demonstrate_decorators())
-        .flat_map(lambda _: _demonstrate_logging())
-        .flat_map(lambda _: _demonstrate_configuration())
+# =============================================================================
+# CONFIGURATION - Enterprise settings with validation
+# =============================================================================
+
+
+class AdvancedExamplesConfig(FlextConfig):
+    """Configuration for advanced examples with enterprise validation."""
+
+    # Service configuration
+    service_name: str = "flext-advanced-examples"
+    service_version: str = "1.0.0"
+    debug_mode: bool = False
+
+    # Business rule configuration
+    max_order_items: int = MAX_ORDER_ITEMS
+    min_order_value: Decimal = MIN_ORDER_VALUE
+    max_order_value: Decimal = MAX_ORDER_VALUE
+
+    # Security settings
+    require_email_verification: bool = True
+    password_complexity_required: bool = True
+
+    model_config = SettingsConfigDict(
+        env_prefix="FLEXT_EXAMPLES_",
+        case_sensitive=False,
+        extra="forbid",
     )
 
-    if result.success:
-        pass
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rule constraints."""
+        if self.max_order_items <= 0:
+            return FlextResult[None].fail("max_order_items must be positive")
+
+        if self.min_order_value <= 0:
+            return FlextResult[None].fail("min_order_value must be positive")
+
+        if self.max_order_value <= self.min_order_value:
+            return FlextResult[None].fail(
+                "max_order_value must be greater than min_order_value"
+            )
+
+        return FlextResult[None].ok(None)
 
 
-def _demonstrate_value_objects() -> FlextResult[None]:
-    """Demonstrate value objects using shared domain models."""
-    # Use shared domain models instead of local definitions
-    EmailAddress(email="user@example.com")
-    Money(amount=Decimal("100.50"), currency="USD")
-
-    # Test equality (value objects are equal by value, not identity)
-    EmailAddress(email="user@example.com")
-
-    return FlextResult.ok(None)
+# =============================================================================
+# BUSINESS LOGIC - Order processing with validation
+# =============================================================================
 
 
-def _demonstrate_aggregate_root() -> FlextResult[SharedOrder]:
-    """Demonstrate aggregate root pattern using shared domain models."""
-    email = EmailAddress(email="user@example.com")
-    money = Money(amount=Decimal("100.50"), currency="USD")
+class OrderProcessor:
+    """Advanced order processing with comprehensive validation and error handling."""
 
-    return (
-        _create_test_user(email)
-        .flat_map(lambda user: _create_test_order(user, money))
-        .flat_map(_display_order_information)
-    )
+    def __init__(self, config: AdvancedExamplesConfig) -> None:
+        """Initialize order processor with configuration."""
+        self._config = config
+
+    def create_order(
+        self, user_id: str, items_data: list[ItemData]
+    ) -> FlextResult[OrderData]:
+        """Create and validate order with comprehensive business rules."""
+        try:
+            # Validate order items count
+            if len(items_data) > self._config.max_order_items:
+                return FlextResult[OrderData].fail(
+                    f"Too many items: {len(items_data)} > {self._config.max_order_items}"
+                )
+
+            if not items_data:
+                return FlextResult[OrderData].fail("Order must have at least one item")
+
+            # Process order items
+            processed_items: list[ItemData] = []
+            total_amount = Decimal("0.00")
+
+            for item_data in items_data:
+                item_result = self._process_order_item(item_data)
+                if not item_result.success:
+                    return FlextResult[OrderData].fail(
+                        f"Item validation failed: {item_result.error}"
+                    )
+
+                item = item_result.value
+                processed_items.append(item)
+                if "total_price" in item:
+                    total_amount += Decimal(str(item["total_price"]))
+
+            # Validate total amount
+            amount_validation = self._validate_order_amount(total_amount)
+            if not amount_validation.success:
+                return FlextResult[OrderData].fail(
+                    amount_validation.error or "Amount validation failed"
+                )
+
+            # Create order dictionary
+            order: OrderData = {
+                "id": f"ORDER-{user_id}-001",
+                "user_id": user_id,
+                "items": processed_items,
+                "total_amount": float(total_amount),
+                "status": "created",
+            }
+
+            return FlextResult[OrderData].ok(order)
+
+        except Exception as e:
+            return FlextResult[OrderData].fail(f"Unexpected error creating order: {e}")
+
+    def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
+        """Process and validate individual order item."""
+        required_fields = ["product_id", "quantity", "unit_price"]
+
+        for field in required_fields:
+            if field not in item_data:
+                return FlextResult[ItemData].fail(f"Missing required field: {field}")
+
+        try:
+            # Safe conversion with proper error handling
+            quantity_str = str(item_data["quantity"])
+            quantity = int(quantity_str)
+            unit_price = Decimal(str(item_data["unit_price"]))
+
+            if quantity <= 0:
+                return FlextResult[ItemData].fail("Quantity must be positive")
+
+            if unit_price <= 0:
+                return FlextResult[ItemData].fail("Unit price must be positive")
+
+            total_price = unit_price * quantity
+
+            processed_item: ItemData = {
+                **item_data,
+                "quantity": quantity,
+                "unit_price": float(unit_price),
+                "total_price": float(total_price),
+            }
+
+            return FlextResult[ItemData].ok(processed_item)
+
+        except (ValueError, TypeError) as e:
+            return FlextResult[ItemData].fail(f"Invalid item data: {e}")
+
+    def _validate_order_amount(self, amount: Decimal) -> FlextResult[None]:
+        """Validate order total amount against business rules."""
+        if amount < self._config.min_order_value:
+            return FlextResult[None].fail(
+                f"Order amount too low: {amount} < {self._config.min_order_value}"
+            )
+
+        if amount > self._config.max_order_value:
+            return FlextResult[None].fail(
+                f"Order amount too high: {amount} > {self._config.max_order_value}"
+            )
+
+        return FlextResult[None].ok(None)
 
 
-def _create_test_user(email: EmailAddress) -> FlextResult[SharedUser]:
-    """Create test user for demonstration."""
-    user_result = SharedDomainFactory.create_user(
-        name="Test User",
-        email=email.email,
-        age=30,
-    )
-
-    if user_result.success:
-        user = user_result.value
-        if user is None:
-            return FlextResult.fail("User creation returned None data")
-        return FlextResult.ok(user)
-    return FlextResult.fail(f"Failed to create user: {user_result.error}")
+# =============================================================================
+# DEMONSTRATION FUNCTIONS - Example usage patterns
+# =============================================================================
 
 
-def _create_test_order(user: SharedUser, money: Money) -> FlextResult[SharedOrder]:
-    """Create test order for demonstration."""
-    order_items: list[dict[str, object]] = [
-        {
-            "product_id": "product123",
-            "product_name": "Test Product",
-            "quantity": 1,
-            "unit_price": str(money.amount),
-            "currency": money.currency,
-        },
-    ]
+def demonstrate_order_processing() -> FlextResult[None]:
+    """Demonstrate advanced order processing with error handling."""
+    print("Starting order processing demonstration")
 
-    order_result = SharedDomainFactory.create_order(
-        customer_id=str(user.id),
-        items=order_items,
-    )
+    try:
+        # Create configuration
+        config = AdvancedExamplesConfig()
+        validation_result = config.validate_business_rules()
+        if not validation_result.success:
+            return FlextResult[None].fail(
+                f"Configuration validation failed: {validation_result.error}"
+            )
 
-    if order_result.success:
+        # Create order processor
+        processor = OrderProcessor(config)
+
+        # Create test order items
+        test_items: list[ItemData] = [
+            {
+                "product_id": "PROD-001",
+                "name": "Test Product 1",
+                "quantity": 2,
+                "unit_price": "29.99",
+            },
+            {
+                "product_id": "PROD-002",
+                "name": "Test Product 2",
+                "quantity": 1,
+                "unit_price": "49.99",
+            },
+        ]
+
+        # Create order
+        order_result = processor.create_order("USER-123", test_items)
+
+        if not order_result.success:
+            print(f"Order creation failed: {order_result.error}")
+            return FlextResult[None].fail(
+                f"Order creation failed: {order_result.error}"
+            )
+
         order = order_result.value
-        if order is None:
-            return FlextResult.fail("Order creation returned None data")
-        return FlextResult.ok(order)
-    return FlextResult.fail(f"Failed to create order: {order_result.error}")
+        print(f"Order created successfully: ID={order['id']}")
 
+        return FlextResult[None].ok(None)
 
-def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
-    """Display order information and return order for chaining."""
-    total_result = order.calculate_total()
-    if total_result.success:
-        pass
-
-    # SharedOrder has built-in domain events
-
-    return FlextResult.ok(order)
-
-
-def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
-    """Demonstrate CQRS query pattern."""
-
-    class GetOrdersQuery(FlextCommands.Models.Query):
-        customer_email: str
-        status: str | None = None
-
-        def validate_query(self) -> FlextResult[None]:
-            """Validate custom query."""
-            result = super().validate_query()  # Call base validation
-            if result.is_failure:
-                return result
-
-            if not self.customer_email or "@" not in self.customer_email:
-                return FlextResult.fail("Invalid customer email")
-            return FlextResult.ok(None)
-
-    class GetOrdersHandler(
-        FlextCommands.Handlers.QueryHandler[GetOrdersQuery, list[SharedOrder]],
-    ):
-        def handle(self, query: GetOrdersQuery) -> FlextResult[list[SharedOrder]]:
-            # Create user for order simulation
-            user_result = SharedDomainFactory.create_user(
-                name="Query User",
-                email=query.customer_email,
-                age=30,
-            )
-
-            if user_result.is_failure:
-                return FlextResult.fail(f"Failed to create user: {user_result.error}")
-
-            user = user_result.value
-
-            if user is None:
-                return FlextResult.fail("User creation returned None data")
-
-            # Simulate database query with SharedOrder
-            order1_result = SharedDomainFactory.create_order(
-                customer_id=str(user.id),
-                items=[
-                    {
-                        "product_id": "product1",
-                        "product_name": "Product 1",
-                        "quantity": 1,
-                        "unit_price": "50.0",
-                        "currency": "USD",
-                    },
-                ],
-            )
-
-            order2_result = SharedDomainFactory.create_order(
-                customer_id=str(user.id),
-                items=[
-                    {
-                        "product_id": "product2",
-                        "product_name": "Product 2",
-                        "quantity": 1,
-                        "unit_price": "75.0",
-                        "currency": "USD",
-                    },
-                ],
-            )
-
-            orders = []
-            if order1_result.success:
-                order1 = order1_result.value
-
-                if order1 is None:
-                    return FlextResult.fail("Order creation returned None data")
-                orders.append(order1)
-            if order2_result.success:
-                order2 = order2_result.value
-
-                if order2 is None:
-                    return FlextResult.fail("Order creation returned None data")
-                orders.append(order2)
-
-            # Filter by status if provided
-            if query.status:
-                orders = [
-                    o
-                    for o in orders
-                    if o is not None and o.status.value == query.status
-                ]
-
-            return FlextResult.ok(orders)
-
-    query = GetOrdersQuery(
-        customer_email="user@example.com",
-        status="confirmed",
-        page_size=10,
-    )
-
-    query_handler = GetOrdersHandler()
-
-    # Validate query
-    validation = query.validate_query()
-
-    if validation.success:
-        query_result = query_handler.handle(query)
-        if query_result.success:
-            orders = query_result.value
-
-            if orders is None:
-                return FlextResult.fail("Orders query returned None data")
-            for o in orders:
-                if hasattr(o, "total") and o.total is not None:  # type: ignore[attr-defined]
-                    pass
-    return FlextResult.ok(None)
-
-
-def _demonstrate_decorators() -> FlextResult[None]:
-    """Demonstrate decorator patterns."""
-
-    def risky_calculation(x: float, y: float) -> float:
-        if y == 0:
-            msg = "Division by zero"
-            raise ValueError(msg)
-        return x / y
-
-    # FlextDecorators.safe_result not available in current version
-    # Would demonstrate decorator application for safe execution
-    cast("FlextDecoratedFunction[float]", risky_calculation)
-
-    # Test safe execution - safe_result returns a function with different signature
-    # The decorator transforms the function, so we test with FlextResult wrapping
-    risky_calculation(10.0, 2.0)  # Normal call
-
-    # Test error handling
-    with contextlib.suppress(ValueError):
-        risky_calculation(10.0, 0.0)  # Expected error
-    return FlextResult.ok(None)
-
-
-def _demonstrate_logging() -> FlextResult[None]:
-    """Demonstrate structured logging patterns."""
-    logger = get_logger("advanced_examples")
-
-    # Structured logging with context
-    logger.info(
-        "Starting advanced processing",
-        operation="advanced_example",
-        user_id="user123",
-        request_id="req456",
-    )
-
-    # Context logging
-    logger.set_context({"component": "order_service", "version": "1.0"})
-    logger.info("Order processing started", order_id="order123")
-
-    try:
-        # Simulate some work
-        result = 100 / 10
-        logger.info("Calculation completed", result=result)
-    except (RuntimeError, ValueError, TypeError) as e:
-        logger.exception("Calculation failed", error=str(e))
-
-    return FlextResult.ok(None)
-
-
-def _demonstrate_configuration() -> FlextResult[None]:
-    """Demonstrate configuration management patterns."""
-
-    class AppSettings(FlextSettings):
-        database_url: str = "sqlite:///app.db"
-        debug: bool = False
-        max_workers: int = 4
-        api_key: str = "default-key"
-
-        model_config = SettingsConfigDict(env_prefix="APP_")
-
-    # Create settings
-    try:
-        settings = AppSettings(
-            debug=True,
-            max_workers=8,
-        )
-        settings_result = FlextResult.ok(settings)
     except Exception as e:
-        settings_result = FlextResult.fail(f"Configuration creation failed: {e}")
+        error_msg = f"Demonstration failed with unexpected error: {e}"
+        print(error_msg)
+        return FlextResult[None].fail(error_msg)
 
-    if settings_result.success:
-        settings = settings_result.value
 
-    return FlextResult.ok(None)
+def demonstrate_configuration_validation() -> FlextResult[None]:
+    """Demonstrate configuration validation with various scenarios."""
+    print("Starting configuration validation demonstration")
+
+    try:
+        # Test valid configuration
+        print("Testing valid configuration...")
+        valid_config = AdvancedExamplesConfig()
+        validation_result = valid_config.validate_business_rules()
+
+        if not validation_result.success:
+            return FlextResult[None].fail(
+                f"Valid configuration failed validation: {validation_result.error}"
+            )
+
+        print("✅ Valid configuration passed validation")
+
+        # Test invalid configuration - negative max_order_items
+        print("Testing invalid configuration (negative max_order_items)...")
+        with contextlib.suppress(Exception):
+            invalid_config1 = AdvancedExamplesConfig(max_order_items=-1)
+            invalid_result1 = invalid_config1.validate_business_rules()
+
+            if invalid_result1.success:
+                print("⚠️  Invalid configuration unexpectedly passed validation")
+            else:
+                print(
+                    f"✅ Invalid configuration correctly failed: {invalid_result1.error}"
+                )
+
+        print("Configuration validation demonstration completed successfully")
+        return FlextResult[None].ok(None)
+
+    except Exception as e:
+        error_msg = f"Configuration demonstration failed: {e}"
+        print(error_msg)
+        return FlextResult[None].fail(error_msg)
+
+
+# =============================================================================
+# MAIN EXECUTION - Comprehensive demonstration
+# =============================================================================
+
+
+def main() -> int:
+    """Main execution function with comprehensive error handling."""
+    print("Starting FLEXT Core Advanced Examples")
+
+    try:
+        # Run configuration demonstration
+        config_result = demonstrate_configuration_validation()
+        if not config_result.success:
+            print(f"Configuration demonstration failed: {config_result.error}")
+            return 1
+
+        # Run order processing demonstration
+        order_result = demonstrate_order_processing()
+        if not order_result.success:
+            print(f"Order processing demonstration failed: {order_result.error}")
+            return 1
+
+        print("✅ All demonstrations completed successfully")
+        return 0
+
+    except Exception as e:
+        print(f"❌ Demonstration failed with unexpected error: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

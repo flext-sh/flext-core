@@ -44,7 +44,7 @@ Examples:
         # FlextConstants hierarchical access
         timeout: int = FlextCommands.Constants.Core.DEFAULT_TIMEOUT
         max_retries: int = FlextCommands.Constants.Application.MAX_RETRIES
-        error_code: str = FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED
+        error_code: str = FlextConstants.Errors.VALIDATION_ERROR
 
     FlextProtocols compliance::
 
@@ -103,18 +103,14 @@ from pydantic import (
 )
 
 from flext_core.constants import FlextConstants
-from flext_core.loggings import FlextLogger, FlextLoggerFactory, get_logger
-from flext_core.mixins import (
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimingMixin,
-)
+from flext_core.loggings import FlextLogger
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModel
 from flext_core.payload import FlextPayload
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextGenerators, FlextTypeGuards
+from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextPredicates
 
 # =============================================================================
@@ -171,68 +167,6 @@ class FlextCommands:
                     return FlextCommands.Results.success("processed")
 
     """
-
-    # =========================================================================
-    # CONSTANTS - Command system constants using FlextConstants hierarchy
-    # =========================================================================
-
-    class Constants(FlextConstants):
-        """Command-specific constants following FLEXT hierarchical patterns.
-
-        Extends FlextConstants base class to provide command-specific constants
-        organized by functional domains. All constants use proper typing and
-        are designed for enterprise-scale CQRS applications.
-        """
-
-        # Command execution constants from FlextConstants hierarchy
-        MAX_RETRIES = FlextConstants.Defaults.MAX_RETRIES
-        RETRY_DELAY = FlextConstants.Network.CONNECTION_TIMEOUT
-        MAX_COMMAND_HANDLERS = FlextConstants.Performance.MAX_BATCH_SIZE
-        MAX_QUERY_RESULTS = FlextConstants.Performance.MAX_BATCH_SIZE
-
-        # Command validation constants using FlextConstants patterns
-        MIN_COMMAND_ID_LENGTH = FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH
-        MAX_COMMAND_TYPE_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH
-        MAX_CORRELATION_ID_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH
-
-        # Performance constants from FlextConstants hierarchy
-        SLOW_COMMAND_THRESHOLD = FlextConstants.Performance.TIMEOUT
-        MEMORY_THRESHOLD_MB = 100  # Command-specific memory threshold in MB
-        METRICS_COLLECTION_INTERVAL = FlextConstants.Performance.TIMEOUT
-
-        # Command state constants - command-specific constants
-        class States:
-            """Command processing state constants."""
-
-            CREATED = "created"
-            VALIDATING = "validating"
-            PROCESSING = "processing"
-            COMPLETED = "completed"
-            FAILED = "failed"
-            TIMEOUT = "timeout"
-            CANCELLED = "cancelled"
-
-        # Command type constants - command-specific constants
-        class Types:
-            """Command type classification constants."""
-
-            CREATE = "create"
-            UPDATE = "update"
-            DELETE = "delete"
-            QUERY = "query"
-            BATCH = "batch"
-            ASYNC = "async"
-
-        # Error codes specific to command processing from FlextConstants
-        class Errors(FlextConstants.Errors):
-            """Command-specific error codes extending base error constants."""
-
-            COMMAND_VALIDATION_FAILED = FlextConstants.Errors.VALIDATION_ERROR
-            COMMAND_HANDLER_NOT_FOUND = FlextConstants.Errors.GENERIC_ERROR
-            COMMAND_PROCESSING_FAILED = FlextConstants.Errors.GENERIC_ERROR
-            COMMAND_TIMEOUT = FlextConstants.Errors.GENERIC_ERROR
-            COMMAND_BUS_ERROR = FlextConstants.Errors.GENERIC_ERROR
-            QUERY_PROCESSING_FAILED = FlextConstants.Errors.GENERIC_ERROR
 
     # =========================================================================
     # TYPES - Command type definitions using FlextTypes hierarchy
@@ -309,15 +243,11 @@ class FlextCommands:
         validation, serialization, and metadata handling.
         """
 
-        class Command(
-            FlextModel,
-            FlextSerializableMixin,
-            FlextLoggableMixin,
-        ):
+        class Command(FlextModel):
             """Base command with validation and metadata using FlextModel.
 
             Implements enterprise command patterns with:
-            - Automatic ID generation using FlextGenerators
+            - Automatic ID generation using FlextUtilities.Generators
             - Timestamp tracking with UTC timezone
             - Command type auto-inference from class name
             - Full validation using FlextModel (Pydantic v2)
@@ -334,8 +264,8 @@ class FlextCommands:
 
             # Use FlextTypes for all field definitions
             command_id: str = Field(
-                default_factory=FlextGenerators.generate_uuid,
-                description="Unique command identifier using FlextGenerators",
+                default_factory=FlextUtilities.Generators.generate_uuid,
+                description="Unique command identifier using FlextUtilities",
             )
 
             command_type: str = Field(
@@ -355,7 +285,7 @@ class FlextCommands:
             )
 
             correlation_id: str = Field(
-                default_factory=FlextGenerators.generate_correlation_id,
+                default_factory=FlextUtilities.Generators.generate_correlation_id,
                 description="Correlation ID for request tracking",
                 max_length=50,
             )
@@ -392,7 +322,7 @@ class FlextCommands:
                     FlextResult containing validated command or error
 
                 """
-                logger = get_logger(f"{cls.__module__}.{cls.__name__}")
+                logger = FlextLogger(f"{cls.__module__}.{cls.__name__}")
                 logger.debug(
                     "Creating command from payload",
                     payload_type=payload.metadata.get("type", "unknown"),
@@ -420,7 +350,9 @@ class FlextCommands:
                 # Build command with explicit field extraction
                 command_fields: dict[str, object] = {
                     "command_id": str(
-                        payload_dict.get("command_id", FlextGenerators.generate_uuid())
+                        payload_dict.get(
+                            "command_id", FlextUtilities.Generators.generate_uuid()
+                        )
                     ),
                     "command_type": str(payload_dict.get("command_type", cls.__name__)),
                     "user_id": str(payload_dict["user_id"])
@@ -428,7 +360,8 @@ class FlextCommands:
                     else None,
                     "correlation_id": str(
                         payload_dict.get(
-                            "correlation_id", FlextGenerators.generate_correlation_id()
+                            "correlation_id",
+                            FlextUtilities.Generators.generate_correlation_id(),
                         )
                     ),
                 }
@@ -454,7 +387,7 @@ class FlextCommands:
                     if validation_result.is_failure:
                         return FlextResult[Self].fail(
                             validation_result.error or "Command validation failed",
-                            error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                            error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
 
                     logger.info(
@@ -467,7 +400,7 @@ class FlextCommands:
                 except (ValueError, TypeError, PydanticValidationError) as e:
                     return FlextResult[Self].fail(
                         f"Command creation failed: {e}",
-                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
             def validate_command(self) -> FlextResult[None]:
@@ -505,7 +438,7 @@ class FlextCommands:
                     msg = error_msg or f"{field_name} is required"
                     return FlextResult[None].fail(
                         msg,
-                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 return FlextResult[None].ok(None)
 
@@ -532,7 +465,7 @@ class FlextCommands:
                 ):
                     return FlextResult[None].fail(
                         f"Invalid {field_name} format",
-                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 return FlextResult[None].ok(None)
 
@@ -557,7 +490,7 @@ class FlextCommands:
                     error_msg = f"{field_name} must be at least {min_len} characters"
                     return FlextResult[None].fail(
                         error_msg,
-                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 return FlextResult[None].ok(None)
 
@@ -606,10 +539,31 @@ class FlextCommands:
                 )
                 return result.value
 
-        class Query(
-            FlextModel,
-            FlextSerializableMixin,
-        ):
+            # FlextMixins integration methods
+            def log_operation(self, operation: str, **kwargs: object) -> None:
+                """Log operation using FlextMixins."""
+                FlextMixins.log_operation(self, operation, **kwargs)
+
+            def log_info(self, message: str, **kwargs: object) -> None:
+                """Log info using FlextMixins."""
+                FlextMixins.log_info(self, message, **kwargs)
+
+            def log_error(self, message: str, **kwargs: object) -> None:
+                """Log error using FlextMixins."""
+                FlextMixins.log_error(self, message, **kwargs)
+
+            def to_dict_basic(self) -> FlextTypes.Core.Dict:
+                """Convert to basic dict using FlextMixins."""
+                return FlextMixins.to_dict_basic(self)
+
+            def to_json(self, **kwargs: object) -> str:
+                """Convert to JSON using FlextMixins."""
+                indent = kwargs.get("indent")
+                if isinstance(indent, int) or indent is None:
+                    return FlextMixins.to_json(self, indent)
+                return FlextMixins.to_json(self, None)
+
+        class Query(FlextModel):
             """Base query for read operations without side effects.
 
             Implements enterprise query patterns with:
@@ -626,7 +580,7 @@ class FlextCommands:
             )
 
             query_id: str | None = Field(
-                default_factory=FlextGenerators.generate_uuid,
+                default_factory=FlextUtilities.Generators.generate_uuid,
                 description="Unique query identifier",
             )
 
@@ -671,9 +625,9 @@ class FlextCommands:
                 # Business validation using constants
                 if self.page_size <= 0:
                     errors.append("Page size must be positive")
-                if self.page_size > FlextCommands.Constants.MAX_QUERY_RESULTS:
+                if self.page_size > FlextConstants.Handlers.MAX_QUERY_RESULTS:
                     errors.append(
-                        f"Page size cannot exceed {FlextCommands.Constants.MAX_QUERY_RESULTS}"
+                        f"Page size cannot exceed {FlextConstants.Handlers.MAX_QUERY_RESULTS}"
                     )
                 if self.page_number <= 0:
                     errors.append("Page number must be positive")
@@ -685,10 +639,22 @@ class FlextCommands:
                     error_message = "; ".join(errors)
                     return FlextResult[None].fail(
                         f"Query validation failed: {error_message}",
-                        error_code=FlextCommands.Constants.Errors.QUERY_PROCESSING_FAILED,
+                        error_code=FlextConstants.Errors.QUERY_PROCESSING_FAILED,
                     )
 
                 return FlextResult[None].ok(None)
+
+            # FlextMixins integration methods
+            def to_dict_basic(self) -> FlextTypes.Core.Dict:
+                """Convert to basic dict using FlextMixins."""
+                return FlextMixins.to_dict_basic(self)
+
+            def to_json(self, **kwargs: object) -> str:
+                """Convert to JSON using FlextMixins."""
+                indent = kwargs.get("indent")
+                if isinstance(indent, int) or indent is None:
+                    return FlextMixins.to_json(self, indent)
+                return FlextMixins.to_json(self, None)
 
     # =========================================================================
     # HANDLERS - Command and query handler base classes
@@ -701,10 +667,7 @@ class FlextCommands:
         proper typing, validation, and metrics collection.
         """
 
-        class CommandHandler[CommandT, ResultT](
-            FlextLoggableMixin,
-            FlextTimingMixin,
-        ):
+        class CommandHandler[CommandT, ResultT](FlextMixins.Loggable):
             """Base command handler with enterprise features.
 
             Provides:
@@ -732,6 +695,15 @@ class FlextCommands:
                 self._handler_name = handler_name or self.__class__.__name__
                 self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
 
+            # Timing functionality using FlextMixins
+            def start_timing(self) -> float:
+                """Start timing operation."""
+                return FlextMixins.start_timing(self)
+
+            def stop_timing(self) -> float:
+                """Stop timing and return elapsed seconds."""
+                return FlextMixins.stop_timing(self)
+
             @property
             def handler_name(self) -> str:
                 """Get handler name for identification."""
@@ -740,7 +712,7 @@ class FlextCommands:
             @property
             def logger(self) -> FlextLogger:
                 """Get logger instance for this handler."""
-                return get_logger(self.__class__.__name__)
+                return FlextLogger(self.__class__.__name__)
 
             def validate_command(self, command: object) -> FlextResult[None]:
                 """Validate command before handling.
@@ -780,7 +752,7 @@ class FlextCommands:
             def can_handle(self, command: object) -> bool:
                 """Check if handler can process this command.
 
-                Uses FlextTypeGuards for type validation and generic inspection.
+                Uses FlextUtilities type guards for validation and generic inspection.
 
                 Args:
                     command: Command object to check
@@ -801,11 +773,8 @@ class FlextCommands:
                         args = getattr(base, "__args__", None)
                         if args is not None and len(args) >= 1:
                             expected_type = base.__args__[0]
-                            # Use FlextTypeGuards for validation
-                            can_handle_result = FlextTypeGuards.is_instance_of(
-                                command,
-                                expected_type,
-                            )
+                            # Use direct isinstance for validation
+                            can_handle_result = isinstance(command, expected_type)
 
                             self.logger.debug(
                                 "Handler check result",
@@ -845,7 +814,7 @@ class FlextCommands:
                     self.logger.error(error_msg)
                     return FlextResult[ResultT].fail(
                         error_msg,
-                        error_code=FlextCommands.Constants.Errors.COMMAND_HANDLER_NOT_FOUND,
+                        error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
                     )
 
                 # Validate the command's data
@@ -858,7 +827,7 @@ class FlextCommands:
                     )
                     return FlextResult[ResultT].fail(
                         validation_result.error or "Validation failed",
-                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
                 start_time = time.perf_counter()
@@ -886,7 +855,7 @@ class FlextCommands:
                     )
                     return FlextResult[ResultT].fail(
                         f"Command processing failed: {e}",
-                        error_code=FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                        error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
                     )
 
         class QueryHandler[QueryT, QueryResultT]:
@@ -962,7 +931,7 @@ class FlextCommands:
     # BUS - Command bus for routing and execution
     # =========================================================================
 
-    class Bus(FlextLoggableMixin):
+    class Bus:
         """Command bus for routing and executing commands.
 
         Provides enterprise-grade command routing with:
@@ -975,22 +944,32 @@ class FlextCommands:
 
         def __init__(self) -> None:
             """Initialize command bus with enterprise features."""
-            super().__init__()
             # Handlers registry: command type -> handler instance
             self._handlers: dict[str, object] = {}
             # Middleware pipeline
             self._middleware: list[object] = []
             # Execution counter
             self._execution_count: int = 0
-            # Logger instance using FlextLogger
-            self._logger: FlextLogger = FlextLoggerFactory.get_logger(
-                f"{self.__module__}.{self.__class__.__name__}",
-            )
+            # Initialize FlextMixins functionality
+            FlextMixins.create_timestamp_fields(self)
 
         @property
         def logger(self) -> FlextLogger:
-            """Get logger instance for this bus."""
-            return self._logger
+            """Get logger instance for this bus using FlextMixins."""
+            return FlextMixins.get_logger(self)
+
+        # FlextMixins integration methods
+        def log_operation(self, operation: str, **kwargs: object) -> None:
+            """Log operation using FlextMixins."""
+            FlextMixins.log_operation(self, operation, **kwargs)
+
+        def log_info(self, message: str, **kwargs: object) -> None:
+            """Log info using FlextMixins."""
+            FlextMixins.log_info(self, message, **kwargs)
+
+        def log_error(self, message: str, **kwargs: object) -> None:
+            """Log error using FlextMixins."""
+            FlextMixins.log_error(self, message, **kwargs)
 
         def register_handler(self, *args: object) -> None:
             """Register command handler with flexible signature support.
@@ -1114,7 +1093,7 @@ class FlextCommands:
                 )
                 return FlextResult[object].fail(
                     f"No handler found for {command_type.__name__}",
-                    error_code=FlextCommands.Constants.Errors.COMMAND_HANDLER_NOT_FOUND,
+                    error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
                 )
 
             # Apply middleware pipeline
@@ -1122,7 +1101,7 @@ class FlextCommands:
             if middleware_result.is_failure:
                 return FlextResult[object].fail(
                     middleware_result.error or "Middleware rejected command",
-                    error_code=FlextCommands.Constants.Errors.COMMAND_BUS_ERROR,
+                    error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
                 )
 
             # Execute the handler
@@ -1199,13 +1178,13 @@ class FlextCommands:
                     except Exception as e:
                         return FlextResult[object].fail(
                             f"Handler execution failed: {e}",
-                            error_code=FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                            error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
                         )
 
             # No valid handler method found
             return FlextResult[object].fail(
                 "Handler has no callable execute, handle, or process_command method",
-                error_code=FlextCommands.Constants.Errors.COMMAND_BUS_ERROR,
+                error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
             )
 
         def add_middleware(self, middleware: object) -> None:
@@ -1370,7 +1349,7 @@ class FlextCommands:
             return FlextResult[object].fail(
                 error,
                 error_code=error_code
-                or FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                or FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
                 error_data=error_data,
             )
 

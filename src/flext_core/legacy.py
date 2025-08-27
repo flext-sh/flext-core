@@ -74,14 +74,16 @@ from typing import ParamSpec, TypeVar, cast
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.container import FlextContainer, get_flext_container
+from flext_core.container import FlextContainer
 from flext_core.decorators import FlextDecorators
+from flext_core.delegation_system import FlextDelegationSystem
 from flext_core.domain_services import FlextDomainService
 from flext_core.exceptions import FlextExceptions
-from flext_core.fields import FlextFields, get_global_field_registry
+from flext_core.fields import FlextFields
+from flext_core.guards import FlextGuards
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger, FlextLoggerFactory, get_logger
-from flext_core.mixins import FlextMixins, FlextServiceMixin
+from flext_core.loggings import FlextLogger
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels, FlextValue
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -98,36 +100,16 @@ from flext_core.schema_processing import (
     FlextRegexProcessor,
 )
 from flext_core.typings import FlextTypes
-from flext_core.utilities import (
-    FlextGenerators,
-    FlextPerformance,
-    FlextProcessingUtils,
-    FlextTypeGuards,
-    FlextUtilities,
-)
+from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextValidation
 
 # Type variables for generic functions
 P = ParamSpec("P")
 R = TypeVar("R")
+T = TypeVar("T")
 
 
-def _emit_validation_deprecation_warning(old_name: str, new_path: str) -> None:
-    """Global function for emitting validation deprecation warnings.
-
-    Args:
-        old_name: The deprecated API name
-        new_path: The modern hierarchical API path
-
-    Note:
-        This is a global function to avoid ordering issues with class methods.
-
-    """
-    warnings.warn(
-        f"{old_name} is deprecated. Use {new_path} instead.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
+# Function removed - use decorators directly instead of manual warnings
 
 
 # =============================================================================
@@ -152,16 +134,11 @@ class ConfigLegacy:
     """
 
     @staticmethod
-    def _emit_deprecation_warning(old_api: str, new_api: str) -> None:
-        """Emit standardized deprecation warning for configuration APIs."""
-        warnings.warn(
-            f"{old_api} is deprecated. Use {new_api} instead. "
-            f"See FlextConfig hierarchical API for modern configuration patterns.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-
-    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="get_flext_config",
+        new_path="FlextConfig",
+        migration_guide="Import FlextConfig directly: from flext_core.config import FlextConfig",
+    )
     def get_flext_config() -> type[FlextConfig]:
         """Legacy FlextConfig factory - DEPRECATED, use FlextConfig() directly.
 
@@ -173,15 +150,17 @@ class ConfigLegacy:
             import and use FlextConfig directly from flext_core.config.
 
         """
-        ConfigLegacy._emit_deprecation_warning(
-            "get_flext_config()", "from flext_core.config import FlextConfig"
-        )
         # Direct import - NO lazy loading per FLEXT requirements
         return FlextConfig
 
     @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="get_flext_settings",
+        new_path="FlextConfig.Settings",
+        migration_guide="Import FlextConfig.Settings directly: from flext_core.config import FlextConfig",
+    )
     def get_flext_settings() -> FlextConfig.Settings:
-        """Legacy FlextSettings factory - DEPRECATED, use FlextConfig.Settings() directly.
+        """Legacy FlextConfig factory - DEPRECATED, use FlextConfig.Settings() directly.
 
         Returns:
             FlextConfig.Settings instance for backward compatibility.
@@ -191,9 +170,6 @@ class ConfigLegacy:
             use FlextConfig.Settings() directly.
 
         """
-        ConfigLegacy._emit_deprecation_warning(
-            "get_flext_settings()", "FlextConfig.Settings()"
-        )
         # Direct instantiation - NO lazy loading per FLEXT requirements
         return FlextConfig.Settings()
 
@@ -268,7 +244,7 @@ class HandlerLegacy:
     """
 
     @staticmethod
-    def _deprecation_warning(old_name: str, new_path: str) -> None:
+    def deprecation_warning(old_name: str, new_path: str) -> None:
         """Emit standardized deprecation warning for legacy usage."""
         warnings.warn(
             f"{old_name} is deprecated. Use {new_path} instead. "
@@ -281,7 +257,7 @@ class HandlerLegacy:
         """Minimal facade for FlextBaseHandler legacy compatibility."""
 
         def __init__(self, name: str | None = None) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextBaseHandler", "FlextHandlers.Implementation.BasicHandler"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -297,13 +273,13 @@ class HandlerLegacy:
         def __init__(
             self, name: str | None = None, validators: list[object] | None = None
         ) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextValidatingHandler",
                 "FlextHandlers.Implementation.ValidatingHandler",
             )
             # Direct usage - NO lazy import per FLEXT requirements
             # Convert legacy validators to proper protocol validators
-            protocol_validators = []
+            protocol_validators: list[object] = []
             if validators:
                 for validator in validators:
                     if callable(validator):
@@ -345,7 +321,7 @@ class HandlerLegacy:
             name: str | None = None,
             authorization_check: Callable[[object], bool] | None = None,
         ) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextAuthorizingHandler",
                 "FlextHandlers.Implementation.AuthorizingHandler",
             )
@@ -362,7 +338,7 @@ class HandlerLegacy:
         """Minimal facade for FlextMetricsHandler legacy compatibility."""
 
         def __init__(self, name: str | None = None) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextMetricsHandler", "FlextHandlers.Implementation.MetricsHandler"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -377,7 +353,7 @@ class HandlerLegacy:
         """Minimal facade for FlextEventHandler legacy compatibility."""
 
         def __init__(self, name: str | None = None) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextEventHandler", "FlextHandlers.Implementation.EventHandler"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -392,7 +368,7 @@ class HandlerLegacy:
         """Minimal facade for FlextHandlerChain legacy compatibility."""
 
         def __init__(self, name: str | None = None) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextHandlerChain", "FlextHandlers.Patterns.HandlerChain"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -407,7 +383,7 @@ class HandlerLegacy:
         """Minimal facade for FlextHandlerRegistry legacy compatibility."""
 
         def __init__(self) -> None:
-            HandlerLegacy._deprecation_warning(
+            HandlerLegacy.deprecation_warning(
                 "FlextHandlerRegistry", "FlextHandlers.Management.HandlerRegistry"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -441,16 +417,6 @@ class ValidationLegacy:
     - Interface Segregation: Separate facades for different validation concerns
     """
 
-    @staticmethod
-    def _emit_deprecation_warning(old_api: str, new_api: str) -> None:
-        """Emit standardized deprecation warning for validation APIs."""
-        warnings.warn(
-            f"{old_api} is deprecated. Use {new_api} instead. "
-            f"See FlextValidation hierarchical API for modern validation patterns.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-
     class PredicateLegacyFacade:
         """Minimal facade for FlextPredicate legacy compatibility.
 
@@ -470,8 +436,11 @@ class ValidationLegacy:
         def __init__(
             self, func: Callable[[object], bool], name: str = "predicate"
         ) -> None:
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicate", "FlextValidation.Core.Predicates"
+            warnings.warn(
+                "FlextPredicate is deprecated. Use FlextValidation.Core.Predicates instead. "
+                "See FlextValidation hierarchical API for modern validation patterns.",
+                DeprecationWarning,
+                stacklevel=3,
             )
             # Store function and name for delegation
             self.func = func
@@ -503,12 +472,14 @@ class ValidationLegacy:
         """Minimal facade for FlextValidationChain legacy compatibility."""
 
         def __init__(self, validators: list[object] | None = None) -> None:
-            _emit_validation_deprecation_warning(
-                "FlextValidationChain", "FlextValidation.Advanced.CompositeValidator"
+            warnings.warn(
+                "FlextValidationChain is deprecated. Use FlextValidation.Advanced.CompositeValidator instead.",
+                DeprecationWarning,
+                stacklevel=3,
             )
             # Direct usage - NO lazy import per FLEXT requirements
             # Convert legacy validators to proper callable validators
-            callable_validators = []
+            callable_validators: list[Callable[[object], FlextResult[object]]] = []
             for validator in validators or []:
                 if callable(validator):
                     # Create a proper closure to avoid late binding issues
@@ -549,12 +520,15 @@ class ValidationLegacy:
         """Minimal facade for FlextSchemaValidator legacy compatibility."""
 
         def __init__(self, schema: dict[str, object]) -> None:
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextSchemaValidator", "FlextValidation.Advanced.SchemaValidator"
+            warnings.warn(
+                "FlextSchemaValidator is deprecated. Use FlextValidation.Advanced.SchemaValidator instead. "
+                "See FlextValidation hierarchical API for modern validation patterns.",
+                DeprecationWarning,
+                stacklevel=3,
             )
             # Direct usage - NO lazy import per FLEXT requirements
             # Convert schema dict to callable validators
-            callable_schema = {}
+            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = {}
             for key, value in schema.items():
                 if callable(value):
                     # Create proper closure to avoid late binding issues
@@ -593,12 +567,14 @@ class ValidationLegacy:
             """Delegate all attributes to implementation."""
             return getattr(self._impl, name)
 
-        def validate(self, data: object) -> object:
+        def validate(self, data: object) -> FlextResult[dict[str, object]]:
             """Delegate validation to implementation."""
             # Ensure data is a dict before passing to schema validator
             if isinstance(data, dict):
-                return self._impl.validate(data)
-            return FlextResult[object].fail(
+                # Type narrowing: data is now dict[str, object] after isinstance check
+                typed_data = cast("dict[str, object]", data)
+                return self._impl.validate(typed_data)
+            return FlextResult[dict[str, object]].fail(
                 f"Schema validation requires dict, got {type(data).__name__}",
                 error_code=FlextConstants.Errors.TYPE_ERROR,
             )
@@ -607,12 +583,13 @@ class ValidationLegacy:
         """Minimal facade for FlextPredicates legacy compatibility."""
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.is_string",
+            new_path="FlextValidation.Core.Predicates",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def is_string() -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks if value is a string."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.is_string", "FlextValidation.Core.Predicates"
-            )
-
             predicate = FlextValidation.Core.Predicates(
                 lambda x: isinstance(x, str), name="is_string"
             )
@@ -621,12 +598,13 @@ class ValidationLegacy:
             )
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.is_integer",
+            new_path="FlextValidation.Core.Predicates",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def is_integer() -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks if value is an integer."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.is_integer", "FlextValidation.Core.Predicates"
-            )
-
             predicate = FlextValidation.Core.Predicates(
                 lambda x: isinstance(x, int) and not isinstance(x, bool),
                 name="is_integer",
@@ -636,12 +614,13 @@ class ValidationLegacy:
             )
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.is_positive",
+            new_path="FlextValidation.Core.Predicates",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def is_positive() -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks if numeric value is positive."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.is_positive", "FlextValidation.Core.Predicates"
-            )
-
             predicate = FlextValidation.Core.Predicates(
                 lambda x: isinstance(x, (int, float))
                 and not isinstance(x, bool)
@@ -653,15 +632,15 @@ class ValidationLegacy:
             )
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.has_length",
+            new_path="FlextValidation.Core.Predicates.create_string_length_predicate",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def has_length(
             min_len: int | None = None, max_len: int | None = None
         ) -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks string length."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.has_length",
-                "FlextValidation.Core.Predicates.create_string_length_predicate",
-            )
-
             predicate = FlextValidation.Core.Predicates.create_string_length_predicate(
                 min_len, max_len
             )
@@ -670,12 +649,13 @@ class ValidationLegacy:
             )
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.contains",
+            new_path="FlextValidation.Core.Predicates",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def contains(substring: str) -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks if string contains substring."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.contains", "FlextValidation.Core.Predicates"
-            )
-
             predicate = FlextValidation.Core.Predicates(
                 lambda x: isinstance(x, str) and substring in x,
                 name=f"contains('{substring}')",
@@ -685,12 +665,13 @@ class ValidationLegacy:
             )
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextPredicates.matches_pattern",
+            new_path="FlextValidation.Core.Predicates.create_email_predicate",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def matches_pattern(pattern: str) -> ValidationLegacy.PredicateLegacyFacade:
             """Create predicate that checks if string matches regex pattern."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextPredicates.matches_pattern",
-                "FlextValidation.Core.Predicates.create_email_predicate",
-            )
 
             def pattern_check(value: object) -> bool:
                 try:
@@ -711,15 +692,16 @@ class ValidationLegacy:
         """Minimal facade for FlextValidationUtils legacy compatibility."""
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextValidationUtils.validate_all",
+            new_path="FlextValidation.Advanced.CompositeValidator",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def validate_all(*validators: object) -> Callable[[object], object]:
             """Create validator that runs all validators and collects all results."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextValidationUtils.validate_all",
-                "FlextValidation.Advanced.CompositeValidator",
-            )
 
             def run_all(data: object) -> list[object]:
-                results = []
+                results: list[object] = []
                 for validator in validators:
                     if callable(validator):
                         try:
@@ -735,15 +717,16 @@ class ValidationLegacy:
             return run_all
 
         @staticmethod
+        @FlextDecorators.Lifecycle.deprecated_legacy_function(
+            old_name="FlextValidationUtils.validate_any",
+            new_path="FlextValidation.Advanced.CompositeValidator",
+            migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+        )
         def validate_any(*validators: object) -> Callable[[object], object]:
             """Create validator that succeeds if any validator succeeds."""
-            ValidationLegacy._emit_deprecation_warning(
-                "FlextValidationUtils.validate_any",
-                "FlextValidation.Advanced.CompositeValidator",
-            )
 
             def run_any(data: object) -> object:
-                errors = []
+                errors: list[str] = []
                 for validator in validators:
                     if callable(validator):
                         try:
@@ -768,19 +751,23 @@ class ValidationLegacy:
             return run_any
 
     @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="get_service_name_validator",
+        new_path="FlextValidation.Core",
+        migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+    )
     def get_service_name_validator() -> Callable[[str], object]:
         """Get service name validator function."""
-        ValidationLegacy._emit_deprecation_warning(
-            "get_service_name_validator", "FlextValidation.Core"
-        )
         return flext_validate_service_name
 
     @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="get_config_key_validator",
+        new_path="FlextValidation.Core",
+        migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+    )
     def get_config_key_validator() -> Callable[[str], object]:
         """Get config key validator function."""
-        ValidationLegacy._emit_deprecation_warning(
-            "get_config_key_validator", "FlextValidation.Core"
-        )
         return flext_validate_config_key
 
 
@@ -789,12 +776,13 @@ class ValidationLegacy:
 # =============================================================================
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="validate_email_address",
+    new_path="FlextValidation.validate_email",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def validate_email_address(value: object) -> object:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "validate_email_address", "FlextValidation.validate_email"
-    )
-
     if isinstance(value, str):
         return FlextValidation.validate_email(value)
 
@@ -804,24 +792,26 @@ def validate_email_address(value: object) -> object:
     )
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="create_validation_pipeline",
+    new_path="FlextValidation.Advanced.CompositeValidator",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def create_validation_pipeline(_data: object) -> object:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "create_validation_pipeline", "FlextValidation.Advanced.CompositeValidator"
-    )
-
     return FlextValidation.create_composite_validator([])
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="validate_with_schema",
+    new_path="FlextValidation.validate_with_schema",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def validate_with_schema(data: object, schema: dict[str, object]) -> object:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "validate_with_schema", "FlextValidation.validate_with_schema"
-    )
-
     if isinstance(data, dict):
         # Convert schema to callable validators like in SchemaValidatorLegacyFacade
-        callable_schema = {}
+        callable_schema: dict[str, Callable[[object], FlextResult[object]]] = {}
         for key, value in schema.items():
             if callable(value):
                 # Create proper closure to avoid late binding issues
@@ -854,7 +844,9 @@ def validate_with_schema(data: object, schema: dict[str, object]) -> object:
 
                 callable_schema[key] = create_equality_validator(value)
 
-        return FlextValidation.validate_with_schema(data, callable_schema)
+        # Type narrowing: data is now dict[str, object] after isinstance check
+        typed_data = cast("dict[str, object]", data)
+        return FlextValidation.validate_with_schema(typed_data, callable_schema)
 
     return FlextResult[dict[str, object]].fail(
         FlextConstants.Messages.TYPE_MISMATCH,
@@ -862,14 +854,15 @@ def validate_with_schema(data: object, schema: dict[str, object]) -> object:
     )
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="validate_length",
+    new_path="FlextValidation.Rules.StringRules.validate_length",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def validate_length(
     value: object, min_length: int | None = None, max_length: int | None = None
 ) -> object:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "validate_length", "FlextValidation.Rules.StringRules.validate_length"
-    )
-
     if isinstance(value, str):
         return FlextValidation.Rules.StringRules.validate_length(
             value, min_length, max_length
@@ -881,6 +874,11 @@ def validate_length(
     )
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="flext_validate_service_name",
+    new_path="FlextValidation.Core",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def flext_validate_service_name(name: str) -> FlextResult[str]:
     """Validate service name - maintains exact ABI.
 
@@ -891,11 +889,7 @@ def flext_validate_service_name(name: str) -> FlextResult[str]:
         FlextResult with validation outcome
 
     """
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "flext_validate_service_name", "FlextValidation.Core"
-    )
-
-    if not isinstance(name, str) or not name.strip():
+    if not name.strip():
         return FlextResult[str].fail(
             "Service name must be a non-empty string",
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -904,6 +898,11 @@ def flext_validate_service_name(name: str) -> FlextResult[str]:
     return FlextResult[str].ok(name.strip())
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="flext_validate_config_key",
+    new_path="FlextValidation.Core",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def flext_validate_config_key(key: str) -> FlextResult[str]:
     """Validate config key - maintains exact ABI.
 
@@ -914,11 +913,7 @@ def flext_validate_config_key(key: str) -> FlextResult[str]:
         FlextResult with validation outcome
 
     """
-    ValidationLegacy._emit_deprecation_warning(
-        "flext_validate_config_key", "FlextValidation.Core"
-    )
-
-    if not isinstance(key, str) or not key.strip():
+    if not key.strip():
         return FlextResult[str].fail(
             "Config key must be a non-empty string",
             error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -939,22 +934,26 @@ FlextValidationUtils = ValidationLegacy.ValidationUtilsLegacyFacade
 
 
 # Legacy function compatibility
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_not_empty",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_not_empty(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "is_not_empty", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, str) and bool(x.strip()), name="is_not_empty"
     )
     return ValidationLegacy.PredicateLegacyFacade(predicate.func, predicate.name)
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_numeric",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_numeric(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "is_numeric", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, (int, float)) and not isinstance(x, bool),
         name="is_numeric",
@@ -962,44 +961,52 @@ def is_numeric(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     return ValidationLegacy.PredicateLegacyFacade(predicate.func, predicate.name)
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_string",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_string(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "is_string", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, str), name="is_string"
     )
     return ValidationLegacy.PredicateLegacyFacade(predicate.func, predicate.name)
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_list",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_list(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "is_list", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, list), name="is_list"
     )
     return ValidationLegacy.PredicateLegacyFacade(predicate.func, predicate.name)
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_dict",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_dict(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(
-        "is_dict", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, dict), name="is_dict"
     )
     return ValidationLegacy.PredicateLegacyFacade(predicate.func, predicate.name)
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="is_boolean",
+    new_path="FlextValidation.Core.Predicates",
+    migration_guide="See FlextValidation hierarchical API for modern validation patterns.",
+)
 def is_boolean(_value: object) -> ValidationLegacy.PredicateLegacyFacade:
     """Legacy function facade - DEPRECATED."""
-    ValidationLegacy._emit_deprecation_warning(  # pyright: ignore[reportPrivateUsage]
-        "is_boolean", "FlextValidation.Core.Predicates"
-    )
     predicate = FlextValidation.Core.Predicates(
         lambda x: isinstance(x, bool), name="is_boolean"
     )
@@ -1019,7 +1026,7 @@ class MixinLegacy:
     """
 
     @staticmethod
-    def _deprecation_warning(old_name: str, new_path: str) -> None:
+    def deprecation_warning(old_name: str, new_path: str) -> None:
         """Emit standardized deprecation warning for legacy mixin usage."""
         warnings.warn(
             f"{old_name} is deprecated. Use {new_path} instead. "
@@ -1038,7 +1045,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins.log_* methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextLoggableMixin", "FlextMixins.Logging.*"
             )
 
@@ -1067,7 +1074,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins timestamp methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextTimestampMixin", "FlextMixins.Timestamp.*"
             )
 
@@ -1124,7 +1131,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins ID methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextIdentifiableMixin", "FlextMixins.Identification.*"
             )
 
@@ -1152,7 +1159,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins validation methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextValidatableMixin", "FlextMixins.Validation.*"
             )
 
@@ -1189,7 +1196,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins serialization methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextSerializableMixin", "FlextMixins.Serialization.*"
             )
 
@@ -1219,7 +1226,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins timing methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning("FlextTimingMixin", "FlextMixins.Timing.*")
+            MixinLegacy.deprecation_warning("FlextTimingMixin", "FlextMixins.Timing.*")
 
         def start_timing(self) -> float:
             """Start timing via FlextMixins."""
@@ -1233,7 +1240,7 @@ class MixinLegacy:
         """Legacy compatibility - delegates to FlextMixins comparison methods."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextComparableMixin", "FlextMixins.Comparison.*"
             )
 
@@ -1265,7 +1272,7 @@ class MixinLegacy:
 
         def __init__(self) -> None:
             super().__init__()
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextEntityMixin", "FlextMixins with multiple categories"
             )
 
@@ -1277,7 +1284,7 @@ class MixinLegacy:
 
         def __init__(self) -> None:
             super().__init__()
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextValueObjectMixin",
                 "FlextMixins.Validation + FlextMixins.Serialization",
             )
@@ -1290,7 +1297,7 @@ class MixinLegacy:
 
         def __init__(self) -> None:
             super().__init__()
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextServiceMixin", "FlextMixins.Logging + FlextMixins.Validation"
             )
 
@@ -1299,7 +1306,7 @@ class MixinLegacy:
         """Abstract base for compatibility."""
 
         def __init__(self) -> None:
-            MixinLegacy._deprecation_warning(
+            MixinLegacy.deprecation_warning(
                 "FlextAbstractMixin", "FlextMixins with composition pattern"
             )
 
@@ -1321,6 +1328,58 @@ class ProtocolLegacy:
     def get_chain_handler_protocol() -> type:
         """Get legacy ChainHandlerProtocol for compatibility."""
         return FlextProtocols.Application.MessageHandler
+
+
+# =============================================================================
+# GUARDS LEGACY COMPATIBILITY
+# =============================================================================
+
+
+class GuardsLegacy:
+    """Legacy guards compatibility layer for existing ecosystem.
+
+    DEPRECATED: Use FlextGuards class directly instead.
+    These are simple aliases to maintain backward compatibility.
+    """
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="GuardsLegacy.get_immutable_decorator",
+        new_path="FlextGuards.immutable",
+        migration_guide="use FlextGuards.immutable instead",
+    )
+    def get_immutable_decorator() -> Callable[[type], type]:
+        """Get immutable decorator for compatibility.
+
+        DEPRECATED: Use FlextGuards.immutable directly.
+        """
+        return FlextGuards.immutable
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="GuardsLegacy.get_pure_decorator",
+        new_path="FlextGuards.pure",
+        migration_guide="use FlextGuards.pure instead",
+    )
+    def get_pure_decorator() -> object:
+        """Get pure function decorator for compatibility.
+
+        DEPRECATED: Use FlextGuards.pure directly.
+        """
+        return FlextGuards.pure
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="GuardsLegacy.get_validation_utils",
+        new_path="FlextGuards.ValidationUtils",
+        migration_guide="use FlextGuards.ValidationUtils instead",
+    )
+    def get_validation_utils() -> type:
+        """Get validation utils for compatibility.
+
+        DEPRECATED: Use FlextGuards.ValidationUtils directly.
+        """
+        return FlextGuards.ValidationUtils
 
 
 # =============================================================================
@@ -1353,6 +1412,93 @@ class HandlersFacade:
     AuthorizingHandler = FlextAuthorizingHandler
 
 
+# Guards compatibility aliases - simple function aliases
+def _deprecated_guards_alias(name: str, replacement: str) -> None:
+    """Issue deprecation warning for guards aliases."""
+    warnings.warn(
+        f"{name} is deprecated, use {replacement} instead",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+
+# Simple function aliases for guards compatibility
+def immutable(target_class: type) -> type:
+    """DEPRECATED: Use FlextGuards.immutable instead."""
+    _deprecated_guards_alias("immutable", "FlextGuards.immutable")
+
+    return FlextGuards.immutable(target_class)
+
+
+def pure(func: object) -> object:
+    """DEPRECATED: Use FlextGuards.pure instead."""
+    _deprecated_guards_alias("pure", "FlextGuards.pure")
+
+    return FlextGuards.pure(cast("Callable[[object], object]", func))
+
+
+def make_factory(target_class: type) -> object:
+    """DEPRECATED: Use FlextGuards.make_factory instead."""
+    _deprecated_guards_alias("make_factory", "FlextGuards.make_factory")
+
+    return FlextGuards.make_factory(target_class)
+
+
+def make_builder(target_class: type) -> object:
+    """DEPRECATED: Use FlextGuards.make_builder instead."""
+    _deprecated_guards_alias("make_builder", "FlextGuards.make_builder")
+
+    return FlextGuards.make_builder(target_class)
+
+
+def require_not_none(value: object, message: str = "Value cannot be None") -> object:
+    """DEPRECATED: Use FlextGuards.ValidationUtils.require_not_none instead."""
+    _deprecated_guards_alias(
+        "require_not_none", "FlextGuards.ValidationUtils.require_not_none"
+    )
+
+    return FlextGuards.ValidationUtils.require_not_none(value, message)
+
+
+def require_positive(value: object, message: str = "Value must be positive") -> object:
+    """DEPRECATED: Use FlextGuards.ValidationUtils.require_positive instead."""
+    _deprecated_guards_alias(
+        "require_positive", "FlextGuards.ValidationUtils.require_positive"
+    )
+
+    return FlextGuards.ValidationUtils.require_positive(value, message)
+
+
+def require_non_empty(value: object, message: str = "Value cannot be empty") -> object:
+    """DEPRECATED: Use FlextGuards.ValidationUtils.require_non_empty instead."""
+    _deprecated_guards_alias(
+        "require_non_empty", "FlextGuards.ValidationUtils.require_non_empty"
+    )
+
+    return FlextGuards.ValidationUtils.require_non_empty(value, message)
+
+
+# Decorator aliases for compatibility
+def validated(func: object) -> object:
+    """DEPRECATED: Use FlextDecorators.Validation.validate_input instead."""
+    _deprecated_guards_alias("validated", "FlextDecorators.Validation.validate_input")
+    from flext_core.decorators import FlextDecorators  # noqa: PLC0415
+
+    return FlextDecorators.Validation.validate_input(
+        cast("Callable[[object], bool]", func)
+    )
+
+
+def safe(func: object) -> object:
+    """DEPRECATED: Use FlextDecorators.Reliability.safe_result instead."""
+    _deprecated_guards_alias("safe", "FlextDecorators.Reliability.safe_result")
+    from flext_core.decorators import FlextDecorators  # noqa: PLC0415
+
+    return FlextDecorators.Reliability.safe_result(
+        cast("Callable[[object], object]", func)
+    )
+
+
 # =============================================================================
 # MIXIN LEGACY EXPORTS - Maintain exact ABI compatibility
 # =============================================================================
@@ -1381,7 +1527,7 @@ FlextAbstractMixin = MixinLegacy.AbstractMixinLegacyFacade
 # Use TimestampableMixinLegacyFacade, StateableMixinLegacyFacade, CacheableMixinLegacyFacade, etc. from MixinLegacy
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # "ChainHandlerProtocol",  # Not implemented yet - removed
     # =======================================================================
     # CONFIG LEGACY COMPATIBILITY - All configuration facades and aliases
@@ -1483,9 +1629,24 @@ __all__ = [
     "flext_validate_service_name",
     # Legacy registry access
     "get_field_registry",
+    # Fields convenience function aliases (DEPRECATED)
+    "create_field",
+    "validate_field_value",
+    "get_global_field_registry",
+    "string_field",
+    "integer_field",
+    "float_field",
+    "boolean_field",
+    "email_field",
+    "uuid_field",
+    "datetime_field",
     # Legacy config functions
     "get_flext_config",
     "get_flext_container",
+    "configure_flext_container",
+    "get_typed",
+    "register_typed",
+    "create_module_container_utilities",
     "get_flext_settings",
     # Logging
     "get_logger",
@@ -1541,10 +1702,11 @@ def create_flext_value_object(*args: object, **kwargs: object) -> object:
     return value_class(*args, **kwargs)
 
 
-# Legacy aliases for backward compatibility
-FlextModel = create_flext_model
-FlextEntity = create_flext_entity
-FlextValueObject = create_flext_value_object
+# Legacy factory functions - NOT conflicting aliases
+# Note: Use actual classes from models.py instead of these factory functions
+create_flext_model_legacy = create_flext_model
+create_flext_entity_legacy = create_flext_entity
+create_flext_value_object_legacy = create_flext_value_object
 
 
 # =============================================================================
@@ -1558,7 +1720,7 @@ class ContainerLegacy:
     @staticmethod
     def get_container_instance() -> FlextContainer:
         """Get FlextContainer instance via lazy import."""
-        return get_flext_container()
+        return FlextContainer.get_global()
 
     @staticmethod
     def get_container_class() -> type[object]:
@@ -1566,11 +1728,68 @@ class ContainerLegacy:
         return FlextContainer
 
 
-# Container facades for direct access
-# Note: FlextContainer is already imported at top of file
+# Container helper function aliases for backward compatibility
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="get_flext_container",
+    replacement="FlextContainer.get_global()",
+)
+def get_flext_container() -> FlextContainer:
+    """Get global container instance (compatibility alias).
+
+    Deprecated: Use FlextContainer.get_global() directly.
+    """
+    return FlextContainer.get_global()
 
 
-# Note: get_flext_container is already imported at top of file
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="configure_flext_container",
+    replacement="FlextContainer.configure_global()",
+)
+def configure_flext_container(
+    container: FlextContainer | None = None,
+) -> FlextContainer:
+    """Configure global container (compatibility alias).
+
+    Deprecated: Use FlextContainer.configure_global() directly.
+    """
+    return FlextContainer.configure_global(container)
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="get_typed",
+    replacement="FlextContainer.get_global_typed()",
+)
+def get_typed[T](key: str, expected_type: type[T]) -> FlextResult[T]:
+    """Get typed service from global container (compatibility alias).
+
+    Deprecated: Use FlextContainer.get_global_typed() directly.
+    """
+    return FlextContainer.get_global_typed(key, expected_type)
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="register_typed",
+    replacement="FlextContainer.register_global()",
+)
+def register_typed(key: str, service: object) -> FlextResult[None]:
+    """Register service in global container (compatibility alias).
+
+    Deprecated: Use FlextContainer.register_global() directly.
+    """
+    return FlextContainer.register_global(key, service)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="create_module_container_utilities",
+    new_path="FlextContainer.create_module_utilities",
+    migration_guide="Use FlextContainer.create_module_utilities() instead.",
+)
+def create_module_container_utilities(module_name: str) -> dict[str, object]:
+    """Create standardized container helpers for module (compatibility alias).
+
+    Deprecated: Use FlextContainer.create_module_utilities() directly.
+    """
+    return FlextContainer.create_module_utilities(module_name)
 
 
 # =============================================================================
@@ -1600,6 +1819,16 @@ class LoggingLegacy:
     """Centralized logging compatibility facades following FLEXT patterns."""
 
     @staticmethod
+    def deprecation_warning(old_name: str, new_path: str) -> None:
+        """Emit standardized deprecation warning for legacy logging usage."""
+        warnings.warn(
+            f"{old_name} is deprecated. Use {new_path} instead. "
+            "See FLEXT migration guide for updated patterns.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+
+    @staticmethod
     def get_logger_function() -> Callable[[str], object]:
         """Get get_logger function via lazy import."""
         return get_logger
@@ -1611,16 +1840,80 @@ class LoggingLegacy:
 
     @staticmethod
     def get_logger_factory() -> type[object]:
-        """Get FlextLoggerFactory class via lazy import."""
-        # FlextLoggers.Factory doesn't exist, use FlextLoggerFactory directly
-        return FlextLoggerFactory
+        """Get FlextLogger class via lazy import."""
+        # FlextLoggerFactory was removed, use FlextLogger directly
+        return FlextLogger
 
 
-# Logging facades for direct access - maintain exact function signature
-# Note: get_logger is already imported at top of file
+# Logging compatibility classes - deprecated, use FlextLogger directly
 
-# Legacy compatibility - direct assignment with type compatibility
-# Legacy compatibility - use imports from top level to avoid F811 redefinition
+
+class FlextLoggerFactory:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+
+    @staticmethod
+    def get_logger(name: str | None = None, level: str = "INFO") -> object:
+        """DEPRECATED: Use FlextLogger() directly instead."""
+        LoggingLegacy.deprecation_warning(
+            "FlextLoggerFactory.get_logger", "FlextLogger"
+        )
+        return FlextLogger(name or "flext", level)
+
+    @staticmethod
+    def set_global_level(level: str) -> None:  # noqa: ARG004
+        """DEPRECATED: Set level on individual FlextLogger instances instead."""
+        LoggingLegacy.deprecation_warning(
+            "FlextLoggerFactory.set_global_level", "FlextLogger.set_level"
+        )
+        # No-op for compatibility - level parameter kept for backward compatibility
+
+    @staticmethod
+    def clear_loggers() -> None:
+        """DEPRECATED: No replacement needed."""
+        LoggingLegacy.deprecation_warning(
+            "FlextLoggerFactory.clear_loggers", "Direct FlextLogger usage"
+        )
+        # No-op for compatibility
+
+
+class FlextLoggings:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+
+    Factory = FlextLoggerFactory  # Alias for compatibility
+
+
+class FlextLogContextManager:
+    """DEPRECATED: Use FlextLogger.with_context() instead."""
+
+    def __init__(self, logger: object, **context: object) -> None:
+        """DEPRECATED: Use FlextLogger.with_context() instead."""
+        LoggingLegacy.deprecation_warning(
+            "FlextLogContextManager", "FlextLogger.with_context"
+        )
+        if isinstance(logger, FlextLogger):
+            self._logger = logger.with_context(**context)
+        else:
+            self._logger = FlextLogger("deprecated")
+
+    def __enter__(self) -> object:
+        """Enter context manager."""
+        return self._logger
+
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+        """Exit context manager."""
+
+
+# Legacy function facades
+def get_logger(name: str = "flext", level: str = "INFO") -> object:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+    LoggingLegacy.deprecation_warning("get_logger", "FlextLogger")
+    return FlextLogger(name, level)
+
+
+def create_log_context(logger: object, **context: object) -> object:
+    """DEPRECATED: Use FlextLogger.with_context() instead."""
+    LoggingLegacy.deprecation_warning("create_log_context", "FlextLogger.with_context")
+    return FlextLogContextManager(logger, **context)
 
 
 # =============================================================================
@@ -1638,7 +1931,7 @@ class FieldsLegacy:
     """
 
     @staticmethod
-    def _deprecation_warning(old_name: str, new_path: str) -> None:
+    def deprecation_warning(old_name: str, new_path: str) -> None:
         """Emit standardized deprecation warning for legacy field usage."""
         warnings.warn(
             f"{old_name} is deprecated. Use {new_path} instead. "
@@ -1651,7 +1944,7 @@ class FieldsLegacy:
         """Minimal facade for FlextFieldRegistry legacy compatibility."""
 
         def __init__(self) -> None:
-            FieldsLegacy._deprecation_warning(
+            FieldsLegacy.deprecation_warning(
                 "FlextFieldRegistry", "FlextFields.Registry.FieldRegistry"
             )
             # Direct usage - NO lazy import per FLEXT requirements
@@ -1678,7 +1971,7 @@ class FieldsLegacy:
         name: str, **config: object
     ) -> FlextFields.Core.StringField:
         """Legacy string field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_string_field",
             "FlextFields.Core.StringField or string_field()",
         )
@@ -1701,15 +1994,31 @@ class FieldsLegacy:
             elif key == "pattern" and (isinstance(value, str) or value is None):
                 field_kwargs["pattern"] = value
 
-        # Use type: ignore for legacy compatibility - runtime validates types
-        return FlextFields.Core.StringField(name, **field_kwargs)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.StringField(
+            name=name,
+            required=bool(field_kwargs.get("required", True)),
+            default=str(field_kwargs["default"])
+            if field_kwargs.get("default") is not None
+            else None,
+            description=str(field_kwargs.get("description", "")),
+            min_length=int(cast("int", field_kwargs["min_length"]))
+            if field_kwargs.get("min_length") is not None
+            else None,
+            max_length=int(cast("int", field_kwargs["max_length"]))
+            if field_kwargs.get("max_length") is not None
+            else None,
+            pattern=str(field_kwargs["pattern"])
+            if field_kwargs.get("pattern") is not None
+            else None,
+        )
 
     @staticmethod
     def create_integer_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.IntegerField:
         """Legacy integer field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_integer_field",
             "FlextFields.Core.IntegerField or integer_field()",
         )
@@ -1730,15 +2039,28 @@ class FieldsLegacy:
             elif key == "max_value" and (isinstance(value, int) or value is None):
                 field_kwargs["max_value"] = value
 
-        # Type ignore for kwargs expansion since we've validated all types above
-        return FlextFields.Core.IntegerField(name, **field_kwargs)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.IntegerField(
+            name=name,
+            required=bool(field_kwargs.get("required", True)),
+            default=int(cast("int", field_kwargs["default"]))
+            if field_kwargs.get("default") is not None
+            else None,
+            description=str(field_kwargs.get("description", "")),
+            min_value=int(cast("int", field_kwargs["min_value"]))
+            if field_kwargs.get("min_value") is not None
+            else None,
+            max_value=int(cast("int", field_kwargs["max_value"]))
+            if field_kwargs.get("max_value") is not None
+            else None,
+        )
 
     @staticmethod
     def create_boolean_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.BooleanField:
         """Legacy boolean field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_boolean_field",
             "FlextFields.Core.BooleanField or boolean_field()",
         )
@@ -1755,15 +2077,22 @@ class FieldsLegacy:
             elif key == "description" and isinstance(value, str):
                 field_kwargs["description"] = value
 
-        # Type ignore for kwargs expansion since we've validated all types above
-        return FlextFields.Core.BooleanField(name, **field_kwargs)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.BooleanField(
+            name=name,
+            required=bool(field_kwargs.get("required", True)),
+            default=bool(field_kwargs["default"])
+            if field_kwargs.get("default") is not None
+            else None,
+            description=str(field_kwargs.get("description", "")),
+        )
 
     @staticmethod
     def create_email_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.EmailField:
         """Legacy email field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_email_field", "FlextFields.Core.EmailField or email_field()"
         )
         # Convert config to proper keyword arguments using runtime type validation for ABI
@@ -1783,15 +2112,22 @@ class FieldsLegacy:
             ):
                 field_kwargs["domain_whitelist"] = value
 
-        # Type ignore for kwargs expansion since we've validated all types above
-        return FlextFields.Core.EmailField(name, **field_kwargs)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.EmailField(
+            name=name,
+            required=bool(field_kwargs.get("required", True)),
+            default=str(field_kwargs["default"])
+            if field_kwargs.get("default") is not None
+            else None,
+            description=str(field_kwargs.get("description", "")),
+        )
 
     @staticmethod
     def create_uuid_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.UuidField:
         """Legacy UUID field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_uuid_field", "FlextFields.Core.UuidField or uuid_field()"
         )
         # Convert config to proper keyword arguments using runtime type validation for ABI
@@ -1807,15 +2143,22 @@ class FieldsLegacy:
             elif key == "description" and isinstance(value, str):
                 field_kwargs["description"] = value
 
-        # Type ignore for kwargs expansion since we've validated all types above
-        return FlextFields.Core.UuidField(name, **field_kwargs)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.UuidField(
+            name=name,
+            required=bool(field_kwargs.get("required", True)),
+            default=str(field_kwargs["default"])
+            if field_kwargs.get("default") is not None
+            else None,
+            description=str(field_kwargs.get("description", "")),
+        )
 
     @staticmethod
     def create_datetime_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.DateTimeField:
         """Legacy datetime field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_datetime_field",
             "FlextFields.Core.DateTimeField or datetime_field()",
         )
@@ -1837,14 +2180,19 @@ class FieldsLegacy:
                 or (key == "description" and isinstance(value, str))
             )
         }
-        return FlextFields.Core.DateTimeField(name, **field_config)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.DateTimeField(
+            name=name,
+            required=bool(field_config.get("required", True)),
+            description=str(field_config.get("description", "")),
+        )
 
     @staticmethod
     def create_float_field_legacy(
         name: str, **config: object
     ) -> FlextFields.Core.FloatField:
         """Legacy float field creation - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "flext_create_float_field", "FlextFields.Core.FloatField or float_field()"
         )
         # Convert config to proper keyword arguments using runtime type validation for ABI
@@ -1871,16 +2219,35 @@ class FieldsLegacy:
                 or (key == "precision" and (isinstance(value, int) or value is None))
             )
         }
-        return FlextFields.Core.FloatField(name, **field_config)  # type: ignore[arg-type]
+        # Use explicit parameters to avoid type issues
+        return FlextFields.Core.FloatField(
+            name=name,
+            required=bool(field_config.get("required", True)),
+            default=float(cast("float", field_config["default"]))
+            if field_config.get("default") is not None
+            else None,
+            description=str(field_config.get("description", "")),
+            min_value=float(cast("float", field_config["min_value"]))
+            if field_config.get("min_value") is not None
+            else None,
+            max_value=float(cast("float", field_config["max_value"]))
+            if field_config.get("max_value") is not None
+            else None,
+            precision=int(cast("int", field_config["precision"]))
+            if field_config.get("precision") is not None
+            else None,
+        )
 
     @staticmethod
-    def get_field_registry_legacy() -> FlextFields.Registry.FieldRegistry:
+    def get_field_registry_legacy() -> (
+        object
+    ):  # Legacy compatibility with dynamic typing
         """Legacy field registry access - DEPRECATED."""
-        FieldsLegacy._deprecation_warning(
+        FieldsLegacy.deprecation_warning(
             "get_field_registry",
             "get_global_field_registry() or FlextFields.Registry.FieldRegistry()",
         )
-        return get_global_field_registry()
+        return FlextFields.Registry.FieldRegistry()
 
 
 # =============================================================================
@@ -1901,6 +2268,102 @@ flext_create_float_field = FieldsLegacy.create_float_field_legacy
 
 # Legacy registry access
 get_field_registry = FieldsLegacy.get_field_registry_legacy
+
+
+# Fields convenience function aliases
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="create_field",
+    replacement="FlextFields.Factory.create_field",
+)
+def create_field(field_type: str, name: str, **config: object) -> object:
+    """DEPRECATED: Use FlextFields.Factory.create_field instead."""
+    return FlextFields.Factory.create_field(field_type, name, **config)
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="validate_field_value",
+    replacement="FlextFields.Validation.validate_field",
+)
+def validate_field_value(field: object, value: object) -> object:
+    """DEPRECATED: Use FlextFields.Validation.validate_field instead."""
+    # Legacy compatibility - basic validation since field typing is complex
+    if field is None:
+        msg = "Field cannot be None"
+        raise ValueError(msg)
+    return value
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="get_global_field_registry",
+    replacement="FlextFields.Registry.FieldRegistry()",
+)
+def get_global_field_registry() -> object:
+    """DEPRECATED: Use FlextFields.Registry.FieldRegistry() instead."""
+    return FlextFields.Registry.FieldRegistry()
+
+
+# Field builder shortcuts
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="string_field",
+    new_path="FlextFields.Factory.FieldBuilder('string', name)",
+)
+def string_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('string', name) instead."""
+    return FlextFields.Factory.FieldBuilder("string", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="integer_field",
+    new_path="FlextFields.Factory.FieldBuilder('integer', name)",
+)
+def integer_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('integer', name) instead."""
+    return FlextFields.Factory.FieldBuilder("integer", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="float_field",
+    new_path="FlextFields.Factory.FieldBuilder('float', name)",
+)
+def float_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('float', name) instead."""
+    return FlextFields.Factory.FieldBuilder("float", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="boolean_field",
+    new_path="FlextFields.Factory.FieldBuilder('boolean', name)",
+)
+def boolean_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('boolean', name) instead."""
+    return FlextFields.Factory.FieldBuilder("boolean", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="email_field",
+    new_path="FlextFields.Factory.FieldBuilder('email', name)",
+)
+def email_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('email', name) instead."""
+    return FlextFields.Factory.FieldBuilder("email", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="uuid_field",
+    new_path="FlextFields.Factory.FieldBuilder('uuid', name)",
+)
+def uuid_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('uuid', name) instead."""
+    return FlextFields.Factory.FieldBuilder("uuid", name)
+
+
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="datetime_field",
+    new_path="FlextFields.Factory.FieldBuilder('datetime', name)",
+)
+def datetime_field(name: str) -> object:
+    """DEPRECATED: Use FlextFields.Factory.FieldBuilder('datetime', name) instead."""
+    return FlextFields.Factory.FieldBuilder("datetime", name)
 
 
 # =============================================================================
@@ -2070,13 +2533,13 @@ FlextFieldMetadata = FlextFields  # Metadata alias
 class FlextFieldType:
     """Field type constants for legacy compatibility."""
 
-    STRING = "string"
-    INTEGER = "integer"
-    BOOLEAN = "boolean"
-    FLOAT = "float"
-    EMAIL = "email"
-    UUID = "uuid"
-    DATETIME = "datetime"
+    STRING = FlextConstants.Legacy.FIELD_TYPE_STRING
+    INTEGER = FlextConstants.Legacy.FIELD_TYPE_INTEGER
+    BOOLEAN = FlextConstants.Legacy.FIELD_TYPE_BOOLEAN
+    FLOAT = FlextConstants.Legacy.FIELD_TYPE_FLOAT
+    EMAIL = FlextConstants.Legacy.FIELD_TYPE_EMAIL
+    UUID = FlextConstants.Legacy.FIELD_TYPE_UUID
+    DATETIME = FlextConstants.Legacy.FIELD_TYPE_DATETIME
 
 
 # =============================================================================
@@ -2084,19 +2547,19 @@ class FlextFieldType:
 # =============================================================================
 
 
-class FlextServiceProcessor(FlextServiceMixin):
+@FlextDecorators.Lifecycle.deprecated_class_warning(
+    class_name="FlextServiceProcessor",
+    replacement="FlextServices.ServiceProcessor",
+)
+class FlextServiceProcessor:
     """Legacy FlextServiceProcessor for backward compatibility.
 
     DEPRECATED: Use FlextServices.ServiceProcessor instead.
     """
 
     def __init__(self, service_name: str | None = None) -> None:
-        warnings.warn(
-            "FlextServiceProcessor is deprecated. Use FlextServices.ServiceProcessor instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        super().__init__()
+        # Initialize FlextMixins functionality
+        FlextMixins.initialize_validation(self)
         self._service_name = service_name or self.__class__.__name__
         self._performance_tracker = FlextPerformance()
         self._correlation_generator = FlextUtilities()
@@ -2104,6 +2567,14 @@ class FlextServiceProcessor(FlextServiceMixin):
     def get_service_name(self) -> str:
         """Get service name."""
         return self._service_name
+
+    def log_operation(self, operation: str, **kwargs: object) -> None:
+        """Log operation using FlextMixins."""
+        FlextMixins.log_operation(self, operation, **kwargs)
+
+    def log_info(self, message: str, **kwargs: object) -> None:
+        """Log info using FlextMixins."""
+        FlextMixins.log_info(self, message, **kwargs)
 
     def initialize_service(self) -> FlextResult[None]:
         """Initialize service."""
@@ -2170,19 +2641,9 @@ __all__ += [  # noqa: RUF022
 # DYNAMIC EXCEPTION GENERATION (DRY implementation)
 # =============================================================================
 
-# Generate dynamic exception classes using the factory pattern
-for spec in FlextExceptions.EXCEPTION_SPECS:
-    name, base_exception, default_code, doc, fields = spec
-    # Create the exception class using the factory
-    generated_class = FlextExceptions.Base.create_exception_type(
-        name=name,
-        base_exception=base_exception,
-        default_code=default_code,
-        doc=doc,
-        fields=fields,
-    )
-    # Add to FlextExceptions namespace
-    setattr(FlextExceptions, name, generated_class)
+# LEGACY COMMENT: Dynamic exception generation removed in favor of real subclasses
+# The FlextExceptions now uses explicit class hierarchy with proper inheritance
+# All exception types are now real classes defined directly in exceptions.py
 
 
 # =============================================================================
@@ -2194,7 +2655,13 @@ def get_exception_metrics() -> dict[str, int]:
     """Get exception occurrence metrics."""
     metrics = FlextExceptions.get_metrics()
     # Convert to int values for type compatibility
-    return {k: int(v) if isinstance(v, (int, float)) else 0 for k, v in metrics.items()}
+    result: dict[str, int] = {}
+    for k, v in metrics.items():
+        try:
+            result[k] = int(v)
+        except (TypeError, ValueError):
+            result[k] = 0
+    return result
 
 
 def clear_exception_metrics() -> None:
@@ -2207,36 +2674,8 @@ def clear_exception_metrics() -> None:
 # =============================================================================
 
 
-# Error codes compatibility - facade for FlextErrorCodes
-class FlextErrorCodes:
-    """COMPATIBILITY FACADE: Use FlextErrorCodes instead.
-
-    This class provides backward compatibility for existing code.
-    All attributes delegate to FlextErrorCodes.
-
-    DEPRECATED: Use FlextErrorCodes.[CODE] instead of FlextErrorCodes.[CODE]
-    """
-
-    GENERIC_ERROR = FlextExceptions.ErrorCodes.GENERIC_ERROR
-    VALIDATION_ERROR = FlextExceptions.ErrorCodes.VALIDATION_ERROR
-    CONFIGURATION_ERROR = FlextExceptions.ErrorCodes.CONFIGURATION_ERROR
-    CONNECTION_ERROR = FlextExceptions.ErrorCodes.CONNECTION_ERROR
-    AUTHENTICATION_ERROR = FlextExceptions.ErrorCodes.AUTHENTICATION_ERROR
-    PERMISSION_ERROR = FlextExceptions.ErrorCodes.PERMISSION_ERROR
-    NOT_FOUND = FlextExceptions.ErrorCodes.NOT_FOUND
-    ALREADY_EXISTS = FlextExceptions.ErrorCodes.ALREADY_EXISTS
-    TIMEOUT_ERROR = FlextExceptions.ErrorCodes.TIMEOUT_ERROR
-    PROCESSING_ERROR = FlextExceptions.ErrorCodes.PROCESSING_ERROR
-    CRITICAL_ERROR = FlextExceptions.ErrorCodes.CRITICAL_ERROR
-    OPERATION_ERROR = FlextExceptions.ErrorCodes.OPERATION_ERROR
-    UNWRAP_ERROR = FlextExceptions.ErrorCodes.UNWRAP_ERROR
-    BUSINESS_ERROR = FlextExceptions.ErrorCodes.BUSINESS_ERROR
-    INFRASTRUCTURE_ERROR = FlextExceptions.ErrorCodes.INFRASTRUCTURE_ERROR
-    TYPE_ERROR = FlextExceptions.ErrorCodes.TYPE_ERROR
-
-
 # Base classes compatibility
-FlextErrorMixin = FlextExceptions.Base.FlextErrorMixin
+FlextErrorMixin = FlextExceptions.FlextExceptionBaseError
 
 
 # Runtime: Use FlextExceptions modern API for backward compatibility
@@ -2475,18 +2914,6 @@ def flext_clear_performance_metrics() -> None:
     # Method doesn't exist in actual implementation - no-op for compatibility
 
 
-def flext_get_performance_metrics() -> FlextTypes.Core.PerformanceMetrics:
-    """Get performance metrics.
-
-    DEPRECATED: Use FlextUtilities.Performance methods instead.
-    """
-    _issue_utilities_deprecation_warning(
-        "flext_get_performance_metrics", "FlextUtilities.Performance methods"
-    )
-    # Return empty dict for compatibility since method doesn't exist in implementation
-    return {}
-
-
 def generate_iso_timestamp() -> str:
     """Generate ISO format timestamp.
 
@@ -2516,7 +2943,7 @@ def flext_track_performance(
 # =============================================================================
 
 
-# Container class facades for legacy test compatibility
+# Container class facades - restored for test compatibility
 FlextServiceKey = FlextContainer.ServiceKey
 FlextServiceRegistrar = FlextContainer.ServiceRegistrar
 FlextServiceRetriever = FlextContainer.ServiceRetriever
@@ -2551,14 +2978,14 @@ class RegisterServiceCommand:
 class RegisterFactoryCommand:
     """Legacy command facade for factory registration."""
 
-    def __init__(self, name: str, factory: Callable[[], object]) -> None:
+    def __init__(self, name: str, factory: object) -> None:
         self.name = name
         self.service_name = name  # Legacy interface compatibility
         self.factory = factory
         self.command_type = "register_factory"  # Legacy interface compatibility
 
     @classmethod
-    def create(cls, name: str, factory: Callable[[], object]) -> RegisterFactoryCommand:
+    def create(cls, name: str, factory: object) -> RegisterFactoryCommand:
         """Create factory registration command."""
         return cls(name, factory)
 
@@ -2566,7 +2993,9 @@ class RegisterFactoryCommand:
         """Validate the command."""
         if not self.name.strip():
             return FlextResult[None].fail("Factory name cannot be empty")
-        # factory is guaranteed to be callable by typing, no need to check
+        # Runtime validation for legacy test compatibility
+        if not callable(self.factory):
+            return FlextResult[None].fail("Factory must be callable")
         return FlextResult[None].ok(None)
 
 
@@ -2670,20 +3099,253 @@ BaseSorter = FlextBaseSorter
 # Legacy type system aliases for backward compatibility
 FlextCoreTypes = FlextTypes
 
+# =============================================================================
+# DELEGATION SYSTEM LEGACY ALIASES - Simple compatibility aliases
+# =============================================================================
+
+
+# DEPRECATED: Use FlextDelegationSystem class methods directly
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="create_mixin_delegator",
+    replacement="FlextDelegationSystem.create_mixin_delegator()",
+)
+def create_mixin_delegator(host_instance: object, *mixin_classes: type) -> object:
+    """DEPRECATED: Use FlextDelegationSystem.create_mixin_delegator() instead."""
+    return FlextDelegationSystem.create_mixin_delegator(host_instance, *mixin_classes)
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="validate_delegation_system",
+    replacement="FlextDelegationSystem.validate_delegation_system()",
+)
+def validate_delegation_system() -> FlextResult[
+    dict[str, str | list[str] | dict[str, object]]
+]:
+    """DEPRECATED: Use FlextDelegationSystem.validate_delegation_system() instead."""
+    return FlextDelegationSystem.validate_delegation_system()
+
+
+# Legacy class aliases - DEPRECATED: Use FlextDelegationSystem nested classes
+def _create_delegation_alias_with_warning(
+    class_name: str, nested_class_name: str
+) -> type:
+    """Create a deprecated alias class with deprecation warning."""
+
+    class DeprecatedAlias:
+        def __new__(cls, *_args: object, **_kwargs: object) -> object:
+            warnings.warn(
+                f"{class_name} is deprecated, use FlextDelegationSystem.{nested_class_name}",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Retorna a instância correta, mas tipa como DeprecatedAlias para o checker
+            return super().__new__(cls)
+
+    DeprecatedAlias.__name__ = class_name
+    DeprecatedAlias.__qualname__ = class_name
+    return DeprecatedAlias
+
+
+# Create deprecated aliases for nested classes
+FlextMixinDelegator = _create_delegation_alias_with_warning(
+    "FlextMixinDelegator", "MixinDelegator"
+)
+FlextDelegatedProperty = _create_delegation_alias_with_warning(
+    "FlextDelegatedProperty", "DelegatedProperty"
+)
+
+# Protocol aliases - these are types, so we can alias directly
+
+_HasDelegator = FlextDelegationSystem.HasDelegator
+_DelegatorProtocol = FlextDelegationSystem.DelegatorProtocol
+
+# =============================================================================
+# UTILITIES COMPATIBILITY CLASSES - DEPRECATED
+# =============================================================================
+
+
+class FlextPerformance:
+    """DEPRECATED: Use FlextUtilities.track_performance() instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextPerformance.track_performance",
+        new_path="FlextUtilities.track_performance",
+        migration_guide="use FlextUtilities.track_performance()",
+    )
+    def track_performance(category: str) -> object:
+        return FlextUtilities.track_performance(category)
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextPerformance.get_performance_metrics",
+        new_path="FlextUtilities.get_performance_metrics",
+        migration_guide="use FlextUtilities.get_performance_metrics()",
+    )
+    def get_performance_metrics() -> dict[str, object]:
+        return FlextUtilities.get_performance_metrics()
+
+
+class FlextConversions:
+    """DEPRECATED: Use FlextUtilities conversion methods instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextConversions.safe_bool_conversion",
+        new_path="FlextUtilities.safe_bool_conversion",
+        migration_guide="use FlextUtilities methods",
+    )
+    def safe_bool_conversion(value: object) -> bool:
+        return FlextUtilities.safe_bool_conversion(value)
+
+
+class FlextProcessingUtils:
+    """DEPRECATED: Use FlextUtilities.parse_json_to_model() instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextProcessingUtils.parse_json_to_model",
+        new_path="FlextUtilities.parse_json_to_model",
+        migration_guide="use FlextUtilities.parse_json_to_model()",
+    )
+    def parse_json_to_model(json_text: str, model_class: type) -> FlextResult[object]:
+        return FlextUtilities.parse_json_to_model(json_text, model_class)
+
+
+class FlextTextProcessor:
+    """DEPRECATED: Use FlextUtilities text methods instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextTextProcessor.truncate",
+        new_path="FlextUtilities.truncate",
+        migration_guide="use FlextUtilities.truncate()",
+    )
+    def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
+        return FlextUtilities.truncate(text, max_length, suffix)
+
+
+class FlextTimeUtils:
+    """DEPRECATED: Use FlextUtilities time methods instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextTimeUtils.format_duration",
+        new_path="FlextUtilities.format_duration",
+        migration_guide="use FlextUtilities.format_duration()",
+    )
+    def format_duration(seconds: float) -> str:
+        return FlextUtilities.format_duration(seconds)
+
+
+class FlextIdGenerator:
+    """DEPRECATED: Use FlextUtilities.Generators instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextIdGenerator.generate_uuid",
+        new_path="FlextUtilities.Generators.generate_uuid",
+        migration_guide="use FlextUtilities.Generators.generate_uuid()",
+    )
+    def generate_uuid() -> str:
+        return FlextUtilities.Generators.generate_uuid()
+
+
+class FlextTypeGuards:
+    """DEPRECATED: Use FlextUtilities type guard methods instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextTypeGuards.is_instance_of",
+        new_path="isinstance",
+        migration_guide="use isinstance() directly",
+    )
+    def is_instance_of(obj: object, type_hint: type) -> bool:
+        return isinstance(obj, type_hint)
+
+
+class FlextGenerators:
+    """DEPRECATED: Use FlextUtilities.Generators instead."""
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextGenerators.generate_uuid",
+        new_path="FlextUtilities.Generators.generate_uuid",
+        migration_guide="use FlextUtilities.Generators.generate_uuid()",
+    )
+    def generate_uuid() -> str:
+        return FlextUtilities.Generators.generate_uuid()
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextGenerators.generate_correlation_id",
+        new_path="FlextUtilities.Generators.generate_correlation_id",
+        migration_guide="use FlextUtilities.Generators.generate_correlation_id()",
+    )
+    def generate_correlation_id() -> str:
+        return FlextUtilities.Generators.generate_correlation_id()
+
+    @staticmethod
+    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+        old_name="FlextGenerators.generate_id",
+        new_path="FlextUtilities.Generators.generate_id",
+        migration_guide="use FlextUtilities.Generators.generate_id()",
+    )
+    def generate_id() -> str:
+        return FlextUtilities.Generators.generate_id()
+
+
+# Standalone function aliases
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="flext_get_performance_metrics",
+    replacement="FlextUtilities.get_performance_metrics()",
+)
+def flext_get_performance_metrics() -> object:
+    """DEPRECATED: Use FlextUtilities.get_performance_metrics() instead."""
+    from flext_core.utilities import FlextUtilities  # noqa: PLC0415
+
+    return FlextUtilities.get_performance_metrics()
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="flext_record_performance",
+    replacement="FlextUtilities performance methods",
+)
+def flext_record_performance(
+    category: str, function_name: str, execution_time: float, **kwargs: object
+) -> object:
+    """DEPRECATED: Use FlextUtilities performance tracking instead."""
+    # Combine category and function_name as operation name
+    operation = f"{category}.{function_name}"
+    # Extract success/error from kwargs if provided
+    success = bool(kwargs.get("success", True))
+    error = str(kwargs.get("error")) if kwargs.get("error") else None
+    return FlextUtilities.record_performance(
+        operation, execution_time, success=success, error=error
+    )
+
+
 # Add utility functions to exports
 __all__ += [
     "FlextCallable",
+    "FlextConversions",  # Legacy backward compatibility - use FlextUtilities methods
     "FlextCoreTypes",
     "FlextDecoratedFunction",
     "FlextFieldCore",
     "FlextFieldMetadata",
     "FlextFieldType",
     "FlextGenerators",  # Legacy backward compatibility - use FlextUtilities.Generators
+    "FlextIdGenerator",  # Legacy backward compatibility - use FlextUtilities.Generators
     "FlextPerformance",  # Legacy backward compatibility - use FlextUtilities.Performance
     "FlextProcessingUtils",  # Legacy backward compatibility - use FlextUtilities.ProcessingUtils
+    # Container facades and Commands/Queries - restored for test compatibility
     "FlextServiceKey",
     "FlextServiceRegistrar",
     "FlextServiceRetriever",
+    "FlextTextProcessor",  # Legacy backward compatibility - use FlextUtilities.truncate
+    "FlextTimeUtils",  # Legacy backward compatibility - use FlextUtilities.format_duration
     "FlextTypeGuards",  # Legacy backward compatibility - use FlextUtilities.TypeGuards
     "FlextValidationDecorators",
     "GetServiceQuery",
@@ -2695,7 +3357,9 @@ __all__ += [
     "_BaseImmutabilityDecorators",
     "_decorators_base",
     "flext_clear_performance_metrics",
+    "flext_get_performance_metrics",  # Legacy function - use FlextUtilities.get_performance_metrics
     "flext_get_performance_metrics",
+    "flext_record_performance",  # Legacy function - use FlextUtilities performance methods
     "flext_safe_int_conversion",
     "flext_track_performance",
     "generate_correlation_id",
@@ -2704,5 +3368,314 @@ __all__ += [
     "generate_uuid",
     "is_not_none",
     "safe_int_conversion_with_default",
+    "truncate",  # Legacy function - use FlextUtilities.truncate
     "truncate",
 ]
+
+
+# =============================================================================
+# LEGACY COMPATIBILITY LAYER - Maintain existing imports
+# =============================================================================
+
+
+# Base compatibility class that enables mixin inheritance for legacy code
+class _CompatibilityMixin:
+    """Base compatibility class that delegates to FlextMixins methods."""
+
+    def mixin_setup(self) -> None:
+        """Setup mixin functionality."""
+
+
+# All original mixin classes as compatibility facades
+# class FlextLoggableMixin(_CompatibilityMixin):
+#     """Legacy compatibility - delegates to FlextMixins.log_* methods."""
+#
+#     @property
+#     def logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+#         """Get logger via FlextMixins."""
+#         return FlextMixins.get_logger(self)
+#
+#     def log_operation(self, operation: str, **kwargs: object) -> None:
+#         """Log operation via FlextMixins."""
+#         FlextMixins.log_operation(self, operation, **kwargs)
+#
+#     def log_info(self, message: str, **kwargs: object) -> None:
+#         """Log info via FlextMixins."""
+#         FlextMixins.log_info(self, message, **kwargs)
+#
+#     def log_error(self, message: str, **kwargs: object) -> None:
+#         """Log error via FlextMixins."""
+#         FlextMixins.log_error(self, message, **kwargs)
+#
+#     def log_debug(self, message: str, **kwargs: object) -> None:
+#         """Log debug via FlextMixins."""
+#         FlextMixins.log_debug(self, message, **kwargs)
+#
+#
+# class FlextTimestampMixin(_CompatibilityMixin):
+#     """Legacy compatibility - delegates to FlextMixins timestamp methods."""
+#
+#     def update_timestamp(self) -> None:
+#         """Update timestamp via FlextMixins."""
+#         FlextMixins.update_timestamp(self)
+#
+#     @property
+#     def created_at(self) -> float:
+#         """Get created timestamp via FlextMixins."""
+#         return FlextMixins.get_created_at(self)
+#
+#     @property
+#     def updated_at(self) -> float:
+#         """Get updated timestamp via FlextMixins."""
+#         return FlextMixins.get_updated_at(self)
+#
+#     def get_age_seconds(self) -> float:
+#         """Get age via FlextMixins."""
+#         return FlextMixins.get_age_seconds(self)
+
+
+# class FlextIdentifiableMixin(_CompatibilityMixin):
+#     """Legacy compatibility - delegates to FlextMixins ID methods."""
+#
+#     @property
+#     def id(self) -> str:
+#         """Get ID via FlextMixins."""
+#         return FlextMixins.ensure_id(self)
+#
+#     @id.setter
+#     def id(self, value: str) -> None:
+#         """Set ID via FlextMixins."""
+#         result = FlextMixins.set_id(self, value)
+#         if result.is_failure:
+#             raise FlextExceptions(result.error or "Invalid entity ID")
+#
+#     def get_id(self) -> str:
+#         """Get ID via FlextMixins."""
+#         return FlextMixins.ensure_id(self)
+#
+#     def has_id(self) -> bool:
+#         """Check ID via FlextMixins."""
+#         return FlextMixins.has_id(self)
+
+
+# class FlextValidatableMixin(_CompatibilityMixin):
+#     """Legacy compatibility - delegates to FlextMixins validation methods."""
+#
+#     def validate(self) -> object:
+#         """Validate via FlextMixins."""
+#         if FlextMixins.is_valid(self):
+#             return None
+#         FlextMixins.get_validation_errors(self)
+#         return None
+#
+#     @property
+#     def is_valid(self) -> bool:
+#         """Check validity via FlextMixins."""
+#         return FlextMixins.is_valid(self)
+#
+#     def add_validation_error(self, error: str) -> None:
+#         """Add validation error via FlextMixins."""
+#         FlextMixins.add_validation_error(self, error)
+#
+#     def clear_validation_errors(self) -> None:
+#         """Clear validation errors via FlextMixins."""
+#         FlextMixins.clear_validation_errors(self)
+#
+#     @property
+#     def validation_errors(self) -> list[str]:
+#         """Get validation errors via FlextMixins."""
+#         return FlextMixins.get_validation_errors(self)
+#
+#     def has_validation_errors(self) -> bool:
+#         """Check if has validation errors via FlextMixins."""
+#         return len(FlextMixins.get_validation_errors(self)) > 0
+
+
+# class FlextSerializableMixin(_CompatibilityMixin):
+#     """Legacy compatibility - delegates to FlextMixins serialization methods."""
+#
+#     def to_dict(self) -> FlextTypes.Core.Dict:
+#         """Convert to dict via FlextMixins."""
+#         return FlextMixins.to_dict(self)
+#
+#     def to_dict_basic(self) -> FlextTypes.Core.Dict:
+#         """Convert to basic dict via FlextMixins."""
+#         return FlextMixins.to_dict_basic(self)
+#
+#     def to_json(self) -> str:
+#         """Convert to JSON via FlextMixins."""
+#         return FlextMixins.to_json(self)
+#
+#     def load_from_dict(self, data: FlextTypes.Core.Dict) -> None:
+#         """Load from dict via FlextMixins."""
+#         FlextMixins.load_from_dict(self, data)
+#
+#     def load_from_json(self, json_str: str) -> None:
+#         """Load from JSON via FlextMixins."""
+#         result = FlextMixins.load_from_json(self, json_str)
+#         if result.is_failure:
+#             raise ValueError(result.error)
+
+
+# Additional compatibility classes for complete legacy support
+class FlextTimingMixin(_CompatibilityMixin):
+    """Legacy compatibility - delegates to FlextMixins timing methods."""
+
+    def start_timing(self) -> float:
+        """Start timing via FlextMixins."""
+        return FlextMixins.start_timing(self)
+
+    def stop_timing(self) -> float:
+        """Stop timing via FlextMixins."""
+        return FlextMixins.stop_timing(self)
+
+
+# DEPRECATED: Composite mixins for legacy compatibility - use FlextMixins.* instead
+# class FlextEntityMixin(
+#     FlextTimestampMixin,
+#     FlextIdentifiableMixin,
+#     FlextLoggableMixin,
+#     FlextValidatableMixin,
+#     FlextSerializableMixin,
+# ):
+#     """Legacy compatibility - composite entity mixin."""
+
+
+# class FlextValueObjectMixin(
+#     FlextValidatableMixin,
+#     FlextSerializableMixin,
+# ):
+#     """Legacy compatibility - composite value object mixin."""
+
+
+# class FlextServiceMixin(
+#     FlextLoggableMixin,
+#     FlextValidatableMixin,
+# ):
+#     """Legacy compatibility - composite service mixin."""
+
+
+FlextAbstractTimestampMixin = FlextAbstractMixin
+FlextAbstractIdentifiableMixin = FlextAbstractMixin
+FlextAbstractLoggableMixin = FlextAbstractMixin
+FlextAbstractValidatableMixin = FlextAbstractMixin
+FlextAbstractSerializableMixin = FlextAbstractMixin
+FlextAbstractEntityMixin = FlextAbstractMixin
+FlextAbstractServiceMixin = FlextAbstractMixin
+
+
+# Additional compatibility classes needed by flext-cli
+class FlextComparableMixin(_CompatibilityMixin):
+    """Legacy compatibility - delegates to FlextMixins comparison methods."""
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality via FlextMixins."""
+        return FlextMixins.objects_equal(self, other)
+
+    def __hash__(self) -> int:
+        """Generate hash via FlextMixins."""
+        return FlextMixins.object_hash(self)
+
+    def __lt__(self, other: object) -> bool:
+        """Compare via FlextMixins."""
+        return FlextMixins.compare_objects(self, other) < 0
+
+    def compare_to(self, other: object) -> int:
+        """Compare objects via FlextMixins."""
+        return FlextMixins.compare_objects(self, other)
+
+
+# =============================================================================
+# MODERN MIXIN ALIASES - Redirect to FlextMixins subclasses
+# =============================================================================
+
+# Modern aliases that redirect to the new FlextMixins architecture
+FlextLoggableMixin = FlextMixins.Loggable
+FlextSerializableMixin = FlextMixins.Serializable
+FlextTimestampMixin = FlextMixins.Timestampable
+FlextIdentifiableMixin = FlextMixins.Identifiable
+FlextValidatableMixin = FlextMixins.Validatable
+FlextServiceMixin = FlextMixins.Service
+FlextEntityMixin = FlextMixins.Entity
+
+# Legacy aliases (after modern definitions)
+FlextTimestampableMixin = FlextTimestampMixin  # Alias for naming consistency
+FlextStateableMixin = FlextAbstractMixin  # State management compatibility
+FlextCacheableMixin = FlextAbstractMixin  # Caching compatibility
+FlextObservableMixin = FlextAbstractMixin  # Observer pattern compatibility
+FlextConfigurableMixin = FlextAbstractMixin  # Configuration compatibility
+
+# =============================================================================
+# LOGGING LEGACY COMPATIBILITY
+# =============================================================================
+
+
+@FlextDecorators.Lifecycle.deprecated_alias(
+    old_name="flext_get_logger",
+    replacement="FlextLogger()",
+)
+def flext_get_logger(name: str = "flext") -> object:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+    return FlextLogger(name)
+
+
+def get_base_logger(name: str, *, _level: str = "INFO") -> object:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+    LoggingLegacy.deprecation_warning("get_base_logger", "FlextLogger")
+    return FlextLogger(name, _level)
+
+
+def bind_context(**context: object) -> object:
+    """DEPRECATED: Use FlextLogger().with_context() instead."""
+    LoggingLegacy.deprecation_warning("bind_context", "FlextLogger.with_context")
+    return FlextLogger("context").with_context(**context)
+
+
+def with_performance_tracking(name: str) -> object:
+    """DEPRECATED: Use FlextLogger() directly instead."""
+    LoggingLegacy.deprecation_warning("with_performance_tracking", "FlextLogger")
+    return FlextLogger(name)
+
+
+# Legacy alias compatibility
+def _create_flext_core_logging_alias() -> object:
+    """Create FlextCoreLogging alias with deprecation."""
+    LoggingLegacy.deprecation_warning("FlextCoreLogging", "FlextLogger")
+    return FlextLogger
+
+
+FlextCoreLogging = _create_flext_core_logging_alias()
+
+# Add logging legacy exports
+__all__ += [
+    "FlextCoreLogging",
+    "bind_context",
+    "create_log_context",
+    "flext_get_logger",
+    "get_base_logger",
+    "get_logger",
+    "with_performance_tracking",
+]
+
+# =============================================================================
+# ADDITIONAL BACKWARD COMPATIBILITY TYPE ALIASES - From typings.py migration
+# =============================================================================
+
+
+# Essential type aliases that don't conflict with existing legacy definitions
+JsonType = str | int | float | bool | None | list[object] | dict[str, object]
+ResultType = FlextTypes.Result.ResultType[object]
+ConfigType = FlextTypes.Config.ConfigDict
+HandlerType = FlextTypes.Handler.CommandHandler
+
+# Add essential type aliases to exports (avoiding duplicates)
+__all__ += [
+    "ConfigType",
+    "HandlerType",
+    "JsonType",
+    "ResultType",
+]
+
+# =============================================================================
+# TIER 1 MODULE PATTERN - EXPORTS
+# =============================================================================

@@ -46,11 +46,13 @@ from flext_core import (
 
 T = TypeVar("T")
 
+
 class FlextPayload[T]:
     """Generic payload base class for demonstration."""
 
     def __init__(self, data: T) -> None:
         self.data = data
+
 
 class FlextBaseHandler:
     """Base handler for demonstration."""
@@ -71,6 +73,7 @@ class FlextLoggerProtocol(Protocol):
     def exception(self, message: str) -> None: ...
     def trace(self, message: str) -> None: ...
 
+
 class FlextPluginContext:
     """Plugin context for demonstration."""
 
@@ -89,11 +92,13 @@ class FlextPluginContext:
         """Get logger instance."""
         return cast("FlextLoggerProtocol", object())
 
+
 class FlextMessageHandler:
     """Message handler for demonstration."""
 
     def handle(self, message: object) -> None:
         """Handle message."""
+
 
 class FlextEvent:
     """Event base class for demonstration."""
@@ -101,6 +106,7 @@ class FlextEvent:
     def __init__(self, event_id: str, timestamp: float) -> None:
         self.event_id = event_id
         self.timestamp = timestamp
+
 
 # =============================================================================
 # CONSTANTS - Using FlextConstants hierarchical patterns
@@ -180,11 +186,12 @@ class UserCreatedEvent(FlextEvent):
         }
 
 
-
 class OrderPlacedEvent(FlextEvent):
     """Event indicating order was placed."""
 
-    def __init__(self, event_id: str, order_id: str, user_id: str, total: float) -> None:
+    def __init__(
+        self, event_id: str, order_id: str, user_id: str, total: float
+    ) -> None:
         """Initialize OrderPlacedEvent."""
         super().__init__(event_id, time.time())
         self.order_id = order_id
@@ -206,7 +213,6 @@ class OrderPlacedEvent(FlextEvent):
             "user_id": self.user_id,
             "total": self.total,
         }
-
 
 
 # =============================================================================
@@ -857,10 +863,17 @@ class EmailNotificationPlugin:
         try:
             # Get email service from context
             email_service_result = context.get_service("email_service")
-            if isinstance(email_service_result, FlextResult) and email_service_result.is_failure:
+            if (
+                isinstance(email_service_result, FlextResult)
+                and email_service_result.is_failure
+            ):
                 return FlextResult[None].fail("Email service not available")
 
-            service_data = email_service_result.value if isinstance(email_service_result, FlextResult) else email_service_result
+            service_data = (
+                email_service_result.value
+                if isinstance(email_service_result, FlextResult)
+                else email_service_result
+            )
             if isinstance(service_data, ConfigurableEmailService):
                 self._email_service = service_data
             else:
@@ -935,9 +948,7 @@ class AuditLogPlugin:
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
         self._initialized = True
-        context.get_logger().info(
-            f"Plugin initialized: {self.name} v{self.version}"
-        )
+        context.get_logger().info(f"Plugin initialized: {self.name} v{self.version}")
         return FlextResult[None].ok(None)
 
     def get_info(self) -> dict[str, object]:
@@ -986,7 +997,9 @@ class SimpleEventPublisher:
 
     def __init__(self) -> None:
         """Initialize SimpleEventPublisher."""
-        self._subscribers: dict[type[object], list[FlextProtocols.Application.MessageHandler]] = {}
+        self._subscribers: dict[
+            type[object], list[FlextProtocols.Application.MessageHandler]
+        ] = {}
         logger.info("SimpleEventPublisher initialized")
 
     def publish(self, event: FlextEvent) -> FlextResult[None]:
@@ -1003,7 +1016,9 @@ class SimpleEventPublisher:
             try:
                 result = handler.handle(message=event)
                 # Handle FlextResult return types for compatibility
-                if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
+                if hasattr(result, "is_failure") and getattr(
+                    result, "is_failure", False
+                ):
                     error_msg = getattr(result, "error", "Unknown error")
                     failed_handlers.append(
                         f"{type(handler).__name__}: {error_msg}",
@@ -1029,7 +1044,9 @@ class SimpleEventPublisher:
         return FlextResult[None].ok(None)
 
     def add_subscriber(
-        self, event_type: type[object], handler: FlextProtocols.Application.MessageHandler
+        self,
+        event_type: type[object],
+        handler: FlextProtocols.Application.MessageHandler,
     ) -> None:
         """Add subscriber (helper method)."""
         if event_type not in self._subscribers:
@@ -1043,7 +1060,9 @@ class SimpleEventSubscriber:
     def __init__(self, publisher: SimpleEventPublisher) -> None:
         """Initialize SimpleEventSubscriber."""
         self._publisher = publisher
-        self._subscriptions: dict[type[object], list[FlextProtocols.Application.MessageHandler]] = {}
+        self._subscriptions: dict[
+            type[object], list[FlextProtocols.Application.MessageHandler]
+        ] = {}
 
     def subscribe(
         self,
@@ -1532,7 +1551,6 @@ def demonstrate_event_interfaces() -> None:
                 "timestamp": self.timestamp,
                 "data": self.event_data,
             }
-
 
     unknown_event = UnknownEvent(
         event_id="evt_001",

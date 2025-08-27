@@ -300,7 +300,9 @@ class AsyncFixtureUtils:
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
-            async def post(self, url: str, data: dict[str, object]) -> dict[str, object]:
+            async def post(
+                self, url: str, data: dict[str, object]
+            ) -> dict[str, object]:
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 

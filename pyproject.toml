@@ -259,6 +259,9 @@ markers = [
     "happy_path: Happy path scenario tests",
     "error_path: Error path scenario tests",
     "benchmark: Performance benchmark tests",
+    "concurrency: Concurrency and threading tests",
+    "race_condition: Race condition tests",
+    "memory: Memory usage tests",
 ]
 minversion = "8.0"
 testpaths = ["tests"]

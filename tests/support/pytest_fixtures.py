@@ -31,7 +31,6 @@ from flext_core import (
     FlextEntityId,
     FlextResult,
     FlextTimestamp,
-    get_flext_container,
 )
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextFieldType
@@ -127,7 +126,7 @@ def test_config() -> object:
 @pytest.fixture
 def flext_container() -> FlextContainer:
     """Provide clean FlextContainer instance for each test."""
-    return get_flext_container()
+    return FlextContainer.get_global()
 
 
 @pytest.fixture
@@ -308,7 +307,7 @@ def edge_case_values() -> dict[str, list[Any]]:
 @pytest.fixture
 async def async_container() -> AsyncGenerator[FlextContainer]:
     """Provide async FlextContainer for async testing."""
-    return get_flext_container()
+    return FlextContainer.get_global()
     # Cleanup if needed
 
 

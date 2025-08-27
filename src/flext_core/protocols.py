@@ -124,6 +124,56 @@ class FlextProtocols:
                 """Create instance asynchronously."""
                 ...
 
+        @runtime_checkable
+        class HasToDictBasic(Protocol):
+            """Runtime-checkable protocol for objects exposing to_dict_basic."""
+
+            def to_dict_basic(
+                self,
+            ) -> dict[str, object]:  # pragma: no cover - typing helper
+                """Convert object to basic dictionary representation."""
+                ...
+
+        @runtime_checkable
+        class HasToDict(Protocol):
+            """Runtime-checkable protocol for objects exposing to_dict."""
+
+            def to_dict(self) -> dict[str, object]:  # pragma: no cover - typing helper
+                """Convert object to dictionary representation."""
+                ...
+
+        @runtime_checkable
+        class SupportsDynamicAttributes(Protocol):
+            """Protocol for objects that support dynamic attribute setting.
+
+            This protocol allows mixins to set arbitrary attributes on objects
+            without triggering MyPy errors for missing attributes.
+            """
+
+            def __setattr__(self, name: str, value: object, /) -> None:
+                """Set attribute on object."""
+                ...
+
+            def __getattribute__(self, name: str, /) -> object:
+                """Get attribute from object."""
+                ...
+
+        @runtime_checkable
+        class HasModelDump(Protocol):
+            """Protocol for Pydantic v2 models with model_dump method."""
+
+            def model_dump(self) -> dict[str, object]:
+                """Convert model to dictionary (Pydantic v2 style)."""
+                ...
+
+        @runtime_checkable
+        class HasDict(Protocol):
+            """Protocol for Pydantic v1 models with dict method."""
+
+            def dict(self) -> dict[str, object]:
+                """Convert model to dictionary (Pydantic v1 style)."""
+                ...
+
     # =========================================================================
     # DOMAIN LAYER - Business logic protocols
     # =========================================================================
@@ -532,6 +582,9 @@ class FlextProtocols:
     ErrorHandler = Foundation.ErrorHandler
     Factory = Foundation.Factory
     AsyncFactory = Foundation.AsyncFactory
+    HasToDictBasic = Foundation.HasToDictBasic
+    HasToDict = Foundation.HasToDict
+    SupportsDynamicAttributes = Foundation.SupportsDynamicAttributes
 
     # Domain layer access
     Service = Domain.Service
@@ -591,6 +644,9 @@ FlextValidator = FlextProtocols.Foundation.Validator
 # FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler - moved to typings.py
 # FlextFactory = FlextProtocols.Foundation.Factory - moved to typings.py
 # FlextAsyncFactory = FlextProtocols.Foundation.AsyncFactory - moved to typings.py
+HasToDictBasic = FlextProtocols.Foundation.HasToDictBasic
+HasToDict = FlextProtocols.Foundation.HasToDict
+SupportsDynamicAttributes = FlextProtocols.Foundation.SupportsDynamicAttributes
 
 # Domain layer aliases
 FlextService = FlextProtocols.Domain.Service

@@ -14,11 +14,11 @@ import pytest
 
 from flext_core import (
     FlextAbstractHandler,
+    FlextContainer,
     FlextCore,
     FlextLogger,
     FlextLoggerFactory,
     FlextResult,
-    get_flext_container,
 )
 
 
@@ -52,7 +52,7 @@ class TestPerformanceBenchmarks:
 
         def container_operations() -> FlextResult[str]:
             """Perform multiple container operations."""
-            container = get_flext_container()
+            container = FlextContainer.get_global()
 
             # Register services
             container.register("service1", "value1")
@@ -153,7 +153,7 @@ class TestStressTests:
     @pytest.mark.slow
     def test_container_stress_test(self) -> None:
         """Stress test container with many services."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Register many services
         service_count = 1000

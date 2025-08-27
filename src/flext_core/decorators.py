@@ -68,7 +68,7 @@ from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
 from flext_core.constants import FlextConstants
-from flext_core.loggings import get_logger
+from flext_core.loggings import FlextLogger
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -77,7 +77,7 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 # Logger instance using FLEXT logging patterns
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 
 class FlextDecorators:
@@ -1025,6 +1025,159 @@ class FlextDecorators:
                     return func(*args, **kwargs)
 
                 return wrapper
+
+            return decorator
+
+        @staticmethod
+        def deprecated_legacy_function(
+            old_name: str,
+            new_path: str,
+            migration_guide: str = "See FLEXT migration guide for updated patterns.",
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            """Decorator for legacy functions with standardized migration messaging.
+
+            This decorator provides a consistent deprecation pattern specifically
+            designed for legacy.py functions with proper migration guidance.
+
+            Args:
+                old_name: Name of the deprecated function/API
+                new_path: Path to the new replacement API
+                migration_guide: Additional migration guidance message
+
+            Returns:
+                Decorator that adds standardized deprecation warnings
+
+            Examples:
+                Legacy field function::
+
+                    @FlextDecorators.Lifecycle.deprecated_legacy_function(
+                        old_name="string_field",
+                        new_path="FlextFields.Factory.FieldBuilder('string', name)",
+                    )
+                    def string_field(name: str) -> object:
+                        return FlextFields.Factory.FieldBuilder("string", name)
+
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                @functools.wraps(func)
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    warnings.warn(
+                        f"{old_name} is deprecated. Use {new_path} instead. "
+                        f"{migration_guide}",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+
+                    logger.warning(
+                        f"Legacy function called: {old_name}",
+                        extra={
+                            "old_api": old_name,
+                            "new_api": new_path,
+                            "category": "legacy_deprecation",
+                        },
+                    )
+
+                    return func(*args, **kwargs)
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def deprecated_alias(
+            old_name: str,
+            replacement: str,
+        ) -> Callable[[Callable[P, T]], Callable[P, T]]:
+            r"""Decorator for deprecated aliases with simple replacement messaging.
+
+            A streamlined decorator for simple function/class aliases that have
+            been deprecated in favor of newer names or locations.
+
+            Args:
+                old_name: Name of the deprecated alias
+                replacement: The replacement to use instead
+
+            Returns:
+                Decorator that adds concise deprecation warnings
+
+            Examples:
+                Simple alias deprecation::
+
+                    @FlextDecorators.Lifecycle.deprecated_alias(
+                        old_name="get_flext_container",
+                        replacement="FlextContainer.get_global()",
+                    )
+                    def get_flext_container() -> object:
+                        return FlextContainer.get_global()
+
+            """
+
+            def decorator(func: Callable[P, T]) -> Callable[P, T]:
+                @functools.wraps(func)
+                def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                    warnings.warn(
+                        f"{old_name} is deprecated. Use {replacement} instead.",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+
+                    return func(*args, **kwargs)
+
+                return wrapper
+
+            return decorator
+
+        @staticmethod
+        def deprecated_class_warning(
+            class_name: str,
+            replacement: str,
+        ) -> Callable[[type], type]:
+            """Class decorator for deprecated classes with replacement messaging.
+
+            Adds deprecation warning to class instantiation while preserving
+            all original functionality.
+
+            Args:
+                class_name: Name of the deprecated class
+                replacement: The replacement to use instead
+
+            Returns:
+                Decorated class that warns on instantiation
+
+            Examples:
+                Deprecated class with replacement::
+
+                    @FlextDecorators.Lifecycle.deprecated_class_warning(
+                        class_name="FlextServiceProcessor",
+                        replacement="FlextServices.ServiceProcessor",
+                    )
+                    class FlextServiceProcessor:
+                        def __init__(self):
+                            # Original implementation
+                            pass
+
+            """
+            T = TypeVar("T")
+
+            def decorator(cls: type[T]) -> type[T]:
+                # Store reference to original init method
+                original_init = getattr(cls, "__init__", None)
+                if original_init is None:
+                    return cls
+
+                def new_init(self: object, *args: object, **kwargs: object) -> None:
+                    warnings.warn(
+                        f"{class_name} is deprecated. Use {replacement} instead.",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                    # Call original init method with proper casting
+                    original_init(self, *args, **kwargs)
+
+                # Replace __init__ with the wrapped version
+                cls.__init__ = new_init
+                return cls
 
             return decorator
 

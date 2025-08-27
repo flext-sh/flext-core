@@ -385,7 +385,7 @@ def demo_functional_composition() -> FlextResult[dict[str, object]]:
     # Chain multiple validation operations
     result = (
         FlextResult[dict[str, object]]
-            .ok({
+        .ok({
             "name": "Helen Taylor",
             "email": "helen@example.com",
             "age": 29,

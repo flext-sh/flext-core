@@ -412,7 +412,7 @@ class TestFlextLoggerFactory:
 
     def test_get_logger_basic(self, clean_logger_cache: None) -> None:
         """Test basic logger retrieval."""
-        logger = FlextLoggerFactory.get_logger("test.service", "DEBUG")
+        logger = FlextLogger("test.service", "DEBUG")
 
         assert isinstance(logger, FlextLogger)
         if logger._name != "test.service":
@@ -422,8 +422,8 @@ class TestFlextLoggerFactory:
 
     def test_get_logger_caching(self, clean_logger_cache: None) -> None:
         """Test logger caching mechanism."""
-        logger1 = FlextLoggerFactory.get_logger("test.service", "INFO")
-        logger2 = FlextLoggerFactory.get_logger("test.service", "INFO")
+        logger1 = FlextLogger("test.service", "INFO")
+        logger2 = FlextLogger("test.service", "INFO")
 
         # Should return same instance
         assert logger1 is logger2
@@ -433,8 +433,8 @@ class TestFlextLoggerFactory:
         clean_logger_cache: None,
     ) -> None:
         """Test different levels create different loggers."""
-        logger1 = FlextLoggerFactory.get_logger("test.service", "INFO")
-        logger2 = FlextLoggerFactory.get_logger("test.service", "DEBUG")
+        logger1 = FlextLogger("test.service", "INFO")
+        logger2 = FlextLogger("test.service", "DEBUG")
 
         # Different levels should create different instances
         assert logger1 is not logger2
@@ -445,8 +445,8 @@ class TestFlextLoggerFactory:
 
     def test_get_logger_different_names(self, clean_logger_cache: None) -> None:
         """Test different names create different loggers."""
-        logger1 = FlextLoggerFactory.get_logger("service1", "INFO")
-        logger2 = FlextLoggerFactory.get_logger("service2", "INFO")
+        logger1 = FlextLogger("service1", "INFO")
+        logger2 = FlextLogger("service2", "INFO")
 
         assert logger1 is not logger2
         if logger1._name != "service1":
@@ -457,27 +457,27 @@ class TestFlextLoggerFactory:
     def test_get_logger_validation(self, clean_logger_cache: None) -> None:
         """Test parameter validation in get_logger."""
         # Empty name should default
-        logger1 = FlextLoggerFactory.get_logger("", "INFO")
+        logger1 = FlextLogger("", "INFO")
         if logger1._name != "flext.unknown":
             msg_45: str = f"Expected {'flext.unknown'}, got {logger1._name}"
             raise AssertionError(msg_45)
 
         # None name should default
-        logger2 = FlextLoggerFactory.get_logger(None, "INFO")
+        logger2 = FlextLogger(None, "INFO")
         if logger2._name != "flext.unknown":
             msg_46: str = f"Expected {'flext.unknown'}, got {logger2._name}"
             raise AssertionError(msg_46)
 
         # Empty level should default
-        logger3 = FlextLoggerFactory.get_logger("test", "")
+        logger3 = FlextLogger("test", "")
         if logger3._level != "INFO":
             msg_47: str = f"Expected {'INFO'}, got {logger3._level}"
             raise AssertionError(msg_47)
 
     def test_set_global_level(self, clean_logger_cache: None) -> None:
         """Test global level setting affects all loggers."""
-        logger1 = FlextLoggerFactory.get_logger("service1", "DEBUG")
-        logger2 = FlextLoggerFactory.get_logger("service2", "INFO")
+        logger1 = FlextLogger("service1", "DEBUG")
+        logger2 = FlextLogger("service2", "INFO")
 
         # Initially different levels
         if logger1._level != "DEBUG":
@@ -496,7 +496,7 @@ class TestFlextLoggerFactory:
 
     def test_set_global_level_validation(self, clean_logger_cache: None) -> None:
         """Test global level setting validation."""
-        logger = FlextLoggerFactory.get_logger("test", "INFO")
+        logger = FlextLogger("test", "INFO")
         original_level = logger._level
 
         # Invalid level should not change anything
@@ -512,10 +512,10 @@ class TestFlextLoggerFactory:
 
     def test_clear_loggers(self, clean_logger_cache: None) -> None:
         """Test logger cache clearing."""
-        logger1 = FlextLoggerFactory.get_logger("test", "INFO")
+        logger1 = FlextLogger("test", "INFO")
         FlextLoggerFactory.clear_loggers()
 
-        logger2 = FlextLoggerFactory.get_logger("test", "INFO")
+        logger2 = FlextLogger("test", "INFO")
 
         # Should be different instances after clearing
         assert logger1 is not logger2
@@ -875,7 +875,7 @@ class TestLoggingEdgeCases:
         clean_log_store: None,
     ) -> None:
         """Test logger creation with empty name."""
-        logger = FlextLoggerFactory.get_logger("", "INFO")
+        logger = FlextLogger("", "INFO")
         logger.info("Test message")
 
         logs = FlextLoggerFactory.get_log_store()
