@@ -11,22 +11,22 @@ from __future__ import annotations
 
 import hashlib
 
-from flext_core import FlextTypes, FlextUtilities
+from flext_core import FlextConstants, FlextTypes, FlextUtilities
 
 # =============================================================================
-# FORMATTING CONSTANTS - Data conversion and size formatting
+# FORMATTING CONSTANTS - Using FlextConstants directly
 # =============================================================================
 
 # Time formatting constants
-SECONDS_PER_MINUTE = 60
-SECONDS_PER_HOUR = 3600
+SECONDS_PER_MINUTE = FlextConstants.Performance.SECONDS_PER_MINUTE
+SECONDS_PER_HOUR = FlextConstants.Performance.SECONDS_PER_HOUR
 
 # Grade threshold constants
 GRADE_A_THRESHOLD = 90
 GRADE_B_THRESHOLD = 80
 
 # Byte conversion constants
-BYTES_PER_KB = 1024  # Standard bytes per kilobyte for binary calculations
+BYTES_PER_KB = FlextConstants.Performance.BYTES_PER_KB
 
 # Age categorization constants
 YOUNG_ADULT_AGE_THRESHOLD = 25

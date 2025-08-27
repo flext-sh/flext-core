@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""Multiple inheritance and composition patterns with mixins.
+"""FlextMixins composition patterns demonstration.
 
-Demonstrates cross-cutting concerns integration, method resolution order,
-and enterprise service patterns using mixin combinations.
+Shows how to use FlextMixins composition pattern instead of individual mixin inheritance.
+Demonstrates centralized behavioral patterns and clean composition over inheritance.
+
+Key Patterns:
+• FlextMixins composition over individual mixin inheritance
+• Centralized behavioral functionality through a single interface
+• Clean separation of concerns with method delegation
+• Type-safe operations with FlextResult pattern
 """
 
 from __future__ import annotations
@@ -19,21 +25,26 @@ from shared_domain import (
 from shared_example_helpers import run_example_demonstration
 
 from flext_core import (
-    FlextCacheableMixin,
-    FlextComparableMixin,
     FlextConstants,
+    FlextResult,
+    FlextUtilities,
+)
+from flext_core.legacy import (
+    FlextCacheableMixin,
     FlextEntityMixin,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
-    FlextResult,
     FlextSerializableMixin,
     FlextTimestampMixin,
-    FlextTimingMixin,
-    FlextUtilities,
     FlextValidatableMixin,
-    FlextValueObjectMixin,
 )
 from flext_core.mixins import FlextMixins
+
+# Some mixins need to be aliased from what's available
+FlextValueObjectMixin = FlextEntityMixin  # Use entity as value object base
+FlextComparableMixin = FlextSerializableMixin  # Use serializable as comparable base
+FlextTimingMixin = FlextTimestampMixin  # Use timestamp as timing base
+SimpleCacheMixin = FlextCacheableMixin  # Use cacheable as simple cache base
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -105,12 +116,12 @@ class SimpleCacheMixin:
 
 
 # =============================================================================
-# INDIVIDUAL MIXIN DEMONSTRATIONS - Single responsibility patterns
+# FLEXTMIXINS COMPOSITION PATTERNS - Clean composition over inheritance
 # =============================================================================
 
 
-class TimestampedDocument(FlextTimestampMixin):
-    """Document with automatic timestamp tracking."""
+class TimestampedDocument:
+    """Document with automatic timestamp tracking using FlextMixins composition."""
 
     def __init__(self, title: str, content: str) -> None:
         """Initialize TimestampedDocument.
@@ -120,30 +131,49 @@ class TimestampedDocument(FlextTimestampMixin):
             content: Document content
 
         """
-        super().__init__()
         self.title = title
         self.content = content
-        # Timestamps are initialized lazily via property access
+        # Initialize timestamp functionality
+        FlextMixins.create_timestamp_fields(self)
 
     def update_content(self, new_content: str) -> None:
         """Update document content with timestamp tracking."""
         self.content = new_content
-        self.update_timestamp()
+        FlextMixins.update_timestamp(self)
 
     def get_age_seconds(self) -> float:
         """Get document age in seconds."""
-        if self.created_at:
-            return time.time() - self.created_at
-        return 0.0
+        return FlextMixins.get_age_seconds(self)
+
+    @property
+    def created_at(self) -> float:
+        """Get creation timestamp."""
+        return FlextMixins.get_created_at(self)
+
+    @property
+    def updated_at(self) -> float:
+        """Get last update timestamp."""
+        return FlextMixins.get_updated_at(self)
 
     def __str__(self) -> str:
-        """Strings representation with timestamps."""
+        """String representation with timestamps."""
         age = self.get_age_seconds()
         return f"Document('{self.title}', age: {age:.2f}s)"
 
 
-class IdentifiableUser(SharedUser, FlextLoggableMixin):
-    """Enhanced user with unique identification using shared domain models."""
+class IdentifiableUser(SharedUser):
+    """Enhanced user with unique identification using FlextMixins composition."""
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Initialize IdentifiableUser with logging support."""
+        super().__init__(*args, **kwargs)
+        # Initialize logging functionality
+        self._logger = FlextMixins.get_logger(self)
+
+    @property
+    def logger(self) -> object:
+        """Get logger instance."""
+        return FlextMixins.get_logger(self)
 
     def change_username(self, new_username: str) -> bool:
         """Change username with ID validation and logging.
@@ -160,11 +190,14 @@ class IdentifiableUser(SharedUser, FlextLoggableMixin):
         # Use shared domain copy_with method for immutable updates
         update_result = self.copy_with(name=new_username)
         if update_result.is_failure:
-            self.logger.error("Failed to update username", error=update_result.error)
+            FlextMixins.log_error(
+                self, f"Failed to update username: {update_result.error}"
+            )
             return False
 
         # In a real system, you would return the new instance or update via repository
-        self.logger.info(
+        FlextMixins.log_info(
+            self,
             "Username change validated",
             old_name=old_username,
             new_name=new_username,
@@ -176,8 +209,8 @@ class IdentifiableUser(SharedUser, FlextLoggableMixin):
         return f"User({self.name}, ID: {self.id}, Email: {self.email_address.email})"
 
 
-class ValidatableConfiguration(FlextValidatableMixin):
-    """Configuration with validation state tracking."""
+class ValidatableConfiguration:
+    """Configuration with validation state tracking using FlextMixins composition."""
 
     def __init__(self, config_name: str, settings: dict[str, object]) -> None:
         """Initialize ValidatableConfiguration.
@@ -187,29 +220,34 @@ class ValidatableConfiguration(FlextValidatableMixin):
             settings: Configuration settings
 
         """
-        super().__init__()
         self.config_name = config_name
         self.settings = settings
-        # Validation state is initialized lazily via method calls
+        # Initialize validation functionality
+        FlextMixins.initialize_validation(self)
 
     def validate_configuration(self) -> bool:
         """Validate configuration settings."""
-        self.clear_validation_errors()
+        FlextMixins.clear_validation_errors(self)
 
         # Required settings validation
         required_keys = ["database_url", "api_key", "timeout"]
         for key in required_keys:
             if key not in self.settings:
-                self.add_validation_error(f"Missing required setting: {key}")
+                FlextMixins.add_validation_error(
+                    self, f"Missing required setting: {key}"
+                )
 
         # Value validation
         if "timeout" in self.settings:
             timeout = self.settings["timeout"]
             if not isinstance(timeout, int | float) or timeout <= 0:
-                self.add_validation_error("Timeout must be a positive number")
+                FlextMixins.add_validation_error(
+                    self, "Timeout must be a positive number"
+                )
 
         # Set validation status
-        is_valid = len(self.validation_errors) == 0
+        errors = FlextMixins.get_validation_errors(self)
+        is_valid = len(errors) == 0
         if is_valid:
             FlextMixins.mark_valid(self)
 
@@ -224,14 +262,24 @@ class ValidatableConfiguration(FlextValidatableMixin):
 
         return True
 
+    @property
+    def validation_errors(self) -> list[str]:
+        """Get validation errors."""
+        return FlextMixins.get_validation_errors(self)
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if configuration is valid."""
+        return FlextMixins.is_valid(self)
+
     def __str__(self) -> str:
-        """Strings representation with validation status."""
+        """String representation with validation status."""
         status = "Valid" if self.is_valid else "Invalid"
         return f"Config({self.config_name}, {status})"
 
 
-class LoggableService(FlextLoggableMixin):
-    """Service with structured logging capabilities."""
+class LoggableService:
+    """Service with structured logging capabilities using FlextMixins composition."""
 
     def __init__(self, service_name: str) -> None:
         """Initialize LoggableService.
@@ -240,8 +288,12 @@ class LoggableService(FlextLoggableMixin):
             service_name: Service name
 
         """
-        super().__init__()
         self.service_name = service_name
+
+    @property
+    def logger(self) -> object:
+        """Get logger instance."""
+        return FlextMixins.get_logger(self)
 
     def process_request(
         self,
@@ -249,7 +301,7 @@ class LoggableService(FlextLoggableMixin):
         _data: dict[str, object],
     ) -> dict[str, object]:
         """Process request with comprehensive logging."""
-        self.logger.info("Processing request", request_id=request_id)
+        FlextMixins.log_info(self, "Processing request", request_id=request_id)
 
         try:
             # Simulate processing
@@ -262,11 +314,13 @@ class LoggableService(FlextLoggableMixin):
                 "service": self.service_name,
             }
 
-            self.logger.info("Request completed successfully", request_id=request_id)
+            FlextMixins.log_info(
+                self, "Request completed successfully", request_id=request_id
+            )
             return result
 
         except (RuntimeError, ValueError, TypeError) as e:
-            self.logger.exception("Request failed", request_id=request_id)
+            FlextMixins.log_error(self, f"Request failed: {e}", request_id=request_id)
             error_result: dict[str, object] = {
                 "request_id": request_id,
                 "status": "error",
@@ -276,7 +330,7 @@ class LoggableService(FlextLoggableMixin):
 
     def health_check(self) -> Mapping[str, object]:
         """Perform health check with logging."""
-        self.logger.debug("Performing health check")
+        FlextMixins.log_debug(self, "Performing health check")
 
         health_status: dict[str, object] = {
             "service": self.service_name,
@@ -284,12 +338,12 @@ class LoggableService(FlextLoggableMixin):
             "timestamp": FlextUtilities.generate_iso_timestamp(),
         }
 
-        self.logger.info("Health check completed")
+        FlextMixins.log_info(self, "Health check completed")
         return health_status
 
 
-class TimedOperation(FlextTimingMixin):
-    """Operation with execution timing."""
+class TimedOperation:
+    """Operation with execution timing using FlextMixins composition."""
 
     def __init__(self, operation_name: str) -> None:
         """Initialize TimedOperation.
@@ -298,19 +352,18 @@ class TimedOperation(FlextTimingMixin):
             operation_name: Operation name
 
         """
-        super().__init__()
         self.operation_name = operation_name
 
     def execute_operation(self, complexity: int = 1000) -> Mapping[str, object]:
         """Execute operation with timing measurement."""
-        self.start_timing()
+        FlextMixins.start_timing(self)
 
         # Simulate operation complexity
         total = 0
         for i in range(complexity):
             total += i * 2
 
-        execution_time = self.stop_timing()
+        execution_time = FlextMixins.stop_timing(self)
 
         return {
             "operation": self.operation_name,
@@ -320,12 +373,11 @@ class TimedOperation(FlextTimingMixin):
         }
 
 
-class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
-    """Calculator with result caching using SimpleCacheMixin for cache methods."""
+class CacheableCalculator:
+    """Calculator with result caching using FlextMixins composition."""
 
     def __init__(self) -> None:
         """Initialize CacheableCalculator."""
-        super().__init__()
         self.calculation_count = 0
 
     def fibonacci(self, n: int) -> int:
@@ -333,13 +385,14 @@ class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
         cache_key = f"fib_{n}"
 
         # Check cache first
-        cached_result = self.cache_get(cache_key)
-        if cached_result is not None:
-            return (
-                int(cached_result)
-                if isinstance(cached_result, (int, float, str))
-                else 0
-            )
+        if FlextMixins.has_cached_value(self, cache_key):
+            cached_result = FlextMixins.get_cached_value(self, cache_key)
+            if cached_result is not None:
+                return (
+                    int(cached_result)
+                    if isinstance(cached_result, (int, float, str))
+                    else 0
+                )
 
         # Calculate if not cached
         self.calculation_count += 1
@@ -347,14 +400,21 @@ class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
         result = n if n <= 1 else self.fibonacci(n - 1) + self.fibonacci(n - 2)
 
         # Cache the result
-        self.cache_set(cache_key, result)
+        FlextMixins.set_cached_value(self, cache_key, result)
         return result
 
     def get_stats(self) -> Mapping[str, object]:
         """Get calculation statistics."""
+        cache_size = 0
+        try:
+            if hasattr(self, "_cache"):
+                cache_size = len(getattr(self, "_cache", {}))
+        except Exception:
+            cache_size = 0
+
         return {
             "calculations_performed": self.calculation_count,
-            "cache_size": len(self._cache) if hasattr(self, "_cache") else 0,
+            "cache_size": cache_size,
         }
 
 
@@ -363,12 +423,8 @@ class CacheableCalculator(FlextCacheableMixin, SimpleCacheMixin):
 # =============================================================================
 
 
-class AdvancedUser(
-    FlextTimestampMixin,
-    FlextValidatableMixin,
-    FlextLoggableMixin,
-):
-    """Enhanced user with multiple behavioral mixins using shared domain models."""
+class AdvancedUser:
+    """Enhanced user with multiple behavioral mixins using FlextMixins composition."""
 
     def __init__(self, username: str, email: str, age: int, role: str = "user") -> None:
         """Initialize AdvancedUser using shared domain factory.
@@ -380,9 +436,6 @@ class AdvancedUser(
             role: User role
 
         """
-        # Initialize mixins first
-        super().__init__()
-
         # Create user using shared domain factory
         user_result = SharedDomainFactory.create_user(username, email, age)
         if user_result.is_failure:
@@ -393,11 +446,13 @@ class AdvancedUser(
         self._user: SharedUser = user_result.value
         self.role = role
 
-        # Initialize mixins
-        # Timestamps are initialized lazily via property access
-        # Validation state is initialized lazily via method calls
+        # Initialize FlextMixins functionality
+        FlextMixins.create_timestamp_fields(self)
+        FlextMixins.initialize_validation(self)
 
-        self.logger.info("Advanced user created", username=username, role=role)
+        FlextMixins.log_info(
+            self, "Advanced user created", username=username, role=role
+        )
         log_domain_operation(
             "advanced_user_created",
             "AdvancedUser",
@@ -421,31 +476,36 @@ class AdvancedUser(
 
     def validate_user(self) -> bool:
         """Comprehensive user validation using shared domain validation."""
-        self.clear_validation_errors()
+        FlextMixins.clear_validation_errors(self)
 
         # First validate using shared domain rules
         domain_validation = self._user.validate_domain_rules()
         if domain_validation.is_failure:
-            self.add_validation_error(
+            FlextMixins.add_validation_error(
+                self,
                 f"Domain validation failed: {domain_validation.error}",
             )
 
         # Additional role validation
         valid_roles = ["user", "REDACTED_LDAP_BIND_PASSWORD", "moderator"]
         if self.role not in valid_roles:
-            self.add_validation_error(f"Invalid role. Must be one of: {valid_roles}")
+            FlextMixins.add_validation_error(
+                self, f"Invalid role. Must be one of: {valid_roles}"
+            )
 
-        is_valid = len(self.validation_errors) == 0
+        validation_errors = FlextMixins.get_validation_errors(self)
+        is_valid = len(validation_errors) == 0
         if is_valid:
             FlextMixins.mark_valid(self)
 
         if is_valid:
-            self.logger.info("User validation successful", username=self.name)
+            FlextMixins.log_info(self, "User validation successful", username=self.name)
         else:
-            self.logger.warning(
+            FlextMixins.log_info(
+                self,
                 "User validation failed",
                 username=self.name,
-                errors=self.validation_errors,
+                errors=validation_errors,
             )
 
         return is_valid
@@ -453,11 +513,11 @@ class AdvancedUser(
     def promote_to_REDACTED_LDAP_BIND_PASSWORD(self) -> bool:
         """Promote user to REDACTED_LDAP_BIND_PASSWORD with validation and logging."""
         if not self.validate_user():
-            self.logger.error("Cannot promote invalid user to REDACTED_LDAP_BIND_PASSWORD")
+            FlextMixins.log_error(self, "Cannot promote invalid user to REDACTED_LDAP_BIND_PASSWORD")
             return False
 
         if self.role == "REDACTED_LDAP_BIND_PASSWORD":
-            self.logger.warning("User is already REDACTED_LDAP_BIND_PASSWORD", username=self.name)
+            FlextMixins.log_info(self, "User is already REDACTED_LDAP_BIND_PASSWORD", username=self.name)
             return False
 
         old_role = self.role
@@ -467,12 +527,13 @@ class AdvancedUser(
         try:
             # This is a demonstration - in production use proper state management
             self.role = "REDACTED_LDAP_BIND_PASSWORD"
-            self.update_timestamp()
+            FlextMixins.update_timestamp(self)
         except (RuntimeError, ValueError, TypeError) as e:
-            self.logger.exception("Failed to update role", error=str(e))
+            FlextMixins.log_error(self, f"Failed to update role: {e}")
             return False
 
-        self.logger.info(
+        FlextMixins.log_info(
+            self,
             "User promoted",
             username=self.name,
             old_role=old_role,
@@ -486,6 +547,26 @@ class AdvancedUser(
             new_role=self.role,
         )
         return True
+
+    @property
+    def created_at(self) -> float:
+        """Get creation timestamp."""
+        return FlextMixins.get_created_at(self)
+
+    @property
+    def updated_at(self) -> float:
+        """Get last update timestamp."""
+        return FlextMixins.get_updated_at(self)
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if user is valid."""
+        return FlextMixins.is_valid(self)
+
+    @property
+    def validation_errors(self) -> list[str]:
+        """Get validation errors."""
+        return FlextMixins.get_validation_errors(self)
 
     def get_user_info(self) -> Mapping[str, object]:
         """Get comprehensive user information."""
@@ -511,14 +592,8 @@ class AdvancedUser(
         }
 
 
-class SmartDocument(
-    FlextTimestampMixin,
-    FlextSerializableMixin,
-    FlextComparableMixin,
-    FlextCacheableMixin,
-    SimpleCacheMixin,
-):
-    """Document with smart features through mixin composition."""
+class SmartDocument:
+    """Document with smart features through FlextMixins composition."""
 
     def __init__(self, title: str, content: str, category: str = "general") -> None:
         """Initialize SmartDocument.
@@ -529,10 +604,17 @@ class SmartDocument(
             category: Document category
 
         """
-        super().__init__()
         self.title = title
         self.content = content
         self.category = category
+
+        # Initialize FlextMixins fields
+        FlextMixins.create_timestamp_fields(self)
+
+        # Initialize cache fields
+        self._cache: dict[str, object] = {}
+        self._cache_hits = 0
+        self._cache_misses = 0
         self.view_count = 0
 
         # Initialize mixins
@@ -543,8 +625,9 @@ class SmartDocument(
         cache_key = f"view_{self.title}"
 
         # Check if view is cached
-        cached_view = self.cache_get(cache_key)
+        cached_view = self._cache.get(cache_key)
         if cached_view is not None:
+            self._cache_hits += 1
             self.view_count += 1
             return cached_view if isinstance(cached_view, dict) else {}
 
@@ -555,13 +638,14 @@ class SmartDocument(
             if len(self.content) > MAX_CONTENT_PREVIEW_LENGTH
             else self.content,
             "category": self.category,
-            "created_at": self.created_at,
+            "created_at": FlextMixins.get_created_at(self),
             "word_count": len(self.content.split()),
             "character_count": len(self.content),
         }
 
         # Cache the view
-        self.cache_set(cache_key, view_data)
+        self._cache[cache_key] = view_data
+        self._cache_misses += 1
         self.view_count += 1
 
         return view_data
@@ -569,44 +653,39 @@ class SmartDocument(
     def update_content(self, new_content: str) -> None:
         """Update content and clear cache."""
         self.content = new_content
-        self.update_timestamp()
+        FlextMixins.update_timestamp(self)
 
         # Clear cached views
         cache_key = f"view_{self.title}"
-        cached_view = self.cache_get(cache_key)
-        if cached_view is not None:
-            self.cache_remove(cache_key)
+        if cache_key in self._cache:
+            del self._cache[cache_key]
 
     def compare_with(self, other: SmartDocument) -> Mapping[str, object]:
-        """Compare documents using comparable mixin."""
+        """Compare documents using FlextMixins."""
+        my_created = FlextMixins.get_created_at(self)
+        other_created = FlextMixins.get_created_at(other)
+
         return {
             "title_match": self.title == other.title,
             "category_match": self.category == other.category,
             "content_length_diff": len(self.content) - len(other.content),
-            "age_diff_seconds": (self.created_at or 0) - (other.created_at or 0),
+            "age_diff_seconds": (my_created or 0) - (other_created or 0),
             "view_count_diff": self.view_count - other.view_count,
         }
 
     def to_dict(self) -> dict[str, object]:
-        """Serialize document to dictionary."""
-        return {
+        """Serialize document to dictionary using FlextMixins."""
+        base_dict = {
             "title": self.title,
             "content": self.content,
             "category": self.category,
             "view_count": self.view_count,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
         }
+        return FlextMixins.to_dict(self, base_dict)
 
 
-class EnterpriseService(
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextTimingMixin,
-    FlextValidatableMixin,
-    SimpleCacheMixin,  # For cache methods
-):
-    """Enterprise service with comprehensive mixin composition."""
+class EnterpriseService:
+    """Enterprise service with comprehensive FlextMixins composition."""
 
     def __init__(self, service_name: str, config: dict[str, object]) -> None:
         """Initialize EnterpriseService with name and configuration.
@@ -616,33 +695,44 @@ class EnterpriseService(
             config: Service configuration dictionary
 
         """
-        super().__init__()
         self.service_name = service_name
         self.config = config
         self.request_count = 0
         self.error_count = 0
 
-        # Initialize all mixins
-        # ID is auto-generated when accessing self.id property
-        # Validation state is initialized lazily via method calls
+        # Initialize FlextMixins fields
+        FlextMixins.ensure_id(self)
+        FlextMixins.initialize_validation(self)
 
-        self.logger.info("Enterprise service initialized", service_name=service_name)
+        # Initialize cache fields for simple cache functionality
+        self._cache: dict[str, object] = {}
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+        FlextMixins.log_info(
+            self, "Enterprise service initialized", service_name=service_name
+        )
 
     def validate_service(self) -> bool:
-        """Validate service configuration."""
-        self.clear_validation_errors()
+        """Validate service configuration using FlextMixins."""
+        FlextMixins.clear_validation_errors(self)
 
         required_config = ["host", "port", "timeout"]
         for key in required_config:
             if key not in self.config:
-                self.add_validation_error(f"Missing required config: {key}")
+                FlextMixins.add_validation_error(
+                    self, f"Missing required config: {key}"
+                )
 
         if "timeout" in self.config:
             timeout = self.config["timeout"]
             if not isinstance(timeout, int | float) or timeout <= 0:
-                self.add_validation_error("Timeout must be positive number")
+                FlextMixins.add_validation_error(
+                    self, "Timeout must be positive number"
+                )
 
-        is_valid = len(self.validation_errors) == 0
+        errors = FlextMixins.get_validation_errors(self)
+        is_valid = len(errors) == 0
         if is_valid:
             FlextMixins.mark_valid(self)
 
@@ -653,52 +743,55 @@ class EnterpriseService(
         request_id: str,
         data: dict[str, object],
     ) -> dict[str, object]:
-        """Process request with comprehensive monitoring."""
-        self.logger.info("Processing request", request_id=request_id)
+        """Process request with comprehensive monitoring using FlextMixins."""
+        FlextMixins.log_info(self, "Processing request", request_id=request_id)
 
         # Validate service first
         if not self.validate_service():
             self.error_count += 1
-            self.logger.error("Service validation failed")
+            FlextMixins.log_error(self, "Service validation failed")
             return {"error": "Service not properly configured"}
 
         # Check cache
         cache_key = f"request_{request_id}"
-        cached_result = self.cache_get(cache_key)
+        cached_result = self._cache.get(cache_key)
         if cached_result is not None:
-            self.logger.info("Cache hit for request", request_id=request_id)
+            self._cache_hits += 1
+            FlextMixins.log_info(self, "Cache hit for request", request_id=request_id)
             return cached_result if isinstance(cached_result, dict) else {}
 
         # Time the operation
-        self.start_timing()
+        FlextMixins.start_timing(self)
 
         try:
             # Simulate processing
             time.sleep(0.001)
 
+            service_id = getattr(self, "id", "unknown")
             result: dict[str, object] = {
                 "request_id": request_id,
-                "service_id": self.id,
+                "service_id": service_id,
                 "status": "success",
                 "data": data,
                 "processed_at": FlextUtilities.generate_iso_timestamp(),
             }
 
-            execution_time = self.stop_timing()
+            execution_time = FlextMixins.stop_timing(self)
             result["execution_time"] = execution_time
 
             # Cache successful results
-            self.cache_set(cache_key, result)
+            self._cache[cache_key] = result
+            self._cache_misses += 1
 
             self.request_count += 1
-            self.logger.info("Request completed", request_id=request_id)
+            FlextMixins.log_info(self, "Request completed", request_id=request_id)
 
             return result
 
         except (RuntimeError, ValueError, TypeError) as e:
-            execution_time = self.stop_timing()
+            execution_time = FlextMixins.stop_timing(self)
             self.error_count += 1
-            self.logger.exception("Request failed", request_id=request_id)
+            FlextMixins.log_exception(self, "Request failed", request_id=request_id)
 
             return {
                 "request_id": request_id,
@@ -708,16 +801,19 @@ class EnterpriseService(
             }
 
     def get_service_metrics(self) -> Mapping[str, object]:
-        """Get comprehensive service metrics."""
+        """Get comprehensive service metrics using FlextMixins."""
+        service_id = getattr(self, "id", "unknown")
         return {
-            "service_id": self.id,
+            "service_id": service_id,
             "service_name": self.service_name,
             "request_count": self.request_count,
             "error_count": self.error_count,
             "error_rate": self.error_count / max(self.request_count, 1),
-            "is_valid": self.is_valid,
-            "validation_errors": self.validation_errors,
+            "is_valid": FlextMixins.is_valid(self),
+            "validation_errors": FlextMixins.get_validation_errors(self),
             "cache_size": len(self._cache) if hasattr(self, "_cache") else 0,
+            "cache_hits": self._cache_hits,
+            "cache_misses": self._cache_misses,
         }
 
 

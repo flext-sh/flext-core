@@ -78,7 +78,9 @@ class TestFlextValidationCore:
     def test_string_validation_basic(self) -> None:
         """Test basic string validation."""
         # Valid strings
-        assert FlextValidation.validate_non_empty_string_func(FlextConstants.Messages.SUCCESS)
+        assert FlextValidation.validate_non_empty_string_func(
+            FlextConstants.Messages.SUCCESS
+        )
         assert FlextValidation.validate_non_empty_string_func("test string")
 
         # Invalid strings
@@ -181,7 +183,9 @@ class TestFlextValidationEdgeCases:
     """Test validation with edge cases and boundary conditions."""
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.unicode_strings())
-    def test_unicode_string_validation(self, edge_value: FlextTypes.Core.String) -> None:
+    def test_unicode_string_validation(
+        self, edge_value: FlextTypes.Core.String
+    ) -> None:
         """Test string validation with Unicode edge cases."""
         result = FlextValidation.validate_non_empty_string_func(edge_value)
 
@@ -194,7 +198,9 @@ class TestFlextValidationEdgeCases:
             assert not result
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.boundary_numbers())
-    def test_boundary_number_validation(self, edge_value: FlextTypes.Core.Float) -> None:
+    def test_boundary_number_validation(
+        self, edge_value: FlextTypes.Core.Float
+    ) -> None:
         """Test number validation with boundary values."""
         result = FlextValidation.validate_numeric_field(edge_value)
 
@@ -246,7 +252,8 @@ class TestFlextValidationPerformance:
 
         def validate_emails() -> list[bool]:
             return [
-                FlextValidation.Validators.validate_email(email).is_valid for email in emails
+                FlextValidation.Validators.validate_email(email).is_valid
+                for email in emails
             ]
 
         results = BenchmarkUtils.benchmark_with_warmup(

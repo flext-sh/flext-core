@@ -13,7 +13,7 @@ from typing import override
 from pydantic import ConfigDict
 
 from flext_core.constants import FlextConstants
-from flext_core.mixins import FlextSerializableMixin
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
@@ -25,7 +25,8 @@ from flext_core.utilities import FlextUtilities
 
 class FlextDomainService[TDomainResult](
     FlextModel,
-    FlextSerializableMixin,
+    FlextMixins.Serializable,
+    FlextMixins.Loggable,
     ABC,
 ):
     """Abstract domain service for stateless cross-entity operations.
@@ -41,8 +42,7 @@ class FlextDomainService[TDomainResult](
         arbitrary_types_allowed=True,  # Allow non-Pydantic types like FlextDbOracleApi
     )
 
-    # Mixin functionality is now inherited properly:
-    # - Serialization methods from FlextSerializableMixin
+    # Mixin functionality is now inherited via FlextMixins.Serializable
 
     def is_valid(self) -> bool:
         """Check if domain service is valid using foundation patterns."""
@@ -131,9 +131,7 @@ class FlextDomainService[TDomainResult](
         """Get service information for monitoring using foundation patterns."""
         return {
             "service_type": self.__class__.__name__,
-            "service_id": FlextUtilities.Generators.generate_service_name(
-                self.__class__.__name__.lower()
-            ),
+            "service_id": f"service_{self.__class__.__name__.lower()}_{FlextUtilities.Generators.generate_id()}",
             "config_valid": self.validate_config().is_success,
             "business_rules_valid": self.validate_business_rules().is_success,
             "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),

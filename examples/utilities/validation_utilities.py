@@ -11,9 +11,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from examples.shared_domain import Order as SharedOrder, Product as SharedProduct
-from examples.utilities.formatting_helpers import MAX_DISCOUNT_PERCENTAGE
+from formatting_helpers import MAX_DISCOUNT_PERCENTAGE
+
 from flext_core import FlextResult
+
+from ..shared_domain import Order as SharedOrder, Product as SharedProduct
 
 # =============================================================================
 # TYPE CHECKING FUNCTIONS - Using FlextTypes.TypeGuards for safety

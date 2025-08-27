@@ -271,16 +271,16 @@ class ExceptionFactory:
         message: str = "Domain error occurred",
         error_code: str = "DOMAIN_ERROR",
     ) -> Exception:
-        """Create FlextExceptions.Error."""
-        return FlextExceptions.Error(message, error_code=error_code)
+        """Create FlextExceptions."""
+        return FlextExceptions(message, error_code=error_code)
 
     @staticmethod
     def create_validation_error(
         message: str = "Validation failed",
         error_code: str = "VALIDATION_ERROR",
     ) -> Exception:
-        """Create FlextExceptions.ValidationError."""
-        return FlextExceptions.ValidationError(message, error_code=error_code)
+        """Create FlextExceptions."""
+        return FlextExceptions(message, error_code=error_code)
 
 
 class TestEntityFactory(Factory[BaseTestEntity]):

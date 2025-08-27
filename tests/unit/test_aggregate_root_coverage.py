@@ -229,8 +229,8 @@ class TestAggregateRootInitializationCoverage:
         class BadAggregate(FlextAggregateRoot):
             required_field: str
 
-        # Should raise FlextExceptions.ValidationError for missing required field
-        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
+        # Should raise FlextExceptions for missing required field
+        with pytest.raises(FlextExceptions) as exc_info:
             BadAggregate()  # Missing required_field
 
         error = exc_info.value

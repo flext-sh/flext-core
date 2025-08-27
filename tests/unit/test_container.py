@@ -18,7 +18,7 @@ from tests.support.factory_boy_factories import (
 )
 from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 
-from flext_core import FlextContainer, FlextResult, get_flext_container
+from flext_core import FlextContainer, FlextResult
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
@@ -35,8 +35,8 @@ class TestFlextContainerCore:
 
     def test_container_singleton_behavior(self) -> None:
         """Test that get_flext_container returns singleton instance."""
-        container1 = get_flext_container()
-        container2 = get_flext_container()
+        container1 = FlextContainer.get_global()
+        container2 = FlextContainer.get_global()
 
         assert container1 is container2
         assert isinstance(container1, FlextContainer)
@@ -45,7 +45,7 @@ class TestFlextContainerCore:
         self, user_data_factory: UserDataFactory
     ) -> None:
         """Test successful service registration using factories."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         test_service = user_data_factory.build()
 
         result = container.register("test_service", test_service)
@@ -57,7 +57,7 @@ class TestFlextContainerCore:
         self, user_data_factory: UserDataFactory
     ) -> None:
         """Test successful service retrieval."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         test_service = user_data_factory.build()
 
         container.register("test_service", test_service)
@@ -68,7 +68,7 @@ class TestFlextContainerCore:
 
     def test_service_not_found(self) -> None:
         """Test retrieval of non-existent service."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         result = container.get("non_existent_service")
 
@@ -77,7 +77,7 @@ class TestFlextContainerCore:
 
     def test_factory_registration_and_execution(self) -> None:
         """Test factory registration and lazy evaluation."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         factory_called = False
 
         def test_factory() -> FlextTypes.Core.String:
@@ -105,7 +105,7 @@ class TestFlextContainerDI:
 
     def test_complex_dependency_chain(self) -> None:
         """Test complex dependency injection chains."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Register dependencies in reverse order
         container.register("config", {"database_url": "localhost:5432"})
@@ -132,7 +132,9 @@ class TestFlextContainerDI:
                 self.db = database
                 self.users = []
 
-            def create_user(self, user_data: FlextTypes.Core.JsonObject) -> FlextTypes.Core.JsonObject:
+            def create_user(
+                self, user_data: FlextTypes.Core.JsonObject
+            ) -> FlextTypes.Core.JsonObject:
                 user = {"id": len(self.users) + 1, **user_data}
                 self.users.append(user)
                 return user
@@ -166,7 +168,7 @@ class TestFlextContainerPerformance:
 
     def test_registration_performance(self, benchmark: object) -> None:
         """Benchmark service registration performance."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         def register_many_services() -> None:
             for i in range(100):
@@ -178,7 +180,7 @@ class TestFlextContainerPerformance:
 
     def test_retrieval_performance(self, benchmark: object) -> None:
         """Benchmark service retrieval performance."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Pre-register services
         for i in range(100):
@@ -203,7 +205,7 @@ class TestFlextContainerPerformance:
         profiler = PerformanceProfiler()
 
         with profiler.profile_memory("container_operations"):
-            container = get_flext_container()
+            container = FlextContainer.get_global()
 
             # Register many services
             for i in range(1000):
@@ -229,13 +231,17 @@ class TestFlextContainerAsync:
     @pytest.mark.asyncio
     async def test_concurrent_container_access(self) -> None:
         """Test concurrent access to container."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
-        async def register_service(service_id: FlextTypes.Core.Integer) -> FlextResult[None]:
+        async def register_service(
+            service_id: FlextTypes.Core.Integer,
+        ) -> FlextResult[None]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return container.register(f"concurrent_service_{service_id}", service_id)
 
-        async def get_service(service_id: FlextTypes.Core.Integer) -> FlextResult[FlextTypes.Core.Object]:
+        async def get_service(
+            service_id: FlextTypes.Core.Integer,
+        ) -> FlextResult[FlextTypes.Core.Object]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return container.get(f"concurrent_service_{service_id}")
 
@@ -264,10 +270,12 @@ class TestFlextContainerProperties:
 
     @given(st.text(min_size=1), st.text())
     def test_register_get_roundtrip(
-        self, service_name: FlextTypes.Core.String, service_value: FlextTypes.Core.String
+        self,
+        service_name: FlextTypes.Core.String,
+        service_value: FlextTypes.Core.String,
     ) -> None:
         """Property: register then get returns the same value."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         register_result = container.register(service_name, service_value)
         if register_result.success:
@@ -276,9 +284,11 @@ class TestFlextContainerProperties:
             assert get_result.value == service_value
 
     @given(st.text(min_size=1))
-    def test_unregistered_service_failure(self, service_name: FlextTypes.Core.String) -> None:
+    def test_unregistered_service_failure(
+        self, service_name: FlextTypes.Core.String
+    ) -> None:
         """Property: getting unregistered service always fails."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Ensure service is not registered by using unique name
         unique_name = f"unregistered_{service_name}_{hash(service_name)}"
@@ -297,7 +307,7 @@ class TestFlextContainerIntegration:
 
     def test_user_service_integration(self, user_data_factory: UserDataFactory) -> None:
         """Test complete user service integration."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         user_data = user_data_factory.build()
 
         # Register real user repository
@@ -305,7 +315,9 @@ class TestFlextContainerIntegration:
             def __init__(self) -> None:
                 self.users = []
 
-            def save(self, user_data: FlextTypes.Core.JsonObject) -> FlextResult[FlextTypes.Core.JsonObject]:
+            def save(
+                self, user_data: FlextTypes.Core.JsonObject
+            ) -> FlextResult[FlextTypes.Core.JsonObject]:
                 user = {"id": len(self.users) + 1, **user_data}
                 self.users.append(user)
                 return FlextResult.ok(user)
@@ -345,7 +357,7 @@ class TestFlextContainerIntegration:
 
     def test_error_handling_scenarios(self, test_scenarios: list[TestScenario]) -> None:
         """Test container error handling with various scenarios."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Check if ERROR_CASE scenario exists
         has_error_case = TestScenario.ERROR_CASE in test_scenarios
@@ -374,7 +386,7 @@ class TestFlextContainerEdgeCases:
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.unicode_strings())
     def test_unicode_service_names(self, edge_value: str) -> None:
         """Test container with unicode service names."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         if edge_value:  # Skip empty strings
             result = container.register(edge_value, "test_value")
@@ -386,7 +398,7 @@ class TestFlextContainerEdgeCases:
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.empty_values())
     def test_empty_value_registration(self, edge_value: object) -> None:
         """Test container with empty/null values."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         result = container.register("empty_service", edge_value)
         if result.success:
@@ -396,7 +408,7 @@ class TestFlextContainerEdgeCases:
 
     def test_large_service_registration(self) -> None:
         """Test container with large service objects."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         large_data = EdgeCaseGenerators.large_values()[0]  # Large string
 
         result = container.register("large_service", large_data)
@@ -417,7 +429,7 @@ class TestFlextContainerFactoryIntegration:
 
     def test_user_factory_integration(self) -> None:
         """Test container with factory_boy user creation."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         def user_service_factory() -> object:
             class RealUserService:
@@ -440,7 +452,7 @@ class TestFlextContainerFactoryIntegration:
 
     def test_validation_test_cases_integration(self) -> None:
         """Test container with comprehensive validation test cases."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
         test_cases = create_validation_test_cases()
 
         def validator_service_factory() -> object:
@@ -473,7 +485,7 @@ class TestFlextContainerStress:
 
     def test_high_volume_service_registration(self) -> None:
         """Test container performance with many services."""
-        container = get_flext_container()
+        container = FlextContainer.get_global()
 
         # Register many services
         for i in range(1000):

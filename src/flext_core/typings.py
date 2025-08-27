@@ -64,32 +64,21 @@ from contextlib import AbstractAsyncContextManager
 from datetime import datetime
 from pathlib import Path
 from typing import (
-    Generic,
     Literal,
     ParamSpec,
     TypeGuard,
     TypeVar,
-    Union,
-    get_args,
-    get_origin,
 )
 
-# Import centralized protocols and result types to avoid circular dependencies
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+
+# NOTE: FlextResult imported at end of file to avoid circular import
 
 # =============================================================================
 # CORE TYPE VARIABLES - Foundation for generic programming
 # =============================================================================
 
-# Primary type variables for generic programming
-T = TypeVar("T")  # Primary generic type
-U = TypeVar("U")  # Secondary generic type
-V = TypeVar("V")  # Tertiary generic type
-K = TypeVar("K")  # Key type for mappings
-R = TypeVar("R")  # Return type for functions
-E = TypeVar("E", bound=Exception)  # Exception type
-F = TypeVar("F")  # Function/field type variable
 
 # Specialized type variables
 TEntity = TypeVar("TEntity")  # Entity types
@@ -101,9 +90,16 @@ TResponse = TypeVar("TResponse")  # Response types
 TCommand = TypeVar("TCommand")  # Command types for CQRS
 TQuery = TypeVar("TQuery")  # Query types for CQRS
 TResult = TypeVar("TResult")  # Result types for handlers
-EntryT = TypeVar("EntryT")  # Entry types for schema processing
+TEntry = TypeVar("TEntry")  # Entry types for schema processing
 
-# Function signature types
+# Primary type variables for generic programming (Python 3.13+ syntax)
+T = TypeVar("T")  # Primary generic type for FLEXT ecosystem
+U = TypeVar("U")  # Secondary generic type for FLEXT ecosystem
+V = TypeVar("V")  # Tertiary generic type
+K = TypeVar("K")  # Key type for mappings
+R = TypeVar("R")  # Return type for functions
+E = TypeVar("E", bound=Exception)  # Exception type
+F = TypeVar("F")  # Function/field type variable
 P = ParamSpec("P")  # Parameter specification for callables
 
 # =============================================================================
@@ -205,6 +201,7 @@ class FlextTypes:
         type Dict = dict[str, object]
         type Set = set[object]
         type Tuple = tuple[object, ...]
+        type Data = dict[str, object]  # Generic data container type
 
         # JSON-compatible types
         type JsonPrimitive = str | int | float | bool | None
@@ -403,6 +400,9 @@ class FlextTypes:
         type EventType = str
         type EventData = dict[str, object]
         type EventMetadata = dict[str, object]
+
+        # Correlation and tracing types
+        type CorrelationId = str
 
         # Repository types
         type Specification[T] = Callable[[T], bool]
@@ -791,157 +791,17 @@ class FlextTypes:
 
 
 # =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Minimal facades for ecosystem migration
-# =============================================================================
-
-# Legacy aliases for smooth ecosystem migration following FLEXT refactoring requirements
-ResultType = FlextTypes.Result.ResultType[object]
-type OptionalType[T] = T | None
-JsonType = str | int | float | bool | None | list[object] | dict[str, object]
-ConfigType = FlextTypes.Config.ConfigDict
-HandlerType = FlextTypes.Handler.CommandHandler
-
-# Function and callable aliases - proper FlextProtocols references
-FlextCallable = type[FlextProtocols.Foundation.Callable[object]]
-FlextValidator = type[FlextProtocols.Foundation.Validator[object]]
-FlextFactory = type[FlextProtocols.Foundation.Factory[object]]
-FlextErrorHandler = type[FlextProtocols.Foundation.ErrorHandler]
-
-# Handler aliases - proper FlextProtocols references
-FlextHandler = type[FlextProtocols.Application.Handler[object, object]]
-FlextMessageHandler = type[FlextProtocols.Application.MessageHandler]
-FlextValidatingHandler = type[FlextProtocols.Application.ValidatingHandler]
-FlextAuthorizingHandler = type[FlextProtocols.Application.AuthorizingHandler]
-FlextEventProcessor = type[FlextProtocols.Application.EventProcessor]
-FlextUnitOfWork = type[FlextProtocols.Application.UnitOfWork]
-
-# Infrastructure aliases - proper FlextProtocols references
-FlextConnection = type[FlextProtocols.Infrastructure.Connection]
-FlextLoggerProtocol = type[FlextProtocols.Infrastructure.LoggerProtocol]
-FlextConfigurable = type[FlextProtocols.Infrastructure.Configurable]
-
-# Extensions aliases - proper FlextProtocols references
-FlextPlugin = type[FlextProtocols.Extensions.Plugin]
-FlextPluginContext = type[FlextProtocols.Extensions.PluginContext]
-FlextMiddleware = type[FlextProtocols.Extensions.Middleware]
-FlextAsyncMiddleware = type[FlextProtocols.Extensions.AsyncMiddleware]
-FlextObservability = type[FlextProtocols.Extensions.Observability]
-
-# Domain aliases
-# Note: FlextEntityId is defined as actual class in root_models.py
-FlextEventType = FlextTypes.Domain.EventType
-
-# Network aliases
-FlextURL = FlextTypes.Network.URL
-FlextHeaders = FlextTypes.Network.Headers
-
-# Generic type aliases for backward compatibility
-FlextGeneric = Generic[T]
-FlextList = list[T]
-FlextDict = dict[str, object]
-
-# Async aliases with proper type parameters
-FlextAsyncCallable = Callable[[object], Awaitable[object]]
-FlextAsyncResult = FlextTypes.Async.AsyncResult[object]
-
-# Decorator function protocol alias (for specific decorated function pattern)
-type FlextDecoratedFunction[T] = Callable[[object], T]
-
-# =============================================================================
-# UTILITY TYPE FUNCTIONS
-# =============================================================================
-
-
-def is_optional_type(tp: type) -> bool:
-    """Check if a type is Optional[T] (Union[T, None])."""
-    origin = get_origin(tp)
-    if origin is not Union:
-        return False
-
-    args = get_args(tp)
-    return type(None) in args
-
-
-def get_optional_inner_type(tp: type) -> type | None:
-    """Extract T from Optional[T], returns None if not optional."""
-    if not is_optional_type(tp):
-        return None
-
-    # Get the non-None type from Union[T, None]
-    args = get_args(tp)
-    non_none_args: list[type] = [arg for arg in args if arg is not type(None)]
-    return non_none_args[0] if non_none_args else None
-
-
-def is_generic_type(tp: type) -> bool:
-    """Check if a type is a generic type like List[T]."""
-    return hasattr(tp, "__origin__") and hasattr(tp, "__args__")
-
-
-def get_generic_origin(tp: type) -> type | None:
-    """Get the origin type from a generic, e.g., list from List[str]."""
-    return getattr(tp, "__origin__", None)
-
-
-def get_generic_args(tp: type) -> tuple[type, ...]:
-    """Get the type arguments from a generic, e.g., (str,) from List[str]."""
-    return getattr(tp, "__args__", ())
-
-
-# =============================================================================
-# TYPE GUARDS
-# =============================================================================
-
-
-def is_string(value: object) -> TypeGuard[str]:
-    """Type guard for string values."""
-    return isinstance(value, str)
-
-
-def is_integer(value: object) -> TypeGuard[int]:
-    """Type guard for integer values."""
-    return isinstance(value, int)
-
-
-def is_float(value: object) -> TypeGuard[float]:
-    """Type guard for float values."""
-    return isinstance(value, float)
-
-
-def is_boolean(value: object) -> TypeGuard[bool]:
-    """Type guard for boolean values."""
-    return isinstance(value, bool)
-
-
-def is_list(value: object) -> TypeGuard[list[object]]:
-    """Type guard for list values."""
-    return isinstance(value, list)
-
-
-def is_dict(value: object) -> TypeGuard[dict[str, object]]:
-    """Type guard for dictionary values."""
-    return isinstance(value, dict)
-
-
-def is_callable(value: object) -> TypeGuard[Callable[..., object]]:
-    """Type guard for callable values."""
-    return callable(value)
-
-
-def is_none(value: object) -> TypeGuard[None]:
-    """Type guard for None values."""
-    return value is None
-
-
-def is_not_none[T](value: T | None) -> TypeGuard[T]:
-    """Type guard for non-None values."""
-    return value is not None
-
-
-# =============================================================================
-# EXPORTS - Hierarchical and compatibility types
+# EXPORTS - Hierarchical types only
 # =============================================================================
 
 __all__: list[str] = [
+    "E",
+    "F",
     "FlextTypes",  # ONLY main class exported
+    "K",
+    "P",
+    "R",
+    "T",
+    "U",
+    "V",
 ]

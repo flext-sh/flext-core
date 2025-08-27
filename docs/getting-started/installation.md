@@ -117,7 +117,7 @@ from flext_core import (
         FlextResult,
         FlextContainer,
         get_flext_container,
-        FlextSettings,
+        FlextConfig,
     )
 
     # Test FlextResult
@@ -127,18 +127,18 @@ from flext_core import (
     print("✅ FlextResult working")
 
     # Test FlextContainer
-    container = get_flext_container()
+    container = FlextContainer.get_global()
     container.register("test", "value")
     assert container.has("test")
     print("✅ FlextContainer working")
 
-    # Test FlextSettings
-    class Settings(FlextSettings):
+    # Test FlextConfig
+    class Settings(FlextConfig):
         app_name: str = "test"
 
     settings = Settings()
     assert settings.app_name == "test"
-    print("✅ FlextSettings working")
+    print("✅ FlextConfig working")
 
 def verify_domain_imports():
     """Test domain pattern imports."""
@@ -226,7 +226,7 @@ my_flext_project/
 │       │   ├── repositories.py
 │       │   ├── database.py
 │       │   └── external_apis.py
-│       └── config.py            # Configuration using FlextSettings
+│       └── config.py            # Configuration using FlextConfig
 ├── tests/
 │   ├── unit/                    # Unit tests (isolated)
 │   ├── integration/             # Integration tests
@@ -244,11 +244,11 @@ my_flext_project/
 # src/my_project/config.py
 """Application configuration using FLEXT Core."""
 
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 from pydantic import Field
 from typing import Optional
 
-class DatabaseConfig(FlextSettings):
+class DatabaseConfig(FlextConfig):
     """Database configuration."""
     host: str = Field("localhost", description="Database host")
     port: int = Field(5432, ge=1, le=65535)
@@ -265,7 +265,7 @@ class DatabaseConfig(FlextSettings):
     class Config:
         env_prefix = "DB_"
 
-class AppConfig(FlextSettings):
+class AppConfig(FlextConfig):
     """Main application configuration."""
     app_name: str = Field("My FLEXT App", description="Application name")
     version: str = Field("0.9.0", description="Application version")

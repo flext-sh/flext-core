@@ -275,7 +275,9 @@ class TestBuilders:
             self._return_values.append(value)
             return self
 
-        def returns_result_success(self, data: object = None) -> TestBuilders.MockBuilder:
+        def returns_result_success(
+            self, data: object = None
+        ) -> TestBuilders.MockBuilder:
             """Return successful FlextResult."""
             result = FlextResult[Any].ok(data)
             return self.returns(result)

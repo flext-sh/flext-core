@@ -13,21 +13,23 @@ import math
 import time
 from decimal import Decimal
 
-from examples.shared_domain import SharedDomainFactory
-from examples.utilities.complexity_helpers import (
-    DemonstrationSectionHelper,
-    ValidationHelper,
-)
-from examples.utilities.domain_models import UtilityDemoUser
-from examples.utilities.formatting_helpers import (
+from formatting_helpers import (
     generate_hash_id,
     generate_prefixed_id,
     generate_short_id,
 )
-from examples.utilities.validation_utilities import (
+from validation_utilities import (
     calculate_discount_price,
 )
+
 from flext_core import FlextTypes, FlextUtilities
+
+from .complexity_helpers import (
+    DemonstrationSectionHelper,
+    ValidationHelper,
+)
+from .domain_models import UtilityDemoUser
+from .shared_domain import SharedDomainFactory
 
 # =============================================================================
 # DEMONSTRATION FUNCTIONS - Core utility demonstrations

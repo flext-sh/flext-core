@@ -116,7 +116,7 @@ class FlextAggregateRoot(FlextEntity):
         except (TypeError, ValueError, AttributeError, RuntimeError) as e:
             # REAL SOLUTION: Proper error handling for initialization failures
             error_msg = f"Failed to initialize aggregate root with provided data: {e}"
-            validation_error = _get_exception_class("FlextExceptions.ValidationError")
+            validation_error = _get_exception_class("FlextExceptions")
             raise validation_error(error_msg) from e
 
     @staticmethod
@@ -131,7 +131,7 @@ class FlextAggregateRoot(FlextEntity):
             return None
 
         # Use FlextUtilities for safe dict conversion
-        coerced_dict = FlextUtilities.SimpleTypeAdapters.to_dict_safe(meta)
+        coerced_dict = FlextUtilities.ProcessingUtils.extract_model_data(meta)
         if coerced_dict:
             # Normalize keys to strings
             normalized_dict: dict[str, object] = {

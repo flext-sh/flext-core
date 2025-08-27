@@ -19,7 +19,7 @@ FLEXT Core is a Python library for clean architecture patterns, railway-oriented
 
 ### 📚 **API Reference**
 
-- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextSettings
+- [**Core API**](api/core.md) - FlextResult, FlextContainer, FlextConfig
 - [**Patterns API**](api/patterns.md) - Commands, Handlers, Validation
 
 ### ⚙️ **Configuration**
@@ -71,12 +71,12 @@ if service_result.success:
     db = service_result.data
 ```
 
-### FlextSettings - Configuration
+### FlextConfig - Configuration
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     app_name: str = "My App"
     debug: bool = False
     database_url: str = "sqlite:///app.db"
@@ -129,7 +129,7 @@ if config_result.success:
 
 - FlextResult[T] railway pattern
 - FlextContainer dependency injection
-- FlextSettings configuration
+- FlextConfig configuration
 - Basic logging support
 
 ### 🔧 **Available API (In Development):**

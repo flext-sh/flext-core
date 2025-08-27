@@ -54,7 +54,7 @@ else:
 from flext_core import get_flext_container
 
 # Global singleton container
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register services
 container.register("database", DatabaseService())
@@ -200,7 +200,7 @@ class OracleService:
             return FlextResult[None].fail(str(e))
 
 # Register in global container
-container = get_flext_container()
+container = FlextContainer.get_global()
 container.register("oracle", OracleService())
 ```
 

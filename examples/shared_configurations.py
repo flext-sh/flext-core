@@ -7,7 +7,7 @@ import contextlib
 from collections.abc import Callable
 from typing import Any
 
-from flext_core import FlextResult
+from flext_core import FlextConstants, FlextResult
 
 
 def run_example_demonstrations(demos: list[tuple[str, Callable[[], None]]]) -> None:
@@ -30,10 +30,10 @@ class ExampleConfig:
     """Configuration for examples."""
 
     DEBUG = True
-    TIMEOUT = 30
-    MAX_RETRIES = 3
-    DEFAULT_HOST = "localhost"
-    DEFAULT_PORT = 389
+    TIMEOUT = FlextConstants.Defaults.TIMEOUT
+    MAX_RETRIES = FlextConstants.Defaults.MAX_RETRIES
+    DEFAULT_HOST = FlextConstants.Platform.DEFAULT_HOST
+    DEFAULT_PORT = FlextConstants.Network.LDAP_PORT
 
 
 def get_test_data() -> dict[str, Any]:

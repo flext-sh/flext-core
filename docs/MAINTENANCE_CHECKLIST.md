@@ -135,7 +135,7 @@ ruff check src/flext_core 2>&1 | grep -c "error"
 # Always test imports
 from flext_core import FlextResult  # Must work
 from flext_core import FlextContainer  # Must work
-from flext_core import FlextSettings  # Must work
+from flext_core import FlextConfig  # Must work
 ```
 
 ### Outdated API Usage

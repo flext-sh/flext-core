@@ -79,7 +79,7 @@ from pydantic.alias_generators import to_camel, to_snake
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLoggerFactory
+from flext_core.loggings import FlextLogger
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
 from flext_core.root_models import (
@@ -92,7 +92,7 @@ from flext_core.root_models import (
 from flext_core.typings import (
     FlextTypes,
 )
-from flext_core.utilities import FlextGenerators
+from flext_core.utilities import FlextUtilities
 
 # Use centralized types from FlextTypes hierarchical structure
 SerializerCallable = FlextTypes.Core.Serializer
@@ -103,11 +103,7 @@ def _get_exception_class(name: str) -> type[Exception]:
     return cast("type[Exception]", getattr(FlextExceptions, name))
 
 
-# Use centralized constants from FlextConstants hierarchical structure
-DEFAULT_TIMEOUT = FlextConstants.Defaults.TIMEOUT
-MAX_STRING_LENGTH = FlextConstants.Validation.MAX_STRING_LENGTH
-VALIDATION_ERROR_CODE = FlextConstants.Errors.VALIDATION_ERROR
-SUCCESS_STATUS = FlextConstants.Status.SUCCESS
+# All constants are used directly from FlextConstants to avoid duplication
 
 # =============================================================================
 # Constants
@@ -255,7 +251,7 @@ class FlextValue(FlextModel, ABC):
         """Log subclass creation for monitoring."""
         super().__init_subclass__()
         try:
-            logger = FlextLoggerFactory.get_logger(cls.__name__)
+            logger = FlextLogger(cls.__name__)
             logger.debug(f"FlextValue subclass created: {cls.__name__}")
         except ImportError:
             pass  # Silently continue if logging is not available
@@ -344,9 +340,7 @@ class FlextValue(FlextModel, ABC):
             # If both attempts fail, raise exception
             if payload_result.is_failure:
                 error_msg = f"Failed to create payload: {payload_result.error}"
-                validation_error = _get_exception_class(
-                    "FlextExceptions.ValidationError"
-                )
+                validation_error = _get_exception_class("FlextExceptions")
                 raise validation_error(error_msg)
 
         return payload_result.value
@@ -754,7 +748,7 @@ class FlextEntity(FlextModel, ABC):
             New entity instance with the specified version
 
         Raises:
-            FlextExceptions.ValidationError: If version is invalid or not greater than current
+            FlextExceptions: If version is invalid or not greater than current
 
         """
 
@@ -805,7 +799,7 @@ class FlextEntity(FlextModel, ABC):
 
         except Exception as e:
             error_msg = f"Failed to set version: {e}"
-            raise FlextExceptions.ValidationError(error_msg) from e
+            raise FlextExceptions(error_msg) from e
 
     def add_domain_event(
         self,
@@ -1374,7 +1368,7 @@ class FlextModels:
             except Exception as e:
                 # If validation check fails, continue without validation
                 try:
-                    logger = FlextLoggerFactory.get_logger("FlextFactory")
+                    logger = FlextLogger("FlextFactory")
                     logger.debug(f"Business rule validation check failed: {e}")
                 except ImportError:
                     pass  # Logger not available, silently continue
@@ -1417,7 +1411,7 @@ class FlextModels:
                 # Auto-generate ID if not provided and entity is FlextEntity
                 if issubclass(entity_class, FlextEntity):
                     if "id" not in merged_kwargs or merged_kwargs.get("id") == "":
-                        merged_kwargs["id"] = FlextGenerators.generate_id()
+                        merged_kwargs["id"] = FlextUtilities.Generators.generate_id()
 
                     # Set default version if not provided
                     if "version" not in merged_kwargs:
@@ -1522,7 +1516,7 @@ class FlextModels:
             except Exception as e:
                 # If validation check fails, continue without validation
                 try:
-                    logger = FlextLoggerFactory.get_logger("FlextFactory")
+                    logger = FlextLogger("FlextFactory")
                     logger.debug(f"Business rule validation check failed: {e}")
                 except ImportError:
                     pass  # Logger not available, silently continue
@@ -1700,6 +1694,7 @@ __all__: list[str] = [
     "FlextModels",  # Main class with namespace
     "FlextRootModel",  # Root model pattern
     "FlextValue",  # Value object pattern
+    "flext_alias_generator",  # Pydantic alias generator function
     "model_to_dict_safe",  # Safe conversion helper
     "validate_all_models",  # Helper function
 ]

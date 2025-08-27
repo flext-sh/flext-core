@@ -18,20 +18,20 @@ from pydantic import Field, field_validator
 
 from flext_core import (
     FlextConstants,
+    FlextContainer,
     FlextCore,
     FlextEntity,
+    FlextLogger,
     FlextModel,
     FlextResult,
     FlextTypes,
     FlextUtilities,
     FlextValue,
-    get_flext_container,
 )
-from flext_core.loggings import get_logger
 
 # Singleton FlextCore instance for all utilities
 core = FlextCore.get_instance()
-logger = get_logger("flext.examples.container_di")
+logger = FlextLogger("flext.examples.container_di")
 
 # =============================================================================
 # DOMAIN VALIDATORS - Using FlextCore centralized patterns
@@ -286,7 +286,7 @@ class DatabaseServiceProcessor:
 
     def __init__(self) -> None:
         """Initialize processor with utilities."""
-        self._logger = get_logger("flext.services.database")
+        self._logger = FlextLogger("flext.services.database")
         self._cache: dict[str, DatabaseSaveResult] = {}
 
     def process(self, request: User) -> FlextResult[DatabaseSaveResult]:
@@ -344,7 +344,7 @@ class EmailServiceProcessor:
 
     def __init__(self) -> None:
         """Initialize processor with utilities."""
-        self._logger = get_logger("flext.services.email")
+        self._logger = FlextLogger("flext.services.email")
 
     def process(self, request: User) -> FlextResult[EmailSendResult]:
         """Process email send using centralized utilities."""
@@ -413,7 +413,7 @@ class UserRegistrationProcessor:
 
     def __init__(self) -> None:
         """Initialize processor with utilities."""
-        self._logger = get_logger("flext.services.registration")
+        self._logger = FlextLogger("flext.services.registration")
         self._database_service = DatabaseServiceProcessor()
         self._email_service = EmailServiceProcessor()
 
@@ -549,7 +549,7 @@ class UserRegistrationProcessor:
 
 def setup_container() -> FlextResult[None]:
     """Setup container using centralized utilities."""
-    container = get_flext_container()
+    container = FlextContainer.get_global()
 
     # Register service processors
     services = {
@@ -593,7 +593,7 @@ def get_service_with_fallback[T](
     service_name: FlextTypes.Core.String, default_factory: type[T]
 ) -> T:
     """Get service from container with centralized utilities."""
-    container = get_flext_container()
+    container = FlextContainer.get_global()
     result = container.get(service_name)
 
     if result.is_success:
@@ -690,7 +690,7 @@ def demo_batch_processing() -> FlextTypes.Core.String:
     # Process all requests individually
     results = [registration_service.register_user(req) for req in requests]
     success_count = len([r for r in results if r.success])
-    failure_count = len([r for r in results if r.failure])
+    failure_count = len([r for r in results if r.is_failure])
 
     logger.info(
         f"Batch processing completed: {success_count} successes, {failure_count} failures"
@@ -778,7 +778,7 @@ def demo_advanced_patterns() -> FlextTypes.Core.String:
                 pass
 
     # Show container services
-    container = get_flext_container()
+    container = FlextContainer.get_global()
     list(container.list_services().keys())
     return "advanced_patterns_completed"
 

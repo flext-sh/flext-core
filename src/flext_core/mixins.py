@@ -4,46 +4,21 @@ from __future__ import annotations
 
 import json
 import time
-import uuid
-from typing import Protocol, cast, runtime_checkable
 
-from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLogger, get_logger
+# uuid removed - using FlextUtilities.Generators instead
+from collections.abc import Iterable
+from typing import cast
+
+from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
-# =============================================================================
-# PROTOCOLS - Runtime-checkable interfaces
-# =============================================================================
-
-
-@runtime_checkable
-class HasToDictBasic(Protocol):
-    """Runtime-checkable protocol for objects exposing to_dict_basic."""
-
-    def to_dict_basic(self) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
-        ...
-
-
-@runtime_checkable
-class HasToDict(Protocol):
-    """Runtime-checkable protocol for objects exposing to_dict."""
-
-    def to_dict(self) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
-        ...
-
-
-@runtime_checkable
-class SupportsDynamicAttributes(Protocol):
-    """Protocol for objects that support dynamic attribute setting.
-
-    This protocol allows mixins to set arbitrary attributes on objects
-    without triggering MyPy errors for missing attributes.
-    """
-
-    def __setattr__(self, name: str, value: object, /) -> None: ...
-    def __getattribute__(self, name: str, /) -> object: ...
+# Import protocols from FlextProtocols
+HasToDictBasic = FlextProtocols.Foundation.HasToDictBasic
+HasToDict = FlextProtocols.Foundation.HasToDict
+SupportsDynamicAttributes = FlextProtocols.Foundation.SupportsDynamicAttributes
 
 
 # =============================================================================
@@ -148,7 +123,8 @@ class FlextMixins:
             raise ValueError(msg) from e
 
         # Generate new ID using simple UUID approach
-        generated_id = str(uuid.uuid4())
+        # Use centralized UUID generation
+        generated_id = FlextUtilities.Generators.generate_uuid()
         obj._id = generated_id
         return generated_id
 
@@ -186,7 +162,7 @@ class FlextMixins:
         """Get FlextLogger instance for an object."""
         if not hasattr(obj, "_logger"):
             logger_name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
-            obj._logger = get_logger(logger_name)
+            obj._logger = FlextLogger(logger_name)
         return obj._logger  # type: ignore[return-value]
 
     @classmethod
@@ -299,7 +275,8 @@ class FlextMixins:
                 # Handle lists
                 if isinstance(value, list):
                     serialized_list: FlextTypes.Core.List = []
-                    for item in value:
+                    item_list: list[object] = cast("list[object]", value)
+                    for item in item_list:
                         if isinstance(item, HasToDictBasic):
                             try:
                                 item_dict = item.to_dict_basic()
@@ -311,7 +288,7 @@ class FlextMixins:
                                     msg,
                                     # validation_details={"object": obj},
                                 ) from e
-                        serialized_list.append(cast("object", item))
+                        serialized_list.append(item)
                     result[key] = serialized_list
                     continue
 
@@ -361,12 +338,11 @@ class FlextMixins:
         if isinstance(value, (str, int, float, bool, type(None))):
             return value
         if isinstance(value, (list, tuple)):
-            return [cls._serialize_value(cast("object", item)) for item in value]
+            typed_value: Iterable[object] = cast("Iterable[object]", value)
+            return [cls._serialize_value(item) for item in typed_value]
         if isinstance(value, dict):
-            return {
-                str(k): cls._serialize_value(cast("object", v))
-                for k, v in value.items()
-            }
+            typed_dict: dict[object, object] = cast("dict[object, object]", value)
+            return {str(k): cls._serialize_value(v) for k, v in typed_dict.items()}
         # For complex objects, use string representation
         return str(value)
 
@@ -386,12 +362,13 @@ class FlextMixins:
         cls, obj: SupportsDynamicAttributes, fields: list[str]
     ) -> object:
         """Validate that required fields are present and not empty."""
-        missing_fields = []
+        missing_fields: list[str] = []
 
         for field in fields:
             value = getattr(obj, field, None)
             if value is None or (isinstance(value, str) and len(value.strip()) == 0):
-                missing_fields.append(str(field))
+                field_name: str = str(field)
+                missing_fields.append(field_name)
 
         if missing_fields:
             return FlextResult[None].fail(
@@ -408,14 +385,13 @@ class FlextMixins:
         field_types: dict[str, type],
     ) -> object:
         """Validate that fields match expected types."""
-        type_errors = []
+        type_errors: list[str] = []
 
         for field, expected_type in field_types.items():
             value = getattr(obj, field, None)
             if value is not None and not isinstance(value, expected_type):
-                type_errors.append(
-                    f"{field!s}: expected {expected_type.__name__}, got {type(value).__name__}"
-                )
+                error_msg: str = f"{field!s}: expected {expected_type.__name__}, got {type(value).__name__}"
+                type_errors.append(error_msg)
 
         if type_errors:
             return FlextResult[None].fail(
@@ -729,229 +705,141 @@ class FlextMixins:
             "comparison_operations",
         ]
 
+    # =============================================================================
+    # TIER 1 MODULE PATTERN - EXPORTS
+    # =============================================================================
 
-# =============================================================================
-# LEGACY COMPATIBILITY LAYER - Maintain existing imports
-# =============================================================================
+    # =============================================================================
+    # MIXIN CLASSES - Real Python mixins as nested classes
+    # =============================================================================
 
+    class Loggable:
+        """Real mixin class for logging functionality."""
 
-# Base compatibility class that enables mixin inheritance for legacy code
-class _CompatibilityMixin:
-    """Base compatibility class that delegates to FlextMixins methods."""
+        @property
+        def logger(self) -> FlextLogger:
+            """Get logger instance for this object."""
+            return FlextMixins.get_logger(self)
 
-    def mixin_setup(self) -> None:
-        """Setup mixin functionality."""
+        def log_operation(self, operation: str, **kwargs: object) -> None:
+            """Log an operation with context."""
+            FlextMixins.log_operation(self, operation, **kwargs)
 
+        def log_error(self, error: str, **kwargs: object) -> None:
+            """Log an error with context."""
+            FlextMixins.log_error(self, error, **kwargs)
 
-# All original mixin classes as compatibility facades
-class FlextLoggableMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins.log_* methods."""
+        def log_info(self, message: str, **kwargs: object) -> None:
+            """Log an info message with context."""
+            FlextMixins.log_info(self, message, **kwargs)
 
-    @property
-    def logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
-        """Get logger via FlextMixins."""
-        return FlextMixins.get_logger(self)
+        def log_debug(self, message: str, **kwargs: object) -> None:
+            """Log a debug message with context."""
+            FlextMixins.log_debug(self, message, **kwargs)
 
-    def log_operation(self, operation: str, **kwargs: object) -> None:
-        """Log operation via FlextMixins."""
-        FlextMixins.log_operation(self, operation, **kwargs)
+    class Serializable:
+        """Real mixin class for serialization functionality."""
 
-    def log_info(self, message: str, **kwargs: object) -> None:
-        """Log info via FlextMixins."""
-        FlextMixins.log_info(self, message, **kwargs)
+        def to_dict_basic(self) -> FlextTypes.Core.Dict:
+            """Convert object to basic dictionary representation."""
+            return FlextMixins.to_dict_basic(self)
 
-    def log_error(self, message: str, **kwargs: object) -> None:
-        """Log error via FlextMixins."""
-        FlextMixins.log_error(self, message, **kwargs)
+        def to_dict(self) -> FlextTypes.Core.Dict:
+            """Convert object to dictionary with advanced serialization."""
+            return FlextMixins.to_dict(self)
 
-    def log_debug(self, message: str, **kwargs: object) -> None:
-        """Log debug via FlextMixins."""
-        FlextMixins.log_debug(self, message, **kwargs)
+        def load_from_dict(self, data: FlextTypes.Core.Dict) -> None:
+            """Load object attributes from dictionary."""
+            FlextMixins.load_from_dict(self, data)
 
+        def load_from_json(self, json_str: str) -> None:
+            """Load object attributes from JSON string."""
+            result = FlextMixins.load_from_json(self, json_str)
+            if result.is_failure:
+                raise ValueError(result.error)
 
-class FlextTimestampMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins timestamp methods."""
+    class Timestampable:
+        """Real mixin class for timestamp functionality."""
 
-    def update_timestamp(self) -> None:
-        """Update timestamp via FlextMixins."""
-        FlextMixins.update_timestamp(self)
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize timestamp fields."""
+            super().__init__(*args, **kwargs)
+            FlextMixins.create_timestamp_fields(self)
 
-    @property
-    def created_at(self) -> float:
-        """Get created timestamp via FlextMixins."""
-        return FlextMixins.get_created_at(self)
+        def update_timestamp(self) -> None:
+            """Update the timestamp on this object."""
+            FlextMixins.update_timestamp(self)
 
-    @property
-    def updated_at(self) -> float:
-        """Get updated timestamp via FlextMixins."""
-        return FlextMixins.get_updated_at(self)
+        @property
+        def created_at(self) -> float:
+            """Get creation timestamp."""
+            return FlextMixins.get_created_at(self)
 
-    def get_age_seconds(self) -> float:
-        """Get age via FlextMixins."""
-        return FlextMixins.get_age_seconds(self)
+        @property
+        def updated_at(self) -> float:
+            """Get last update timestamp."""
+            return FlextMixins.get_updated_at(self)
 
+        def get_age_seconds(self) -> float:
+            """Get age in seconds since creation."""
+            return FlextMixins.get_age_seconds(self)
 
-class FlextIdentifiableMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins ID methods."""
+    class Identifiable:
+        """Real mixin class for ID management functionality."""
 
-    @property
-    def id(self) -> str:
-        """Get ID via FlextMixins."""
-        return FlextMixins.ensure_id(self)
+        @property
+        def id(self) -> str:
+            """Get ID, generating if needed."""
+            return FlextMixins.ensure_id(self)
 
-    @id.setter
-    def id(self, value: str) -> None:
-        """Set ID via FlextMixins."""
-        result = FlextMixins.set_id(self, value)
-        if result.is_failure:
-            raise FlextExceptions.ValidationError(result.error or "Invalid entity ID")  # type: ignore[call-arg]
+        @id.setter
+        def id(self, value: str) -> None:
+            """Set entity ID with validation."""
+            result = FlextMixins.set_id(self, value)
+            if result.is_failure:
+                raise ValueError(result.error or "Invalid entity ID")
 
-    def get_id(self) -> str:
-        """Get ID via FlextMixins."""
-        return FlextMixins.ensure_id(self)
+        def has_id(self) -> bool:
+            """Check if object has a valid ID."""
+            return FlextMixins.has_id(self)
 
-    def has_id(self) -> bool:
-        """Check ID via FlextMixins."""
-        return FlextMixins.has_id(self)
+    class Validatable:
+        """Real mixin class for validation functionality."""
 
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize validation state."""
+            super().__init__(*args, **kwargs)
+            FlextMixins.initialize_validation(self)
 
-class FlextValidatableMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins validation methods."""
+        def add_validation_error(self, error: str) -> None:
+            """Add a validation error."""
+            FlextMixins.add_validation_error(self, error)
 
-    def validate(self) -> object:
-        """Validate via FlextMixins."""
-        if FlextMixins.is_valid(self):
-            return None
-        FlextMixins.get_validation_errors(self)
-        return None
+        def clear_validation_errors(self) -> None:
+            """Clear all validation errors."""
+            FlextMixins.clear_validation_errors(self)
 
-    @property
-    def is_valid(self) -> bool:
-        """Check validity via FlextMixins."""
-        return FlextMixins.is_valid(self)
+        @property
+        def validation_errors(self) -> list[str]:
+            """Get all validation errors."""
+            return FlextMixins.get_validation_errors(self)
 
-    def add_validation_error(self, error: str) -> None:
-        """Add validation error via FlextMixins."""
-        FlextMixins.add_validation_error(self, error)
+        @property
+        def is_valid(self) -> bool:
+            """Check if object is valid (no validation errors)."""
+            return FlextMixins.is_valid(self)
 
-    def clear_validation_errors(self) -> None:
-        """Clear validation errors via FlextMixins."""
-        FlextMixins.clear_validation_errors(self)
+        def mark_valid(self) -> None:
+            """Mark object as valid."""
+            FlextMixins.mark_valid(self)
 
-    @property
-    def validation_errors(self) -> list[str]:
-        """Get validation errors via FlextMixins."""
-        return FlextMixins.get_validation_errors(self)
+    # Composite mixins
+    class Service(Loggable, Validatable):
+        """Composite mixin for service classes."""
 
-    def has_validation_errors(self) -> bool:
-        """Check if has validation errors via FlextMixins."""
-        return len(FlextMixins.get_validation_errors(self)) > 0
+    class Entity(Timestampable, Identifiable, Loggable, Validatable, Serializable):
+        """Composite mixin for entity classes."""
 
-
-class FlextSerializableMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins serialization methods."""
-
-    def to_dict(self) -> FlextTypes.Core.Dict:
-        """Convert to dict via FlextMixins."""
-        return FlextMixins.to_dict(self)
-
-    def to_dict_basic(self) -> FlextTypes.Core.Dict:
-        """Convert to basic dict via FlextMixins."""
-        return FlextMixins.to_dict_basic(self)
-
-    def to_json(self) -> str:
-        """Convert to JSON via FlextMixins."""
-        return FlextMixins.to_json(self)
-
-    def load_from_dict(self, data: FlextTypes.Core.Dict) -> None:
-        """Load from dict via FlextMixins."""
-        FlextMixins.load_from_dict(self, data)
-
-    def load_from_json(self, json_str: str) -> None:
-        """Load from JSON via FlextMixins."""
-        result = FlextMixins.load_from_json(self, json_str)
-        if result.is_failure:
-            raise ValueError(result.error)
-
-
-# Additional compatibility classes for complete legacy support
-class FlextTimingMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins timing methods."""
-
-    def start_timing(self) -> float:
-        """Start timing via FlextMixins."""
-        return FlextMixins.start_timing(self)
-
-    def stop_timing(self) -> float:
-        """Stop timing via FlextMixins."""
-        return FlextMixins.stop_timing(self)
-
-
-# Composite mixins for legacy compatibility
-class FlextEntityMixin(
-    FlextTimestampMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextValidatableMixin,
-    FlextSerializableMixin,
-):
-    """Legacy compatibility - composite entity mixin."""
-
-
-class FlextValueObjectMixin(
-    FlextValidatableMixin,
-    FlextSerializableMixin,
-):
-    """Legacy compatibility - composite value object mixin."""
-
-
-class FlextServiceMixin(
-    FlextLoggableMixin,
-    FlextValidatableMixin,
-):
-    """Legacy compatibility - composite service mixin."""
-
-
-# Abstract base classes for compatibility
-class FlextAbstractMixin(_CompatibilityMixin):
-    """Abstract base for compatibility."""
-
-
-FlextAbstractTimestampMixin = FlextAbstractMixin
-FlextAbstractIdentifiableMixin = FlextAbstractMixin
-FlextAbstractLoggableMixin = FlextAbstractMixin
-FlextAbstractValidatableMixin = FlextAbstractMixin
-FlextAbstractSerializableMixin = FlextAbstractMixin
-FlextAbstractEntityMixin = FlextAbstractMixin
-FlextAbstractServiceMixin = FlextAbstractMixin
-
-
-# Additional compatibility classes needed by flext-cli
-class FlextComparableMixin(_CompatibilityMixin):
-    """Legacy compatibility - delegates to FlextMixins comparison methods."""
-
-    def __eq__(self, other: object) -> bool:
-        """Check equality via FlextMixins."""
-        return FlextMixins.objects_equal(self, other)
-
-    def __hash__(self) -> int:
-        """Generate hash via FlextMixins."""
-        return FlextMixins.object_hash(self)
-
-    def __lt__(self, other: object) -> bool:
-        """Compare via FlextMixins."""
-        return FlextMixins.compare_objects(self, other) < 0
-
-    def compare_to(self, other: object) -> int:
-        """Compare objects via FlextMixins."""
-        return FlextMixins.compare_objects(self, other)
-
-
-FlextTimestampableMixin = FlextTimestampMixin  # Alias for naming consistency
-FlextStateableMixin = FlextAbstractMixin  # State management compatibility
-FlextCacheableMixin = FlextAbstractMixin  # Caching compatibility
-FlextObservableMixin = FlextAbstractMixin  # Observer pattern compatibility
-FlextConfigurableMixin = FlextAbstractMixin  # Configuration compatibility
 
 # =============================================================================
 # TIER 1 MODULE PATTERN - EXPORTS

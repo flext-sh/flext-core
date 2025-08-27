@@ -11,12 +11,11 @@ from typing import cast
 from shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
 
 from flext_core import (
+    FlextContainer,
     FlextFields,
     FlextLogger,
     FlextResult,
     FlextTypes,
-    get_flext_container,
-    get_logger,
 )
 
 # =============================================================================
@@ -34,7 +33,7 @@ def _print_header() -> None:
 
 
 def _setup_logger() -> FlextLogger:
-    logger = get_logger("integration_example")
+    logger = FlextLogger("integration_example")
     logger.info("Starting complete integration example")
     return logger
 
@@ -139,7 +138,7 @@ class _OrderRepositoryProtocol:
 
 
 def _demo_container(customer: User, repository: object) -> None:
-    container = get_flext_container()
+    container = FlextContainer.get_global()
     container.register("order_repository", repository)
     container.register("current_customer", customer)
     repo_result = container.get("order_repository")
@@ -183,7 +182,7 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
     # Modern pattern: Check success and use value directly
     if order2_result.success:
         order2 = order2_result.value
-        repository_any = get_flext_container().get("order_repository").value
+        repository_any = FlextContainer.get_global().get("order_repository").value
         # Hint to type checker
         repo: _OrderRepositoryProtocol = cast(
             "_OrderRepositoryProtocol", repository_any

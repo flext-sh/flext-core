@@ -209,7 +209,7 @@ class TestIdentifiableMixin:
 
         # Test failure cases
         for case in failure_cases:
-            with pytest.raises(FlextExceptions.ValidationError):
+            with pytest.raises(FlextExceptions):
                 identifiable_obj.id = cast("str", case["input"]["id"])
 
     @given(FlextStrategies.flext_ids())

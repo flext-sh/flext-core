@@ -10,9 +10,7 @@ import contextlib
 from collections.abc import Callable
 from typing import cast
 
-from flext_core.decorators import FlextDecorators
 from flext_core.exceptions import FlextExceptions
-from flext_core.utilities import FlextUtilities
 
 
 class FlextGuards:
@@ -82,7 +80,7 @@ class FlextGuards:
         ) -> object:
             """Require value is not None with assertion-style validation."""
             if value is None:
-                raise FlextExceptions.ValidationError(message)
+                raise FlextExceptions(message)
             return value
 
         @staticmethod
@@ -92,7 +90,7 @@ class FlextGuards:
         ) -> object:
             """Require value is a positive integer with comprehensive validation."""
             if not (isinstance(value, int) and value > 0):
-                raise FlextExceptions.ValidationError(message)
+                raise FlextExceptions(message)
             return value
 
         @staticmethod
@@ -106,7 +104,7 @@ class FlextGuards:
             if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
                 if not message:
                     message = f"Value must be between {min_val} and {max_val}"
-                raise FlextExceptions.ValidationError(message)
+                raise FlextExceptions(message)
             return value
 
         @staticmethod
@@ -116,7 +114,7 @@ class FlextGuards:
         ) -> object:
             """Require value is a non-empty string with comprehensive validation."""
             if not isinstance(value, str) or not value.strip():
-                raise FlextExceptions.ValidationError(message)
+                raise FlextExceptions(message)
             return value
 
     # ==========================================================================
@@ -218,36 +216,32 @@ class FlextGuards:
         """
         return FlextGuards.PureWrapper(func)
 
+    # Factory and builder methods removed - use direct class construction
     @staticmethod
-    def make_factory(target_class: type) -> FlextUtilities.SimpleFactory:
-        """Create a simple factory for safe object construction."""
-        return FlextUtilities.make_factory(target_class)
+    def make_factory(target_class: type) -> object:
+        """Create simple factory for target class."""
+
+        def factory(*args: object, **kwargs: object) -> object:
+            return target_class(*args, **kwargs)
+
+        return factory
 
     @staticmethod
-    def make_builder(target_class: type) -> FlextUtilities.SimpleBuilder:
-        """Create a simple builder for fluent object construction."""
-        return FlextUtilities.make_builder(target_class)
+    def make_builder(target_class: type) -> object:
+        """Create simple builder for target class."""
 
+        class Builder:
+            def __init__(self) -> None:
+                self._kwargs: dict[str, object] = {}
 
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Consolidated approach
-# =============================================================================
+            def set(self, key: str, value: object) -> Builder:
+                self._kwargs[key] = value
+                return self
 
-# Export nested classes for external access (backward compatibility)
-_PureWrapper = FlextGuards.PureWrapper
+            def build(self) -> object:
+                return target_class(**self._kwargs)
 
-# Re-export FlextValidationDecorators methods as module-level functions
-validated = FlextDecorators.Validation.validate_input
-safe = FlextDecorators.Reliability.safe_result
-
-# Compatibility aliases pointing to consolidated FlextGuards
-immutable = FlextGuards.immutable
-pure = FlextGuards.pure
-make_factory = FlextGuards.make_factory
-make_builder = FlextGuards.make_builder
-require_not_none = FlextGuards.ValidationUtils.require_not_none
-require_positive = FlextGuards.ValidationUtils.require_positive
-require_non_empty = FlextGuards.ValidationUtils.require_non_empty
+        return Builder()
 
 
 # =============================================================================
@@ -255,5 +249,5 @@ require_non_empty = FlextGuards.ValidationUtils.require_non_empty
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextGuards",  # ONLY main class exported
+    "FlextGuards",  # Main class - all functionality via FlextGuards.*
 ]

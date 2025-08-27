@@ -87,13 +87,19 @@ class DatabaseMixin:
         self.operations_log.append(f"SAVE:{record_id}:{data}")
         return FlextResult[str].ok(record_id)
 
-    def find_record(self, record_id: str) -> FlextResult[dict[str, FlextTypes.Core.Object]]:
+    def find_record(
+        self, record_id: str
+    ) -> FlextResult[dict[str, FlextTypes.Core.Object]]:
         """Real find operation."""
         for entry in self.operations_log:
             if f"SAVE:{record_id}:" in entry:
                 data_part = entry.split(":", 2)[2]
-                return FlextResult[dict[str, FlextTypes.Core.Object]].ok(ast.literal_eval(data_part))
-        return FlextResult[dict[str, FlextTypes.Core.Object]].fail(f"Record {record_id} not found")
+                return FlextResult[dict[str, FlextTypes.Core.Object]].ok(
+                    ast.literal_eval(data_part)
+                )
+        return FlextResult[dict[str, FlextTypes.Core.Object]].fail(
+            f"Record {record_id} not found"
+        )
 
     def get_connection_info(self) -> dict[str, FlextTypes.Core.Object]:
         """Get connection information."""
@@ -475,7 +481,8 @@ class TestDelegationPropertyEdgeCases:
 
         # Test that setting raises appropriate error
         with pytest.raises(
-            FlextExceptions.OperationError, match="Property 'readonly_prop' is read-only"
+            FlextExceptions,
+            match="Property 'readonly_prop' is read-only",
         ):
             host.readonly_prop = "new_value"
 

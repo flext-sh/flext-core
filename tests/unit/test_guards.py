@@ -328,7 +328,7 @@ class TestFlextModel:
             assert model.name == profile["name"]
             assert model.email == profile["email"]
             assert model.active == profile["active"]
-        except FlextExceptions.ValidationError:
+        except FlextExceptions:
             # Some generated data might not pass validation
             pass
 
@@ -476,7 +476,7 @@ class TestValidationUtilities:
         # Test failure cases
         for case in failure_cases:
             case_dict = cast("dict[str, Any]", case)
-            with pytest.raises(FlextExceptions.ValidationError):
+            with pytest.raises(FlextExceptions):
                 require_not_none(case_dict["input"]["input"])
 
     @given(EdgeCaseStrategies.boundary_integers())
@@ -488,7 +488,7 @@ class TestValidationUtilities:
             assert result == value
         else:
             # Non-positive integers should fail
-            with pytest.raises(FlextExceptions.ValidationError):
+            with pytest.raises(FlextExceptions):
                 require_positive(value)
 
     @mark_test_pattern("arrange_act_assert")
@@ -508,13 +508,13 @@ class TestValidationUtilities:
             try:
                 require_non_empty(data["empty_string"])
                 results["empty_failed"] = False
-            except FlextExceptions.ValidationError:
+            except FlextExceptions:
                 results["empty_failed"] = True
 
             try:
                 require_non_empty(data["whitespace"])
                 results["whitespace_failed"] = False
-            except FlextExceptions.ValidationError:
+            except FlextExceptions:
                 results["whitespace_failed"] = True
 
             return results

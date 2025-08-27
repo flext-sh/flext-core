@@ -51,16 +51,7 @@ ConfigSerializer = FlextTypes.Core.Serializer
 # =============================================================================
 
 
-# Direct constants (use FlextConstants hierarchical access - LEGACY COMPATIBILITY ONLY)
-MIN_PASSWORD_LENGTH_HIGH_SECURITY = FlextConstants.Validation.MIN_PASSWORD_LENGTH + 4
-MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = FlextConstants.Validation.MIN_PASSWORD_LENGTH
-MAX_PASSWORD_LENGTH = FlextConstants.Validation.MAX_PASSWORD_LENGTH
-MAX_USERNAME_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH // 2
-MIN_SECRET_KEY_LENGTH_STRONG = FlextConstants.Validation.MIN_SECRET_KEY_LENGTH * 2
-MIN_SECRET_KEY_LENGTH_ADEQUATE = FlextConstants.Validation.MIN_SECRET_KEY_LENGTH
-
-
-# FlextSettings and FlextBaseConfigModel facades will be defined after FlextConfig class
+# FlextConfig and FlextBaseConfigModel facades will be defined after FlextConfig class
 # to avoid circular reference issues
 
 
@@ -85,18 +76,13 @@ class FlextConfig(BaseModel):
         class Security:
             """Security-related configuration defaults."""
 
-            MIN_PASSWORD_LENGTH_HIGH_SECURITY = (
-                FlextConstants.Validation.MIN_PASSWORD_LENGTH + 4
-            )
-            MIN_PASSWORD_LENGTH_MEDIUM_SECURITY = (
-                FlextConstants.Validation.MIN_PASSWORD_LENGTH
-            )
-            MAX_PASSWORD_LENGTH = FlextConstants.Validation.MAX_PASSWORD_LENGTH
-            MAX_USERNAME_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH // 2
-            MIN_SECRET_KEY_LENGTH_STRONG = (
+            # Use FlextConstants.Validation directly for all validation constants
+            max_password_length = FlextConstants.Validation.MAX_PASSWORD_LENGTH
+            max_username_length = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH // 2
+            min_secret_key_length_strong = (
                 FlextConstants.Validation.MIN_SECRET_KEY_LENGTH * 2
             )
-            MIN_SECRET_KEY_LENGTH_ADEQUATE = (
+            min_secret_key_length_adequate = (
                 FlextConstants.Validation.MIN_SECRET_KEY_LENGTH
             )
 
@@ -167,7 +153,7 @@ class FlextConfig(BaseModel):
             # With JSON mode, Pydantic always returns dict
             # Add settings-specific API metadata
             data["_settings"] = {
-                "type": "FlextSettings",
+                "type": "FlextConfig",
                 "env_loaded": True,
                 "validation_enabled": True,
                 "api_version": "v2",
@@ -698,22 +684,6 @@ class FlextConfig(BaseModel):
     # Class-level access to all configuration components (updated for nested classes)
     Defaults: ClassVar[type[SystemDefaults]] = SystemDefaults
 
-    # Backward compatibility constants
-    MIN_PASSWORD_LENGTH_HIGH_SECURITY: ClassVar[int] = (
-        SystemDefaults.Security.MIN_PASSWORD_LENGTH_HIGH_SECURITY
-    )
-    MIN_PASSWORD_LENGTH_MEDIUM_SECURITY: ClassVar[int] = (
-        SystemDefaults.Security.MIN_PASSWORD_LENGTH_MEDIUM_SECURITY
-    )
-    MAX_PASSWORD_LENGTH: ClassVar[int] = SystemDefaults.Security.MAX_PASSWORD_LENGTH
-    MAX_USERNAME_LENGTH: ClassVar[int] = SystemDefaults.Security.MAX_USERNAME_LENGTH
-    MIN_SECRET_KEY_LENGTH_STRONG: ClassVar[int] = (
-        SystemDefaults.Security.MIN_SECRET_KEY_LENGTH_STRONG
-    )
-    MIN_SECRET_KEY_LENGTH_ADEQUATE: ClassVar[int] = (
-        SystemDefaults.Security.MIN_SECRET_KEY_LENGTH_ADEQUATE
-    )
-
 
 # =============================================================================
 # COMPATIBILITY FACADES - Defined after FlextConfig to avoid circular references
@@ -803,5 +773,11 @@ def merge_configs(
 
 # Export only the classes and functions defined in this module
 __all__ = [
-    "FlextConfig",  # ONLY main class exported
+    "FlextBaseConfigModel",  # Compatibility alias
+    "FlextConfig",  # Main class
+    "FlextSettings",  # Compatibility alias
+    "FlextSystemDefaults",  # Compatibility alias
+    "merge_configs",
+    "safe_get_env_var",
+    "safe_load_json_file",
 ]

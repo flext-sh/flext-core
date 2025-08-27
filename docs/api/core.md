@@ -110,7 +110,7 @@ Global singleton container for service management.
 from flext_core import get_flext_container
 
 # Get global container
-container = get_flext_container()
+container = FlextContainer.get_global()
 
 # Register service instance
 class DatabaseService:
@@ -179,20 +179,20 @@ class FlextContainer:
         """Remove all registrations."""
 
 # Global container access
-def get_flext_container() -> FlextContainer:
+def FlextContainer.get_global() -> FlextContainer:
     """Get global singleton container."""
 ```
 
-## FlextSettings - Configuration Management
+## FlextConfig - Configuration Management
 
 Environment-aware configuration with Pydantic validation.
 
 ### Basic Configuration
 
 ```python
-from flext_core import FlextSettings
+from flext_core import FlextConfig
 
-class AppSettings(FlextSettings):
+class AppSettings(FlextConfig):
     """Application configuration."""
     app_name: str = "MyApp"
     debug: bool = False
@@ -216,7 +216,7 @@ print(f"Database: {settings.database_url}")
 ```python
 from pydantic import Field, validator
 
-class DatabaseSettings(FlextSettings):
+class DatabaseSettings(FlextConfig):
     """Database configuration with validation."""
     host: str = "localhost"
     port: int = Field(5432, ge=1, le=65535)

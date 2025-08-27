@@ -57,7 +57,7 @@ Based on actual files in src/flext_core/:
 
 ### **Configuration** (3+ modules)
 
-- `config.py` - FlextSettings (base configuration)
+- `config.py` - FlextConfig (base configuration)
 - `config_models.py` - Configuration data models
 - `payload.py` - Message/payload patterns
 
@@ -118,7 +118,7 @@ Based on actual files in src/flext_core/:
 - [ ] Verify all **init**.py exports have proper docstrings
 - [ ] Ensure result.py documents actual FlextResult API
 - [ ] Check container.py documents real container methods
-- [ ] Validate config.py shows actual FlextSettings
+- [ ] Validate config.py shows actual FlextConfig
 
 ### **Priority 2: Standard Template Application**
 

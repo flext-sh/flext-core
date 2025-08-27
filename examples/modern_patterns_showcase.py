@@ -3,649 +3,683 @@
 
 Demonstrates railway-oriented programming, semantic types,
 zero-configuration patterns, and type safety compliance.
-Building an e-commerce order processing system with user management,
-inventory tracking, payment processing, and notification systems.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import sys
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self, cast, override
+from typing import Self, override
 
+from pydantic import BaseModel, Field
 from pydantic_settings import SettingsConfigDict
-from shared_domain import (
-    Age,
-    EmailAddress as Email,
-    Money,
-    User as SharedUser,
-)
 
-from flext_core import (
-    FlextContainer,
-    FlextEntity,
-    FlextEntityId,
-    FlextResult,
-    FlextSettings,
-    FlextUtilities,
-    FlextValue,
-    get_flext_container,
-)
+from flext_core import FlextConfig, FlextResult
 
 # =============================================================================
-# BUSINESS CONSTANTS
+# TYPE ALIASES AND CONSTANTS
 # =============================================================================
 
-# Product validation
-MIN_PRODUCT_NAME_LENGTH = 2
-
-# Order validation
-MAX_ORDER_ITEM_QUANTITY = 100
-MAX_ORDER_ITEMS = 50
-
-# =============================================================================
-# CONFIGURATION: Environment-Aware Settings (Zero Boilerplate)
-# =============================================================================
-
-
-class AppConfig(FlextSettings):
-    """Application configuration with automatic environment loading."""
-
-    # Database settings - automatically loaded from env vars
-    database_url: str = "postgresql://localhost/ecommerce"
-    redis_url: str = "redis://localhost:6379"
-
-    # Payment settings
-    payment_api_key: str = "demo_payment_key_12345"
-    payment_endpoint: str = "https://api.payments.com"
-
-    # Business rules
-    max_order_value: int = 100000  # cents
-    min_order_value: int = 100  # cents
-
-    model_config = SettingsConfigDict(env_prefix="ECOMMERCE_")
+MIN_AGE = 18
+MAX_AGE = 120
+MIN_PRICE = Decimal("0.01")
+MAX_PRICE = Decimal("100000.00")
 
 
 # =============================================================================
-# VALUE OBJECTS: Immutable Domain Concepts (Minimal Boilerplate)
-# =============================================================================
-
-
-# Using Money, Email, and other value objects from shared_domain
-# This eliminates ~50 lines of duplicate code!
-
-
-# =============================================================================
-# DOMAIN ENTITIES: Rich Business Logic (Framework Handles Infrastructure)
+# ENUMS AND VALUE OBJECTS
 # =============================================================================
 
 
 class OrderStatus(StrEnum):
     """Order status enumeration."""
 
-    DRAFT = "draft"
     PENDING = "pending"
     CONFIRMED = "confirmed"
+    PROCESSING = "processing"
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
 
 
-class Customer(SharedUser):
-    """Customer entity using shared domain - zero boilerplate."""
+class PaymentStatus(StrEnum):
+    """Payment status enumeration."""
 
-    is_premium: bool = False
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    REFUNDED = "refunded"
 
-    def promote_to_premium(self) -> FlextResult[Self]:
-        """Promote customer to premium status."""
-        result = self.copy_with(is_premium=True)
-        # Modern pattern: Check success and add domain event
-        if result.success:
-            customer = result.value
-            customer.add_domain_event(
-                "CustomerPromoted",
-                {
-                    "customer_id": self.id,
-                    "timestamp": FlextUtilities.generate_iso_timestamp(),
-                },
+
+class Age(BaseModel):
+    """Age value object with validation."""
+
+    value: int = Field(..., ge=MIN_AGE, le=MAX_AGE)
+
+    @classmethod
+    def create(cls, age: int) -> FlextResult[Self]:
+        """Create age with validation."""
+        try:
+            instance = cls(value=age)
+            return FlextResult[Self].ok(instance)
+        except Exception as e:
+            return FlextResult[Self].fail(f"Invalid age: {e}")
+
+
+class Money(BaseModel):
+    """Money value object with currency support."""
+
+    amount: Decimal = Field(..., ge=MIN_PRICE, le=MAX_PRICE)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+
+    @classmethod
+    def create(
+        cls, amount: Decimal | float | str, currency: str = "USD"
+    ) -> FlextResult[Self]:
+        """Create money with validation."""
+        try:
+            decimal_amount = Decimal(str(amount))
+            instance = cls(amount=decimal_amount, currency=currency.upper())
+            return FlextResult[Self].ok(instance)
+        except Exception as e:
+            return FlextResult[Self].fail(f"Invalid money: {e}")
+
+    def add(self, other: Money) -> FlextResult[Money]:
+        """Add two money values."""
+        if self.currency != other.currency:
+            return FlextResult[Money].fail(
+                f"Currency mismatch: {self.currency} vs {other.currency}"
             )
-            return FlextResult[Self].ok(customer)
-        return result
+        return Money.create(self.amount + other.amount, self.currency)
+
+    def multiply(self, factor: float) -> FlextResult[Money]:
+        """Multiply money by a factor."""
+        return Money.create(self.amount * Decimal(str(factor)), self.currency)
 
 
-class Product(FlextEntity):
-    """Product entity with inventory management."""
+class EmailAddress(BaseModel):
+    """Email address value object with validation."""
 
-    name: str
-    price: Money
-    stock_quantity: int
-    category: str
+    address: str = Field(..., min_length=5, max_length=254)
 
-    def is_available(self, quantity: int = 1) -> bool:
-        """Check if product is available in requested quantity."""
-        return self.stock_quantity >= quantity
+    @classmethod
+    def create(cls, email: str) -> FlextResult[Self]:
+        """Create email with validation."""
+        try:
+            if "@" not in email or "." not in email.split("@")[-1]:
+                return FlextResult[Self].fail("Invalid email format")
+            instance = cls(address=email.lower())
+            return FlextResult[Self].ok(instance)
+        except Exception as e:
+            return FlextResult[Self].fail(f"Invalid email: {e}")
 
-    def reserve_stock(self, quantity: int) -> FlextResult[None]:
-        """Reserve stock for an order."""
-        if not self.is_available(quantity):
-            return FlextResult[None].fail(
-                f"Insufficient stock: {self.stock_quantity} available, {quantity} requested",
-            )
 
-        # Update stock (in real implementation would persist to database)
-        self.stock_quantity -= quantity
-        return FlextResult[None].ok(None)
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+
+class ECommerceConfig(FlextConfig):
+    """E-commerce system configuration."""
+
+    # Service configuration
+    service_name: str = "modern-ecommerce"
+    service_version: str = "1.0.0"
+    debug_mode: bool = False
+
+    # Business rules
+    max_order_items: int = Field(default=50, ge=1, le=100)
+    min_order_value: Decimal = Field(default=MIN_PRICE)
+    max_order_value: Decimal = Field(default=MAX_PRICE)
+
+    # Payment settings
+    payment_timeout_seconds: int = Field(default=300, ge=60, le=3600)
+    enable_refunds: bool = True
+
+    # Notification settings
+    enable_email_notifications: bool = True
+    enable_sms_notifications: bool = False
+
+    model_config = SettingsConfigDict(
+        env_prefix="ECOMMERCE_",
+        case_sensitive=False,
+        extra="forbid",
+    )
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate product business rules."""
-        if not self.name or len(self.name.strip()) < MIN_PRODUCT_NAME_LENGTH:
-            return FlextResult[None].fail("Product name must be at least 2 characters")
-
-        if self.stock_quantity < 0:
-            return FlextResult[None].fail("Stock quantity cannot be negative")
-
-        if not self.category:
-            return FlextResult[None].fail("Product category is required")
-
-        # Validate price
-        price_validation = self.price.validate_business_rules()
-        if price_validation.is_failure:
+        """Validate configuration business rules."""
+        if self.min_order_value >= self.max_order_value:
             return FlextResult[None].fail(
-                f"Price validation failed: {price_validation.error}",
+                "min_order_value must be less than max_order_value"
             )
-
+        if self.max_order_items <= 0:
+            return FlextResult[None].fail("max_order_items must be positive")
         return FlextResult[None].ok(None)
 
 
-class OrderItem(FlextValue):
-    """Order item with quantity and pricing."""
+# =============================================================================
+# DOMAIN ENTITIES
+# =============================================================================
 
-    product_id: str
-    quantity: int
-    unit_price: Money
 
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate order item business rules."""
-        if not self.product_id:
-            return FlextResult[None].fail("Product ID cannot be empty")
+class User(BaseModel):
+    """User entity with comprehensive validation."""
 
-        if self.quantity <= 0:
-            return FlextResult[None].fail("Quantity must be positive")
+    user_id: str = Field(..., alias="id")
+    email: EmailAddress
+    name: str = Field(..., min_length=1, max_length=100)
+    age: Age
+    is_active: bool = True
 
-        if self.quantity > MAX_ORDER_ITEM_QUANTITY:
-            return FlextResult[None].fail("Quantity cannot exceed 100")
+    @classmethod
+    def create(
+        cls,
+        email: str,
+        name: str,
+        age: int,
+        user_id: str | None = None,
+    ) -> FlextResult[User]:
+        """Create user with validation."""
+        try:
+            # Validate email
+            email_result = EmailAddress.create(email)
+            if not email_result.success:
+                return FlextResult[User].fail(f"Invalid email: {email_result.error}")
 
-        # Validate unit price
-        price_validation = self.unit_price.validate_business_rules()
-        if price_validation.is_failure:
-            return FlextResult[None].fail(
-                f"Unit price validation failed: {price_validation.error}",
+            # Validate age
+            age_result = Age.create(age)
+            if not age_result.success:
+                return FlextResult[User].fail(f"Invalid age: {age_result.error}")
+
+            # Generate ID if not provided
+            if user_id is None:
+                user_id = f"USER-{hash(email) % 100000:05d}"
+
+            user = cls(
+                id=user_id,
+                email=email_result.value,
+                name=name.strip(),
+                age=age_result.value,
             )
 
+            return FlextResult[User].ok(user)
+
+        except Exception as e:
+            return FlextResult[User].fail(f"Failed to create user: {e}")
+
+
+class Product(BaseModel):
+    """Product entity with pricing and inventory."""
+
+    product_id: str = Field(..., alias="id")
+    name: str = Field(..., min_length=1, max_length=200)
+    price: Money
+    stock_quantity: int = Field(default=0, ge=0)
+    is_available: bool = True
+
+    @classmethod
+    def create(
+        cls,
+        name: str,
+        price: Decimal | float | str,
+        stock_quantity: int = 0,
+        currency: str = "USD",
+        product_id: str | None = None,
+    ) -> FlextResult[Product]:
+        """Create product with validation."""
+        try:
+            # Validate price
+            price_result = Money.create(price, currency)
+            if not price_result.success:
+                return FlextResult[Product].fail(f"Invalid price: {price_result.error}")
+
+            # Generate ID if not provided
+            if product_id is None:
+                product_id = f"PROD-{hash(name) % 100000:05d}"
+
+            product = cls(
+                id=product_id,
+                name=name.strip(),
+                price=price_result.value,
+                stock_quantity=max(0, stock_quantity),
+                is_available=stock_quantity > 0,
+            )
+
+            return FlextResult[Product].ok(product)
+
+        except Exception as e:
+            return FlextResult[Product].fail(f"Failed to create product: {e}")
+
+    def update_stock(self, quantity: int) -> FlextResult[None]:
+        """Update stock quantity."""
+        if self.stock_quantity + quantity < 0:
+            return FlextResult[None].fail("Insufficient stock")
+        self.stock_quantity += quantity
+        self.is_available = self.stock_quantity > 0
         return FlextResult[None].ok(None)
 
-    def total_price(self) -> Money:
-        """Calculate total price for this item."""
-        result = self.unit_price.multiply(Decimal(str(self.quantity)))
-        # Modern pattern: Use .value with fallback for cleaner error handling
-        return result.unwrap_or(
-            Money(amount=Decimal(0), currency=self.unit_price.currency)
-        )
 
+class OrderItem(BaseModel):
+    """Order item with product and quantity."""
 
-class Order(FlextEntity):
-    """Order entity with complete business logic."""
+    product: Product
+    quantity: int = Field(..., ge=1)
+    total_price: Money
 
-    customer_id: str
-    items: list[OrderItem]
-    status: OrderStatus = OrderStatus.DRAFT
-    total: Money = Money(amount=Decimal(0), currency="USD")
+    @classmethod
+    def create(cls, product: Product, quantity: int) -> FlextResult[OrderItem]:
+        """Create order item with validation."""
+        if quantity <= 0:
+            return FlextResult[OrderItem].fail("Quantity must be positive")
+        if quantity > product.stock_quantity:
+            return FlextResult[OrderItem].fail("Insufficient stock")
 
-    def add_item(self, product: Product, quantity: int) -> FlextResult[Self]:
-        """Add item to order with validation."""
-        if not product.is_available(quantity):
-            return FlextResult[Self].fail(
-                f"Product {product.name} not available in quantity {quantity}",
+        # Calculate total price
+        price_result = product.price.multiply(quantity)
+        if not price_result.success:
+            return FlextResult[OrderItem].fail(
+                f"Price calculation failed: {price_result.error}"
             )
 
-        item = OrderItem(
-            product_id=str(product.id),
+        item = cls(
+            product=product,
             quantity=quantity,
-            unit_price=product.price,
+            total_price=price_result.value,
         )
+        return FlextResult[OrderItem].ok(item)
 
-        updated_items = [*self.items, item]
-        new_total = self._calculate_total(updated_items)
 
-        # Modern pattern: Use map for transformation, preserving error structure
-        return self.copy_with(items=updated_items, total=new_total)
+class Order(BaseModel):
+    """Order aggregate with comprehensive business logic."""
 
-    def confirm(self) -> FlextResult[Self]:
-        """Confirm the order with business rule validation."""
-        config = cast("AppConfig", get_flext_container().get("config").value)
+    order_id: str = Field(..., alias="id")
+    user: User
+    items: list[OrderItem]
+    status: OrderStatus = OrderStatus.PENDING
+    payment_status: PaymentStatus = PaymentStatus.PENDING
+    total_amount: Money
 
-        if self.total.amount < config.min_order_value:
-            return FlextResult[Self].fail(f"Order below minimum value: {self.total}")
+    def model_post_init(self, __context: dict[str, object] | None = None, /) -> None:
+        """Calculate total after initialization."""
+        if not hasattr(self, "total_amount") and self.items:
+            self.total_amount = self._calculate_total()
 
-        if self.total.amount > config.max_order_value:
-            return FlextResult[Self].fail(f"Order exceeds maximum value: {self.total}")
-
-        # Modern pattern: Use map for cleaner transformation
-        return self.copy_with(status=OrderStatus.CONFIRMED)
-
-    def _calculate_total(self, items: list[OrderItem]) -> Money:
-        """Calculate total from all items."""
-        total_amount = sum(item.total_price().amount for item in items)
-        return Money(amount=Decimal(str(total_amount)), currency="USD")
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate order business rules."""
-        if not self.customer_id:
-            return FlextResult[None].fail("Customer ID is required")
-
+    def _calculate_total(self) -> Money:
+        """Calculate order total."""
         if not self.items:
-            return FlextResult[None].fail("Order must have at least one item")
+            return Money.create(0).value
 
-        if len(self.items) > MAX_ORDER_ITEMS:
-            return FlextResult[None].fail("Order cannot have more than 50 items")
+        # Get currency from first item
+        currency = self.items[0].total_price.currency
+        total = Decimal("0.00")
 
-        # Validate all items
-        for i, item in enumerate(self.items):
-            item_validation = item.validate_business_rules()
-            if item_validation.is_failure:
-                return FlextResult[None].fail(
-                    f"Item {i + 1} validation failed: {item_validation.error}",
+        for item in self.items:
+            total += item.total_price.amount
+
+        return Money.create(total, currency).value
+
+    @classmethod
+    def create(
+        cls,
+        user: User,
+        items_data: list[dict[str, object]],
+        config: ECommerceConfig,
+        order_id: str | None = None,
+    ) -> FlextResult[Order]:
+        """Create order with validation."""
+        try:
+            # Validate basic constraints
+            validation_result = cls._validate_order_constraints(items_data, config)
+            if not validation_result.success:
+                return FlextResult[Order].fail(
+                    validation_result.error or "Validation failed"
                 )
 
-        # Validate total is consistent
-        calculated_total = self._calculate_total(self.items)
-        if abs(self.total.amount - calculated_total.amount) > Decimal("0.01"):
+            # Create order items
+            items_result = cls._create_order_items(items_data)
+            if not items_result.success:
+                return FlextResult[Order].fail(
+                    items_result.error or "Failed to create items"
+                )
+
+            items = items_result.value
+
+            # Generate order
+            return cls._build_order(user, items, config, order_id)
+
+        except Exception as e:
+            return FlextResult[Order].fail(f"Failed to create order: {e}")
+
+    @classmethod
+    def _validate_order_constraints(
+        cls, items_data: list[dict[str, object]], config: ECommerceConfig
+    ) -> FlextResult[None]:
+        """Validate order constraints."""
+        if len(items_data) > config.max_order_items:
             return FlextResult[None].fail(
-                "Order total is inconsistent with item totals"
+                f"Too many items: {len(items_data)} > {config.max_order_items}"
             )
 
+        if not items_data:
+            return FlextResult[None].fail("Order must have at least one item")
+
         return FlextResult[None].ok(None)
 
+    @classmethod
+    def _create_order_items(
+        cls, items_data: list[dict[str, object]]
+    ) -> FlextResult[list[OrderItem]]:
+        """Create order items from data."""
+        items: list[OrderItem] = []
 
-# =============================================================================
-# SERVICES: Business Logic Orchestration (Clean & Testable)
-# =============================================================================
+        for item_data in items_data:
+            if "product" not in item_data or "quantity" not in item_data:
+                return FlextResult[list[OrderItem]].fail("Invalid item data")
 
+            product = item_data["product"]
+            if not isinstance(product, Product):
+                return FlextResult[list[OrderItem]].fail("Invalid product")
 
-class InventoryService:
-    """Inventory management service."""
+            quantity = int(str(item_data["quantity"]))
+            item_result = OrderItem.create(product, quantity)
+            if not item_result.success:
+                return FlextResult[list[OrderItem]].fail(
+                    f"Invalid item: {item_result.error}"
+                )
 
-    def reserve_items(self, items: list[OrderItem]) -> FlextResult[None]:
-        """Reserve inventory for order items."""
-        container = get_flext_container()
+            items.append(item_result.value)
 
+        return FlextResult[list[OrderItem]].ok(items)
+
+    @classmethod
+    def _build_order(
+        cls,
+        user: User,
+        items: list[OrderItem],
+        config: ECommerceConfig,
+        order_id: str | None,
+    ) -> FlextResult[Order]:
+        """Build final order with validation."""
+        # Generate ID
+        if order_id is None:
+            order_id = f"ORDER-{user.user_id}-{len(items):03d}"
+
+        # Calculate and validate total
+        total_result = cls._calculate_and_validate_total(items, config)
+        if not total_result.success:
+            return FlextResult[Order].fail(
+                total_result.error or "Total validation failed"
+            )
+
+        total_money = total_result.value
+
+        # Create final order
+        order = cls(
+            id=order_id,
+            user=user,
+            items=items,
+            total_amount=total_money,
+        )
+
+        return FlextResult[Order].ok(order)
+
+    @classmethod
+    def _calculate_and_validate_total(
+        cls, items: list[OrderItem], config: ECommerceConfig
+    ) -> FlextResult[Money]:
+        """Calculate and validate order total."""
+        if not items:
+            return FlextResult[Money].fail("No items to calculate total")
+
+        currency = items[0].total_price.currency
+        total = Decimal("0.00")
         for item in items:
-            product_result = container.get(f"product_{item.product_id}")
-            if not product_result.success:
-                return FlextResult[None].fail(f"Product not found: {item.product_id}")
+            total += item.total_price.amount
 
-            product = cast("Product", product_result.value)
-            reserve_result = product.reserve_stock(item.quantity)
-            if not reserve_result.success:
-                return reserve_result
+        total_money_result = Money.create(total, currency)
+        if not total_money_result.success:
+            return FlextResult[Money].fail(
+                f"Total calculation failed: {total_money_result.error}"
+            )
 
+        # Validate total amount
+        if total < config.min_order_value:
+            return FlextResult[Money].fail(f"Order value too low: {total}")
+
+        if total > config.max_order_value:
+            return FlextResult[Money].fail(f"Order value too high: {total}")
+
+        return total_money_result
+
+    def confirm(self) -> FlextResult[None]:
+        """Confirm order and update stock."""
+        if self.status != OrderStatus.PENDING:
+            return FlextResult[None].fail(
+                f"Cannot confirm order in {self.status} status"
+            )
+
+        # Update stock for all items
+        for item in self.items:
+            stock_result = item.product.update_stock(-item.quantity)
+            if not stock_result.success:
+                return FlextResult[None].fail(
+                    f"Stock update failed: {stock_result.error}"
+                )
+
+        self.status = OrderStatus.CONFIRMED
         return FlextResult[None].ok(None)
+
+
+# =============================================================================
+# SERVICES
+# =============================================================================
 
 
 class PaymentService:
     """Payment processing service."""
 
-    def charge(self, customer_id: str, amount: Money) -> FlextResult[str]:
-        """Process payment and return transaction ID."""
-        # Simulate payment processing
-        if amount.amount <= 0:
-            return FlextResult[str].fail("Invalid payment amount")
+    def __init__(self, config: ECommerceConfig) -> None:
+        """Initialize payment service."""
+        self.config = config
 
-        # In real implementation, call payment API
-        transaction_id = f"txn_{customer_id}_{amount.amount}"
-        return FlextResult[str].ok(transaction_id)
+    def process_payment(
+        self, order: Order, payment_method: str = "credit_card"
+    ) -> FlextResult[str]:
+        """Process payment for order."""
+        try:
+            if order.payment_status != PaymentStatus.PENDING:
+                return FlextResult[str].fail("Payment already processed")
+
+            # Simulate payment processing
+            payment_id = f"PAY-{order.order_id}-{hash(payment_method) % 10000:04d}"
+
+            # In real implementation, this would call external payment gateway
+            print(f"Processing payment: {payment_id} for ${order.total_amount.amount}")
+
+            order.payment_status = PaymentStatus.COMPLETED
+            return FlextResult[str].ok(payment_id)
+
+        except Exception as e:
+            return FlextResult[str].fail(f"Payment processing failed: {e}")
 
 
-class NotificationService:
-    """Notification service for customer communications."""
+class OrderService:
+    """Order management service."""
 
-    def send_order_confirmation(
+    def __init__(
+        self, config: ECommerceConfig, payment_service: PaymentService
+    ) -> None:
+        """Initialize order service."""
+        self.config = config
+        self.payment_service = payment_service
+
+    def create_and_process_order(
         self,
-        customer: Customer,  # noqa: ARG002
-        order: Order,  # noqa: ARG002
-    ) -> FlextResult[None]:
-        """Send order confirmation email."""
-        # Simulate email sending (send_email function not available in shared_domain)
-        return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# FACTORIES: Zero-Boilerplate Object Creation
-# =============================================================================
-
-
-def create_customer(name: str, email_address: str) -> FlextResult[Customer]:
-    """Create customer with validation."""
-    try:
-        # Create email and validate
-        email = Email(email=email_address)
-        validation_result = email.validate_business_rules()
-        if validation_result.is_failure:
-            return FlextResult[Customer].fail(
-                validation_result.error or "Email validation failed"
-            )
-
-        # Create customer
-        customer = Customer(
-            id=FlextEntityId(FlextUtilities.generate_entity_id()),
-            name=name,
-            email_address=email,
-            age=Age(value=25),  # Default age
-        )
-        return FlextResult[Customer].ok(customer)
-    except Exception as e:
-        return FlextResult[Customer].fail(f"Customer creation failed: {e}")
-
-
-def create_product(
-    name: str,
-    price_cents: int,
-    stock: int,
-    category: str,
-) -> FlextResult[Product]:
-    """Create product with business rules."""
-    if price_cents <= 0:
-        return FlextResult[Product].fail("Price must be positive")
-
-    if stock < 0:
-        return FlextResult[Product].fail("Stock cannot be negative")
-
-    price = Money(amount=Decimal(str(price_cents)), currency="USD")
-
-    product = Product(
-        id=FlextEntityId(FlextUtilities.generate_entity_id()),
-        name=name,
-        price=price,
-        stock_quantity=stock,
-        category=category,
-    )
-    return FlextResult[Product].ok(product)
-
-
-# =============================================================================
-# APPLICATION SERVICE: Complete Business Flow (Railway-Oriented)
-# =============================================================================
-
-
-class OrderProcessingService:
-    """Order processing service with railway-oriented programming."""
-
-    def __init__(self) -> None:
-        self.inventory = InventoryService()
-        self.payment = PaymentService()
-        self.notifications = NotificationService()
-
-    def process_order(
-        self,
-        customer_id: str,
-        order_data: dict[str, object],
+        user: User,
+        items_data: list[dict[str, object]],
     ) -> FlextResult[Order]:
-        """Process complete order with automatic error handling.
-
-        Traditional approach would require 50+ lines of try/catch boilerplate.
-        Railway-oriented approach: 8 lines, automatic error propagation!
-        """
-        return (
-            self._create_order(customer_id, order_data)
-            .flat_map(self._validate_inventory)
-            .flat_map(self._confirm_order)
-            .flat_map(self._process_payment)
-            .flat_map(self._reserve_inventory)
-            .flat_map(self._send_notifications)
-            .tap(self._log_success)
-        )
-
-    def _create_order(
-        self,
-        customer_id: str,
-        order_data: dict[str, object],
-    ) -> FlextResult[Order]:
-        """Create order from raw data."""
-
-        def _start_empty_order() -> Order:
-            return Order(
-                id=FlextEntityId(FlextUtilities.generate_entity_id()),
-                customer_id=customer_id,
-                items=[],
-            )
-
-        def _ensure_items(
-            data: dict[str, object],
-        ) -> FlextResult[list[dict[str, object]]]:
-            items_value = data.get("items", [])
-            if not isinstance(items_value, list):
-                return FlextResult[list[dict[str, object]]].fail("Items must be a list")
-            normalized: list[dict[str, object]] = []
-            for entry in items_value:
-                if not isinstance(entry, dict):
-                    return FlextResult[list[dict[str, object]]].fail(
-                        "Item data must be a dictionary"
-                    )
-                normalized.append(entry)
-            return FlextResult[list[dict[str, object]]].ok(normalized)
-
-        def _parse_quantity(raw_quantity: object) -> FlextResult[int]:
-            if not isinstance(raw_quantity, (int, str)):
-                return FlextResult[int].fail("Quantity must be a number")
-            try:
-                return FlextResult[int].ok(int(str(raw_quantity)))
-            except (ValueError, TypeError):
-                return FlextResult[int].fail("Invalid quantity format")
-
-        def _get_product_for_item(
-            item: dict[str, object],
-        ) -> FlextResult[tuple[object, int]]:
-            product_id = item.get("product_id")
-
-            if not isinstance(product_id, str):
-                return FlextResult[tuple[object, int]].fail(
-                    "Product ID must be a string"
-                )
-            product_result = self._get_product(product_id)
-
-            if product_result.is_failure or product_result.value is None:
-                return FlextResult[tuple[object, int]].fail(
-                    product_result.error or "Product not found"
-                )
-            quantity_result = _parse_quantity(item.get("quantity", 1))
-
-            if quantity_result.is_failure or quantity_result.value is None:
-                return FlextResult[tuple[object, int]].fail(
-                    quantity_result.error or "Invalid quantity"
-                )
-            return FlextResult[tuple[object, int]].ok((
-                product_result.value,
-                quantity_result.value,
-            ))
-
-        items_result = _ensure_items(order_data)
-        if items_result.is_failure or items_result.value is None:
-            return FlextResult[Order].fail(items_result.error or "Invalid items")
-
-        order = _start_empty_order()
-        for item_data in items_result.value:
-            pair_result = _get_product_for_item(item_data)
-
-            if pair_result.is_failure or pair_result.value is None:
-                return FlextResult[Order].fail(pair_result.error or "Invalid item")
-            product, quantity_int = cast("tuple[Product, int]", pair_result.value)
-            order_result = order.add_item(product, quantity_int)
-
+        """Create and process complete order."""
+        try:
+            # Create order
+            order_result = Order.create(user, items_data, self.config)
             if not order_result.success:
                 return FlextResult[Order].fail(
-                    order_result.error or "Failed to add item"
+                    f"Order creation failed: {order_result.error}"
                 )
 
             order = order_result.value
-        return FlextResult[Order].ok(order)
 
-    def _validate_inventory(self, order: Order) -> FlextResult[Order]:
-        """Validate inventory availability."""
-        validation_result = self.inventory.reserve_items(order.items)
-        return validation_result.map(lambda _: order)
+            # Confirm order
+            confirm_result = order.confirm()
+            if not confirm_result.success:
+                return FlextResult[Order].fail(
+                    f"Order confirmation failed: {confirm_result.error}"
+                )
 
-    def _confirm_order(self, order: Order) -> FlextResult[Order]:
-        """Confirm order with business rules."""
-        return order.confirm()
+            # Process payment
+            payment_result = self.payment_service.process_payment(order)
+            if not payment_result.success:
+                return FlextResult[Order].fail(
+                    f"Payment failed: {payment_result.error}"
+                )
 
-    def _process_payment(self, order: Order) -> FlextResult[Order]:
-        """Process payment for order."""
-        payment_result = self.payment.charge(order.customer_id, order.total)
-        return payment_result.map(lambda _: order)
+            order.status = OrderStatus.PROCESSING
+            return FlextResult[Order].ok(order)
 
-    def _reserve_inventory(self, order: Order) -> FlextResult[Order]:
-        """Reserve inventory for confirmed order."""
-        reserve_result = self.inventory.reserve_items(order.items)
-        return reserve_result.map(lambda _: order)
-
-    def _send_notifications(self, order: Order) -> FlextResult[Order]:
-        """Send order confirmation notifications."""
-        container = get_flext_container()
-        customer_result = container.get(f"customer_{order.customer_id}")
-
-        if not customer_result.success:
-            return FlextResult[Order].fail("Customer not found for notification")
-
-        if customer_result.value is None:
-            return FlextResult[Order].fail("Customer data is None")
-
-        customer = cast("Customer", customer_result.value)
-        notification_result = self.notifications.send_order_confirmation(
-            customer,
-            order,
-        )
-        return notification_result.map(lambda _: order)
-
-    def _get_product(self, product_id: str) -> FlextResult[Product]:
-        """Get product by ID."""
-        container = get_flext_container()
-        result = container.get(f"product_{product_id}")
-        if result.is_failure:
-            return FlextResult[Product].fail(result.error or "Product not found")
-
-        if result.value is None:
-            return FlextResult[Product].fail("Product data is None")
-
-        return FlextResult[Product].ok(cast("Product", result.value))
-
-    def _log_success(self, order: Order) -> None:
-        """Log successful order processing."""
+        except Exception as e:
+            return FlextResult[Order].fail(f"Order processing failed: {e}")
 
 
 # =============================================================================
-# DEMONSTRATION: Real-World Usage
+# DEMONSTRATION FUNCTIONS
 # =============================================================================
 
 
-def _print_showcase_header() -> None:
-    pass
+def demonstrate_user_creation() -> FlextResult[User]:
+    """Demonstrate user creation with validation."""
+    print("Creating user with validation...")
 
-
-def _setup_environment() -> FlextContainer:
-    config = AppConfig()
-    container = get_flext_container()
-    container.register("config", config)
-    return container
-
-
-def _create_and_register_customer(container: FlextContainer) -> Customer | None:
-    customer_result: FlextResult[Customer] = create_customer(
-        "John Doe", "john@example.com"
+    user_result = User.create(
+        email="john.doe@example.com",
+        name="John Doe",
+        age=30,
     )
-    if not customer_result.success:
-        raise ValueError(customer_result.error)
-    customer = customer_result.value
-    container.register(f"customer_{customer.id}", customer)
-    return customer
+
+    if user_result.success:
+        user = user_result.value
+        print(f"✅ User created: {user.name} ({user.email.address})")
+        return user_result
+
+    print(f"❌ User creation failed: {user_result.error}")
+    return user_result
 
 
-def _create_and_register_products(container: FlextContainer) -> None:
-    products_data = [
-        ("Laptop", 99900, 10, "Electronics", "product_laptop"),
-        ("Mouse", 2500, 50, "Electronics", "product_mouse"),
-        ("Keyboard", 7500, 25, "Electronics", "product_keyboard"),
+def demonstrate_product_creation() -> FlextResult[list[Product]]:
+    """Demonstrate product creation and management."""
+    print("Creating products...")
+
+    products: list[Product] = []
+    product_data = [
+        {"name": "Laptop Pro", "price": "1299.99", "stock": 10},
+        {"name": "Wireless Mouse", "price": "29.99", "stock": 50},
+        {"name": "USB Cable", "price": "9.99", "stock": 100},
     ]
-    for name, price, stock, category, key in products_data:
-        product_result = create_product(name, price, stock, category)
+
+    for data in product_data:
+        product_result = Product.create(
+            name=str(data["name"]),
+            price=str(data["price"]),
+            stock_quantity=int(str(data["stock"])),
+        )
+
         if product_result.success:
             product = product_result.value
-            container.register(key, product)
+            products.append(product)
+            print(f"✅ Product created: {product.name} - ${product.price.amount}")
+        else:
+            print(f"❌ Product creation failed: {product_result.error}")
+            return FlextResult[list[Product]].fail(
+                f"Product creation failed: {product_result.error}"
+            )
+
+    return FlextResult[list[Product]].ok(products)
 
 
-def _select_first_available_product_id(
-    container: FlextContainer,
-    keys: list[str],
-) -> str | None:
-    for key in keys:
-        result = container.get(key)
-        if result.success:
-            product = cast("Product", result.value)
-            return str(product.id)
-    return None
+def demonstrate_order_processing(
+    user: User, products: list[Product]
+) -> FlextResult[Order]:
+    """Demonstrate complete order processing."""
+    print("Processing order...")
 
+    # Create configuration
+    config = ECommerceConfig()
 
-def _process_order_and_print(
-    _: FlextContainer, customer: Customer, product_id: str
-) -> None:
-    order_service = OrderProcessingService()
-    order_data: dict[str, object] = {
-        "items": [{"product_id": product_id, "quantity": 1}],
-    }
-    order_result = order_service.process_order(str(customer.id), order_data)
+    # Create services
+    payment_service = PaymentService(config)
+    order_service = OrderService(config, payment_service)
+
+    # Create order items
+    items_data: list[dict[str, object]] = [
+        {"product": products[0], "quantity": 1},  # Laptop
+        {"product": products[1], "quantity": 2},  # Mouse x2
+    ]
+
+    # Process order
+    order_result = order_service.create_and_process_order(user, items_data)
+
     if order_result.success:
-        pass
+        order = order_result.value
+        print(f"✅ Order processed: {order.order_id} - ${order.total_amount.amount}")
+        print(f"   Status: {order.status}")
+        print(f"   Payment: {order.payment_status}")
+    else:
+        print(f"❌ Order processing failed: {order_result.error}")
+
+    return order_result
 
 
-def _type_system_demo(customer: Customer) -> None:
-    def validator(c: Customer) -> bool:
-        return c.is_premium
-
-    def transformer(m: Money) -> str:
-        return str(m)
-
-    # Use the customer parameter
-    validator(customer)
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
 
 
-def _print_benefits() -> None:
-    """Print benefits of modern patterns."""
+def main() -> int:
+    """Main demonstration function."""
+    print("🚀 Modern FLEXT Patterns Showcase")
+    print("=" * 50)
 
+    try:
+        # Demonstrate user creation
+        user_result = demonstrate_user_creation()
+        if not user_result.success:
+            return 1
 
-def demonstrate_modern_patterns() -> None:
-    """Demonstrate the power of modern FLEXT patterns."""
-    _print_showcase_header()
-    container: FlextContainer = _setup_environment()
-    _create_and_register_products(container)
-    customer = _create_and_register_customer(container)
-    if customer is None:
-        return
-    product_keys = ["product_laptop", "product_mouse", "product_keyboard"]
-    product_id = _select_first_available_product_id(container, product_keys)
-    if product_id is None:
-        return
-    _process_order_and_print(container, customer, product_id)
-    _type_system_demo(customer)
-    _print_benefits()
+        user = user_result.value
 
+        # Demonstrate product creation
+        products_result = demonstrate_product_creation()
+        if not products_result.success:
+            return 1
 
-def demonstrate_boilerplate_comparison() -> float:
-    """Show before/after comparison of boilerplate reduction."""
-    traditional_lines = 150  # Estimated lines for traditional approach
-    modern_lines = 25  # Actual lines in modern approach
-    return ((traditional_lines - modern_lines) / traditional_lines) * 100
+        products = products_result.value
+
+        # Demonstrate order processing
+        order_result = demonstrate_order_processing(user, products)
+        if not order_result.success:
+            return 1
+
+        print("\n✅ All demonstrations completed successfully!")
+        return 0
+
+    except Exception as e:
+        print(f"❌ Demonstration failed: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    demonstrate_modern_patterns()
-    demonstrate_boilerplate_comparison()
+    sys.exit(main())

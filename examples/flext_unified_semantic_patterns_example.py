@@ -47,9 +47,7 @@ class DatabaseConfig(FlextConfig):
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified business rule validation pattern using FlextConstants."""
         if not self.database_name:
-            return FlextResult[None].fail(
-                FlextConstants.Errors.VALIDATION_ERROR
-            )
+            return FlextResult[None].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
         min_port: FlextTypes.Core.Integer = FlextConstants.Network.MIN_PORT or 1
         max_port: FlextTypes.Core.Integer = FlextConstants.Network.MAX_PORT or 65535

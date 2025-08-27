@@ -20,11 +20,8 @@ from pydantic import (
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
-from flext_core.loggings import FlextLoggerFactory, flext_get_logger
-from flext_core.mixins import (
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-)
+from flext_core.loggings import FlextLogger
+from flext_core.mixins import FlextMixins
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -74,17 +71,13 @@ PYTHON_TO_GO_TYPES: dict[type[object], FlextTypes.Core.String] = {
     object: "interface{}",
 }
 
-# Maximum payload size before automatic compression (64KB)
-MAX_UNCOMPRESSED_SIZE = FlextConstants.Performance.PAYLOAD_MAX_SIZE
-
-# Compression level for large payloads
-COMPRESSION_LEVEL = FlextConstants.Performance.PAYLOAD_COMPRESSION_LEVEL
+# All constants used directly from FlextConstants to avoid duplication
 
 
 class FlextPayload[T](
     BaseModel,
-    FlextSerializableMixin,
-    FlextLoggableMixin,
+    FlextMixins.Loggable,
+    FlextMixins.Serializable,
 ):
     """Generic type-safe payload container for structured data transport and validation.
 
@@ -162,7 +155,7 @@ class FlextPayload[T](
             Result containing payload or error
 
         """
-        logger = flext_get_logger(__name__)
+        logger = FlextLogger(__name__)
 
         logger.debug(
             "Creating payload",
@@ -546,7 +539,7 @@ class FlextPayload[T](
             Cross-service representation
 
         """
-        logger = flext_get_logger(__name__)
+        logger = FlextLogger(__name__)
 
         # Delegate to helper method to reduce complexity
         result = self._get_serializable_value(value)
@@ -725,7 +718,7 @@ class FlextPayload[T](
             json.dumps(value)
             return True
         except (TypeError, ValueError, OverflowError) as e4:
-            logger = flext_get_logger(__name__)
+            logger = FlextLogger(__name__)
             logger.warning(
                 f"Value not JSON serializable: {type(value).__name__} - {e4}",
             )
@@ -748,7 +741,7 @@ class FlextPayload[T](
             FlextResult containing reconstructed payload.
 
         Raises:
-            FlextExceptions.ValidationError: If a dictionary format is invalid.
+            FlextExceptions: If a dictionary format is invalid.
 
         """
         # Validate required fields
@@ -866,7 +859,7 @@ class FlextPayload[T](
                 return bool(data) if data is not None else None
 
         except (ValueError, TypeError) as e6:
-            logger = flext_get_logger(__name__)
+            logger = FlextLogger(__name__)
             logger.warning(
                 f"Type conversion failed for {type(data).__name__} to {target_type.__name__}: {e6}"
             )
@@ -899,7 +892,7 @@ class FlextPayload[T](
         compressed: bool = False,
         include_type_info: bool = True,
     ) -> FlextResult[str]:
-        """Convert payload to JSON string for cross-service transport.
+        """Convert payload to JSON string for cross-service transport (FlextResult).
 
         Args:
             compressed: Whether to compress large payloads
@@ -919,10 +912,10 @@ class FlextPayload[T](
             json_str = json.dumps(payload_dict, separators=(",", ":"))
 
             # Compress if payload is large and compression requested
-            if compressed and len(json_str.encode()) > MAX_UNCOMPRESSED_SIZE:
+            if compressed and len(json_str.encode()) > FlextConstants.Performance.PAYLOAD_MAX_SIZE:
                 compressed_bytes = zlib.compress(
                     json_str.encode(),
-                    level=COMPRESSION_LEVEL,
+                    level=FlextConstants.Performance.PAYLOAD_COMPRESSION_LEVEL,
                 )
                 encoded_str = b64encode(compressed_bytes).decode()
 
@@ -1076,7 +1069,7 @@ class FlextPayload[T](
                     logger_name = (
                         f"{self.__class__.__module__}.{self.__class__.__name__}"
                     )
-                    self._logger = FlextLoggerFactory.get_logger(logger_name)
+                    self._logger = FlextLogger(logger_name)
                     return self._logger
                 setattr(self, name, default_value)
                 return default_value
@@ -1094,19 +1087,7 @@ class FlextPayload[T](
             return self.metadata[name]
 
         error_msg: str = f"'{self.__class__.__name__}' object has no attribute '{name}'"
-        available_fields = (
-            list(self.__pydantic_extra__.keys())
-            if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__
-            else []
-        )
-        raise FlextExceptions.AttributeError(  # type: ignore[call-arg]
-            error_msg,
-            attribute_context={
-                "class_name": self.__class__.__name__,
-                "attribute_name": name,
-                "available_fields": available_fields,
-            },
-        )
+        raise FlextExceptions.AttributeError(error_msg, attribute_name=name)
 
     def __contains__(self, key: str) -> bool:
         """Check if key exists in extra fields.
@@ -1223,7 +1204,7 @@ class FlextPayload[T](
             Result containing message payload
 
         """
-        logger = flext_get_logger(__name__)
+        logger = FlextLogger(__name__)
 
         # Validate message using FlextValidation
         if not FlextValidation.Rules.StringRules.validate_non_empty(message).success:
@@ -1274,7 +1255,7 @@ class FlextPayload[T](
             Result containing event payload
 
         """
-        logger = flext_get_logger(__name__)
+        logger = FlextLogger(__name__)
 
         # Validate event_type using FlextValidation
         if not FlextValidation.Rules.StringRules.validate_non_empty(event_type).success:
@@ -1477,7 +1458,7 @@ except (
     RuntimeError,
 ) as except_data:
     # Log rebuild errors but maintain runtime functionality
-    logger = flext_get_logger(__name__)
+    logger = FlextLogger(__name__)
     logger.warning(
         "Model rebuild failed, continuing with runtime functionality",
         error=str(except_data),
@@ -1501,7 +1482,7 @@ except (
     RuntimeError,
 ) as except_data:
     # Log rebuild errors but maintain runtime functionality
-    logger = flext_get_logger(__name__)
+    logger = FlextLogger(__name__)
     logger.warning(
         "Model rebuild failed, continuing with runtime functionality",
         error=str(except_data),

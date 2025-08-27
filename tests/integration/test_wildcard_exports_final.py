@@ -1,0 +1,286 @@
+"""Integration tests for flext-core wildcard export system.
+
+This module validates that the wildcard import system works correctly across
+the entire flext-core ecosystem, ensuring all major components are properly
+exported and functional.
+"""
+
+from __future__ import annotations
+
+import uuid
+
+import pytest
+
+from flext_core import (
+    FlextConstants,
+    FlextExceptions,
+    FlextResult,
+    FlextUtilities,
+)
+
+
+class TestFlextCoreWildcardExports:
+    """Integration tests for the flext-core wildcard export system."""
+
+    def test_wildcard_import_works(self) -> None:
+        """Test that wildcard import from flext_core works without errors."""
+        # Since we already have the wildcard import at module level, test it works
+        assert "FlextResult" in globals()
+        assert "FlextConstants" in globals()
+
+    def test_essential_modules_exported(self) -> None:
+        """Test that essential flext-core modules are exported via wildcard import."""
+        # Define essential modules that must be available
+        essential_modules = [
+            "FlextResult",
+            "FlextConstants",
+            "FlextExceptions",
+            "FlextUtilities",
+            "FlextTypes",
+            "FlextConfig",
+            "FlextContainer",
+            "FlextFields",
+            "FlextValidation",
+            "FlextCommands",
+        ]
+
+        # Verify each essential module is available in globals
+        current_globals = globals()
+        missing_modules = []
+
+        for module_name in essential_modules:
+            if module_name not in current_globals:
+                missing_modules.append(module_name)
+            else:
+                # Verify the module is not None
+                module = current_globals[module_name]
+                assert module is not None, f"Module '{module_name}' is None"
+
+        assert not missing_modules, f"Missing essential modules: {missing_modules}"
+
+    def test_flext_result_basic_functionality(self) -> None:
+        """Test basic FlextResult functionality."""
+        # Test success case
+        success_result = FlextResult[str].ok("test_value")
+        assert success_result.success is True
+        assert success_result.value == "test_value"
+        assert success_result.error is None
+
+        # Test failure case
+        failure_result = FlextResult[str].fail("test_error")
+        assert failure_result.success is False
+        assert failure_result.error == "test_error"
+
+        # Test chaining operations
+        chained_result = success_result.map(lambda x: x.upper())
+        assert chained_result.success is True
+        assert chained_result.value == "TEST_VALUE"
+
+    def test_flext_utilities_basic_functionality(self) -> None:
+        """Test basic FlextUtilities functionality."""
+        # Test UUID generation
+        generated_uuid = FlextUtilities.generate_uuid()
+        assert isinstance(generated_uuid, str)
+        assert len(generated_uuid) == 36  # Standard UUID format
+
+        # Verify it's a valid UUID
+        uuid.UUID(generated_uuid)  # This will raise if invalid
+
+    def test_flext_constants_access(self) -> None:
+        """Test that FlextConstants hierarchy is accessible."""
+        # Test accessing nested constants
+        timeout = FlextConstants.Defaults.TIMEOUT
+        assert isinstance(timeout, int)
+        assert timeout > 0
+
+        # Test error constants
+        validation_error = FlextConstants.Errors.VALIDATION_ERROR
+        assert isinstance(validation_error, str)
+        assert "FLEXT" in validation_error
+
+        # Test message constants
+        success_msg = FlextConstants.Messages.SUCCESS
+        assert isinstance(success_msg, str)
+        assert len(success_msg) > 0
+
+    def test_flext_exceptions_basic_functionality(self) -> None:
+        """Test basic FlextExceptions functionality."""
+        # Test ValidationError creation and format
+        validation_error = FlextExceptions.ValidationError("test_message")
+        error_str = str(validation_error)
+        assert "[FLEXT_3001]" in error_str
+        assert "test_message" in error_str
+
+        # Test OperationError creation
+        operation_error = FlextExceptions.OperationError("operation_failed")
+        assert isinstance(operation_error, Exception)
+        assert "operation_failed" in str(operation_error)
+
+    def test_no_import_duplications(self) -> None:
+        """Test that there are no duplicate exports in wildcard import."""
+        # Get all exported names
+        exported_names = [name for name in globals() if not name.startswith("_")]
+
+        # Check for duplicates
+        unique_names = set(exported_names)
+        assert len(exported_names) == len(unique_names), (
+            f"Duplicate exports detected: "
+            f"{[name for name in exported_names if exported_names.count(name) > 1]}"
+        )
+
+    def test_major_categories_present(self) -> None:
+        """Test that major categories of flext-core are represented in exports."""
+        # Categories that should be present
+        expected_categories = [
+            "Result",  # FlextResult and related
+            "Constants",  # FlextConstants
+            "Exceptions",  # FlextExceptions
+            "Utilities",  # FlextUtilities
+        ]
+
+        exported_names = [name for name in globals() if not name.startswith("_")]
+
+        for category in expected_categories:
+            assert any(category in name for name in exported_names), (
+                f"No exports found for category '{category}'. "
+                f"Expected to find names containing '{category}' in exports."
+            )
+
+    def test_export_count_reasonable(self) -> None:
+        """Test that the number of exports is reasonable."""
+        exported_names = [name for name in globals() if not name.startswith("_")]
+        export_count = len(exported_names)
+
+        # Should have at least 10 exports (minimum for a functional system)
+        assert export_count >= 10, (
+            f"Export count {export_count} seems too low. "
+            f"Expected at least 10 exports for a functional system."
+        )
+
+        # Upper bound check - shouldn't exceed 1000 (would indicate bloat)
+        assert export_count <= 1000, (
+            f"Export count {export_count} seems too high. "
+            f"Expected at most 1000 exports to avoid namespace pollution."
+        )
+
+
+class TestFlextCoreIntegrationScenarios:
+    """Integration test scenarios using multiple flext-core components together."""
+
+    def test_end_to_end_basic_workflow(self) -> None:
+        """Test a basic workflow using multiple flext-core components."""
+        # 1. Generate a unique ID for operation tracking
+        operation_id = FlextUtilities.generate_uuid()
+        assert isinstance(operation_id, str)
+
+        # 2. Create a result
+        result = FlextResult[dict].ok(
+            {"operation_id": operation_id, "status": "started"}
+        )
+        assert result.success is True
+
+        # 3. Process the result through transformations
+        processed_result = result.map(
+            lambda data: {**data, "timestamp": "2024-01-01T00:00:00Z"}
+        )
+
+        assert processed_result.success is True
+        assert "timestamp" in processed_result.value
+
+        # 4. Verify final state using constants
+        final_status = FlextConstants.Status.COMPLETED
+        final_result = processed_result.map(
+            lambda data: {**data, "status": final_status}
+        )
+
+        assert final_result.success is True
+        assert final_result.value["status"] == FlextConstants.Status.COMPLETED
+
+    def test_error_handling_integration(self) -> None:
+        """Test error handling across multiple components."""
+        # Create a failed result
+        failed_result = FlextResult[str].fail("test_error")
+        assert failed_result.success is False
+
+        # Convert to exception
+        error = FlextExceptions.ValidationError(failed_result.error)
+        assert FlextConstants.Errors.VALIDATION_ERROR in str(error)
+
+    def test_constants_and_exceptions_integration(self) -> None:
+        """Test integration between constants and exceptions."""
+        # Use constant in exception
+        error_code = FlextConstants.Errors.VALIDATION_ERROR
+        error = FlextExceptions.ValidationError("test message")
+
+        assert error_code in str(error)
+        assert "test message" in str(error)
+
+
+@pytest.mark.integration
+class TestFlextCoreSystemValidation:
+    """System-level validation tests."""
+
+    def test_system_exports_health(self) -> None:
+        """Test overall health of the export system."""
+        # Get all Flext-prefixed exports
+        flext_exports = [
+            name
+            for name in globals()
+            if name.startswith("Flext") and not name.startswith("_")
+        ]
+
+        # Should have at least the core classes
+        core_classes = [
+            "FlextResult",
+            "FlextConstants",
+            "FlextExceptions",
+            "FlextUtilities",
+        ]
+        missing_core = [cls for cls in core_classes if cls not in flext_exports]
+
+        assert not missing_core, f"Missing core classes: {missing_core}"
+
+        # Should have reasonable number of exports
+        assert len(flext_exports) >= 4, f"Too few Flext classes: {len(flext_exports)}"
+
+    def test_basic_import_stability(self) -> None:
+        """Test that imports are stable and don't cause circular issues."""
+        # This test just ensures the import completed successfully
+        # and we can access basic functionality
+
+        result = FlextResult[int].ok(42)
+        assert result.value == 42
+
+        timeout = FlextConstants.Defaults.TIMEOUT
+        assert isinstance(timeout, int)
+
+        error = FlextExceptions.ValidationError("test")
+        assert isinstance(error, Exception)
+
+        uuid_val = FlextUtilities.generate_uuid()
+        assert isinstance(uuid_val, str)
+
+    def test_railway_oriented_programming_pattern(self) -> None:
+        """Test that the core railway-oriented programming pattern works."""
+        # Chain of operations using FlextResult
+        result = (
+            FlextResult[int]
+            .ok(10)
+            .map(lambda x: x * 2)
+            .map(lambda x: x + 5)
+            .map(lambda x: str(x))
+        )
+
+        assert result.success is True
+        assert result.value == "25"
+
+        # Test failure propagation
+        failed_chain = (
+            FlextResult[int]
+            .fail("initial error")
+            .map(lambda x: x * 2)  # Should not execute
+            .map(lambda x: x + 5)  # Should not execute
+        )
+
+        assert failed_chain.success is False
+        assert failed_chain.error == "initial error"

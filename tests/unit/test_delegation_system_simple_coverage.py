@@ -52,7 +52,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutIsValid()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "is_valid property not delegated" in str(exc_info.value)
@@ -70,7 +70,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutValidationErrors()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "validation_errors property not delegated" in str(exc_info.value)
@@ -88,7 +88,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutHasValidationErrors()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "has_validation_errors method not delegated" in str(exc_info.value)
@@ -106,7 +106,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutToDictBasic()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "to_dict_basic method not delegated" in str(exc_info.value)
@@ -136,7 +136,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutDelegator()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Host must have delegator attribute" in str(exc_info.value)
@@ -154,7 +154,7 @@ class TestDelegationSystemCoverage:
         host = HostWithBadDelegator()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Delegator must have get_delegation_info method" in str(exc_info.value)
@@ -173,7 +173,7 @@ class TestDelegationSystemCoverage:
         host = HostWithFailingValidation()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        with pytest.raises(FlextExceptions) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Delegation validation should pass" in str(exc_info.value)
@@ -316,11 +316,11 @@ class TestValidateSystemExceptionHandling:
             assert "Runtime error" in result.error
 
     def test_flext_operation_error_handling(self) -> None:
-        """Test FlextExceptions.OperationError handling in validate_delegation_system."""
+        """Test FlextExceptions handling in validate_delegation_system."""
         with patch(
             "flext_core.delegation_system._validate_delegation_methods"
         ) as mock_validate:
-            mock_validate.side_effect = FlextExceptions.OperationError(
+            mock_validate.side_effect = FlextExceptions(
                 "Operation error", operation="test"
             )
 

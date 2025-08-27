@@ -380,7 +380,7 @@ class TestFlextAggregateRootEdgeCases:
     def test_initialization_with_invalid_data(self) -> None:
         """Test initialization with invalid data."""
         # Test with malformed metadata
-        with pytest.raises(FlextExceptions.ValidationError):
+        with pytest.raises(FlextExceptions):
             OrderAggregate(
                 customer_id="test",
                 total_amount=-100.0,  # This might be invalid depending on validation

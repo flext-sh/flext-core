@@ -82,7 +82,7 @@ class OrderService:
         return FlextResult[None].ok(None)
 
 # Setup with container
-container = get_flext_container()
+container = FlextContainer.get_global()
 container.register("payment", PaymentGateway())
 container.register("inventory", InventoryService())
 container.register("email", EmailService())

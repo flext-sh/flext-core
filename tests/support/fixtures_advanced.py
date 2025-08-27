@@ -259,7 +259,9 @@ async def async_context_manager() -> AsyncGenerator[Any]:
             await asyncio.sleep(0.001)  # Simulate async setup
             return self
 
-        async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+        async def __aexit__(
+            self, exc_type: object, exc_val: object, exc_tb: object
+        ) -> None:
             self.exited = True
             await asyncio.sleep(0.001)  # Simulate async cleanup
 

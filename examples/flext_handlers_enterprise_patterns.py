@@ -31,7 +31,6 @@ from flext_core import (
     FlextEntity,
     FlextHandlers,
     FlextLogger,
-    FlextLoggerFactory,
     FlextResult,
 )
 
@@ -200,7 +199,7 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
         """Initialize CreateUserHandler."""
         super().__init__("CreateUserHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         # Simulate user storage
@@ -219,7 +218,10 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
 
     def can_handle(self, message_type: type) -> bool:
         """Check if can handle this message type."""
-        return message_type is CreateUserCommand or (isinstance(message_type, type) and issubclass(message_type, CreateUserCommand))
+        return message_type is CreateUserCommand or (
+            isinstance(message_type, type)
+            and issubclass(message_type, CreateUserCommand)
+        )
 
     def validate_command(self, command: object) -> FlextResult[None]:
         """Additional command validation."""
@@ -272,7 +274,7 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("UpdateUserHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
 
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         self.users = user_storage
@@ -289,7 +291,10 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
 
     def can_handle(self, message_type: type) -> bool:
         """Check if can handle this message type."""
-        return message_type is UpdateUserCommand or (isinstance(message_type, type) and issubclass(message_type, UpdateUserCommand))
+        return message_type is UpdateUserCommand or (
+            isinstance(message_type, type)
+            and issubclass(message_type, UpdateUserCommand)
+        )
 
     def validate_command(self, command: object) -> FlextResult[None]:
         """Validate update command."""
@@ -350,7 +355,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("GetUserHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
 
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         self.users = user_storage
@@ -367,7 +372,9 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
 
     def can_handle(self, message_type: type) -> bool:
         """Check if can handle this message type."""
-        return message_type is GetUserQuery or (isinstance(message_type, type) and issubclass(message_type, GetUserQuery))
+        return message_type is GetUserQuery or (
+            isinstance(message_type, type) and issubclass(message_type, GetUserQuery)
+        )
 
     def validate_command(self, query: object) -> FlextResult[None]:
         """Validate query (renamed from validate_command for consistency)."""
@@ -424,7 +431,7 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("ListUsersHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
 
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         self.users = user_storage
@@ -441,7 +448,9 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
 
     def can_handle(self, message_type: type) -> bool:
         """Check if can handle this message type."""
-        return message_type is ListUsersQuery or (isinstance(message_type, type) and issubclass(message_type, ListUsersQuery))
+        return message_type is ListUsersQuery or (
+            isinstance(message_type, type) and issubclass(message_type, ListUsersQuery)
+        )
 
     def handle(self, request: object) -> FlextResult[object]:
         """List users with filtering and pagination."""
@@ -483,7 +492,7 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("UserCreatedEventHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
         # Don't override _handler_name as it's Final in parent class
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         self._notifications_sent = 0
@@ -500,7 +509,10 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
     def can_handle(self, message_type: type) -> bool:
         """Check if can handle this request type."""
-        return message_type is UserCreatedEvent or (isinstance(message_type, type) and issubclass(message_type, UserCreatedEvent))
+        return message_type is UserCreatedEvent or (
+            isinstance(message_type, type)
+            and issubclass(message_type, UserCreatedEvent)
+        )
 
     def handle(self, request: object) -> FlextResult[object]:
         """Handle user created event."""
@@ -547,7 +559,7 @@ class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("UserUpdatedEventHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
 
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
 
@@ -591,7 +603,7 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         super().__init__("OrderCreatedEventHandler")
         # Use imported FlextLoggerFactory for proper logger initialization
 
-        self._logger = FlextLoggerFactory.get_logger(
+        self._logger = FlextLogger(
             f"{self.__class__.__module__}.{self.__class__.__name__}",
         )
         self._orders_processed = 0
@@ -891,7 +903,9 @@ def _setup_registry() -> FlextHandlers.Management.HandlerRegistry:
     return registry
 
 
-def _retrieve_handlers_by_key(registry: FlextHandlers.Management.HandlerRegistry) -> None:
+def _retrieve_handlers_by_key(
+    registry: FlextHandlers.Management.HandlerRegistry,
+) -> None:
     result = registry.get_handler("create_user")
     if result.success:
         pass
@@ -900,7 +914,9 @@ def _retrieve_handlers_by_key(registry: FlextHandlers.Management.HandlerRegistry
         pass
 
 
-def _retrieve_handlers_by_type(registry: FlextHandlers.Management.HandlerRegistry) -> None:
+def _retrieve_handlers_by_type(
+    registry: FlextHandlers.Management.HandlerRegistry,
+) -> None:
     # Using key-based access since type-based registration was not done
     result = registry.get_handler("create_user")
     if result.success:
@@ -928,7 +944,9 @@ def _process_with_registry(registry: FlextHandlers.Management.HandlerRegistry) -
                 pass
 
 
-def _create_handler_chain() -> tuple[FlextHandlers.Patterns.HandlerChain, dict[str, User], str | None]:
+def _create_handler_chain() -> tuple[
+    FlextHandlers.Patterns.HandlerChain, dict[str, User], str | None
+]:
     """Create handler chain and return chain, storage, and user_id."""
     # Create different types of handlers
     create_handler = CreateUserHandler()
@@ -944,7 +962,9 @@ def _create_handler_chain() -> tuple[FlextHandlers.Patterns.HandlerChain, dict[s
     chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", create_handler))
     chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", get_handler))
     chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", update_handler))
-    chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", user_event_handler))
+    chain.add_handler(
+        cast("FlextHandlers.Protocols.ChainableHandler", user_event_handler)
+    )
 
     # Process create command and get user_id
     create_command = CreateUserCommand(name="Chain User", email="chain@example.com")
@@ -961,7 +981,9 @@ def _create_handler_chain() -> tuple[FlextHandlers.Patterns.HandlerChain, dict[s
     return chain, user_storage, user_id
 
 
-def _process_get_query(chain: FlextHandlers.Patterns.HandlerChain, user_id: str | None) -> None:
+def _process_get_query(
+    chain: FlextHandlers.Patterns.HandlerChain, user_id: str | None
+) -> None:
     """Process get query through the chain."""
     if not user_id:
         return
@@ -975,7 +997,9 @@ def _process_get_query(chain: FlextHandlers.Patterns.HandlerChain, user_id: str 
             pass
 
 
-def _process_update_command(chain: FlextHandlers.Patterns.HandlerChain, user_id: str | None) -> None:
+def _process_update_command(
+    chain: FlextHandlers.Patterns.HandlerChain, user_id: str | None
+) -> None:
     """Process update command through the chain."""
     if not user_id:
         return
@@ -992,7 +1016,9 @@ def _process_update_command(chain: FlextHandlers.Patterns.HandlerChain, user_id:
             pass
 
 
-def _process_event_through_all_handlers(chain: FlextHandlers.Patterns.HandlerChain) -> None:
+def _process_event_through_all_handlers(
+    chain: FlextHandlers.Patterns.HandlerChain,
+) -> None:
     """Process event through all applicable handlers."""
     user_event = UserCreatedEvent(
         user_id="event_user",
@@ -1060,7 +1086,9 @@ def _create_function_handlers() -> tuple[
     )
 
 
-def _use_message_handler(message_handler: FlextHandlers.Implementation.BasicHandler) -> None:
+def _use_message_handler(
+    message_handler: FlextHandlers.Implementation.BasicHandler,
+) -> None:
     try:
         result = message_handler.handle("hello world")
         if result.success:
@@ -1075,7 +1103,9 @@ def _use_message_handler(message_handler: FlextHandlers.Implementation.BasicHand
         pass
 
 
-def _use_number_handler(number_handler: FlextHandlers.Implementation.BasicHandler) -> None:
+def _use_number_handler(
+    number_handler: FlextHandlers.Implementation.BasicHandler,
+) -> None:
     try:
         result = number_handler.handle(42)
         if result.success:
@@ -1090,7 +1120,9 @@ def _use_number_handler(number_handler: FlextHandlers.Implementation.BasicHandle
         pass
 
 
-def _process_complex_order(order_handler: FlextHandlers.Implementation.BasicHandler) -> None:
+def _process_complex_order(
+    order_handler: FlextHandlers.Implementation.BasicHandler,
+) -> None:
     def process_order_total(
         order_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:

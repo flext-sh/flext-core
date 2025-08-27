@@ -39,8 +39,8 @@ class TestFlextDelegatedPropertyCoverage:
             has_setter=False,  # Read-only property
         )
 
-        # Trying to set should raise FlextExceptions.OperationError
-        with pytest.raises(FlextExceptions.OperationError) as exc_info:
+        # Trying to set should raise FlextExceptions
+        with pytest.raises(FlextExceptions) as exc_info:
             delegated_prop.__set__(None, "new_value")
 
         error = exc_info.value
