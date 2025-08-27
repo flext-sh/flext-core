@@ -13,7 +13,6 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from flext_core import (
     FlextAggregateRoot,
     FlextEntity,
-    FlextEvent,
     FlextFactory,
     FlextPayload,
     FlextResult,
@@ -509,7 +508,7 @@ class TestFlextAggregateRoot:
                 f"Expected {1}, got {len(aggregate.get_domain_events())}",
             )
         event = aggregate.get_domain_events()[0]
-        assert isinstance(event, FlextEvent)
+        assert isinstance(event, FlextPayload)
         # Modern FlextEntityId wrapper - compare string representations
         if str(event.get_metadata("aggregate_id")) != str(aggregate.id):
             raise AssertionError(

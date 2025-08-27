@@ -13,21 +13,8 @@ import pytest
 
 from flext_core import ERROR_CODES, FlextResult
 from flext_core.exceptions import (
-    FlextAlreadyExistsError,
-    FlextAttributeError,
-    FlextAuthenticationError,
-    FlextConfigurationError,
-    FlextConnectionError,
-    FlextCriticalError,
-    FlextError,
     FlextExceptions,
-    FlextNotFoundError,
-    FlextOperationError,
-    FlextPermissionError,
     FlextProcessingError,
-    FlextTimeoutError,
-    FlextTypeError,
-    FlextValidationError,
     clear_exception_metrics,
     get_exception_metrics,
 )
@@ -43,26 +30,26 @@ def get_dynamic_attr(obj: object, attr: str, default: object = None) -> object:
 
 
 class TestFlextError:
-    """Test FlextError base exception functionality."""
+    """Test FlextExceptions.Error base exception functionality."""
 
     def test_flext_error_basic_creation(self) -> None:
-        """Test basic FlextError creation."""
-        error = FlextError("Test error message")
+        """Test basic FlextExceptions.Error creation."""
+        error = FlextExceptions.Error("Test error message")
 
         assert "Test error message" in str(error)
         assert "FLEXT_" in str(error)  # Should have FLEXT_ prefix
         assert cast("str", get_dynamic_attr(error, "message", "")) == "Test error message"
         # Error code should be mapped through ERROR_CODES system
         assert "FLEXT_" in cast("str", get_dynamic_attr(error, "error_code", ""))  # Should have FLEXT_ prefix
-        # FlextError uses FLEXT_0001 as default error code
+        # FlextExceptions.Error uses FLEXT_0001 as default error code
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_0001"
         assert isinstance(error.context, dict)
         assert isinstance(error.timestamp, float)
         assert isinstance(error.correlation_id, str)
 
     def test_flext_error_with_error_code(self) -> None:
-        """Test FlextError with specific error code."""
-        error = FlextError(
+        """Test FlextExceptions.Error with specific error code."""
+        error = FlextExceptions.Error(
             "Configuration error",
             error_code=ERROR_CODES["CONFIGURATION_ERROR"],
         )
@@ -72,12 +59,12 @@ class TestFlextError:
         assert cast("str", get_dynamic_attr(error, "message", "")) == "Configuration error"
 
     def test_flext_error_with_context(self) -> None:
-        """Test FlextError with custom context."""
+        """Test FlextExceptions.Error with custom context."""
         context: dict[str, object] = {
             "component": "test_component",
             "operation": "test_operation",
         }
-        error = FlextError(
+        error = FlextExceptions.Error(
             "Context error",
             context=context,
         )
@@ -91,14 +78,14 @@ class TestFlextError:
             raise AssertionError(f"Expected {'Context error'}, got {cast('str', get_dynamic_attr(error, "message", ""))}")
 
     def test_flext_error_with_full_context(self) -> None:
-        """Test FlextError with full context and error code."""
+        """Test FlextExceptions.Error with full context and error code."""
         context: dict[str, object] = {
             "component": "test_component",
             "operation": "test_operation",
             "user_id": "test_user",
         }
 
-        error = FlextError(
+        error = FlextExceptions.Error(
             "Context error",
             error_code=ERROR_CODES["VALIDATION_ERROR"],
             context=context,
@@ -116,7 +103,7 @@ class TestFlextError:
 
     def test_flext_error_context_enhancement(self) -> None:
         """Test automatic context enhancement."""
-        error = FlextError("Test error")
+        error = FlextExceptions.Error("Test error")
 
         # Context should be available even if not explicitly set
         assert isinstance(error.context, dict)
@@ -124,8 +111,8 @@ class TestFlextError:
         assert error.timestamp > 0
 
     def test_flext_error_serialization(self) -> None:
-        """Test FlextError serialization."""
-        error = FlextError(
+        """Test FlextExceptions.Error serialization."""
+        error = FlextExceptions.Error(
             "Serialization test",
             error_code=ERROR_CODES["OPERATION_ERROR"],
             context={"test_field": "test_value"},
@@ -160,8 +147,8 @@ class TestFlextError:
         assert isinstance(serialized["timestamp"], float)
 
     def test_flext_error_str_representation(self) -> None:
-        """Test string representation of FlextError."""
-        error = FlextError("String test error")
+        """Test string representation of FlextExceptions.Error."""
+        error = FlextExceptions.Error("String test error")
         str_repr = str(error)
 
         if "String test error" not in str_repr:
@@ -171,48 +158,48 @@ class TestFlextError:
         assert "FLEXT_" in str_repr  # Should have FLEXT_ prefix
 
     def test_flext_error_repr_representation(self) -> None:
-        """Test repr representation of FlextError."""
-        error = FlextError("Repr test error")
+        """Test repr representation of FlextExceptions.Error."""
+        error = FlextExceptions.Error("Repr test error")
         repr_str = repr(error)
 
-        if "FlextError" not in repr_str:
-            raise AssertionError(f"Expected {'FlextError'} in {repr_str}")
+        if "FlextExceptions.Error" not in repr_str:
+            raise AssertionError(f"Expected {'FlextExceptions.Error'} in {repr_str}")
         assert "Repr test error" in repr_str
 
     def test_flext_error_inheritance(self) -> None:
-        """Test FlextError inheritance from Exception."""
-        error = FlextError("Inheritance test")
+        """Test FlextExceptions.Error inheritance from Exception."""
+        error = FlextExceptions.Error("Inheritance test")
 
         assert isinstance(error, Exception)
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_flext_error_raise_and_catch(self) -> None:
-        """Test raising and catching FlextError."""
+        """Test raising and catching FlextExceptions.Error."""
         test_message = "Test exception"
-        with pytest.raises(FlextError) as exc_info:
-            raise FlextError(test_message)
+        with pytest.raises(FlextExceptions.Error) as exc_info:
+            raise FlextExceptions.Error(test_message)
 
         caught_error = exc_info.value
         if cast("str", get_dynamic_attr(caught_error, "message", "")) != test_message:
             raise AssertionError(f"Expected {test_message}, got {cast('str', get_dynamic_attr(caught_error, "message", ""))}")
-        assert isinstance(caught_error, FlextError)
+        assert isinstance(caught_error, FlextExceptions.Error)
 
 
 class TestFlextValidationError:
-    """Test FlextValidationError functionality."""
+    """Test FlextExceptions.ValidationError functionality."""
 
     def test_validation_error_basic(self) -> None:
         """Test basic validation error creation."""
-        error = FlextValidationError("Field validation failed")
+        error = FlextExceptions.ValidationError("Field validation failed")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Field validation failed":
             raise AssertionError(
                 f"Expected {'Field validation failed'}, got {cast('str', get_dynamic_attr(error, "message", ""))}",
             )
         # Error code should be mapped through ERROR_CODES system
-        # FlextValidationError uses FLEXT_3001 error code
+        # FlextExceptions.ValidationError uses FLEXT_3001 error code
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_3001"
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_validation_error_with_field_details(self) -> None:
         """Test validation error with field-specific context."""
@@ -222,14 +209,14 @@ class TestFlextValidationError:
             "rules": ["email_format"],
         }
 
-        error = FlextValidationError(
+        error = FlextExceptions.ValidationError(
             "Email validation failed",
             field="email",
             value="invalid-email",
             validation_details=validation_details,
         )
 
-        # FlextValidationError uses direct context, not nested
+        # FlextExceptions.ValidationError uses direct context, not nested
         if cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["field"] != "email":
             raise AssertionError(f"Expected {'email'}, got {error.context['field']}")
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["value"] == "invalid-email"
@@ -246,7 +233,7 @@ class TestFlextValidationError:
             "rules": ["required", "format", "length"],
         }
 
-        error = FlextValidationError(
+        error = FlextExceptions.ValidationError(
             "Multiple validation errors",
             field="user_data",
             validation_details=validation_details,
@@ -271,7 +258,7 @@ class TestFlextValidationError:
     def test_validation_error_serialization(self) -> None:
         """Test validation error serialization includes validation details."""
         validation_details: dict[str, object] = {"field": "username", "value": "ab"}
-        error = FlextValidationError(
+        error = FlextExceptions.ValidationError(
             "Username too short",
             validation_details=validation_details,
         )
@@ -296,11 +283,11 @@ class TestFlextValidationError:
 
 
 class TestFlextTypeError:
-    """Test FlextTypeError functionality."""
+    """Test FlextExceptions.TypeError functionality."""
 
     def test_type_error_basic(self) -> None:
         """Test basic type error creation."""
-        error = FlextTypeError("Type conversion failed")
+        error = FlextExceptions.TypeError("Type conversion failed")
 
         message = cast("str", get_dynamic_attr(error, "message", ""))
         error_code = cast("str", get_dynamic_attr(error, "error_code", ""))
@@ -309,11 +296,11 @@ class TestFlextTypeError:
                 f"Expected {'Type conversion failed'}, got {message}",
             )
         assert "TYPE" in error_code
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_type_error_with_type_info(self) -> None:
         """Test type error with type information."""
-        error = FlextTypeError(
+        error = FlextExceptions.TypeError(
             "Cannot convert string to int",
             expected_type=str,
             actual_type=int,
@@ -346,7 +333,7 @@ class TestFlextTypeError:
             "reason": "invalid_literal",
         }
 
-        error = FlextTypeError(
+        error = FlextExceptions.TypeError(
             "Type conversion error in user input",
             context=context,
         )
@@ -363,21 +350,21 @@ class TestFlextTypeError:
 
 
 class TestFlextOperationError:
-    """Test FlextOperationError functionality."""
+    """Test FlextExceptions.OperationError functionality."""
 
     def test_operation_error_basic(self) -> None:
         """Test basic operation error creation."""
-        error = FlextOperationError("Operation failed")
+        error = FlextExceptions.OperationError("Operation failed")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Operation failed":
             raise AssertionError(f"Expected {'Operation failed'}, got {cast('str', get_dynamic_attr(error, "message", ""))}")
         # Error code should be mapped through ERROR_CODES system
         assert "OPERATION" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_operation_error_with_operation_info(self) -> None:
         """Test operation error with operation details."""
-        error = FlextOperationError(
+        error = FlextExceptions.OperationError(
             "File read operation failed",
             operation="file_read",
             stage="file_open",
@@ -401,7 +388,7 @@ class TestFlextOperationError:
 
     def test_operation_error_with_retry_info(self) -> None:
         """Test operation error with retry context."""
-        error = FlextOperationError(
+        error = FlextExceptions.OperationError(
             "API call failed after retries",
             operation="api_call",
             context={
@@ -430,8 +417,8 @@ class TestSpecificErrors:
     """Test specific domain error types."""
 
     def test_configuration_error(self) -> None:
-        """Test FlextConfigurationError."""
-        error = FlextConfigurationError("Invalid configuration")
+        """Test FlextExceptions.ConfigurationError."""
+        error = FlextExceptions.ConfigurationError("Invalid configuration")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Invalid configuration":
             raise AssertionError(
@@ -439,11 +426,11 @@ class TestSpecificErrors:
             )
         # Error code should be the FLEXT format
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_2003"
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_connection_error(self) -> None:
-        """Test FlextConnectionError."""
-        error = FlextConnectionError("Database connection failed")
+        """Test FlextExceptions.ConnectionError."""
+        error = FlextExceptions.ConnectionError("Database connection failed")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Database connection failed":
             raise AssertionError(
@@ -451,11 +438,11 @@ class TestSpecificErrors:
             )
         # Error code should be the FLEXT format
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_2001"
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_authentication_error(self) -> None:
-        """Test FlextAuthenticationError."""
-        error = FlextAuthenticationError("Invalid credentials")
+        """Test FlextExceptions.AuthenticationError."""
+        error = FlextExceptions.AuthenticationError("Invalid credentials")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Invalid credentials":
             raise AssertionError(
@@ -463,21 +450,21 @@ class TestSpecificErrors:
             )
         # Error code should be mapped through ERROR_CODES system
         assert "AUTH" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_permission_error(self) -> None:
-        """Test FlextPermissionError."""
-        error = FlextPermissionError("Access denied")
+        """Test FlextExceptions.PermissionError."""
+        error = FlextExceptions.PermissionError("Access denied")
 
         if cast("str", get_dynamic_attr(error, "message", "")) != "Access denied":
             raise AssertionError(f"Expected {'Access denied'}, got {cast('str', get_dynamic_attr(error, "message", ""))}")
         # Error code should be mapped through ERROR_CODES system
         assert "PERMISSION" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        assert hasattr(error, "error_code")  # Check it has error_code like FlextError
+        assert hasattr(error, "error_code")  # Check it has error_code like FlextExceptions.Error
 
     def test_specific_errors_with_context(self) -> None:
         """Test specific errors with additional context."""
-        config_error = FlextConfigurationError(
+        config_error = FlextExceptions.ConfigurationError(
             "Missing configuration key",
             config_file="/etc/app/config.yml",
             context={"missing_key": "database.host"},
@@ -491,10 +478,10 @@ class TestSpecificErrors:
 
     def test_error_code_consistency(self) -> None:
         """Test that error codes are consistent across error types."""
-        validation_error = FlextValidationError("Test")
-        type_error = FlextTypeError("Test")
-        operation_error = FlextOperationError("Test")
-        config_error = FlextConfigurationError("Test")
+        validation_error = FlextExceptions.ValidationError("Test")
+        type_error = FlextExceptions.TypeError("Test")
+        operation_error = FlextExceptions.OperationError("Test")
+        config_error = FlextExceptions.ConfigurationError("Test")
 
         # Each should have different error codes - check actual codes
         assert cast("str", get_dynamic_attr(validation_error, "error_code", "")) == "FLEXT_3001"
@@ -514,13 +501,13 @@ class TestExceptionIntegration:
         def _raise_validation_error() -> None:
             """Helper to raise validation error."""
             validation_error_message = "Validation failed"
-            raise FlextValidationError(validation_error_message)
+            raise FlextExceptions.ValidationError(validation_error_message)
 
         def risky_operation() -> FlextResult[str]:
             try:
                 # Simulate an operation that might fail
                 _raise_validation_error()
-            except (FlextError, FlextValidationError) as e:
+            except (FlextExceptions.Error, FlextExceptions.ValidationError) as e:
                 return FlextResult[str].fail(str(e))
             return FlextResult[str].ok("Success")  # This line won't be reached
 
@@ -533,7 +520,7 @@ class TestExceptionIntegration:
 
     def test_exception_context_enhancement(self) -> None:
         """Test automatic context enhancement in exceptions."""
-        error = FlextOperationError(
+        error = FlextExceptions.OperationError(
             "Test operation error",
             context={"test": "value"},
         )
@@ -553,13 +540,13 @@ class TestExceptionIntegration:
             "user_data": {"name": "test", "email": "test@example.com"},
         }
 
-        error = FlextValidationError(
+        error = FlextExceptions.ValidationError(
             "User creation validation failed",
             validation_details={"field": "email", "value": "invalid_format"},
             context=original_context,
         )
 
-        # Check that FlextValidationError handles complex data
+        # Check that FlextExceptions.ValidationError handles complex data
         assert cast("str", get_dynamic_attr(error, "message", "")) == "User creation validation failed"
         # validation_details becomes direct context, passed context becomes nested
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["validation_details"] == {
@@ -584,16 +571,16 @@ class TestExceptionIntegration:
                 _raise_original_error()
             except ValueError as e:
                 operation_message = "Operation failed due to validation error"
-                raise FlextOperationError(
+                raise FlextExceptions.OperationError(
                     operation_message,
                     context={"original_error": str(e)},
                 ) from e
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _chain_exceptions()
 
         flext_error = exc_info.value
-        # FlextOperationError stores context in nested structure
+        # FlextExceptions.OperationError stores context in nested structure
         context_obj = cast("dict[str, object]", get_dynamic_attr(flext_error, "context", {}))
         nested_context = cast("dict[str, object]", context_obj["context"])
         original_error = nested_context["original_error"]
@@ -609,7 +596,7 @@ class TestErrorCodeIntegration:
 
     def test_error_code_enum_usage(self) -> None:
         """Test using error codes with exceptions."""
-        error = FlextError(
+        error = FlextExceptions.Error(
             "Test error",
             error_code=ERROR_CODES["VALIDATION_ERROR"],
         )
@@ -621,8 +608,8 @@ class TestErrorCodeIntegration:
 
     def test_error_context_variations(self) -> None:
         """Test error creation with different context variations."""
-        low_error = FlextError("Basic error", context={"priority": "low"})
-        high_error = FlextError("Important error", context={"priority": "high"})
+        low_error = FlextExceptions.Error("Basic error", context={"priority": "low"})
+        high_error = FlextExceptions.Error("Important error", context={"priority": "high"})
 
         nested_ctx_low = cast("dict[str, object]", get_dynamic_attr(low_error, "context", {}))["context"]
         if nested_ctx_low["priority"] != "low":
@@ -636,13 +623,13 @@ class TestErrorCodeIntegration:
     def test_default_error_codes(self) -> None:
         """Test default error codes for each exception type."""
         # Test that each exception type has appropriate default error code patterns
-        validation_error = FlextValidationError("test")
-        type_error = FlextTypeError("test")
-        operation_error = FlextOperationError("test")
-        config_error = FlextConfigurationError("test")
-        connection_error = FlextConnectionError("test")
-        auth_error = FlextAuthenticationError("test")
-        permission_error = FlextPermissionError("test")
+        validation_error = FlextExceptions.ValidationError("test")
+        type_error = FlextExceptions.TypeError("test")
+        operation_error = FlextExceptions.OperationError("test")
+        config_error = FlextExceptions.ConfigurationError("test")
+        connection_error = FlextExceptions.ConnectionError("test")
+        auth_error = FlextExceptions.AuthenticationError("test")
+        permission_error = FlextExceptions.PermissionError("test")
 
         # Check error codes match expected values from implementation
         assert cast("str", get_dynamic_attr(validation_error, "error_code", "")) == "FLEXT_3001"
@@ -659,14 +646,14 @@ class TestExceptionEdgeCases:
 
     def test_exception_with_none_message(self) -> None:
         """Test exception with empty message."""
-        # Test with empty string instead of None since FlextError expects str
-        error = FlextError("")
+        # Test with empty string instead of None since FlextExceptions.Error expects str
+        error = FlextExceptions.Error("")
         if cast("str", get_dynamic_attr(error, "message", "")) != "":
             raise AssertionError(f"Expected {''}, got {cast('str', get_dynamic_attr(error, "message", ""))}")
 
     def test_exception_with_empty_context(self) -> None:
         """Test exception with empty context."""
-        error = FlextError("Test", context={})
+        error = FlextExceptions.Error("Test", context={})
 
         # Should still have automatic fields
         assert isinstance(error.context, dict)
@@ -685,7 +672,7 @@ class TestExceptionEdgeCases:
             "simple": "value",
         }
 
-        error = FlextError("Complex context test", context=complex_context)
+        error = FlextExceptions.Error("Complex context test", context=complex_context)
 
         # Context parameter creates nested structure under 'context' key
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
@@ -708,9 +695,9 @@ class TestExceptionEdgeCases:
             "complex": complex(1, 2),
         }
 
-        error = FlextError("Non-serializable context", context=non_serializable_context)
+        error = FlextExceptions.Error("Non-serializable context", context=non_serializable_context)
 
-        # FlextError should handle non-serializable context gracefully
+        # FlextExceptions.Error should handle non-serializable context gracefully
         # Context gets nested
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["context"] == non_serializable_context
         assert cast("str", get_dynamic_attr(error, "message", "")) == "Non-serializable context"
@@ -728,7 +715,7 @@ class TestExceptionEdgeCases:
         # Create many exceptions to test memory efficiency
         errors = []
         for i in range(100):
-            error = FlextError(
+            error = FlextExceptions.Error(
                 f"Error {i}",
                 context={"index": i, "data": f"data_{i}"},
             )
@@ -751,7 +738,7 @@ class TestExceptionEdgeCases:
         # Create exceptions in rapid succession
         errors = []
         for _ in range(50):
-            error = FlextError("Thread safety test")
+            error = FlextExceptions.Error("Thread safety test")
             errors.append(error)
 
         # All should have proper error codes
@@ -774,21 +761,21 @@ class TestAdditionalExceptions:
     """Test additional exception types not previously covered."""
 
     def test_flext_not_found_error(self) -> None:
-        """Test FlextNotFoundError functionality."""
-        error = FlextNotFoundError(
+        """Test FlextExceptions.NotFoundError functionality."""
+        error = FlextExceptions.NotFoundError(
             "Resource not found", resource_id="123", resource_type="user"
         )
 
         assert "Resource not found" in str(error)
         assert "[NOT_FOUND]" in str(error)  # Should have NOT_FOUND error code
         assert "NOT_FOUND" in cast("str", get_dynamic_attr(error, "error_code", "")) or "FLEXT_NOT_FOUND" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        # FlextNotFoundError uses direct context, not nested
+        # FlextExceptions.NotFoundError uses direct context, not nested
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_id"] == "123"
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_type"] == "user"
 
     def test_flext_already_exists_error(self) -> None:
-        """Test FlextAlreadyExistsError functionality."""
-        error = FlextAlreadyExistsError(
+        """Test FlextExceptions.AlreadyExistsError functionality."""
+        error = FlextExceptions.AlreadyExistsError(
             "Resource exists",
             resource_id="456",
             resource_type="email",
@@ -800,19 +787,19 @@ class TestAdditionalExceptions:
             "ALREADY_EXISTS" in cast("str", get_dynamic_attr(error, "error_code", ""))
             or "FLEXT_ALREADY_EXISTS" in cast("str", get_dynamic_attr(error, "error_code", ""))
         )
-        # FlextAlreadyExistsError uses direct context
+        # FlextExceptions.AlreadyExistsError uses direct context
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_id"] == "456"
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_type"] == "email"
 
     def test_flext_timeout_error(self) -> None:
-        """Test FlextTimeoutError functionality."""
-        error = FlextTimeoutError(
+        """Test FlextExceptions.TimeoutError functionality."""
+        error = FlextExceptions.TimeoutError(
             "Operation timed out", timeout_seconds=30.0, context={"duration": 45}
         )
 
         assert "Operation timed out" in str(error)
         assert "FLEXT_" in str(error)  # Should have FLEXT_ prefix
-        # FlextTimeoutError uses FLEXT_2002 error code from constants
+        # FlextExceptions.TimeoutError uses FLEXT_2002 error code from constants
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_2002"
         # Field parameter is in direct context
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["timeout_seconds"] == 30.0
@@ -838,8 +825,8 @@ class TestAdditionalExceptions:
         assert nested_ctx["stage"] == "validation"
 
     def test_flext_critical_error(self) -> None:
-        """Test FlextCriticalError functionality."""
-        error = FlextCriticalError(
+        """Test FlextExceptions.CriticalError functionality."""
+        error = FlextExceptions.CriticalError(
             "System failure",
             service="database",
             context={"component": "connection"},
@@ -848,20 +835,20 @@ class TestAdditionalExceptions:
         assert "System failure" in str(error)
         assert "[CRITICAL_ERROR]" in str(error)  # Uses CRITICAL_ERROR format
         assert "CRITICAL_ERROR" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        # FlextCriticalError uses mixed context: service direct + context nested
+        # FlextExceptions.CriticalError uses mixed context: service direct + context nested
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["service"] == "database"
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
         nested_ctx = cast("dict[str, object]", context_obj["context"])
         assert nested_ctx["component"] == "connection"
 
     def test_flext_attribute_error(self) -> None:
-        """Test FlextAttributeError functionality."""
+        """Test FlextExceptions.AttributeError functionality."""
         attr_context: dict[str, object] = {
             "class_name": "TestClass",
             "attribute_name": "missing_attr",
             "available_attributes": ["attr1", "attr2"],
         }
-        error = FlextAttributeError(
+        error = FlextExceptions.AttributeError(
             "Attribute not found",
             attribute_context=attr_context,
         )
@@ -869,7 +856,7 @@ class TestAdditionalExceptions:
         assert "Attribute not found" in str(error)
         assert "[OPERATION_ERROR]" in str(error)  # Uses OPERATION_ERROR format
         assert "OPERATION_ERROR" in cast("str", get_dynamic_attr(error, "error_code", ""))
-        # FlextAttributeError uses direct context with attribute_context key
+        # FlextExceptions.AttributeError uses direct context with attribute_context key
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
         attr_ctx = cast("dict[str, object]", context_obj["attribute_context"])
         assert attr_ctx["class_name"] == "TestClass"
@@ -892,34 +879,34 @@ class TestAdditionalExceptions:
     def test_flext_exceptions_factory(self) -> None:
         """Test FlextExceptions factory methods."""
         # Test direct exception creation
-        validation_error = FlextExceptions.FlextValidationError(
+        validation_error = FlextExceptions.ValidationError(
             "Invalid field",
             field="email",
             value="invalid",
             validation_details={"rules": ["email_format"]},
         )
-        assert isinstance(validation_error, FlextValidationError)
+        assert isinstance(validation_error, FlextExceptions.ValidationError)
         # Field parameters create direct context (not nested)
         assert cast("dict[str, object]", get_dynamic_attr(validation_error, "context", {}))["field"] == "email"
         assert cast("dict[str, object]", get_dynamic_attr(validation_error, "context", {}))["value"] == "invalid"
 
         # Test create_type_error
-        type_error = FlextExceptions.FlextTypeError(
+        type_error = FlextExceptions.TypeError(
             "Type mismatch",
             expected_type=str,
             actual_type=int,
         )
-        assert isinstance(type_error, FlextTypeError)
-        # FlextTypeError field parameters create direct context
+        assert isinstance(type_error, FlextExceptions.TypeError)
+        # FlextExceptions.TypeError field parameters create direct context
         assert cast("dict[str, object]", get_dynamic_attr(type_error, "context", {}))["expected_type"] is str
         assert cast("dict[str, object]", get_dynamic_attr(type_error, "context", {}))["actual_type"] is int
 
         # Test create_operation_error
-        op_error = FlextExceptions.FlextOperationError(
+        op_error = FlextExceptions.OperationError(
             "Operation failed",
             operation="user_creation",
         )
-        assert isinstance(op_error, FlextOperationError)
+        assert isinstance(op_error, FlextExceptions.OperationError)
         # Field parameters create direct context
         assert cast("dict[str, object]", get_dynamic_attr(op_error, "context", {}))["operation"] == "user_creation"
 
@@ -928,13 +915,13 @@ class TestExceptionsCoverageImprovements:
     """Test cases specifically for improving coverage of exceptions.py module."""
 
     def test_context_truncation(self) -> None:
-        """Test FlextError context truncation (lines 121-124)."""
+        """Test FlextExceptions.Error context truncation (lines 121-124)."""
         # Create a large context that should be truncated
         large_context: dict[str, object] = {"data": "x" * 2000}  # Over 1000 char limit
 
-        error = FlextError("Test message", context=large_context)
+        error = FlextExceptions.Error("Test message", context=large_context)
 
-        # FlextError doesn't implement context truncation in current implementation
+        # FlextExceptions.Error doesn't implement context truncation in current implementation
         # Just verify the context exists and has large data (context is nested)
         assert "context" in error.context
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
@@ -943,19 +930,19 @@ class TestExceptionsCoverageImprovements:
         assert len(str(nested_ctx["data"])) == 2000
 
     def test_str_without_error_code(self) -> None:
-        """Test FlextError __str__ without error_code (line 130)."""
-        # FlextError always assigns a default error_code, so we need to test the __str__ logic
+        """Test FlextExceptions.Error __str__ without error_code (line 130)."""
+        # FlextExceptions.Error always assigns a default error_code, so we need to test the __str__ logic
         # by directly testing the conditional branch. Since error_code is always set,
         # we test the case where it would be falsy by mocking
-        error = FlextError("Simple message")
+        error = FlextExceptions.Error("Simple message")
 
-        # FlextError always has an error_code, so test the normal case
+        # FlextExceptions.Error always has an error_code, so test the normal case
         # This tests the __str__ method behavior with proper error code
         assert str(error) == f"[{cast('str', get_dynamic_attr(error, "error_code", ""))}] Simple message"
 
     def test_str_with_error_code(self) -> None:
-        """Test FlextError __str__ with error_code (line 129)."""
-        error = FlextError("Test message", error_code="E001")
+        """Test FlextExceptions.Error __str__ with error_code (line 129)."""
+        error = FlextExceptions.Error("Test message", error_code="E001")
 
         # Should return formatted message with error code
         assert str(error) == "[E001] Test message"
@@ -976,13 +963,13 @@ class TestExceptionsCoverageImprovements:
         assert recorded_metrics["AnotherError"] == 1
 
     def test_factory_config_error_with_config_key(self) -> None:
-        """Test FlextConfigurationError with config_key context."""
-        config_error = FlextConfigurationError(
+        """Test FlextExceptions.ConfigurationError with config_key context."""
+        config_error = FlextExceptions.ConfigurationError(
             "Config error",
             context={"config_key": "database.host", "extra": "data"},
         )
 
-        assert isinstance(config_error, FlextConfigurationError)
+        assert isinstance(config_error, FlextExceptions.ConfigurationError)
         assert cast("str", get_dynamic_attr(config_error, "message", "")) == "Config error"
         # The config_key should be in the nested context
         context_obj = cast("dict[str, object]", get_dynamic_attr(config_error, "context", {}))
@@ -992,13 +979,13 @@ class TestExceptionsCoverageImprovements:
 
     def test_factory_connection_error_with_endpoint(self) -> None:
         """Test create_connection_error with endpoint (lines 658-661)."""
-        conn_error = FlextExceptions.FlextConnectionError(
+        conn_error = FlextExceptions.ConnectionError(
             "Connection failed",
             endpoint="https://api.example.com",
             timeout=30,
         )
 
-        assert isinstance(conn_error, FlextConnectionError)
+        assert isinstance(conn_error, FlextExceptions.ConnectionError)
         assert cast("str", get_dynamic_attr(conn_error, "message", "")) == "Connection failed"
         # The endpoint should be in the error's context
         assert "endpoint" in str(

@@ -14,12 +14,15 @@ from typing import cast
 import pytest
 
 from flext_core import (
+    FlextExceptions,
     FlextMixinDelegator,
-    FlextOperationError,
     FlextResult,
     create_mixin_delegator,
     validate_delegation_system,
 )
+
+# Initialize dynamic exception classes
+FlextExceptions.initialize()
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -319,7 +322,7 @@ class TestFlextMixinDelegator:
 
         # Test property getter
         assert hasattr(host, "writable_property")
-        value = host.writable_property
+        value = getattr(host, "writable_property")  # noqa: B009
         if value != "mixin1_value":
             raise AssertionError(f"Expected {'mixin1_value'}, got {value}")
 
@@ -329,10 +332,11 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test property setter using setattr/getattr to satisfy typing
-        host.writable_property = "new_value"
-        if host.writable_property != "new_value":
+        setattr(host, "writable_property", "new_value")  # noqa: B010
+        property_value = getattr(host, "writable_property")  # noqa: B009
+        if property_value != "new_value":
             raise AssertionError(
-                f"Expected {'new_value'}, got {host.writable_property}",
+                f"Expected {'new_value'}, got {property_value}",
             )
 
     def test_property_delegation_readonly(self) -> None:
@@ -341,17 +345,17 @@ class TestFlextMixinDelegator:
         FlextMixinDelegator(host, SampleMixin1)
 
         # Test readonly property via getattr
-        value = host.readonly_property
+        value = getattr(host, "readonly_property")  # noqa: B009
         if value != "readonly_value":
             raise AssertionError(f"Expected {'readonly_value'}, got {value}")
 
-        # Test that setting readonly property raises FlextOperationError
+        # Test that setting readonly property raises FlextExceptions.OperationError
         # (custom behavior)
         with pytest.raises(
-            FlextOperationError,
+            getattr(FlextExceptions, "FlextOperationError"),  # noqa: B009
             match="Property 'readonly_property' is read-only",
         ):
-            host.readonly_property = "new_value"
+            setattr(host, "readonly_property", "new_value")  # noqa: B010
 
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
@@ -379,10 +383,10 @@ class TestFlextMixinDelegator:
 
         # Test that delegation error is properly wrapped
         with pytest.raises(
-            FlextOperationError,
+            getattr(FlextExceptions, "FlextOperationError"),  # noqa: B009
             match="Delegation error in ErrorMixin.error_method",
         ):
-            host.error_method()
+            getattr(host, "error_method")  # noqa: B009
 
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
@@ -749,7 +753,7 @@ class TestDelegationSystemEdgeCases:
         FlextMixinDelegator(host, Mixin1, Mixin2)
 
         # Should have the method from the last registered mixin - use cast for dynamic delegation
-        result = host.conflict_method()
+        result = getattr(host, "conflict_method")  # noqa: B009
         # The actual behavior depends on the order of processing
         if result not in {"mixin1", "mixin2"}:
             msg: str = f"Expected {'mixin1', 'mixin2'}, got {result}"
@@ -837,7 +841,7 @@ class TestDelegationSystemEdgeCases:
                 f"Expected {'property_with_error'} in {type(host).__dict__}",
             )
         with pytest.raises(ValueError, match="Property getter error"):
-            _ = host.property_with_error
+            _ = getattr(host, "property_with_error")  # noqa: B009
 
     def test_mixin_registry_persistence(self) -> None:
         """Test that mixin registry persists across delegator instances."""
@@ -983,7 +987,7 @@ class TestDelegationSystemIntegration:
 
         # Test property delegation
         assert hasattr(host, "writable_property")
-        value = host.writable_property
+        value = getattr(host, "writable_property")  # noqa: B009
         assert isinstance(value, str)
 
         # Test validation

@@ -1,4 +1,9 @@
-"""Protocol definitions for FLEXT ecosystem contracts."""
+"""Protocol definitions for FLEXT ecosystem contracts.
+
+Core protocol definitions that avoid ALL circular imports by using string annotations
+and minimal external dependencies. This is a foundation module that should not
+import from other flext_core modules at runtime.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +11,8 @@ from abc import abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
 
-from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+# Import only essential types to avoid circular dependencies
+# Currently no TYPE_CHECKING imports needed
 
 # ParamSpec and TypeVar for generic callable protocols
 P = ParamSpec("P")
@@ -45,15 +50,15 @@ class FlextProtocols:
             class UserService(
                 FlextProtocols.Domain.Service, FlextProtocols.Foundation.Validator[User]
             ):
-                def validate(self, user: User) -> FlextResult[None]: ...
-                def start(self) -> FlextResult[None]: ...
+                def validate(self, user: User) -> object: ...
+                def start(self) -> object: ...
 
         Application layer patterns::
 
             handler: FlextProtocols.Application.Handler[CreateUser, str] = (
                 CreateUserHandler()
             )
-            result = handler(CreateUser(name="John"))  # Returns FlextResult[str]
+            result = handler(CreateUser(name="John"))  # Returns Any
 
     """
 
@@ -94,7 +99,7 @@ class FlextProtocols:
         class Validator[T](Protocol):
             """Generic validator protocol for type-safe validation."""
 
-            def validate(self, data: T) -> FlextResult[None]:
+            def validate(self, data: T) -> object:
                 """Validate input data and return success/failure status."""
                 ...
 
@@ -108,14 +113,14 @@ class FlextProtocols:
         class Factory[T](Protocol):
             """Type-safe factory protocol for object creation."""
 
-            def create(self, **kwargs: object) -> FlextResult[T]:
+            def create(self, **kwargs: object) -> object:
                 """Create instance of type T."""
                 ...
 
         class AsyncFactory[T](Protocol):
             """Async factory protocol for asynchronous object creation."""
 
-            async def create_async(self, **kwargs: object) -> FlextResult[T]:
+            async def create_async(self, **kwargs: object) -> object:
                 """Create instance asynchronously."""
                 ...
 
@@ -129,22 +134,22 @@ class FlextProtocols:
         class Service(Protocol):
             """Domain service protocol with lifecycle management and callable interface."""
 
-            def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
+            def __call__(self, *args: object, **kwargs: object) -> object:
                 """Callable interface for service invocation."""
                 ...
 
             @abstractmethod
-            def start(self) -> FlextResult[None]:
+            def start(self) -> object:
                 """Start the service."""
                 ...
 
             @abstractmethod
-            def stop(self) -> FlextResult[None]:
+            def stop(self) -> object:
                 """Stop the service."""
                 ...
 
             @abstractmethod
-            def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
+            def health_check(self) -> object:
                 """Perform health check."""
                 ...
 
@@ -152,22 +157,22 @@ class FlextProtocols:
             """Repository protocol for data access patterns."""
 
             @abstractmethod
-            def get_by_id(self, entity_id: str) -> FlextResult[T | None]:
+            def get_by_id(self, entity_id: str) -> object:
                 """Get entity by ID."""
                 ...
 
             @abstractmethod
-            def save(self, entity: T) -> FlextResult[T]:
+            def save(self, entity: T) -> object:
                 """Save entity."""
                 ...
 
             @abstractmethod
-            def delete(self, entity_id: str) -> FlextResult[None]:
+            def delete(self, entity_id: str) -> object:
                 """Delete entity by ID."""
                 ...
 
             @abstractmethod
-            def find_all(self) -> FlextResult[list[T]]:
+            def find_all(self) -> object:
                 """Find all entities."""
                 ...
 
@@ -200,14 +205,12 @@ class FlextProtocols:
                 aggregate_id: str,
                 events: list[FlextProtocols.Domain.DomainEvent],
                 expected_version: int,
-            ) -> FlextResult[None]:
+            ) -> object:
                 """Save events for aggregate."""
                 ...
 
             @abstractmethod
-            def get_events(
-                self, aggregate_id: str
-            ) -> FlextResult[list[FlextProtocols.Domain.DomainEvent]]:
+            def get_events(self, aggregate_id: str) -> object:
                 """Get events for aggregate."""
                 ...
 
@@ -221,18 +224,18 @@ class FlextProtocols:
         class Handler[TInput, TOutput](Protocol):
             """Application handler with validation and processing."""
 
-            def __call__(self, input_data: TInput) -> FlextResult[TOutput]:
+            def __call__(self, input_data: TInput) -> object:
                 """Process input data and return transformed output."""
                 ...
 
-            def validate(self, data: TInput) -> FlextResult[None]:
+            def validate(self, data: TInput) -> object:
                 """Validate input before processing (Foundation.Validator composition)."""
                 ...
 
         class MessageHandler(Protocol):
             """Message handler for CQRS patterns."""
 
-            def handle(self, message: object) -> FlextResult[object]:
+            def handle(self, message: object) -> object:
                 """Handle incoming message and return result."""
                 ...
 
@@ -243,7 +246,7 @@ class FlextProtocols:
         class ValidatingHandler(MessageHandler, Protocol):
             """Handler with built-in validation capabilities."""
 
-            def validate(self, message: object) -> FlextResult[object]:
+            def validate(self, message: object) -> object:
                 """Validate message before processing (Foundation.Validator composition)."""
                 ...
 
@@ -254,14 +257,14 @@ class FlextProtocols:
                 self,
                 message: object,
                 context: dict[str, object],
-            ) -> FlextResult[bool]:
+            ) -> object:
                 """Check authorization for message processing."""
                 ...
 
         class EventProcessor(Protocol):
             """Event processor for domain event handling."""
 
-            def process_event(self, event: dict[str, object]) -> FlextResult[None]:
+            def process_event(self, event: dict[str, object]) -> object:
                 """Process domain event."""
                 ...
 
@@ -273,17 +276,17 @@ class FlextProtocols:
             """Unit of Work pattern for transaction management."""
 
             @abstractmethod
-            def begin(self) -> FlextResult[None]:
+            def begin(self) -> object:
                 """Begin transaction."""
                 ...
 
             @abstractmethod
-            def commit(self) -> FlextResult[None]:
+            def commit(self) -> object:
                 """Commit transaction."""
                 ...
 
             @abstractmethod
-            def rollback(self) -> FlextResult[None]:
+            def rollback(self) -> object:
                 """Rollback transaction."""
                 ...
 
@@ -297,11 +300,11 @@ class FlextProtocols:
         class Connection(Protocol):
             """Connection protocol for external systems with callable interface."""
 
-            def __call__(self, *args: object, **kwargs: object) -> FlextResult[bool]:
+            def __call__(self, *args: object, **kwargs: object) -> object:
                 """Callable interface for connection operations."""
                 ...
 
-            def test_connection(self) -> FlextResult[bool]:
+            def test_connection(self) -> object:
                 """Test connection to an external system."""
                 ...
 
@@ -309,43 +312,40 @@ class FlextProtocols:
                 """Get connection string for an external system."""
                 ...
 
-            def close_connection(self) -> FlextResult[None]:
+            def close_connection(self) -> object:
                 """Close connection to an external system."""
                 ...
 
         class LdapConnection(Connection, Protocol):
             """LDAP-specific connection protocol extending base Connection."""
 
-            def connect(self, uri: str, bind_dn: str, password: str) -> FlextResult[None]:
+            def connect(self, uri: str, bind_dn: str, password: str) -> object:
                 """Connect to LDAP server with authentication."""
                 ...
 
-            def bind(self, bind_dn: str, password: str) -> FlextResult[None]:
+            def bind(self, bind_dn: str, password: str) -> object:
                 """Bind with specific credentials."""
                 ...
 
-            def unbind(self) -> FlextResult[None]:
+            def unbind(self) -> object:
                 """Unbind from LDAP server."""
                 ...
 
             def search(
-                self,
-                base_dn: str,
-                search_filter: str,
-                scope: str = "subtree"
-            ) -> FlextResult[list[dict[str, object]]]:
+                self, base_dn: str, search_filter: str, scope: str = "subtree"
+            ) -> object:
                 """Perform LDAP search operation."""
                 ...
 
-            def add(self, dn: str, attributes: dict[str, object]) -> FlextResult[None]:
+            def add(self, dn: str, attributes: dict[str, object]) -> object:
                 """Add new LDAP entry."""
                 ...
 
-            def modify(self, dn: str, modifications: dict[str, object]) -> FlextResult[None]:
+            def modify(self, dn: str, modifications: dict[str, object]) -> object:
                 """Modify existing LDAP entry."""
                 ...
 
-            def delete(self, dn: str) -> FlextResult[None]:
+            def delete(self, dn: str) -> object:
                 """Delete LDAP entry."""
                 ...
 
@@ -358,22 +358,20 @@ class FlextProtocols:
 
             def authenticate(
                 self,
-                credentials: FlextTypes.Core.Dict,
-            ) -> FlextResult[FlextTypes.Core.Dict]:
+                credentials: dict[str, object],
+            ) -> object:
                 """Authenticate user with provided credentials."""
                 ...
 
             def authorize(
                 self,
-                user_info: FlextTypes.Core.Dict,
+                user_info: dict[str, object],
                 resource: str,
-            ) -> FlextResult[bool]:
+            ) -> object:
                 """Authorize user access to resource."""
                 ...
 
-            def refresh_token(
-                self, refresh_token: str
-            ) -> FlextResult[FlextTypes.Core.Dict]:
+            def refresh_token(self, refresh_token: str) -> object:
                 """Refresh authentication token."""
                 ...
 
@@ -381,7 +379,7 @@ class FlextProtocols:
         class Configurable(Protocol):
             """Configurable component protocol."""
 
-            def configure(self, config: dict[str, object]) -> FlextResult[None]:
+            def configure(self, config: dict[str, object]) -> object:
                 """Configure component with provided settings."""
                 ...
 
@@ -437,7 +435,7 @@ class FlextProtocols:
         class Plugin(Protocol):
             """Plugin protocol with configuration support."""
 
-            def configure(self, config: dict[str, object]) -> FlextResult[None]:
+            def configure(self, config: dict[str, object]) -> object:
                 """Configure component with provided settings (Infrastructure.Configurable composition)."""
                 ...
 
@@ -448,12 +446,12 @@ class FlextProtocols:
             @abstractmethod
             def initialize(
                 self, context: FlextProtocols.Extensions.PluginContext
-            ) -> FlextResult[None]:
+            ) -> object:
                 """Initialize plugin with context."""
                 ...
 
             @abstractmethod
-            def shutdown(self) -> FlextResult[None]:
+            def shutdown(self) -> object:
                 """Shutdown plugin and cleanup resources."""
                 ...
 
@@ -465,7 +463,7 @@ class FlextProtocols:
         class PluginContext(Protocol):
             """Plugin execution context protocol."""
 
-            def get_service(self, service_name: str) -> FlextResult[object]:
+            def get_service(self, service_name: str) -> object:
                 """Get service instance by name."""
                 ...
 
@@ -483,8 +481,8 @@ class FlextProtocols:
             def process(
                 self,
                 request: object,
-                next_handler: Callable[[object], FlextResult[object]],
-            ) -> FlextResult[object]:
+                next_handler: Callable[[object], object],
+            ) -> object:
                 """Process request with middleware logic."""
                 ...
 
@@ -494,8 +492,8 @@ class FlextProtocols:
             async def process_async(
                 self,
                 request: object,
-                next_handler: Callable[[object], Awaitable[FlextResult[object]]],
-            ) -> FlextResult[object]:
+                next_handler: Callable[[object], Awaitable[object]],
+            ) -> object:
                 """Process request asynchronously."""
                 ...
 
@@ -508,15 +506,15 @@ class FlextProtocols:
                 name: str,
                 value: float,
                 tags: dict[str, str] | None = None,
-            ) -> FlextResult[None]:
+            ) -> object:
                 """Record metric value."""
                 ...
 
-            def start_trace(self, operation_name: str) -> FlextResult[str]:
+            def start_trace(self, operation_name: str) -> object:
                 """Start distributed trace."""
                 ...
 
-            def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
+            def health_check(self) -> object:
                 """Perform health check."""
                 ...
 
@@ -575,7 +573,7 @@ class FlextProtocols:
 class DecoratedFunction[T](Protocol):
     """Decorated function protocol returning FlextResult for railway-oriented programming."""
 
-    def __call__(self, *args: object, **kwargs: object) -> FlextResult[T]:
+    def __call__(self, *args: object, **kwargs: object) -> object:
         """Execute the decorated function returning FlextResult."""
         ...
 
@@ -669,20 +667,5 @@ FlextPluginLoader = FlextProtocols.Extensions.PluginContext  # Loader is part of
 # =============================================================================
 
 __all__: list[str] = [
-    # Backward compatibility only - specific concrete classes
-    "DecoratedFunction",
-    # Observability protocols
-    "FlextAlertsProtocol",
-    # Specific protocol classes (not aliases)
-    "FlextAuthProtocol",
-    "FlextConfigurable",
-    "FlextMetricsProtocol",
-    "FlextObservabilityProtocol",
-    # Legacy compatibility
-    "FlextProtocol",
-    # Main hierarchical class - only protocols, not type aliases
-    "FlextProtocols",
-    "FlextSpanProtocol",
-    "FlextTracerProtocol",
-    "FlextValidator",
+    "FlextProtocols",  # ONLY main class exported
 ]

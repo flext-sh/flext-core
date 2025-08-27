@@ -13,7 +13,6 @@ from __future__ import annotations
 import time
 from typing import Any
 
-# ruff: noqa: ARG001, ARG002
 import pytest
 from hypothesis import assume, given, strategies as st
 from tests.support.async_utils import AsyncTestUtils
@@ -285,7 +284,7 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*args: object, **kwargs: object) -> dict[str, object]:
+        def arrange_data(*_args: object, **_kwargs: object) -> dict[str, object]:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: dict[str, object]) -> int:

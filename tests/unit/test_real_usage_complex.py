@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult, TEntityId, get_flext_container
+from flext_core import FlextContainer, FlextResult, FlextTypes, get_flext_container
 
 pytestmark = [pytest.mark.e2e]
 
@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.e2e]
 class TestUser:
     """Test user for testing."""
 
-    def __init__(self, user_id: TEntityId, name: str) -> None:
+    def __init__(self, user_id: FlextTypes.Domain.EntityId, name: str) -> None:
         """Initialize test user."""
         self.id = user_id
         self.name = name
@@ -32,7 +32,7 @@ class TestDatabase:
             "user-456": TestUser("user-456", "Jane Smith"),
         }
 
-    def get_user(self, user_id: TEntityId) -> TestUser | None:
+    def get_user(self, user_id: FlextTypes.Domain.EntityId) -> TestUser | None:
         """Get user by ID."""
         return self.users.get(user_id)
 
@@ -49,7 +49,7 @@ class UserService:
         """Initialize user service with database dependency."""
         self.database = database
 
-    def fetch_user(self, user_id: TEntityId) -> FlextResult[TestUser]:
+    def fetch_user(self, user_id: FlextTypes.Domain.EntityId) -> FlextResult[TestUser]:
         """Fetch user with type-safe error handling."""
         user = self.database.get_user(user_id)
         if user is None:
@@ -58,7 +58,7 @@ class UserService:
 
     def create_user(
         self,
-        user_id: TEntityId,
+        user_id: FlextTypes.Domain.EntityId,
         name: str,
     ) -> FlextResult[TestUser]:
         """Create a new user."""
@@ -211,7 +211,7 @@ class TestUsagePatterns:
     def test_entity_id_type_safety(self) -> None:
         """Test FlextEntityId type safety in real usage."""
         # Type-safe entity ID usage
-        user_id: TEntityId = "typed-user-123"
+        user_id: FlextTypes.Domain.EntityId = "typed-user-123"
 
         database = TestDatabase()
         service = UserService(database)

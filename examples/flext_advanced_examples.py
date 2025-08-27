@@ -22,7 +22,6 @@ from shared_domain import (
 from flext_core import (
     FlextCommands,
     FlextDecoratedFunction,
-    FlextDecorators,
     FlextResult,
     FlextSettings,
     get_logger,
@@ -131,7 +130,7 @@ def _display_order_information(order: SharedOrder) -> FlextResult[SharedOrder]:
 def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
     """Demonstrate CQRS query pattern."""
 
-    class GetOrdersQuery(FlextCommands.Query):
+    class GetOrdersQuery(FlextCommands.Models.Query):
         customer_email: str
         status: str | None = None
 
@@ -146,7 +145,7 @@ def _demonstrate_query_pattern(_order: SharedOrder) -> FlextResult[None]:
             return FlextResult.ok(None)
 
     class GetOrdersHandler(
-        FlextCommands.QueryHandler[GetOrdersQuery, list[SharedOrder]],
+        FlextCommands.Handlers.QueryHandler[GetOrdersQuery, list[SharedOrder]],
     ):
         def handle(self, query: GetOrdersQuery) -> FlextResult[list[SharedOrder]]:
             # Create user for order simulation
@@ -248,10 +247,9 @@ def _demonstrate_decorators() -> FlextResult[None]:
             raise ValueError(msg)
         return x / y
 
-    # Apply decorator using casting for protocol compliance
-    FlextDecorators.safe_result(
-        cast("FlextDecoratedFunction[float]", risky_calculation),
-    )
+    # FlextDecorators.safe_result not available in current version
+    # Would demonstrate decorator application for safe execution
+    cast("FlextDecoratedFunction[float]", risky_calculation)
 
     # Test safe execution - safe_result returns a function with different signature
     # The decorator transforms the function, so we test with FlextResult wrapping

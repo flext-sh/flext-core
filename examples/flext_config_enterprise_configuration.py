@@ -52,7 +52,7 @@ def demonstrate_basic_configuration() -> None:
     "\n" + "=" * 80
 
     # 1. Basic configuration creation
-    config_data: FlextTypes.Core.Config = {
+    config_data: FlextTypes.Config.ConfigDict = {
         "app_name": "MyApp",
         "debug": True,
         "max_connections": 100,
@@ -77,7 +77,7 @@ def demonstrate_basic_configuration() -> None:
         pass
 
     # 3. Configuration defaults
-    defaults: FlextTypes.Core.Config = {
+    defaults: FlextTypes.Config.ConfigDict = {
         "debug": False,
         "timeout": 30,
         "port": 8000,

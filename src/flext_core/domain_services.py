@@ -1,24 +1,22 @@
-"""Domain-Driven Design domain services implementation."""
+"""Domain-Driven Design domain services implementation.
+
+Provides enterprise-grade domain service patterns following DDD principles
+with stateless cross-entity operations, business logic orchestration, and
+type-safe error handling using FLEXT foundation patterns.
+"""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from typing import override
 
 from pydantic import ConfigDict
 
+from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextSerializableMixin
 from flext_core.models import FlextModel
 from flext_core.result import FlextResult
-
-# Type alias for flexible operation callables
-OperationType = (
-    Callable[[], object]
-    | Callable[[object], object]
-    | Callable[[object, object], object]
-    | Callable[[object, object, object], object]
-)
+from flext_core.utilities import FlextUtilities
 
 # =============================================================================
 # FLEXT DOMAIN SERVICE - Public DDD Domain Service implementation
@@ -47,9 +45,13 @@ class FlextDomainService[TDomainResult](
     # - Serialization methods from FlextSerializableMixin
 
     def is_valid(self) -> bool:
-        """Check if domain service is valid (compatibility with FlextValidatableMixin)."""
-        validation_result = self.validate_business_rules()
-        return validation_result.is_success
+        """Check if domain service is valid using foundation patterns."""
+        try:
+            validation_result = self.validate_business_rules()
+            return validation_result.is_success
+        except Exception:
+            # Use FlextUtilities for error logging if needed
+            return False
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -78,7 +80,7 @@ class FlextDomainService[TDomainResult](
         *args: object,
         **kwargs: object,
     ) -> FlextResult[object]:
-        """Execute operation with standard error handling and logging.
+        """Execute operation with standard error handling using foundation patterns.
 
         Args:
             operation_name: Name of the operation for logging
@@ -87,33 +89,58 @@ class FlextDomainService[TDomainResult](
             **kwargs: Keyword arguments to pass to the operation
 
         Returns:
-            Result of the operation
+            FlextResult containing the operation result or error
 
         """
         try:
             # Validate configuration first
             config_result = self.validate_config()
             if config_result.is_failure:
-                error_message = config_result.error or "Configuration validation failed"
-                return FlextResult[object].fail(error_message)
+                error_message = (
+                    config_result.error
+                    or f"{FlextConstants.Messages.VALIDATION_FAILED}: Configuration validation failed"
+                )
+                return FlextResult[object].fail(
+                    error_message, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                )
 
-            # Execute operation
+            # Validate operation is callable and execute
             if not callable(operation):
                 return FlextResult[object].fail(
-                    f"Operation {operation_name} is not callable"
+                    f"{FlextConstants.Messages.OPERATION_FAILED}: Operation {operation_name} is not callable",
+                    error_code=FlextConstants.Errors.OPERATION_ERROR,
                 )
+
+            # Execute the callable operation - MyPy should understand this is reachable
             result = operation(*args, **kwargs)
             return FlextResult[object].ok(result)
+
         except (RuntimeError, ValueError, TypeError) as e:
-            return FlextResult[object].fail(f"Operation {operation_name} failed: {e}")
+            return FlextResult[object].fail(
+                f"{FlextConstants.Messages.OPERATION_FAILED}: Operation {operation_name} failed: {e}",
+                error_code=FlextConstants.Errors.EXCEPTION_ERROR,
+            )
+        except Exception as e:
+            # Catch any other exceptions using FlextConstants
+            return FlextResult[object].fail(
+                f"{FlextConstants.Messages.UNKNOWN_ERROR}: Unexpected error in {operation_name}: {e}",
+                error_code=FlextConstants.Errors.UNKNOWN_ERROR,
+            )
 
     def get_service_info(self) -> dict[str, object]:
-        """Get service information for monitoring."""
+        """Get service information for monitoring using foundation patterns."""
         return {
             "service_type": self.__class__.__name__,
+            "service_id": FlextUtilities.Generators.generate_service_name(
+                self.__class__.__name__.lower()
+            ),
             "config_valid": self.validate_config().is_success,
+            "business_rules_valid": self.validate_business_rules().is_success,
+            "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
         }
 
 
 # Export API
-__all__: list[str] = ["FlextDomainService"]
+__all__: list[str] = [
+    "FlextDomainService",  # Main domain service base class
+]

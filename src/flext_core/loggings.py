@@ -874,17 +874,7 @@ def create_log_context(
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextLogContext",
-    "FlextLogContextManager",
-    "FlextLogEntry",
-    "FlextLogLevel",
-    "FlextLogger",
-    "FlextLoggerFactory",
-    # Convenience functions
-    "create_log_context",
-    "flext_get_logger",
-    "get_logger",
-    "setup_custom_trace_level",
+    "FlextLoggerFactory",  # ONLY main class exported
 ]
 
 

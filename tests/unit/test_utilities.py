@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -378,7 +377,7 @@ class TestFlextTypeGuards:
             (None, False),
         ],
     )
-    def test_string_type_guard(self, value: Any, expected: bool) -> None:
+    def test_string_type_guard(self, value: object, *, expected: bool) -> None:
         """Test string type guard with various inputs."""
         result = FlextUtilities.is_string(value)
         assert result == expected

@@ -11,9 +11,8 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core.decorators import FlextDecorators
-from flext_core.exceptions import FlextValidationError
-from flext_core.result import FlextResult
-from flext_core.validation import FlextPredicates
+from flext_core.exceptions import FlextExceptions
+from flext_core.utilities import FlextUtilities
 
 
 class FlextGuards:
@@ -23,7 +22,7 @@ class FlextGuards:
     including pure function wrapping, validation utilities, and factory methods
     into one main class with nested classes for organization.
 
-    CONSOLIDATED CLASSES: _PureWrapper + FlextGuards + FlextValidationUtils
+    CONSOLIDATED CLASSES: _PureWrapper + FlextGuards
     """
 
     # ==========================================================================
@@ -83,10 +82,7 @@ class FlextGuards:
         ) -> object:
             """Require value is not None with assertion-style validation."""
             if value is None:
-                raise FlextValidationError(
-                    message,
-                    validation_details={"field": "required_value", "value": value},
-                )
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -96,10 +92,7 @@ class FlextGuards:
         ) -> object:
             """Require value is a positive integer with comprehensive validation."""
             if not (isinstance(value, int) and value > 0):
-                raise FlextValidationError(
-                    message,
-                    validation_details={"field": "positive_value", "value": value},
-                )
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -113,15 +106,7 @@ class FlextGuards:
             if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
                 if not message:
                     message = f"Value must be between {min_val} and {max_val}"
-                raise FlextValidationError(
-                    message,
-                    validation_details={
-                        "field": "range_value",
-                        "value": value,
-                        "min_val": min_val,
-                        "max_val": max_val,
-                    },
-                )
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -130,11 +115,8 @@ class FlextGuards:
             message: str = "Value cannot be empty",
         ) -> object:
             """Require value is a non-empty string with comprehensive validation."""
-            if not isinstance(value, str) or not FlextPredicates.is_non_empty_string(value):  # type: ignore[attr-defined]
-                raise FlextValidationError(
-                    message,
-                    validation_details={"field": "non_empty_string", "value": value},
-                )
+            if not isinstance(value, str) or not value.strip():
+                raise FlextExceptions.ValidationError(message)
             return value
 
     # ==========================================================================
@@ -237,32 +219,14 @@ class FlextGuards:
         return FlextGuards.PureWrapper(func)
 
     @staticmethod
-    def make_factory(target_class: type) -> object:
-        """Create a simple factory class for safe object construction."""
-
-        class _Factory:
-            def create(self, **kwargs: object) -> FlextResult[object]:
-                try:
-                    instance = target_class(**kwargs)
-                    return FlextResult[object].ok(instance)
-                except Exception as e:
-                    return FlextResult[object].fail(f"Factory failed: {e}")
-
-        return _Factory()
+    def make_factory(target_class: type) -> FlextUtilities.SimpleFactory:
+        """Create a simple factory for safe object construction."""
+        return FlextUtilities.make_factory(target_class)
 
     @staticmethod
-    def make_builder(target_class: type) -> object:
-        """Create a simple builder class for fluent object construction."""
-
-        class _Builder:
-            def create(self, **kwargs: object) -> FlextResult[object]:
-                try:
-                    instance = target_class(**kwargs)
-                    return FlextResult[object].ok(instance)
-                except Exception as e:
-                    return FlextResult[object].fail(f"Builder failed: {e}")
-
-        return _Builder()
+    def make_builder(target_class: type) -> FlextUtilities.SimpleBuilder:
+        """Create a simple builder for fluent object construction."""
+        return FlextUtilities.make_builder(target_class)
 
 
 # =============================================================================
@@ -270,12 +234,11 @@ class FlextGuards:
 # =============================================================================
 
 # Export nested classes for external access (backward compatibility)
-FlextValidationUtils = FlextGuards.ValidationUtils
 _PureWrapper = FlextGuards.PureWrapper
 
 # Re-export FlextValidationDecorators methods as module-level functions
-validated = FlextDecorators.validated_with_result
-safe = FlextDecorators.safe_result
+validated = FlextDecorators.Validation.validate_input
+safe = FlextDecorators.Reliability.safe_result
 
 # Compatibility aliases pointing to consolidated FlextGuards
 immutable = FlextGuards.immutable
@@ -292,18 +255,5 @@ require_non_empty = FlextGuards.ValidationUtils.require_non_empty
 # =============================================================================
 
 __all__: list[str] = [
-    # Main static class
-    "FlextGuards",
-    # Utility classes
-    "FlextValidationUtils",
-    # Compatibility aliases for functions (alphabetically sorted)
-    "immutable",
-    "make_builder",
-    "make_factory",
-    "pure",
-    "require_non_empty",
-    "require_not_none",
-    "require_positive",
-    "safe",
-    "validated",
+    "FlextGuards",  # ONLY main class exported
 ]

@@ -196,7 +196,7 @@ def benchmark_rounds() -> int:
 def performance_tracker(benchmark: object) -> Callable[[Callable[[], Any]], Any]:
     """Provide performance tracking utility."""
 
-    def track(func: Callable[[], Any]) -> Any:
+    def track(func: Callable[[], object]) -> object:
         """Track performance of a function."""
         # Simple benchmark without complex configuration
         return func()  # For now, just execute - can enhance later
@@ -357,7 +357,7 @@ def create_test_value(**kwargs: object) -> dict[str, Any]:
 
 
 def create_test_result(
-    success: bool = True, value: object = None, error: str | None = None
+    *, success: bool = True, value: object = None, error: str | None = None
 ) -> FlextResult[Any]:
     """Create test result with specified state."""
     if success:

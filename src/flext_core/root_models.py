@@ -19,7 +19,7 @@ from typing import cast, override
 
 from pydantic import Field, RootModel, field_validator
 
-from flext_core.exceptions import FlextValidationError
+from flext_core.exceptions import FlextExceptions
 from flext_core.payload import FlextEvent, FlextPayload
 from flext_core.result import FlextResult
 
@@ -27,7 +27,14 @@ from flext_core.result import FlextResult
 # Note: These reference the FlextProtocols hierarchy for architectural consistency
 
 
-# Delayed import function to avoid circular imports
+# Delayed import functions to avoid circular imports
+def _generate_timestamp() -> str:
+    """Generate timestamp using FlextUtilities to avoid circular imports."""
+    from flext_core.utilities import FlextUtilities  # noqa: PLC0415
+
+    return FlextUtilities.Generators.generate_iso_timestamp()
+
+
 def _get_flext_event_class() -> type[FlextPayload[Mapping[str, object]]]:
     """Get FlextPayload class for event creation with delayed import to avoid circular dependencies."""
     return FlextPayload
@@ -57,7 +64,8 @@ class FlextEntityId(RootModel[str]):
         v = v.strip()
         if not v:
             msg = "Entity ID cannot be empty"
-            raise FlextValidationError(msg)
+            # Use the legacy name that's properly typed
+            raise FlextExceptions.FlextValidationError(msg)
         return v
 
     @override
@@ -97,13 +105,13 @@ class FlextVersion(RootModel[int]):
                 v = int(v)
             except ValueError as e:
                 msg = f"Invalid version number: {v}"
-                raise FlextValidationError(msg) from e
+                raise FlextExceptions.FlextValidationError(msg) from e
         if not isinstance(v, int):
             msg = f"Version must be an integer, got {type(v).__name__}"
-            raise FlextValidationError(msg)
+            raise FlextExceptions.FlextValidationError(msg)
         if v < 1:
             msg = "Version must be >= 1"
-            raise FlextValidationError(msg)
+            raise FlextExceptions.FlextValidationError(msg)
         return v
 
     def __int__(self) -> int:
@@ -209,9 +217,11 @@ class FlextTimestamp(RootModel[datetime]):
                 return datetime.fromisoformat(v)
             except ValueError as e:
                 msg = f"Invalid timestamp format: {v}"
-                raise FlextValidationError(msg) from e
+                # Use the legacy name that's properly typed
+                raise FlextExceptions.FlextValidationError(msg) from e
         msg = f"Timestamp must be datetime or ISO string, got {type(v).__name__}"
-        raise FlextValidationError(msg)
+        # Use the legacy name that's properly typed
+        raise FlextExceptions.FlextValidationError(msg)
 
     @override
     def __str__(self) -> str:
@@ -299,7 +309,7 @@ class FlextEventList(RootModel[list[dict[str, object]]]):
             {
                 "type": event_type,
                 "data": data,
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": _generate_timestamp(),
             },
         )
         new_list = FlextEventList(new_events)
@@ -578,20 +588,9 @@ ErrorMessage = FlextErrorMessage
 # =============================================================================
 
 __all__ = [
-    # Removed conflicting types that exist in other modules with validation:
-    # EmailAddress, EntityId, ErrorCode, ErrorMessage, Host, Port, Metadata, Timestamp, Version
-    # FlextEmailAddress, FlextServiceName moved to validation.py with proper validation
-    "FlextConnectionString",
-    # Core RootModel types - keeping only non-conflicting ones
-    "FlextEntityId",
-    "FlextErrorCode",
-    "FlextErrorMessage",
-    "FlextEventList",
-    "FlextHost",
-    "FlextMetadata",
-    "FlextPercentage",
-    "FlextPort",
-    "FlextTimestamp",
+    "FlextEmailAddress",  # Email root model
+    "FlextEntityId",  # Entity ID root model
+    # NOTE: FlextRootModels class not yet implemented
     "FlextVersion",
     # Removed conflicting aliases that exist in validation.py with proper validation:
     # Metadata, Port, ServiceName, Timestamp, Version

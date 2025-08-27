@@ -103,7 +103,7 @@ def data(self) -> T | None:  # Safe access, returns None on failure
 @property  
 def value(self) -> T:  # Direct access, raises on failure
     if self._error is not None:
-        raise FlextError(f"Result error: {self._error}")
+        raise FlextExceptions.Error(f"Result error: {self._error}")
     return cast(T, self._data)
 
 def unwrap(self) -> T:  # Explicit unwrap for functional style
@@ -340,7 +340,7 @@ def validate_string(self, value: str, min_len: int = 0, max_len: int = 100) -> F
 ```python
 class FlextExceptions:
     class Codes:
-        class FlextErrorCodes(StrEnum):
+        class FlextExceptions.ErrorCodes(StrEnum):
             VALIDATION_ERROR = "VALIDATION_ERROR"
             SYSTEM_ERROR = "SYSTEM_ERROR"
             # ... 15+ códigos
@@ -350,14 +350,14 @@ class FlextExceptions:
             _instance = None  # Singleton pattern desnecessário!
             
     class Handlers:
-        class FlextErrorHandler:
+        class FlextExceptions.ErrorHandler:
             # Mais 50+ linhas de handlers
 ```
 
 #### Exceções com Lógica Demais
 
 ```python
-class FlextValidationError(FlextError):
+class FlextExceptions.ValidationError(FlextExceptions.Error):
     def __init__(self, message: str, field: str | None = None, value: object = None):
         super().__init__(message)
         self.field = field
@@ -503,7 +503,7 @@ class FlextPayload[T](BaseModel, FlextSerializableMixin, FlextLoggableMixin):
         try:
             payload = cls(data=data, metadata=metadata)
             return FlextResult[FlextPayload[T]].ok(payload)
-        except (ValidationError, FlextValidationError) as e:
+        except (ValidationError, FlextExceptions.ValidationError) as e:
             return FlextResult[FlextPayload[T]].fail(f"Failed to create payload: {e}")
 
 # Especializações semânticas (não duplicação)
@@ -694,7 +694,7 @@ class FlextValidationDecorators(FlextAbstractValidationDecorator):
         """Factory method para validation decorators type-safe."""
         return _flext_validate_input_decorator(validator)
 
-class FlextErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
+class FlextExceptions.ErrorHandlingDecorators(FlextAbstractErrorHandlingDecorator):
     """Error handling decorators com railway-oriented programming."""
     
     def __init__(self, max_retries: int = 3, backoff_factor: float = 1.0) -> None:
@@ -740,7 +740,7 @@ class FlextDecorators:
     
     # Category access
     Validation = FlextValidationDecorators
-    ErrorHandling = FlextErrorHandlingDecorators  
+    ErrorHandling = FlextExceptions.ErrorHandlingDecorators  
     Performance = FlextPerformanceDecorators
     Logging = FlextLoggingDecorators
     Functional = FlextFunctionalDecorators
@@ -941,7 +941,7 @@ O módulo cria uma hierarquia de exceções com **5 níveis de aninhamento**:
 ```python
 class FlextExceptions:
     class Codes:
-        class FlextErrorCodes(StrEnum):
+        class FlextExceptions.ErrorCodes(StrEnum):
             # 15+ error codes
     
     class Metrics:
@@ -949,9 +949,9 @@ class FlextExceptions:
             # Singleton para métricas
     
     class Base:
-        class FlextErrorMixin:
+        class FlextExceptions.ErrorMixin:
             # Mixin base
-        class FlextUserError(FlextErrorMixin, TypeError):
+        class FlextExceptions.UserError(FlextExceptions.ErrorMixin, TypeError):
             # E mais 15+ classes de erro
 ```
 
@@ -967,11 +967,11 @@ class FlextExceptions:
 Cada classe de exceção repete a mesma estrutura:
 
 ```python
-class FlextXXXError(Base.FlextErrorMixin, SomeException):
+class FlextXXXError(Base.FlextExceptions.ErrorMixin, SomeException):
     def __init__(self, message: str, **kwargs):
         base_context = dict(context or {})
         # Mesma lógica repetida 37 vezes!
-        FlextExceptions.Base.FlextErrorMixin.__init__(...)
+        FlextExceptions.Base.FlextExceptions.ErrorMixin.__init__(...)
         SomeException.__init__(self, message)
 ```
 
@@ -1071,7 +1071,7 @@ O `FlextResult` que deveria ser um **pattern puro** está poluído com:
 
 ```python
 from flext_core.loggings import FlextLoggerFactory  # Por que logging?
-from flext_core.exceptions import FlextOperationError  # Acoplamento
+from flext_core.exceptions import FlextExceptions.OperationError  # Acoplamento
 from flext_core.constants import ERROR_CODES  # Mais acoplamento
 ```
 
@@ -1185,7 +1185,7 @@ loggings.py ← utilities.py ← typings.py
 $ python -c "from flext_core.result import FlextResult"
 # OK
 
-$ python -c "from flext_core.exceptions import FlextError"
+$ python -c "from flext_core.exceptions import FlextExceptions.Error"
 # OK
 
 $ python -c "from flext_core.core import FlextCore"
@@ -1777,21 +1777,21 @@ result = validate_string("test")
 
 ```python
 # shared_kernel/exceptions.py
-class FlextError(Exception):
+class FlextExceptions.Error(Exception):
     """Base exception for FLEXT."""
     pass
 
-class ValidationError(FlextError):
+class ValidationError(FlextExceptions.Error):
     """Validation failed."""
     def __init__(self, message: str, field: str | None = None):
         super().__init__(message)
         self.field = field
 
-class NotFoundError(FlextError):
+class NotFoundError(FlextExceptions.Error):
     """Resource not found."""
     pass
 
-class ConflictError(FlextError):
+class ConflictError(FlextExceptions.Error):
     """Resource conflict."""
     pass
 
@@ -2862,7 +2862,7 @@ class FlextAbstractValidatableMixin(FlextAbstractMixin):
 class FlextIdentifiableMixin(FlextAbstractIdentifiableMixin):
     def set_id(self, entity_id: FlextTypes.Domain.EntityId) -> None:
         if not FlextValidators.is_non_empty_string(entity_id):
-            raise FlextValidationError(...)  # Type-safe error handling
+            raise FlextExceptions.ValidationError(...)  # Type-safe error handling
 ```
 
 #### MRO Handling e Super() Pattern
@@ -2951,7 +2951,7 @@ class FlextFieldCore(BaseModel):
                 re.compile(value)
             except re.error as e:
                 msg = f"Invalid regex pattern: {e}"
-                raise FlextValidationError(msg, field="pattern", value=value) from e
+                raise FlextExceptions.ValidationError(msg, field="pattern", value=value) from e
         return value
 
     def validate_field_value(self, value: object) -> tuple[bool, str | None]:
@@ -4685,7 +4685,7 @@ def require_not_none(
 ) -> object:
     """Require value is not None with assertion-style validation."""
     if value is None:
-        raise FlextValidationError(
+        raise FlextExceptions.ValidationError(
             message,
             validation_details={"field": "required_value", "value": value},
         )

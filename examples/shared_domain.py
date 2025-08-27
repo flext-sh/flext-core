@@ -32,59 +32,59 @@ from typing import Self, override
 from flext_core import (
     FlextEntity,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
     FlextValue,
-    TEntityId,
     get_logger,
 )
 
 # =============================================================================
-# BUSINESS CONSTANTS - Centralized business rules
+# BUSINESS CONSTANTS - Using FlextConstants and FlextTypes patterns
 # =============================================================================
 
-# Age validation
-MIN_AGE = 18
-MAX_AGE = 120
+# Age validation - following FlextTypes pattern
+MIN_AGE: FlextTypes.Core.Integer = 18
+MAX_AGE: FlextTypes.Core.Integer = 120
 
 # Email validation
-MAX_EMAIL_LENGTH = 254
+MAX_EMAIL_LENGTH: FlextTypes.Core.Integer = 254
 
 # Name validation
-MIN_NAME_LENGTH = 2
-MAX_NAME_LENGTH = 100
+MIN_NAME_LENGTH: FlextTypes.Core.Integer = 2
+MAX_NAME_LENGTH: FlextTypes.Core.Integer = 100
 
 # Address validation
-MIN_STREET_LENGTH = 5
-MIN_CITY_LENGTH = 2
-MIN_POSTAL_CODE_LENGTH = 3
-MIN_COUNTRY_LENGTH = 2
+MIN_STREET_LENGTH: FlextTypes.Core.Integer = 5
+MIN_CITY_LENGTH: FlextTypes.Core.Integer = 2
+MIN_POSTAL_CODE_LENGTH: FlextTypes.Core.Integer = 3
+MIN_COUNTRY_LENGTH: FlextTypes.Core.Integer = 2
 
 # Currency validation
-CURRENCY_CODE_LENGTH = 3
-SUPPORTED_CURRENCIES = {"USD", "EUR", "GBP", "JPY", "CAD", "BRL"}
+CURRENCY_CODE_LENGTH: FlextTypes.Core.Integer = 3
+SUPPORTED_CURRENCIES: set[FlextTypes.Core.String] = {"USD", "EUR", "GBP", "JPY", "CAD", "BRL"}
 
 # Phone validation
-MIN_PHONE_LENGTH = 10
-MAX_PHONE_LENGTH = 15
+MIN_PHONE_LENGTH: FlextTypes.Core.Integer = 10
+MAX_PHONE_LENGTH: FlextTypes.Core.Integer = 15
 
 # Product validation
-MIN_PRODUCT_NAME_LENGTH = 3
-MAX_PRODUCT_PRICE = 100000
+MIN_PRODUCT_NAME_LENGTH: FlextTypes.Core.Integer = 3
+MAX_PRODUCT_PRICE: FlextTypes.Core.Integer = 100000
 
 # Order validation
-MIN_ORDER_ITEMS = 1
-MAX_ORDER_ITEMS = 50
+MIN_ORDER_ITEMS: FlextTypes.Core.Integer = 1
+MAX_ORDER_ITEMS: FlextTypes.Core.Integer = 50
 
 # Validation message lengths
-MIN_REASON_LENGTH = 10
-MIN_DESCRIPTION_LENGTH = 10
+MIN_REASON_LENGTH: FlextTypes.Core.Integer = 10
+MIN_DESCRIPTION_LENGTH: FlextTypes.Core.Integer = 10
 
 # Product item validation
-MIN_PRODUCT_ITEM_NAME_LENGTH = 2
-MAX_ORDER_ITEM_QUANTITY = 100
+MIN_PRODUCT_ITEM_NAME_LENGTH: FlextTypes.Core.Integer = 2
+MAX_ORDER_ITEM_QUANTITY: FlextTypes.Core.Integer = 100
 
 # Email format validation
-REQUIRED_EMAIL_PARTS = 2
+REQUIRED_EMAIL_PARTS: FlextTypes.Core.Integer = 2
 
 # =============================================================================
 # ENUMS - Domain enumerations
@@ -127,9 +127,12 @@ class PaymentMethod(StrEnum):
 
 
 class EmailAddress(FlextValue):
-    """Email address value object with comprehensive validation."""
+    """Email address value object with comprehensive validation.
 
-    email: str
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    email: FlextTypes.Core.String
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -161,9 +164,12 @@ class EmailAddress(FlextValue):
 
 
 class Age(FlextValue):
-    """Age value object with business rule validation."""
+    """Age value object with business rule validation.
 
-    value: int
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    value: FlextTypes.Core.Integer
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -178,10 +184,13 @@ class Age(FlextValue):
 
 
 class Money(FlextValue):
-    """Money value object with currency and amount validation."""
+    """Money value object with currency and amount validation.
+
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
 
     amount: Decimal
-    currency: str
+    currency: FlextTypes.Core.String
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -245,13 +254,16 @@ class Money(FlextValue):
 
 
 class Address(FlextValue):
-    """Address value object with validation."""
+    """Address value object with validation.
 
-    street: str
-    city: str
-    postal_code: str
-    country: str
-    state: str | None = None
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    street: FlextTypes.Core.String
+    city: FlextTypes.Core.String
+    postal_code: FlextTypes.Core.String
+    country: FlextTypes.Core.String
+    state: FlextTypes.Core.String | None = None
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -287,10 +299,13 @@ class Address(FlextValue):
 
 
 class PhoneNumber(FlextValue):
-    """Phone number value object with validation."""
+    """Phone number value object with validation.
 
-    number: str
-    country_code: str | None = None
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    number: FlextTypes.Core.String
+    country_code: FlextTypes.Core.String | None = None
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -320,9 +335,12 @@ class PhoneNumber(FlextValue):
 
 
 class User(FlextEntity):
-    """User entity with comprehensive business rules."""
+    """User entity with comprehensive business rules.
 
-    name: str
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    name: FlextTypes.Core.String
     email_address: EmailAddress
     age: Age
     status: UserStatus = UserStatus.PENDING
@@ -421,13 +439,16 @@ class User(FlextEntity):
 
 
 class Product(FlextEntity):
-    """Product entity with business rules."""
+    """Product entity with business rules.
 
-    name: str
-    description: str
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    name: FlextTypes.Core.String
+    description: FlextTypes.Core.String
     price: Money
-    category: str
-    in_stock: bool = True
+    category: FlextTypes.Core.String
+    in_stock: FlextTypes.Core.Boolean = True
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate product domain rules."""
@@ -508,11 +529,14 @@ class Product(FlextEntity):
 
 
 class OrderItem(FlextValue):
-    """Order item value object."""
+    """Order item value object.
 
-    product_id: TEntityId
-    product_name: str
-    quantity: int
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    product_id: FlextTypes.Domain.EntityId
+    product_name: FlextTypes.Core.String
+    quantity: FlextTypes.Core.Integer
     unit_price: Money
 
     @override
@@ -548,9 +572,12 @@ class OrderItem(FlextValue):
 
 
 class Order(FlextEntity):
-    """Order entity with complex business rules."""
+    """Order entity with complex business rules.
 
-    customer_id: TEntityId
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    customer_id: FlextTypes.Domain.EntityId
     items: list[OrderItem]
     status: OrderStatus = OrderStatus.PENDING
     payment_method: PaymentMethod | None = None
@@ -670,10 +697,10 @@ class SharedDomainFactory:
 
     @staticmethod
     def create_user(
-        name: str,
-        email: str,
-        age: int,
-        **kwargs: object,
+        name: FlextTypes.Core.String,
+        email: FlextTypes.Core.String,
+        age: FlextTypes.Core.Integer,
+        **kwargs: FlextTypes.Core.Object,
     ) -> FlextResult[User]:
         """Create user with validation."""
         # Create value objects
@@ -715,11 +742,11 @@ class SharedDomainFactory:
 
     @staticmethod
     def create_product(
-        name: str,
-        description: str,
-        price_amount: str | Decimal,
-        currency: str = "USD",
-        **kwargs: object,
+        name: FlextTypes.Core.String,
+        description: FlextTypes.Core.String,
+        price_amount: FlextTypes.Core.String | Decimal,
+        currency: FlextTypes.Core.String = "USD",
+        **kwargs: FlextTypes.Core.Object,
     ) -> FlextResult[Product]:
         """Create product with validation."""
         # Create money value object
@@ -760,9 +787,9 @@ class SharedDomainFactory:
 
     @staticmethod
     def create_order(
-        customer_id: TEntityId,
+        customer_id: FlextTypes.Domain.EntityId,
         items: list[dict[str, object]],
-        **kwargs: object,
+        **kwargs: FlextTypes.Core.Object,
     ) -> FlextResult[Order]:
         """Create order with items validation."""
         try:
@@ -844,10 +871,10 @@ class SharedDomainFactory:
 
 
 def log_domain_operation(
-    operation: str,
-    entity_type: str,
-    entity_id: str,
-    **context: object,
+    operation: FlextTypes.Core.String,
+    entity_type: FlextTypes.Core.String,
+    entity_id: FlextTypes.Core.String,
+    **context: FlextTypes.Core.Object,
 ) -> None:
     """Log domain operation with structured context."""
     logger = get_logger("shared_domain")
@@ -897,10 +924,13 @@ __all__: list[str] = [
 
 
 class ConcreteFlextEntity(FlextEntity):
-    """Concrete entity implementation for comprehensive testing."""
+    """Concrete entity implementation for comprehensive testing.
 
-    name: str
-    status: str = "active"
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    name: FlextTypes.Core.String
+    status: FlextTypes.Core.String = "active"
 
     def validate_domain_rules(self) -> FlextResult[None]:
         """Validate test entity business rules."""
@@ -910,11 +940,14 @@ class ConcreteFlextEntity(FlextEntity):
 
 
 class ConcreteValueObject(FlextValue):
-    """Concrete value object implementation for comprehensive testing."""
+    """Concrete value object implementation for comprehensive testing.
+
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
 
     amount: Decimal
-    currency: str = "USD"
-    description: str = ""
+    currency: FlextTypes.Core.String = "USD"
+    description: FlextTypes.Core.String = ""
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -930,9 +963,12 @@ class ConcreteValueObject(FlextValue):
 
 
 class ComplexValueObject(FlextValue):
-    """Value object with complex data types for testing."""
+    """Value object with complex data types for testing.
 
-    name: str
+    Uses FlextTypes for proper type annotation following FLEXT patterns.
+    """
+
+    name: FlextTypes.Core.String
     tags: list[str]
     metadata: dict[str, object]
 
@@ -949,9 +985,9 @@ class TestDomainFactory:
 
     @staticmethod
     def create_concrete_entity(
-        name: str,
-        status: str = "active",
-        **kwargs: object,
+        name: FlextTypes.Core.String,
+        status: FlextTypes.Core.String = "active",
+        **kwargs: FlextTypes.Core.Object,
     ) -> FlextResult[ConcreteFlextEntity]:
         """Create a concrete entity for testing."""
         try:
@@ -976,8 +1012,8 @@ class TestDomainFactory:
     @staticmethod
     def create_concrete_value_object(
         amount: Decimal,
-        currency: str = "USD",
-        **kwargs: object,
+        currency: FlextTypes.Core.String = "USD",
+        **kwargs: FlextTypes.Core.Object,
     ) -> FlextResult[ConcreteValueObject]:
         """Create a concrete value object for testing."""
         try:
@@ -1002,7 +1038,7 @@ class TestDomainFactory:
 
     @staticmethod
     def create_complex_value_object(
-        name: str,
+        name: FlextTypes.Core.String,
         tags: list[str],
         metadata: dict[str, object],
     ) -> FlextResult[ComplexValueObject]:
@@ -1040,7 +1076,7 @@ class SharedDemonstrationPattern:
 
     @staticmethod
     def run_demonstration(
-        title: str,  # noqa: ARG004
+        title: FlextTypes.Core.String,  # noqa: ARG004
         demonstration_functions: list[Callable[[], None]],
     ) -> None:
         """Run a demonstration with consistent formatting and error handling."""

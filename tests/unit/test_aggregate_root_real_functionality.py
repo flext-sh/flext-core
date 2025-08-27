@@ -11,9 +11,7 @@ from typing import Any, ClassVar
 
 import pytest
 
-from flext_core import FlextPayload, FlextResult
-from flext_core.aggregate_root import FlextAggregateRoot
-from flext_core.exceptions import FlextValidationError
+from flext_core import FlextAggregateRoot, FlextExceptions, FlextPayload, FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.ddd]
 
@@ -382,7 +380,7 @@ class TestFlextAggregateRootEdgeCases:
     def test_initialization_with_invalid_data(self) -> None:
         """Test initialization with invalid data."""
         # Test with malformed metadata
-        with pytest.raises(FlextValidationError):
+        with pytest.raises(FlextExceptions.ValidationError):
             OrderAggregate(
                 customer_id="test",
                 total_amount=-100.0,  # This might be invalid depending on validation

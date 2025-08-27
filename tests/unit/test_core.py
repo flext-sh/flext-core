@@ -20,7 +20,6 @@ from flext_core import (
     FlextDomainService,
     FlextEntity,
     FlextEntityId,
-    FlextError,
     FlextLogger,
     FlextResult,
     FlextServiceKey,
@@ -772,7 +771,7 @@ class TestFlextCoreErrorHandling:
         """Test real error creation."""
         error = clean_flext_core.create_error("Real error message", "TEST_ERROR")
 
-        assert isinstance(error, FlextError)
+        assert isinstance(error, Exception)
         assert "Real error message" in str(error)
 
     def test_create_validation_error_real_functionality(

@@ -11,6 +11,8 @@ Key Patterns:
 • Simple event sourcing
 """
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import cast, override
 
@@ -87,7 +89,7 @@ user_db = UserDatabase()
 # =============================================================================
 
 
-class CreateUserCommand(FlextCommands.Command):
+class CreateUserCommand(FlextCommands.Models.Command):
     """Command to create a new user."""
 
     name: str
@@ -95,7 +97,7 @@ class CreateUserCommand(FlextCommands.Command):
     age: int
 
 
-class UpdateUserCommand(FlextCommands.Command):
+class UpdateUserCommand(FlextCommands.Models.Command):
     """Command to update a user."""
 
     target_user_id: str  # Renamed to avoid conflict with base class user_id
@@ -103,7 +105,7 @@ class UpdateUserCommand(FlextCommands.Command):
     email: str | None = None
 
 
-class DeleteUserCommand(FlextCommands.Command):
+class DeleteUserCommand(FlextCommands.Models.Command):
     """Command to delete a user."""
 
     target_user_id: str  # Renamed to avoid conflict with base class user_id
@@ -114,17 +116,17 @@ class DeleteUserCommand(FlextCommands.Command):
 # =============================================================================
 
 
-class GetUserQuery(FlextCommands.Query):
+class GetUserQuery(FlextCommands.Models.Query):
     """Query to get a specific user."""
 
     user_id: str
 
 
-class ListUsersQuery(FlextCommands.Query):
+class ListUsersQuery(FlextCommands.Models.Query):
     """Query to list all users."""
 
 
-class GetEventsQuery(FlextCommands.Query):
+class GetEventsQuery(FlextCommands.Models.Query):
     """Query to get all events."""
 
 
@@ -133,7 +135,7 @@ class GetEventsQuery(FlextCommands.Query):
 # =============================================================================
 
 
-class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
+class CreateUserHandler(FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]):
     """Handler for user creation."""
 
     @override
@@ -149,7 +151,7 @@ class CreateUserHandler(FlextCommands.Handler[CreateUserCommand, User]):
         return user
 
 
-class UpdateUserHandler(FlextCommands.Handler[UpdateUserCommand, User]):
+class UpdateUserHandler(FlextCommands.Handlers.CommandHandler[UpdateUserCommand, User]):
     """Handler for user updates."""
 
     @override
@@ -176,7 +178,7 @@ class UpdateUserHandler(FlextCommands.Handler[UpdateUserCommand, User]):
         return FlextResult[User].ok(user)
 
 
-class DeleteUserHandler(FlextCommands.Handler[DeleteUserCommand, bool]):
+class DeleteUserHandler(FlextCommands.Handlers.CommandHandler[DeleteUserCommand, bool]):
     """Handler for user deletion."""
 
     @override
@@ -194,7 +196,7 @@ class DeleteUserHandler(FlextCommands.Handler[DeleteUserCommand, bool]):
 # =============================================================================
 
 
-class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, User]):
+class GetUserQueryHandler(FlextCommands.Handlers.QueryHandler[GetUserQuery, User]):
     """Handler for user lookup."""
 
     @override
@@ -206,7 +208,9 @@ class GetUserQueryHandler(FlextCommands.QueryHandler[GetUserQuery, User]):
         return FlextResult[User].fail(f"User not found: {query.user_id}")
 
 
-class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User]]):
+class ListUsersQueryHandler(
+    FlextCommands.Handlers.QueryHandler[ListUsersQuery, list[User]]
+):
     """Handler for user listing."""
 
     @override
@@ -217,7 +221,7 @@ class ListUsersQueryHandler(FlextCommands.QueryHandler[ListUsersQuery, list[User
 
 
 class GetEventsQueryHandler(
-    FlextCommands.QueryHandler[GetEventsQuery, list[dict[str, object]]]
+    FlextCommands.Handlers.QueryHandler[GetEventsQuery, list[dict[str, object]]]
 ):
     """Handler for event listing."""
 
@@ -322,9 +326,9 @@ class UserService:
             sort_order="asc",
         )
         handler = self.queries["get_user"]
-        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
-            query
-        )
+        result = cast(
+            "FlextCommands.Handlers.QueryHandler[object, object]", handler
+        ).handle(query)
         return cast("FlextResult[User]", result)
 
     def list_users(self) -> FlextResult[list[User]]:
@@ -338,9 +342,9 @@ class UserService:
             sort_order="asc",
         )
         handler = self.queries["list_users"]
-        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
-            query
-        )
+        result = cast(
+            "FlextCommands.Handlers.QueryHandler[object, object]", handler
+        ).handle(query)
         return cast("FlextResult[list[User]]", result)
 
     def get_events(self) -> FlextResult[list[dict[str, object]]]:
@@ -354,9 +358,9 @@ class UserService:
             sort_order="asc",
         )
         handler = self.queries["get_events"]
-        result = cast("FlextCommands.QueryHandler[object, object]", handler).handle(
-            query
-        )
+        result = cast(
+            "FlextCommands.Handlers.QueryHandler[object, object]", handler
+        ).handle(query)
         return cast("FlextResult[list[dict[str, object]]]", result)
 
 

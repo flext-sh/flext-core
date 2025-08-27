@@ -16,7 +16,7 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from flext_core import FlextResult, FlextTypes
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class FlextMatchers:
@@ -375,7 +375,7 @@ class PerformanceMatchers:
     def assert_memory_efficient(
         benchmark: BenchmarkFixture,
         func: Callable[[], Any],
-        max_memory_mb: float = 100.0,
+        _max_memory_mb: float = 100.0,
     ) -> None:
         """Assert function is memory efficient.
 

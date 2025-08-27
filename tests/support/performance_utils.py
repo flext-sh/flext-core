@@ -13,7 +13,7 @@ import time
 import tracemalloc
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any, TypeVar
+from typing import TypeVar
 
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
@@ -25,14 +25,14 @@ class ComplexityAnalyzer:
     """Analyze algorithmic complexity and performance characteristics."""
 
     def __init__(self) -> None:
-        self.measurements: list[dict[str, Any]] = []
+        self.measurements: list[dict[str, object]] = []
 
     def measure_complexity(
         self,
-        function: Callable[[int], Any],
+        function: Callable[[int], object],
         input_sizes: list[int],
         operation_name: str = "operation",
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Measure function performance across different input sizes."""
         results = []
 
@@ -69,8 +69,8 @@ class ComplexityAnalyzer:
 
     def _analyze_complexity_pattern(
         self,
-        results: list[dict[str, Any]],
-    ) -> dict[str, Any]:
+        results: list[dict[str, object]],
+    ) -> dict[str, object]:
         """Analyze if the performance follows common complexity patterns."""
         if len(results) < 2:
             return {"pattern": "insufficient_data"}
@@ -100,16 +100,16 @@ class StressTestRunner:
     """Run stress tests with configurable load patterns."""
 
     def __init__(self) -> None:
-        self.results: list[dict[str, Any]] = []
+        self.results: list[dict[str, object]] = []
 
     def run_load_test(
         self,
-        function: Callable[[], Any],
+        function: Callable[[], object],
         iterations: int = 1000,
         *,  # concurrent is keyword-only to avoid boolean trap
         concurrent: bool = False,
         operation_name: str = "load_test",
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Run load test with specified iterations."""
         start_time = time.perf_counter()
         failures = 0
@@ -145,10 +145,10 @@ class StressTestRunner:
 
     def run_endurance_test(
         self,
-        function: Callable[[], Any],
+        function: Callable[[], object],
         duration_seconds: float = 60.0,
         operation_name: str = "endurance_test",
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Run endurance test for specified duration."""
         start_time = time.perf_counter()
         end_time = start_time + duration_seconds
@@ -186,7 +186,7 @@ class PerformanceProfiler:
     """Advanced performance profiling with memory and time tracking."""
 
     def __init__(self) -> None:
-        self.measurements: list[dict[str, Any]] = []
+        self.measurements: list[dict[str, object]] = []
 
     @contextmanager
     def profile_memory(self, operation_name: str = "operation") -> Generator[None]:
@@ -264,7 +264,7 @@ class BenchmarkUtils:
         func: Callable[[int], T],
         sizes: list[int],
         expected_complexity: str = "O(n)",
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Benchmark function complexity across different input sizes."""
         results = {}
 
@@ -292,9 +292,9 @@ class BenchmarkUtils:
 
     @staticmethod
     def _analyze_complexity(
-        results: dict[int, dict[str, Any]],
+        results: dict[int, dict[str, object]],
         expected: str,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Analyze time complexity from benchmark results."""
         sizes = sorted(results.keys())
         times = [results[size]["mean_time"] for size in sizes]
@@ -362,7 +362,7 @@ class BenchmarkUtils:
         thread_counts: list[int],
         *args: object,
         **kwargs: object,
-    ) -> dict[int, dict[str, Any]]:
+    ) -> dict[int, dict[str, object]]:
         """Benchmark function with different thread counts."""
         results = {}
 
@@ -445,7 +445,7 @@ class AsyncBenchmark:
 
     @staticmethod
     async def benchmark_async(
-        func: Callable[..., Any],
+        func: Callable[..., object],
         iterations: int = 100,
         *args: object,
         **kwargs: object,
@@ -471,11 +471,11 @@ class AsyncBenchmark:
 
     @staticmethod
     async def benchmark_concurrency(
-        func: Callable[..., Any],
+        func: Callable[..., object],
         concurrency_levels: list[int],
         *args: object,
         **kwargs: object,
-    ) -> dict[int, dict[str, Any]]:
+    ) -> dict[int, dict[str, object]]:
         """Benchmark async function with different concurrency levels."""
         import asyncio
 
@@ -483,7 +483,7 @@ class AsyncBenchmark:
 
         for concurrency in concurrency_levels:
 
-            async def concurrent_execution(workers: int = concurrency) -> list[Any]:
+            async def concurrent_execution(workers: int = concurrency) -> list[object]:
                 tasks = [func(*args, **kwargs) for _ in range(workers)]
                 return await asyncio.gather(*tasks)
 

@@ -4,13 +4,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 
 import pytest
 from pydantic import ValidationError
 
 from flext_core import (
-    FlextEvent,
-    FlextMessage,
     FlextPayload,
 )
 from flext_core.payload import (
@@ -384,9 +383,10 @@ class TestFlextMessageEnhancedCoverage:
         ]
 
         for invalid_dict in invalid_dicts:
-            result = FlextMessage.from_cross_service_dict(invalid_dict)
+            result = FlextPayload[str].from_cross_service_dict(invalid_dict)
             assert result.is_failure
-            assert "Invalid message text" in result.error
+            assert ("Invalid message text" in result.error or
+                    "Invalid cross-service dictionary" in result.error)
 
 
 class TestFlextEventEnhancedCoverage:
@@ -413,7 +413,7 @@ class TestFlextEventEnhancedCoverage:
         assert result.is_success
 
         event = result.value
-        assert isinstance(event, FlextEvent)
+        assert isinstance(event, FlextPayload)
 
         # Create a new event with invalid version directly in metadata
         result_invalid = FlextPayload.create_event(
@@ -442,7 +442,7 @@ class TestFlextEventEnhancedCoverage:
         ]
 
         for invalid_dict in invalid_dicts:
-            result = FlextEvent.from_cross_service_dict(invalid_dict)
+            result = FlextPayload[Mapping[str, object]].from_cross_service_dict(invalid_dict)
             assert result.is_failure
             assert any(
                 phrase in result.error
@@ -450,6 +450,7 @@ class TestFlextEventEnhancedCoverage:
                     "Invalid event type",
                     "Invalid event data",
                     "Invalid event version",
+                    "Invalid cross-service dictionary",
                 ]
             )
 

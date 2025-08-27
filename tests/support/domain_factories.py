@@ -14,7 +14,7 @@ from typing import Any
 
 from flext_core import FlextResult, FlextTypes
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class FlextResultFactory:

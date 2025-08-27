@@ -6,7 +6,7 @@ and cross-service correlation ID propagation.
 
 This module implements a comprehensive, hierarchical context management system
 organized into logical domains following the established flext-core patterns:
-    - Variables: Context variables organized by domain (Correlation, Service, Request, Performance)
+    - Variables: Context variables by domain (Correlation, Service, etc.)
     - Correlation: Distributed tracing and correlation ID management
     - Service: Service identification and lifecycle context
     - Request: User and request metadata management
@@ -48,7 +48,6 @@ Note:
 from __future__ import annotations
 
 import contextlib
-import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
@@ -56,6 +55,7 @@ from datetime import UTC, datetime
 from typing import Final
 
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 # =============================================================================
 # FlextContext - Hierarchical Context Management System
@@ -91,7 +91,7 @@ class FlextContext:
         - Open/Closed: Easy to extend with new context operation categories
         - Liskov Substitution: Consistent interface across all context managers
         - Interface Segregation: Clients depend only on context operations they use
-        - Dependency Inversion: High-level context operations don't depend on low-level details
+        - Dependency Inversion: High-level operations independent of details
 
     Examples:
         Basic context operations::
@@ -117,7 +117,7 @@ class FlextContext:
     # =========================================================================
 
     class Variables:
-        """Context variables organized by domain following Clean Architecture principles.
+        """Context variables organized by domain for Clean Architecture.
 
         This class provides a structured organization of all context variables used
         throughout the FLEXT ecosystem, grouped by domain and functionality for better
@@ -125,7 +125,7 @@ class FlextContext:
         """
 
         class Correlation:
-            """Correlation context variables for distributed tracing and request tracking."""
+            """Correlation variables for distributed tracing/request tracking."""
 
             CORRELATION_ID: Final[ContextVar[str | None]] = ContextVar(
                 "correlation_id", default=None
@@ -180,7 +180,7 @@ class FlextContext:
 
         Provides comprehensive correlation ID management functionality for the FLEXT
         ecosystem, implementing distributed tracing patterns, parent-child relationship
-        tracking, and cross-service request correlation following observability best practices.
+        tracking, and cross-service correlation for observability.
 
         Features:
             - Thread-safe correlation ID generation and management
@@ -238,7 +238,7 @@ class FlextContext:
                 str: The generated correlation ID
 
             """
-            correlation_id = f"corr_{uuid.uuid4().hex[:16]}"
+            correlation_id = FlextUtilities.Generators.generate_correlation_id()
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
@@ -280,7 +280,9 @@ class FlextContext:
             """
             # Generate correlation ID if not provided
             if correlation_id is None:
-                correlation_id = f"corr_{uuid.uuid4().hex[:16]}"
+                from flext_core.utilities import FlextUtilities  # noqa: PLC0415
+
+                correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
             # Save current context
             current_correlation = (
@@ -347,7 +349,7 @@ class FlextContext:
 
         Provides comprehensive service identification functionality for the FLEXT
         ecosystem, implementing service-to-service communication patterns, versioning
-        support, and service mesh integration following microservices architecture best practices.
+        support, and service mesh integration for microservices.
 
         Key Features:
             - Service name and version identification
@@ -767,10 +769,12 @@ class FlextContext:
                 # Calculate duration
                 end_time = datetime.now(UTC)
                 duration = (end_time - start_time).total_seconds()
-                operation_metadata.update({
-                    "end_time": end_time,
-                    "duration_seconds": duration,
-                })
+                operation_metadata.update(
+                    {
+                        "end_time": end_time,
+                        "duration_seconds": duration,
+                    }
+                )
 
                 # Restore previous context
                 FlextContext.Variables.Performance.OPERATION_START_TIME.reset(
@@ -830,16 +834,17 @@ class FlextContext:
                 Dict[str, object]: All context variables with current values
 
             """
+            context_vars = FlextContext.Variables
             return {
-                "correlation_id": FlextContext.Variables.Correlation.CORRELATION_ID.get(),
-                "parent_correlation_id": FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get(),
-                "service_name": FlextContext.Variables.Service.SERVICE_NAME.get(),
-                "service_version": FlextContext.Variables.Service.SERVICE_VERSION.get(),
-                "user_id": FlextContext.Variables.Request.USER_ID.get(),
-                "operation_name": FlextContext.Variables.Performance.OPERATION_NAME.get(),
-                "request_id": FlextContext.Variables.Request.REQUEST_ID.get(),
-                "operation_start_time": FlextContext.Variables.Performance.OPERATION_START_TIME.get(),
-                "operation_metadata": FlextContext.Variables.Performance.OPERATION_METADATA.get(),
+                "correlation_id": context_vars.Correlation.CORRELATION_ID.get(),
+                "parent_correlation_id": context_vars.Correlation.PARENT_CORRELATION_ID.get(),
+                "service_name": context_vars.Service.SERVICE_NAME.get(),
+                "service_version": context_vars.Service.SERVICE_VERSION.get(),
+                "user_id": context_vars.Request.USER_ID.get(),
+                "operation_name": context_vars.Performance.OPERATION_NAME.get(),
+                "request_id": context_vars.Request.REQUEST_ID.get(),
+                "operation_start_time": context_vars.Performance.OPERATION_START_TIME.get(),
+                "operation_metadata": context_vars.Performance.OPERATION_METADATA.get(),
             }
 
         @staticmethod
@@ -1048,6 +1053,5 @@ _operation_metadata: Final[ContextVar[FlextTypes.Core.Dict | None]] = (
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextContext",
-    "FlextContexts",  # Backward compatibility
+    "FlextContext",  # ONLY main class exported
 ]

@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable, Iterator
-from typing import TypeGuard, cast, overload, override
+from typing import TypeGuard, TypeVar, cast, overload, override
 
-from flext_core.constants import ERROR_CODES
-from flext_core.exceptions import FlextOperationError
-from flext_core.typings import FlextTypes, U
+from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 
-# Use centralized types from FlextTypes for specialized cases
-TryFunction = FlextTypes.Core.Factory[object]  # For operations that may fail
+# Essential type variables - redefined here to avoid circular import with typings.py
+# Following FLEXT_REFACTORING_PROMPT.md: result.py is foundation layer, cannot import from typings.py
+T = TypeVar("T")
+U = TypeVar("U")
+
 
 # =============================================================================
 # FLEXT RESULT - Simple implementation
@@ -75,17 +77,17 @@ class FlextResult[T]:
         *,
         data: None = None,
         error: str,
-        error_code: FlextTypes.Result.ErrorCode = None,
-        error_data: FlextTypes.Result.ErrorData = None,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> None: ...
 
     def __init__(
         self,
         *,
         data: T | None = None,
-        error: FlextTypes.Result.ErrorMessage = None,
-        error_code: FlextTypes.Result.ErrorCode = None,
-        error_data: FlextTypes.Result.ErrorData = None,
+        error: str | None = None,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> None:
         """Initialize FlextResult with discriminated union pattern.
 
@@ -108,14 +110,14 @@ class FlextResult[T]:
         if error is not None:
             # Failure path: ensure data is None for type consistency
             self._data: T | None = None
-            self._error: FlextTypes.Result.ErrorMessage = error
+            self._error: str | None = error
         else:
             # Success path: data can be T (including None if T allows it)
             self._data = data
             self._error = None
 
         self._error_code = error_code
-        self._error_data: FlextTypes.Result.ErrorContext = error_data or {}
+        self._error_data: dict[str, object] = error_data or {}
 
     def _is_success_state(self, value: T | None) -> TypeGuard[T]:
         """Type guard that narrows _data to T for successful results."""
@@ -198,22 +200,22 @@ class FlextResult[T]:
         return self.value
 
     @property
-    def error(self) -> FlextTypes.Result.ErrorMessage:
+    def error(self) -> str | None:
         """Get error message (None for successful results)."""
         return self._error
 
     @property
-    def error_code(self) -> FlextTypes.Result.ErrorCode:
+    def error_code(self) -> str | None:
         """Get error code."""
         return self._error_code
 
     @property
-    def error_data(self) -> FlextTypes.Result.ErrorContext:
+    def error_data(self) -> dict[str, object]:
         """Get error metadata."""
         return self._error_data
 
     @property
-    def metadata(self) -> FlextTypes.Result.ErrorContext:
+    def metadata(self) -> dict[str, object]:
         """Get metadata - alias for error_data for command result compatibility."""
         return self._error_data
 
@@ -251,8 +253,8 @@ class FlextResult[T]:
         error: str,
         /,
         *,
-        error_code: FlextTypes.Result.ErrorCode = None,
-        error_data: FlextTypes.Result.ErrorData = None,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
         """Alias for fail()."""
         return cls.fail(error, error_code=error_code, error_data=error_data)
@@ -263,8 +265,8 @@ class FlextResult[T]:
         error: str,
         /,
         *,
-        error_code: FlextTypes.Result.ErrorCode = None,
-        error_data: FlextTypes.Result.ErrorData = None,
+        error_code: str | None = None,
+        error_data: dict[str, object] | None = None,
     ) -> FlextResult[T]:
         """Create a failed FlextResult with error information.
 
@@ -314,7 +316,7 @@ class FlextResult[T]:
             aggregated.append(res.value)
         return FlextResult[list[object]].ok(aggregated)
 
-    def map(self, func: FlextTypes.Result.MapFunction[T, U]) -> FlextResult[U]:
+    def map(self, func: Callable[[T], U]) -> FlextResult[U]:
         """Transform success value with function.
 
         Args:
@@ -345,18 +347,18 @@ class FlextResult[T]:
             # Handle specific transformation exceptions
             return FlextResult[U](
                 error=f"Transformation error: {e}",
-                error_code=ERROR_CODES["EXCEPTION_ERROR"],
+                error_code=FlextConstants.Errors.EXCEPTION_ERROR,
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
         except Exception as e:
             # Use FLEXT Core structured error handling for all other exceptions
             return FlextResult[U](
                 error=f"Transformation failed: {e}",
-                error_code=ERROR_CODES["MAP_ERROR"],
+                error_code=FlextConstants.Errors.MAP_ERROR,
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 
-    def flat_map(self, func: FlextTypes.Result.FlatMapFunction[T, U]) -> FlextResult[U]:
+    def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Chain operations that return results.
 
         Args:
@@ -385,14 +387,14 @@ class FlextResult[T]:
             # Use FLEXT Core structured error handling
             return FlextResult[U](
                 error=f"Chained operation failed: {e}",
-                error_code=ERROR_CODES["BIND_ERROR"],
+                error_code=FlextConstants.Errors.BIND_ERROR,
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
         except Exception as e:
             # Handle any other unexpected exceptions
             return FlextResult[U](
                 error=f"Unexpected chaining error: {e}",
-                error_code=ERROR_CODES["CHAIN_ERROR"],
+                error_code=FlextConstants.Errors.CHAIN_ERROR,
                 error_data={"exception_type": type(e).__name__, "exception": str(e)},
             )
 
@@ -430,11 +432,10 @@ class FlextResult[T]:
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise FlextOperationError(
+            raise FlextExceptions.OperationError(  # type: ignore[call-arg]
                 error_msg,
-                code=self._error_code or ERROR_CODES["CONTEXT_ERROR"],
+                error_code=self._error_code or FlextConstants.Errors.CONTEXT_ERROR,
                 operation="context_manager",
-                context=self._error_data,
             )
         # Type narrowing: for success results, _data must be T
         if self._data is None:
@@ -470,17 +471,16 @@ class FlextResult[T]:
             The success value if not None
 
         Raises:
-            FlextOperationError: If result is failure
+            FlextExceptions.OperationError: If result is failure
             RuntimeError: If success result has None data (defensive validation)
 
         """
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise FlextOperationError(
+            raise FlextExceptions.OperationError(  # type: ignore[call-arg]
                 msg,
-                code=self._error_code or ERROR_CODES["EXPECT_ERROR"],
+                error_code=self._error_code or FlextConstants.Errors.EXPECTATION_ERROR,
                 operation="expect",
-                context=self._error_data,
             )
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
@@ -607,7 +607,31 @@ class FlextResult[T]:
             return cast("T", self._data)
         return default
 
-    def recover(self, func: FlextTypes.Result.RecoverFunction[T]) -> FlextResult[T]:
+    def unwrap(self) -> T:
+        """Return success value or raise exception if failure.
+
+        This method provides backward compatibility for legacy code that expects
+        an unwrap() method. For new code, prefer unwrap_or() or explicit success checking.
+
+        Returns:
+            Success value if result is successful
+
+        Raises:
+            RuntimeError: If result is failure
+
+        Examples:
+            >>> result = FlextResult.ok("success")
+            >>> value = result.unwrap()  # Returns "success"
+
+            >>> result = FlextResult.fail("error")
+            >>> result.unwrap()  # Raises RuntimeError("error")
+
+        """
+        if self.is_success:
+            return cast("T", self._data)
+        raise RuntimeError(self._error or "Operation failed")
+
+    def recover(self, func: Callable[[str], T]) -> FlextResult[T]:
         """Recover from failure by applying func to error."""
         if self.is_success:
             return self
@@ -619,9 +643,7 @@ class FlextResult[T]:
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult[T].fail(str(e))
 
-    def recover_with(
-        self, func: FlextTypes.Result.RecoverWithFunction[T]
-    ) -> FlextResult[T]:
+    def recover_with(self, func: Callable[[str], FlextResult[T]]) -> FlextResult[T]:
         """Recover from failure by applying func to error, returning FlextResult."""
         if self.is_success:
             return self
@@ -632,14 +654,14 @@ class FlextResult[T]:
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult[T].fail(str(e))
 
-    def tap(self, func: FlextTypes.Result.TapFunction[T]) -> FlextResult[T]:
+    def tap(self, func: Callable[[T], None]) -> FlextResult[T]:
         """Execute side effect function on success with non-None data, return self."""
         if self.is_success and self._data is not None:
             with contextlib.suppress(TypeError, ValueError, AttributeError):
                 func(self._data)
         return self
 
-    def tap_error(self, func: FlextTypes.Result.TapFunction[str]) -> FlextResult[T]:
+    def tap_error(self, func: Callable[[str], None]) -> FlextResult[T]:
         """Execute side effect function on error, return self."""
         if self.is_failure and self._error is not None:
             with contextlib.suppress(TypeError, ValueError, AttributeError):
@@ -648,7 +670,7 @@ class FlextResult[T]:
 
     def filter(
         self,
-        predicate: FlextTypes.Result.FilterPredicate[T],
+        predicate: Callable[[T], bool],
         error_msg: str = "Filter predicate failed",
     ) -> FlextResult[T]:
         """Filter success value with predicate."""
@@ -687,7 +709,7 @@ class FlextResult[T]:
         except (TypeError, ValueError, AttributeError, ZeroDivisionError) as e:
             return FlextResult[object].fail(str(e))
 
-    def to_either(self) -> FlextTypes.Result.ResultTuple:
+    def to_either(self) -> tuple[T | None, str | None]:
         """Convert a result to either tuple (data, error)."""
         if self.is_success:
             return self._data, None
@@ -699,7 +721,9 @@ class FlextResult[T]:
             return None
 
         error_msg = self._error or "Result failed"
-        return FlextOperationError(error_msg, code=ERROR_CODES["OPERATION_ERROR"])
+        return FlextExceptions.OperationError(  # type: ignore[call-arg]
+            error_msg, error_code=FlextConstants.Errors.OPERATION_ERROR
+        )
 
     @classmethod
     def from_exception(cls, func: Callable[[], T]) -> FlextResult[T]:
@@ -962,8 +986,8 @@ def ok_result[TResultLocal](data: TResultLocal) -> FlextResult[TResultLocal]:
 
 def fail_result(
     error: str,
-    error_code: FlextTypes.Result.ErrorCode = None,
-    error_data: FlextTypes.Result.ErrorData = None,
+    error_code: str | None = None,
+    error_data: dict[str, object] | None = None,
 ) -> FlextResult[object]:
     """Typed helper that wraps FlextResult.fail.
 
@@ -1026,10 +1050,5 @@ class FlextResultUtils:
 
 
 __all__: list[str] = [
-    # Main result class
-    "FlextResult",
-    # Utility class for FlextResult patterns
-    "FlextResultUtils",
-    # Utility functions
-    "safe_call",
+    "FlextResult",  # ONLY main class exported
 ]

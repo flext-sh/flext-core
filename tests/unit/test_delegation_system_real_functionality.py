@@ -7,23 +7,25 @@ focusing on real-world scenarios and increasing coverage to near 100%.
 from __future__ import annotations
 
 import ast
-from typing import Any
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextResult, FlextTypes
 from flext_core.delegation_system import (
     FlextMixinDelegator,
     create_mixin_delegator,
     validate_delegation_system,
 )
-from flext_core.exceptions import FlextOperationError
+from flext_core.exceptions import FlextExceptions
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextValidatableMixin,
 )
+
+# Initialize dynamic exception classes
+FlextExceptions.initialize()
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -76,24 +78,24 @@ class DatabaseMixin:
         self.operations_log: list[str] = []
         self.connection_count = 0
 
-    def save_record(self, data: dict[str, Any]) -> FlextResult[str]:
+    def save_record(self, data: dict[str, FlextTypes.Core.Object]) -> FlextResult[str]:
         """Real save operation."""
         if not data:
-            return FlextResult[None].fail("Data cannot be empty")
+            return FlextResult[str].fail("Data cannot be empty")
 
         record_id = f"rec_{len(self.operations_log) + 1:05d}"
         self.operations_log.append(f"SAVE:{record_id}:{data}")
-        return FlextResult[None].ok(record_id)
+        return FlextResult[str].ok(record_id)
 
-    def find_record(self, record_id: str) -> FlextResult[dict[str, Any]]:
+    def find_record(self, record_id: str) -> FlextResult[dict[str, FlextTypes.Core.Object]]:
         """Real find operation."""
         for entry in self.operations_log:
             if f"SAVE:{record_id}:" in entry:
                 data_part = entry.split(":", 2)[2]
-                return FlextResult[None].ok(ast.literal_eval(data_part))
-        return FlextResult[None].fail(f"Record {record_id} not found")
+                return FlextResult[dict[str, FlextTypes.Core.Object]].ok(ast.literal_eval(data_part))
+        return FlextResult[dict[str, FlextTypes.Core.Object]].fail(f"Record {record_id} not found")
 
-    def get_connection_info(self) -> dict[str, Any]:
+    def get_connection_info(self) -> dict[str, FlextTypes.Core.Object]:
         """Get connection information."""
         return {
             "active_connections": self.connection_count,
@@ -153,7 +155,7 @@ class RealBusinessHost:
 
     def process_order(
         self, amount: float, customer_id: str
-    ) -> FlextResult[dict[str, Any]]:
+    ) -> FlextResult[dict[str, FlextTypes.Core.Object]]:
         """Real business process using delegated methods."""
         # Use delegated validation
         validation_result = self.validate_amount(amount)
@@ -279,7 +281,7 @@ class TestAdvancedDelegationScenarios:
 
         class AdvancedHost:
             def __init__(self) -> None:
-                self.data_store: dict[str, Any] = {}
+                self.data_store: dict[str, FlextTypes.Core.Object] = {}
                 self.delegator = create_mixin_delegator(
                     self,
                     FlextValidatableMixin,
@@ -473,7 +475,7 @@ class TestDelegationPropertyEdgeCases:
 
         # Test that setting raises appropriate error
         with pytest.raises(
-            FlextOperationError, match="Property 'readonly_prop' is read-only"
+            FlextExceptions.OperationError, match="Property 'readonly_prop' is read-only"
         ):
             host.readonly_prop = "new_value"
 

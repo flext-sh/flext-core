@@ -46,10 +46,10 @@ from tests.support.test_patterns import (
 )
 
 from flext_core import (
+    FlextExceptions,
     FlextGuards,
     FlextModel,
     FlextResult,
-    FlextValidationError,
     FlextValidationUtils,
     immutable,
     is_not_none,
@@ -328,7 +328,7 @@ class TestFlextModel:
             assert model.name == profile["name"]
             assert model.email == profile["email"]
             assert model.active == profile["active"]
-        except FlextValidationError:
+        except FlextExceptions.ValidationError:
             # Some generated data might not pass validation
             pass
 
@@ -400,7 +400,7 @@ class TestFactoryHelpers:
         stress_runner = StressTestRunner()
 
         def create_with_builder() -> BuildableClass:
-            result = builder.create(x=10, y=20)
+            result = builder.set(x=10, y=20).build()
             if result.is_failure:
                 raise RuntimeError(f"Builder failed: {result.error}")
             return cast("BuildableClass", result.value)
@@ -476,7 +476,7 @@ class TestValidationUtilities:
         # Test failure cases
         for case in failure_cases:
             case_dict = cast("dict[str, Any]", case)
-            with pytest.raises(FlextValidationError):
+            with pytest.raises(FlextExceptions.ValidationError):
                 require_not_none(case_dict["input"]["input"])
 
     @given(EdgeCaseStrategies.boundary_integers())
@@ -488,7 +488,7 @@ class TestValidationUtilities:
             assert result == value
         else:
             # Non-positive integers should fail
-            with pytest.raises(FlextValidationError):
+            with pytest.raises(FlextExceptions.ValidationError):
                 require_positive(value)
 
     @mark_test_pattern("arrange_act_assert")
@@ -508,13 +508,13 @@ class TestValidationUtilities:
             try:
                 require_non_empty(data["empty_string"])
                 results["empty_failed"] = False
-            except FlextValidationError:
+            except FlextExceptions.ValidationError:
                 results["empty_failed"] = True
 
             try:
                 require_non_empty(data["whitespace"])
                 results["whitespace_failed"] = False
-            except FlextValidationError:
+            except FlextExceptions.ValidationError:
                 results["whitespace_failed"] = True
 
             return results

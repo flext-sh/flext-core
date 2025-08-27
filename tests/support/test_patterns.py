@@ -13,13 +13,13 @@ from collections.abc import Callable, Container, Generator, Sized
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 U = TypeVar("U")
 
-# Type aliases para reduzir explicit-any warnings em tests
-TestFunction = Callable[..., Any]
+# Type aliases para padrões de teste - seguindo FLEXT patterns sem Any
+TestFunction = Callable[..., None]  # Test functions typically return None
 TestDecorator = Callable[[TestFunction], TestFunction]
 
 
@@ -448,7 +448,7 @@ def mark_test_pattern(pattern_name: str) -> TestDecorator:
     """Decorator to mark tests with specific patterns."""
 
     def decorator(func: TestFunction) -> TestFunction:
-        setattr(func, '_test_pattern', pattern_name)
+        func._test_pattern = pattern_name  # type: ignore[attr-defined]
         return func
 
     return decorator

@@ -11,6 +11,8 @@ Key Patterns:
 • Chain validation patterns
 """
 
+from __future__ import annotations
+
 from typing import cast
 
 from shared_domain import SharedDomainFactory, User
@@ -129,13 +131,11 @@ class FormValidator:
 
         # Combine results
         if name_result.success and email_result.success and age_result.success:
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "name": name_result.value,
-                    "email": email_result.value,
-                    "age": age_result.value,
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "name": name_result.value,
+                "email": email_result.value,
+                "age": age_result.value,
+            })
 
         # Collect all errors
         errors = []
@@ -174,13 +174,11 @@ class FormValidator:
 
         # Combine results
         if name_result.success and price_result.success and category_result.success:
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "name": name_result.value,
-                    "price": price_result.value,
-                    "category": category_result.value,
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "name": name_result.value,
+                "price": price_result.value,
+                "category": category_result.value,
+            })
 
         errors = []
         if name_result.is_failure:
@@ -258,16 +256,14 @@ class BatchValidator:
             else:
                 errors.append(f"User {i}: {validation_result.error}")
 
-        return FlextResult[dict[str, object]].ok(
-            {
-                "total": len(user_list),
-                "valid": len(results),
-                "invalid": len(errors),
-                "users": results,
-                "errors": errors,
-                "success_rate": (len(results) / len(user_list)) * 100,
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "total": len(user_list),
+            "valid": len(results),
+            "invalid": len(errors),
+            "users": results,
+            "errors": errors,
+            "success_rate": (len(results) / len(user_list)) * 100,
+        })
 
 
 # =============================================================================
@@ -384,17 +380,16 @@ def demo_batch_validation() -> None:
             pass
 
 
-def demo_functional_composition() -> None:
+def demo_functional_composition() -> FlextResult[dict[str, object]]:
     """Demonstrate functional validation composition."""
     # Chain multiple validation operations
     result = (
-        FlextResult.ok(
-            {
-                "name": "Helen Taylor",
-                "email": "helen@example.com",
-                "age": 29,
-            }
-        )
+        FlextResult[dict[str, object]]
+            .ok({
+            "name": "Helen Taylor",
+            "email": "helen@example.com",
+            "age": 29,
+        })
         .flat_map(FormValidator.validate_user_data)
         .flat_map(
             lambda data: SharedDomainFactory.create_user(
@@ -403,13 +398,15 @@ def demo_functional_composition() -> None:
                 int(data["age"]) if isinstance(data["age"], int) else 0,
             )
         )
-        .map(lambda user: {"user": user, "status": "validated"})
+        .map(lambda user: dict[str, object]({"user": user, "status": "validated"}))
     )
 
     # Use success pattern for cleaner error handling
     if result.success:
         response = result.value
         cast("User", response["user"])
+
+    return result
 
 
 def main() -> None:

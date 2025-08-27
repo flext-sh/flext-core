@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextTypes
-
 from .validation_utilities import (
     is_email,
     is_int,
@@ -58,7 +56,7 @@ class ValidationHelper:
     """Helper to reduce repetitive validation patterns - SOLID SRP."""
 
     @staticmethod
-    def validate_user_data(user_data: FlextTypes.Auth.UserData) -> list[str]:
+    def validate_user_data(user_data: dict[str, object]) -> list[str]:
         """DRY Helper: Validate user data with consistent rules."""
         validation_errors: list[str] = []
 

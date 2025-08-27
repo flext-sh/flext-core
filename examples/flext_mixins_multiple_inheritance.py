@@ -952,9 +952,7 @@ def demonstrate_composite_mixins() -> None:
     )
     updated_info = entity.get_entity_info()
     data_field = updated_info["data"]
-    (
-        len(cast("Sized", data_field)) if hasattr(data_field, "__len__") else 0
-    )
+    (len(cast("Sized", data_field)) if hasattr(data_field, "__len__") else 0)
 
     # Value object using FlextValueObjectMixin
 
