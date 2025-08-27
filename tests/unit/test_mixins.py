@@ -48,13 +48,13 @@ from tests.support.test_patterns import (
 from flext_core import (
     FlextCacheableMixin,
     FlextEntityMixin,
+    FlextExceptions,
     FlextIdentifiableMixin,
     FlextLoggableMixin,
     FlextSerializableMixin,
     FlextTimestampMixin,
     FlextTimingMixin,
     FlextValidatableMixin,
-    FlextValidationError,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.mixins]
@@ -209,7 +209,7 @@ class TestIdentifiableMixin:
 
         # Test failure cases
         for case in failure_cases:
-            with pytest.raises(FlextValidationError):
+            with pytest.raises(FlextExceptions.ValidationError):
                 identifiable_obj.id = cast("str", case["input"]["id"])
 
     @given(FlextStrategies.flext_ids())

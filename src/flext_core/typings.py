@@ -1,712 +1,947 @@
-"""Centralized type definitions for the FLEXT core library.
+"""Type definitions and aliases for the FLEXT core library.
 
-This module provides the single source of truth for all types used throughout
-the FLEXT ecosystem. All types are organized within the FlextTypes class
-hierarchy for consistent access and maintainability.
+This module provides comprehensive type definitions, generic patterns, and type
+utilities for the FLEXT ecosystem. Built with Python 3.13+ syntax and strict
+typing enforcement following Clean Architecture principles and FLEXT patterns.
 
-Built for Python 3.13+ with strict typing enforcement and no compatibility layers.
+Critical Patterns Applied:
+    - FlextTypes hierarchical class with nested organization
+    - FlextConstants integration for type-related constants
+    - Centralized protocols import from protocols.py
+    - Zero circular import dependencies through proper layering
+    - Minimal compatibility facades in legacy.py
 
-Usage:
-    Import types directly from FlextTypes::
+The module includes:
+    - FlextTypes hierarchical type system with nested classes
+    - Integration with FlextConstants for type constants
+    - Centralized protocol imports from protocols.py
+    - Core type definitions (T, U, V generic variables)
+    - FLEXT-specific type aliases for common patterns
+    - Complex generic types for Result patterns and containers
+    - Type utility functions and validation helpers
+    - Protocol-based type definitions for interfaces
+    - Backward compatibility aliases for ecosystem migration
+
+Examples:
+    Modern hierarchical usage::
 
         from flext_core.typings import FlextTypes
 
-        # Core types
-        config: FlextTypes.Core.Config = {"debug": True}
-        entity_id: FlextTypes.Domain.EntityId = "user_123"
+        # Hierarchical type access
+        result: FlextTypes.Result.Success[str] = FlextResult.ok("data")
+        handler: FlextTypes.Protocol.Handler[str, int] = MyHandler()
+        config: FlextTypes.Config.Dict = {"key": "value"}
 
-        # Protocol types
-        validator: FlextTypes.Protocol.Validator[str] = email_validator
-        handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
+    Protocol integration::
 
-Architecture:
-    - FlextTypes: Single hierarchical class containing ALL types
-    - No compatibility layers or aliases outside FlextTypes
-    - Domain-organized type system (Core, Domain, Service, etc.)
-    - Modern Python 3.13 type alias syntax throughout
+        from flext_core.typings import FlextTypes
+        from flext_core.protocols import FlextProtocols
+
+        # Use centralized protocols
+        service: FlextProtocols.Domain.Service = MyService()
+        validator: FlextTypes.Protocol.Validator[str] = MyValidator()
+
+    Constant integration::
+
+        from flext_core.typings import FlextTypes
+        from flext_core.constants import FlextConstants
+
+        # Use hierarchical constants with types
+        timeout: int = FlextConstants.Defaults.TIMEOUT
+        error_code: str = FlextConstants.Errors.VALIDATION_ERROR
+
+Note:
+    This module enforces Python 3.13+ requirements and follows FLEXT refactoring
+    patterns with hierarchical organization, proper import layering to avoid
+    circular dependencies, and centralized compatibility management.
 
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Coroutine
+from contextlib import AbstractAsyncContextManager
 from datetime import datetime
-from typing import TYPE_CHECKING, ParamSpec, TypeVar
+from pathlib import Path
+from typing import (
+    Generic,
+    Literal,
+    ParamSpec,
+    TypeGuard,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
-# Define ParamSpec and TypeVar for FlextCallable
-P = ParamSpec("P")
-T = TypeVar("T")
-
-if TYPE_CHECKING:
-    from flext_core.protocols import (
-        FlextProtocols,
-    )
-    from flext_core.result import FlextResult
-
-# =============================================================================
-# DYNAMIC EXCEPTION TYPE STUBS
-# =============================================================================
-
-# Type stubs for dynamically generated exceptions to help mypy understand them
-# These are created at runtime by FlextExceptions but need type definitions
-if TYPE_CHECKING:
-    # Base exception classes - dynamically generated
-    class FlextError(RuntimeError): ...
-
-    class FlextUserError(TypeError): ...
-
-    class FlextValidationError(ValueError): ...
-
-    class FlextConfigurationError(ValueError): ...
-
-    class FlextConnectionError(ConnectionError): ...
-
-    class FlextAuthenticationError(PermissionError): ...
-
-    class FlextPermissionError(PermissionError): ...
-
-    class FlextNotFoundError(FileNotFoundError): ...
-
-    class FlextAlreadyExistsError(FileExistsError): ...
-
-    class FlextTimeoutError(TimeoutError): ...
-
-    class FlextProcessingError(RuntimeError): ...
-
-    class FlextCriticalError(RuntimeError): ...
-
-    class FlextOperationError(RuntimeError): ...
-
-    class FlextTypeError(TypeError): ...
-
-    class FlextAttributeError(AttributeError): ...
+# Import centralized protocols and result types to avoid circular dependencies
+from flext_core.protocols import FlextProtocols
+from flext_core.result import FlextResult
 
 # =============================================================================
-# FLEXT HIERARCHICAL TYPE SYSTEM - Organized by domain
+# CORE TYPE VARIABLES - Foundation for generic programming
+# =============================================================================
+
+# Primary type variables for generic programming
+T = TypeVar("T")  # Primary generic type
+U = TypeVar("U")  # Secondary generic type
+V = TypeVar("V")  # Tertiary generic type
+K = TypeVar("K")  # Key type for mappings
+R = TypeVar("R")  # Return type for functions
+E = TypeVar("E", bound=Exception)  # Exception type
+F = TypeVar("F")  # Function/field type variable
+
+# Specialized type variables
+TEntity = TypeVar("TEntity")  # Entity types
+TValueObject = TypeVar("TValueObject")  # Value object types
+TAggregate = TypeVar("TAggregate")  # Aggregate root types
+TMessage = TypeVar("TMessage")  # Message types for handlers
+TRequest = TypeVar("TRequest")  # Request types
+TResponse = TypeVar("TResponse")  # Response types
+TCommand = TypeVar("TCommand")  # Command types for CQRS
+TQuery = TypeVar("TQuery")  # Query types for CQRS
+TResult = TypeVar("TResult")  # Result types for handlers
+EntryT = TypeVar("EntryT")  # Entry types for schema processing
+
+# Function signature types
+P = ParamSpec("P")  # Parameter specification for callables
+
+# =============================================================================
+# FLEXT TYPE SYSTEM - Hierarchical organization following FLEXT patterns
 # =============================================================================
 
 
 class FlextTypes:
-    """Hierarchical type system organizing FLEXT types by domain and functionality.
+    """Hierarchical type system organizing FLEXT types by domain and usage.
 
-    This is the single consolidated class for all FLEXT Core types, following the
-    Flext[Area][Module] pattern where this represents FlextTypes.
-    All other FLEXT libraries should inherit from this class to maintain hierarchy.
+    Following FLEXT_REFACTORING_PROMPT.md requirements:
+        - Hierarchical organization with nested classes
+        - Integration with FlextConstants for type-related constants
+        - Proper import layering to avoid circular dependencies
+        - Centralized protocol imports from protocols.py
+        - Clean Architecture compliance with domain separation
 
-    This class provides a structured organization of all types used throughout
-    the FLEXT ecosystem, grouped by domain and functionality for better
-    maintainability and discoverability.
+    This is the single consolidated class for all FLEXT Core type definitions,
+    following the Flext[Area][Module] pattern where this represents FlextTypes.
+    All other FLEXT libraries should reference types from this class hierarchy.
 
     The type system is organized into the following domains:
-        - Protocol: Type aliases for protocol definitions
-        - Core: Fundamental building blocks (Value, Data, Config, etc.)
-        - Domain: Business domain modeling (Entity, Event, etc.)
-        - Service: Dependency injection and service location
-        - Config: Configuration management
-        - Logging: Structured logging and observability
-        - Auth: Authentication and authorization
-        - Field: Field validation and metadata
+        - Core: Fundamental types (primitives, collections, unions)
+        - Result: Result pattern types for railway-oriented programming
+        - Protocol: Protocol-based interface types from centralized protocols.py
+        - Domain: Domain modeling types (entities, value objects, aggregates)
+        - Handler: Handler and processing types for CQRS
+        - Config: Configuration and settings types
+        - Network: Network and connectivity types
+        - Async: Asynchronous operation types
+        - Meta: Metaclass and advanced type utilities
+        - Constants: Type-related constants from FlextConstants
+
+    Architecture Principles:
+        - Single Responsibility: Each nested class has a single domain focus
+        - Open/Closed: Easy to extend with new type categories
+        - Liskov Substitution: Consistent interface across all categories
+        - Interface Segregation: Clients depend only on types they use
+        - Dependency Inversion: High-level types don't depend on low-level details
 
     Examples:
-        Using protocol aliases::
+        Using hierarchical types for better organization::
 
-            from flext_core.typings import FlextTypes
+            # Core primitive types
+            value: str = "hello"
+            count: int = 42
 
-            validator: FlextTypes.Protocol.Validator[str] = email_validator
-            handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
+            # Result pattern types
+            result: FlextTypes.Result.Success[str] = FlextResult.ok("data")
 
-        Using the hierarchical type system::
+            # Protocol types from centralized protocols.py
+            handler: FlextTypes.Protocol.Handler[str, int] = MyHandler()
 
-            user_id: FlextTypes.Domain.EntityId = "user123"
-            config: FlextTypes.Config.Dict = {"debug": True}
-            event_data: FlextTypes.Domain.EventData = {"type": "UserCreated"}
+            # Domain modeling
+            user_id: FlextTypes.Domain.EntityId = "user_123"
+
+            # Constants integration
+            timeout: int = FlextTypes.Constants.Timeout
+
+    Note:
+        All types use Python 3.13+ syntax and are designed for strict
+        type checking. The hierarchical organization follows SOLID principles,
+        Clean Architecture patterns, and FLEXT refactoring requirements.
 
     """
-
-    # =========================================================================
-    # PROTOCOL TYPE ALIASES - Modern Python 3.13 syntax
-    # =========================================================================
-
-    class Protocol:
-        """Protocol type aliases using modern Python 3.13 syntax.
-
-        This class contains all protocol-related type aliases that reference
-        the consolidated FlextProtocols class. These aliases provide shorter,
-        more convenient names for common protocol usage patterns.
-
-        Examples:
-            Using protocol aliases for cleaner type annotations::
-
-                # Instead of FlextProtocols.Callable[str]
-                processor: FlextTypes.Protocol.Callable[str] = string_processor
-
-                # Instead of FlextProtocols.Handler[Command, str]
-                handler: FlextTypes.Protocol.Handler[Command, str] = command_handler
-
-                # Instead of FlextProtocols.Validator[dict]
-                validator: FlextTypes.Protocol.Validator[dict] = dict_validator
-
-        """
-
-        # Foundation layer aliases
-        type Callable[T] = FlextProtocols.Foundation.Callable[T]
-        type DecoratedCallable[T] = FlextProtocols.Foundation.DecoratedCallable[T]
-        type Validator[T] = FlextProtocols.Foundation.Validator[T]
-        type ErrorHandler = FlextProtocols.Foundation.ErrorHandler
-        type Factory[T] = FlextProtocols.Foundation.Factory[T]
-        type AsyncFactory[T] = FlextProtocols.Foundation.AsyncFactory[T]
-
-        # Domain layer aliases
-        type Service = FlextProtocols.Domain.Service
-        type Repository[T] = FlextProtocols.Domain.Repository[T]
-        type DomainEvent = FlextProtocols.Domain.DomainEvent
-        type EventStore = FlextProtocols.Domain.EventStore
-
-        # Application layer aliases
-        type Handler[TInput, TOutput] = FlextProtocols.Application.Handler[
-            TInput, TOutput
-        ]
-        type MessageHandler = FlextProtocols.Application.MessageHandler
-        type ValidatingHandler = FlextProtocols.Application.ValidatingHandler
-        type AuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
-        type EventProcessor = FlextProtocols.Application.EventProcessor
-        type UnitOfWork = FlextProtocols.Application.UnitOfWork
-
-        # Infrastructure layer aliases
-        type Connection = FlextProtocols.Infrastructure.Connection
-        type LdapConnection = FlextProtocols.Infrastructure.LdapConnection
-        type Auth = FlextProtocols.Infrastructure.Auth
-        type Configurable = FlextProtocols.Infrastructure.Configurable
-        type LoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
-
-        # Extensions layer aliases
-        type Plugin = FlextProtocols.Extensions.Plugin
-        type PluginContext = FlextProtocols.Extensions.PluginContext
-        type Middleware = FlextProtocols.Extensions.Middleware
-        type AsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
-        type Observability = FlextProtocols.Extensions.Observability
-
-        # Decorator patterns - using imported alias
-        type DecoratedFunction[T] = FlextDecoratedFunction[T]
-
-        # Utility callable types
-        type SafeCallable[T] = FlextProtocols.Foundation.Callable[FlextResult[T]]
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
     # =========================================================================
 
     class Core:
-        """Core fundamental types used throughout the ecosystem.
+        """Core fundamental types used throughout the FLEXT ecosystem.
 
-        This class contains the most basic types that form the foundation
-        of the FLEXT type system, including primitive types, identifiers,
-        collections, and basic callable patterns.
+        This class contains the most basic type definitions that form the foundation
+        of the FLEXT type system, including primitives, collections, and utilities
+        following SOLID principles.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only core type definitions
+            - Open/Closed: Easy to extend with new primitive types
+            - Interface Segregation: Core types separated from domain-specific ones
         """
 
-        # Basic value types
-        type Value = str | int | float | bool | None
-        type Data = dict[str, object]
-        type Config = dict[str, str | int | float | bool | None]
+        # Primitive types with semantic meaning
+        type String = str
+        type Integer = int
+        type Float = float
+        type Boolean = bool
+        type Bytes = bytes
+        type Object = object
 
-        # Identifier types
-        type Id = str
-        type Key = str
+        # Numeric types
+        type Number = int | float
+        type PositiveInt = int  # Constrained in validation
+        type NonNegativeInt = int  # Constrained in validation
 
         # Collection types
-        type Dict = dict[str, object]
         type List = list[object]
-        type StringDict = dict[str, str]
-        type JsonDict = dict[str, object]
+        type Dict = dict[str, object]
+        type Set = set[object]
+        type Tuple = tuple[object, ...]
 
-        # Connection and infrastructure
-        type ConnectionString = str
-        type LogMessage = str
-        type ErrorCode = str
+        # JSON-compatible types
+        type JsonPrimitive = str | int | float | bool | None
+        type JsonValue = (
+            JsonPrimitive
+            | list[str | int | float | bool | None | list[object] | dict[str, object]]
+            | dict[
+                str, str | int | float | bool | None | list[object] | dict[str, object]
+            ]
+        )
+        type JsonObject = dict[str, JsonValue]
+        type JsonDict = dict[str, JsonValue]  # Alias for JsonObject compatibility
+        type JsonArray = list[JsonValue]
+
+        # Serialization types
+        type Serializer = Callable[[object], dict[str, object]]
+        type Deserializer = Callable[[dict[str, object]], object]
+
+        # Identifier types
+        type Identifier = str
+        type Id = str  # Generic ID type
+        type UUID = str  # UUID string representation
+
+        # Path and filesystem types
+        type PathLike = str | Path
+        type FilePath = Path
+        type DirectoryPath = Path
+
+        # Time and date types
+        type Timestamp = float
+        type IsoDateTime = str
+
+        # Function types - Fixed Python 3.13+ type alias syntax
+        type FlextCallableType = Callable[[object], object]
+
+        # Error and status types
         type ErrorMessage = str
+        type ErrorCode = str
+        type StatusCode = str
+        type LogMessage = str
 
-        # Factory types
-        type Factory[T] = Callable[[], T]
-
-        # Callable type union for generic callable patterns
-        type TCallable = (
+        # Operation types - Python 3.13+ compatible
+        type OperationCallable = Callable[[object], object]
+        type OperationCallableType = (
             Callable[[], object]
-            | Callable[[str], object]
-            | Callable[[str], str]
-            | Callable[[str], dict[str, object]]
             | Callable[[object], object]
             | Callable[[object, object], object]
-            | Callable[[int], int]
-            | Callable[[int, int], int]
-            | Callable[[], str]
-            | Callable[[], dict[str, str]]
-            | Callable[[], None]
-            | Callable[[list[int]], dict[str, object]]
-            | Callable[[str, str], dict[str, str]]
-            | Callable[[int], dict[str, int]]
-            | Callable[[float], dict[str, float]]
+            | Callable[[object, object, object], object]
         )
 
-        # Validator callable types
-        type Validator = Callable[[object], bool]
-        type DecoratorFunction[T] = Callable[
-            [FlextCallable[T]], FlextDecoratedFunction[T]
+        # Value types for domain operations
+        type Value = str | int | float | bool | None | object
+
+        # Performance metrics type for consistent signatures
+        type PerformanceMetrics = dict[
+            str, dict[str, dict[str, dict[str, float | bool]]]
         ]
 
-        # Serializer callable types
-        type Serializer = Callable[[object], dict[str, object]]
+    # =========================================================================
+    # RESULT PATTERN TYPES - Railway-oriented programming support
+    # =========================================================================
+
+    class Result:
+        """Result pattern types for railway-oriented programming.
+
+        This class provides type definitions for the FlextResult pattern that
+        enables railway-oriented programming throughout the FLEXT ecosystem.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only result pattern types
+            - Open/Closed: Easy to extend with new result transformation types
+            - Dependency Inversion: Result types don't depend on implementation details
+        """
+
+        # Direct hierarchical types following FLEXT dependency layers
+        # String-based type annotations to avoid circular imports
+
+        # Success and failure type aliases
+        type Success[T] = FlextResult[T]
+        type Failure = FlextResult[None]
+        type ResultType[T] = FlextResult[T]
+
+        # Result transformation types
+        type ResultMapper[T, U] = Callable[[T], FlextResult[U]]
+        type ResultPredicate[T] = Callable[[T], bool]
+
+        # Async result types
+        type AsyncResult[T] = Awaitable[FlextResult[T]]
+        type AsyncResultMapper[T, U] = Callable[[T], Awaitable[FlextResult[U]]]
+
+        # Error handling types
+        type ErrorHandler = Callable[[Exception], str]
+        type ErrorTransformer[T] = Callable[[T], Exception]
 
     # =========================================================================
-    # DOMAIN TYPES - Business domain modeling
+    # PROTOCOL TYPES - Centralized protocol imports from protocols.py
+    # =========================================================================
+
+    class Protocol:
+        """Protocol-based interface types for contracts.
+
+        Following FLEXT refactoring requirements, this class imports and aliases
+        protocols from the centralized protocols.py module to avoid circular
+        dependencies and maintain proper layering.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only protocol type definitions
+            - Dependency Inversion: Protocol types don't depend on implementations
+            - Interface Segregation: Protocol types separated by layer
+        """
+
+        # Direct protocol type aliases to avoid circular dependencies
+        # Following FLEXT strict rules: NO TYPE_CHECKING imports allowed
+
+        # Foundation protocols - proper FlextProtocols references
+        type CallableProtocol[T] = FlextProtocols.Foundation.Callable[T]
+        type ValidatorProtocol[T] = FlextProtocols.Foundation.Validator[T]
+        type FactoryProtocol[T] = FlextProtocols.Foundation.Factory[T]
+        type ErrorHandlerProtocol = FlextProtocols.Foundation.ErrorHandler
+
+        # Domain protocols - proper FlextProtocols references
+        type ServiceProtocol = FlextProtocols.Domain.Service
+        type RepositoryProtocol[T] = FlextProtocols.Domain.Repository[T]
+        type DomainEventProtocol = FlextProtocols.Domain.DomainEvent
+
+        # Application protocols - proper FlextProtocols references
+        type HandlerProtocol[TRequest, TResponse] = FlextProtocols.Application.Handler[
+            TRequest, TResponse
+        ]
+        type MessageHandlerProtocol = FlextProtocols.Application.MessageHandler
+        type ValidatingHandlerProtocol = FlextProtocols.Application.ValidatingHandler
+        type AuthorizingHandlerProtocol = FlextProtocols.Application.AuthorizingHandler
+        type EventProcessorProtocol = FlextProtocols.Application.EventProcessor
+        type UnitOfWorkProtocol = FlextProtocols.Application.UnitOfWork
+
+        # Infrastructure protocols - proper FlextProtocols references
+        type ConnectionProtocol = FlextProtocols.Infrastructure.Connection
+        type LoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
+        type Configurable = FlextProtocols.Infrastructure.Configurable
+
+        # Extensions protocols
+        type Plugin = FlextProtocols.Extensions.Plugin
+        type PluginContext = FlextProtocols.Extensions.PluginContext
+        type Middleware = FlextProtocols.Extensions.Middleware
+        type AsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
+        type Observability = FlextProtocols.Extensions.Observability
+
+        # Legacy protocol aliases for backward compatibility
+        type Validator[T] = FlextProtocols.Foundation.Validator[T]
+        type Factory[T] = FlextProtocols.Foundation.Factory[T]
+        type ErrorHandler = FlextProtocols.Foundation.ErrorHandler
+        type Service = FlextProtocols.Domain.Service
+        type Repository[T] = FlextProtocols.Domain.Repository[T]
+        type DomainEvent = FlextProtocols.Domain.DomainEvent
+        type Handler[TRequest, TResponse] = FlextProtocols.Application.Handler[
+            TRequest, TResponse
+        ]
+        type MessageHandler = FlextProtocols.Application.MessageHandler
+        type ValidatingHandler = FlextProtocols.Application.ValidatingHandler
+        type AuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
+        type EventProcessor = FlextProtocols.Application.EventProcessor
+        type UnitOfWork = FlextProtocols.Application.UnitOfWork
+        type Connection = FlextProtocols.Infrastructure.Connection
+
+    # =========================================================================
+    # DOMAIN TYPES - Domain modeling and DDD patterns
     # =========================================================================
 
     class Domain:
-        """Domain modeling and business logic types.
+        """Domain modeling types for DDD patterns.
 
-        This class contains types used in Domain-Driven Design (DDD) patterns,
-        including entities, aggregates, domain events, and value objects.
+        This class provides type definitions for domain-driven design patterns
+        including entities, value objects, aggregates, and events.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only domain modeling types
+            - Open/Closed: Easy to extend with new domain patterns
+            - Domain Focus: Types reflect business domain concepts
         """
 
-        # Entity and aggregate types
+        # Entity types
         type EntityId = str
+        type EntityState = dict[str, object]
         type EntityVersion = int
-        type EntityTimestamp = datetime
-        type AggregateId = str
-        type EntityMetadata = dict[str, object]
+        type EntityTimestamp = datetime  # Add missing EntityTimestamp type
+
+        # Value object types
+        type ValueObjectData = dict[str, object]
+
+        # Aggregate types
+        type AggregateId = EntityId
+        type AggregateVersion = int
 
         # Event types
+        type EventId = str
         type EventType = str
         type EventData = dict[str, object]
-        type EventVersion = int
-        type DomainEvents = list[object]
+        type EventMetadata = dict[str, object]
 
-        # Backward compatibility aliases (T* pattern)
-        type TEntityId = EntityId
+        # Repository types
+        type Specification[T] = Callable[[T], bool]
+        type QueryCriteria = dict[str, object]
 
     # =========================================================================
-    # SERVICE TYPES - Dependency injection and service location
+    # SERVICE TYPES - Service layer patterns and application services
     # =========================================================================
 
     class Service:
-        """Service-related types for dependency injection.
+        """Service layer types for application services and business operations.
 
-        This class contains types used in the dependency injection system,
-        service location patterns, event handling, and service orchestration.
+        This class provides type definitions for service layer patterns
+        including application services, domain services, and service contracts.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only service layer type definitions
+            - Open/Closed: Easy to extend with new service patterns
+            - Service Focus: Types support service layer patterns
         """
 
-        # Service identification
+        # Service contract types
+        type ServiceId = str
         type ServiceName = str
-        type ServiceKey = str | type[object]
-        type Container = Mapping[str, object]
-        type ServiceFactory[T] = Callable[[], T]
-        type ServiceInstance = object
-        type ServiceDict = dict[str, object]
-        type ServiceListDict = dict[str, str]  # For list_services return type
-        type FactoryDict = dict[str, Callable[[], object]]
-        type ServiceInfo = dict[str, object]
-        type ServiceRegistrations = dict[str, object]
+        type ServiceVersion = str
 
-        # Context and correlation types
-        type CorrelationId = str
-        type RequestId = str
-        type TraceId = str
+        # Service operation types
+        type ServiceOperation = Callable[[object], object]
+        type ServiceResult[T] = FlextTypes.Result.Success[T]
 
-    # =========================================================================
-    # HANDLER TYPES - Handler patterns and registries
-    # =========================================================================
+        # Service metadata
+        type ServiceMetadata = dict[str, object]
+        type ServiceConfig = dict[str, object]
 
-    class Handler:
-        """Handler pattern types for CQRS and chain of responsibility.
+        # Service lifecycle types
+        type ServiceState = Literal["active", "inactive", "maintenance"]
+        type ServiceHealth = Literal["healthy", "degraded", "unhealthy"]
 
-        This class contains types used in handler implementations,
-        including handler registries, chains, and metadata.
-        """
-
-        # Handler registry and metadata
-        type HandlerDict = dict[str, object]
-        type HandlerMetadata = dict[str, object]
-        type ValidationRules = list[object]
-        type MetricsDict = dict[str, object]
-
-        # Metrics value types - specific and type-safe
-        type CounterMetric = int
-        type TimeMetric = float
-        type ErrorCounterMap = dict[str, int]
-        type SizeList = list[int]
-        type PerformanceMap = dict[str, dict[str, int | float]]
-
-        # More flexible metrics types for compatibility
-        type MetricsValue = (
-            #           CounterMetric | TimeMetric | ErrorCounterMap | SizeList | PerformanceMap
-            int | float | str | dict[str, object] | list[object] | object
-        )
-        type MetricsData = dict[str, MetricsValue]
-        type NumericMetrics = dict[str, int | float]
-        type CollectionMetrics = dict[str, list[object] | dict[str, object]]
-
-        # Handler-specific types
-        type HandlerName = str
-        type MessageType = object
+        # Container service types for dependency injection
+        type ServiceInstance = object  # Any service instance
+        type ServiceDict = dict[str, ServiceInstance]  # Services registry
+        type FactoryDict = dict[str, Callable[[], ServiceInstance]]  # Factory registry
+        type ServiceListDict = dict[
+            str, Literal["instance", "factory"]
+        ]  # Service type mapping
 
     # =========================================================================
-    # CONFIG TYPES - Configuration management
-    # =========================================================================
-
-    class Config:
-        """Configuration management types.
-
-        This class contains types used in configuration management systems,
-        including configuration keys, values, environments, and deployment
-        strategies.
-        """
-
-        # Core configuration types
-        type Key = str
-        type Value = object
-        type Path = str
-        type Environment = str
-        type Dict = dict[str, str | int | float | bool | None]
-        type Settings = dict[str, object]
-
-        # File system types
-        type DirectoryPath = str
-        type FilePath = str
-
-    # =========================================================================
-    # PAYLOAD TYPES - Data transport and serialization
+    # PAYLOAD TYPES - Message and payload patterns for integration
     # =========================================================================
 
     class Payload:
-        """Payload and message transport types.
+        """Payload types for message and event patterns.
 
-        This class contains types used in payload systems for cross-service
-        communication, including metadata, serialization, and transport formats.
+        This class provides type definitions for payload patterns used in
+        messaging, event handling, and cross-service communication.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only payload and messaging type definitions
+            - Open/Closed: Easy to extend with new payload patterns
+            - Integration Focus: Types support cross-service communication
         """
 
-        # Payload metadata and transport
-        type Metadata = dict[str, object]
-        type SerializedData = dict[str, object]
-        type TransformFunction = Callable[[object], object]
-        type SerializerFunction = Callable[[object], dict[str, object] | object]
+        # Basic payload types
+        type PayloadData = dict[str, object]
+        type PayloadMetadata = dict[str, str]
+        type PayloadId = str
 
-        # Collection types
-        type CollectionType = list[object] | tuple[object, ...]
-        type MappingType = dict[str, object] | Mapping[str, object]
+        # Message types
+        type MessageId = str
+        type MessageType = str
+        type MessageData = PayloadData
 
-    # =========================================================================
-    # LOGGING TYPES - Structured logging and observability
-    # =========================================================================
+        # Event types
+        type EventId = str
+        type EventPayload = PayloadData
+        type EventMetadata = PayloadMetadata
 
-    class Logging:
-        """Logging and observability types.
-
-        This class contains types used in structured logging and observability
-        systems, including log levels, correlation IDs, metrics, and tracing.
-        """
-
-        # Core logging types
-        type LoggerName = str
-        type Level = str
-        type Format = str
-        type Message = str
-
-        # Context types
-        type ContextDict = dict[str, object]
-        type Record = dict[str, object]
-        type Metrics = dict[str, object]
+        # Serialization types
+        type SerializedPayload = str
+        type DeserializedPayload = PayloadData
 
     # =========================================================================
-    # AUTH TYPES - Authentication and authorization
+    # AUTH TYPES - Authentication and authorization patterns
     # =========================================================================
 
     class Auth:
         """Authentication and authorization types.
 
-        This class contains types used in authentication and authorization
-        systems, including tokens, credentials, users, roles, and permissions.
+        This class provides type definitions for authentication and authorization
+        patterns including tokens, credentials, and user identity.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only authentication type definitions
+            - Security Focus: Types support secure authentication patterns
         """
 
-        # Authentication types
-        type Token = str
+        # Identity types
         type UserId = str
-        type UserData = dict[str, object]
-        type Credentials = dict[str, object]
+        type Username = str
+        type UserRole = str
+
+        # Token types
+        type AccessToken = str
+        type RefreshToken = str
+        type TokenPayload = dict[str, object]
 
         # Authorization types
-        type Role = str
         type Permission = str
+        type Role = str
+        type Scope = str
 
     # =========================================================================
-    # FIELD TYPES - Field definitions and validation
+    # LOGGING TYPES - Logging and observability patterns
     # =========================================================================
 
-    class Field:
-        """Field-related types for validation and metadata.
+    class Logging:
+        """Logging and observability types.
 
-        This class contains types used in field definition, validation,
-        and metadata management systems.
+        This class provides type definitions for logging patterns including
+        log levels, messages, and structured logging data.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only logging type definitions
+            - Observability Focus: Types support structured logging patterns
         """
 
-        # Field definition types
-        type Id = str
-        type Name = str
-        type TypeStr = str
-        type Value = object
-        type Info = dict[str, object]
+        # Log level types
+        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        type LogMessage = str
+        type LogData = dict[str, object]
+
+        # Structured logging types
+        type LogEntry = dict[str, object]
+        type LogContext = dict[str, str]
+        type LogMetadata = dict[str, object]
+        type ContextDict = dict[str, object]
+
+    # =========================================================================
+    # HANDLER TYPES - Handler patterns for CQRS
+    # =========================================================================
+
+    class Handler:
+        """Handler types for CQRS and message processing.
+
+        This class provides type definitions for command query responsibility
+        segregation patterns and message processing handlers.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only handler pattern types
+            - Open/Closed: Easy to extend with new handler types
+            - Interface Segregation: Handler types separated by responsibility
+        """
+
+        # Command and query types
+        type Command = object  # Commands are specific to domain
+        type Query = object  # Queries are specific to domain
+        type Event = dict[str, object]
+
+        # Handler function types
+        type CommandHandler = Callable[[Command], object]
+        type QueryHandler = Callable[[Query], object]
+        type EventHandler = Callable[[Event], None]
+
+        # Handler metadata
+        type HandlerName = str
+        type HandlerMetadata = dict[str, object]
+
+        # Processing context
+        type Context = dict[str, object]
+        type ProcessingResult = object
+
+    # =========================================================================
+    # CONFIG TYPES - Configuration and settings
+    # =========================================================================
+
+    class Config:
+        """Configuration and settings types.
+
+        This class provides type definitions for configuration management,
+        environment settings, and deployment configuration.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only configuration types
+            - Open/Closed: Easy to extend with new configuration patterns
+            - Environment Independence: Configuration types don't depend on
+              specific environments
+        """
+
+        # Configuration data types
+        type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
+        type ConfigDict = dict[str, ConfigValue]
+        type ConfigKey = str
+        type ConfigPath = str
+
+        # Alias for legacy compatibility
+        type Config = ConfigDict
+
+        # Environment and deployment
+        type Environment = Literal["development", "production", "staging", "test"]
+        type DeploymentMode = Literal["local", "cloud", "hybrid"]
+
+        # Validation types
+        type ConfigValidator = Callable[[ConfigDict], None]
+        type ConfigTransformer = Callable[[ConfigDict], ConfigDict]
+
+    # =========================================================================
+    # FIELD TYPES - Field system types for FlextFields
+    # =========================================================================
+
+    class Fields:
+        """Fields system types for the FlextFields system.
+
+        This class provides type definitions for the field system,
+        ensuring type safety when working with different field types
+        and their configurations.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only field system types
+            - Open/Closed: Easy to extend with new field types
+            - Type Safety: Proper type compatibility for field operations
+        """
+
+        # Basic Python type aliases for field values
+        type String = str
+        type Integer = int
+        type Float = float
+        type Boolean = bool
+        type Object = object
+        type Dict = dict[str, object]
+        type List = list[object]
+        type Number = int | float
+
+        # Field-specific type aliases
+        type Email = str  # Email is a string with validation
+        type Uuid = str  # UUID is a string with validation
+        type DateTime = datetime  # DateTime field type
+
+        # Field configuration and metadata type aliases
+        type Config = dict[str, str | int | float | bool | datetime | None | object]
         type Metadata = dict[str, object]
 
+        # Field instance union type - represents any field instance
+        type Instance = object  # Any field instance (covariant compatibility)
+
+        # Field validation type aliases
+        type ValidationResult = object  # Result of field validation
+        type ValidationError = str  # Validation error message
+
+        # Field constraint type aliases
+        type Constraints = dict[str, object]  # Field constraints configuration
+        type Options = dict[str, object]  # Field options configuration
+
     # =========================================================================
-    # RESULT TYPES - Railway-oriented programming support
+    # NETWORK TYPES - Network and connectivity
     # =========================================================================
 
-    class Result:
-        """Result-specific types for railway-oriented programming.
+    class Network:
+        """Network and connectivity types.
 
-        This class contains types used in the FlextResult implementation,
-        including error data, context, and operation metadata.
+        This class provides type definitions for network operations,
+        HTTP requests/responses, and connectivity patterns.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only network-related types
+            - Open/Closed: Easy to extend with new network protocols
+            - Protocol Independence: Network types don't depend on specific protocols
         """
 
-        # Error handling types
-        type ErrorMessage = str | None
-        type ErrorCode = str | None
-        type ErrorData = dict[str, object] | None
-        type ErrorContext = dict[str, object]
+        # Address types
+        type IPAddress = str
+        type PortNumber = int
+        type HostName = str
+        type URL = str
+        type URI = str
 
-        # Operation types
-        type OperationName = str | None
-        type ExceptionType = type[BaseException] | None
+        # Protocol types
+        type Protocol = Literal["http", "https", "tcp", "udp", "ws", "wss"]
+        type HttpMethod = Literal[
+            "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"
+        ]
 
-        # Transformation functions
-        type MapFunction[T, U] = Callable[[T], U]
-        type FlatMapFunction[T, U] = Callable[[T], FlextResult[U]]
-        type FilterPredicate[T] = Callable[[T], bool]
-        type RecoverFunction[T] = Callable[[str], T]
-        type RecoverWithFunction[T] = Callable[[str], FlextResult[T]]
-        type TapFunction[T] = Callable[[T], None]
-        type ZipFunction[T, U, V] = Callable[[T, U], V]
+        # Request/Response types
+        type Headers = dict[str, str]
+        type QueryParams = dict[str, str | list[str]]
+        type RequestBody = str | bytes | dict[str, object]
+        type ResponseBody = str | bytes | dict[str, object]
 
-        # Utility types
-        type DataOrNone[T] = T | None
-        type ResultTuple = tuple[object | None, str | None]
+        # Connection types
+        type ConnectionString = str
+        type ConnectionPool = object  # Implementation-specific
+
+    # =========================================================================
+    # ASYNC TYPES - Asynchronous operation support
+    # =========================================================================
+
+    class Async:
+        """Asynchronous operation types.
+
+        This class provides type definitions for asynchronous programming
+        patterns including async/await, coroutines, and streaming.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only asynchronous operation types
+            - Open/Closed: Easy to extend with new async patterns
+            - Concurrency Focus: Types support safe concurrent operations
+        """
+
+        # Awaitable types
+        type AsyncCallable[**P, T] = Callable[P, Awaitable[T]]
+        type AsyncGenerator[T] = AsyncIterator[T]
+        type AsyncContext[T] = AbstractAsyncContextManager[T]
+
+        # Coroutine types
+        type CoroFunction[**P, T] = Callable[P, Coroutine[object, object, T]]
+        type AsyncResult[T] = Awaitable[T]
+
+        # Streaming types
+        type AsyncStream[T] = AsyncIterable[T]
+        type StreamProcessor[T, U] = Callable[[AsyncIterable[T]], AsyncIterable[U]]
+
+    # =========================================================================
+    # META TYPES - Metaclass and advanced utilities
+    # =========================================================================
+
+    class Meta:
+        """Metaclass and advanced type utilities.
+
+        This class provides type definitions for metaprogramming,
+        reflection, and advanced type manipulation.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only metaprogramming types
+            - Open/Closed: Easy to extend with new metaprogramming patterns
+            - Type Safety: Meta types support compile-time type checking
+        """
+
+        # Type checking utilities
+        type TypeChecker[T] = Callable[[object], TypeGuard[T]]
+        type TypeValidator = Callable[[object], bool]
+
+        # Generic utilities
+        type GenericAlias = object  # For generic type manipulation
+        type TypeInfo = dict[str, object]  # Type metadata
+
+        # Decorator types
+        type DecoratorFactory[P, T] = Callable[
+            [P], Callable[[Callable[[P], T]], Callable[[P], T]]
+        ]
+        type MethodDecorator[T] = Callable[
+            [Callable[[object], T]], Callable[[object], T]
+        ]
+
+        # Reflection types
+        type AttributeName = str
+        type MethodName = str
+        type ClassName = str
+
+    # =========================================================================
+    # CONSTANTS INTEGRATION - Type-related constants from FlextConstants
+    # =========================================================================
+
+    class Constants:
+        """Type-related constants integrated from FlextConstants.
+
+        Following FLEXT refactoring requirements, this class provides
+        type-related constants that are frequently used with type definitions.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only type-related constants
+            - Dependency Inversion: Constants don't depend on implementation details
+            - Integration: Seamless integration with FlextConstants hierarchy
+        """
+
+        # Direct constant types - following FLEXT hierarchical pattern
+        type Timeout = int  # FlextConstants.Defaults.TIMEOUT
+        type MaxRetries = int  # FlextConstants.Defaults.MAX_RETRIES
+        type PageSize = int  # FlextConstants.Defaults.PAGE_SIZE
+
+        # Error codes for types
+        type ValidationError = str  # FlextConstants.Errors.VALIDATION_ERROR
+        type TypeError = str  # FlextConstants.Errors.TYPE_ERROR
+
+        # Status values for types
+        type Success = str  # FlextConstants.Status.SUCCESS
+        type Failure = str  # FlextConstants.Status.FAILURE
 
 
 # =============================================================================
-# CORE TYPE VARIABLES - Foundation building blocks
+# BACKWARD COMPATIBILITY ALIASES - Minimal facades for ecosystem migration
 # =============================================================================
 
+# Legacy aliases for smooth ecosystem migration following FLEXT refactoring requirements
+ResultType = FlextTypes.Result.ResultType[object]
+type OptionalType[T] = T | None
+JsonType = str | int | float | bool | None | list[object] | dict[str, object]
+ConfigType = FlextTypes.Config.ConfigDict
+HandlerType = FlextTypes.Handler.CommandHandler
 
-# Primary generic type variables (most commonly used)
-# T and P are already defined at the top of the file (lines 37-38)
-U = TypeVar("U")  # Secondary generic type parameter
-V = TypeVar("V")  # Tertiary generic type parameter
-K = TypeVar("K")  # Key type parameter
-R = TypeVar("R")  # Result type for operations
-E = TypeVar("E")  # Error type for error handling
+# Function and callable aliases - proper FlextProtocols references
+FlextCallable = type[FlextProtocols.Foundation.Callable[object]]
+FlextValidator = type[FlextProtocols.Foundation.Validator[object]]
+FlextFactory = type[FlextProtocols.Foundation.Factory[object]]
+FlextErrorHandler = type[FlextProtocols.Foundation.ErrorHandler]
 
+# Handler aliases - proper FlextProtocols references
+FlextHandler = type[FlextProtocols.Application.Handler[object, object]]
+FlextMessageHandler = type[FlextProtocols.Application.MessageHandler]
+FlextValidatingHandler = type[FlextProtocols.Application.ValidatingHandler]
+FlextAuthorizingHandler = type[FlextProtocols.Application.AuthorizingHandler]
+FlextEventProcessor = type[FlextProtocols.Application.EventProcessor]
+FlextUnitOfWork = type[FlextProtocols.Application.UnitOfWork]
 
-# TypeVar for preserving function signatures in decorator
-F = TypeVar("F", bound=FlextTypes.Core.TCallable)
+# Infrastructure aliases - proper FlextProtocols references
+FlextConnection = type[FlextProtocols.Infrastructure.Connection]
+FlextLoggerProtocol = type[FlextProtocols.Infrastructure.LoggerProtocol]
+FlextConfigurable = type[FlextProtocols.Infrastructure.Configurable]
 
-# Specialized type variables
-TData = TypeVar("TData")  # Generic data type
-TConfig = TypeVar("TConfig")  # Generic configuration type
-
-# Result-specific type variable (for local type annotations)
-TResultLocal = TypeVar("TResultLocal")  # Local type variable for result operations
-
-# Command and handler specific type variables
-CommandT = TypeVar("CommandT")  # Command types
-ResultT = TypeVar("ResultT")  # Result types
-QueryT = TypeVar("QueryT")  # Query types
-QueryResultT = TypeVar("QueryResultT")  # Query result types
-TInput = TypeVar("TInput")  # Input types
-TOutput = TypeVar("TOutput")  # Output types
-ServiceRequestT = TypeVar("ServiceRequestT")  # Service request types
-ServiceDomainT = TypeVar("ServiceDomainT")  # Service domain types
-ServiceResultT = TypeVar("ServiceResultT")  # Service result types
-EntryT = TypeVar("EntryT")  # Entry types
-InputT = TypeVar("InputT")  # Generic input types
-OutputT = TypeVar("OutputT")  # Generic output types
-TDomainResult = TypeVar("TDomainResult")  # Domain result types
-
-# Query-specific type variables for handlers
-TQuery = TypeVar("TQuery")  # Query types (alias for clarity)
-TQueryResult = TypeVar("TQueryResult")  # Query result types (alias for clarity)
-
-
-# =============================================================================
-# BASIC TYPE DEFINITIONS
-# =============================================================================
-
-AnyCallable = FlextTypes.Core.TCallable
-
-type FlextDecoratedFunction[T] = FlextProtocols.Foundation.DecoratedCallable[T]
-
-# =============================================================================
-# CONVENIENCE ALIASES - For backward compatibility and shorter names
-# =============================================================================
-
-# Field aliases for current usage
-FlextFieldId = FlextTypes.Field.Id
-FlextFieldName = FlextTypes.Field.Name
-FlextFieldTypeStr = FlextTypes.Field.TypeStr
-TFieldInfo = FlextTypes.Field.Info  # Field info type
-
-# Core type aliases for easy access
-TAnyDict = FlextTypes.Core.Dict
-TAnyList = FlextTypes.Core.List
-TValue = FlextTypes.Core.Value
-TFactory = FlextTypes.Core.Factory[object]
-
-# Protocol aliases for easy access - proper generic forms
-# Foundation layer aliases - use protocols from FlextProtocols
-type FlextCallable[T] = Callable[..., T]  # type: ignore[explicit-any]
-type FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler
-# type FlextFactory[T] = FlextProtocols.Foundation.Factory[T]  # Disabled: conflicts with models.FlextFactory class
-type FlextAsyncFactory[T] = FlextProtocols.Foundation.AsyncFactory[T]
-
-# Domain layer aliases
-type FlextService = FlextProtocols.Domain.Service
-type FlextRepository[T] = FlextProtocols.Domain.Repository[T]
-type FlextDomainEvent = FlextProtocols.Domain.DomainEvent
-type FlextEventStore = FlextProtocols.Domain.EventStore
-
-# Application layer aliases
-type FlextHandler[TInput, TOutput] = FlextProtocols.Application.Handler[TInput, TOutput]
-type FlextMessageHandler = FlextProtocols.Application.MessageHandler
-type FlextValidatingHandler = FlextProtocols.Application.ValidatingHandler
-type FlextAuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
-type FlextEventProcessor = FlextProtocols.Application.EventProcessor
-type FlextUnitOfWork = FlextProtocols.Application.UnitOfWork
-
-# Infrastructure layer aliases
-type FlextConnection = FlextProtocols.Infrastructure.Connection
-type FlextLdapConnection = FlextProtocols.Infrastructure.LdapConnection
-type FlextAuth = FlextProtocols.Infrastructure.Auth
-# type FlextConfigurable = FlextProtocols.Infrastructure.Configurable  # Moved to protocols.py
-type FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
-
-# Extensions layer aliases
-type FlextPlugin = FlextProtocols.Extensions.Plugin
-type FlextPluginContext = FlextProtocols.Extensions.PluginContext
-type FlextMiddleware = FlextProtocols.Extensions.Middleware
-type FlextAsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
-
+# Extensions aliases - proper FlextProtocols references
+FlextPlugin = type[FlextProtocols.Extensions.Plugin]
+FlextPluginContext = type[FlextProtocols.Extensions.PluginContext]
+FlextMiddleware = type[FlextProtocols.Extensions.Middleware]
+FlextAsyncMiddleware = type[FlextProtocols.Extensions.AsyncMiddleware]
+FlextObservability = type[FlextProtocols.Extensions.Observability]
 
 # Domain aliases
-TEntityId = FlextTypes.Domain.EntityId
-TEntityMetadata = FlextTypes.Domain.EntityMetadata
-TEventData = FlextTypes.Domain.EventData
+# Note: FlextEntityId is defined as actual class in root_models.py
+FlextEventType = FlextTypes.Domain.EventType
 
-# Service aliases
-TServiceName = FlextTypes.Service.ServiceName
-TCorrelationId = FlextTypes.Service.CorrelationId
+# Network aliases
+FlextURL = FlextTypes.Network.URL
+FlextHeaders = FlextTypes.Network.Headers
 
-# Logging aliases
-TLogMessage = FlextTypes.Logging.Message
-TContextDict = FlextTypes.Logging.ContextDict
+# Generic type aliases for backward compatibility
+FlextGeneric = Generic[T]
+FlextList = list[T]
+FlextDict = dict[str, object]
+
+# Async aliases with proper type parameters
+FlextAsyncCallable = Callable[[object], Awaitable[object]]
+FlextAsyncResult = FlextTypes.Async.AsyncResult[object]
+
+# Decorator function protocol alias (for specific decorated function pattern)
+type FlextDecoratedFunction[T] = Callable[[object], T]
 
 # =============================================================================
-# EXPORTS - Comprehensive centralized type system
+# UTILITY TYPE FUNCTIONS
 # =============================================================================
 
-__all__ = [
-    "AnyCallable",
-    # Command and handler specific type variables
-    "CommandT",
-    "E",
-    "EntryT",
-    "F",
-    # "FlextFactory",  # Disabled: use models.FlextFactory class instead
-    "FlextAsyncFactory",
-    "FlextAsyncMiddleware",
-    "FlextAuth",
-    "FlextAuthorizingHandler",
-    # Foundation layer protocol aliases
-    "FlextCallable",
-    # Infrastructure layer protocol aliases
-    "FlextConnection",
-    # Backward compatibility
-    "FlextCoreTypes",
-    # Decorator patterns
-    "FlextDecoratedFunction",
-    "FlextDomainEvent",
-    "FlextErrorHandler",
-    "FlextEventProcessor",
-    "FlextEventStore",
-    # Field aliases
-    "FlextFieldId",
-    "FlextFieldName",
-    "FlextFieldTypeStr",
-    # Application layer protocol aliases
-    "FlextHandler",
-    # "FlextConfigurable",  # Moved to protocols.py
-    "FlextLoggerProtocol",
-    "FlextMessageHandler",
-    "FlextMiddleware",
-    # Extensions layer protocol aliases
-    "FlextPlugin",
-    "FlextPluginContext",
-    "FlextRepository",
-    # Domain layer protocol aliases
-    "FlextService",
-    # Main hierarchical class
-    "FlextTypes",
-    # Backward compatibility
-    "FlextTypes",
-    "FlextUnitOfWork",
-    "FlextValidatingHandler",
-    "InputT",
-    "K",
-    "MetricsData",
-    # Handler metrics aliases
-    "MetricsValue",
-    "OutputT",
-    "P",
-    "QueryResultT",
-    "QueryT",
-    "R",
-    "ResultT",
-    "ServiceDomainT",
-    "ServiceRequestT",
-    "ServiceResultT",
-    # Core type variables
-    "T",
-    # Core type aliases
-    "TAnyDict",
-    "TAnyList",
-    "TConfig",
-    "TContextDict",
-    "TCorrelationId",
-    "TData",
-    "TDomainResult",
-    # Domain aliases
-    "TEntityId",
-    "TEntityMetadata",
-    "TEventData",
-    "TFactory",
-    "TFieldInfo",
-    "TInput",
-    # Logging aliases
-    "TLogMessage",
-    "TOutput",
-    "TQuery",
-    "TQueryResult",
-    "TResultLocal",
-    # Service aliases
-    "TServiceName",
-    "TValue",
-    "U",
-    "V",
+
+def is_optional_type(tp: type) -> bool:
+    """Check if a type is Optional[T] (Union[T, None])."""
+    origin = get_origin(tp)
+    if origin is not Union:
+        return False
+
+    args = get_args(tp)
+    return type(None) in args
+
+
+def get_optional_inner_type(tp: type) -> type | None:
+    """Extract T from Optional[T], returns None if not optional."""
+    if not is_optional_type(tp):
+        return None
+
+    # Get the non-None type from Union[T, None]
+    args = get_args(tp)
+    non_none_args: list[type] = [arg for arg in args if arg is not type(None)]
+    return non_none_args[0] if non_none_args else None
+
+
+def is_generic_type(tp: type) -> bool:
+    """Check if a type is a generic type like List[T]."""
+    return hasattr(tp, "__origin__") and hasattr(tp, "__args__")
+
+
+def get_generic_origin(tp: type) -> type | None:
+    """Get the origin type from a generic, e.g., list from List[str]."""
+    return getattr(tp, "__origin__", None)
+
+
+def get_generic_args(tp: type) -> tuple[type, ...]:
+    """Get the type arguments from a generic, e.g., (str,) from List[str]."""
+    return getattr(tp, "__args__", ())
+
+
+# =============================================================================
+# TYPE GUARDS
+# =============================================================================
+
+
+def is_string(value: object) -> TypeGuard[str]:
+    """Type guard for string values."""
+    return isinstance(value, str)
+
+
+def is_integer(value: object) -> TypeGuard[int]:
+    """Type guard for integer values."""
+    return isinstance(value, int)
+
+
+def is_float(value: object) -> TypeGuard[float]:
+    """Type guard for float values."""
+    return isinstance(value, float)
+
+
+def is_boolean(value: object) -> TypeGuard[bool]:
+    """Type guard for boolean values."""
+    return isinstance(value, bool)
+
+
+def is_list(value: object) -> TypeGuard[list[object]]:
+    """Type guard for list values."""
+    return isinstance(value, list)
+
+
+def is_dict(value: object) -> TypeGuard[dict[str, object]]:
+    """Type guard for dictionary values."""
+    return isinstance(value, dict)
+
+
+def is_callable(value: object) -> TypeGuard[Callable[..., object]]:
+    """Type guard for callable values."""
+    return callable(value)
+
+
+def is_none(value: object) -> TypeGuard[None]:
+    """Type guard for None values."""
+    return value is None
+
+
+def is_not_none[T](value: T | None) -> TypeGuard[T]:
+    """Type guard for non-None values."""
+    return value is not None
+
+
+# =============================================================================
+# EXPORTS - Hierarchical and compatibility types
+# =============================================================================
+
+__all__: list[str] = [
+    "FlextTypes",  # ONLY main class exported
 ]
-
-# Handler metrics aliases for easy access
-MetricsValue = FlextTypes.Handler.MetricsValue
-MetricsData = FlextTypes.Handler.MetricsData
-
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
-# =============================================================================
-
-# Legacy alias for FlextTypes - maintain backward compatibility
-FlextCoreTypes = FlextTypes

@@ -19,7 +19,7 @@ from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 
 # Import TestScenario from conftest.py (local enum)
 # from tests.support.test_patterns import TestScenario
-from flext_core import FlextResult
+from flext_core import FlextConstants, FlextResult, FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -44,7 +44,7 @@ class TestFlextResultCore:
 
     def test_fail_result_creation(self) -> None:
         """Test failure result creation."""
-        error_msg = "Test error"
+        error_msg = FlextConstants.Messages.OPERATION_FAILED
         result = FlextResult[None].fail(error_msg)
 
         assert result.is_failure
@@ -55,7 +55,7 @@ class TestFlextResultCore:
     @pytest.mark.parametrize(
         "test_data", [42, "string_value", [1, 2, 3], {"key": "value"}, None]
     )
-    def test_ok_with_various_types(self, test_data: object) -> None:
+    def test_ok_with_various_types(self, test_data: FlextTypes.Core.Object) -> None:
         """Test ok() with various data types using parametrization."""
         result = FlextResult.ok(test_data)
         assert result.success
@@ -63,15 +63,20 @@ class TestFlextResultCore:
 
     def test_result_factory_integration(self) -> None:
         """Test integration with FlextResultFactory."""
-        success_result = FlextResultFactory.create_success("test_data")
-        failure_result = FlextResultFactory.create_failure("test_error", "TEST_CODE")
+        success_result = FlextResultFactory.create_success(
+            FlextConstants.Messages.SUCCESS
+        )
+        failure_result = FlextResultFactory.create_failure(
+            FlextConstants.Messages.OPERATION_FAILED,
+            FlextConstants.Errors.VALIDATION_ERROR,
+        )
 
         assert success_result.success
-        assert success_result.value == "test_data"
+        assert success_result.value == FlextConstants.Messages.SUCCESS
 
         assert failure_result.is_failure
-        assert failure_result.error == "test_error"
-        assert failure_result.error_code == "TEST_CODE"
+        assert failure_result.error == FlextConstants.Messages.OPERATION_FAILED
+        assert failure_result.error_code == FlextConstants.Errors.VALIDATION_ERROR
 
 
 # ============================================================================
@@ -96,20 +101,22 @@ class TestFlextResultRailway:
 
     def test_map_failure_passthrough(self) -> None:
         """Test map doesn't transform failure results."""
-        result = FlextResult[None].fail("error")
+        result = FlextResult[None].fail(FlextConstants.Messages.UNKNOWN_ERROR)
         mapped_result = result.map(lambda x: x.upper())
 
         assert mapped_result.is_failure
-        assert mapped_result.error == "error"
+        assert mapped_result.error == FlextConstants.Messages.UNKNOWN_ERROR
 
     def test_flat_map_chaining(self, user_data_factory: UserDataFactory) -> None:
         """Test flat_map for monadic chaining."""
         user_data = user_data_factory.build()
 
-        def validate_name(name: str) -> FlextResult[str]:
+        def validate_name(
+            name: FlextTypes.Core.String,
+        ) -> FlextResult[FlextTypes.Core.String]:
             if len(name) > 2:
                 return FlextResult.ok(name.title())
-            return FlextResult[None].fail("Name too short")
+            return FlextResult[None].fail(FlextConstants.Messages.VALIDATION_FAILED)
 
         result = FlextResult.ok(user_data["name"]).flat_map(validate_name)
 
@@ -118,7 +125,7 @@ class TestFlextResultRailway:
             assert result.value == user_data["name"].title()
         else:
             assert result.is_failure
-            assert result.error == "Name too short"
+            assert result.error == FlextConstants.Messages.VALIDATION_FAILED
 
     def test_railway_pattern_composition(self) -> None:
         """Test complex railway pattern composition."""
@@ -129,7 +136,7 @@ class TestFlextResultRailway:
             .flat_map(
                 lambda s: FlextResult.ok(f"Processed: {s}")
                 if s
-                else FlextResult[None].fail("Empty")
+                else FlextResult[None].fail(FlextConstants.Messages.VALUE_EMPTY)
             )
             .map(lambda s: s.upper())
         )
@@ -155,9 +162,9 @@ class TestFlextResultErrorHandling:
 
     def test_value_failure_raises(self) -> None:
         """Test value property raises on failure results."""
-        result = FlextResult[None].fail("error")
+        result = FlextResult[None].fail(FlextConstants.Messages.UNKNOWN_ERROR)
 
-        with pytest.raises(TypeError, match="error"):
+        with pytest.raises(TypeError, match=FlextConstants.Messages.UNKNOWN_ERROR):
             _ = result.value
 
     def test_unwrap_or_default(self, user_data_factory: UserDataFactory) -> None:
@@ -166,7 +173,7 @@ class TestFlextResultErrorHandling:
         default_data = {"default": True}
 
         success_result = FlextResult.ok(success_data)
-        failure_result = FlextResult[None].fail("error")
+        failure_result = FlextResult[None].fail(FlextConstants.Messages.UNKNOWN_ERROR)
 
         assert success_result.unwrap_or(default_data) == success_data
         assert failure_result.unwrap_or(default_data) == default_data
@@ -174,15 +181,17 @@ class TestFlextResultErrorHandling:
     def test_error_propagation_chain(self) -> None:
         """Test error propagation through transformation chains."""
 
-        def failing_transform(_x: str) -> FlextResult[str]:
-            return FlextResult[None].fail("Transform failed")
+        def failing_transform(
+            _x: FlextTypes.Core.String,
+        ) -> FlextResult[FlextTypes.Core.String]:
+            return FlextResult[None].fail(FlextConstants.Messages.OPERATION_FAILED)
 
         result = (
             FlextResult.ok("input").flat_map(failing_transform).map(str.upper)
         )  # Should not execute
 
         assert result.is_failure
-        assert result.error == "Transform failed"
+        assert result.error == FlextConstants.Messages.OPERATION_FAILED
 
 
 # ============================================================================
@@ -196,7 +205,9 @@ class TestFlextResultPerformance:
     def test_creation_performance(self, benchmark: object) -> None:
         """Benchmark result creation performance."""
 
-        def create_results() -> list[FlextResult[str]]:
+        def create_results() -> FlextTypes.Core.List[
+            FlextResult[FlextTypes.Core.String]
+        ]:
             return [FlextResult.ok(f"value_{i}") for i in range(100)]
 
         results = BenchmarkUtils.benchmark_with_warmup(
@@ -255,33 +266,35 @@ class TestFlextResultProperties:
     """Property-based tests for FlextResult invariants."""
 
     @given(st.text())
-    def test_ok_preserves_value(self, value: str) -> None:
+    def test_ok_preserves_value(self, value: FlextTypes.Core.String) -> None:
         """Property: ok(value).value == value."""
         result = FlextResult.ok(value)
         assert result.value == value
         assert result.success
 
     @given(st.text())
-    def test_fail_preserves_error(self, error: str) -> None:
+    def test_fail_preserves_error(self, error: FlextTypes.Core.String) -> None:
         """Property: fail(error).error == error (with empty string handling)."""
         result = FlextResult[None].fail(error)
 
         # FlextResult converts empty/whitespace-only errors to default message
         expected_error = error.strip() if error else ""
         if not expected_error:
-            expected_error = "Unknown error occurred"
+            expected_error = FlextConstants.Messages.UNKNOWN_ERROR
 
         assert result.error == expected_error
         assert result.is_failure
 
     @given(st.text(), st.text())
-    def test_map_composition_law(self, value: str, prefix: str) -> None:
+    def test_map_composition_law(
+        self, value: FlextTypes.Core.String, prefix: FlextTypes.Core.String
+    ) -> None:
         """Property: result.map(f).map(g) == result.map(lambda x: g(f(x)))."""
 
-        def f(x: str) -> str:
+        def f(x: FlextTypes.Core.String) -> FlextTypes.Core.String:
             return f"{prefix}_{x}"
 
-        def g(x: str) -> str:
+        def g(x: FlextTypes.Core.String) -> FlextTypes.Core.String:
             return x.upper()
 
         result = FlextResult.ok(value)
@@ -306,19 +319,19 @@ class TestFlextResultIntegration:
         user_data = user_data_factory.build()
 
         def validate_user_data(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             return (
                 FlextResult.ok(data)
                 .flat_map(
                     lambda d: FlextResult.ok(d)
                     if d.get("name")
-                    else FlextResult[None].fail("Name required")
+                    else FlextResult[None].fail(FlextConstants.Messages.NAME_EMPTY)
                 )
                 .flat_map(
                     lambda d: FlextResult.ok(d)
                     if d.get("email")
-                    else FlextResult[None].fail("Email required")
+                    else FlextResult[None].fail(FlextConstants.Messages.INVALID_INPUT)
                 )
                 .map(lambda d: {**d, "validated": True})
             )
@@ -329,7 +342,9 @@ class TestFlextResultIntegration:
         assert result.value["validated"] is True
         assert result.value["name"] == user_data["name"]
 
-    def test_error_handling_scenarios(self, test_scenarios: list) -> None:
+    def test_error_handling_scenarios(
+        self, test_scenarios: FlextTypes.Core.List
+    ) -> None:
         """Test various error handling scenarios."""
         # Check if we have error scenarios (look for ERROR_CASE enum value)
         has_error_scenario = any(
@@ -338,16 +353,18 @@ class TestFlextResultIntegration:
         if not has_error_scenario:
             pytest.skip("No error scenario available")
 
-        def process_with_validation(data: str) -> FlextResult[str]:
+        def process_with_validation(
+            data: FlextTypes.Core.String,
+        ) -> FlextResult[FlextTypes.Core.String]:
             if not data:
-                return FlextResult[None].fail("Empty input")
+                return FlextResult[None].fail(FlextConstants.Messages.VALUE_EMPTY)
             if len(data) < 3:
-                return FlextResult[None].fail("Too short")
+                return FlextResult[None].fail(FlextConstants.Messages.VALIDATION_FAILED)
             return FlextResult.ok(data.upper())
 
         result = process_with_validation("")
         assert result.is_failure
-        assert "Empty input" in result.error
+        assert FlextConstants.Messages.VALUE_EMPTY in result.error
 
 
 # ============================================================================
@@ -366,8 +383,8 @@ class TestFlextResultAsync:
         user_data = user_data_factory.build()
 
         async def async_process(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             # Simulate async processing
             await AsyncTestUtils.sleep_with_timeout(0.01)
             return FlextResult.ok({**data, "processed_async": True})
@@ -381,20 +398,22 @@ class TestFlextResultAsync:
     async def test_async_error_handling(self) -> None:
         """Test async error handling with FlextResult."""
 
-        async def async_failing_operation() -> FlextResult[str]:
+        async def async_failing_operation() -> FlextResult[FlextTypes.Core.String]:
             await AsyncTestUtils.sleep_with_timeout(0.01)
-            return FlextResult[None].fail("Async operation failed")
+            return FlextResult[None].fail(FlextConstants.Messages.OPERATION_FAILED)
 
         result = await async_failing_operation()
 
         assert result.is_failure
-        assert result.error == "Async operation failed"
+        assert result.error == FlextConstants.Messages.OPERATION_FAILED
 
     @pytest.mark.asyncio
     async def test_async_concurrency_handling(self) -> None:
         """Test concurrent async operations with FlextResult."""
 
-        async def create_async_result(value: str) -> FlextResult[str]:
+        async def create_async_result(
+            value: FlextTypes.Core.String,
+        ) -> FlextResult[FlextTypes.Core.String]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return FlextResult.ok(f"processed_{value}")
 
@@ -425,21 +444,21 @@ class TestFlextResultEdgeCases:
     """Test edge cases and boundary conditions."""
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.unicode_strings())
-    def test_unicode_handling(self, edge_value: str) -> None:
+    def test_unicode_handling(self, edge_value: FlextTypes.Core.String) -> None:
         """Test FlextResult with unicode strings."""
         result = FlextResult.ok(edge_value)
         assert result.success
         assert result.value == edge_value
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.boundary_numbers())
-    def test_boundary_numbers(self, edge_value: float) -> None:
+    def test_boundary_numbers(self, edge_value: FlextTypes.Core.Float) -> None:
         """Test FlextResult with boundary number values."""
         result = FlextResult.ok(edge_value)
         assert result.success
         assert result.value == edge_value
 
     @pytest.mark.parametrize("empty_value", EdgeCaseGenerators.empty_values())
-    def test_empty_values(self, empty_value: object) -> None:
+    def test_empty_values(self, empty_value: FlextTypes.Core.Object) -> None:
         """Test FlextResult with empty/null values."""
         result = FlextResult.ok(empty_value)
         assert result.success
@@ -477,9 +496,11 @@ class TestFlextResultFactoryIntegration:
         """Test FlextResult with batch factory data."""
         users = UserFactory.create_batch(5)
 
-        def process_users(user_list: list) -> FlextResult[list]:
+        def process_users(
+            user_list: FlextTypes.Core.List,
+        ) -> FlextResult[FlextTypes.Core.List]:
             if not user_list:
-                return FlextResult[None].fail("No users to process")
+                return FlextResult[None].fail(FlextConstants.Messages.INVALID_INPUT)
             return FlextResult.ok([f"processed_{user.name}" for user in user_list])
 
         result = process_users(users)

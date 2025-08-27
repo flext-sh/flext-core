@@ -6,8 +6,6 @@ Demonstrates SOLID principles, DI patterns, and extensive test automation.
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from hypothesis import given, strategies as st
 from tests.conftest import TestScenario
@@ -21,6 +19,8 @@ from tests.support.factory_boy_factories import (
 from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 
 from flext_core import FlextContainer, FlextResult, get_flext_container
+from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -73,17 +73,17 @@ class TestFlextContainerCore:
         result = container.get("non_existent_service")
 
         assert result.is_failure
-        assert "not found" in result.error.lower()
+        assert FlextConstants.Messages.OPERATION_FAILED.lower() in result.error.lower()
 
     def test_factory_registration_and_execution(self) -> None:
         """Test factory registration and lazy evaluation."""
         container = get_flext_container()
         factory_called = False
 
-        def test_factory() -> str:
+        def test_factory() -> FlextTypes.Core.String:
             nonlocal factory_called
             factory_called = True
-            return "factory_result"
+            return FlextConstants.Messages.SUCCESS
 
         result = container.register_factory("test_factory", test_factory)
         assert result.success
@@ -91,7 +91,7 @@ class TestFlextContainerCore:
 
         get_result = container.get("test_factory")
         assert get_result.success
-        assert get_result.value == "factory_result"
+        assert get_result.value == FlextConstants.Messages.SUCCESS
         assert factory_called  # Factory called during get
 
 
@@ -111,11 +111,11 @@ class TestFlextContainerDI:
         container.register("config", {"database_url": "localhost:5432"})
 
         class DatabaseService:
-            def __init__(self, url: str) -> None:
+            def __init__(self, url: FlextTypes.Core.String) -> None:
                 self.url = url
                 self.connected = False
 
-            def connect(self) -> bool:
+            def connect(self) -> FlextTypes.Core.Boolean:
                 self.connected = True
                 return True
 
@@ -132,7 +132,7 @@ class TestFlextContainerDI:
                 self.db = database
                 self.users = []
 
-            def create_user(self, user_data: dict[str, Any]) -> dict[str, Any]:
+            def create_user(self, user_data: FlextTypes.Core.JsonObject) -> FlextTypes.Core.JsonObject:
                 user = {"id": len(self.users) + 1, **user_data}
                 self.users.append(user)
                 return user
@@ -184,7 +184,7 @@ class TestFlextContainerPerformance:
         for i in range(100):
             container.register(f"service_{i}", f"value_{i}")
 
-        def retrieve_services() -> list[str]:
+        def retrieve_services() -> FlextTypes.Core.List[FlextTypes.Core.String]:
             results = []
             for i in range(100):
                 result = container.get(f"service_{i}")
@@ -231,11 +231,11 @@ class TestFlextContainerAsync:
         """Test concurrent access to container."""
         container = get_flext_container()
 
-        async def register_service(service_id: int) -> FlextResult[None]:
+        async def register_service(service_id: FlextTypes.Core.Integer) -> FlextResult[None]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return container.register(f"concurrent_service_{service_id}", service_id)
 
-        async def get_service(service_id: int) -> FlextResult[Any]:
+        async def get_service(service_id: FlextTypes.Core.Integer) -> FlextResult[FlextTypes.Core.Object]:
             await AsyncTestUtils.sleep_with_timeout(0.001)
             return container.get(f"concurrent_service_{service_id}")
 
@@ -264,7 +264,7 @@ class TestFlextContainerProperties:
 
     @given(st.text(min_size=1), st.text())
     def test_register_get_roundtrip(
-        self, service_name: str, service_value: str
+        self, service_name: FlextTypes.Core.String, service_value: FlextTypes.Core.String
     ) -> None:
         """Property: register then get returns the same value."""
         container = get_flext_container()
@@ -276,7 +276,7 @@ class TestFlextContainerProperties:
             assert get_result.value == service_value
 
     @given(st.text(min_size=1))
-    def test_unregistered_service_failure(self, service_name: str) -> None:
+    def test_unregistered_service_failure(self, service_name: FlextTypes.Core.String) -> None:
         """Property: getting unregistered service always fails."""
         container = get_flext_container()
 
@@ -305,7 +305,7 @@ class TestFlextContainerIntegration:
             def __init__(self) -> None:
                 self.users = []
 
-            def save(self, user_data: dict[str, Any]) -> FlextResult[dict[str, Any]]:
+            def save(self, user_data: FlextTypes.Core.JsonObject) -> FlextResult[FlextTypes.Core.JsonObject]:
                 user = {"id": len(self.users) + 1, **user_data}
                 self.users.append(user)
                 return FlextResult.ok(user)
@@ -319,8 +319,8 @@ class TestFlextContainerIntegration:
                 self.repository = repository
 
             def create_user(
-                self, user_data: dict[str, Any]
-            ) -> FlextResult[dict[str, Any]]:
+                self, user_data: FlextTypes.Core.JsonObject
+            ) -> FlextResult[FlextTypes.Core.JsonObject]:
                 return self.repository.save(user_data)
 
         def create_user_service() -> UserService:
@@ -384,7 +384,7 @@ class TestFlextContainerEdgeCases:
                 assert get_result.value == "test_value"
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.empty_values())
-    def test_empty_value_registration(self, edge_value: Any) -> None:
+    def test_empty_value_registration(self, edge_value: object) -> None:
         """Test container with empty/null values."""
         container = get_flext_container()
 

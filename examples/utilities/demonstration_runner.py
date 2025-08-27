@@ -115,13 +115,13 @@ def demonstrate_validation() -> None:
     DemonstrationSectionHelper.print_section_header(4, "Data Validation")
 
     # Test user data validation
-    valid_user_data: FlextTypes.Auth.UserData = {
+    valid_user_data: dict[str, object] = {
         "name": "John Doe",
         "email": "john@example.com",
         "age": 30,
     }
 
-    invalid_user_data: FlextTypes.Auth.UserData = {
+    invalid_user_data: dict[str, object] = {
         "name": "",
         "email": "invalid-email",
         "age": "not-a-number",

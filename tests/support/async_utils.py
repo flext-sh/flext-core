@@ -246,10 +246,10 @@ class AsyncMockUtils:
         return_value: object = None,
         delay: float = 0.1,
         side_effect: Exception | None = None,
-    ) -> Any:
+    ) -> object:
         """Create async mock with delay."""
 
-        async def delayed_async_mock(*args: object, **kwargs: object) -> Any:  # noqa: ARG001
+        async def delayed_async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -262,11 +262,11 @@ class AsyncMockUtils:
         return_value: object = None,
         failure_rate: float = 0.3,
         exception: Exception | None = None,
-    ) -> Any:
+    ) -> object:
         """Create async mock that fails randomly."""
         import random
 
-        async def flaky_async_mock(*args: object, **kwargs: object) -> Any:  # noqa: ARG001
+        async def flaky_async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
             if random.random() < failure_rate:  # noqa: S311
                 test_exception = exception or RuntimeError("Flaky operation failed")
                 raise test_exception
@@ -291,16 +291,16 @@ class AsyncFixtureUtils:
             await teardown(resource)
 
     @staticmethod
-    async def create_async_test_client() -> Any:
+    async def create_async_test_client() -> object:
         """Create async test client (placeholder for actual implementation)."""
 
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
-            async def get(self, url: str) -> dict[str, Any]:
+            async def get(self, url: str) -> dict[str, object]:
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
-            async def post(self, url: str, data: dict[str, Any]) -> dict[str, Any]:
+            async def post(self, url: str, data: dict[str, object]) -> dict[str, object]:
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 
@@ -329,10 +329,10 @@ class AsyncConcurrencyTesting:
 
     @staticmethod
     async def test_race_condition(
-        func1: Callable[[], Awaitable[Any]],
-        func2: Callable[[], Awaitable[Any]],
+        func1: Callable[[], Awaitable[object]],
+        func2: Callable[[], Awaitable[object]],
         iterations: int = 100,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Test for race conditions between two async functions."""
         results = []
 
@@ -344,7 +344,7 @@ class AsyncConcurrencyTesting:
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
 
-                async def _wrapper1(coro: object = awaitable1) -> Any:
+                async def _wrapper1(coro: object = awaitable1) -> object:
                     return await coro
 
                 coro1 = _wrapper1()
@@ -353,7 +353,7 @@ class AsyncConcurrencyTesting:
 
             if not asyncio.iscoroutine(awaitable2):
 
-                async def _wrapper2(coro: object = awaitable2) -> Any:
+                async def _wrapper2(coro: object = awaitable2) -> object:
                     return await coro
 
                 coro2 = _wrapper2()

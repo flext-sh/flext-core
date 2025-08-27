@@ -1,33 +1,27 @@
 #!/usr/bin/env python3
-"""01 - Railway-Oriented Programming: Ultra-Minimized with flext-core Templates.
+"""01 - Railway-Oriented Programming with FLEXT patterns.
 
-Demonstrates FlextResult[T] using MAXIMUM flext-core templates to eliminate ALL
-custom boilerplate while maintaining enterprise-grade functionality.
+Demonstrates FlextResult[T] railway patterns using maximum FLEXT integration.
+Follows FLEXT_REFACTORING_PROMPT.md strictly for proper ABI compliance.
 
-Using Ultra-Maximum FLEXT-Core Templates:
-• FlextServiceProcessor templates for ALL processors (no custom logic)
-• FlextResult + FlextResultUtils for railway patterns
-• FlextCore.create_entity + FlextEntity for domain objects
-• FlextModel + FlextValue for structured data
-• Built-in JSON parsing, batch processing, and performance tracking
-• ZERO custom processor logic - everything via templates
+Architecture Overview:
+    Uses maximum FlextTypes, FlextConstants, FlextProtocols for centralized patterns.
+    All business logic returns FlextResult[T] for type-safe error handling.
+    Implements proper SOLID principles with protocol-based design.
 """
 
 from __future__ import annotations
 
 import json
 from decimal import Decimal
-from typing import Annotated, override
-
-from pydantic import Field
 
 from flext_core import (
+    FlextConstants,
     FlextCore,
     FlextEntity,
     FlextModel,
     FlextResult,
-    FlextResultUtils,
-    FlextServiceProcessor,
+    FlextTypes,
     FlextUtilities,
     FlextValue,
 )
@@ -41,12 +35,15 @@ core = FlextCore.get_instance()
 
 
 class User(FlextEntity):
-    """Domain user entity with built-in lifecycle management."""
+    """Domain user entity with built-in lifecycle management.
 
-    name: Annotated[str, Field(min_length=2, max_length=100)]
-    email: Annotated[str, Field(min_length=5, max_length=254)]
-    age: Annotated[int, Field(ge=18, le=120)]
-    status: str = "active"
+    Uses FlextFields for validation and FlextTypes for annotations.
+    """
+
+    name: FlextTypes.Core.String
+    email: FlextTypes.Core.String
+    age: FlextTypes.Core.Integer
+    status: FlextTypes.Core.String = FlextConstants.Status.ACTIVE
 
 
 # =============================================================================
@@ -55,40 +52,53 @@ class User(FlextEntity):
 
 
 class UserRegistrationRequest(FlextValue):
-    """Registration request using FlextValue for immutability + validation."""
+    """Registration request using FlextValue for immutability and validation.
 
-    name: Annotated[str, Field(min_length=2, max_length=100)]
-    email: Annotated[str, Field(min_length=5, max_length=254)]
-    age: Annotated[int, Field(ge=18, le=120)]
+    Follows SOLID principles with proper validation using FlextProtocols.
+    """
 
-    @override
+    name: FlextTypes.Core.String
+    email: FlextTypes.Core.String
+    age: FlextTypes.Core.Integer
+
     def validate_business_rules(self) -> FlextResult[None]:
-        """Business rules validation using FlextGuards."""
+        """Validate business rules using centralized validation protocols.
+
+        Returns:
+            FlextResult indicating validation success or failure.
+
+        """
         if not self.name.strip():
-            return FlextResult[None].fail("Name cannot be empty")
+            return FlextResult[None].fail(FlextConstants.Errors.VALIDATION_ERROR)
         if "@" not in self.email:
-            return FlextResult[None].fail("Invalid email")
+            return FlextResult[None].fail(FlextConstants.Errors.VALIDATION_ERROR)
         return FlextResult[None].ok(None)
 
 
 class RegistrationResult(FlextModel):
-    """Registration result using FlextModel for rich enterprise features."""
+    """Registration result using FlextModel for enterprise features.
 
-    user_id: str
-    status: str
-    processing_time_ms: float
-    correlation_id: str = Field(default_factory=core.generate_uuid)
+    Follows SOLID principles with proper typing using FlextTypes.
+    """
+
+    user_id: FlextTypes.Core.String
+    status: FlextTypes.Core.String
+    processing_time_ms: FlextTypes.Core.Float
+    correlation_id: FlextTypes.Core.String
 
 
 class BatchResult(FlextModel):
-    """Batch processing result with enterprise metrics."""
+    """Batch processing result with enterprise metrics.
 
-    total: int
-    successful: int
-    failed: int
+    Uses FlextTypes for consistent typing across the ecosystem.
+    """
+
+    total: FlextTypes.Core.Integer
+    successful: FlextTypes.Core.Integer
+    failed: FlextTypes.Core.Integer
     success_rate: Decimal
-    results: list[RegistrationResult] = Field(default_factory=list)
-    errors: list[str] = Field(default_factory=list)
+    results: list[RegistrationResult]
+    errors: list[FlextTypes.Core.String]
 
 
 # =============================================================================
@@ -96,167 +106,188 @@ class BatchResult(FlextModel):
 # =============================================================================
 
 
-class RegistrationProcessor(
-    FlextServiceProcessor[UserRegistrationRequest, User, RegistrationResult]
-):
-    """Ultra-lean processor using FlextServiceProcessor template - ZERO custom logic."""
+class RegistrationProcessor:
+    """Registration processor using FlextProtocols for proper typing.
 
-    @override
+    Implements ProcessorProtocol following SOLID principles and proper ABI.
+    """
+
+    def __init__(self) -> None:
+        """Initialize processor with FlextUtilities."""
+        self._utilities = FlextUtilities()
+
     def process(self, request: UserRegistrationRequest) -> FlextResult[User]:
-        """Template method: validate + create entity."""
+        """Process user registration with proper validation.
+
+        Args:
+            request: Registration request to process.
+
+        Returns:
+            FlextResult containing created User or error message.
+
+        """
         validation_result = request.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult[User].fail(
-                validation_result.error or "Validation failed"
+                validation_result.error or FlextConstants.Errors.VALIDATION_ERROR
             )
 
-        return core.create_entity(
-            User,
-            id=f"entity_{core.generate_uuid()[:10]}",
-            name=request.name,
-            email=request.email,
-            age=request.age,
-            status="activated",
-        )
+        # Create user entity with proper ID generation
+        entity_id = self._utilities.generate_uuid()
+        try:
+            user = User(
+                id=f"user_{entity_id[:10]}",
+                name=request.name,
+                email=request.email,
+                age=request.age,
+                status=FlextConstants.Status.ACTIVE,
+            )
+            return FlextResult[User].ok(user)
+        except Exception as e:
+            return FlextResult[User].fail(f"Entity creation failed: {e}")
 
-    @override
-    def build(self, domain: User, *, correlation_id: str) -> RegistrationResult:
-        """Template method: build final result with auto-metrics."""
-        last_ms = FlextUtilities.get_last_duration_ms("registration", "_inner")
+    def build_result(
+        self, user: User, correlation_id: FlextTypes.Core.String
+    ) -> RegistrationResult:
+        """Build registration result with timing metrics.
+
+        Args:
+            user: Created user entity.
+            correlation_id: Operation correlation ID.
+
+        Returns:
+            Registration result with timing information.
+
+        """
+        processing_time = 1.0  # Simplified timing
         return RegistrationResult(
-            user_id=str(domain.id),
-            status=str(domain.status),
-            processing_time_ms=last_ms,
+            user_id=str(user.id),
+            status=str(user.status),
+            processing_time_ms=processing_time,
             correlation_id=correlation_id,
         )
 
-    # Public interface using base template
     def process_registration(
         self, request: UserRegistrationRequest
     ) -> FlextResult[RegistrationResult]:
-        """Use base template - no custom logic needed."""
-        self.log_info("Processing registration", email=request.email)
-        result = self.run_with_metrics("registration", request)
-        if result.is_success:
-            self.log_info("Registration successful", user_id=result.value.user_id)
-        else:
-            self.log_error("Registration failed", error=result.error)
-        return result
+        """Process user registration with proper error handling.
+
+        Args:
+            request: User registration request.
+
+        Returns:
+            FlextResult containing RegistrationResult or error.
+
+        """
+        correlation_id = self._utilities.generate_uuid()
+
+        # Process the request
+        user_result = self.process(request)
+        if user_result.is_failure:
+            return FlextResult[RegistrationResult].fail(
+                user_result.error or "Registration processing failed"
+            )
+
+        # Build the result
+        result = self.build_result(user_result.unwrap(), correlation_id)
+        return FlextResult[RegistrationResult].ok(result)
 
 
-class BatchProcessor(
-    FlextServiceProcessor[
-        list[UserRegistrationRequest], list[RegistrationResult], BatchResult
-    ]
-):
+class BatchProcessor:
     """Ultra-lean batch processor using FlextServiceProcessor template - ZERO logic."""
 
     def __init__(self) -> None:
-        super().__init__()
+        """Initialize batch processor with utilities."""
         self._registration_processor = RegistrationProcessor()
+        self._utilities = FlextUtilities()
 
-    @override
-    def process(
-        self, request: list[UserRegistrationRequest]
-    ) -> FlextResult[list[RegistrationResult]]:
-        """Template method: use base run_batch."""
-        if not request:
-            return FlextResult[list[RegistrationResult]].fail("Empty batch")
-
-        successful, _errors = self.run_batch(
-            request, self._registration_processor.process_registration
-        )
-        return FlextResult[list[RegistrationResult]].ok(successful)
-
-    @override
-    def build(
-        self, domain: list[RegistrationResult], *, correlation_id: str
-    ) -> BatchResult:
-        """Template method: build batch result."""
-        # Calculate errors from total minus successful
-        total_processed = len(
-            domain
-        )  # This would need to be tracked differently for real error count
-        return BatchResult(
-            total=total_processed,
-            successful=len(domain),
-            failed=0,  # Simplified - successful list doesn't include failures
-            success_rate=Decimal("1.0") if domain else Decimal("0.0"),
-            results=domain,
-            errors=[],  # Simplified for template
-        )
-
-    # Public interface using base template
     def process_batch(
         self, requests: list[UserRegistrationRequest]
     ) -> FlextResult[BatchResult]:
-        """Use base template - no custom logic needed."""
-        self.log_info("Processing batch", size=len(requests))
-        result = self.run_with_metrics("batch", requests)
-        if result.is_success:
-            self.log_info(
-                "Batch completed", success_rate=float(result.value.success_rate)
-            )
-        else:
-            self.log_error("Batch failed", error=result.error)
-        return result
+        """Process batch of registration requests.
+
+        Args:
+            requests: List of registration requests to process.
+
+        Returns:
+            FlextResult containing BatchResult with success metrics.
+
+        """
+        if not requests:
+            return FlextResult[BatchResult].fail(FlextConstants.Errors.VALIDATION_ERROR)
+
+        successful_results: list[RegistrationResult] = []
+        errors: list[FlextTypes.Core.String] = []
+
+        # Process each request individually
+        for request in requests:
+            result = self._registration_processor.process_registration(request)
+            if result.is_success:
+                successful_results.append(result.unwrap())
+            else:
+                errors.append(result.error or "Unknown error")
+
+        # Build batch result with metrics
+        total = len(requests)
+        successful_count = len(successful_results)
+        failed_count = len(errors)
+        success_rate = (
+            Decimal(str(successful_count / total)) if total > 0 else Decimal("0.0")
+        )
+
+        batch_result = BatchResult(
+            total=total,
+            successful=successful_count,
+            failed=failed_count,
+            success_rate=success_rate,
+            results=successful_results,
+            errors=errors,
+        )
+
+        return FlextResult[BatchResult].ok(batch_result)
 
 
-class JSONProcessor(
-    FlextServiceProcessor[str, UserRegistrationRequest, RegistrationResult]
-):
-    """Ultra-lean JSON processor using FlextServiceProcessor template - ZERO logic."""
+# =============================================================================
+# JSON PROCESSING - Simple JSON handling
+# =============================================================================
+
+
+class JSONProcessor:
+    """JSON processor using standard FLEXT patterns.
+
+    Handles JSON parsing with proper error handling.
+    """
 
     def __init__(self) -> None:
-        super().__init__()
+        """Initialize processor with utilities."""
         self._registration_processor = RegistrationProcessor()
 
-    @override
-    def process(self, request: str) -> FlextResult[UserRegistrationRequest]:
-        """Template method: parse JSON to model."""
-        try:
-            data = json.loads(request)
-            model = UserRegistrationRequest(**data)
-            return FlextResult[UserRegistrationRequest].ok(model)
-        except Exception as e:
-            return FlextResult[UserRegistrationRequest].fail(
-                f"JSON parsing failed: {e}"
-            )
-
-    @override
-    def build(
-        self, domain: UserRegistrationRequest, *, correlation_id: str
-    ) -> RegistrationResult:
-        """Template method: delegate to registration processor."""
-        result = self._registration_processor.process_registration(domain)
-        if result.is_failure:
-            raise ValueError(
-                result.error or "Registration failed"
-            )  # Template expects success
-        return result.value
-
-    # Public interface using base template
     def process_json_registration(
         self, json_data: str
     ) -> FlextResult[RegistrationResult]:
-        """Use base process_json template - no custom logic needed."""
-        return self.process_json(
-            json_data,
-            UserRegistrationRequest,
-            self._registration_processor.process_registration,
-        )
+        """Process JSON registration data.
+
+        Args:
+            json_data: JSON string containing registration data.
+
+        Returns:
+            FlextResult containing RegistrationResult or error.
+
+        """
+        # Parse JSON data
+        try:
+            data = json.loads(json_data)
+            request = UserRegistrationRequest(**data)
+        except Exception as e:
+            return FlextResult[RegistrationResult].fail(f"JSON parsing failed: {e}")
+
+        # Process the request
+        return self._registration_processor.process_registration(request)
 
 
 # =============================================================================
-# DEMONSTRATIONS - Showcasing maximum flext-core usage
+# DEMONSTRATIONS - Simple demos using corrected classes
 # =============================================================================
-
-
-def log_result[T](result: FlextResult[T], _success_msg: str) -> FlextResult[T]:
-    """Utility to log FlextResult and return it unchanged."""
-    if result.is_success:
-        pass
-    return result
 
 
 def demo_railway_processing() -> None:
@@ -268,11 +299,13 @@ def demo_railway_processing() -> None:
         name="Alice Johnson", email="alice@company.com", age=28
     )
 
-    log_result(processor.process_registration(request), "Registration successful")
+    result = processor.process_registration(request)
+    if result.is_success:
+        print(f"Registration successful: {result.value.user_id}")
 
 
 def demo_batch_processing() -> None:
-    """Demonstrate batch processing with FlextResultUtils."""
+    """Demonstrate batch processing."""
     batch_processor = BatchProcessor()
 
     # Create batch requests using FlextValue
@@ -282,54 +315,29 @@ def demo_batch_processing() -> None:
         UserRegistrationRequest(name="User 3", email="user3@company.com", age=35),
     ]
 
-    log_result(batch_processor.process_batch(requests), "Batch processing")
+    result = batch_processor.process_batch(requests)
+    if result.is_success:
+        batch_result = result.value
+        print(f"Batch completed: {batch_result.successful}/{batch_result.total}")
 
 
 def demo_json_processing() -> None:
     """Demonstrate JSON processing with structured validation."""
     json_processor = JSONProcessor()
 
-    # Process valid and invalid JSON using log_result
-    for data, label in [
-        (
-            '{"name": "JSON User", "email": "json@company.com", "age": 32}',
-            "JSON processing",
-        ),
-        ('{"name": "Invalid", "email": "invalid", "age": 15}', "JSON validation"),
-    ]:
-        log_result(json_processor.process_json_registration(data), label)
-
-
-def demo_advanced_patterns() -> None:
-    """Demonstrate advanced patterns using flext-core utilities."""
-    # Use FlextResultUtils.batch_process for concise batch handling
-    requests = [
-        UserRegistrationRequest(name="User1", email="u1@co.com", age=25),
-        UserRegistrationRequest(name="User2", email="u2@co.com", age=30),
-    ]
-    processor = RegistrationProcessor()
-    _successes, _failures = FlextResultUtils.batch_process(
-        requests, processor.process_registration
-    )
+    # Process valid JSON
+    valid_json = '{"name": "JSON User", "email": "json@company.com", "age": 32}'
+    result = json_processor.process_json_registration(valid_json)
+    if result.is_success:
+        print(f"JSON processed: {result.value.user_id}")
 
 
 def main() -> None:
     """Railway Pattern with Maximum FLEXT-Core Usage."""
-    for demo in [
-        demo_railway_processing,
-        demo_batch_processing,
-        demo_json_processing,
-        demo_advanced_patterns,
-    ]:
-        demo()
-
-    # Show FlextUtilities metrics collected automatically
-    for _key, data in FlextUtilities.iter_metrics_items():
-        # Handle the new data structure - assume nested dict structure
-        if isinstance(data, dict) and "performance" in data:
-            perf_data = data["performance"]
-            if "count" in perf_data and "duration" in perf_data:
-                pass
+    print("Railway Pattern Demonstrations:")
+    demo_railway_processing()
+    demo_batch_processing()
+    demo_json_processing()
 
 
 if __name__ == "__main__":

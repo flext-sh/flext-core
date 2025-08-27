@@ -17,6 +17,8 @@ from tests.support.factory_boy_factories import (
 from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 
 # Direct imports avoiding problematic paths
+from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 from flext_core.validation import FlextValidation
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -52,7 +54,7 @@ class TestFlextValidationCore:
             "user_name@example-site.info",
         ],
     )
-    def test_valid_email_formats(self, valid_email: str) -> None:
+    def test_valid_email_formats(self, valid_email: FlextTypes.Core.String) -> None:
         """Test various valid email formats."""
         result = FlextValidation.validate_email_field(valid_email)
         assert result.is_valid, f"Email should be valid: {valid_email}"
@@ -68,7 +70,7 @@ class TestFlextValidationCore:
             "user name@domain.com",
         ],
     )
-    def test_invalid_email_formats(self, invalid_email: str) -> None:
+    def test_invalid_email_formats(self, invalid_email: FlextTypes.Core.String) -> None:
         """Test various invalid email formats."""
         result = FlextValidation.validate_email_field(invalid_email)
         assert not result.is_valid, f"Email should be invalid: {invalid_email}"
@@ -76,7 +78,7 @@ class TestFlextValidationCore:
     def test_string_validation_basic(self) -> None:
         """Test basic string validation."""
         # Valid strings
-        assert FlextValidation.validate_non_empty_string_func("valid")
+        assert FlextValidation.validate_non_empty_string_func(FlextConstants.Messages.SUCCESS)
         assert FlextValidation.validate_non_empty_string_func("test string")
 
         # Invalid strings
@@ -108,7 +110,7 @@ class TestFlextValidationProperties:
     """Property-based tests using Hypothesis."""
 
     @given(st.emails())
-    def test_email_validation_hypothesis(self, email: str) -> None:
+    def test_email_validation_hypothesis(self, email: FlextTypes.Core.String) -> None:
         """Property-based test for email validation using Hypothesis emails."""
         result = FlextValidation.validate_email_field(email)
         # Hypothesis generates RFC-compliant emails, but our validator may have stricter rules
@@ -118,7 +120,7 @@ class TestFlextValidationProperties:
             assert "@" in email  # Valid emails must have @
 
     @given(st.text(min_size=1).filter(lambda x: "@" not in x))
-    def test_non_email_strings(self, text: str) -> None:
+    def test_non_email_strings(self, text: FlextTypes.Core.String) -> None:
         """Property-based test with strings that are definitely not emails."""
         assume("@" not in text)
         assume(len(text.strip()) > 0)
@@ -129,7 +131,7 @@ class TestFlextValidationProperties:
         )
 
     @given(st.text(min_size=1, max_size=1000))
-    def test_string_validation_properties(self, text: str) -> None:
+    def test_string_validation_properties(self, text: FlextTypes.Core.String) -> None:
         """Property-based test for string validation."""
         result = FlextValidation.validate_non_empty_string_func(text)
 
@@ -140,7 +142,7 @@ class TestFlextValidationProperties:
             assert not result
 
     @given(st.floats(min_value=0.1, max_value=1000000))
-    def test_positive_number_validation(self, number: float) -> None:
+    def test_positive_number_validation(self, number: FlextTypes.Core.Float) -> None:
         """Property-based test for positive number validation."""
         assume(number > 0)
 
@@ -154,7 +156,7 @@ class TestFlextValidationProperties:
             and x not in {"Infinity", "-Infinity", "inf", "-inf", "nan", "NaN"}
         )
     )
-    def test_non_numeric_validation(self, text: str) -> None:
+    def test_non_numeric_validation(self, text: FlextTypes.Core.String) -> None:
         """Property-based test for non-numeric validation."""
         assume(text)  # Ensure non-empty
         assume(not any(c.isdigit() for c in text))  # No digits
@@ -179,7 +181,7 @@ class TestFlextValidationEdgeCases:
     """Test validation with edge cases and boundary conditions."""
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.unicode_strings())
-    def test_unicode_string_validation(self, edge_value: str) -> None:
+    def test_unicode_string_validation(self, edge_value: FlextTypes.Core.String) -> None:
         """Test string validation with Unicode edge cases."""
         result = FlextValidation.validate_non_empty_string_func(edge_value)
 
@@ -192,7 +194,7 @@ class TestFlextValidationEdgeCases:
             assert not result
 
     @pytest.mark.parametrize("edge_value", EdgeCaseGenerators.boundary_numbers())
-    def test_boundary_number_validation(self, edge_value: float) -> None:
+    def test_boundary_number_validation(self, edge_value: FlextTypes.Core.Float) -> None:
         """Test number validation with boundary values."""
         result = FlextValidation.validate_numeric_field(edge_value)
 

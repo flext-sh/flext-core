@@ -19,7 +19,7 @@ from pydantic import (
 )
 
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextAttributeError, FlextValidationError
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLoggerFactory, flext_get_logger
 from flext_core.mixins import (
     FlextLoggableMixin,
@@ -28,7 +28,7 @@ from flext_core.mixins import (
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-from flext_core.validation import FlextPredicates
+from flext_core.validation import FlextValidation
 
 # Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
 type PayloadProtocol = FlextProtocols.Foundation.Validator[object]
@@ -49,10 +49,10 @@ SERIALIZATION_FORMAT_JSON = FlextConstants.Observability.SERIALIZATION_FORMAT_JS
 SERIALIZATION_FORMAT_JSON_COMPRESSED = (
     FlextConstants.Observability.SERIALIZATION_FORMAT_JSON_COMPRESSED
 )
-SERIALIZATION_FORMAT_BINARY = "binary"
+SERIALIZATION_FORMAT_BINARY = FlextConstants.Observability.SERIALIZATION_FORMAT_BINARY
 
 # Go bridge type mappings for proper type reconstruction
-GO_TYPE_MAPPINGS: dict[str, object] = {
+GO_TYPE_MAPPINGS: FlextTypes.Core.Dict = {
     "string": str,
     "int": int,
     "int64": int,
@@ -64,7 +64,7 @@ GO_TYPE_MAPPINGS: dict[str, object] = {
 }
 
 # Python to Go type mappings for serialization
-PYTHON_TO_GO_TYPES: dict[type[object], str] = {
+PYTHON_TO_GO_TYPES: dict[type[object], FlextTypes.Core.String] = {
     str: "string",
     int: "int64",
     float: "float64",
@@ -75,10 +75,10 @@ PYTHON_TO_GO_TYPES: dict[type[object], str] = {
 }
 
 # Maximum payload size before automatic compression (64KB)
-MAX_UNCOMPRESSED_SIZE = 65536
+MAX_UNCOMPRESSED_SIZE = FlextConstants.Performance.PAYLOAD_MAX_SIZE
 
 # Compression level for large payloads
-COMPRESSION_LEVEL = 6
+COMPRESSION_LEVEL = FlextConstants.Performance.PAYLOAD_COMPRESSION_LEVEL
 
 
 class FlextPayload[T](
@@ -112,7 +112,7 @@ class FlextPayload[T](
         description="Payload data",
         serialization_alias="payloadData",
     )
-    metadata: FlextTypes.Payload.Metadata = Field(
+    metadata: FlextTypes.Core.Dict = Field(
         default_factory=dict,
         description="Optional metadata",
         serialization_alias="payloadMetadata",
@@ -127,6 +127,28 @@ class FlextPayload[T](
 
         """
         return self.data
+
+    @property
+    def version(self) -> FlextTypes.Core.Integer | None:
+        """Get event version from metadata, with safe conversion.
+
+        Returns:
+            Version as integer or None if conversion fails
+
+        """
+        version_raw = self.metadata.get("version")
+        if version_raw is None:
+            return None
+
+        # Try to convert to int, return None if fails
+        try:
+            if isinstance(version_raw, (int, float)):
+                return int(version_raw)
+            if isinstance(version_raw, str):
+                return int(version_raw)
+            return None
+        except (ValueError, TypeError):
+            return None
 
     @classmethod
     def create(cls, data: T, **metadata: object) -> FlextResult[FlextPayload[T]]:
@@ -153,7 +175,7 @@ class FlextPayload[T](
             payload = cls(data=data, metadata=metadata)
             logger.debug("Payload created successfully", payload_id=id(payload))
             return FlextResult[FlextPayload[T]].ok(payload)
-        except (ValidationError, FlextValidationError) as e:
+        except ValidationError as e:
             logger.exception("Failed to create payload")
             return FlextResult[FlextPayload[T]].fail(f"Failed to create payload: {e}")
 
@@ -171,9 +193,7 @@ class FlextPayload[T](
         new_metadata = {**self.metadata, **additional}
         return FlextPayload(data=self.value, metadata=new_metadata)
 
-    def enrich_metadata(
-        self, additional: FlextTypes.Payload.Metadata
-    ) -> FlextPayload[T]:
+    def enrich_metadata(self, additional: FlextTypes.Core.Dict) -> FlextPayload[T]:
         """Create a new payload with enriched metadata from dictionary.
 
         Args:
@@ -205,7 +225,7 @@ class FlextPayload[T](
         match data_dict:
             case dict():
                 # Type narrowing: data_dict is now known to be a dict
-                validated_dict = cast("FlextTypes.Payload.SerializedData", data_dict)
+                validated_dict = cast("dict[str, object]", data_dict)
             case _:
                 return FlextResult[FlextPayload[object]].fail(
                     "Failed to create payload from dict: Input is not a dictionary",
@@ -234,7 +254,7 @@ class FlextPayload[T](
     @classmethod
     def from_dict(
         cls,
-        data_dict: FlextTypes.Payload.MappingType | object,
+        data_dict: dict[str, object] | object,
     ) -> FlextResult[FlextPayload[object]]:
         """Convenience wrapper ; returns FlextResult.
 
@@ -244,7 +264,7 @@ class FlextPayload[T](
         if isinstance(data_dict, Mapping):
             data_obj = dict(cast("Mapping[str, object]", data_dict))
         else:
-            data_obj = cast("FlextTypes.Payload.SerializedData", data_dict)
+            data_obj = cast("dict[str, object]", data_dict)
         return cls.create_from_dict(data_obj)
 
     def has_data(self) -> bool:
@@ -281,7 +301,7 @@ class FlextPayload[T](
 
     def transform_data(
         self,
-        transformer: FlextTypes.Payload.TransformFunction,
+        transformer: Callable[[object], object],
     ) -> FlextResult[FlextPayload[object]]:
         """Transform payload data using a function.
 
@@ -305,7 +325,9 @@ class FlextPayload[T](
                 f"Data transformation failed: {e3}"
             )
 
-    def get_metadata(self, key: str, default: object | None = None) -> object | None:
+    def get_metadata(
+        self, key: FlextTypes.Core.String, default: object | None = None
+    ) -> object | None:
         """Get metadata value by key.
 
         Args:
@@ -318,7 +340,7 @@ class FlextPayload[T](
         """
         return self.metadata.get(key, default)
 
-    def has_metadata(self, key: str) -> bool:
+    def has_metadata(self, key: FlextTypes.Core.String) -> bool:
         """Check if a metadata key exists.
 
         Args:
@@ -345,8 +367,8 @@ class FlextPayload[T](
     @field_serializer("metadata", when_used="always")
     def serialize_metadata(
         self,
-        value: dict[str, object],
-    ) -> dict[str, object]:
+        value: FlextTypes.Core.Dict,
+    ) -> FlextTypes.Core.Dict:
         """Metadata serialization with payload context."""
         metadata = dict(value)
         metadata["_payload_type"] = self.__class__.__name__
@@ -375,7 +397,7 @@ class FlextPayload[T](
         return cast("dict[str, object]", data)
 
     @override
-    def to_dict(self) -> FlextTypes.Payload.SerializedData:
+    def to_dict(self) -> dict[str, object]:
         """Convert payload to dictionary representation.
 
         Returns:
@@ -388,7 +410,7 @@ class FlextPayload[T](
         }
 
     @override
-    def to_dict_basic(self) -> FlextTypes.Payload.SerializedData:
+    def to_dict_basic(self) -> dict[str, object]:
         """Convert to basic dictionary representation."""
         result: dict[str, object] = {}
 
@@ -609,8 +631,8 @@ class FlextPayload[T](
 
     def _serialize_metadata_for_cross_service(
         self,
-        metadata: dict[str, object],
-    ) -> dict[str, object]:
+        metadata: FlextTypes.Core.Dict,
+    ) -> FlextTypes.Core.Dict:
         """Serialize metadata for cross-service transport.
 
         Args:
@@ -636,7 +658,7 @@ class FlextPayload[T](
         return serialized_metadata
 
     @staticmethod
-    def _get_go_type_name(python_type: type) -> str:
+    def _get_go_type_name(python_type: type) -> FlextTypes.Core.String:
         """Get Go type name for Python type.
 
         Args:
@@ -649,7 +671,7 @@ class FlextPayload[T](
         return PYTHON_TO_GO_TYPES.get(python_type, "interface{}")
 
     @staticmethod
-    def _get_python_type_name(python_type: type) -> str:
+    def _get_python_type_name(python_type: type) -> FlextTypes.Core.String:
         """Get Python type name string.
 
         Args:
@@ -661,7 +683,7 @@ class FlextPayload[T](
         """
         return getattr(python_type, "__name__", str(python_type))
 
-    def _extract_generic_type_info(self) -> dict[str, object]:
+    def _extract_generic_type_info(self) -> FlextTypes.Core.Dict:
         """Extract generic type information for type reconstruction.
 
         Returns:
@@ -712,7 +734,7 @@ class FlextPayload[T](
     @classmethod
     def from_cross_service_dict(
         cls,
-        cross_service_dict: dict[str, object],
+        cross_service_dict: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextPayload[T]]:
         """Create payload from cross-service dictionary with type reconstruction.
 
@@ -726,7 +748,7 @@ class FlextPayload[T](
             FlextResult containing reconstructed payload.
 
         Raises:
-            FlextValidationError: If a dictionary format is invalid.
+            FlextExceptions.ValidationError: If a dictionary format is invalid.
 
         """
         # Validate required fields
@@ -775,7 +797,7 @@ class FlextPayload[T](
             )
 
     @classmethod
-    def _is_protocol_supported(cls, version: str) -> bool:
+    def _is_protocol_supported(cls, version: FlextTypes.Core.String) -> bool:
         """Check if a protocol version is supported.
 
         Args:
@@ -1077,7 +1099,7 @@ class FlextPayload[T](
             if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__
             else []
         )
-        raise FlextAttributeError(
+        raise FlextExceptions.AttributeError(  # type: ignore[call-arg]
             error_msg,
             attribute_context={
                 "class_name": self.__class__.__name__,
@@ -1204,7 +1226,7 @@ class FlextPayload[T](
         logger = flext_get_logger(__name__)
 
         # Validate message using FlextValidation
-        if not FlextPredicates.is_non_empty_string(message):  # type: ignore[attr-defined]
+        if not FlextValidation.Rules.StringRules.validate_non_empty(message).success:
             logger.error("Invalid message - empty or not string")
             return FlextResult[FlextPayload[object]].fail("Message cannot be empty")
 
@@ -1223,8 +1245,10 @@ class FlextPayload[T](
         # Create FlextPayload[str] instance directly
         try:
             instance = cls(data=message, metadata=metadata)  # type: ignore[arg-type]
-            return FlextResult[FlextPayload[object]].ok(instance)  # type: ignore[arg-type]
-        except (ValidationError, FlextValidationError) as e:
+            return FlextResult[FlextPayload[object]].ok(
+                cast("FlextPayload[object]", instance)
+            )
+        except ValidationError as e:
             return FlextResult[FlextPayload[object]].fail(
                 f"Failed to create message: {e}"
             )
@@ -1253,13 +1277,16 @@ class FlextPayload[T](
         logger = flext_get_logger(__name__)
 
         # Validate event_type using FlextValidation
-        if not FlextPredicates.is_non_empty_string(event_type):  # type: ignore[attr-defined]
+        if not FlextValidation.Rules.StringRules.validate_non_empty(event_type).success:
             logger.error("Invalid event type - empty or not string")
             return FlextResult[FlextPayload[object]].fail("Event type cannot be empty")
 
         # Validate aggregate_id if provided
-        if aggregate_id is not None and not FlextPredicates.is_non_empty_string(  # type: ignore[attr-defined]
-            aggregate_id
+        if (
+            aggregate_id is not None
+            and not FlextValidation.Rules.StringRules.validate_non_empty(
+                aggregate_id
+            ).success
         ):
             logger.error("Invalid aggregate ID - empty string")
             return FlextResult[FlextPayload[object]].fail("Invalid aggregate ID")
@@ -1289,8 +1316,10 @@ class FlextPayload[T](
         # Create FlextPayload[Mapping[str, object]] instance directly
         try:
             instance = cls(data=event_data, metadata=metadata)  # type: ignore[arg-type]
-            return FlextResult[FlextPayload[object]].ok(instance)  # type: ignore[arg-type]
-        except (ValidationError, FlextValidationError) as e:
+            return FlextResult[FlextPayload[object]].ok(
+                cast("FlextPayload[object]", instance)
+            )
+        except ValidationError as e:
             return FlextResult[FlextPayload[object]].fail(
                 f"Failed to create event: {e}"
             )
@@ -1481,18 +1510,7 @@ except (
 
 # Export API
 __all__: list[str] = [
-    # Serialization constants (sorted alphabetically)
-    "FLEXT_SERIALIZATION_VERSION",
-    "SERIALIZATION_FORMAT_BINARY",
-    "SERIALIZATION_FORMAT_JSON",
-    "SERIALIZATION_FORMAT_JSON_COMPRESSED",
-    # Core payload classes (sorted alphabetically)
-    "FlextEvent",
-    "FlextMessage",
-    "FlextPayload",
-    # Cross-service helper functions for test convenience
-    "create_cross_service_event",
-    "create_cross_service_message",
-    "get_serialization_metrics",
-    "validate_cross_service_protocol",
+    "FlextEvent",  # Event type alias
+    "FlextMessage",  # Message type alias
+    "FlextPayload",  # Main class for payloads
 ]

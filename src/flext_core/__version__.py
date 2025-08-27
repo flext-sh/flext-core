@@ -50,8 +50,9 @@ AVAILABLE_FEATURES: dict[str, bool] = {
 class FlextVersionManager:
     """Single consolidated class for all version management functionality.
 
-    Consolidates ALL version-related classes and operations into one class following FLEXT patterns.
-    Provides version information, compatibility checking, and utility functions.
+    Consolidates ALL version-related classes and operations into one class
+    following FLEXT patterns. Provides version information, compatibility
+    checking, and utility functions.
     """
 
     class VersionInfo(NamedTuple):
@@ -65,7 +66,7 @@ class FlextVersionManager:
         build_type: str
 
     class CompatibilityResult:
-        """Result of Python version compatibility check nested inside consolidated class."""
+        """Result of Python version compatibility check."""
 
         def __init__(
             self,

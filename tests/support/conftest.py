@@ -222,10 +222,8 @@ def configure_test_environment() -> None:
 @pytest.fixture(autouse=True)
 def reset_factory_sequences() -> None:
     """Reset factory sequences between tests for consistency."""
-    import factory
-
-    # Reset all factory sequences
-    factory.Sequence.reset()
+    # Note: factory-boy doesn't have global sequence reset
+    # Individual factories should handle sequence isolation if needed
 
 
 # =============================================================================

@@ -24,7 +24,7 @@ from flext_core import (
     FlextConfig,
     FlextEntity,
     FlextEnvironment,
-    FlextFieldCore,
+    FlextFields,
     FlextModel,
     FlextResult,
     FlextValue,
@@ -178,19 +178,19 @@ class FlextFieldCoreFactory:
     """Factory para FlextFieldCore objects."""
 
     @classmethod
-    def create(cls, **kwargs: object) -> FlextFieldCore:
-        """Create FlextFieldCore instance with default values."""
+    def create(cls, **kwargs: object) -> object:
+        """Create FlextFields.Core field instance with default values."""
         defaults = {
-            "id": str(uuid.uuid4()),
             "name": _generate_fake_word(),
             "field_type": random.choice(["string", "integer", "boolean", "datetime"]),  # noqa: S311
             "required": random.choice([True, False]),  # noqa: S311
             "description": _generate_fake_sentence(),
             "default_value": None,
-            "validation_rules": [],
         }
         defaults.update(kwargs)
-        return FlextFieldCore(**defaults)  # type: ignore[arg-type]
+        # Use proper FLEXT hierarchical pattern
+        field_name = defaults.get("name", "test_field")
+        return FlextFields.Core.StringField(str(field_name))
 
 
 class FlextResultFactory:
@@ -363,7 +363,7 @@ def create_test_config(**kwargs: object) -> FlextConfig:
     return FlextConfigFactory.create(**kwargs)
 
 
-def create_test_field(**kwargs: object) -> FlextFieldCore:
+def create_test_field(**kwargs: object) -> object:
     """Cria field de teste com parâmetros customizados."""
     return FlextFieldCoreFactory.create(**kwargs)
 

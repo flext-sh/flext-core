@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextOperationError
-from flext_core.delegation_system import (
+from flext_core import (
     FlextDelegatedProperty,
+    FlextExceptions,
     FlextMixinDelegator,
     create_mixin_delegator,
     validate_delegation_system,
@@ -39,8 +39,8 @@ class TestFlextDelegatedPropertyCoverage:
             has_setter=False,  # Read-only property
         )
 
-        # Trying to set should raise FlextOperationError
-        with pytest.raises(FlextOperationError) as exc_info:
+        # Trying to set should raise FlextExceptions.OperationError
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             delegated_prop.__set__(None, "new_value")
 
         error = exc_info.value

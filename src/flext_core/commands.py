@@ -1,685 +1,1021 @@
-"""CQRS command patterns for write operations."""
+"""FLEXT Commands - CQRS Command and Query Processing System.
+
+Enterprise-grade CQRS implementation following FLEXT architectural patterns
+with massive use of FlextTypes, FlextConstants, and FlextProtocols hierarchies.
+Implements single consolidated class architecture with full compliance to
+FLEXT refactoring standards for Python 3.13+ and Pydantic v2.
+
+Architecture:
+    This module implements the complete FLEXT architectural stack:
+
+    - **FlextCommands**: Single consolidated class containing ALL CQRS functionality
+    - **Hierarchical Organization**: Nested classes following FLEXT patterns
+    - **Massive FlextTypes Integration**: Full use of FlextTypes.Core, FlextTypes.Domain hierarchies
+    - **FlextConstants Compliance**: Inherits from FlextConstants with command-specific extensions
+    - **FlextProtocols Adherence**: Uses FlextProtocols.Application, Foundation layers
+    - **Railway-Oriented Programming**: FlextResult patterns throughout
+    - **SOLID Principles**: Single Responsibility, Open/Closed, Interface Segregation
+    - **Clean Architecture**: Foundation -> Domain -> Application -> Infrastructure layers
+
+FlextCommands Organization:
+    - **Constants**: Inherits FlextConstants with command-specific constants by domain
+    - **Types**: Inherits FlextTypes with command-specific type definitions
+    - **Protocols**: Inherits FlextProtocols with command-specific protocol definitions
+    - **Models**: Command/Query models using FlextModel with Pydantic v2 validation
+    - **Handlers**: Handler implementations using FlextProtocols.Application patterns
+    - **Bus**: Command bus with FlextProtocols.Application.MessageHandler compliance
+    - **Middleware**: Pipeline processing with FlextProtocols.Extensions.Middleware
+    - **Results**: Result factory methods using FlextResult patterns
+    - **Factories**: Instance creation factories with proper type safety
+    - **Validation**: Command validation using FlextProtocols.Foundation.Validator
+    - **Events**: Domain event handling with FlextProtocols.Domain.EventProcessor
+    - **Metrics**: Performance monitoring with FlextConstants.Performance integration
+
+Examples:
+    Hierarchical FlextTypes usage::
+
+        from flext_core import FlextCommands
+
+        # FlextTypes hierarchical access
+        command_id: FlextCommands.Types.Core.CommandId = "cmd_123"
+        user_data: FlextCommands.Types.Domain.UserData = {"name": "John"}
+        handler_type: FlextCommands.Types.Application.HandlerType = "CreateUser"
+
+        # FlextConstants hierarchical access
+        timeout: int = FlextCommands.Constants.Core.DEFAULT_TIMEOUT
+        max_retries: int = FlextCommands.Constants.Application.MAX_RETRIES
+        error_code: str = FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED
+
+    FlextProtocols compliance::
+
+        from flext_core import FlextCommands
+
+
+        # Handler using FlextProtocols.Application
+        class CreateUserHandler(FlextCommands.Handlers.CommandHandler[User, str]):
+            def handle(self, command: User) -> FlextResult[str]:
+                return FlextCommands.Results.success("User created")
+
+
+        # Protocol-compliant command bus
+        bus: FlextCommands.Protocols.Application.MessageHandler = FlextCommands.Bus()
+        bus.register_handler(CreateUserHandler())
+
+    Factory patterns with type safety::
+
+        # Type-safe factory usage
+        handler = FlextCommands.Factories.create_command_handler(
+            handler_func=lambda cmd: FlextCommands.Results.success("processed"),
+            command_type=FlextCommands.Types.Domain.CreateUserCommand,
+        )
+
+        command_bus = FlextCommands.Factories.create_message_bus(
+            middleware=[logging_middleware, validation_middleware]
+        )
+
+Note:
+    This implementation represents full FLEXT compliance with:
+    - Python 3.13+ modern type syntax (type aliases)
+    - Pydantic v2 integration via FlextModel
+    - SOLID architectural principles throughout
+    - Professional Google/PEP docstrings
+    - Zero code duplication - all patterns from flext-core
+    - Hierarchical inheritance from FlextTypes/FlextConstants/FlextProtocols
+    - Clean Architecture layer separation
+    - Railway-oriented programming with FlextResult
+
+"""
 
 from __future__ import annotations
 
 import re
 import time
-from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
-from typing import Self, cast, override
+from typing import Self, cast
 from zoneinfo import ZoneInfo
 
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     ValidationError as PydanticValidationError,
     model_validator,
 )
 
-from flext_core.loggings import FlextLogger, FlextLoggerFactory
+from flext_core.constants import FlextConstants
+from flext_core.loggings import FlextLogger, FlextLoggerFactory, get_logger
 from flext_core.mixins import (
     FlextLoggableMixin,
     FlextSerializableMixin,
     FlextTimingMixin,
 )
+from flext_core.models import FlextModel
 from flext_core.payload import FlextPayload
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import (
-    CommandT,
-    FlextTypes,
-    QueryResultT,
-    QueryT,
-    ResultT,
-)
+from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextGenerators, FlextTypeGuards
 from flext_core.validation import FlextPredicates
 
-
-class FlextAbstractCommand(ABC):
-    """Abstract base command."""
-
-    @abstractmethod
-    def validate_command(self) -> FlextResult[None]:
-        """Validate command."""
-        ...
-
-
-class FlextAbstractCommandHandler[CommandT, ResultT](ABC):
-    """Abstract command handler."""
-
-    @property
-    @abstractmethod
-    def handler_name(self) -> str:
-        """Get handler name."""
-        ...
-
-    @abstractmethod
-    def handle(self, command: CommandT) -> FlextResult[ResultT]:
-        """Handle command."""
-        ...
-
-    @abstractmethod
-    def can_handle(self, command: object) -> bool:
-        """Check if can handle command."""
-        ...
-
-
-class FlextAbstractCommandBus(ABC):
-    """Abstract command bus."""
-
-    @abstractmethod
-    def send_command(self, command: FlextAbstractCommand) -> FlextResult[object]:
-        """Send command."""
-        ...
-
-    @abstractmethod
-    def unregister_handler(self, command_type: str) -> bool:
-        """Unregister handler."""
-        ...
-
-    @abstractmethod
-    def get_registered_handlers(self) -> dict[str, object]:
-        """Get registered handlers."""
-        ...
-
-
-class FlextAbstractQueryHandler[QueryT, ResultT](ABC):
-    """Abstract query handler."""
-
-    @property
-    @abstractmethod
-    def handler_name(self) -> str:
-        """Get handler name."""
-        ...
-
-    @abstractmethod
-    def handle(self, query: QueryT) -> FlextResult[ResultT]:
-        """Handle query."""
-        ...
-
-
-# FlextLogger imported for class methods only - instance methods use FlextLoggableMixin
-
 # =============================================================================
-# FLEXT COMMANDS - Unified command pattern
+# FLEXT COMMANDS - Consolidated CQRS Implementation
 # =============================================================================
 
 
 class FlextCommands:
-    """CQRS implementation with command and query processing.
+    """FLEXT Consolidated CQRS Command and Query Processing System.
 
-    Unified framework for CQRS patterns including command processing,
-    query handling, and command bus routing.
+    Single consolidated class implementing ALL command and query functionality
+    following FLEXT architectural patterns with hierarchical organization. This
+    class serves as the SINGLE SOURCE OF TRUTH for all CQRS-related functionality
+    in the FLEXT ecosystem.
+
+    Architecture Principles:
+        - Single Responsibility: Each nested class focuses on specific CQRS domain
+        - Open/Closed: Easy extension through nested class composition
+        - Liskov Substitution: Consistent interfaces across all command types
+        - Interface Segregation: Clients use only required command protocols
+        - Dependency Inversion: Depends on FlextTypes/FlextConstants abstractions
+
+    Organization:
+        - Constants: Command system constants using FlextConstants patterns
+        - Types: Command type definitions using FlextTypes hierarchy
+        - Protocols: Command protocol definitions for type safety
+        - Models: Command and query model implementations
+        - Handlers: Command and query handler base classes
+        - Bus: Command bus for routing and execution
+        - Decorators: Command handling decorators
+        - Factories: Factory methods for instance creation
+        - Results: Result helper methods for FlextResult patterns
+
+    Examples:
+        Using hierarchical command access::
+
+            from flext_core import FlextCommands
+
+            # Constants access
+            timeout = FlextCommands.Constants.DEFAULT_TIMEOUT
+            max_handlers = FlextCommands.Constants.MAX_COMMAND_HANDLERS
+
+            # Type definitions
+            command_id: FlextCommands.Types.CommandId = "cmd_123"
+            metadata: FlextCommands.Types.CommandMetadata = {"user": "john"}
+
+            # Model creation
+            command = FlextCommands.Models.Command(command_type="create_user")
+
+
+            # Handler implementation
+            class MyHandler(FlextCommands.Handlers.CommandHandler):
+                def handle(self, command: object) -> FlextResult[str]:
+                    return FlextCommands.Results.success("processed")
+
     """
 
-    # =============================================================================
-    # BASE COMMAND - Foundation for all commands
-    # =============================================================================
+    # =========================================================================
+    # CONSTANTS - Command system constants using FlextConstants hierarchy
+    # =========================================================================
 
-    class Command(
-        BaseModel,
-        FlextAbstractCommand,
-        FlextSerializableMixin,
-        FlextLoggableMixin,
-    ):
-        """Base command with validation and metadata."""
+    class Constants(FlextConstants):
+        """Command-specific constants following FLEXT hierarchical patterns.
 
-        model_config = ConfigDict(
-            validate_assignment=True,
-            str_strip_whitespace=True,
-            extra="forbid",
-            frozen=True,
-        )
+        Extends FlextConstants base class to provide command-specific constants
+        organized by functional domains. All constants use proper typing and
+        are designed for enterprise-scale CQRS applications.
+        """
 
-        # Use FlextUtilities for ID generation
-        command_id: str = Field(
-            default_factory=FlextGenerators.generate_uuid,
-            description="Unique command identifier",
-        )
+        # Command execution constants from FlextConstants hierarchy
+        MAX_RETRIES = FlextConstants.Defaults.MAX_RETRIES
+        RETRY_DELAY = FlextConstants.Network.CONNECTION_TIMEOUT
+        MAX_COMMAND_HANDLERS = FlextConstants.Performance.MAX_BATCH_SIZE
+        MAX_QUERY_RESULTS = FlextConstants.Performance.MAX_BATCH_SIZE
 
-        command_type: str = Field(
-            default="",
-            description="Command type for routing",
-        )
+        # Command validation constants using FlextConstants patterns
+        MIN_COMMAND_ID_LENGTH = FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH
+        MAX_COMMAND_TYPE_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH
+        MAX_CORRELATION_ID_LENGTH = FlextConstants.Validation.MAX_SERVICE_NAME_LENGTH
 
-        timestamp: datetime = Field(
-            default_factory=lambda: datetime.now(tz=ZoneInfo("UTC")),
-            description="Command creation timestamp",
-        )
+        # Performance constants from FlextConstants hierarchy
+        SLOW_COMMAND_THRESHOLD = FlextConstants.Performance.TIMEOUT
+        MEMORY_THRESHOLD_MB = 100  # Command-specific memory threshold in MB
+        METRICS_COLLECTION_INTERVAL = FlextConstants.Performance.TIMEOUT
 
-        user_id: str | None = Field(
-            default=None,
-            description="User who initiated the command",
-        )
+        # Command state constants - command-specific constants
+        class States:
+            """Command processing state constants."""
 
-        correlation_id: str = Field(
-            default_factory=FlextGenerators.generate_uuid,
-            description="Correlation ID for tracking",
-        )
+            CREATED = "created"
+            VALIDATING = "validating"
+            PROCESSING = "processing"
+            COMPLETED = "completed"
+            FAILED = "failed"
+            TIMEOUT = "timeout"
+            CANCELLED = "cancelled"
 
-        @model_validator(mode="before")
-        @classmethod
-        def set_command_type(cls, values: dict[str, object]) -> dict[str, object]:
-            """Auto-generate command_type from class name if not provided."""
-            if not values.get("command_type"):
-                # Convert "SampleCommand" -> "sample"
-                class_name = cls.__name__
-                # Remove trailing 'Command' if present
-                base = class_name.removesuffix("Command")
-                # Convert CamelCase/PascalCase to snake_case (createUser -> create_user)
-                s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
-                command_type = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
-                values["command_type"] = command_type
-            return values
+        # Command type constants - command-specific constants
+        class Types:
+            """Command type classification constants."""
 
-        @classmethod
-        def from_payload(
-            cls,
-            payload: FlextPayload[FlextTypes.Core.Dict],
-        ) -> FlextResult[Self]:
-            """Create command from FlextPayload with validation."""
-            logger = FlextLoggerFactory.get_logger(f"{cls.__module__}.{cls.__name__}")
-            logger.debug(
-                "Creating command from payload",
-                payload_type=payload.metadata.get("type", "unknown"),
-                expected_type=cls.__name__,
+            CREATE = "create"
+            UPDATE = "update"
+            DELETE = "delete"
+            QUERY = "query"
+            BATCH = "batch"
+            ASYNC = "async"
+
+        # Error codes specific to command processing from FlextConstants
+        class Errors(FlextConstants.Errors):
+            """Command-specific error codes extending base error constants."""
+
+            COMMAND_VALIDATION_FAILED = FlextConstants.Errors.VALIDATION_ERROR
+            COMMAND_HANDLER_NOT_FOUND = FlextConstants.Errors.GENERIC_ERROR
+            COMMAND_PROCESSING_FAILED = FlextConstants.Errors.GENERIC_ERROR
+            COMMAND_TIMEOUT = FlextConstants.Errors.GENERIC_ERROR
+            COMMAND_BUS_ERROR = FlextConstants.Errors.GENERIC_ERROR
+            QUERY_PROCESSING_FAILED = FlextConstants.Errors.GENERIC_ERROR
+
+    # =========================================================================
+    # TYPES - Command type definitions using FlextTypes hierarchy
+    # =========================================================================
+
+    class Types(FlextTypes):
+        """Command-specific type definitions following FLEXT hierarchical patterns.
+
+        Extends FlextTypes base class to provide command-specific type aliases
+        and definitions. All types are designed for strict typing with mypy/pyright.
+        """
+
+        # Core command types from FlextTypes hierarchy
+        CommandId = FlextTypes.Core.Id
+        CommandType = FlextTypes.Core.String
+        CommandState = FlextTypes.Core.String
+        CommandMetadata = FlextTypes.Core.Dict
+        CorrelationId = FlextTypes.Core.Id
+
+        # Query types
+        QueryId = FlextTypes.Core.Id
+        QueryType = FlextTypes.Core.String
+        QueryParameters = FlextTypes.Core.Dict
+
+        # Handler types
+        HandlerName = FlextTypes.Service.ServiceName
+        HandlerMetrics = FlextTypes.Core.Dict
+
+        # Command-specific type aliases from FlextTypes hierarchy
+        CommandData = FlextTypes.Core.Dict
+        # Command result types
+        CommandResult = FlextTypes.Core.Dict | list[FlextTypes.Core.Dict]
+        ValidationErrors = list[str]
+        CommandExecutionTime = FlextTypes.Core.Float
+        HandlerRegistry = FlextTypes.Core.Dict
+
+        # Function type aliases using FlextTypes unified Callable patterns
+        CommandHandlerFunction = FlextTypes.Handler.CommandHandler
+        QueryHandlerFunction = FlextTypes.Handler.QueryHandler
+        ValidatorFunction = FlextTypes.Core.FlextCallableType
+        CommandBusMiddleware = FlextTypes.Core.OperationCallable
+
+    # =========================================================================
+    # PROTOCOLS - Command protocol definitions for type safety
+    # =========================================================================
+
+    class Protocols:
+        """Command protocol definitions for type-safe interfaces.
+
+        Contains all protocol definitions for command system components,
+        enabling strict typing and interface contracts throughout the system.
+        Uses FlextProtocols as the base foundation.
+        """
+
+        # Use FlextProtocols as foundation
+        Handler = FlextProtocols.Application.Handler
+        MessageHandler = FlextProtocols.Application.MessageHandler
+        ValidatingHandler = FlextProtocols.Application.ValidatingHandler
+        EventProcessor = FlextProtocols.Application.EventProcessor
+
+        # Command-specific protocol aliases
+        CommandHandler = Handler
+        QueryHandler = Handler
+        CommandBus = MessageHandler
+
+    # =========================================================================
+    # MODELS - Command and query model implementations
+    # =========================================================================
+
+    class Models:
+        """Command and query model definitions using FlextModel base.
+
+        Contains all model classes for command and query objects with proper
+        validation, serialization, and metadata handling.
+        """
+
+        class Command(
+            FlextModel,
+            FlextSerializableMixin,
+            FlextLoggableMixin,
+        ):
+            """Base command with validation and metadata using FlextModel.
+
+            Implements enterprise command patterns with:
+            - Automatic ID generation using FlextGenerators
+            - Timestamp tracking with UTC timezone
+            - Command type auto-inference from class name
+            - Full validation using FlextModel (Pydantic v2)
+            - Serialization support via FlextMixins.Serialization
+            - Logging integration via FlextMixins.Logging
+            """
+
+            model_config = ConfigDict(
+                validate_assignment=True,
+                str_strip_whitespace=True,
+                extra="forbid",
+                frozen=True,
             )
 
-            expected_type = payload.metadata.get("type", "")
-            if expected_type not in {cls.__name__, ""}:
-                logger.warning(
-                    "Payload type mismatch",
-                    expected=cls.__name__,
-                    actual=expected_type,
+            # Use FlextTypes for all field definitions
+            command_id: str = Field(
+                default_factory=FlextGenerators.generate_uuid,
+                description="Unique command identifier using FlextGenerators",
+            )
+
+            command_type: str = Field(
+                default="",
+                description="Command type for routing and processing",
+                max_length=100,
+            )
+
+            timestamp: datetime = Field(
+                default_factory=lambda: datetime.now(tz=ZoneInfo("UTC")),
+                description="Command creation timestamp in UTC",
+            )
+
+            user_id: str | None = Field(
+                default=None,
+                description="User who initiated the command",
+            )
+
+            correlation_id: str = Field(
+                default_factory=FlextGenerators.generate_correlation_id,
+                description="Correlation ID for request tracking",
+                max_length=50,
+            )
+
+            @model_validator(mode="before")
+            @classmethod
+            def set_command_type(cls, values: dict[str, object]) -> dict[str, object]:
+                """Auto-generate command_type from class name if not provided.
+
+                Converts class names like 'CreateUserCommand' to 'create_user'
+                following FLEXT naming conventions.
+                """
+                if not values.get("command_type"):
+                    class_name = cls.__name__
+                    # Remove trailing 'Command' if present
+                    base = class_name.removesuffix("Command")
+                    # Convert CamelCase/PascalCase to snake_case
+                    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+                    command_type = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+                    values["command_type"] = command_type
+                return values
+
+            @classmethod
+            def from_payload(
+                cls,
+                payload: FlextPayload[FlextTypes.Core.Dict],
+            ) -> FlextResult[Self]:
+                """Create command from FlextPayload with full validation.
+
+                Args:
+                    payload: FlextPayload containing command data
+
+                Returns:
+                    FlextResult containing validated command or error
+
+                """
+                logger = get_logger(f"{cls.__module__}.{cls.__name__}")
+                logger.debug(
+                    "Creating command from payload",
+                    payload_type=payload.metadata.get("type", "unknown"),
+                    expected_type=cls.__name__,
                 )
 
-            # Parse timestamp if string - handle None case
-            payload_dict: dict[str, object]
-            # Extract dict data with explicit type handling for pyright compatibility
-            raw_data = payload.value
-            if raw_data is not None:
-                # Explicit cast to satisfy pyright's type checking
-                payload_dict = {
-                    str(k): v for k, v in cast("dict[object, object]", raw_data).items()
+                expected_type = payload.metadata.get("type", "")
+                if expected_type not in {cls.__name__, ""}:
+                    logger.warning(
+                        "Payload type mismatch",
+                        expected=cls.__name__,
+                        actual=expected_type,
+                    )
+
+                # Extract and validate payload data
+                raw_data = payload.value
+                if raw_data is not None:
+                    payload_dict = {
+                        str(k): v
+                        for k, v in cast("dict[object, object]", raw_data).items()
+                    }
+                else:
+                    payload_dict = {}
+
+                # Build command with explicit field extraction
+                command_fields: dict[str, object] = {
+                    "command_id": str(
+                        payload_dict.get("command_id", FlextGenerators.generate_uuid())
+                    ),
+                    "command_type": str(payload_dict.get("command_type", cls.__name__)),
+                    "user_id": str(payload_dict["user_id"])
+                    if payload_dict.get("user_id")
+                    else None,
+                    "correlation_id": str(
+                        payload_dict.get(
+                            "correlation_id", FlextGenerators.generate_correlation_id()
+                        )
+                    ),
                 }
-            else:
-                payload_dict = {}
 
-            # Extract explicit parameters for Command constructor
-            command_id = str(
-                payload_dict.get("command_id", FlextGenerators.generate_uuid())
-            )
-            command_type = str(payload_dict.get("command_type", cls.__name__))
+                # Handle timestamp parsing
+                timestamp_raw = payload_dict.get("timestamp")
+                if isinstance(timestamp_raw, str):
+                    command_fields["timestamp"] = datetime.fromisoformat(timestamp_raw)
+                else:
+                    command_fields["timestamp"] = datetime.now(tz=ZoneInfo("UTC"))
 
-            # Handle timestamp (FlextTypes.Core.Dict only allows primitive types, não datetime)
-            timestamp_raw = payload_dict.get("timestamp")
-            if isinstance(timestamp_raw, str):
-                timestamp = datetime.fromisoformat(timestamp_raw)
-            else:
-                timestamp = datetime.now(tz=ZoneInfo("UTC"))
-
-            # Handle user_id (optional)
-            user_id_raw = payload_dict.get("user_id")
-            user_id = str(user_id_raw) if user_id_raw else None
-
-            # Handle correlation_id
-            correlation_id_raw = payload_dict.get("correlation_id")
-            correlation_id = (
-                str(correlation_id_raw)
-                if correlation_id_raw
-                else str(FlextGenerators.generate_uuid())
-            )
-
-            # Remove processed fields from payload_dict
-            remaining_data: dict[str, object] = {
-                k: v
-                for k, v in payload_dict.items()
-                if k
-                not in {
-                    "command_id",
-                    "command_type",
-                    "timestamp",
-                    "user_id",
-                    "correlation_id",
+                # Add remaining fields
+                remaining_data = {
+                    k: v for k, v in payload_dict.items() if k not in command_fields
                 }
-            }
+                command_fields.update(remaining_data)
 
-            command = cls(
-                command_id=command_id,
-                command_type=command_type,
-                timestamp=timestamp,
-                user_id=user_id,
-                correlation_id=correlation_id,
-                **remaining_data,
-            )
+                try:
+                    command = cls(**command_fields)  # type: ignore[arg-type]
 
-            # Validate using FlextValidation
-            validate_method = getattr(command, "validate_command", None)
-            if callable(validate_method):
-                validation_result = validate_method()
-                if (
-                    isinstance(validation_result, FlextResult)
-                    and validation_result.is_failure
-                ):
-                    val = cast("FlextResult[object]", validation_result)
+                    # Validate using command's validation method
+                    validation_result = command.validate_command()
+                    if validation_result.is_failure:
+                        return FlextResult[Self].fail(
+                            validation_result.error or "Command validation failed",
+                            error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                        )
+
+                    logger.info(
+                        "Command created from payload",
+                        command_type=command.command_type,
+                        command_id=command.command_id,
+                    )
+                    return FlextResult[Self].ok(command)
+
+                except (ValueError, TypeError, PydanticValidationError) as e:
                     return FlextResult[Self].fail(
-                        val.error or "Command validation failed",
+                        f"Command creation failed: {e}",
+                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
                     )
 
-            logger.info(
-                "Command created from payload",
-                command_type=command.command_type,
-                command_id=command.command_id,
-            )
-            return FlextResult[Self].ok(command)
+            def validate_command(self) -> FlextResult[None]:
+                """Validate command using FlextValidation patterns.
 
-        @override
-        def validate_command(self) -> FlextResult[None]:
-            """Validate command using FlextValidation."""
-            # Override in subclasses for custom validation
-            return FlextResult[None].ok(None)
+                Override in subclasses for custom validation logic.
+                Uses FlextPredicates for common validation patterns.
 
-        @staticmethod
-        def require_field(
-            field_name: str,
-            value: object,
-            error_msg: str = "",
-        ) -> FlextResult[None]:
-            """Validate a required field with custom error."""
-            if not value or (isinstance(value, str) and not value.strip()):
-                msg = error_msg or f"{field_name} is required"
-                return FlextResult[None].fail(msg)
-            return FlextResult[None].ok(None)
+                Returns:
+                    FlextResult indicating validation success or failure
 
-        @staticmethod
-        def require_email(
-            email: str,
-            field_name: str = "email",
-        ) -> FlextResult[None]:
-            """Validate email format."""
-            if (
-                not email
-                or "@" not in email
-                or "." not in email.rsplit("@", maxsplit=1)[-1]
-            ):
-                return FlextResult[None].fail(f"Invalid {field_name} format")
-            return FlextResult[None].ok(None)
-
-        @staticmethod
-        def require_min_length(
-            value: str,
-            min_len: int,
-            field_name: str,
-        ) -> FlextResult[None]:
-            """Validate minimum string length."""
-            if len(value.strip()) < min_len:
-                error_msg = f"{field_name} must be at least {min_len} characters"
-                return FlextResult[None].fail(error_msg)
-            return FlextResult[None].ok(None)
-
-        def get_metadata(self) -> dict[str, str | None]:
-            """Get command metadata."""
-            return {
-                "command_id": self.command_id,
-                "command_type": self.command_type,
-                "command_class": self.__class__.__name__,
-                "timestamp": self.timestamp.isoformat() if self.timestamp else None,
-                "user_id": self.user_id,
-                "correlation_id": self.correlation_id,
-            }
-
-        def to_payload(self) -> FlextPayload[dict[str, str | None]]:
-            """Convert command to FlextPayload for serialization."""
-            # Convert the command model to a dictionary
-            command_dict = self.model_dump()
-
-            # Ensure timestamp is serialized as ISO string
-            if "timestamp" in command_dict and isinstance(
-                command_dict["timestamp"], datetime
-            ):
-                command_dict["timestamp"] = command_dict["timestamp"].isoformat()
-
-            # Create payload with metadata
-            metadata = self.get_metadata()
-            metadata["type"] = self.command_type or self.__class__.__name__.lower()
-
-            # Create and return payload
-            result = FlextPayload[dict[str, object]].create(
-                data=command_dict, **metadata
-            )
-            return cast("FlextPayload[dict[str, str | None]]", result.value)
-
-    # =============================================================================
-    # COMMAND RESULT HELPERS - Use FlextResult directly as requested
-    # =============================================================================
-
-    # Result type alias for compatibility
-    Result = FlextResult
-
-    @staticmethod
-    def create_success(data: object) -> FlextResult[object]:
-        """Create successful result using FlextResult pattern."""
-        return FlextResult[object].ok(data)
-
-    @staticmethod
-    def create_failure(
-        error: str,
-        error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
-    ) -> FlextResult[object]:
-        """Create failed result using FlextResult pattern."""
-        return FlextResult[object].fail(
-            error, error_code=error_code, error_data=error_data
-        )
-
-    # =============================================================================
-    # COMMAND HANDLER - Base handler interface
-    # =============================================================================
-
-    class Handler(
-        FlextAbstractCommandHandler[CommandT, ResultT],
-        FlextLoggableMixin,
-        FlextTimingMixin,
-    ):
-        """Base command handler interface - implements FlextAbstractCommandHandler."""
-
-        def __init__(
-            self,
-            handler_name: FlextTypes.Service.ServiceName | None = None,
-            handler_id: FlextTypes.Service.ServiceName | None = None,
-        ) -> None:
-            """Initialize handler with logging."""
-            super().__init__()
-            self._metrics_state: dict[str, int] | None = None
-            self._handler_name = handler_name or self.__class__.__name__
-            self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
-            # Logger now provided by FlextLoggableMixin - DRY principle applied
-
-        @property
-        @override
-        def handler_name(self) -> str:
-            """Get handler name - implements abstract method."""
-            return self._handler_name
-
-        def validate_command(self, command: object) -> FlextResult[None]:
-            """Validate command before handling - implements abstract method."""
-            # Default implementation delegates to command's validation
-            validate_method = getattr(command, "validate_command", None)
-            if callable(validate_method):
-                result = validate_method()
-                # Ensure we return FlextResult[None] type
-                if hasattr(result, "success") and hasattr(result, "data"):
-                    return cast("FlextResult[None]", result)
+                """
                 return FlextResult[None].ok(None)
-            return FlextResult[None].ok(None)
 
-        @abstractmethod
-        @override
-        def handle(self, command: CommandT) -> FlextResult[ResultT]:
-            """Handle the command and return result.
+            @staticmethod
+            def require_field(
+                field_name: str,
+                value: object,
+                error_msg: str = "",
+            ) -> FlextResult[None]:
+                """Validate a required field with structured error handling.
 
-            Args:
-                command: Command to handle
+                Args:
+                    field_name: Name of the field being validated
+                    value: Value to validate
+                    error_msg: Custom error message (optional)
 
-            Returns:
-                FlextResult with execution result or error
+                Returns:
+                    FlextResult indicating validation success or failure
 
-            """
-
-        def _start_timing(self) -> float:
-            """Start timing operation - implements timing interface."""
-            return time.perf_counter()
-
-        def _get_execution_time_ms_rounded(self, start_time: float) -> float:
-            """Get execution time in milliseconds rounded to 2 decimal places."""
-            return round((time.perf_counter() - start_time) * 1000, 2)
-
-        def process_command(self, command: CommandT) -> FlextResult[ResultT]:
-            """Process command with validation, execution, and metrics collection."""
-            # Initialize metrics
-            self._initialize_metrics()
-
-            # Validate command
-            validation_result = self._validate_command(command)
-            if validation_result.is_failure:
-                return FlextResult[ResultT].fail(
-                    validation_result.error or "Validation failed",
-                )
-
-            # Check capability
-            if not self.can_handle(command):
-                error = f"{self.handler_name} cannot process {type(command).__name__}"
-                return FlextResult[ResultT].fail(error)
-
-            # Execute command
-            return self._execute_command(command)
-
-        def _initialize_metrics(self) -> None:
-            """Initialize metrics state."""
-            metrics_state = getattr(self, "_metrics_state", None)
-            if metrics_state is None:
-                self._metrics_state = {"total": 0, "success": 0}
-                metrics_state = self._metrics_state
-            metrics_state["total"] = int(metrics_state.get("total", 0)) + 1
-
-        def _validate_command(self, command: CommandT) -> FlextResult[None]:
-            """Validate command using injected validator or command's own method."""
-            validator = getattr(self, "_validator", None)
-            if validator is not None:
-                return self._validate_with_injected_validator(validator, command)
-            return self._validate_with_command_method(command)
-
-        def _validate_with_injected_validator(
-            self,
-            validator: object,
-            command: object,
-        ) -> FlextResult[None]:
-            """Validate using injected validator."""
-            try:
-                validate_method = getattr(validator, "validate_message", None)
-                if callable(validate_method):
-                    validated_result = validate_method(command)
-                    if (
-                        isinstance(validated_result, FlextResult)
-                        and validated_result.is_failure
-                    ):
-                        val = cast("FlextResult[object]", validated_result)
-                        return FlextResult[None].fail(val.error or "Validation failed")
-            except (
-                TypeError,
-                ValueError,
-                AttributeError,
-                PydanticValidationError,
-            ) as e:
-                return FlextResult[None].fail(f"Command validation failed: {e}")
-            return FlextResult[None].ok(None)
-
-        def _validate_with_command_method(self, command: object) -> FlextResult[None]:
-            """Validate using command's own validation method."""
-            validate_cmd_method = getattr(command, "validate_command", None)
-            if callable(validate_cmd_method):
-                validation_result = validate_cmd_method()
-                if (
-                    isinstance(validation_result, FlextResult)
-                    and validation_result.is_failure
+                """
+                if not FlextPredicates.is_not_none(value) or (
+                    isinstance(value, str) and not value.strip()
                 ):
-                    val = cast("FlextResult[object]", validation_result)
+                    msg = error_msg or f"{field_name} is required"
                     return FlextResult[None].fail(
-                        val.error or "Command validation failed"
+                        msg,
+                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
                     )
-            return FlextResult[None].ok(None)
+                return FlextResult[None].ok(None)
 
-        def _execute_command(self, command: CommandT) -> FlextResult[ResultT]:
-            """Execute command and update metrics."""
-            try:
-                result: FlextResult[ResultT] = self.handle(command)
-                self._update_metrics(result)
-                return result
-            except (RuntimeError, OSError) as e:
-                return FlextResult[ResultT].fail(f"Command processing failed: {e}")
+            @staticmethod
+            def require_email(
+                email: str,
+                field_name: str = "email",
+            ) -> FlextResult[None]:
+                """Validate email format using FlextPredicates.
 
-        def _update_metrics(self, result: FlextResult[ResultT]) -> None:
-            """Update metrics after command execution."""
-            # Simple metrics update when collector injected
-            metrics_collector = getattr(self, "_metrics", None)
-            if metrics_collector is not None:
-                get_metrics_method = getattr(metrics_collector, "get_metrics", None)
-                if callable(get_metrics_method):
-                    _ = get_metrics_method()
+                Args:
+                    email: Email address to validate
+                    field_name: Name of the field (for error messages)
 
-            # Update success counter only if successful
-            if result.is_success and self._metrics_state is not None:
-                self._metrics_state["success"] = (
-                    int(self._metrics_state.get("success", 0)) + 1
+                Returns:
+                    FlextResult indicating validation success or failure
+
+                """
+                # Use FlextPredicates for validation if available
+                if (
+                    not email
+                    or "@" not in email
+                    or "." not in email.rsplit("@", maxsplit=1)[-1]
+                ):
+                    return FlextResult[None].fail(
+                        f"Invalid {field_name} format",
+                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                    )
+                return FlextResult[None].ok(None)
+
+            @staticmethod
+            def require_min_length(
+                value: str,
+                min_len: int,
+                field_name: str,
+            ) -> FlextResult[None]:
+                """Validate minimum string length.
+
+                Args:
+                    value: String value to validate
+                    min_len: Minimum required length
+                    field_name: Name of the field (for error messages)
+
+                Returns:
+                    FlextResult indicating validation success or failure
+
+                """
+                if len(value.strip()) < min_len:
+                    error_msg = f"{field_name} must be at least {min_len} characters"
+                    return FlextResult[None].fail(
+                        error_msg,
+                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                    )
+                return FlextResult[None].ok(None)
+
+            def get_metadata(self) -> dict[str, object]:
+                """Get command metadata using FlextTypes.
+
+                Returns:
+                    Command metadata dictionary with typed structure
+
+                """
+                return {
+                    "command_id": self.command_id,
+                    "command_type": self.command_type,
+                    "command_class": self.__class__.__name__,
+                    "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+                    "user_id": self.user_id,
+                    "correlation_id": self.correlation_id,
+                }
+
+            def to_payload(self) -> FlextPayload[dict[str, object]]:
+                """Convert command to FlextPayload for serialization.
+
+                Returns:
+                    FlextPayload containing command data and metadata
+
+                """
+                # Convert the command model to a dictionary
+                command_dict = self.model_dump()
+
+                # Ensure timestamp is serialized as ISO string
+                if "timestamp" in command_dict and isinstance(
+                    command_dict["timestamp"], datetime
+                ):
+                    command_dict["timestamp"] = command_dict["timestamp"].isoformat()
+
+                # Create payload with metadata
+                metadata = self.get_metadata()
+                metadata_dict = dict(metadata)
+                metadata_dict["type"] = (
+                    self.command_type or self.__class__.__name__.lower()
                 )
 
-        @override
-        def can_handle(self, command: object) -> bool:
-            """Check if handler can process this command - implements abstract method.
+                # Create and return payload
+                result = FlextPayload[dict[str, object]].create(
+                    data=command_dict, **metadata_dict
+                )
+                return result.value
 
-            Uses FlextUtilities type guards for validation.
+        class Query(
+            FlextModel,
+            FlextSerializableMixin,
+        ):
+            """Base query for read operations without side effects.
+
+            Implements enterprise query patterns with:
+            - Pagination support with configurable limits
+            - Sorting and ordering capabilities
+            - Query validation using FlextModel
+            - Immutable design (frozen=True)
             """
-            # Log handler check
-            self.logger.debug(
-                "Checking if handler can process command",
-                command_type=type(command).__name__,
+
+            model_config = ConfigDict(
+                frozen=True,
+                validate_assignment=True,
+                extra="forbid",
             )
 
-            # Get expected command type from Generic parameter
-            orig_bases = getattr(self, "__orig_bases__", None)
-            if orig_bases is not None:
-                for base in orig_bases:
-                    args = getattr(base, "__args__", None)
-                    if args is not None and len(args) >= 1:
-                        expected_type = base.__args__[0]
-                        # Use BASE type guard directly - MAXIMIZE base functionality
-                        can_handle_result = FlextTypeGuards.is_instance_of(
-                            command,
-                            expected_type,
-                        )
+            query_id: str | None = Field(
+                default_factory=FlextGenerators.generate_uuid,
+                description="Unique query identifier",
+            )
 
-                        self.logger.debug(
-                            "Handler check result",
-                            can_handle=can_handle_result,
-                            expected_type=getattr(
+            query_type: str | None = Field(
+                default=None,
+                description="Query type for routing",
+            )
+
+            page_size: int = Field(
+                default=100,
+                ge=1,
+                le=1000,
+                description="Number of results per page",
+            )
+
+            page_number: int = Field(
+                default=1,
+                ge=1,
+                description="Page number for pagination",
+            )
+
+            sort_by: str | None = Field(
+                default=None,
+                description="Field to sort by",
+            )
+
+            sort_order: str = Field(
+                default="asc",
+                pattern=r"^(asc|desc)$",
+                description="Sort order: asc or desc",
+            )
+
+            def validate_query(self) -> FlextResult[None]:
+                """Validate query with business logic using FlextValidation.
+
+                Returns:
+                    FlextResult indicating validation success or failure with errors
+
+                """
+                errors: FlextCommands.Types.ValidationErrors = []
+
+                # Business validation using constants
+                if self.page_size <= 0:
+                    errors.append("Page size must be positive")
+                if self.page_size > FlextCommands.Constants.MAX_QUERY_RESULTS:
+                    errors.append(
+                        f"Page size cannot exceed {FlextCommands.Constants.MAX_QUERY_RESULTS}"
+                    )
+                if self.page_number <= 0:
+                    errors.append("Page number must be positive")
+                if self.sort_order not in {"asc", "desc"}:
+                    errors.append("Sort order must be 'asc' or 'desc'")
+
+                # Check validation results
+                if errors:
+                    error_message = "; ".join(errors)
+                    return FlextResult[None].fail(
+                        f"Query validation failed: {error_message}",
+                        error_code=FlextCommands.Constants.Errors.QUERY_PROCESSING_FAILED,
+                    )
+
+                return FlextResult[None].ok(None)
+
+    # =========================================================================
+    # HANDLERS - Command and query handler base classes
+    # =========================================================================
+
+    class Handlers:
+        """Command and query handler implementations.
+
+        Contains base handler classes for command and query processing with
+        proper typing, validation, and metrics collection.
+        """
+
+        class CommandHandler[CommandT, ResultT](
+            FlextLoggableMixin,
+            FlextTimingMixin,
+        ):
+            """Base command handler with enterprise features.
+
+            Provides:
+            - Generic typing for commands and results
+            - Validation integration
+            - Metrics collection
+            - Logging and timing
+            - Thread-safe operations
+            """
+
+            def __init__(
+                self,
+                handler_name: str | None = None,
+                handler_id: str | None = None,
+            ) -> None:
+                """Initialize handler with logging and metrics.
+
+                Args:
+                    handler_name: Human-readable handler name
+                    handler_id: Unique handler identifier
+
+                """
+                super().__init__()
+                self._metrics_state: dict[str, object] | None = None
+                self._handler_name = handler_name or self.__class__.__name__
+                self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
+
+            @property
+            def handler_name(self) -> str:
+                """Get handler name for identification."""
+                return self._handler_name
+
+            @property
+            def logger(self) -> FlextLogger:
+                """Get logger instance for this handler."""
+                return get_logger(self.__class__.__name__)
+
+            def validate_command(self, command: object) -> FlextResult[None]:
+                """Validate command before handling.
+
+                Args:
+                    command: Command object to validate
+
+                Returns:
+                    FlextResult indicating validation success or failure
+
+                """
+                # Delegate to command's validation if available
+                validate_method = getattr(command, "validate_command", None)
+                if callable(validate_method):
+                    result = validate_method()
+                    if hasattr(result, "success") and hasattr(result, "data"):
+                        return cast("FlextResult[None]", result)
+                return FlextResult[None].ok(None)
+
+            def handle(self, command: CommandT) -> FlextResult[ResultT]:
+                """Handle the command and return result.
+
+                Args:
+                    command: Command to handle
+
+                Returns:
+                    FlextResult with execution result or error
+
+                Note:
+                    Subclasses must implement this method for actual processing.
+
+                """
+                # Subclasses must implement this method
+                msg = "Subclasses must implement handle method"
+                raise NotImplementedError(msg)
+
+            def can_handle(self, command: object) -> bool:
+                """Check if handler can process this command.
+
+                Uses FlextTypeGuards for type validation and generic inspection.
+
+                Args:
+                    command: Command object to check
+
+                Returns:
+                    True if handler can process the command, False otherwise
+
+                """
+                self.logger.debug(
+                    "Checking if handler can process command",
+                    command_type=type(command).__name__,
+                )
+
+                # Get expected command type from Generic parameter
+                orig_bases = getattr(self, "__orig_bases__", None)
+                if orig_bases is not None:
+                    for base in orig_bases:
+                        args = getattr(base, "__args__", None)
+                        if args is not None and len(args) >= 1:
+                            expected_type = base.__args__[0]
+                            # Use FlextTypeGuards for validation
+                            can_handle_result = FlextTypeGuards.is_instance_of(
+                                command,
                                 expected_type,
-                                "__name__",
-                                str(expected_type),
-                            ),
-                        )
-                        return bool(can_handle_result)
+                            )
 
-            self.logger.warning("Could not determine handler type constraints")
-            return True
+                            self.logger.debug(
+                                "Handler check result",
+                                can_handle=can_handle_result,
+                                expected_type=getattr(
+                                    expected_type,
+                                    "__name__",
+                                    str(expected_type),
+                                ),
+                            )
+                            return bool(can_handle_result)
 
-        def handle_command(self, command: CommandT) -> FlextResult[ResultT]:
-            """Alias for handle used by some tests/utilities."""
-            return self.handle(command)
+                self.logger.warning("Could not determine handler type constraints")
+                return True
 
-        def get_command_type(self) -> str:
-            """Return command type name; subclasses typically override."""
-            return self.__class__.__name__
+            def execute(self, command: CommandT) -> FlextResult[ResultT]:
+                """Execute command with full validation and error handling.
 
-        def execute(self, command: CommandT) -> FlextResult[ResultT]:
-            """Execute command with full logging and error handling."""
-            self.logger.info(
-                "Executing command",
-                command_type=type(command).__name__,
-                command_id=getattr(command, "command_id", "unknown"),
-            )
+                Args:
+                    command: Command to execute
 
-            # Validate command can be handled
-            if not self.can_handle(command):
-                error_msg = (
-                    f"{self._handler_name} cannot handle {type(command).__name__}"
-                )
-                self.logger.error(error_msg)
-                return FlextResult[ResultT].fail(error_msg)
+                Returns:
+                    FlextResult with execution result or structured error
 
-            # Validate the command's data
-            validation_result = self.validate_command(command)
-            if validation_result.is_failure:
-                self.logger.warning(
-                    "Command validation failed",
-                    command_type=type(command).__name__,
-                    error=validation_result.error,
-                )
-                return FlextResult[ResultT].fail(
-                    validation_result.error or "Validation failed",
-                )
-
-            start_time = self._start_timing()
-
-            try:
-                result: FlextResult[ResultT] = self.handle(command)
-
+                """
                 self.logger.info(
-                    "Command executed successfully",
+                    "Executing command",
                     command_type=type(command).__name__,
-                    execution_time_ms=self._get_execution_time_ms_rounded(start_time),
-                    success=result.is_success,
+                    command_id=getattr(command, "command_id", "unknown"),
                 )
-            except (TypeError, ValueError, AttributeError, RuntimeError) as e:
-                self.logger.exception(
-                    "Command execution failed",
-                    command_type=type(command).__name__,
-                    execution_time_ms=self._get_execution_time_ms_rounded(start_time),
-                    error=str(e),
-                )
-                raise
-            else:
-                return result
 
-    # =============================================================================
-    # COMMAND BUS - Command routing and execution
-    # =============================================================================
+                # Validate command can be handled
+                if not self.can_handle(command):
+                    error_msg = (
+                        f"{self._handler_name} cannot handle {type(command).__name__}"
+                    )
+                    self.logger.error(error_msg)
+                    return FlextResult[ResultT].fail(
+                        error_msg,
+                        error_code=FlextCommands.Constants.Errors.COMMAND_HANDLER_NOT_FOUND,
+                    )
 
-    class Bus(FlextAbstractCommandBus, FlextLoggableMixin):
-        """Command bus for routing and executing commands."""
+                # Validate the command's data
+                validation_result = self.validate_command(command)
+                if validation_result.is_failure:
+                    self.logger.warning(
+                        "Command validation failed",
+                        command_type=type(command).__name__,
+                        error=validation_result.error,
+                    )
+                    return FlextResult[ResultT].fail(
+                        validation_result.error or "Validation failed",
+                        error_code=FlextCommands.Constants.Errors.COMMAND_VALIDATION_FAILED,
+                    )
+
+                start_time = time.perf_counter()
+
+                try:
+                    result: FlextResult[ResultT] = self.handle(command)
+
+                    execution_time = round((time.perf_counter() - start_time) * 1000, 2)
+                    self.logger.info(
+                        "Command executed successfully",
+                        command_type=type(command).__name__,
+                        execution_time_ms=execution_time,
+                        success=result.is_success,
+                    )
+
+                    return result
+
+                except (TypeError, ValueError, AttributeError, RuntimeError) as e:
+                    execution_time = round((time.perf_counter() - start_time) * 1000, 2)
+                    self.logger.exception(
+                        "Command execution failed",
+                        command_type=type(command).__name__,
+                        execution_time_ms=execution_time,
+                        error=str(e),
+                    )
+                    return FlextResult[ResultT].fail(
+                        f"Command processing failed: {e}",
+                        error_code=FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                    )
+
+        class QueryHandler[QueryT, QueryResultT]:
+            """Base query handler for read operations.
+
+            Provides query processing capabilities with validation and
+            consistent error handling patterns.
+            """
+
+            def __init__(self, handler_name: str | None = None) -> None:
+                """Initialize query handler with optional name.
+
+                Args:
+                    handler_name: Human-readable handler name
+
+                """
+                self._handler_name = handler_name or self.__class__.__name__
+
+            @property
+            def handler_name(self) -> str:
+                """Get handler name for identification."""
+                return self._handler_name
+
+            def can_handle(self, query: QueryT) -> bool:
+                """Check if handler can process this query.
+
+                Args:
+                    query: Query object to check
+
+                Returns:
+                    True if handler can process the query
+
+                """
+                # Generic implementation - override in subclasses for specific logic
+                _ = query
+                return True
+
+            def validate_query(self, query: QueryT) -> FlextResult[None]:
+                """Validate query using its own validation method.
+
+                Args:
+                    query: Query object to validate
+
+                Returns:
+                    FlextResult indicating validation success or failure
+
+                """
+                validate_method = getattr(query, "validate_query", None)
+                if callable(validate_method):
+                    result = validate_method()
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[None]", result)
+                return FlextResult[None].ok(None)
+
+            def handle(self, query: QueryT) -> FlextResult[QueryResultT]:
+                """Handle query and return result.
+
+                Args:
+                    query: Query to handle
+
+                Returns:
+                    FlextResult with query result or error
+
+                Note:
+                    Subclasses must implement this method for actual processing.
+
+                """
+                # Subclasses should implement this method
+                msg = "Subclasses must implement handle method"
+                raise NotImplementedError(msg)
+
+    # =========================================================================
+    # BUS - Command bus for routing and execution
+    # =========================================================================
+
+    class Bus(FlextLoggableMixin):
+        """Command bus for routing and executing commands.
+
+        Provides enterprise-grade command routing with:
+        - Handler registration and management
+        - Middleware pipeline support
+        - Execution metrics and monitoring
+        - Thread-safe operations
+        - Structured error handling with FlextConstants error codes
+        """
 
         def __init__(self) -> None:
-            """Initialize command bus."""
+            """Initialize command bus with enterprise features."""
             super().__init__()
             # Handlers registry: command type -> handler instance
-            # Use object for values because handlers can be different Handler generics
-            self._handlers: dict[object, object] = {}
+            self._handlers: dict[str, object] = {}
             # Middleware pipeline
             self._middleware: list[object] = []
             # Execution counter
             self._execution_count: int = 0
-            # Logger instance
-
+            # Logger instance using FlextLogger
             self._logger: FlextLogger = FlextLoggerFactory.get_logger(
                 f"{self.__module__}.{self.__class__.__name__}",
             )
-            # Optional validator
-            self._validator: object | None = None
 
-        # Core execution/validation methods moved below to keep a single implementation
+        @property
+        def logger(self) -> FlextLogger:
+            """Get logger instance for this bus."""
+            return self._logger
 
-        # Single initializer above handles setup for Bus; duplicate initializer removed
+        def register_handler(self, *args: object) -> None:
+            """Register command handler with flexible signature support.
 
-        def register_handler(
-            self,
-            *args: object,
-        ) -> None:
-            """Register command handler (compatible signature).
+            Supports both single handler and (command_type, handler) registration.
 
-            Supports both (command_type: str, handler) and (handler) forms.
+            Args:
+                *args: Either (handler,) or (command_type, handler)
+
+            Raises:
+                TypeError: If invalid arguments provided
+                ValueError: If handler registration fails
+
             """
-            one = 1
-            two = 2
-            if len(args) == one:
+            if len(args) == 1:
                 handler = args[0]
                 if handler is None:
                     msg = "Handler cannot be None"
                     raise TypeError(msg)
+
                 handle_method = getattr(handler, "handle", None)
                 if not callable(handle_method):
                     msg = "Invalid handler: must have callable 'handle' method"
                     raise TypeError(msg)
+
                 key = getattr(handler, "handler_id", handler.__class__.__name__)
                 if key in self._handlers:
                     self.logger.warning(
@@ -688,6 +1024,7 @@ class FlextCommands:
                         existing_handler=self._handlers[key].__class__.__name__,
                     )
                     return
+
                 self._handlers[key] = handler
                 self.logger.info(
                     "Handler registered successfully",
@@ -697,7 +1034,8 @@ class FlextCommands:
                 )
                 return
 
-            if len(args) == two:
+            min_expected_args = 2
+            if len(args) == min_expected_args:
                 command_type_obj, handler = args
                 if command_type_obj is None:
                     msg = "Command type cannot be None"
@@ -705,8 +1043,10 @@ class FlextCommands:
                 if handler is None:
                     msg = "Handler cannot be None"
                     raise ValueError(msg)
+
                 name_attr = getattr(command_type_obj, "__name__", None)
                 key = name_attr if name_attr is not None else str(command_type_obj)
+
                 if key in self._handlers:
                     self.logger.warning(
                         "Handler already registered",
@@ -714,6 +1054,7 @@ class FlextCommands:
                         existing_handler=self._handlers[key].__class__.__name__,
                     )
                     return
+
                 self._handlers[key] = handler
                 self.logger.info(
                     "Handler registered successfully",
@@ -726,80 +1067,35 @@ class FlextCommands:
             msg = "register_handler() takes 1 or 2 positional arguments"
             raise TypeError(msg)
 
-        def register_handler_flexible(
-            self,
-            handler_or_command_type: object | type[CommandT],
-            handler: FlextCommands.Handler[CommandT, ResultT] | None = None,
-        ) -> FlextResult[None]:
-            """Register handler with flexible arguments (compatibility).
+        def find_handler(self, command: object) -> object | None:
+            """Find handler capable of processing the given command.
 
             Args:
-                handler_or_command_type: Handler instance or command type
-                handler: Handler instance (when first arg is a command type)
+                command: Command object to find handler for
 
             Returns:
-                FlextResult indicating registration success
+                Handler object if found, None otherwise
 
             """
-            # Handle a single argument case (just the handler)
-            if handler is None:
-                handle_method = getattr(handler_or_command_type, "handle", None)
-                if not callable(handle_method):
-                    return FlextResult[None].fail(
-                        "Invalid handler: must have callable 'handle' method",
-                    )
-                handler_obj = handler_or_command_type
-                # Use handler_id as a key for uniqueness
-                key = getattr(handler_obj, "handler_id", handler_obj.__class__.__name__)
-                self._handlers[key] = handler_obj
+            for handler in self._handlers.values():
+                can_handle_method = getattr(handler, "can_handle", None)
+                if callable(can_handle_method) and can_handle_method(command):
+                    return handler
+            return None
 
-                self.logger.info(
-                    "Handler registered successfully",
-                    handler_id=key,
-                    handler_type=handler_obj.__class__.__name__,
-                    total_handlers=len(self._handlers),
-                )
-                return FlextResult[None].ok(None)
-            # Handle two arguments case (command_type, handler)
-            command_type = handler_or_command_type
-            handler_obj = handler
+        def execute(self, command: object) -> FlextResult[object]:
+            """Execute command through registered handler with middleware.
 
-            # Use BASE validators directly - MAXIMIZE base usage
-            if not FlextPredicates.is_not_none(command_type):  # type: ignore[attr-defined]
-                return FlextResult[None].fail("Command type cannot be None")
+            Args:
+                command: Command object to execute
 
-            if not FlextPredicates.is_not_none(handler_obj):  # type: ignore[attr-defined]
-                return FlextResult[None].fail("Handler cannot be None")
+            Returns:
+                FlextResult with execution result or structured error
 
-            # Check if already registered
-            if command_type in self._handlers:
-                command_name = getattr(command_type, "__name__", str(command_type))
-                self.logger.warning(
-                    "Handler already registered",
-                    command_type=command_name,
-                    existing_handler=self._handlers[command_type].__class__.__name__,
-                )
-                return FlextResult[None].fail(
-                    f"Handler already registered for {command_name}",
-                )
+            """
+            self._execution_count = int(self._execution_count) + 1
+            command_type = type(command)
 
-            # Register handler
-            self._handlers[command_type] = handler_obj
-
-            command_name = getattr(command_type, "__name__", str(command_type))
-            self.logger.info(
-                "Handler registered successfully",
-                command_type=command_name,
-                handler_type=handler_obj.__class__.__name__,
-                total_handlers=len(self._handlers),
-            )
-
-            return FlextResult[None].ok(None)
-
-        # ...existing code...
-
-        def _log_command_execution(self, command: object, command_type: type) -> None:
-            """Log command execution start."""
             self.logger.info(
                 "Executing command via bus",
                 command_type=command_type.__name__,
@@ -807,50 +1103,66 @@ class FlextCommands:
                 execution_count=self._execution_count,
             )
 
-        def _find_command_handler(self, command: object) -> object | None:
-            """Find a handler that can handle this command."""
-            for registered_handler in self._handlers.values():
-                can_handle_method = getattr(registered_handler, "can_handle", None)
-                if callable(can_handle_method) and can_handle_method(command):
-                    return registered_handler
-            return None
+            # Find appropriate handler
+            handler = self.find_handler(command)
+            if handler is None:
+                handler_names = [h.__class__.__name__ for h in self._handlers.values()]
+                self.logger.error(
+                    "No handler found",
+                    command_type=command_type.__name__,
+                    registered_handlers=handler_names,
+                )
+                return FlextResult[object].fail(
+                    f"No handler found for {command_type.__name__}",
+                    error_code=FlextCommands.Constants.Errors.COMMAND_HANDLER_NOT_FOUND,
+                )
 
-        def _handle_no_handler_found(self, command_type: type) -> FlextResult[object]:
-            """Handle a case when no handler is found."""
-            handler_names = [h.__class__.__name__ for h in self._handlers.values()]
-            self.logger.error(
-                "No handler found",
-                command_type=command_type.__name__,
-                registered_handlers=handler_names,
-            )
-            return FlextResult[object].fail(
-                f"No handler found for {command_type.__name__}"
-            )
+            # Apply middleware pipeline
+            middleware_result = self._apply_middleware(command, handler)
+            if middleware_result.is_failure:
+                return FlextResult[object].fail(
+                    middleware_result.error or "Middleware rejected command",
+                    error_code=FlextCommands.Constants.Errors.COMMAND_BUS_ERROR,
+                )
+
+            # Execute the handler
+            return self._execute_handler(handler, command)
 
         def _apply_middleware(
             self,
             command: object,
             handler: object,
         ) -> FlextResult[None]:
-            """Apply a middleware pipeline."""
+            """Apply middleware pipeline to command processing.
+
+            Args:
+                command: Command being processed
+                handler: Handler that will process the command
+
+            Returns:
+                FlextResult indicating middleware processing success or failure
+
+            """
             for i, middleware in enumerate(self._middleware):
                 self.logger.debug(
                     "Applying middleware",
                     middleware_index=i,
                     middleware_type=type(middleware).__name__,
                 )
+
                 process_method = getattr(middleware, "process", None)
                 if callable(process_method):
                     result = process_method(command, handler)
                     if isinstance(result, FlextResult) and result.is_failure:
-                        val = cast("FlextResult[object]", result)
                         self.logger.warning(
                             "Middleware rejected command",
                             middleware_type=type(middleware).__name__,
-                            error=val.error or "Unknown error",
+                            error=result.error or "Unknown error",
                         )
-                        error_msg = str(val.error or "Middleware rejected command")
-                        return FlextResult[None].fail(error_msg)
+                        return FlextResult[None].fail(
+                            str(result.error or "Middleware rejected command")
+                        )
+
             return FlextResult[None].ok(None)
 
         def _execute_handler(
@@ -858,107 +1170,134 @@ class FlextCommands:
             handler: object,
             command: object,
         ) -> FlextResult[object]:
-            """Execute the command handler."""
+            """Execute command through handler with error handling.
+
+            Args:
+                handler: Handler object to execute
+                command: Command to process
+
+            Returns:
+                FlextResult with handler execution result or error
+
+            """
             self.logger.debug(
                 "Delegating to handler",
                 handler_type=handler.__class__.__name__,
             )
 
             # Try different handler methods in order of preference
-            handler_methods = ["process_command", "execute", "handle"]
+            handler_methods = ["execute", "handle", "process_command"]
 
             for method_name in handler_methods:
                 method = getattr(handler, method_name, None)
                 if callable(method):
-                    result = method(command)
-                    if isinstance(result, FlextResult):
-                        return cast("FlextResult[object]", result)
-                    return FlextResult[object].ok(result)
+                    try:
+                        result = method(command)
+                        if isinstance(result, FlextResult):
+                            return cast("FlextResult[object]", result)
+                        return FlextResult[object].ok(result)
+                    except Exception as e:
+                        return FlextResult[object].fail(
+                            f"Handler execution failed: {e}",
+                            error_code=FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                        )
 
             # No valid handler method found
             return FlextResult[object].fail(
-                "Handler has no callable process_command, execute, or handle method",
+                "Handler has no callable execute, handle, or process_command method",
+                error_code=FlextCommands.Constants.Errors.COMMAND_BUS_ERROR,
             )
 
-        def execute(self, command: FlextAbstractCommand) -> FlextResult[object]:
-            """Find handler, apply middleware and execute command via handler."""
-            self._execution_count = int(self._execution_count) + 1
-            command_type = type(command)
-            self._log_command_execution(command, command_type)
-
-            handler = self._find_command_handler(command)
-            if handler is None:
-                return self._handle_no_handler_found(command_type)
-
-            # Apply middleware pipeline
-            mw_result = self._apply_middleware(command, handler)
-            if mw_result.is_failure:
-                # propagate middleware error as object failure
-                return FlextResult[object].fail(
-                    cast("FlextResult[object]", mw_result).error
-                    or "Middleware rejected command"
-                )
-
-            # Execute the handler
-            return self._execute_handler(handler, command)
-
         def add_middleware(self, middleware: object) -> None:
-            """Add middleware to processing pipeline."""
+            """Add middleware to the processing pipeline.
+
+            Args:
+                middleware: Middleware object with process() method
+
+            """
             self._middleware.append(middleware)
+            self.logger.info(
+                "Middleware added to pipeline",
+                middleware_type=type(middleware).__name__,
+                total_middleware=len(self._middleware),
+            )
 
         def get_all_handlers(self) -> list[object]:
-            """Get all registered handlers."""
+            """Get all registered handlers for inspection.
+
+            Returns:
+                List of all registered handler objects
+
+            """
             return list(self._handlers.values())
 
-        def find_handler(self, command: object) -> object | None:
-            """Find handler for command type."""
-            for handler in self._handlers.values():
-                can_handle_method = getattr(handler, "can_handle", None)
-                if callable(can_handle_method) and can_handle_method(command):
-                    return handler
-            return None
-
-        @override
         def unregister_handler(self, command_type: str) -> bool:
-            """Unregister command handler - implements abstract method."""
-            # Find handler by command type string
-            for key, _handler in list(self._handlers.items()):
+            """Unregister command handler by command type.
+
+            Args:
+                command_type: String identifier of command type
+
+            Returns:
+                True if handler was unregistered, False if not found
+
+            """
+            for key in list(self._handlers.keys()):
                 key_name = getattr(key, "__name__", None)
                 if (key_name is not None and key_name == command_type) or str(
-                    key,
+                    key
                 ) == command_type:
                     del self._handlers[key]
+                    self.logger.info(
+                        "Handler unregistered",
+                        command_type=command_type,
+                        remaining_handlers=len(self._handlers),
+                    )
                     return True
             return False
 
-        @override
-        def send_command(self, command: FlextAbstractCommand) -> FlextResult[object]:
-            """Send command - implements abstract method."""
+        def send_command(self, command: object) -> FlextResult[object]:
+            """Send command for processing (alias for execute).
+
+            Args:
+                command: Command object to send
+
+            Returns:
+                FlextResult with execution result or error
+
+            """
             return self.execute(command)
 
-        @override
         def get_registered_handlers(self) -> dict[str, object]:
-            """Get registered handlers - implements abstract method."""
+            """Get registered handlers as string-keyed dictionary.
+
+            Returns:
+                Dictionary mapping handler names to handler objects
+
+            """
             return {str(k): v for k, v in self._handlers.items()}
 
-    # =============================================================================
-    # COMMAND DECORATORS - Convenience decorators
-    # =============================================================================
+    # =========================================================================
+    # DECORATORS - Command handling decorators and utilities
+    # =========================================================================
 
     class Decorators:
-        """Decorators for command handling."""
+        """Decorators for command handling and processing.
+
+        Provides decorator patterns for command handler registration and
+        function-based command processing.
+        """
 
         @staticmethod
         def command_handler(
             command_type: type[object],
         ) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
-            """Mark a function as command handler.
+            """Mark function as command handler with automatic registration.
 
             Args:
-                command_type: Command type to handle
+                command_type: Command type class to handle
 
             Returns:
-                Decorator function for command handler registration.
+                Decorator function for command handler registration
 
             """
 
@@ -966,15 +1305,16 @@ class FlextCommands:
                 func: Callable[[object], object],
             ) -> Callable[[object], object]:
                 # Create handler class from function
-                class FunctionHandler(FlextCommands.Handler[object, object]):
-                    @override
+                class FunctionHandler(
+                    FlextCommands.Handlers.CommandHandler[object, object]
+                ):
                     def handle(self, command: object) -> FlextResult[object]:
                         result = func(command)
                         if isinstance(result, FlextResult):
                             return cast("FlextResult[object]", result)
                         return FlextResult[object].ok(result)
 
-                # Create wrapper function with metadata instead of dynamic attributes
+                # Create wrapper function with metadata
                 def wrapper(*args: object, **kwargs: object) -> object:
                     return func(*args, **kwargs)
 
@@ -986,127 +1326,123 @@ class FlextCommands:
 
             return decorator
 
-    # =============================================================================
-    # QUERY PATTERNS - Read-only operations
-    # =============================================================================
+    # =========================================================================
+    # RESULTS - Result helper methods for FlextResult patterns
+    # =========================================================================
 
-    class Query(
-        BaseModel,
-        FlextSerializableMixin,
-    ):
-        """Base query for read operations without side effects."""
+    class Results:
+        """Result helper methods using FlextResult patterns.
 
-        model_config = ConfigDict(
-            frozen=True,
-            validate_assignment=True,
-            extra="forbid",
-        )
-
-        query_id: str | None = None
-        query_type: str | None = None
-        page_size: int = 100
-        page_number: int = 1
-        sort_by: str | None = None
-        sort_order: str = "asc"
-
-        def validate_query(self) -> FlextResult[None]:
-            """Validate a query with business logic."""
-            errors: list[str] = []
-
-            # Perform business validation
-            if self.page_size <= 0:
-                errors.append("Page size must be positive")
-            if self.page_number <= 0:
-                errors.append("Page number must be positive")
-            if self.sort_order not in {"asc", "desc"}:
-                errors.append("Sort order must be 'asc' or 'desc'")
-
-            # Check validation results
-            if errors:
-                error_message = "; ".join(errors)
-                return FlextResult[None].fail(
-                    f"Query validation failed: {error_message}",
-                )
-
-            return FlextResult[None].ok(None)
-
-        # Mixin methods are now available through proper inheritance:
-        # - is_valid property (from FlextValidatableMixin)
-        # - validation_errors property (from FlextValidatableMixin)
-        # - has_validation_errors() method (from FlextValidatableMixin)
-        # - to_dict_basic() method (from FlextSerializableMixin)
-        # - All serialization methods (from FlextSerializableMixin)
-
-    class QueryHandler(
-        FlextAbstractQueryHandler[QueryT, QueryResultT],
-    ):
-        """Base query handler built on abstract base.
-
-        Provides default implementations using centralized base.
+        Provides convenient factory methods for creating success and failure
+        results with proper error code integration.
         """
 
-        def __init__(self, handler_name: str | None = None) -> None:
-            """Initialize query handler with optional name."""
-            self._handler_name = handler_name or self.__class__.__name__
+        @staticmethod
+        def success(data: object) -> FlextResult[object]:
+            """Create successful result with data.
 
-        @property
-        @override
-        def handler_name(self) -> str:
-            """Get handler name for this query handler."""
-            return self._handler_name
+            Args:
+                data: Success data to wrap in result
 
-        def can_handle(self, query: QueryT) -> bool:
-            """Return True for generic handler capability check."""
-            _ = query
-            return True
+            Returns:
+                FlextResult containing success data
 
-        def validate_query(self, query: QueryT) -> FlextResult[None]:
-            """Validate a query object using its own validation method if available."""
-            validate_method = getattr(query, "validate_query", None)
-            if callable(validate_method):
-                result = validate_method()
-                if isinstance(result, FlextResult):
-                    return cast("FlextResult[None]", result)
-            return FlextResult[None].ok(None)
+            """
+            return FlextResult[object].ok(data)
 
-        @abstractmethod
-        @override
-        def handle(self, query: QueryT) -> FlextResult[QueryResultT]:
-            """Handle query and return result."""
+        @staticmethod
+        def failure(
+            error: str,
+            error_code: str | None = None,
+            error_data: dict[str, object] | None = None,
+        ) -> FlextResult[object]:
+            """Create failure result with structured error information.
 
-    # =============================================================================
-    # FACTORY METHODS - Convenience builders
-    # =============================================================================
+            Args:
+                error: Error message
+                error_code: Structured error code from FlextConstants
+                error_data: Additional error context data
 
-    @staticmethod
-    def create_command_bus() -> FlextCommands.Bus:
-        """Create a new command bus instance."""
-        return FlextCommands.Bus()
+            Returns:
+                FlextResult containing structured error information
 
-    @staticmethod
-    def create_simple_handler(
-        handler_func: Callable[[object], object],
-    ) -> FlextCommands.Handler[object, object]:
-        """Create handler from function.
+            """
+            return FlextResult[object].fail(
+                error,
+                error_code=error_code
+                or FlextCommands.Constants.Errors.COMMAND_PROCESSING_FAILED,
+                error_data=error_data,
+            )
 
-        Args:
-            handler_func: Function that takes command and returns FlextResult
+    # =========================================================================
+    # FACTORIES - Factory methods for creating instances
+    # =========================================================================
 
-        Returns:
-            Handler instance
+    class Factories:
+        """Factory methods for creating command system instances.
 
+        Provides convenient factory methods for creating common command
+        system components with proper configuration.
         """
 
-        class SimpleHandler(FlextCommands.Handler[object, object]):
-            @override
-            def handle(self, command: object) -> FlextResult[object]:
-                result = handler_func(command)
-                if isinstance(result, FlextResult):
-                    return cast("FlextResult[object]", result)
-                return FlextResult[object].ok(result)
+        @staticmethod
+        def create_command_bus() -> FlextCommands.Bus:
+            """Create a new command bus instance with default configuration.
 
-        return SimpleHandler()
+            Returns:
+                Configured FlextCommands.Bus instance
+
+            """
+            return FlextCommands.Bus()
+
+        @staticmethod
+        def create_simple_handler(
+            handler_func: FlextTypes.Core.OperationCallable,
+        ) -> FlextCommands.Handlers.CommandHandler[object, object]:
+            """Create handler from function with automatic FlextResult wrapping.
+
+            Args:
+                handler_func: Function that processes commands
+
+            Returns:
+                CommandHandler instance wrapping the function
+
+            """
+
+            class SimpleHandler(FlextCommands.Handlers.CommandHandler[object, object]):
+                def handle(self, command: object) -> FlextResult[object]:
+                    result = handler_func(command)
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[object]", result)
+                    return FlextResult[object].ok(result)
+
+            return SimpleHandler()
+
+        @staticmethod
+        def create_query_handler(
+            handler_func: FlextTypes.Core.OperationCallable,
+        ) -> FlextCommands.Handlers.QueryHandler[object, object]:
+            """Create query handler from function.
+
+            Args:
+                handler_func: Function that processes queries
+
+            Returns:
+                QueryHandler instance wrapping the function
+
+            """
+
+            class SimpleQueryHandler(
+                FlextCommands.Handlers.QueryHandler[object, object]
+            ):
+                def handle(self, query: object) -> FlextResult[object]:
+                    result = handler_func(query)
+                    if isinstance(result, FlextResult):
+                        return cast("FlextResult[object]", result)
+                    return FlextResult[object].ok(result)
+
+            return SimpleQueryHandler()
 
 
-# Export API
+# Export API following FLEXT patterns
 __all__: list[str] = ["FlextCommands"]

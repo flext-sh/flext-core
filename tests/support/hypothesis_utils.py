@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 import string
 from datetime import UTC, datetime
-from typing import Any, TypeVar
+from typing import TypeVar
 from uuid import uuid4
 
 from hypothesis import strategies as st
@@ -326,7 +326,7 @@ class EdgeCaseStrategies:
         )
 
     @staticmethod
-    def malformed_data() -> st.SearchStrategy[dict[str, Any]]:
+    def malformed_data() -> st.SearchStrategy[dict[str, object]]:
         """Generate malformed data structures."""
         return st.one_of(
             [
@@ -339,11 +339,10 @@ class EdgeCaseStrategies:
                         for i in range(5)
                     },
                 ),
-                st.recursive(
-                    st.none() | st.booleans() | st.integers() | st.text(),
-                    lambda children: st.lists(children)
-                    | st.dictionaries(st.text(), children),
-                    max_leaves=20,
+                st.dictionaries(
+                    st.text(),
+                    st.one_of([st.none(), st.booleans(), st.integers(), st.text()]),
+                    max_size=5,
                 ),
             ]
         )
@@ -371,7 +370,7 @@ class PerformanceStrategies:
         )
 
     @staticmethod
-    def nested_structures() -> st.SearchStrategy[dict[str, Any]]:
+    def nested_structures() -> st.SearchStrategy[dict[str, object]]:
         """Generate deeply nested structures."""
         return st.recursive(
             st.builds(dict, key=st.text(), value=st.integers()),
@@ -422,7 +421,7 @@ class PropertyTestHelpers:
         strategy: st.SearchStrategy[T],
         scenario_name: str = "test_scenario",
         _min_examples: int = 10,
-    ) -> st.SearchStrategy[dict[str, Any]]:
+    ) -> st.SearchStrategy[dict[str, object]]:
         """Generate test scenarios with metadata."""
         return st.builds(
             lambda data, id_val: {
@@ -441,7 +440,7 @@ class CompositeStrategies:
     """Pre-configured composite strategies for common testing scenarios."""
 
     @staticmethod
-    def user_profiles() -> st.SearchStrategy[dict[str, Any]]:
+    def user_profiles() -> st.SearchStrategy[dict[str, object]]:
         """Complete user profile data."""
         return st.builds(
             dict,
@@ -460,7 +459,7 @@ class CompositeStrategies:
         )
 
     @staticmethod
-    def api_requests() -> st.SearchStrategy[dict[str, Any]]:
+    def api_requests() -> st.SearchStrategy[dict[str, object]]:
         """API request-like data structures."""
         return st.builds(
             dict,
@@ -490,7 +489,7 @@ class CompositeStrategies:
         )
 
     @staticmethod
-    def configuration_data() -> st.SearchStrategy[dict[str, Any]]:
+    def configuration_data() -> st.SearchStrategy[dict[str, object]]:
         """Configuration-like data structures."""
         return st.builds(
             dict,

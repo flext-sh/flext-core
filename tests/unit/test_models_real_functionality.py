@@ -437,7 +437,7 @@ class TestFlextEntityRealFunctionality:
         assert new_user.name == user.name
 
         # Should validate version is greater than current
-        with pytest.raises(Exception):  # Should raise FlextValidationError
+        with pytest.raises(Exception):  # Should raise FlextExceptions.ValidationError
             user.with_version(1)  # Same or lower version should fail
 
     def test_entity_domain_events(self) -> None:

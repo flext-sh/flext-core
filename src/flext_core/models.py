@@ -1,22 +1,57 @@
-"""Pydantic BaseModel patterns for FLEXT Core.
+"""Consolidated FLEXT Models - Domain modeling and data structures.
 
-This module provides the core foundation models for the FLEXT ecosystem,
-using standard Pydantic v2 patterns including AliasGenerator, Field aliases,
-and validation patterns. All legacy code has been eliminated.
+This module provides the complete model foundation for the FLEXT ecosystem,
+organized using the consolidated class pattern with nested model definitions
+following FLEXT architectural standards and Clean Architecture principles.
 
-Key Benefits:
--  Pydantic BaseModel with AliasGenerator and Field aliases
-- Automatic validation, serialization, and alias handling
-- Railway-oriented programming via FlextResult
-- Type-safe domain modeling with Pydantic features
--  implementation
+Key Features:
+- FlextModels: Single consolidated class containing ALL model functionality
+- Nested model classes organized by type (Model, Value, Entity, etc.)
+- Full FlextTypes and FlextConstants integration with hierarchical access
+- Railway-oriented programming via FlextResult patterns
+- Type-safe domain modeling with Pydantic v2 features
+- Enterprise patterns following SOLID principles
 
- Patterns Used:
-- AliasGenerator for consistent field naming
-- Field aliases for flexible API interfaces
-- ValidationInfo for context-aware validation
-- Computed fields for derived properties
-- ConfigDict for consistent model behavior
+Architecture:
+- Hierarchical model organization using FlextTypes patterns
+- Constants integration via FlextConstants nested structures
+- Clean separation between base models, value objects, and entities
+- Backward compatibility through property re-exports
+- Factory pattern integration with validation and error handling
+
+Usage:
+    Basic model creation using consolidated class::
+
+        from flext_core.models import FlextModels
+
+        # Use nested classes for type-safe model creation
+        user_model = FlextModels.Entity(**user_data)
+        config_model = FlextModels.Model(**config_data)
+
+        # Factory pattern with validation
+        result = FlextModels.create("user", **user_data)
+        if result.success:
+            user = result.value
+
+    Using FlextTypes and FlextConstants integration::
+
+        from flext_core import FlextTypes, FlextConstants
+
+        # Type-safe field definitions
+        entity_id: FlextTypes.Domain.EntityId = "user_123"
+        config: FlextTypes.Core.Config = {"debug": True}
+
+        # Constants for validation thresholds
+        max_length = FlextConstants.Validation.MAX_STRING_LENGTH
+        timeout = FlextConstants.Defaults.TIMEOUT
+
+Note:
+    This module enforces the FLEXT consolidated class pattern where all
+    related functionality is organized within a single main class with
+    nested classes for specific domains. This follows the principle of
+    high cohesion and provides a single point of access for all model
+    operations while maintaining clear separation of concerns.
+
 """
 
 from __future__ import annotations
@@ -42,8 +77,8 @@ from pydantic import (
 )
 from pydantic.alias_generators import to_camel, to_snake
 
-from flext_core.exceptions import FlextValidationError
-from flext_core.fields import FlextFields
+from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.payload import FlextPayload
 from flext_core.result import FlextResult
@@ -55,13 +90,24 @@ from flext_core.root_models import (
     FlextVersion,
 )
 from flext_core.typings import (
-    FlextCallable,
     FlextTypes,
 )
 from flext_core.utilities import FlextGenerators
 
-# Use centralized types from FlextTypes
+# Use centralized types from FlextTypes hierarchical structure
 SerializerCallable = FlextTypes.Core.Serializer
+
+
+def _get_exception_class(name: str) -> type[Exception]:
+    """Get dynamically created exception class with type safety."""
+    return cast("type[Exception]", getattr(FlextExceptions, name))
+
+
+# Use centralized constants from FlextConstants hierarchical structure
+DEFAULT_TIMEOUT = FlextConstants.Defaults.TIMEOUT
+MAX_STRING_LENGTH = FlextConstants.Validation.MAX_STRING_LENGTH
+VALIDATION_ERROR_CODE = FlextConstants.Errors.VALIDATION_ERROR
+SUCCESS_STATUS = FlextConstants.Status.SUCCESS
 
 # =============================================================================
 # Constants
@@ -298,7 +344,10 @@ class FlextValue(FlextModel, ABC):
             # If both attempts fail, raise exception
             if payload_result.is_failure:
                 error_msg = f"Failed to create payload: {payload_result.error}"
-                raise FlextValidationError(error_msg)
+                validation_error = _get_exception_class(
+                    "FlextExceptions.ValidationError"
+                )
+                raise validation_error(error_msg)
 
         return payload_result.value
 
@@ -358,20 +407,7 @@ class FlextValue(FlextModel, ABC):
         self, field_name: str, _value: object = None
     ) -> FlextResult[None]:
         """Validate a single field using FlextFields registry if available."""
-        # Try to use FlextFields registry first (for comprehensive validation)
-        try:
-            field_result = FlextFields.get_field_by_name(field_name)
-            if field_result.is_success:
-                field_obj = field_result.value
-                if hasattr(field_obj, "validate_value"):
-                    validation_result = field_obj.validate_value(_value)
-                    if validation_result.is_failure:
-                        return FlextResult[None].fail(
-                            validation_result.error or "Validation failed"
-                        )
-                    return FlextResult[None].ok(None)
-        except (ImportError, AttributeError):
-            pass  # Fall back to Pydantic validation
+        # FlextFields registry not implemented yet, use Pydantic validation directly
 
         # If field doesn't exist in model, return success for unknown fields
         if field_name not in self.__class__.model_fields:
@@ -718,21 +754,21 @@ class FlextEntity(FlextModel, ABC):
             New entity instance with the specified version
 
         Raises:
-            FlextValidationError: If version is invalid or not greater than current
+            FlextExceptions.ValidationError: If version is invalid or not greater than current
 
         """
 
         def _raise_version_error() -> None:
             error_msg = "New version must be greater than current version"
-            raise FlextValidationError(error_msg)
+            raise FlextExceptions.ValidationError(error_msg)
 
         def _raise_invalid_version_error(error: str) -> None:
             error_msg = f"Invalid version: {error}"
-            raise FlextValidationError(error_msg)
+            raise FlextExceptions.ValidationError(error_msg)
 
         def _raise_validation_error(error: str) -> None:
             error_msg = error or "Validation failed"
-            raise FlextValidationError(error_msg)
+            raise FlextExceptions.ValidationError(error_msg)
 
         # Validate new version is greater than current
         if new_version <= self.version:
@@ -756,7 +792,7 @@ class FlextEntity(FlextModel, ABC):
                 new_entity = type(self)(**entity_data)
             except TypeError as e:
                 error_msg = f"Failed to set version: {e}"
-                raise FlextValidationError(error_msg) from e
+                raise FlextExceptions.ValidationError(error_msg) from e
 
             # Validate business rules on new entity
             validation_result = new_entity.validate_business_rules()
@@ -767,11 +803,9 @@ class FlextEntity(FlextModel, ABC):
 
             return new_entity
 
-        except FlextValidationError:
-            raise
         except Exception as e:
             error_msg = f"Failed to set version: {e}"
-            raise FlextValidationError(error_msg) from e
+            raise FlextExceptions.ValidationError(error_msg) from e
 
     def add_domain_event(
         self,
@@ -1007,15 +1041,203 @@ def _get_default_registry() -> dict[str, type[FlextModel] | object]:
 
 
 class FlextModels:
-    """Consolidated FLEXT Models - All model functionality in one class."""
+    """Consolidated FLEXT Models - Single class containing ALL model functionality.
+
+    This is the main consolidated class following the FLEXT refactoring pattern
+    where all model-related functionality is organized within a single class
+    with nested classes for specific model types. This approach provides:
+
+    - Single Responsibility: All model functionality in one place
+    - High Cohesion: Related model operations grouped together
+    - Type Safety: Full FlextTypes integration with hierarchical access
+    - Constants Integration: Direct FlextConstants usage throughout
+    - Clean Architecture: Clear separation between model types
+    - Factory Patterns: Unified creation and validation methods
+
+    Architecture:
+        The class is organized into nested model classes that correspond to
+        different architectural layers following Clean Architecture:
+
+        - Model: Base Pydantic models with FlextTypes integration
+        - RootModel: Root data structures using hierarchical types
+        - Value: Value objects with FlextConstants validation
+        - Entity: Domain entities with lifecycle and FlextTypes support
+        - Factory: Creation patterns with FlextResult error handling
+
+    FlextTypes Integration:
+        All nested classes use FlextTypes hierarchical structure for type safety:
+
+        - FlextTypes.Core: Fundamental types (Value, Data, Config)
+        - FlextTypes.Domain: Business domain types (EntityId, EventData)
+        - FlextTypes.Service: Service layer types (ServiceName, Container)
+        - FlextTypes.Handler: Handler patterns (HandlerDict, MetricsData)
+
+    FlextConstants Integration:
+        Constants are accessed through FlextConstants hierarchical structure:
+
+        - FlextConstants.Validation: Validation rules and limits
+        - FlextConstants.Defaults: Default values for configuration
+        - FlextConstants.Errors: Error codes with structured hierarchy
+        - FlextConstants.Messages: Standardized user-facing messages
+
+    Examples:
+        Creating models with type safety::
+
+            # Using nested classes with FlextTypes
+            config_data: FlextTypes.Core.Config = {"debug": True}
+            model = FlextModels.Model(**config_data)
+
+            # Entity creation with domain types
+            entity_id: FlextTypes.Domain.EntityId = "user_123"
+            entity = FlextModels.Entity(id=entity_id)
+
+        Using constants for validation::
+
+            # FlextConstants for validation limits
+            max_length = FlextConstants.Validation.MAX_STRING_LENGTH
+            timeout = FlextConstants.Defaults.TIMEOUT
+            error_code = FlextConstants.Errors.VALIDATION_ERROR
+
+        Factory pattern with error handling::
+
+            # FlextResult integration for railway pattern
+            result = FlextModels.create("user", name="John")
+            if result.success:
+                user = result.value
+            else:
+                error = result.error  # Uses FlextConstants error codes
+
+    """
 
     # ==========================================================================
-    # NESTED MODEL CLASSES - Reference to existing implementations
+    # TYPE SYSTEM INTEGRATION - FlextTypes hierarchical access
     # ==========================================================================
-    Model: type[BaseModel] | None = None  # Will be set after class definitions
-    RootModel: type[BaseModel] | None = None  # Will be set after class definitions
-    Value: type[BaseModel] | None = None  # Will be set after class definitions
-    Entity: type[BaseModel] | None = None  # Will be set after class definitions
+
+    class Types:
+        """FlextTypes integration for hierarchical type access.
+
+        Provides organized access to the complete FlextTypes system within
+        the models context, maintaining the hierarchical structure for
+        better organization and type safety.
+        """
+
+        # Core fundamental types
+        Core = FlextTypes.Core
+
+        # Domain modeling types
+        Domain = FlextTypes.Domain
+
+        # Service layer types
+        Service = FlextTypes.Service
+
+        # Handler pattern types
+        Handler = FlextTypes.Handler
+
+        # Configuration types
+        Config = FlextTypes.Config
+
+        # Payload and transport types
+        Payload = FlextTypes.Payload
+
+        # Protocol aliases
+        Protocol = FlextTypes.Protocol
+
+        # Result types for railway pattern
+        Result = FlextTypes.Result
+
+        # Authentication types
+        Auth = FlextTypes.Auth
+
+        # Field definition types
+        Field = FlextTypes.Fields
+
+        # Logging and observability types
+        Logging = FlextTypes.Logging
+
+    # ==========================================================================
+    # CONSTANTS SYSTEM INTEGRATION - FlextConstants hierarchical access
+    # ==========================================================================
+
+    class Constants:
+        """FlextConstants integration for hierarchical constant access.
+
+        Provides organized access to the complete FlextConstants system within
+        the models context, maintaining the hierarchical structure for
+        better organization and maintainability.
+        """
+
+        # Core system constants
+        Core = FlextConstants.Core
+
+        # Network and connectivity constants
+        Network = FlextConstants.Network
+
+        # Validation rules and limits
+        Validation = FlextConstants.Validation
+
+        # Error codes and categorization
+        Errors = FlextConstants.Errors
+
+        # User-facing messages
+        Messages = FlextConstants.Messages
+
+        # Status values
+        Status = FlextConstants.Status
+
+        # Regex patterns
+        Patterns = FlextConstants.Patterns
+
+        # Default values
+        Defaults = FlextConstants.Defaults
+
+        # System limits
+        Limits = FlextConstants.Limits
+
+        # Performance constants
+        Performance = FlextConstants.Performance
+
+        # Configuration system
+        Configuration = FlextConstants.Configuration
+
+        # CLI constants
+        Cli = FlextConstants.Cli
+
+        # Infrastructure constants
+        Infrastructure = FlextConstants.Infrastructure
+
+        # Model configuration constants
+        Models = FlextConstants.Models
+
+        # Observability constants
+        Observability = FlextConstants.Observability
+
+        # Handler system constants
+        Handlers = FlextConstants.Handlers
+
+        # Entity system constants
+        Entities = FlextConstants.Entities
+
+        # Validation system constants
+        ValidationSystem = FlextConstants.ValidationSystem
+
+        # Infrastructure messaging
+        InfrastructureMessages = FlextConstants.InfrastructureMessages
+
+        # Platform constants
+        Platform = FlextConstants.Platform
+
+        # Enum definitions
+        Enums = FlextConstants.Enums
+
+    # ==========================================================================
+    # NESTED MODEL CLASSES - Core model implementations with FlextTypes/Constants
+    # ==========================================================================
+
+    # References to model classes - will be set after class definitions
+    Model: type[BaseModel] | None = None
+    RootModel: type[BaseModel] | None = None
+    Value: type[BaseModel] | None = None
+    Entity: type[BaseModel] | None = None
 
     # ==========================================================================
     # FACTORY FUNCTIONALITY - Model creation and registration
@@ -1037,18 +1259,36 @@ class FlextModels:
 
     @classmethod
     def create(cls, name: str, **kwargs: object) -> FlextResult[object]:
-        """Create model instance using registered factory."""
+        """Create model instance using registered factory with FlextConstants integration.
+
+        Uses FlextConstants for error codes and messages to ensure consistent
+        error handling throughout the system.
+
+        Args:
+            name: The name of the factory to use
+            **kwargs: Arguments to pass to the factory
+
+        Returns:
+            FlextResult containing the created instance or error with structured codes
+
+        """
         cls._ensure_registry()
         registry = cast("dict[str, type[FlextModel] | object]", cls._registry)
         if name not in registry:
-            return FlextResult[object].fail(f"No factory registered for '{name}'")
+            error_msg = f"No factory registered for '{name}'"
+            return FlextResult[object].fail(
+                error_msg, error_code=cls.Constants.Errors.RESOURCE_NOT_FOUND
+            )
 
         factory = registry[name]
 
         try:
             return cls._create_with_factory(name, factory, kwargs)
         except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as e:
-            return FlextResult[object].fail(f"Failed to create '{name}': {e}")
+            error_msg = f"Failed to create '{name}': {e}"
+            return FlextResult[object].fail(
+                error_msg, error_code=cls.Constants.Errors.OPERATION_ERROR
+            )
 
     @classmethod
     def _create_with_factory(
@@ -1057,7 +1297,11 @@ class FlextModels:
         factory: object,
         kwargs: dict[str, object],
     ) -> FlextResult[object]:
-        """Create instance with factory."""
+        """Create instance with factory using FlextConstants for error handling.
+
+        Integrates FlextConstants error codes and messages for consistent
+        error reporting throughout the factory creation process.
+        """
         # Handle model class
         if isinstance(factory, type):
             try:
@@ -1067,13 +1311,15 @@ class FlextModels:
                 pass  # factory is not a class
 
         # Handle callable factory function
-        # Direct check - factory is already object type
+        # Type: ignore for complex union type with callable check
         if callable(factory):
-            # Factory is already checked to be callable above
-            factory_callable = cast("FlextCallable[object]", factory)
-            return cls._create_with_callable(factory_callable, kwargs)
+            # Callable factory function handling
+            return cls._create_with_callable(factory, kwargs)
 
-        return FlextResult[object].fail(f"Invalid factory type for '{name}'")
+        error_msg = f"Invalid factory type for '{name}'"
+        return FlextResult[object].fail(
+            error_msg, error_code=cls.Constants.Errors.TYPE_ERROR
+        )
 
     @classmethod
     def _create_model_instance(
@@ -1081,28 +1327,38 @@ class FlextModels:
         factory: type[FlextModel],
         kwargs: dict[str, object],
     ) -> FlextResult[object]:
-        """Create model instance with validation."""
-        instance = factory.model_validate(kwargs)
-        validation_result = instance.validate_business_rules()
-        if validation_result.is_failure:
+        """Create model instance with validation using FlextConstants messages.
+
+        Uses FlextConstants for consistent validation error messages and codes.
+        """
+        try:
+            instance = factory.model_validate(kwargs)
+            validation_result = instance.validate_business_rules()
+            if validation_result.is_failure:
+                error_msg = (
+                    validation_result.error or cls.Constants.Messages.VALIDATION_FAILED
+                )
+                return FlextResult[object].fail(
+                    error_msg, error_code=cls.Constants.Errors.VALIDATION_ERROR
+                )
+            return FlextResult[object].ok(instance)
+        except Exception as e:
+            error_msg = cls.Constants.Messages.OPERATION_FAILED + f": {e}"
             return FlextResult[object].fail(
-                validation_result.error or "Business rule validation failed",
+                error_msg, error_code=cls.Constants.Errors.VALIDATION_ERROR
             )
-        return FlextResult[object].ok(instance)
 
     @classmethod
     def _create_with_callable(
         cls,
-        factory: object,  # Accept any callable object to avoid mypy strict issues
+        factory: object,  # Accept any callable to avoid complex typing
         kwargs: dict[str, object],
     ) -> FlextResult[object]:
         """Create with callable factory."""
         try:
             # Factory is guaranteed to be callable by the caller
-            callable_factory = factory
-            if not callable(callable_factory):
-                return FlextResult[object].fail("Factory is not callable")
-            instance: object = callable_factory(**kwargs)
+            # Type: ignore to avoid complex callable typing
+            instance: object = factory(**kwargs)  # type: ignore[operator]
             # Check for business rule validation if available
             try:
                 validation_method = getattr(instance, "validate_business_rules", None)
@@ -1300,6 +1556,9 @@ JsonSchemaDefinition = dict[str, JsonSchemaValue]
 DomainEventDict = dict[str, object]
 FlextEntityDict = dict[str, object]
 FlextValueObjectDict = dict[str, object]
+
+# Legacy compatibility aliases
+FlextValueObject = FlextValue  # Alias for backward compatibility
 FlextOperationDict = dict[str, object]
 FlextConnectionDict = dict[str, object]
 
@@ -1323,34 +1582,47 @@ FlextSingerStreamModel = FlextModel
 
 
 def create_database_model(**kwargs: object) -> FlextResult[FlextModel]:
-    """Create database model instance."""
+    """Create database model instance with FlextConstants integration.
+
+    Uses FlextConstants for default values and error handling to ensure
+    consistent behavior across the FLEXT ecosystem.
+    """
     try:
-        # Create with defaults first, then update with provided kwargs
+        # Create with defaults using FlextConstants
         model_data: dict[str, object] = {
-            "host": "localhost",
-            "port": 5432,
+            "host": FlextConstants.Infrastructure.DEFAULT_HOST,
+            "port": FlextConstants.Infrastructure.DEFAULT_DB_PORT,
             "database": "flext_db",
         }
         model_data.update(kwargs)
         return FlextResult[FlextModel].ok(FlextDatabaseModel(**model_data))
     except Exception as e:
-        return FlextResult[FlextModel].fail(f"Failed to create database model: {e}")
+        error_msg = f"Failed to create database model: {e}"
+        return FlextResult[FlextModel].fail(
+            error_msg, error_code=FlextConstants.Errors.CONFIGURATION_ERROR
+        )
 
 
 def create_oracle_model(**kwargs: object) -> FlextResult[FlextModel]:
-    """Create Oracle model instance."""
+    """Create Oracle model instance with FlextConstants integration.
+
+    Uses FlextConstants for default values and error handling.
+    """
     try:
-        # Create with defaults first, then update with provided kwargs
+        # Create with defaults using FlextConstants
         model_data: dict[str, object] = {
-            "host": "localhost",
-            "port": 1521,
+            "host": FlextConstants.Infrastructure.DEFAULT_HOST,
+            "port": FlextConstants.Infrastructure.DEFAULT_ORACLE_PORT,
             "sid": "ORCL",
             "service_name": "XEPDB1",
         }
         model_data.update(kwargs)
         return FlextResult[FlextModel].ok(FlextOracleModel(**model_data))
     except Exception as e:
-        return FlextResult[FlextModel].fail(f"Failed to create oracle model: {e}")
+        error_msg = f"Failed to create oracle model: {e}"
+        return FlextResult[FlextModel].fail(
+            error_msg, error_code=FlextConstants.Errors.CONFIGURATION_ERROR
+        )
 
 
 def create_operation_model(**kwargs: object) -> FlextResult[FlextModel]:
@@ -1360,19 +1632,25 @@ def create_operation_model(**kwargs: object) -> FlextResult[FlextModel]:
 
 
 def create_service_model(**kwargs: object) -> FlextResult[FlextModel]:
-    """Create service model instance."""
+    """Create service model instance with FlextConstants integration.
+
+    Uses FlextConstants for default values and error handling.
+    """
     try:
-        # Create with defaults first, then update with provided kwargs
+        # Create with defaults using FlextConstants
         model_data: dict[str, object] = {
-            "host": "localhost",
-            "port": 8080,
+            "host": FlextConstants.Infrastructure.DEFAULT_HOST,
+            "port": FlextConstants.Platform.FLEXCORE_PORT,
             "service_name": "flext_service",
-            "version": "1.0.0",
+            "version": FlextConstants.Core.VERSION,
         }
         model_data.update(kwargs)
         return FlextResult[FlextModel].ok(FlextServiceModel(**model_data))
     except Exception as e:
-        return FlextResult[FlextModel].fail(f"Failed to create service model: {e}")
+        error_msg = f"Failed to create service model: {e}"
+        return FlextResult[FlextModel].fail(
+            error_msg, error_code=FlextConstants.Errors.CONFIGURATION_ERROR
+        )
 
 
 def validate_all_models(*models: FlextModel) -> FlextResult[None]:
@@ -1415,35 +1693,13 @@ FlextEntityFactory = FlextModels  # Entity factory also references FlextModels
 
 # Exports
 __all__: list[str] = [
-    "DomainEventDict",
-    # "FlextAuth", - moved to typings.py as protocol alias to avoid conflicts
-    "FlextBaseModel",
-    "FlextConnectionDict",
-    "FlextDatabaseModel",
-    "FlextEntity",
-    "FlextEntityDict",
-    "FlextEntityFactory",
-    "FlextFactory",  # Now an alias to FlextModels
-    "FlextFieldValidationInfo",
-    "FlextLegacyConfig",
-    "FlextModel",
-    "FlextModelDict",
-    "FlextModels",  # 🎯 MAIN EXPORT: Single class consolidating ALL model functionality
-    "FlextOperationDict",
-    "FlextOperationModel",
-    "FlextOracleModel",
-    "FlextServiceModel",
-    "FlextSingerStreamModel",
-    "FlextValue",
-    "FlextValueObjectDict",
-    "JsonSchemaDefinition",
-    "JsonSchemaFieldInfo",
-    "JsonSchemaValue",
-    "create_database_model",
-    "create_operation_model",
-    "create_oracle_model",
-    "create_service_model",
-    "flext_alias_generator",
-    "model_to_dict_safe",
-    "validate_all_models",
+    "FlextEntity",  # Entity pattern
+    "FlextEntityFactory",  # Entity factory alias
+    "FlextFactory",  # Factory for backward compatibility
+    "FlextModel",  # Base model class
+    "FlextModels",  # Main class with namespace
+    "FlextRootModel",  # Root model pattern
+    "FlextValue",  # Value object pattern
+    "model_to_dict_safe",  # Safe conversion helper
+    "validate_all_models",  # Helper function
 ]

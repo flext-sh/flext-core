@@ -14,9 +14,9 @@ from pydantic import ValidationError
 
 from flext_core import (
     FlextEntity,
+    FlextExceptions,
     FlextResult,
     FlextTimestamp,
-    FlextValidationError,
     FlextVersion,
 )
 from flext_core.models import FlextFactory
@@ -114,7 +114,7 @@ class TestFlextEntity:
 
     def test_entity_id_validation_empty(self) -> None:
         """Test entity ID validation with empty ID."""
-        with pytest.raises((FlextValidationError, ValidationError)) as exc_info:
+        with pytest.raises((FlextExceptions.ValidationError, ValidationError)) as exc_info:
             SampleUser(
                 id="",
                 name="John Doe",
@@ -126,7 +126,7 @@ class TestFlextEntity:
 
     def test_entity_id_validation_whitespace(self) -> None:
         """Test entity ID validation with whitespace ID."""
-        with pytest.raises((FlextValidationError, ValidationError)) as exc_info:
+        with pytest.raises((FlextExceptions.ValidationError, ValidationError)) as exc_info:
             SampleUser(
                 id="   ",
                 name="John Doe",
@@ -549,7 +549,7 @@ class TestFlextEntity:
         )
 
         # Version must be greater than current version
-        with pytest.raises(FlextValidationError) as exc_info:
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             user.with_version(3)  # Lower than current version
 
         if "New version must be greater than current version" not in str(
@@ -566,7 +566,7 @@ class TestFlextEntity:
         )
 
         # Version must be greater, not equal
-        with pytest.raises(FlextValidationError) as exc_info:
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             user.with_version(5)  # Equal to current version
 
         if "New version must be greater than current version" not in str(
@@ -585,7 +585,7 @@ class TestFlextEntity:
             version=FlextVersion(1),
         )
 
-        with pytest.raises(FlextValidationError, match="Always fails"):
+        with pytest.raises(FlextExceptions.ValidationError, match="Always fails"):
             user.with_version(2)
 
     def test_with_version_construction_error(self) -> None:
@@ -607,7 +607,7 @@ class TestFlextEntity:
             id="user_1", name="John", email="john@example.com", version=FlextVersion(1)
         )
 
-        with pytest.raises(FlextValidationError) as exc_info:
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             user.with_version(2)
 
         if "Failed to set version" not in str(exc_info.value):

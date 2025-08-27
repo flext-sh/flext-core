@@ -27,11 +27,8 @@ import time
 from collections.abc import Mapping
 
 from flext_core import (
-    FlextEvent,
-    FlextMessage,
     FlextPayload,
     FlextResult,
-    FlextTypes,
 )
 
 # =============================================================================
@@ -59,7 +56,7 @@ def _print_generic_header() -> None:
 def _demo_basic_payloads() -> None:
     FlextPayload(data="Hello, World!")
 
-    user_data: FlextTypes.Auth.UserData = {
+    user_data: dict[str, object] = {
         "id": "user123",
         "name": "John Doe",
         "email": "john@example.com",
@@ -71,7 +68,7 @@ def _demo_basic_payloads() -> None:
 
 
 def _demo_type_safe_payload() -> None:
-    order_data: FlextTypes.Auth.UserData = {
+    order_data: dict[str, object] = {
         "order_id": "ORD001",
         "customer_id": "CUST123",
         "items": [
@@ -148,21 +145,21 @@ def _create_basic_messages() -> tuple[
     info_message = FlextResult[FlextPayload[str]].ok(
         FlextPayload[str](
             data="User login successful",
-            metadata={"level": "info", "source": "auth_service"}
+            metadata={"level": "info", "source": "auth_service"},
         )
     )
 
     warning_message = FlextResult[FlextPayload[str]].ok(
         FlextPayload[str](
             data="Database connection slow",
-            metadata={"level": "warning", "source": "database_service"}
+            metadata={"level": "warning", "source": "database_service"},
         )
     )
 
     error_message_result = FlextResult[FlextPayload[str]].ok(
         FlextPayload[str](
             data="Payment processing failed",
-            metadata={"level": "error", "source": "payment_service"}
+            metadata={"level": "error", "source": "payment_service"},
         )
     )
     return info_message, warning_message, error_message_result
@@ -190,7 +187,7 @@ def _display_basic_messages(
 
 
 def _validate_invalid_level_message() -> None:
-    invalid_level_result = FlextMessage.create(
+    invalid_level_result = FlextPayload[str].create(
         "Test message",
         level="invalid_level",
         source="test_service",
@@ -202,7 +199,7 @@ def _validate_invalid_level_message() -> None:
 
 
 def _demonstrate_message_enrichment() -> None:
-    base_message_result = FlextMessage.create(
+    base_message_result = FlextPayload[str].create(
         "Base message",
         level="info",
         source="base_service",
@@ -220,7 +217,7 @@ def _demonstrate_message_enrichment() -> None:
 
 
 def _process_and_filter_messages() -> None:
-    messages_data: list[FlextTypes.Auth.UserData] = [
+    messages_data: list[dict[str, object]] = [
         {"text": "System startup", "level": "info", "source": "system"},
         {"text": "Low memory warning", "level": "warning", "source": "monitoring"},
         {"text": "Database connection lost", "level": "error", "source": "database"},
@@ -229,7 +226,7 @@ def _process_and_filter_messages() -> None:
 
     created_messages: list[FlextPayload[str]] = []
     for msg_data in messages_data:
-        message_result = FlextMessage.create(
+        message_result = FlextPayload[str].create(
             str(msg_data["text"]),
             level=str(msg_data["level"]),
             source=str(msg_data["source"]),
@@ -245,13 +242,13 @@ def _process_and_filter_messages() -> None:
 
 def _demonstrate_message_correlation() -> None:
     correlation_id = "corr_123"
-    request_message_result = FlextMessage.create(
+    request_message_result = FlextPayload[str].create(
         "Processing user request",
         level="info",
         source="api_gateway",
         correlation_id=correlation_id,
     )
-    response_message_result = FlextMessage.create(
+    response_message_result = FlextPayload[str].create(
         "Request completed successfully",
         level="info",
         source="api_gateway",
@@ -286,14 +283,14 @@ def _print_domain_events_section_header(title: str) -> None:  # noqa: ARG001
 def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
     """Demonstrate basic domain event creation patterns."""
     # Create user registration event
-    user_registration_data: FlextTypes.Auth.UserData = {
+    user_registration_data: dict[str, object] = {
         "user_id": "user_456",
         "email": "alice@example.com",
         "registration_date": "2024-01-15T10:30:00Z",
         "source": "web_registration",
     }
 
-    user_registration_event = FlextEvent.create(
+    user_registration_event = FlextPayload[Mapping[str, object]].create(
         event_type="UserRegistered",
         aggregate_id="user_456",
         aggregate_type="User",
@@ -331,7 +328,7 @@ def _create_order_created_event(
     order_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order created event."""
-    order_created_data: FlextTypes.Auth.UserData = {
+    order_created_data: dict[str, object] = {
         "order_id": order_id,
         "customer_id": "customer_123",
         "items": [
@@ -342,7 +339,7 @@ def _create_order_created_event(
         "created_at": "2024-01-15T14:20:00Z",
     }
 
-    return FlextEvent.create(
+    return FlextPayload[Mapping[str, object]].create(
         event_type="OrderCreated",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -356,14 +353,14 @@ def _create_order_confirmed_event(
     order_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create order confirmed event."""
-    order_confirmed_data: FlextTypes.Auth.UserData = {
+    order_confirmed_data: dict[str, object] = {
         "order_id": order_id,
         "confirmed_at": "2024-01-15T14:25:00Z",
         "payment_method": "credit_card",
         "payment_id": "pay_456",
     }
 
-    return FlextEvent.create(
+    return FlextPayload[Mapping[str, object]].create(
         event_type="OrderConfirmed",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -406,7 +403,7 @@ def _create_stock_updated_event(
     product_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create stock updated event."""
-    stock_updated_data: FlextTypes.Auth.UserData = {
+    stock_updated_data: dict[str, object] = {
         "product_id": product_id,
         "old_quantity": 50,
         "new_quantity": 35,
@@ -414,7 +411,7 @@ def _create_stock_updated_event(
         "updated_at": "2024-01-15T15:00:00Z",
     }
 
-    return FlextEvent.create(
+    return FlextPayload[Mapping[str, object]].create(
         event_type="StockUpdated",
         aggregate_id=product_id,
         aggregate_type="Product",
@@ -451,7 +448,7 @@ def _create_and_display_low_stock_alert(
     new_quantity: int,
 ) -> FlextResult[None]:
     """Create and display low stock alert event."""
-    low_stock_data: FlextTypes.Auth.UserData = {
+    low_stock_data: dict[str, object] = {
         "product_id": product_id,
         "current_quantity": new_quantity,
         "threshold": LOW_STOCK_THRESHOLD,
@@ -459,7 +456,7 @@ def _create_and_display_low_stock_alert(
         "alerted_at": "2024-01-15T15:00:00Z",
     }
 
-    low_stock_event = FlextEvent.create(
+    low_stock_event = FlextPayload[Mapping[str, object]].create(
         event_type="LowStockAlert",
         aggregate_id=product_id,
         aggregate_type="Product",
@@ -494,7 +491,7 @@ def _create_process_started_event(
     process_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process started event."""
-    return FlextEvent.create(
+    return FlextPayload[Mapping[str, object]].create(
         event_type="ProcessStarted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -508,7 +505,7 @@ def _create_step_completed_event(
     process_id: str,
 ) -> FlextResult[FlextPayload[Mapping[str, object]]]:
     """Create process step completed event."""
-    return FlextEvent.create(
+    return FlextPayload[Mapping[str, object]].create(
         event_type="ProcessStepCompleted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -545,7 +542,7 @@ def _display_correlated_events(
 def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
     """Demonstrate event validation and error handling patterns."""
     # Test invalid event (missing required fields)
-    invalid_event_result = FlextEvent.create(
+    invalid_event_result = FlextPayload[Mapping[str, object]].create(
         event_type="",  # Empty event type
         aggregate_id="",  # Empty aggregate ID
         aggregate_type="",  # Empty aggregate type
@@ -585,8 +582,8 @@ def _print_serialization_header() -> None:
     _separator = "\n" + "=" * 80
 
 
-def _basic_serialization_demo() -> FlextTypes.Auth.UserData:
-    serialization_data: FlextTypes.Auth.UserData = {
+def _basic_serialization_demo() -> dict[str, object]:
+    serialization_data: dict[str, object] = {
         "user_id": "user_789",
         "action": "profile_update",
         "changes": {
@@ -608,7 +605,7 @@ def _basic_serialization_demo() -> FlextTypes.Auth.UserData:
 
 
 def _message_serialization_demo() -> None:
-    message_result = FlextMessage.create(
+    message_result = FlextPayload[str].create(
         "User profile updated successfully",
         level="info",
         source="user_service",
@@ -620,8 +617,8 @@ def _message_serialization_demo() -> None:
             message.to_dict()
 
 
-def _event_serialization_demo(serialization_data: FlextTypes.Auth.UserData) -> None:
-    event_result = FlextEvent.create(
+def _event_serialization_demo(serialization_data: dict[str, object]) -> None:
+    event_result = FlextPayload[Mapping[str, object]].create(
         event_type="UserProfileUpdated",
         aggregate_id="user_789",
         aggregate_type="User",
@@ -650,7 +647,7 @@ def _cross_service_transport_demo() -> None:
 
 
 def _payload_validation_during_serialization() -> None:
-    complex_data: FlextTypes.Auth.UserData = {
+    complex_data: dict[str, object] = {
         "nested_object": {
             "level1": {
                 "level2": {
@@ -684,7 +681,7 @@ def _print_enterprise_header() -> None:
 
 
 def _request_response_pattern_demo() -> None:
-    request_data: FlextTypes.Auth.UserData = {
+    request_data: dict[str, object] = {
         "request_id": "req_456",
         "user_id": "user_123",
         "action": "get_user_profile",
@@ -699,7 +696,7 @@ def _request_response_pattern_demo() -> None:
             "timestamp": time.time(),
         },
     )
-    response_data: FlextTypes.Auth.UserData = {
+    response_data: dict[str, object] = {
         "request_id": "req_456",
         "user_profile": {
             "user_id": "user_123",
@@ -727,7 +724,7 @@ def _request_response_pattern_demo() -> None:
 
 def _event_driven_pattern_demo() -> None:
     order_id = "order_999"
-    order_placed_event = FlextEvent.create(
+    order_placed_event = FlextPayload[Mapping[str, object]].create(
         event_type="OrderPlaced",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -740,7 +737,7 @@ def _event_driven_pattern_demo() -> None:
         source="order_service",
         version=1,
     )
-    inventory_reserved_event = FlextEvent.create(
+    inventory_reserved_event = FlextPayload[Mapping[str, object]].create(
         event_type="InventoryReserved",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -752,7 +749,7 @@ def _event_driven_pattern_demo() -> None:
         source="inventory_service",
         version=2,
     )
-    payment_processed_event = FlextEvent.create(
+    payment_processed_event = FlextPayload[Mapping[str, object]].create(
         event_type="PaymentProcessed",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -781,19 +778,19 @@ def _event_driven_pattern_demo() -> None:
 
 def _message_routing_pattern_demo() -> None:
     routing_messages: list[FlextPayload[str]] = []
-    high_priority_result = FlextMessage.create(
+    high_priority_result = FlextPayload[str].create(
         "Critical system alert",
         level="error",
         source="monitoring_service",
         metadata={"priority": "high", "route_to": "REDACTED_LDAP_BIND_PASSWORD_team"},
     )
-    normal_priority_result = FlextMessage.create(
+    normal_priority_result = FlextPayload[str].create(
         "User login successful",
         level="info",
         source="auth_service",
         metadata={"priority": "normal", "route_to": "log_aggregator"},
     )
-    low_priority_result = FlextMessage.create(
+    low_priority_result = FlextPayload[str].create(
         "Debug information",
         level="debug",
         source="debug_service",
@@ -811,26 +808,26 @@ def _message_routing_pattern_demo() -> None:
     for message in routing_messages:
         message.metadata.get("priority", "normal")
         message.metadata.get("route_to", "default")
-        str(message.text)[:30] if message.text else "(empty)"
+        str(message.data)[:30] if message.data else "(empty)"
 
 
 def _message_correlation_tracing_demo() -> None:
     transaction_id = "txn_123"
-    start_message = FlextMessage.create(
+    start_message = FlextPayload[str].create(
         "Transaction started",
         level="info",
         source="transaction_service",
         correlation_id=transaction_id,
         metadata={"step": "start", "transaction_type": "payment"},
     )
-    validation_message = FlextMessage.create(
+    validation_message = FlextPayload[str].create(
         "Transaction validated",
         level="info",
         source="transaction_service",
         correlation_id=transaction_id,
         metadata={"step": "validation", "validation_result": "success"},
     )
-    completion_message = FlextMessage.create(
+    completion_message = FlextPayload[str].create(
         "Transaction completed",
         level="info",
         source="transaction_service",
@@ -846,7 +843,7 @@ def _message_correlation_tracing_demo() -> None:
 
 
 def _dead_letter_queue_demo() -> None:
-    problematic_message_result = FlextMessage.create(
+    problematic_message_result = FlextPayload[str].create(
         "Message with invalid data",
         level="error",
         source="problematic_service",

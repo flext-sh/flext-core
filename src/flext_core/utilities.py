@@ -13,11 +13,10 @@ import sys
 import time
 import traceback
 import uuid
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from inspect import signature
-from typing import Protocol, cast, override
+from typing import Any, Protocol, cast, override
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLoggerFactory
@@ -49,6 +48,13 @@ class FlextUtilities:
     FlextTypeGuards + FlextFormatters + FlextBaseFactory + FlextGenericFactory +
     FlextUtilityFactory + FlextResultUtilities + FlextTypeUtilities
     """
+
+    # Constants for validation
+    MIN_SERVICE_NAME_LENGTH = 2
+    MIN_PORT = 1
+    MAX_PORT = 65535
+    MIN_PERCENTAGE = 0.0
+    MAX_PERCENTAGE = 100.0
 
     # ==========================================================================
     # NESTED CLASSES FOR ORGANIZATION
@@ -98,6 +104,11 @@ class FlextUtilities:
             return f"entity_{uuid.uuid4().hex[:12]}"
 
         @staticmethod
+        def generate_service_name(prefix: str = "flext") -> str:
+            """Generate a service name with prefix."""
+            return f"{prefix}_{uuid.uuid4().hex[:8]}"
+
+        @staticmethod
         def generate_session_id() -> str:
             """Generate session ID with sess_ prefix."""
             return f"sess_{uuid.uuid4().hex[:10]}"
@@ -123,7 +134,9 @@ class FlextUtilities:
             result: list[str] = []
             for item in values:
                 try:
-                    str_item = FlextUtilities.LdapConverters.safe_convert_value_to_str(item)
+                    str_item = FlextUtilities.LdapConverters.safe_convert_value_to_str(
+                        item
+                    )
                     if str_item:  # Only add non-empty strings
                         result.append(str_item)
                 except Exception as e:
@@ -137,13 +150,17 @@ class FlextUtilities:
             """Safely convert unknown value to list of strings for LDAP attributes."""
             if isinstance(source_value, list):
                 typed_list: list[object] = cast("list[object]", source_value)
-                return FlextUtilities.LdapConverters.safe_convert_list_to_strings(typed_list)
-            str_value = FlextUtilities.LdapConverters.safe_convert_value_to_str(source_value)
+                return FlextUtilities.LdapConverters.safe_convert_list_to_strings(
+                    typed_list
+                )
+            str_value = FlextUtilities.LdapConverters.safe_convert_value_to_str(
+                source_value
+            )
             return [str_value] if str_value else []
 
         @staticmethod
         def safe_convert_external_dict_to_ldap_attributes(
-            source_dict: object
+            source_dict: dict[object, object] | object,
         ) -> dict[str, str | list[str]]:
             """Safely convert unknown dict to typed LDAP attributes.
 
@@ -168,18 +185,25 @@ class FlextUtilities:
 
                 # Safe conversion
                 ldap_attrs = safe_convert_external_dict_to_ldap_attributes(external_data)
-                # Result: {'uid': 'john', 'cn': ['John', 'Doe'], 'mail': 'john@example.com', 'binary_attr': 'binary_data'}
+                # Result: {'uid': 'john', 'cn': ['John', 'Doe'], 'mail': 'john@example.com'}
 
             """
             if not isinstance(source_dict, dict):
                 return {}
 
+            # Use cast for proper typing since we checked isinstance
+            typed_dict = cast("FlextTypes.Core.Dict", source_dict)
             result: dict[str, str | list[str]] = {}
-            for key, value in source_dict.items():
+            for key, value in typed_dict.items():
                 str_key = str(key)  # Ensure key is string
                 if isinstance(value, list):
-                    # Convert list values to strings
-                    converted_list = FlextUtilities.LdapConverters.safe_convert_list_to_strings(value)
+                    # Convert list values to strings with proper typing
+                    typed_list: list[object] = value
+                    converted_list = (
+                        FlextUtilities.LdapConverters.safe_convert_list_to_strings(
+                            typed_list
+                        )
+                    )
                     if len(converted_list) == 1:
                         result[str_key] = converted_list[0]  # Single item as string
                     elif converted_list:
@@ -187,16 +211,20 @@ class FlextUtilities:
                     # Skip empty lists
                 else:
                     # Convert single value to string
-                    converted_str = FlextUtilities.LdapConverters.safe_convert_value_to_str(value)
+                    converted_str = (
+                        FlextUtilities.LdapConverters.safe_convert_value_to_str(value)
+                    )
                     if converted_str:  # Only add non-empty strings
                         result[str_key] = converted_str
 
             return result
 
         @staticmethod
-        def normalize_attributes(attrs: dict[str, object]) -> dict[str, str | list[str]]:
+        def normalize_attributes(
+            attrs: dict[str, object],
+        ) -> dict[str, str | list[str]]:
             """Normalize mapping: lists -> list[str], scalars -> str."""
-            if not isinstance(attrs, dict) or not attrs:
+            if not attrs:
                 return {}
 
             # Optimized with dictionary comprehension for better performance
@@ -206,10 +234,7 @@ class FlextUtilities:
                     return [str(item) for item in cast("list[object]", value)]
                 return str(value)
 
-            return {
-                key: coerce_value(value)
-                for key, value in attrs.items()
-            }
+            return {key: coerce_value(value) for key, value in attrs.items()}
 
     class TextProcessor:
         """Nested text processing utilities."""
@@ -335,9 +360,7 @@ class FlextUtilities:
             }
 
         @staticmethod
-        def get_performance_metrics() -> dict[
-            str, dict[str, dict[str, dict[str, float | bool]]]
-        ]:
+        def get_performance_metrics() -> FlextTypes.Core.PerformanceMetrics:
             """Get all performance metrics."""
             return {"metrics": PERFORMANCE_METRICS}
 
@@ -357,7 +380,9 @@ class FlextUtilities:
                     return default
                 if isinstance(value, str):
                     return int(float(value))  # Handle "3.14" -> 3
-                return int(value)
+                if isinstance(value, (int, float)):
+                    return int(value)
+                return int(str(value))  # Convert to string first for safety
             except (ValueError, TypeError):
                 return default
 
@@ -367,7 +392,9 @@ class FlextUtilities:
             try:
                 if value is None:
                     return default
-                return float(value)
+                if isinstance(value, (int, float, str)):
+                    return float(value)
+                return float(str(value))  # Convert to string first for safety
             except (ValueError, TypeError):
                 return default
 
@@ -429,6 +456,36 @@ class FlextUtilities:
             typed_list = cast("list[object]", obj)
             return all(isinstance(item, item_type) for item in typed_list)
 
+        @staticmethod
+        def is_email(value: object) -> bool:
+            """Check if value is a valid email address."""
+            if not isinstance(value, str):
+                return False
+            pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            return bool(re.match(pattern, value))
+
+        @staticmethod
+        def is_uuid(value: object) -> bool:
+            """Check if value is a valid UUID."""
+            if not isinstance(value, str):
+                return False
+            pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            return bool(re.match(pattern, value.lower()))
+
+        @staticmethod
+        def is_url(value: object) -> bool:
+            """Check if value is a valid URL."""
+            if not isinstance(value, str):
+                return False
+            return value.startswith(("http://", "https://"))
+
+        @staticmethod
+        def matches_pattern(value: object, pattern: str) -> bool:
+            """Check if string matches regex pattern."""
+            if not isinstance(value, str):
+                return False
+            return bool(re.match(pattern, value))
+
     class Formatters:
         """Nested formatting utilities."""
 
@@ -468,7 +525,10 @@ class FlextUtilities:
             """Safely parse JSON string."""
             try:
                 result = json.loads(json_str)
-                return result if isinstance(result, dict) else default or {}
+                if isinstance(result, dict):
+                    typed_result: dict[str, object] = result
+                    return typed_result
+                return default or {}
             except (json.JSONDecodeError, TypeError):
                 return default or {}
 
@@ -484,11 +544,14 @@ class FlextUtilities:
         def extract_model_data(obj: object) -> dict[str, object]:
             """Extract data from Pydantic model or dict."""
             if hasattr(obj, "model_dump"):
-                return obj.model_dump()  # type: ignore[no-any-return]
+                result = obj.model_dump()  # type: ignore[attr-defined]
+                return cast("dict[str, object]", result)
             if hasattr(obj, "dict"):
-                return obj.dict()  # type: ignore[no-any-return]
+                result = obj.dict()  # type: ignore[attr-defined]
+                return cast("dict[str, object]", result)
             if isinstance(obj, dict):
-                return obj
+                typed_obj: dict[str, object] = obj
+                return typed_obj
             return {}
 
     class ResultUtils:
@@ -538,12 +601,12 @@ class FlextUtilities:
                     failures.append(result.error or "Unknown error")
             return successes, failures
 
-    class BaseFactory[TFactory](ABC):
-        """Nested abstract base factory."""
+    class BaseFactory[TFactory](Protocol):
+        """Nested factory protocol for type safety."""
 
-        @abstractmethod
         def create(self, **kwargs: object) -> FlextResult[object]:
-            """Abstract creation method."""
+            """Factory creation method."""
+            ...
 
     class GenericFactory(BaseFactory[object]):
         """Nested generic factory for object creation."""
@@ -560,6 +623,42 @@ class FlextUtilities:
                 return FlextResult[object].ok(instance)
             except (TypeError, ValueError, AttributeError, RuntimeError, OSError) as e:
                 return FlextResult[object].fail(f"Factory creation failed: {e}")
+
+    class SimpleFactory:
+        """Simple factory pattern for any class with FlextResult error handling."""
+
+        def __init__(self, target_class: type) -> None:
+            """Initialize factory with target class."""
+            self._target_class = target_class
+
+        def create(self, **kwargs: object) -> FlextResult[object]:
+            """Create instance with error handling."""
+            try:
+                instance = self._target_class(**kwargs)
+                return FlextResult[object].ok(instance)
+            except Exception as e:
+                return FlextResult[object].fail(f"Factory failed: {e}")
+
+    class SimpleBuilder:
+        """Simple builder pattern for fluent object construction."""
+
+        def __init__(self, target_class: type) -> None:
+            """Initialize builder with target class."""
+            self._target_class = target_class
+            self._kwargs: dict[str, object] = {}
+
+        def set(self, **kwargs: object) -> FlextUtilities.SimpleBuilder:
+            """Set builder parameters fluently."""
+            self._kwargs.update(kwargs)
+            return self
+
+        def build(self) -> FlextResult[object]:
+            """Build instance with accumulated parameters."""
+            try:
+                instance = self._target_class(**self._kwargs)
+                return FlextResult[object].ok(instance)
+            except Exception as e:
+                return FlextResult[object].fail(f"Builder failed: {e}")
 
     # ==========================================================================
     # CONSTANTS - Class constants
@@ -668,7 +767,7 @@ class FlextUtilities:
     @classmethod
     def get_performance_metrics(
         cls,
-    ) -> dict[str, dict[str, dict[str, dict[str, float | bool]]]]:
+    ) -> FlextTypes.Core.PerformanceMetrics:
         """Get performance metrics - delegates to nested Performance."""
         return cls.Performance.get_performance_metrics()
 
@@ -781,7 +880,10 @@ class FlextUtilities:
         """Safely parse JSON string."""
         try:
             result = json.loads(json_str)
-            return result if isinstance(result, dict) else default or {}
+            if isinstance(result, dict):
+                typed_result: dict[str, object] = result
+                return typed_result
+            return default or {}
         except (json.JSONDecodeError, TypeError):
             return default or {}
 
@@ -797,11 +899,14 @@ class FlextUtilities:
     def extract_model_data(cls, obj: object) -> dict[str, object]:
         """Extract data from Pydantic model or dict."""
         if hasattr(obj, "model_dump"):
-            return obj.model_dump()  # type: ignore[no-any-return]
+            result = obj.model_dump()  # type: ignore[attr-defined]
+            return cast("dict[str, object]", result)
         if hasattr(obj, "dict"):
-            return obj.dict()  # type: ignore[no-any-return]
+            result = obj.dict()  # type: ignore[attr-defined]
+            return cast("dict[str, object]", result)
         if isinstance(obj, dict):
-            return obj
+            typed_obj: dict[str, object] = obj
+            return typed_obj
         return {}
 
     # =============================================================================
@@ -882,6 +987,245 @@ class FlextUtilities:
     # =============================================================================
     # FACTORY UTILITIES - Consolidated from Factory classes
     # =============================================================================
+
+    @classmethod
+    def make_factory(cls, target_class: type) -> FlextUtilities.SimpleFactory:
+        """Create a simple factory for safe object construction."""
+        return cls.SimpleFactory(target_class)
+
+    @classmethod
+    def make_builder(cls, target_class: type) -> FlextUtilities.SimpleBuilder:
+        """Create a simple builder for fluent object construction."""
+        return cls.SimpleBuilder(target_class)
+
+    # =============================================================================
+    # VALIDATION UTILITIES - Simple validation patterns
+    # =============================================================================
+
+    @classmethod
+    def validate_and_create(
+        cls,
+        validator_func: Callable[[object], bool],
+        value: object,
+        error_message: str = "Validation failed",
+    ) -> FlextResult[bool]:
+        """Generic validation with FlextResult return."""
+        try:
+            if validator_func(value):
+                return FlextResult[bool].ok(data=True)
+            return FlextResult[bool].fail(error_message)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Validation error: {e}")
+
+    @classmethod
+    def create_validator(
+        cls, predicate: Callable[[object], bool]
+    ) -> Callable[[object], FlextResult[bool]]:
+        """Create a FlextResult-based validator from a simple predicate."""
+
+        def validator(value: object) -> FlextResult[bool]:
+            try:
+                if predicate(value):
+                    return FlextResult[bool].ok(data=True)
+                return FlextResult[bool].fail("Validation failed")
+            except Exception as e:
+                return FlextResult[bool].fail(f"Validation error: {e}")
+
+        return validator
+
+    # =============================================================================
+    # JSON PROCESSING UTILITIES - Consolidated from multiple modules
+    # =============================================================================
+
+    @classmethod
+    def parse_json_safe(cls, json_text: str) -> FlextResult[dict[str, object]]:
+        """Parse JSON string safely with FlextResult error handling."""
+        try:
+            data = json.loads(json_text)
+            if not isinstance(data, dict):
+                return FlextResult[dict[str, object]].fail("JSON must be object")
+            # Ensure value type is object for typing consistency
+            typed: dict[str, object] = cast("dict[str, object]", data)
+            return FlextResult[dict[str, object]].ok(typed)
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(f"Invalid JSON: {e}")
+
+    @classmethod
+    def serialize_json_safe(cls, data: object) -> FlextResult[str]:
+        """Serialize object to JSON safely with FlextResult error handling."""
+        try:
+            result = json.dumps(data, default=str, ensure_ascii=False)
+            return FlextResult[str].ok(result)
+        except Exception as e:
+            return FlextResult[str].fail(f"JSON serialization failed: {e}")
+
+    # =============================================================================
+    # TYPE CONVERSION UTILITIES - Safe conversions with FlextResult
+    # =============================================================================
+
+    @classmethod
+    def safe_cast_to_type[TCast](
+        cls, value: object, target_type: type[TCast]
+    ) -> FlextResult[TCast]:
+        """Safely cast value to target type with FlextResult error handling."""
+        try:
+            if isinstance(value, target_type):
+                return FlextResult[TCast].ok(value)
+            # Try direct conversion - cast to Any for flexible type conversion
+            converted = target_type(cast("Any", value))  # type: ignore[call-arg,explicit-any]
+            return FlextResult[TCast].ok(converted)
+        except Exception as e:
+            return FlextResult[TCast].fail(
+                f"Cannot cast {type(value).__name__} to {target_type.__name__}: {e}"
+            )
+
+    @classmethod
+    def safe_int_convert(cls, value: object) -> FlextResult[int]:
+        """Safely convert value to integer."""
+        return cls.safe_cast_to_type(value, int)
+
+    @classmethod
+    def safe_str_convert(cls, value: object) -> FlextResult[str]:
+        """Safely convert value to string."""
+        return cls.safe_cast_to_type(value, str)
+
+    @classmethod
+    def safe_float_convert(cls, value: object) -> FlextResult[float]:
+        """Safely convert value to float."""
+        return cls.safe_cast_to_type(value, float)
+
+    # Validation utilities without FlextResult - simple boolean checks
+    @classmethod
+    def validate_email_simple(cls, value: object) -> bool:
+        """Simple email validation without FlextResult."""
+        return cls.TypeGuards.is_email(value)
+
+    @classmethod
+    def validate_service_name_simple(cls, value: object) -> bool:
+        """Simple service name validation without FlextResult."""
+        if (
+            not isinstance(value, str)
+            or len(value.strip()) < cls.MIN_SERVICE_NAME_LENGTH
+        ):
+            return False
+        return bool(re.match(r"^[a-zA-Z][a-zA-Z0-9_-]*$", value.strip()))
+
+    @classmethod
+    def validate_port_range(cls, port: object) -> bool:
+        """Simple port range validation without FlextResult."""
+        if not isinstance(port, int):
+            try:
+                port = int(cast("Any", port))  # type: ignore[explicit-any]
+            except (ValueError, TypeError):
+                return False
+        return cls.MIN_PORT <= port <= cls.MAX_PORT
+
+    @classmethod
+    def validate_percentage(cls, value: object) -> bool:
+        """Simple percentage validation without FlextResult."""
+        if not isinstance(value, (int, float)):
+            try:
+                value = float(cast("Any", value))  # type: ignore[explicit-any]
+            except (ValueError, TypeError):
+                return False
+        return cls.MIN_PERCENTAGE <= value <= cls.MAX_PERCENTAGE
+
+    @classmethod
+    def validate_positive_number(cls, value: object) -> bool:
+        """Simple positive number validation without FlextResult."""
+        if not isinstance(value, (int, float)):
+            try:
+                value = float(cast("Any", value))  # type: ignore[explicit-any]
+            except (ValueError, TypeError):
+                return False
+        return value > 0
+
+    @classmethod
+    def validate_in_range(cls, value: object, min_val: float, max_val: float) -> bool:
+        """Simple range validation without FlextResult."""
+        if not isinstance(value, (int, float)):
+            try:
+                value = float(cast("Any", value))  # type: ignore[explicit-any]
+            except (ValueError, TypeError):
+                return False
+        return min_val <= value <= max_val
+
+    # Type Adaptation utilities - simple serialization without FlextResult dependencies
+    class SimpleTypeAdapters:
+        """Simple type adaptation utilities without external dependencies."""
+
+        @staticmethod
+        def to_dict_safe(obj: object) -> dict[str, object]:
+            """Safely convert object to dictionary."""
+            if isinstance(obj, dict):
+                return cast("dict[str, object]", obj)
+            if hasattr(obj, "__dict__"):
+                return dict(obj.__dict__)
+            return {}
+
+        @staticmethod
+        def normalize_dict_values(data: dict[str, object]) -> dict[str, str]:
+            """Normalize dictionary values to strings."""
+            return {key: str(value) for key, value in data.items()}
+
+        @staticmethod
+        def validate_host_port_simple(host: object, port: object) -> bool:
+            """Simple host/port validation without FlextResult."""
+            if not isinstance(host, str) or not host.strip():
+                return False
+            return FlextUtilities.validate_port_range(port)
+
+        @staticmethod
+        def extract_entity_id(data: dict[str, object], key: str = "id") -> str | None:
+            """Extract entity ID from dictionary, return None if not found."""
+            value = data.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            return None
+
+        @staticmethod
+        def create_simple_schema(fields: list[str]) -> dict[str, object]:
+            """Create a simple schema definition."""
+            return {
+                "type": "object",
+                "properties": {field: {"type": "string"} for field in fields},
+                "required": fields,
+            }
+
+    # Simple schema processing utilities without FlextResult dependencies
+    class SimpleSchemaProcessors:
+        """Simple schema and entry processing utilities."""
+
+        @staticmethod
+        def extract_identifier_regex(content: str, pattern: str) -> str | None:
+            """Extract identifier using regex pattern, return None if not found."""
+            match = re.search(pattern, content)
+            return match.group(1) if match else None
+
+        @staticmethod
+        def clean_content_prefix(content: str, prefix: str = "") -> str:
+            """Clean content by removing prefix and whitespace."""
+            if prefix:
+                content = content.replace(f"{prefix}: ", "")
+            return content.strip()
+
+        @staticmethod
+        def validate_required_attributes_simple(
+            config: object, required: list[str]
+        ) -> bool:
+            """Simple validation of required attributes without FlextResult."""
+            if isinstance(config, dict):
+                typed_config = cast("dict[str, object]", config)
+                return all(field in typed_config for field in required)
+            # For non-dict objects, check attributes
+            return all(hasattr(config, field) for field in required)
+
+        @staticmethod
+        def extract_config_dict_safe(config: object) -> dict[str, object]:
+            """Extract configuration as dict safely."""
+            if isinstance(config, dict):
+                return cast("dict[str, object]", config)
+            return getattr(config, "__dict__", {})
 
     @classmethod
     def create_factory(cls, factory_type: str, **kwargs: object) -> dict[str, object]:
@@ -1004,7 +1348,7 @@ class FlextUtilities:
     @classmethod
     def is_not_none_guard(cls, value: object | None) -> bool:
         """Type guard for not None values."""
-        return FlextPredicates.is_not_none(value)  # type: ignore[attr-defined,no-any-return]
+        return FlextPredicates.is_not_none(value)
 
     # =================================================================
     # INTEGER CONVERSION UTILITIES - DRY REFACTORING
@@ -1308,9 +1652,7 @@ class FlextPerformance:
         return FlextUtilities.track_performance(category)
 
     @staticmethod
-    def get_performance_metrics() -> dict[
-        str, dict[str, dict[str, dict[str, float | bool]]]
-    ]:
+    def get_performance_metrics() -> FlextTypes.Core.PerformanceMetrics:
         """Get performance metrics - delegates to FlextUtilities."""
         return FlextUtilities.get_performance_metrics()
 
@@ -1664,8 +2006,11 @@ class FlextTypeGuards:
         return hasattr(obj, attr)
 
     @staticmethod
-    def is_instance_of(obj: object, target_type: type) -> bool:
+    def is_instance_of(obj: object, target_type: object) -> bool:
         """Check if an object is an instance of type."""
+        # Handle non-type objects gracefully (generic type annotations, etc.)
+        if not isinstance(target_type, type):
+            return False
         return isinstance(obj, target_type)
 
     @staticmethod
@@ -1768,15 +2113,15 @@ class FlextFormatters:
 # =============================================================================
 
 
-class FlextBaseFactory[T](ABC):
-    """Abstract base factory providing creation foundation across ecosystem.
+class FlextBaseFactory[T](Protocol):
+    """Factory protocol providing creation foundation across ecosystem.
 
     SOLID compliance: Single responsibility for object creation patterns.
     """
 
-    @abstractmethod
     def create(self, **kwargs: object) -> FlextResult[object]:
-        """Abstract creation method - must be implemented by concrete factories."""
+        """Factory creation method - must be implemented by concrete factories."""
+        ...
 
 
 class FlextGenericFactory(FlextBaseFactory[object]):
@@ -1833,44 +2178,15 @@ class FlextUtilityFactory:
         return FlextTextProcessor()
 
 
-# =============================================================================
-# FUNCTION ALIASES - Convenience functions
-# =============================================================================
-
-
-def flext_safe_int_conversion(value: object, default: int | None = None) -> int | None:
-    """Alias for safe_int_conversion (convenience function)."""
-    return FlextUtilities.safe_int_conversion(value, default)
-
-
-def generate_correlation_id() -> str:
-    """Generate correlation ID for request tracking."""
-    return FlextIdGenerator.generate_correlation_id()
-
-
-def safe_int_conversion_with_default(value: object, default: int) -> int:
-    """Safe int conversion with guaranteed default."""
-    return FlextUtilities.safe_int_conversion_with_default(value, default)
-
-
-def flext_clear_performance_metrics() -> None:
-    """Clear all performance metrics."""
-    FlextUtilities.clear_performance_metrics()
-
-
-def generate_id() -> str:
-    """Generate unique ID."""
-    return FlextIdGenerator.generate_id()
-
-
-def generate_uuid() -> str:
-    """Generate UUID."""
-    return FlextIdGenerator.generate_uuid()
-
-
-def is_not_none(value: object) -> bool:
-    """Check if the value is not None."""
-    return FlextUtilities.is_not_none_guard(value)
+# MIGRATED TO LEGACY.PY: Standalone functions moved to centralized legacy compatibility
+# Use FlextUtilities and FlextTypes hierarchy directly in new code:
+# - FlextUtilities.safe_int_conversion() (instead of flext_safe_int_conversion)
+# - FlextUtilities.Generators.generate_correlation_id() (instead of generate_correlation_id)
+# - FlextUtilities.Generators.generate_id() (instead of generate_id)
+# - FlextUtilities.Generators.generate_uuid() (instead of generate_uuid)
+# - FlextUtilities.is_not_none_guard() (instead of is_not_none)
+# - FlextUtilities.clear_performance_metrics() (instead of flext_clear_performance_metrics)
+# - FlextUtilities.safe_int_conversion_with_default() (instead of safe_int_conversion_with_default)
 
 
 # safe_call moved to result.py to avoid type conflicts with generic T version
@@ -1881,9 +2197,7 @@ def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
     return FlextTextProcessor.truncate(text, max_length, suffix)
 
 
-def flext_get_performance_metrics() -> dict[
-    str, dict[str, dict[str, dict[str, float | bool]]]
-]:
+def flext_get_performance_metrics() -> FlextTypes.Core.PerformanceMetrics:
     """Get performance metrics."""
     return FlextPerformance.get_performance_metrics()
 
@@ -1911,22 +2225,11 @@ def flext_record_performance(
     )
 
 
-def flext_track_performance(
-    category: str,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Track performance decorator."""
-    return FlextPerformance.track_performance(category)
-
-
-def generate_iso_timestamp() -> str:
-    """Generate ISO timestamp."""
-    return FlextGenerators.generate_iso_timestamp()
-
-
-# FlextUtilities functionality moved to FlextUtilities
-# Back-compat alias: some modules/tests import `Console` and `FlextUtilities`
-Console = FlextUtilities  # Legacy support if needed
-# FlextUtilities already defined above - no need to redefine
+# MIGRATED TO LEGACY.PY: Additional standalone functions moved to legacy compatibility
+# Use FlextUtilities hierarchy directly in new code:
+# - FlextUtilities.Performance.track_performance() (instead of flext_track_performance)
+# - FlextUtilities.Generators.generate_iso_timestamp() (instead of generate_iso_timestamp)
+# - FlextUtilities directly (instead of Console alias)
 
 
 # =============================================================================
@@ -1993,6 +2296,320 @@ class FlextTypeUtilities:
             return FlextResult[T].fail("Value cannot be None")
         return FlextResult[T].ok(value)
 
+    # =============================================================================
+    # ADVANCED VALIDATION UTILITIES - From validation.py patterns
+    # =============================================================================
+
+    class ValidationCore:
+        """Core validation functions without FlextResult dependency."""
+
+        @staticmethod
+        def is_valid_email_format(email: str) -> bool:
+            """Simple email validation without FlextResult."""
+            return "@" in email and "." in email.rsplit("@", maxsplit=1)[-1]
+
+        @staticmethod
+        def is_valid_uuid_format(value: str) -> bool:
+            """Simple UUID validation without FlextResult."""
+            try:
+                uuid.UUID(value)
+                return True
+            except (ValueError, TypeError):
+                return False
+
+        @staticmethod
+        def is_valid_service_name(name: str) -> bool:
+            """Simple service name validation without FlextResult."""
+            if not name.strip():
+                return False
+            return (
+                len(name) >= FlextUtilities.MIN_SERVICE_NAME_LENGTH
+                and name.replace("_", "").replace("-", "").replace(".", "").isalnum()
+            )
+
+        @staticmethod
+        def is_valid_port_range(port: int) -> bool:
+            """Simple port validation without FlextResult."""
+            return FlextUtilities.MIN_PORT <= port <= FlextUtilities.MAX_PORT
+
+        @staticmethod
+        def is_valid_percentage(value: float) -> bool:
+            """Simple percentage validation without FlextResult."""
+            return (
+                FlextUtilities.MIN_PERCENTAGE <= value <= FlextUtilities.MAX_PERCENTAGE
+            )
+
+        @staticmethod
+        def is_non_empty_string_type(value: object) -> bool:
+            """Type guard for non-empty strings without FlextResult."""
+            return isinstance(value, str) and len(value.strip()) > 0
+
+        @staticmethod
+        def extract_domain_from_email(email: str) -> str | None:
+            """Extract domain from email without FlextResult."""
+            if "@" not in email:
+                return None
+            return email.rsplit("@", maxsplit=1)[-1] or None
+
+    # =============================================================================
+    # SIMPLE TYPE PROCESSING - From type_adapters.py patterns
+    # =============================================================================
+
+    class TypeProcessing:
+        """Simple type processing without FlextResult dependency."""
+
+        @staticmethod
+        def safe_json_loads(json_str: str) -> dict[str, object] | None:
+            """Safe JSON parsing without FlextResult."""
+            try:
+                result = json.loads(json_str)
+                if isinstance(result, dict):
+                    typed_result: dict[str, object] = result
+                    return typed_result
+                return None
+            except (json.JSONDecodeError, TypeError):
+                return None
+
+        @staticmethod
+        def safe_json_dumps(obj: object) -> str | None:
+            """Safe JSON serialization without FlextResult."""
+            try:
+                return json.dumps(obj)
+            except (TypeError, ValueError):
+                return None
+
+        @staticmethod
+        def validate_and_cast_int(value: object) -> int | None:
+            """Safe int validation and casting without FlextResult."""
+            try:
+                if isinstance(value, int):
+                    return value
+                if isinstance(value, str) and value.strip().isdigit():
+                    return int(value)
+                if isinstance(value, float) and value.is_integer():
+                    return int(value)
+                return None
+            except (ValueError, TypeError):
+                return None
+
+        @staticmethod
+        def validate_and_cast_float(value: object) -> float | None:
+            """Safe float validation and casting without FlextResult."""
+            try:
+                if isinstance(value, (int, float)):
+                    return float(value)
+                if isinstance(value, str):
+                    return float(value.strip())
+                return None
+            except (ValueError, TypeError):
+                return None
+
+        @staticmethod
+        def extract_type_name(obj: object) -> str:
+            """Extract type name for debugging without FlextResult."""
+            return type(obj).__name__
+
+        @staticmethod
+        def is_dict_like(obj: object) -> bool:
+            """Check if object is dict-like without FlextResult."""
+            return (
+                hasattr(obj, "keys")
+                and hasattr(obj, "values")
+                and hasattr(obj, "items")
+            )
+
+    # =============================================================================
+    # SCHEMA PROCESSING UTILITIES - From schema_processing.py patterns
+    # =============================================================================
+
+    class SchemaCore:
+        """Simple schema processing without FlextResult dependency."""
+
+        @staticmethod
+        def extract_identifier_simple(content: str, pattern: str) -> str | None:
+            """Extract identifier using regex pattern without FlextResult."""
+            match = re.search(pattern, content)
+            return match.group(1) if match and match.groups() else None
+
+        @staticmethod
+        def clean_content_simple(content: str, prefix: str = "") -> str:
+            """Clean content by removing prefix without FlextResult."""
+            if prefix and content.startswith(f"{prefix}: "):
+                return content.replace(f"{prefix}: ", "").strip()
+            return content.strip()
+
+        @staticmethod
+        def is_valid_content_line(line: str) -> bool:
+            """Check if content line is valid without FlextResult."""
+            return len(line.strip()) > 0
+
+        @staticmethod
+        def extract_field_value(
+            data: dict[str, object], field: str, default: object = None
+        ) -> object:
+            """Extract field value with default without FlextResult."""
+            return data.get(field, default)
+
+        @staticmethod
+        def validate_required_fields(
+            data: dict[str, object], required: list[str]
+        ) -> list[str]:
+            """Validate required fields and return missing ones without FlextResult."""
+            return [
+                field for field in required if field not in data or data[field] is None
+            ]
+
+        @staticmethod
+        def create_error_summary(errors: list[str], max_errors: int = 3) -> str:
+            """Create error summary without FlextResult."""
+            if not errors:
+                return "No errors"
+            if len(errors) <= max_errors:
+                return "; ".join(errors)
+            return (
+                f"{'; '.join(errors[:max_errors])} and {len(errors) - max_errors} more"
+            )
+
+    # =============================================================================
+    # ENHANCED TYPE ADAPTER UTILITIES
+    # =============================================================================
+
+    class SimpleTypeAdapterExtended:
+        """Extended type adapter utilities without FlextResult."""
+
+        @staticmethod
+        def adapt_to_string_safe(value: object) -> str:
+            """Safely adapt value to string."""
+            if value is None:
+                return ""
+            if isinstance(value, str):
+                return value
+            try:
+                return str(value)
+            except Exception:
+                return f"<{type(value).__name__} object>"
+
+        @staticmethod
+        def adapt_to_dict_safe(obj: object) -> dict[str, object]:
+            """Safely adapt object to dict."""
+            if isinstance(obj, dict):
+                typed_dict: dict[object, object] = obj
+                return {str(k): v for k, v in typed_dict.items()}
+            if hasattr(obj, "__dict__"):
+                obj_dict: dict[str, object] = obj.__dict__  # type: ignore[attr-defined]
+                return {str(k): v for k, v in obj_dict.items() if not k.startswith("_")}
+            return {"value": obj, "type": type(obj).__name__}
+
+        @staticmethod
+        def adapt_list_items(
+            items: list[object], adapter_func: Callable[[object], object]
+        ) -> list[object]:
+            """Safely adapt list items using adapter function."""
+            result: list[object] = []
+            for item in items:
+                try:
+                    adapted = adapter_func(item)
+                    result.append(adapted)
+                except Exception:
+                    result.append(f"<adaptation_error: {type(item).__name__}>")
+            return result
+
+        @staticmethod
+        def create_metadata_dict(obj: object) -> dict[str, str]:
+            """Create metadata dict for object."""
+            return {
+                "type": type(obj).__name__,
+                "module": getattr(type(obj), "__module__", "unknown"),
+                "str_repr": str(obj)[:100],
+                "has_dict": str(hasattr(obj, "__dict__")),
+            }
+
+    # =============================================================================
+    # DELEGATION TO NESTED CLASSES - Extended validation and processing
+    # =============================================================================
+
+    @classmethod
+    def is_valid_email_format(cls, email: str) -> bool:
+        """Check if email format is valid - delegates to ValidationCore."""
+        return cls.ValidationCore.is_valid_email_format(email)
+
+    @classmethod
+    def is_valid_uuid_format(cls, value: str) -> bool:
+        """Check if UUID format is valid - delegates to ValidationCore."""
+        return cls.ValidationCore.is_valid_uuid_format(value)
+
+    @classmethod
+    def is_valid_service_name(cls, name: str) -> bool:
+        """Check if service name is valid - delegates to ValidationCore."""
+        return cls.ValidationCore.is_valid_service_name(name)
+
+    @classmethod
+    def is_valid_port_range(cls, port: int) -> bool:
+        """Check if port is in valid range - delegates to ValidationCore."""
+        return cls.ValidationCore.is_valid_port_range(port)
+
+    @classmethod
+    def is_valid_percentage(cls, value: float) -> bool:
+        """Check if percentage is valid - delegates to ValidationCore."""
+        return cls.ValidationCore.is_valid_percentage(value)
+
+    @classmethod
+    def extract_domain_from_email(cls, email: str) -> str | None:
+        """Extract domain from email - delegates to ValidationCore."""
+        return cls.ValidationCore.extract_domain_from_email(email)
+
+    @classmethod
+    def safe_json_loads_simple(cls, json_str: str) -> dict[str, object] | None:
+        """Safe JSON parsing - delegates to TypeProcessing."""
+        return cls.TypeProcessing.safe_json_loads(json_str)
+
+    @classmethod
+    def safe_json_dumps_simple(cls, obj: object) -> str | None:
+        """Safe JSON serialization - delegates to TypeProcessing."""
+        return cls.TypeProcessing.safe_json_dumps(obj)
+
+    @classmethod
+    def validate_and_cast_int(cls, value: object) -> int | None:
+        """Validate and cast to int - delegates to TypeProcessing."""
+        return cls.TypeProcessing.validate_and_cast_int(value)
+
+    @classmethod
+    def validate_and_cast_float(cls, value: object) -> float | None:
+        """Validate and cast to float - delegates to TypeProcessing."""
+        return cls.TypeProcessing.validate_and_cast_float(value)
+
+    @classmethod
+    def extract_identifier_simple(cls, content: str, pattern: str) -> str | None:
+        """Extract identifier using pattern - delegates to SchemaCore."""
+        return cls.SchemaCore.extract_identifier_simple(content, pattern)
+
+    @classmethod
+    def clean_content_simple(cls, content: str, prefix: str = "") -> str:
+        """Clean content by removing prefix - delegates to SchemaCore."""
+        return cls.SchemaCore.clean_content_simple(content, prefix)
+
+    @classmethod
+    def validate_required_fields(
+        cls, data: dict[str, object], required: list[str]
+    ) -> list[str]:
+        """Validate required fields - delegates to SchemaCore."""
+        return cls.SchemaCore.validate_required_fields(data, required)
+
+    @classmethod
+    def create_error_summary(cls, errors: list[str], max_errors: int = 3) -> str:
+        """Create error summary - delegates to SchemaCore."""
+        return cls.SchemaCore.create_error_summary(errors, max_errors)
+
+    @classmethod
+    def adapt_to_string_safe(cls, value: object) -> str:
+        """Safely adapt to string - delegates to SimpleTypeAdapterExtended."""
+        return cls.SimpleTypeAdapterExtended.adapt_to_string_safe(value)
+
+    @classmethod
+    def adapt_to_dict_safe(cls, obj: object) -> dict[str, object]:
+        """Safely adapt to dict - delegates to SimpleTypeAdapterExtended."""
+        return cls.SimpleTypeAdapterExtended.adapt_to_dict_safe(obj)
+
 
 # =============================================================================
 # EXPORTS - Main architectural classes and utilities
@@ -2003,37 +2620,7 @@ class FlextTypeUtilities:
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextGenerators",  # Legacy support for generators
-    "FlextPerformance",  # Legacy support for performance
-    "FlextTypeGuards",  # Legacy support for type guards
-    # =======================================================================
-    # BACKWARD COMPATIBILITY ALIASES - Classes
-    # =======================================================================
-    "FlextUtilities",  # Legacy support - core.py imports FlextUtilities
-    # =======================================================================
-    # PRIMARY EXPORT - Single class consolidating all functionality
-    # =======================================================================
-    "FlextUtilities",  # 🎯 SINGLE EXPORT: All utility functionality consolidated
-    "FlextUtilities",  # Main backward compatibility alias
-    # =======================================================================
-    # LEGACY COMPATIBILITY - Function aliases only (not classes)
-    # =======================================================================
-    "flext_clear_performance_metrics",  # → FlextUtilities.clear_performance_metrics()
-    "flext_get_performance_metrics",  # → FlextUtilities.get_performance_metrics()
-    "flext_record_performance",  # → FlextUtilities.record_performance()
-    "flext_safe_int_conversion",  # → FlextUtilities.safe_int_conversion()
-    "flext_track_performance",  # → FlextUtilities.track_performance()
-    "generate_correlation_id",  # → FlextUtilities.generate_correlation_id()
-    "generate_id",  # → FlextUtilities.generate_id()
-    "generate_iso_timestamp",  # → FlextUtilities.generate_iso_timestamp()
-    "generate_uuid",  # → FlextUtilities.generate_uuid()
-    "is_not_none",  # → FlextUtilities.is_not_none()
-    "safe_int_conversion_with_default",  # → FlextUtilities.safe_int_conversion_with_default()
-    "truncate",  # → FlextUtilities.truncate()
-    # =======================================================================
-    # NOTE: All FlextXxx classes have been internalized into FlextUtilities
-    # Use FlextUtilities methods directly for all functionality
-    # =======================================================================
+    "FlextUtilities",  # ONLY main class exported
 ]
 
 # =============================================================================

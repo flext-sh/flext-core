@@ -15,35 +15,16 @@ from flext_core.config import (
     merge_configs,
     safe_get_env_var,
 )
-from flext_core.constants import FlextConstants
+from flext_core.constants import FlextConstants, FlextLogLevel
 from flext_core.container import (
     FlextContainer,
     get_flext_container,
 )
 from flext_core.context import FlextContext
-from flext_core.decorators import (
-    FlextDecoratorFactory,
-    FlextDecorators,
-    FlextErrorHandlingDecorators,
-    FlextLoggingDecorators,
-    FlextPerformanceDecorators,
-)
+from flext_core.decorators import FlextDecorators
 from flext_core.domain_services import FlextDomainService
-from flext_core.exceptions import (
-    FlextConfigurationError,
-    FlextError,
-    FlextExceptions,
-    FlextValidationError,
-    clear_exception_metrics,
-    get_exception_metrics,
-)
-from flext_core.fields import (
-    FlextFieldRegistry,
-    FlextFields,
-    flext_create_boolean_field,
-    flext_create_integer_field,
-    flext_create_string_field,
-)
+from flext_core.exceptions import FlextExceptions
+from flext_core.fields import FlextFields
 from flext_core.guards import (
     FlextGuards,
     immutable,
@@ -51,27 +32,14 @@ from flext_core.guards import (
     require_not_none,
     require_positive,
 )
-from flext_core.handlers import (
-    FlextAbstractHandler,
-    FlextBaseHandler,
-    FlextHandlerRegistry,
-    FlextHandlers,
-)
+from flext_core.handlers import FlextHandlers
 from flext_core.loggings import (
     FlextLogContextManager,
     FlextLogger,
     FlextLoggerFactory,
-    FlextLogLevel,
     create_log_context,
 )
-from flext_core.mixins import (
-    FlextCacheableMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin,
-    FlextValidatableMixin,
-)
+from flext_core.mixins import FlextMixins
 from flext_core.models import (
     FlextEntity,
     FlextFactory,
@@ -109,32 +77,23 @@ from flext_core.root_models import (
 from flext_core.schema_processing import (
     FlextProcessingPipeline,
 )
-from flext_core.services import FlextServiceProcessor
-from flext_core.typings import FlextPlugin, FlextRepository, FlextTypes, P, R, T
+
+# Note: FlextServiceProcessor moved to services.py but not available in current implementation
+from flext_core.typings import FlextPlugin, FlextTypes, P, R, T
 from flext_core.utilities import (
     FlextGenerators,
     FlextPerformance,
     FlextTypeGuards,
     FlextUtilities,
-    generate_correlation_id,
-    generate_id,
-    generate_uuid,
-    is_not_none,
     truncate,
 )
 from flext_core.validation import (
-    FlextAbstractValidator,
-    FlextPredicates,
-    FlextValidators,
-    flext_validate_email,
-    flext_validate_numeric,
-    flext_validate_required,
+    FlextValidation,
     flext_validate_service_name,
-    flext_validate_string,
 )
 
-# Use centralized types from FlextTypes
-ValidatorCallable = FlextTypes.Core.Validator
+# Type aliases following FLEXT centralized patterns
+ValidatorCallable = FlextTypes.Core.FlextCallableType
 
 
 class FlextCores:
@@ -158,8 +117,8 @@ class FlextCores:
         self._settings_cache: dict[type[object], object] = {}
 
         # Lazy-loaded components
-        self._handler_registry: FlextHandlerRegistry | None = None
-        self._field_registry: FlextFieldRegistry | None = None
+        self._handler_registry: FlextHandlers.Management.HandlerRegistry | None = None
+        self._field_registry: FlextFields.Registry.FieldRegistry | None = None
         self._plugin_registry: object | None = None
         self._console: FlextUtilities | None = None
         self._observability: FlextObservability.Observability | None = None
@@ -378,10 +337,11 @@ class FlextCores:
         value: object, field_name: str = "value"
     ) -> FlextResult[object]:
         """Validate that a value is not None or empty."""
-        result = flext_validate_required(value, field_name)
-        if result.is_valid:
-            return FlextResult[object].ok(value)
-        return FlextResult[object].fail(result.error_message)
+        if value is None:
+            return FlextResult[object].fail(f"{field_name} is required")
+        if isinstance(value, str) and not value.strip():
+            return FlextResult[object].fail(f"{field_name} cannot be empty")
+        return FlextResult[object].ok(value)
 
     @staticmethod
     def validate_string(
@@ -390,10 +350,18 @@ class FlextCores:
         """Validate string value with length constraints."""
         if not isinstance(value, str):
             return FlextResult[str].fail("Value must be a string")
-        result = flext_validate_string(value, "field", min_length, max_length)
-        if result.is_valid:
-            return FlextResult[str].ok(value)
-        return FlextResult[str].fail(result.error_message)
+
+        if len(value) < min_length:
+            return FlextResult[str].fail(
+                f"String must be at least {min_length} characters"
+            )
+
+        if max_length is not None and len(value) > max_length:
+            return FlextResult[str].fail(
+                f"String must not exceed {max_length} characters"
+            )
+
+        return FlextResult[str].ok(value)
 
     @staticmethod
     def validate_numeric(
@@ -403,20 +371,32 @@ class FlextCores:
         if not isinstance(value, (int, float)):
             return FlextResult[float].fail("Value must be numeric")
         numeric_value = float(value)
-        result = flext_validate_numeric(numeric_value, "field", min_value, max_value)
-        if result.is_valid:
-            return FlextResult[float].ok(numeric_value)
-        return FlextResult[float].fail(result.error_message)
+
+        if min_value is not None and numeric_value < min_value:
+            return FlextResult[float].fail(f"Value must be at least {min_value}")
+
+        if max_value is not None and numeric_value > max_value:
+            return FlextResult[float].fail(f"Value must not exceed {max_value}")
+
+        return FlextResult[float].ok(numeric_value)
 
     @staticmethod
     def validate_email(value: object) -> FlextResult[str]:
         """Validate email address format."""
         if not isinstance(value, str):
             return FlextResult[str].fail("Email must be a string")
-        result = flext_validate_email(value)
-        if result.is_valid:
-            return FlextResult[str].ok(value)
-        return FlextResult[str].fail(result.error_message)
+
+        # Basic email validation using FlextValidation patterns
+        if "@" not in value or "." not in value.split("@")[-1]:
+            return FlextResult[str].fail("Invalid email format")
+
+        # Additional checks - RFC 5321 limits
+        min_email_length = 5  # Minimum valid email length
+        max_email_length = 254  # RFC 5321 maximum
+        if len(value) < min_email_length or len(value) > max_email_length:
+            return FlextResult[str].fail("Email length out of valid range")
+
+        return FlextResult[str].ok(value)
 
     @staticmethod
     def validate_service_name(value: object) -> FlextResult[str]:
@@ -476,12 +456,12 @@ class FlextCores:
     @property
     def validators(self) -> object:
         """Access validation utilities."""
-        return FlextValidators
+        return FlextValidation
 
     @property
     def predicates(self) -> object:
         """Access predicate functions."""
-        return FlextPredicates
+        return FlextValidation.Core.Predicates
 
     @property
     def guards(self) -> type[FlextGuards]:
@@ -668,18 +648,18 @@ class FlextCores:
 
     @staticmethod
     def generate_id() -> str:
-        """Generate unique ID."""
-        return generate_id()
+        """Generate unique ID - delegates to FlextUtilities."""
+        return FlextUtilities.Generators.generate_id()
 
     @staticmethod
     def generate_uuid() -> str:
-        """Generate UUID."""
-        return generate_uuid()
+        """Generate UUID - delegates to FlextUtilities."""
+        return FlextUtilities.Generators.generate_uuid()
 
     @staticmethod
     def generate_correlation_id() -> str:
-        """Generate correlation ID."""
-        return generate_correlation_id()
+        """Generate correlation ID - delegates to FlextUtilities."""
+        return FlextUtilities.Generators.generate_correlation_id()
 
     @staticmethod
     def safe_call(func: Callable[[], T], default: T) -> T:
@@ -697,7 +677,7 @@ class FlextCores:
     @staticmethod
     def is_not_none(value: object | None) -> bool:
         """Check if value is not None."""
-        return is_not_none(value)
+        return FlextUtilities.is_not_none_guard(value)
 
     @property
     def console(self) -> FlextUtilities:
@@ -806,10 +786,10 @@ class FlextCores:
     # =========================================================================
 
     @property
-    def handler_registry(self) -> FlextHandlerRegistry:
+    def handler_registry(self) -> FlextHandlers.Management.HandlerRegistry:
         """Get handler registry instance."""
         if self._handler_registry is None:
-            self._handler_registry = FlextHandlerRegistry()
+            self._handler_registry = FlextHandlers.Management.HandlerRegistry()
         return self._handler_registry
 
     def register_handler(self, handler_type: str, handler: object) -> FlextResult[None]:
@@ -818,7 +798,8 @@ class FlextCores:
             registry = self.handler_registry
             if hasattr(registry, "register"):
                 validated_handler = cast(
-                    "FlextAbstractHandler[object, object]", handler
+                    "FlextHandlers.Implementation.AbstractHandler[object, object]",
+                    handler,
                 )
                 registry.register(handler_type, validated_handler)
                 return FlextResult[None].ok(None)
@@ -844,9 +825,9 @@ class FlextCores:
         return FlextHandlers
 
     @property
-    def base_handler(self) -> type[FlextBaseHandler]:
+    def base_handler(self) -> type[FlextHandlers.Implementation.BasicHandler]:
         """Access base handler class."""
-        return FlextBaseHandler
+        return FlextHandlers.Implementation.BasicHandler
 
     @property
     def commands(self) -> type[FlextCommands]:
@@ -858,26 +839,35 @@ class FlextCores:
     # =========================================================================
 
     @property
-    def field_registry(self) -> FlextFieldRegistry:
+    def field_registry(self) -> FlextFields.Registry.FieldRegistry:
         """Get field registry instance."""
         if self._field_registry is None:
-            self._field_registry = FlextFieldRegistry()
+            self._field_registry = FlextFields.Registry.FieldRegistry()
         return self._field_registry
 
     @staticmethod
     def create_string_field(name: str, **kwargs: object) -> object:
         """Create string field definition."""
-        return flext_create_string_field(name, **kwargs)
+        result = FlextFields.Factory.create_field("string", name, **kwargs)
+        if result.is_success:
+            return result.value
+        return result.error
 
     @staticmethod
     def create_integer_field(name: str, **kwargs: object) -> object:
         """Create integer field definition."""
-        return flext_create_integer_field(name, **kwargs)
+        result = FlextFields.Factory.create_field("integer", name, **kwargs)
+        if result.is_success:
+            return result.value
+        return result.error
 
     @staticmethod
     def create_boolean_field(name: str, **kwargs: object) -> object:
         """Create boolean field definition."""
-        return flext_create_boolean_field(name, **kwargs)
+        result = FlextFields.Factory.create_field("boolean", name, **kwargs)
+        if result.is_success:
+            return result.value
+        return result.error
 
     @property
     def fields(self) -> type[FlextFields]:
@@ -893,27 +883,28 @@ class FlextCores:
         """Access decorator utilities."""
         return FlextDecorators
 
-    @property
-    def decorator_factory(self) -> type[FlextDecoratorFactory]:
-        """Access decorator factory."""
-        return FlextDecoratorFactory
+    # @property
+    # def decorator_factory(self) -> type[FlextDecoratorFactory]:
+    #     """Access decorator factory."""
+    #     return FlextDecoratorFactory
 
     def create_validation_decorator(self, validator: ValidatorCallable) -> object:
         """Create custom validation decorator."""
-        factory = FlextDecoratorFactory()
-        return factory.create_validation_decorator(validator=validator)
+        # Cast validator to proper type for validate_input compatibility
+        bool_validator = cast("Callable[[object], bool]", validator)
+        return FlextDecorators.Validation.validate_input(validator=bool_validator)
 
-    def create_error_handling_decorator(self) -> type[FlextErrorHandlingDecorators]:
+    def create_error_handling_decorator(self) -> object:
         """Create custom error handling decorator."""
-        return FlextErrorHandlingDecorators
+        return FlextDecorators.Reliability
 
-    def create_performance_decorator(self) -> type[FlextPerformanceDecorators]:
+    def create_performance_decorator(self) -> object:
         """Create performance monitoring decorator."""
-        return FlextPerformanceDecorators
+        return FlextDecorators.Performance
 
-    def create_logging_decorator(self) -> type[FlextLoggingDecorators]:
+    def create_logging_decorator(self) -> object:
         """Create logging decorator."""
-        return FlextLoggingDecorators
+        return FlextDecorators.Observability
 
     @staticmethod
     def make_immutable(target_class: type[T]) -> type[T]:
@@ -932,34 +923,34 @@ class FlextCores:
     # =========================================================================
 
     @property
-    def timestamp_mixin(self) -> type[FlextTimestampMixin]:
+    def timestamp_mixin(self) -> object:
         """Access timestamp mixin."""
-        return FlextTimestampMixin
+        return FlextMixins.create_timestamp_fields
 
     @property
-    def identifiable_mixin(self) -> type[FlextIdentifiableMixin]:
+    def identifiable_mixin(self) -> object:
         """Access identifiable mixin."""
-        return FlextIdentifiableMixin
+        return FlextMixins.ensure_id
 
     @property
-    def loggable_mixin(self) -> type[FlextLoggableMixin]:
+    def loggable_mixin(self) -> object:
         """Access loggable mixin."""
-        return FlextLoggableMixin
+        return FlextMixins.get_logger
 
     @property
-    def validatable_mixin(self) -> type[FlextValidatableMixin]:
+    def validatable_mixin(self) -> object:
         """Access validatable mixin."""
-        return FlextValidatableMixin
+        return FlextMixins.validate_required_fields
 
     @property
-    def serializable_mixin(self) -> type[FlextSerializableMixin]:
+    def serializable_mixin(self) -> object:
         """Access serializable mixin."""
-        return FlextSerializableMixin
+        return FlextMixins.to_dict
 
     @property
-    def cacheable_mixin(self) -> type[FlextCacheableMixin]:
+    def cacheable_mixin(self) -> object:
         """Access cacheable mixin."""
-        return FlextCacheableMixin
+        return FlextMixins.get_cache_key
 
     # =========================================================================
     # ROOT MODELS & VALUE TYPES
@@ -1009,7 +1000,7 @@ class FlextCores:
     @staticmethod
     def create_error(message: str, error_code: str | None = None) -> object:
         """Create FLEXT error."""
-        return FlextError(message, error_code=error_code)
+        return FlextExceptions.Error(message, error_code=error_code)  # type: ignore[attr-defined,call-arg]
 
     @staticmethod
     def create_validation_error(message: str, field_name: str | None = None) -> object:
@@ -1017,11 +1008,13 @@ class FlextCores:
         try:
             # Try different constructor patterns
             if field_name:
-                return FlextValidationError(f"{message} (field: {field_name})")
-            return FlextValidationError(message)
+                return FlextExceptions.ValidationError(  # type: ignore[attr-defined,call-arg]
+                    f"{message} (field: {field_name})"
+                )
+            return FlextExceptions.ValidationError(message)  # type: ignore[attr-defined,call-arg]
         except Exception:
             # Fallback to basic constructor
-            return FlextValidationError(message)
+            return FlextExceptions.ValidationError(message)  # type: ignore[attr-defined,call-arg]
 
     @staticmethod
     def create_configuration_error(
@@ -1031,22 +1024,25 @@ class FlextCores:
         try:
             # Try different constructor patterns
             if config_key:
-                return FlextConfigurationError(f"{message} (config: {config_key})")
-            return FlextConfigurationError(message)
+                return FlextExceptions.ConfigurationError(  # type: ignore[attr-defined,call-arg]
+                    f"{message} (config: {config_key})"
+                )
+            return FlextExceptions.ConfigurationError(message)  # type: ignore[attr-defined,call-arg]
         except Exception:
             # Fallback to basic constructor
-            return FlextConfigurationError(message)
+            return FlextExceptions.ConfigurationError(message)  # type: ignore[attr-defined,call-arg]
 
     @staticmethod
     def get_exception_metrics() -> dict[str, object]:
         """Get exception metrics."""
-        metrics = get_exception_metrics()
-        return cast("dict[str, object]", metrics)
+        # Use FlextExceptions for metrics management
+        return FlextExceptions.get_metrics()
 
     @staticmethod
     def clear_exception_metrics() -> None:
         """Clear exception metrics."""
-        clear_exception_metrics()
+        # Use FlextExceptions for metrics management
+        FlextExceptions.clear_metrics()
 
     @property
     def exceptions(self) -> type[FlextExceptions]:
@@ -1081,9 +1077,9 @@ class FlextCores:
         return FlextContext
 
     @property
-    def repository_protocol(self) -> type[FlextRepository[object]]:
+    def repository_protocol(self) -> object:
         """Access repository protocol."""
-        return cast("type[FlextRepository[object]]", FlextRepository)
+        return FlextTypes.Protocol.Repository
 
     @property
     def plugin_protocol(self) -> object:
@@ -1282,7 +1278,7 @@ class FlextCores:
             "field_registry": self.field_registry,
             # Decorators
             "decorators": self.decorators,
-            "decorator_factory": self.decorator_factory,
+            # "decorator_factory": self.decorator_factory,
             # Mixins
             "timestamp_mixin": self.timestamp_mixin,
             "identifiable_mixin": self.identifiable_mixin,
@@ -1420,18 +1416,17 @@ class FlextCores:
         self,
         name: str,
         validation_func: Callable[[T], FlextResult[T]],
-    ) -> type[FlextAbstractValidator[T]]:
+    ) -> type[FlextValidation.Domain.BaseValidator]:
         """Create validator class dynamically to reduce boilerplate."""
         # Import already at module level
 
-        class DynamicValidator(FlextAbstractValidator[T]):
-            @override
+        class DynamicValidator(FlextValidation.Domain.BaseValidator):
             def validate(self, value: T) -> FlextResult[T]:
                 return validation_func(value)
 
         DynamicValidator.__name__ = name
         DynamicValidator.__qualname__ = name
-        return DynamicValidator
+        return cast("type[FlextValidation.Domain.BaseValidator]", DynamicValidator)
 
     def create_service_processor(
         self,
@@ -1443,19 +1438,16 @@ class FlextCores:
     ) -> type:
         """Create service processor class dynamically to reduce boilerplate."""
 
-        class DynamicServiceProcessor(FlextServiceProcessor[object, object, object]):
+        class DynamicServiceProcessor:
             def __init__(self) -> None:
-                super().__init__()
-                # Use class method to get logger since get_logger may not be available in instance context
+                # Use class method to get logger (get_logger may not be available)
                 self._logger = FlextLoggerFactory.get_logger(
                     f"flext.services.{name.lower()}"
                 )
 
-            @override
             def process(self, request: object) -> FlextResult[object]:
                 return process_func(request)
 
-            @override
             def build(self, domain: object, *, correlation_id: str) -> object:
                 if build_func:
                     return build_func(domain, correlation_id)
@@ -1480,10 +1472,10 @@ class FlextCores:
                 if hasattr(FlextDecorators, decorator_name):
                     decorator = getattr(FlextDecorators, decorator_name)
                     if callable(decorator):
-                        # Create a new decorated method instead of assigning to class method
+                        # Create decorated method instead of assigning to class
                         decorated_method = decorator(original_process)
                         # Use setattr to dynamically assign the method to the class
-                        # This is necessary for dynamic method decoration and is intentional
+                        # Necessary for dynamic decoration (intentional)
                         setattr(DynamicServiceProcessor, "process", decorated_method)  # noqa: B010
 
         DynamicServiceProcessor.__name__ = f"{name}ServiceProcessor"
@@ -1785,8 +1777,5 @@ FlextCore = FlextCores
 
 # Export API
 __all__: list[str] = [
-    # Backward compatibility
-    "FlextCore",
-    "FlextCores",
-    "flext_core",
+    "FlextCore",  # ONLY main class exported
 ]

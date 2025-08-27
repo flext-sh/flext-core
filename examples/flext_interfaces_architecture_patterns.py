@@ -17,7 +17,7 @@ Key Components:
     - FlextConfigurable: Protocol for configuration injection
     - FlextMessageHandler/FlextMiddleware: ABCs for message processing pipelines
     - FlextRepository/FlextUnitOfWork: ABCs for data access patterns
-    - FlextPlugin/FlextPluginContext: ABCs and protocols for extensibility
+    - FlextProtocols.Plugin/FlextProtocols.PluginContext: ABCs and protocols for extensibility
     - FlextEventPublisher/FlextEventSubscriber: ABCs for event-driven patterns
 
 This example shows real-world enterprise architecture scenarios
@@ -28,28 +28,91 @@ import time
 import traceback
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import cast
+
+# =============================================================================
+# LOCAL TYPE DEFINITIONS - For demonstration purposes
+# =============================================================================
+from typing import Protocol, TypeVar, cast
 
 from structlog.stdlib import BoundLogger
 
 from flext_core import (
-    FlextCommandHandler,
-    FlextDomainEvent,
-    FlextLoggerProtocol,
-    FlextMessageHandler,
-    FlextPluginContext,
+    FlextConstants,
     FlextProtocols,
     FlextResult,
     FlextTypes,
-    FlextUnitOfWork,
+    get_logger,
 )
 
+T = TypeVar("T")
+
+class FlextPayload[T]:
+    """Generic payload base class for demonstration."""
+
+    def __init__(self, data: T) -> None:
+        self.data = data
+
+class FlextBaseHandler:
+    """Base handler for demonstration."""
+
+
+class FlextUnitOfWork:
+    """Unit of work pattern for demonstration."""
+
+
+class FlextLoggerProtocol(Protocol):
+    """Logger protocol for demonstration."""
+
+    def info(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+    def debug(self, message: str) -> None: ...
+    def warning(self, message: str) -> None: ...
+    def critical(self, message: str) -> None: ...
+    def exception(self, message: str) -> None: ...
+    def trace(self, message: str) -> None: ...
+
+class FlextPluginContext:
+    """Plugin context for demonstration."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def get_service(self, _service_name: str) -> object:
+        """Get service by name."""
+        return object()
+
+    def get_config(self, _key: str) -> object:
+        """Get configuration value."""
+        return object()
+
+    def get_logger(self) -> FlextLoggerProtocol:
+        """Get logger instance."""
+        return cast("FlextLoggerProtocol", object())
+
+class FlextMessageHandler:
+    """Message handler for demonstration."""
+
+    def handle(self, message: object) -> None:
+        """Handle message."""
+
+class FlextEvent:
+    """Event base class for demonstration."""
+
+    def __init__(self, event_id: str, timestamp: float) -> None:
+        self.event_id = event_id
+        self.timestamp = timestamp
+
 # =============================================================================
-# INTERFACE CONSTANTS - Network and system constraints
+# CONSTANTS - Using FlextConstants hierarchical patterns
 # =============================================================================
 
-# Network port validation constants
-MAX_TCP_PORT = 65535  # Maximum valid TCP port number
+# Network port validation constants using FlextConstants
+MAX_TCP_PORT: FlextTypes.Core.Integer = FlextConstants.Network.MAX_PORT or 65535
+MIN_AGE: FlextTypes.Core.Integer = 18  # Default age validation
+MAX_AGE: FlextTypes.Core.Integer = 120  # Default max age validation
+
+# Logger using centralized logging
+logger = get_logger("flext.examples.interfaces")
 
 # =============================================================================
 # DOMAIN MODELS - Business entities for examples
@@ -58,53 +121,50 @@ MAX_TCP_PORT = 65535  # Maximum valid TCP port number
 
 @dataclass
 class User:
-    """User domain model."""
+    """User domain model using FlextTypes."""
 
-    id: str
-    name: str
-    email: str
-    age: int | None = None
-    is_active: bool = True
+    id: FlextTypes.Core.String
+    name: FlextTypes.Core.String
+    email: FlextTypes.Core.String
+    age: FlextTypes.Core.Integer | None = None
+    is_active: FlextTypes.Core.Boolean = True
 
 
 @dataclass
 class Product:
-    """Product domain model."""
+    """Product domain model using FlextTypes."""
 
-    id: str
-    name: str
-    price: float
-    category: str
-    stock: int = 0
+    id: FlextTypes.Core.String
+    name: FlextTypes.Core.String
+    price: FlextTypes.Core.Float
+    category: FlextTypes.Core.String
+    stock: FlextTypes.Core.Integer = 0
 
 
 @dataclass
 class Order:
-    """Order domain model."""
+    """Order domain model using FlextTypes."""
 
-    id: str
-    user_id: str
-    products: list[str]
-    total: float
-    status: str = "pending"
+    id: FlextTypes.Core.String
+    user_id: FlextTypes.Core.String
+    products: list[FlextTypes.Core.String]
+    total: FlextTypes.Core.Float
+    status: FlextTypes.Core.String = "pending"
 
 
 # Domain Events
-@dataclass
-class UserCreatedEvent:
+class UserCreatedEvent(FlextEvent):
     """Event indicating user was created."""
 
-    # Domain event fields (FlextDomainEvent protocol)
-    event_id: str
-    event_type: str
-    aggregate_id: str
-    event_version: int
-    timestamp: str
-
-    # Event-specific fields
-    user_id: str
-    name: str
-    email: str
+    def __init__(self, event_id: str, user_id: str, name: str, email: str) -> None:
+        """Initialize UserCreatedEvent."""
+        super().__init__(event_id, time.time())
+        self.user_id = user_id
+        self.name = name
+        self.email = email
+        self.event_type = "user_created"
+        self.aggregate_id = user_id
+        self.event_version = 1
 
     def to_dict(self) -> dict[str, object]:
         """Convert event to dictionary."""
@@ -119,46 +179,20 @@ class UserCreatedEvent:
             "email": self.email,
         }
 
-    @classmethod
-    def from_dict(cls, data: dict[str, object]) -> "UserCreatedEvent":
-        """Create event from dictionary."""
-        event_version_raw = data["event_version"]
-        if isinstance(event_version_raw, int):
-            event_version = event_version_raw
-        elif isinstance(event_version_raw, (str, float)):
-            event_version = int(event_version_raw)
-        elif event_version_raw is None:
-            event_version = 1
-        else:
-            event_version = int(str(event_version_raw))
-
-        return cls(
-            event_id=str(data["event_id"]),
-            event_type=str(data["event_type"]),
-            aggregate_id=str(data["aggregate_id"]),
-            event_version=event_version,
-            timestamp=str(data["timestamp"]),
-            user_id=str(data["user_id"]),
-            name=str(data["name"]),
-            email=str(data["email"]),
-        )
 
 
-@dataclass
-class OrderPlacedEvent:
+class OrderPlacedEvent(FlextEvent):
     """Event indicating order was placed."""
 
-    # Domain event fields (FlextDomainEvent protocol)
-    event_id: str
-    event_type: str
-    aggregate_id: str
-    event_version: int
-    timestamp: str
-
-    # Event-specific fields
-    order_id: str
-    user_id: str
-    total: float
+    def __init__(self, event_id: str, order_id: str, user_id: str, total: float) -> None:
+        """Initialize OrderPlacedEvent."""
+        super().__init__(event_id, time.time())
+        self.order_id = order_id
+        self.user_id = user_id
+        self.total = total
+        self.event_type = "order_placed"
+        self.aggregate_id = order_id
+        self.event_version = 1
 
     def to_dict(self) -> dict[str, object]:
         """Convert event to dictionary."""
@@ -173,39 +207,6 @@ class OrderPlacedEvent:
             "total": self.total,
         }
 
-    @classmethod
-    def from_dict(cls, data: dict[str, object]) -> "OrderPlacedEvent":
-        """Create event from dictionary."""
-        event_version_raw = data["event_version"]
-        if isinstance(event_version_raw, int):
-            event_version = event_version_raw
-        elif isinstance(event_version_raw, (str, float)):
-            event_version = int(event_version_raw)
-        elif event_version_raw is None:
-            event_version = 1
-        else:
-            event_version = int(str(event_version_raw))
-
-        total_raw = data["total"]
-        if isinstance(total_raw, float):
-            total = total_raw
-        elif isinstance(total_raw, (int, str)):
-            total = float(total_raw)
-        elif total_raw is None:
-            total = 0.0
-        else:
-            total = float(str(total_raw))
-
-        return cls(
-            event_id=str(data["event_id"]),
-            event_type=str(data["event_type"]),
-            aggregate_id=str(data["aggregate_id"]),
-            event_version=event_version,
-            timestamp=str(data["timestamp"]),
-            order_id=str(data["order_id"]),
-            user_id=str(data["user_id"]),
-            total=total,
-        )
 
 
 # =============================================================================
@@ -243,7 +244,11 @@ class EmailValidator:
 class AgeRangeRule:
     """Age validation rule demonstrating FlextProtocols.Foundation.Validator protocol."""
 
-    def __init__(self, min_age: int = 18, max_age: int = 120) -> None:
+    def __init__(
+        self,
+        min_age: FlextTypes.Core.Integer = MIN_AGE,
+        max_age: FlextTypes.Core.Integer = MAX_AGE,
+    ) -> None:
         """Initialize AgeRangeRule.
 
         Args:
@@ -371,9 +376,9 @@ class UserService:
 
     def create_user(
         self,
-        name: str,
-        email: str,
-        age: int | None = None,
+        name: FlextTypes.Core.String,
+        email: FlextTypes.Core.String,
+        age: FlextTypes.Core.Integer | None = None,
     ) -> FlextResult[User]:
         """Create new user."""
         if not self._is_running:
@@ -387,7 +392,7 @@ class UserService:
 
         return FlextResult[User].ok(user)
 
-    def get_user(self, user_id: str) -> FlextResult[User]:
+    def get_user(self, user_id: FlextTypes.Core.String) -> FlextResult[User]:
         """Get user by ID."""
         if not self._is_running:
             return FlextResult[User].fail("Service is not running")
@@ -434,7 +439,12 @@ class ConfigurableEmailService:
         except (ValueError, TypeError, KeyError) as e:
             return FlextResult[None].fail(f"Configuration failed: {e}")
 
-    def send_email(self, _to: str, _subject: str, _body: str) -> FlextResult[None]:
+    def send_email(
+        self,
+        _to: FlextTypes.Core.String,
+        _subject: FlextTypes.Core.String,
+        _body: FlextTypes.Core.String,
+    ) -> FlextResult[None]:
         """Send email (simulated)."""
         if not self._configured:
             return FlextResult[None].fail("Service not configured")
@@ -447,7 +457,7 @@ class ConfigurableEmailService:
 # =============================================================================
 
 
-class UserCommandHandler(FlextCommandHandler):
+class UserCommandHandler(FlextBaseHandler):
     """User command handler demonstrating FlextMessageHandler."""
 
     def __init__(self, user_service: UserService) -> None:
@@ -623,7 +633,7 @@ class UserRepository:
         return FlextResult[None].ok(None)
 
 
-class DatabaseUnitOfWork:
+class DatabaseUnitOfWork(FlextUnitOfWork):
     """Database unit of work implementing FlextUnitOfWork protocol."""
 
     def __init__(self, user_repo: UserRepository) -> None:
@@ -681,7 +691,7 @@ class DatabaseUnitOfWork:
         self._rolled_back = False
         return FlextResult[None].ok(None)
 
-    def __enter__(self) -> FlextUnitOfWork:
+    def __enter__(self) -> "DatabaseUnitOfWork":
         """Enter context manager."""
         return self
 
@@ -788,8 +798,8 @@ class MockLogger:
         return cast("BoundLogger", MockLogger())
 
 
-class SimplePluginContext:
-    """Simple plugin context demonstrating FlextPluginContext protocol."""
+class SimplePluginContext(FlextPluginContext):
+    """Simple plugin context demonstrating FlextProtocols.PluginContext protocol."""
 
     def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize SimplePluginContext.
@@ -806,8 +816,10 @@ class SimplePluginContext:
         """Get logger for plugin (simplified)."""
         return cast("FlextLoggerProtocol", self._logger)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self, key: str = "") -> dict[str, object] | object:
         """Get plugin configuration."""
+        if key:
+            return self._config.get(key, {})
         return dict(self._config)
 
     def get_service(self, service_name: str) -> FlextResult[object]:
@@ -845,17 +857,18 @@ class EmailNotificationPlugin:
         try:
             # Get email service from context
             email_service_result = context.get_service("email_service")
-            if email_service_result.is_failure:
+            if isinstance(email_service_result, FlextResult) and email_service_result.is_failure:
                 return FlextResult[None].fail("Email service not available")
 
-            service_data = email_service_result.value
+            service_data = email_service_result.value if isinstance(email_service_result, FlextResult) else email_service_result
             if isinstance(service_data, ConfigurableEmailService):
                 self._email_service = service_data
             else:
                 return FlextResult[None].fail("Invalid email service type")
 
             # Configure email service from plugin config
-            config = context.get_config()
+            config_raw = context.get_config("")
+            config = config_raw if isinstance(config_raw, dict) else {}
             if isinstance(self._email_service, ConfigurableEmailService):
                 config_result = self._email_service.configure(config)
                 if config_result.is_failure:
@@ -863,9 +876,7 @@ class EmailNotificationPlugin:
 
             self._initialized = True
             context.get_logger().info(
-                "Plugin initialized",
-                plugin=self.name,
-                version=self.version,
+                f"Plugin initialized: {self.name} v{self.version}"
             )
             return FlextResult[None].ok(None)
 
@@ -925,9 +936,7 @@ class AuditLogPlugin:
         """Initialize plugin with context."""
         self._initialized = True
         context.get_logger().info(
-            "Plugin initialized",
-            plugin=self.name,
-            version=self.version,
+            f"Plugin initialized: {self.name} v{self.version}"
         )
         return FlextResult[None].ok(None)
 
@@ -977,9 +986,10 @@ class SimpleEventPublisher:
 
     def __init__(self) -> None:
         """Initialize SimpleEventPublisher."""
-        self._subscribers: dict[type[object], list[FlextMessageHandler]] = {}
+        self._subscribers: dict[type[object], list[FlextProtocols.Application.MessageHandler]] = {}
+        logger.info("SimpleEventPublisher initialized")
 
-    def publish(self, event: FlextDomainEvent) -> FlextResult[None]:
+    def publish(self, event: FlextEvent) -> FlextResult[None]:
         """Publish event to subscribers."""
         event_type = type(event)
 
@@ -990,10 +1000,17 @@ class SimpleEventPublisher:
         failed_handlers = []
 
         for handler in handlers:
-            result = handler.handle(event)
-            if result.is_failure:
+            try:
+                result = handler.handle(message=event)
+                # Handle FlextResult return types for compatibility
+                if hasattr(result, "is_failure") and getattr(result, "is_failure", False):
+                    error_msg = getattr(result, "error", "Unknown error")
+                    failed_handlers.append(
+                        f"{type(handler).__name__}: {error_msg}",
+                    )
+            except Exception as e:
                 failed_handlers.append(
-                    f"{handler.__class__.__name__}: {result.error}",
+                    f"{type(handler).__name__}: {e!s}",
                 )
 
         if failed_handlers:
@@ -1003,7 +1020,7 @@ class SimpleEventPublisher:
 
         return FlextResult[None].ok(None)
 
-    def publish_batch(self, events: list[FlextDomainEvent]) -> FlextResult[None]:
+    def publish_batch(self, events: list[FlextEvent]) -> FlextResult[None]:
         """Publish a batch of events sequentially."""
         for event in events:
             result = self.publish(event)
@@ -1012,7 +1029,7 @@ class SimpleEventPublisher:
         return FlextResult[None].ok(None)
 
     def add_subscriber(
-        self, event_type: type[object], handler: FlextMessageHandler
+        self, event_type: type[object], handler: FlextProtocols.Application.MessageHandler
     ) -> None:
         """Add subscriber (helper method)."""
         if event_type not in self._subscribers:
@@ -1026,12 +1043,12 @@ class SimpleEventSubscriber:
     def __init__(self, publisher: SimpleEventPublisher) -> None:
         """Initialize SimpleEventSubscriber."""
         self._publisher = publisher
-        self._subscriptions: dict[type[object], list[FlextMessageHandler]] = {}
+        self._subscriptions: dict[type[object], list[FlextProtocols.Application.MessageHandler]] = {}
 
     def subscribe(
         self,
         event_type: type[object],
-        handler: FlextMessageHandler,
+        handler: FlextProtocols.Application.MessageHandler,
     ) -> FlextResult[None]:
         """Subscribe to event type."""
         try:
@@ -1049,7 +1066,7 @@ class SimpleEventSubscriber:
     def unsubscribe(
         self,
         event_type: type[object],
-        handler: FlextMessageHandler,
+        handler: FlextProtocols.Application.MessageHandler,
     ) -> FlextResult[None]:
         """Unsubscribe from event type."""
         try:
@@ -1065,8 +1082,9 @@ class SimpleEventSubscriber:
             return FlextResult[None].fail(f"Unsubscription failed: {e}")
 
     # Implement protocol-required methods
-    def handle_event(self, event: FlextDomainEvent) -> FlextResult[None]:  # noqa: ARG002
+    def handle_event(self, event: FlextEvent) -> FlextResult[None]:  # noqa: ARG002
         """Handle incoming event and return success when processed."""
+        logger.info("Event handled", event_type=type(event).__name__)
         return FlextResult[None].ok(None)
 
     def can_handle(self, event_type: str) -> bool:
@@ -1094,10 +1112,10 @@ class UserEventHandler:
         """Handler name for registration."""
         return "user_event_handler"
 
-    def handle(self, message: object) -> FlextResult[object]:
+    def handle(self, message: object) -> object:
         """Handle user events."""
         if isinstance(message, UserCreatedEvent):
-            result = self._audit_plugin.log_event(
+            self._audit_plugin.log_event(
                 "user_created",
                 {
                     "user_id": message.user_id,
@@ -1105,10 +1123,10 @@ class UserEventHandler:
                     "email": message.email,
                 },
             )
-            return result.map(lambda _: None)
+            return FlextResult[None].ok(None)
 
         if isinstance(message, OrderPlacedEvent):
-            result = self._audit_plugin.log_event(
+            self._audit_plugin.log_event(
                 "order_placed",
                 {
                     "order_id": message.order_id,
@@ -1116,9 +1134,9 @@ class UserEventHandler:
                     "total": message.total,
                 },
             )
-            return result.map(lambda _: None)
+            return FlextResult[None].ok(None)
 
-        return FlextResult[object].fail(f"Unknown event type: {type(message)}")
+        return FlextResult[None].fail("Unsupported message type")
 
 
 # =============================================================================
@@ -1448,7 +1466,7 @@ def demonstrate_event_interfaces() -> None:
 
     # Create audit plugin for event handling
     audit_plugin = AuditLogPlugin()
-    context = SimplePluginContext()
+    context = SimplePluginContext({})
     audit_plugin.initialize(context)
 
     # Create event handler
@@ -1470,10 +1488,6 @@ def demonstrate_event_interfaces() -> None:
     # Publish user created event
     user_event = UserCreatedEvent(
         event_id="evt_user_001",
-        event_type="user_created",
-        aggregate_id="user_event_user_1",
-        event_version=1,
-        timestamp="2023-01-01T00:00:00Z",
         user_id="event_user_1",
         name="Event User",
         email="eventuser@example.com",
@@ -1486,10 +1500,6 @@ def demonstrate_event_interfaces() -> None:
     # Publish order placed event
     order_event = OrderPlacedEvent(
         event_id="evt_order_001",
-        event_type="order_placed",
-        aggregate_id="order_event_order_1",
-        event_version=1,
-        timestamp="2023-01-01T00:00:00Z",
         order_id="event_order_1",
         user_id="event_user_1",
         total=129.99,
@@ -1501,7 +1511,7 @@ def demonstrate_event_interfaces() -> None:
 
     # Publish event with no subscribers
     @dataclass
-    class UnknownEvent:
+    class UnknownEvent(FlextEvent):
         # Domain event fields (FlextDomainEvent protocol)
         event_id: str
         event_type: str
@@ -1510,7 +1520,7 @@ def demonstrate_event_interfaces() -> None:
         timestamp: str
 
         # Event-specific fields
-        data: str
+        event_data: str
 
         def to_dict(self) -> dict[str, object]:
             """Convert event to dictionary."""
@@ -1520,30 +1530,9 @@ def demonstrate_event_interfaces() -> None:
                 "aggregate_id": self.aggregate_id,
                 "event_version": self.event_version,
                 "timestamp": self.timestamp,
-                "data": self.value,  # type: ignore[attr-defined]
+                "data": self.event_data,
             }
 
-        @classmethod
-        def from_dict(cls, data_dict: dict[str, object]) -> "UnknownEvent":
-            """Create event from dictionary."""
-            event_version_raw = data_dict["event_version"]
-            if isinstance(event_version_raw, int):
-                event_version = event_version_raw
-            elif isinstance(event_version_raw, (str, float)):
-                event_version = int(event_version_raw)
-            elif event_version_raw is None:
-                event_version = 1
-            else:
-                event_version = int(str(event_version_raw))
-
-            return cls(
-                event_id=str(data_dict["event_id"]),
-                event_type=str(data_dict["event_type"]),
-                aggregate_id=str(data_dict["aggregate_id"]),
-                event_version=event_version,
-                timestamp=str(data_dict["timestamp"]),
-                data=str(data_dict["data"]),
-            )
 
     unknown_event = UnknownEvent(
         event_id="evt_001",
@@ -1551,7 +1540,7 @@ def demonstrate_event_interfaces() -> None:
         aggregate_id="test",
         event_version=1,
         timestamp="2023-01-01T00:00:00Z",
-        data="test data",
+        event_data="test data",
     )
     result = publisher.publish(unknown_event)
     if result.success:
@@ -1566,10 +1555,6 @@ def demonstrate_event_interfaces() -> None:
     # Publish event after unsubscription
     user_event2 = UserCreatedEvent(
         event_id="evt_user_002",
-        event_type="user_created",
-        aggregate_id="user_event_user_2",
-        event_version=1,
-        timestamp="2023-01-01T01:00:00Z",
         user_id="event_user_2",
         name="Second Event User",
         email="eventuser2@example.com",

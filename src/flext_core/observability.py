@@ -11,13 +11,13 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 
-# Type aliases for unified approach with FlextProtocols integration - Python 3.13+ syntax
-type ObservabilityProtocol = FlextProtocols.Infrastructure.Configurable
-type MetricsCollectorProtocol = FlextProtocols.Extensions.Observability
-type LoggerServiceProtocol = FlextProtocols.Infrastructure.LoggerProtocol
+# MIGRATED TO LEGACY.PY: Protocol aliases moved to centralized legacy compatibility
+# Use FlextProtocols hierarchy directly in new code:
+# - FlextProtocols.Infrastructure.Configurable (instead of ObservabilityProtocol)
+# - FlextProtocols.Extensions.Observability (instead of MetricsCollectorProtocol)
+# - FlextProtocols.Infrastructure.LoggerProtocol (instead of LoggerServiceProtocol)
 
 GeneratorT = Generator
 
@@ -96,6 +96,12 @@ class FlextObservability:
         def log_event(self, event_name: str, payload: dict[str, object]) -> None:
             pass
 
+        def add_context(self, key: str, value: object) -> None:
+            """Add context to span for API compatibility with tests."""
+
+        def add_error(self, error: Exception) -> None:
+            """Add error to span for API compatibility with tests."""
+
         def finish(self) -> None:
             pass
 
@@ -115,12 +121,42 @@ class FlextObservability:
             finally:
                 span.finish()
 
+        @contextmanager
+        def business_span(
+            self, operation_name: str
+        ) -> Generator[FlextObservability.Span]:
+            """Business span for API compatibility with tests."""
+            # Delegate to trace_operation for consistent behavior
+            with self.trace_operation(operation_name) as span:
+                yield span
+
+        @contextmanager
+        def technical_span(
+            self, operation_name: str, component: str | None = None
+        ) -> Generator[FlextObservability.Span]:
+            """Technical span for API compatibility with tests."""
+            with self.trace_operation(operation_name) as span:
+                if component:
+                    span.set_tag("component", component)
+                yield span
+
+        @contextmanager
+        def error_span(
+            self, operation_name: str, error_type: str | None = None
+        ) -> Generator[FlextObservability.Span]:
+            """Error span for API compatibility with tests."""
+            with self.trace_operation(operation_name) as span:
+                if error_type:
+                    span.set_tag("error_type", error_type)
+                yield span
+
     class Metrics:
         """Nested in-memory metrics collector."""
 
         def __init__(self) -> None:
             self._counters: dict[str, int] = {}
             self._gauges: dict[str, float] = {}
+            self._histograms: dict[str, list[float]] = {}
 
         def increment_counter(
             self, name: str, tags: dict[str, str] | None = None
@@ -128,11 +164,45 @@ class FlextObservability:
             key = self._make_key(name, tags)
             self._counters[key] = self._counters.get(key, 0) + 1
 
+        def increment(
+            self, name: str, value: int = 1, tags: dict[str, str] | None = None
+        ) -> None:
+            """Increment counter for API compatibility with tests."""
+            if tags:
+                key = self._make_key(name, tags)
+                self._counters[key] = self._counters.get(key, 0) + value
+            else:
+                self._counters[name] = self._counters.get(name, 0) + value
+
         def record_gauge(
             self, name: str, value: float, tags: dict[str, str] | None = None
         ) -> None:
             key = self._make_key(name, tags)
             self._gauges[key] = value
+
+        def gauge(self, name: str, value: float) -> None:
+            """Record gauge for API compatibility with tests."""
+            self._gauges[name] = value
+
+        def histogram(self, name: str, value: float) -> None:
+            """Record histogram value for API compatibility with tests."""
+            if name not in self._histograms:
+                self._histograms[name] = []
+            self._histograms[name].append(value)
+
+        def get_metrics(self) -> dict[str, object]:
+            """Get all collected metrics for API compatibility with tests."""
+            return {
+                "counters": self._counters.copy(),
+                "gauges": self._gauges.copy(),
+                "histograms": {k: v.copy() for k, v in self._histograms.items()},
+            }
+
+        def clear_metrics(self) -> None:
+            """Clear all collected metrics for API compatibility with tests."""
+            self._counters.clear()
+            self._gauges.clear()
+            self._histograms.clear()
 
         def _make_key(self, name: str, tags: dict[str, str] | None) -> str:
             if not tags:
@@ -144,9 +214,16 @@ class FlextObservability:
         """Nested simple observability implementation."""
 
         def __init__(self) -> None:
+            # Standard attributes (legacy)
             self.logger = FlextObservability.Console()
             self.tracer = FlextObservability.Tracer()
             self.metrics = FlextObservability.Metrics()
+
+            # Test API compatibility attributes
+            self.log = self.logger  # Tests expect .log
+            self.trace = self.tracer  # Tests expect .trace
+            self.alerts = FlextObservability.Alerts()
+            self.health = FlextObservability.Health()
 
         def record_metric(
             self, name: str, value: float, tags: dict[str, str] | None = None
@@ -166,6 +243,26 @@ class FlextObservability:
         def warning(self, message: str, **kwargs: object) -> None:
             pass
 
+        def critical(self, message: str, **kwargs: object) -> None:
+            """Critical alert for API compatibility with tests."""
+
+        def error(self, message: str, **kwargs: object) -> None:
+            """Error alert for API compatibility with tests."""
+
+    class Health:
+        """Nested health check component."""
+
+        def __init__(self) -> None:
+            self._status = "healthy"
+
+        def check(self) -> dict[str, object]:
+            """Health check for API compatibility with tests."""
+            return {"status": self._status, "timestamp": "now"}
+
+        def is_healthy(self) -> bool:
+            """Check if system is healthy."""
+            return self._status == "healthy"
+
 
 # =============================================================================
 # BACKWARD COMPATIBILITY ALIASES - Consolidated approach
@@ -177,7 +274,7 @@ FlextSpan = FlextObservability.Span
 FlextTracer = FlextObservability.Tracer
 FlextMetrics = FlextObservability.Metrics
 FlextObservabilitySystem = FlextObservability  # Backward compatibility with old name
-FlextAlerts = FlextObservability.Alerts()
+FlextAlerts = FlextObservability.Alerts
 FlextCoreObservability = FlextObservability.Observability
 _SimpleHealth = FlextObservability.Alerts()  # Simple fallback
 
@@ -201,8 +298,14 @@ class _GlobalObservabilityManager:
         cls._instance = FlextObservability.Observability()
 
 
-def get_global_observability() -> FlextObservability.Observability:
+def get_global_observability(
+    log_level: str | None = None, *, force_recreate: bool = False
+) -> FlextObservability.Observability:
     """Get global observability instance for compatibility."""
+    # log_level parameter is accepted but not used in this no-op implementation
+    _ = log_level  # Explicitly mark as unused but needed for API compatibility
+    if force_recreate:
+        _GlobalObservabilityManager.reset_instance()
     return _GlobalObservabilityManager.get_instance()
 
 
@@ -212,13 +315,5 @@ def reset_global_observability() -> None:
 
 
 __all__: list[str] = [
-    "FlextAlerts",
-    "FlextConsole",
-    "FlextCoreObservability",
-    "FlextMetrics",
-    "FlextObservability",
-    "FlextSpan",
-    "FlextTracer",
-    "get_global_observability",
-    "reset_global_observability",
+    "FlextObservability",  # ONLY main class exported
 ]

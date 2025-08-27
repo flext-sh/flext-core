@@ -75,7 +75,7 @@ TServiceName = str
 TUserId = str
 
 
-class SampleCommand(FlextCommands.Command):
+class SampleCommand(FlextCommands.Models.Command):
     """Test command for comprehensive testing."""
 
     name: str
@@ -90,13 +90,13 @@ class SampleCommand(FlextCommands.Command):
         return FlextResult[None].ok(None)
 
 
-class SampleCommandWithoutValidation(FlextCommands.Command):
+class SampleCommandWithoutValidation(FlextCommands.Models.Command):
     """Test command without custom validation."""
 
     description: str
 
 
-class SampleComplexCommand(FlextCommands.Command):
+class SampleComplexCommand(FlextCommands.Models.Command):
     """Test command with complex validation rules."""
 
     email: str
@@ -515,7 +515,7 @@ class TestFlextCommandsFactoryMethods:
 
     def test_create_command_bus_factory(self) -> None:
         """Test FlextCommands.create_command_bus factory method."""
-        bus = FlextCommands.create_command_bus()
+        bus = FlextCommands.Factories.create_command_bus()
         assert isinstance(bus, FlextCommands.Bus)
         assert hasattr(bus, "execute")
         assert hasattr(bus, "register_handler")
@@ -526,8 +526,8 @@ class TestFlextCommandsFactoryMethods:
         def sample_handler(command: object) -> object:
             return f"handled: {command}"
 
-        handler = FlextCommands.create_simple_handler(sample_handler)
-        assert isinstance(handler, FlextCommands.Handler)
+        handler = FlextCommands.Factories.create_simple_handler(sample_handler)
+        assert isinstance(handler, FlextCommands.Handlers.CommandHandler)
 
         # Test the handler works
         test_command = SampleCommand(name="test", value=42)
@@ -551,7 +551,7 @@ class TestFlextCommandsFactoryMethods:
     def test_command_handler_with_validation(self) -> None:
         """Test handler validation and processing paths."""
 
-        class TestHandler(FlextCommands.Handler[SampleCommand, str]):
+        class TestHandler(FlextCommands.Handlers.CommandHandler[SampleCommand, str]):
             def handle(self, command: SampleCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"processed: {command.name}")
 
@@ -564,7 +564,7 @@ class TestFlextCommandsFactoryMethods:
         assert isinstance(can_handle, bool)
 
         # Test processing
-        result = handler.process_command(test_command)
+        result = handler.handle(test_command)
         assert result.success
 
     def test_command_decorators_functionality(self) -> None:
@@ -583,13 +583,13 @@ class TestFlextCommandsFactoryMethods:
     def test_command_result_with_metadata(self) -> None:
         """Test FlextCommands.Result with error data functionality."""
         # Test successful result (FlextResult doesn't support metadata in .ok())
-        result: FlextResult[str] = FlextCommands.Result.ok("success")
+        result: FlextResult[str] = FlextCommands.Results.success("success")
         assert result is not None
         assert result.success
         assert result.value == "success"
 
         # Test failed result with error code and error data
-        failed_result: FlextResult[None] = FlextCommands.Result.fail(
+        failed_result: FlextResult[None] = FlextCommands.Results.failure(
             "error message",
             error_code="TEST_ERROR",
             error_data={"context": "test"},
@@ -602,7 +602,7 @@ class TestFlextCommandsFactoryMethods:
     def test_query_functionality(self) -> None:
         """Test Query classes and handlers."""
 
-        class TestQuery(FlextCommands.Query):
+        class TestQuery(FlextCommands.Models.Query):
             search_term: str = "test"
 
         query = TestQuery()
@@ -611,7 +611,7 @@ class TestFlextCommandsFactoryMethods:
         assert validation_result.success
 
         # Test query handler
-        class TestQueryHandler(FlextCommands.QueryHandler[TestQuery, str]):
+        class TestQueryHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
             def handle(self, query: TestQuery) -> FlextResult[str]:
                 return FlextResult[str].ok(f"found: {query.search_term}")
 

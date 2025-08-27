@@ -9,14 +9,12 @@ from __future__ import annotations
 
 import tempfile
 from collections.abc import Generator
-from typing import Any
 
 import pytest
 
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextFieldCore,
     FlextFields,
     FlextFieldType,
     FlextResult,
@@ -25,7 +23,7 @@ from flext_core import (
 )
 from tests.support.factories import FlextResultFactory, UserDataFactory
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class FlextTestFixtures:
@@ -55,13 +53,13 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def edge_case_values() -> dict[str, list[Any]]:
+    def edge_case_values() -> dict[str, list[object]]:
         """Edge case values for comprehensive testing."""
         return {"edge_cases": [None, "", 0, False, [], {}]}
 
     @staticmethod
     @pytest.fixture
-    def field_types_matrix() -> list[tuple[FlextFieldType, list[Any], list[bool]]]:
+    def field_types_matrix() -> list[tuple[FlextFieldType, list[object], list[bool]]]:
         """Field types with test values and expected validity."""
         return [
             (FlextFieldType.STRING, ["test", ""], [True, False]),
@@ -111,42 +109,57 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def sample_string_field() -> FlextFieldCore:
+    def sample_string_field() -> FlextFields.Core.BaseField[object]:
         """Sample string field for testing."""
-        return FlextFields.create_string_field(
-            field_id="test_string",
-            field_name="test_string_field",
+        from flext_core.fields import create_field
+
+        result = create_field(
+            "string",
+            "test_string_field",
             min_length=1,
             max_length=100,
             pattern=r"^[a-zA-Z0-9_]+$",
             required=True,
             description="Test string field",
         )
+        if result.failure:
+            raise ValueError(f"Failed to create string field: {result.error}")
+        return result.value
 
     @staticmethod
     @pytest.fixture
-    def sample_integer_field() -> FlextFieldCore:
+    def sample_integer_field() -> FlextFields.Core.BaseField[object]:
         """Sample integer field for testing."""
-        return FlextFields.create_integer_field(
-            field_id="test_integer",
-            field_name="test_integer_field",
+        from flext_core.fields import create_field
+
+        result = create_field(
+            "integer",
+            "test_integer_field",
             min_value=0,
             max_value=1000,
             required=True,
             description="Test integer field",
         )
+        if result.failure:
+            raise ValueError(f"Failed to create integer field: {result.error}")
+        return result.value
 
     @staticmethod
     @pytest.fixture
-    def sample_boolean_field() -> FlextFieldCore:
+    def sample_boolean_field() -> FlextFields.Core.BaseField[object]:
         """Sample boolean field for testing."""
-        return FlextFields.create_boolean_field(
-            field_id="test_boolean",
-            field_name="test_boolean_field",
+        from flext_core.fields import create_field
+
+        result = create_field(
+            "boolean",
+            "test_boolean_field",
             required=False,
             default_value=False,
             description="Test boolean field",
         )
+        if result.failure:
+            raise ValueError(f"Failed to create boolean field: {result.error}")
+        return result.value
 
     @staticmethod
     @pytest.fixture
@@ -166,13 +179,13 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def mock_validator_success() -> Any:
+    def mock_validator_success() -> object:
         """Mock validator that always succeeds."""
         return lambda _: True
 
     @staticmethod
     @pytest.fixture
-    def mock_validator_failure() -> Any:
+    def mock_validator_failure() -> object:
         """Mock validator that always fails."""
         return lambda _: False
 
@@ -201,7 +214,7 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def validation_test_cases() -> list[dict[str, Any]]:
+    def validation_test_cases() -> list[dict[str, object]]:
         """Test cases for validation scenarios."""
         return [
             {

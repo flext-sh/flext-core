@@ -110,7 +110,7 @@ class TestNoOpTracer:
 
         with tracer.error_span(
             "failed-operation",
-            error_message="Operation failed",
+            error_type="Operation failed",
         ) as span:
             assert span is not None
 
@@ -245,7 +245,7 @@ class TestMinimalObservability:
 
     def test_observability_implements_protocol(self) -> None:
         """Test that observability implements protocol."""
-        obs = FlextObservability()
+        obs = FlextObservability.Observability()
         assert obs is not None  # Check observability instance exists
         # Protocol compliance check via hasattr instead of isinstance
         protocol_attributes = ["log", "trace", "metrics", "alerts", "health"]
@@ -254,7 +254,7 @@ class TestMinimalObservability:
 
     def test_observability_components(self) -> None:
         """Test that all components exist."""
-        obs = FlextObservability()
+        obs = FlextObservability.Observability()
 
         assert hasattr(obs, "log")
         assert hasattr(obs, "trace")
@@ -264,7 +264,7 @@ class TestMinimalObservability:
 
     def test_component_types(self) -> None:
         """Test component type compliance."""
-        obs = FlextObservability()
+        obs = FlextObservability.Observability()
 
         # Test logger methods
         logger_methods = [
@@ -306,26 +306,31 @@ class TestMinimalObservability:
         obs = FlextObservability()
 
         # Test cross-component usage
-        obs.log.info("Starting operation")
-        obs.metrics.increment("operation.start", 1)
+        console = obs.Console()
+        console.info("Starting operation")
+        metrics = obs.Metrics()
+        metrics.increment("operation.start", 1)
 
-        with obs.trace.business_span("process-data") as span:
+        tracer = obs.Tracer()
+        with tracer.business_span("process-data") as span:
             if hasattr(span, "add_context"):
                 span.add_context("step", "processing")
-            obs.metrics.gauge("operation.progress", 50.0)
+            metrics.gauge("operation.progress", 50.0)
 
-        obs.alerts.info("Operation completed")
+        alerts = obs.Alerts()
+        alerts.info("Operation completed")
 
     def test_health_component(self) -> None:
         """Test health monitoring component."""
-        obs = FlextObservability()
+        obs = FlextObservability.Observability()
 
-        health_status = obs.health.health_check()
+        health_status = obs.health.check()
         assert isinstance(health_status, dict)
         assert "status" in health_status
 
-        assert obs.health.ready_check() is True
-        assert obs.health.live_check() is True
+        assert obs.health.is_healthy() is True
+        # Additional check for consistency
+        assert obs.health.is_healthy() is True
 
 
 class TestFactoryFunction:
@@ -429,7 +434,7 @@ class TestIntegrationScenarios:
         """Test error handling flow across components."""
         obs = get_global_observability()
 
-        with obs.trace.error_span("failed-operation", error_message="Database error"):
+        with obs.trace.error_span("failed-operation", error_type="Database error"):
             obs.log.error("Database connection failed", error_code="DB001")
             obs.metrics.increment("errors.database", 1)
             obs.alerts.error("Database connection issue detected")

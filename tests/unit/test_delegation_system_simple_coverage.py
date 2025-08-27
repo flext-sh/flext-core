@@ -10,9 +10,8 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import (
+    FlextExceptions,
     FlextMixinDelegator,
-    FlextOperationError,
-    FlextTypeError,
     create_mixin_delegator,
 )
 from flext_core.delegation_system import (
@@ -53,7 +52,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutIsValid()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "is_valid property not delegated" in str(exc_info.value)
@@ -71,7 +70,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutValidationErrors()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "validation_errors property not delegated" in str(exc_info.value)
@@ -89,7 +88,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutHasValidationErrors()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "has_validation_errors method not delegated" in str(exc_info.value)
@@ -107,7 +106,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutToDictBasic()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_methods(host, test_results)
 
         assert "to_dict_basic method not delegated" in str(exc_info.value)
@@ -123,7 +122,7 @@ class TestDelegationSystemCoverage:
         host = HostWithWrongIsValidType()
         test_results: list[str] = []
 
-        with pytest.raises(FlextTypeError) as exc_info:
+        with pytest.raises(FlextExceptions.TypeError) as exc_info:
             _validate_method_functionality(host, test_results)
 
         assert "is_valid should return bool" in str(exc_info.value)
@@ -137,7 +136,7 @@ class TestDelegationSystemCoverage:
         host = HostWithoutDelegator()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Host must have delegator attribute" in str(exc_info.value)
@@ -155,7 +154,7 @@ class TestDelegationSystemCoverage:
         host = HostWithBadDelegator()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Delegator must have get_delegation_info method" in str(exc_info.value)
@@ -174,7 +173,7 @@ class TestDelegationSystemCoverage:
         host = HostWithFailingValidation()
         test_results: list[str] = []
 
-        with pytest.raises(FlextOperationError) as exc_info:
+        with pytest.raises(FlextExceptions.OperationError) as exc_info:
             _validate_delegation_info(host, test_results)
 
         assert "Delegation validation should pass" in str(exc_info.value)
@@ -317,11 +316,11 @@ class TestValidateSystemExceptionHandling:
             assert "Runtime error" in result.error
 
     def test_flext_operation_error_handling(self) -> None:
-        """Test FlextOperationError handling in validate_delegation_system."""
+        """Test FlextExceptions.OperationError handling in validate_delegation_system."""
         with patch(
             "flext_core.delegation_system._validate_delegation_methods"
         ) as mock_validate:
-            mock_validate.side_effect = FlextOperationError(
+            mock_validate.side_effect = FlextExceptions.OperationError(
                 "Operation error", operation="test"
             )
 
@@ -332,11 +331,11 @@ class TestValidateSystemExceptionHandling:
             assert "Operation error" in result.error
 
     def test_flext_type_error_handling(self) -> None:
-        """Test FlextTypeError handling in validate_delegation_system."""
+        """Test FlextExceptions.TypeError handling in validate_delegation_system."""
         with patch(
             "flext_core.delegation_system._validate_method_functionality"
         ) as mock_validate:
-            mock_validate.side_effect = FlextTypeError("Type error")
+            mock_validate.side_effect = FlextExceptions.TypeError("Type error")
 
             result = validate_delegation_system()
 

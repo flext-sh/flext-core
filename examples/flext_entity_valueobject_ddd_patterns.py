@@ -21,13 +21,13 @@ from flext_core import (
     FlextEntity,
     FlextEntityId,
     FlextEventList,
+    FlextGenerators,
     FlextMetadata,
     FlextResult,
     FlextTimestamp,
     FlextValue,
     FlextVersion,
 )
-from flext_core.utilities import FlextGenerators
 
 # Constants to avoid magic numbers
 MIN_PRODUCT_CODE_LENGTH = 3
@@ -83,9 +83,10 @@ class Price(FlextValue):
                 "Cannot add prices with different currencies"
             )
         return FlextResult[Price].ok(
-            Price.model_validate(
-                {"amount": self.amount + other.amount, "currency": self.currency}
-            )
+            Price.model_validate({
+                "amount": self.amount + other.amount,
+                "currency": self.currency,
+            })
         )
 
 
@@ -160,7 +161,7 @@ class Customer(FlextEntity):
                 "country": new_address.country,
             },
         )
-        return FlextResult.ok(self)
+        return FlextResult[Customer].ok(self)
 
 
 # =============================================================================
@@ -207,12 +208,10 @@ class ShoppingCart(FlextEntity):
         self.items.append(item)
 
         # Update total
-        item_total = Price.model_validate(
-            {
-                "amount": product.price.amount * quantity,
-                "currency": product.price.currency,
-            }
-        )
+        item_total = Price.model_validate({
+            "amount": product.price.amount * quantity,
+            "currency": product.price.currency,
+        })
         total_result = self.total.add(item_total)
         if total_result.success:
             self.total = total_result.value
@@ -256,7 +255,7 @@ class ShoppingCart(FlextEntity):
             },
         )
 
-        return FlextResult.ok(order_data)
+        return FlextResult[dict[str, object]].ok(order_data)
 
 
 # =============================================================================
@@ -278,7 +277,7 @@ class PricingService:
         discount_amount = price.amount * (discount_percent / 100)
         final_amount = price.amount - discount_amount
 
-        return FlextResult.ok(
+        return FlextResult[Price].ok(
             Price.model_validate({"amount": final_amount, "currency": price.currency})
         )
 
@@ -289,7 +288,7 @@ class PricingService:
         """Apply bulk discount to products."""
         if len(items) < min_quantity:
             # No discount, return original prices
-            return FlextResult.ok([item.price for item in items])
+            return FlextResult[list[Price]].ok([item.price for item in items])
 
         # Apply 10% bulk discount
         discounted_prices = []
@@ -302,7 +301,7 @@ class PricingService:
                     f"Bulk discount failed: {discount_result.error}"
                 )
 
-        return FlextResult.ok(discounted_prices)
+        return FlextResult[list[Price]].ok(discounted_prices)
 
 
 # =============================================================================
@@ -321,9 +320,10 @@ class DomainObjectFactory:
         try:
             # Create value objects
             product_code = ProductCode.model_validate({"code": code})
-            price = Price.model_validate(
-                {"amount": Decimal(str(price_amount)), "currency": currency}
-            )
+            price = Price.model_validate({
+                "amount": Decimal(str(price_amount)),
+                "currency": currency,
+            })
 
             # Create entity with proper initialization
             product = Product(
@@ -354,14 +354,12 @@ class DomainObjectFactory:
         name: str, email: str, city: str = "Unknown", country: str = "Unknown"
     ) -> FlextResult[Customer]:
         """Create customer with validation."""
-        address = Address.model_validate(
-            {
-                "street": "123 Main St",
-                "city": city,
-                "postal_code": "12345",
-                "country": country,
-            }
-        )
+        address = Address.model_validate({
+            "street": "123 Main St",
+            "city": city,
+            "postal_code": "12345",
+            "country": country,
+        })
 
         customer = Customer(
             name=name,

@@ -10,9 +10,12 @@ from datetime import UTC, datetime
 
 import pytest
 
-from flext_core import FlextAggregateRoot, FlextValidationError
-from flext_core.aggregate_root import FlextAggregateRoot as _FlextAggregateRoot
-from flext_core.root_models import FlextMetadata
+from flext_core import (
+    FlextAggregateRoot,
+    FlextAggregateRoot as _FlextAggregateRoot,
+    FlextExceptions,
+    FlextMetadata,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -226,8 +229,8 @@ class TestAggregateRootInitializationCoverage:
         class BadAggregate(FlextAggregateRoot):
             required_field: str
 
-        # Should raise FlextValidationError for missing required field
-        with pytest.raises(FlextValidationError) as exc_info:
+        # Should raise FlextExceptions.ValidationError for missing required field
+        with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             BadAggregate()  # Missing required_field
 
         error = exc_info.value

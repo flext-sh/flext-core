@@ -15,7 +15,7 @@ The module includes:
 Examples:
     Basic usage with hierarchical constants::
 
-        from flext_core.constants import FlextConstants
+        # Example: FlextConstants.Core.VERSION
 
         timeout = FlextConstants.Defaults.TIMEOUT
         error_code = FlextConstants.Errors.VALIDATION_ERROR
@@ -23,7 +23,7 @@ Examples:
 
     Using enumerations for type safety::
 
-        from flext_core.constants import FlextLogLevel, FlextEnvironment
+        # Example: FlextLogLevel.INFO, FlextEnvironment.PRODUCTION
 
         current_level = FlextLogLevel.INFO
         env = FlextEnvironment.PRODUCTION
@@ -31,7 +31,7 @@ Examples:
 
     Error handling with structured codes::
 
-        from flext_core.constants import FlextConstants, ERROR_CODES
+        # Example usage:
 
         # Modern structured approach
         error = FlextConstants.Errors.CONNECTION_ERROR
@@ -59,7 +59,7 @@ from typing import ClassVar, Final, override
 
 
 class FlextConstants:
-    """Hierarchical constants system organizing FLEXT constants by domain and functionality.
+    """Hierarchical constants system organizing FLEXT constants by domain.
 
     This is the single consolidated class for all FLEXT Core constants, following the
     Flext[Area][Module] pattern where this represents FlextConstants.
@@ -286,6 +286,7 @@ class FlextConstants:
         CONFIGURATION_ERROR: Final[str] = "FLEXT_2003"
         SERIALIZATION_ERROR: Final[str] = "FLEXT_2004"
         EXTERNAL_SERVICE_ERROR: Final[str] = "FLEXT_2005"
+        CREATION: Final[str] = "FLEXT_3002"
 
         # Legacy compatibility codes (existing ecosystem dependencies)
         # Business Logic Errors
@@ -348,6 +349,7 @@ class FlextConstants:
         # Interface & CLI Errors
         CLI_ERROR: Final[str] = "CLI_ERROR"
         NOT_FOUND: Final[str] = "NOT_FOUND"
+        NOT_FOUND_ERROR: Final[str] = "NOT_FOUND_ERROR"
         ALREADY_EXISTS: Final[str] = "ALREADY_EXISTS"
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"
 
@@ -639,10 +641,14 @@ class FlextConstants:
         METRICS_INTERVAL: Final[int] = 60  # seconds
         HEALTH_CHECK_INTERVAL: Final[int] = 30  # seconds
 
-        # Time and size calculation constants (consolidated from utilities.py - SOLID SRP)
+        # Time and size calculation constants (consolidated from utilities.py)
         SECONDS_PER_MINUTE: Final[int] = 60
         SECONDS_PER_HOUR: Final[int] = 3600
         BYTES_PER_KB: Final[int] = 1024
+
+        # Payload processing constants
+        PAYLOAD_MAX_SIZE: Final[int] = 65536  # 64KB maximum uncompressed size
+        PAYLOAD_COMPRESSION_LEVEL: Final[int] = 6  # zlib compression level
 
     # =========================================================================
     # CONFIGURATION CONSTANTS - Configuration system constants
@@ -808,6 +814,38 @@ class FlextConstants:
     # OBSERVABILITY CONSTANTS - Logging, monitoring, and tracing constants
     # =========================================================================
 
+    class Reliability:
+        """Reliability constants for the FLEXT ecosystem.
+
+        This class contains reliability-related constants including retry policies,
+        timeout values, circuit breaker thresholds, and error handling parameters
+        following reliability engineering best practices.
+
+        Architecture Principles Applied:
+            - Single Responsibility: Only reliability configuration
+            - Fault Tolerance: Constants support resilience patterns
+            - Circuit Breaking: Thresholds for failure isolation
+        """
+
+        # Retry configuration
+        MAX_RETRY_ATTEMPTS: Final[int] = 3
+        DEFAULT_RETRY_DELAY: Final[float] = 1.0
+        EXPONENTIAL_BACKOFF_MULTIPLIER: Final[float] = 2.0
+
+        # Circuit breaker thresholds
+        CIRCUIT_BREAKER_FAILURE_THRESHOLD: Final[int] = 5
+        CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = 60
+        CIRCUIT_BREAKER_SUCCESS_THRESHOLD: Final[int] = 3
+
+        # Timeout configuration (seconds)
+        DEFAULT_OPERATION_TIMEOUT: Final[float] = 30.0
+        SHORT_TIMEOUT: Final[float] = 5.0
+        LONG_TIMEOUT: Final[float] = 300.0
+
+        # Health check configuration
+        HEALTH_CHECK_TIMEOUT: Final[float] = 10.0
+        HEALTH_CHECK_RETRIES: Final[int] = 2
+
     class Observability:
         """Observability constants for the FLEXT ecosystem.
 
@@ -848,6 +886,7 @@ class FlextConstants:
         FLEXT_SERIALIZATION_VERSION: Final[str] = "1.0.0"
         SERIALIZATION_FORMAT_JSON: Final[str] = "json"
         SERIALIZATION_FORMAT_JSON_COMPRESSED: Final[str] = "json_compressed"
+        SERIALIZATION_FORMAT_BINARY: Final[str] = "binary"
 
     # NEW: Handler system constants (ADDED from string mapping analysis)
     class Handlers:
@@ -1243,22 +1282,6 @@ SERVICE_NAME_EMPTY: Final[str] = "Service name cannot be empty"
 FlextCoreConstants = FlextConstants
 
 __all__: Final[list[str]] = [
-    # Legacy constants
-    "ERROR_CODES",
-    "MESSAGES",
-    "SERVICE_NAME_EMPTY",
-    # Enumerations
-    "FlextConnectionType",
-    # Main constants class with nested structure
-    "FlextConstants",
-    # Backward compatibility
-    "FlextCoreConstants",
-    "FlextDataFormat",
-    "FlextEntityStatus",
-    "FlextEnvironment",
-    "FlextFieldType",
-    "FlextLogLevel",
-    "FlextOperationStatus",
-    # Use FlextConstants hierarchical structure
-    # Use FlextConstants for hierarchical access
+    "FlextConstants",  # Main class with all constants
+    "FlextEntityStatus",  # Entity status enum alias
 ]

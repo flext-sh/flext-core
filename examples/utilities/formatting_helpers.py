@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 
-from flext_core import FlextUtilities, TEntityId
+from flext_core import FlextTypes, FlextUtilities
 
 # =============================================================================
 # FORMATTING CONSTANTS - Data conversion and size formatting
@@ -41,18 +41,18 @@ MAX_DISCOUNT_PERCENTAGE = 100
 # =============================================================================
 
 
-def generate_prefixed_id(prefix: str, length: int) -> TEntityId:
-    """Generate prefixed ID with specified length using TEntityId."""
+def generate_prefixed_id(prefix: str, length: int) -> FlextTypes.Core.Id:
+    """Generate prefixed ID with specified length using FlextTypes.Core.Id."""
     base_id = FlextUtilities.generate_id()
     return f"{prefix}-{base_id[:length]}"
 
 
-def generate_hash_id(data: str) -> TEntityId:
-    """Generate hash-based ID from data using TEntityId."""
+def generate_hash_id(data: str) -> FlextTypes.Core.Id:
+    """Generate hash-based ID from data using FlextTypes.Core.Id."""
     return hashlib.sha256(data.encode()).hexdigest()[:12]
 
 
-def generate_short_id(length: int = 8) -> TEntityId:
+def generate_short_id(length: int = 8) -> FlextTypes.Core.Id:
     """Generate short ID with specified length - improved default."""
     base_id = FlextUtilities.generate_id()
     return base_id[:length]

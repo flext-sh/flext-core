@@ -29,12 +29,12 @@ from factory.declarations import (
 from factory.faker import Faker
 
 from flext_core import FlextResult
-from flext_core.exceptions import FlextError, FlextValidationError
+from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModel, FlextValue
 from flext_core.root_models import FlextMetadata, FlextVersion
 from flext_core.typings import FlextTypes
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class BaseTestEntity(FlextModel):
@@ -270,17 +270,17 @@ class ExceptionFactory:
     def create_domain_error(
         message: str = "Domain error occurred",
         error_code: str = "DOMAIN_ERROR",
-    ) -> FlextError:
-        """Create FlextError."""
-        return FlextError(message, error_code=error_code)
+    ) -> Exception:
+        """Create FlextExceptions.Error."""
+        return FlextExceptions.Error(message, error_code=error_code)
 
     @staticmethod
     def create_validation_error(
         message: str = "Validation failed",
         error_code: str = "VALIDATION_ERROR",
-    ) -> FlextValidationError:
-        """Create FlextValidationError."""
-        return FlextValidationError(message, error_code=error_code)
+    ) -> Exception:
+        """Create FlextExceptions.ValidationError."""
+        return FlextExceptions.ValidationError(message, error_code=error_code)
 
 
 class TestEntityFactory(Factory[BaseTestEntity]):

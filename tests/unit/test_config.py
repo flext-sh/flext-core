@@ -10,12 +10,10 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
-
-if TYPE_CHECKING:
-    from pytest_benchmark.fixture import BenchmarkFixture
+from typing import cast
 
 import pytest
+from pytest_benchmark.fixture import BenchmarkFixture
 from tests.support.factory_boy_factories import (
     ConfigFactory,
     EdgeCaseGenerators,
@@ -27,6 +25,7 @@ from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 from flext_core import (
     FlextConfig,
     FlextResult,
+    FlextTypes,
 )
 from flext_core.config import merge_configs
 
@@ -46,11 +45,11 @@ class TestFlextConfigCore:
         config = ConfigFactory()
 
         class TestConfig(FlextConfig):
-            database_url: str
-            log_level: str
-            debug: bool
-            timeout: int
-            max_connections: int
+            database_url: FlextTypes.Core.String
+            log_level: FlextTypes.Core.String
+            debug: FlextTypes.Core.Boolean
+            timeout: FlextTypes.Core.Integer
+            max_connections: FlextTypes.Core.Integer
 
         test_config = TestConfig(
             database_url=config.database_url,
@@ -71,11 +70,11 @@ class TestFlextConfigCore:
         prod_config = ProductionConfigFactory()
 
         class ProdConfig(FlextConfig):
-            database_url: str
-            log_level: str
-            debug: bool
-            timeout: int
-            max_connections: int
+            database_url: FlextTypes.Core.String
+            log_level: FlextTypes.Core.String
+            debug: FlextTypes.Core.Boolean
+            timeout: FlextTypes.Core.Integer
+            max_connections: FlextTypes.Core.Integer
 
         config = ProdConfig(
             database_url=prod_config.database_url,
@@ -107,11 +106,11 @@ class TestFlextConfigCore:
         """Test config field assignment using parametrization."""
 
         class TestConfig(FlextConfig):
-            database_url: str = "default"
-            log_level: str = "INFO"
-            debug: bool = False
-            timeout: int = 30
-            max_connections: int = 100
+            database_url: FlextTypes.Core.String = "default"
+            log_level: FlextTypes.Core.String = "INFO"
+            debug: FlextTypes.Core.Boolean = False
+            timeout: FlextTypes.Core.Integer = 30
+            max_connections: FlextTypes.Core.Integer = 100
 
         config = TestConfig()
         setattr(config, field_name, field_value)
@@ -131,9 +130,9 @@ class TestFlextConfigSettings:
         """Test settings creation with configuration values."""
 
         class TestConfig(FlextConfig):
-            app_name: str = "default_app"
-            version: str = "1.0.0"
-            debug: bool = False
+            app_name: FlextTypes.Core.String = "default_app"
+            version: FlextTypes.Core.String = "1.0.0"
+            debug: FlextTypes.Core.Boolean = False
 
         config = TestConfig()
 
@@ -159,9 +158,9 @@ class TestFlextConfigSettings:
         """Test settings validation patterns."""
 
         class TestConfig(FlextConfig):
-            port: int = 8080
-            host: str = "localhost"
-            workers: int = 4
+            port: FlextTypes.Core.Integer = 8080
+            host: FlextTypes.Core.String = "localhost"
+            workers: FlextTypes.Core.Integer = 4
 
         config = TestConfig(port=3000, host="0.0.0.0", workers=8)
 
@@ -196,7 +195,8 @@ class TestConfigOperations:
         }
 
         result = merge_configs(
-            cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
+            cast("dict[str, object]", dict1),
+            cast("dict[str, object]", dict2),
         )
 
         assert result.success
@@ -211,7 +211,8 @@ class TestConfigOperations:
         dict2 = {"key3": "value3", "key4": "value4", "shared": "from_second"}
 
         result = merge_configs(
-            cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
+            cast("dict[str, object]", dict1),
+            cast("dict[str, object]", dict2),
         )
 
         assert result.success
@@ -313,11 +314,11 @@ class TestConfigPerformance:
                 config = ConfigFactory()
 
                 class TestConfig(FlextConfig):
-                    database_url: str
-                    log_level: str
-                    debug: bool
-                    timeout: int
-                    max_connections: int
+                    database_url: FlextTypes.Core.String
+                    log_level: FlextTypes.Core.String
+                    debug: FlextTypes.Core.Boolean
+                    timeout: FlextTypes.Core.Integer
+                    max_connections: FlextTypes.Core.Integer
 
                 test_config = TestConfig(
                     database_url=config.database_url,
@@ -339,7 +340,9 @@ class TestConfigPerformance:
     def test_merge_performance(self, benchmark: object) -> None:
         """Benchmark config merging performance."""
 
-        def merge_many_configs() -> list[FlextResult[dict[str, object]]]:
+        def merge_many_configs() -> list[
+            FlextResult[dict[str, object]]
+        ]:
             results = []
             for _i in range(50):
                 config1 = ConfigFactory()
@@ -357,7 +360,8 @@ class TestConfigPerformance:
                 }
 
                 result = merge_configs(
-                    cast("dict[str, object]", dict1), cast("dict[str, object]", dict2)
+                    cast("dict[str, FlextTypes.Core.Object]", dict1),
+                    cast("dict[str, FlextTypes.Core.Object]", dict2),
                 )
                 results.append(result)
             return results
@@ -380,9 +384,9 @@ class TestConfigPerformance:
                 config = ConfigFactory()
 
                 class TestConfig(FlextConfig):
-                    database_url: str
-                    log_level: str
-                    debug: bool
+                    database_url: FlextTypes.Core.String
+                    log_level: FlextTypes.Core.String
+                    debug: FlextTypes.Core.Boolean
 
                 test_config = TestConfig(
                     database_url=config.database_url,
@@ -410,12 +414,12 @@ class TestConfigValidation:
         test_cases = create_validation_test_cases()
 
         class TestConfig(FlextConfig):
-            name: str
-            email: str
-            age: int
-            is_active: bool
-            created_at: object
-            metadata: object
+            name: FlextTypes.Core.String
+            email: FlextTypes.Core.String
+            age: FlextTypes.Core.Integer
+            is_active: FlextTypes.Core.Boolean
+            created_at: FlextTypes.Core.Object
+            metadata: FlextTypes.Core.Object
 
         for case in test_cases:
             if case["expected_valid"]:
@@ -473,7 +477,7 @@ class TestConfigEdgeCases:
         """Test config with unicode values."""
 
         class TestConfig(FlextConfig):
-            text_value: str
+            text_value: FlextTypes.Core.String
 
         config = TestConfig(text_value=edge_value)
         assert config.text_value == edge_value
@@ -483,7 +487,7 @@ class TestConfigEdgeCases:
         """Test config with boundary number values."""
 
         class TestConfig(FlextConfig):
-            numeric_value: float
+            numeric_value: FlextTypes.Core.Float
 
         config = TestConfig(numeric_value=edge_value)
         assert config.numeric_value == edge_value
@@ -493,7 +497,7 @@ class TestConfigEdgeCases:
         """Test config with empty/null values."""
 
         class TestConfig(FlextConfig):
-            optional_value: object = None
+            optional_value: FlextTypes.Core.Object = None
 
         config = TestConfig(optional_value=empty_value)
         assert config.optional_value == empty_value
@@ -503,7 +507,7 @@ class TestConfigEdgeCases:
         large_text = EdgeCaseGenerators.large_values()[0]  # Large string
 
         class TestConfig(FlextConfig):
-            large_field: str
+            large_field: FlextTypes.Core.String
 
         config = TestConfig(large_field=large_text)
 
@@ -545,9 +549,9 @@ class TestEnvironmentVariables:
         """Test environment variables with default values."""
 
         class TestConfig(FlextConfig):
-            app_name: str = "default_app"
-            port: int = 8080
-            debug: bool = False
+            app_name: FlextTypes.Core.String = "default_app"
+            port: FlextTypes.Core.Integer = 8080
+            debug: FlextTypes.Core.Boolean = False
 
         config = TestConfig()
 
@@ -596,13 +600,13 @@ class TestConfigIntegration:
 
         # Create final config object
         class FinalConfig(FlextConfig):
-            database_url: str
-            log_level: str
-            debug: bool
-            timeout: int
-            max_connections: int
+            database_url: FlextTypes.Core.String
+            log_level: FlextTypes.Core.String
+            debug: FlextTypes.Core.Boolean
+            timeout: FlextTypes.Core.Integer
+            max_connections: FlextTypes.Core.Integer
 
-        config = FinalConfig(**cast("dict[str, Any]", final_config))
+        config = FinalConfig(**cast("dict[str, object]", final_config))
 
         # Verify final configuration
         assert config.database_url == base_config.database_url  # From base
@@ -631,8 +635,8 @@ class TestConfigIntegration:
         """Test config integration with FlextConstants."""
 
         class TestConfig(FlextConfig):
-            environment: str = "development"
-            version: str = "1.0.0"
+            environment: FlextTypes.Core.String = "development"
+            version: FlextTypes.Core.String = "1.0.0"
 
         config = TestConfig()
 

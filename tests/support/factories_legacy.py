@@ -25,7 +25,7 @@ from flext_core import (
     FlextTypes,
 )
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class TestDataFactory:

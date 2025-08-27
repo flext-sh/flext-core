@@ -11,7 +11,7 @@ import inspect
 from collections.abc import Callable
 from typing import ClassVar, NoReturn, Protocol, cast
 
-from flext_core.exceptions import FlextOperationError, FlextTypeError
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLoggerFactory
 from flext_core.mixins import (
     FlextSerializableMixin as _BaseSerializableMixin,
@@ -70,11 +70,7 @@ class FlextDelegationSystem:
                 setattr(self.mixin_instance, self.prop_name, value)
             else:
                 error_msg: str = f"Property '{self.prop_name}' is read-only"
-                raise FlextOperationError(
-                    error_msg,
-                    operation="property_setter",
-                    context={"property_name": self.prop_name, "readonly": True},
-                )
+                raise FlextExceptions.OperationError(error_msg)
 
     class MixinDelegator:
         """Nested sistema robusto de delegação de mixins com descoberta automática.
@@ -227,11 +223,7 @@ class FlextDelegationSystem:
                         f"Delegation error in {type(mixin_instance).__name__}."
                         f"{method_name}: {e1}"
                     )
-                    raise FlextOperationError(
-                        error_msg,
-                        operation="delegation",
-                        stage=method_name,
-                    ) from e1
+                    raise FlextExceptions.OperationError(error_msg) from e1
 
             # Preserve original signature and docstring
             try:
@@ -329,7 +321,7 @@ def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
     """Validate that delegation methods exist on the host."""
 
     def _raise_delegation_error(message: str) -> NoReturn:
-        raise FlextOperationError(message, operation="delegation_validation")
+        raise FlextExceptions.OperationError(message)
 
     # Test validation methods exist
     if not hasattr(host, "is_valid"):
@@ -350,7 +342,7 @@ def _validate_method_functionality(host: object, test_results: list[str]) -> Non
     """Validate that delegated methods are functional."""
 
     def _raise_type_error(message: str) -> NoReturn:
-        raise FlextTypeError(message)
+        raise FlextExceptions.TypeError(message)
 
     # Test method functionality
     validation_result = getattr(host, "is_valid", None)
@@ -366,7 +358,7 @@ def _validate_delegation_info(
     """Validate delegation system self-check and return info."""
 
     def _raise_delegation_error(message: str) -> NoReturn:
-        raise FlextOperationError(message, operation="delegation_validation")
+        raise FlextExceptions.OperationError(message)
 
     # Test delegation info - use type guard for host.delegator
     if not hasattr(host, "delegator"):
@@ -433,8 +425,8 @@ def validate_delegation_system() -> FlextResult[
         TypeError,
         ValueError,
         RuntimeError,
-        FlextOperationError,
-        FlextTypeError,
+        FlextExceptions.OperationError,
+        FlextExceptions.TypeError,
     ) as e:
         test_results.append(f"✗ Test failed: {e}")
         error_msg: str = (
@@ -457,12 +449,5 @@ _DelegatorProtocol = FlextDelegationSystem.DelegatorProtocol
 
 
 __all__: list[str] = [
-    "FlextDelegatedProperty",
-    # Main consolidated class
-    "FlextDelegationSystem",
-    # Backward compatibility aliases
-    "FlextMixinDelegator",
-    # Factory functions
-    "create_mixin_delegator",
-    "validate_delegation_system",
+    "FlextDelegationSystem",  # ONLY main class exported
 ]

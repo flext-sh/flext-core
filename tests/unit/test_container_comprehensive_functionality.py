@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from flext_core import FlextContainer, FlextResult, get_flext_container
-from flext_core.container import (
+from flext_core.legacy import (
     FlextServiceKey,
     FlextServiceRegistrar,
     FlextServiceRetriever,
@@ -39,11 +39,13 @@ class DatabaseService:
         self.connected = True
         return FlextResult[None].ok(None)
 
-    def execute_query(self, query: str) -> FlextResult[list[dict[str, Any]]]:
-        """Execute database query."""
+    def execute_query(self, query: str, *args: object) -> FlextResult[list[dict[str, Any]]]:
+        """Execute database query with parameters."""
         if not self.connected:
             return FlextResult[list[dict[str, Any]]].fail("Database not connected")
-        return FlextResult[list[dict[str, Any]]].ok([{"result": f"Executed: {query}"}])
+        params_str = ", ".join(str(arg) for arg in args) if args else ""
+        result_msg = f"Executed: {query}" + (f" with params: [{params_str}]" if params_str else "")
+        return FlextResult[list[dict[str, Any]]].ok([{"result": result_msg}])
 
 
 class EmailService:
@@ -71,9 +73,11 @@ class UserService:
 
     def create_user(self, name: str, email: str) -> FlextResult[dict[str, Any]]:
         """Create user using injected dependencies."""
-        # Use database to store user
+        # Use database to store user - safe for testing with mock database
         db_result = self.database.execute_query(
-            f"INSERT INTO users (name, email) VALUES ('{name}', '{email}')"
+            "INSERT INTO users (name, email) VALUES (?, ?)",
+            name,
+            email,
         )
         if db_result.is_failure:
             return FlextResult[dict[str, Any]].fail(

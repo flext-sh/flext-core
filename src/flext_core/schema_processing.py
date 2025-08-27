@@ -182,7 +182,7 @@ class FlextBaseProcessor[EntryT](ABC):
         self._extracted_entries.clear()
 
 
-class FlextRegexProcessor(FlextBaseProcessor[EntryT], ABC):
+class FlextRegexProcessor(FlextBaseProcessor[EntryT]):
     """Regex-based processor for entries with pattern matching."""
 
     def __init__(
@@ -295,15 +295,13 @@ class FlextBaseSorter[EntryT]:
             return entries
 
 
-class FlextBaseFileWriter(ABC):
-    """Base file writer with common file operations."""
+class FlextBaseFileWriter(Protocol):
+    """File writer protocol with common file operations."""
 
-    @abstractmethod
     def write_header(self, output_file: object) -> None:
         """Write file header."""
         ...
 
-    @abstractmethod
     def write_entry(self, output_file: object, entry: object) -> None:
         """Write single entry."""
         ...
@@ -381,38 +379,14 @@ class FlextProcessingPipeline[InputT, OutputT]:
 # =============================================================================
 
 __all__: list[str] = [
-    # Backward-compatible export names
-    "BaseConfigManager",
-    "BaseEntry",
-    "BaseFileWriter",
-    "BaseProcessor",
-    "BaseSorter",
-    "ConfigAttributeValidator",
-    "EntryType",
-    "EntryValidator",
-    # New names
-    "FlextBaseConfigManager",
-    "FlextBaseEntry",
-    "FlextBaseFileWriter",
-    "FlextBaseProcessor",
+    # NOTE: FlextSchemaProcessing class not yet implemented
     "FlextBaseSorter",
     "FlextConfigAttributeValidator",
     "FlextEntryType",
     "FlextEntryValidator",
     "FlextProcessingPipeline",
     "FlextRegexProcessor",
-    "ProcessingPipeline",
-    "RegexProcessor",
+    # Legacy aliases removed - now in legacy.py
 ]
 
-# Backward-compatible aliases
-BaseEntry = FlextBaseEntry
-EntryType = FlextEntryType
-EntryValidator = FlextEntryValidator
-BaseProcessor = FlextBaseProcessor
-ProcessingPipeline = FlextProcessingPipeline
-BaseFileWriter = FlextBaseFileWriter
-RegexProcessor = FlextRegexProcessor
-ConfigAttributeValidator = FlextConfigAttributeValidator
-BaseConfigManager = FlextBaseConfigManager
-BaseSorter = FlextBaseSorter
+# Backward-compatible aliases moved to legacy.py per FLEXT_REFACTORING_PROMPT.md

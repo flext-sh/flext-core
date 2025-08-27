@@ -17,13 +17,12 @@ from pytest_mock import MockerFixture
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextFieldCore,
     FlextFields,
     FlextResult,
     FlextTypes,
 )
 
-JsonDict = FlextTypes.Core.JsonDict
+JsonDict = FlextTypes.Core.JsonObject
 
 
 class TestBuilders:
@@ -148,7 +147,7 @@ class TestBuilders:
             return self._container
 
     class FieldBuilder:
-        """Builder for FlextFieldCore objects with various configurations."""
+        """Builder for FlextFields objects with various configurations."""
 
         def __init__(self, field_type: str = "string") -> None:
             self._field_type = field_type
@@ -208,28 +207,16 @@ class TestBuilders:
             self._config["default_value"] = default_value
             return self
 
-        def build(self) -> FlextFieldCore:
+        def build(self) -> FlextFields.Core.BaseField[object]:
             """Build the field object."""
-            if self._field_type == "string":
-                return FlextFields.create_string_field(
-                    self._field_id,
-                    self._field_name,
-                    **self._config,
-                )
-            if self._field_type == "integer":
-                return FlextFields.create_integer_field(
-                    self._field_id,
-                    self._field_name,
-                    **self._config,
-                )
-            if self._field_type == "boolean":
-                return FlextFields.create_boolean_field(
-                    self._field_id,
-                    self._field_name,
-                    **self._config,
-                )
-            msg = f"Unsupported field type: {self._field_type}"
-            raise ValueError(msg)
+            from flext_core.fields import create_field
+
+            result = create_field(self._field_type, self._field_name, **self._config)
+            if result.failure:
+                msg = f"Failed to create {self._field_type} field: {result.error}"
+                raise ValueError(msg)
+
+            return result.value
 
     class ConfigBuilder:
         """Builder for FlextConfig objects with various settings."""
@@ -421,7 +408,7 @@ def build_string_field(
     *,
     required: bool = True,
     **constraints: object,
-) -> FlextFieldCore:
+) -> FlextFields.Core.BaseField[object]:
     """Build a string field quickly."""
     builder = TestBuilders.field("string").with_id(field_id).required(required)
 

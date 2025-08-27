@@ -17,8 +17,8 @@ FlextCommandType = str
 # Constants
 EXPECTED_BULK_SIZE = 2
 
-FlextCommand = FlextCommands.Command
-FlextCommandHandler = FlextCommands.Handler
+FlextCommand = FlextCommands.Models.Command
+FlextCommandHandler = FlextCommands.Handlers.CommandHandler
 FlextCommandBus = FlextCommands.Bus
 FlextCommandResult = FlextCommands.Result  # FlextCommands.Result with metadata
 
@@ -26,7 +26,7 @@ FlextCommandResult = FlextCommands.Result  # FlextCommands.Result with metadata
 # =============================================================================
 
 
-class CreateUserCommand(FlextCommands.Command):
+class CreateUserCommand(FlextCommands.Models.Command):
     """Test command for creating users."""
 
     username: str
@@ -51,7 +51,7 @@ class CreateUserCommand(FlextCommands.Command):
         return FlextResult[None].ok(None)
 
 
-class UpdateUserCommand(FlextCommands.Command):
+class UpdateUserCommand(FlextCommands.Models.Command):
     """Test command for updating users."""
 
     target_user_id: str
@@ -74,7 +74,7 @@ class UpdateUserCommand(FlextCommands.Command):
         return FlextResult[None].ok(None)
 
 
-class FailingCommand(FlextCommands.Command):
+class FailingCommand(FlextCommands.Models.Command):
     """Test command that always fails validation."""
 
     def get_payload(self) -> dict[str, object]:
