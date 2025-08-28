@@ -54,14 +54,14 @@ Business logic and domain models, independent of frameworks:
 # src/flext_core/
 ├── entities.py         # FlextEntity - Entities with identity
 ├── value_objects.py    # FlextValue - Immutable values
-├── aggregate_root.py   # FlextAggregateRoot - Consistency boundaries
+├── aggregate_root.py   # FlextAggregates - Consistency boundaries
 └── domain_services.py  # FlextDomainService - Domain operations
 ```
 
 **Domain Modeling Example:**
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregates
 from decimal import Decimal
 
 class Money(FlextValue):
@@ -94,7 +94,7 @@ class Account(FlextEntity):
             return FlextResult[None].ok(None)
         return result.map(lambda _: None)
 
-class BankingContext(FlextAggregateRoot):
+class BankingContext(FlextAggregates):
     """Aggregate root - consistency boundary."""
     accounts: list[Account]
 
@@ -265,7 +265,7 @@ class OrderPlaced(FlextDomainEvent):
     customer_id: str
     total: Decimal
 
-class Order(FlextAggregateRoot):
+class Order(FlextAggregates):
     def place(self) -> FlextResult[None]:
         # Business logic
         self.status = "placed"
@@ -294,7 +294,7 @@ class Order(FlextAggregateRoot):
 
 - **Entities**: Objects with identity (`FlextEntity`)
 - **Value Objects**: Immutable values (`FlextValue`)
-- **Aggregates**: Consistency boundaries (`FlextAggregateRoot`)
+- **Aggregates**: Consistency boundaries (`FlextAggregates`)
 - **Domain Services**: Stateless operations (`FlextDomainService`)
 - **Domain Events**: State change notifications
 

@@ -23,7 +23,8 @@ import uuid
 from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+
+object
 
 import pytest
 import pytest_asyncio
@@ -279,7 +280,7 @@ async def async_container() -> AsyncGenerator[FlextContainer]:
 
 
 @pytest_asyncio.fixture  # type: ignore[misc]
-async def async_executor() -> AsyncGenerator[Any]:
+async def async_executor() -> AsyncGenerator[object]:
     """Async fixture providing executor for async operations."""
     executor = AsyncExecutor()
     try:
@@ -308,7 +309,7 @@ class AsyncExecutor:
 
     def __init__(self) -> None:
         self._running = False
-        self._tasks: list[asyncio.Task[Any]] = []
+        self._tasks: list[asyncio.Task[object]] = []
 
     async def start(self) -> None:
         """Start executor."""
@@ -381,7 +382,7 @@ def factory_registry() -> FactoryRegistry:
 @pytest.fixture
 def mock_logger(mocker: MockerFixture) -> object:
     """Fixture providing mocked logger."""
-    return mocker.patch("flext_core.loggings.get_logger")
+    return mocker.patch("flext_core.legacy.get_logger")
 
 
 @pytest.fixture
@@ -528,10 +529,10 @@ def random_data() -> dict[str, object]:
     import random
 
     return {
-        "random_int": random.randint(1, 1000),  # noqa: S311
-        "random_float": random.uniform(0.0, 100.0),  # noqa: S311
-        "random_string": f"random_{random.randint(1000, 9999)}",  # noqa: S311
-        "random_bool": random.choice([True, False]),  # noqa: S311
+        "random_int": random.randint(1, 1000),
+        "random_float": random.uniform(0.0, 100.0),
+        "random_string": f"random_{random.randint(1000, 9999)}",
+        "random_bool": random.choice([True, False]),
     }
 
 

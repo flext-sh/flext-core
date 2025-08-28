@@ -21,13 +21,11 @@ from flext_core import (
     FlextEntity,
     FlextEntityId,
     FlextGenerators,
+    FlextModels,
     FlextResult,
     FlextValue,
     FlextVersion,
 )
-
-# FlextRootModels consolidated into FlextModels in models.py
-from flext_core.models import FlextModels
 
 # Constants to avoid magic numbers
 MIN_PRODUCT_CODE_LENGTH = 3

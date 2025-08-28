@@ -11,7 +11,8 @@ This test file showcases the full power of our testing infrastructure including:
 from __future__ import annotations
 
 import time
-from typing import Any
+
+object
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -245,19 +246,15 @@ class TestAdvancedPatterns:
         param_builder = ParameterizedTestBuilder("email_validation")
 
         # Add various test cases
-        param_builder.add_success_cases(
-            [
-                {"email": "test@example.com", "input": "valid_email_1"},
-                {"email": "user@domain.org", "input": "valid_email_2"},
-            ]
-        )
+        param_builder.add_success_cases([
+            {"email": "test@example.com", "input": "valid_email_1"},
+            {"email": "user@domain.org", "input": "valid_email_2"},
+        ])
 
-        param_builder.add_failure_cases(
-            [
-                {"email": "invalid-email", "input": "invalid_email_1"},
-                {"email": "@domain.com", "input": "invalid_email_2"},
-            ]
-        )
+        param_builder.add_failure_cases([
+            {"email": "invalid-email", "input": "invalid_email_1"},
+            {"email": "@domain.com", "input": "invalid_email_2"},
+        ])
 
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()
@@ -366,7 +363,7 @@ class TestComprehensiveIntegration:
             .build()
         )
 
-        async def async_operation() -> dict[str, Any]:
+        async def async_operation() -> dict[str, object]:
             """Simulate async operation."""
             await async_test_utils.simulate_delay(0.1)
             return {"result": "success", "data": test_data}
@@ -386,7 +383,7 @@ class TestComprehensiveIntegration:
     def test_performance_with_property_testing(self, benchmark: object) -> None:
         """Combine performance testing with property-based testing."""
 
-        def process_user_profiles(profiles: list[dict[str, Any]]) -> list[str]:
+        def process_user_profiles(profiles: list[dict[str, object]]) -> list[str]:
             """Process user profiles (simulate real operation)."""
             return [
                 f"{profile['name']} <{profile['email']}>"
@@ -482,7 +479,7 @@ class TestRealWorldScenarios:
             }
 
             # Simulate API processing
-            def process_api_request(request: dict[str, Any]) -> dict[str, Any]:
+            def process_api_request(request: dict[str, object]) -> dict[str, object]:
                 return {
                     "status": "success",
                     "method": request["method"],
@@ -509,7 +506,7 @@ class TestRealWorldScenarios:
 
     @given(CompositeStrategies.configuration_data())
     def test_configuration_validation_comprehensive(
-        self, config: dict[str, Any]
+        self, config: dict[str, object]
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

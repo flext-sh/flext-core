@@ -15,8 +15,9 @@ from enum import Enum
 
 from pydantic import Field
 
-from flext_core import FlextEntity, FlextResult, FlextValue
-from flext_core.models import FlextEntityId
+from flext_core import FlextEntity, FlextResult, FlextTypes, FlextValue
+
+EntityId = FlextTypes.Domain.EntityId
 
 
 class TestUserStatus(Enum):
@@ -82,7 +83,7 @@ class TestDomainFactory:
     def create_user(
         name: str = "Test User", email: str = "test@example.com"
     ) -> TestUser:
-        return TestUser(id=FlextEntityId("test-user"), name=name, email=email)
+        return TestUser(id=EntityId("test-user"), name=name, email=email)
 
     @staticmethod
     def create_money(amount: float = 100.0, currency: str = "USD") -> TestMoney:
@@ -96,7 +97,7 @@ class TestDomainFactory:
         try:
             user_status = TestUserStatus(status)
             user = TestUser(
-                id=FlextEntityId("test-user"),
+                id=EntityId("test-user"),
                 name=name,
                 email="test@example.com",
                 status=user_status,

@@ -155,14 +155,14 @@ container.unregister("cache")
 ```python
 class FlextContainer:
     # Registration
-    def register(self, key: str, instance: Any) -> FlextResult[None]:
+    def register(self, key: str, instance: object) -> FlextResult[None]:
         """Register service instance."""
 
-    def register_factory(self, key: str, factory: Callable[[], Any]) -> FlextResult[None]:
+    def register_factory(self, key: str, factory: Callable[[], object]) -> FlextResult[None]:
         """Register service factory."""
 
     # Resolution
-    def get(self, key: str) -> FlextResult[Any]:
+    def get(self, key: str) -> FlextResult[object]:
         """Get service by key."""
 
     def has(self, key: str) -> bool:
@@ -341,14 +341,14 @@ class Email(FlextValue):
         return self.address.split("@")[0]
 ```
 
-### FlextAggregateRoot - Consistency Boundaries
+### FlextAggregates - Consistency Boundaries
 
 Aggregates that maintain consistency.
 
 ```python
-from flext_core import FlextAggregateRoot
+from flext_core import FlextAggregates
 
-class ShoppingCart(FlextAggregateRoot):
+class ShoppingCart(FlextAggregates):
     """Shopping cart aggregate."""
     customer_id: str
     items: list[CartItem] = []

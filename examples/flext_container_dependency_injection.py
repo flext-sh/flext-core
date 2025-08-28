@@ -20,13 +20,11 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextCore,
-    FlextEntity,
     FlextLogger,
-    FlextModel,
+    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValue,
 )
 
 # Singleton FlextCore instance for all utilities
@@ -103,11 +101,11 @@ class UserNameValidator:
 
 
 # =============================================================================
-# DOMAIN ENTITIES - Using FlextEntity with centralized types
+# DOMAIN ENTITIES - Using FlextModels.Entity with centralized types
 # =============================================================================
 
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """User entity with centralized validation and FlextTypes.
 
     Uses FlextTypes for consistency and FlextConstants for validation rules.
@@ -154,7 +152,7 @@ class User(FlextEntity):
         return result.unwrap()
 
 
-class EmailAddress(FlextValue):
+class EmailAddress(FlextModels.Value):
     """Email value object with centralized validation."""
 
     email: FlextTypes.Core.String
@@ -177,7 +175,7 @@ class EmailAddress(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class UserRegistrationRequest(FlextValue):
+class UserRegistrationRequest(FlextModels.Value):
     """Registration request with centralized validation."""
 
     name: FlextTypes.Core.String
@@ -229,11 +227,11 @@ class UserRegistrationRequest(FlextValue):
 
 
 # =============================================================================
-# RESULT MODELS - Using FlextModel with centralized types
+# RESULT MODELS - Using FlextModels.BaseConfig with centralized types
 # =============================================================================
 
 
-class DatabaseSaveResult(FlextModel):
+class DatabaseSaveResult(FlextModels.BaseConfig):
     """Database save result with centralized patterns."""
 
     user_id: FlextTypes.Core.String
@@ -247,7 +245,7 @@ class DatabaseSaveResult(FlextModel):
     performance_metrics: dict[str, float] = Field(default_factory=dict)
 
 
-class EmailSendResult(FlextModel):
+class EmailSendResult(FlextModels.BaseConfig):
     """Email send result with centralized patterns."""
 
     recipient: FlextTypes.Core.String
@@ -261,7 +259,7 @@ class EmailSendResult(FlextModel):
     performance_metrics: dict[str, float] = Field(default_factory=dict)
 
 
-class RegistrationResult(FlextModel):
+class RegistrationResult(FlextModels.BaseConfig):
     """Complete registration result with centralized patterns."""
 
     user_id: FlextTypes.Core.String

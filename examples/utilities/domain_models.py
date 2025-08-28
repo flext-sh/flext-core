@@ -9,11 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextUtilities
-from flext_core.legacy import (
-    FlextCacheableMixin,
-    FlextSerializableMixin,
-)
+from flext_core import FlextMixins, FlextUtilities
 
 from ..shared_domain import (
     Order as SharedOrder,
@@ -28,17 +24,15 @@ from .formatting_helpers import (
     YOUNG_ADULT_AGE_THRESHOLD,
 )
 
-# =========
+# ================================================================
+# DIRECT USAGE OF UNIFIED CLASSES - NO ALIASES
 
-# For mixins not available in legacy, alias to available ones
-FlextComparableMixin = FlextSerializableMixin
-FlextLoggableMixin = object  # Simple base class for now
-====================================================================
+# ====================================================================
 # ENHANCED DOMAIN MODELS - Using mixins for advanced functionality
 # =============================================================================
 
 
-class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
+class UtilityDemoUser(SharedUser, FlextMixins.Serializable):
     """Enhanced user with utility mixins for demonstrations."""
 
     def get_cache_key(self) -> str:
@@ -90,8 +84,7 @@ class UtilityDemoUser(SharedUser, FlextCacheableMixin, FlextSerializableMixin):
 
 class UtilityDemoProduct(
     SharedProduct,
-    FlextCacheableMixin,
-    FlextSerializableMixin,
+    FlextMixins.Serializable,
 ):
     """Enhanced product with comprehensive mixins."""
 
@@ -138,7 +131,7 @@ class UtilityDemoProduct(
 
 class UtilityDemoOrder(
     SharedOrder,
-    FlextSerializableMixin,
+    FlextMixins.Serializable,
 ):
     """Enhanced order with logging and tracking capabilities."""
 

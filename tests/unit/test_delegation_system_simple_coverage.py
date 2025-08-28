@@ -10,15 +10,8 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import (
+    FlextDelegationSystem,
     FlextExceptions,
-    FlextMixinDelegator,
-    create_mixin_delegator,
-)
-from flext_core.delegation_system import (
-    _validate_delegation_info,
-    _validate_delegation_methods,
-    _validate_method_functionality,
-    validate_delegation_system,
 )
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -47,13 +40,13 @@ class TestDelegationSystemCoverage:
                 self.validation_errors = []
                 self.has_validation_errors = lambda: False
                 self.to_dict_basic = dict
-                self.delegator = create_mixin_delegator(self)
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
         host = HostWithoutIsValid()
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_methods(host, test_results)
+            FlextDelegationSystem._validate_delegation_methods(host, test_results)
 
         assert "is_valid property not delegated" in str(exc_info.value)
 
@@ -65,13 +58,13 @@ class TestDelegationSystemCoverage:
                 self.is_valid = True
                 self.has_validation_errors = lambda: False
                 self.to_dict_basic = dict
-                self.delegator = create_mixin_delegator(self)
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
         host = HostWithoutValidationErrors()
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_methods(host, test_results)
+            FlextDelegationSystem._validate_delegation_methods(host, test_results)
 
         assert "validation_errors property not delegated" in str(exc_info.value)
 
@@ -83,13 +76,13 @@ class TestDelegationSystemCoverage:
                 self.is_valid = True
                 self.validation_errors = []
                 self.to_dict_basic = dict
-                self.delegator = create_mixin_delegator(self)
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
         host = HostWithoutHasValidationErrors()
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_methods(host, test_results)
+            FlextDelegationSystem._validate_delegation_methods(host, test_results)
 
         assert "has_validation_errors method not delegated" in str(exc_info.value)
 
@@ -101,13 +94,13 @@ class TestDelegationSystemCoverage:
                 self.is_valid = True
                 self.validation_errors = []
                 self.has_validation_errors = lambda: False
-                self.delegator = create_mixin_delegator(self)
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
         host = HostWithoutToDictBasic()
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_methods(host, test_results)
+            FlextDelegationSystem._validate_delegation_methods(host, test_results)
 
         assert "to_dict_basic method not delegated" in str(exc_info.value)
 
@@ -117,13 +110,13 @@ class TestDelegationSystemCoverage:
         class HostWithWrongIsValidType:
             def __init__(self) -> None:
                 self.is_valid = "not a bool"  # Should be bool
-                self.delegator = create_mixin_delegator(self)
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
         host = HostWithWrongIsValidType()
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions.TypeError) as exc_info:
-            _validate_method_functionality(host, test_results)
+            FlextDelegationSystem._validate_method_functionality(host, test_results)
 
         assert "is_valid should return bool" in str(exc_info.value)
 
@@ -137,7 +130,7 @@ class TestDelegationSystemCoverage:
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_info(host, test_results)
+            FlextDelegationSystem._validate_delegation_info(host, test_results)
 
         assert "Host must have delegator attribute" in str(exc_info.value)
 
@@ -154,8 +147,8 @@ class TestDelegationSystemCoverage:
         host = HostWithBadDelegator()
         test_results: list[str] = []
 
-        with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_info(host, test_results)
+        with pytest.raises(FlextExceptions.TypeError) as exc_info:
+            FlextDelegationSystem._validate_delegation_info(host, test_results)
 
         assert "Delegator must have get_delegation_info method" in str(exc_info.value)
 
@@ -174,7 +167,7 @@ class TestDelegationSystemCoverage:
         test_results: list[str] = []
 
         with pytest.raises(FlextExceptions) as exc_info:
-            _validate_delegation_info(host, test_results)
+            FlextDelegationSystem._validate_delegation_info(host, test_results)
 
         assert "Delegation validation should pass" in str(exc_info.value)
 
@@ -188,7 +181,7 @@ class TestDelegationSystemCoverage:
             pass
 
         host = TestHost()
-        delegator = FlextMixinDelegator(host, EmptyMixin)
+        delegator = FlextDelegationSystem.create_mixin_delegator(host, EmptyMixin)
 
         # Should have no delegated methods
         assert len(delegator._delegated_methods) == 0
@@ -208,7 +201,9 @@ class TestDelegationSystemCoverage:
             pass
 
         host = TestHost()
-        delegator = FlextMixinDelegator(host, PrivateMethodMixin)
+        delegator = FlextDelegationSystem.create_mixin_delegator(
+            host, PrivateMethodMixin
+        )
 
         # Private methods should not be delegated
         assert "_private_method" not in delegator._delegated_methods
@@ -229,7 +224,9 @@ class TestDelegationSystemCoverage:
             pass
 
         host = TestHost()
-        delegator = FlextMixinDelegator(host, InitializableMixin)
+        delegator = FlextDelegationSystem.create_mixin_delegator(
+            host, InitializableMixin
+        )
 
         # Should have successful initialization in log
         init_logs = delegator._initialization_log
@@ -250,8 +247,10 @@ class TestDelegationSystemCoverage:
         class TestHost:
             pass
 
-        host = TestHost()
-        delegator = FlextMixinDelegator(host, FailingInitMixin)
+        host: TestHost = TestHost()
+        delegator: FlextDelegationSystem.MixinDelegator = (
+            FlextDelegationSystem.create_mixin_delegator(host, FailingInitMixin)
+        )
 
         # Should have failure in initialization log
         init_logs = delegator._initialization_log
@@ -270,7 +269,7 @@ class TestValidateSystemExceptionHandling:
         ) as mock_validate:
             mock_validate.side_effect = AttributeError("Attribute error")
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error
@@ -283,7 +282,7 @@ class TestValidateSystemExceptionHandling:
         ) as mock_validate:
             mock_validate.side_effect = TypeError("Type error")
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error
@@ -296,7 +295,7 @@ class TestValidateSystemExceptionHandling:
         ) as mock_validate:
             mock_validate.side_effect = ValueError("Value error")
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error
@@ -309,7 +308,7 @@ class TestValidateSystemExceptionHandling:
         ) as mock_validate:
             mock_validate.side_effect = RuntimeError("Runtime error")
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error
@@ -324,7 +323,7 @@ class TestValidateSystemExceptionHandling:
                 "Operation error", operation="test"
             )
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error
@@ -337,7 +336,7 @@ class TestValidateSystemExceptionHandling:
         ) as mock_validate:
             mock_validate.side_effect = FlextExceptions.TypeError("Type error")
 
-            result = validate_delegation_system()
+            result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.is_failure
             assert "Delegation system validation failed" in result.error

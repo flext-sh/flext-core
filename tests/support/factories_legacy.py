@@ -17,7 +17,8 @@ import json
 import math
 import uuid
 from collections.abc import Callable
-from typing import Any
+
+object
 
 from flext_core import (
     FlextFieldType,
@@ -187,7 +188,7 @@ class TestDataFactory:
     def create_test_result_success(
         cls,
         data: object = "test_data",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create successful FlextResult for testing.
 
         Args:
@@ -197,14 +198,14 @@ class TestDataFactory:
             FlextResult with success state
 
         """
-        return FlextResult[Any].ok(data)
+        return FlextResult[object].ok(data)
 
     @classmethod
     def create_test_result_failure(
         cls,
         error: str = "test_error",
         error_code: str = "TEST_ERROR",
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create failed FlextResult for testing.
 
         Args:
@@ -215,13 +216,13 @@ class TestDataFactory:
             FlextResult with failure state
 
         """
-        return FlextResult[Any].fail(error, error_code=error_code)
+        return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
     def create_mock_validator(
         *,
         should_pass: bool = True,
-    ) -> Callable[[Any], FlextResult[Any]]:
+    ) -> Callable[[object], FlextResult[object]]:
         """Create mock validator function for testing.
 
         Args:
@@ -232,10 +233,10 @@ class TestDataFactory:
 
         """
 
-        def validator(value: object) -> FlextResult[Any]:
+        def validator(value: object) -> FlextResult[object]:
             if should_pass:
-                return FlextResult[Any].ok(value)
-            return FlextResult[Any].fail(f"Validation failed for: {value}")
+                return FlextResult[object].ok(value)
+            return FlextResult[object].fail(f"Validation failed for: {value}")
 
         return validator
 
@@ -263,7 +264,7 @@ class TestDataFactory:
 
     @staticmethod
     def create_field_types_matrix() -> list[
-        tuple[FlextFieldType, list[Any], list[bool]]
+        tuple[FlextFieldType, list[object], list[bool]]
     ]:
         """Create matrix of field types with test values and expected validity.
 
@@ -295,7 +296,7 @@ class TestDataFactory:
         ]
 
     @staticmethod
-    def create_edge_case_values() -> dict[str, list[Any]]:
+    def create_edge_case_values() -> dict[str, list[object]]:
         """Create edge case values for comprehensive testing.
 
         Returns:
@@ -324,7 +325,7 @@ class ServiceFactory:
     """
 
     @staticmethod
-    def create_mock_database_service() -> dict[str, Any]:
+    def create_mock_database_service() -> dict[str, object]:
         """Create mock database service for testing."""
         return {
             "type": "database",
@@ -335,7 +336,7 @@ class ServiceFactory:
         }
 
     @staticmethod
-    def create_mock_cache_service() -> dict[str, Any]:
+    def create_mock_cache_service() -> dict[str, object]:
         """Create mock cache service for testing."""
         return {
             "type": "cache",
@@ -346,7 +347,7 @@ class ServiceFactory:
         }
 
     @staticmethod
-    def create_mock_logger_service() -> dict[str, Any]:
+    def create_mock_logger_service() -> dict[str, object]:
         """Create mock logger service for testing."""
         return {
             "type": "logger",

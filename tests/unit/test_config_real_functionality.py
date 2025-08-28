@@ -9,7 +9,9 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import time
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -39,9 +41,13 @@ class TestFlextConfigRealCreation:
         config = TestConfig()
 
         # Real validation - values should match StrEnum values
-        assert config.environment in [e.value for e in FlextConstants.Config.ConfigEnvironment]
-        assert config.config_source in [s.value for s in FlextConstants.Config.ConfigSource]
-        assert config.log_level in [l.value for l in FlextConstants.Config.LogLevel]
+        assert config.environment in [
+            e.value for e in FlextConstants.Config.ConfigEnvironment
+        ]
+        assert config.config_source in [
+            s.value for s in FlextConstants.Config.ConfigSource
+        ]
+        assert config.log_level in [level.value for level in FlextConstants.Config.LogLevel]
 
     def test_config_with_all_new_types(self) -> None:
         """Test FlextConfig with ALL new FlextTypes.Config types."""
@@ -87,7 +93,10 @@ class TestFlextConfigRealCreation:
             log_level: str = FlextConstants.Config.LogLevel.INFO
 
         # Valid values should work
-        config = TestConfig(environment=FlextConstants.Config.ConfigEnvironment.PRODUCTION, log_level=FlextConstants.Config.LogLevel.DEBUG)
+        config = TestConfig(
+            environment=FlextConstants.Config.ConfigEnvironment.PRODUCTION,
+            log_level=FlextConstants.Config.LogLevel.DEBUG,
+        )
         assert config.environment == "production"
         assert config.log_level == "DEBUG"
 
@@ -97,7 +106,7 @@ class TestFlextConfigRealCreation:
             config_env = TestConfig(environment=env_value)
             assert config_env.environment == env_value
 
-        valid_logs = ["DEBUG", "INFO", "ERROR", "WARNING"]  
+        valid_logs = ["DEBUG", "INFO", "ERROR", "WARNING"]
         for log_value in valid_logs:
             config_log = TestConfig(log_level=log_value)
             assert config_log.log_level == log_value
@@ -154,7 +163,9 @@ class TestFlextConfigRealUtilityFunctions:
             "max_connections": 100,
         }
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(test_data, f)
             temp_file = f.name
 
@@ -183,7 +194,9 @@ class TestFlextConfigRealUtilityFunctions:
         """Test real JSON file loading with invalid JSON."""
         invalid_json = '{"valid": "data", "invalid": }'
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             f.write(invalid_json)
             temp_file = f.name
 
@@ -199,7 +212,9 @@ class TestFlextConfigRealUtilityFunctions:
         """Test real JSON file loading with non-dict content."""
         non_dict_json = '["this", "is", "a", "list"]'
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             f.write(non_dict_json)
             temp_file = f.name
 
@@ -222,9 +237,9 @@ class TestFlextConfigRealUtilityFunctions:
 
         override_config = {
             "environment": "production",  # Override
-            "debug": False,               # Override
-            "timeout": 60,                # Add new
-            "max_connections": 200,       # Add new
+            "debug": False,  # Override
+            "timeout": 60,  # Add new
+            "max_connections": 200,  # Add new
         }
 
         result = FlextConfig.merge_configs(base_config, override_config)
@@ -234,15 +249,15 @@ class TestFlextConfigRealUtilityFunctions:
 
         # Check overrides work
         assert merged["environment"] == "production"  # Overridden
-        assert merged["debug"] is False               # Overridden
+        assert merged["debug"] is False  # Overridden
 
         # Check originals preserved
-        assert merged["log_level"] == "DEBUG"         # From base
+        assert merged["log_level"] == "DEBUG"  # From base
         assert merged["database_url"] == "sqlite:///dev.db"  # From base
 
         # Check new values added
-        assert merged["timeout"] == 60                # Added
-        assert merged["max_connections"] == 200       # Added
+        assert merged["timeout"] == 60  # Added
+        assert merged["max_connections"] == 200  # Added
 
     def test_merge_configs_none_values_real(self) -> None:
         """Test real config merging with None values (should fail)."""
@@ -288,7 +303,9 @@ class TestFlextConstantsStrEnumRealFunctionality:
             assert len(env.value) > 0
 
         # Test specific expected values
-        assert FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value == "development"
+        assert (
+            FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value == "development"
+        )
         assert FlextConstants.Config.ConfigEnvironment.PRODUCTION.value == "production"
         assert FlextConstants.Config.ConfigEnvironment.STAGING.value == "staging"
 
@@ -405,8 +422,8 @@ class TestFlextTypesConfigRealFunctionality:
 
         class TestAllTypesConfig(FlextConfig):
             # Core config types
-            config: FlextTypes.Config.Config = {}
-            config_dict: FlextTypes.Config.ConfigDict = {}
+            config: ClassVar[FlextTypes.Config.Config] = {}
+            config_dict: ClassVar[FlextTypes.Config.ConfigDict] = {}
             config_value: FlextTypes.Config.ConfigValue = "test"
             config_key: FlextTypes.Config.ConfigKey = "test_key"
 
@@ -470,7 +487,9 @@ class TestRealIntegrationScenarios:
             "max_connections": 1000,
         }
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(config_data, f)
             temp_file = f.name
 
@@ -506,10 +525,16 @@ class TestRealIntegrationScenarios:
             assert config.max_connections == 1000
 
             # Verify StrEnum validation
-            assert config.environment in [e.value for e in FlextConstants.Config.ConfigEnvironment]
-            assert config.config_source in [s.value for s in FlextConstants.Config.ConfigSource]
-            assert config.log_level in [l.value for l in FlextConstants.Config.LogLevel]
-            assert config.validation_level in [v.value for v in FlextConstants.Config.ValidationLevel]
+            assert config.environment in [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            assert config.config_source in [
+                s.value for s in FlextConstants.Config.ConfigSource
+            ]
+            assert config.log_level in [level.value for level in FlextConstants.Config.LogLevel]
+            assert config.validation_level in [
+                v.value for v in FlextConstants.Config.ValidationLevel
+            ]
 
         finally:
             Path(temp_file).unlink()
@@ -579,11 +604,11 @@ class TestRealIntegrationScenarios:
         }
 
         production_overrides = {
-            "environment": "production",    # Override with valid StrEnum value
-            "log_level": "ERROR",          # Override with valid StrEnum value
-            "validation_level": "strict",   # Override with valid StrEnum value
-            "debug": False,                # Override
-            "max_connections": 500,        # Add new
+            "environment": "production",  # Override with valid StrEnum value
+            "log_level": "ERROR",  # Override with valid StrEnum value
+            "validation_level": "strict",  # Override with valid StrEnum value
+            "debug": False,  # Override
+            "max_connections": 500,  # Add new
         }
 
         # Merge configs
@@ -604,18 +629,24 @@ class TestRealIntegrationScenarios:
         config = MergedConfig(**merged)
 
         # Verify merged config with StrEnum validation
-        assert config.environment == "production"       # Overridden
-        assert config.config_source == "file"          # From base
-        assert config.log_level == "ERROR"             # Overridden
-        assert config.validation_level == "strict"      # Overridden
-        assert config.debug is False                   # Overridden
-        assert config.max_connections == 500           # Added
+        assert config.environment == "production"  # Overridden
+        assert config.config_source == "file"  # From base
+        assert config.log_level == "ERROR"  # Overridden
+        assert config.validation_level == "strict"  # Overridden
+        assert config.debug is False  # Overridden
+        assert config.max_connections == 500  # Added
 
         # Verify all values are valid StrEnum values
-        assert config.environment in [e.value for e in FlextConstants.Config.ConfigEnvironment]
-        assert config.config_source in [s.value for s in FlextConstants.Config.ConfigSource]
-        assert config.log_level in [l.value for l in FlextConstants.Config.LogLevel]
-        assert config.validation_level in [v.value for v in FlextConstants.Config.ValidationLevel]
+        assert config.environment in [
+            e.value for e in FlextConstants.Config.ConfigEnvironment
+        ]
+        assert config.config_source in [
+            s.value for s in FlextConstants.Config.ConfigSource
+        ]
+        assert config.log_level in [level.value for level in FlextConstants.Config.LogLevel]
+        assert config.validation_level in [
+            v.value for v in FlextConstants.Config.ValidationLevel
+        ]
 
 
 # =============================================================================
@@ -628,7 +659,6 @@ class TestRealPerformance:
 
     def test_config_creation_speed_real(self) -> None:
         """Test real config creation speed."""
-        import time
 
         class TestConfig(FlextConfig):
             environment: FlextTypes.Config.Environment = "development"
@@ -658,8 +688,6 @@ class TestRealPerformance:
 
     def test_json_loading_speed_real(self) -> None:
         """Test real JSON loading speed."""
-        import time
-
         # Create large config file
         large_config = {
             "environment": "production",
@@ -671,7 +699,9 @@ class TestRealPerformance:
         for i in range(1000):
             large_config[f"key_{i}"] = f"value_{i}"
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(large_config, f)
             temp_file = f.name
 
@@ -697,8 +727,6 @@ class TestRealPerformance:
 
     def test_merge_performance_real(self) -> None:
         """Test real config merging performance."""
-        import time
-
         # Create large configs
         base_config = {}
         override_config = {}
@@ -725,8 +753,8 @@ class TestRealPerformance:
         assert result.success is True
         merged = result.value
 
-        # Check merge worked correctly  
+        # Check merge worked correctly
         assert len(merged) == 1000  # 500 base + 500 override (overlaps overwritten)
         assert merged["base_key_0"] == "overridden_value_0"  # Override worked
-        assert merged["base_key_200"] == "base_value_200"    # Base preserved
+        assert merged["base_key_200"] == "base_value_200"  # Base preserved
         assert merged["override_key_200"] == "override_value_200"  # Override added

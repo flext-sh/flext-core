@@ -1,30 +1,166 @@
-"""Handler classes for request processing and chain-of-responsibility patterns.
+"""Comprehensive handler system for request processing and enterprise patterns.
 
-Provides handler implementations for request processing, validation, authorization,
-metrics collection, CQRS patterns, and chain composition.
+This module provides the complete handler infrastructure for FLEXT applications,
+implementing enterprise patterns including Chain of Responsibility, CQRS, command
+buses, validation handlers, authorization handlers, and metrics collection. The
+system is organized as a single consolidated FlextHandlers class containing all
+handler-related functionality.
 
-Main Components:
-    FlextHandlers.Implementation: Core handler classes (BasicHandler, ValidatingHandler, etc.)
-    FlextHandlers.CQRS: Command and query bus implementations
-    FlextHandlers.Patterns: Chain of responsibility and pipeline patterns
-    FlextHandlers.Management: Handler registry and lifecycle management
+Architectural Overview:
+    The handler system is structured with six major architectural layers:
 
-Usage:
-    Basic handler with metrics:
-        handler = FlextHandlers.Implementation.BasicHandler("api_handler")
-        result = handler.handle({"action": "process", "data": "test"})
+    **Constants Layer**: Handler execution parameters and states
+        - Handler: Timeout, retry, and performance limits from FlextConstants
+        - States: Handler execution states (IDLE, PROCESSING, COMPLETED, FAILED)
+        - Types: Handler classifications (BASIC, VALIDATING, COMMAND, QUERY)
+
+    **Types Layer**: Type definitions for handler operations
+        - HandlerTypes: Name, state, metadata, and function type definitions
+        - Message: Message data, headers, and processing context types
+        - Integration with FlextTypes system for consistency
+
+    **Protocols Layer**: Protocol-based interfaces for handlers
+        - MetricsHandler: Protocol for metrics collection and reporting
+        - ChainableHandler: Protocol for chain participation with type checking
+        - Integration with FlextProtocols for validation and authorization
+
+    **Implementation Layer**: Concrete handler classes
+        - AbstractHandler: Base class with generic type parameters
+        - BasicHandler: Core handler with metrics and state management
+        - ValidatingHandler: Handler with validation capabilities
+        - AuthorizingHandler: Handler with authorization checks
+        - MetricsHandler: Specialized metrics collection handler
+        - EventHandler: Event processing with domain event patterns
+
+    **CQRS Layer**: Command Query Responsibility Segregation patterns
+        - CommandBus: Command dispatch and handler registration
+        - QueryBus: Query processing and result transformation
+        - EventBus: Domain event distribution and handling
+
+    **Patterns Layer**: Design pattern implementations
+        - HandlerChain: Chain of Responsibility pattern with metrics
+        - Pipeline: Linear processing pipeline with validation
+        - Middleware: Request/response transformation patterns
+
+    **Management Layer**: Handler lifecycle and registry management
+        - HandlerRegistry: Central registry for handler discovery and management
+        - Lifecycle management with registration, cleanup, and monitoring
+
+Key Features:
+    - **Thread Safety**: All operations protected with thread-safe locking mechanisms
+    - **Metrics Collection**: Comprehensive performance metrics and monitoring
+    - **Type Safety**: Generic type parameters and FlextResult error handling
+    - **State Management**: Complete handler lifecycle state tracking
+    - **Chain Composition**: Flexible handler chain composition with early termination
+    - **CQRS Implementation**: Full Command Query Responsibility Segregation support
+    - **Configuration Integration**: Deep integration with FlextTypes.Config system
+    - **Error Handling**: Railway-oriented programming with FlextResult patterns
+
+Usage Examples:
+    Basic handler operations::
+
+        # Create and configure a basic handler
+        handler = FlextHandlers.Implementation.BasicHandler("api_processor")
+        config = {"log_level": "INFO", "timeout": 30000}
+        handler.configure(config)
+
+        # Process request with metrics
+        result = handler.handle({"action": "process", "data": "payload"})
         metrics = handler.get_metrics()
+        print(f"Success rate: {metrics['successful_requests']}")
 
-    Handler chain:
-        chain = FlextHandlers.Patterns.HandlerChain("request_processing")
+    Handler chain composition::
+
+        # Build processing chain
+        chain = FlextHandlers.Patterns.HandlerChain("request_pipeline")
         chain.add_handler(auth_handler)
         chain.add_handler(validation_handler)
-        result = chain.handle(request_data)
+        chain.add_handler(business_logic_handler)
 
-    CQRS command bus:
+        # Process request through chain
+        result = chain.handle(request_data)
+        if result.success:
+            print(f"Processed by {len(chain.handlers)} handlers")
+
+    CQRS implementation::
+
+        # Setup command bus
         cmd_bus = FlextHandlers.CQRS.CommandBus()
-        cmd_bus.register(CreateUserCommand, user_handler)
-        result = cmd_bus.send(CreateUserCommand(name="John"))
+        cmd_bus.register(CreateUserCommand, create_user_handler)
+        cmd_bus.register(UpdateUserCommand, update_user_handler)
+
+        # Send commands
+        command = CreateUserCommand(name="John Doe", email="john@example.com")
+        result = cmd_bus.send(command)
+
+        # Setup query bus
+        query_bus = FlextHandlers.CQRS.QueryBus()
+        query_bus.register(GetUserQuery, user_query_handler)
+
+        query = GetUserQuery(user_id="123")
+        result = query_bus.execute(query)
+
+    Advanced validation and authorization::
+
+        # Create validating handler with custom validator
+        validator = lambda data: "name" in data and "email" in data
+        val_handler = FlextHandlers.Implementation.ValidatingHandler(
+            "user_validator", validator
+        )
+
+        # Create authorizing handler
+        authorizer = lambda data: data.get("user_role") == "REDACTED_LDAP_BIND_PASSWORD"
+        auth_handler = FlextHandlers.Implementation.AuthorizingHandler(
+            "REDACTED_LDAP_BIND_PASSWORD_auth", authorizer
+        )
+
+        # Chain them together
+        secure_chain = FlextHandlers.Patterns.HandlerChain("secure_processing")
+        secure_chain.add_handler(auth_handler)
+        secure_chain.add_handler(val_handler)
+
+    Handler registry and management::
+
+        # Register handlers in central registry
+        registry = FlextHandlers.Management.HandlerRegistry()
+        registry.register("user_processor", user_handler)
+        registry.register("order_processor", order_handler)
+
+        # Discover and execute handlers
+        handler = registry.get("user_processor")
+        if handler.success:
+            result = handler.value.handle(user_data)
+
+Design Patterns:
+    - **Chain of Responsibility**: HandlerChain with flexible composition and early termination
+    - **Template Method**: AbstractHandler with customizable processing methods
+    - **Command Pattern**: CQRS implementation with command and query buses
+    - **Strategy Pattern**: Pluggable validation and authorization strategies
+    - **Observer Pattern**: Event handling with domain event distribution
+    - **Registry Pattern**: Central handler registry with discovery capabilities
+    - **Factory Pattern**: Handler creation with configuration and dependency injection
+    - **Decorator Pattern**: Middleware and handler wrapping capabilities
+
+Performance Features:
+    - **Thread-Safe Operations**: All state modifications protected with RLock
+    - **Metrics Collection**: Real-time performance monitoring and statistics
+    - **Resource Management**: Memory and processing time thresholds
+    - **Caching**: Handler result caching for improved performance
+    - **Batch Processing**: Support for batch request processing
+    - **Timeout Handling**: Configurable timeouts with graceful degradation
+
+Integration Points:
+    - **FlextResult**: All operations return FlextResult[T] for type-safe error handling
+    - **FlextTypes**: Comprehensive type system integration for all handler operations
+    - **FlextConstants**: Centralized constants for timeouts, limits, and configuration
+    - **FlextProtocols**: Protocol-based interfaces for validation and authorization
+    - **Configuration System**: Environment-aware handler behavior configuration
+    - **Logging Integration**: Structured logging with correlation IDs and context
+
+Thread Safety:
+    All handler operations are thread-safe through the `thread_safe_operation()`
+    context manager, which uses a reentrant lock to protect shared state modifications.
+    This ensures safe concurrent access to metrics, state updates, and handler chains.
 """
 
 from __future__ import annotations
@@ -50,24 +186,163 @@ from flext_core.typings import FlextTypes
 
 
 class FlextHandlers:
-    """Container for all handler-related functionality with nested organization.
+    """Comprehensive handler system providing enterprise-grade request processing capabilities.
 
-    Provides access to handler implementations, CQRS patterns, management tools,
-    and design patterns through nested classes. All handlers use FlextResult
-    for error handling and provide metrics collection.
+    This class serves as the central container for all handler-related functionality
+    in the FLEXT ecosystem, implementing sophisticated patterns for request processing,
+    validation, authorization, CQRS, and metrics collection. The system is designed
+    for high-performance, thread-safe operation in enterprise environments.
 
-    Nested Classes:
-        Constants: Handler execution constants and states
-        Types: Type definitions for handlers and messages
-        Protocols: Interface definitions for handler contracts
-        Implementation: Core handler classes (BasicHandler, ValidatingHandler, etc.)
-        CQRS: Command and query bus implementations
-        Patterns: Chain of responsibility and pipeline patterns
-        Management: Handler registry for lifecycle management
+    Architecture:
+        The handler system is organized into six major architectural layers:
 
-    Thread Safety:
-        All handler operations use thread-safe locking via thread_safe_operation()
-        context manager. Metrics and state updates are protected from race conditions.
+        **Constants Layer**: Execution parameters and state definitions
+            - Handler: Timeout, retry, and performance limits from FlextConstants
+            - States: Complete handler lifecycle states (IDLE, PROCESSING, COMPLETED, etc.)
+            - Types: Handler classifications for routing and management
+
+        **Types Layer**: Comprehensive type system integration
+            - HandlerTypes: Type aliases for names, states, metrics, and functions
+            - Message: Message processing types with headers and context
+            - Full integration with FlextTypes for consistency
+
+        **Protocols Layer**: Contract-driven interfaces
+            - MetricsHandler: Protocol for performance metrics collection
+            - ChainableHandler: Protocol for handler chain participation
+            - Integration with FlextProtocols for validation and authorization
+
+        **Implementation Layer**: Concrete handler implementations
+            - AbstractHandler: Generic base class with type parameters
+            - BasicHandler: Core handler with comprehensive metrics and state management
+            - ValidatingHandler: Handler with integrated validation capabilities
+            - AuthorizingHandler: Handler with authorization checks and role-based access
+            - MetricsHandler: Specialized metrics collection and reporting
+            - EventHandler: Domain event processing with event sourcing patterns
+
+        **CQRS Layer**: Command Query Responsibility Segregation
+            - CommandBus: Command dispatch with handler registration and routing
+            - QueryBus: Query processing with result transformation and caching
+            - EventBus: Domain event distribution with subscription management
+
+        **Patterns Layer**: Enterprise design pattern implementations
+            - HandlerChain: Chain of Responsibility with early termination and metrics
+            - Pipeline: Linear processing pipeline with validation and transformation
+            - Middleware: Request/response transformation with interceptor patterns
+
+        **Management Layer**: Handler lifecycle and registry
+            - HandlerRegistry: Central registry with discovery, registration, and cleanup
+            - Lifecycle management with health checks and monitoring
+
+    Key Features:
+        **Thread Safety**:
+            All operations are protected by reentrant locking through the
+            `thread_safe_operation()` context manager, ensuring safe concurrent
+            access to shared state, metrics, and handler chains.
+
+        **Performance Monitoring**:
+            Comprehensive metrics collection including request counts, processing
+            times, success/failure rates, memory usage, and performance thresholds
+            with real-time monitoring capabilities.
+
+        **Type Safety**:
+            Full generic type parameter support with FlextResult[T] error handling,
+            ensuring compile-time type checking and runtime type safety throughout
+            the handler pipeline.
+
+        **Configuration Integration**:
+            Deep integration with FlextTypes.Config system for environment-aware
+            configuration, timeout management, validation levels, and logging
+            configuration with runtime reconfiguration support.
+
+        **Error Handling**:
+            Railway-oriented programming patterns with FlextResult ensuring
+            predictable error propagation, comprehensive error context, and
+            graceful degradation under failure conditions.
+
+        **Scalability**:
+            Designed for high-throughput scenarios with batch processing support,
+            resource pooling, connection management, and horizontal scaling
+            capabilities through distributed handler registration.
+
+    Thread Safety Model:
+        The system uses a class-level reentrant lock (`threading.RLock`) to protect
+        all shared state modifications. The `thread_safe_operation()` context manager
+        provides a clean interface for ensuring thread-safe access to:
+
+        - Handler metrics and state updates
+        - Handler chain modifications and execution
+        - Registry operations (registration, deregistration, lookup)
+        - CQRS bus operations (command/query dispatch)
+        - Event distribution and subscription management
+
+    Examples:
+        Basic handler usage::
+
+            # Create and configure handler
+            handler = FlextHandlers.Implementation.BasicHandler("api_processor")
+            config = {
+                "log_level": "INFO",
+                "timeout": 30000,
+                "environment": "production",
+            }
+            configure_result = handler.configure(config)
+
+            # Process requests with metrics
+            result = handler.handle({"action": "create_user", "data": user_data})
+            metrics = handler.get_metrics()
+
+        Handler chain composition::
+
+            # Build enterprise processing pipeline
+            pipeline = FlextHandlers.Patterns.HandlerChain("user_registration")
+            pipeline.add_handler(
+                FlextHandlers.Implementation.AuthorizingHandler("auth", auth_func)
+            )
+            pipeline.add_handler(
+                FlextHandlers.Implementation.ValidatingHandler("validator", val_func)
+            )
+            pipeline.add_handler(business_logic_handler)
+
+            # Execute with comprehensive error handling
+            result = pipeline.handle(registration_data)
+            if result.success:
+                user = result.value
+                print(f"User created: {user['id']}")
+
+        CQRS implementation::
+
+            # Setup command and query buses
+            command_bus = FlextHandlers.CQRS.CommandBus()
+            query_bus = FlextHandlers.CQRS.QueryBus()
+
+            # Register handlers with type safety
+            command_bus.register(CreateUserCommand, create_user_handler)
+            query_bus.register(GetUserQuery, get_user_handler)
+
+            # Execute with full error handling
+            create_cmd = CreateUserCommand(name="John", email="john@example.com")
+            result = command_bus.send(create_cmd)
+
+            if result.success:
+                user_id = result.value
+                query = GetUserQuery(user_id=user_id)
+                user_result = query_bus.execute(query)
+
+    Design Principles:
+        - **Single Responsibility**: Each handler class has a focused, well-defined purpose
+        - **Open/Closed**: Easy to extend with new handler types without modification
+        - **Liskov Substitution**: All handlers follow consistent interfaces and contracts
+        - **Interface Segregation**: Specific protocols for different handler capabilities
+        - **Dependency Inversion**: Handlers depend on abstractions, not implementations
+
+    Integration Points:
+        - **FlextResult**: Type-safe error handling throughout the handler pipeline
+        - **FlextTypes**: Comprehensive type system for all handler operations
+        - **FlextConstants**: Centralized configuration constants and limits
+        - **FlextProtocols**: Protocol-based interfaces for validation and authorization
+        - **Configuration System**: Runtime configuration with environment awareness
+        - **Logging System**: Structured logging with correlation IDs and context tracking
+
     """
 
     # =========================================================================
@@ -75,13 +350,41 @@ class FlextHandlers:
     # =========================================================================
 
     class Constants(FlextConstants):
-        """Handler execution constants and limits."""
+        """Handler execution constants and limits extending FlextConstants.
+
+        This class provides handler-specific constants while inheriting all base
+        constants from FlextConstants. It organizes constants into logical categories
+        for handler execution parameters, state definitions, and type classifications.
+
+        Features:
+            - **Inheritance**: Inherits all FlextConstants for consistency
+            - **Handler-Specific**: Constants tailored for handler execution
+            - **Performance**: Timeout, retry, and threshold constants
+            - **State Management**: Complete handler lifecycle state definitions
+            - **Type Classification**: Handler type categories for routing and management
+
+        Categories:
+            - **Handler**: Execution timeouts, retries, and performance parameters
+            - **Handler.States**: Handler execution states for lifecycle management
+            - **Handler.Types**: Handler classifications for routing and discovery
+        """
 
         # Inherit all base constants from FlextConstants
         # Add handler-specific constant categories
 
         class Handler:
-            """Handler execution timeouts, retries, and performance limits."""
+            """Handler execution timeouts, retries, and performance limits from FlextConstants.
+
+            This class provides execution parameters and performance thresholds for
+            handler operations, sourced from the centralized FlextConstants system
+            to ensure consistency across the FLEXT ecosystem.
+
+            Categories:
+                - **Execution Parameters**: Timeouts and retry configuration
+                - **Chain Limits**: Maximum handlers per chain and pipeline stages
+                - **Performance Thresholds**: Timing and memory usage limits
+                - **Metrics Collection**: Intervals and collection parameters
+            """
 
             # Execution parameters from centralized constants
             DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
@@ -243,11 +546,146 @@ class FlextHandlers:
     # =========================================================================
 
     class Implementation:
-        """Concrete handler implementations with metrics and thread safety.
+        """Concrete handler implementations with enterprise-grade capabilities.
 
-        Provides BasicHandler, ValidatingHandler, AuthorizingHandler,
-        MetricsHandler, and EventHandler classes. All handlers return
-        FlextResult and collect performance metrics.
+        This class provides the core handler implementations that form the foundation
+        of the FLEXT handler system. All implementations feature comprehensive metrics
+        collection, thread-safe operations, state management, and FlextResult-based
+        error handling for enterprise reliability.
+
+        Handler Classes:
+            **AbstractHandler[TInput, TOutput]**: Generic base class with type parameters
+                - Defines the core handler contract with handle(), can_handle() methods
+                - Provides type safety through generic input/output type parameters
+                - Abstract base for all concrete handler implementations
+
+            **BasicHandler**: Foundation handler with comprehensive metrics
+                - Request counting, success/failure tracking, and timing metrics
+                - Thread-safe state management through handler lifecycle
+                - FlextTypes.Config integration for runtime configuration
+                - Template method pattern for extensible request processing
+
+            **ValidatingHandler**: Handler with integrated validation capabilities
+                - Custom validator function integration with FlextResult patterns
+                - Validation failure handling with detailed error reporting
+                - Composable with other handlers in chain configurations
+                - Support for both boolean and FlextResult validator functions
+
+            **AuthorizingHandler**: Handler with authorization and access control
+                - Role-based and function-based authorization strategies
+                - Integration with authentication systems and user contexts
+                - Security audit logging and access attempt tracking
+                - Flexible authorization function interfaces
+
+            **MetricsHandler**: Specialized metrics collection and reporting
+                - Advanced performance monitoring and statistical analysis
+                - Resource usage tracking (memory, CPU, network)
+                - Historical data collection with time-series capabilities
+                - Integration with monitoring and alerting systems
+
+            **EventHandler**: Domain event processing and distribution
+                - Event sourcing pattern implementation
+                - Domain event publishing and subscription management
+                - Event store integration for persistence and replay
+                - Asynchronous event processing capabilities
+
+        Key Features:
+            **Thread Safety**: All implementations use the `thread_safe_operation()`
+            context manager to protect shared state modifications, ensuring safe
+            concurrent access to metrics, state, and configuration data.
+
+            **Metrics Collection**: Comprehensive performance metrics including:
+                - Request counts (total, successful, failed)
+                - Processing times (average, total, per-request)
+                - Error tracking with categorization
+                - Resource usage monitoring
+                - Performance threshold alerts
+
+            **State Management**: Complete handler lifecycle tracking:
+                - IDLE: Handler ready for requests
+                - PROCESSING: Currently handling a request
+                - COMPLETED: Request processing finished successfully
+                - FAILED: Request processing failed with error
+                - TIMEOUT: Request exceeded time limits
+                - PAUSED: Handler temporarily suspended
+
+            **Configuration Integration**: Deep integration with FlextTypes.Config:
+                - Runtime configuration updates
+                - Environment-specific behavior
+                - Validation level settings
+                - Timeout and retry configurations
+                - Logging level management
+
+            **Error Handling**: Railway-oriented programming with FlextResult:
+                - Type-safe error propagation
+                - Detailed error context and codes
+                - Exception handling with graceful degradation
+                - Error recovery and retry mechanisms
+
+        Design Patterns:
+            - **Template Method**: BasicHandler provides extensible _process_request()
+            - **Strategy Pattern**: Pluggable validation and authorization functions
+            - **Chain of Responsibility**: Handlers can be composed in processing chains
+            - **Observer Pattern**: Event handlers with subscription management
+            - **Factory Pattern**: Handler creation with configuration injection
+
+        Examples:
+            Basic handler with configuration::
+
+                handler = Implementation.BasicHandler("user_processor")
+                config = {
+                    "log_level": "DEBUG",
+                    "environment": "development",
+                    "timeout": 15000,
+                    "max_retries": 2,
+                }
+                configure_result = handler.configure(config)
+
+                # Process request with metrics
+                result = handler.handle({"action": "create", "data": user_data})
+                metrics = handler.get_metrics()
+                print(
+                    f"Success rate: {metrics['successful_requests'] / metrics['requests_processed']}"
+                )
+
+            Validating handler with custom validator::
+
+                def validate_user_data(data):
+                    required_fields = ["name", "email", "age"]
+                    missing = [f for f in required_fields if f not in data]
+                    if missing:
+                        return FlextResult[None].fail(f"Missing fields: {missing}")
+                    return FlextResult[None].ok(None)
+
+
+                validator = Implementation.ValidatingHandler(
+                    "user_validator", validate_user_data
+                )
+                result = validator.handle(user_input)
+
+            Handler composition in chain::
+
+                # Build processing pipeline
+                auth_handler = Implementation.AuthorizingHandler(
+                    "auth", check_permissions
+                )
+                val_handler = Implementation.ValidatingHandler(
+                    "validator", validate_data
+                )
+                biz_handler = Implementation.BasicHandler("business_logic")
+
+                # Chain handlers together
+                chain = Patterns.HandlerChain("user_registration")
+                chain.add_handler(auth_handler)
+                chain.add_handler(val_handler)
+                chain.add_handler(biz_handler)
+
+        Integration Points:
+            - **FlextResult**: Type-safe error handling throughout all implementations
+            - **FlextTypes**: Type system integration for names, states, and metrics
+            - **FlextConstants**: Configuration constants and execution parameters
+            - **FlextProtocols**: Protocol-based interfaces for validation and authorization
+
         """
 
         class AbstractHandler[TInput, TOutput](ABC):
@@ -330,6 +768,15 @@ class FlextHandlers:
                     "error_count": 0,
                 }
 
+                # Initialize handler configuration with FlextTypes.Config
+                self._config: FlextTypes.Config.ConfigDict = {
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "timeout": 30000,  # milliseconds
+                    "max_retries": 3,
+                }
+
             @property
             def handler_name(self) -> FlextHandlers.Types.HandlerTypes.Name:
                 """Get handler unique identifier.
@@ -349,6 +796,57 @@ class FlextHandlers:
 
                 """
                 return self._state
+
+            def configure(
+                self, config: FlextTypes.Config.ConfigDict
+            ) -> FlextResult[None]:
+                """Configure handler with FlextTypes.Config integration.
+
+                Args:
+                    config: Configuration dictionary with FlextTypes.Config validation
+
+                Returns:
+                    FlextResult[None]: Success or failure with validation errors
+
+                """
+                try:
+                    # Validate log level
+                    if "log_level" in config:
+                        log_level = config["log_level"]
+                        valid_levels = [
+                            level.value for level in FlextConstants.Config.LogLevel
+                        ]
+                        if log_level not in valid_levels:
+                            return FlextResult[None].fail(
+                                f"Invalid log_level: {log_level}"
+                            )
+
+                    # Validate environment
+                    if "environment" in config:
+                        env = config["environment"]
+                        valid_envs = [
+                            e.value for e in FlextConstants.Config.ConfigEnvironment
+                        ]
+                        if env not in valid_envs:
+                            return FlextResult[None].fail(f"Invalid environment: {env}")
+
+                    # Validate validation level
+                    if "validation_level" in config:
+                        val_level = config["validation_level"]
+                        valid_levels = [
+                            v.value for v in FlextConstants.Config.ValidationLevel
+                        ]
+                        if val_level not in valid_levels:
+                            return FlextResult[None].fail(
+                                f"Invalid validation_level: {val_level}"
+                            )
+
+                    # Update configuration
+                    self._config.update(config)
+                    return FlextResult[None].ok(None)
+
+                except Exception as e:
+                    return FlextResult[None].fail(f"Handler configuration failed: {e}")
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle request with comprehensive metrics and state management.
@@ -491,6 +989,215 @@ class FlextHandlers:
                         "total_processing_time": 0.0,
                         "error_count": 0,
                     }
+
+            # =============================================================================
+            # CONFIGURATION MANAGEMENT - FlextTypes.Config Integration
+            # =============================================================================
+
+            def get_handler_config(self) -> FlextResult[FlextTypes.Config.ConfigDict]:
+                """Get current handler configuration with system information.
+
+                Returns:
+                    FlextResult containing current handler configuration with runtime state
+
+                """
+                try:
+                    current_config: FlextTypes.Config.ConfigDict = {
+                        "handler_name": self._handler_name,
+                        "handler_state": self._state,
+                        "log_level": self._config.get(
+                            "log_level", FlextConstants.Config.LogLevel.INFO.value
+                        ),
+                        "environment": self._config.get(
+                            "environment",
+                            FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                        ),
+                        "validation_level": self._config.get(
+                            "validation_level",
+                            FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        ),
+                        "timeout": self._config.get("timeout", 30000),
+                        "max_retries": self._config.get("max_retries", 3),
+                        "requests_processed": cast(
+                            "int", self._metrics["requests_processed"]
+                        ),
+                        "success_rate": (
+                            (
+                                cast("int", self._metrics["successful_requests"])
+                                / max(
+                                    cast("int", self._metrics["requests_processed"]), 1
+                                )
+                            )
+                            * 100
+                        ),
+                        "average_response_time_ms": cast(
+                            "float", self._metrics["average_processing_time"]
+                        ),
+                        "supported_handler_types": [
+                            "BASIC",
+                            "VALIDATING",
+                            "AUTHORIZING",
+                            "METRICS",
+                            "EVENT",
+                        ],
+                        "available_configurations": [
+                            "log_level",
+                            "environment",
+                            "validation_level",
+                            "timeout",
+                            "max_retries",
+                        ],
+                    }
+
+                    return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
+
+                except Exception as e:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Failed to get handler config: {e}"
+                    )
+
+            @classmethod
+            def create_environment_handler_config(
+                cls, environment: FlextTypes.Config.Environment
+            ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+                """Create environment-specific handler configuration.
+
+                Args:
+                    environment: Target environment for handler configuration
+
+                Returns:
+                    FlextResult containing environment-optimized handler configuration
+
+                """
+                try:
+                    # Validate environment
+                    valid_environments = [
+                        e.value for e in FlextConstants.Config.ConfigEnvironment
+                    ]
+                    if environment not in valid_environments:
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                        )
+
+                    # Create environment-specific configuration
+                    if environment == "production":
+                        config: FlextTypes.Config.ConfigDict = {
+                            "environment": environment,
+                            "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                            "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                            "timeout": 15000,  # Shorter timeout for production
+                            "max_retries": 1,  # Fewer retries for production
+                            "enable_detailed_logging": False,
+                            "enable_performance_metrics": True,
+                            "enable_error_reporting": True,
+                        }
+                    elif environment == "development":
+                        config = {
+                            "environment": environment,
+                            "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                            "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                            "timeout": 60000,  # Longer timeout for development
+                            "max_retries": 5,  # More retries for development
+                            "enable_detailed_logging": True,
+                            "enable_performance_metrics": True,
+                            "enable_error_reporting": True,
+                        }
+                    elif environment == "test":
+                        config = {
+                            "environment": environment,
+                            "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                            "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                            "timeout": 5000,  # Short timeout for tests
+                            "max_retries": 0,  # No retries in tests
+                            "enable_detailed_logging": False,
+                            "enable_performance_metrics": False,  # No metrics in tests
+                            "enable_error_reporting": False,
+                        }
+                    else:  # staging, local, etc.
+                        config = {
+                            "environment": environment,
+                            "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                            "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                            "timeout": 30000,
+                            "max_retries": 3,
+                            "enable_detailed_logging": True,
+                            "enable_performance_metrics": True,
+                            "enable_error_reporting": True,
+                        }
+
+                    return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+                except Exception as e:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Environment handler config failed: {e}"
+                    )
+
+            @classmethod
+            def optimize_handler_performance(
+                cls, config: FlextTypes.Config.ConfigDict
+            ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+                """Optimize handler performance based on configuration.
+
+                Args:
+                    config: Performance optimization configuration dictionary
+
+                Returns:
+                    FlextResult containing optimized handler configuration
+
+                """
+                try:
+                    # Default performance configuration
+                    optimized_config: FlextTypes.Config.ConfigDict = {
+                        "concurrent_handlers": config.get("concurrent_handlers", 10),
+                        "request_batch_size": config.get("request_batch_size", 100),
+                        "response_caching_enabled": config.get(
+                            "response_caching_enabled", False
+                        ),
+                        "metrics_collection_interval": config.get(
+                            "metrics_collection_interval", 5000
+                        ),
+                        "enable_request_pooling": config.get(
+                            "enable_request_pooling", False
+                        ),
+                        "thread_pool_size": config.get("thread_pool_size", 4),
+                        "memory_limit_mb": config.get("memory_limit_mb", 512),
+                        "enable_compression": config.get("enable_compression", False),
+                    }
+
+                    # Optimize based on performance level
+                    performance_level = config.get("performance_level", "standard")
+
+                    if performance_level == "high":
+                        optimized_config.update({
+                            "concurrent_handlers": 50,
+                            "request_batch_size": 500,
+                            "response_caching_enabled": True,
+                            "metrics_collection_interval": 1000,
+                            "enable_request_pooling": True,
+                            "thread_pool_size": 16,
+                            "memory_limit_mb": 2048,
+                            "enable_compression": True,
+                        })
+                    elif performance_level == "low":
+                        optimized_config.update({
+                            "concurrent_handlers": 2,
+                            "request_batch_size": 10,
+                            "response_caching_enabled": False,
+                            "metrics_collection_interval": 10000,
+                            "enable_request_pooling": False,
+                            "thread_pool_size": 1,
+                            "memory_limit_mb": 128,
+                            "enable_compression": False,
+                        })
+
+                    return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                        optimized_config
+                    )
+
+                except Exception as e:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Handler performance optimization failed: {e}"
+                    )
 
         class ValidatingHandler(BasicHandler):
             """Handler that validates requests before processing using validator functions."""

@@ -11,10 +11,10 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import (
-    FlextAggregateRoot,
+    FlextAggregates,
     FlextEntity,
     FlextFactory,
-    FlextPayload,
+    FlextModels.Payload,
     FlextResult,
     FlextValue,
 )
@@ -43,7 +43,7 @@ def create_test_entity(entity_class: type, **kwargs: object) -> object:
     instance = result.value
 
     # Additional domain validation for aggregate roots
-    if isinstance(instance, FlextAggregateRoot):
+    if isinstance(instance, FlextAggregates):
         validation_result = instance.validate_domain_rules()
         if validation_result.is_failure:
             validation_msg: str = f"Domain validation failed for {entity_class.__name__}: {validation_result.error}"
@@ -118,7 +118,7 @@ class SampleValueObject(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class SampleAggregateRoot(FlextAggregateRoot):
+class SampleAggregateRoot(FlextAggregates):
     """Test aggregate root implementation."""
 
     title: str
@@ -261,7 +261,7 @@ class TestFlextEntity:
         """Test entity validation with invalid data."""
         # Test validation error via factory directly
         factory_fn = FlextFactory.create_entity_factory(SampleEntity)
-        # Cast to callable returning FlextResult (avoiding explicit Any)
+        # Cast to callable returning FlextResult (avoiding explicit object)
         entity_factory = cast("Callable[[], FlextResult[object]]", factory_fn)
         factory_result = entity_factory()  # Missing required 'name' field
         # No need for redundant cast since factory_result is already FlextResult[object]
@@ -455,7 +455,7 @@ class TestFlextDomainEvent:
 
 
 class TestFlextAggregateRoot:
-    """Test FlextAggregateRoot base class."""
+    """Test FlextAggregates base class."""
 
     def test_aggregate_root_creation(self) -> None:
         """Test aggregate root creation."""
@@ -508,7 +508,7 @@ class TestFlextAggregateRoot:
                 f"Expected {1}, got {len(aggregate.get_domain_events())}",
             )
         event = aggregate.get_domain_events()[0]
-        assert isinstance(event, FlextPayload)
+        assert isinstance(event, FlextModels.Payload)
         # Modern FlextEntityId wrapper - compare string representations
         if str(event.get_metadata("aggregate_id")) != str(aggregate.id):
             raise AssertionError(
@@ -692,7 +692,7 @@ class TestFlextAggregateRoot:
         aggregate = cast("SampleAggregateRoot", aggregate_obj)
 
         # Create a test event - convert FlextEntityId and FlextVersion to primitives
-        event_result = FlextPayload.create_event(
+        event_result = FlextModels.Payload.create_event(
             event_type="test.direct",
             event_data={"action": "direct_add"},
             aggregate_id=str(aggregate.id),  # Convert FlextEntityId to string

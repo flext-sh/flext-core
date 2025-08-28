@@ -71,6 +71,7 @@ import time
 import uuid
 import warnings
 from collections.abc import Callable, Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final, ParamSpec, Self, TypeVar, cast
 
@@ -89,7 +90,6 @@ from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.payload import FlextPayload
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.schema_processing import (
@@ -143,7 +143,7 @@ T = TypeVar("T")
 @FlextDecorators.Lifecycle.deprecated_legacy_function(
     old_name="get_logger",
     new_path="FlextLogger",
-    migration_guide="Import FlextLogger directly: from flext_core import FlextLogger",
+    migration_guide="Import FlextLogger directly: from flext_core import FlextLogger; logger = FlextLogger(__name__)",
 )
 def get_logger(
     name: str,
@@ -152,10 +152,23 @@ def get_logger(
     service_name: str | None = None,
     service_version: str | None = None,
 ) -> FlextLogger:
-    """Get a FlextLogger instance - compatibility function."""
+    """Get a FlextLogger instance - compatibility function.
+
+    .. deprecated:: 0.9.0
+        Use ``FlextLogger`` directly instead.
+    """
+    # Cast level to proper type for FlextLogger
+
+    valid_level = cast(
+        "FlextTypes.Config.LogLevel",
+        level.upper()
+        if level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        else "INFO",
+    )
+
     return FlextLogger(
         name=name,
-        level=level,
+        level=valid_level,
         service_name=service_name,
         service_version=service_version or version,
     )
@@ -271,21 +284,29 @@ class ConfigLegacy:
 
 
 # Legacy config facades - maintain exact same interface
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="get_flext_config",
+    new_path="FlextConfig",
+    migration_guide="Import FlextConfig directly: from flext_core import FlextConfig",
+)
 def get_flext_config() -> type[FlextConfig]:
     """Legacy function facade - DEPRECATED.
 
     Returns:
         FlextConfig class for backward compatibility.
 
-    Note:
-        This function exists for ABI compatibility only. New code should
-
-        import and use FlextConfig directly from flext_core.
+    .. deprecated:: 0.9.0
+        Use ``FlextConfig`` directly instead.
 
     """
     return ConfigLegacy.get_flext_config()
 
 
+@FlextDecorators.Lifecycle.deprecated_legacy_function(
+    old_name="get_flext_settings",
+    new_path="FlextConfig.Settings",
+    migration_guide="Import FlextConfig directly: from flext_core import FlextConfig; settings = FlextConfig.Settings()",
+)
 def get_flext_settings() -> FlextConfig.Settings:
     """Legacy function facade - DEPRECATED.
 
@@ -1776,7 +1797,7 @@ class ModelLegacy:
     @staticmethod
     def get_flext_model() -> type[object] | None:
         """Get FlextModel class via lazy import."""
-        return FlextModels.Model
+        return FlextModels
 
     @staticmethod
     def get_flext_entity() -> type[object] | None:
@@ -1971,7 +1992,7 @@ def create_version(value: int) -> FlextResult[object]:
 
     Deprecated: Use FlextModels.create_version() directly.
     """
-    result = FlextModels.create_version(value)
+    result = FlextCore.create_version_number(value)
     return cast("FlextResult[object]", result)
 
 
@@ -1984,7 +2005,7 @@ def create_email(value: str) -> FlextResult[object]:
 
     Deprecated: Use FlextModels.create_email() directly.
     """
-    result = FlextModels.create_email(value)
+    result = FlextCore.create_email_address(value)
     return cast("FlextResult[object]", result)
 
 
@@ -2136,7 +2157,14 @@ class FlextLoggerFactory:
         LoggingLegacy.deprecation_warning(
             "FlextLoggerFactory.get_logger", "FlextLogger"
         )
-        return FlextLogger(name or "flext", level)
+        # Cast level to LogLevel type for compatibility
+        valid_level = cast(
+            "FlextTypes.Config.LogLevel",
+            level.upper()
+            if level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+            else "INFO",
+        )
+        return FlextLogger(name or "flext", level=valid_level)
 
     @staticmethod
     def set_global_level(level: str) -> None:  # noqa: ARG004
@@ -3897,7 +3925,14 @@ def flext_get_logger(name: str = "flext") -> object:
 def get_base_logger(name: str, *, _level: str = "INFO") -> object:
     """DEPRECATED: Use FlextLogger() directly instead."""
     LoggingLegacy.deprecation_warning("get_base_logger", "FlextLogger")
-    return FlextLogger(name, _level)
+    # Cast level to LogLevel type for compatibility
+    valid_level = cast(
+        "FlextTypes.Config.LogLevel",
+        _level.upper()
+        if _level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        else "INFO",
+    )
+    return FlextLogger(name, level=valid_level)
 
 
 def bind_context(**context: object) -> object:
@@ -4123,12 +4158,12 @@ def flext_core() -> FlextCore:
 # =============================================================================
 
 # Type aliases for specialized payload types
-type FlextMessage = FlextPayload[str]
-type FlextEvent = FlextPayload[Mapping[str, object]]
+type FlextMessage = FlextModels.Payload[str]
+type FlextEvent = FlextModels.Payload[Mapping[str, object]]
 
 # Legacy class references for isinstance checks
-FlextMessageType = FlextPayload[str]
-FlextEventType = FlextPayload[Mapping[str, object]]
+FlextMessageType = FlextModels.Payload[str]
+FlextEventType = FlextModels.Payload[Mapping[str, object]]
 
 
 # Payload helper functions (compatibility)
@@ -4137,34 +4172,91 @@ def create_cross_service_event(
     event_data: dict[str, object],
     correlation_id: str | None = None,
     **kwargs: object,
-) -> FlextResult[FlextPayload[object]]:
+) -> FlextResult[FlextModels.Payload[object]]:
     """Create a cross-service event - compatibility function."""
-    return FlextPayload.create_cross_service_event(
-        event_type, event_data, correlation_id, **kwargs
-    )
+    try:
+        event_payload = {
+            "event_type": event_type,
+            "event_data": event_data,
+            "correlation_id": correlation_id or str(uuid.uuid4()),
+            **kwargs,
+        }
+        payload = FlextModels.Payload[object](
+            data=event_payload,
+            message_type=event_type,
+            source_service="legacy_compatibility",
+        )
+        return FlextResult[FlextModels.Payload[object]].ok(payload)
+    except Exception as e:
+        return FlextResult[FlextModels.Payload[object]].fail(
+            f"Event creation failed: {e}"
+        )
 
 
 def create_cross_service_message(
     message_text: str,
     correlation_id: str | None = None,
     **kwargs: object,
-) -> FlextResult[FlextPayload[object]]:
+) -> FlextResult[FlextModels.Payload[object]]:
     """Create a cross-service message - compatibility function."""
-    return FlextPayload.create_cross_service_message(
-        message_text, correlation_id, **kwargs
-    )
+    try:
+        message_payload = {
+            "message": message_text,
+            "correlation_id": correlation_id or str(uuid.uuid4()),
+            "timestamp": datetime.now(UTC).isoformat(),
+            **kwargs,
+        }
+        payload = FlextModels.Payload[object](
+            data=message_payload,
+            message_type="cross_service_message",
+            source_service="legacy_compatibility",
+        )
+        return FlextResult[FlextModels.Payload[object]].ok(payload)
+    except Exception as e:
+        return FlextResult[FlextModels.Payload[object]].fail(
+            f"Message creation failed: {e}"
+        )
 
 
 def get_serialization_metrics(
     payload: object | None = None,
 ) -> dict[str, object]:
     """Get serialization metrics for payload - compatibility function."""
-    return FlextPayload.get_serialization_metrics(payload)
+    if payload is None:
+        return {"size": 0, "type": "none", "timestamp": time.time()}
+
+    try:
+        payload_str = str(payload)
+        return {
+            "size": len(payload_str),
+            "type": type(payload).__name__,
+            "timestamp": time.time(),
+            "serializable": True,
+        }
+    except Exception:
+        return {
+            "size": 0,
+            "type": type(payload).__name__,
+            "timestamp": time.time(),
+            "serializable": False,
+        }
 
 
 def validate_cross_service_protocol(payload: object) -> FlextResult[None]:
     """Validate cross-service protocol - compatibility function."""
-    return FlextPayload.validate_cross_service_protocol(payload)
+    if payload is None:
+        return FlextResult[None].fail("Payload cannot be None")
+
+    # Basic validation - can be extended based on requirements
+    if isinstance(payload, dict):
+        required_fields = ["correlation_id"]
+        missing_fields = [field for field in required_fields if field not in payload]
+        if missing_fields:
+            return FlextResult[None].fail(f"Missing required fields: {missing_fields}")
+        return FlextResult[None].ok(None)
+
+    # For other types, just ensure it's not None
+    return FlextResult[None].ok(None)
 
 
 # =============================================================================

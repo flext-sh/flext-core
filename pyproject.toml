@@ -251,6 +251,7 @@ markers = [
     "unit: Unit tests",
     "core: Core framework functionality tests",
     "architecture: Architectural pattern tests",
+    "advanced: Advanced functionality tests",
     "pep8: PEP8 compliance validation tests",
     "ddd: Domain-driven design tests",
     "boundary: Boundary condition tests",
@@ -263,6 +264,7 @@ markers = [
     "race_condition: Race condition tests",
     "memory: Memory usage tests",
     "timeout: Tests that may timeout",
+    "regression: Regression testing and detection",
 ]
 minversion = "8.0"
 testpaths = ["tests"]

@@ -4,7 +4,7 @@ Tests the actual business functionality of all payload classes without mocks,
 focusing on real patterns, validation, serialization, and cross-service messaging.
 
 Classes Tested:
-- FlextPayload: Generic type-safe payload container
+- FlextModels.Payload: Generic type-safe payload container
 - FlextMessage: Specialized string message payload
 - FlextEvent: Domain event payload with aggregate tracking
 """
@@ -14,14 +14,14 @@ from __future__ import annotations
 import math
 import time
 from datetime import UTC, datetime
+from decimal import Decimal
 
 import pytest
 from pydantic_core import ValidationError
 
+# Import from unified interface - NO legacy imports
+from flext_core import FlextModels
 from flext_core.constants import FlextConstants
-from flext_core.payload import (
-    FlextPayload,
-)
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -32,36 +32,39 @@ pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 class TestFlextPayloadRealFunctionality:
-    """Test FlextPayload real functionality with type-safe containers."""
+    """Test FlextModels.Payload real functionality with type-safe containers."""
 
     def test_payload_creation_with_primitive_data(self) -> None:
-        """Test FlextPayload creation with primitive data types."""
+        """Test FlextModels.Payload creation with primitive data types."""
         # String payload
-        result = FlextPayload.create("test string", source="unit_test")
-        assert result.is_success
+        result = FlextModels.create_payload(
+            "test string", message_type="string", source_service="unit_test"
+        )
+        assert result.success
         payload = result.value
         assert payload.data == "test string"
-        assert payload.value == "test string"  # Modern .value access
-        assert payload.metadata["source"] == "unit_test"
+        assert payload.source_service == "unit_test"
 
         # Integer payload
-        result = FlextPayload.create(42, version=1)
-        assert result.is_success
+        result = FlextModels.create_payload(
+            42, message_type="integer", source_service="unit_test"
+        )
+        assert result.success
         payload = result.value
         assert payload.data == 42
-        assert payload.value == 42
-        assert payload.metadata["version"] == 1
 
         # Boolean payload
-        result = FlextPayload.create(True, flag_type="boolean")
-        assert result.is_success
+        result = FlextModels.create_payload(
+            True, message_type="boolean", source_service="unit_test"
+        )
+        assert result.success
         payload = result.value
         assert payload.data is True
         assert payload.value is True
         assert payload.metadata["flag_type"] == "boolean"
 
     def test_payload_creation_with_complex_data(self) -> None:
-        """Test FlextPayload with complex nested data structures."""
+        """Test FlextModels.Payload with complex nested data structures."""
         complex_data = {
             "user_id": "user_123",
             "preferences": {
@@ -75,7 +78,9 @@ class TestFlextPayloadRealFunctionality:
             },
         }
 
-        result = FlextPayload.create(complex_data, operation="user_preferences_update")
+        result = FlextModels.Payload.create(
+            complex_data, operation="user_preferences_update"
+        )
         assert result.is_success
 
         payload = result.value
@@ -86,9 +91,11 @@ class TestFlextPayloadRealFunctionality:
         assert payload.metadata["operation"] == "user_preferences_update"
 
     def test_payload_metadata_enrichment(self) -> None:
-        """Test FlextPayload metadata enrichment functionality."""
+        """Test FlextModels.Payload metadata enrichment functionality."""
         # Create initial payload
-        result = FlextPayload.create({"initial": "data"}, version=1, source="test")
+        result = FlextModels.Payload.create(
+            {"initial": "data"}, version=1, source="test"
+        )
         assert result.is_success
 
         original = result.value
@@ -112,8 +119,8 @@ class TestFlextPayloadRealFunctionality:
         assert enriched.metadata["operation"] == "data_processing"
 
     def test_payload_metadata_enrichment_from_dict(self) -> None:
-        """Test FlextPayload metadata enrichment from dictionary."""
-        result = FlextPayload.create({"test": "data"})
+        """Test FlextModels.Payload metadata enrichment from dictionary."""
+        result = FlextModels.Payload.create({"test": "data"})
         assert result.is_success
 
         original = result.value
@@ -132,13 +139,13 @@ class TestFlextPayloadRealFunctionality:
         assert enriched.metadata["trace_id"] == "trace_789"
 
     def test_payload_create_from_dict(self) -> None:
-        """Test FlextPayload creation from dictionary."""
+        """Test FlextModels.Payload creation from dictionary."""
         data_dict = {
             "data": {"user": "john", "action": "login"},
             "metadata": {"timestamp": "2024-01-01T00:00:00Z"},
         }
 
-        result = FlextPayload.create_from_dict(data_dict)
+        result = FlextModels.Payload.create_from_dict(data_dict)
         assert result.is_success
 
         payload = result.value
@@ -146,8 +153,8 @@ class TestFlextPayloadRealFunctionality:
         assert payload.metadata["timestamp"] == "2024-01-01T00:00:00Z"
 
     def test_payload_immutability(self) -> None:
-        """Test FlextPayload immutability (frozen=True)."""
-        result = FlextPayload.create({"test": "data"}, version=1)
+        """Test FlextModels.Payload immutability (frozen=True)."""
+        result = FlextModels.Payload.create({"test": "data"}, version=1)
         assert result.is_success
 
         payload = result.value
@@ -160,7 +167,7 @@ class TestFlextPayloadRealFunctionality:
             payload.metadata = {"modified": "metadata"}
 
     def test_payload_serialization_patterns(self) -> None:
-        """Test FlextPayload serialization patterns."""
+        """Test FlextModels.Payload serialization patterns."""
         test_data = {
             "id": "test_123",
             "name": "Test Object",
@@ -168,7 +175,9 @@ class TestFlextPayloadRealFunctionality:
             "config": {"enabled": True, "timeout": 30},
         }
 
-        result = FlextPayload.create(test_data, operation="test", timestamp=time.time())
+        result = FlextModels.Payload.create(
+            test_data, operation="test", timestamp=time.time()
+        )
         assert result.is_success
 
         payload = result.value
@@ -192,14 +201,14 @@ class TestFlextMessageRealFunctionality:
     def test_message_creation_with_levels(self) -> None:
         """Test FlextMessage creation with different message levels."""
         # Info level (default)
-        result = FlextPayload.create_message("System initialized successfully")
+        result = FlextModels.Payload.create_message("System initialized successfully")
         assert result.is_success
         message = result.value
         assert message.value == "System initialized successfully"
         assert message.metadata["level"] == "info"
 
         # Warning level
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Database connection slow", level="warning", source="database_monitor"
         )
         assert result.is_success
@@ -209,7 +218,7 @@ class TestFlextMessageRealFunctionality:
         assert message.metadata["source"] == "database_monitor"
 
         # Error level
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Failed to authenticate user", level="error", source="auth_service"
         )
         assert result.is_success
@@ -219,7 +228,7 @@ class TestFlextMessageRealFunctionality:
         assert message.metadata["source"] == "auth_service"
 
         # Critical level
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "System shutdown initiated", level="critical", source="system_manager"
         )
         assert result.is_success
@@ -229,7 +238,7 @@ class TestFlextMessageRealFunctionality:
     def test_message_level_validation_and_fallback(self) -> None:
         """Test FlextMessage level validation with fallback to 'info'."""
         # Invalid level should fallback to 'info'
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Test message with invalid level", level="invalid_level"
         )
         assert result.is_success
@@ -239,7 +248,9 @@ class TestFlextMessageRealFunctionality:
         # Test all valid levels
         valid_levels = ["info", "warning", "error", "debug", "critical"]
         for level in valid_levels:
-            result = FlextPayload.create_message(f"Test {level} message", level=level)
+            result = FlextModels.Payload.create_message(
+                f"Test {level} message", level=level
+            )
             assert result.is_success
             message = result.value
             assert message.metadata["level"] == level
@@ -247,28 +258,28 @@ class TestFlextMessageRealFunctionality:
     def test_message_validation_failures(self) -> None:
         """Test FlextMessage validation failures."""
         # Empty message should fail
-        result = FlextPayload.create_message("")
+        result = FlextModels.Payload.create_message("")
         assert result.is_failure
         assert "cannot be empty" in result.error
 
         # None message should fail
-        result = FlextPayload.create_message(None)
+        result = FlextModels.Payload.create_message(None)
         assert result.is_failure
 
         # Whitespace-only message should fail
-        result = FlextPayload.create_message("   ")
+        result = FlextModels.Payload.create_message("   ")
         assert result.is_failure
 
     def test_message_source_tracking(self) -> None:
         """Test FlextMessage source tracking functionality."""
         # Without source
-        result = FlextPayload.create_message("Test message without source")
+        result = FlextModels.Payload.create_message("Test message without source")
         assert result.is_success
         message = result.value
         assert "source" not in message.metadata
 
         # With source
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Test message with source", source="unit_test_module"
         )
         assert result.is_success
@@ -276,8 +287,8 @@ class TestFlextMessageRealFunctionality:
         assert message.metadata["source"] == "unit_test_module"
 
     def test_message_inheritance_from_payload(self) -> None:
-        """Test FlextMessage inherits FlextPayload functionality."""
-        result = FlextPayload.create_message(
+        """Test FlextMessage inherits FlextModels.Payload functionality."""
+        result = FlextModels.Payload.create_message(
             "Test message", level="info", source="test"
         )
         assert result.is_success
@@ -301,14 +312,14 @@ class TestFlextMessageRealFunctionality:
         messages = []
 
         # Startup sequence
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Starting application initialization", level="info", source="app_manager"
         )
         assert result.is_success
         messages.append(result.value)
 
         # Configuration loading
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Loading configuration from config.yaml",
             level="debug",
             source="config_loader",
@@ -317,7 +328,7 @@ class TestFlextMessageRealFunctionality:
         messages.append(result.value)
 
         # Warning during startup
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Configuration file missing optional section 'advanced'",
             level="warning",
             source="config_loader",
@@ -326,7 +337,7 @@ class TestFlextMessageRealFunctionality:
         messages.append(result.value)
 
         # Successful startup
-        result = FlextPayload.create_message(
+        result = FlextModels.Payload.create_message(
             "Application started successfully on port 8080",
             level="info",
             source="web_server",
@@ -336,7 +347,7 @@ class TestFlextMessageRealFunctionality:
 
         # Verify the message sequence
         assert len(messages) == 4
-        assert all(isinstance(msg, FlextPayload) for msg in messages)
+        assert all(isinstance(msg, FlextModels.Payload) for msg in messages)
         assert messages[0].metadata["level"] == "info"
         assert messages[1].metadata["level"] == "debug"
         assert messages[2].metadata["level"] == "warning"
@@ -363,7 +374,7 @@ class TestFlextEventRealFunctionality:
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "UserRegistered", event_data, aggregate_id="user_123", version=1
         )
 
@@ -378,7 +389,7 @@ class TestFlextEventRealFunctionality:
         """Test FlextEvent creation without optional aggregate_id and version."""
         event_data = {"action": "system_restart", "reason": "maintenance"}
 
-        result = FlextPayload.create_event("SystemRestarted", event_data)
+        result = FlextModels.Payload.create_event("SystemRestarted", event_data)
         assert result.is_success
 
         event = result.value
@@ -392,21 +403,23 @@ class TestFlextEventRealFunctionality:
         event_data = {"test": "data"}
 
         # Empty event_type should fail
-        result = FlextPayload.create_event("", event_data)
+        result = FlextModels.Payload.create_event("", event_data)
         assert result.is_failure
         assert "cannot be empty" in result.error
 
         # None event_type should fail
-        result = FlextPayload.create_event(None, event_data)
+        result = FlextModels.Payload.create_event(None, event_data)
         assert result.is_failure
 
         # Empty aggregate_id should fail
-        result = FlextPayload.create_event("TestEvent", event_data, aggregate_id="")
+        result = FlextModels.Payload.create_event(
+            "TestEvent", event_data, aggregate_id=""
+        )
         assert result.is_failure
         assert "Invalid aggregate ID" in result.error
 
         # Negative version should fail
-        result = FlextPayload.create_event("TestEvent", event_data, version=-1)
+        result = FlextModels.Payload.create_event("TestEvent", event_data, version=-1)
         assert result.is_failure
         assert "must be non-negative" in result.error
 
@@ -423,7 +436,7 @@ class TestFlextEventRealFunctionality:
             "registration_source": "web_app",
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "UserRegistered", registration_data, aggregate_id="user_456", version=1
         )
         assert result.is_success
@@ -436,7 +449,7 @@ class TestFlextEventRealFunctionality:
             "verified_at": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "EmailVerified", verification_data, aggregate_id="user_456", version=2
         )
         assert result.is_success
@@ -453,7 +466,7 @@ class TestFlextEventRealFunctionality:
             "updated_by": "user_456",
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "ProfileUpdated", profile_data, aggregate_id="user_456", version=3
         )
         assert result.is_success
@@ -466,7 +479,7 @@ class TestFlextEventRealFunctionality:
             "deactivated_at": datetime.now(UTC).isoformat(),
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "AccountDeactivated", deactivation_data, aggregate_id="user_456", version=4
         )
         assert result.is_success
@@ -536,7 +549,7 @@ class TestFlextEventRealFunctionality:
             },
         }
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "OrderPlaced", complex_event_data, aggregate_id="order_789", version=1
         )
 
@@ -550,10 +563,10 @@ class TestFlextEventRealFunctionality:
         assert event.metadata["event_type"] == "OrderPlaced"
 
     def test_event_inheritance_from_payload(self) -> None:
-        """Test FlextEvent inherits FlextPayload functionality."""
+        """Test FlextEvent inherits FlextModels.Payload functionality."""
         event_data = {"test": "event"}
 
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "TestEvent", event_data, aggregate_id="test_123", version=1
         )
         assert result.is_success
@@ -588,7 +601,10 @@ class TestPayloadSerializationRealFunctionality:
 
         # Format constants should be defined
         assert FlextConstants.Observability.SERIALIZATION_FORMAT_JSON is not None
-        assert FlextConstants.Observability.SERIALIZATION_FORMAT_JSON_COMPRESSED is not None
+        assert (
+            FlextConstants.Observability.SERIALIZATION_FORMAT_JSON_COMPRESSED
+            is not None
+        )
 
         # Size and compression constants
         assert FlextConstants.Performance.PAYLOAD_COMPRESSION_LEVEL == 6
@@ -596,12 +612,52 @@ class TestPayloadSerializationRealFunctionality:
     @pytest.mark.skip(reason="Go type mappings not yet implemented")
     def test_go_type_mappings_comprehensive(self) -> None:
         """Test Go type mappings for cross-service communication."""
-        # TODO: Implement Go type mappings when bridge functionality is added
+        # This test validates basic type compatibility for future Go bridge
+        # Current implementation focuses on JSON serialization compatibility
+
+        # Test basic types that map well to Go
+        basic_types_data = {
+            "string_val": "test",  # string
+            "int_val": 42,  # int64
+            "float_val": math.pi,  # float64
+            "bool_val": True,  # bool
+            "array_val": [1, 2, 3],  # []interface{}
+            "object_val": {"key": "value"},  # map[string]interface{}
+        }
+
+        payload = FlextModels.Payload(data=basic_types_data)
+
+        # Verify serialization maintains Go-compatible types
+        serialized = payload.to_json()
+        assert serialized is not None
+
+        # Verify deserialization preserves types
+        deserialized = FlextModels.Payload.from_json(serialized)
+        assert deserialized.success
+        assert deserialized.unwrap().data == basic_types_data
 
     @pytest.mark.skip(reason="Python to Go type mappings not yet implemented")
     def test_python_to_go_type_mappings(self) -> None:
         """Test Python to Go type mappings for serialization."""
-        # TODO: Implement Python to Go type mappings when bridge functionality is added
+        # Future implementation will handle Python-specific types that need
+        # special handling for Go bridge compatibility
+
+        # Python-specific types that need mapping
+        python_specific_data = {
+            "datetime_val": datetime.now(UTC),
+            "decimal_val": Decimal("123.456"),
+            "bytes_val": b"binary data",
+            "none_val": None,
+            "complex_val": {"nested": {"deeply": {"value": 123}}},
+        }
+
+        # Verify data structure is valid
+        assert python_specific_data is not None
+        assert len(python_specific_data) == 5
+
+        # For now, verify basic serialization works
+        payload = FlextModels.Payload(data={"basic": "test"})
+        assert payload.to_json() is not None
 
     def test_payload_serialization_with_go_bridge_types(self) -> None:
         """Test payload serialization considering Go bridge type compatibility."""
@@ -615,7 +671,9 @@ class TestPayloadSerializationRealFunctionality:
             "array_field": [1, 2, 3, "mixed"],  # []interface{}
         }
 
-        result = FlextPayload.create(go_compatible_data, target_service="go_service")
+        result = FlextModels.Payload.create(
+            go_compatible_data, target_service="go_service"
+        )
         assert result.is_success
 
         payload = result.value
@@ -640,7 +698,7 @@ class TestPayloadSerializationRealFunctionality:
             },
         }
 
-        result = FlextPayload.create(large_data, size_test=True)
+        result = FlextModels.Payload.create(large_data, size_test=True)
         assert result.is_success
 
         payload = result.value
@@ -665,7 +723,7 @@ class TestPayloadIntegrationRealFunctionality:
     def test_complete_message_event_workflow(self) -> None:
         """Test complete workflow using messages and events together."""
         # 1. Create system startup message
-        startup_result = FlextPayload.create_message(
+        startup_result = FlextModels.Payload.create_message(
             "System startup initiated", level="info", source="system_manager"
         )
         assert startup_result.is_success
@@ -678,14 +736,14 @@ class TestPayloadIntegrationRealFunctionality:
             "configuration": {"environment": "production", "version": "1.0.0"},
         }
 
-        event_result = FlextPayload.create_event(
+        event_result = FlextModels.Payload.create_event(
             "SystemStarted", startup_event_data, aggregate_id="system_001", version=1
         )
         assert event_result.is_success
         startup_event = event_result.value
 
         # 3. Create completion message
-        completion_result = FlextPayload.create_message(
+        completion_result = FlextModels.Payload.create_message(
             "System startup completed successfully",
             level="info",
             source="system_manager",
@@ -715,7 +773,7 @@ class TestPayloadIntegrationRealFunctionality:
             "items": [{"product": "laptop", "quantity": 1, "price": 1200.00}],
             "total": 1200.00,
         }
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "OrderCreated", create_data, aggregate_id=aggregate_id, version=1
         )
         assert result.is_success
@@ -728,7 +786,7 @@ class TestPayloadIntegrationRealFunctionality:
             "amount": 1200.00,
             "transaction_id": "txn_001",
         }
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "PaymentAdded", payment_data, aggregate_id=aggregate_id, version=2
         )
         assert result.is_success
@@ -741,7 +799,7 @@ class TestPayloadIntegrationRealFunctionality:
             "carrier": "FedEx",
             "shipped_at": datetime.now(UTC).isoformat(),
         }
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "OrderShipped", shipping_data, aggregate_id=aggregate_id, version=3
         )
         assert result.is_success
@@ -753,7 +811,7 @@ class TestPayloadIntegrationRealFunctionality:
             "delivered_at": datetime.now(UTC).isoformat(),
             "signature": "customer_signature",
         }
-        result = FlextPayload.create_event(
+        result = FlextModels.Payload.create_event(
             "OrderDelivered", delivery_data, aggregate_id=aggregate_id, version=4
         )
         assert result.is_success
@@ -767,37 +825,29 @@ class TestPayloadIntegrationRealFunctionality:
             event_data = event.value
 
             if event_type == "OrderCreated":
-                aggregate_state.update(
-                    {
-                        "customer_id": event_data["customer_id"],
-                        "items": event_data["items"],
-                        "total": event_data["total"],
-                        "status": "created",
-                    }
-                )
+                aggregate_state.update({
+                    "customer_id": event_data["customer_id"],
+                    "items": event_data["items"],
+                    "total": event_data["total"],
+                    "status": "created",
+                })
             elif event_type == "PaymentAdded":
-                aggregate_state.update(
-                    {
-                        "payment_method": event_data["payment_method"],
-                        "transaction_id": event_data["transaction_id"],
-                        "status": "paid",
-                    }
-                )
+                aggregate_state.update({
+                    "payment_method": event_data["payment_method"],
+                    "transaction_id": event_data["transaction_id"],
+                    "status": "paid",
+                })
             elif event_type == "OrderShipped":
-                aggregate_state.update(
-                    {
-                        "tracking_number": event_data["tracking_number"],
-                        "carrier": event_data["carrier"],
-                        "status": "shipped",
-                    }
-                )
+                aggregate_state.update({
+                    "tracking_number": event_data["tracking_number"],
+                    "carrier": event_data["carrier"],
+                    "status": "shipped",
+                })
             elif event_type == "OrderDelivered":
-                aggregate_state.update(
-                    {
-                        "delivered_at": event_data["delivered_at"],
-                        "status": "delivered",
-                    }
-                )
+                aggregate_state.update({
+                    "delivered_at": event_data["delivered_at"],
+                    "status": "delivered",
+                })
 
         # Verify reconstructed state
         assert aggregate_state["order_id"] == aggregate_id
@@ -817,7 +867,7 @@ class TestPayloadIntegrationRealFunctionality:
             "validation_rules": ["email", "age", "country"],
         }
 
-        result = FlextPayload.create(
+        result = FlextModels.Payload.create(
             service_a_data,
             source_service="user_service",
             target_service="validation_service",
@@ -834,7 +884,7 @@ class TestPayloadIntegrationRealFunctionality:
             "overall_status": "passed",
         }
 
-        response_result = FlextPayload.create(
+        response_result = FlextModels.Payload.create(
             response_data,
             source_service="validation_service",
             target_service="user_service",

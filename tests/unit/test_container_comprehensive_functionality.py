@@ -2,21 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+object
 
 import pytest
 
 from flext_core import FlextContainer, FlextResult
-from flext_core.legacy import (
-    FlextServiceKey,
-    FlextServiceRegistrar,
-    FlextServiceRetriever,
-    GetServiceQuery,
-    ListServicesQuery,
-    RegisterFactoryCommand,
-    RegisterServiceCommand,
-    UnregisterServiceCommand,
-)
+
+# Removed legacy imports - using FlextContainer directly
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -41,15 +33,15 @@ class DatabaseService:
 
     def execute_query(
         self, query: str, *args: object
-    ) -> FlextResult[list[dict[str, Any]]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Execute database query with parameters."""
         if not self.connected:
-            return FlextResult[list[dict[str, Any]]].fail("Database not connected")
+            return FlextResult[list[dict[str, object]]].fail("Database not connected")
         params_str = ", ".join(str(arg) for arg in args) if args else ""
         result_msg = f"Executed: {query}" + (
             f" with params: [{params_str}]" if params_str else ""
         )
-        return FlextResult[list[dict[str, Any]]].ok([{"result": result_msg}])
+        return FlextResult[list[dict[str, object]]].ok([{"result": result_msg}])
 
 
 class EmailService:
@@ -58,7 +50,7 @@ class EmailService:
     def __init__(self, smtp_server: str = "localhost", port: int = 587) -> None:
         self.smtp_server = smtp_server
         self.port = port
-        self.emails_sent: list[dict[str, Any]] = []
+        self.emails_sent: list[dict[str, object]] = []
 
     def send_email(self, to: str, subject: str, body: str) -> FlextResult[str]:
         """Send email and return message ID."""
@@ -75,7 +67,7 @@ class UserService:
         self.database = database
         self.email = email
 
-    def create_user(self, name: str, email: str) -> FlextResult[dict[str, Any]]:
+    def create_user(self, name: str, email: str) -> FlextResult[dict[str, object]]:
         """Create user using injected dependencies."""
         # Use database to store user - safe for testing with mock database
         db_result = self.database.execute_query(
@@ -84,7 +76,7 @@ class UserService:
             email,
         )
         if db_result.is_failure:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Database error: {db_result.error}"
             )
 
@@ -93,12 +85,12 @@ class UserService:
             email, "Welcome!", f"Hello {name}, welcome to our service!"
         )
         if email_result.is_failure:
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Email error: {email_result.error}"
             )
 
         user = {"name": name, "email": email, "message_id": email_result.value}
-        return FlextResult[dict[str, Any]].ok(user)
+        return FlextResult[dict[str, object]].ok(user)
 
 
 class ConfigService:
@@ -154,7 +146,7 @@ class TestFlextServiceKeyFunctionality:
         assert subscripted_class == FlextServiceKey
 
         # Should work with any type
-        any_type_class = FlextServiceKey[Any]
+        any_type_class = FlextServiceKey[object]
         assert any_type_class == FlextServiceKey
 
     def test_service_key_string_operations(self) -> None:
@@ -959,7 +951,7 @@ class TestContainerComplexIntegrationScenarios:
         container.register("user_service", user_service)
 
         # Layer 3: Application services
-        def notification_factory() -> dict[str, Any]:
+        def notification_factory() -> dict[str, object]:
             user_svc = container.get("user_service").unwrap_or(user_service)
             return {"user_service": user_svc, "type": "notification"}
 
@@ -1031,7 +1023,7 @@ class TestContainerComplexIntegrationScenarios:
         container.register("config", ConfigService("production"))
 
         # Composite service factory
-        def application_context_factory() -> dict[str, Any]:
+        def application_context_factory() -> dict[str, object]:
             return {
                 "database": container.get("database").unwrap_or(DatabaseService()),
                 "email": container.get("email").unwrap_or(EmailService()),

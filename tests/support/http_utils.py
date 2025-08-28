@@ -9,7 +9,8 @@ patterns with automatic retry, error simulation, and performance monitoring.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+
+object
 from urllib.parse import urljoin
 
 import httpx
@@ -248,7 +249,7 @@ class HTTPScenarioBuilder:
 
     def __init__(self, httpx_mock: HTTPXMock) -> None:
         self.httpx_mock = httpx_mock
-        self.scenarios: list[dict[str, Any]] = []
+        self.scenarios: list[dict[str, object]] = []
 
     def add_successful_request(
         self,
@@ -266,14 +267,12 @@ class HTTPScenarioBuilder:
             status_code,
         )
 
-        self.scenarios.append(
-            {
-                "type": "success",
-                "url": url,
-                "method": method,
-                "status_code": status_code,
-            }
-        )
+        self.scenarios.append({
+            "type": "success",
+            "url": url,
+            "method": method,
+            "status_code": status_code,
+        })
 
         return self
 
@@ -293,14 +292,12 @@ class HTTPScenarioBuilder:
             error_message,
         )
 
-        self.scenarios.append(
-            {
-                "type": "error",
-                "url": url,
-                "method": method,
-                "status_code": status_code,
-            }
-        )
+        self.scenarios.append({
+            "type": "error",
+            "url": url,
+            "method": method,
+            "status_code": status_code,
+        })
 
         return self
 
@@ -329,14 +326,12 @@ class HTTPScenarioBuilder:
             final_response or {"status": "success", "retry_succeeded": True},
         )
 
-        self.scenarios.append(
-            {
-                "type": "retry",
-                "url": url,
-                "method": method,
-                "failure_count": failure_count,
-            }
-        )
+        self.scenarios.append({
+            "type": "retry",
+            "url": url,
+            "method": method,
+            "failure_count": failure_count,
+        })
 
         return self
 
@@ -370,18 +365,16 @@ class HTTPScenarioBuilder:
             },
         )
 
-        self.scenarios.append(
-            {
-                "type": "circuit_breaker",
-                "url": url,
-                "method": method,
-                "failure_threshold": failure_threshold,
-            }
-        )
+        self.scenarios.append({
+            "type": "circuit_breaker",
+            "url": url,
+            "method": method,
+            "failure_threshold": failure_threshold,
+        })
 
         return self
 
-    def build_scenario(self) -> dict[str, Any]:
+    def build_scenario(self) -> dict[str, object]:
         """Build complete scenario."""
         return {
             "total_requests": len(self.scenarios),

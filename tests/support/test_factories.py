@@ -20,25 +20,24 @@ from datetime import UTC, datetime
 from typing import override
 
 from flext_core import (
-    FlextAggregateRoot,
+    FlextAggregates,
     FlextConfig,
+    FlextConstants,
     FlextEntity,
-    FlextEnvironment,
     FlextFields,
-    FlextModel,
+    FlextModels,
     FlextResult,
-    FlextValue,
 )
 
 
 def _generate_fake_word() -> str:
     """Generate a fake word for testing."""
-    return "".join(random.choices(string.ascii_lowercase, k=random.randint(4, 12)))  # noqa: S311
+    return "".join(random.choices(string.ascii_lowercase, k=random.randint(4, 12)))
 
 
 def _generate_fake_sentence() -> str:
     """Generate a fake sentence for testing."""
-    words = [_generate_fake_word() for _ in range(random.randint(3, 8))]  # noqa: S311
+    words = [_generate_fake_word() for _ in range(random.randint(3, 8))]
     return " ".join(words).capitalize() + "."
 
 
@@ -70,11 +69,11 @@ class FlextModelFactory:
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC),
         }
-        defaults.update(kwargs)  # type: ignore[arg-type]
-        return FlextModel(**defaults)
+        defaults.update(kwargs)
+        return FlextModels(**defaults)
 
 
-class TestValueObject(FlextValue):
+class TestValueObject(FlextModels.Value):
     """Concrete FlextValue implementation for testing."""
 
     value: object = None
@@ -94,7 +93,7 @@ class FlextValueFactory:
         defaults = {
             "value": _generate_fake_word(),
         }
-        defaults.update(kwargs)  # type: ignore[arg-type]
+        defaults.update(kwargs)
         return TestValueObject(**defaults)
 
 
@@ -119,15 +118,15 @@ class FlextEntityFactory:
         defaults = {
             "name": "Test Entity",
         }
-        defaults.update(kwargs)  # type: ignore[arg-type]
+        defaults.update(kwargs)
         # Create with auto-generated ID if not provided
         if "id" not in defaults:
             defaults["id"] = f"test_entity_{uuid.uuid4().hex[:8]}"
-        return TestEntity(**defaults)  # type: ignore[arg-type]
+        return TestEntity(**defaults)
 
 
-class TestAggregateRoot(FlextAggregateRoot):
-    """Concrete FlextAggregateRoot implementation for testing."""
+class TestAggregateRoot(FlextAggregates):
+    """Concrete FlextAggregates implementation for testing."""
 
     name: str = "Test Aggregate"
 
@@ -138,16 +137,16 @@ class TestAggregateRoot(FlextAggregateRoot):
 
 
 class FlextAggregateRootFactory:
-    """Factory para FlextAggregateRoot objects."""
+    """Factory para FlextAggregates objects."""
 
     @classmethod
     def create(cls, **kwargs: object) -> TestAggregateRoot:
-        """Create FlextAggregateRoot instance with default values."""
+        """Create FlextAggregates instance with default values."""
         defaults = {
             "name": "Test Aggregate",
         }
-        defaults.update(kwargs)  # type: ignore[arg-type]
-        return TestAggregateRoot(**defaults)  # type: ignore[arg-type]
+        defaults.update(kwargs)
+        return TestAggregateRoot(**defaults)
 
 
 class FlextConfigFactory:
@@ -160,18 +159,20 @@ class FlextConfigFactory:
             "name": "test-flext",
             "version": "1.0.0",
             "description": "Test FLEXT configuration",
-            "environment": random.choice([env.value for env in FlextEnvironment]),  # noqa: S311
-            "debug": random.choice([True, False]),  # noqa: S311
-            "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),  # noqa: S311
-            "timeout": random.randint(5, 60),  # noqa: S311
-            "retries": random.randint(1, 5),  # noqa: S311
-            "page_size": random.randint(10, 500),  # noqa: S311
-            "enable_caching": random.choice([True, False]),  # noqa: S311
-            "enable_metrics": random.choice([True, False]),  # noqa: S311
-            "enable_tracing": random.choice([True, False]),  # noqa: S311
+            "environment": random.choice([
+                env.value for env in FlextConstants.Config.ConfigEnvironment
+            ]),
+            "debug": random.choice([True, False]),
+            "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
+            "timeout": random.randint(5, 60),
+            "retries": random.randint(1, 5),
+            "page_size": random.randint(10, 500),
+            "enable_caching": random.choice([True, False]),
+            "enable_metrics": random.choice([True, False]),
+            "enable_tracing": random.choice([True, False]),
         }
-        defaults.update(kwargs)  # type: ignore[arg-type]
-        return FlextConfig(**defaults)  # type: ignore[arg-type]
+        defaults.update(kwargs)
+        return FlextConfig(**defaults)
 
 
 class FlextFieldCoreFactory:
@@ -182,8 +183,8 @@ class FlextFieldCoreFactory:
         """Create FlextFields.Core field instance with default values."""
         defaults = {
             "name": _generate_fake_word(),
-            "field_type": random.choice(["string", "integer", "boolean", "datetime"]),  # noqa: S311
-            "required": random.choice([True, False]),  # noqa: S311
+            "field_type": random.choice(["string", "integer", "boolean", "datetime"]),
+            "required": random.choice([True, False]),
             "description": _generate_fake_sentence(),
             "default_value": None,
         }
@@ -224,11 +225,24 @@ class FlextResultFactory:
 # =============================================================================
 
 
+class DomainEntity(FlextEntity):
+    """Concrete domain entity for testing."""
+
+    name: str = "Test Domain Entity"
+    description: str = "Test description"
+    active: bool = True
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
+
+
 class DomainEntityFactory:
     """Factory para entidades de domínio genéricas."""
 
     @classmethod
-    def create(cls, **kwargs: object) -> FlextEntity:
+    def create(cls, **kwargs: object) -> DomainEntity:
         """Create domain entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -240,14 +254,29 @@ class DomainEntityFactory:
             "active": True,
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)  # type: ignore[arg-type]
+        return DomainEntity(**defaults)
+
+
+class UserEntity(FlextEntity):
+    """Concrete user entity for testing."""
+
+    email: str = "test@example.com"
+    username: str = "testuser"
+    first_name: str = "Test"
+    last_name: str = "User"
+    is_active: bool = True
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
 
 
 class UserEntityFactory:
     """Factory para entidade User específica."""
 
     @classmethod
-    def create(cls, **kwargs: object) -> FlextEntity:
+    def create(cls, **kwargs: object) -> UserEntity:
         """Create user entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -261,14 +290,28 @@ class UserEntityFactory:
             "is_active": True,
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)  # type: ignore[arg-type]
+        return UserEntity(**defaults)
+
+
+class OrganizationEntity(FlextEntity):
+    """Concrete organization entity for testing."""
+
+    name: str = "Test Organization"
+    tax_id: str = "123456789"
+    website: str = "https://test.com"
+    industry: str = "Technology"
+
+    @override
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Test implementation of business rules validation."""
+        return FlextResult[None].ok(None)
 
 
 class OrganizationEntityFactory:
     """Factory para entidade Organization."""
 
     @classmethod
-    def create(cls, **kwargs: object) -> FlextEntity:
+    def create(cls, **kwargs: object) -> OrganizationEntity:
         """Create organization entity instance with default values."""
         defaults = {
             "id": str(uuid.uuid4()),
@@ -276,12 +319,12 @@ class OrganizationEntityFactory:
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC),
             "name": _generate_fake_company(),
-            "tax_id": "".join(random.choices(string.digits, k=9)),  # noqa: S311
+            "tax_id": "".join(random.choices(string.digits, k=9)),
             "website": _generate_fake_url(),
             "industry": _generate_fake_word().capitalize(),
         }
         defaults.update(kwargs)
-        return FlextEntity(**defaults)  # type: ignore[arg-type]
+        return OrganizationEntity(**defaults)
 
 
 # =============================================================================
@@ -299,7 +342,9 @@ class MetadataFactory:
             "source": "test",
             "version": "1.0.0",
             "created_by": _generate_fake_word(),
-            "environment": random.choice([env.value for env in FlextEnvironment]),  # noqa: S311
+            "environment": random.choice([
+                env.value for env in FlextConstants.Config.ConfigEnvironment
+            ]),
         }
         defaults.update(kwargs)
         return defaults
@@ -312,10 +357,10 @@ class ConfigDictFactory:
     def create(cls, **kwargs: object) -> dict[str, object]:
         """Create config dictionary with default values."""
         defaults: dict[str, object] = {
-            "debug": random.choice([True, False]),  # noqa: S311
-            "timeout": random.randint(1, 300),  # noqa: S311
-            "max_retries": random.randint(1, 10),  # noqa: S311
-            "batch_size": random.randint(10, 1000),  # noqa: S311
+            "debug": random.choice([True, False]),
+            "timeout": random.randint(1, 300),
+            "max_retries": random.randint(1, 10),
+            "batch_size": random.randint(10, 1000),
         }
         defaults.update(kwargs)
         return defaults
@@ -330,7 +375,7 @@ class EntityListFactory:
     """Factory para listas de entidades."""
 
     @classmethod
-    def create_batch_entities(cls, size: int = 5) -> list[FlextEntity]:
+    def create_batch_entities(cls, size: int = 5) -> list[DomainEntity]:
         """Cria batch de entidades."""
         return [DomainEntityFactory.create() for _ in range(size)]
 
@@ -353,7 +398,7 @@ class ResultListFactory:
 # =============================================================================
 
 
-def create_test_entity(**kwargs: object) -> FlextEntity:
+def create_test_entity(**kwargs: object) -> DomainEntity:
     """Cria entidade de teste com parâmetros customizados."""
     return DomainEntityFactory.create(**kwargs)
 
@@ -411,7 +456,7 @@ class FlextEntityBuilder:
         self._data["active"] = False
         return self
 
-    def build(self) -> FlextEntity:
+    def build(self) -> DomainEntity:
         """Constrói a entidade."""
         return DomainEntityFactory.create(**self._data)
 

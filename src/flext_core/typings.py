@@ -70,10 +70,7 @@ from typing import (
     TypeVar,
 )
 
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-
-# NOTE: FlextResult imported at end of file to avoid circular import
 
 # =============================================================================
 # CORE TYPE VARIABLES - Foundation for generic programming
@@ -297,76 +294,6 @@ class FlextTypes:
         type ErrorTransformer[T] = Callable[[T], Exception]
 
     # =========================================================================
-    # PROTOCOL TYPES - Centralized protocol imports from protocols.py
-    # =========================================================================
-
-    class Protocol:
-        """Protocol-based interface types for contracts.
-
-        Following FLEXT refactoring requirements, this class imports and aliases
-        protocols from the centralized protocols.py module to avoid circular
-        dependencies and maintain proper layering.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only protocol type definitions
-            - Dependency Inversion: Protocol types don't depend on implementations
-            - Interface Segregation: Protocol types separated by layer
-        """
-
-        # Direct protocol type aliases to avoid circular dependencies
-        # Following FLEXT strict rules: NO TYPE_CHECKING imports allowed
-
-        # Foundation protocols - proper FlextProtocols references
-        type CallableProtocol[T] = FlextProtocols.Foundation.Callable[T]
-        type ValidatorProtocol[T] = FlextProtocols.Foundation.Validator[T]
-        type FactoryProtocol[T] = FlextProtocols.Foundation.Factory[T]
-        type ErrorHandlerProtocol = FlextProtocols.Foundation.ErrorHandler
-
-        # Domain protocols - proper FlextProtocols references
-        type ServiceProtocol = FlextProtocols.Domain.Service
-        type RepositoryProtocol[T] = FlextProtocols.Domain.Repository[T]
-        type DomainEventProtocol = FlextProtocols.Domain.DomainEvent
-
-        # Application protocols - proper FlextProtocols references
-        type HandlerProtocol[TRequest, TResponse] = FlextProtocols.Application.Handler[
-            TRequest, TResponse
-        ]
-        type MessageHandlerProtocol = FlextProtocols.Application.MessageHandler
-        type ValidatingHandlerProtocol = FlextProtocols.Application.ValidatingHandler
-        type AuthorizingHandlerProtocol = FlextProtocols.Application.AuthorizingHandler
-        type EventProcessorProtocol = FlextProtocols.Application.EventProcessor
-        type UnitOfWorkProtocol = FlextProtocols.Application.UnitOfWork
-
-        # Infrastructure protocols - proper FlextProtocols references
-        type ConnectionProtocol = FlextProtocols.Infrastructure.Connection
-        type LoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol
-        type Configurable = FlextProtocols.Infrastructure.Configurable
-
-        # Extensions protocols
-        type Plugin = FlextProtocols.Extensions.Plugin
-        type PluginContext = FlextProtocols.Extensions.PluginContext
-        type Middleware = FlextProtocols.Extensions.Middleware
-        type AsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware
-        type Observability = FlextProtocols.Extensions.Observability
-
-        # Legacy protocol aliases for backward compatibility
-        type Validator[T] = FlextProtocols.Foundation.Validator[T]
-        type Factory[T] = FlextProtocols.Foundation.Factory[T]
-        type ErrorHandler = FlextProtocols.Foundation.ErrorHandler
-        type Service = FlextProtocols.Domain.Service
-        type Repository[T] = FlextProtocols.Domain.Repository[T]
-        type DomainEvent = FlextProtocols.Domain.DomainEvent
-        type Handler[TRequest, TResponse] = FlextProtocols.Application.Handler[
-            TRequest, TResponse
-        ]
-        type MessageHandler = FlextProtocols.Application.MessageHandler
-        type ValidatingHandler = FlextProtocols.Application.ValidatingHandler
-        type AuthorizingHandler = FlextProtocols.Application.AuthorizingHandler
-        type EventProcessor = FlextProtocols.Application.EventProcessor
-        type UnitOfWork = FlextProtocols.Application.UnitOfWork
-        type Connection = FlextProtocols.Infrastructure.Connection
-
-    # =========================================================================
     # DOMAIN TYPES - Domain modeling and DDD patterns
     # =========================================================================
 
@@ -442,7 +369,7 @@ class FlextTypes:
         type ServiceHealth = Literal["healthy", "degraded", "unhealthy"]
 
         # Container service types for dependency injection
-        type ServiceInstance = object  # Any service instance
+        type ServiceInstance = object  # object service instance
         type ServiceDict = dict[str, ServiceInstance]  # Services registry
         type FactoryDict = dict[str, Callable[[], ServiceInstance]]  # Factory registry
         type ServiceListDict = dict[
@@ -483,11 +410,6 @@ class FlextTypes:
         # Serialization types
         type SerializedPayload = str
         type DeserializedPayload = PayloadData
-
-        # Protocol types for payload handling
-        type PayloadProtocol = FlextProtocols.Foundation.Validator[object]
-        type MessageProtocol = FlextProtocols.Application.MessageHandler
-        type EventProtocol = FlextProtocols.Domain.DomainEvent
 
     # =========================================================================
     # AUTH TYPES - Authentication and authorization patterns
@@ -644,7 +566,7 @@ class FlextTypes:
         # Missing directory type
         type ConfigDir = str
 
-        # Logging levels in config context  
+        # Logging levels in config context
         type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         type ValidationLevel = Literal["strict", "normal", "minimal"]
 
@@ -655,7 +577,9 @@ class FlextTypes:
         type Config = ConfigDict
 
         # Environment and deployment
-        type Environment = Literal["development", "production", "staging", "test", "local"]
+        type Environment = Literal[
+            "development", "production", "staging", "test", "local"
+        ]
         type DeploymentMode = Literal["local", "cloud", "hybrid"]
 
     # =========================================================================
@@ -695,7 +619,7 @@ class FlextTypes:
         type Metadata = dict[str, object]
 
         # Field instance union type - represents any field instance
-        type Instance = object  # Any field instance (covariant compatibility)
+        type Instance = object  # object field instance (covariant compatibility)
 
         # Field validation type aliases
         type ValidationResult = object  # Result of field validation
@@ -845,7 +769,7 @@ class FlextTypes:
 # =============================================================================
 
 # Generic callable type with type parameter - for decorator compatibility
-FlextCallable = FlextTypes.Core.FlextCallableType
+# Use FlextTypes.Core.FlextCallableType directly - no aliases
 
 
 # =============================================================================
@@ -855,7 +779,6 @@ FlextCallable = FlextTypes.Core.FlextCallableType
 __all__: list[str] = [
     "E",
     "F",
-    "FlextCallable",  # Public type alias for decorator compatibility
     "FlextTypes",  # ONLY main class exported
     "K",
     "P",

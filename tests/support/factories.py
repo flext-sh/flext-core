@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import Any, override
+from typing import override
 
 import factory
 import factory.fuzzy
@@ -45,8 +45,8 @@ class BaseTestEntity(FlextModels.Entity):
     name: str = "test_entity"
     description: str = ""
     active: bool = True
-    version: FlextVersion = FlextModels.Version(root=1)
-    metadata: FlextMetadata = FlextModels.Metadata(root={})
+    version: FlextModels.Version = FlextModels.Version(root=1)
+    metadata: FlextModels.Metadata = FlextModels.Metadata(root={})
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -193,7 +193,7 @@ class DatabaseConfigFactory(DictFactory):
     port = factory.fuzzy.FuzzyInteger(3000, 9999)  # type: ignore[no-untyped-call]
     database = Sequence(lambda n: f"testdb_{n}")  # type: ignore[no-untyped-call]
     username = "testuser"
-    password = "testpass"  # noqa: S105
+    password = "testpass"
     pool_size = factory.fuzzy.FuzzyInteger(5, 20)  # type: ignore[no-untyped-call]
     timeout = 30
     ssl_enabled = False
@@ -245,7 +245,7 @@ class FlextResultFactory:
     @staticmethod
     def create_success(data: object = "test_data") -> FlextResult[object]:
         """Create successful FlextResult."""
-        return FlextResult[Any].ok(data)
+        return FlextResult[object].ok(data)
 
     @staticmethod
     def create_failure(
@@ -253,12 +253,12 @@ class FlextResultFactory:
         error_code: str = "TEST_ERROR",
     ) -> FlextResult[object]:
         """Create failed FlextResult."""
-        return FlextResult[Any].fail(error, error_code=error_code)
+        return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
     def create_validation_failure(field: str = "test_field") -> FlextResult[object]:
         """Create validation failure FlextResult."""
-        return FlextResult[Any].fail(
+        return FlextResult[object].fail(
             f"Validation failed for field: {field}",
             error_code="VALIDATION_ERROR",
         )
@@ -298,7 +298,8 @@ class TestEntityFactory(Factory[BaseTestEntity]):
     )
 
     metadata = LazyFunction(  # type: ignore[no-untyped-call]
-        lambda: FlextModels.Metadata(root={
+        lambda: FlextModels.Metadata(
+            root={
                 "created_by": "test_user",
                 "tags": ["test", "automated"],
                 "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),  # type: ignore[no-untyped-call]
@@ -309,11 +310,14 @@ class TestEntityFactory(Factory[BaseTestEntity]):
     class Params:
         inactive = Trait(  # type: ignore[no-untyped-call]
             active=False,
-            metadata=LazyFunction(lambda: FlextModels.Metadata(root={"status": "deactivated"})),  # type: ignore[no-untyped-call]
+            metadata=LazyFunction(
+                lambda: FlextModels.Metadata(root={"status": "deactivated"})
+            ),  # type: ignore[no-untyped-call]
         )
         high_priority = Trait(  # type: ignore[no-untyped-call]
             metadata=LazyFunction(  # type: ignore[no-untyped-call]
-                lambda: FlextModels.Metadata(root={
+                lambda: FlextModels.Metadata(
+                    root={
                         "priority": "high",
                         "urgent": True,
                     }

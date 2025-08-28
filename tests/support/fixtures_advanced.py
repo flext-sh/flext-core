@@ -20,15 +20,13 @@ import asyncio
 import tempfile
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import Any, Self
+from typing import Self, object
 from unittest.mock import Mock
 
 import pytest
 import pytest_asyncio
 
-from flext_core import FlextResult, get_logger
-from flext_core.container import FlextContainer
-from flext_core.loggings import FlextLogger
+from flext_core import FlextContainer, FlextLogger, FlextResult
 from tests.support.factories import (
     BaseTestEntity,
     ConfigurationFactory,
@@ -52,7 +50,7 @@ def event_loop_policy() -> asyncio.AbstractEventLoopPolicy:
 @pytest.fixture(scope="session")
 def logger() -> FlextLogger:
     """Provide configured logger for testing."""
-    return get_logger("test_logger")
+    return FlextLogger("test_logger")
 
 
 @pytest.fixture(scope="session")
@@ -68,7 +66,7 @@ def container() -> Generator[FlextContainer]:
     container = FlextContainer()
 
     # Register common test services
-    container.register("logger", get_logger("test"))
+    container.register("logger", FlextLogger("test"))
     container.register("config", ConfigurationFactory())
 
     yield container
@@ -83,13 +81,13 @@ def container() -> Generator[FlextContainer]:
 
 
 @pytest.fixture
-def user_data() -> dict[str, Any]:
+def user_data() -> dict[str, object]:
     """Generate single user data."""
     return UserDataFactory()
 
 
 @pytest.fixture
-def user_batch(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
+def user_batch(request: pytest.FixtureRequest) -> list[dict[str, object]]:
     """Generate batch of users with configurable size.
 
     Usage:
@@ -102,13 +100,13 @@ def user_batch(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def REDACTED_LDAP_BIND_PASSWORD_user() -> dict[str, Any]:
+def REDACTED_LDAP_BIND_PASSWORD_user() -> dict[str, object]:
     """Generate REDACTED_LDAP_BIND_PASSWORD user data."""
     return UserDataFactory(is_REDACTED_LDAP_BIND_PASSWORD=True)
 
 
 @pytest.fixture
-def inactive_user() -> dict[str, Any]:
+def inactive_user() -> dict[str, object]:
     """Generate inactive user data."""
     return UserDataFactory(is_inactive=True)
 
@@ -144,7 +142,7 @@ def success_result() -> FlextResult[str]:
 
 
 @pytest.fixture
-def failure_result() -> FlextResult[Any]:
+def failure_result() -> FlextResult[object]:
     """Generate failed FlextResult."""
     return FlextResultFactory.create_failure(
         "Test failure message",
@@ -153,13 +151,13 @@ def failure_result() -> FlextResult[Any]:
 
 
 @pytest.fixture
-def validation_failure_result() -> FlextResult[Any]:
+def validation_failure_result() -> FlextResult[object]:
     """Generate validation failure FlextResult."""
     return FlextResultFactory.create_validation_failure("test_field")
 
 
 @pytest.fixture
-def mixed_results() -> list[FlextResult[Any]]:
+def mixed_results() -> list[FlextResult[object]]:
     """Generate mixed success/failure results for batch testing."""
     return create_batch.create_mixed_results(success_count=3, failure_count=2)
 
@@ -170,19 +168,19 @@ def mixed_results() -> list[FlextResult[Any]]:
 
 
 @pytest.fixture
-def test_config() -> dict[str, Any]:
+def test_config() -> dict[str, object]:
     """Generate test configuration."""
     return ConfigurationFactory(development=True)
 
 
 @pytest.fixture
-def production_config() -> dict[str, Any]:
+def production_config() -> dict[str, object]:
     """Generate production-like configuration."""
     return ConfigurationFactory(production=True)
 
 
 @pytest.fixture
-def config_batch() -> list[dict[str, Any]]:
+def config_batch() -> list[dict[str, object]]:
     """Generate batch of configurations."""
     return create_batch.create_config_batch(3)
 
@@ -215,7 +213,7 @@ def mock_database(mocker: object) -> Mock:
 @pytest.fixture
 def mock_logger(mocker: object) -> Mock:
     """Provide mock logger for testing."""
-    return mocker.patch("flext_core.loggings.get_logger")
+    return mocker.patch("flext_core.legacy.get_logger")
 
 
 # =============================================================================
@@ -224,16 +222,18 @@ def mock_logger(mocker: object) -> Mock:
 
 
 @pytest_asyncio.fixture  # type: ignore[misc]
-async def async_service() -> AsyncGenerator[Any]:
+async def async_service() -> AsyncGenerator[object]:
     """Provide async service for testing."""
 
     class AsyncTestService:
-        async def async_process(self, data: object) -> FlextResult[Any]:
+        async def async_process(self, data: object) -> FlextResult[object]:
             """Simulate async processing."""
             await asyncio.sleep(0.01)  # Simulate async work
             return FlextResultFactory.create_success(f"processed_{data}")
 
-        async def async_batch_process(self, items: list[Any]) -> list[FlextResult[Any]]:
+        async def async_batch_process(
+            self, items: list[object]
+        ) -> list[FlextResult[object]]:
             """Simulate async batch processing."""
             results = []
             for item in items:
@@ -246,7 +246,7 @@ async def async_service() -> AsyncGenerator[Any]:
 
 
 @pytest_asyncio.fixture  # type: ignore[misc]
-async def async_context_manager() -> AsyncGenerator[Any]:
+async def async_context_manager() -> AsyncGenerator[object]:
     """Provide async context manager for testing."""
 
     class AsyncContextManager:
@@ -274,7 +274,7 @@ async def async_context_manager() -> AsyncGenerator[Any]:
 
 
 @pytest.fixture
-def benchmark_data() -> dict[str, Any]:
+def benchmark_data() -> dict[str, object]:
     """Generate data for benchmarking tests."""
     return {
         "small_dataset": create_batch.create_user_batch(10),
@@ -384,7 +384,7 @@ def boolean_flags(request: pytest.FixtureRequest) -> bool:
 
 
 @pytest.fixture
-def integration_scenario() -> dict[str, Any]:
+def integration_scenario() -> dict[str, object]:
     """Provide complete integration testing scenario."""
     return {
         "users": create_batch.create_user_batch(10),

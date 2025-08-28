@@ -12,6 +12,7 @@ class TestFlextDecoratorsReliability:
 
     def test_safe_result_success(self) -> None:
         """Test safe_result decorator with successful function."""
+
         @FlextDecorators.Reliability.safe_result
         def successful_function(value: int) -> int:
             return value * 2
@@ -22,6 +23,7 @@ class TestFlextDecoratorsReliability:
 
     def test_safe_result_failure(self) -> None:
         """Test safe_result decorator with failing function."""
+
         @FlextDecorators.Reliability.safe_result
         def failing_function() -> str:
             msg = "Test error"
@@ -33,6 +35,7 @@ class TestFlextDecoratorsReliability:
 
     def test_safe_result_with_division_by_zero(self) -> None:
         """Test safe_result decorator with division by zero."""
+
         @FlextDecorators.Reliability.safe_result
         def divide(a: int, b: int) -> float:
             return a / b
@@ -60,6 +63,7 @@ class TestFlextDecoratorsReliability:
 
     def test_retry_decorator_all_attempts_fail(self) -> None:
         """Test retry decorator when all attempts fail."""
+
         @FlextDecorators.Reliability.retry(max_attempts=2)
         def always_failing_function() -> str:
             msg = "Always fails"
@@ -72,7 +76,9 @@ class TestFlextDecoratorsReliability:
         """Test retry decorator with specific exception types."""
         attempt_count = 0
 
-        @FlextDecorators.Reliability.retry(max_attempts=2, exceptions=(ConnectionError,))
+        @FlextDecorators.Reliability.retry(
+            max_attempts=2, exceptions=(ConnectionError,)
+        )
         def selective_retry_function() -> str:
             nonlocal attempt_count
             attempt_count += 1
@@ -89,6 +95,7 @@ class TestFlextDecoratorsReliability:
 
     def test_timeout_decorator(self) -> None:
         """Test timeout decorator with fast function."""
+
         @FlextDecorators.Reliability.timeout(seconds=1)
         def fast_function() -> str:
             return "completed"
@@ -102,6 +109,7 @@ class TestFlextDecoratorsValidation:
 
     def test_validate_input_success(self) -> None:
         """Test validate_input decorator with valid input."""
+
         def positive_validator(value: object) -> bool:
             return isinstance(value, int) and value > 0
 
@@ -114,6 +122,7 @@ class TestFlextDecoratorsValidation:
 
     def test_validate_input_failure(self) -> None:
         """Test validate_input decorator with invalid input."""
+
         def positive_validator(value: object) -> bool:
             return isinstance(value, int) and value > 0
 
@@ -130,6 +139,7 @@ class TestFlextDecoratorsPerformance:
 
     def test_monitor_decorator(self) -> None:
         """Test monitor decorator functionality."""
+
         @FlextDecorators.Performance.monitor()
         def monitored_function(value: int) -> int:
             return value + 1
@@ -163,6 +173,7 @@ class TestFlextDecoratorsObservability:
 
     def test_log_execution_decorator(self) -> None:
         """Test log_execution decorator functionality."""
+
         @FlextDecorators.Observability.log_execution()
         def logged_function(value: str) -> str:
             return value.upper()

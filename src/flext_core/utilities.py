@@ -57,11 +57,13 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import cast
 
+from pydantic import ConfigDict
+
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.typings import P, R, T
+from flext_core.typings import FlextTypes, P, R, T
 
 logger = FlextLogger(__name__)
 
@@ -184,8 +186,8 @@ class FlextUtilities:
         Examples:
             Text processing operations::
 
-                truncated = TextProcessor.truncate(long_text, 50, '...')
-                safe_str = TextProcessor.safe_string(any_object, 'default')
+                truncated = TextProcessor.truncate(long_text, 50, "...")
+                safe_str = TextProcessor.safe_string(any_object, "default")
 
         """
 
@@ -316,6 +318,7 @@ class FlextUtilities:
                 def create_user(data):
                     return process_user_data(data)
 
+
                 metrics = Performance.get_metrics("user_creation")
 
         """
@@ -398,7 +401,7 @@ class FlextUtilities:
             Safe conversions::
 
                 num = Conversions.safe_int("123", 0)  # 123
-                flag = Conversions.safe_bool("true")   # True
+                flag = Conversions.safe_bool("true")  # True
                 val = Conversions.safe_float(None, 0.0)  # 0.0
 
         """
@@ -432,7 +435,7 @@ class FlextUtilities:
                 return default
 
         @staticmethod
-        def safe_bool(value: object, *, default: bool = False) -> bool:  # noqa: FBT001
+        def safe_bool(value: object, *, default: bool = False) -> bool:
             """Convert value to bool safely."""
             if value is None:
                 return default
@@ -645,6 +648,273 @@ class FlextUtilities:
 
             return successes, errors
 
+    class Configuration:
+        """Configuration utilities with FlextTypes.Config and StrEnum integration.
+
+        Provides comprehensive configuration management utilities including
+        environment detection, configuration validation, and system configuration
+        generation using FlextTypes.Config hierarchical structure.
+
+        Examples:
+            Configuration utilities::
+
+                config = Configuration.create_default_config("production")
+                result = Configuration.validate_config(config_dict)
+                env_config = Configuration.get_environment_configuration("staging")
+
+        """
+
+        @staticmethod
+        def create_default_config(
+            environment: FlextTypes.Config.Environment = "development",
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Create default configuration for specified environment using FlextTypes.Config.
+
+            Args:
+                environment: Target environment using FlextTypes.Config.Environment.
+
+            Returns:
+                FlextResult containing default configuration dictionary.
+
+            """
+            try:
+                # Validate environment is a valid StrEnum value
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if environment not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment: {environment}. Must be one of: {valid_environments}"
+                    )
+
+                # Create environment-specific configuration
+                config: FlextTypes.Config.ConfigDict = {
+                    "environment": environment,
+                    "log_level": (
+                        FlextConstants.Config.LogLevel.ERROR.value
+                        if environment
+                        == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                        else FlextConstants.Config.LogLevel.DEBUG.value
+                    ),
+                    "validation_level": (
+                        FlextConstants.Config.ValidationLevel.STRICT.value
+                        if environment
+                        == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                        else FlextConstants.Config.ValidationLevel.NORMAL.value
+                    ),
+                    "config_source": FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
+                    "debug": environment
+                    != FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+                    "performance_monitoring": True,
+                    "request_timeout": (
+                        60000
+                        if environment
+                        == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                        else 30000
+                    ),
+                    "max_retries": 3,
+                    "enable_caching": True,
+                }
+
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Default config creation failed: {e}"
+                )
+
+        @staticmethod
+        def validate_configuration_with_types(  # noqa: PLR0911, PLR0912
+            config: FlextTypes.Config.ConfigDict,
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Validate configuration using FlextTypes.Config with comprehensive StrEnum validation.
+
+            Args:
+                config: Configuration dictionary to validate.
+
+            Returns:
+                FlextResult containing validated configuration or validation errors.
+
+            """
+            # Configuration validation constants
+            min_timeout_ms = 100
+            max_timeout_ms = 300000
+            max_retries = 10
+
+            try:
+                validated: FlextTypes.Config.ConfigDict = {}
+
+                # Environment validation
+                if "environment" not in config:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        "Required field 'environment' missing"
+                    )
+
+                env_value = config["environment"]
+                valid_environments = {
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                }
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {sorted(valid_environments)}"
+                    )
+                validated["environment"] = env_value
+
+                # Log level validation
+                log_level = config.get(
+                    "log_level", FlextConstants.Config.LogLevel.INFO.value
+                )
+                valid_log_levels = {
+                    level.value for level in FlextConstants.Config.LogLevel
+                }
+                if log_level not in valid_log_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_level}'. Valid options: {sorted(valid_log_levels)}"
+                    )
+                validated["log_level"] = log_level
+
+                # Validation level validation
+                validation_level = config.get(
+                    "validation_level",
+                    FlextConstants.Config.ValidationLevel.NORMAL.value,
+                )
+                valid_validation_levels = {
+                    v.value for v in FlextConstants.Config.ValidationLevel
+                }
+                if validation_level not in valid_validation_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid validation_level '{validation_level}'. Valid options: {sorted(valid_validation_levels)}"
+                    )
+                validated["validation_level"] = validation_level
+
+                # Config source validation
+                config_source = config.get(
+                    "config_source",
+                    FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
+                )
+                valid_config_sources = {
+                    s.value for s in FlextConstants.Config.ConfigSource
+                }
+                if config_source not in valid_config_sources:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid config_source '{config_source}'. Valid options: {sorted(valid_config_sources)}"
+                    )
+                validated["config_source"] = config_source
+
+                # Boolean validations
+                for bool_field in ["debug", "performance_monitoring", "enable_caching"]:
+                    if bool_field in config:
+                        value = config[bool_field]
+                        if not isinstance(value, bool):
+                            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                                f"Field '{bool_field}' must be a boolean"
+                            )
+                        validated[bool_field] = value
+
+                # Numeric validations
+                if "request_timeout" in config:
+                    timeout = config["request_timeout"]
+                    if (
+                        not isinstance(timeout, (int, float))
+                        or timeout < min_timeout_ms
+                        or timeout > max_timeout_ms
+                    ):
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            "request_timeout must be a number between 100 and 300000 milliseconds"
+                        )
+                    validated["request_timeout"] = timeout
+
+                if "max_retries" in config:
+                    retries = config["max_retries"]
+                    if (
+                        not isinstance(retries, int)
+                        or retries < 0
+                        or retries > max_retries
+                    ):
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            "max_retries must be an integer between 0 and 10"
+                        )
+                    validated["max_retries"] = retries
+
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(validated)
+
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Configuration validation failed: {e}"
+                )
+
+        @staticmethod
+        def get_environment_configuration(
+            environment: FlextTypes.Config.Environment,
+        ) -> FlextResult[dict[str, object]]:
+            """Get comprehensive environment-specific configuration using FlextTypes.Config.
+
+            Args:
+                environment: Target environment for configuration.
+
+            Returns:
+                FlextResult containing environment-specific configuration details.
+
+            """
+            try:
+                # Create base configuration
+                config_result = FlextUtilities.Configuration.create_default_config(
+                    environment
+                )
+                if config_result.is_failure:
+                    return FlextResult[dict[str, object]].fail(
+                        config_result.error or "Failed to create base configuration"
+                    )
+
+                base_config: ConfigDict = cast("ConfigDict", config_result.value)
+
+                # Create comprehensive environment configuration
+                env_config: dict[str, object] = {
+                    "base_configuration": base_config,
+                    "environment_metadata": {
+                        "name": environment,
+                        "is_production": environment
+                        == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+                        "is_development": environment
+                        == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                        "is_testing": environment
+                        == FlextConstants.Config.ConfigEnvironment.TEST.value,
+                    },
+                    "available_environments": [
+                        e.value for e in FlextConstants.Config.ConfigEnvironment
+                    ],
+                    "available_log_levels": [
+                        level.value for level in FlextConstants.Config.LogLevel
+                    ],
+                    "available_validation_levels": [
+                        v.value for v in FlextConstants.Config.ValidationLevel
+                    ],
+                    "available_config_sources": [
+                        s.value for s in FlextConstants.Config.ConfigSource
+                    ],
+                    "performance_settings": {
+                        "request_timeout_ms": base_config.get("request_timeout", 30000),
+                        "max_retries": base_config.get("max_retries", 3),
+                        "caching_enabled": base_config.get("enable_caching", True),
+                        "monitoring_enabled": base_config.get(
+                            "performance_monitoring", True
+                        ),
+                    },
+                    "security_settings": {
+                        "debug_mode": base_config.get("debug", False),
+                        "strict_validation": base_config.get("validation_level")
+                        == "strict",
+                        "log_level": base_config.get("log_level", "INFO"),
+                    },
+                }
+
+                return FlextResult[dict[str, object]].ok(env_config)
+
+            except Exception as e:
+                return FlextResult[dict[str, object]].fail(
+                    f"Environment configuration generation failed: {e}"
+                )
+
     # ==========================================================================
     # MAIN CLASS METHODS - Delegate to nested classes
     # ==========================================================================
@@ -742,7 +1012,7 @@ class FlextUtilities:
         return cls.safe_int_conversion(value, default) or default
 
     @classmethod
-    def safe_bool_conversion(cls, value: object, *, default: bool = False) -> bool:  # noqa: FBT001
+    def safe_bool_conversion(cls, value: object, *, default: bool = False) -> bool:
         """Convert value to bool safely (delegates to Conversions)."""
         return cls.Conversions.safe_bool(value, default=default)
 

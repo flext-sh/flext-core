@@ -8,7 +8,7 @@ from typing import cast
 
 from flext_core import (
     FlextEntityId,
-    FlextPayload,
+    FlextModels.Payload,
     FlextTypes,
 )
 
@@ -23,7 +23,7 @@ FlextServiceName = str
 # Modern types - no globals needed
 
 # Now safely call model_rebuild() with types in scope
-FlextPayload.model_rebuild()
+FlextModels.Payload.model_rebuild()
 
 
 class TestTypeProtocols:
@@ -156,23 +156,23 @@ class TestTypeAliases:
         assert order_placed == "order.placed"
 
     def test_payload_basic_usage(self) -> None:
-        """Test FlextPayload type alias for data payloads."""
-        # FlextPayload is a Pydantic BaseModel for structured data
+        """Test FlextModels.Payload type alias for data payloads."""
+        # FlextModels.Payload is a Pydantic BaseModel for structured data
         user_data: dict[str, object] = {
             "id": "123",
             "name": "John Doe",
             "email": "john@example.com",
         }
-        user_payload: FlextPayload[dict[str, object]] = FlextPayload(data=user_data)
+        user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(data=user_data)
 
         event_data: dict[str, object] = {
             "event_type": "user.created",
             "timestamp": "2025-01-01T00:00:00Z",
         }
-        event_payload: FlextPayload[dict[str, object]] = FlextPayload(data=event_data)
+        event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(data=event_data)
 
         # Verify payload structure
-        def process_payload(payload: FlextPayload[dict[str, object]]) -> str:
+        def process_payload(payload: FlextModels.Payload[dict[str, object]]) -> str:
             data_dict = payload.model_dump()
             return f"Processing: {len(data_dict)} fields"
 

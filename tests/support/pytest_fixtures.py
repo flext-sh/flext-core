@@ -21,7 +21,8 @@ import math
 import tempfile
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import Any
+
+object
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -233,7 +234,7 @@ async def async_mock_database() -> AsyncMock:
 
 
 @pytest.fixture
-def benchmark_config() -> dict[str, Any]:
+def benchmark_config() -> dict[str, object]:
     """Provide benchmark configuration for performance tests."""
     return {
         "min_rounds": 5,
@@ -246,7 +247,7 @@ def benchmark_config() -> dict[str, Any]:
 
 
 @pytest.fixture
-def performance_data() -> dict[str, Any]:
+def performance_data() -> dict[str, object]:
     """Provide performance test data sets."""
     return {
         "small": UserFactory.create_batch(10),
@@ -267,7 +268,7 @@ def field_types() -> list[FlextFieldType]:
 
 
 @pytest.fixture
-def field_test_matrix() -> list[dict[str, Any]]:
+def field_test_matrix() -> list[dict[str, object]]:
     """Provide comprehensive field testing matrix."""
     return [
         {
@@ -294,7 +295,7 @@ def field_test_matrix() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def edge_case_values() -> dict[str, list[Any]]:
+def edge_case_values() -> dict[str, list[object]]:
     """Provide edge case values for boundary testing."""
     return EdgeCaseGenerators().empty_values()
 
@@ -336,7 +337,7 @@ async def async_service_mock() -> AsyncGenerator[AsyncMock]:
 def integrated_system(
     flext_container: FlextContainer,
     flext_config: FlextConfig,
-) -> dict[str, Any]:
+) -> dict[str, object]:
     """Provide integrated system for end-to-end testing."""
     return {
         "container": flext_container,
@@ -347,7 +348,7 @@ def integrated_system(
 
 
 @pytest.fixture
-def test_scenario_basic() -> dict[str, Any]:
+def test_scenario_basic() -> dict[str, object]:
     """Provide basic test scenario data."""
     return {
         "name": "basic_scenario",
@@ -361,7 +362,7 @@ def test_scenario_basic() -> dict[str, Any]:
 
 
 @pytest.fixture
-def test_scenario_complex() -> dict[str, Any]:
+def test_scenario_complex() -> dict[str, object]:
     """Provide complex test scenario data."""
     return {
         "name": "complex_scenario",
@@ -382,7 +383,7 @@ def test_scenario_complex() -> dict[str, Any]:
 
 
 @pytest.fixture
-def error_scenarios() -> list[dict[str, Any]]:
+def error_scenarios() -> list[dict[str, object]]:
     """Provide error scenarios for exception testing."""
     return [
         {
@@ -404,7 +405,7 @@ def error_scenarios() -> list[dict[str, Any]]:
 
 
 @pytest.fixture
-def timeout_config() -> dict[str, Any]:
+def timeout_config() -> dict[str, object]:
     """Provide timeout configuration for pytest-timeout."""
     return {
         "timeout": 30,  # 30 seconds default
@@ -447,7 +448,7 @@ batch_size_params = pytest.mark.parametrize(
 
 
 @pytest.fixture
-def assert_helpers() -> dict[str, Any]:
+def assert_helpers() -> dict[str, object]:
     """Provide assertion helper functions."""
 
     def assert_success(result: object) -> None:
@@ -471,7 +472,7 @@ def assert_helpers() -> dict[str, Any]:
 
 
 @pytest.fixture
-def test_markers() -> dict[str, Any]:
+def test_markers() -> dict[str, object]:
     """Provide test markers and categories."""
     return {
         "unit": pytest.mark.unit,

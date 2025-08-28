@@ -18,9 +18,7 @@ from tests.support.factory_boy_factories import (
 )
 from tests.support.performance_utils import BenchmarkUtils, PerformanceProfiler
 
-from flext_core import FlextContainer, FlextResult
-from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core import FlextContainer, FlextResult, FlextConstants, FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -73,7 +71,7 @@ class TestFlextContainerCore:
         result = container.get("non_existent_service")
 
         assert result.is_failure
-        assert FlextConstants.Messages.OPERATION_FAILED.lower() in result.error.lower()
+        assert "not found" in result.error.lower()
 
     def test_factory_registration_and_execution(self) -> None:
         """Test factory registration and lazy evaluation."""

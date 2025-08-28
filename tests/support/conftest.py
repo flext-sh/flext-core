@@ -23,7 +23,7 @@ from tests.support.factories import (
     TestEntityFactory,
     UserDataFactory,
 )
-from tests.support.fixtures_advanced import *  # noqa: F403,F401 # Import all fixtures
+from tests.support.fixtures_advanced import *
 from tests.support.matchers import FlextMatchers, PerformanceMatchers
 
 # =============================================================================
@@ -128,8 +128,8 @@ def performance_matchers() -> type[PerformanceMatchers]:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config,  # noqa: ARG001
-    items: list[pytest.Item],  # noqa: ARG001
+    config: pytest.Config,
+    items: list[pytest.Item],
 ) -> None:
     """Modify test collection to add markers based on test patterns."""
     for item in items:
@@ -191,7 +191,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:  # noqa: ARG001
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
     """Hook to customize test reports."""
     # Add factory information to test reports if applicable
     if hasattr(item, "factory_used"):

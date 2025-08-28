@@ -8,7 +8,6 @@ timeout management, and async context management for robust testing.
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
@@ -16,12 +15,14 @@ from typing import TYPE_CHECKING, TypeVar
 
 import pytest
 
+from flext_core import FlextLogger
+
 if TYPE_CHECKING:
-    from typing import Any
+    object
 
 T = TypeVar("T")
 
-logger = logging.getLogger(__name__)
+logger = FlextLogger(__name__)
 
 
 class AsyncTestUtils:
@@ -234,7 +235,7 @@ class AsyncMockUtils:
     ) -> Callable[..., Awaitable[object]]:
         """Create async mock function."""
 
-        async def async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
+        async def async_mock(*args: object, **kwargs: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
@@ -249,7 +250,7 @@ class AsyncMockUtils:
     ) -> object:
         """Create async mock with delay."""
 
-        async def delayed_async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
+        async def delayed_async_mock(*args: object, **kwargs: object) -> object:
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -266,8 +267,8 @@ class AsyncMockUtils:
         """Create async mock that fails randomly."""
         import random
 
-        async def flaky_async_mock(*args: object, **kwargs: object) -> object:  # noqa: ARG001
-            if random.random() < failure_rate:  # noqa: S311
+        async def flaky_async_mock(*args: object, **kwargs: object) -> object:
+            if random.random() < failure_rate:
                 test_exception = exception or RuntimeError("Flaky operation failed")
                 raise test_exception
             return return_value
@@ -370,14 +371,12 @@ class AsyncConcurrencyTesting:
                 task1, task2, return_exceptions=True
             )
 
-            results.append(
-                {
-                    "result1": result1,
-                    "result2": result2,
-                    "error1": isinstance(result1, Exception),
-                    "error2": isinstance(result2, Exception),
-                }
-            )
+            results.append({
+                "result1": result1,
+                "result2": result2,
+                "error1": isinstance(result1, Exception),
+                "error2": isinstance(result2, Exception),
+            })
 
         return {
             "total_iterations": iterations,
@@ -388,13 +387,13 @@ class AsyncConcurrencyTesting:
 
     @staticmethod
     async def test_concurrent_access(
-        func: Callable[[], Awaitable[Any]],
+        func: Callable[[], Awaitable[object]],
         concurrency_level: int = 10,
         iterations_per_worker: int = 10,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Test concurrent access to a resource."""
 
-        async def worker() -> list[Any]:
+        async def worker() -> list[object]:
             results = []
             for _ in range(iterations_per_worker):
                 try:
@@ -426,9 +425,9 @@ class AsyncConcurrencyTesting:
 
     @staticmethod
     async def test_deadlock_detection(
-        operations: list[Callable[[], Awaitable[Any]]],
+        operations: list[Callable[[], Awaitable[object]]],
         deadline: float = 5.0,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """Test for potential deadlocks in async operations."""
         start_time = time.time()
 
@@ -467,12 +466,12 @@ class AsyncMarkers:
     race_condition = pytest.mark.race_condition
 
     @staticmethod
-    def async_timeout(seconds: float) -> Any:
+    def async_timeout(seconds: float) -> object:
         """Mark async test with specific timeout."""
         return pytest.mark.timeout(seconds)
 
     @staticmethod
-    def async_slow() -> Any:
+    def async_slow() -> object:
         """Mark async test as slow."""
         return pytest.mark.slow
 

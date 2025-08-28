@@ -10,7 +10,8 @@ from __future__ import annotations
 import random
 import uuid
 from decimal import Decimal
-from typing import Any
+
+object
 
 from flext_core import FlextResult, FlextTypes
 
@@ -21,35 +22,35 @@ class FlextResultFactory:
     """Factory for creating FlextResult objects with realistic scenarios."""
 
     @staticmethod
-    def success_result(data: object = None) -> FlextResult[Any]:
+    def success_result(data: object = None) -> FlextResult[object]:
         """Create successful result."""
-        return FlextResult[Any].ok(
+        return FlextResult[object].ok(
             data or {"status": "success", "id": str(uuid.uuid4())}
         )
 
     @staticmethod
-    def create_success(data: object = None) -> FlextResult[Any]:
+    def create_success(data: object = None) -> FlextResult[object]:
         """Create successful result (alias for success_result)."""
         return FlextResultFactory.success_result(data)
 
     @staticmethod
     def create_failure(
         error: str = "Operation failed", error_code: str | None = None
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create failed result with optional error code."""
-        return FlextResult[Any].fail(error, error_code=error_code)
+        return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
-    def failed_result(error: str = "Operation failed") -> FlextResult[Any]:
+    def failed_result(error: str = "Operation failed") -> FlextResult[object]:
         """Create failed result."""
-        return FlextResult[Any].fail(error, error_code="OPERATION_ERROR")
+        return FlextResult[object].fail(error, error_code="OPERATION_ERROR")
 
     @staticmethod
     def validation_error(
         field: str = "unknown", value: object = None
-    ) -> FlextResult[Any]:
+    ) -> FlextResult[object]:
         """Create validation failure FlextResult."""
-        return FlextResult[Any].fail(
+        return FlextResult[object].fail(
             f"Validation failed for field '{field}'",
             error_code="VALIDATION_ERROR",
             error_data={"field": field, "value": value},
@@ -60,13 +61,13 @@ class UserDataFactory:
     """Factory for creating realistic user data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, object]:
         """Create user data dict."""
         data = {
             "id": str(uuid.uuid4()),
-            "name": f"User {random.randint(100, 999)}",  # noqa: S311
-            "email": f"user{random.randint(1, 1000)}@example.com",  # noqa: S311
-            "age": random.randint(18, 65),  # noqa: S311
+            "name": f"User {random.randint(100, 999)}",
+            "email": f"user{random.randint(1, 1000)}@example.com",
+            "age": random.randint(18, 65),
             "active": True,
             "created_at": "2024-01-01T00:00:00Z",
         }
@@ -74,12 +75,12 @@ class UserDataFactory:
         return data
 
     @staticmethod
-    def build(**overrides: object) -> dict[str, Any]:
+    def build(**overrides: object) -> dict[str, object]:
         """Build user data dict (alias for create)."""
         return UserDataFactory.create(**overrides)
 
     @staticmethod
-    def batch(count: int = 5) -> list[dict[str, Any]]:
+    def batch(count: int = 5) -> list[dict[str, object]]:
         """Create batch of user data."""
         return [UserDataFactory.create() for _ in range(count)]
 
@@ -88,7 +89,7 @@ class ConfigurationFactory:
     """Factory for creating realistic configuration data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, object]:
         """Create configuration data dict."""
         data = {
             "database_url": "postgresql://localhost:5432/test",
@@ -106,12 +107,12 @@ class ServiceDataFactory:
     """Factory for creating realistic service data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, object]:
         """Create service data dict."""
         data = {
-            "name": f"test_service_{random.randint(1, 100)}",  # noqa: S311
-            "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",  # noqa: S311
-            "port": random.randint(8000, 9000),  # noqa: S311
+            "name": f"test_service_{random.randint(1, 100)}",
+            "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
+            "port": random.randint(8000, 9000),
             "health_check_path": "/health",
             "dependencies": [],
         }
@@ -123,7 +124,7 @@ class PayloadDataFactory:
     """Factory for creating realistic message/payload data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, Any]:
+    def create(**overrides: object) -> dict[str, object]:
         """Create payload data dict."""
         data = {
             "message_id": str(uuid.uuid4()),
@@ -175,23 +176,23 @@ class RealisticData:
     """Factory for realistic test data scenarios."""
 
     @staticmethod
-    def user_registration_data() -> dict[str, Any]:
+    def user_registration_data() -> dict[str, object]:
         """Create realistic user registration data."""
         return {
-            "name": f"John Doe {random.randint(1, 100)}",  # noqa: S311
-            "email": f"john.doe{random.randint(1, 1000)}@company.com",  # noqa: S311
-            "age": random.randint(18, 65),  # noqa: S311
-            "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",  # noqa: S311
+            "name": f"John Doe {random.randint(1, 100)}",
+            "email": f"john.doe{random.randint(1, 1000)}@company.com",
+            "age": random.randint(18, 65),
+            "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
             "address": {
-                "street": f"{random.randint(1, 999)} Main St",  # noqa: S311
+                "street": f"{random.randint(1, 999)} Main St",
                 "city": "Test City",
                 "state": "TC",
-                "zip": f"{random.randint(10000, 99999)}",  # noqa: S311
+                "zip": f"{random.randint(10000, 99999)}",
             },
         }
 
     @staticmethod
-    def order_data() -> dict[str, Any]:
+    def order_data() -> dict[str, object]:
         """Create realistic order data."""
         return {
             "order_id": str(uuid.uuid4()),
@@ -199,9 +200,9 @@ class RealisticData:
             "items": [
                 {
                     "product_id": str(uuid.uuid4()),
-                    "name": f"Product {random.randint(1, 100)}",  # noqa: S311
-                    "quantity": random.randint(1, 5),  # noqa: S311
-                    "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(  # noqa: S311
+                    "name": f"Product {random.randint(1, 100)}",
+                    "quantity": random.randint(1, 5),
+                    "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(
                         Decimal("0.01")
                     ),
                 }
@@ -211,7 +212,7 @@ class RealisticData:
         }
 
     @staticmethod
-    def api_response_data() -> dict[str, Any]:
+    def api_response_data() -> dict[str, object]:
         """Create realistic API response data."""
         return {
             "success": True,

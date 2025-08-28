@@ -18,8 +18,7 @@ from tests.shared_test_domain import (
 
 from flext_core import FlextEntity, FlextExceptions, FlextResult
 
-# Initialize dynamic exception classes
-FlextExceptions.initialize()
+# Exception classes are automatically available
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -186,7 +185,7 @@ class TestFlextEntityVersioning:
         )
 
         with pytest.raises(
-            getattr(FlextExceptions, "FlextValidationError"),  # noqa: B009
+            FlextExceptions.FlextValidationError,
             match="New version must be greater than current version",
         ):
             entity.with_version(5)
@@ -201,7 +200,7 @@ class TestFlextEntityVersioning:
         )
 
         with pytest.raises(
-            getattr(FlextExceptions, "FlextValidationError"),  # noqa: B009
+            FlextExceptions.FlextValidationError,
             match="New version must be greater than current version",
         ):
             entity.with_version(3)

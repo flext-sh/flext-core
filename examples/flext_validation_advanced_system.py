@@ -103,7 +103,7 @@ class ValidationChains:
     def validate_age(age: int) -> FlextResult[int]:
         """Validate age with business rules."""
         return BasicValidators.age_range(age, 16, 120).tap(
-            lambda a: None  # Age validation completed  # noqa: ARG005
+            lambda a: None  # Age validation completed
         )
 
 

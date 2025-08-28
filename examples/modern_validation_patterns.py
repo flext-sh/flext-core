@@ -16,11 +16,11 @@ Key Benefits:
 from __future__ import annotations
 
 from flext_core import (
+    FlextLogger,
     FlextResult,
     FlextTypes,
+    FlextValidation,
 )
-from flext_core.legacy import validate_length
-from flext_core.loggings import FlextLogger
 
 # Logger using centralized logging
 logger = FlextLogger("flext.examples.validation")
@@ -33,7 +33,7 @@ def flext_validate_string(
     max_length: FlextTypes.Core.Integer = 1000,
 ) -> FlextResult[FlextTypes.Core.String]:
     """Validate string with length constraints."""
-    length_result = validate_length(value, min_length, max_length)
+    length_result = FlextValidation.validate_length(value, min_length, max_length)
     if length_result.is_success:
         return FlextResult[FlextTypes.Core.String].ok(value)
     return FlextResult[FlextTypes.Core.String].fail(str(length_result.error))
@@ -174,7 +174,7 @@ def demonstrate_type_safety() -> None:
 
         flext_validate_string("hello", "greeting")
 
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
     # These will raise ValidationError due to wrong types

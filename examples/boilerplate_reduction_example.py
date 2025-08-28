@@ -109,7 +109,6 @@ class TraditionalDatabaseService:
 
 
 class DatabaseConfig(FlextConfig):
-
     SSH_PORT: int = 22  # Valor mágico substituído por constante
     """Database configuration with validation."""
 
@@ -123,7 +122,10 @@ class DatabaseConfig(FlextConfig):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate database configuration."""
-        if self.host.lower() in {"localhost", "127.0.0.1"} and self.port == self.SSH_PORT:
+        if (
+            self.host.lower() in {"localhost", "127.0.0.1"}
+            and self.port == self.SSH_PORT
+        ):
             return FlextResult[None].fail("SSH port not allowed for database")
 
         return FlextResult[None].ok(None)
@@ -246,7 +248,10 @@ def demonstrate_traditional_approach() -> int:
 
     # Create service with manual validation
     service = TraditionalDatabaseService(
-        host="localhost", port=5432, username="REDACTED_LDAP_BIND_PASSWORD", password="password123"  # noqa: S106 (exemplo didático)
+        host="localhost",
+        port=5432,
+        username="REDACTED_LDAP_BIND_PASSWORD",
+        password="password123",
     )
 
     # Manual connection handling
@@ -286,7 +291,7 @@ def demonstrate_modern_approach() -> int:
             host="localhost",
             port=5432,
             username="REDACTED_LDAP_BIND_PASSWORD",
-            password="password123",  # noqa: S106 (exemplo didático)
+            password="password123",
             connection_timeout=30,
         )
 
@@ -359,7 +364,10 @@ def demonstrate_error_handling_comparison() -> int:
 
     # Valid config but simulated connection error
     config = DatabaseConfig(
-        host="nonexistent.server.com", port=5432, username="test", password="test"  # noqa: S106 (exemplo didático)
+        host="nonexistent.server.com",
+        port=5432,
+        username="test",
+        password="test",
     )
 
     service = ModernDatabaseService(config)

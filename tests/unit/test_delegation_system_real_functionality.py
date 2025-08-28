@@ -17,15 +17,9 @@ from flext_core.delegation_system import (
     validate_delegation_system,
 )
 from flext_core.exceptions import FlextExceptions
-from flext_core.mixins import (
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin,
-    FlextValidatableMixin,
-)
+from flext_core.mixins import FlextMixins
 
-# Initialize dynamic exception classes
-FlextExceptions.initialize()
+# Exception classes are automatically available
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -155,8 +149,8 @@ class RealBusinessHost:
             BusinessLogicMixin,
             DatabaseMixin,
             CacheAccessMixin,
-            FlextValidatableMixin,
-            FlextTimestampMixin,
+            FlextMixins.Validatable,
+            FlextMixins.Timestampable,
         )
 
     def process_order(
@@ -290,10 +284,10 @@ class TestAdvancedDelegationScenarios:
                 self.data_store: dict[str, FlextTypes.Core.Object] = {}
                 self.delegator = create_mixin_delegator(
                     self,
-                    FlextValidatableMixin,
-                    FlextSerializableMixin,
-                    FlextTimestampMixin,
-                    FlextLoggableMixin,
+                    FlextMixins.Validatable,
+                    FlextMixins.Serializable,
+                    FlextMixins.Timestampable,
+                    FlextMixins.Loggable,
                 )
 
         host = AdvancedHost()

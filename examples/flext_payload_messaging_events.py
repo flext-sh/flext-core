@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Messaging and events using FlextPayload.
+"""Messaging and events using FlextModels.Payload.
 
 Demonstrates structured data transport, validation,
 and metadata management for message patterns.
@@ -11,7 +11,7 @@ and metadata management for message patterns.
     - Maximum type safety using flext_core.typings
 
 Key Components:
-    - FlextPayload[T]: Generic type-safe payload container
+    - FlextModels.Payload[T]: Generic type-safe payload container
     - FlextMessage: Specialized string message payload with levels
     - FlextEvent: Domain event payload with aggregate correlation
     - Payload factory methods with comprehensive validation
@@ -19,7 +19,7 @@ Key Components:
     - Serialization support for cross-service communication
 
 This example shows real-world enterprise messaging scenarios
-demonstrating the power and flexibility of the FlextPayload system.
+demonstrating the power and flexibility of the FlextModels.Payload system.
 """
 
 import contextlib
@@ -27,7 +27,7 @@ import time
 from collections.abc import Mapping
 
 from flext_core import (
-    FlextPayload,
+    FlextModels.Payload,
     FlextResult,
 )
 
@@ -54,14 +54,14 @@ def _print_generic_header() -> None:
 
 
 def _demo_basic_payloads() -> None:
-    FlextPayload(data="Hello, World!")
+    FlextModels.Payload(data="Hello, World!")
 
     user_data: dict[str, object] = {
         "id": "user123",
         "name": "John Doe",
         "email": "john@example.com",
     }
-    FlextPayload(
+    FlextModels.Payload(
         data=user_data,
         metadata={"source": "user_service", "version": "1.0", "timestamp": time.time()},
     )
@@ -77,7 +77,7 @@ def _demo_type_safe_payload() -> None:
         ],
         "total": 1059.97,
     }
-    order_result = FlextPayload.create(
+    order_result = FlextModels.Payload.create(
         order_data,
         source="order_service",
         correlation_id="req_456",
@@ -91,13 +91,13 @@ def _demo_type_safe_payload() -> None:
 
 
 def _demo_invalid_payload() -> None:
-    invalid_result = FlextPayload.create(None, source="test_service")
+    invalid_result = FlextModels.Payload.create(None, source="test_service")
     if invalid_result.success:
         pass
 
 
 def _demo_metadata_enrichment() -> None:
-    base_payload = FlextPayload(
+    base_payload = FlextModels.Payload(
         data={"message": "Hello from service"},
         metadata={"source": "base_service"},
     )
@@ -107,7 +107,7 @@ def _demo_metadata_enrichment() -> None:
 
 
 def _demo_payload_transformation() -> None:
-    base_payload = FlextPayload(
+    base_payload = FlextModels.Payload(
         data={"message": "Hello from service"},
         metadata={"source": "base_service"},
     )
@@ -138,26 +138,26 @@ def _print_message_header() -> None:
 
 
 def _create_basic_messages() -> tuple[
-    FlextResult[FlextPayload[str]],
-    FlextResult[FlextPayload[str]],
-    FlextResult[FlextPayload[str]],
+    FlextResult[FlextModels.Payload[str]],
+    FlextResult[FlextModels.Payload[str]],
+    FlextResult[FlextModels.Payload[str]],
 ]:
-    info_message = FlextResult[FlextPayload[str]].ok(
-        FlextPayload[str](
+    info_message = FlextResult[FlextModels.Payload[str]].ok(
+        FlextModels.Payload[str](
             data="User login successful",
             metadata={"level": "info", "source": "auth_service"},
         )
     )
 
-    warning_message = FlextResult[FlextPayload[str]].ok(
-        FlextPayload[str](
+    warning_message = FlextResult[FlextModels.Payload[str]].ok(
+        FlextModels.Payload[str](
             data="Database connection slow",
             metadata={"level": "warning", "source": "database_service"},
         )
     )
 
-    error_message_result = FlextResult[FlextPayload[str]].ok(
-        FlextPayload[str](
+    error_message_result = FlextResult[FlextModels.Payload[str]].ok(
+        FlextModels.Payload[str](
             data="Payment processing failed",
             metadata={"level": "error", "source": "payment_service"},
         )
@@ -166,9 +166,9 @@ def _create_basic_messages() -> tuple[
 
 
 def _display_basic_messages(
-    info_message: FlextResult[FlextPayload[str]],
-    warning_message: FlextResult[FlextPayload[str]],
-    error_message_result: FlextResult[FlextPayload[str]],
+    info_message: FlextResult[FlextModels.Payload[str]],
+    warning_message: FlextResult[FlextModels.Payload[str]],
+    error_message_result: FlextResult[FlextModels.Payload[str]],
 ) -> None:
     if info_message.success:
         info_payload = info_message.value
@@ -187,7 +187,7 @@ def _display_basic_messages(
 
 
 def _validate_invalid_level_message() -> None:
-    invalid_level_result = FlextPayload[str].create(
+    invalid_level_result = FlextModels.Payload[str].create(
         "Test message",
         level="invalid_level",
         source="test_service",
@@ -199,7 +199,7 @@ def _validate_invalid_level_message() -> None:
 
 
 def _demonstrate_message_enrichment() -> None:
-    base_message_result = FlextPayload[str].create(
+    base_message_result = FlextModels.Payload[str].create(
         "Base message",
         level="info",
         source="base_service",
@@ -224,9 +224,9 @@ def _process_and_filter_messages() -> None:
         {"text": "User action completed", "level": "info", "source": "user_service"},
     ]
 
-    created_messages: list[FlextPayload[str]] = []
+    created_messages: list[FlextModels.Payload[str]] = []
     for msg_data in messages_data:
-        message_result = FlextPayload[str].create(
+        message_result = FlextModels.Payload[str].create(
             str(msg_data["text"]),
             level=str(msg_data["level"]),
             source=str(msg_data["source"]),
@@ -242,13 +242,13 @@ def _process_and_filter_messages() -> None:
 
 def _demonstrate_message_correlation() -> None:
     correlation_id = "corr_123"
-    request_message_result = FlextPayload[str].create(
+    request_message_result = FlextModels.Payload[str].create(
         "Processing user request",
         level="info",
         source="api_gateway",
         correlation_id=correlation_id,
     )
-    response_message_result = FlextPayload[str].create(
+    response_message_result = FlextModels.Payload[str].create(
         "Request completed successfully",
         level="info",
         source="api_gateway",
@@ -275,7 +275,7 @@ def demonstrate_domain_events() -> None:
     )
 
 
-def _print_domain_events_section_header(title: str) -> None:  # noqa: ARG001
+def _print_domain_events_section_header(title: str) -> None:
     """Print formatted domain events section header."""
     _separator = "\n" + "=" * 80
 
@@ -290,7 +290,7 @@ def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
         "source": "web_registration",
     }
 
-    user_registration_event = FlextPayload[Mapping[str, object]].create(
+    user_registration_event = FlextModels.Payload[Mapping[str, object]].create(
         event_type="UserRegistered",
         aggregate_id="user_456",
         aggregate_type="User",
@@ -302,7 +302,7 @@ def _demonstrate_basic_domain_event_creation() -> FlextResult[None]:
 
 
 def _display_user_registration_event(
-    user_registration_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    user_registration_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display user registration event details."""
     if user_registration_event.success:
@@ -326,7 +326,7 @@ def _demonstrate_order_lifecycle_events() -> FlextResult[None]:
 
 def _create_order_created_event(
     order_id: str,
-) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+) -> FlextResult[FlextModels.Payload[Mapping[str, object]]]:
     """Create order created event."""
     order_created_data: dict[str, object] = {
         "order_id": order_id,
@@ -339,7 +339,7 @@ def _create_order_created_event(
         "created_at": "2024-01-15T14:20:00Z",
     }
 
-    return FlextPayload[Mapping[str, object]].create(
+    return FlextModels.Payload[Mapping[str, object]].create(
         event_type="OrderCreated",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -351,7 +351,7 @@ def _create_order_created_event(
 
 def _create_order_confirmed_event(
     order_id: str,
-) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+) -> FlextResult[FlextModels.Payload[Mapping[str, object]]]:
     """Create order confirmed event."""
     order_confirmed_data: dict[str, object] = {
         "order_id": order_id,
@@ -360,7 +360,7 @@ def _create_order_confirmed_event(
         "payment_id": "pay_456",
     }
 
-    return FlextPayload[Mapping[str, object]].create(
+    return FlextModels.Payload[Mapping[str, object]].create(
         event_type="OrderConfirmed",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -371,8 +371,8 @@ def _create_order_confirmed_event(
 
 
 def _display_order_lifecycle_events(
-    order_created_event: FlextResult[FlextPayload[Mapping[str, object]]],
-    order_confirmed_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    order_created_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
+    order_confirmed_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display order lifecycle event details."""
     if order_created_event.success and order_confirmed_event.success:
@@ -401,7 +401,7 @@ def _demonstrate_inventory_management_events() -> FlextResult[None]:
 
 def _create_stock_updated_event(
     product_id: str,
-) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+) -> FlextResult[FlextModels.Payload[Mapping[str, object]]]:
     """Create stock updated event."""
     stock_updated_data: dict[str, object] = {
         "product_id": product_id,
@@ -411,7 +411,7 @@ def _create_stock_updated_event(
         "updated_at": "2024-01-15T15:00:00Z",
     }
 
-    return FlextPayload[Mapping[str, object]].create(
+    return FlextModels.Payload[Mapping[str, object]].create(
         event_type="StockUpdated",
         aggregate_id=product_id,
         aggregate_type="Product",
@@ -422,7 +422,7 @@ def _create_stock_updated_event(
 
 
 def _handle_stock_updated_event(
-    stock_updated_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    stock_updated_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
     product_id: str,
 ) -> FlextResult[None]:
     """Handle stock updated event and create low stock alert if needed."""
@@ -456,7 +456,7 @@ def _create_and_display_low_stock_alert(
         "alerted_at": "2024-01-15T15:00:00Z",
     }
 
-    low_stock_event = FlextPayload[Mapping[str, object]].create(
+    low_stock_event = FlextModels.Payload[Mapping[str, object]].create(
         event_type="LowStockAlert",
         aggregate_id=product_id,
         aggregate_type="Product",
@@ -489,9 +489,9 @@ def _demonstrate_event_correlation_and_tracing() -> FlextResult[None]:
 
 def _create_process_started_event(
     process_id: str,
-) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+) -> FlextResult[FlextModels.Payload[Mapping[str, object]]]:
     """Create process started event."""
-    return FlextPayload[Mapping[str, object]].create(
+    return FlextModels.Payload[Mapping[str, object]].create(
         event_type="ProcessStarted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -503,9 +503,9 @@ def _create_process_started_event(
 
 def _create_step_completed_event(
     process_id: str,
-) -> FlextResult[FlextPayload[Mapping[str, object]]]:
+) -> FlextResult[FlextModels.Payload[Mapping[str, object]]]:
     """Create process step completed event."""
-    return FlextPayload[Mapping[str, object]].create(
+    return FlextModels.Payload[Mapping[str, object]].create(
         event_type="ProcessStepCompleted",
         aggregate_id=process_id,
         aggregate_type="BusinessProcess",
@@ -521,8 +521,8 @@ def _create_step_completed_event(
 
 
 def _display_correlated_events(
-    process_started_event: FlextResult[FlextPayload[Mapping[str, object]]],
-    step_completed_event: FlextResult[FlextPayload[Mapping[str, object]]],
+    process_started_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
+    step_completed_event: FlextResult[FlextModels.Payload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display correlated event details."""
     if process_started_event.success and step_completed_event.success:
@@ -542,7 +542,7 @@ def _display_correlated_events(
 def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
     """Demonstrate event validation and error handling patterns."""
     # Test invalid event (missing required fields)
-    invalid_event_result = FlextPayload[Mapping[str, object]].create(
+    invalid_event_result = FlextModels.Payload[Mapping[str, object]].create(
         event_type="",  # Empty event type
         aggregate_id="",  # Empty aggregate ID
         aggregate_type="",  # Empty aggregate type
@@ -554,7 +554,7 @@ def _demonstrate_event_validation_and_error_handling() -> FlextResult[None]:
 
 
 def _display_validation_results(
-    invalid_event_result: FlextResult[FlextPayload[Mapping[str, object]]],
+    invalid_event_result: FlextResult[FlextModels.Payload[Mapping[str, object]]],
 ) -> FlextResult[None]:
     """Display event validation results."""
     if invalid_event_result.success:
@@ -592,7 +592,7 @@ def _basic_serialization_demo() -> dict[str, object]:
         },
         "timestamp": "2024-01-15T17:00:00Z",
     }
-    payload = FlextPayload(
+    payload = FlextModels.Payload(
         data=serialization_data,
         metadata={
             "source": "user_service",
@@ -605,7 +605,7 @@ def _basic_serialization_demo() -> dict[str, object]:
 
 
 def _message_serialization_demo() -> None:
-    message_result = FlextPayload[str].create(
+    message_result = FlextModels.Payload[str].create(
         "User profile updated successfully",
         level="info",
         source="user_service",
@@ -618,7 +618,7 @@ def _message_serialization_demo() -> None:
 
 
 def _event_serialization_demo(serialization_data: dict[str, object]) -> None:
-    event_result = FlextPayload[Mapping[str, object]].create(
+    event_result = FlextModels.Payload[Mapping[str, object]].create(
         event_type="UserProfileUpdated",
         aggregate_id="user_789",
         aggregate_type="User",
@@ -634,12 +634,12 @@ def _event_serialization_demo(serialization_data: dict[str, object]) -> None:
 
 
 def _cross_service_transport_demo() -> None:
-    service_a_payload = FlextPayload(
+    service_a_payload = FlextModels.Payload(
         data={"request_id": "req_123", "user_id": "user_456"},
         metadata={"source": "service_a", "timestamp": time.time()},
     )
     transport_data = service_a_payload.to_dict()
-    received_payload = FlextPayload.from_dict(transport_data)
+    received_payload = FlextModels.Payload.from_dict(transport_data)
     if received_payload.success:
         received_data = received_payload.value
         if received_data is not None:
@@ -658,7 +658,7 @@ def _payload_validation_during_serialization() -> None:
         "array_data": [1, 2, 3, {"nested": "value"}],
         "boolean_flags": [True, False, True],
     }
-    complex_payload = FlextPayload(
+    complex_payload = FlextModels.Payload(
         data=complex_data,
         metadata={"complexity": "high", "validation": "passed"},
     )
@@ -687,7 +687,7 @@ def _request_response_pattern_demo() -> None:
         "action": "get_user_profile",
         "parameters": {"include_preferences": True, "include_history": False},
     }
-    request_payload = FlextPayload(
+    request_payload = FlextModels.Payload(
         data=request_data,
         metadata={
             "source": "api_gateway",
@@ -707,7 +707,7 @@ def _request_response_pattern_demo() -> None:
         "status": "success",
         "processing_time_ms": 45,
     }
-    response_payload = FlextPayload(
+    response_payload = FlextModels.Payload(
         data=response_data,
         metadata={
             "source": "user_service",
@@ -724,7 +724,7 @@ def _request_response_pattern_demo() -> None:
 
 def _event_driven_pattern_demo() -> None:
     order_id = "order_999"
-    order_placed_event = FlextPayload[Mapping[str, object]].create(
+    order_placed_event = FlextModels.Payload[Mapping[str, object]].create(
         event_type="OrderPlaced",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -737,7 +737,7 @@ def _event_driven_pattern_demo() -> None:
         source="order_service",
         version=1,
     )
-    inventory_reserved_event = FlextPayload[Mapping[str, object]].create(
+    inventory_reserved_event = FlextModels.Payload[Mapping[str, object]].create(
         event_type="InventoryReserved",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -749,7 +749,7 @@ def _event_driven_pattern_demo() -> None:
         source="inventory_service",
         version=2,
     )
-    payment_processed_event = FlextPayload[Mapping[str, object]].create(
+    payment_processed_event = FlextModels.Payload[Mapping[str, object]].create(
         event_type="PaymentProcessed",
         aggregate_id=order_id,
         aggregate_type="Order",
@@ -762,7 +762,7 @@ def _event_driven_pattern_demo() -> None:
         source="payment_service",
         version=3,
     )
-    events: list[FlextPayload[Mapping[str, object]]] = []
+    events: list[FlextModels.Payload[Mapping[str, object]]] = []
     for event_result in [
         order_placed_event,
         inventory_reserved_event,
@@ -777,20 +777,20 @@ def _event_driven_pattern_demo() -> None:
 
 
 def _message_routing_pattern_demo() -> None:
-    routing_messages: list[FlextPayload[str]] = []
-    high_priority_result = FlextPayload[str].create(
+    routing_messages: list[FlextModels.Payload[str]] = []
+    high_priority_result = FlextModels.Payload[str].create(
         "Critical system alert",
         level="error",
         source="monitoring_service",
         metadata={"priority": "high", "route_to": "REDACTED_LDAP_BIND_PASSWORD_team"},
     )
-    normal_priority_result = FlextPayload[str].create(
+    normal_priority_result = FlextModels.Payload[str].create(
         "User login successful",
         level="info",
         source="auth_service",
         metadata={"priority": "normal", "route_to": "log_aggregator"},
     )
-    low_priority_result = FlextPayload[str].create(
+    low_priority_result = FlextModels.Payload[str].create(
         "Debug information",
         level="debug",
         source="debug_service",
@@ -813,28 +813,28 @@ def _message_routing_pattern_demo() -> None:
 
 def _message_correlation_tracing_demo() -> None:
     transaction_id = "txn_123"
-    start_message = FlextPayload[str].create(
+    start_message = FlextModels.Payload[str].create(
         "Transaction started",
         level="info",
         source="transaction_service",
         correlation_id=transaction_id,
         metadata={"step": "start", "transaction_type": "payment"},
     )
-    validation_message = FlextPayload[str].create(
+    validation_message = FlextModels.Payload[str].create(
         "Transaction validated",
         level="info",
         source="transaction_service",
         correlation_id=transaction_id,
         metadata={"step": "validation", "validation_result": "success"},
     )
-    completion_message = FlextPayload[str].create(
+    completion_message = FlextModels.Payload[str].create(
         "Transaction completed",
         level="info",
         source="transaction_service",
         correlation_id=transaction_id,
         metadata={"step": "completion", "final_status": "success"},
     )
-    correlated_messages: list[FlextPayload[str]] = []
+    correlated_messages: list[FlextModels.Payload[str]] = []
     for msg_result in [start_message, validation_message, completion_message]:
         if msg_result.success:
             message = msg_result.value
@@ -843,7 +843,7 @@ def _message_correlation_tracing_demo() -> None:
 
 
 def _dead_letter_queue_demo() -> None:
-    problematic_message_result = FlextPayload[str].create(
+    problematic_message_result = FlextModels.Payload[str].create(
         "Message with invalid data",
         level="error",
         source="problematic_service",
@@ -867,7 +867,7 @@ def _dead_letter_queue_demo() -> None:
 
 
 def main() -> None:
-    """Run comprehensive FlextPayload demonstration with maximum type safety."""
+    """Run comprehensive FlextModels.Payload demonstration with maximum type safety."""
     # Run all demonstrations
     demonstrate_generic_payloads()
     demonstrate_message_payloads()

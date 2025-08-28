@@ -31,12 +31,11 @@ from typing import Self, override
 
 from flext_core import (
     FlextConstants,
-    FlextEntity,
     FlextLogger,
+    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValue,
 )
 
 # =============================================================================
@@ -142,7 +141,7 @@ class PaymentMethod(StrEnum):
 # =============================================================================
 
 
-class EmailAddress(FlextValue):
+class EmailAddress(FlextModels.Value):
     """Email address value object with comprehensive validation.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -179,7 +178,7 @@ class EmailAddress(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class Age(FlextValue):
+class Age(FlextModels.Value):
     """Age value object with business rule validation.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -199,7 +198,7 @@ class Age(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class Money(FlextValue):
+class Money(FlextModels.Value):
     """Money value object with currency and amount validation.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -269,7 +268,7 @@ class Money(FlextValue):
         return FlextResult[Money].ok(result)
 
 
-class Address(FlextValue):
+class Address(FlextModels.Value):
     """Address value object with validation.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -314,7 +313,7 @@ class Address(FlextValue):
         return self.city.strip().lower() == other.city.strip().lower()
 
 
-class PhoneNumber(FlextValue):
+class PhoneNumber(FlextModels.Value):
     """Phone number value object with validation.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -350,7 +349,7 @@ class PhoneNumber(FlextValue):
 # =============================================================================
 
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """User entity with comprehensive business rules.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -454,7 +453,7 @@ class User(FlextEntity):
         return result
 
 
-class Product(FlextEntity):
+class Product(FlextModels.Entity):
     """Product entity with business rules.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -544,7 +543,7 @@ class Product(FlextEntity):
             return FlextResult[Product].fail(f"Failed to update price: {e}")
 
 
-class OrderItem(FlextValue):
+class OrderItem(FlextModels.Value):
     """Order item value object.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -587,7 +586,7 @@ class OrderItem(FlextValue):
         return self.unit_price.multiply(Decimal(str(self.quantity)))
 
 
-class Order(FlextEntity):
+class Order(FlextModels.Entity):
     """Order entity with complex business rules.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -822,7 +821,7 @@ class SharedDomainFactory:
                         f"Invalid item price: {money_result.error}"
                     )
 
-                # OrderItem uses FlextValue base, use model_validate
+                # OrderItem uses FlextModels.Value base, use model_validate
                 order_item = OrderItem.model_validate({
                     "product_id": str(item_data["product_id"]),
                     "product_name": str(item_data["product_name"]),
@@ -939,7 +938,7 @@ __all__: list[str] = [
 # =============================================================================
 
 
-class ConcreteFlextEntity(FlextEntity):
+class ConcreteFlextEntity(FlextModels.Entity):
     """Concrete entity implementation for comprehensive testing.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -955,7 +954,7 @@ class ConcreteFlextEntity(FlextEntity):
         return FlextResult[None].ok(None)
 
 
-class ConcreteValueObject(FlextValue):
+class ConcreteValueObject(FlextModels.Value):
     """Concrete value object implementation for comprehensive testing.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -978,7 +977,7 @@ class ConcreteValueObject(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class ComplexValueObject(FlextValue):
+class ComplexValueObject(FlextModels.Value):
     """Value object with complex data types for testing.
 
     Uses FlextTypes for proper type annotation following FLEXT patterns.
@@ -1034,7 +1033,7 @@ class TestDomainFactory:
         """Create a concrete value object for testing."""
         try:
             description = str(kwargs.get("description", ""))
-            # ConcreteValueObject uses the __init__ from FlextValue
+            # ConcreteValueObject uses the __init__ from FlextModels.Value
             vo = ConcreteValueObject.model_validate({
                 "amount": amount,
                 "currency": currency,
@@ -1060,7 +1059,7 @@ class TestDomainFactory:
     ) -> FlextResult[ComplexValueObject]:
         """Create a complex value object for testing."""
         try:
-            # ComplexValueObject uses the __init__ from FlextValue
+            # ComplexValueObject uses the __init__ from FlextModels.Value
             vo = ComplexValueObject.model_validate({
                 "name": name,
                 "tags": tags,
@@ -1092,7 +1091,7 @@ class SharedDemonstrationPattern:
 
     @staticmethod
     def run_demonstration(
-        title: FlextTypes.Core.String,  # noqa: ARG004
+        title: FlextTypes.Core.String,
         demonstration_functions: list[Callable[[], None]],
     ) -> None:
         """Run a demonstration with consistent formatting and error handling."""

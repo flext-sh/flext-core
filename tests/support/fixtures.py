@@ -12,17 +12,18 @@ from collections.abc import Generator
 
 import pytest
 
+# Import from unified interface - NEVER from legacy
 from flext_core import (
     FlextConfig,
+    FlextConstants,
     FlextContainer,
     FlextFields,
-    FlextFieldType,
     FlextResult,
     FlextTypes,
 )
 from tests.support.factories import FlextResultFactory, UserDataFactory
 
-JsonDict = FlextTypes.Core.JsonObject
+# Use FlextTypes.Core.JsonObject directly - no aliases needed
 
 
 class FlextTestFixtures:
@@ -34,19 +35,19 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def sample_user_data() -> JsonDict:
+    def sample_user_data() -> FlextTypes.Core.JsonObject:
         """Sample user data for testing."""
         return UserDataFactory.build()
 
     @staticmethod
     @pytest.fixture
-    def sample_config_data() -> JsonDict:
+    def sample_config_data() -> FlextTypes.Core.JsonObject:
         """Sample configuration data for testing."""
         return {"env": "test", "debug": True, "database_url": "sqlite:///:memory:"}
 
     @staticmethod
     @pytest.fixture
-    def sample_field_data() -> JsonDict:
+    def sample_field_data() -> FlextTypes.Core.JsonObject:
         """Sample field data for testing."""
         return {"field_name": "test_field", "field_type": "string", "required": True}
 
@@ -58,11 +59,11 @@ class FlextTestFixtures:
 
     @staticmethod
     @pytest.fixture
-    def field_types_matrix() -> list[tuple[FlextFieldType, list[object], list[bool]]]:
+    def field_types_matrix() -> list[tuple[object, list[object], list[bool]]]:
         """Field types with test values and expected validity."""
         return [
-            (FlextFieldType.STRING, ["test", ""], [True, False]),
-            (FlextFieldType.INTEGER, [42, "invalid"], [True, False]),
+            (FlextConstants.Enums.FieldType.STRING, ["test", ""], [True, False]),
+            (FlextConstants.Enums.FieldType.INTEGER, [42, "invalid"], [True, False]),
         ]
 
     @staticmethod
@@ -110,10 +111,8 @@ class FlextTestFixtures:
     @pytest.fixture
     def sample_string_field() -> FlextFields.Core.BaseField[object]:
         """Sample string field for testing."""
-        from flext_core.fields import create_field
-
-        result = create_field(
-            "string",
+        # Use direct FlextFields.Core.StringField constructor
+        return FlextFields.Core.StringField(
             "test_string_field",
             min_length=1,
             max_length=100,
@@ -121,44 +120,31 @@ class FlextTestFixtures:
             required=True,
             description="Test string field",
         )
-        if result.failure:
-            raise ValueError(f"Failed to create string field: {result.error}")
-        return result.value
 
     @staticmethod
     @pytest.fixture
     def sample_integer_field() -> FlextFields.Core.BaseField[object]:
         """Sample integer field for testing."""
-        from flext_core.fields import create_field
-
-        result = create_field(
-            "integer",
+        # Use direct FlextFields.Core.IntegerField constructor
+        return FlextFields.Core.IntegerField(
             "test_integer_field",
             min_value=0,
             max_value=1000,
             required=True,
             description="Test integer field",
         )
-        if result.failure:
-            raise ValueError(f"Failed to create integer field: {result.error}")
-        return result.value
 
     @staticmethod
     @pytest.fixture
     def sample_boolean_field() -> FlextFields.Core.BaseField[object]:
         """Sample boolean field for testing."""
-        from flext_core.fields import create_field
-
-        result = create_field(
-            "boolean",
+        # Use direct FlextFields.Core.BooleanField constructor
+        return FlextFields.Core.BooleanField(
             "test_boolean_field",
             required=False,
-            default_value=False,
+            default=False,
             description="Test boolean field",
         )
-        if result.failure:
-            raise ValueError(f"Failed to create boolean field: {result.error}")
-        return result.value
 
     @staticmethod
     @pytest.fixture

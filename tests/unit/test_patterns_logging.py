@@ -9,7 +9,7 @@ import pytest
 from flext_core import (
     FlextLogger,
     FlextLogLevel,
-    flext_get_logger,
+    FlextTypes,
 )
 
 # Constants
@@ -17,11 +17,11 @@ EXPECTED_BULK_SIZE = 2
 
 
 class TestFlextContext:
-    """Test FlextLogContext TypedDict."""
+    """Test FlextTypes.Logging.LogContext TypedDict."""
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: FlextLogContext = {}
+        context: FlextTypes.Logging.LogContext = {}
 
         assert isinstance(context, dict)
         if len(context) != 0:
@@ -29,7 +29,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: FlextLogContext = {
+        context: FlextTypes.Logging.LogContext = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -46,7 +46,7 @@ class TestFlextContext:
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
         # Test with partial context
-        context: FlextLogContext = {
+        context: FlextTypes.Logging.LogContext = {
             "user_id": "123",
         }
 
@@ -56,7 +56,7 @@ class TestFlextContext:
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: FlextLogContext = {
+        context: FlextTypes.Logging.LogContext = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -77,7 +77,7 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: FlextLogContext = {
+        context: FlextTypes.Logging.LogContext = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -91,7 +91,7 @@ class TestFlextContext:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: FlextLogContext = {
+        context: FlextTypes.Logging.LogContext = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",
@@ -148,7 +148,7 @@ class TestFlextLogger:
         FlextLogger._configured = False
 
         # Getting a logger should auto-configure
-        logger = FlextLogger.get_logger("test")
+        logger = FlextLogger("test")
 
         if not (FlextLogger._configured):
             raise AssertionError(f"Expected True, got {FlextLogger._configured}")
@@ -156,7 +156,7 @@ class TestFlextLogger:
 
     def test_get_logger_creates_instance(self) -> None:
         """Test that get_logger creates logger instances."""
-        logger = FlextLogger.get_logger("test_logger")
+        logger = FlextLogger("test_logger")
 
         assert logger is not None
         assert hasattr(logger, "info")  # Should be a structlog BoundLogger
@@ -165,14 +165,14 @@ class TestFlextLogger:
 
     def test_get_logger_caches_instances(self) -> None:
         """Test that get_logger caches logger instances."""
-        logger1 = FlextLogger.get_logger("cached_test")
-        logger2 = FlextLogger.get_logger("cached_test")
+        logger1 = FlextLogger("cached_test")
+        logger2 = FlextLogger("cached_test")
 
         assert logger1 is logger2
 
     def test_logger_methods_exist(self) -> None:
         """Test that logger has expected methods."""
-        logger = FlextLogger.get_logger("method_test")
+        logger = FlextLogger("method_test")
 
         # Basic logging methods
         assert hasattr(logger, "debug")
@@ -261,14 +261,14 @@ class TestFlextLogger:
 
     def test_backward_compatibility_function(self) -> None:
         """Test backward compatibility function."""
-        logger = FlextLogger.flext_get_logger("compat_test")
+        logger = FlextLogger("compat_test")
 
         assert logger is not None
         assert hasattr(logger, "info")
 
     def test_module_level_function(self) -> None:
         """Test module-level backward compatibility function."""
-        logger = flext_get_logger("module_test")
+        logger = FlextLogger("module_test")
 
         assert logger is not None
         assert hasattr(logger, "info")
@@ -333,14 +333,14 @@ class TestFlextLoggerUsage:
         FlextLogger._loggers.clear()
 
         # Test real logger creation
-        logger1 = FlextLogger.get_logger("factory_test")
-        logger2 = FlextLogger.get_logger("factory_test")
+        logger1 = FlextLogger("factory_test")
+        logger2 = FlextLogger("factory_test")
 
         # Same name should return same cached instance
         assert logger1 is logger2
 
         # Different name should return different instance
-        logger3 = FlextLogger.get_logger("different_test")
+        logger3 = FlextLogger("different_test")
         assert logger1 is not logger3
 
         # Test that loggers have the expected methods
@@ -359,23 +359,23 @@ class TestFlextLoggerIntegration:
 
     def test_multiple_loggers(self) -> None:
         """Test creating and using multiple loggers."""
-        logger1 = FlextLogger.get_logger("service1")
-        logger2 = FlextLogger.get_logger("service2")
-        logger3 = FlextLogger.get_logger("service3")
+        logger1 = FlextLogger("service1")
+        logger2 = FlextLogger("service2")
+        logger3 = FlextLogger("service3")
 
         # Should be different instances
         assert logger1 is not logger2
         assert logger2 is not logger3
 
         # But same name should return same instance
-        logger1_again = FlextLogger.get_logger("service1")
+        logger1_again = FlextLogger("service1")
         assert logger1 is logger1_again
 
     def test_logging_hierarchy(self) -> None:
         """Test hierarchical logging."""
-        parent_logger = FlextLogger.get_logger("parent")
-        child_logger = FlextLogger.get_logger("parent.child")
-        grandchild_logger = FlextLogger.get_logger("parent.child.grandchild")
+        parent_logger = FlextLogger("parent")
+        child_logger = FlextLogger("parent.child")
+        grandchild_logger = FlextLogger("parent.child.grandchild")
 
         # All should be valid logger instances
         assert parent_logger is not None

@@ -1248,8 +1248,12 @@ class FlextConstants:
 
                 # Configure monitoring thresholds
                 error_threshold = FlextConstants.Observability.DEFAULT_ERROR_THRESHOLD
-                latency_threshold = FlextConstants.Observability.DEFAULT_LATENCY_THRESHOLD
-                health_interval = FlextConstants.Observability.DEFAULT_HEALTH_CHECK_INTERVAL
+                latency_threshold = (
+                    FlextConstants.Observability.DEFAULT_LATENCY_THRESHOLD
+                )
+                health_interval = (
+                    FlextConstants.Observability.DEFAULT_HEALTH_CHECK_INTERVAL
+                )
 
         Note:
             These constants ensure consistent observability practices across
@@ -1302,10 +1306,53 @@ class FlextConstants:
         SERIALIZATION_FORMAT_BINARY: Final[str] = "binary"
 
     class Quality:
-        """Code quality specific constants.
+        """Code quality and static analysis constants for the FLEXT ecosystem.
 
-        These constants are used by flext-quality module and provide
-        defaults for quality analysis, complexity metrics, and compliance.
+        This class provides comprehensive code quality constants used by the
+        flext-quality module and static analysis tools for maintaining high
+        code standards across the FLEXT ecosystem. Includes complexity metrics,
+        coverage thresholds, PEP8 compliance rules, and quality gates.
+
+        Constant Categories:
+            - Quality Thresholds: Code coverage and quality score minimums
+            - Complexity Metrics: Cyclomatic complexity and maintainability limits
+            - Code Standards: PEP8 compliance rules and formatting standards
+            - Analysis Limits: File size and structural complexity boundaries
+            - Duplication Control: Code duplication detection thresholds
+            - Static Analysis: Linting rules and code inspection settings
+
+        Architecture Principles Applied:
+            - Quality Gates: Enforced quality standards across the codebase
+            - Maintainability: Code structure and complexity management
+            - Standards Compliance: PEP8 and Python best practices enforcement
+            - Continuous Improvement: Progressive quality enhancement
+
+        Examples:
+            Quality gate configuration::
+
+                # Set quality thresholds
+                min_coverage = FlextConstants.Quality.MIN_COVERAGE_THRESHOLD
+                max_complexity = FlextConstants.Quality.MAX_COMPLEXITY_THRESHOLD
+                max_duplication = FlextConstants.Quality.MAX_DUPLICATION_THRESHOLD
+
+            Code structure limits::
+
+                # Configure structural limits
+                max_file_size = FlextConstants.Quality.MAX_FILE_SIZE_BYTES
+                max_function_length = FlextConstants.Quality.MAX_FUNCTION_LINES
+                max_class_methods = FlextConstants.Quality.MAX_CLASS_METHODS
+
+            PEP8 compliance::
+
+                # Configure style standards
+                line_length = FlextConstants.Quality.MAX_LINE_LENGTH
+                max_args = FlextConstants.Quality.MAX_FUNCTION_ARGUMENTS
+                nesting_depth = FlextConstants.Quality.MAX_NESTING_DEPTH
+
+        Note:
+            These constants ensure consistent code quality standards across
+            the FLEXT ecosystem and support automated quality enforcement.
+
         """
 
         # Quality thresholds
@@ -1435,10 +1482,61 @@ class FlextConstants:
         MAX_ENTRY_SIZE: Final[int] = 1048576  # 1MB
 
     class GRPC:
-        """gRPC specific constants.
+        """gRPC service constants for high-performance remote procedure calls.
 
-        These constants are used by flext-grpc module and provide defaults
-        for gRPC services, connections, and messaging.
+        This class provides comprehensive constants for gRPC services within the
+        FLEXT ecosystem, supporting service configuration, connection management,
+        streaming operations, memory management, and performance optimization
+        for scalable and efficient gRPC communication.
+
+        Constant Categories:
+            - Connection Configuration: Ports, timeouts, and connection settings
+            - Service Management: Worker pools, message sizes, and service validation
+            - Streaming Operations: Server, client, and bidirectional streaming
+            - Memory Management: Buffer management and memory pressure handling
+            - Performance Tuning: Channel options and optimization settings
+            - Health and Monitoring: Health checks and metrics collection
+
+        Architecture Principles Applied:
+            - High Performance: Optimized for low-latency communication
+            - Resource Management: Efficient memory and connection management
+            - Scalability: Support for high-throughput streaming operations
+            - Reliability: Comprehensive health monitoring and error handling
+
+        Examples:
+            Service configuration::
+
+                # Configure gRPC service
+                port = FlextConstants.GRPC.DEFAULT_GRPC_PORT
+                workers = FlextConstants.GRPC.DEFAULT_MAX_WORKERS
+                timeout = FlextConstants.GRPC.DEFAULT_TIMEOUT
+                max_message = FlextConstants.GRPC.MAX_MESSAGE_SIZE
+
+            Connection management::
+
+                # Configure connection limits
+                idle_time = FlextConstants.GRPC.MAX_CONNECTION_IDLE
+                max_age = FlextConstants.GRPC.MAX_CONNECTION_AGE
+                keepalive = FlextConstants.GRPC.KEEPALIVE_TIME
+
+            Streaming configuration::
+
+                # Configure streaming operations
+                batch_size = FlextConstants.GRPC.SERVER_STREAMING_BATCH_SIZE
+                buffer_threshold = FlextConstants.GRPC.CLIENT_STREAMING_BUFFER_THRESHOLD
+                queue_size = FlextConstants.GRPC.BIDIRECTIONAL_STREAMING_QUEUE_SIZE
+
+            Memory management::
+
+                # Configure memory and buffers
+                max_buffer = FlextConstants.GRPC.MAX_BUFFER_SIZE_BYTES
+                pressure_threshold = FlextConstants.GRPC.MEMORY_PRESSURE_THRESHOLD
+                cleanup_batch = FlextConstants.GRPC.BUFFER_CLEANUP_BATCH_SIZE
+
+        Note:
+            These constants ensure optimal gRPC performance and reliability
+            across all FLEXT services with production-ready configurations.
+
         """
 
         # gRPC default port and connection settings
@@ -1506,10 +1604,62 @@ class FlextConstants:
     # =========================================================================
 
     class DBT:
-        """DBT-specific constants for data transformation.
+        """DBT (Data Build Tool) constants for data transformation in the FLEXT ecosystem.
 
-        These constants are used by flext-dbt-oracle and provide defaults
-        for DBT model configurations, testing, and performance.
+        This class provides comprehensive constants for DBT-based data transformation
+        operations within the FLEXT ecosystem. Includes model configuration,
+        materialization strategies, testing frameworks, freshness monitoring,
+        and performance optimization for scalable data transformation pipelines.
+
+        Constant Categories:
+            - Model Configuration: Model types and materialization strategies
+            - Testing Framework: Test severity levels and validation rules
+            - Freshness Monitoring: Data freshness checks and alert thresholds
+            - Performance Optimization: Batch processing and query thresholds
+            - Quality Assurance: Data quality metrics and validation settings
+            - Pipeline Management: Transformation pipeline configuration
+
+        Architecture Principles Applied:
+            - Data Quality: Comprehensive testing and validation framework
+            - Performance Focus: Optimized batch processing and query execution
+            - Freshness Monitoring: Real-time data freshness validation
+            - Materialization Flexibility: Support for multiple model types
+
+        Examples:
+            Model configuration::
+
+                # Configure model types
+                table_model = FlextConstants.DBT.MODEL_TYPE_TABLE
+                view_model = FlextConstants.DBT.MODEL_TYPE_VIEW
+                incremental_model = FlextConstants.DBT.MODEL_TYPE_INCREMENTAL
+
+                # Set materialization strategy
+                table_mat = FlextConstants.DBT.MATERIALIZATION_TABLE
+                incremental_mat = FlextConstants.DBT.MATERIALIZATION_INCREMENTAL
+
+            Testing configuration::
+
+                # Configure test severity
+                warn_level = FlextConstants.DBT.TEST_SEVERITY_WARN
+                error_level = FlextConstants.DBT.TEST_SEVERITY_ERROR
+
+            Freshness monitoring::
+
+                # Set freshness thresholds
+                warn_after = FlextConstants.DBT.FRESHNESS_WARN_AFTER
+                error_after = FlextConstants.DBT.FRESHNESS_ERROR_AFTER
+
+            Performance tuning::
+
+                # Configure batch processing
+                batch_size = FlextConstants.DBT.DEFAULT_BATCH_SIZE
+                large_batch = FlextConstants.DBT.LARGE_BATCH_SIZE
+                slow_threshold = FlextConstants.DBT.SLOW_QUERY_THRESHOLD
+
+        Note:
+            These constants ensure consistent DBT behavior across all FLEXT
+            data transformation operations and maintain data quality standards.
+
         """
 
         # Model types
@@ -1707,10 +1857,51 @@ class FlextConstants:
         METADATA_ENDPOINT: Final[str] = "/metadata"
 
     class Targets:
-        """Target constants for Singer targets ecosystem.
+        """Singer target constants for data loading and processing.
 
-        Common constants used across all Singer targets in the FLEXT
-        ecosystem for data loading and processing.
+        This class provides comprehensive constants for Singer targets within
+        the FLEXT ecosystem, supporting data loading operations, stream processing,
+        batch management, error handling, and data validation for consistent
+        target implementation across all data destination systems.
+
+        Constant Categories:
+            - Batch Processing: Batch sizes and processing configurations
+            - Stream Management: Parallel stream processing and buffer management
+            - Error Handling: Retry logic and failure recovery mechanisms
+            - Data Validation: Field and table naming validation rules
+            - Performance: Optimization settings for high-throughput loading
+            - Connection Management: Target connection and session handling
+
+        Architecture Principles Applied:
+            - Singer Compliance: Full Singer specification adherence
+            - Performance Optimization: Tuned for high-throughput data loading
+            - Error Resilience: Comprehensive error handling and recovery
+            - Data Integrity: Validation and consistency checks
+
+        Examples:
+            Batch configuration::
+
+                # Configure batch processing
+                batch_size = FlextConstants.Targets.DEFAULT_BATCH_SIZE
+                large_batch = FlextConstants.Targets.LARGE_BATCH_SIZE
+                max_batch = FlextConstants.Targets.MAX_BATCH_SIZE
+
+            Stream processing::
+
+                # Parallel stream settings
+                parallel_streams = FlextConstants.Targets.DEFAULT_MAX_PARALLEL_STREAMS
+                max_parallel = FlextConstants.Targets.MAX_PARALLEL_STREAMS
+
+            Error handling::
+
+                # Retry configuration
+                max_retries = FlextConstants.Targets.MAX_RETRIES
+                retry_delay = FlextConstants.Targets.RETRY_DELAY
+
+        Note:
+            These constants ensure consistent Singer target behavior across
+            all FLEXT data loading operations and destination systems.
+
         """
 
         # Default processing settings
@@ -1731,10 +1922,56 @@ class FlextConstants:
         MAX_TABLE_NAME_LENGTH: Final[int] = 64
 
     class Taps:
-        """Tap constants for Singer taps ecosystem.
+        """Singer tap constants for data extraction and discovery.
 
-        Common constants used across all Singer taps in the FLEXT
-        ecosystem for data extraction and discovery.
+        This class provides comprehensive constants for Singer taps within
+        the FLEXT ecosystem, supporting data extraction operations, schema
+        discovery, stream management, replication strategies, and state
+        management for consistent tap implementation across all data sources.
+
+        Constant Categories:
+            - Discovery Operations: Schema discovery and metadata extraction
+            - Stream Management: Data stream buffering and processing
+            - Replication Strategies: Full table, incremental, and log-based replication
+            - State Management: Bookmark properties and state tracking
+            - Performance: Buffer sizes and timeout configurations
+            - Data Types: Stream type definitions and data format support
+
+        Architecture Principles Applied:
+            - Singer Compliance: Full Singer specification adherence
+            - Discovery Efficiency: Optimized schema and metadata discovery
+            - State Consistency: Reliable state management and bookmark tracking
+            - Replication Flexibility: Support for multiple replication strategies
+
+        Examples:
+            Discovery configuration::
+
+                # Configure discovery operations
+                discovery_timeout = FlextConstants.Taps.DEFAULT_DISCOVERY_TIMEOUT
+                max_discovery = FlextConstants.Taps.MAX_DISCOVERY_TIMEOUT
+
+            Stream processing::
+
+                # Buffer configuration
+                buffer_size = FlextConstants.Taps.DEFAULT_STREAM_BUFFER_SIZE
+                max_buffer = FlextConstants.Taps.MAX_STREAM_BUFFER_SIZE
+
+            Replication strategies::
+
+                # Choose replication method
+                full_replication = FlextConstants.Taps.FULL_REPLICATION
+                incremental = FlextConstants.Taps.INCREMENTAL_REPLICATION
+                log_based = FlextConstants.Taps.LOG_BASED_REPLICATION
+
+            State management::
+
+                # Configure bookmark properties
+                bookmarks = FlextConstants.Taps.STATE_BOOKMARK_PROPERTIES
+
+        Note:
+            These constants ensure consistent Singer tap behavior across
+            all FLEXT data extraction operations and source systems.
+
         """
 
         # Discovery settings
@@ -1758,10 +1995,54 @@ class FlextConstants:
         ]
 
     class Meltano:
-        """Meltano constants for pipeline orchestration.
+        """Meltano pipeline orchestration constants for the FLEXT ecosystem.
 
-        Constants used in Meltano configurations and pipeline management
-        across the FLEXT Meltano ecosystem.
+        This class provides comprehensive constants for Meltano-based data pipeline
+        orchestration within the FLEXT ecosystem. Includes database connections,
+        pipeline timeouts, environment configurations, and operational settings
+        for consistent Meltano deployment and management.
+
+        Constant Categories:
+            - Database Connections: Standard database service port configurations
+            - Pipeline Timeouts: Operation-specific timeout configurations
+            - Environment Management: Development, staging, and production settings
+            - Pipeline Operations: Extract, load, and transform configurations
+            - Service Integration: Integration with FLEXT core services
+            - Deployment Configuration: Environment-specific deployment settings
+
+        Architecture Principles Applied:
+            - Pipeline Orchestration: Comprehensive pipeline management support
+            - Environment Separation: Clear environment-specific configurations
+            - Timeout Management: Appropriate timeouts for different operations
+            - Database Flexibility: Support for multiple database backends
+
+        Examples:
+            Database configuration::
+
+                # Configure database connections
+                postgres_port = FlextConstants.Meltano.DEFAULT_POSTGRES_PORT
+                mysql_port = FlextConstants.Meltano.DEFAULT_MYSQL_PORT
+                oracle_port = FlextConstants.Meltano.DEFAULT_ORACLE_PORT
+
+            Pipeline timeouts::
+
+                # Set operation timeouts
+                default_timeout = FlextConstants.Meltano.DEFAULT_TIMEOUT
+                discovery_timeout = FlextConstants.Meltano.DISCOVERY_TIMEOUT
+                extract_timeout = FlextConstants.Meltano.EXTRACT_TIMEOUT
+                load_timeout = FlextConstants.Meltano.LOAD_TIMEOUT
+
+            Environment configuration::
+
+                # Configure deployment environments
+                dev_env = FlextConstants.Meltano.ENVIRONMENT_DEV
+                staging_env = FlextConstants.Meltano.ENVIRONMENT_STAGING
+                prod_env = FlextConstants.Meltano.ENVIRONMENT_PROD
+
+        Note:
+            These constants ensure consistent Meltano pipeline behavior across
+            all FLEXT deployment environments and data processing operations.
+
         """
 
         # Default database ports
@@ -2993,25 +3274,7 @@ class FlextConstants:
             SUSPENDED = "suspended"
 
 
-# Legacy compatibility aliases moved to legacy.py
-# These exports are now handled in the legacy module for backward compatibility
-
-
-# =============================================================================
-# LEGACY CONSTANTS MOVED TO LEGACY.PY
-# =============================================================================
-# Legacy flat constants ERROR_CODES, MESSAGES, STATUS_CODES, VALIDATION_RULES,
-# DEFAULT_TIMEOUT, DEFAULT_RETRIES, DEFAULT_PAGE_SIZE, VERSION, NAME, and
-# pattern aliases have been moved to legacy.py with deprecation warnings.
-#
-# NEW USAGE: Use proper FlextConstants nested structure
-#   FlextConstants.Errors.VALIDATION_ERROR
-#   FlextConstants.Defaults.TIMEOUT
-#   FlextConstants.Patterns.EMAIL_PATTERN
-#
-# Use FlextConstants hierarchical structure for new code
-
-
 __all__: Final[list[str]] = [
     "FlextConstants",
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

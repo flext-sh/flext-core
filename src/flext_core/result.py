@@ -37,7 +37,6 @@ from collections.abc import Callable, Iterator
 from typing import TypeGuard, TypeVar, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
 
 # Essential type variables redefined to avoid circular import with typings.py.
 # Foundation layer modules cannot import from application/domain layers.
@@ -133,6 +132,24 @@ class FlextResult[T]:
         """
         return self._error is None and value is not None
 
+    def _ensure_success_data(self) -> T:
+        """Ensure success data is available, raising RuntimeError if not.
+
+        This is a defensive programming helper to detect logic errors.
+        Should only be called when is_success is True.
+
+        Returns:
+            The success data of type T.
+
+        Raises:
+            RuntimeError: If success result has None data (logic error).
+
+        """
+        if self._data is None:
+            msg = "Success result has None data - this should not happen"
+            raise RuntimeError(msg)
+        return self._data
+
     @property
     def is_success(self) -> bool:
         """Check if the result represents a successful operation.
@@ -162,6 +179,26 @@ class FlextResult[T]:
 
         """
         return self._error is not None
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if result is valid (alias for is_success for backward compatibility).
+
+        Returns:
+            True if result contains success data, False if contains error.
+
+        """
+        return self.is_success
+
+    @property
+    def error_message(self) -> str | None:
+        """Get error message (alias for error property for backward compatibility).
+
+        Returns:
+            Error message string for failures, None for successful results.
+
+        """
+        return self.error
 
     @property
     def is_fail(self) -> bool:
@@ -383,10 +420,8 @@ class FlextResult[T]:
         try:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T for success
-            if self._data is None:
-                msg = "Success result has None data - this should not happen"
-                raise RuntimeError(msg)  # noqa: TRY301
-            result = func(self._data)  # Type narrowing: _data is T here
+            data = self._ensure_success_data()
+            result = func(data)  # Type narrowing: data is T here
             return FlextResult[U](data=result)
         except (ValueError, TypeError, AttributeError) as e:
             # Handle specific transformation exceptions
@@ -510,7 +545,7 @@ class FlextResult[T]:
         """Context manager entry - returns value or raises on error."""
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
-            raise FlextExceptions.CriticalError(error_msg)
+            raise RuntimeError(error_msg)
         # Type narrowing: for success results, _data must be T
         if self._data is None:
             msg = "Success result has None data - this should not happen"
@@ -562,13 +597,12 @@ class FlextResult[T]:
             Success value of type T if result is successful and data is not None.
 
         Raises:
-            FlextExceptions.CriticalError: If result represents failure.
-            RuntimeError: If success result contains None data (defensive validation).
+            RuntimeError: If result represents failure or contains None data.
 
         """
         if self.is_failure:
             msg = f"{message}: {self._error}"
-            raise FlextExceptions.CriticalError(msg, operation="expect")
+            raise RuntimeError(msg)
         # DEFENSIVE: .expect() validates None for safety (unlike .value/.unwrap)
         if self._data is None:
             msg = f"{message}: Success result has None data - use .value if None is expected"
@@ -768,7 +802,7 @@ class FlextResult[T]:
             # Python 3.13+ discriminated union: _data is guaranteed to be T for success
             if self._data is None:
                 msg = "Success result has None data - this should not happen"
-                raise RuntimeError(msg)  # noqa: TRY301
+                raise RuntimeError(msg)
             if predicate(self._data):  # Type narrowing: _data is T here
                 return self
             return FlextResult[T].fail(error_msg)
@@ -808,9 +842,7 @@ class FlextResult[T]:
             return None
 
         error_msg = self._error or "Result failed"
-        return cast(
-            "Exception", FlextExceptions(error_msg, operation="result_to_exception")
-        )
+        return RuntimeError(error_msg)
 
     @classmethod
     def from_exception(cls, func: Callable[[], T]) -> FlextResult[T]:

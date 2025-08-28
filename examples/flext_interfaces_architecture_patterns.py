@@ -47,7 +47,7 @@ from flext_core import (
 T = TypeVar("T")
 
 
-class FlextPayload[T]:
+class FlextModels.Payload[T]:
     """Generic payload base class for demonstration."""
 
     def __init__(self, data: T) -> None:
@@ -347,7 +347,7 @@ class UserService:
         self._is_running = False
         self._next_id = 1
 
-    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:  # noqa: ARG002
+    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
         """Callable interface for service invocation."""
         # Simple implementation for protocol compliance
         if not self._is_running:
@@ -1101,7 +1101,7 @@ class SimpleEventSubscriber:
             return FlextResult[None].fail(f"Unsubscription failed: {e}")
 
     # Implement protocol-required methods
-    def handle_event(self, event: FlextEvent) -> FlextResult[None]:  # noqa: ARG002
+    def handle_event(self, event: FlextEvent) -> FlextResult[None]:
         """Handle incoming event and return success when processed."""
         logger.info("Event handled", event_type=type(event).__name__)
         return FlextResult[None].ok(None)

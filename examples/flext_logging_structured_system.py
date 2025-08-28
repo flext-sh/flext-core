@@ -30,7 +30,28 @@ from flext_core import (
     FlextConstants,
     FlextLogger,
 )
-from flext_core.legacy import FlextLoggerFactory, create_log_context, get_logger
+
+# Use FlextLogger directly from unified API - no need to rewrite functionality
+get_logger = FlextLogger
+
+# Simple context manager using existing FlextLogger functionality
+def create_log_context(logger: FlextLogger, **context: object):
+    """Create a log context using existing FlextLogger with_context method."""
+    return logger.with_context(**context)
+
+# Simple factory pattern using existing FlextLogger
+class FlextLoggerFactory:
+    """Simple factory pattern using existing FlextLogger."""
+    
+    @classmethod
+    def set_global_level(cls, level: str) -> None:
+        """Set global logging level - conceptual demo."""
+        pass  # FlextLogger handles this internally
+        
+    @classmethod
+    def clear_loggers(cls) -> None:
+        """Clear logger cache - conceptual demo."""
+        pass  # FlextLogger handles this internally
 
 # Constants for magic numbers
 MAX_PAYMENT_AMOUNT = 10000

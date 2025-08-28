@@ -21,12 +21,8 @@ import pytest
 import structlog
 from structlog.testing import LogCapture
 
-from flext_core.legacy import (
-    get_correlation_id,
-    get_logger,
-    set_global_correlation_id,
-)
-from flext_core.loggings import FlextLogger
+# Removed legacy imports - using FlextLogger directly
+from flext_core import FlextLogger
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -86,7 +82,7 @@ class TestFlextLoggerInitialization:
             "test_service",
             level="DEBUG",
             service_name="payment-service",
-            service_version="2.1.0"
+            service_version="2.1.0",
         )
 
         assert logger._name == "test_service"
@@ -171,11 +167,7 @@ class TestStructuredLogging:
         """Test that all expected structured fields are present."""
         logger = FlextLogger("test_service", service_name="validation-test")
 
-        log_entry = logger._build_log_entry(
-            "INFO",
-            "Test message",
-            {"user_id": "123"}
-        )
+        log_entry = logger._build_log_entry("INFO", "Test message", {"user_id": "123"})
 
         # Check required fields
         assert "@timestamp" in log_entry
@@ -229,7 +221,7 @@ class TestStructuredLogging:
                 order_id="ORD-123",
                 amount=99.99,
                 currency="USD",
-                customer_id="CUST-456"
+                customer_id="CUST-456",
             )
 
         assert len(cap.entries) == 1
@@ -312,9 +304,7 @@ class TestOperationTracking:
 
         with capture_structured_logs() as output:
             logger.start_operation(
-                "user_authentication",
-                user_id="123",
-                method="oauth2"
+                "user_authentication", user_id="123", method="oauth2"
             )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -332,10 +322,7 @@ class TestOperationTracking:
 
         with capture_structured_logs() as output:
             logger.complete_operation(
-                operation_id,
-                success=True,
-                records_processed=1500,
-                cache_hits=45
+                operation_id, success=True, records_processed=1500, cache_hits=45
             )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -349,10 +336,7 @@ class TestOperationTracking:
 
         with capture_structured_logs() as output:
             logger.complete_operation(
-                operation_id,
-                success=False,
-                error_code="PROC_001",
-                retry_count=3
+                operation_id, success=False, error_code="PROC_001", retry_count=3
             )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -396,7 +380,7 @@ class TestSecuritySanitization:
             "authorization": "Bearer token123",
             "secret": "top_secret",
             "private": "private_data",
-            "session_id": "sess_abc123"
+            "session_id": "sess_abc123",
         }
 
         sanitized = logger._sanitize_context(sensitive_context)
@@ -420,16 +404,9 @@ class TestSecuritySanitization:
             "user": {
                 "name": "john",
                 "password": "secret",
-                "profile": {
-                    "email": "john@example.com",
-                    "api_key": "key123"
-                }
+                "profile": {"email": "john@example.com", "api_key": "key123"},
             },
-            "request": {
-                "headers": {
-                    "authorization": "Bearer token"
-                }
-            }
+            "request": {"headers": {"authorization": "Bearer token"}},
         }
 
         sanitized = logger._sanitize_context(nested_context)
@@ -452,7 +429,7 @@ class TestSecuritySanitization:
                 "User login attempt",
                 username="john_doe",
                 password="should_be_hidden",
-                api_key="should_also_be_hidden"
+                api_key="should_also_be_hidden",
             )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -482,7 +459,7 @@ class TestErrorHandling:
                     "Configuration validation failed",
                     error=e,
                     config_file="/etc/app/config.yaml",
-                    parameter="database_url"
+                    parameter="database_url",
                 )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -517,7 +494,7 @@ class TestErrorHandling:
                 "Business rule violation",
                 rule="max_daily_limit",
                 current_amount=1500,
-                limit=1000
+                limit=1000,
             )
 
         log_entries = [str(entry) for entry in output.entries]
@@ -532,9 +509,7 @@ class TestRequestContextManagement:
         logger = FlextLogger("context_test")
 
         logger.set_request_context(
-            request_id="req_123",
-            user_id="user_456",
-            endpoint="/api/orders"
+            request_id="req_123", user_id="user_456", endpoint="/api/orders"
         )
 
         with capture_structured_logs() as output:
@@ -662,9 +637,7 @@ class TestConvenienceFunctions:
     def test_get_logger_with_version(self) -> None:
         """Test get_logger with version parameter."""
         logger = get_logger(
-            "versioned_test",
-            service_name="test-service",
-            service_version="1.2.3"
+            "versioned_test", service_name="test-service", service_version="1.2.3"
         )
 
         assert logger._service_version == "1.2.3"
@@ -736,7 +709,7 @@ class TestRealWorldScenarios:
             request_id="req_order_123",
             endpoint="POST /api/orders",
             user_id="user_456",
-            correlation_id=get_correlation_id()
+            correlation_id=get_correlation_id(),
         )
 
         with capture_structured_logs() as output:
@@ -757,7 +730,7 @@ class TestRealWorldScenarios:
                 operation_id,
                 success=True,
                 order_id="ORD-789",
-                payment_status="authorized"
+                payment_status="authorized",
             )
 
             # Response
@@ -775,8 +748,7 @@ class TestRealWorldScenarios:
         logger = get_logger("error_service", service_name="payment-processor")
 
         logger.set_request_context(
-            request_id="req_payment_fail",
-            operation="process_payment"
+            request_id="req_payment_fail", operation="process_payment"
         )
 
         try:
@@ -786,7 +758,9 @@ class TestRealWorldScenarios:
                 raise ConnectionError(msg)
 
             with capture_structured_logs() as output:
-                logger.info("Starting payment processing", amount=150.00, gateway="stripe")
+                logger.info(
+                    "Starting payment processing", amount=150.00, gateway="stripe"
+                )
 
                 try:
                     process_payment()
@@ -795,11 +769,14 @@ class TestRealWorldScenarios:
                         "Payment processing failed",
                         error=e,
                         retry_count=3,
-                        fallback_gateway="paypal"
+                        fallback_gateway="paypal",
                     )
 
                     # Log recovery attempt
-                    logger.warning("Attempting payment recovery", recovery_method="fallback_gateway")
+                    logger.warning(
+                        "Attempting payment recovery",
+                        recovery_method="fallback_gateway",
+                    )
 
         except Exception:
             pass  # Expected for test
@@ -820,7 +797,7 @@ class TestRealWorldScenarios:
                     f"Processing item {i}",
                     item_id=f"item_{i}",
                     batch_id="batch_001",
-                    sequence=i
+                    sequence=i,
                 )
 
         end_time = time.time()
