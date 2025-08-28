@@ -911,16 +911,16 @@ def demonstrate_validation_exceptions() -> None:
             if isinstance(data, Mapping):
                 # Convert Mapping to dict for proper type compatibility
                 data_dict = dict(data) if not isinstance(data, dict) else data
-                result = validation_service.validate_user_data(data_dict)
+                validation_service.validate_user_data(data_dict)
             else:
-                result = FlextResult[User].fail("Invalid data type")
+                FlextResult[User].fail("Invalid data type")
 
             # If we get here, validation passed
             if test_case["should_pass"]:
                 pass  # Expected success
             else:
                 pass  # Unexpected success - should have raised exception
-        except FlextExceptions.FlextExceptionBaseError:
+        except FlextExceptions.BaseError:
             # Exception was raised as expected for invalid data
             if not test_case["should_pass"]:
                 pass  # Expected failure via exception

@@ -80,7 +80,7 @@ class FlextGuards:
         ) -> object:
             """Require value is not None with assertion-style validation."""
             if value is None:
-                raise FlextExceptions(message)
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -90,7 +90,7 @@ class FlextGuards:
         ) -> object:
             """Require value is a positive integer with comprehensive validation."""
             if not (isinstance(value, int) and value > 0):
-                raise FlextExceptions(message)
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -104,7 +104,7 @@ class FlextGuards:
             if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
                 if not message:
                     message = f"Value must be between {min_val} and {max_val}"
-                raise FlextExceptions(message)
+                raise FlextExceptions.ValidationError(message)
             return value
 
         @staticmethod
@@ -114,7 +114,7 @@ class FlextGuards:
         ) -> object:
             """Require value is a non-empty string with comprehensive validation."""
             if not isinstance(value, str) or not value.strip():
-                raise FlextExceptions(message)
+                raise FlextExceptions.ValidationError(message)
             return value
 
     # ==========================================================================

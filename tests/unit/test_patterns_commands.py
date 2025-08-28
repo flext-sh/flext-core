@@ -20,7 +20,7 @@ EXPECTED_BULK_SIZE = 2
 FlextCommand = FlextCommands.Models.Command
 FlextCommandHandler = FlextCommands.Handlers.CommandHandler
 FlextCommandBus = FlextCommands.Bus
-FlextCommandResult = FlextCommands.Result  # FlextCommands.Result with metadata
+FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metadata
 
 # TEST COMMAND IMPLEMENTATIONS
 # =============================================================================
@@ -605,14 +605,14 @@ class TestFlextCommandBus:
 # =============================================================================
 
 
-class TestFlextCommandResult:
-    """Test FlextCommandResult functionality."""
+class TestFlextCommandResults:
+    """Test FlextCommandResults functionality."""
 
     def test_success_result_creation(self) -> None:
         """Test creating successful command result."""
         result_data = {"id": "123", "username": "test"}
 
-        command_result = FlextCommandResult.ok(result_data)
+        command_result = FlextResult.ok(result_data)
 
         if not command_result.success:
             raise AssertionError(f"Expected True, got {command_result.success}")
@@ -642,8 +642,8 @@ class TestFlextCommandResult:
         """Test result metadata properties."""
         result_data = {"id": "123"}
 
-        # FlextCommandResult is an alias to FlextResult, test successful creation
-        command_result = FlextCommandResult[dict[str, str]].ok(result_data)
+        # FlextResult test - create successful result
+        command_result = FlextResult[dict[str, str]].ok(result_data)
 
         if not command_result.success:
             raise AssertionError(f"Expected True, got {command_result.success}")

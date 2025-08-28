@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from pytest_benchmark.fixture import BenchmarkFixture
+
+# from pytest_benchmark.fixture import BenchmarkFixture
 from tests.support.factory_boy_factories import (
     ConfigFactory,
     EdgeCaseGenerators,

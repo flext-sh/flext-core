@@ -315,12 +315,10 @@ class FlextServices:
             # Implementation would handle service coordination based on workflow_definition
             # This is a placeholder for the actual orchestration logic
             workflow_id = getattr(workflow_definition, "id", "default_workflow")
-            return FlextResult[dict[str, object]].ok(
-                {
-                    "status": "success",
-                    "results": {"workflow_id": workflow_id},
-                }
-            )
+            return FlextResult[dict[str, object]].ok({
+                "status": "success",
+                "results": {"workflow_id": workflow_id},
+            })
 
     class ServiceRegistry:
         """Service discovery and registration management.
@@ -387,7 +385,7 @@ class FlextServices:
             service_data = self._registered_services[service_name]
             service_info = service_data["info"]
             if isinstance(service_info, dict):
-                return FlextResult[dict[str, object]].ok(service_info)
+                return FlextResult[dict[str, object]].ok(service_info)  # type: ignore[arg-type]
             return FlextResult[dict[str, object]].fail(
                 f"Invalid service info type for {service_name}"
             )

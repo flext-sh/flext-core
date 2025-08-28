@@ -1,55 +1,20 @@
-"""FLEXT Container - Enterprise dependency injection following architectural patterns.
+"""Dependency injection container with type-safe service management.
 
-Complete dependency injection container with FlextTypes, FlextConstants, FlextProtocols
-integration and railway-oriented programming via FlextResult patterns, following
-SOLID principles, Clean Architecture, and FLEXT consolidated class patterns.
+Provides the FlextContainer class for managing service dependencies with type safety,
+factory patterns, and FlextResult error handling. Includes a global singleton pattern
+for ecosystem-wide service sharing.
 
-This module provides the FlextContainer consolidated class containing ALL container
-functionality organized as nested classes following the FLEXT_REFACTORING_PROMPT.md
-requirements. It eliminates ALL local base classes, TypeVar definitions, and
-TYPE_CHECKING constructs in favor of centralized FlextTypes, FlextConstants, and
-FlextProtocols usage.
+Classes:
+    FlextContainer: Main dependency injection container.
+    FlextContainer.ServiceKey: Type-safe service identifier with validation.
 
-Architecture Principles:
-    - Single consolidated FlextContainer class with nested organization
-    - Hierarchical integration with FlextTypes, FlextConstants, FlextProtocols
-    - Railway-oriented programming via FlextResult for all operations
-    - SOLID principles with dependency injection and inversion of control
-    - Zero circular imports through proper layering
-    - Python 3.13+ syntax with strict type annotations
-    - Professional Google-style docstrings throughout
+Functions:
+    get_flext_container: Get the global container instance.
+    flext_validate_service_name: Validate service name strings.
 
-Examples:
-    Basic container usage::
-
-        container = FlextContainer()
-
-        # Service registration
-        result = container.register("logger", logger_instance)
-        if result.is_success:
-            print("Service registered successfully")
-
-        # Type-safe service retrieval
-        logger_result = container.get_typed("logger", Logger)
-        if logger_result.is_success:
-            logger = logger_result.unwrap()
-
-    Global container pattern::
-
-        # Access global singleton
-        global_container = FlextContainer.get_global()
-        global_container.register("database", db_service)
-
-        # Convenient global access
-        from flext_core.container import get_flext_container
-
-        container = FlextContainer.get_global()
-
-Note:
-    This module follows strict FLEXT refactoring requirements with nested classes,
-    centralized type definitions, and elimination of all local abstractions in
-    favor of flext-core consolidated patterns.
-
+The container supports service registration, factory registration for lazy initialization,
+type-safe retrieval, and hierarchical service resolution. All operations return FlextResult
+for consistent error handling.
 """
 
 from __future__ import annotations
@@ -67,68 +32,61 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 from flext_core.utilities import FlextUtilities
-from flext_core.validation import flext_validate_service_name
+
+
+# Define validate_service_name locally to avoid circular import
+def flext_validate_service_name(name: str) -> FlextResult[None]:
+    """Validate service name string.
+
+    Args:
+        name: Service name to validate.
+
+    Returns:
+        FlextResult[None] indicating validation success or failure with error message.
+
+    """
+    if not name or not isinstance(name, str):
+        return FlextResult[None].fail("Service name must be a non-empty string")
+    if not name.strip():
+        return FlextResult[None].fail("Service name cannot be only whitespace")
+    return FlextResult[None].ok(None)
 
 
 def _get_exception_class(name: FlextTypes.Core.String) -> type[Exception]:
-    """Get dynamically created exception class with type safety."""
+    """Get exception class by name from FlextExceptions.
+
+    Args:
+        name: Exception class name from FlextExceptions.
+
+    Returns:
+        Exception class type with proper type casting.
+
+    """
     return cast("type[Exception]", getattr(FlextExceptions, name))
 
 
 class FlextContainer:
-    """Consolidated enterprise dependency injection container with SOLID principles.
+    """Dependency injection container with type-safe service management.
 
-    This is the single consolidated class for ALL container functionality following
-    FLEXT_REFACTORING_PROMPT.md requirements. It contains nested classes for
-    organization while maintaining a single export interface.
+    Manages service dependencies through registration, factory patterns, and type-safe retrieval.
+    Supports both instance and global singleton patterns with FlextResult error handling.
 
-    The container implements:
-        - Railway-oriented programming via FlextResult for all operations
-        - Type-safe service registration and retrieval
-        - Factory pattern support for lazy initialization
-        - SOLID principles with dependency inversion and single responsibility
-        - Global singleton pattern for ecosystem-wide service sharing
-        - Command/Query separation for operations
-        - Hierarchical service resolution with fallback patterns
+    The container provides:
+        - Service registration with unique name validation
+        - Factory registration for lazy service initialization
+        - Type-safe service retrieval with generic type support
+        - Global singleton pattern for ecosystem-wide sharing
+        - Command pattern for service operations
+        - FlextResult integration for consistent error handling
 
-    Architecture Compliance:
-        - Uses FlextTypes for all type definitions (no local TypeVars)
-        - Uses FlextConstants for all constants (no local constants)
-        - Uses FlextProtocols for all interface definitions
-        - Implements nested classes for organization
-        - Follows Python 3.13+ syntax throughout
-        - Professional Google-style docstrings
-        - Zero circular import dependencies
+    Attributes:
+        _services: Dictionary mapping service names to instances.
+        _factories: Dictionary mapping service names to factory functions.
+        _global_instance: Class-level global container instance.
 
-    Examples:
-        Basic service management::
-
-            container = FlextContainer()
-
-            # Register service instance
-            reg_result = container.register("config", config_instance)
-            if reg_result.is_success:
-                print("Configuration service registered")
-
-            # Register factory for lazy initialization
-            factory_result = container.register_factory(
-                "database", lambda: DatabaseService()
-            )
-
-            # Type-safe retrieval with validation
-            db_result = container.get_typed("database", DatabaseService)
-            if db_result.is_success:
-                db = db_result.unwrap()
-
-        Global container usage::
-
-            # Global singleton access
-            global_container = FlextContainer.get_global()
-            global_container.register("metrics", metrics_service)
-
-            # Convenient functions
-            container = FlextContainer.get_global()
-            result = register_typed("cache", cache_service)
+    Nested Classes:
+        ServiceKey: Type-safe service identifier with validation.
+        Commands: Command objects for service operations.
 
     """
 
@@ -193,10 +151,14 @@ class FlextContainer:
             return FlextResult[FlextTypes.Core.String].ok(data.strip())
 
     class Commands:
-        """Container command definitions following CQRS pattern.
+        """Command objects for container operations following CQRS pattern.
 
-        Nested class containing all command definitions for container operations
-        following the Command Query Responsibility Segregation pattern.
+        Contains command classes for service registration and management operations.
+        Each command includes validation, metadata tracking, and correlation IDs.
+
+        Classes:
+            RegisterService: Command for registering service instances.
+            RegisterFactory: Command for registering service factories.
         """
 
         class RegisterService:

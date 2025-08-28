@@ -18,7 +18,6 @@ from flext_core import (
     FlextEntityId,
     FlextResult,
     FlextValue,
-    flext_core,
 )
 
 
@@ -107,7 +106,7 @@ class TestCleanArchitecturePatterns:
 
         # Infrastructure Layer - Framework integration
         # Initialize core instance for framework integration
-        _ = flext_core()
+        _ = FlextCore()
 
         # Test the full flow
         command = CreateUserCommand(name="John Doe", email="john@example.com")

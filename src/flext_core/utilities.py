@@ -1,13 +1,56 @@
-"""FLEXT Utilities - Consolidated utility functions following architectural patterns.
+"""Comprehensive utility functions for the FLEXT ecosystem.
 
-SINGLE CONSOLIDATED MODULE following FLEXT architectural patterns.
-All utility functionality consolidated into FlextUtilities main class.
+Provides the FlextUtilities class with organized utility functions including
+ID generation, text processing, validation, performance monitoring, JSON handling,
+and decorator patterns. All utilities follow SOLID principles with nested class
+organization for better code organization and discoverability.
+
+Main Classes:
+    FlextUtilities: Main container with nested utility classes
+    FlextUtilities.Generators: ID and timestamp generation
+    FlextUtilities.TextProcessor: Text processing and formatting
+    FlextUtilities.Validators: Data validation utilities
+    FlextUtilities.Performance: Performance monitoring and timing
+    FlextUtilities.JSON: JSON processing and serialization
+    FlextUtilities.Decorators: Utility decorators and function wrappers
+
+Key Features:
+    - Hierarchical organization with nested classes
+    - Performance monitoring with metrics collection
+    - Type-safe validation with FlextResult patterns
+    - Comprehensive text processing utilities
+    - ID generation with consistent prefixing
+    - JSON handling with error recovery
+    - Timing and performance decorators
+
+Example:
+    Basic utility usage::
+
+        # Generate various types of IDs
+        uuid = FlextUtilities.Generators.generate_uuid()
+        entity_id = FlextUtilities.Generators.generate_entity_id()
+        correlation_id = FlextUtilities.Generators.generate_correlation_id()
+
+        # Text processing
+        truncated = FlextUtilities.TextProcessor.truncate(long_text, 50)
+        safe_str = FlextUtilities.TextProcessor.safe_string(any_value)
+
+        # Validation
+        email_result = FlextUtilities.Validators.validate_email(email)
+        if email_result.success:
+            process_valid_email(email)
+
+Note:
+    All utilities return FlextResult types for consistent error handling
+    and integrate with the FLEXT logging and constants systems.
+
 """
 
 from __future__ import annotations
 
 import functools
 import json
+import re
 import time
 import uuid
 from collections.abc import Callable
@@ -22,30 +65,79 @@ from flext_core.typings import P, R, T
 
 logger = FlextLogger(__name__)
 
-# Global storage for performance metrics
+# Performance metrics storage.
 PERFORMANCE_METRICS: dict[str, dict[str, object]] = {}
 
 
 class FlextUtilities:
-    """SINGLE CONSOLIDATED CLASS for all utility functionality.
+    """Comprehensive utility functions organized by functional domain.
 
-    Following FLEXT architectural patterns - consolidates ALL utility functionality
-    into one main class with nested organization.
+    This class serves as the central container for all FLEXT utility functions,
+    organized into nested classes by functional area. Provides common operations
+    for ID generation, text processing, validation, performance monitoring,
+    JSON handling, and more.
 
     Architecture:
-        - Single main class FlextUtilities
-        - Nested classes for logical organization
-        - No standalone helper classes
-        - Direct method access patterns
-        - Railway-oriented programming with FlextResult
+        The utilities are organized into nested classes following single
+        responsibility principle:
+        - Generators: ID and timestamp generation utilities
+        - TextProcessor: Text manipulation and formatting
+        - Validators: Data validation with FlextResult patterns
+        - Performance: Timing and performance monitoring
+        - JSON: JSON processing and serialization
+        - Decorators: Function decorators and wrappers
+
+    Examples:
+        ID generation utilities::
+
+            uuid = FlextUtilities.Generators.generate_uuid()
+            entity_id = FlextUtilities.Generators.generate_entity_id()
+            correlation_id = FlextUtilities.Generators.generate_correlation_id()
+
+        Text processing utilities::
+
+            truncated = FlextUtilities.TextProcessor.truncate(text, 100)
+            cleaned = FlextUtilities.TextProcessor.safe_string(value)
+
+        Validation utilities::
+
+            email_result = FlextUtilities.Validators.validate_email(email)
+            if email_result.success:
+                process_valid_email(email)
+
+    Note:
+        All utilities follow FLEXT patterns including FlextResult for error
+        handling, FlextConstants for configuration, and structured logging.
+
     """
+
+    # ==========================================================================
+    # CLASS CONSTANTS
+    # ==========================================================================
+
+    MIN_PORT: int = FlextConstants.Network.MIN_PORT
+    MAX_PORT: int = FlextConstants.Network.MAX_PORT
 
     # ==========================================================================
     # NESTED CLASSES FOR ORGANIZATION
     # ==========================================================================
 
     class Generators:
-        """ID and timestamp generation utilities."""
+        """ID and timestamp generation utilities with consistent prefixing.
+
+        Provides various ID generation methods with semantic prefixes for
+        different use cases. All IDs use UUID4 for uniqueness with shortened
+        hex representations for readability.
+
+        Examples:
+            Generate different types of IDs::
+
+                uuid = Generators.generate_uuid()  # Full UUID4
+                entity_id = Generators.generate_entity_id()  # entity_xxxx
+                correlation_id = Generators.generate_correlation_id()  # corr_xxxx
+                session_id = Generators.generate_session_id()  # sess_xxxx
+
+        """
 
         @staticmethod
         def generate_uuid() -> str:
@@ -72,8 +164,30 @@ class FlextUtilities:
             """Generate ISO timestamp in UTC."""
             return datetime.now(UTC).isoformat()
 
+        @staticmethod
+        def generate_session_id() -> str:
+            """Generate session ID for web sessions."""
+            return f"sess_{uuid.uuid4().hex[:16]}"
+
+        @staticmethod
+        def generate_request_id() -> str:
+            """Generate request ID for web requests."""
+            return f"req_{uuid.uuid4().hex[:12]}"
+
     class TextProcessor:
-        """Text processing and formatting utilities."""
+        """Text processing, formatting, and safe conversion utilities.
+
+        Provides safe text processing functions with proper error handling
+        and consistent formatting. Handles edge cases and provides fallbacks
+        for robust text manipulation.
+
+        Examples:
+            Text processing operations::
+
+                truncated = TextProcessor.truncate(long_text, 50, '...')
+                safe_str = TextProcessor.safe_string(any_object, 'default')
+
+        """
 
         @staticmethod
         def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
@@ -92,8 +206,86 @@ class FlextUtilities:
             except Exception:
                 return default
 
+        @staticmethod
+        def clean_text(text: str) -> str:
+            """Clean text by removing extra whitespace and controlling characters."""
+            if not text:
+                return ""
+            # Remove control characters except tabs and newlines
+            cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", text)
+            # Normalize whitespace
+            cleaned = re.sub(r"\s+", " ", cleaned)
+            return cleaned.strip()
+
+        @staticmethod
+        def slugify(text: str) -> str:
+            """Convert text to URL-safe slug format."""
+            if not text:
+                return ""
+            # Convert to lowercase and remove extra whitespace
+            slug = text.lower().strip()
+            # Replace non-alphanumeric characters with hyphens
+            slug = re.sub(r"[^a-z0-9]+", "-", slug)
+            # Remove leading/trailing hyphens
+            return slug.strip("-")
+
+        @staticmethod
+        def mask_sensitive(
+            text: str,
+            mask_char: str = "*",
+            visible_chars: int = 4,
+            show_first: int | None = None,
+            show_last: int | None = None,
+        ) -> str:
+            """Mask sensitive information with flexible visibility options.
+
+            Args:
+                text: Text to mask
+                mask_char: Character to use for masking
+                visible_chars: Number of characters to show at the end (legacy parameter)
+                show_first: Number of characters to show at the start
+                show_last: Number of characters to show at the end
+
+            """
+            if not text:
+                return mask_char * 8  # Default masked length
+
+            # Handle new API with show_first and show_last
+            if show_first is not None or show_last is not None:
+                first_chars = show_first or 0
+                last_chars = show_last or 0
+
+                if len(text) <= (first_chars + last_chars):
+                    return mask_char * len(text)
+
+                first_part = text[:first_chars] if first_chars > 0 else ""
+                last_part = text[-last_chars:] if last_chars > 0 else ""
+                middle_length = len(text) - first_chars - last_chars
+                masked_part = mask_char * middle_length
+
+                return first_part + masked_part + last_part
+
+            # Legacy API - show only last characters
+            if len(text) <= visible_chars:
+                return mask_char * len(text)
+
+            visible_part = text[-visible_chars:]
+            masked_part = mask_char * (len(text) - visible_chars)
+            return masked_part + visible_part
+
     class TimeUtils:
-        """Time and duration utilities."""
+        """Time and duration utilities with formatting and conversion.
+
+        Provides utilities for time formatting, duration calculations, and
+        timestamp operations with proper timezone handling.
+
+        Examples:
+            Time operations::
+
+                formatted = TimeUtils.format_duration(123.45)  # "2.1m"
+                utc_now = TimeUtils.get_timestamp_utc()
+
+        """
 
         @staticmethod
         def format_duration(seconds: float) -> str:
@@ -112,7 +304,21 @@ class FlextUtilities:
             return datetime.now(UTC)
 
     class Performance:
-        """Performance tracking utilities."""
+        """Performance tracking and monitoring utilities.
+
+        Provides decorators and utilities for tracking function performance,
+        recording metrics, and monitoring operation success rates.
+
+        Examples:
+            Performance tracking::
+
+                @Performance.track_performance("user_creation")
+                def create_user(data):
+                    return process_user_data(data)
+
+                metrics = Performance.get_metrics("user_creation")
+
+        """
 
         @staticmethod
         def track_performance(
@@ -161,13 +367,12 @@ class FlextUtilities:
                 }
 
             metrics = PERFORMANCE_METRICS[operation]
-            metrics["total_calls"] = cast("int", metrics["total_calls"]) + 1
-            metrics["total_duration"] = (
-                cast("float", metrics["total_duration"]) + duration
-            )
-            metrics["avg_duration"] = cast("float", metrics["total_duration"]) / cast(
-                "int", metrics["total_calls"]
-            )
+            total_calls = cast("int", metrics["total_calls"]) + 1
+            total_duration = cast("float", metrics["total_duration"]) + duration
+
+            metrics["total_calls"] = total_calls
+            metrics["total_duration"] = total_duration
+            metrics["avg_duration"] = total_duration / total_calls
 
             if success:
                 metrics["success_count"] = cast("int", metrics["success_count"]) + 1
@@ -184,7 +389,19 @@ class FlextUtilities:
             return dict(PERFORMANCE_METRICS)
 
     class Conversions:
-        """Type conversion utilities."""
+        """Safe type conversion utilities with fallback handling.
+
+        Provides robust type conversion functions that handle edge cases
+        and provide sensible defaults when conversion fails.
+
+        Examples:
+            Safe conversions::
+
+                num = Conversions.safe_int("123", 0)  # 123
+                flag = Conversions.safe_bool("true")   # True
+                val = Conversions.safe_float(None, 0.0)  # 0.0
+
+        """
 
         @staticmethod
         def safe_int(value: object, default: int = 0) -> int:
@@ -222,14 +439,28 @@ class FlextUtilities:
             if isinstance(value, bool):
                 return value
             if isinstance(value, str):
-                return value.lower() in ("true", "1", "yes", "on")
+                return value.lower() in {"true", "1", "yes", "on"}
             try:
                 return bool(value)
             except (ValueError, TypeError):
                 return default
 
     class TypeGuards:
-        """Type guard utilities."""
+        """Type checking and validation guard utilities.
+
+        Provides type guard functions for runtime type checking and
+        validation with proper type narrowing support.
+
+        Examples:
+            Type validation::
+
+                if TypeGuards.is_string_non_empty(value):
+                    process_string(value)  # value is now str
+
+                if TypeGuards.is_dict_non_empty(data):
+                    process_dict(data)  # data is now dict
+
+        """
 
         @staticmethod
         def is_string_non_empty(value: object) -> bool:
@@ -239,12 +470,18 @@ class FlextUtilities:
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
             """Check if value is non-empty dict."""
-            return isinstance(value, dict) and len(value) > 0
+            if isinstance(value, dict):
+                sized_dict = cast("FlextProtocols.Foundation.SizedDict", value)
+                return len(sized_dict) > 0
+            return False
 
         @staticmethod
         def is_list_non_empty(value: object) -> bool:
             """Check if value is non-empty list."""
-            return isinstance(value, list) and len(value) > 0
+            if isinstance(value, list):
+                sized_list = cast("FlextProtocols.Foundation.SizedList", value)
+                return len(sized_list) > 0
+            return False
 
         @staticmethod
         def has_attribute(obj: object, attr: str) -> bool:
@@ -257,7 +494,18 @@ class FlextUtilities:
             return value is not None
 
     class Formatters:
-        """Formatting utilities."""
+        """Data formatting utilities for human-readable output.
+
+        Provides formatting functions for common data types including
+        byte sizes, percentages, and other human-readable formats.
+
+        Examples:
+            Data formatting::
+
+                size = Formatters.format_bytes(1024)  # "1.0 KB"
+                percent = Formatters.format_percentage(0.85)  # "85.0%"
+
+        """
 
         @staticmethod
         def format_bytes(bytes_count: int) -> str:
@@ -277,7 +525,19 @@ class FlextUtilities:
             return f"{value * 100:.{precision}f}%"
 
     class ProcessingUtils:
-        """Processing utilities for JSON and data."""
+        """Data processing utilities for JSON, models, and structured data.
+
+        Provides safe processing functions for JSON parsing, model extraction,
+        and data validation with FlextResult error handling.
+
+        Examples:
+            Data processing::
+
+                data = ProcessingUtils.safe_json_parse(json_str, {})
+                json_str = ProcessingUtils.safe_json_stringify(obj)
+                result = ProcessingUtils.parse_json_to_model(json_str, MyModel)
+
+        """
 
         @staticmethod
         def safe_json_parse(
@@ -285,8 +545,10 @@ class FlextUtilities:
         ) -> dict[str, object]:
             """Safely parse JSON string."""
             try:
-                result = json.loads(json_str)
-                return result if isinstance(result, dict) else (default or {})
+                result: object = json.loads(json_str)
+                if isinstance(result, dict):
+                    return cast("dict[str, object]", result)
+                return default or {}
             except (json.JSONDecodeError, TypeError):
                 return default or {}
 
@@ -315,13 +577,24 @@ class FlextUtilities:
         def parse_json_to_model(json_text: str, model_class: type[T]) -> FlextResult[T]:
             """Parse JSON and validate using Pydantic model."""
             try:
-                data = json.loads(json_text)
-                # Use getattr to handle generic type properly
+                data: object = json.loads(json_text)
+                # Check if the class supports Pydantic v2 model_validate
                 if hasattr(model_class, "model_validate"):
-                    model = model_class.model_validate(data)  # type: ignore[attr-defined]
+                    # Cast to HasModelValidate protocol for type safety
+                    pydantic_model = cast(
+                        "type[FlextProtocols.Foundation.HasModelValidate]",  # type: ignore[name-defined]
+                        model_class,  # pyright: ignore[reportGeneralTypeIssues]
+                    )
+                    model_obj = pydantic_model.model_validate(data)
+                    model = cast("T", model_obj)
                 else:
-                    # Fallback for non-Pydantic models
-                    model = model_class(data)  # type: ignore[call-arg]
+                    # Fallback for regular classes - use DataConstructor protocol
+                    constructor = cast(
+                        "FlextProtocols.Foundation.DataConstructor",
+                        model_class,  # type: ignore[name-defined]
+                    )
+                    model_obj = constructor(data)
+                    model = cast("T", model_obj)
                 return FlextResult[T].ok(model)
             except json.JSONDecodeError as e:
                 return FlextResult[T].fail(f"Invalid JSON: {e}")
@@ -329,7 +602,18 @@ class FlextUtilities:
                 return FlextResult[T].fail(f"Model validation failed: {e}")
 
     class ResultUtils:
-        """FlextResult utilities."""
+        """FlextResult processing and composition utilities.
+
+        Provides utilities for working with FlextResult types including
+        result chaining, batch processing, and error collection.
+
+        Examples:
+            Result operations::
+
+                combined = ResultUtils.chain_results(result1, result2)
+                successes, errors = ResultUtils.batch_process(items, processor)
+
+        """
 
         @staticmethod
         def chain_results(*results: FlextResult[T]) -> FlextResult[list[T]]:
@@ -410,6 +694,11 @@ class FlextUtilities:
         return cls.ProcessingUtils.safe_json_parse(json_str, default)
 
     @classmethod
+    def safe_json_stringify(cls, obj: object, default: str = "{}") -> str:
+        """Stringify object to JSON safely (delegates to ProcessingUtils)."""
+        return cls.ProcessingUtils.safe_json_stringify(obj, default)
+
+    @classmethod
     def parse_json_to_model(
         cls, json_text: str, model_class: type[T]
     ) -> FlextResult[T]:
@@ -480,6 +769,44 @@ class FlextUtilities:
         return cls.Performance.record_metric(
             operation, duration, success=success, error=error
         )
+
+    # Additional delegator methods needed by flext-cli
+    @classmethod
+    def is_non_empty_string(cls, value: object) -> bool:
+        """Check if value is non-empty string (delegates to TypeGuards)."""
+        return cls.TypeGuards.is_string_non_empty(value)
+
+    @classmethod
+    def clean_text(cls, text: str) -> str:
+        """Clean text (delegates to TextProcessor)."""
+        return cls.TextProcessor.clean_text(text)
+
+    @classmethod
+    def generate_timestamp(cls) -> str:
+        """Generate timestamp (delegates to Generators)."""
+        return cls.Generators.generate_iso_timestamp()
+
+    @classmethod
+    def parse_iso_timestamp(cls, timestamp_str: str) -> datetime:
+        """Parse ISO timestamp string to datetime."""
+        try:
+            return datetime.fromisoformat(timestamp_str)
+        except (ValueError, TypeError):
+            # Return current UTC time as fallback
+            return datetime.now(UTC)
+
+    @classmethod
+    def get_elapsed_time(cls, start_time: datetime) -> float:
+        """Get elapsed time from start_time to now in seconds."""
+        current_time = datetime.now(UTC)
+        # Ensure both timestamps are timezone-aware
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=UTC)
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=UTC)
+
+        delta = current_time - start_time
+        return delta.total_seconds()
 
 
 # =============================================================================

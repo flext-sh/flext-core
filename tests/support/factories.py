@@ -30,22 +30,23 @@ from factory.faker import Faker
 
 from flext_core import FlextResult
 from flext_core.exceptions import FlextExceptions
-from flext_core.models import FlextModel, FlextValue
-from flext_core.root_models import FlextMetadata, FlextVersion
+
+# FlextRootModels consolidated into FlextModels in models.py
+from flext_core.models import FlextModels
 from flext_core.typings import FlextTypes
 
 JsonDict = FlextTypes.Core.JsonObject
 
 
-class BaseTestEntity(FlextModel):
+class BaseTestEntity(FlextModels.Entity):
     """Base entity for testing with proper FlextCore integration."""
 
     # Using proper FlextCore types for compatibility
     name: str = "test_entity"
     description: str = ""
     active: bool = True
-    version: FlextVersion = FlextVersion(1)
-    metadata: FlextMetadata = FlextMetadata({})
+    version: FlextVersion = FlextModels.Version(root=1)
+    metadata: FlextMetadata = FlextModels.Metadata(root={})
 
     @override
     def validate_business_rules(self) -> FlextResult[None]:
@@ -58,7 +59,7 @@ class BaseTestEntity(FlextModel):
         return FlextResult[None].ok(None)
 
 
-class BaseTestValueObject(FlextValue):
+class BaseTestValueObject(FlextModels.Value):
     """Base value object for testing with proper FlextCore integration."""
 
     value: str = "test_value"
@@ -293,12 +294,11 @@ class TestEntityFactory(Factory[BaseTestEntity]):
     description = Faker("sentence", nb_words=6)  # type: ignore[no-untyped-call]
     active = True
     version = LazyFunction(  # type: ignore[no-untyped-call]
-        lambda: FlextVersion(factory.fuzzy.FuzzyInteger(1, 10).fuzz())  # type: ignore[no-untyped-call]
+        lambda: FlextModels.Version(root=factory.fuzzy.FuzzyInteger(1, 10).fuzz())  # type: ignore[no-untyped-call]
     )
 
     metadata = LazyFunction(  # type: ignore[no-untyped-call]
-        lambda: FlextMetadata(
-            {
+        lambda: FlextModels.Metadata(root={
                 "created_by": "test_user",
                 "tags": ["test", "automated"],
                 "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),  # type: ignore[no-untyped-call]
@@ -309,12 +309,11 @@ class TestEntityFactory(Factory[BaseTestEntity]):
     class Params:
         inactive = Trait(  # type: ignore[no-untyped-call]
             active=False,
-            metadata=LazyFunction(lambda: FlextMetadata({"status": "deactivated"})),  # type: ignore[no-untyped-call]
+            metadata=LazyFunction(lambda: FlextModels.Metadata(root={"status": "deactivated"})),  # type: ignore[no-untyped-call]
         )
         high_priority = Trait(  # type: ignore[no-untyped-call]
             metadata=LazyFunction(  # type: ignore[no-untyped-call]
-                lambda: FlextMetadata(
-                    {
+                lambda: FlextModels.Metadata(root={
                         "priority": "high",
                         "urgent": True,
                     }

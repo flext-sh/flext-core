@@ -366,10 +366,6 @@ def _log_store_observability() -> None:
         )
     # FlextLoggerFactory.get_log_store() method doesn't exist in the refactored architecture
     # Simulating some basic observability statistics for demonstration purposes
-    log_entries = []  # Empty placeholder - legacy functionality not available
-    levels: dict[str, int] = {"INFO": 5, "WARNING": 2, "ERROR": 1}  # Sample data
-    loggers: dict[str, int] = {"myapp.observability": 8}  # Sample data
-    has_context = 4  # Sample count
     # Log entries functionality not available in refactored system
     # This would normally show actual log store analysis
     if False:  # Disabled since log_entries is empty
@@ -388,11 +384,9 @@ def _log_store_observability() -> None:
 def _testing_utilities_demo() -> None:
     # FlextLoggerFactory.get_log_store() doesn't exist in refactored architecture
     # Simulating log store operations for demo purposes
-    log_store_size = 0  # Placeholder - actual log store not available
     FlextLoggerFactory.clear_loggers()
     fresh_logger = FlextLogger("myapp.fresh", "DEBUG")
     fresh_logger.info("Fresh logger after cache clear", cache_cleared=True)
-    log_store_size_after = 1  # Placeholder - would normally increment
     FlextLoggerFactory.clear_loggers()
     # FlextLoggerFactory.get_log_store() call commented out - method doesn't exist
 

@@ -484,6 +484,11 @@ class FlextTypes:
         type SerializedPayload = str
         type DeserializedPayload = PayloadData
 
+        # Protocol types for payload handling
+        type PayloadProtocol = FlextProtocols.Foundation.Validator[object]
+        type MessageProtocol = FlextProtocols.Application.MessageHandler
+        type EventProtocol = FlextProtocols.Domain.DomainEvent
+
     # =========================================================================
     # AUTH TYPES - Authentication and authorization patterns
     # =========================================================================
@@ -596,17 +601,62 @@ class FlextTypes:
         type ConfigDict = dict[str, ConfigValue]
         type ConfigKey = str
         type ConfigPath = str
+        type ConfigSource = str
+        type ConfigProvider = str
+        type ConfigPriority = int
+        type ConfigFile = str
+        type ConfigEnv = str
+        type ConfigSection = str
+        type ConfigNamespace = str
+
+        # Environment-specific types
+        type EnvironmentName = str
+        type EnvironmentConfig = dict[str, ConfigValue]
+        type EnvironmentVariable = str
+        type EnvironmentValue = str
+
+        # Configuration file types
+        type JsonConfig = dict[str, object]
+        type YamlConfig = dict[str, object]
+        type TomlConfig = dict[str, object]
+        type IniConfig = dict[str, dict[str, object]]
+
+        # Configuration validation types
+        type ValidationRule = str
+        type ValidationResult = bool
+        type ValidationMessage = str
+        type ValidationError = str
+
+        # Configuration provider types
+        type FileProvider = str
+        type EnvProvider = str
+        type CliProvider = str
+        type DefaultProvider = str
+
+        # Configuration management types
+        type ConfigLoader = Callable[[ConfigPath], ConfigDict]
+        type ConfigMerger = Callable[[ConfigDict, ConfigDict], ConfigDict]
+        type ConfigValidator = Callable[[ConfigDict], ValidationResult]
+        type ConfigTransformer = Callable[[ConfigDict], ConfigDict]
+        type ConfigSerializer = Callable[[ConfigDict], str]
+        type ConfigDeserializer = Callable[[str], ConfigDict]
+
+        # Missing directory type
+        type ConfigDir = str
+
+        # Logging levels in config context  
+        type LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        type ValidationLevel = Literal["strict", "normal", "minimal"]
+
+        # Configuration format types
+        type ConfigFormat = Literal["json", "yaml", "toml", "ini"]
 
         # Alias for legacy compatibility
         type Config = ConfigDict
 
         # Environment and deployment
-        type Environment = Literal["development", "production", "staging", "test"]
+        type Environment = Literal["development", "production", "staging", "test", "local"]
         type DeploymentMode = Literal["local", "cloud", "hybrid"]
-
-        # Validation types
-        type ConfigValidator = Callable[[ConfigDict], None]
-        type ConfigTransformer = Callable[[ConfigDict], ConfigDict]
 
     # =========================================================================
     # FIELD TYPES - Field system types for FlextFields
@@ -791,12 +841,21 @@ class FlextTypes:
 
 
 # =============================================================================
+# PUBLIC TYPE ALIASES - For backward compatibility and ease of use
+# =============================================================================
+
+# Generic callable type with type parameter - for decorator compatibility
+FlextCallable = FlextTypes.Core.FlextCallableType
+
+
+# =============================================================================
 # EXPORTS - Hierarchical types only
 # =============================================================================
 
 __all__: list[str] = [
     "E",
     "F",
+    "FlextCallable",  # Public type alias for decorator compatibility
     "FlextTypes",  # ONLY main class exported
     "K",
     "P",

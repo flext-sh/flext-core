@@ -1,56 +1,60 @@
-"""Centralized constants and enumerations for the FLEXT core library.
+"""Hierarchical constants system for the FLEXT ecosystem.
 
-Provides a comprehensive constant system for the FLEXT ecosystem, organized by
-domain and functionality. Built for Python 3.13+ with strict typing enforcement
-and hierarchical organization following Clean Architecture principles.
+Provides a comprehensive hierarchical constants system organizing all FLEXT constants
+by domain and functionality. The FlextConstants class serves as the single source of
+truth for all constants used throughout the FLEXT ecosystem, eliminating magic numbers
+and hardcoded values while providing type safety and clear organization.
 
-The module includes:
-    - Hierarchical FlextConstants class organizing all system constants
-    - Domain-specific constant categories (Core, Network, Validation, etc.)
-    - Comprehensive error codes and status values
-    - Type-safe enumerations for field types, log levels, and environments
-    - Performance and infrastructure constants
-    - Legacy compatibility layer for existing ecosystem
+Main Classes:
+    FlextConstants: Main hierarchical constants container with 50+ nested domains.
 
-Examples:
-    Basic usage with hierarchical constants::
+Key Features:
+    - Domain-based organization (Core, Network, Validation, Errors, etc.)
+    - Type-safe constants with Final annotations
+    - SOLID principles adherence in constant organization
+    - Comprehensive error code system with structured hierarchy
+    - Performance tuning constants and thresholds
+    - Security-focused validation patterns and limits
+    - Infrastructure configuration constants
+    - Platform-specific constants for FLEXT ecosystem
 
-        # Example: FlextConstants.Core.VERSION
+Architecture:
+    The constants system follows a hierarchical organization pattern where each
+    nested class represents a specific domain or functional area. This provides:
+    - Clear separation of concerns
+    - Easy discoverability of related constants
+    - Type safety through Final annotations
+    - Consistent naming patterns across the ecosystem
 
-        timeout = FlextConstants.Defaults.TIMEOUT
+Example:
+    Basic usage with hierarchical access::
+
+        # Core system constants
+        app_name = FlextConstants.Core.NAME
+        version = FlextConstants.Core.VERSION
+
+        # Network configuration
+        timeout = FlextConstants.Network.DEFAULT_TIMEOUT
+        port = FlextConstants.Platform.FLEXT_SERVICE_PORT
+
+        # Error handling
         error_code = FlextConstants.Errors.VALIDATION_ERROR
-        log_level = FlextConstants.Observability.DEFAULT_LOG_LEVEL
+        error_message = FlextConstants.Messages.VALIDATION_FAILED
 
-    Using enumerations for type safety::
-
-        # Example: FlextLogLevel.INFO, FlextEnvironment.PRODUCTION
-
-        current_level = FlextLogLevel.INFO
-        env = FlextEnvironment.PRODUCTION
-        numeric_level = current_level.get_numeric_value()  # Returns 20
-
-    Error handling with structured codes::
-
-        # Example usage:
-
-        # Modern structured approach
-        error = FlextConstants.Errors.CONNECTION_ERROR
-        message = FlextConstants.Messages.DATABASE_CONNECTION_FAILED
-
-        # Legacy flat mapping for backward compatibility
-        legacy_error = ERROR_CODES["CONNECTION_ERROR"]
+        # Performance tuning
+        batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
+        threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
 
 Note:
-    This module enforces Python 3.13+ requirements and uses modern constant
-    organization patterns. All constants are designed for strict type checking
-    with mypy and pyright, following SOLID principles and Clean Architecture.
-    Legacy flat constants are available for backward compatibility.
+    All constants are marked as Final for immutability and type safety.
+    The system is designed to be extended by adding new nested classes
+    while maintaining backward compatibility.
 
 """
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import ClassVar, Final, override
 
 # =============================================================================
@@ -715,7 +719,7 @@ class FlextConstants:
     # CONFIGURATION CONSTANTS - Configuration system constants
     # =========================================================================
 
-    class Configuration:
+    class Config:
         """Configuration system constants for the FLEXT ecosystem.
 
         This class contains configuration management constants including provider
@@ -755,6 +759,90 @@ class FlextConstants:
         # Configuration validation categories
         REQUIRED_FIELDS: Final[list[str]] = ["REQUIRED"]
         OPTIONAL_FIELDS: Final[list[str]] = ["OPTIONAL"]
+
+        class ConfigSource(StrEnum):
+            """Configuration source enumeration."""
+
+            FILE = "file"
+            ENVIRONMENT = "env"
+            CLI = "cli"
+            DEFAULT = "default"
+            DOTENV = "dotenv"
+            YAML = "yaml"
+            JSON = "json"
+
+        class ConfigProvider(StrEnum):
+            """Configuration provider enumeration."""
+
+            CLI_PROVIDER = "cli"
+            ENV_PROVIDER = "env"
+            DOTENV_PROVIDER = "dotenv"
+            CONFIG_FILE_PROVIDER = "config_file"
+            CONSTANTS_PROVIDER = "constants"
+
+        class ConfigFormat(StrEnum):
+            """Configuration format enumeration."""
+
+            JSON = "json"
+            YAML = "yaml"
+            TOML = "toml"
+            INI = "ini"
+            ENV = "env"
+
+        class ConfigEnvironment(StrEnum):
+            """Configuration environment enumeration."""
+
+            DEVELOPMENT = "development"
+            STAGING = "staging"
+            PRODUCTION = "production"
+            TEST = "test"
+            LOCAL = "local"
+
+        class ValidationLevel(StrEnum):
+            """Configuration validation level enumeration."""
+
+            STRICT = "strict"
+            NORMAL = "normal"
+            LOOSE = "loose"
+            DISABLED = "disabled"
+
+        class LogLevel(StrEnum):
+            """Log level enumeration with numeric value support."""
+
+            DEBUG = "DEBUG"
+            INFO = "INFO"
+            WARNING = "WARNING"
+            ERROR = "ERROR"
+            CRITICAL = "CRITICAL"
+            TRACE = "TRACE"
+
+            @override
+            def __hash__(self) -> int:
+                """Hash based on enum value."""
+                return hash(self.value)
+
+            @override
+            def __eq__(self, other: object) -> bool:
+                """Support comparison with string values."""
+                if isinstance(other, str):
+                    return self.value == other
+                return super().__eq__(other)
+
+            @classmethod
+            def get_numeric_levels(cls) -> dict[str, int]:
+                """Get numeric level values for logging compatibility."""
+                return {
+                    "CRITICAL": 50,
+                    "ERROR": 40,
+                    "WARNING": 30,
+                    "INFO": 20,
+                    "DEBUG": 10,
+                    "TRACE": 5,
+                }
+
+            def get_numeric_value(self) -> int:
+                """Get numeric value for this log level."""
+                return self.get_numeric_levels()[self.value]
 
     # =========================================================================
     # CLI CONSTANTS - Command-line interface constants
@@ -969,10 +1057,54 @@ class FlextConstants:
     # =========================================================================
 
     class Web:
-        """Web interface specific constants.
+        """Web interface and HTTP application constants for the FLEXT web ecosystem.
 
-        These constants are used by flext-web module and provide defaults
-        for web application configuration, ports, and HTTP settings.
+        This class provides comprehensive web-related constants used by the flext-web
+        module and other web-facing components. Includes HTTP configuration, port
+        management, application limits, status codes, and security settings for
+        consistent web application behavior across the FLEXT platform.
+
+        Constant Categories:
+            - Port Configuration: Default HTTP/HTTPS ports and development settings
+            - Application Limits: Constraints for web applications and resources
+            - HTTP Status Codes: Standard HTTP response codes for API consistency
+            - MIME Types: Content type definitions for HTTP responses
+            - Performance: Timeout values and connection limits
+
+        Architecture Principles Applied:
+            - Web Standards: Follows HTTP/HTTPS standards and best practices
+            - Security First: Default secure configurations and limits
+            - Development Support: Separate development and production defaults
+            - Performance Optimization: Tuned limits for optimal web performance
+
+        Examples:
+            Basic web server configuration::
+
+                # Default port configuration
+                http_port = FlextConstants.Web.DEFAULT_HTTP_PORT
+                https_port = FlextConstants.Web.DEFAULT_HTTPS_PORT
+                dev_port = FlextConstants.Web.DEFAULT_DEVELOPMENT_PORT
+
+            Application constraints::
+
+                # Validate application name length
+                app_name = "my-web-app"
+                if len(app_name) > FlextConstants.Web.MAX_APP_NAME_LENGTH:
+                    raise ValueError("App name too long")
+
+            HTTP response handling::
+
+                # Use standard status codes
+                success_code = FlextConstants.Web.HTTP_OK
+                not_found_code = FlextConstants.Web.HTTP_NOT_FOUND
+                server_error = FlextConstants.Web.HTTP_INTERNAL_ERROR
+
+        Note:
+            These constants are designed to work seamlessly with the flext-web
+            module and provide consistent defaults across all web components
+            in the FLEXT ecosystem. Values follow web standards and security
+            best practices.
+
         """
 
         # Port configurations
@@ -1006,10 +1138,52 @@ class FlextConstants:
         HTML_MIME: Final[str] = "text/html"
 
     class CLI:
-        """Command line interface specific constants.
+        """Command-line interface constants for the FLEXT CLI ecosystem.
 
-        These constants are used by flext-cli module and provide defaults
-        for terminal display, table formatting, and command line operations.
+        This class provides comprehensive CLI-related constants used by the flext-cli
+        module and other command-line tools. Includes terminal display settings,
+        table formatting, command-line operations, and user interaction defaults
+        for consistent CLI behavior across the FLEXT platform.
+
+        Constant Categories:
+            - Terminal Display: Width, height, and formatting constraints
+            - Table Formatting: Column widths, alignment, and display limits
+            - Command Operations: Timeout values and execution limits
+            - User Interaction: Prompt defaults and input validation
+            - Output Formatting: Colors, styles, and presentation formats
+
+        Architecture Principles Applied:
+            - User Experience: Optimized for terminal usability and readability
+            - Cross-Platform: Compatible across different terminal environments
+            - Accessibility: Considerate of different screen sizes and capabilities
+            - Performance: Efficient display and processing for large datasets
+
+        Examples:
+            Terminal display configuration::
+
+                # Configure table display
+                table_width = FlextConstants.CLI.DEFAULT_TABLE_WIDTH
+                max_columns = FlextConstants.CLI.MAX_COLUMNS_DISPLAY
+                page_size = FlextConstants.CLI.DEFAULT_PAGE_SIZE
+
+            Command execution limits::
+
+                # Set operation timeouts
+                cmd_timeout = FlextConstants.CLI.DEFAULT_COMMAND_TIMEOUT
+                max_retries = FlextConstants.CLI.MAX_COMMAND_RETRIES
+
+            Output formatting::
+
+                # Format CLI output
+                if output_length > FlextConstants.CLI.MAX_OUTPUT_LENGTH:
+                    truncate_output()
+
+        Note:
+            These constants are designed to provide optimal CLI experience
+            across different terminal environments while maintaining consistency
+            with FLEXT design principles. Values are tuned for both usability
+            and performance considerations.
+
         """
 
         # Terminal dimensions
@@ -1033,16 +1207,54 @@ class FlextConstants:
         MAX_OUTPUT_WIDTH: Final[int] = 120
 
     class Observability:
-        """Observability constants for the FLEXT ecosystem.
+        """Observability and monitoring constants for the FLEXT ecosystem.
 
-        This class contains observability-related constants including logging levels,
-        tracing configuration, metrics types, and monitoring headers consolidated
-        from various observability patterns throughout the system.
+        This class provides comprehensive observability constants including logging
+        configuration, distributed tracing, metrics collection, alerting thresholds,
+        and monitoring infrastructure for complete system visibility and performance
+        tracking across the entire FLEXT ecosystem.
+
+        Constant Categories:
+            - Logging Configuration: Log levels, formats, and structured logging
+            - Distributed Tracing: Trace collection, sampling, and correlation
+            - Metrics Collection: Performance metrics, counters, and gauges
+            - Alerting: Threshold definitions and alert severity levels
+            - Health Monitoring: Health check intervals and status reporting
+            - Correlation: Request correlation and distributed context tracking
 
         Architecture Principles Applied:
-            - Single Responsibility: Only observability configuration
-            - Monitoring Integration: Standards for distributed tracing
-            - Consistency: Unified observability across all services
+            - Single Responsibility: Only observability and monitoring configuration
+            - Distributed Systems: Support for microservice observability
+            - Performance Focus: Optimized monitoring with minimal overhead
+            - Standards Compliance: OpenTelemetry and industry standard integration
+            - Operational Excellence: Production-ready monitoring and alerting
+
+        Examples:
+            Logging configuration::
+
+                # Configure structured logging
+                log_level = FlextConstants.Observability.DEFAULT_LOG_LEVEL
+                trace_level = FlextConstants.Observability.TRACE_LEVEL
+                log_format = FlextConstants.Observability.SERIALIZATION_FORMAT_JSON
+
+            Distributed tracing::
+
+                # Set up tracing headers
+                correlation_header = FlextConstants.Observability.CORRELATION_ID_HEADER
+                trace_header = FlextConstants.Observability.TRACE_ID_HEADER
+                trace_timeout = FlextConstants.Observability.DEFAULT_TRACE_TIMEOUT
+
+            Metrics and alerting::
+
+                # Configure monitoring thresholds
+                error_threshold = FlextConstants.Observability.DEFAULT_ERROR_THRESHOLD
+                latency_threshold = FlextConstants.Observability.DEFAULT_LATENCY_THRESHOLD
+                health_interval = FlextConstants.Observability.DEFAULT_HEALTH_CHECK_INTERVAL
+
+        Note:
+            These constants ensure consistent observability practices across
+            the FLEXT ecosystem with industry-standard monitoring and tracing.
+
         """
 
         # Tracing configuration
@@ -1112,10 +1324,53 @@ class FlextConstants:
         MAX_NESTING_DEPTH: Final[int] = 4
 
     class Oracle:
-        """Oracle database specific constants.
+        """Oracle database integration constants for the FLEXT Oracle ecosystem.
 
-        These constants are used by flext-db-oracle module and provide
-        defaults for Oracle database connections, queries, and operations.
+        This class provides comprehensive Oracle-specific constants used by the
+        flext-db-oracle module and other Oracle integration components. Includes
+        connection configuration, query optimization, data type limits, performance
+        tuning, and security settings for optimal Oracle database operations.
+
+        Constant Categories:
+            - Connection Configuration: Ports, service names, and connection settings
+            - Connection Pooling: Pool sizing and management parameters
+            - Query Optimization: Fetch sizes, array sizes, and performance tuning
+            - Data Type Limits: Oracle-specific data type constraints
+            - Security Settings: Authentication and authorization parameters
+            - Performance Tuning: Timeouts, batch sizes, and optimization settings
+
+        Architecture Principles Applied:
+            - Performance First: Optimized defaults for Oracle database operations
+            - Security Focused: Secure connection and authentication defaults
+            - Scalability: Connection pooling and resource management
+            - Oracle Best Practices: Aligned with Oracle DBA recommendations
+
+        Examples:
+            Oracle connection configuration::
+
+                # Database connection setup
+                port = FlextConstants.Oracle.DEFAULT_ORACLE_PORT
+                service = FlextConstants.Oracle.DEFAULT_SERVICE_NAME
+                charset = FlextConstants.Oracle.DEFAULT_CHARSET
+
+            Connection pool management::
+
+                # Pool configuration
+                min_connections = FlextConstants.Oracle.DEFAULT_POOL_MIN
+                max_connections = FlextConstants.Oracle.DEFAULT_POOL_MAX
+                pool_increment = FlextConstants.Oracle.DEFAULT_POOL_INCREMENT
+
+            Query optimization::
+
+                # Performance tuning
+                fetch_size = FlextConstants.Oracle.MAX_FETCH_SIZE
+                array_size = FlextConstants.Oracle.DEFAULT_ARRAY_SIZE
+
+        Note:
+            These constants are tuned for optimal Oracle database performance
+            and follow Oracle best practices for enterprise applications.
+            Values are suitable for both development and production environments.
+
         """
 
         # Oracle-specific ports and connection settings
@@ -1825,7 +2080,7 @@ class FlextConstants:
     class AlgarMigration:
         """ALGAR Oracle to OUD migration constants.
 
-        Comprehensive constants for ALGAR Telecom's Oracle Unified Directory
+        Comprehensive constants for ALGAR Telecom Oracle Unified Directory
         migration system including phases, processing limits, and configurations.
         """
 
@@ -2247,7 +2502,7 @@ class FlextConstants:
 
         # Handler templates (for f-strings)
         HANDLER_NOT_FOUND_TEMPLATE: Final[str] = (
-            "Handler '{name}' not found. Available: {available}"
+            "Handler {name} not found. Available: {available}"
         )
         MISSING_PERMISSION_TEMPLATE: Final[str] = "Missing permission: {permission}"
         EVENT_PROCESSING_FAILED_TEMPLATE: Final[str] = (
@@ -2268,7 +2523,47 @@ class FlextConstants:
 
     # NEW: Entity system constants (ADDED from string mapping analysis)
     class Entities:
-        """Entity system constants for domain modeling."""
+        """Entity system constants for domain-driven design patterns.
+
+        This class contains constants specific to entity management, validation,
+        and operations in the FLEXT domain modeling system. Provides standardized
+        messages, templates, and validation rules for entity lifecycle management
+        following DDD principles.
+
+        Constants Categories:
+            - Entity Validation: ID validation and entity state checks
+            - Cache Operations: Cache key templates and hash patterns
+            - Entity Operations: CRUD operation messages and templates
+            - Entity State: Active/inactive state management
+            - Error Templates: Parameterized error message templates
+
+        Architecture Principles Applied:
+            - Domain Focus: Entity-specific constants separate from general validation
+            - Template Pattern: Parameterized templates for consistent messaging
+            - State Management: Clear entity lifecycle state definitions
+
+        Examples:
+            Entity validation messages::
+
+                # Basic validation
+                error = FlextConstants.Entities.ENTITY_ID_EMPTY
+                validation_failed = FlextConstants.Entities.ENTITY_VALIDATION_FAILED
+
+            Cache key generation::
+
+                # Template-based cache keys
+                cache_key = FlextConstants.Entities.CACHE_KEY_TEMPLATE.format(
+                    class_name="User", id="123"
+                )
+
+            Entity operation logging::
+
+                # Operation templates
+                log_message = FlextConstants.Entities.ENTITY_OPERATION_TEMPLATE.format(
+                    operation="created", entity_id="user_123"
+                )
+
+        """
 
         # Entity validation
         ENTITY_ID_INVALID: Final[str] = "Invalid entity ID"
@@ -2298,7 +2593,65 @@ class FlextConstants:
 
     # NEW: Validation system constants (EXPANDED from string mapping analysis)
     class ValidationSystem:
-        """Extended validation constants beyond basic patterns."""
+        """Extended validation system constants beyond basic pattern validation.
+
+        This class provides comprehensive validation constants that extend beyond
+        the basic Validation class, focusing on error categorization, business rules,
+        type validation, and validation system infrastructure. These constants
+        support advanced validation scenarios and error handling patterns.
+
+        Validation Categories:
+            - Error Categories: Structured error classification system
+            - Value Object Validation: Immutable object validation rules
+            - Type Validation: Runtime type checking and conversion
+            - Business Rule Validation: Domain-specific business logic validation
+            - Validation Templates: Parameterized error message templates
+
+        Architecture Principles Applied:
+            - Error Classification: Structured error categorization for better handling
+            - Template Pattern: Parameterized templates for consistent error messaging
+            - Type Safety: Runtime type validation support for dynamic scenarios
+            - Business Focus: Domain-specific validation separate from technical validation
+
+        Examples:
+            Error categorization::
+
+                # Error category classification
+                validation_category = (
+                    FlextConstants.ValidationSystem.VALIDATION_ERROR_CATEGORY
+                )
+                business_category = (
+                    FlextConstants.ValidationSystem.BUSINESS_ERROR_CATEGORY
+                )
+
+            Value object validation::
+
+                # Value object checks
+                empty_error = FlextConstants.ValidationSystem.VALUE_OBJECT_EMPTY
+                format_error = (
+                    FlextConstants.ValidationSystem.VALUE_OBJECT_FORMAT_INVALID
+                )
+
+            Template-based validation errors::
+
+                # Dynamic error messages
+                error_msg = (
+                    FlextConstants.ValidationSystem.VALIDATION_ERROR_TEMPLATE.format(
+                        details="Email format is invalid"
+                    )
+                )
+                business_msg = (
+                    FlextConstants.ValidationSystem.BUSINESS_RULE_TEMPLATE.format(
+                        rule="Customer age must be 18 or older"
+                    )
+                )
+
+        Note:
+            This validation system complements the basic Validation class
+            with advanced validation scenarios and error handling patterns
+            commonly needed in enterprise domain modeling.
+
+        """
 
         # Error categories
         VALIDATION_ERROR_CATEGORY: Final[str] = "VALIDATION"
@@ -2331,7 +2684,46 @@ class FlextConstants:
 
     # NEW: Infrastructure messaging constants (EXPANDED from string mapping analysis)
     class InfrastructureMessages:
-        """Infrastructure layer messaging constants."""
+        """Infrastructure layer messaging constants for cross-cutting concerns.
+
+        This class centralizes all infrastructure-related messages used throughout
+        the system for serialization, configuration, logging, delegation, and
+        monitoring operations. Provides standardized messages and templates
+        for consistent infrastructure layer communication.
+
+        Message Categories:
+            - Serialization: JSON/binary serialization and deserialization messages
+            - Delegation: Status messages for the delegation system
+            - Configuration: Config loading, validation, and error messages
+            - Operations: Generic operation lifecycle messages
+            - Templates: Parameterized message templates for dynamic content
+
+        Architecture Principles Applied:
+            - Separation of Concerns: Infrastructure messages separate from business logic
+            - Consistency: Standardized messaging across all infrastructure components
+            - Template Pattern: Parameterized templates for dynamic message generation
+
+        Examples:
+            Serialization messaging::
+
+                # Standard messages
+                success = FlextConstants.InfrastructureMessages.SERIALIZATION_SUCCESS
+                error = FlextConstants.InfrastructureMessages.SERIALIZATION_FAILED
+
+            Configuration operations::
+
+                # Config lifecycle
+                loading = FlextConstants.InfrastructureMessages.CONFIG_LOADING
+                loaded = FlextConstants.InfrastructureMessages.CONFIG_LOADED
+
+            Template-based messaging::
+
+                # Dynamic error messages
+                error_msg = FlextConstants.InfrastructureMessages.SERIALIZATION_ERROR_TEMPLATE.format(
+                    error="JSON parsing failed"
+                )
+
+        """
 
         # Serialization
         SERIALIZATION_FAILED: Final[str] = "Serialization failed"
@@ -2361,7 +2753,54 @@ class FlextConstants:
 
     # NEW: Platform constants (FLEXT specific infrastructure)
     class Platform:
-        """Platform-wide constants."""
+        """FLEXT platform infrastructure configuration constants.
+
+        This class centralizes all platform-specific configuration constants
+        including service ports, database connections, cache settings, security
+        parameters, and network configurations. Provides the foundational
+        infrastructure constants for the entire FLEXT ecosystem deployment.
+
+        Configuration Categories:
+            - Service Ports: All FLEXT service and infrastructure ports
+            - Database: PostgreSQL, Redis, and connection configuration
+            - Security: Authentication, authorization, and rate limiting
+            - Network: Hosts, URLs, and connection timeouts
+            - Performance: Cache TTL, connection pools, and timeout settings
+            - Development: Dev-specific overrides and localhost settings
+
+        Architecture Principles Applied:
+            - Environment Separation: Clear dev vs production configurations
+            - Security First: Secure defaults with explicit configuration
+            - Performance Optimization: Tuned timeouts and connection settings
+            - Scalability: Configurable pools and connection management
+
+        Examples:
+            Service configuration::
+
+                # Core service ports
+                api_port = FlextConstants.Platform.FLEXT_API_PORT
+                grpc_port = FlextConstants.Platform.FLEXT_GRPC_PORT
+                db_port = FlextConstants.Platform.POSTGRESQL_PORT
+
+            Database connections::
+
+                # Connection strings
+                db_url = FlextConstants.Platform.DEFAULT_POSTGRES_URL
+                cache_url = FlextConstants.Platform.REDIS_URL
+
+            Security settings::
+
+                # Token lifetimes
+                access_ttl = FlextConstants.Platform.ACCESS_TOKEN_LIFETIME
+                refresh_ttl = FlextConstants.Platform.REFRESH_TOKEN_LIFETIME
+                rate_limit = FlextConstants.Platform.RATE_LIMIT_REQUESTS
+
+        Note:
+            These constants define the infrastructure foundation for all
+            FLEXT ecosystem services and should be used consistently
+            across all deployment environments.
+
+        """
 
         # Service Ports
         FLEXCORE_PORT: Final[int] = 8080
@@ -2440,9 +2879,56 @@ class FlextConstants:
     # =============================================================================
 
     class Enums:
-        """Enums."""
+        """Type-safe enumerations for the FLEXT ecosystem.
 
-        class FieldType(Enum):
+        This class provides type-safe enumerations used throughout the FLEXT
+        system for field types, environments, connection types, and data formats.
+        All enumerations inherit from StrEnum for string compatibility while
+        providing type safety and IDE support.
+
+        Enumeration Categories:
+            - FieldType: Data field types for validation and schema definition
+            - Environment: Deployment environment types (dev, prod, staging)
+            - ConnectionType: Database and service connection types
+            - DataFormat: Supported data serialization formats
+
+        Architecture Principles Applied:
+            - Type Safety: Strong typing with StrEnum for string compatibility
+            - Extensibility: Easy to add new enum values without breaking changes
+            - Consistency: Standardized values across the entire ecosystem
+            - IDE Support: Full autocomplete and validation support
+
+        Examples:
+            Field validation with type safety::
+
+                # Type-safe field definitions
+                field_type = FlextConstants.Enums.FieldType.STRING
+                email_field = FlextConstants.Enums.FieldType.EMAIL
+                date_field = FlextConstants.Enums.FieldType.DATETIME
+
+            Environment configuration::
+
+                # Environment-specific behavior
+                env = FlextConstants.Enums.Environment.PRODUCTION
+                is_dev = env == FlextConstants.Enums.Environment.DEVELOPMENT
+
+            Connection management::
+
+                # Connection type identification
+                conn_type = FlextConstants.Enums.ConnectionType.POSTGRES
+                is_database = conn_type in [
+                    FlextConstants.Enums.ConnectionType.DATABASE,
+                    FlextConstants.Enums.ConnectionType.POSTGRES,
+                ]
+
+        Note:
+            All enumerations provide both string values and type safety,
+            making them suitable for serialization while maintaining
+            compile-time validation.
+
+        """
+
+        class FieldType(StrEnum):
             """Field type enumeration for validation and schema definition."""
 
             STRING = "string"
@@ -2454,45 +2940,7 @@ class FlextConstants:
             UUID = "uuid"
             EMAIL = "email"
 
-        class LogLevel(Enum):
-            """Log level enumeration with numeric value support."""
-
-            DEBUG = "DEBUG"
-            INFO = "INFO"
-            WARNING = "WARNING"
-            ERROR = "ERROR"
-            CRITICAL = "CRITICAL"
-            TRACE = "TRACE"
-
-            @override
-            def __hash__(self) -> int:
-                """Hash based on enum value."""
-                return hash(self.value)
-
-            @override
-            def __eq__(self, other: object) -> bool:
-                """Support comparison with string values."""
-                if isinstance(other, str):
-                    return self.value == other
-                return super().__eq__(other)
-
-            @classmethod
-            def get_numeric_levels(cls) -> dict[str, int]:
-                """Get numeric level values for logging compatibility."""
-                return {
-                    "CRITICAL": 50,
-                    "ERROR": 40,
-                    "WARNING": 30,
-                    "INFO": 20,
-                    "DEBUG": 10,
-                    "TRACE": 5,
-                }
-
-            def get_numeric_value(self) -> int:
-                """Get numeric value for this log level."""
-                return self.get_numeric_levels()[self.value]
-
-        class Environment(Enum):
+        class Environment(StrEnum):
             """Environment type enumeration."""
 
             DEVELOPMENT = "development"
@@ -2500,7 +2948,7 @@ class FlextConstants:
             STAGING = "staging"
             TESTING = "testing"
 
-        class ConnectionType(Enum):
+        class ConnectionType(StrEnum):
             """Connection type enumeration."""
 
             DATABASE = "database"
@@ -2513,7 +2961,7 @@ class FlextConstants:
             FILE = "file"
             STREAM = "stream"
 
-        class DataFormat(Enum):
+        class DataFormat(StrEnum):
             """Data format enumeration."""
 
             JSON = "json"
@@ -2525,7 +2973,7 @@ class FlextConstants:
             AVRO = "avro"
             PROTOBUF = "protobuf"
 
-        class OperationStatus(Enum):
+        class OperationStatus(StrEnum):
             """Operation status enumeration."""
 
             PENDING = "pending"
@@ -2535,7 +2983,7 @@ class FlextConstants:
             CANCELLED = "cancelled"
             RETRYING = "retrying"
 
-        class EntityStatus(Enum):
+        class EntityStatus(StrEnum):
             """Entity status enumeration."""
 
             ACTIVE = "active"
@@ -2545,13 +2993,8 @@ class FlextConstants:
             SUSPENDED = "suspended"
 
 
-FlextOperationStatus = FlextConstants.Enums.OperationStatus
-FlextLogLevel = FlextConstants.Enums.LogLevel
-FlextFieldType = FlextConstants.Enums.FieldType
-FlextEnvironment = FlextConstants.Enums.Environment
-FlextEntityStatus = FlextConstants.Enums.EntityStatus
-FlextDataFormat = FlextConstants.Enums.DataFormat
-FlextConnectionType = FlextConstants.Enums.ConnectionType
+# Legacy compatibility aliases moved to legacy.py
+# These exports are now handled in the legacy module for backward compatibility
 
 
 # =============================================================================
@@ -2568,96 +3011,7 @@ FlextConnectionType = FlextConstants.Enums.ConnectionType
 #
 # Use FlextConstants hierarchical structure for new code
 
-# =============================================================================
-# EXPORTS - Semantic constants + compatibility
-# =============================================================================
-
-# Simplified ERROR_CODES mapping
-ERROR_CODES: dict[str, str] = {
-    "GENERIC_ERROR": FlextConstants.Errors.GENERIC_ERROR,
-    "VALIDATION_ERROR": "FLEXT_VALIDATION_ERROR",
-    "CONNECTION_ERROR": FlextConstants.Errors.CONNECTION_ERROR,
-    "TIMEOUT_ERROR": FlextConstants.Errors.TIMEOUT_ERROR,
-    "OPERATION_ERROR": "FLEXT_OPERATION_ERROR",
-    "TYPE_ERROR": "FLEXT_TYPE_ERROR",
-    "CONFIG_ERROR": "FLEXT_CONFIG_ERROR",
-    "CONFIGURATION_ERROR": "FLEXT_CONFIG_ERROR",  # Alias for consistency
-    "AUTH_ERROR": "FLEXT_AUTH_ERROR",
-    "PERMISSION_ERROR": "FLEXT_PERMISSION_ERROR",
-    "BIND_ERROR": "FLEXT_BIND_ERROR",
-    "CHAIN_ERROR": "FLEXT_CHAIN_ERROR",
-    "MAP_ERROR": "MAP_ERROR",
-}
-
-# Direct message access
-MESSAGES = FlextConstants.Messages
-SERVICE_NAME_EMPTY: Final[str] = "Service name cannot be empty"
-
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
-# =============================================================================
-
-# Legacy alias for FlextConstants - maintain backward compatibility
-FlextCoreConstants = FlextConstants
-
-
-# =============================================================================
-# DOMAIN-SPECIFIC CONSTANT FACADES - Domain inheritance patterns
-# =============================================================================
-
-
-class FlextWebConstants(FlextConstants):
-    """Web domain-specific constants facade extending FlextConstants."""
-
-
-class FlextCliConstants(FlextConstants):
-    """CLI domain-specific constants facade extending FlextConstants."""
-
-
-class FlextObservabilityConstants(FlextConstants):
-    """Observability domain-specific constants facade extending FlextConstants."""
-
-
-class FlextQualityConstants(FlextConstants):
-    """Quality domain-specific constants facade extending FlextConstants."""
-
-
-class FlextTargetConstants(FlextConstants):
-    """Target domain-specific constants facade extending FlextConstants."""
-
-
-class FlextTapConstants(FlextConstants):
-    """Tap domain-specific constants facade extending FlextConstants."""
-
-
-class FlextMeltanoConstants(FlextConstants):
-    """Meltano domain-specific constants facade extending FlextConstants."""
-
-
-class FlextLdifConstants(FlextConstants):
-    """LDIF domain-specific constants facade extending FlextConstants."""
-
-
-class FlextOracleWmsConstants(FlextConstants):
-    """Oracle WMS domain-specific constants facade extending FlextConstants."""
-
-
-class FlextAlgarConstants(FlextConstants):
-    """ALGAR Migration domain-specific constants facade extending FlextConstants."""
-
 
 __all__: Final[list[str]] = [
-    "FlextAlgarConstants",
-    "FlextCliConstants",
-    "FlextConstants",  # Main class with all constants
-    "FlextEntityStatus",  # Entity status enum alias
-    "FlextLdifConstants",
-    "FlextMeltanoConstants",
-    "FlextObservabilityConstants",
-    "FlextOracleWmsConstants",
-    "FlextQualityConstants",
-    "FlextTapConstants",
-    "FlextTargetConstants",
-    # Domain-specific facades
-    "FlextWebConstants",
+    "FlextConstants",
 ]

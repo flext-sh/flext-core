@@ -13,12 +13,6 @@ from contextlib import contextmanager
 
 from flext_core.result import FlextResult
 
-# MIGRATED TO LEGACY.PY: Protocol aliases moved to centralized legacy compatibility
-# Use FlextProtocols hierarchy directly in new code:
-# - FlextProtocols.Infrastructure.Configurable (instead of ObservabilityProtocol)
-# - FlextProtocols.Extensions.Observability (instead of MetricsCollectorProtocol)
-# - FlextProtocols.Infrastructure.LoggerProtocol (instead of LoggerServiceProtocol)
-
 GeneratorT = Generator
 
 

@@ -5,19 +5,19 @@ from __future__ import annotations
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from typing import Protocol, TypeGuard, override
 
-from flext_core.models import FlextValue
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import TEntry
 
 
-class FlextEntryType(Enum):
+class FlextEntryType(StrEnum):
     """Base enumeration for entry types."""
 
 
-class FlextBaseEntry(FlextValue):
+class FlextBaseEntry(FlextModels.Value):
     """Base entry value object for schema/ACL processing."""
 
     entry_type: str

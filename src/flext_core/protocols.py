@@ -11,9 +11,6 @@ from abc import abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import ParamSpec, Protocol, TypeVar, runtime_checkable
 
-# Import only essential types to avoid circular dependencies
-# Currently no TYPE_CHECKING imports needed
-
 # ParamSpec and TypeVar for generic callable protocols
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -42,13 +39,13 @@ class FlextProtocols:
     Examples:
         Foundation layer usage::
 
-            processor: FlextProtocols.Foundation.Callable[str] = lambda x: x.upper()
+            processor: Foundation.Callable[str] = lambda x: x.upper()
             result = processor("test")  # Returns "TEST"
 
         Domain composition::
 
             class UserService(
-                FlextProtocols.Domain.Service, FlextProtocols.Foundation.Validator[User]
+                FlextProtocols.Domain.Service, Foundation.Validator[User]
             ):
                 def validate(self, user: User) -> object: ...
                 def start(self) -> object: ...
@@ -172,6 +169,39 @@ class FlextProtocols:
 
             def dict(self) -> dict[str, object]:
                 """Convert model to dictionary (Pydantic v1 style)."""
+                ...
+
+        @runtime_checkable
+        class HasModelValidate(Protocol):
+            """Protocol for Pydantic v2 models with model_validate class method."""
+
+            @classmethod
+            def model_validate(cls, obj: object) -> object:
+                """Validate and create model instance from object data."""
+                ...
+
+        @runtime_checkable
+        class DataConstructor(Protocol):
+            """Protocol for classes that can be constructed from data."""
+
+            def __call__(self, data: object) -> object:
+                """Construct instance from data object."""
+                ...
+
+        @runtime_checkable
+        class SizedDict(Protocol):
+            """Protocol for dict-like objects that support len()."""
+
+            def __len__(self) -> int:
+                """Return length of dict."""
+                ...
+
+        @runtime_checkable
+        class SizedList(Protocol):
+            """Protocol for list-like objects that support len()."""
+
+            def __len__(self) -> int:
+                """Return length of list."""
                 ...
 
     # =========================================================================
@@ -568,9 +598,16 @@ class FlextProtocols:
                 """Perform health check."""
                 ...
 
-    # =========================================================================
-    # BACKWARD COMPATIBILITY - Legacy protocol definitions
-    # =========================================================================
+    # =============================================================================
+    # DECORATOR PROTOCOLS - Special function patterns
+    # =============================================================================
+
+    class DecoratedFunction[T](Protocol):
+        """Decorated function protocol returning FlextResult for railway-oriented programming."""
+
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            """Execute the decorated function returning FlextResult."""
+            ...
 
     # =========================================================================
     # COMPATIBILITY LAYER - Optimized aliases for hierarchical access
@@ -615,107 +652,6 @@ class FlextProtocols:
 
 
 # =============================================================================
-# DECORATOR PROTOCOLS - Special function patterns
-# =============================================================================
-
-# =============================================================================
-# DECORATOR PROTOCOLS - Special function patterns
-# =============================================================================
-
-
-class DecoratedFunction[T](Protocol):
-    """Decorated function protocol returning FlextResult for railway-oriented programming."""
-
-    def __call__(self, *args: object, **kwargs: object) -> object:
-        """Execute the decorated function returning FlextResult."""
-        ...
-
-
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES
-# =============================================================================
-
-# Core protocols aliases for backward compatibility
-FlextProtocol = FlextProtocols  # Legacy name
-
-# Foundation layer aliases - commented to avoid conflicts with typings.py
-# FlextCallable = FlextProtocols.Foundation.Callable - moved to typings.py
-FlextValidator = FlextProtocols.Foundation.Validator
-# FlextErrorHandler = FlextProtocols.Foundation.ErrorHandler - moved to typings.py
-# FlextFactory = FlextProtocols.Foundation.Factory - moved to typings.py
-# FlextAsyncFactory = FlextProtocols.Foundation.AsyncFactory - moved to typings.py
-HasToDictBasic = FlextProtocols.Foundation.HasToDictBasic
-HasToDict = FlextProtocols.Foundation.HasToDict
-SupportsDynamicAttributes = FlextProtocols.Foundation.SupportsDynamicAttributes
-
-# Domain layer aliases
-FlextService = FlextProtocols.Domain.Service
-FlextRepository = FlextProtocols.Domain.Repository
-FlextDomainEvent = FlextProtocols.Domain.DomainEvent
-FlextEventStore = FlextProtocols.Domain.EventStore
-
-# Application layer aliases - commented to avoid conflicts with typings.py
-# FlextHandler = FlextProtocols.Application.Handler - moved to typings.py
-# FlextMessageHandler = FlextProtocols.Application.MessageHandler - moved to typings.py
-# FlextValidatingHandler = FlextProtocols.Application.ValidatingHandler - moved to typings.py
-# FlextAuthorizingHandler = FlextProtocols.Application.AuthorizingHandler - moved to typings.py
-# FlextEventProcessor = FlextProtocols.Application.EventProcessor - moved to typings.py
-# FlextUnitOfWork = FlextProtocols.Application.UnitOfWork - moved to typings.py
-
-# Infrastructure layer aliases - commented to avoid conflicts with typings.py
-# FlextConnection = FlextProtocols.Infrastructure.Connection - moved to typings.py
-FlextAuthProtocol = FlextProtocols.Infrastructure.Auth  # Keep this one as it's specific
-FlextConfigurable = FlextProtocols.Infrastructure.Configurable
-# FlextLoggerProtocol = FlextProtocols.Infrastructure.LoggerProtocol - moved to typings.py
-
-# Extensions layer aliases - commented to avoid conflicts with typings.py
-# FlextPlugin = FlextProtocols.Extensions.Plugin - moved to typings.py
-# FlextPluginContext = FlextProtocols.Extensions.PluginContext - moved to typings.py
-# FlextMiddleware = FlextProtocols.Extensions.Middleware - moved to typings.py
-# FlextAsyncMiddleware = FlextProtocols.Extensions.AsyncMiddleware - moved to typings.py
-FlextObservabilityProtocol = FlextProtocols.Extensions.Observability  # Keep this one
-
-# Decorator patterns - commented to avoid conflicts with typings.py
-# FlextDecoratedFunction = DecoratedFunction - moved to typings.py
-
-# Legacy aliases for removed protocols (redirected to new hierarchy)
-FlextValidationRule = (
-    FlextProtocols.Foundation.Validator
-)  # Simplified to base validator
-FlextMetricsCollector = (
-    FlextProtocols.Extensions.Observability
-)  # Metrics are part of observability
-FlextAsyncHandler = FlextProtocols.Application.Handler  # Unified with regular handler
-FlextAsyncService = FlextProtocols.Domain.Service  # Unified with regular service
-
-# Typo fixes
-FlextAuthProtocols = FlextProtocols.Infrastructure.Auth  # Fix legacy typo
-
-# Additional legacy support
-FlextEventPublisher = (
-    FlextProtocols.Domain.EventStore
-)  # Publisher is part of event store
-FlextEventSubscriber = (
-    FlextProtocols.Application.EventProcessor
-)  # Subscriber is event processor
-FlextEventStreamReader = (
-    FlextProtocols.Domain.EventStore
-)  # Stream reader is part of event store
-FlextProjectionBuilder = (
-    FlextProtocols.Application.EventProcessor
-)  # Projection builder is event processor
-
-# Observability sub-protocols (consolidated into main observability)
-FlextSpanProtocol = FlextProtocols.Extensions.Observability
-FlextTracerProtocol = FlextProtocols.Extensions.Observability
-FlextMetricsProtocol = FlextProtocols.Extensions.Observability
-FlextAlertsProtocol = FlextProtocols.Extensions.Observability
-
-# Plugin system legacy aliases
-FlextPluginRegistry = (
-    FlextProtocols.Extensions.PluginContext
-)  # Registry is part of context
-FlextPluginLoader = FlextProtocols.Extensions.PluginContext  # Loader is part of context
 
 
 # =============================================================================

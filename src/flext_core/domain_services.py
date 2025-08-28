@@ -14,7 +14,7 @@ from pydantic import ConfigDict
 
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModel
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 
@@ -24,7 +24,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextDomainService[TDomainResult](
-    FlextModel,
+    FlextModels.BaseConfig,
     FlextMixins.Serializable,
     FlextMixins.Loggable,
     ABC,

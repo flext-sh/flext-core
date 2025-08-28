@@ -11,7 +11,7 @@ and extensibility through protocols and abstract base classes.
     - Protocol-based structural typing for maximum flexibility
 
 Key Components:
-    - FlextValidator: Protocol for flexible validation implementations
+    - FlextProtocols.Foundation.Validator: Protocol for flexible validation implementations
     - FlextProtocols.Foundation.Validator: ABC for reusable validation rules
     - FlextService: ABC for service lifecycle management
     - FlextConfigurable: Protocol for configuration injection
@@ -221,7 +221,7 @@ class OrderPlacedEvent(FlextEvent):
 
 
 class EmailValidator:
-    """Protocol-compliant email validator demonstrating FlextValidator."""
+    """Protocol-compliant email validator demonstrating FlextProtocols.Foundation.Validator."""
 
     def validate(self, value: object) -> FlextResult[object]:
         """Validate email format and normalize."""
