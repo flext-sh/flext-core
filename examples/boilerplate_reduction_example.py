@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import override
 
@@ -58,7 +59,7 @@ class TraditionalDatabaseService:
             self.is_connected = False
             return False
 
-    def execute_query(self, query: str) -> list[dict[str, object]] | None:
+    def execute_query(self, query: str) -> Sequence[Mapping[str, object]] | None:
         """Execute query - manual error handling and validation."""
         try:
             if not self.is_connected:
@@ -108,6 +109,8 @@ class TraditionalDatabaseService:
 
 
 class DatabaseConfig(FlextConfig):
+
+    SSH_PORT: int = 22  # Valor mágico substituído por constante
     """Database configuration with validation."""
 
     host: str = Field(..., min_length=1)
@@ -120,7 +123,7 @@ class DatabaseConfig(FlextConfig):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate database configuration."""
-        if self.host.lower() in ["localhost", "127.0.0.1"] and self.port == 22:
+        if self.host.lower() in {"localhost", "127.0.0.1"} and self.port == self.SSH_PORT:
             return FlextResult[None].fail("SSH port not allowed for database")
 
         return FlextResult[None].ok(None)
@@ -166,22 +169,22 @@ class ModernDatabaseService:
         except Exception as e:
             return FlextResult[None].fail(f"Connection failed: {e}")
 
-    def execute_query(self, query: str) -> FlextResult[list[dict[str, object]]]:
+    def execute_query(self, query: str) -> FlextResult[Sequence[Mapping[str, object]]]:
         """Execute query with comprehensive error handling."""
         # Validate connection
         if not self.connection.is_connected:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[Sequence[Mapping[str, object]]].fail(
                 "Not connected to database"
             )
 
         # Validate query
         if not query or not query.strip():
-            return FlextResult[list[dict[str, object]]].fail("Empty query")
+            return FlextResult[Sequence[Mapping[str, object]]].fail("Empty query")
 
         query = query.strip()
 
         if "SELECT" not in query.upper():
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[Sequence[Mapping[str, object]]].fail(
                 "Only SELECT queries allowed"
             )
 
@@ -189,16 +192,16 @@ class ModernDatabaseService:
             print(f"Executing query: {query[:50]}...")
 
             # Simulate query execution
-            results = [
+            results: Sequence[Mapping[str, object]] = [
                 {"id": 1, "name": "John Doe", "created": datetime.now(UTC)},
                 {"id": 2, "name": "Jane Smith", "created": datetime.now(UTC)},
             ]
 
             print(f"✅ Query executed, {len(results)} rows returned")
-            return FlextResult[list[dict[str, object]]].ok(results)
+            return FlextResult[Sequence[Mapping[str, object]]].ok(results)
 
         except Exception as e:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[Sequence[Mapping[str, object]]].fail(
                 f"Query execution failed: {e}"
             )
 
@@ -243,7 +246,7 @@ def demonstrate_traditional_approach() -> int:
 
     # Create service with manual validation
     service = TraditionalDatabaseService(
-        host="localhost", port=5432, username="REDACTED_LDAP_BIND_PASSWORD", password="password123"
+        host="localhost", port=5432, username="REDACTED_LDAP_BIND_PASSWORD", password="password123"  # noqa: S106 (exemplo didático)
     )
 
     # Manual connection handling
@@ -283,7 +286,7 @@ def demonstrate_modern_approach() -> int:
             host="localhost",
             port=5432,
             username="REDACTED_LDAP_BIND_PASSWORD",
-            password="password123",
+            password="password123",  # noqa: S106 (exemplo didático)
             connection_timeout=30,
         )
 
@@ -347,8 +350,8 @@ def demonstrate_error_handling_comparison() -> int:
 
     print("\n🟢 Modern Error Handling:")
     try:
-        # This will fail validation
-        invalid_config = DatabaseConfig(host="", port=0, username="", password="")
+        # Isto irá falhar na validação (exemplo didático, variável não usada removida)
+        DatabaseConfig(host="", port=0, username="", password="")
         print("   - This shouldn't print (config validation should fail)")
     except Exception as e:
         print("   ✅ Validation caught at configuration level")
@@ -356,7 +359,7 @@ def demonstrate_error_handling_comparison() -> int:
 
     # Valid config but simulated connection error
     config = DatabaseConfig(
-        host="nonexistent.server.com", port=5432, username="test", password="test"
+        host="nonexistent.server.com", port=5432, username="test", password="test"  # noqa: S106 (exemplo didático)
     )
 
     service = ModernDatabaseService(config)

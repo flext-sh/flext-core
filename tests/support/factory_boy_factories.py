@@ -20,11 +20,8 @@ from factory import (
 from pydantic import BaseModel
 
 from flext_core import FlextResult
-from flext_core.constants import FlextFieldType
-from flext_core.models import (
-    FlextEntityId,
-    FlextTimestamp,
-)
+from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 
 
 # Base models for testing (these would typically come from domain models)
@@ -143,7 +140,7 @@ class StringFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"string_field_{n}")  # type: ignore[no-untyped-call]
-    field_type = FlextFieldType.STRING.value
+    field_type = FlextConstants.Enums.FieldType.STRING.value
     required = True
     description = LazyAttribute(lambda obj: f"Test string field: {obj.field_name}")  # type: ignore[no-untyped-call]
     min_length = 1
@@ -159,7 +156,7 @@ class IntegerFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"integer_field_{n}")  # type: ignore[no-untyped-call]
-    field_type = FlextFieldType.INTEGER.value
+    field_type = FlextConstants.Enums.FieldType.INTEGER.value
     required = True
     description = LazyAttribute(lambda obj: f"Test integer field: {obj.field_name}")  # type: ignore[no-untyped-call]
     min_value = 0
@@ -174,7 +171,7 @@ class BooleanFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"boolean_field_{n}")  # type: ignore[no-untyped-call]
-    field_type = FlextFieldType.BOOLEAN.value
+    field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
     required = True
     description = LazyAttribute(lambda obj: f"Test boolean field: {obj.field_name}")  # type: ignore[no-untyped-call]
     default_value = False
@@ -188,7 +185,7 @@ class FloatFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
     field_name = Sequence(lambda n: f"float_field_{n}")  # type: ignore[no-untyped-call]
-    field_type = FlextFieldType.FLOAT.value
+    field_type = FlextConstants.Enums.FieldType.FLOAT.value
     required = True
     description = LazyAttribute(lambda obj: f"Test float field: {obj.field_name}")  # type: ignore[no-untyped-call]
     min_value = 0.0
@@ -231,12 +228,12 @@ class SequenceGenerators:
     @staticmethod
     def entity_id_sequence() -> str:
         """Generate sequence of entity IDs."""
-        return str(FlextEntityId(f"test_entity_{uuid.uuid4()}"))
+        return str(FlextModels.EntityId(root=f"test_entity_{uuid.uuid4()}"))
 
     @staticmethod
-    def timestamp_sequence() -> FlextTimestamp:
+    def timestamp_sequence() -> FlextModels.Timestamp:
         """Generate sequence of timestamps."""
-        return FlextTimestamp(datetime.now(UTC))
+        return FlextModels.Timestamp(root=datetime.now(UTC))
 
     @staticmethod
     def email_sequence(domain: str = "example.com") -> str:

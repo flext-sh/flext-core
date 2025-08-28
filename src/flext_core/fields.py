@@ -435,9 +435,9 @@ class FlextFields:
                 # Convert string representations
                 if isinstance(value, str):
                     lower_value = value.lower().strip()
-                    if lower_value in ("true", "yes", "1", "on", "enabled"):
+                    if lower_value in {"true", "yes", "1", "on", "enabled"}:
                         return FlextResult[bool].ok(data=True)
-                    if lower_value in ("false", "no", "0", "off", "disabled"):
+                    if lower_value in {"false", "no", "0", "off", "disabled"}:
                         return FlextResult[bool].ok(data=False)
 
                 # Convert numeric values
@@ -520,7 +520,9 @@ class FlextFields:
                     # Use centralized UUID generation
                     if self.default:
                         return FlextResult[str].ok(self.default)
-                    return FlextResult[str].ok(FlextUtilities.Generators.generate_uuid())
+                    return FlextResult[str].ok(
+                        FlextUtilities.Generators.generate_uuid()
+                    )
 
                 if not isinstance(value, str):
                     return FlextResult[str].fail(
@@ -1056,12 +1058,12 @@ class FlextFields:
                 if isinstance(value, bool):
                     processed_config["required"] = value
                 elif isinstance(value, str):
-                    processed_config["required"] = value.lower() in (
+                    processed_config["required"] = value.lower() in {
                         "true",
                         "yes",
                         "1",
                         "on",
-                    )
+                    }
                 else:
                     processed_config["required"] = bool(value)
 
@@ -1184,7 +1186,7 @@ class FlextFields:
             # Extract common parameters with type safety
             required = config.get("required", True)
             if isinstance(required, str):
-                required = required.lower() in ("true", "yes", "1", "on")
+                required = required.lower() in {"true", "yes", "1", "on"}
             elif not isinstance(required, bool):
                 required = bool(required)
 
@@ -1367,7 +1369,7 @@ class FlextFields:
                     if isinstance(default, bool):
                         bool_default = default
                     elif isinstance(default, str):
-                        bool_default = default.lower() in ("true", "yes", "1", "on")
+                        bool_default = default.lower() in {"true", "yes", "1", "on"}
                     elif isinstance(default, (int, float)):
                         bool_default = bool(default)
                     else:
@@ -1451,19 +1453,20 @@ class FlextFields:
             fields: list[FlextFields.Core.BaseField[object]] = []
             errors: list[str] = []
 
-            schema_fields = schema["fields"]
-            if not isinstance(schema_fields, list):
+            # Extract field definitions using the same pattern as process_field_schema
+            schema_fields_raw = schema["fields"]
+            if not isinstance(schema_fields_raw, list):
                 return FlextResult[list[FlextFields.Core.BaseField[object]]].fail(
                     "Schema 'fields' must be a list",
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
-            for field_def_obj in schema_fields:
-                # Anotação explícita para o Pylance
-                field_def_typed: dict[str, object] = cast(
-                    "dict[str, object]", field_def_obj
-                )
-                field_def = field_def_typed
+            # Type-narrowed after isinstance check - Pylance can now infer this is list[object]
+            schema_fields = cast("list[dict[str, object]]", schema_fields_raw)
+
+            for field_definition in schema_fields:
+                # field_definition is now guaranteed to be dict[str, object] from cast
+                field_def: dict[str, object] = field_definition
                 field_type_obj = field_def.get("type")
                 field_name_obj = field_def.get("name")
 
@@ -1712,34 +1715,28 @@ class FlextFields:
 
             # Type-specific capabilities
             if isinstance(field, FlextFields.Core.StringField):
-                capabilities.update(
-                    {
-                        "supports_length_validation": True,
-                        "supports_pattern_validation": field.pattern is not None,
-                    }
-                )
+                capabilities.update({
+                    "supports_length_validation": True,
+                    "supports_pattern_validation": field.pattern is not None,
+                })
             elif isinstance(
                 field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)
             ):
-                capabilities.update(
-                    {
-                        "supports_range_validation": True,
-                        "supports_precision": isinstance(
-                            field, FlextFields.Core.FloatField
-                        ),
-                    }
-                )
+                capabilities.update({
+                    "supports_range_validation": True,
+                    "supports_precision": isinstance(
+                        field, FlextFields.Core.FloatField
+                    ),
+                })
             elif isinstance(field, FlextFields.Core.EmailField):
                 capabilities["validates_email_format"] = True
             elif isinstance(field, FlextFields.Core.UuidField):
                 capabilities["validates_uuid_format"] = True
             elif isinstance(field, FlextFields.Core.DateTimeField):
-                capabilities.update(
-                    {
-                        "supports_date_format": True,
-                        "supports_date_range": True,
-                    }
-                )
+                capabilities.update({
+                    "supports_date_format": True,
+                    "supports_date_range": True,
+                })
 
             return capabilities
 

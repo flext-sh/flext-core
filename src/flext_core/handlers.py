@@ -1,54 +1,30 @@
-"""FLEXT Handlers - Enterprise Handler Management System.
+"""Handler classes for request processing and chain-of-responsibility patterns.
 
-Comprehensive handler implementation following FLEXT architecture patterns,
-Clean Architecture principles, and SOLID design principles with complete
-consolidation into a single FlextHandlers class.
+Provides handler implementations for request processing, validation, authorization,
+metrics collection, CQRS patterns, and chain composition.
 
-This module implements the OFFICIAL FLEXT pattern with:
-    - Single consolidated FlextHandlers class (Tier 1 Module Pattern)
-    - Hierarchical nested class organization
-    - Complete integration with FlextTypes, FlextConstants, FlextProtocols
-    - Zero circular import dependencies
-    - Railway-oriented programming with FlextResult
-    - Thread-safe operations with enterprise metrics
-    - ABI compatibility through legacy.py facades
+Main Components:
+    FlextHandlers.Implementation: Core handler classes (BasicHandler, ValidatingHandler, etc.)
+    FlextHandlers.CQRS: Command and query bus implementations
+    FlextHandlers.Patterns: Chain of responsibility and pipeline patterns
+    FlextHandlers.Management: Handler registry and lifecycle management
 
-Architecture Compliance:
-    - FLEXT_REFACTORING_PROMPT.md: Full compliance with consolidated class pattern
-    - CLAUDE.md: SOLID principles and Clean Architecture enforcement
-    - Zero circular imports: Uses only result.py, constants.py, protocols.py, typings.py
-    - Legacy compatibility: All compatibility layers moved to legacy.py
-
-Example Usage:
-    Modern FLEXT patterns::
-
-        from flext_core import FlextHandlers
-
-        # Constants access
-        timeout = FlextHandlers.Constants.Network.DEFAULT_TIMEOUT
-        states = FlextHandlers.Constants.Handler.States
-
-        # Type-safe access
-        handler_name: FlextHandlers.Types.HandlerTypes.Name = "user_processor"
-        metrics: FlextHandlers.Types.HandlerTypes.Metrics = {}
-
-        # Implementation access
+Usage:
+    Basic handler with metrics:
         handler = FlextHandlers.Implementation.BasicHandler("api_handler")
-        validator = FlextHandlers.Implementation.ValidatingHandler("validator")
+        result = handler.handle({"action": "process", "data": "test"})
+        metrics = handler.get_metrics()
 
-        # Pattern implementations
-        chain = FlextHandlers.Patterns.HandlerChain("request_chain")
-        pipeline = FlextHandlers.Patterns.Pipeline("data_pipeline")
+    Handler chain:
+        chain = FlextHandlers.Patterns.HandlerChain("request_processing")
+        chain.add_handler(auth_handler)
+        chain.add_handler(validation_handler)
+        result = chain.handle(request_data)
 
-        # CQRS implementations
+    CQRS command bus:
         cmd_bus = FlextHandlers.CQRS.CommandBus()
-        query_bus = FlextHandlers.CQRS.QueryBus()
-
-    Legacy compatibility (through legacy.py)::
-
-        from flext_core import FlextBaseHandler  # Still works via legacy facades
-
-        handler = FlextBaseHandler("legacy")  # Emits deprecation warning
+        cmd_bus.register(CreateUserCommand, user_handler)
+        result = cmd_bus.send(CreateUserCommand(name="John"))
 """
 
 from __future__ import annotations
@@ -74,75 +50,24 @@ from flext_core.typings import FlextTypes
 
 
 class FlextHandlers:
-    """FLEXT Consolidated Handler Management System.
+    """Container for all handler-related functionality with nested organization.
 
-    Single consolidated class implementing ALL handler functionality following
-    FLEXT architectural patterns with complete hierarchical organization.
-    This class serves as the SINGLE SOURCE OF TRUTH for all handler-related
-    functionality in the FLEXT ecosystem.
+    Provides access to handler implementations, CQRS patterns, management tools,
+    and design patterns through nested classes. All handlers use FlextResult
+    for error handling and provide metrics collection.
 
-    FLEXT Architecture Compliance:
-        - Tier 1 Module Pattern: Single main class consolidating all functionality
-        - Hierarchical Nested Classes: Domain-organized nested class structure
-        - SOLID Principles: Each nested class has single responsibility
-        - Clean Architecture: Clear separation of concerns across layers
-        - Dependency Inversion: Depends only on FlextConstants, FlextTypes, FlextProtocols
-        - Open/Closed: Easy extension through nested class composition
+    Nested Classes:
+        Constants: Handler execution constants and states
+        Types: Type definitions for handlers and messages
+        Protocols: Interface definitions for handler contracts
+        Implementation: Core handler classes (BasicHandler, ValidatingHandler, etc.)
+        CQRS: Command and query bus implementations
+        Patterns: Chain of responsibility and pipeline patterns
+        Management: Handler registry for lifecycle management
 
-    Organization Hierarchy:
-        - Constants: Handler system constants extending FlextConstants
-        - Types: Handler type definitions extending FlextTypes
-        - Protocols: Handler protocol definitions for type safety
-        - Implementation: Core handler implementations
-        - CQRS: Command/Query responsibility segregation handlers
-        - Patterns: Enterprise design pattern implementations
-        - Management: Handler lifecycle and registry management
-        - Infrastructure: Thread-safe operations and metrics collection
-
-    Examples:
-        Using hierarchical constant access::
-
-            # Network timeouts
-            timeout = FlextHandlers.Constants.Network.DEFAULT_TIMEOUT
-            connection_timeout = FlextHandlers.Constants.Network.CONNECTION_TIMEOUT
-
-            # Handler states
-            idle_state = FlextHandlers.Constants.Handler.States.IDLE
-            processing_state = FlextHandlers.Constants.Handler.States.PROCESSING
-
-        Using type-safe definitions::
-
-            # Handler types
-            handler_name: FlextHandlers.Types.HandlerTypes.Name = "user_processor"
-            handler_state: FlextHandlers.Types.HandlerTypes.State = "processing"
-            metrics_data: FlextHandlers.Types.HandlerTypes.Metrics = {"processed": 100}
-
-        Using implementation classes::
-
-            # Basic handler
-            handler = FlextHandlers.Implementation.BasicHandler("api_handler")
-            result = handler.handle({"action": "process", "data": "test"})
-
-            # Validating handler with protocols
-            validator: FlextHandlers.Protocols.Validator = lambda x: len(str(x)) > 0
-            val_handler = FlextHandlers.Implementation.ValidatingHandler(
-                "validator", [validator]
-            )
-
-        Using pattern implementations::
-
-            # Chain of responsibility
-            chain = FlextHandlers.Patterns.HandlerChain("request_processing")
-            chain.add_handler(auth_handler)
-            chain.add_handler(validation_handler)
-            result = chain.handle(request_data)
-
-            # Pipeline processing
-            pipeline = FlextHandlers.Patterns.Pipeline("data_transformation")
-            pipeline.add_stage(normalize_data)
-            pipeline.add_stage(validate_data)
-            result = pipeline.process(raw_data)
-
+    Thread Safety:
+        All handler operations use thread-safe locking via thread_safe_operation()
+        context manager. Metrics and state updates are protected from race conditions.
     """
 
     # =========================================================================
@@ -150,24 +75,13 @@ class FlextHandlers:
     # =========================================================================
 
     class Constants(FlextConstants):
-        """Handler-specific constants following FLEXT hierarchical patterns.
-
-        Extends FlextConstants base class to provide handler-specific constants
-        organized by functional domains. All constants follow FLEXT naming
-        conventions and enterprise architecture patterns.
-
-        Architecture Compliance:
-            - Extends FlextConstants for hierarchical inheritance
-            - Single Responsibility: Each nested class handles one constant domain
-            - Type Safety: All constants use proper Final typing
-            - Enterprise Scale: Constants designed for production environments
-        """
+        """Handler execution constants and limits."""
 
         # Inherit all base constants from FlextConstants
         # Add handler-specific constant categories
 
         class Handler:
-            """Handler-specific execution constants from FlextConstants."""
+            """Handler execution timeouts, retries, and performance limits."""
 
             # Execution parameters from centralized constants
             DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
@@ -195,7 +109,7 @@ class FlextHandlers:
             )
 
             class States:
-                """Handler execution state constants from FlextConstants."""
+                """Handler execution states (IDLE, PROCESSING, COMPLETED, etc.)."""
 
                 IDLE: Final[str] = FlextConstants.Handlers.HANDLER_STATE_IDLE
                 PROCESSING: Final[str] = (
@@ -207,7 +121,7 @@ class FlextHandlers:
                 PAUSED: Final[str] = FlextConstants.Handlers.HANDLER_STATE_PAUSED
 
             class Types:
-                """Handler classification constants from FlextConstants."""
+                """Handler type classifications (BASIC, VALIDATING, COMMAND, etc.)."""
 
                 BASIC: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_BASIC
                 VALIDATING: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_VALIDATING
@@ -226,21 +140,10 @@ class FlextHandlers:
     # =========================================================================
 
     class Types(FlextTypes):
-        """Handler-specific type definitions following FLEXT hierarchical patterns.
-
-        Extends FlextTypes base class to provide handler-specific type aliases
-        and definitions. All types designed for strict typing with mypy/pyright
-        and enterprise-scale type safety.
-
-        Architecture Compliance:
-            - Extends FlextTypes for hierarchical inheritance
-            - Type Safety: All types support strict mypy/pyright checking
-            - Enterprise Scale: Types designed for complex business logic
-            - Clean Interfaces: Clear separation between type categories
-        """
+        """Type definitions for handler names, states, metrics, and functions."""
 
         class HandlerTypes:
-            """Handler-specific type definitions."""
+            """Type aliases for handler identifiers, states, metrics, and functions."""
 
             # Core handler types
             type Name = str  # Handler identifier
@@ -264,7 +167,7 @@ class FlextHandlers:
             type ProcessorFunction = Callable[[object], FlextResult[object]]
 
         class Message:
-            """Message handling type definitions."""
+            """Type aliases for message data, headers, and context."""
 
             type Data = dict[str, object]  # Message payload
             type Type = str  # Message type identifier
@@ -276,17 +179,7 @@ class FlextHandlers:
     # =========================================================================
 
     class Protocols:
-        """Handler protocol definitions extending FlextProtocols.
-
-        Provides handler-specific protocol definitions that compose with
-        FlextProtocols hierarchy for complete type safety and interface contracts.
-
-        Architecture Compliance:
-            - Composes with FlextProtocols for consistency
-            - Interface Segregation: Small, focused protocol interfaces
-            - Liskov Substitution: All implementations substitutable
-            - Type Safety: Runtime checkable protocols where appropriate
-        """
+        """Protocol interfaces for handlers, validators, and metrics collection."""
 
         # Alias core protocols for handler use
         Validator = FlextProtocols.Foundation.Validator
@@ -296,7 +189,7 @@ class FlextHandlers:
 
         # Handler-specific protocol extensions
         class MetricsHandler(FlextProtocols.Application.MessageHandler):
-            """Protocol for metrics-enabled handlers."""
+            """Handler protocol that provides metrics collection and reset methods."""
 
             @abstractmethod
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
@@ -309,7 +202,7 @@ class FlextHandlers:
                 ...
 
         class ChainableHandler(FlextProtocols.Application.MessageHandler):
-            """Protocol for handlers that can participate in chains."""
+            """Handler protocol for chain participation with name and type checking."""
 
             @property
             @abstractmethod
@@ -332,19 +225,14 @@ class FlextHandlers:
     @staticmethod
     @contextmanager
     def thread_safe_operation() -> Iterator[None]:
-        """Thread-safe context manager for handler operations.
+        """Context manager for thread-safe handler state modifications.
 
-        Provides reentrant locking for all handler state modifications.
-        All handler implementations should use this context manager for
-        thread-safe operations in multi-threaded environments.
-
-        Yields:
-            Iterator[None]: Context manager for thread-safe execution
+        Use this for all handler metrics updates and state changes to prevent
+        race conditions in multi-threaded environments.
 
         Example:
-            >>> with FlextHandlers.thread_safe_operation():
-            ...     # Thread-safe handler state modifications
-            ...     handler.update_metrics(new_data)
+            with FlextHandlers.thread_safe_operation():
+                handler._metrics["count"] += 1
 
         """
         with FlextHandlers._handlers_lock:
@@ -355,28 +243,22 @@ class FlextHandlers:
     # =========================================================================
 
     class Implementation:
-        """Core handler implementations following SOLID principles.
+        """Concrete handler implementations with metrics and thread safety.
 
-        Contains all concrete handler implementations organized by functionality.
-        Each handler type focuses on specific concerns while maintaining
-        consistent interfaces and behavior patterns.
-
-        Architecture Compliance:
-            - Single Responsibility: Each handler has one clear purpose
-            - Open/Closed: Easy to extend through composition
-            - Interface Segregation: Handlers implement only needed protocols
-            - Dependency Inversion: Depends on protocols, not implementations
+        Provides BasicHandler, ValidatingHandler, AuthorizingHandler,
+        MetricsHandler, and EventHandler classes. All handlers return
+        FlextResult and collect performance metrics.
         """
 
         class AbstractHandler[TInput, TOutput](ABC):
-            """Abstract foundation for all FLEXT handlers.
+            """Abstract base class defining handler contract.
 
-            Provides the base contract and common infrastructure for all
-            handler implementations with type safety and consistent behavior.
+            Requires implementation of handler_name property, handle method,
+            and can_handle method for type checking.
 
-            Generic Parameters:
-                TInput: Type of input data the handler processes
-                TOutput: Type of output data the handler produces
+            Type Parameters:
+                TInput: Input data type
+                TOutput: Output data type
             """
 
             @property
@@ -417,15 +299,11 @@ class FlextHandlers:
                 ...
 
         class BasicHandler:
-            """Basic handler with metrics collection and state management.
+            """Basic handler with metrics collection and state tracking.
 
-            Provides fundamental handler functionality with built-in:
-                - Performance metrics collection
-                - State management with thread safety
-                - Error handling with FlextResult patterns
-                - Template method pattern for extensibility
-
-            This serves as the foundation for all other handler implementations.
+            Tracks request counts, success/failure rates, processing times,
+            and execution state. Uses template method pattern - override
+            _process_request() for custom logic.
             """
 
             def __init__(
@@ -615,12 +493,7 @@ class FlextHandlers:
                     }
 
         class ValidatingHandler(BasicHandler):
-            """Handler with built-in validation capabilities.
-
-            Extends BasicHandler with comprehensive validation support using
-            FlextProtocols.Foundation.Validator pattern for type-safe validation
-            with flexible validator composition.
-            """
+            """Handler that validates requests before processing using validator functions."""
 
             def __init__(
                 self,
@@ -709,11 +582,7 @@ class FlextHandlers:
                 self._validators.append(validator)
 
         class AuthorizingHandler(BasicHandler):
-            """Handler with authorization capabilities.
-
-            Extends BasicHandler with authorization checking before processing
-            requests, following security-first design principles.
-            """
+            """Handler that checks authorization before processing requests."""
 
             def __init__(
                 self,
@@ -767,14 +636,7 @@ class FlextHandlers:
                 return True
 
         class MetricsHandler(BasicHandler):
-            """Handler with enhanced metrics collection.
-
-            Extends BasicHandler with comprehensive metrics including:
-                - Request/response size tracking
-                - Error type categorization
-                - Memory usage monitoring
-                - Performance analytics
-            """
+            """Handler with enhanced metrics including request/response sizes and error types."""
 
             def __init__(
                 self, name: FlextHandlers.Types.HandlerTypes.Name | None = None

@@ -2843,7 +2843,7 @@ type MixinProtocol = FlextProtocols.Infrastructure.Configurable
 type LoggableMixinProtocol = FlextProtocols.Infrastructure.LoggerProtocol
 
 @runtime_checkable
-class HasToDict(Protocol):
+class FlextProtocols.Foundation.HasToDict(Protocol):
     def to_dict(self) -> FlextTypes.Core.Dict: ...
 
 # FlextResult integration throughout

@@ -7,7 +7,6 @@ import time
 import pytest
 
 from flext_core import (
-    FlextLogContext,
     FlextLogger,
     FlextLogLevel,
     flext_get_logger,
@@ -17,7 +16,7 @@ from flext_core import (
 EXPECTED_BULK_SIZE = 2
 
 
-class TestFlextLogContext:
+class TestFlextContext:
     """Test FlextLogContext TypedDict."""
 
     def test_context_creation_empty(self) -> None:

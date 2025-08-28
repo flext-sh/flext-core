@@ -1,9 +1,66 @@
-"""FLEXT exception hierarchy with clean subclass approach.
+"""Comprehensive exception system with structured error handling and metrics.
 
-Hierarchical exception system with real subclasses:
-- FlextExceptions: Main container with Codes, Metrics, and real exception classes
-- Clean subclasses: Each exception type has its own class with proper signatures
-- Type Safety: Full mypy/pyright support without dynamic generation
+Provides a hierarchical exception system with the FlextExceptions class containing
+specialized exception types, error codes, context tracking, and metrics monitoring.
+All exceptions follow a consistent pattern with error codes, correlation IDs,
+and structured context for better debugging and monitoring.
+
+Main Classes:
+    FlextExceptions: Hierarchical container for all FLEXT exception types and utilities.
+
+Key Features:
+    - Hierarchical exception organization with specialized types
+    - Structured error codes using FlextConstants integration
+    - Context tracking with correlation IDs for distributed tracing
+    - Automatic metrics collection for exception monitoring
+    - Multiple inheritance from appropriate Python builtin exceptions
+    - Legacy compatibility aliases for backward compatibility
+    - Direct callable interface for automatic exception type selection
+
+Architecture:
+    The exception system follows Clean Architecture principles with clear separation
+    of concerns. All exceptions inherit from a common BaseError that provides:
+    - Structured error codes
+    - Context tracking with correlation IDs
+    - Automatic metrics recording
+    - Timestamp tracking
+    - Consistent string representation
+
+Example:
+    Basic exception usage with context::
+
+        # Direct usage with specific exception type
+        raise FlextExceptions.ValidationError(
+            "Invalid email format",
+            field="email",
+            value="invalid-email",
+            context={"user_id": "123"},
+        )
+
+        # Automatic type selection via callable interface
+        raise FlextExceptions(
+            "Operation failed", operation="create_user", context={"attempt": 3}
+        )
+
+        # Configuration errors with structured context
+        raise FlextExceptions.ConfigurationError(
+            "Database URL not configured", config_key="DATABASE_URL", config_file=".env"
+        )
+
+    Exception metrics and monitoring::
+
+        # Get exception occurrence metrics
+        metrics = FlextExceptions.get_metrics()
+        print(f"ValidationError occurred: {metrics.get('ValidationError', 0)} times")
+
+        # Clear metrics for new monitoring period
+        FlextExceptions.clear_metrics()
+
+Note:
+    All exceptions automatically record metrics and include correlation IDs
+    for distributed tracing. The system is designed to provide maximum
+    debugging information while maintaining clean APIs.
+
 """
 
 from __future__ import annotations
@@ -20,14 +77,91 @@ from flext_core.constants import FlextConstants
 
 
 class FlextExceptions:
-    """Hierarchical exception system with clean subclass approach.
+    """Hierarchical exception container with structured error handling and monitoring.
 
-    All exception classes are real subclasses with proper type signatures.
+    This class serves as the central container for all FLEXT exception types,
+    providing a clean hierarchical organization with specialized exception classes,
+    error code management, context tracking, and metrics monitoring. All exceptions
+    inherit from a common BaseError with consistent behavior and structured data.
 
-    Usage:
-        raise FlextExceptions.AttributeError("Invalid field", attribute_name="test")
-        raise FlextExceptions("Failed", operation="create")
-        raise FlextExceptions("Invalid", field="name", value="")
+    Architecture Components:
+        - Metrics: Exception occurrence tracking and monitoring
+        - BaseError: Common base class with error codes and context
+        - Specialized Exceptions: Domain-specific exception types
+        - ErrorCodes: Centralized error code constants
+        - Legacy Aliases: Backward compatibility support
+        - Callable Interface: Automatic exception type selection
+
+    Exception Categories:
+        - Validation: Data validation and format errors
+        - Configuration: System configuration and settings errors
+        - Network: Connection and communication errors
+        - Authentication: Auth and permission errors
+        - Processing: Business logic and operation errors
+        - Resource: Not found and already exists errors
+        - System: Critical system and type errors
+
+    Key Features:
+        - Structured error codes from FlextConstants
+        - Automatic correlation ID generation for tracing
+        - Context tracking with metadata preservation
+        - Metrics collection for monitoring and alerting
+        - Multiple inheritance from Python builtin exceptions
+        - Consistent string representation with error codes
+        - Thread-safe metrics tracking
+
+    Examples:
+        Domain-specific exceptions with context::
+
+            # Validation error with field details
+            raise FlextExceptions.ValidationError(
+                "Email format is invalid",
+                field="email",
+                value="not-an-email",
+                validation_details={"pattern": "email_regex"},
+                context={"user_id": "123", "form": "registration"},
+            )
+
+            # Configuration error with file context
+            raise FlextExceptions.ConfigurationError(
+                "Database connection string missing",
+                config_key="DATABASE_URL",
+                config_file="/app/.env",
+                context={"environment": "production"},
+            )
+
+        Automatic type selection via callable::
+
+            # Automatically creates ValidationError
+            raise FlextExceptions(
+                "Field is required", field="username", context={"form_step": 1}
+            )
+
+            # Automatically creates OperationError
+            raise FlextExceptions(
+                "User creation failed",
+                operation="create_user",
+                context={"retry_count": 3},
+            )
+
+        Exception monitoring and metrics::
+
+            # Monitor exception patterns
+            metrics = FlextExceptions.get_metrics()
+            validation_errors = metrics.get("ValidationError", 0)
+            if validation_errors > 100:
+                alert_operations_team()
+
+            # Reset metrics for new period
+            FlextExceptions.clear_metrics()
+
+    Note:
+        All exceptions automatically record occurrence metrics and generate
+        correlation IDs for distributed tracing. The system is designed to
+        provide maximum observability while maintaining clean, usable APIs.
+        All exceptions are real Python exception subclasses with proper
+        inheritance from builtin exception types.
+
     """
 
     # =============================================================================
@@ -35,18 +169,75 @@ class FlextExceptions:
     # =============================================================================
 
     class Metrics:
-        """Exception metrics tracking (singleton pattern)."""
+        """Thread-safe exception metrics tracking and monitoring system.
+
+        This class provides centralized tracking of exception occurrences across
+        the FLEXT ecosystem. It maintains counters for each exception type and
+        provides methods for retrieving and managing metrics data for monitoring,
+        alerting, and observability purposes.
+
+        Features:
+            - Thread-safe exception counter management
+            - Automatic metrics recording on exception creation
+            - Metrics retrieval for monitoring systems
+            - Metrics clearing for periodic resets
+
+        Architecture Principles:
+            - Single Responsibility: Only metrics tracking functionality
+            - Thread Safety: Safe for concurrent access
+            - Zero Dependencies: No external monitoring system dependencies
+            - Memory Efficient: Simple counter-based tracking
+
+        Examples:
+            Manual metrics recording::
+
+                # Record custom exception occurrence
+                FlextExceptions.Metrics.record_exception("CustomError")
+
+            Metrics monitoring and alerts::
+
+                # Get current exception metrics
+                metrics = FlextExceptions.Metrics.get_metrics()
+
+                # Monitor specific exception types
+                validation_errors = metrics.get("ValidationError", 0)
+                if validation_errors > 50:
+                    send_alert("High validation error rate detected")
+
+            Periodic metrics management::
+
+                # Get snapshot and reset for new period
+                current_metrics = FlextExceptions.Metrics.get_metrics()
+                log_metrics_to_monitoring_system(current_metrics)
+                FlextExceptions.Metrics.clear_metrics()
+
+        Note:
+            Metrics are automatically recorded when any FlextExceptions exception
+            is created. The metrics are stored in memory and should be periodically
+            exported to external monitoring systems if persistent tracking is required.
+
+        """
 
         _metrics: ClassVar[dict[str, int]] = {}
 
         @classmethod
         def record_exception(cls, exception_type: str) -> None:
-            """Record exception occurrence for metrics tracking."""
+            """Record exception occurrence.
+
+            Args:
+                exception_type: Exception type name.
+
+            """
             cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
 
         @classmethod
         def get_metrics(cls) -> dict[str, int]:
-            """Get current exception metrics."""
+            """Get exception counts.
+
+            Returns:
+                Dict mapping exception types to counts.
+
+            """
             return dict(cls._metrics)
 
         @classmethod
@@ -58,8 +249,59 @@ class FlextExceptions:
     # BASE EXCEPTION CLASS - Clean hierarchical approach
     # =============================================================================
 
-    class FlextExceptionBaseError(Exception):
-        """Base class for all FLEXT exceptions with common functionality."""
+    class BaseError(Exception):
+        """Base exception class providing structured error handling and context tracking.
+
+        This class serves as the foundation for all FLEXT exceptions, providing
+        consistent behavior including error codes, correlation IDs, context tracking,
+        automatic metrics recording, and structured string representation. All
+        FLEXT exceptions inherit from this base class to ensure consistent behavior.
+
+        Features:
+            - Structured error codes using FlextConstants
+            - Correlation ID generation for distributed tracing
+            - Context dictionary for debugging metadata
+            - Automatic metrics recording on exception creation
+            - Timestamp tracking for temporal analysis
+            - Consistent string representation with error codes
+
+        Args:
+            message: Human-readable error description
+            code: Optional error code (defaults to generic error)
+            context: Optional context metadata for debugging
+            correlation_id: Optional correlation ID for distributed tracing
+
+        Attributes:
+            message: The error message
+            code: The structured error code
+            context: Context metadata dictionary
+            correlation_id: Unique correlation identifier
+            timestamp: Exception creation timestamp
+            error_code: Property alias for code
+
+        Examples:
+            Basic exception with context::
+
+                error = BaseError(
+                    "Operation failed",
+                    code="FLEXT_2001",
+                    context={"operation": "create_user", "attempt": 3},
+                    correlation_id="req_123",
+                )
+
+            Exception with automatic correlation ID::
+
+                error = BaseError(
+                    "Validation failed", context={"field": "email", "value": "invalid"}
+                )
+                print(error.correlation_id)  # Generated automatically
+
+        Note:
+            This class automatically records metrics and generates correlation IDs
+            when not provided. All FLEXT exceptions should inherit from this class
+            to maintain consistency across the ecosystem.
+
+        """
 
         def __init__(
             self,
@@ -89,8 +331,12 @@ class FlextExceptions:
     # SPECIFIC EXCEPTION CLASSES - Clean subclass hierarchy
     # =============================================================================
 
-    class _AttributeError(FlextExceptionBaseError, AttributeError):
-        """Attribute access failed."""
+    class _AttributeError(BaseError, AttributeError):
+        """Attribute access failure with attribute context.
+
+        Raised when attribute access fails on objects. Provides context
+        about which attribute could not be accessed.
+        """
 
         def __init__(
             self, message: str, *, attribute_name: str | None = None, **kwargs: object
@@ -107,8 +353,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _OperationError(FlextExceptionBaseError, RuntimeError):
-        """Operation failed."""
+    class _OperationError(BaseError, RuntimeError):
+        """Generic operation failure with operation context.
+
+        Raised when specific operations fail. Provides context about
+        which operation failed for debugging purposes.
+        """
 
         def __init__(
             self, message: str, *, operation: str | None = None, **kwargs: object
@@ -125,8 +375,42 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _ValidationError(FlextExceptionBaseError, ValueError):
-        """Data validation failed."""
+    class _ValidationError(BaseError, ValueError):
+        """Data validation failure exception with field-specific context.
+
+        Raised when data validation fails, typically during input validation,
+        form processing, or data model validation. Provides structured context
+        including the specific field that failed, the invalid value, and
+        detailed validation information for debugging and user feedback.
+
+        Args:
+            message: Human-readable validation error description
+            field: Name of the field that failed validation
+            value: The invalid value that caused the validation failure
+            validation_details: Additional validation metadata and constraints
+            **kwargs: Additional context and correlation_id
+
+        Attributes:
+            field: The field name that failed validation
+            value: The invalid value
+            validation_details: Detailed validation information
+
+        Examples:
+            Field validation error::
+
+                raise ValidationError(
+                    "Email format is invalid",
+                    field="user_email",
+                    value="not-an-email",
+                    validation_details={"expected_format": "email"}
+                )
+
+        Note:
+            This exception inherits from both BaseError and ValueError to maintain
+            compatibility with standard Python exception handling while providing
+            FLEXT-specific structured error information.
+
+        """
 
         def __init__(
             self,
@@ -155,8 +439,39 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _ConfigurationError(FlextExceptionBaseError, ValueError):
-        """Configuration error."""
+    class _ConfigurationError(BaseError, ValueError):
+        """System configuration error with structured configuration context.
+
+        Raised when system configuration is invalid, missing, or improperly formatted.
+        Provides structured context including the specific configuration key that
+        caused the error, the configuration file location, and additional metadata
+        for debugging configuration issues.
+
+        Args:
+            message: Human-readable configuration error description
+            config_key: The configuration key that caused the error
+            config_file: Path to the configuration file with the issue
+            **kwargs: Additional context and correlation_id
+
+        Attributes:
+            config_key: The problematic configuration key
+            config_file: Configuration file path
+
+        Examples:
+            Missing configuration key::
+
+                raise ConfigurationError(
+                    "Database URL not configured",
+                    config_key="DATABASE_URL",
+                    config_file="/app/.env"
+                )
+
+        Note:
+            This exception is critical for deployment and runtime configuration
+            debugging. It provides precise information about configuration issues
+            to facilitate quick resolution in production environments.
+
+        """
 
         def __init__(
             self,
@@ -179,8 +494,13 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _ConnectionError(FlextExceptionBaseError, ConnectionError):
-        """Network/service connection failed."""
+    class _ConnectionError(BaseError, ConnectionError):
+        """Network or service connection failure with endpoint context.
+
+        Raised when network connections fail, services are unreachable, or
+        communication errors occur. Provides structured context about the
+        service and endpoint that failed.
+        """
 
         def __init__(
             self,
@@ -203,8 +523,13 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _ProcessingError(FlextExceptionBaseError, RuntimeError):
-        """Processing failed."""
+    class _ProcessingError(BaseError, RuntimeError):
+        """Business logic or data processing failure.
+
+        Raised when business operations fail, data processing encounters errors,
+        or business rules are violated. Includes context about the specific
+        operation and business rule that failed.
+        """
 
         def __init__(
             self,
@@ -227,8 +552,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _TimeoutError(FlextExceptionBaseError, TimeoutError):
-        """Operation timed out."""
+    class _TimeoutError(BaseError, TimeoutError):
+        """Operation timeout with timing context.
+
+        Raised when operations exceed their allowed execution time.
+        Includes the timeout duration for debugging performance issues.
+        """
 
         def __init__(
             self,
@@ -249,8 +578,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _NotFoundError(FlextExceptionBaseError, FileNotFoundError):
-        """Resource not found."""
+    class _NotFoundError(BaseError, FileNotFoundError):
+        """Resource not found with resource identification.
+
+        Raised when requested resources (files, database records, services)
+        cannot be located. Provides context about the resource type and identifier.
+        """
 
         def __init__(
             self,
@@ -273,8 +606,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _AlreadyExistsError(FlextExceptionBaseError, FileExistsError):
-        """Resource already exists."""
+    class _AlreadyExistsError(BaseError, FileExistsError):
+        """Resource already exists conflict.
+
+        Raised when attempting to create resources that already exist.
+        Provides context about the conflicting resource identifier.
+        """
 
         def __init__(
             self, message: str, *, resource_id: str | None = None, **kwargs: object
@@ -291,8 +628,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _PermissionError(FlextExceptionBaseError, PermissionError):
-        """Insufficient permissions."""
+    class _PermissionError(BaseError, PermissionError):
+        """Insufficient permissions for requested operation.
+
+        Raised when user lacks required permissions for an operation.
+        Includes information about the required permission level.
+        """
 
         def __init__(
             self,
@@ -313,8 +654,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _AuthenticationError(FlextExceptionBaseError, PermissionError):
-        """Authentication failed."""
+    class _AuthenticationError(BaseError, PermissionError):
+        """Authentication failure with method context.
+
+        Raised when user authentication fails. Includes context about
+        the authentication method that was attempted.
+        """
 
         def __init__(
             self, message: str, *, auth_method: str | None = None, **kwargs: object
@@ -331,8 +676,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _TypeError(FlextExceptionBaseError, TypeError):
-        """Type validation failed."""
+    class _TypeError(BaseError, TypeError):
+        """Type validation failure with type context.
+
+        Raised when type validation fails or type conversion errors occur.
+        Includes expected and actual type information for debugging.
+        """
 
         def __init__(
             self,
@@ -355,8 +704,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _CriticalError(FlextExceptionBaseError, SystemError):
-        """System critical error."""
+    class _CriticalError(BaseError, SystemError):
+        """Critical system error requiring immediate attention.
+
+        Raised for serious system failures that may compromise application
+        stability or data integrity. Used for high-priority alerts.
+        """
 
         def __init__(self, message: str, **kwargs: object) -> None:
             super().__init__(
@@ -366,8 +719,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _Error(FlextExceptionBaseError, RuntimeError):
-        """Base FLEXT error."""
+    class _Error(BaseError, RuntimeError):
+        """Generic FLEXT error for general failures.
+
+        Base error class for general FLEXT failures that don't fit
+        into more specific exception categories.
+        """
 
         def __init__(self, message: str, **kwargs: object) -> None:
             super().__init__(
@@ -377,8 +734,12 @@ class FlextExceptions:
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
 
-    class _UserError(FlextExceptionBaseError, TypeError):
-        """User input/usage error."""
+    class _UserError(BaseError, TypeError):
+        """User input or API usage error.
+
+        Raised when users provide invalid input or use APIs incorrectly.
+        Helps distinguish user errors from system errors.
+        """
 
         def __init__(self, message: str, **kwargs: object) -> None:
             super().__init__(
@@ -433,7 +794,55 @@ class FlextExceptions:
     # =============================================================================
 
     class ErrorCodes:
-        """Error code constants using FlextConstants for consistency."""
+        """Centralized error code constants with FlextConstants integration.
+
+        This class provides a centralized collection of structured error codes
+        used throughout the FLEXT exception system. All error codes are sourced
+        from FlextConstants to ensure consistency and maintainability across
+        the entire FLEXT ecosystem.
+
+        Error Code Categories:
+            - Generic: General-purpose error codes
+            - Validation: Data validation and format errors
+            - Configuration: System configuration errors
+            - Network: Connection and communication errors
+            - Authentication: Security and permission errors
+            - Resource: Not found and existence errors
+            - Processing: Business logic and operation errors
+            - System: Critical system and infrastructure errors
+
+        Code Format:
+            Error codes follow the FLEXT_XXXX format with numeric categorization:
+            - 1000-1999: Business logic errors
+            - 2000-2999: Technical infrastructure errors
+            - 3000-3999: Validation and data errors
+            - 4000-4999: Security and authentication errors
+
+        Examples:
+            Using error codes in exception handling::
+
+                # Check for specific error types
+                try:
+                    risky_operation()
+                except FlextExceptions.ValidationError as e:
+                    if e.code == FlextExceptions.ErrorCodes.VALIDATION_ERROR:
+                        handle_validation_error(e)
+
+            Error code mapping for monitoring::
+
+                # Map error codes to alert severity
+                error_severity = {
+                    FlextExceptions.ErrorCodes.CRITICAL_ERROR: "high",
+                    FlextExceptions.ErrorCodes.VALIDATION_ERROR: "medium",
+                    FlextExceptions.ErrorCodes.NOT_FOUND: "low",
+                }
+
+        Note:
+            All error codes are synchronized with FlextConstants to maintain
+            consistency across the ecosystem. These constants should be used
+            for error code comparisons rather than hardcoded strings.
+
+        """
 
         GENERIC_ERROR = FlextConstants.Errors.GENERIC_ERROR
         VALIDATION_ERROR = FlextConstants.Errors.VALIDATION_ERROR
@@ -456,7 +865,7 @@ class FlextExceptions:
     # DIRECT CALLABLE INTERFACE - For general usage
     # =============================================================================
 
-    def __new__(
+    def __new__(  # type: ignore[misc]
         cls,
         message: str,
         *,
@@ -465,7 +874,7 @@ class FlextExceptions:
         config_key: str | None = None,
         error_code: str | None = None,
         **kwargs: object,
-    ) -> FlextExceptionBaseError:
+    ) -> BaseError:
         """Direct callable interface for FlextExceptions.
 
         Automatically selects appropriate exception type based on context.
@@ -485,7 +894,7 @@ class FlextExceptions:
                 operation=operation,
                 code=error_code,
                 context=context,
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
             )
         if field is not None:
             value = kwargs.get("value")
@@ -497,7 +906,7 @@ class FlextExceptions:
                 validation_details=validation_details,
                 code=error_code,
                 context=context,
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
             )
         if config_key is not None:
             config_file = cast("str | None", kwargs.get("config_file"))
@@ -507,10 +916,12 @@ class FlextExceptions:
                 config_file=config_file,
                 code=error_code,
                 context=context,
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
             )
         # Default to general error
-        return cls._Error(message, code=error_code, context=context, correlation_id=correlation_id)
+        return cls._Error(
+            message, code=error_code, context=context, correlation_id=correlation_id
+        )
 
     # =============================================================================
     # UTILITY METHODS

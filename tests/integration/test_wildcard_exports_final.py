@@ -268,7 +268,7 @@ class TestFlextCoreSystemValidation:
             .ok(10)
             .map(lambda x: x * 2)
             .map(lambda x: x + 5)
-            .map(lambda x: str(x))
+            .map(str)
         )
 
         assert result.success is True

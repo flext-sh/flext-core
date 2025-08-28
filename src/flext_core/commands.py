@@ -105,13 +105,12 @@ from pydantic import (
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
-from flext_core.models import FlextModel
+from flext_core.models import FlextModels
 from flext_core.payload import FlextPayload
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-from flext_core.validation import FlextPredicates
 
 # =============================================================================
 # FLEXT COMMANDS - Consolidated CQRS Implementation
@@ -243,7 +242,7 @@ class FlextCommands:
         validation, serialization, and metadata handling.
         """
 
-        class Command(FlextModel):
+        class Command(FlextModels.BaseConfig):
             """Base command with validation and metadata using FlextModel.
 
             Implements enterprise command patterns with:
@@ -407,7 +406,7 @@ class FlextCommands:
                 """Validate command using FlextValidation patterns.
 
                 Override in subclasses for custom validation logic.
-                Uses FlextPredicates for common validation patterns.
+                Uses FlextValidation for common validation patterns.
 
                 Returns:
                     FlextResult indicating validation success or failure
@@ -432,9 +431,7 @@ class FlextCommands:
                     FlextResult indicating validation success or failure
 
                 """
-                if not FlextPredicates.is_not_none(value) or (
-                    isinstance(value, str) and not value.strip()
-                ):
+                if value is None or (isinstance(value, str) and not value.strip()):
                     msg = error_msg or f"{field_name} is required"
                     return FlextResult[None].fail(
                         msg,
@@ -447,7 +444,7 @@ class FlextCommands:
                 email: str,
                 field_name: str = "email",
             ) -> FlextResult[None]:
-                """Validate email format using FlextPredicates.
+                """Validate email format using FlextValidation.
 
                 Args:
                     email: Email address to validate
@@ -457,7 +454,7 @@ class FlextCommands:
                     FlextResult indicating validation success or failure
 
                 """
-                # Use FlextPredicates for validation if available
+                # Use FlextValidation for validation
                 if (
                     not email
                     or "@" not in email
@@ -563,7 +560,7 @@ class FlextCommands:
                     return FlextMixins.to_json(self, indent)
                 return FlextMixins.to_json(self, None)
 
-        class Query(FlextModel):
+        class Query(FlextModels.BaseConfig):
             """Base query for read operations without side effects.
 
             Implements enterprise query patterns with:

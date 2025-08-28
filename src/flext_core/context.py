@@ -769,12 +769,10 @@ class FlextContext:
                 # Calculate duration
                 end_time = datetime.now(UTC)
                 duration = (end_time - start_time).total_seconds()
-                operation_metadata.update(
-                    {
-                        "end_time": end_time,
-                        "duration_seconds": duration,
-                    }
-                )
+                operation_metadata.update({
+                    "end_time": end_time,
+                    "duration_seconds": duration,
+                })
 
                 # Restore previous context
                 FlextContext.Variables.Performance.OPERATION_START_TIME.reset(
@@ -1013,39 +1011,6 @@ class FlextContext:
             return (
                 f"FlextContext({', '.join(parts)})" if parts else "FlextContext(empty)"
             )
-
-
-# =============================================================================
-# Backward Compatibility Layer
-# =============================================================================
-
-# Alias for backward compatibility
-FlextContexts = FlextContext
-
-# Context variable aliases for backward compatibility
-_correlation_id: Final[ContextVar[str | None]] = (
-    FlextContext.Variables.Correlation.CORRELATION_ID
-)
-_parent_correlation_id: Final[ContextVar[str | None]] = (
-    FlextContext.Variables.Correlation.PARENT_CORRELATION_ID
-)
-_service_name: Final[ContextVar[str | None]] = (
-    FlextContext.Variables.Service.SERVICE_NAME
-)
-_service_version: Final[ContextVar[str | None]] = (
-    FlextContext.Variables.Service.SERVICE_VERSION
-)
-_user_id: Final[ContextVar[str | None]] = FlextContext.Variables.Request.USER_ID
-_operation_name: Final[ContextVar[str | None]] = (
-    FlextContext.Variables.Performance.OPERATION_NAME
-)
-_request_id: Final[ContextVar[str | None]] = FlextContext.Variables.Request.REQUEST_ID
-_operation_start_time: Final[ContextVar[datetime | None]] = (
-    FlextContext.Variables.Performance.OPERATION_START_TIME
-)
-_operation_metadata: Final[ContextVar[FlextTypes.Core.Dict | None]] = (
-    FlextContext.Variables.Performance.OPERATION_METADATA
-)
 
 
 # =============================================================================

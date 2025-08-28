@@ -15,7 +15,8 @@ from tests.support.test_factories import (
     UserEntityFactory,
 )
 
-from flext_core import FlextEntity, FlextModel
+from flext_core.models import FlextModels
+from flext_core.result import FlextResult
 
 
 # Simple edge case generators for testing
@@ -57,7 +58,7 @@ class TestFlextModelCore:
         user_data = user_data_factory.build()
 
         # Create a simple model for testing
-        class TestModel(FlextModel):
+        class TestModel(FlextModels.BaseConfig):
             name: str
             email: str
             age: int
@@ -74,7 +75,7 @@ class TestFlextModelCore:
         """Test FlextModel with factory_boy generated data."""
         user_entity = UserEntityFactory.create()
 
-        class UserModel(FlextModel):
+        class UserModel(FlextModels.BaseConfig):
             name: str
             email: str
             age: int
@@ -108,9 +109,13 @@ class TestFlextEntityCore:
         """Test FlextEntity creation using factories."""
         user_data = user_data_factory.build()
 
-        class TestEntity(FlextEntity):
+        class TestEntity(FlextModels.Entity):
             name: str
             email: str
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                from flext_core.result import FlextResult
+                return FlextResult[None].ok(None)
 
         entity = TestEntity(
             id=str(uuid.uuid4()), name=user_data["name"], email=user_data["email"]
@@ -123,9 +128,13 @@ class TestFlextEntityCore:
         """Test FlextEntity with factory_boy generated data."""
         user_entity = UserEntityFactory.create()
 
-        class UserEntity(FlextEntity):
+        class UserEntity(FlextModels.Entity):
             name: str
             email: str
+
+            def validate_business_rules(self) -> FlextResult[None]:
+                from flext_core.result import FlextResult
+                return FlextResult[None].ok(None)
 
         entity = UserEntity(
             id=str(user_entity.id),
@@ -148,7 +157,7 @@ class TestFlextModelPerformance:
     def test_model_creation_performance(self, benchmark: object) -> None:
         """Benchmark model creation performance."""
 
-        class PerformanceModel(FlextModel):
+        class PerformanceModel(FlextModels.BaseConfig):
             name: str
             value: int
 
@@ -166,7 +175,7 @@ class TestFlextModelPerformance:
         """Test memory efficiency of model operations."""
         profiler = PerformanceProfiler()
 
-        class MemoryModel(FlextModel):
+        class MemoryModel(FlextModels.BaseConfig):
             data: str
             number: int
 
@@ -193,7 +202,7 @@ class TestFlextModelEdgeCases:
     def test_unicode_string_handling(self, edge_value: str) -> None:
         """Test model handling of unicode strings."""
 
-        class UnicodeModel(FlextModel):
+        class UnicodeModel(FlextModels.BaseConfig):
             text: str
 
         model = UnicodeModel(text=edge_value)
@@ -203,7 +212,7 @@ class TestFlextModelEdgeCases:
     def test_boundary_number_handling(self, edge_value: float) -> None:
         """Test model handling of boundary numbers."""
 
-        class NumberModel(FlextModel):
+        class NumberModel(FlextModels.BaseConfig):
             number: float
 
         model = NumberModel(number=edge_value)
@@ -222,7 +231,7 @@ class TestFlextModelIntegration:
         """Test complete model workflow with validation."""
         user_data = user_data_factory.build()
 
-        class CompleteModel(FlextModel):
+        class CompleteModel(FlextModels.BaseConfig):
             name: str
             email: str
             age: int
@@ -243,7 +252,7 @@ class TestFlextModelIntegration:
         """Test model with comprehensive validation test cases."""
         test_cases = create_validation_test_cases()
 
-        class ValidationModel(FlextModel):
+        class ValidationModel(FlextModels.BaseConfig):
             data: object
 
         for case in test_cases:
@@ -264,7 +273,7 @@ class TestFlextModelFactoryIntegration:
         """Test model creation with batch factory data."""
         users = [UserEntityFactory.create() for _ in range(5)]
 
-        class BatchModel(FlextModel):
+        class BatchModel(FlextModels.BaseConfig):
             users: list[object]
 
         model = BatchModel(users=users)

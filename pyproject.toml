@@ -262,6 +262,7 @@ markers = [
     "concurrency: Concurrency and threading tests",
     "race_condition: Race condition tests",
     "memory: Memory usage tests",
+    "timeout: Tests that may timeout",
 ]
 minversion = "8.0"
 testpaths = ["tests"]

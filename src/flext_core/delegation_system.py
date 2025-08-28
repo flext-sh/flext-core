@@ -126,7 +126,7 @@ class FlextDelegationSystem:
                     mixin_class=mixin_class.__name__,
                     error=str(e),
                 )
-                raise FlextExceptions.FlextExceptionBaseError(error_msg) from e
+                raise FlextExceptions.BaseError(error_msg) from e
 
         def _auto_delegate_methods(self) -> None:
             """Automatically delegate common methods from mixins to host."""
@@ -146,10 +146,10 @@ class FlextDelegationSystem:
                     if not name.startswith("_")
                     and callable(getattr(mixin_instance, name))
                     and name
-                    not in [
+                    not in {
                         "is_valid",
                         "validation_errors",
-                    ]  # Properties handled separately
+                    }  # Properties handled separately
                 ]
 
                 for method_name in method_names:
@@ -182,7 +182,7 @@ class FlextDelegationSystem:
                         mixin_class=mixin_instance.__class__.__name__,
                         error=str(e),
                     )
-                    raise FlextExceptions.FlextExceptionBaseError(error_msg) from e
+                    raise FlextExceptions.BaseError(error_msg) from e
 
             # Preserve method metadata
             delegated_method.__name__ = method_name
@@ -326,7 +326,7 @@ class FlextDelegationSystem:
         """Validate that delegation methods exist on the host."""
 
         def _raise_delegation_error(message: str) -> NoReturn:
-            raise FlextExceptions.FlextExceptionBaseError(message)
+            raise FlextExceptions.BaseError(message)
 
         # Test validation methods exist
         if not hasattr(host, "is_valid"):
@@ -360,13 +360,13 @@ class FlextDelegationSystem:
         """Safe delegator access with proper typing."""
         if not hasattr(host, "delegator"):
             error_msg = "Host missing delegator attribute"
-            raise FlextExceptions.FlextExceptionBaseError(error_msg)
+            raise FlextExceptions.BaseError(error_msg)
 
         # Dynamic attribute access is necessary here for validation code
         delegator_attr = getattr(host, "delegator", None)
         if delegator_attr is None:
             error_msg = "Host delegator attribute is None"
-            raise FlextExceptions.FlextExceptionBaseError(error_msg)
+            raise FlextExceptions.BaseError(error_msg)
         return cast("FlextDelegationSystem.MixinDelegator", delegator_attr)
 
     @staticmethod
@@ -376,7 +376,7 @@ class FlextDelegationSystem:
         """Validate delegation info and return it."""
 
         def _raise_delegation_error(message: str) -> NoReturn:
-            raise FlextExceptions.FlextExceptionBaseError(message)
+            raise FlextExceptions.BaseError(message)
 
         # Get delegation info using safe helper
         delegator = FlextDelegationSystem._get_host_delegator(host)

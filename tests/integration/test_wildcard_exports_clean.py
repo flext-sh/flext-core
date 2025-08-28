@@ -7,6 +7,10 @@ exported and functional.
 
 from __future__ import annotations
 
+import importlib
+import inspect
+import sys
+import time
 import uuid
 from typing import get_origin
 
@@ -301,7 +305,8 @@ class TestFlextCoreIntegrationScenarios:
         # 4. Handle any potential errors using exception system
         try:
             if not processed_result.success:
-                raise FlextExceptions.OperationError("Workflow failed")
+                error_msg = "Workflow failed"
+                raise FlextExceptions.OperationError(error_msg)
         except FlextExceptions.OperationError as e:
             pytest.fail(f"Unexpected workflow failure: {e}")
 
@@ -360,9 +365,6 @@ class TestFlextCoreImportPerformance:
 
     def test_import_time_reasonable(self) -> None:
         """Test that wildcard import time is reasonable."""
-        import importlib
-        import time
-
         # Reload the module to test import time
         start_time = time.time()
         importlib.reload(__import__("flext_core"))
@@ -373,8 +375,6 @@ class TestFlextCoreImportPerformance:
 
     def test_memory_usage_reasonable(self) -> None:
         """Test that memory usage after import is reasonable."""
-        import sys
-
         # Get current memory usage (simplified)
         modules_count = len(sys.modules)
 
@@ -391,7 +391,6 @@ class TestFlextCoreExportCompleteness:
     def test_all_public_classes_exported(self) -> None:
         """Test that all public classes from major modules are exported."""
         # This test ensures no important classes are missing from exports
-        import inspect
 
         # Get all classes from the current module's globals
         exported_classes = []
@@ -404,8 +403,6 @@ class TestFlextCoreExportCompleteness:
 
     def test_all_public_functions_exported(self) -> None:
         """Test that all public functions from major modules are exported."""
-        import inspect
-
         # Get all functions from the current module's globals
         exported_functions = []
         for name, obj in globals().items():

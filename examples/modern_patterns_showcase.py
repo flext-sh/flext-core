@@ -110,7 +110,7 @@ class EmailAddress(BaseModel):
     def create(cls, email: str) -> FlextResult[Self]:
         """Create email with validation."""
         try:
-            if "@" not in email or "." not in email.split("@")[-1]:
+            if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
                 return FlextResult[Self].fail("Invalid email format")
             instance = cls(address=email.lower())
             return FlextResult[Self].ok(instance)

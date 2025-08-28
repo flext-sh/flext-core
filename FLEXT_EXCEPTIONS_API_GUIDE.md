@@ -40,21 +40,21 @@ except FlextExceptions._get_exception_class("FlextValidationError") as e:
 #### Legacy API (Still works but not recommended)
 ```python
 # ⚠️ DEPRECATED - Use modern API instead
-raise FlextExceptions.FlextValidationError("Invalid input")  # Works but use modern
-except FlextExceptions.FlextValidationError as e:  # Works but use modern
+raise FlextExceptions.ValidationError("Invalid input")  # Works but use modern
+except FlextExceptions.ValidationError as e:  # Works but use modern
 ```
 
 ### Technical Explanation
 
 - `FlextExceptions.ValidationError` → **Exception class** (modern API, use this)
-- `FlextExceptions.FlextValidationError` → **Exception class** (legacy API, same functionality)
+- `FlextExceptions.ValidationError` → **Exception class** (legacy API, same functionality)
 
 ### Migration Guidelines
 
 When refactoring existing code:
 
-1. **Update raises**: `FlextExceptions.FlextXxxError()` → `FlextExceptions.XxxError()`
-2. **Update except**: `FlextExceptions.FlextXxxError` → `FlextExceptions.XxxError`
+1. **Update raises**: `FlextExceptions.XxxError()` → `FlextExceptions.XxxError()`
+2. **Update except**: `FlextExceptions.XxxError` → `FlextExceptions.XxxError`
 3. **For new code**: Always use modern API (without Flext prefix)
 
 ### Available Exception Types

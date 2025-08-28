@@ -974,7 +974,7 @@ class TestAdditionalExceptions:
 
     def test_flext_processing_error(self) -> None:
         """Test FlextProcessingError functionality."""
-        error = FlextProcessingError(
+        error = FlextExceptions.ProcessingError(
             "Processing failed",
             context={"data": "test_data", "stage": "validation"},
         )
@@ -984,11 +984,10 @@ class TestAdditionalExceptions:
         assert "PROCESSING_ERROR" in cast(
             "str", get_dynamic_attr(error, "error_code", "")
         )
-        # FlextProcessingError uses nested context
+        # FlextProcessingError uses direct context
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
-        nested_ctx = cast("dict[str, object]", context_obj["context"])
-        assert nested_ctx["data"] == "test_data"
-        assert nested_ctx["stage"] == "validation"
+        assert context_obj["data"] == "test_data"
+        assert context_obj["stage"] == "validation"
 
     def test_flext_critical_error(self) -> None:
         """Test FlextExceptions.CriticalError functionality."""
@@ -1038,15 +1037,15 @@ class TestAdditionalExceptions:
     def test_exception_metrics(self) -> None:
         """Test exception metrics functionality."""
         # Clear metrics first
-        clear_exception_metrics()
+        FlextExceptions.clear_metrics()
 
         # Get initial metrics
-        metrics = get_exception_metrics()
+        metrics = FlextExceptions.get_metrics()
         assert isinstance(metrics, dict)
 
         # Clear again to ensure clean state
-        clear_exception_metrics()
-        metrics_after_clear = get_exception_metrics()
+        FlextExceptions.clear_metrics()
+        metrics_after_clear = FlextExceptions.get_metrics()
         assert len(metrics_after_clear) == 0
 
     def test_flext_exceptions_factory(self) -> None:

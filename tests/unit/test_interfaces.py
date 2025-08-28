@@ -9,7 +9,8 @@ import types
 
 import pytest
 
-from flext_core import FlextConfigurable, FlextValidator, protocols as interfaces
+from flext_core import protocols as interfaces
+from flext_core.protocols import FlextProtocols
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -22,20 +23,20 @@ class TestProtocolInterfaces:
         assert hasattr(FlextConfigurable, "configure")
 
     def test_validator_protocol(self) -> None:
-        """Test FlextValidator protocol."""  # Test that protocol is defined
-        assert hasattr(FlextValidator, "validate")
+        """Test FlextProtocols.Foundation.Validator protocol."""  # Test that protocol is defined
+        assert hasattr(FlextProtocols.Foundation.Validator, "validate")
 
     def test_protocol_runtime_checkable(self) -> None:
         """Test that protocols are runtime checkable."""  # All protocols should be runtime checkable
         assert hasattr(FlextConfigurable, "__instancecheck__")
-        assert hasattr(FlextValidator, "__instancecheck__")
+        assert hasattr(FlextProtocols.Foundation.Validator, "__instancecheck__")
 
     def test_protocol_imports(self) -> None:
         """Test that TYPE_CHECKING imports are accessible in protocols."""  # This test covers the TYPE_CHECKING import lines
         # Verify module structure
         assert isinstance(interfaces, types.ModuleType)
         assert hasattr(interfaces, "FlextConfigurable")
-        assert hasattr(interfaces, "FlextValidator")
+        assert hasattr(interfaces, "FlextProtocols.Foundation.Validator")
 
     def test_type_checking_imports(self) -> None:
         """Test TYPE_CHECKING imports for coverage."""  # These tests will cover the TYPE_CHECKING import lines
@@ -44,4 +45,4 @@ class TestProtocolInterfaces:
         assert FlextConfigurable.__module__ == "flext_core.protocols", (
             f"Expected {'flext_core.protocols'}, got {FlextConfigurable.__module__}"
         )
-        assert FlextValidator.__module__ == "flext_core.protocols"
+        assert FlextProtocols.Foundation.Validator.__module__ == "flext_core.protocols"

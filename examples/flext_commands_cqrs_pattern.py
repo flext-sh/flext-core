@@ -16,9 +16,76 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import cast, override
 
-from shared_domain import EmailAddress, SharedDomainFactory, User
+from flext_core import FlextCommands, FlextEntity, FlextResult, FlextValue
 
-from flext_core import FlextCommands, FlextResult
+# =============================================================================
+# DOMAIN MODELS - For demonstration
+# =============================================================================
+
+
+class EmailAddress(FlextValue):
+    """Email address value object."""
+
+    address: str
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for email address."""
+        if "@" not in self.address:
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
+
+    @classmethod
+    def create(cls, address: str) -> FlextResult[EmailAddress]:
+        """Create email address with validation."""
+        if "@" not in address:
+            return FlextResult["EmailAddress"].fail("Invalid email format")
+        return FlextResult["EmailAddress"].ok(cls(address=address))
+
+
+class User(FlextEntity):
+    """User entity."""
+
+    name: str
+    email: EmailAddress
+    age: int = 0
+    is_active: bool = True
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for user."""
+        if not self.name.strip():
+            return FlextResult[None].fail("Name cannot be empty")
+        if self.age < 0 or self.age > 150:
+            return FlextResult[None].fail("Invalid age")
+        return self.email.validate_business_rules()
+
+    def activate(self) -> FlextResult[None]:
+        """Activate user."""
+        if self.is_active:
+            return FlextResult[None].fail("User already active")
+        self.is_active = True
+        return FlextResult[None].ok(None)
+
+
+class SharedDomainFactory:
+    """Factory for domain objects."""
+
+    @staticmethod
+    def create_user(name: str, email: str, age: int = 0) -> FlextResult[User]:
+        """Create user with validation."""
+        email_result = EmailAddress.create(email)
+        if email_result.failure:
+            return FlextResult[User].fail(f"Invalid email: {email_result.error}")
+
+        if age < 0 or age > 150:
+            return FlextResult[User].fail("Invalid age")
+
+        user = User(
+            name=name,
+            email=email_result.value,
+            age=age,
+            is_active=True
+        )
+        return FlextResult[User].ok(user)
 
 # =============================================================================
 # SIMPLE EVENT STORE - For demonstration

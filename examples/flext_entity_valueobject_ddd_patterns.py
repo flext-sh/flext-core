@@ -25,11 +25,9 @@ from flext_core import (
     FlextValue,
     FlextVersion,
 )
-from flext_core.root_models import (
-    FlextEventList,
-    FlextMetadata,
-    FlextTimestamp,
-)
+
+# FlextRootModels consolidated into FlextModels in models.py
+from flext_core.models import FlextModels
 
 # Constants to avoid magic numbers
 MIN_PRODUCT_CODE_LENGTH = 3
@@ -334,10 +332,10 @@ class DomainObjectFactory:
                 price=price,
                 id=FlextEntityId("product_" + code),
                 version=FlextVersion(1),
-                created_at=FlextTimestamp(),
-                updated_at=FlextTimestamp(),
-                domain_events=FlextEventList(),
-                metadata=FlextMetadata(),
+                created_at=FlextModels.Timestamp.now(),
+                updated_at=FlextModels.Timestamp.now(),
+                domain_events=FlextModels.EventList(root=[]),
+                metadata=FlextModels.Metadata(root={}),
             )
 
             # Validate business rules
@@ -369,10 +367,10 @@ class DomainObjectFactory:
             address=address,
             id=FlextEntityId(f"customer_{name.replace(' ', '_').lower()}"),
             version=FlextVersion(1),
-            created_at=FlextTimestamp(),
-            updated_at=FlextTimestamp(),
-            domain_events=FlextEventList(),
-            metadata=FlextMetadata(),
+            created_at=FlextModels.Timestamp.now(),
+            updated_at=FlextModels.Timestamp.now(),
+            domain_events=FlextModels.EventList(root=[]),
+            metadata=FlextModels.Metadata(root={}),
         )
         validation_result = customer.validate_business_rules()
         if not validation_result.success:

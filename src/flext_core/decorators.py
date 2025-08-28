@@ -1,61 +1,34 @@
-"""Enterprise decorator patterns for the FLEXT core library.
+"""Decorator functions for reliability, validation, performance monitoring, and observability.
 
-This module provides the hierarchical FlextDecorators class system following
-FLEXT_REFACTORING_PROMPT.md requirements with proper SOLID principles,
-zero circular imports, and full integration with FlextTypes, FlextConstants,
-and FlextProtocols.
+Provides decorators organized into categories: Reliability (safe execution, retries),
+Validation (input/output checking), Performance (timing, caching), Observability
+(logging, tracing), and Lifecycle (deprecation warnings).
 
-Built for Python 3.13+ with strict typing enforcement and enterprise-grade
-reliability patterns.
+Main Decorator Categories:
+    FlextDecorators.Reliability: safe_result, retry, timeout decorators
+    FlextDecorators.Validation: validate_input, validate_output, type_check decorators
+    FlextDecorators.Performance: monitor, cache, profile decorators
+    FlextDecorators.Observability: log_calls, trace_execution decorators
+    FlextDecorators.Lifecycle: deprecated, version_check decorators
 
-Architecture:
-    FlextDecorators
-    ├── Reliability    # Safe execution, retries, timeouts
-    ├── Validation     # Input/output validation, type checking
-    ├── Performance    # Monitoring, caching, profiling
-    ├── Observability  # Logging, tracing, metrics
-    ├── Lifecycle      # Deprecation, versioning
-    └── Integration    # Cross-cutting decorator composition
-
-Patterns Applied:
-    - Single Responsibility: Each nested class handles one decorator category
-    - Open/Closed: Easy to extend with new decorator categories
-    - Liskov Substitution: All decorators maintain consistent interfaces
-    - Interface Segregation: Clients use only needed decorator categories
-    - Dependency Inversion: Decorators depend on FlextTypes/FlextProtocols abstractions
-
-Examples:
-    Safe execution with FlextResult::
-
+Usage:
+    Safe function execution:
         @FlextDecorators.Reliability.safe_result
         def process_data(data: dict) -> int:
             return len(data)
+        # Returns FlextResult instead of raising exceptions
 
-
-        result = process_data({"key": "value"})
-        # Returns: FlextResult.ok(1)
-
-    Performance monitoring::
-
-        @FlextDecorators.Performance.monitor(
-            threshold=FlextConstants.Performance.SLOW_QUERY_THRESHOLD
-        )
+    Performance monitoring:
+        @FlextDecorators.Performance.monitor(threshold=1.0)
         def expensive_operation() -> dict:
             return {"status": "completed"}
+        # Logs warning if execution exceeds threshold
 
-    Input validation::
-
-        @FlextDecorators.Validation.validate_input(
-            lambda x: isinstance(x, str) and len(x) > 0
-        )
-        def process_text(text: str) -> str:
-            return text.upper()
-
-Note:
-    All decorators integrate with FlextResult for consistent error handling
-    and use FlextConstants for configuration defaults. Legacy compatibility
-    is maintained through minimal facades in legacy.py without ABI changes.
-
+    Input validation:
+        @FlextDecorators.Validation.validate_input(lambda x: x > 0)
+        def calculate(value: int) -> int:
+            return value * 2
+        # Validates input before execution
 """
 
 from __future__ import annotations
@@ -888,12 +861,10 @@ class FlextDecorators:
                         result = func(*args, **kwargs)
 
                         elapsed_time = time.perf_counter() - start_time
-                        log_data.update(
-                            {
-                                "elapsed_time": elapsed_time,
-                                "status": "success",
-                            }
-                        )
+                        log_data.update({
+                            "elapsed_time": elapsed_time,
+                            "status": "success",
+                        })
 
                         if include_result:
                             log_data["result_type"] = type(result).__name__
@@ -903,14 +874,12 @@ class FlextDecorators:
 
                     except Exception as e:
                         elapsed_time = time.perf_counter() - start_time
-                        log_data.update(
-                            {
-                                "elapsed_time": elapsed_time,
-                                "status": "error",
-                                "exception": type(e).__name__,
-                                "error_message": str(e),
-                            }
-                        )
+                        log_data.update({
+                            "elapsed_time": elapsed_time,
+                            "status": "error",
+                            "exception": type(e).__name__,
+                            "error_message": str(e),
+                        })
 
                         logger.exception("Function execution failed", extra=log_data)
                         raise
@@ -1158,7 +1127,6 @@ class FlextDecorators:
                             pass
 
             """
-            T = TypeVar("T")
 
             def decorator(cls: type[T]) -> type[T]:
                 # Store reference to original init method
@@ -1175,8 +1143,8 @@ class FlextDecorators:
                     # Call original init method with proper casting
                     original_init(self, *args, **kwargs)
 
-                # Replace __init__ with the wrapped version
-                cls.__init__ = new_init
+                # Replace __init__ with the wrapped version using setattr for type safety
+                setattr(cls, "__init__", new_init)  # noqa: B010
                 return cls
 
             return decorator

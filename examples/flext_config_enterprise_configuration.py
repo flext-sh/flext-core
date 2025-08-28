@@ -137,7 +137,8 @@ class SecurityConfig(FlextConfig):
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key complexity."""
         if len(v) < 32:
-            raise ValueError("Secret key must be at least 32 characters")
+            msg = "Secret key must be at least 32 characters"
+            raise ValueError(msg)
 
         # Check complexity requirements
         has_upper = any(c.isupper() for c in v)
@@ -145,7 +146,8 @@ class SecurityConfig(FlextConfig):
         has_digit = any(c.isdigit() for c in v)
 
         if not (has_upper and has_lower and has_digit):
-            raise ValueError("Secret key must contain uppercase, lowercase, and digits")
+            msg = "Secret key must contain uppercase, lowercase, and digits"
+            raise ValueError(msg)
 
         return v
 
@@ -462,7 +464,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
         }
 
         # Save to temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f, indent=2)
             config_file = f.name
 

@@ -152,7 +152,8 @@ from flext_core.decorators import *
 from flext_core.delegation_system import *
 from flext_core.fields import *
 from flext_core.mixins import *
-from flext_core.root_models import *
+
+# root_models consolidated into models.py
 from flext_core.schema_processing import *
 from flext_core.services import *
 from flext_core.type_adapters import *
@@ -192,7 +193,8 @@ import flext_core.observability as _observability
 import flext_core.payload as _payload
 import flext_core.protocols as _protocols
 import flext_core.result as _result
-import flext_core.root_models as _root_models
+
+# root_models consolidated into models.py
 import flext_core.schema_processing as _schema_processing
 import flext_core.services as _services
 import flext_core.type_adapters as _type_adapters
@@ -233,7 +235,7 @@ for module in [
     _delegation_system,
     _schema_processing,
     _type_adapters,
-    _root_models,
+    # _root_models consolidated into models.py
     _legacy,  # Include legacy module in wildcard exports
 ]:
     if hasattr(module, "__all__"):
