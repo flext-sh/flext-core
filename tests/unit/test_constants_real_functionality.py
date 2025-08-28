@@ -344,7 +344,9 @@ class TestValidationLevelStrEnumReal:
         def validate_with_level(data: dict, level: str) -> bool:
             if level == validation_enum.STRICT.value:
                 # Strict validation - all fields required
-                return all(key in data for key in ["required1", "required2", "required3"])
+                return all(
+                    key in data for key in ["required1", "required2", "required3"]
+                )
             if level == validation_enum.NORMAL.value:
                 # Normal validation - some fields required
                 return any(key in data for key in ["required1", "required2"])
@@ -436,7 +438,9 @@ class TestStrEnumFunctionalityReal:
 
                 # Test string operations work
                 assert len(enum_value.value) > 0
-                assert enum_value.value.strip() == enum_value.value  # No leading/trailing whitespace
+                assert (
+                    enum_value.value.strip() == enum_value.value
+                )  # No leading/trailing whitespace
 
                 # Test enum behaves like string
                 assert str(enum_value) == enum_value.value
@@ -505,10 +509,7 @@ class TestStrEnumFunctionalityReal:
         assert dev_env.value == "development"
 
         # Test in JSON-like structures
-        config_dict = {
-            "environment": dev_env.value,
-            "name": "test_app"
-        }
+        config_dict = {"environment": dev_env.value, "name": "test_app"}
 
         assert config_dict["environment"] == "development"
 
@@ -546,7 +547,9 @@ class TestConstantsIntegrationReal:
 
             # Validate environment
             if "environment" in data:
-                valid_envs = {env.value for env in FlextConstants.Config.ConfigEnvironment}
+                valid_envs = {
+                    env.value for env in FlextConstants.Config.ConfigEnvironment
+                }
                 if data["environment"] not in valid_envs:
                     errors["environment"] = f"Must be one of: {', '.join(valid_envs)}"
 
@@ -558,9 +561,13 @@ class TestConstantsIntegrationReal:
 
             # Validate config source
             if "config_source" in data:
-                valid_sources = {source.value for source in FlextConstants.Config.ConfigSource}
+                valid_sources = {
+                    source.value for source in FlextConstants.Config.ConfigSource
+                }
                 if data["config_source"] not in valid_sources:
-                    errors["config_source"] = f"Must be one of: {', '.join(valid_sources)}"
+                    errors["config_source"] = (
+                        f"Must be one of: {', '.join(valid_sources)}"
+                    )
 
             return errors
 
@@ -611,7 +618,9 @@ class TestConstantsIntegrationReal:
         assert len(source_values) >= 3
 
         # Test we have validation levels
-        validation_values = {level.value for level in FlextConstants.Config.ValidationLevel}
+        validation_values = {
+            level.value for level in FlextConstants.Config.ValidationLevel
+        }
         assert "strict" in validation_values
         assert "normal" in validation_values
         assert "loose" in validation_values

@@ -328,7 +328,7 @@ class TestFlextValueRealFunctionality:
 
     def test_value_object_field_validation(self) -> None:
         """Test FlextValue field validation methods."""
-        email = EmailValue(address="user@example.com", domain="example.com")
+        EmailValue(address="user@example.com", domain="example.com")
 
         # Test Pydantic validation works
         try:
@@ -429,7 +429,6 @@ class TestFlextEntityRealFunctionality:
 
         # Test version management - new API doesn't have with_version
         # Just test that version can be set through regular assignment
-        original_version = user.version
         user.version = 5
         assert user.version == 5
         assert user.id == "user_101"
@@ -446,9 +445,9 @@ class TestFlextEntityRealFunctionality:
 
         # Add domain event (new API)
         event_data = {
-            "event_type": "UserCreated", 
-            "user_id": str(user.id), 
-            "created_at": datetime.now(UTC).isoformat()
+            "event_type": "UserCreated",
+            "user_id": str(user.id),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         user.add_domain_event(event_data)
         assert len(user.domain_events) == 1
@@ -658,7 +657,7 @@ class TestModelsIntegrationRealFunctionality:
         event_data = {
             "event_type": "UserRegistered",
             "registration_type": "standard",
-            "source": "integration_test"
+            "source": "integration_test",
         }
         user.add_domain_event(event_data)
         assert len(user.domain_events) == 1

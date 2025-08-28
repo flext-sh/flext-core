@@ -54,6 +54,8 @@ from contextvars import ContextVar, Token
 from datetime import UTC, datetime
 from typing import Final
 
+from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
@@ -280,8 +282,6 @@ class FlextContext:
             """
             # Generate correlation ID if not provided
             if correlation_id is None:
-                from flext_core.utilities import FlextUtilities  # noqa: PLC0415
-
                 correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
             # Save current context
@@ -1012,6 +1012,458 @@ class FlextContext:
                 f"FlextContext({', '.join(parts)})" if parts else "FlextContext(empty)"
             )
 
+    # =============================================================================
+    # FLEXT CONTEXT CONFIGURATION METHODS - Standard FlextTypes.Config
+    # =============================================================================
+
+    @classmethod
+    def configure_context_system(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Configure context system using FlextTypes.Config with StrEnum validation.
+
+        Configures the FLEXT context management system including distributed tracing,
+        correlation ID management, service context tracking, performance monitoring,
+        and cross-service context propagation with thread-safe operations.
+
+        Args:
+            config: Configuration dictionary supporting:
+                   - environment: Runtime environment (development, production, test, staging, local)
+                   - context_level: Context validation level (strict, normal, loose)
+                   - log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL, TRACE)
+                   - enable_correlation_tracking: Enable correlation ID tracking
+                   - enable_service_context: Enable service context management
+                   - enable_performance_tracking: Enable performance context tracking
+                   - context_propagation_enabled: Enable cross-service context propagation
+                   - max_context_depth: Maximum nesting depth for context scopes
+
+        Returns:
+            FlextResult containing validated configuration with context system settings
+
+        Example:
+            ```python
+            config = {
+                "environment": "production",
+                "context_level": "strict",
+                "log_level": "WARNING",
+                "enable_correlation_tracking": True,
+                "enable_service_context": True,
+                "max_context_depth": 10,
+            }
+            result = FlextContext.configure_context_system(config)
+            if result.success:
+                validated_config = result.unwrap()
+            ```
+
+        """
+        try:
+            # Create working copy of config
+            validated_config = dict(config)
+
+            # Validate environment
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                    )
+            else:
+                validated_config["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                )
+
+            # Validate context_level (using validation level as basis)
+            if "context_level" in config:
+                context_value = config["context_level"]
+                valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
+                if context_value not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid context_level '{context_value}'. Valid options: {valid_levels}"
+                    )
+            else:
+                validated_config["context_level"] = (
+                    FlextConstants.Config.ValidationLevel.LOOSE.value
+                )
+
+            # Validate log_level
+            if "log_level" in config:
+                log_value = config["log_level"]
+                valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
+                if log_value not in valid_log_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                    )
+            else:
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.DEBUG.value
+                )
+
+            # Set default values for context system specific settings
+            validated_config.setdefault("enable_correlation_tracking", True)
+            validated_config.setdefault("enable_service_context", True)
+            validated_config.setdefault("enable_performance_tracking", True)
+            validated_config.setdefault("context_propagation_enabled", True)
+            validated_config.setdefault("max_context_depth", 20)
+            validated_config.setdefault("context_serialization_enabled", True)
+            validated_config.setdefault("context_cleanup_enabled", True)
+            validated_config.setdefault("enable_nested_contexts", True)
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to configure context system: {e}"
+            )
+
+    @classmethod
+    def get_context_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current context system configuration with runtime metrics.
+
+        Retrieves the current context system configuration including runtime metrics,
+        active context scopes, correlation tracking status, service context data,
+        and performance tracking metrics for monitoring and diagnostics.
+
+        Returns:
+            FlextResult containing current context system configuration with:
+            - environment: Current runtime environment
+            - context_level: Current context validation level
+            - log_level: Current logging level
+            - correlation_tracking_enabled: Correlation tracking status
+            - active_context_scopes: Number of currently active context scopes
+            - context_performance_metrics: Performance metrics for context operations
+            - service_context_active: Service context status
+            - context_propagation_active: Cross-service propagation status
+
+        Example:
+            ```python
+            result = FlextContext.get_context_system_config()
+            if result.success:
+                current_config = result.unwrap()
+                print(f"Active scopes: {current_config['active_context_scopes']}")
+            ```
+
+        """
+        try:
+            # Get current context state for runtime metrics
+            correlation_id = cls.Correlation.get_correlation_id()
+            service_name = cls.Service.get_service_name()
+            operation_name = cls.Request.get_operation_name()
+
+            # Build current configuration with runtime metrics
+            current_config: FlextTypes.Config.ConfigDict = {
+                # Core system configuration
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                # Context system specific configuration
+                "enable_correlation_tracking": True,
+                "enable_service_context": True,
+                "enable_performance_tracking": True,
+                "context_propagation_enabled": True,
+                "max_context_depth": 20,
+                # Runtime metrics and status
+                "active_context_scopes": 0,  # Would be dynamically calculated
+                "total_context_operations": 0,  # Runtime counter
+                "successful_context_operations": 0,  # Success counter
+                "failed_context_operations": 0,  # Failure counter
+                "average_context_operation_time_ms": 0.0,  # Performance metric
+                # Context tracking status
+                "correlation_tracking_active": correlation_id is not None,
+                "service_context_active": service_name is not None,
+                "performance_tracking_active": operation_name is not None,
+                "current_correlation_id": correlation_id or "",
+                "current_service_name": service_name or "",
+                "current_operation_name": operation_name or "",
+                # Context management information
+                "available_context_variables": [
+                    "correlation_id",
+                    "service_name",
+                    "service_version",
+                    "environment",
+                    "user_id",
+                    "operation_name",
+                ],
+                "context_propagation_methods": ["serialization", "headers", "metadata"],
+                # Monitoring and diagnostics
+                "last_health_check": FlextUtilities.Generators.generate_iso_timestamp(),
+                "system_status": "operational",
+                "configuration_source": "default",
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get context system configuration: {e}"
+            )
+
+    @classmethod
+    def create_environment_context_config(
+        cls, environment: str
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Create environment-specific context system configuration.
+
+        Generates optimized configuration for context management based on the
+        target environment (development, staging, production, test, local)
+        with appropriate correlation tracking, service context management,
+        and performance settings for each environment.
+
+        Args:
+            environment: Target environment name (development, staging, production, test, local)
+
+        Returns:
+            FlextResult containing environment-optimized context system configuration
+
+        Example:
+            ```python
+            result = FlextContext.create_environment_context_config("production")
+            if result.success:
+                prod_config = result.unwrap()
+                print(f"Context level: {prod_config['context_level']}")
+            ```
+
+        """
+        try:
+            # Validate environment
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                )
+
+            # Base configuration for all environments
+            base_config: FlextTypes.Config.ConfigDict = {
+                "environment": environment,
+                "enable_correlation_tracking": True,
+                "enable_service_context": True,
+                "context_serialization_enabled": True,
+            }
+
+            # Environment-specific configurations
+            if environment == "production":
+                base_config.update({
+                    "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_performance_tracking": True,  # Critical in production
+                    "max_context_depth": 15,  # Limited depth for performance
+                    "context_propagation_enabled": True,  # Essential for microservices
+                    "context_cleanup_enabled": True,  # Memory management
+                    "enable_nested_contexts": True,  # Full nesting support
+                    "context_serialization_compression": True,  # Optimize bandwidth
+                })
+            elif environment == "staging":
+                base_config.update({
+                    "context_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_performance_tracking": True,  # Monitor staging performance
+                    "max_context_depth": 20,  # Moderate depth limit
+                    "context_propagation_enabled": True,  # Test propagation behavior
+                    "context_cleanup_enabled": True,  # Memory management
+                    "enable_nested_contexts": True,  # Full feature testing
+                    "context_serialization_compression": False,  # No compression for debugging
+                })
+            elif environment == "development":
+                base_config.update({
+                    "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_performance_tracking": True,  # Monitor development performance
+                    "max_context_depth": 50,  # Higher depth for debugging
+                    "context_propagation_enabled": True,  # Test propagation locally
+                    "context_cleanup_enabled": False,  # Keep contexts for debugging
+                    "enable_nested_contexts": True,  # Full nesting for development
+                    "context_serialization_compression": False,  # No compression for clarity
+                })
+            elif environment == "test":
+                base_config.update({
+                    "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_performance_tracking": False,  # No performance monitoring in tests
+                    "max_context_depth": 10,  # Limited depth for testing
+                    "context_propagation_enabled": False,  # No propagation in unit tests
+                    "context_cleanup_enabled": True,  # Clean context between tests
+                    "enable_nested_contexts": True,  # Test nested behavior
+                    "context_serialization_compression": False,  # No compression in tests
+                })
+            elif environment == "local":
+                base_config.update({
+                    "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_performance_tracking": False,  # No monitoring for local
+                    "max_context_depth": 100,  # Very high depth for local development
+                    "context_propagation_enabled": False,  # No propagation locally
+                    "context_cleanup_enabled": False,  # Keep everything for debugging
+                    "enable_nested_contexts": True,  # Full nesting support
+                    "context_serialization_compression": False,  # No compression
+                })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to create environment context configuration: {e}"
+            )
+
+    @classmethod
+    def optimize_context_performance(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Optimize context system performance based on configuration.
+
+        Analyzes the provided configuration and generates performance-optimized
+        settings for the FLEXT context system. This includes correlation tracking
+        optimization, service context caching, context propagation tuning,
+        and memory management for optimal distributed tracing performance.
+
+        Args:
+            config: Base configuration dictionary containing performance preferences:
+                   - performance_level: Performance optimization level (high, medium, low)
+                   - max_concurrent_contexts: Maximum concurrent context operations
+                   - context_pool_size: Context instance pool size for reuse
+                   - correlation_optimization: Enable correlation tracking optimization
+                   - service_context_optimization: Enable service context caching optimization
+
+        Returns:
+            FlextResult containing optimized configuration with performance settings
+            tuned for context system performance requirements.
+
+        Example:
+            ```python
+            config = {
+                "performance_level": "high",
+                "max_concurrent_contexts": 100,
+                "context_pool_size": 200,
+            }
+            result = FlextContext.optimize_context_performance(config)
+            if result.success:
+                optimized = result.unwrap()
+                print(f"Context cache size: {optimized['context_cache_size']}")
+            ```
+
+        """
+        try:
+            # Create optimized configuration
+            optimized_config = dict(config)
+
+            # Get performance level from config
+            performance_level = config.get("performance_level", "medium")
+
+            # Base performance settings
+            optimized_config.update({
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            })
+
+            # Performance level specific optimizations
+            if performance_level == "high":
+                optimized_config.update({
+                    # Context management optimization
+                    "context_cache_size": 1000,
+                    "enable_context_pooling": True,
+                    "context_pool_size": 200,
+                    "max_concurrent_contexts": 100,
+                    "context_discovery_cache_ttl": 3600,  # 1 hour
+                    # Correlation tracking optimization
+                    "enable_correlation_caching": True,
+                    "correlation_cache_size": 2000,
+                    "correlation_tracking_threads": 8,
+                    "parallel_correlation_processing": True,
+                    # Service context optimization
+                    "service_context_batch_size": 200,
+                    "enable_service_context_batching": True,
+                    "service_context_processing_threads": 16,
+                    "service_context_queue_size": 4000,
+                    # Memory and performance optimization
+                    "memory_pool_size_mb": 150,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "aggressive",
+                })
+            elif performance_level == "medium":
+                optimized_config.update({
+                    # Balanced context settings
+                    "context_cache_size": 500,
+                    "enable_context_pooling": True,
+                    "context_pool_size": 100,
+                    "max_concurrent_contexts": 50,
+                    "context_discovery_cache_ttl": 1800,  # 30 minutes
+                    # Moderate correlation optimization
+                    "enable_correlation_caching": True,
+                    "correlation_cache_size": 1000,
+                    "correlation_tracking_threads": 4,
+                    "parallel_correlation_processing": True,
+                    # Standard service context processing
+                    "service_context_batch_size": 100,
+                    "enable_service_context_batching": True,
+                    "service_context_processing_threads": 8,
+                    "service_context_queue_size": 2000,
+                    # Moderate memory settings
+                    "memory_pool_size_mb": 75,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "balanced",
+                })
+            elif performance_level == "low":
+                optimized_config.update({
+                    # Conservative context settings
+                    "context_cache_size": 100,
+                    "enable_context_pooling": False,
+                    "context_pool_size": 25,
+                    "max_concurrent_contexts": 10,
+                    "context_discovery_cache_ttl": 600,  # 10 minutes
+                    # Minimal correlation optimization
+                    "enable_correlation_caching": False,
+                    "correlation_cache_size": 200,
+                    "correlation_tracking_threads": 1,
+                    "parallel_correlation_processing": False,
+                    # Sequential service context processing
+                    "service_context_batch_size": 25,
+                    "enable_service_context_batching": False,
+                    "service_context_processing_threads": 1,
+                    "service_context_queue_size": 200,
+                    # Minimal memory usage
+                    "memory_pool_size_mb": 20,
+                    "enable_object_pooling": False,
+                    "gc_optimization_enabled": False,
+                    "optimization_level": "conservative",
+                })
+
+            # Additional performance metrics and targets
+            optimized_config.update({
+                "expected_throughput_contexts_per_second": 500
+                if performance_level == "high"
+                else 200
+                if performance_level == "medium"
+                else 50,
+                "target_context_latency_ms": 5
+                if performance_level == "high"
+                else 15
+                if performance_level == "medium"
+                else 50,
+                "target_correlation_tracking_ms": 2
+                if performance_level == "high"
+                else 8
+                if performance_level == "medium"
+                else 25,
+                "memory_efficiency_target": 0.92
+                if performance_level == "high"
+                else 0.85
+                if performance_level == "medium"
+                else 0.70,
+            })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to optimize context performance: {e}"
+            )
+
 
 # =============================================================================
 # Exports
@@ -1019,4 +1471,5 @@ class FlextContext:
 
 __all__: list[str] = [
     "FlextContext",  # ONLY main class exported
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

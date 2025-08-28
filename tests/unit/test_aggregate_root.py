@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pydantic import ValidationError
 
-from flext_core import FlextAggregateRoot, FlextEntityId, FlextResult
+from flext_core import FlextAggregates, FlextEntityId, FlextResult
 
 
-class TestAggregateRoot(FlextAggregateRoot):
+class TestAggregateRoot(FlextAggregates):
     """Test aggregate root for coverage testing."""
 
     name: str
@@ -17,7 +17,7 @@ class TestAggregateRoot(FlextAggregateRoot):
         return FlextResult[None].ok(None)
 
 
-class FailingEventAggregateRoot(FlextAggregateRoot):
+class FailingEventAggregateRoot(FlextAggregates):
     """Aggregate root that fails to create events for testing error handling."""
 
     name: str

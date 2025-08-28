@@ -70,6 +70,8 @@ from collections.abc import Mapping
 from typing import ClassVar, cast
 
 from flext_core.constants import FlextConstants
+from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 # =============================================================================
 # FlextExceptions - Hierarchical Exception Management System
@@ -402,7 +404,7 @@ class FlextExceptions:
                     "Email format is invalid",
                     field="user_email",
                     value="not-an-email",
-                    validation_details={"expected_format": "email"}
+                    validation_details={"expected_format": "email"},
                 )
 
         Note:
@@ -463,7 +465,7 @@ class FlextExceptions:
                 raise ConfigurationError(
                     "Database URL not configured",
                     config_key="DATABASE_URL",
-                    config_file="/app/.env"
+                    config_file="/app/.env",
                 )
 
         Note:
@@ -937,12 +939,209 @@ class FlextExceptions:
         """Clear exception metrics."""
         cls.Metrics.clear_metrics()
 
+    # =============================================================================
+    # CONFIGURATION MANAGEMENT - FlextTypes.Config Integration
+    # =============================================================================
+
+    @classmethod
+    def configure_error_handling(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Configure error handling system using FlextTypes.Config.
+
+        Configures exception behavior, metrics collection, and error logging
+        based on environment and validation settings.
+
+        Args:
+            config: Configuration dictionary with error handling settings
+
+        Returns:
+            FlextResult containing validated configuration or error
+
+        """
+        try:
+            validated_config: FlextTypes.Config.ConfigDict = {}
+
+            # Validate environment (required for error handling behavior)
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                    )
+                validated_config["environment"] = env_value
+            else:
+                validated_config["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                )
+
+            # Validate log level (affects error detail level)
+            if "log_level" in config:
+                log_level = config["log_level"]
+                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
+                if log_level not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}"
+                    )
+                validated_config["log_level"] = log_level
+            # Default based on environment
+            elif validated_config["environment"] == "production":
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.ERROR.value
+                )
+            else:
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.WARNING.value
+                )
+
+            # Validate validation level (affects error validation strictness)
+            if "validation_level" in config:
+                val_level = config["validation_level"]
+                valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
+                if val_level not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}"
+                    )
+                validated_config["validation_level"] = val_level
+            # Default based on environment
+            elif validated_config["environment"] == "production":
+                validated_config["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.STRICT.value
+                )
+            else:
+                validated_config["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.NORMAL.value
+                )
+
+            # Add error handling specific configuration
+            validated_config["enable_metrics"] = config.get("enable_metrics", True)
+            validated_config["enable_stack_traces"] = config.get(
+                "enable_stack_traces", validated_config["environment"] != "production"
+            )
+            validated_config["max_error_details"] = config.get(
+                "max_error_details", 1000
+            )
+            validated_config["error_correlation_enabled"] = config.get(
+                "error_correlation_enabled", True
+            )
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Configuration error: {e}"
+            )
+
+    @classmethod
+    def get_error_handling_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current error handling configuration.
+
+        Returns:
+            FlextResult containing current error handling configuration
+
+        """
+        try:
+            # Build current configuration from system state
+            current_config: FlextTypes.Config.ConfigDict = {
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                "enable_metrics": True,
+                "enable_stack_traces": True,
+                "max_error_details": 1000,
+                "error_correlation_enabled": True,
+                "total_errors_recorded": len(cls.Metrics._metrics),
+                "error_types_available": list(cls.Metrics._metrics.keys()),
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get config: {e}"
+            )
+
+    @classmethod
+    def create_environment_specific_config(
+        cls, environment: FlextTypes.Config.Environment
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Create environment-specific error handling configuration.
+
+        Args:
+            environment: Target environment for configuration
+
+        Returns:
+            FlextResult containing environment-optimized configuration
+
+        """
+        try:
+            # Validate environment
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                )
+
+            # Create environment-specific configuration
+            if environment == "production":
+                config: FlextTypes.Config.ConfigDict = {
+                    "environment": environment,
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "enable_metrics": True,
+                    "enable_stack_traces": False,  # Hide stack traces in production
+                    "max_error_details": 500,  # Limit error details
+                    "error_correlation_enabled": True,
+                }
+            elif environment == "development":
+                config = {
+                    "environment": environment,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "enable_metrics": True,
+                    "enable_stack_traces": True,  # Full stack traces for debugging
+                    "max_error_details": 2000,  # More error details for debugging
+                    "error_correlation_enabled": True,
+                }
+            elif environment == "test":
+                config = {
+                    "environment": environment,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "enable_metrics": False,  # Disable metrics in tests
+                    "enable_stack_traces": True,
+                    "max_error_details": 1000,
+                    "error_correlation_enabled": False,  # No correlation in tests
+                }
+            else:  # staging, local, etc.
+                config = {
+                    "environment": environment,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "enable_metrics": True,
+                    "enable_stack_traces": True,
+                    "max_error_details": 1000,
+                    "error_correlation_enabled": True,
+                }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Environment config failed: {e}"
+            )
+
 
 # =============================================================================
 # EXPORTS - Clean public API
 # =============================================================================
 
 __all__: list[str] = [
-    # Main hierarchical container - ONLY access point
-    "FlextExceptions",
+    "FlextExceptions",  # Main hierarchical container - ONLY access point
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

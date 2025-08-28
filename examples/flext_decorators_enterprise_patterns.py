@@ -51,7 +51,6 @@ class CalculationProtocol(FlextProtocols.Foundation.Validator[FlextTypes.Core.In
         self, data: FlextTypes.Core.Integer
     ) -> FlextResult[FlextTypes.Core.Integer]:
         """Process calculation with FlextResult pattern."""
-        ...  # noqa: PIE790
 
 
 class ValidationProtocol(FlextProtocols.Foundation.Validator[FlextTypes.Core.Integer]):
@@ -61,7 +60,6 @@ class ValidationProtocol(FlextProtocols.Foundation.Validator[FlextTypes.Core.Int
         self, data: FlextTypes.Core.Integer
     ) -> FlextResult[FlextTypes.Core.Integer]:
         """Validate data with FlextResult pattern."""
-        ...  # noqa: PIE790
 
 
 # =============================================================================
@@ -160,7 +158,7 @@ def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
             time.sleep(processing_delay)
 
             # Business logic with controlled randomness
-            if random.random() > SUCCESS_THRESHOLD:  # noqa: S311
+            if random.random() > SUCCESS_THRESHOLD:
                 result_data: dict[str, object] = {
                     "status": "processed",
                     "data": data,
@@ -276,25 +274,25 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
                     age = int(age_val)
                 else:
                     msg = f"Invalid age: {age_val}"
-                    raise ValueError(msg)  # noqa: TRY301
+                    raise ValueError(msg)
 
                 # Basic validation
                 if not name or not name.strip():
                     msg = "Name required"
-                    raise ValueError(msg)  # noqa: TRY301
+                    raise ValueError(msg)
                 if "@" not in email:
                     msg = "Valid email required"
-                    raise ValueError(msg)  # noqa: TRY301
+                    raise ValueError(msg)
                 if age < MIN_AGE or age > MAX_AGE:
                     msg = "Valid age required"
-                    raise ValueError(msg)  # noqa: TRY301
+                    raise ValueError(msg)
 
                 # Create user using SharedDomainFactory
                 result = SharedDomainFactory.create_user(name, email, age)
                 if result.success:
                     return result.value
                 msg = f"User creation failed: {result.error}"
-                raise ValueError(msg)  # noqa: TRY301
+                raise ValueError(msg)
 
             except (ValueError, TypeError) as e:
                 msg = f"Type conversion failed: {e}"
@@ -309,7 +307,7 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
         )
         if hasattr(user_result, "name"):
             pass
-    except Exception:  # noqa: S110
+    except Exception:
         pass
 
     # Test validation failure

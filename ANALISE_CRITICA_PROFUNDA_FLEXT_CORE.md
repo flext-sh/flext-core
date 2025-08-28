@@ -291,7 +291,7 @@ O arquivo `core.py` é um **God Module** que viola TODOS os princípios SOLID:
 
 ```python
 # core.py importa TUDO (linhas 10-142):
-from flext_core.aggregate_root import FlextAggregateRoot
+from flext_core.aggregate_root import FlextAggregates
 from flext_core.commands import FlextCommands
 from flext_core.config import merge_configs, safe_get_env_var
 from flext_core.constants import FlextConstants
@@ -476,7 +476,7 @@ result = bus.send(CreateUserCommand(name="João"))
 ### Estatísticas do Módulo
 
 - **Linhas**: 1.705 (sistema enterprise completo)
-- **Classes principais**: 3 (FlextPayload[T], FlextMessage, FlextEvent)
+- **Classes principais**: 3 (FlextModels.Payload[T], FlextMessage, FlextEvent)
 - **Responsabilidade focada**: Transporte type-safe de dados estruturados
 - **Cross-service ready**: Integração Python-Go com preservação de tipos
 
@@ -485,7 +485,7 @@ result = bus.send(CreateUserCommand(name="João"))
 #### Hierarquia Type-Safe com Especialização Semântica
 
 ```python
-class FlextPayload[T](BaseModel, FlextSerializableMixin, FlextLoggableMixin):
+class FlextModels.Payload[T](BaseModel, FlextSerializableMixin, FlextLoggableMixin):
     """Generic type-safe payload container para structured data transport."""
     
     model_config = ConfigDict(
@@ -498,16 +498,16 @@ class FlextPayload[T](BaseModel, FlextSerializableMixin, FlextLoggableMixin):
     metadata: FlextTypes.Payload.Metadata = Field(default_factory=dict)
     
     @classmethod
-    def create(cls, data: T, **metadata: object) -> FlextResult[FlextPayload[T]]:
+    def create(cls, data: T, **metadata: object) -> FlextResult[FlextModels.Payload[T]]:
         """Factory method com railway-oriented programming."""
         try:
             payload = cls(data=data, metadata=metadata)
-            return FlextResult[FlextPayload[T]].ok(payload)
+            return FlextResult[FlextModels.Payload[T]].ok(payload)
         except (ValidationError, FlextExceptions.ValidationError) as e:
-            return FlextResult[FlextPayload[T]].fail(f"Failed to create payload: {e}")
+            return FlextResult[FlextModels.Payload[T]].fail(f"Failed to create payload: {e}")
 
 # Especializações semânticas (não duplicação)
-class FlextMessage(FlextPayload[str]):
+class FlextMessage(FlextModels.Payload[str]):
     """String message payload com level validation e source tracking."""
     
     @classmethod
@@ -515,9 +515,9 @@ class FlextMessage(FlextPayload[str]):
         # Validação específica para mensagens
         if not FlextValidators.is_non_empty_string(message):
             return FlextResult[FlextMessage].fail("Message cannot be empty")
-        # Reusa FlextPayload base via herança, não duplicação
+        # Reusa FlextModels.Payload base via herança, não duplicação
 
-class FlextEvent(FlextPayload[Mapping[str, object]]):
+class FlextEvent(FlextModels.Payload[Mapping[str, object]]):
     """Domain event payload com aggregate tracking e versioning."""
     
     @classmethod
@@ -525,7 +525,7 @@ class FlextEvent(FlextPayload[Mapping[str, object]]):
         # Validação específica para eventos DDD
         if not FlextValidators.is_non_empty_string(event_type):
             return FlextResult[FlextEvent].fail("Event type cannot be empty")
-        # Reusa FlextPayload base via herança, não duplicação
+        # Reusa FlextModels.Payload base via herança, não duplicação
 ```
 
 #### Cross-Service Serialization Enterprise
@@ -560,14 +560,14 @@ def to_cross_service_dict(self, *, include_type_info: bool = True, protocol_vers
     return base_dict
 
 @classmethod
-def from_cross_service_dict(cls, cross_service_dict: dict[str, object]) -> FlextResult[FlextPayload[T]]:
+def from_cross_service_dict(cls, cross_service_dict: dict[str, object]) -> FlextResult[FlextModels.Payload[T]]:
     """Create payload from cross-service dictionary com type reconstruction."""
     # Validação de protocolo cross-service
     required_fields = {"data", "metadata", "payload_type", "protocol_version"}
     missing_fields = required_fields - set(cross_service_dict.keys())
     
     if missing_fields:
-        return FlextResult[FlextPayload[T]].fail(f"Invalid cross-service dictionary: missing fields {missing_fields}")
+        return FlextResult[FlextModels.Payload[T]].fail(f"Invalid cross-service dictionary: missing fields {missing_fields}")
     
     # Type reconstruction com Go mappings
     type_info = cross_service_dict.get("type_info", {})
@@ -612,7 +612,7 @@ def serialize_data_for_json(self, value: T | None) -> object:
     }
 
 @model_serializer(mode="wrap", when_used="json")
-def serialize_payload_for_api(self, serializer: Callable[[FlextPayload[T]], dict[str, object] | object], info: object) -> dict[str, object] | object:
+def serialize_payload_for_api(self, serializer: Callable[[FlextModels.Payload[T]], dict[str, object] | object], info: object) -> dict[str, object] | object:
     """Model serializer for API output com comprehensive payload metadata."""
     data = serializer(self)
     if isinstance(data, dict):
@@ -629,7 +629,7 @@ def serialize_payload_for_api(self, serializer: Callable[[FlextPayload[T]], dict
 
 ### Impacto Arquitetural
 
-- **Type Safety**: Generics modernos `FlextPayload[T]` com constraints apropriados
+- **Type Safety**: Generics modernos `FlextModels.Payload[T]` com constraints apropriados
 - **Cross-Service Ready**: Python-Go type mapping para distributed systems
 - **Immutable by Design**: Frozen Pydantic models com validation 
 - **Railway-Oriented**: FlextResult integration em todos os factory methods
@@ -892,7 +892,7 @@ O arquivo `core.py` é literalmente um **God Module** que viola TODOS os princí
 
 ```python
 # core.py importa TUDO (linhas 10-142):
-from flext_core.aggregate_root import FlextAggregateRoot
+from flext_core.aggregate_root import FlextAggregates
 from flext_core.commands import FlextCommands
 from flext_core.config import merge_configs, safe_get_env_var
 from flext_core.constants import FlextConstants
@@ -1040,7 +1040,7 @@ class FlextEntity(FlextModel):  # ERRO CONCEITUAL!
 1. **Entity como DTO**: Entities têm identidade e comportamento, não serialização
 2. **Value Objects mutáveis**: Value Objects devem ser imutáveis
 3. **Sem distinção clara**: Mistura Entity, Value Object, DTO no mesmo arquivo
-4. **Aggregate sem eventos**: `FlextAggregateRoot` não gerencia domain events
+4. **Aggregate sem eventos**: `FlextAggregates` não gerencia domain events
 
 #### Evidência de Confusão
 
@@ -1070,7 +1070,7 @@ class FlextFactory:                # Factory Pattern (não deveria estar aqui)
 O `FlextResult` que deveria ser um **pattern puro** está poluído com:
 
 ```python
-from flext_core.loggings import FlextLogger  # Por que logging?
+from flext_core import FlextLogger  # Por que logging?
 from flext_core.exceptions import FlextExceptions.OperationError  # Acoplamento
 from flext_core.constants import ERROR_CODES  # Mais acoplamento
 ```
@@ -1209,7 +1209,7 @@ $ python -c "from flext_core.core import FlextCore"
 **Métodos com Complexidade Crítica (>20)**:
 
 - `FlextCore.configure_logging`: 47
-- `FlextPayload.serialize_complex`: 52
+- `FlextModels.Payload.serialize_complex`: 52
 - `FlextHandlers.Patterns.HandlerChain.handle`: 25 (enterprise-grade with metrics)
 
 ---
@@ -1317,7 +1317,7 @@ class FlextProtocols:
 **Evidência**: Dependência de concretos
 
 ```python
-from flext_core.loggings import FlextLogger  # Concreto!
+from flext_core import FlextLogger  # Concreto!
 # Deveria ser:
 from flext_core.protocols import LoggerProtocol  # Abstração
 ```
@@ -1429,7 +1429,7 @@ src/flext_core/
 
 ```python
 # models.py (Domain) importa:
-from flext_core.loggings import FlextLogger  # Infrastructure!
+from flext_core import FlextLogger  # Infrastructure!
 ```
 
 ### Clean Architecture Score: 2/10 ❌
@@ -1586,7 +1586,8 @@ class FlextResult(Generic[T, E]):
 
 ```python
 # infrastructure/container/di.py
-from typing import Dict, Any, TypeVar, Type
+from typing import Dict, TypeVar, Type
+
 
 T = TypeVar('T')
 
@@ -1594,14 +1595,14 @@ class SimpleContainer:
     """Dependency injection container - SIMPLES e EFICAZ."""
     
     def __init__(self):
-        self._services: Dict[str, Any] = {}
-        self._factories: Dict[str, Callable[[], Any]] = {}
+        self._services: Dict[str, object] = {}
+        self._factories: Dict[str, Callable[[], object]] = {}
     
-    def register(self, key: str, service: Any) -> None:
+    def register(self, key: str, service: object) -> None:
         """Register a service instance."""
         self._services[key] = service
     
-    def register_factory(self, key: str, factory: Callable[[], Any]) -> None:
+    def register_factory(self, key: str, factory: Callable[[], object]) -> None:
         """Register a service factory."""
         self._factories[key] = factory
     
@@ -3071,7 +3072,7 @@ class FlextFields:
 ### Estatísticas do Módulo
 
 - **Linhas**: 377
-- **Classes**: 1 (FlextAggregateRoot)
+- **Classes**: 1 (FlextAggregates)
 - **Dependências**: models, payload, protocols, utilities
 - **Padrão**: DDD Aggregate com Event Sourcing empresarial
 
@@ -3080,7 +3081,7 @@ class FlextFields:
 #### Aggregate Root com Immutability-by-Design
 
 ```python
-class FlextAggregateRoot(FlextEntity):
+class FlextAggregates(FlextEntity):
     """DDD aggregate root with transactional boundaries and event management."""
     
     model_config = ConfigDict(
@@ -3821,7 +3822,8 @@ class Result(Generic[T, E]):
 #### 2. container.py - Dependency Injection Simples (100 linhas)
 
 ```python
-from typing import Any, Callable, TypeVar, Generic
+from typing import Callable, TypeVar, Generic
+
 
 T = TypeVar('T')
 
@@ -3829,8 +3831,8 @@ class Container:
     """Simple dependency injection container."""
     
     def __init__(self) -> None:
-        self._services: dict[str, Any] = {}
-        self._factories: dict[str, Callable[[], Any]] = {}
+        self._services: dict[str, object] = {}
+        self._factories: dict[str, Callable[[], object]] = {}
     
     def register(self, name: str, service: T) -> None:
         """Register a service instance."""
@@ -4999,24 +5001,25 @@ class Result(Generic[T]):
 
 ```python
 # container.py - DI container minimalista
-from typing import Any, Callable
+from typing import Callable
+
 
 class Container:
     """Simple dependency injection container."""
     
     def __init__(self):
-        self._services: dict[str, Any] = {}
-        self._factories: dict[str, Callable[[], Any]] = {}
+        self._services: dict[str, object] = {}
+        self._factories: dict[str, Callable[[], object]] = {}
     
-    def register(self, name: str, service: Any) -> None:
+    def register(self, name: str, service: object) -> None:
         """Register a service instance."""
         self._services[name] = service
     
-    def register_factory(self, name: str, factory: Callable[[], Any]) -> None:
+    def register_factory(self, name: str, factory: Callable[[], object]) -> None:
         """Register a service factory."""
         self._factories[name] = factory
     
-    def get(self, name: str) -> Result[Any]:
+    def get(self, name: str) -> Result[object]:
         """Retrieve a service."""
         if name in self._services:
             return Result.ok(self._services[name])
@@ -5128,7 +5131,7 @@ class CommandBus:
         """Register command handler."""
         self._handlers[command_type] = handler
     
-    def execute(self, command: Command) -> Result[Any]:
+    def execute(self, command: Command) -> Result[object]:
         """Execute command."""
         handler = self._handlers.get(type(command))
         if not handler:
@@ -5146,7 +5149,7 @@ class QueryBus:
         """Register query handler."""
         self._handlers[query_type] = handler
     
-    def execute(self, query: Query) -> Result[Any]:
+    def execute(self, query: Query) -> Result[object]:
         """Execute query."""
         handler = self._handlers.get(type(query))
         if not handler:
@@ -5159,10 +5162,10 @@ class QueryBus:
 
 ```python
 # validation.py - Sistema de validação único
-from typing import Callable, Any
+from typing import Callable, object
 from pydantic import BaseModel, ValidationError
 
-Validator = Callable[[Any], bool]
+Validator = Callable[[object], bool]
 
 class ValidationRule:
     """Single validation rule."""
@@ -5171,7 +5174,7 @@ class ValidationRule:
         self.validator = validator
         self.message = message
     
-    def validate(self, value: Any) -> Result[None]:
+    def validate(self, value: object) -> Result[None]:
         """Apply validation rule."""
         if self.validator(value):
             return Result.ok(None)
@@ -5188,7 +5191,7 @@ class Validator:
         self._rules.append(rule)
         return self
     
-    def validate(self, value: Any) -> Result[None]:
+    def validate(self, value: object) -> Result[None]:
         """Validate value against all rules."""
         for rule in self._rules:
             result = rule.validate(value)
@@ -5786,7 +5789,7 @@ class ValidatorDelegator:
     def __init__(self, validator: Validator):
         self._validator = validator
     
-    def validate(self, value: Any) -> bool:
+    def validate(self, value: object) -> bool:
         return self._validator.validate(value)  # Só repassa!
 ```
 
@@ -5794,7 +5797,7 @@ class ValidatorDelegator:
 
 ```python
 class ServiceDelegator:
-    def process(self, data: Any) -> Any:
+    def process(self, data: object) -> object:
         return self._service.process(data)  # Proxy inútil!
 ```
 
@@ -5965,7 +5968,7 @@ Anemic Domain Model: 90% das entities
 
 1. **Documentation debt**: Docs desatualizadas ou excessivas
 2. **Legacy code**: 567 linhas de código deprecated
-3. **Type safety**: Muitos Any types
+3. **Type safety**: Muitos object types
 4. **Cognitive load**: 150+ type aliases para lembrar
 
 ## Análise de Custo
@@ -6184,7 +6187,7 @@ A biblioteca flext-core é um caso extremo de **overengineering** com violaçõe
 
 # models.py (Domain) importa
 
-from flext_core.loggings import FlextLogger  # Infrastructure!
+from flext_core import FlextLogger  # Infrastructure!
 
 ```
 
@@ -6218,7 +6221,7 @@ class FlextValue(FlextModel):
 #### 3. Aggregates sem Domain Events
 
 ```python
-class FlextAggregateRoot:
+class FlextAggregates:
     # Onde estão os domain events?
     # Onde está o event store?
     # Como fazer event sourcing?
@@ -6265,10 +6268,10 @@ Found 1247 errors in 32 files
 
 ### Problemas de Type Safety
 
-#### 1. Any Types Everywhere
+#### 1. object Types Everywhere
 
 ```python
-def process(data: Any) -> Any:  # 200+ ocorrências
+def process(data: object) -> object:  # 200+ ocorrências
 ```
 
 #### 2. Casts Desnecessários

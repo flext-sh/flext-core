@@ -18,23 +18,21 @@ from decimal import Decimal
 from flext_core import (
     FlextConstants,
     FlextCore,
-    FlextEntity,
-    FlextModel,
+    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValue,
 )
 
 # Singleton FlextCore instance for all utilities
 core = FlextCore.get_instance()
 
 # =============================================================================
-# DOMAIN ENTITIES - Using FlextEntity with FlextCore factory
+# DOMAIN ENTITIES - Using FlextModels.Entity with FlextCore factory
 # =============================================================================
 
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """Domain user entity with built-in lifecycle management.
 
     Uses FlextFields for validation and FlextTypes for annotations.
@@ -47,12 +45,12 @@ class User(FlextEntity):
 
 
 # =============================================================================
-# STRUCTURED DATA MODELS - Using FlextModel + FlextValue base
+# STRUCTURED DATA MODELS - Using FlextModels + FlextModels.Value base
 # =============================================================================
 
 
-class UserRegistrationRequest(FlextValue):
-    """Registration request using FlextValue for immutability and validation.
+class UserRegistrationRequest(FlextModels.Value):
+    """Registration request using FlextModels.Value for immutability and validation.
 
     Follows SOLID principles with proper validation using FlextProtocols.
     """
@@ -75,8 +73,8 @@ class UserRegistrationRequest(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class RegistrationResult(FlextModel):
-    """Registration result using FlextModel for enterprise features.
+class RegistrationResult(FlextModels.BaseConfig):
+    """Registration result using FlextModels for enterprise features.
 
     Follows SOLID principles with proper typing using FlextTypes.
     """
@@ -87,7 +85,7 @@ class RegistrationResult(FlextModel):
     correlation_id: FlextTypes.Core.String
 
 
-class BatchResult(FlextModel):
+class BatchResult(FlextModels.BaseConfig):
     """Batch processing result with enterprise metrics.
 
     Uses FlextTypes for consistent typing across the ecosystem.
@@ -294,7 +292,7 @@ def demo_railway_processing() -> None:
     """Demonstrate railway processing with flext-core components."""
     processor = RegistrationProcessor()
 
-    # Valid request using FlextValue
+    # Valid request using FlextModels.Value
     request = UserRegistrationRequest(
         name="Alice Johnson", email="alice@company.com", age=28
     )
@@ -308,7 +306,7 @@ def demo_batch_processing() -> None:
     """Demonstrate batch processing."""
     batch_processor = BatchProcessor()
 
-    # Create batch requests using FlextValue
+    # Create batch requests using FlextModels.Value
     requests = [
         UserRegistrationRequest(name="User 1", email="user1@company.com", age=25),
         UserRegistrationRequest(name="User 2", email="user2@company.com", age=30),

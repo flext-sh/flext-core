@@ -14,7 +14,7 @@ This refactored test file demonstrates extensive use of our testing infrastructu
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol, cast
+from typing import Protocol, cast, object
 
 import pytest
 from hypothesis import assume, given
@@ -51,20 +51,23 @@ from flext_core import (
     FlextModel,
     FlextResult,
     FlextValidationUtils,
-    immutable,
     is_not_none,
-    make_builder,
-    make_factory,
-    pure,
-    require_non_empty,
-    require_not_none,
-    require_positive,
-    safe,
 )
-from flext_core.typings import FlextCallable
-from flext_core.utilities import FlextTypeGuards
 
-pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.guards]
+# Get functions from FlextGuards unified class
+FlextTypeGuards = FlextGuards.ValidationUtils  # Use validation utils for type guards
+immutable = FlextGuards.PureWrapper.make_immutable
+pure = FlextGuards.PureWrapper.pure_function
+make_builder = FlextGuards.PureWrapper.make_builder  # Use pure wrapper for builder
+make_factory = FlextGuards.PureWrapper.make_factory  # Use pure wrapper for factory
+
+# Use FlextValidationUtils directly
+require_not_none = FlextValidationUtils.require_not_none
+require_positive = FlextValidationUtils.require_positive
+require_non_empty = FlextValidationUtils.require_non_empty
+safe = FlextGuards.PureWrapper.safe_function
+
+pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 class BuilderProtocol(Protocol):
@@ -140,7 +143,9 @@ class TestTypeGuards:
         assert FlextTypeGuards.is_list_of("string", str) is False
 
     @given(CompositeStrategies.user_profiles())
-    def test_is_instance_of_with_user_profiles(self, profile: dict[str, Any]) -> None:
+    def test_is_instance_of_with_user_profiles(
+        self, profile: dict[str, object]
+    ) -> None:
         """Property-based test for is_instance_of with generated user profiles."""
         assume(PropertyTestHelpers.assume_non_empty_string(profile.get("name", "")))
 
@@ -302,7 +307,7 @@ class TestFlextModel:
             age: int
 
         # Execute the scenario - use standard Pydantic construction
-        model = UserModel(**cast("dict[str, Any]", scenario.given["data"]))
+        model = UserModel(**cast("dict[str, object]", scenario.given["data"]))
 
         # Verify model was created successfully
         assert model is not None
@@ -310,7 +315,7 @@ class TestFlextModel:
         assert scenario.then["success"] is True
 
     @given(CompositeStrategies.user_profiles())
-    def test_validated_model_property_based(self, profile: dict[str, Any]) -> None:
+    def test_validated_model_property_based(self, profile: dict[str, object]) -> None:
         """Property-based testing for FlextModel."""
         assume(PropertyTestHelpers.assume_valid_email(profile.get("email", "")))
         assume(PropertyTestHelpers.assume_non_empty_string(profile.get("name", "")))
@@ -365,12 +370,10 @@ class TestFactoryHelpers:
         param_builder = ParameterizedTestBuilder("factory_creation")
 
         # Add various test cases
-        param_builder.add_success_cases(
-            [
-                {"class_name": "SimpleClass", "args": [42], "expected_value": 42},
-                {"class_name": "SimpleClass", "args": [100], "expected_value": 100},
-            ]
-        )
+        param_builder.add_success_cases([
+            {"class_name": "SimpleClass", "args": [42], "expected_value": 42},
+            {"class_name": "SimpleClass", "args": [100], "expected_value": 100},
+        ])
 
         class SimpleClass:
             def __init__(self, value: int) -> None:
@@ -469,13 +472,13 @@ class TestValidationUtilities:
 
         # Test success cases
         for case in success_cases:
-            case_dict = cast("dict[str, Any]", case)
+            case_dict = cast("dict[str, object]", case)
             result = require_not_none(case_dict["input"]["input"])
             assert result == case_dict["expected"]["output"]
 
         # Test failure cases
         for case in failure_cases:
-            case_dict = cast("dict[str, Any]", case)
+            case_dict = cast("dict[str, object]", case)
             with pytest.raises(FlextExceptions):
                 require_not_none(case_dict["input"]["input"])
 
@@ -495,11 +498,11 @@ class TestValidationUtilities:
     def test_require_non_empty_aaa_pattern(self) -> None:
         """Test require_non_empty using Arrange-Act-Assert pattern."""
 
-        def arrange_data(*args: object, **kwargs: object) -> dict[str, Any]:
+        def arrange_data(*args: object, **kwargs: object) -> dict[str, object]:
             _ = args, kwargs  # Mark as used
             return {"valid_string": "hello", "empty_string": "", "whitespace": "   "}
 
-        def act_on_data(data: dict[str, Any]) -> dict[str, Any]:
+        def act_on_data(data: dict[str, object]) -> dict[str, object]:
             results = {}
             # Test valid string
             results["valid"] = require_non_empty(data["valid_string"])
@@ -520,7 +523,7 @@ class TestValidationUtilities:
             return results
 
         def assert_results(
-            results: dict[str, Any], original_data: dict[str, Any]
+            results: dict[str, object], original_data: dict[str, object]
         ) -> None:
             _ = original_data  # Mark as used
             assert results["valid"] == "hello"
@@ -591,7 +594,7 @@ class TestGuardsIntegration:
         """Test guards performance in async endurance scenarios."""
         stress_runner = StressTestRunner()
 
-        async def async_validation_workflow() -> dict[str, Any]:
+        async def async_validation_workflow() -> dict[str, object]:
             # Simulate async validation workflow
             await async_test_utils.simulate_delay(0.001)
 
@@ -661,7 +664,9 @@ class TestGuardsPropertyBased:
         assert require_non_empty(email) == email
 
     @given(CompositeStrategies.configuration_data())
-    def test_configuration_validation_properties(self, config: dict[str, Any]) -> None:
+    def test_configuration_validation_properties(
+        self, config: dict[str, object]
+    ) -> None:
         """Property-based test for configuration validation."""
         # All configuration should be valid dict structure
         assert is_not_none(config)

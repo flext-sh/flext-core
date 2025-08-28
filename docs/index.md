@@ -68,7 +68,7 @@ cache = container.get("cache").unwrap()
 #### Domain-Driven Design
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregates
 from decimal import Decimal
 
 class Money(FlextValue):
@@ -162,7 +162,7 @@ class Account(FlextEntity):
 | **FlextContainer**     | Dependency injection container  | ✅ Stable  |
 | **FlextEntity**        | DDD entities with identity      | ✅ Stable  |
 | **FlextValue**   | Immutable value objects         | ✅ Stable  |
-| **FlextAggregateRoot** | Aggregate consistency boundary  | ✅ Stable  |
+| **FlextAggregates** | Aggregate consistency boundary  | ✅ Stable  |
 | **FlextCommand**       | CQRS command pattern            | 🔄 Active  |
 | **FlextMessageHandler**       | Command/query handlers          | 🔄 Active  |
 | **FlextEvent**         | Domain events                   | 📋 Planned |

@@ -157,7 +157,7 @@ class TestCreateApiTestResponse:
 
     def test_failure_response_structure_details(self) -> None:
         """Test detailed failure response structure."""
-        from typing import cast  # noqa: PLC0415
+        from typing import cast
 
         response = create_api_test_response(success=False)
         error = response["error"]

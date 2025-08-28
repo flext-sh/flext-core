@@ -302,7 +302,7 @@ def merge_configurations(
 
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = merge_configurations(result[key], value)  # type: ignore[arg-type]
+            result[key] = merge_configurations(result[key], value)
         else:
             result[key] = value
 
@@ -464,7 +464,9 @@ def demonstrate_file_configuration() -> FlextResult[None]:
         }
 
         # Save to temporary file
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(config_data, f, indent=2)
             config_file = f.name
 
@@ -481,7 +483,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             print(f"Loaded keys: {list(loaded_data.keys())}")
 
             # Create configuration with loaded data
-            config = EnterpriseConfig(**loaded_data)  # type: ignore[arg-type]
+            config = EnterpriseConfig(**loaded_data)
 
             validation = config.validate_all_components()
             if validation.success:
@@ -571,7 +573,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = EnterpriseConfig(**final_config)  # type: ignore[arg-type]
+        config = EnterpriseConfig(**final_config)
 
         validation = config.validate_all_components()
         if validation.success:
@@ -622,7 +624,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = EnterpriseConfig(**config_data)  # type: ignore[arg-type]
+            config = EnterpriseConfig(**config_data)
             validation = config.validate_all_components()
 
             if not validation.success:

@@ -6,6 +6,8 @@ Tests the railway-oriented programming pattern without external dependencies.
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from flext_core import FlextResult
@@ -35,7 +37,9 @@ class TestFlextResultCore:
         assert not result.success
         assert result.error == error_msg
         # Test that accessing value on failure raises TypeError
-        with pytest.raises(TypeError, match="Attempted to access value on failed result"):
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
             _ = result.value
 
     def test_map_on_success(self) -> None:
@@ -123,7 +127,8 @@ class TestFlextResultChaining:
     def test_early_failure_stops_chain(self) -> None:
         """Test that early failure stops the chain."""
         result = (
-            FlextResult[None].fail("initial_error")
+            FlextResult[None]
+            .fail("initial_error")
             .map(lambda x: x * 2)  # Should not execute
             .flat_map(lambda x: FlextResult.ok(x + 5))  # Should not execute
         )
@@ -152,7 +157,9 @@ class TestFlextResultProperties:
         assert result.is_failure
         assert result.error == "test_error"
         # Test that accessing value on failure raises TypeError
-        with pytest.raises(TypeError, match="Attempted to access value on failed result"):
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
             _ = result.value
 
     def test_data_property_compatibility(self) -> None:
@@ -178,6 +185,7 @@ class TestFlextResultAsync:
     @pytest.mark.asyncio
     async def test_async_result_usage(self) -> None:
         """Test FlextResult works with async functions."""
+
         async def async_operation(value: int) -> FlextResult[int]:
             return FlextResult.ok(value * 2)
 
@@ -188,16 +196,13 @@ class TestFlextResultAsync:
     @pytest.mark.asyncio
     async def test_async_concurrency_handling(self) -> None:
         """Test concurrent async result operations."""
-        import asyncio
 
         async def async_multiply(x: int) -> FlextResult[int]:
             await asyncio.sleep(0.01)  # Simulate async work
             return FlextResult.ok(x * 2)
 
         results = await asyncio.gather(
-            async_multiply(1),
-            async_multiply(2),
-            async_multiply(3)
+            async_multiply(1), async_multiply(2), async_multiply(3)
         )
 
         assert all(r.success for r in results)
@@ -232,6 +237,7 @@ class TestFlextResultErrorHandling:
 
     def test_error_propagation(self) -> None:
         """Test error propagation through operations."""
+
         def divide(x: int, y: int) -> FlextResult[float]:
             if y == 0:
                 return FlextResult[None].fail("Division by zero")
@@ -243,6 +249,7 @@ class TestFlextResultErrorHandling:
 
     def test_error_recovery(self) -> None:
         """Test error recovery patterns."""
+
         def safe_divide(x: int, y: int) -> FlextResult[float]:
             if y == 0:
                 return FlextResult[None].fail("Division by zero")
@@ -256,7 +263,10 @@ class TestFlextResultErrorHandling:
 
     def test_multiple_error_scenarios(self) -> None:
         """Test handling multiple error scenarios."""
-        def validate_and_process(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+
+        def validate_and_process(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if not data:
                 return FlextResult[None].fail("Data is empty")
             if "name" not in data:
@@ -291,6 +301,7 @@ class TestFlextResultIntegration:
 
     def test_business_logic_integration(self) -> None:
         """Test FlextResult integration with business logic."""
+
         class User:
             def __init__(self, name: str, email: str) -> None:
                 self.name = name
@@ -305,15 +316,16 @@ class TestFlextResultIntegration:
             return FlextResult.ok(User(data["name"], data["email"]))
 
         def format_user(user: User) -> FlextResult[dict[str, str]]:
-            return FlextResult.ok({
-                "display_name": f"{user.name} <{user.email}>",
-                "user_id": f"user_{user.name.lower()}"
-            })
+            return FlextResult.ok(
+                {
+                    "display_name": f"{user.name} <{user.email}>",
+                    "user_id": f"user_{user.name.lower()}",
+                }
+            )
 
         # Test complete flow
-        result = (
-            create_user({"name": "John", "email": "john@test.com"})
-            .flat_map(format_user)
+        result = create_user({"name": "John", "email": "john@test.com"}).flat_map(
+            format_user
         )
 
         assert result.success
@@ -323,6 +335,7 @@ class TestFlextResultIntegration:
 
     def test_error_handling_scenarios(self) -> None:
         """Test various error handling scenarios."""
+
         def risky_operation(value: int) -> FlextResult[str]:
             if value < 0:
                 return FlextResult[None].fail("Negative values not allowed")
@@ -334,7 +347,7 @@ class TestFlextResultIntegration:
         test_cases = [
             (-1, "Negative values not allowed"),
             (150, "Value too large"),
-            (50, None)  # Success case
+            (50, None),  # Success case
         ]
 
         for value, expected_error in test_cases:

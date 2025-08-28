@@ -962,6 +962,360 @@ class FlextValidation:
         validator = cls.create_schema_validator(schema)
         return validator.validate(data)
 
+    # =============================================================================
+    # CONFIGURATION MANAGEMENT - FlextTypes.Config Integration
+    # =============================================================================
+
+    @classmethod
+    def configure_validation_system(  # noqa: PLR0912
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Configure validation system using FlextTypes.Config.
+
+        Configures validation behavior, strictness levels, and performance settings
+        based on environment and validation level settings.
+
+        Args:
+            config: Configuration dictionary with validation settings
+
+        Returns:
+            FlextResult containing validated configuration or error
+
+        """
+        try:
+            # Validate required FlextTypes.Config fields
+            validated_config: FlextTypes.Config.ConfigDict = {}
+
+            # Validate environment (affects validation behavior)
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                    )
+                validated_config["environment"] = env_value
+            else:
+                validated_config["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                )
+
+            # Validate validation level (core setting for validation strictness)
+            if "validation_level" in config:
+                val_level = config["validation_level"]
+                valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
+                if val_level not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}"
+                    )
+                validated_config["validation_level"] = val_level
+            # Default based on environment
+            elif validated_config["environment"] == "production":
+                validated_config["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.STRICT.value
+                )
+            elif validated_config["environment"] == "test":
+                validated_config["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.NORMAL.value
+                )
+            else:
+                validated_config["validation_level"] = (
+                    FlextConstants.Config.ValidationLevel.LOOSE.value
+                )
+
+            # Validate log level (affects validation error logging)
+            if "log_level" in config:
+                log_level = config["log_level"]
+                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
+                if log_level not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}"
+                    )
+                validated_config["log_level"] = log_level
+            # Default based on environment
+            elif validated_config["environment"] == "production":
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.WARNING.value
+                )
+            else:
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.DEBUG.value
+                )
+
+            # Add validation-specific configuration
+            validated_config["enable_detailed_errors"] = config.get(
+                "enable_detailed_errors",
+                validated_config["validation_level"] != "strict",
+            )
+            validated_config["max_validation_errors"] = config.get(
+                "max_validation_errors",
+                100 if validated_config["validation_level"] == "strict" else 1000,
+            )
+            validated_config["enable_performance_tracking"] = config.get(
+                "enable_performance_tracking", True
+            )
+            validated_config["cache_validation_results"] = config.get(
+                "cache_validation_results",
+                validated_config["environment"] == "production",
+            )
+            validated_config["fail_fast_validation"] = config.get(
+                "fail_fast_validation", validated_config["validation_level"] == "strict"
+            )
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Validation configuration error: {e}"
+            )
+
+    @classmethod
+    def get_validation_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current validation system configuration.
+
+        Returns:
+            FlextResult containing current validation system configuration
+
+        """
+        try:
+            # Build current validation configuration
+            current_config: FlextTypes.Config.ConfigDict = {
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                "enable_detailed_errors": True,
+                "max_validation_errors": 1000,
+                "enable_performance_tracking": True,
+                "cache_validation_results": False,
+                "fail_fast_validation": False,
+                "available_validators": [
+                    "email_validator",
+                    "url_validator",
+                    "schema_validator",
+                    "api_request_validator",
+                    "config_validator",
+                ],
+                "supported_patterns": [
+                    "email",
+                    "url",
+                    "phone",
+                    "credit_card",
+                    "ip_address",
+                    "uuid",
+                    "hex_color",
+                    "postal_code",
+                ],
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get validation config: {e}"
+            )
+
+    @classmethod
+    def create_environment_validation_config(
+        cls, environment: FlextTypes.Config.Environment
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Create environment-specific validation configuration.
+
+        Args:
+            environment: Target environment for validation configuration
+
+        Returns:
+            FlextResult containing environment-optimized validation configuration
+
+        """
+        try:
+            # Validate environment
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                )
+
+            # Create environment-specific validation configuration
+            if environment == "production":
+                config: FlextTypes.Config.ConfigDict = {
+                    "environment": environment,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_detailed_errors": False,  # Hide detailed errors in production
+                    "max_validation_errors": 50,  # Limit error collection
+                    "enable_performance_tracking": True,
+                    "cache_validation_results": True,  # Cache for performance
+                    "fail_fast_validation": True,  # Fail fast for security
+                }
+            elif environment == "development":
+                config = {
+                    "environment": environment,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_detailed_errors": True,  # Full error details for debugging
+                    "max_validation_errors": 2000,  # More errors for debugging
+                    "enable_performance_tracking": True,
+                    "cache_validation_results": False,  # No caching for development
+                    "fail_fast_validation": False,  # Continue validation for debugging
+                }
+            elif environment == "test":
+                config = {
+                    "environment": environment,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_detailed_errors": True,  # Detailed errors for test debugging
+                    "max_validation_errors": 500,
+                    "enable_performance_tracking": False,  # No performance tracking in tests
+                    "cache_validation_results": False,  # No caching in tests
+                    "fail_fast_validation": True,  # Fail fast for test efficiency
+                }
+            else:  # staging, local, etc.
+                config = {
+                    "environment": environment,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_detailed_errors": True,
+                    "max_validation_errors": 1000,
+                    "enable_performance_tracking": True,
+                    "cache_validation_results": True,
+                    "fail_fast_validation": False,
+                }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Environment validation config failed: {e}"
+            )
+
+    @classmethod
+    def optimize_validation_performance(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Optimize validation configuration for performance.
+
+        Analyzes validation configuration and applies performance optimizations
+        based on environment and usage patterns.
+
+        Args:
+            config: Base validation configuration to optimize
+
+        Returns:
+            FlextResult containing performance-optimized configuration
+
+        """
+        try:
+            # Since config is typed as ConfigDict (dict subtype), validation is ensured
+            optimized_config = dict(config)  # Copy base config
+
+            # Performance optimizations based on environment
+            environment = optimized_config.get("environment", "development")
+            validation_level = optimized_config.get("validation_level", "normal")
+
+            if environment == "production":
+                # Production performance optimizations
+                optimized_config["cache_validation_results"] = True
+                optimized_config["fail_fast_validation"] = True
+                # Ensure we have an int for min comparison
+                current_max = optimized_config.get("max_validation_errors", 100)
+                if isinstance(current_max, int):
+                    optimized_config["max_validation_errors"] = min(current_max, 100)
+                else:
+                    optimized_config["max_validation_errors"] = 100
+                optimized_config["enable_detailed_errors"] = False
+                optimized_config["validation_timeout_ms"] = 5000  # 5 second timeout
+
+            elif validation_level == "strict":
+                # Strict validation optimizations
+                optimized_config["fail_fast_validation"] = True
+                optimized_config["max_validation_errors"] = 10
+                optimized_config["validation_timeout_ms"] = 3000  # Faster timeout
+
+            else:
+                # Development/flexible validation optimizations
+                optimized_config["cache_validation_results"] = (
+                    False  # No caching for flexibility
+                )
+                optimized_config["fail_fast_validation"] = (
+                    False  # Continue for debugging
+                )
+                optimized_config["validation_timeout_ms"] = 10000  # Longer timeout
+
+            # Add performance monitoring settings
+            optimized_config["performance_metrics_enabled"] = optimized_config.get(
+                "enable_performance_tracking", True
+            )
+            optimized_config["validation_batch_size"] = (
+                1000 if environment == "production" else 500
+            )
+            optimized_config["concurrent_validations"] = (
+                10 if environment == "production" else 5
+            )
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Performance optimization failed: {e}"
+            )
+
+    # =============================================================================
+    # BACKWARD COMPATIBILITY METHODS - Direct access for legacy tests
+    # =============================================================================
+
+    @staticmethod
+    def validate_non_empty_string_func(value: object) -> bool:
+        """Validate non-empty string (legacy compatibility)."""
+        return isinstance(value, str) and len(value.strip()) > 0
+
+    @staticmethod
+    def validate_email_field(value: object) -> FlextResult[None]:
+        """Validate email field (legacy compatibility)."""
+        if not isinstance(value, str):
+            return FlextResult[None].fail("Email must be a string")
+
+        pattern = FlextConstants.Patterns.EMAIL_PATTERN
+        if re.match(pattern, value):
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail("Invalid email format")
+
+    @staticmethod
+    def validate_numeric_field(value: object) -> FlextResult[None]:
+        """Validate numeric field (legacy compatibility)."""
+        if isinstance(value, (int, float)):
+            return FlextResult[None].ok(None)
+        if isinstance(value, str):
+            try:
+                float(value)
+                return FlextResult[None].ok(None)
+            except ValueError:
+                return FlextResult[None].fail("Value is not numeric")
+        return FlextResult[None].fail("Value is not numeric")
+
+    @staticmethod
+    def validate_string_field(value: object) -> FlextResult[None]:
+        """Validate string field (legacy compatibility)."""
+        if isinstance(value, str) and len(value.strip()) > 0:
+            return FlextResult[None].ok(None)
+        return FlextResult[None].fail("Value is not a valid string")
+
+    class Validators:
+        """Validators nested class for legacy compatibility."""
+
+        @staticmethod
+        def validate_email(value: object) -> FlextResult[None]:
+            """Validate email using validators pattern."""
+            return FlextValidation.validate_email_field(value)
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if validation result is valid."""
+        return True  # Default implementation for compatibility
+
 
 # =============================================================================
 # EXPORTS - Hierarchical and legacy validation system

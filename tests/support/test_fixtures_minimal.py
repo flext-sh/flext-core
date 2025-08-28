@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+
+object
 
 import pytest
 
@@ -46,7 +47,7 @@ def clean_container() -> FlextContainer:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, Any]:
+def sample_data() -> dict[str, object]:
     """Provide sample data for testing."""
     return {
         "id": str(uuid.uuid4()),
@@ -58,7 +59,7 @@ def sample_data() -> dict[str, Any]:
 
 
 # Helper functions for creating test objects
-def create_test_entity_data(**kwargs: object) -> dict[str, Any]:
+def create_test_entity_data(**kwargs: object) -> dict[str, object]:
     """Create test entity data with defaults."""
     defaults = {
         "id": str(uuid.uuid4()),
@@ -70,11 +71,11 @@ def create_test_entity_data(**kwargs: object) -> dict[str, Any]:
     return defaults
 
 
-def create_test_result_success(data: object = None) -> FlextResult[Any]:
+def create_test_result_success(data: object = None) -> FlextResult[object]:
     """Create a successful test result."""
-    return FlextResult[Any].ok(data or "test_data")
+    return FlextResult[object].ok(data or "test_data")
 
 
-def create_test_result_failure(error: str = "test_error") -> FlextResult[Any]:
+def create_test_result_failure(error: str = "test_error") -> FlextResult[object]:
     """Create a failed test result."""
-    return FlextResult[Any].fail(error)
+    return FlextResult[object].fail(error)

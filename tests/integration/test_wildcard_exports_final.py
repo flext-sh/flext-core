@@ -264,11 +264,7 @@ class TestFlextCoreSystemValidation:
         """Test that the core railway-oriented programming pattern works."""
         # Chain of operations using FlextResult
         result = (
-            FlextResult[int]
-            .ok(10)
-            .map(lambda x: x * 2)
-            .map(lambda x: x + 5)
-            .map(str)
+            FlextResult[int].ok(10).map(lambda x: x * 2).map(lambda x: x + 5).map(str)
         )
 
         assert result.success is True

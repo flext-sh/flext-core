@@ -18,7 +18,7 @@ from typing import TypeVar
 T = TypeVar("T")
 U = TypeVar("U")
 
-# Type aliases para padrões de teste - seguindo FLEXT patterns sem Any
+# Type aliases para padrões de teste - seguindo FLEXT patterns sem object
 TestFunction = Callable[..., None]  # Test functions typically return None
 TestDecorator = Callable[[TestFunction], TestFunction]
 

@@ -28,23 +28,11 @@ from flext_core import (
     FlextConstants,
     FlextResult,
     FlextUtilities,
+    FlextMixins,
 )
-from flext_core.legacy import (
-    FlextCacheableMixin,
-    FlextEntityMixin,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin,
-    FlextValidatableMixin,
-)
-from flext_core.mixins import FlextMixins
 
-# Some mixins need to be aliased from what's available
-FlextValueObjectMixin = FlextEntityMixin  # Use entity as value object base
-FlextComparableMixin = FlextSerializableMixin  # Use serializable as comparable base
-FlextTimingMixin = FlextTimestampMixin  # Use timestamp as timing base
-SimpleCacheMixin = FlextCacheableMixin  # Use cacheable as simple cache base
+# DIRECT USAGE OF UNIFIED CLASSES - NO ALIASES
+# Use FlextMixins.Serializable, FlextMixins.Loggable, etc. directly
 
 # =============================================================================
 # PROTOCOL DEFINITIONS - Type protocols for enterprise patterns
@@ -1068,7 +1056,7 @@ def demonstrate_method_resolution_order() -> None:
     """Demonstrate method resolution order in multiple inheritance."""
 
     class ComplexClass(
-        FlextLoggableMixin,
+        FlextMixins.Loggable,
         FlextTimingMixin,
         FlextValidatableMixin,
         FlextIdentifiableMixin,
@@ -1145,7 +1133,7 @@ def demonstrate_performance_characteristics() -> None:
     class MultipleMixinClass(
         FlextIdentifiableMixin,
         FlextTimestampMixin,
-        FlextLoggableMixin,
+        FlextMixins.Loggable,
         FlextValidatableMixin,
     ):
         def __init__(self, name: str) -> None:
@@ -1207,7 +1195,7 @@ def _create_enterprise_user_repository() -> UserRepositoryProtocol:
 
     # Repository pattern with mixins using FlextResult pattern
     class UserRepository(
-        FlextLoggableMixin,
+        FlextMixins.Loggable,
         SimpleCacheMixin,  # For cache methods
         FlextTimingMixin,
     ):
@@ -1324,7 +1312,7 @@ def _create_enterprise_order_service(
     # Domain service pattern with railway-oriented programming
     class OrderService(
         FlextIdentifiableMixin,
-        FlextLoggableMixin,
+        FlextMixins.Loggable,
         FlextValidatableMixin,
         FlextTimingMixin,
     ):

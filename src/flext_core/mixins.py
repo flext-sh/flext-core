@@ -9,19 +9,12 @@ import time
 from collections.abc import Iterable
 from typing import cast
 
+from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
-
-# Import protocols from FlextProtocols
-FlextProtocols.Foundation.HasToDictBasic = FlextProtocols.Foundation.HasToDictBasic
-FlextProtocols.Foundation.HasToDict = FlextProtocols.Foundation.HasToDict
-FlextProtocols.Foundation.SupportsDynamicAttributes = (
-    FlextProtocols.Foundation.SupportsDynamicAttributes
-)
-
 
 # =============================================================================
 # TIER 1 MODULE PATTERN - SINGLE MAIN EXPORT WITH TRUE INTERNALIZATION
@@ -52,6 +45,345 @@ class FlextMixins:
     - Metrics (performance tracking patterns)
     - Event Handling (observer patterns)
     """
+
+    # ==========================================================================
+    # CONFIGURATION METHODS WITH FLEXTTYPES.CONFIG INTEGRATION
+    # ==========================================================================
+
+    @classmethod
+    def configure_mixins_system(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Configure mixins system using FlextTypes.Config with StrEnum validation.
+
+        Args:
+            config: Configuration dictionary with mixins settings
+
+        Returns:
+            FlextResult containing the validated and applied configuration
+
+        """
+        try:
+            # Create validated configuration with defaults
+            validated_config: FlextTypes.Config.ConfigDict = {}
+
+            # Validate environment using FlextConstants.Config.ConfigEnvironment
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                    )
+                validated_config["environment"] = env_value
+            else:
+                validated_config["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                )
+
+            # Validate log level using FlextConstants.Config.LogLevel
+            if "log_level" in config:
+                log_level = config["log_level"]
+                valid_log_levels = [
+                    level.value for level in FlextConstants.Config.LogLevel
+                ]
+                if log_level not in valid_log_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}"
+                    )
+                validated_config["log_level"] = log_level
+            else:
+                validated_config["log_level"] = (
+                    FlextConstants.Config.LogLevel.DEBUG.value
+                )
+
+            # Mixins-specific configuration
+            validated_config["enable_timestamp_tracking"] = config.get(
+                "enable_timestamp_tracking", True
+            )
+            validated_config["enable_logging_integration"] = config.get(
+                "enable_logging_integration", True
+            )
+            validated_config["enable_serialization"] = config.get(
+                "enable_serialization", True
+            )
+            validated_config["enable_validation"] = config.get(
+                "enable_validation", True
+            )
+            validated_config["enable_identification"] = config.get(
+                "enable_identification", True
+            )
+            validated_config["enable_state_management"] = config.get(
+                "enable_state_management", True
+            )
+            validated_config["enable_caching"] = config.get("enable_caching", False)
+            validated_config["enable_thread_safety"] = config.get(
+                "enable_thread_safety", True
+            )
+            validated_config["enable_metrics"] = config.get("enable_metrics", True)
+            validated_config["default_cache_size"] = config.get(
+                "default_cache_size", 1000
+            )
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to configure mixins system: {e!s}"
+            )
+
+    @classmethod
+    def get_mixins_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current mixins system configuration with runtime information.
+
+        Returns:
+            FlextResult containing current mixins system configuration
+
+        """
+        try:
+            config: FlextTypes.Config.ConfigDict = {
+                # Environment information
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                # Mixins system settings
+                "enable_timestamp_tracking": True,
+                "enable_logging_integration": True,
+                "enable_serialization": True,
+                "enable_validation": True,
+                "enable_identification": True,
+                "enable_state_management": True,
+                "enable_caching": False,
+                "enable_thread_safety": True,
+                "enable_metrics": True,
+                "default_cache_size": 1000,
+                # Runtime metrics
+                "active_mixins": 0,
+                "cached_objects": 0,
+                "serialization_operations": 0,
+                "validation_operations": 0,
+                # Available patterns
+                "available_mixins": [
+                    "TimestampMixin",
+                    "LoggingMixin",
+                    "SerializationMixin",
+                    "ValidationMixin",
+                    "IdentificationMixin",
+                ],
+                "enabled_behaviors": [
+                    "timestamp_tracking",
+                    "logging",
+                    "serialization",
+                    "validation",
+                    "identification",
+                ],
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get mixins system configuration: {e!s}"
+            )
+
+    @classmethod
+    def create_environment_mixins_config(
+        cls, environment: FlextTypes.Config.Environment
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Create environment-specific mixins system configuration.
+
+        Args:
+            environment: Target environment for configuration
+
+        Returns:
+            FlextResult containing environment-optimized mixins configuration
+
+        """
+        try:
+            # Validate environment
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                )
+
+            # Base configuration
+            config: FlextTypes.Config.ConfigDict = {
+                "environment": environment,
+                "enable_timestamp_tracking": True,
+                "enable_logging_integration": True,
+                "enable_serialization": True,
+                "enable_validation": True,
+                "enable_identification": True,
+            }
+
+            # Environment-specific optimizations
+            if environment == "production":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_caching": True,  # Enable caching in production
+                    "default_cache_size": 10000,  # Large cache for production
+                    "enable_thread_safety": True,  # Thread safety critical in production
+                    "enable_metrics": True,  # Metrics for production monitoring
+                    "enable_performance_optimization": True,  # Performance optimizations
+                    "cache_ttl_seconds": 600,  # 10 minute cache TTL
+                    "enable_lazy_initialization": True,  # Lazy init for performance
+                })
+            elif environment == "development":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_caching": False,  # No caching for development
+                    "default_cache_size": 100,  # Small cache for development
+                    "enable_thread_safety": False,  # Not needed in single-threaded dev
+                    "enable_metrics": True,  # Metrics for debugging
+                    "enable_debug_logging": True,  # Debug logging for development
+                    "enable_validation_verbose": True,  # Verbose validation messages
+                })
+            elif environment == "test":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_caching": False,  # No caching in tests
+                    "default_cache_size": 10,  # Very small cache for tests
+                    "enable_thread_safety": False,  # Single-threaded tests
+                    "enable_metrics": False,  # No metrics in tests
+                    "enable_test_mode": True,  # Special test mode
+                    "enable_mock_behavior": True,  # Enable mock behavior
+                })
+            elif environment == "staging":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_caching": True,  # Test caching in staging
+                    "default_cache_size": 5000,  # Medium cache for staging
+                    "enable_thread_safety": True,  # Test thread safety
+                    "enable_metrics": True,  # Metrics for staging validation
+                    "cache_ttl_seconds": 300,  # 5 minute cache TTL
+                    "enable_staging_validation": True,  # Staging-specific validation
+                })
+            else:  # local environment
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_caching": False,  # No caching locally
+                    "default_cache_size": 50,  # Tiny cache for local
+                    "enable_thread_safety": False,  # Single-threaded local development
+                    "enable_metrics": False,  # No metrics locally
+                    "enable_local_debugging": True,  # Local debugging features
+                })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to create environment mixins configuration: {e!s}"
+            )
+
+    @classmethod
+    def optimize_mixins_performance(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Optimize mixins system performance based on configuration.
+
+        Args:
+            config: Performance optimization configuration
+
+        Returns:
+            FlextResult containing performance-optimized mixins configuration
+
+        """
+        try:
+            # Start with base configuration
+            optimized_config: FlextTypes.Config.ConfigDict = config.copy()
+
+            # Performance level-based optimizations
+            performance_level = config.get("performance_level", "medium")
+
+            if performance_level == "high":
+                optimized_config.update({
+                    "enable_caching": True,
+                    "default_cache_size": 50000,  # Very large cache
+                    "cache_ttl_seconds": 3600,  # 1 hour cache TTL
+                    "enable_lazy_initialization": True,  # Lazy initialization
+                    "enable_object_pooling": True,  # Object pooling
+                    "pool_size": 1000,  # Large object pool
+                    "enable_batch_operations": True,  # Batch operations
+                    "batch_size": 1000,  # Large batch size
+                    "enable_async_operations": True,  # Async operations
+                    "max_concurrent_operations": 100,  # High concurrency
+                })
+            elif performance_level == "medium":
+                optimized_config.update({
+                    "enable_caching": True,
+                    "default_cache_size": 10000,  # Medium cache
+                    "cache_ttl_seconds": 1800,  # 30 minute cache TTL
+                    "enable_lazy_initialization": True,  # Lazy initialization
+                    "enable_batch_operations": True,  # Batch operations
+                    "batch_size": 100,  # Medium batch size
+                    "max_concurrent_operations": 25,  # Medium concurrency
+                })
+            else:  # low performance level
+                optimized_config.update({
+                    "enable_caching": False,  # No caching
+                    "default_cache_size": 100,  # Small cache if needed
+                    "enable_lazy_initialization": False,  # No lazy initialization
+                    "enable_batch_operations": False,  # No batch operations
+                    "batch_size": 1,  # Single operations
+                    "max_concurrent_operations": 1,  # Single-threaded
+                    "enable_detailed_monitoring": True,  # More detailed monitoring
+                })
+
+            # Memory optimization settings - define constants for thresholds
+            low_memory_threshold = 256
+            high_memory_threshold = 4096
+
+            # Type-safe memory limit handling
+            memory_limit_raw = config.get("memory_limit_mb", 512)
+            memory_limit_mb = (
+                int(memory_limit_raw)
+                if isinstance(memory_limit_raw, (int, str, float))
+                else 512
+            )
+
+            if memory_limit_mb < low_memory_threshold:
+                current_cache = optimized_config.get("default_cache_size", 1000)
+                cache_size = (
+                    int(current_cache)
+                    if isinstance(current_cache, (int, str, float))
+                    else 1000
+                )
+                optimized_config["default_cache_size"] = min(cache_size, 100)
+                optimized_config["enable_memory_monitoring"] = True
+                optimized_config["enable_garbage_collection"] = True
+            elif memory_limit_mb > high_memory_threshold:
+                optimized_config["enable_large_cache"] = True
+                optimized_config["enable_memory_mapping"] = True
+
+            # Type-safe CPU cores handling
+            cpu_cores_raw = config.get("cpu_cores", 4)
+            cpu_cores = (
+                int(cpu_cores_raw)
+                if isinstance(cpu_cores_raw, (int, str, float))
+                else 4
+            )
+            optimized_config["max_worker_threads"] = min(cpu_cores, 8)
+            optimized_config["thread_pool_size"] = cpu_cores * 2
+
+            # Add performance metrics
+            optimized_config.update({
+                "performance_level": performance_level,
+                "memory_limit_mb": memory_limit_mb,
+                "cpu_cores": cpu_cores,
+                "optimization_applied": True,
+                "optimization_timestamp": "runtime",
+            })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to optimize mixins performance: {e!s}"
+            )
 
     # =============================================================================
     # BASE ABSTRACT MIXIN - Foundation for all mixins
@@ -934,5 +1266,16 @@ class FlextMixins:
 # =============================================================================
 
 __all__: list[str] = [
+    # Backward compatibility - individual mixin classes
+    "FlextLoggableMixin",
     "FlextMixins",  # ONLY main class exported
+    "FlextSerializableMixin",
+    "FlextTimestampMixin",
+    "FlextValidatableMixin",
 ]
+
+# Backward compatibility - export nested classes with Flext prefix
+FlextLoggableMixin = FlextMixins.Loggable
+FlextSerializableMixin = FlextMixins.Serializable
+FlextTimestampMixin = FlextMixins.Timestampable
+FlextValidatableMixin = FlextMixins.Validatable

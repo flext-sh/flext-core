@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import tempfile
 from collections.abc import Callable
-from typing import Any
+
+object
 from unittest.mock import Mock
 
 from pytest_mock import MockerFixture
@@ -61,11 +62,11 @@ class TestBuilders:
             self._is_success = False
             return self
 
-        def build(self) -> FlextResult[Any]:
+        def build(self) -> FlextResult[object]:
             """Build the FlextResult object."""
             if self._is_success:
-                return FlextResult[Any].ok(self._data)
-            return FlextResult[Any].fail(
+                return FlextResult[object].ok(self._data)
+            return FlextResult[object].fail(
                 self._error or "Test error",
                 error_code=self._error_code,
                 error_data=self._error_data,
@@ -76,8 +77,8 @@ class TestBuilders:
 
         def __init__(self) -> None:
             self._container = FlextContainer()
-            self._services: dict[str, Any] = {}
-            self._factories: dict[str, Callable[[], Any]] = {}
+            self._services: dict[str, object] = {}
+            self._factories: dict[str, Callable[[], object]] = {}
 
         def with_service(
             self, name: str, service: object
@@ -89,7 +90,7 @@ class TestBuilders:
         def with_factory(
             self,
             name: str,
-            factory: Callable[[], Any],
+            factory: Callable[[], object],
         ) -> TestBuilders.ContainerBuilder:
             """Add a factory to the container."""
             self._factories[name] = factory
@@ -267,8 +268,8 @@ class TestBuilders:
         def __init__(self, mocker: MockerFixture) -> None:
             self._mocker = mocker
             self._mock = Mock()
-            self._return_values: list[Any] = []
-            self._side_effects: list[Any] = []
+            self._return_values: list[object] = []
+            self._side_effects: list[object] = []
 
         def returns(self, value: object) -> TestBuilders.MockBuilder:
             """Set return value."""
@@ -279,12 +280,12 @@ class TestBuilders:
             self, data: object = None
         ) -> TestBuilders.MockBuilder:
             """Return successful FlextResult."""
-            result = FlextResult[Any].ok(data)
+            result = FlextResult[object].ok(data)
             return self.returns(result)
 
         def returns_result_failure(self, error: str) -> TestBuilders.MockBuilder:
             """Return failed FlextResult."""
-            result = FlextResult[Any].fail(error)
+            result = FlextResult[object].fail(error)
             return self.returns(result)
 
         def raises(self, exception: Exception) -> TestBuilders.MockBuilder:
@@ -384,12 +385,12 @@ class TestBuilders:
 
 
 # Convenience functions for common builders
-def build_success_result(data: object = "test_data") -> FlextResult[Any]:
+def build_success_result(data: object = "test_data") -> FlextResult[object]:
     """Build a successful result quickly."""
     return TestBuilders.result().with_success_data(data).build()
 
 
-def build_failure_result(error: str = "test_error") -> FlextResult[Any]:
+def build_failure_result(error: str = "test_error") -> FlextResult[object]:
     """Build a failure result quickly."""
     return TestBuilders.result().with_failure(error).build()
 

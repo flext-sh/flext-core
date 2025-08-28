@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import re
 from collections.abc import Callable, Sequence
-from typing import Any, TypeGuard
+from typing import TypeGuard, object
 
 from pytest_benchmark.fixture import BenchmarkFixture
 
@@ -28,7 +28,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_result_success(
-        result: FlextResult[Any],
+        result: FlextResult[object],
         expected_data: object = None,
     ) -> None:
         """Assert FlextResult is successful with optional data check.
@@ -52,7 +52,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: FlextResult[Any],
+        result: FlextResult[object],
         expected_error: str | None = None,
         expected_error_code: str | None = None,
     ) -> None:
@@ -175,11 +175,11 @@ class FlextMatchers:
     @staticmethod
     def assert_performance_within_limit(
         benchmark: BenchmarkFixture,
-        func: Callable[[], Any],
+        func: Callable[[], object],
         max_time_seconds: float = 1.0,
         *args: object,
         **kwargs: object,
-    ) -> Any:
+    ) -> object:
         """Assert function performance is within time limit.
 
         Args:
@@ -234,7 +234,7 @@ class FlextMatchers:
     @staticmethod
     def assert_type_guard(
         value: object,
-        type_guard: Callable[[Any], TypeGuard[Any]],
+        type_guard: Callable[[object], TypeGuard[object]],
     ) -> None:
         """Assert value passes type guard.
 
@@ -340,7 +340,7 @@ class PerformanceMatchers:
     @staticmethod
     def assert_linear_complexity(
         benchmark: BenchmarkFixture,
-        func: Callable[[int], Any],
+        func: Callable[[int], object],
         sizes: Sequence[int],
         tolerance_factor: float = 2.0,
     ) -> None:
@@ -374,7 +374,7 @@ class PerformanceMatchers:
     @staticmethod
     def assert_memory_efficient(
         benchmark: BenchmarkFixture,
-        func: Callable[[], Any],
+        func: Callable[[], object],
         _max_memory_mb: float = 100.0,
     ) -> None:
         """Assert function is memory efficient.

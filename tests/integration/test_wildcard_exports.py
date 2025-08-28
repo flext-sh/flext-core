@@ -12,7 +12,7 @@ import uuid
 import pytest
 
 # Wildcard import para testar todo o sistema
-from flext_core import *  # noqa: F403
+from flext_core import *
 from flext_core import FlextConstants, FlextExceptions, FlextResult, FlextUtilities
 
 

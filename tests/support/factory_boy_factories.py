@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+
+object
 
 import factory
 from factory import (
@@ -34,7 +35,7 @@ class TestUser(BaseModel):
     age: int
     is_active: bool
     created_at: datetime
-    metadata: dict[str, Any]  # type: ignore[explicit-any]
+    metadata: dict[str, object]  # type: ignore[explicit-any]
 
 
 class TestConfig(BaseModel):
@@ -204,9 +205,9 @@ class FlextResultFactory:
     @staticmethod
     def failure(
         error: str = "test_error", error_code: str = "TEST_ERROR"
-    ) -> FlextResult[Any]:  # type: ignore[explicit-any]
+    ) -> FlextResult[object]:  # type: ignore[explicit-any]
         """Create failed FlextResult."""
-        return FlextResult[Any].fail(error, error_code=error_code)
+        return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
     def success_with_user() -> FlextResult[TestUser]:
@@ -299,12 +300,12 @@ class EdgeCaseGenerators:
         return [0, -1, 1, 999999999, -999999999, 1e-10, float("inf"), float("-inf")]
 
     @staticmethod
-    def empty_values() -> list[Any]:  # type: ignore[explicit-any]
+    def empty_values() -> list[object]:  # type: ignore[explicit-any]
         """Generate empty/null test values."""
         return ["", [], {}, None, 0, False]
 
     @staticmethod
-    def large_values() -> list[Any]:  # type: ignore[explicit-any]
+    def large_values() -> list[object]:  # type: ignore[explicit-any]
         """Generate large value test cases."""
         return [
             "x" * 10000,
@@ -314,7 +315,7 @@ class EdgeCaseGenerators:
 
 
 # Utility functions for common test patterns
-def create_test_hierarchy() -> dict[str, Any]:  # type: ignore[explicit-any]
+def create_test_hierarchy() -> dict[str, object]:  # type: ignore[explicit-any]
     """Create hierarchical test data structure."""
     return {
         "root": UserFactory(),
@@ -325,7 +326,7 @@ def create_test_hierarchy() -> dict[str, Any]:  # type: ignore[explicit-any]
     }
 
 
-def create_validation_test_cases() -> list[dict[str, Any]]:  # type: ignore[explicit-any]
+def create_validation_test_cases() -> list[dict[str, object]]:  # type: ignore[explicit-any]
     """Create comprehensive validation test cases."""
     return [
         {

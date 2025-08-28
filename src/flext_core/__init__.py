@@ -1,104 +1,19 @@
-"""FLEXT Core - Foundation Library for FLEXT Ecosystem.
+"""FLEXT Core - Foundation library for enterprise data integration.
 
-This module provides the complete FLEXT ecosystem foundation following
-FLEXT architectural patterns with proper layered imports and zero circular
-dependencies. All exports use wildcard imports from individual modules
-following the hierarchical FlextXxx pattern.
+Provides FlextResult for error handling, FlextContainer for DI,
+and FlextEntity/FlextValueObject for domain modeling.
 
-Architecture Overview:
-    This library follows Clean Architecture principles with proper dependency
-    layering to avoid circular imports. The import order is carefully structured
-    to respect dependencies:
+Main exports:
+    - FlextResult: Railway-oriented programming
+    - FlextContainer: Dependency injection
+    - FlextEntity, FlextValueObject: Domain patterns
+    - get_flext_container(): Global DI container
 
-    Foundation Layer (no dependencies):
-        - __version__: Version information
-        - constants: System-wide constants and enums
-        - typings: Type definitions and generic patterns
-        - result: Railway-oriented programming with FlextResult[T]
-        - exceptions: Exception hierarchy and error handling
-        - protocols: Interface definitions and contracts
+Example:
+    from flext_core import FlextResult, get_flext_container
 
-    Domain Layer (depends on Foundation):
-        - models: Domain models with Pydantic integration
-        - entities: Entity patterns for DDD
-        - aggregate_root: Aggregate root patterns with domain events
-        - domain_services: Domain service patterns
-
-    Application Layer (depends on Domain + Foundation):
-        - commands: CQRS command patterns
-        - handlers: Handler implementations and registry
-        - validation: Validation framework with predicates
-        - payload: Message/event patterns for integration
-        - guards: Type guards and validation decorators
-
-    Infrastructure Layer (depends on Application + Domain + Foundation):
-        - container: Dependency injection container
-        - config: Configuration management with Pydantic Settings
-        - loggings: Structured logging with structlog integration
-        - observability: Metrics, tracing, monitoring abstractions
-        - context: Request/operation context management
-        - core: Core framework integration layer
-
-    Support Layer (depends on layers as needed, imported last):
-        - mixins: Reusable behavior patterns (timestamps, etc.)
-        - decorators: Enterprise decorator patterns
-        - utilities: Helper functions and generators
-        - fields: Field validation and metadata
-        - services: Service layer abstractions
-        - semantic: Semantic modeling and analysis
-        - test helpers: Available separately when needed
-        - delegation_system: Mixin delegation patterns
-        - schema_processing: Schema validation and processing
-        - type_adapters: Type adaptation utilities
-        - root_models: Root model patterns for validation
-        - legacy: Backward compatibility layer
-
-Key Features:
-    - FlextResult[T] for railway-oriented programming
-    - Hierarchical FlextTypes system for comprehensive type definitions
-    - FlextConstants for system-wide constants and configuration
-    - FlextProtocols for centralized interface definitions
-    - FlextContainer for dependency injection
-    - FlextEntity, FlextValueObject, FlextAggregateRoot for DDD patterns
-    - Professional enterprise patterns following SOLID principles
-
-Examples:
-    Basic usage with FlextResult pattern::
-
-        from flext_core import FlextResult
-
-
-        def validate_email(email: str) -> FlextResult[str]:
-            if "@" not in email:
-                return FlextResult[None].fail("Invalid email format")
-            return FlextResult[None].ok(email)
-
-
-        result = validate_email("user@example.com")
-        if result.success:
-            validated_email = result.unwrap()
-
-    Using hierarchical types::
-
-        from flext_core import FlextTypes
-
-        # Type-safe declarations
-        user_id: FlextTypes.Domain.EntityId = "user_123"
-        config: FlextTypes.Config.ConfigDict = {"key": "value"}
-
-    Dependency injection::
-
-        from flext_core import get_flext_container
-
-        container = get_flext_container()
-        container.register("service", MyService())
-        service_result = container.get("service")
-
-Note:
-    This module enforces Python 3.13+ requirements and follows FLEXT refactoring
-    patterns with hierarchical organization, proper import layering to avoid
-    circular dependencies, and centralized compatibility management through
-    legacy.py facades.
+    result = FlextResult.ok("success")
+    container = get_flext_container()
 
 """
 
@@ -130,17 +45,16 @@ from flext_core.models import *
 from flext_core.commands import *
 from flext_core.guards import *
 from flext_core.handlers import *
-from flext_core.payload import *
 from flext_core.validation import *
 
 # =============================================================================
 # INFRASTRUCTURE LAYER - Depends on Application + Domain + Foundation
 # =============================================================================
 
+# Infrastructure layer - explicit imports to avoid type conflicts
 from flext_core.config import *
 from flext_core.container import *
 from flext_core.context import *
-from flext_core.core import *
 from flext_core.loggings import *
 from flext_core.observability import *
 
@@ -152,18 +66,27 @@ from flext_core.decorators import *
 from flext_core.delegation_system import *
 from flext_core.fields import *
 from flext_core.mixins import *
-
-# root_models consolidated into models.py
 from flext_core.schema_processing import *
 from flext_core.services import *
 from flext_core.type_adapters import *
 from flext_core.utilities import *
 
+
 # =============================================================================
-# LEGACY COMPATIBILITY LAYER - Import last for backward compatibility
+# LEGACY FUNCTIONALITY - Legacy implementation exports
 # =============================================================================
 
+# Legacy functionality - ensure specific exports are accessible
 from flext_core.legacy import *
+
+
+# =============================================================================
+# CORE FUNCTIONALITY - Main implementation exports
+# =============================================================================
+
+# Core functionality - ensure specific exports are accessible
+from flext_core.core import *
+
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules
@@ -185,22 +108,19 @@ import flext_core.exceptions as _exceptions
 import flext_core.fields as _fields
 import flext_core.guards as _guards
 import flext_core.handlers as _handlers
-import flext_core.legacy as _legacy
 import flext_core.loggings as _loggings
 import flext_core.mixins as _mixins
 import flext_core.models as _models
 import flext_core.observability as _observability
-import flext_core.payload as _payload
 import flext_core.protocols as _protocols
 import flext_core.result as _result
-
-# root_models consolidated into models.py
 import flext_core.schema_processing as _schema_processing
 import flext_core.services as _services
 import flext_core.type_adapters as _type_adapters
 import flext_core.typings as _typings
 import flext_core.utilities as _utilities
 import flext_core.validation as _validation
+import flext_core.legacy as _legacy
 
 # Collect all __all__ exports from imported modules
 _temp_exports: list[str] = []
@@ -218,7 +138,6 @@ for module in [
     _commands,
     _validation,
     _guards,
-    _payload,
     _handlers,
     _container,
     _config,
@@ -231,12 +150,10 @@ for module in [
     _utilities,
     _fields,
     _services,
-    # _testing_utilities removed - not available
     _delegation_system,
     _schema_processing,
     _type_adapters,
-    # _root_models consolidated into models.py
-    _legacy,  # Include legacy module in wildcard exports
+    _legacy,
 ]:
     if hasattr(module, "__all__"):
         _temp_exports.extend(module.__all__)

@@ -18,7 +18,8 @@ import contextlib
 import datetime
 import uuid
 from collections.abc import AsyncGenerator, Callable
-from typing import Any
+
+object
 
 import httpx
 import pytest
@@ -36,7 +37,7 @@ class SimpleDataFactory:
     """Simple data factory for test objects without complex dependencies."""
 
     @staticmethod
-    def create_entity_data() -> dict[str, Any]:
+    def create_entity_data() -> dict[str, object]:
         """Create realistic entity data for testing."""
         return {
             "id": str(uuid.uuid4()),
@@ -48,7 +49,7 @@ class SimpleDataFactory:
         }
 
     @staticmethod
-    def create_value_data() -> dict[str, Any]:
+    def create_value_data() -> dict[str, object]:
         """Create realistic value data for testing."""
         test_value = f"test_value_{uuid.uuid4().hex[:8]}"
         return {
@@ -61,14 +62,16 @@ class SimpleDataFactory:
         }
 
     @staticmethod
-    def create_success_result(value: object = "test_success_value") -> FlextResult[Any]:
+    def create_success_result(
+        value: object = "test_success_value",
+    ) -> FlextResult[object]:
         """Create successful FlextResult."""
-        return FlextResult[Any].ok(value)
+        return FlextResult[object].ok(value)
 
     @staticmethod
-    def create_failure_result(error: str = "Test failure error") -> FlextResult[Any]:
+    def create_failure_result(error: str = "Test failure error") -> FlextResult[object]:
         """Create failed FlextResult."""
-        return FlextResult[Any].fail(error)
+        return FlextResult[object].fail(error)
 
     @staticmethod
     def create_container_with_services() -> FlextContainer:
@@ -117,9 +120,9 @@ async def async_timeout() -> float:
 
 
 @pytest.fixture
-async def async_context() -> AsyncGenerator[dict[str, Any]]:
+async def async_context() -> AsyncGenerator[dict[str, object]]:
     """Provide async execution context with cleanup."""
-    context: dict[str, Any] = {
+    context: dict[str, object] = {
         "started_at": datetime.datetime.now(datetime.UTC),
         "tasks": [],
         "resources": [],
@@ -193,7 +196,7 @@ def benchmark_rounds() -> int:
 
 
 @pytest.fixture
-def performance_tracker(benchmark: object) -> Callable[[Callable[[], Any]], Any]:
+def performance_tracker(benchmark: object) -> Callable[[Callable[[], object]], object]:
     """Provide performance tracking utility."""
 
     def track(func: Callable[[], object]) -> object:
@@ -216,13 +219,13 @@ def simple_factory() -> SimpleDataFactory:
 
 
 @pytest.fixture
-def entity_data(simple_factory: SimpleDataFactory) -> dict[str, Any]:
+def entity_data(simple_factory: SimpleDataFactory) -> dict[str, object]:
     """Provide entity data for testing."""
     return simple_factory.create_entity_data()
 
 
 @pytest.fixture
-def value_data(simple_factory: SimpleDataFactory) -> dict[str, Any]:
+def value_data(simple_factory: SimpleDataFactory) -> dict[str, object]:
     """Provide value data for testing."""
     return simple_factory.create_value_data()
 
@@ -251,13 +254,13 @@ def test_container(simple_factory: SimpleDataFactory) -> FlextContainer:
 
 
 @pytest.fixture
-def entity_batch(simple_factory: SimpleDataFactory) -> list[dict[str, Any]]:
+def entity_batch(simple_factory: SimpleDataFactory) -> list[dict[str, object]]:
     """Provide batch of entity data for performance testing."""
     return [simple_factory.create_entity_data() for _ in range(10)]
 
 
 @pytest.fixture
-def value_batch(simple_factory: SimpleDataFactory) -> list[dict[str, Any]]:
+def value_batch(simple_factory: SimpleDataFactory) -> list[dict[str, object]]:
     """Provide batch of value data for performance testing."""
     return [simple_factory.create_value_data() for _ in range(10)]
 
@@ -284,7 +287,7 @@ def mock_container(mocker: pytest_mock.MockerFixture) -> FlextContainer:
 
 @pytest.fixture
 def mock_entity(
-    mocker: pytest_mock.MockerFixture, entity_data: dict[str, Any]
+    mocker: pytest_mock.MockerFixture, entity_data: dict[str, object]
 ) -> FlextEntity:
     """Provide mocked FlextEntity."""
     entity = mocker.Mock(spec=FlextEntity)
@@ -297,7 +300,7 @@ def mock_entity(
 
 @pytest.fixture
 def mock_value(
-    mocker: pytest_mock.MockerFixture, value_data: dict[str, Any]
+    mocker: pytest_mock.MockerFixture, value_data: dict[str, object]
 ) -> FlextValue:
     """Provide mocked FlextValue."""
     value = mocker.Mock(spec=FlextValue)
@@ -348,7 +351,7 @@ def create_test_entity(**kwargs: object) -> FlextEntity:
     return TestEntity(**data)
 
 
-def create_test_value(**kwargs: object) -> dict[str, Any]:
+def create_test_value(**kwargs: object) -> dict[str, object]:
     """Create test value data with custom attributes."""
     factory = SimpleDataFactory()
     data = factory.create_value_data()
@@ -358,8 +361,8 @@ def create_test_value(**kwargs: object) -> dict[str, Any]:
 
 def create_test_result(
     *, success: bool = True, value: object = None, error: str | None = None
-) -> FlextResult[Any]:
+) -> FlextResult[object]:
     """Create test result with specified state."""
     if success:
-        return FlextResult[Any].ok(value or "test_value")
-    return FlextResult[Any].fail(error or "test_error")
+        return FlextResult[object].ok(value or "test_value")
+    return FlextResult[object].fail(error or "test_error")

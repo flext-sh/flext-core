@@ -94,13 +94,13 @@ class CommandBus:
     """Route commands to handlers."""
 
     def __init__(self):
-        self.handlers: dict[type, Any] = {}
+        self.handlers: dict[type, object] = {}
 
-    def register(self, command_type: type, handler: Any) -> None:
+    def register(self, command_type: type, handler: object) -> None:
         """Register handler for command type."""
         self.handlers[command_type] = handler
 
-    def dispatch(self, command: Any) -> FlextResult[Any]:
+    def dispatch(self, command: object) -> FlextResult[object]:
         """Dispatch command to handler."""
         handler = self.handlers.get(type(command))
         if not handler:
@@ -195,7 +195,7 @@ class HandlerMiddleware(ABC):
         self.next = next_handler
 
     @abstractmethod
-    def handle(self, request: Any) -> FlextResult[Any]:
+    def handle(self, request: object) -> FlextResult[object]:
         """Process request."""
         pass
 
@@ -206,7 +206,7 @@ class LoggingMiddleware(HandlerMiddleware):
         super().__init__(next_handler)
         self.logger = logger
 
-    def handle(self, request: Any) -> FlextResult[Any]:
+    def handle(self, request: object) -> FlextResult[object]:
         self.logger.info(f"Processing: {type(request).__name__}")
 
         if self.next:
@@ -219,7 +219,7 @@ class LoggingMiddleware(HandlerMiddleware):
 class ValidationMiddleware(HandlerMiddleware):
     """Validate requests."""
 
-    def handle(self, request: Any) -> FlextResult[Any]:
+    def handle(self, request: object) -> FlextResult[object]:
         if hasattr(request, 'validate'):
             validation = request.validate()
             if validation.is_failure:
@@ -237,7 +237,7 @@ class AuthorizationMiddleware(HandlerMiddleware):
         super().__init__(next_handler)
         self.auth_service = auth_service
 
-    def handle(self, request: Any) -> FlextResult[Any]:
+    def handle(self, request: object) -> FlextResult[object]:
         if hasattr(request, 'user_id'):
             auth_result = self.auth_service.authorize(
                 request.user_id,
@@ -288,7 +288,7 @@ from typing import Protocol
 class ValidationRule(Protocol):
     """Validation rule protocol."""
 
-    def validate(self, value: Any) -> FlextResult[Any]:
+    def validate(self, value: object) -> FlextResult[object]:
         """Validate value."""
         ...
 
@@ -298,7 +298,7 @@ class RequiredRule:
     def __init__(self, message: str = "Value is required"):
         self.message = message
 
-    def validate(self, value: Any) -> FlextResult[Any]:
+    def validate(self, value: object) -> FlextResult[object]:
         if value is None or (isinstance(value, str) and not value.strip()):
             return FlextResult[None].fail(self.message)
         return FlextResult[None].ok(value)
@@ -492,12 +492,12 @@ class Repository(ABC):
     """Base repository interface."""
 
     @abstractmethod
-    def find_by_id(self, entity_id: str) -> FlextResult[Any]:
+    def find_by_id(self, entity_id: str) -> FlextResult[object]:
         """Find entity by ID."""
         pass
 
     @abstractmethod
-    def save(self, entity: Any) -> FlextResult[None]:
+    def save(self, entity: object) -> FlextResult[None]:
         """Save entity."""
         pass
 

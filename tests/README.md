@@ -237,7 +237,7 @@ class TestUser(FlextEntity):
     email: str
     is_active: bool = True
 
-class TestOrder(FlextAggregateRoot):
+class TestOrder(FlextAggregates):
     """Test order aggregate."""
     customer_id: str
     items: list

@@ -11,7 +11,10 @@ import contextlib
 
 import pytest
 
-from flext_core.guards import FlextGuards, _PureWrapper
+from flext_core.guards import FlextGuards
+
+# Get PureWrapper from FlextGuards if it exists
+_PureWrapper = getattr(FlextGuards, "PureWrapper", None) or object
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -171,7 +174,7 @@ class TestFlextGuardsCoverage:
                 self.value = value
 
         # Create immutable version
-        ImmutableFailingClass = FlextGuards.immutable(FailingInitClass)  # noqa: N806
+        ImmutableFailingClass = FlextGuards.immutable(FailingInitClass)
 
         # Test that it falls back to basic initialization when original init fails
         try:
@@ -188,7 +191,7 @@ class TestFlextGuardsCoverage:
             def __init__(self, value: str) -> None:
                 self.value = value
 
-        ImmutableClass = FlextGuards.immutable(SimpleClass)  # noqa: N806
+        ImmutableClass = FlextGuards.immutable(SimpleClass)
         instance = ImmutableClass("test")
 
         # Should allow access to value
@@ -208,7 +211,7 @@ class TestFlextGuardsCoverage:
                 self.unhashable_attr = {"key": "value"}  # Dict is unhashable
                 self.normal_attr = "string"
 
-        ImmutableClass = FlextGuards.immutable(UnhashableClass)  # noqa: N806
+        ImmutableClass = FlextGuards.immutable(UnhashableClass)
         instance = ImmutableClass()
 
         # Should fall back to id-based hash when attributes are unhashable
@@ -227,7 +230,7 @@ class TestFlextGuardsCoverage:
                 self.value = value
                 self.number = number
 
-        ImmutableClass = FlextGuards.immutable(HashableClass)  # noqa: N806
+        ImmutableClass = FlextGuards.immutable(HashableClass)
         instance1 = ImmutableClass("test", 42)
         instance2 = ImmutableClass("test", 42)
 
@@ -302,7 +305,7 @@ class TestEdgeCasesAndBoundaryConditions:
         class NoInitClass:
             pass
 
-        ImmutableNoInitClass = FlextGuards.immutable(NoInitClass)  # noqa: N806
+        ImmutableNoInitClass = FlextGuards.immutable(NoInitClass)
         instance = ImmutableNoInitClass()
 
         # Should be successfully created and marked as initialized

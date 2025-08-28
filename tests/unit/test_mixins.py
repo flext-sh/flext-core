@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime
-from typing import Any, cast
+from typing import cast, object
 
 import pytest
 from hypothesis import assume, given
@@ -46,18 +46,11 @@ from tests.support.test_patterns import (
 )
 
 from flext_core import (
-    FlextCacheableMixin,
-    FlextEntityMixin,
     FlextExceptions,
-    FlextIdentifiableMixin,
-    FlextLoggableMixin,
-    FlextSerializableMixin,
-    FlextTimestampMixin,
-    FlextTimingMixin,
-    FlextValidatableMixin,
+    FlextMixins,
 )
 
-pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.mixins]
+pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
 # ============================================================================
@@ -66,14 +59,14 @@ pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.mixins]
 
 
 class TestTimestampMixin:
-    """Test FlextTimestampMixin with factory patterns and property testing."""
+    """Test FlextMixins.Timestampable with factory patterns and property testing."""
 
     def test_timestamp_mixin_with_factory_data(
         self, user_data_factory: UserDataFactory
     ) -> None:
         """Test timestamp mixin with factory-generated data."""
 
-        class TimestampedModel(FlextTimestampMixin):
+        class TimestampedModel(FlextMixins.Timestampable):
             def __init__(self, name: str) -> None:
                 super().__init__()
                 self.name = name
@@ -105,7 +98,7 @@ class TestTimestampMixin:
     def test_timestamp_age_calculation_complexity(self) -> None:
         """Test age calculation with complexity analysis."""
 
-        class ConcreteTimestamp(FlextTimestampMixin):
+        class ConcreteTimestamp(FlextMixins.Timestampable):
             def get_timestamp(self) -> float:
                 return 1704067200.0  # 2024-01-01T00:00:00Z timestamp
 
@@ -135,7 +128,7 @@ class TestTimestampMixin:
     def test_timestamp_property_based(self, timestamp: datetime) -> None:
         """Property-based test for timestamp functionality."""
 
-        class PropertyTimestamp(FlextTimestampMixin):
+        class PropertyTimestamp(FlextMixins.Timestampable):
             def get_timestamp(self) -> float:
                 return timestamp.timestamp()
 
@@ -154,7 +147,7 @@ class TestTimestampMixin:
 
 
 class TestIdentifiableMixin:
-    """Test FlextIdentifiableMixin with comprehensive patterns."""
+    """Test FlextMixins.Identifiable with comprehensive patterns."""
 
     def test_identifiable_with_given_when_then(self) -> None:
         """Test identifiable mixin using Given-When-Then pattern."""
@@ -168,7 +161,7 @@ class TestIdentifiableMixin:
             .build()
         )
 
-        class IdentifiableModel(FlextIdentifiableMixin):
+        class IdentifiableModel(FlextMixins.Identifiable):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
                 self.id = entity_id
@@ -198,7 +191,7 @@ class TestIdentifiableMixin:
             ),
         ]
 
-        class ConcreteIdentifiable(FlextIdentifiableMixin):
+        class ConcreteIdentifiable(FlextMixins.Identifiable):
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
 
@@ -217,7 +210,7 @@ class TestIdentifiableMixin:
         """Property-based test for identifiable mixin."""
         assume(PropertyTestHelpers.assume_non_empty_string(generated_id))
 
-        class PropertyIdentifiable(FlextIdentifiableMixin):
+        class PropertyIdentifiable(FlextMixins.Identifiable):
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
 
@@ -241,14 +234,14 @@ class TestTimingMixin:
     def test_timing_mixin_performance_benchmarking(self, benchmark: object) -> None:
         """Performance benchmark for timing mixin operations."""
 
-        class TimedModel(FlextTimingMixin):
+        class TimedModel:
             def __init__(self) -> None:
-                super().__init__()
+                pass
 
             def timed_operation(self) -> str:
-                self.start_timing()
+                FlextMixins.start_timing(self)
                 time.sleep(0.001)
-                execution_time = self.stop_timing()
+                execution_time = FlextMixins.stop_timing(self)
                 return f"completed in {execution_time:.2f}ms"
 
         def create_and_time() -> TimedModel:
@@ -266,14 +259,14 @@ class TestTimingMixin:
     def test_timing_mixin_stress_testing(self) -> None:
         """Stress test timing mixin under load."""
 
-        class StressTimedModel(FlextTimingMixin):
+        class StressTimedModel:
             def __init__(self) -> None:
-                super().__init__()
+                pass
 
             def quick_operation(self) -> float:
-                self.start_timing()
+                FlextMixins.start_timing(self)
                 # Minimal operation
-                return self.stop_timing()
+                return FlextMixins.stop_timing(self)
 
         stress_runner = StressTestRunner()
 
@@ -296,11 +289,9 @@ class TestCacheableMixin:
     def test_cacheable_mixin_memory_profiling(self) -> None:
         """Test cacheable mixin with memory profiling."""
 
-        class CacheableModel(FlextCacheableMixin):
+        class CacheableModel:
             def __init__(self) -> None:
-                super().__init__()
                 self.call_count = 0
-                self._cache: dict[str, object] = {}
 
             def expensive_operation(self, x: int) -> int:
                 self.call_count += 1
@@ -308,11 +299,11 @@ class TestCacheableMixin:
 
             def cache_set(self, key: str, value: object) -> None:
                 """Set cache value."""
-                self._cache[key] = value
+                FlextMixins.set_cached_value(self, key, value)
 
             def cache_get(self, key: str) -> object:
                 """Get cache value."""
-                return self._cache.get(key)
+                return FlextMixins.get_cached_value(self, key)
 
             def mixin_setup(self) -> None:
                 pass
@@ -338,10 +329,9 @@ class TestCacheableMixin:
     ) -> None:
         """Test cacheable mixin with async operations."""
 
-        class AsyncCacheableModel(FlextCacheableMixin):
+        class AsyncCacheableModel:
             def __init__(self) -> None:
-                super().__init__()
-                self._cache: dict[str, object] = {}
+                pass
 
             async def async_cached_operation(self, key: str) -> str:
                 # Simulate async operation
@@ -385,21 +375,21 @@ class TestCacheableMixin:
 
 
 class TestValidatableMixin:
-    """Test FlextValidatableMixin with comprehensive validation patterns."""
+    """Test FlextMixins.Validatable with comprehensive validation patterns."""
 
     @mark_test_pattern("arrange_act_assert")
     def test_validatable_mixin_aaa_pattern(self) -> None:
         """Test validatable mixin using Arrange-Act-Assert pattern."""
 
-        def arrange_data(*args: object, **kwargs: object) -> dict[str, Any]:
+        def arrange_data(*args: object, **kwargs: object) -> dict[str, object]:
             _ = args, kwargs  # Mark as used
             return {
                 "error_message": "Test validation error",
                 "second_error": "Another error",
             }
 
-        def act_on_data(data: dict[str, Any]) -> dict[str, Any]:
-            class ValidatableModel(FlextValidatableMixin):
+        def act_on_data(data: dict[str, object]) -> dict[str, object]:
+            class ValidatableModel(FlextMixins.Validatable):
                 def __init__(self) -> None:
                     super().__init__()
 
@@ -419,7 +409,7 @@ class TestValidatableMixin:
             }
 
         def assert_results(
-            results: dict[str, Any], original_data: dict[str, Any]
+            results: dict[str, object], original_data: dict[str, object]
         ) -> None:
             _ = original_data  # Mark as used
             assert len(results["errors"]) == 2
@@ -434,12 +424,12 @@ class TestValidatableMixin:
         test_validation_workflow()
 
     @given(CompositeStrategies.user_profiles())
-    def test_validatable_property_based(self, profile: dict[str, Any]) -> None:
+    def test_validatable_property_based(self, profile: dict[str, object]) -> None:
         """Property-based test for validatable mixin."""
         assume(PropertyTestHelpers.assume_non_empty_string(profile.get("name", "")))
 
-        class ProfileValidatable(FlextValidatableMixin):
-            def __init__(self, profile_data: dict[str, Any]) -> None:
+        class ProfileValidatable(FlextMixins.Validatable):
+            def __init__(self, profile_data: dict[str, object]) -> None:
                 super().__init__()
                 self.profile_data = profile_data
                 self._validate_profile()
@@ -466,7 +456,7 @@ class TestValidatableMixin:
 
 
 class TestSerializableMixin:
-    """Test FlextSerializableMixin with comprehensive serialization patterns."""
+    """Test FlextMixins.Serializable with comprehensive serialization patterns."""
 
     def test_serializable_collection_handling_comprehensive(
         self, user_data_factory: UserDataFactory
@@ -480,8 +470,8 @@ class TestSerializableMixin:
             def to_dict_basic(self) -> dict[str, object]:
                 return {"serializable_data": self.value}
 
-        class ConcreteSerializable(FlextSerializableMixin):
-            def __init__(self, user_data: dict[str, Any]) -> None:
+        class ConcreteSerializable(FlextMixins.Serializable):
+            def __init__(self, user_data: dict[str, object]) -> None:
                 super().__init__()
                 self.user_name = user_data["name"]
                 self.test_list_attr = [
@@ -513,7 +503,7 @@ class TestSerializableMixin:
     ) -> None:
         """Performance benchmark for serializing large objects."""
 
-        class LargeSerializable(FlextSerializableMixin):
+        class LargeSerializable(FlextMixins.Serializable):
             def __init__(self) -> None:
                 super().__init__()
                 # Create large data structure
@@ -543,22 +533,20 @@ class TestSerializableMixin:
 
 
 class TestEntityMixin:
-    """Test FlextEntityMixin with comprehensive entity patterns."""
+    """Test FlextMixins.Entity with comprehensive entity patterns."""
 
     def test_entity_mixin_with_parametrized_cases(self) -> None:
         """Test entity mixin with parametrized test cases."""
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases(
-            [
-                {"entity_id": "entity-123", "name": "Test Entity 1"},
-                {"entity_id": "entity-456", "name": "Test Entity 2"},
-                {"entity_id": "entity-789", "name": "Test Entity 3"},
-            ]
-        )
+        param_builder.add_success_cases([
+            {"entity_id": "entity-123", "name": "Test Entity 1"},
+            {"entity_id": "entity-456", "name": "Test Entity 2"},
+            {"entity_id": "entity-789", "name": "Test Entity 3"},
+        ])
 
-        class EntityModel(FlextEntityMixin):
+        class EntityModel(FlextMixins.Entity):
             def __init__(self, entity_id: str, name: str) -> None:
                 super().__init__()
                 self.id = entity_id
@@ -595,7 +583,7 @@ class TestEntityMixin:
     def test_entity_mixin_domain_events_stress_testing(self) -> None:
         """Stress test entity mixin domain events."""
 
-        class StressEntityModel(FlextEntityMixin):
+        class StressEntityModel(FlextMixins.Entity):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
                 self.id = entity_id
@@ -668,17 +656,17 @@ class TestMixinComposition:
         external_service = ExternalService()
 
         class AsyncCompositeModel(
-            FlextIdentifiableMixin,
-            FlextTimestampMixin,
-            FlextValidatableMixin,
-            FlextLoggableMixin,
-            FlextSerializableMixin,
+            FlextMixins.Identifiable,
+            FlextMixins.Timestampable,
+            FlextMixins.Validatable,
+            FlextMixins.Loggable,
+            FlextMixins.Serializable,
         ):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
                 self.id = entity_id
 
-            async def async_operation(self) -> dict[str, Any]:
+            async def async_operation(self) -> dict[str, object]:
                 # Simulate async validation
                 await async_test_utils.simulate_delay(0.01)
 
@@ -723,11 +711,7 @@ class TestMixinComposition:
     def test_mixin_composition_memory_efficiency_analysis(self) -> None:
         """Test memory efficiency of complex mixin composition."""
 
-        class MemoryEfficientComposite(
-            FlextEntityMixin,
-            FlextCacheableMixin,
-            FlextTimingMixin,
-        ):
+        class MemoryEfficientComposite(FlextMixins.Entity):
             def __init__(self, entity_id: str) -> None:
                 super().__init__()
                 self.id = entity_id
@@ -803,13 +787,13 @@ class TestMixinPropertyBased:
     """Comprehensive property-based testing for all mixin behaviors."""
 
     @given(CompositeStrategies.user_profiles())
-    def test_serializable_mixin_properties(self, profile: dict[str, Any]) -> None:
+    def test_serializable_mixin_properties(self, profile: dict[str, object]) -> None:
         """Property-based test for serializable mixin with user profiles."""
         assume(PropertyTestHelpers.assume_valid_email(profile.get("email", "")))
         assume(PropertyTestHelpers.assume_non_empty_string(profile.get("name", "")))
 
-        class PropertySerializable(FlextSerializableMixin):
-            def __init__(self, profile_data: dict[str, Any]) -> None:
+        class PropertySerializable(FlextMixins.Serializable):
+            def __init__(self, profile_data: dict[str, object]) -> None:
                 super().__init__()
                 self.name = profile_data["name"]
                 self.email = profile_data["email"]
@@ -835,7 +819,7 @@ class TestMixinPropertyBased:
         """Property-based test for identifiable mixin with correlation IDs."""
         assume(PropertyTestHelpers.assume_non_empty_string(correlation_id))
 
-        class PropertyIdentifiable(FlextIdentifiableMixin):
+        class PropertyIdentifiable(FlextMixins.Identifiable):
             def get_id(self) -> str:
                 return getattr(self, "_id", "default-id")
 
@@ -854,7 +838,7 @@ class TestMixinPropertyBased:
     def test_validation_mixin_unicode_properties(self, unicode_text: str) -> None:
         """Property-based test for validation mixin with Unicode edge cases."""
 
-        class PropertyValidatable(FlextValidatableMixin):
+        class PropertyValidatable(FlextMixins.Validatable):
             def __init__(self, test_text: str) -> None:
                 super().__init__()
                 self.test_text = test_text

@@ -1,4 +1,4 @@
-"""Real functionality tests for FlextAggregateRoot - NO MOCKS, only real usage.
+"""Real functionality tests for FlextAggregates - NO MOCKS, only real usage.
 
 These tests demonstrate the aggregate root working with real domain events and business logic,
 focusing on real-world DDD scenarios and increasing coverage significantly.
@@ -7,25 +7,26 @@ focusing on real-world DDD scenarios and increasing coverage significantly.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any, ClassVar
+from typing import ClassVar
+
 
 import pytest
 
-from flext_core import FlextAggregateRoot, FlextExceptions, FlextPayload, FlextResult
+from flext_core import FlextAggregates, FlextExceptions, FlextModels.Payload, FlextResult
 
 pytestmark = [pytest.mark.unit, pytest.mark.core, pytest.mark.ddd]
 
 
-class OrderAggregate(FlextAggregateRoot):
+class OrderAggregate(FlextAggregates):
     """Real order aggregate for testing DDD patterns."""
 
     # Business fields
     customer_id: str
     total_amount: float
     status: str = "pending"
-    items: ClassVar[list[dict[str, Any]]] = []
+    items: ClassVar[list[dict[str, object]]] = []
 
-    def place_order(self, items: list[dict[str, Any]]) -> FlextResult[None]:
+    def place_order(self, items: list[dict[str, object]]) -> FlextResult[None]:
         """Real business logic - place an order."""
         if not items:
             return FlextResult[None].fail("Cannot place order with no items")
@@ -103,13 +104,13 @@ class OrderAggregate(FlextAggregateRoot):
         return FlextResult[None].ok(None)
 
 
-class UserAggregate(FlextAggregateRoot):
+class UserAggregate(FlextAggregates):
     """Real user aggregate for testing user management scenarios."""
 
     email: str
     username: str
     is_active: bool = True
-    profile_data: ClassVar[dict[str, Any]] = {}
+    profile_data: ClassVar[dict[str, object]] = {}
 
     def activate_user(self) -> FlextResult[None]:
         """Real business logic - activate user."""
@@ -129,7 +130,7 @@ class UserAggregate(FlextAggregateRoot):
 
         return FlextResult[None].ok(None)
 
-    def update_profile(self, profile_data: dict[str, Any]) -> FlextResult[None]:
+    def update_profile(self, profile_data: dict[str, object]) -> FlextResult[None]:
         """Real business logic - update user profile."""
         if not profile_data:
             return FlextResult[None].fail("Profile data cannot be empty")
@@ -175,7 +176,7 @@ class UserAggregate(FlextAggregateRoot):
 
 
 class TestFlextAggregateRootRealFunctionality:
-    """Test FlextAggregateRoot with real business scenarios."""
+    """Test FlextAggregates with real business scenarios."""
 
     def test_aggregate_initialization_basic(self) -> None:
         """Test basic aggregate initialization."""
@@ -354,7 +355,7 @@ class TestFlextAggregateRootRealFunctionality:
         order = OrderAggregate(customer_id="event_object_test", total_amount=0.0)
 
         # Create a FlextEvent using the correct factory method
-        event_result = FlextPayload.create_event(
+        event_result = FlextModels.Payload.create_event(
             event_type="DirectEvent",
             event_data={"direct": True, "test": "value"},
             aggregate_id=str(order.id),

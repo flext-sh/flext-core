@@ -113,7 +113,7 @@ class FlextCoreValidation:
 **Status**: FlextGuards existe, validar estrutura  
 
 #### **9. FlextCoreLoggings - MÉDIO**
-**Arquivo**: `src/flext_core/loggings.py`  
+**Arquivo**: `src/flext_core.py`  
 **Status**: FlextCoreLogging existe, verificar nome e estrutura  
 
 ---

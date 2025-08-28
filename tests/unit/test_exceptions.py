@@ -12,7 +12,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult
-from flext_core.constants import ERROR_CODES
+from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 
 # Constants
@@ -51,7 +51,7 @@ class TestFlextError:
         """Test FlextExceptions with specific error code."""
         error = FlextExceptions(
             "Configuration error",
-            error_code=ERROR_CODES["CONFIGURATION_ERROR"],
+            error_code=FlextConstants.ERROR_CODES["CONFIGURATION_ERROR"],
         )
 
         # Error code should be mapped through ERROR_CODES system - could be FLEXT_CONFIG_ERROR or CONFIGURATION_ERROR
@@ -93,7 +93,7 @@ class TestFlextError:
 
         error = FlextExceptions(
             "Context error",
-            error_code=ERROR_CODES["VALIDATION_ERROR"],
+            error_code=FlextConstants.ERROR_CODES["VALIDATION_ERROR"],
             context=context,
         )
 
@@ -123,7 +123,7 @@ class TestFlextError:
         """Test FlextExceptions serialization."""
         error = FlextExceptions(
             "Serialization test",
-            error_code=ERROR_CODES["OPERATION_ERROR"],
+            error_code=FlextConstants.ERROR_CODES["OPERATION_ERROR"],
             context={"test_field": "test_value"},
         )
 
@@ -689,7 +689,7 @@ class TestErrorCodeIntegration:
         """Test using error codes with exceptions."""
         error = FlextExceptions(
             "Test error",
-            error_code=ERROR_CODES["VALIDATION_ERROR"],
+            error_code=FlextConstants.ERROR_CODES["VALIDATION_ERROR"],
         )
 
         # Error code should be mapped through ERROR_CODES system
@@ -703,9 +703,7 @@ class TestErrorCodeIntegration:
     def test_error_context_variations(self) -> None:
         """Test error creation with different context variations."""
         low_error = FlextExceptions("Basic error", context={"priority": "low"})
-        high_error = FlextExceptions(
-            "Important error", context={"priority": "high"}
-        )
+        high_error = FlextExceptions("Important error", context={"priority": "high"})
 
         nested_ctx_low = cast(
             "dict[str, object]", get_dynamic_attr(low_error, "context", {})

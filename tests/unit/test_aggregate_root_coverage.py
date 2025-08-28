@@ -11,8 +11,8 @@ from datetime import UTC, datetime
 import pytest
 
 from flext_core import (
-    FlextAggregateRoot,
-    FlextAggregateRoot as _FlextAggregateRoot,
+    FlextAggregates,
+    FlextAggregates as _FlextAggregateRoot,
     FlextExceptions,
     FlextMetadata,
 )
@@ -142,12 +142,12 @@ class TestHelperFunctionsCoverage:
 
 
 class TestAggregateRootInitializationCoverage:
-    """Test FlextAggregateRoot initialization edge cases."""
+    """Test FlextAggregates initialization edge cases."""
 
     def test_aggregate_root_with_provided_id_in_data(self) -> None:
         """Test initialization with ID provided in data dict."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         # ID in data should take precedence
@@ -163,7 +163,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_with_entity_id_param(self) -> None:
         """Test initialization with entity_id parameter."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(entity_id="param_id", name="test")
@@ -173,7 +173,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_with_generated_id(self) -> None:
         """Test initialization with auto-generated ID."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -185,7 +185,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_with_domain_events_in_data(self) -> None:
         """Test initialization with domain_events in data."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         events = [
@@ -200,7 +200,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_with_created_at_in_data(self) -> None:
         """Test initialization with created_at datetime in data."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         created_time = datetime.now(UTC)
@@ -213,7 +213,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_with_metadata_dict(self) -> None:
         """Test initialization with metadata dict."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         metadata = {"source": "test", "version": 1}
@@ -226,7 +226,7 @@ class TestAggregateRootInitializationCoverage:
     def test_aggregate_root_initialization_failure(self) -> None:
         """Test initialization failure handling."""
 
-        class BadAggregate(FlextAggregateRoot):
+        class BadAggregate(FlextAggregates):
             required_field: str
 
         # Should raise FlextExceptions for missing required field
@@ -245,7 +245,7 @@ class TestAggregateRootDomainEventsCoverage:
     def test_add_domain_event_with_string_and_data(self) -> None:
         """Test add_domain_event with string event type and separate data."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -259,7 +259,7 @@ class TestAggregateRootDomainEventsCoverage:
     def test_add_domain_event_with_dict_only(self) -> None:
         """Test add_domain_event with event dict only."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -276,7 +276,7 @@ class TestAggregateRootDomainEventsCoverage:
     def test_add_domain_event_with_empty_data(self) -> None:
         """Test add_domain_event with empty event data."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(name="test")
@@ -293,7 +293,7 @@ class TestAggregateRootEdgeCasesCoverage:
     def test_non_dict_domain_events_input(self) -> None:
         """Test aggregate with non-list domain_events."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         # domain_events is not a list - should default to empty
@@ -307,7 +307,7 @@ class TestAggregateRootEdgeCasesCoverage:
     def test_non_datetime_created_at(self) -> None:
         """Test aggregate with non-datetime created_at."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         aggregate = TestAggregate(
@@ -320,7 +320,7 @@ class TestAggregateRootEdgeCasesCoverage:
     def test_complex_metadata_scenarios(self) -> None:
         """Test various metadata input scenarios."""
 
-        class TestAggregate(FlextAggregateRoot):
+        class TestAggregate(FlextAggregates):
             name: str
 
         # Test with complex metadata

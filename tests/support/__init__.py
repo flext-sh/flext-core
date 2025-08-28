@@ -23,13 +23,14 @@ from tests.support.domain_factories import (
     ServiceDataFactory,
     UserDataFactory,
 )
-from tests.support.factory_boy_factories import (
-    AdminUserFactory,
-    ConfigFactory,
-    InactiveUserFactory,
-    ProductionConfigFactory,
-    UserFactory,
-)
+# factory_boy_factories temporarily disabled due to missing dependency
+# from tests.support.factory_boy_factories import (
+#     AdminUserFactory,
+#     ConfigFactory,
+#     InactiveUserFactory,
+#     ProductionConfigFactory,
+#     UserFactory,
+# )
 from tests.support.fixtures import FlextTestFixtures
 from tests.support.http_utils import (
     APITestClient,
@@ -54,11 +55,12 @@ __all__ = [
     "PayloadDataFactory",
     "ServiceDataFactory",
     # Factory Boy factories
-    "UserFactory",
-    "AdminUserFactory",
-    "InactiveUserFactory",
-    "ConfigFactory",
-    "ProductionConfigFactory",
+    # Factory_boy factories disabled due to missing dependency
+    # "UserFactory",
+    # "AdminUserFactory",
+    # "InactiveUserFactory", 
+    # "ConfigFactory",
+    # "ProductionConfigFactory",
     # Core utilities
     "FlextTestFixtures",
     "FlextMatchers",

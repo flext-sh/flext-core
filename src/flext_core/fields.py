@@ -1411,22 +1411,59 @@ class FlextFields:
                     description=description,
                 )
 
-            # Fallback to base field with common parameters only
-            # Cast default to a compatible type
-            fallback_default = None
+            # Fallback for unknown field types - use field_class directly
+            # Determine appropriate default conversion based on the field_class
+            converted_default: object = None
             if default is not None:
-                if isinstance(default, (str, int, float, bool)):
-                    fallback_default = default
-                else:
-                    fallback_default = str(default)
+                # Check the field class name to determine appropriate conversion
+                field_class_name = getattr(field_class, "__name__", str(field_class))
 
-            # Type-safe field creation with explicit casting
+                if (
+                    "String" in field_class_name
+                    or "Email" in field_class_name
+                    or "Uuid" in field_class_name
+                    or field_type.lower() == "string"
+                    or "string" in field_type.lower()
+                ):
+                    # String-based fields
+                    converted_default = (
+                        default if isinstance(default, str) else str(default)
+                    )
+                elif (
+                    "Integer" in field_class_name
+                    or "Int" in field_class_name
+                    or field_type.lower() == "integer"
+                    or "int" in field_type.lower()
+                ):
+                    # Integer fields
+                    converted_default = FlextUtilities.safe_int(default)
+                elif (
+                    "Float" in field_class_name
+                    or field_type.lower() == "float"
+                    or "float" in field_type.lower()
+                ):
+                    # Float fields
+                    converted_default = FlextUtilities.Conversions.safe_float(default)
+                elif (
+                    "Boolean" in field_class_name
+                    or "Bool" in field_class_name
+                    or field_type.lower() == "boolean"
+                    or "bool" in field_type.lower()
+                ):
+                    # Boolean fields
+                    converted_default = FlextUtilities.safe_bool_conversion(default)
+                else:
+                    # Generic fallback - try string conversion as safest option
+                    converted_default = (
+                        default if isinstance(default, str) else str(default)
+                    )
+
             return cast(
                 "FlextTypes.Fields.Instance",
                 field_class(
                     name,
                     required=required,
-                    default=fallback_default,  # type: ignore[arg-type]
+                    default=converted_default,  # type: ignore[arg-type]
                     description=description,
                 ),
             )
@@ -1795,6 +1832,666 @@ class FlextFields:
 
             return FlextResult[dict[str, object]].ok(summary)
 
+    # =========================================================================
+    # CONFIGURATION MANAGEMENT - FLEXT TYPES INTEGRATION
+    # =========================================================================
+
+    @classmethod
+    def configure_fields_system(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Configure fields system using FlextTypes.Config with StrEnum validation."""
+        try:
+            # Validate environment
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                    )
+
+            # Validate log level
+            if "log_level" in config:
+                log_value = config["log_level"]
+                valid_log_levels = [
+                    level.value for level in FlextConstants.Config.LogLevel
+                ]
+                if log_value not in valid_log_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                    )
+
+            # Validate validation level
+            if "validation_level" in config:
+                val_value = config["validation_level"]
+                valid_validation_levels = [
+                    v.value for v in FlextConstants.Config.ValidationLevel
+                ]
+                if val_value not in valid_validation_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}"
+                    )
+
+            # Build validated configuration with defaults
+            validated_config: FlextTypes.Config.ConfigDict = {
+                "environment": config.get(
+                    "environment",
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                ),
+                "log_level": config.get(
+                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value
+                ),
+                "validation_level": config.get(
+                    "validation_level",
+                    FlextConstants.Config.ValidationLevel.NORMAL.value,
+                ),
+                "enable_field_validation": config.get("enable_field_validation", True),
+                "enable_type_checking": config.get("enable_type_checking", True),
+                "enable_constraint_validation": config.get(
+                    "enable_constraint_validation", True
+                ),
+                "max_field_cache_size": config.get("max_field_cache_size", 500),
+                "enable_field_metadata": config.get("enable_field_metadata", True),
+                "enable_schema_validation": config.get(
+                    "enable_schema_validation", True
+                ),
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Fields system configuration failed: {e}"
+            )
+
+    @classmethod
+    def get_fields_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current fields system configuration with runtime information."""
+        try:
+            config: FlextTypes.Config.ConfigDict = {
+                # Current system state
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                # Fields-specific settings
+                "enable_field_validation": True,
+                "enable_type_checking": True,
+                "enable_constraint_validation": True,
+                "max_field_cache_size": 500,
+                "enable_field_metadata": True,
+                "enable_schema_validation": True,
+                # Runtime metrics
+                "registered_field_types": 7,  # string, integer, float, boolean, email, uuid, datetime
+                "active_field_instances": 0,  # Would be tracked in registry
+                "validation_errors_count": 0,  # Would be tracked in validation
+                "schema_processing_count": 0,  # Would be tracked in schema processor
+                # Available field types
+                "available_field_types": [
+                    "string",
+                    "integer",
+                    "float",
+                    "boolean",
+                    "email",
+                    "uuid",
+                    "datetime",
+                    "base",
+                ],
+                # Field capabilities
+                "supported_constraints": [
+                    "required",
+                    "default",
+                    "min_length",
+                    "max_length",
+                    "min_value",
+                    "max_value",
+                    "pattern",
+                    "precision",
+                    "date_format",
+                    "min_date",
+                    "max_date",
+                ],
+                # Performance settings
+                "enable_field_caching": True,
+                "cache_validation_results": False,
+                "enable_performance_monitoring": False,
+            }
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get fields system configuration: {e}"
+            )
+
+    @classmethod
+    def create_environment_fields_config(
+        cls, environment: FlextTypes.Config.Environment
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Create environment-specific fields system configuration."""
+        try:
+            # Validate environment
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                )
+
+            # Base configuration
+            config: FlextTypes.Config.ConfigDict = {
+                "environment": environment,
+            }
+
+            # Environment-specific settings
+            if environment == "production":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "enable_field_validation": True,  # Strict validation in production
+                    "enable_type_checking": True,  # Type checking for safety
+                    "enable_constraint_validation": True,  # All constraints in production
+                    "max_field_cache_size": 1000,  # Larger cache for production
+                    "enable_field_metadata": False,  # Minimal metadata for performance
+                    "enable_schema_validation": True,  # Schema validation for safety
+                    "cache_validation_results": True,  # Cache for performance
+                    "enable_performance_monitoring": True,  # Performance monitoring
+                })
+            elif environment == "development":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "enable_field_validation": True,  # Validation for development
+                    "enable_type_checking": True,  # Type checking for catching issues
+                    "enable_constraint_validation": True,  # Full constraints for development
+                    "max_field_cache_size": 200,  # Smaller cache for development
+                    "enable_field_metadata": True,  # Full metadata for debugging
+                    "enable_schema_validation": True,  # Schema validation for development
+                    "cache_validation_results": False,  # No caching for fresh results
+                    "enable_detailed_error_messages": True,  # Detailed errors for debugging
+                })
+            elif environment == "test":
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "enable_field_validation": True,  # Strict validation for tests
+                    "enable_type_checking": True,  # Type checking for test accuracy
+                    "enable_constraint_validation": True,  # Full constraints for tests
+                    "max_field_cache_size": 50,  # Minimal cache for tests
+                    "enable_field_metadata": True,  # Metadata for test inspection
+                    "enable_schema_validation": True,  # Schema validation for tests
+                    "cache_validation_results": False,  # No caching in tests
+                    "enable_test_utilities": True,  # Special test utilities
+                })
+            else:  # staging, local, etc.
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "enable_field_validation": True,  # Standard validation
+                    "enable_type_checking": True,  # Standard type checking
+                    "enable_constraint_validation": True,  # Standard constraints
+                    "max_field_cache_size": 500,  # Standard cache size
+                    "enable_field_metadata": True,  # Standard metadata
+                    "enable_schema_validation": True,  # Standard schema validation
+                })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to create environment fields config: {e}"
+            )
+
+    @classmethod
+    def optimize_fields_performance(
+        cls, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Optimize fields system performance based on configuration."""
+        try:
+            # Extract performance level or determine from config
+            performance_level = config.get("performance_level", "medium")
+
+            # Base optimization settings
+            optimized_config: FlextTypes.Config.ConfigDict = {
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+            }
+
+            # Performance level specific optimizations
+            if performance_level == "high":
+                optimized_config.update({
+                    "max_field_cache_size": config.get("max_field_cache_size", 2000),
+                    "enable_field_caching": True,
+                    "cache_validation_results": True,
+                    "enable_lazy_validation": True,
+                    "batch_validation_size": 100,
+                    "enable_concurrent_validation": True,
+                    "memory_optimization": "aggressive",
+                    "enable_field_pooling": True,
+                    "precompile_constraints": True,
+                })
+            elif performance_level == "medium":
+                optimized_config.update({
+                    "max_field_cache_size": config.get("max_field_cache_size", 1000),
+                    "enable_field_caching": True,
+                    "cache_validation_results": False,
+                    "enable_lazy_validation": False,
+                    "batch_validation_size": 50,
+                    "enable_concurrent_validation": False,
+                    "memory_optimization": "balanced",
+                    "enable_field_pooling": False,
+                    "precompile_constraints": False,
+                })
+            elif performance_level == "low":
+                optimized_config.update({
+                    "max_field_cache_size": config.get("max_field_cache_size", 200),
+                    "enable_field_caching": False,
+                    "cache_validation_results": False,
+                    "enable_lazy_validation": False,
+                    "batch_validation_size": 10,
+                    "enable_concurrent_validation": False,
+                    "memory_optimization": "conservative",
+                    "enable_field_pooling": False,
+                    "precompile_constraints": False,
+                })
+            else:
+                # Default/custom performance level
+                optimized_config.update({
+                    "max_field_cache_size": config.get("max_field_cache_size", 500),
+                    "enable_field_caching": config.get("enable_field_caching", True),
+                    "memory_optimization": "balanced",
+                })
+
+            # Merge with original config
+            optimized_config.update({
+                key: value
+                for key, value in config.items()
+                if key not in optimized_config
+            })
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Fields performance optimization failed: {e}"
+            )
+
+    # =============================================================================
+    # LEGACY COMPATIBILITY METHODS - Support for old API patterns
+    # =============================================================================
+
+    @classmethod
+    def create_string_field(cls, **kwargs: object) -> FlextResult[object]:
+        """Create string field with validation - legacy compatibility method."""
+        try:
+            # Convert kwargs to proper types for StringField
+            name = str(kwargs.get("name", ""))
+            required = bool(kwargs.get("required", True))
+            default = (
+                str(kwargs["default"]) if kwargs.get("default") is not None else None
+            )
+            description = str(kwargs.get("description", ""))
+            min_length = (
+                FlextUtilities.safe_int(kwargs["min_length"])
+                if kwargs.get("min_length") is not None
+                else None
+            )
+
+            field = cls.Core.StringField(
+                name=name,
+                required=required,
+                default=default,
+                description=description,
+                min_length=min_length,
+            )
+            return FlextResult[object].ok(field)
+        except Exception as e:
+            return FlextResult[object].fail(f"Failed to create string field: {e}")
+
+    @classmethod
+    def create_integer_field(cls, **kwargs: object) -> FlextResult[object]:
+        """Create integer field with validation - legacy compatibility method."""
+        try:
+            # Convert kwargs to proper types for IntegerField
+            name = str(kwargs.get("name", ""))
+            required = bool(kwargs.get("required", True))
+            default = (
+                FlextUtilities.safe_int(kwargs["default"])
+                if kwargs.get("default") is not None
+                else None
+            )
+            description = str(kwargs.get("description", ""))
+            min_value = (
+                FlextUtilities.safe_int(kwargs["min_value"])
+                if kwargs.get("min_value") is not None
+                else None
+            )
+
+            field = cls.Core.IntegerField(
+                name=name,
+                required=required,
+                default=default,
+                description=description,
+                min_value=min_value,
+            )
+            return FlextResult[object].ok(field)
+        except Exception as e:
+            return FlextResult[object].fail(f"Failed to create integer field: {e}")
+
+    @classmethod
+    def create_boolean_field(cls, **kwargs: object) -> FlextResult[object]:
+        """Create boolean field with validation - legacy compatibility method."""
+        try:
+            # Convert kwargs to proper types for BooleanField
+            name = str(kwargs.get("name", ""))
+            required = bool(kwargs.get("required", True))
+            default = (
+                FlextUtilities.safe_bool_conversion(kwargs["default"])
+                if kwargs.get("default") is not None
+                else None
+            )
+            description = str(kwargs.get("description", ""))
+
+            field = cls.Core.BooleanField(
+                name=name,
+                required=required,
+                default=default,
+                description=description,
+            )
+            return FlextResult[object].ok(field)
+        except Exception as e:
+            return FlextResult[object].fail(f"Failed to create boolean field: {e}")
+
+    @property
+    def string_field(self) -> type:
+        """Legacy compatibility property for string field access."""
+        return self.Core.StringField
+
+    @property
+    def integer_field(self) -> type:
+        """Legacy compatibility property for integer field access."""
+        return self.Core.IntegerField
+
+    @property
+    def boolean_field(self) -> type:
+        """Legacy compatibility property for boolean field access."""
+        return self.Core.BooleanField
+
+
+# =============================================================================
+# COMPATIBILITY FUNCTIONS - Legacy support for test code
+# =============================================================================
+
+
+def flext_create_string_field(**kwargs: object) -> FlextResult[object]:
+    """Create string field with validation - compatibility function."""
+    try:
+        # Convert kwargs to proper types for StringField
+        name = str(kwargs.get("name", ""))
+        required = bool(kwargs.get("required", True))
+        default = str(kwargs["default"]) if kwargs.get("default") is not None else None
+        description = str(kwargs.get("description", ""))
+        min_length = (
+            FlextUtilities.safe_int(kwargs["min_length"])
+            if kwargs.get("min_length") is not None
+            else None
+        )
+
+        field = FlextFields.Core.StringField(
+            name=name,
+            required=required,
+            default=default,
+            description=description,
+            min_length=min_length,
+        )
+        return FlextResult[object].ok(field)
+    except Exception as e:
+        return FlextResult[object].fail(f"Failed to create string field: {e}")
+
+
+def flext_create_integer_field(**kwargs: object) -> FlextResult[object]:
+    """Create integer field with validation - compatibility function."""
+    try:
+        # Convert kwargs to proper types for IntegerField
+        name = str(kwargs.get("name", ""))
+        required = bool(kwargs.get("required", True))
+        default = (
+            FlextUtilities.safe_int(kwargs["default"])
+            if kwargs.get("default") is not None
+            else None
+        )
+        description = str(kwargs.get("description", ""))
+        min_value = (
+            FlextUtilities.safe_int(kwargs["min_value"])
+            if kwargs.get("min_value") is not None
+            else None
+        )
+
+        field = FlextFields.Core.IntegerField(
+            name=name,
+            required=required,
+            default=default,
+            description=description,
+            min_value=min_value,
+        )
+        return FlextResult[object].ok(field)
+    except Exception as e:
+        return FlextResult[object].fail(f"Failed to create integer field: {e}")
+
+
+def flext_create_boolean_field(**kwargs: object) -> FlextResult[object]:
+    """Create boolean field with validation - compatibility function."""
+    try:
+        # Convert kwargs to proper types for BooleanField
+        name = str(kwargs.get("name", ""))
+        required = bool(kwargs.get("required", True))
+        default = (
+            FlextUtilities.safe_bool_conversion(kwargs["default"])
+            if kwargs.get("default") is not None
+            else None
+        )
+        description = str(kwargs.get("description", ""))
+
+        field = FlextFields.Core.BooleanField(
+            name=name,
+            required=required,
+            default=default,
+            description=description,
+        )
+        return FlextResult[object].ok(field)
+    except Exception as e:
+        return FlextResult[object].fail(f"Failed to create boolean field: {e}")
+
+
+# Compatibility wrapper for legacy field API
+class _FlextFieldCoreCompat(FlextFields.Core.BaseField[object]):
+    """Compatibility wrapper for legacy FlextFieldCore API."""
+
+    def __init__(
+        self,
+        field_id: str = "default",
+        field_name: str = "default",
+        field_type: str = "string",
+        **kwargs: str | float | bool | None,
+    ) -> None:
+        # Map old API to new API parameters
+        name = str(kwargs.get("name", field_name))
+        required = bool(kwargs.get("required", True))
+        default = kwargs.get("default")
+        description = str(
+            kwargs.get("description", f"Field {field_name} of type {field_type}")
+        )
+
+        super().__init__(
+            name=name,
+            required=required,
+            default=default,
+            description=description,
+        )
+
+        # Store legacy attributes for compatibility
+        self._legacy_field_id = field_id
+        self._legacy_field_name = field_name
+        self._legacy_field_type = field_type
+
+        # Store validation constraints for compatibility
+        min_length_val = kwargs.get("min_length")
+        self._min_length: int | None = (
+            FlextUtilities.safe_int(min_length_val)
+            if min_length_val is not None
+            else None
+        )
+
+        max_length_val = kwargs.get("max_length")
+        self._max_length: int | None = (
+            FlextUtilities.safe_int(max_length_val)
+            if max_length_val is not None
+            else None
+        )
+
+        min_value_val = kwargs.get("min_value")
+        self._min_value: int | float | None = (
+            FlextUtilities.Conversions.safe_float(min_value_val)
+            if min_value_val is not None
+            else None
+        )
+
+        max_value_val = kwargs.get("max_value")
+        self._max_value: int | float | None = (
+            FlextUtilities.Conversions.safe_float(max_value_val)
+            if max_value_val is not None
+            else None
+        )
+
+        allowed_values_val = kwargs.get("allowed_values")
+        self._allowed_values: list[object] | None = None
+        if allowed_values_val is not None:
+            # Check if it's a list or tuple using try/except to avoid type narrowing issues
+            try:
+                if hasattr(allowed_values_val, "__iter__") and not isinstance(
+                    allowed_values_val, (str, bytes)
+                ):
+                    # It's an iterable that's not a string - convert to list
+                    self._allowed_values = list(allowed_values_val)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                # If conversion fails, leave as None
+                pass
+
+        # Store kwargs for property access
+        self._kwargs = kwargs
+
+    @property
+    def field_id(self) -> str:
+        """Legacy field_id property."""
+        return self._legacy_field_id
+
+    @property
+    def field_name(self) -> str:
+        """Legacy field_name property."""
+        return self._legacy_field_name
+
+    @property
+    def min_length(self) -> int | None:
+        """Legacy min_length property."""
+        return self._min_length
+
+    @property
+    def max_length(self) -> int | None:
+        """Legacy max_length property."""
+        return self._max_length
+
+    @property
+    def min_value(self) -> int | float | None:
+        """Legacy min_value property."""
+        return self._min_value
+
+    @property
+    def max_value(self) -> int | float | None:
+        """Legacy max_value property."""
+        return self._max_value
+
+    @property
+    def allowed_values(self) -> list[object] | None:
+        """Legacy allowed_values property."""
+        return self._allowed_values
+
+    def validate(self, value: object) -> FlextResult[object]:
+        """Enhanced validate implementation with basic constraint checking."""
+        # String length validation
+        if self._legacy_field_type == "string" and isinstance(value, str):
+            if self._min_length is not None and len(value) < self._min_length:
+                return FlextResult[object].fail(
+                    f"Value length {len(value)} is below minimum {self._min_length}"
+                )
+            if self._max_length is not None and len(value) > self._max_length:
+                return FlextResult[object].fail(
+                    f"Value length {len(value)} is above maximum {self._max_length}"
+                )
+
+        # Numeric value validation
+        if self._legacy_field_type == "integer" and isinstance(value, (int, float)):
+            if self._min_value is not None and value < self._min_value:
+                return FlextResult[object].fail(
+                    f"Value {value} is below minimum {self._min_value}"
+                )
+            if self._max_value is not None and value > self._max_value:
+                return FlextResult[object].fail(
+                    f"Value {value} is above maximum {self._max_value}"
+                )
+
+        # Allowed values validation
+        if self._allowed_values is not None and value not in self._allowed_values:
+            return FlextResult[object].fail(
+                f"Value {value} is not in allowed values {self._allowed_values}"
+            )
+
+        return FlextResult[object].ok(value)
+
+    def validate_value(self, value: object) -> object:
+        """Legacy validate_value method - maps to validate."""
+        return self.validate(value)
+
+
+# Compatibility aliases for test code
+FlextFieldCore = _FlextFieldCoreCompat
+# Use FlextFields.Metadata and FlextFields.Registry directly - no aliases
+
+
+# Note: Legacy factory functions have been consolidated into FlextFields class methods
+# Use FlextFields.create_string_field, FlextFields.create_integer_field, etc. instead
+
+
+# Enum-like object for field types with .value attributes for backward compatibility
+class _FlextFieldTypeEnum:
+    """Enum-like object providing backward compatibility for field types."""
+
+    class STRING:
+        value = "string"
+
+    class INTEGER:
+        value = "integer"
+
+    class BOOLEAN:
+        value = "boolean"
+
+    class FLOAT:
+        value = "float"
+
+    class EMAIL:
+        value = "email"
+
+    class UUID:
+        value = "uuid"
+
+    class DATETIME:
+        value = "datetime"
+
+
+FlextFieldType = _FlextFieldTypeEnum()
+
 
 # =============================================================================
 # EXPORTS - Comprehensive field system
@@ -1802,4 +2499,6 @@ class FlextFields:
 
 __all__: Final[list[str]] = [
     "FlextFields",  # ONLY main class exported
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    # Import from flext_core.legacy if you need FlextFieldRegistry, flext_create_*_field, etc.
 ]

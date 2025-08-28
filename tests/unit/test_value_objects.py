@@ -9,7 +9,6 @@ Coverage Target: value_objects.py 63% → 95%+
 
 from __future__ import annotations
 
-import logging
 import math
 from collections.abc import Callable
 from decimal import Decimal
@@ -19,6 +18,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import (
+    FlextLogger,
     FlextPayload,
     FlextResult,
     FlextValue,
@@ -375,7 +375,7 @@ class TestValueObjectPayloadConversion:
             assert payload is not None
         except Exception as exc:
             # Real validation error can occur in some cases
-            logging.getLogger(__name__).debug("Validation exception occurred: %s", exc)
+            FlextLogger(__name__).debug("Validation exception occurred: %s", exc)
 
     def test_extract_serializable_attributes_pydantic(self) -> None:
         """Test serializable attribute extraction via Pydantic."""

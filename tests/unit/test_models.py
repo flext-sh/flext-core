@@ -81,7 +81,6 @@ class TestFlextModelCore:
             age: int
 
         model = UserModel(
-            id=str(user_entity.id),
             name=getattr(user_entity, "first_name", "test_name"),
             email=getattr(user_entity, "email", "test@example.com"),
             age=25,
@@ -114,7 +113,7 @@ class TestFlextEntityCore:
             email: str
 
             def validate_business_rules(self) -> FlextResult[None]:
-                from flext_core.result import FlextResult
+
                 return FlextResult[None].ok(None)
 
         entity = TestEntity(
@@ -133,7 +132,7 @@ class TestFlextEntityCore:
             email: str
 
             def validate_business_rules(self) -> FlextResult[None]:
-                from flext_core.result import FlextResult
+
                 return FlextResult[None].ok(None)
 
         entity = UserEntity(

@@ -84,7 +84,7 @@ if db_result.success:
 #### Domain-Driven Design
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregateRoot
+from flext_core import FlextEntity, FlextValue, FlextAggregates
 
 class Email(FlextValue):
     """Immutable value object with built-in validation."""
@@ -110,7 +110,7 @@ class User(FlextEntity):
         self.add_domain_event("UserActivated", {"user_id": self.id})
         return FlextResult[None].ok(None)
 
-class Account(FlextAggregateRoot):
+class Account(FlextAggregates):
     """Aggregate root managing consistency boundaries."""
     owner: User
     balance: Decimal

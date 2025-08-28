@@ -204,8 +204,17 @@ class FlextConfig(BaseModel):
 
             """
             _ = info  # Acknowledge parameter for future use
-            data: FlextTypes.Core.Dict = serializer(self)
-            # With JSON mode, Pydantic always returns dict
+            _ = serializer  # Acknowledge serializer parameter for Pydantic compatibility
+            # Get the base dict representation first
+            base_data = self.model_dump()
+            # Ensure all values are of the correct types for ConfigDict
+            data: FlextTypes.Config.ConfigDict = {}
+            for key, value in base_data.items():
+                if isinstance(value, (str, int, float, bool, list, dict)):
+                    data[key] = value  # type: ignore[assignment]
+                else:
+                    data[key] = str(value)  # type: ignore[assignment]
+
             # Add settings-specific API metadata
             data["_settings"] = {
                 "type": "FlextConfig",
@@ -275,7 +284,7 @@ class FlextConfig(BaseModel):
 
     # Environment settings
     environment: FlextTypes.Config.Environment = Field(
-        default=FlextConstants.Config.DEFAULT_ENVIRONMENT,
+        default="development",
         description="Environment name (development, staging, production)",
     )
     debug: bool = Field(default=False, description="Debug mode enabled")
@@ -500,11 +509,11 @@ class FlextConfig(BaseModel):
             and production safety indicator.
 
         """
-        level_hierarchy = FlextConstants.Enums.LogLevel.get_numeric_levels()
+        level_hierarchy = FlextConstants.Config.LogLevel.get_numeric_levels()
         return {
             "level": value,
             "numeric_level": level_hierarchy.get(
-                value, FlextConstants.Enums.LogLevel.get_numeric_levels()["INFO"]
+                value, FlextConstants.Config.LogLevel.get_numeric_levels()["INFO"]
             ),
             "verbose": value == FlextConstants.Observability.LOG_LEVELS[1],
             "production_safe": value
@@ -1066,4 +1075,5 @@ class FlextConfig(BaseModel):
 # Export only the classes and functions defined in this module
 __all__ = [
     "FlextConfig",  # Main class
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import Any
+
+object
 
 from flext_core import FlextConstants, FlextResult
 
@@ -36,7 +37,7 @@ class ExampleConfig:
     DEFAULT_PORT = FlextConstants.Network.LDAP_PORT
 
 
-def get_test_data() -> dict[str, Any]:
+def get_test_data() -> dict[str, object]:
     """Get test data for examples."""
     return {
         "users": [

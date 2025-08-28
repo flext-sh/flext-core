@@ -9,7 +9,7 @@ import types
 
 import pytest
 
-from flext_core import protocols as interfaces
+from flext_core import FlextConfigurable, protocols as interfaces
 from flext_core.protocols import FlextProtocols
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

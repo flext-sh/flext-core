@@ -34,37 +34,6 @@ from flext_core.typings import FlextTypes, T
 from flext_core.utilities import FlextUtilities
 
 
-# Define validate_service_name locally to avoid circular import
-def flext_validate_service_name(name: str) -> FlextResult[None]:
-    """Validate service name string.
-
-    Args:
-        name: Service name to validate.
-
-    Returns:
-        FlextResult[None] indicating validation success or failure with error message.
-
-    """
-    if not name or not isinstance(name, str):
-        return FlextResult[None].fail("Service name must be a non-empty string")
-    if not name.strip():
-        return FlextResult[None].fail("Service name cannot be only whitespace")
-    return FlextResult[None].ok(None)
-
-
-def _get_exception_class(name: FlextTypes.Core.String) -> type[Exception]:
-    """Get exception class by name from FlextExceptions.
-
-    Args:
-        name: Exception class name from FlextExceptions.
-
-    Returns:
-        Exception class type with proper type casting.
-
-    """
-    return cast("type[Exception]", getattr(FlextExceptions, name))
-
-
 class FlextContainer:
     """Dependency injection container with type-safe service management.
 
@@ -574,7 +543,7 @@ class FlextContainer:
                 FlextResult with validated name or error.
 
             """
-            if not flext_validate_service_name(name):
+            if not FlextContainer.flext_validate_service_name(name):
                 return FlextResult[str].fail(FlextConstants.Messages.SERVICE_NAME_EMPTY)
             return FlextResult[str].ok(name)
 
@@ -785,7 +754,7 @@ class FlextContainer:
                 FlextResult with validated name or error.
 
             """
-            if not flext_validate_service_name(name):
+            if not FlextContainer.flext_validate_service_name(name):
                 return FlextResult[str].fail(FlextConstants.Messages.SERVICE_NAME_EMPTY)
             return FlextResult[str].ok(name)
 
@@ -831,7 +800,7 @@ class FlextContainer:
                     ValueError,
                     AttributeError,
                     RuntimeError,
-                    _get_exception_class("FlextError"),
+                    FlextContainer._get_exception_class("FlextError"),
                 ) as e:
                     return FlextResult[object].fail(
                         f"Factory for '{validated_name}' failed: {e!s}",
@@ -937,9 +906,26 @@ class FlextContainer:
     # CONTAINER IMPLEMENTATION - Main container functionality
     # =========================================================================
 
-    def __init__(self) -> None:
-        """Initialize container with internal components and command bus."""
+    def __init__(self, config: FlextTypes.Config.ConfigDict | None = None) -> None:
+        """Initialize container with internal components and FlextTypes.Config support.
+
+        Args:
+            config: Optional configuration dictionary using FlextTypes.Config.
+
+        """
         super().__init__()
+
+        # Initialize container configuration with FlextTypes.Config
+        self._config: FlextTypes.Config.ConfigDict = config or {
+            "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+            "log_level": FlextConstants.Config.LogLevel.INFO.value,
+            "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+            "config_source": FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
+            "max_services": 1000,
+            "service_timeout": 30000,  # milliseconds
+            "enable_auto_wire": True,
+            "enable_factory_cache": True,
+        }
 
         # SRP: Delegate to focused internal components
         self._registrar = self.ServiceRegistrar()
@@ -951,6 +937,209 @@ class FlextContainer:
 
         # Simplified command bus - can be extended later
         self._command_bus = None
+
+    # =========================================================================
+    # CONFIGURATION MANAGEMENT WITH FlextTypes.Config - Massive Integration
+    # =========================================================================
+
+    def configure_container(  # noqa: PLR0911, PLR0912
+        self, config: FlextTypes.Config.ConfigDict
+    ) -> FlextResult[None]:
+        """Configure container with FlextTypes.Config and StrEnum validation.
+
+        Args:
+            config: Configuration dictionary using FlextTypes.Config structure.
+
+        Returns:
+            FlextResult indicating configuration success or validation failure.
+
+        """
+        try:
+            # Validate environment using FlextConstants.Config.ConfigEnvironment
+            if "environment" in config:
+                env_value = config["environment"]
+                valid_environments = [
+                    e.value for e in FlextConstants.Config.ConfigEnvironment
+                ]
+                if env_value not in valid_environments:
+                    return FlextResult[None].fail(
+                        f"Invalid environment: {env_value}. Must be one of: {valid_environments}"
+                    )
+
+            # Validate log level using FlextConstants.Config.LogLevel
+            if "log_level" in config:
+                log_level = config["log_level"]
+                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
+                if log_level not in valid_levels:
+                    return FlextResult[None].fail(
+                        f"Invalid log_level: {log_level}. Must be one of: {valid_levels}"
+                    )
+
+            # Validate validation level using FlextConstants.Config.ValidationLevel
+            if "validation_level" in config:
+                val_level = config["validation_level"]
+                valid_val_levels = [
+                    v.value for v in FlextConstants.Config.ValidationLevel
+                ]
+                if val_level not in valid_val_levels:
+                    return FlextResult[None].fail(
+                        f"Invalid validation_level: {val_level}. Must be one of: {valid_val_levels}"
+                    )
+
+            # Validate config source using FlextConstants.Config.ConfigSource
+            if "config_source" in config:
+                source = config["config_source"]
+                valid_sources = [s.value for s in FlextConstants.Config.ConfigSource]
+                if source not in valid_sources:
+                    return FlextResult[None].fail(
+                        f"Invalid config_source: {source}. Must be one of: {valid_sources}"
+                    )
+
+            # Validate numeric constraints
+            if "max_services" in config:
+                max_services = config["max_services"]
+                if not isinstance(max_services, int) or max_services < 1:
+                    return FlextResult[None].fail(
+                        "max_services must be a positive integer"
+                    )
+
+            if "service_timeout" in config:
+                timeout = config["service_timeout"]
+                if not isinstance(timeout, (int, float)) or timeout < 0:
+                    return FlextResult[None].fail(
+                        "service_timeout must be a non-negative number"
+                    )
+
+            # Update internal configuration
+            self._config.update(config)
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Container configuration failed: {e}")
+
+    def get_container_config(self) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current container configuration using FlextTypes.Config.
+
+        Returns:
+            FlextResult containing configuration dictionary with FlextTypes.Config structure.
+
+        """
+        try:
+            # Return copy to prevent external modification
+            config_copy: FlextTypes.Config.ConfigDict = dict(self._config)
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config_copy)
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Config retrieval failed: {e}"
+            )
+
+    def create_environment_scoped_container(
+        self, environment: FlextTypes.Config.Environment
+    ) -> FlextResult[FlextContainer]:
+        """Create a new container scoped to a specific environment using FlextTypes.Config.
+
+        Args:
+            environment: Target environment using FlextTypes.Config.Environment.
+
+        Returns:
+            FlextResult containing environment-specific container instance.
+
+        """
+        try:
+            # Validate environment is a valid StrEnum value
+            valid_environments = [
+                e.value for e in FlextConstants.Config.ConfigEnvironment
+            ]
+            if environment not in valid_environments:
+                return FlextResult[FlextContainer].fail(
+                    f"Invalid environment: {environment}. Must be one of: {valid_environments}"
+                )
+
+            # Create environment-specific configuration
+            env_config: FlextTypes.Config.ConfigDict = {
+                "environment": environment,
+                "log_level": self._config.get(
+                    "log_level", FlextConstants.Config.LogLevel.INFO.value
+                ),
+                "validation_level": (
+                    FlextConstants.Config.ValidationLevel.STRICT.value
+                    if environment
+                    == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                    else FlextConstants.Config.ValidationLevel.NORMAL.value
+                ),
+                "config_source": FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
+                "max_services": self._config.get("max_services", 1000),
+                "service_timeout": (
+                    60000
+                    if environment
+                    == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                    else 30000
+                ),
+                "enable_auto_wire": self._config.get("enable_auto_wire", True),
+                "enable_factory_cache": self._config.get("enable_factory_cache", True),
+            }
+
+            # Create new container with environment-specific config
+            scoped_container = FlextContainer(config=env_config)
+            return FlextResult[FlextContainer].ok(scoped_container)
+
+        except Exception as e:
+            return FlextResult[FlextContainer].fail(
+                f"Environment scoped container creation failed: {e}"
+            )
+
+    def get_configuration_summary(self) -> FlextResult[dict[str, object]]:
+        """Get comprehensive configuration summary with FlextTypes.Config integration.
+
+        Returns:
+            FlextResult containing detailed configuration summary with metadata.
+
+        """
+        try:
+            # Build summary with proper object typing
+            summary: dict[str, object] = {
+                "container_config": dict(self._config),
+                "service_statistics": {
+                    "total_services": self.get_service_count(),
+                    "service_names": self.get_service_names(),
+                    "max_services_limit": self._config.get("max_services", 1000),
+                    "factory_cache_enabled": self._config.get(
+                        "enable_factory_cache", True
+                    ),
+                },
+                "environment_info": {
+                    "current_environment": self._config.get("environment", "unknown"),
+                    "log_level": self._config.get("log_level", "INFO"),
+                    "validation_level": self._config.get("validation_level", "normal"),
+                    "config_source": self._config.get("config_source", "environment"),
+                },
+                "performance_settings": {
+                    "service_timeout_ms": self._config.get("service_timeout", 30000),
+                    "auto_wire_enabled": self._config.get("enable_auto_wire", True),
+                },
+                "available_enum_values": {
+                    "environments": [
+                        e.value for e in FlextConstants.Config.ConfigEnvironment
+                    ],
+                    "log_levels": [
+                        level.value for level in FlextConstants.Config.LogLevel
+                    ],
+                    "validation_levels": [
+                        v.value for v in FlextConstants.Config.ValidationLevel
+                    ],
+                    "config_sources": [
+                        s.value for s in FlextConstants.Config.ConfigSource
+                    ],
+                },
+            }
+
+            return FlextResult[dict[str, object]].ok(summary)
+
+        except Exception as e:
+            return FlextResult[dict[str, object]].fail(
+                f"Configuration summary generation failed: {e}"
+            )
 
     # -------------------------------------------------------------------------
     # Registration API - Simplified without command bus for now
@@ -1384,6 +1573,37 @@ class FlextContainer:
         count = self.get_service_count()
         return f"FlextContainer(services: {count})"
 
+    # Define validate_service_name locally to avoid circular import
+    @staticmethod
+    def flext_validate_service_name(name: str) -> FlextResult[None]:
+        """Validate service name string.
+
+        Args:
+            name: Service name to validate.
+
+        Returns:
+            FlextResult[None] indicating validation success or failure with error message.
+
+        """
+        if not name:
+            return FlextResult[None].fail("Service name must be a non-empty string")
+        if not name.strip():
+            return FlextResult[None].fail("Service name cannot be only whitespace")
+        return FlextResult[None].ok(None)
+
+    @staticmethod
+    def _get_exception_class(name: FlextTypes.Core.String) -> type[Exception]:
+        """Get exception class by name from FlextExceptions.
+
+        Args:
+            name: Exception class name from FlextExceptions.
+
+        Returns:
+            Exception class type with proper type casting.
+
+        """
+        return cast("type[Exception]", getattr(FlextExceptions, name))
+
 
 # =============================================================================
 # GLOBAL CONTAINER MANAGER - Singleton instance
@@ -1393,54 +1613,10 @@ _global_manager = FlextContainer.GlobalManager()
 
 
 # =============================================================================
-# NO HELPER FUNCTIONS - Use FlextContainer class methods directly
-# =============================================================================
-# All functionality is accessed via FlextContainer class methods:
-# - FlextContainer.get_global() instead of FlextContainer.get_global()
-# - FlextContainer.configure_global() instead of configure_flext_container()
-# - FlextContainer.get_global_typed() instead of get_typed()
-# - FlextContainer.register_global() instead of register_typed()
-# - FlextContainer.create_module_utilities() instead of create_module_container_utilities()
-#
-# For backward compatibility, use aliases from flext_core.legacy module.
-
-
-# =============================================================================
-# CONVENIENCE FUNCTIONS - Backward compatibility and ease of use
-# =============================================================================
-
-
-def get_flext_container() -> FlextContainer:
-    """Get the global FlextContainer instance.
-
-    Returns:
-        Global FlextContainer singleton instance.
-
-    Examples:
-        Basic usage::
-
-            container = get_flext_container()
-            result = container.register("service", my_service)
-
-        Type-safe retrieval::
-
-            container = get_flext_container()
-            service_result = container.get("service")
-            if service_result.is_success:
-                service = service_result.unwrap()
-
-    Note:
-        This is a convenience function equivalent to FlextContainer.get_global().
-
-    """
-    return FlextContainer.get_global()
-
-
-# =============================================================================
 # EXPORTS - Single consolidated class with backward compatibility
 # =============================================================================
 
 __all__: list[str] = [
     "FlextContainer",  # Main container class - all functionality via class methods
-    "get_flext_container",  # Convenience function for global access
+    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

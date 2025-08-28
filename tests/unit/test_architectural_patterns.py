@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextBaseHandler,
+    FlextCore,
     FlextEntity,
     FlextEntityId,
     FlextResult,

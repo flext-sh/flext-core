@@ -122,8 +122,8 @@ class FlextStrategies:
     def timestamps() -> st.SearchStrategy[datetime]:
         """Generate timestamps within reasonable ranges."""
         return st.datetimes(
-            min_value=datetime(2020, 1, 1, tzinfo=UTC),
-            max_value=datetime(2030, 12, 31, tzinfo=UTC),
+            min_value=datetime(2020, 1, 1),
+            max_value=datetime(2030, 12, 31),
             timezones=st.just(UTC),
         )
 
