@@ -1,53 +1,91 @@
-"""Comprehensive field definition and validation system for the FLEXT ecosystem.
+"""FLEXT Fields - Comprehensive field definition and validation system with enterprise patterns.
 
-This module provides enterprise-grade field validation, metadata management, and schema
-processing capabilities following Clean Architecture principles and SOLID patterns.
+Type-safe field validation, metadata management, and schema processing system using hierarchical
+nested classes for domain organization, registry-based field management, and FlextResult
+integration following Clean Architecture principles with zero circular dependencies.
 
-Built for Python 3.13+ with strict typing enforcement, the module uses hierarchical
-nested classes to organize functionality by domain and prevent circular imports.
+Module Role in Architecture:
+    FlextFields provides comprehensive field validation and metadata management for all
+    FLEXT ecosystem components, organized in hierarchical layers from Core to Factory,
+    enabling type-safe schema processing and railway-oriented validation patterns.
 
-Key Features:
-    - Hierarchical FlextFields class with nested domain organization
-    - Type-safe field definitions with comprehensive validation
-    - Registry-based field management with performance optimization
-    - Schema processing and metadata extraction capabilities
-    - Railway-oriented programming with FlextResult integration
-    - Zero circular dependencies through proper layering
+Classes and Methods:
+    FlextFields:                            # Hierarchical field management system
+        # Core Layer - Foundation Field Types:
+        Core.StringField                            # String validation with length constraints
+        Core.NumericField                           # Numeric validation with range constraints
+        Core.EmailField                             # Email format validation
+        Core.DateField                              # Date validation and parsing
+        Core.TimeField                              # Time validation and parsing
+        Core.DateTimeField                          # DateTime validation with timezone support
+        Core.BooleanField                           # Boolean value validation
+        Core.ListField                              # List validation with item constraints
+        Core.DictField                              # Dictionary validation with key/value constraints
 
-Architecture:
-    - FlextFields: Main hierarchical class containing all field functionality
-    - FlextFields.Core: Foundation field types and basic operations
-    - FlextFields.Validation: Field validation and constraint checking
-    - FlextFields.Registry: Field registration and management
-    - FlextFields.Schema: Schema processing and metadata extraction
-    - FlextFields.Factory: Factory patterns for field creation
+        # Validation Layer - Field Validation and Constraints:
+        Validation.FieldValidator                   # Base field validator with constraint checking
+        Validation.StringValidator                  # String-specific validation rules
+        Validation.NumericValidator                 # Numeric range and constraint validation
+        Validation.EmailValidator                   # Email format and domain validation
+        Validation.ListValidator                    # List length and item validation
+        Validation.DictValidator                    # Dictionary structure validation
 
-Examples:
-    Basic field creation and validation::
+        # Registry Layer - Field Registration and Management:
+        Registry.FieldRegistry                      # Central field type registry
+        Registry.register_field(name, field_type) -> FlextResult[None] # Register field type
+        Registry.get_field(name) -> FlextResult[FieldType] # Retrieve registered field
+        Registry.list_registered_fields() -> FlextResult[list[str]] # List all field names
+        Registry.unregister_field(name) -> FlextResult[None] # Remove field registration
 
-        from flext_core.fields import FlextFields
+        # Schema Layer - Schema Processing and Metadata:
+        Schema.SchemaProcessor                      # Schema validation and processing
+        Schema.extract_field_metadata(field) -> dict # Extract field metadata
+        Schema.validate_schema(schema_dict) -> FlextResult[dict] # Validate schema structure
+        Schema.generate_field_docs(field) -> str   # Generate field documentation
+        Schema.merge_schemas(*schemas) -> FlextResult[dict] # Merge multiple schemas
 
-        # Create and validate a string field
-        field = FlextFields.Core.StringField(
-            name="username", min_length=3, max_length=20
-        )
+        # Factory Layer - Field Creation Patterns:
+        Factory.FieldFactory                        # Factory for field creation
+        Factory.create_string_field(name, **constraints) -> FlextResult[StringField] # Create string field
+        Factory.create_numeric_field(name, **constraints) -> FlextResult[NumericField] # Create numeric field
+        Factory.create_email_field(name) -> FlextResult[EmailField] # Create email field
+        Factory.create_list_field(name, item_type) -> FlextResult[ListField] # Create list field
+        Factory.create_dict_field(name, key_type, value_type) -> FlextResult[DictField] # Create dict field
 
-        result = field.validate("john_doe")
+        # Configuration Methods:
+        configure_fields_system(config) -> FlextResult[ConfigDict] # Configure field system
+        get_fields_system_config() -> FlextResult[ConfigDict] # Get current field config
+        create_environment_fields_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_fields_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
+
+Usage Examples:
+    Basic field validation:
+        string_field = FlextFields.Core.StringField(min_length=3, max_length=20)
+        result = string_field.validate("username")
         if result.success:
-            print(f"Valid: {result.value}")
+            validated_value = result.value
 
-    Field registry operations::
-
-        # Register a field type
+    Field registry usage:
         registry = FlextFields.Registry.FieldRegistry()
-        result = registry.register_field("email", FlextFields.Core.EmailField())
-
-        # Get registered field
+        registry.register_field("email", FlextFields.Core.EmailField())
         field_result = registry.get_field("email")
-        if field_result.success:
-            field = field_result.value
 
-    Schema processing::
+    Schema processing:
+        schema = {"username": "string", "age": "numeric", "email": "email"}
+        result = FlextFields.Schema.validate_schema(schema)
+
+    Configuration:
+        config = {
+            "environment": "production",
+            "validation_level": "strict",
+            "enable_field_caching": True,
+        }
+        FlextFields.configure_fields_system(config)
+
+Integration:
+    FlextFields integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for validation limits, providing comprehensive
+    field validation and metadata management for the entire FLEXT ecosystem.
 
         # Process field schema
         processor = FlextFields.Schema.FieldProcessor()
@@ -66,6 +104,7 @@ import contextlib
 import re
 import uuid
 from abc import abstractmethod
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Final, cast, override
 
@@ -2375,7 +2414,8 @@ class _FlextFieldCoreCompat(FlextFields.Core.BaseField[object]):
                     allowed_values_val, (str, bytes)
                 ):
                     # It's an iterable that's not a string - convert to list
-                    self._allowed_values = list(allowed_values_val)  # type: ignore[arg-type]
+                    # Cast to iterable after checking __iter__ exists
+                    self._allowed_values = list(cast("Iterable[object]", allowed_values_val))
             except (TypeError, ValueError):
                 # If conversion fails, leave as None
                 pass

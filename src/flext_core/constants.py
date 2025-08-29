@@ -1,54 +1,109 @@
-"""Hierarchical constants system for the FLEXT ecosystem.
+"""FLEXT Constants - Hierarchical constants system with domain organization and type-safe immutable values.
 
-Provides a comprehensive hierarchical constants system organizing all FLEXT constants
-by domain and functionality. The FlextConstants class serves as the single source of
-truth for all constants used throughout the FLEXT ecosystem, eliminating magic numbers
-and hardcoded values while providing type safety and clear organization.
+Comprehensive hierarchical constants system providing FlextConstants class as single source of truth
+for all FLEXT ecosystem constants, organized by domain with type-safe Final annotations, eliminating
+magic numbers and providing structured error codes, validation limits, and configuration defaults.
 
-Main Classes:
-    FlextConstants: Main hierarchical constants container with 50+ nested domains.
+Module Role in Architecture:
+    FlextConstants serves as the foundation constants system for all FLEXT ecosystem components,
+    providing hierarchical organization by domain, type-safe immutable constants, structured
+    error codes, and validation limits used throughout the ecosystem.
 
-Key Features:
-    - Domain-based organization (Core, Network, Validation, Errors, etc.)
-    - Type-safe constants with Final annotations
-    - SOLID principles adherence in constant organization
-    - Comprehensive error code system with structured hierarchy
-    - Performance tuning constants and thresholds
-    - Security-focused validation patterns and limits
-    - Infrastructure configuration constants
-    - Platform-specific constants for FLEXT ecosystem
+Classes and Methods:
+    FlextConstants:                         # Hierarchical constants system with 15+ domain classes
+        # Core Domain - Fundamental System Constants:
+        Core.NAME: Final[str] = "FLEXT"             # System identification name
+        Core.VERSION: Final[str] = "0.9.0"          # Current system version
+        Core.DESCRIPTION: Final[str] = "..."        # System description
+        Core.AUTHOR: Final[str] = "FLEXT Team"      # System author
 
-Architecture:
-    The constants system follows a hierarchical organization pattern where each
-    nested class represents a specific domain or functional area. This provides:
-    - Clear separation of concerns
-    - Easy discoverability of related constants
-    - Type safety through Final annotations
-    - Consistent naming patterns across the ecosystem
+        # Network Domain - Network Configuration Constants:
+        Network.DEFAULT_PORT: Final[int] = 8080     # Default service port
+        Network.DEFAULT_TIMEOUT: Final[int] = 30    # Default request timeout seconds
+        Network.MAX_RETRIES: Final[int] = 3         # Maximum retry attempts
+        Network.KEEPALIVE_TIMEOUT: Final[int] = 65  # Connection keepalive timeout
 
-Example:
-    Basic usage with hierarchical access::
+        # Validation Domain - Input Validation Limits and Patterns:
+        Validation.MIN_PASSWORD_LENGTH: Final[int] = 8      # Minimum password length
+        Validation.MAX_TEXT_LENGTH: Final[int] = 10000      # Maximum text input length
+        Validation.EMAIL_PATTERN: Final[str] = r"..."       # Email regex pattern
+        Validation.UUID_PATTERN: Final[str] = r"..."        # UUID regex pattern
 
-        # Core system constants
-        app_name = FlextConstants.Core.NAME
+        # Errors Domain - Structured Error Code System:
+        Errors.VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"    # Input validation failure
+        Errors.NETWORK_ERROR: Final[str] = "NETWORK_ERROR"          # Network communication failure
+        Errors.DATABASE_ERROR: Final[str] = "DATABASE_ERROR"        # Database operation failure
+        Errors.AUTHENTICATION_ERROR: Final[str] = "AUTH_ERROR"      # Authentication failure
+
+        # Config Domain - Configuration Enumerations:
+        Config.ConfigEnvironment(StrEnum)           # Environment enum (DEVELOPMENT, PRODUCTION, etc.)
+        Config.LogLevel(StrEnum)                    # Log level enum (DEBUG, INFO, WARNING, etc.)
+        Config.ValidationLevel(StrEnum)             # Validation strictness enum (LOOSE, STRICT)
+
+        # Messages Domain - Standardized System Messages:
+        Messages.SUCCESS_CREATED: Final[str] = "Resource created successfully"
+        Messages.ERROR_NOT_FOUND: Final[str] = "Resource not found"
+        Messages.ERROR_UNAUTHORIZED: Final[str] = "Unauthorized access"
+
+        # Status Domain - Entity and Operation Status Values:
+        Status.ACTIVE: Final[str] = "active"        # Active status
+        Status.INACTIVE: Final[str] = "inactive"    # Inactive status
+        Status.PENDING: Final[str] = "pending"      # Pending status
+
+        # Performance Domain - Performance and Optimization Constants:
+        Performance.CACHE_TTL: Final[int] = 300     # Default cache time-to-live seconds
+        Performance.MAX_BATCH_SIZE: Final[int] = 1000   # Maximum batch processing size
+        Performance.THREAD_POOL_SIZE: Final[int] = 10   # Default thread pool size
+
+        # Infrastructure Domain - Database and External Service Constants:
+        Infrastructure.DB_POOL_SIZE: Final[int] = 20    # Database connection pool size
+        Infrastructure.REDIS_TTL: Final[int] = 3600     # Redis cache default TTL
+        Infrastructure.LDAP_TIMEOUT: Final[int] = 30    # LDAP operation timeout
+
+Usage Examples:
+    System identification:
+        system_name = FlextConstants.Core.NAME
         version = FlextConstants.Core.VERSION
+        print(f"{system_name} v{version}")
 
-        # Network configuration
+    Network configuration:
+        port = FlextConstants.Network.DEFAULT_PORT
         timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-        port = FlextConstants.Platform.FLEXT_SERVICE_PORT
 
-        # Error handling
-        error_code = FlextConstants.Errors.VALIDATION_ERROR
-        error_message = FlextConstants.Messages.VALIDATION_FAILED
+    Validation with constants:
+        if len(password) < FlextConstants.Validation.MIN_PASSWORD_LENGTH:
+            return FlextResult.fail(
+                FlextConstants.Messages.ERROR_VALIDATION,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR
+            )
 
-        # Performance tuning
-        batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
-        threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
+    Using configuration enums:
+        environment = FlextConstants.Config.ConfigEnvironment.PRODUCTION
+        log_level = FlextConstants.Config.LogLevel.INFO
 
-Note:
-    All constants are marked as Final for immutability and type safety.
-    The system is designed to be extended by adding new nested classes
-    while maintaining backward compatibility.
+Integration:
+    FlextConstants integrates with all FLEXT ecosystem components providing consistent
+    constants, error codes, validation limits, configuration defaults, and system
+    messages used throughout the ecosystem for maintainable constant management.
+    >>> port = FlextConstants.Network.FLEXT_SERVICE_PORT
+    >>> connection_string = f"http://localhost:{port}"
+
+    Error handling with structured codes:
+    >>> error_code = FlextConstants.Errors.VALIDATION_ERROR
+    >>> error_message = FlextConstants.Messages.VALIDATION_FAILED
+    >>> raise ValidationError(error_message, error_code=error_code)
+
+    Performance and system limits:
+    >>> batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
+    >>> threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
+    >>> max_retries = FlextConstants.Limits.MAX_RETRY_ATTEMPTS
+
+Notes:
+    - All constants are marked as Final for immutability and type safety
+    - Domain classes follow single responsibility principle organization
+    - Constants use UPPER_CASE naming convention for easy identification
+    - System is designed for extension while maintaining backward compatibility
+    - Hierarchical access provides clear namespace separation and discoverability
 
 """
 

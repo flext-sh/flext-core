@@ -1,59 +1,129 @@
-"""Basic test configuration for flext-core."""
+"""Comprehensive test configuration for flext-core with advanced pytest features.
+
+Provides centralized fixtures, test utilities, and configuration for all flext-core tests
+using the consolidated tests/support/ infrastructure for maximum testing efficiency.
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from tests.support.domain_factories import UserDataFactory
+from .support import (
+    AsyncTestUtils,
+    BenchmarkUtils,
+    ConfigurationFactory,
+    FlextMatchers,
+    FlextResultFactory,
+    HTTPTestUtils,
+    MemoryProfiler,
+    PayloadDataFactory,
+    PerformanceProfiler,
+    ServiceDataFactory,
+    TestBuilders,
+    UserDataFactory,
+)
 
 
+# Core Fixtures
 @pytest.fixture
 def test_scenario() -> dict[str, str]:
     """Basic test scenario fixture."""
-    return {"status": "test"}
+    return {"status": "test", "environment": "test"}
 
 
+# Factory Fixtures - using consolidated tests/support
 @pytest.fixture
-def user_data_factory() -> type[UserDataFactory]:
+def user_factory() -> type[UserDataFactory]:
     """User data factory fixture."""
     return UserDataFactory
 
 
 @pytest.fixture
-def assert_helpers():
-    """Simple assert helpers for test compatibility."""
-    class AssertHelpers:
-        def assert_result_success(self, result) -> None:
-            """Assert that a FlextResult is successful."""
-            assert result.success, f"Expected success but got failure: {result.error}"
-
-        def assert_result_failure(self, result) -> None:
-            """Assert that a FlextResult is a failure."""
-            assert result.failure, f"Expected failure but got success: {result.value}"
-
-    return AssertHelpers()
-
-
-class TestScenario:
-    """Basic test scenario class."""
-
-    def __init__(self, name: str = "test") -> None:
-        self.name = name
-        self.status = "active"
+def config_factory() -> type[ConfigurationFactory]:
+    """Configuration factory fixture."""
+    return ConfigurationFactory
 
 
 @pytest.fixture
-def clean_container():
-    """Create a clean container for testing."""
-    from flext_core import FlextContainer
-    
-    # Create a new container instance
-    container = FlextContainer()
-    yield container
-    # No cleanup needed as each test gets a fresh container
+def result_factory() -> type[FlextResultFactory]:
+    """FlextResult factory fixture."""
+    return FlextResultFactory
 
 
 @pytest.fixture
-def temp_directory(tmp_path):
-    """Create a temporary directory for testing."""
-    yield tmp_path
+def service_factory() -> type[ServiceDataFactory]:
+    """Service data factory fixture."""
+    return ServiceDataFactory
+
+
+@pytest.fixture
+def payload_factory() -> type[PayloadDataFactory]:
+    """Payload factory fixture."""
+    return PayloadDataFactory
+
+
+# Performance Testing Fixtures
+@pytest.fixture
+def benchmark_utils() -> BenchmarkUtils:
+    """Benchmark utilities for performance tests."""
+    return BenchmarkUtils()
+
+
+@pytest.fixture
+def memory_profiler() -> MemoryProfiler:
+    """Memory profiler for memory usage tests."""
+    return MemoryProfiler()
+
+
+@pytest.fixture
+def performance_profiler() -> PerformanceProfiler:
+    """Performance profiler for comprehensive profiling."""
+    return PerformanceProfiler()
+
+
+# HTTP Testing Fixtures
+@pytest.fixture
+def http_test_utils() -> HTTPTestUtils:
+    """HTTP testing utilities."""
+    return HTTPTestUtils()
+
+
+# Async Testing Fixtures
+@pytest.fixture
+def async_test_utils() -> AsyncTestUtils:
+    """Async testing utilities."""
+    return AsyncTestUtils()
+
+
+# Builder Fixtures
+@pytest.fixture
+def test_builders() -> TestBuilders:
+    """Test builders for complex object creation."""
+    return TestBuilders()
+
+
+# Matcher Fixtures
+@pytest.fixture
+def flext_matchers() -> FlextMatchers:
+    """Advanced assertion matchers."""
+    return FlextMatchers()
+
+
+# Shared test configuration
+@pytest.fixture(autouse=True)
+def setup_test_environment() -> None:
+    """Automatically set up test environment for all tests."""
+    # object global test setup can go here
+    return
+    # object global test teardown can go here
+
+
+# Mark configuration
+def pytest_configure(config: pytest.Config) -> None:
+    """Configure pytest marks."""
+    config.addinivalue_line("markers", "unit: Unit tests")
+    config.addinivalue_line("markers", "integration: Integration tests")
+    config.addinivalue_line("markers", "core: Core framework tests")
+    config.addinivalue_line("markers", "performance: Performance tests")
+    config.addinivalue_line("markers", "slow: Slow-running tests")
+    config.addinivalue_line("markers", "asyncio: Async tests")

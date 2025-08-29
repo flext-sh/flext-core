@@ -22,7 +22,12 @@ import structlog
 from structlog.testing import LogCapture
 
 # Removed legacy imports - using FlextLogger directly
-from flext_core import FlextLogger
+from flext_core import (
+    FlextLogger,
+    get_correlation_id,
+    get_logger,
+    set_global_correlation_id,
+)
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

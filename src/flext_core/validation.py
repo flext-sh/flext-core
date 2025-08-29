@@ -1,8 +1,232 @@
-"""Validation functions and predicates.
+r"""FLEXT Validation - Enterprise validation framework with hierarchical predicates and railway-oriented error handling.
 
-Provides FlextValidation class with validation methods for common data types
-like emails, URLs, and business rules. Returns FlextResult for type-safe
-error handling.
+Comprehensive validation system providing FlextValidation class with domain-organized validation
+patterns, composable validation chains, business rule enforcement, and enterprise-grade data
+validation using FlextResult for type-safe error handling with performance optimization.
+
+Module Role in Architecture:
+    FlextValidation provides comprehensive validation capabilities for all FLEXT ecosystem
+    components, organized hierarchically by domain from basic format validation to complex
+    business rule validation with composable patterns and performance optimization.
+
+Classes and Methods:
+    FlextValidation:                        # Consolidated validation system with hierarchical organization
+        # Basic Validators - Core Format and Data Type Validation:
+        is_email(email) -> FlextResult[None]            # RFC-compliant email validation
+        is_url(url) -> FlextResult[None]                # URL format and protocol validation
+        is_phone(phone) -> FlextResult[None]            # International phone number validation
+        is_credit_card(card) -> FlextResult[None]       # Credit card number validation
+        is_uuid(uuid_str) -> FlextResult[None]          # UUID format validation
+        is_json(json_str) -> FlextResult[None]          # JSON format validation
+
+        # Data Type Validators - Type Safety and Constraint Validation:
+        validate_type(value, expected_type) -> FlextResult[None] # Type checking validation
+        validate_range(value, min_val, max_val) -> FlextResult[None] # Numeric range validation
+        validate_length(text, min_len, max_len) -> FlextResult[None] # String length constraints
+        validate_regex(text, pattern) -> FlextResult[None] # Regular expression matching
+        validate_enum(value, valid_values) -> FlextResult[None] # Enumeration validation
+        validate_required(value, field_name) -> FlextResult[None] # Required field validation
+
+        # Business Validators - Enterprise Business Rule Validation:
+        validate_business_id(business_id, format) -> FlextResult[None] # Business identifier validation
+        validate_tax_id(tax_id, country) -> FlextResult[None] # Tax identifier validation
+        validate_account_number(account, format) -> FlextResult[None] # Account number validation
+        validate_sku(sku, pattern) -> FlextResult[None] # Product SKU validation
+        validate_postal_code(code, country) -> FlextResult[None] # Postal code validation
+
+        # Composition Validators - Complex Validation Workflows:
+        chain_validators(*validators) -> Validator       # Sequential validation chain
+        conditional_validator(condition, validator) -> Validator # Conditional validation
+        parallel_validators(validators) -> FlextResult[list] # Parallel validation execution
+        custom_validator(predicate, message) -> Validator # Custom predicate validator
+        all_validators(*validators) -> Validator         # All validators must pass
+        any_validator(*validators) -> Validator          # At least one validator must pass
+
+        # Performance Validators - Optimized Enterprise Validation:
+        cached_validator(validator, ttl=300) -> Validator # Cached validation results
+        batch_validator(items, validator) -> FlextResult[list] # Batch validation processing
+        async_validator(validator) -> AsyncValidator     # Asynchronous validation
+        memoized_validator(validator) -> Validator       # Memoized validation results
+
+        # Configuration Methods:
+        configure_validation_system(config) -> FlextResult[ConfigDict] # Configure validation system
+        get_validation_system_config() -> FlextResult[ConfigDict] # Get current config
+        create_environment_validation_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_validation_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
+
+    # Standalone Validation Functions:
+    is_email(email: str) -> FlextResult[None]           # Standalone email validation
+    is_url(url: str) -> FlextResult[None]               # Standalone URL validation
+    is_phone(phone: str) -> FlextResult[None]           # Standalone phone validation
+
+Usage Examples:
+    Basic validation:
+        email_result = FlextValidation.is_email("user@example.com")
+        if email_result.success:
+            print("Valid email")
+
+        # Chain validations
+        result = (
+            FlextValidation.validate_required(data.get("name"), "name")
+            .flat_map(lambda _: FlextValidation.validate_length(data["name"], 2, 50))
+            .flat_map(lambda _: FlextValidation.is_email(data.get("email", "")))
+        )
+
+    Business rule validation:
+        tax_id_result = FlextValidation.validate_tax_id("123-45-6789", "US")
+        sku_result = FlextValidation.validate_sku("PROD-123-ABC", r"^PROD-\\d+-[A-Z]+$")
+
+    Validation composition:
+        email_validator = FlextValidation.chain_validators(
+            lambda email: FlextValidation.validate_required(email, "email"),
+            lambda email: FlextValidation.is_email(email)
+        )
+
+        result = email_validator("user@example.com")
+
+    Configuration:
+        config = {
+            "environment": "production",
+            "validation_level": "strict",
+            "enable_caching": True,
+        }
+        FlextValidation.configure_validation_system(config)
+
+Integration:
+    FlextValidation integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for validation limits, providing comprehensive
+    validation capabilities across the entire FLEXT ecosystem with composable patterns.
+        validate_required(value: object, field_name: str) -> FlextResult[None] - Required field check
+        validate_not_empty(text: str, field_name: str) -> FlextResult[None] - Non-empty validation
+
+    Advanced Validation Functions:
+        validate_json_schema(data: dict, schema: dict) -> FlextResult[None] - JSON schema validation
+        validate_business_rules(data: dict, rules: list) -> FlextResult[None] - Business rule engine
+        validate_data_integrity(data: dict, constraints: dict) -> FlextResult[None] - Data integrity
+        validate_security_constraints(data: dict, policies: dict) -> FlextResult[None] - Security validation
+
+Integration with FlextCore:
+    >>> from flext_core import FlextValidation, FlextResult
+    >>> from flext_core.core import FlextCore
+    >>> # Basic validation with logging
+    >>> core = FlextCore.get_instance()
+    >>> email_result = FlextValidation.is_email("user@example.com")
+    >>> if email_result.success:
+    ...     core.logger.info("Email validation passed")
+    >>> else:
+    ...     core.logger.error(f"Email validation failed: {email_result.error}")
+    >>> # Complex business validation
+    >>> business_data = {"tax_id": "12-3456789", "country": "US"}
+    >>> tax_result = FlextValidation.validate_tax_id(
+    ...     business_data["tax_id"], business_data["country"]
+    ... )
+    >>> core.observability.track_validation_result("tax_id", tax_result.success)
+
+Validation Chaining Examples:
+    >>> # Chain multiple validators
+    >>> user_validators = FlextValidation.chain_validators([
+    ...     lambda email: FlextValidation.is_email(email),
+    ...     lambda email: FlextValidation.validate_length(email, 5, 100),
+    ...     lambda email: FlextValidation.validate_regex(email, r".*@company\\\\.com$"),
+    ... ])
+    >>> email_validation = user_validators("john.doe@company.com")
+    >>> if email_validation.failure:
+    ...     print(f"Email validation failed: {email_validation.error}")
+
+Business Rule Validation:
+    >>> # Complex business rule validation
+    >>> order_data = {
+    ...     "amount": 1500.00,
+    ...     "customer_tier": "premium",
+    ...     "payment_method": "credit_card",
+    ...     "shipping_country": "US",
+    ... }
+    >>> business_rules = [
+    ...     {"field": "amount", "min": 0, "max": 10000},
+    ...     {"field": "customer_tier", "values": ["basic", "premium", "enterprise"]},
+    ...     {
+    ...         "field": "payment_method",
+    ...         "values": ["credit_card", "paypal", "bank_transfer"],
+    ...     },
+    ... ]
+    >>> validation_result = FlextValidation.validate_business_rules(
+    ...     order_data, business_rules
+    ... )
+
+Performance Optimization Examples:
+    >>> # Cached validation for repeated checks
+    >>> email_validator_cached = FlextValidation.cached_validator(
+    ...     FlextValidation.is_email,
+    ...     ttl=3600,  # Cache for 1 hour
+    ... )
+    >>> # Batch validation for multiple items
+    >>> emails = ["user1@example.com", "user2@example.com", "invalid-email"]
+    >>> batch_result = FlextValidation.batch_validator(emails, FlextValidation.is_email)
+    >>> valid_emails = [
+    ...     email for email, result in zip(emails, batch_result.value) if result.success
+    ... ]
+
+Conditional Validation Examples:
+    >>> # Validate based on conditions
+    >>> def validate_user_data(user_data: dict) -> FlextResult[None]:
+    ...     # Required field validation
+    ...     email_validation = FlextValidation.validate_required(
+    ...         user_data.get("email"), "email"
+    ...     )
+    ...     if email_validation.failure:
+    ...         return email_validation
+    ...
+    ...     # Conditional validation based on user type
+    ...     if user_data.get("type") == "business":
+    ...         return FlextValidation.validate_tax_id(user_data.get("tax_id"), "US")
+    ...
+    ...     return FlextResult.ok(None)
+
+Custom Validator Creation:
+    >>> # Create custom validators with predicates
+    >>> def is_strong_password(password: str) -> bool:
+    ...     return (
+    ...         len(password) >= 8
+    ...         and any(c.isupper() for c in password)
+    ...         and any(c.islower() for c in password)
+    ...         and any(c.isdigit() for c in password)
+    ...     )
+    >>> password_validator = FlextValidation.custom_validator(
+    ...     is_strong_password,
+    ...     "Password must be at least 8 characters with upper, lower, and digits",
+    ... )
+    >>> result = password_validator("WeakPass")  # Will fail
+    >>> strong_result = password_validator("StrongP@ss123")  # Will pass
+
+Data Integrity Validation:
+    >>> # Comprehensive data validation
+    >>> user_data = {
+    ...     "id": "usr_12345",
+    ...     "email": "john@example.com",
+    ...     "age": 25,
+    ...     "status": "active",
+    ... }
+    >>> integrity_constraints = {
+    ...     "id": {"required": True, "pattern": r"usr_\\d+"},
+    ...     "email": {"required": True, "validator": "email"},
+    ...     "age": {"required": True, "min": 18, "max": 120},
+    ...     "status": {"required": True, "enum": ["active", "inactive", "suspended"]},
+    ... }
+    >>> integrity_result = FlextValidation.validate_data_integrity(
+    ...     user_data, integrity_constraints
+    ... )
+
+Notes:
+    - All validation functions return FlextResult for consistent error handling
+    - Validation chains support short-circuiting on first failure for performance
+    - Caching mechanisms optimize repeated validation of same data
+    - Business rule engine supports dynamic rule loading and complex conditions
+    - Integration with FlextCore provides centralized logging and observability
+    - Thread-safe validation operations support concurrent enterprise applications
+    - Async validation patterns support high-throughput validation scenarios
+    - Custom validator creation enables domain-specific validation logic
+    - Performance optimizations include batching, caching, and parallel validation
+
 """
 
 from __future__ import annotations

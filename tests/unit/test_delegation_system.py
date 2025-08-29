@@ -1,4 +1,4 @@
-"""Comprehensive tests for FlextMixinDelegator and delegation system.
+"""Comprehensive tests for FlextDelegationSystem and delegation system.
 
 This test suite provides complete coverage of the delegation system,
 testing all aspects of mixin delegation, automatic method discovery,
@@ -14,11 +14,9 @@ from typing import cast
 import pytest
 
 from flext_core import (
+    FlextDelegationSystem,
     FlextExceptions,
-    FlextMixinDelegator,
     FlextResult,
-    create_mixin_delegator,
-    validate_delegation_system,
 )
 
 # Exception classes are automatically available
@@ -173,52 +171,54 @@ class FrozenHostObject:
 
 
 @pytest.mark.unit
-class TestFlextMixinDelegator:
-    """Test FlextMixinDelegator functionality."""
+class TestFlextDelegationSystem:
+    """Test FlextDelegationSystem.MixinDelegator functionality."""
 
     def test_delegator_initialization_single_mixin(self) -> None:
         """Test delegator initialization with single mixin."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1)
+        delegator = FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
-        assert delegator._host is host
-        if len(delegator._mixin_instances) != 1:
-            raise AssertionError(f"Expected {1}, got {len(delegator._mixin_instances)}")
-        if SampleMixin1 not in delegator._mixin_instances:
+        assert delegator.host_instance is host
+        if len(delegator.mixin_instances) != 1:
+            raise AssertionError(f"Expected {1}, got {len(delegator.mixin_instances)}")
+        if SampleMixin1 not in delegator.mixin_instances:
             raise AssertionError(
-                f"Expected {SampleMixin1} in {delegator._mixin_instances}",
+                f"Expected {SampleMixin1} in {delegator.mixin_instances}",
             )
-        assert isinstance(delegator._mixin_instances[SampleMixin1], SampleMixin1)
+        assert isinstance(delegator.mixin_instances[SampleMixin1], SampleMixin1)
 
     def test_delegator_initialization_multiple_mixins(self) -> None:
         """Test delegator initialization with multiple mixins."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1, SampleMixin2)
+        delegator = FlextDelegationSystem.MixinDelegator(
+            host, SampleMixin1, SampleMixin2
+        )
 
-        if len(delegator._mixin_instances) != EXPECTED_BULK_SIZE:
-            raise AssertionError(f"Expected {2}, got {len(delegator._mixin_instances)}")
-        if SampleMixin1 not in delegator._mixin_instances:
+        if len(delegator.mixin_instances) != EXPECTED_BULK_SIZE:
+            raise AssertionError(f"Expected {2}, got {len(delegator.mixin_instances)}")
+        if SampleMixin1 not in delegator.mixin_instances:
             raise AssertionError(
-                f"Expected {SampleMixin1} in {delegator._mixin_instances}",
+                f"Expected {SampleMixin1} in {delegator.mixin_instances}",
             )
-        assert SampleMixin2 in delegator._mixin_instances
+        assert SampleMixin2 in delegator.mixin_instances
 
     def test_delegator_initialization_no_mixins(self) -> None:
         """Test delegator initialization with no mixins."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host)
+        delegator = FlextDelegationSystem.MixinDelegator(host)
 
-        if len(delegator._mixin_instances) != 0:
-            raise AssertionError(f"Expected {0}, got {len(delegator._mixin_instances)}")
+        if len(delegator.mixin_instances) != 0:
+            raise AssertionError(f"Expected {0}, got {len(delegator.mixin_instances)}")
         assert len(delegator._delegated_methods) == 0
 
     def test_delegator_initialization_with_initializable_mixin(self) -> None:
         """Test delegator with mixin that has initialization methods."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, InitializableMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, InitializableMixin)
 
         # Check that initialization methods were called
-        mixin_instance = delegator._mixin_instances[InitializableMixin]
+        mixin_instance = delegator.mixin_instances[InitializableMixin]
         assert isinstance(mixin_instance, InitializableMixin)
         if not (mixin_instance.validation_initialized):
             raise AssertionError(
@@ -242,12 +242,12 @@ class TestFlextMixinDelegator:
     def test_delegator_initialization_with_failing_init(self) -> None:
         """Test delegator with mixin that has failing initialization."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, FailingInitMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, FailingInitMixin)
 
         # Mixin should still be registered despite initialization failure
-        if FailingInitMixin not in delegator._mixin_instances:
+        if FailingInitMixin not in delegator.mixin_instances:
             raise AssertionError(
-                f"Expected {FailingInitMixin} in {delegator._mixin_instances}",
+                f"Expected {FailingInitMixin} in {delegator.mixin_instances}",
             )
 
         # Check that failures were logged
@@ -269,12 +269,12 @@ class TestFlextMixinDelegator:
                 raise TypeError(msg)
 
         with pytest.raises(TypeError, match="Cannot create mixin instance"):
-            FlextMixinDelegator(host, FailingMixin)
+            FlextDelegationSystem.MixinDelegator(host, FailingMixin)
 
     def test_method_delegation_basic(self) -> None:
         """Test basic method delegation."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test that method was delegated
         assert hasattr(host, "mixin_method1")
@@ -285,7 +285,7 @@ class TestFlextMixinDelegator:
     def test_method_delegation_with_arguments(self) -> None:
         """Test method delegation with arguments."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test method with arguments
         assert hasattr(host, "mixin_method2")
@@ -301,7 +301,7 @@ class TestFlextMixinDelegator:
     def test_method_delegation_multiple_mixins(self) -> None:
         """Test method delegation from multiple mixins."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1, SampleMixin2)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1, SampleMixin2)
 
         # Test methods from both mixins
         assert hasattr(host, "mixin_method1")
@@ -317,7 +317,7 @@ class TestFlextMixinDelegator:
     def test_property_delegation_getter(self) -> None:
         """Test property delegation getter."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test property getter
         assert hasattr(host, "writable_property")
@@ -328,7 +328,7 @@ class TestFlextMixinDelegator:
     def test_property_delegation_setter(self) -> None:
         """Test property delegation setter."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test property setter using setattr/getattr to satisfy typing
         host.writable_property = "new_value"
@@ -341,7 +341,7 @@ class TestFlextMixinDelegator:
     def test_property_delegation_readonly(self) -> None:
         """Test delegation of read-only property."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test readonly property via getattr
         value = host.readonly_property
@@ -359,7 +359,7 @@ class TestFlextMixinDelegator:
     def test_private_methods_not_delegated(self) -> None:
         """Test that private methods are not delegated."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Private methods should not be delegated
         assert not hasattr(host, "_value")
@@ -378,7 +378,7 @@ class TestFlextMixinDelegator:
                 raise ValueError(msg)
 
         host = HostObject()
-        FlextMixinDelegator(host, ErrorMixin)
+        FlextDelegationSystem.MixinDelegator(host, ErrorMixin)
 
         # Test that delegation error is properly wrapped
         with pytest.raises(
@@ -390,7 +390,7 @@ class TestFlextMixinDelegator:
     def test_method_signature_preservation(self) -> None:
         """Test that method signatures are preserved."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Test that delegated method has correct signature - use getattr for dynamic delegation
         method = getattr(host, "mixin_method2", None)
@@ -405,7 +405,7 @@ class TestFlextMixinDelegator:
         host.freeze()
 
         # Should still work by attaching to class
-        delegator = FlextMixinDelegator(host, SampleMixin1)
+        delegator = FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         # Methods should be available through class delegation
         if "mixin_method1" not in delegator._delegated_methods:
@@ -415,7 +415,9 @@ class TestFlextMixinDelegator:
     def test_get_mixin_instance(self) -> None:
         """Test getting specific mixin instance."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1, SampleMixin2)
+        delegator = FlextDelegationSystem.MixinDelegator(
+            host, SampleMixin1, SampleMixin2
+        )
 
         # Test getting specific mixin instances
         mixin1_instance = delegator.get_mixin_instance(SampleMixin1)
@@ -431,7 +433,9 @@ class TestFlextMixinDelegator:
     def test_get_delegation_info(self) -> None:
         """Test getting delegation information."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1, SampleMixin2)
+        delegator = FlextDelegationSystem.MixinDelegator(
+            host, SampleMixin1, SampleMixin2
+        )
 
         info = delegator.get_delegation_info()
 
@@ -465,7 +469,7 @@ class TestFlextMixinDelegator:
     def test_delegation_validation_success(self) -> None:
         """Test successful delegation validation."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1)
+        delegator = FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
         result = delegator._validate_delegation()
         assert result.success
@@ -475,9 +479,11 @@ class TestFlextMixinDelegator:
         host = HostObject()
 
         # Manually create delegator with no mixins
-        delegator = FlextMixinDelegator.__new__(FlextMixinDelegator)
+        delegator = FlextDelegationSystem.MixinDelegator.__new__(
+            FlextDelegationSystem.MixinDelegator
+        )
         delegator._host = host
-        delegator._mixin_instances = {}
+        delegator.mixin_instances = {}
         delegator._delegated_methods = {}
         delegator._initialization_log = []
 
@@ -494,9 +500,11 @@ class TestFlextMixinDelegator:
         host = HostObject()
 
         # Create delegator with empty methods
-        delegator = FlextMixinDelegator.__new__(FlextMixinDelegator)
+        delegator = FlextDelegationSystem.MixinDelegator.__new__(
+            FlextDelegationSystem.MixinDelegator
+        )
         delegator._host = host
-        delegator._mixin_instances = {SampleMixin1: SampleMixin1()}
+        delegator.mixin_instances = {SampleMixin1: SampleMixin1()}
         delegator._delegated_methods = {}
         delegator._initialization_log = []
 
@@ -511,7 +519,7 @@ class TestFlextMixinDelegator:
     def test_delegation_validation_with_init_failures(self) -> None:
         """Test delegation validation with initialization failures."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, FailingInitMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, FailingInitMixin)
 
         result = delegator._validate_delegation()
         assert result.is_failure
@@ -519,18 +527,18 @@ class TestFlextMixinDelegator:
             msg: str = f"Expected 'Initialization failed' in {result.error}"
             raise AssertionError(msg)
 
-    def test_mixin_registry_global(self) -> None:
-        """Test global mixin registry."""
+    def test_mixin_instances_access(self) -> None:
+        """Test mixin instances access in delegator."""
         host = HostObject()
-        FlextMixinDelegator(host, SampleMixin1)
+        delegator = FlextDelegationSystem.MixinDelegator(host, SampleMixin1)
 
-        # Test that mixin was registered globally
-        if "SampleMixin1" not in FlextMixinDelegator._MIXIN_REGISTRY:
+        # Test that mixin was registered in delegator instance
+        if SampleMixin1 not in delegator.mixin_instances:
             msg: str = (
-                f"Expected {'SampleMixin1'} in {FlextMixinDelegator._MIXIN_REGISTRY}"
+                f"Expected {SampleMixin1} in {list(delegator.mixin_instances.keys())}"
             )
             raise AssertionError(msg)
-        assert FlextMixinDelegator._MIXIN_REGISTRY["SampleMixin1"] is SampleMixin1
+        assert isinstance(delegator.mixin_instances[SampleMixin1], SampleMixin1)
 
 
 @pytest.mark.unit
@@ -540,37 +548,39 @@ class TestCreateMixinDelegator:
     def test_create_mixin_delegator_basic(self) -> None:
         """Test basic mixin delegator creation."""
         host = HostObject()
-        delegator = create_mixin_delegator(host, SampleMixin1)
+        delegator = FlextDelegationSystem.create_mixin_delegator(host, SampleMixin1)
 
-        assert isinstance(delegator, FlextMixinDelegator)
-        assert delegator._host is host
-        if SampleMixin1 not in delegator._mixin_instances:
-            msg: str = f"Expected {SampleMixin1} in {delegator._mixin_instances}"
+        assert isinstance(delegator, FlextDelegationSystem.MixinDelegator)
+        assert delegator.host_instance is host
+        if SampleMixin1 not in delegator.mixin_instances:
+            msg: str = f"Expected {SampleMixin1} in {delegator.mixin_instances}"
             raise AssertionError(msg)
 
     def test_create_mixin_delegator_multiple_mixins(self) -> None:
         """Test creating delegator with multiple mixins."""
         host = HostObject()
-        delegator = create_mixin_delegator(host, SampleMixin1, SampleMixin2)
+        delegator = FlextDelegationSystem.create_mixin_delegator(
+            host, SampleMixin1, SampleMixin2
+        )
 
-        if len(delegator._mixin_instances) != EXPECTED_BULK_SIZE:
-            length_msg: str = f"Expected {2}, got {len(delegator._mixin_instances)}"
+        if len(delegator.mixin_instances) != EXPECTED_BULK_SIZE:
+            length_msg: str = f"Expected {2}, got {len(delegator.mixin_instances)}"
             raise AssertionError(length_msg)
-        if SampleMixin1 not in delegator._mixin_instances:
+        if SampleMixin1 not in delegator.mixin_instances:
             mixin_instance_msg: str = (
-                f"Expected {SampleMixin1} in {delegator._mixin_instances}"
+                f"Expected {SampleMixin1} in {delegator.mixin_instances}"
             )
             raise AssertionError(mixin_instance_msg)
-        assert SampleMixin2 in delegator._mixin_instances
+        assert SampleMixin2 in delegator.mixin_instances
 
     def test_create_mixin_delegator_no_mixins(self) -> None:
         """Test creating delegator with no mixins."""
         host = HostObject()
-        delegator = create_mixin_delegator(host)
+        delegator = FlextDelegationSystem.create_mixin_delegator(host)
 
-        assert isinstance(delegator, FlextMixinDelegator)
-        if len(delegator._mixin_instances) != 0:
-            msg: str = f"Expected {0}, got {len(delegator._mixin_instances)}"
+        assert isinstance(delegator, FlextDelegationSystem.MixinDelegator)
+        if len(delegator.mixin_instances) != 0:
+            msg: str = f"Expected {0}, got {len(delegator.mixin_instances)}"
             raise AssertionError(msg)
 
 
@@ -580,7 +590,7 @@ class TestValidateDelegationSystem:
 
     def test_validate_delegation_system_success(self) -> None:
         """Test successful delegation system validation."""
-        result = validate_delegation_system()
+        result = FlextDelegationSystem.validate_delegation_system()
 
         assert isinstance(result, FlextResult)
         if result.success:
@@ -612,16 +622,20 @@ class TestValidateDelegationSystem:
                 pass
 
         host = HostObject()
-        _ = FlextMixinDelegator(host, IncompleteMixin)  # Test delegator creation
+        _ = FlextDelegationSystem.MixinDelegator(
+            host, IncompleteMixin
+        )  # Test delegator creation
 
         # Validation should succeed even with missing methods
-        result = validate_delegation_system()  # Não aceita argumentos
+        result = (
+            FlextDelegationSystem.validate_delegation_system()
+        )  # Não aceita argumentos
         assert result.success
 
     def test_validate_delegation_system_real_validation(self) -> None:
         """Test validation system with real execution instead of mocks."""
         # Test that the real validation system works without mocking
-        result = validate_delegation_system()
+        result = FlextDelegationSystem.validate_delegation_system()
 
         # The real validation should either succeed or fail gracefully
         # We test that it returns a proper FlextResult
@@ -643,10 +657,10 @@ class TestValidateDelegationSystem:
         # Test the real validation system behavior with edge cases
 
         # First test - normal validation
-        result = validate_delegation_system()
+        result = FlextDelegationSystem.validate_delegation_system()
 
         # Test that we get consistent results
-        result2 = validate_delegation_system()
+        result2 = FlextDelegationSystem.validate_delegation_system()
 
         # Both results should have the same success status
         assert result.success == result2.success
@@ -687,7 +701,7 @@ class TestValidateDelegationSystem:
         # Test real delegation with potentially problematic classes
         # Pass class types, not instances (delegation system works with classes)
         host = ProblematicHost()
-        delegator = FlextMixinDelegator(host, ProblematicMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, ProblematicMixin)
 
         # Even with problematic classes, delegator should be created
         assert delegator is not None
@@ -698,7 +712,7 @@ class TestValidateDelegationSystem:
                 delegator.problematic_method()
 
         # Test that the main validation function still works even with edge cases
-        result = validate_delegation_system()
+        result = FlextDelegationSystem.validate_delegation_system()
         # The validation should return a proper FlextResult regardless
         assert hasattr(result, "success")
         assert hasattr(result, "is_failure")
@@ -719,7 +733,7 @@ class TestDelegationSystemEdgeCases:
                 return "regular"
 
         host = HostObject()
-        FlextMixinDelegator(host, CallableMixin)
+        FlextDelegationSystem.MixinDelegator(host, CallableMixin)
 
         # Callable attribute should be delegated
         assert hasattr(host, "callable_attr")
@@ -749,7 +763,7 @@ class TestDelegationSystemEdgeCases:
         host = HostObject()
 
         # Later mixins should override earlier ones
-        FlextMixinDelegator(host, Mixin1, Mixin2)
+        FlextDelegationSystem.MixinDelegator(host, Mixin1, Mixin2)
 
         # Should have the method from the last registered mixin - use cast for dynamic delegation
         result = host.conflict_method
@@ -770,7 +784,7 @@ class TestDelegationSystemEdgeCases:
 
         host = HostObject()
 
-        FlextMixinDelegator(host, ConflictMixin)
+        FlextDelegationSystem.MixinDelegator(host, ConflictMixin)
 
         # Host's original method might be preserved or overridden
         # depending on the delegation strategy
@@ -802,7 +816,7 @@ class TestDelegationSystemEdgeCases:
         host = HostObject()
         # Test that initialization fails with RuntimeError
         with pytest.raises(RuntimeError, match="Complex initialization error"):
-            FlextMixinDelegator(host, ComplexErrorMixin)
+            FlextDelegationSystem.MixinDelegator(host, ComplexErrorMixin)
 
     def test_delegation_with_property_edge_cases(self) -> None:
         """Test property delegation edge cases."""
@@ -825,7 +839,7 @@ class TestDelegationSystemEdgeCases:
                 raise ValueError(msg)
 
         host = HostObject()
-        FlextMixinDelegator(host, PropertyMixin)
+        FlextDelegationSystem.MixinDelegator(host, PropertyMixin)
 
         # Normal property should work
         assert hasattr(host, "normal_property")
@@ -848,21 +862,24 @@ class TestDelegationSystemEdgeCases:
         host2 = HostObject()
 
         # Create two delegators with same mixin
-        FlextMixinDelegator(host1, SampleMixin1)
-        FlextMixinDelegator(host2, SampleMixin1)
+        delegator1 = FlextDelegationSystem.MixinDelegator(host1, SampleMixin1)
+        delegator2 = FlextDelegationSystem.MixinDelegator(host2, SampleMixin1)
 
-        # Both should see the same registry entry
-        if "SampleMixin1" not in FlextMixinDelegator._MIXIN_REGISTRY:
+        # Both delegators should have their own mixin instances
+        if SampleMixin1 not in delegator1.mixin_instances:
             msg: str = (
-                f"Expected {'SampleMixin1'} in {FlextMixinDelegator._MIXIN_REGISTRY}"
+                f"Expected {SampleMixin1} in {list(delegator1.mixin_instances.keys())}"
             )
             raise AssertionError(msg)
-        assert FlextMixinDelegator._MIXIN_REGISTRY["SampleMixin1"] is SampleMixin1
+        assert isinstance(delegator1.mixin_instances[SampleMixin1], SampleMixin1)
+        assert isinstance(delegator2.mixin_instances[SampleMixin1], SampleMixin1)
 
     def test_delegation_info_completeness(self) -> None:
         """Test that delegation info contains all expected information."""
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SampleMixin1, InitializableMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(
+            host, SampleMixin1, InitializableMixin
+        )
 
         info = delegator.get_delegation_info()
 
@@ -920,7 +937,7 @@ class TestDelegationSystemEdgeCases:
                 return "dynamic_attr"
 
         host = HostObject()
-        delegator = FlextMixinDelegator(host, SignatureMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, SignatureMixin)
 
         # Should handle methods with potential signature issues
         if "method_with_signature_issues" not in delegator._delegated_methods:
@@ -943,7 +960,7 @@ class TestDelegationSystemEdgeCases:
 
         host = HostObject()
         # Should not crash even if some methods cause issues
-        delegator = FlextMixinDelegator(host, ProblematicMixin)
+        delegator = FlextDelegationSystem.MixinDelegator(host, ProblematicMixin)
 
         # Should still have the normal method
         if "normal_method" not in delegator._delegated_methods:
@@ -959,7 +976,7 @@ class TestDelegationSystemIntegration:
         """Test complete delegation workflow from creation to usage."""
         # Create host and delegator
         host = HostObject()
-        delegator = create_mixin_delegator(
+        delegator = FlextDelegationSystem.create_mixin_delegator(
             host,
             SampleMixin1,
             SampleMixin2,
@@ -967,9 +984,9 @@ class TestDelegationSystemIntegration:
         )
 
         # Verify initialization
-        assert delegator._host is host
-        if len(delegator._mixin_instances) != EXPECTED_DATA_COUNT:
-            raise AssertionError(f"Expected {3}, got {len(delegator._mixin_instances)}")
+        assert delegator.host_instance is host
+        if len(delegator.mixin_instances) != EXPECTED_DATA_COUNT:
+            raise AssertionError(f"Expected {3}, got {len(delegator.mixin_instances)}")
 
         # Test method delegation from multiple mixins
         assert hasattr(host, "mixin_method1")
@@ -1005,7 +1022,7 @@ class TestDelegationSystemIntegration:
 
     def test_system_validation_integration(self) -> None:
         """Test integration with system validation."""
-        result = validate_delegation_system()
+        result = FlextDelegationSystem.validate_delegation_system()
 
         assert isinstance(result, FlextResult)
         if result.success:
@@ -1035,7 +1052,7 @@ class TestDelegationSystemIntegration:
     def test_complex_mixin_combination(self) -> None:
         """Test complex combination of mixins with various features."""
         host = HostObject()
-        delegator = FlextMixinDelegator(
+        delegator = FlextDelegationSystem.MixinDelegator(
             host,
             SampleMixin1,  # Methods and properties
             SampleMixin2,  # Different methods
@@ -1104,11 +1121,11 @@ class TestDelegationSystemIntegration:
             mixins.append(mixin_class)
 
         host = HostObject()
-        delegator = FlextMixinDelegator(host, *mixins)
+        delegator = FlextDelegationSystem.MixinDelegator(host, *mixins)
 
         # Should handle many mixins without issues
-        if len(delegator._mixin_instances) != 10:
-            instances_msg: str = f"Expected {10}, got {len(delegator._mixin_instances)}"
+        if len(delegator.mixin_instances) != 10:
+            instances_msg: str = f"Expected {10}, got {len(delegator.mixin_instances)}"
             raise AssertionError(instances_msg)
         if len(delegator._delegated_methods) < 10:
             methods_msg: str = f"Expected {len(delegator._delegated_methods)} >= {10}"

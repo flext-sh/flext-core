@@ -1,83 +1,115 @@
-"""Comprehensive handler system for request processing and enterprise patterns.
+"""FLEXT Handlers - Enterprise handler system for request processing and architectural patterns.
 
-This module provides the complete handler infrastructure for FLEXT applications,
-implementing enterprise patterns including Chain of Responsibility, CQRS, command
-buses, validation handlers, authorization handlers, and metrics collection. The
-system is organized as a single consolidated FlextHandlers class containing all
-handler-related functionality.
+Comprehensive handler infrastructure implementing enterprise patterns including Chain of
+Responsibility, CQRS, command buses, validation handlers, authorization handlers, and
+metrics collection. All functionality consolidated into FlextHandlers class with nested
+components for logical organization and type safety.
 
-Architectural Overview:
-    The handler system is structured with six major architectural layers:
+Module Role in Architecture:
+    FlextHandlers provides the complete handler infrastructure for request processing
+    across FLEXT applications. Implements enterprise patterns with thread safety,
+    metrics collection, state management and FlextResult integration for railway-oriented
+    programming patterns.
 
-    **Constants Layer**: Handler execution parameters and states
-        - Handler: Timeout, retry, and performance limits from FlextConstants
-        - States: Handler execution states (IDLE, PROCESSING, COMPLETED, FAILED)
-        - Types: Handler classifications (BASIC, VALIDATING, COMMAND, QUERY)
+Classes and Methods:
+    FlextHandlers:                      # Consolidated handler system with enterprise patterns
+        # Nested Handler Components:
+        Constants                       # Handler execution parameters and states
+        Types                          # Type definitions and message structures
+        Protocols                      # Protocol interfaces for handlers
+        Implementation                 # Concrete handler classes
+        CQRS                          # Command Query Responsibility Segregation
+        Patterns                      # Design pattern implementations
+        Management                    # Handler lifecycle and registry
 
-    **Types Layer**: Type definitions for handler operations
-        - HandlerTypes: Name, state, metadata, and function type definitions
-        - Message: Message data, headers, and processing context types
-        - Integration with FlextTypes system for consistency
+    Implementation Classes:
+        AbstractHandler               # Base class with generic type parameters
+        BasicHandler                  # Core handler with metrics and state management
+        ValidatingHandler             # Handler with validation capabilities
+        AuthorizingHandler            # Handler with authorization checks
+        MetricsHandler                # Specialized metrics collection handler
+        EventHandler                  # Event processing with domain patterns
 
-    **Protocols Layer**: Protocol-based interfaces for handlers
-        - MetricsHandler: Protocol for metrics collection and reporting
-        - ChainableHandler: Protocol for chain participation with type checking
-        - Integration with FlextProtocols for validation and authorization
+    CQRS Components:
+        CommandBus                    # Command dispatch and handler registration
+        QueryBus                      # Query processing and result transformation
+        EventBus                      # Domain event distribution and handling
 
-    **Implementation Layer**: Concrete handler classes
-        - AbstractHandler: Base class with generic type parameters
-        - BasicHandler: Core handler with metrics and state management
-        - ValidatingHandler: Handler with validation capabilities
-        - AuthorizingHandler: Handler with authorization checks
-        - MetricsHandler: Specialized metrics collection handler
-        - EventHandler: Event processing with domain event patterns
+    Pattern Implementations:
+        HandlerChain                  # Chain of Responsibility with metrics
+        Pipeline                      # Linear processing pipeline with validation
+        Middleware                    # Request/response transformation patterns
 
-    **CQRS Layer**: Command Query Responsibility Segregation patterns
-        - CommandBus: Command dispatch and handler registration
-        - QueryBus: Query processing and result transformation
-        - EventBus: Domain event distribution and handling
+    Handler Management:
+        HandlerRegistry               # Central registry for discovery and management
+        LifecycleManager              # Handler lifecycle and monitoring
 
-    **Patterns Layer**: Design pattern implementations
-        - HandlerChain: Chain of Responsibility pattern with metrics
-        - Pipeline: Linear processing pipeline with validation
-        - Middleware: Request/response transformation patterns
+    BasicHandler Methods:
+        handle(request) -> FlextResult[response]  # Process request with metrics
+        configure(config) -> FlextResult[None]    # Configure handler settings
+        get_metrics() -> dict                     # Get performance metrics
+        get_state() -> str                        # Get current handler state
+        reset() -> FlextResult[None]              # Reset handler state
 
-    **Management Layer**: Handler lifecycle and registry management
-        - HandlerRegistry: Central registry for handler discovery and management
-        - Lifecycle management with registration, cleanup, and monitoring
+    HandlerChain Methods:
+        add_handler(handler) -> FlextResult[None] # Add handler to chain
+        remove_handler(name) -> FlextResult[None] # Remove handler from chain
+        process(request) -> FlextResult[response] # Process through chain
+        get_chain_metrics() -> dict               # Get chain performance metrics
 
-Key Features:
-    - **Thread Safety**: All operations protected with thread-safe locking mechanisms
-    - **Metrics Collection**: Comprehensive performance metrics and monitoring
-    - **Type Safety**: Generic type parameters and FlextResult error handling
-    - **State Management**: Complete handler lifecycle state tracking
-    - **Chain Composition**: Flexible handler chain composition with early termination
-    - **CQRS Implementation**: Full Command Query Responsibility Segregation support
-    - **Configuration Integration**: Deep integration with FlextTypes.Config system
-    - **Error Handling**: Railway-oriented programming with FlextResult patterns
+    CommandBus Methods:
+        register_handler(command_type, handler) -> FlextResult[None] # Register command handler
+        dispatch(command) -> FlextResult[response] # Dispatch command to handler
+        get_registered_commands() -> list[str]     # List registered command types
+
+    EventBus Methods:
+        subscribe(event_type, handler) -> FlextResult[None] # Subscribe to events
+        publish(event) -> FlextResult[None]        # Publish event to subscribers
+        unsubscribe(event_type, handler) -> FlextResult[None] # Unsubscribe from events
+
+    HandlerRegistry Methods:
+        register(name, handler) -> FlextResult[None] # Register handler by name
+        get_handler(name) -> FlextResult[handler]  # Get handler by name
+        list_handlers() -> list[str]               # List all registered handlers
+        unregister(name) -> FlextResult[None]      # Unregister handler
 
 Usage Examples:
-    Basic handler operations::
-
-        # Create and configure a basic handler
+    Basic handler usage:
         handler = FlextHandlers.Implementation.BasicHandler("api_processor")
         config = {"log_level": "INFO", "timeout": 30000}
         handler.configure(config)
 
-        # Process request with metrics
         result = handler.handle({"action": "process", "data": "payload"})
-        metrics = handler.get_metrics()
-        print(f"Success rate: {metrics['successful_requests']}")
+        if result.success:
+            response = result.unwrap()
 
-    Handler chain composition::
-
-        # Build processing chain
+    Handler chain composition:
         chain = FlextHandlers.Patterns.HandlerChain("request_pipeline")
         chain.add_handler(auth_handler)
         chain.add_handler(validation_handler)
         chain.add_handler(business_logic_handler)
 
-        # Process request through chain
+        result = chain.process(request_data)
+
+    CQRS command processing:
+        bus = FlextHandlers.CQRS.CommandBus()
+        bus.register_handler("CreateUser", user_creation_handler)
+
+        command = CreateUserCommand(name="John", email="john@example.com")
+        result = bus.dispatch(command)
+
+    Event handling:
+        event_bus = FlextHandlers.CQRS.EventBus()
+        event_bus.subscribe("UserCreated", notification_handler)
+        event_bus.subscribe("UserCreated", audit_handler)
+
+        event = UserCreatedEvent(user_id="12345", timestamp=datetime.now())
+        event_bus.publish(event)
+
+Integration:
+    FlextHandlers integrates with FlextResult for error handling, FlextConstants for
+    configuration limits, FlextTypes for type safety, FlextProtocols for interfaces,
+    and FlextMetrics for comprehensive performance monitoring.
         result = chain.handle(request_data)
         if result.success:
             print(f"Processed by {len(chain.handlers)} handlers")
@@ -156,6 +188,96 @@ Integration Points:
     - **FlextProtocols**: Protocol-based interfaces for validation and authorization
     - **Configuration System**: Environment-aware handler behavior configuration
     - **Logging Integration**: Structured logging with correlation IDs and context
+
+**Classes and Methods**:
+    Complete FlextHandlers class hierarchy with all nested implementation categories:
+
+    FlextHandlers.Constants: Handler execution parameters and configuration constants
+        • Handler: Timeout, retry, and performance limits from FlextConstants
+        • States: Handler execution states (IDLE, PROCESSING, COMPLETED, FAILED)
+        • Types: Handler classifications (BASIC, VALIDATING, COMMAND, QUERY, EVENT)
+        • Metrics: Performance thresholds and monitoring limits
+
+    FlextHandlers.Types: Type definitions for handler operations
+        • HandlerTypes: Name, state, metadata, and function type definitions
+        • Message: Message data, headers, and processing context types
+        • Request: Request types and validation patterns
+        • Response: Response types and result formatting
+
+    FlextHandlers.Protocols: Protocol-based interfaces for handlers
+        • MetricsHandler: Protocol for metrics collection and reporting
+        • ChainableHandler: Protocol for chain participation with type checking
+        • ValidatingHandler: Protocol for handlers with validation capabilities
+        • AuthorizingHandler: Protocol for handlers with authorization checks
+
+    FlextHandlers.Implementation: Concrete handler classes for different scenarios
+        • AbstractHandler[TRequest, TResponse]: Base handler with generic type parameters
+            - handle(self, request: TRequest) -> FlextResult[TResponse]: Process request
+            - can_handle(self, request: object) -> bool: Check handler compatibility
+            - configure(self, config: dict[str, object]) -> FlextResult[None]: Configure handler
+            - get_metrics(self) -> dict[str, int | float]: Get handler performance metrics
+            - get_state(self) -> str: Get current handler state
+        • BasicHandler: Core handler with metrics and state management
+            - handle_request(self, request: object) -> FlextResult[object]: Basic request processing
+            - validate_request(self, request: object) -> FlextResult[None]: Request validation
+            - process_request(self, request: object) -> FlextResult[object]: Core processing logic
+            - update_metrics(self, success: bool, duration: float) -> None: Metrics collection
+        • ValidatingHandler: Handler with comprehensive validation capabilities
+            - validate_input(self, input: object) -> FlextResult[None]: Input validation
+            - validate_business_rules(self, data: object) -> FlextResult[None]: Business rule validation
+            - sanitize_input(self, input: object) -> FlextResult[object]: Input sanitization
+        • AuthorizingHandler: Handler with authorization and access control
+            - check_permissions(self, request: object, user: object) -> FlextResult[None]: Permission checking
+            - validate_access_token(self, token: str) -> FlextResult[dict]: Token validation
+            - authorize_operation(self, operation: str, context: dict) -> FlextResult[None]: Operation authorization
+        • MetricsHandler: Specialized metrics collection handler
+            - collect_metrics(self, operation: str, **data) -> None: Metrics collection
+            - get_performance_stats(self) -> dict[str, float]: Performance statistics
+            - reset_metrics(self) -> None: Reset collected metrics
+        • EventHandler: Event processing with domain event patterns
+            - handle_event(self, event: object) -> FlextResult[None]: Event processing
+            - register_event_listener(self, event_type: str, handler: Callable) -> None: Event registration
+            - publish_event(self, event: object) -> FlextResult[None]: Event publication
+
+    FlextHandlers.CQRS: Command Query Responsibility Segregation patterns
+        • CommandBus: Command dispatch and handler registration
+            - send(self, command: object) -> FlextResult[object]: Send command for processing
+            - register(self, command_type: type, handler: object) -> None: Register command handler
+            - unregister(self, command_type: type) -> None: Unregister command handler
+        • QueryBus: Query processing and result transformation
+            - query(self, query: object) -> FlextResult[object]: Execute query
+            - register_query_handler(self, query_type: type, handler: object) -> None: Register query handler
+            - get_cached_result(self, query: object) -> FlextResult[object]: Get cached query result
+        • EventBus: Domain event distribution and handling
+            - publish(self, event: object) -> FlextResult[None]: Publish domain event
+            - subscribe(self, event_type: str, handler: object) -> None: Subscribe to event type
+            - unsubscribe(self, event_type: str, handler: object) -> None: Unsubscribe from events
+
+    FlextHandlers.Patterns: Design pattern implementations
+        • HandlerChain: Chain of Responsibility pattern with metrics
+            - add_handler(self, handler: object) -> FlextHandlers.Patterns.HandlerChain: Add handler to chain
+            - remove_handler(self, handler: object) -> bool: Remove handler from chain
+            - handle(self, request: object) -> FlextResult[object]: Process request through chain
+            - get_chain_metrics(self) -> dict[str, object]: Get chain performance metrics
+        • Pipeline: Linear processing pipeline with validation
+            - add_stage(self, stage: Callable) -> FlextHandlers.Patterns.Pipeline: Add pipeline stage
+            - process(self, input: object) -> FlextResult[object]: Process input through pipeline stages
+            - validate_pipeline(self) -> FlextResult[None]: Validate pipeline configuration
+        • Middleware: Request/response transformation patterns
+            - before_request(self, request: object) -> FlextResult[object]: Pre-request processing
+            - after_response(self, response: object) -> FlextResult[object]: Post-response processing
+            - handle_error(self, error: Exception) -> FlextResult[object]: Error handling
+
+    FlextHandlers.Management: Handler lifecycle and registry management
+        • HandlerRegistry: Central registry for handler discovery and management
+            - register(self, name: str, handler: object) -> FlextResult[None]: Register handler
+            - unregister(self, name: str) -> FlextResult[None]: Unregister handler
+            - get_handler(self, name: str) -> FlextResult[object]: Get handler by name
+            - list_handlers(self) -> dict[str, object]: List all registered handlers
+            - get_registry_metrics(self) -> dict[str, int]: Get registry statistics
+
+    Global Functions:
+        • thread_safe_operation() -> Iterator[None]: Thread-safe context manager for handler operations
 
 Thread Safety:
     All handler operations are thread-safe through the `thread_safe_operation()`

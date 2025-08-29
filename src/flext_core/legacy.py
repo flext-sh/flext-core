@@ -1,66 +1,70 @@
-"""Legacy compatibility layer for FLEXT ecosystem backward compatibility.
+"""FLEXT Legacy - Backward compatibility layer for FLEXT ecosystem migration.
 
-Comprehensive backward compatibility module following FLEXT_REFACTORING_PROMPT.md and
-CLAUDE.md requirements. Provides minimal facades and aliases maintaining strict ABI
-compatibility while directing users to modern hierarchical FlextCore architecture.
+Provides minimal facades and aliases maintaining strict ABI compatibility while directing
+users to modern FlextCore architecture. All legacy functions emit deprecation warnings
+with specific migration paths to modern hierarchical APIs.
 
-FLEXT Refactoring Compliance:
-    - Hierarchical organization: All facades organized using nested class patterns
-    - FlextTypes integration: Proper FlextTypes.* type hierarchy usage throughout
-    - FlextConstants integration: Uses FlextConstants.* for all constants and error codes
-    - FlextProtocols integration: Imports protocols from centralized protocols.py
-    - Layer architecture: Foundation -> Domain -> Application -> Infrastructure compliance
-    - Zero circular imports: Proper layering with string annotations and lazy imports
-    - Python 3.13+ patterns: Modern type syntax, Pydantic integration, SOLID principles
-    - Professional docstrings: Google/PEP style with comprehensive examples
+Module Role in Architecture:
+    Legacy compatibility bridge ensuring zero breaking changes during migration to
+    FlextCore hierarchical patterns. Provides minimal facades with proper delegation
+    to modern components while emitting deprecation warnings with migration guidance.
 
-FLEXT Architecture Layers:
-    - ConfigLegacy: Configuration system backward compatibility facades
-    - ValidationLegacy: Validation system minimal delegation to FlextValidation.Core
-    - FieldsLegacy: Field system facades delegating to FlextFields.Core hierarchy
-    - DecoratorsLegacy: Decorator facades using FlextDecorators structured patterns
-    - ContainerLegacy: DI container facades with FlextContainer delegation
-    - ModelLegacy: Model system facades using FlextTypes.Domain patterns
-    - LoggingLegacy: Structured logging facades with FlextConstants.Observability
+Classes and Methods:
+    # Configuration Compatibility:
+    get_flext_config() -> FlextConfig          # DEPRECATED: Use FlextConfig()
+    get_flext_settings() -> FlextConfig.Settings # DEPRECATED: Use FlextConfig.Settings()
+    load_config_from_file(path) -> FlextResult[FlextConfig] # DEPRECATED: Use FlextConfig.load()
 
-Critical Implementation Requirements:
-    - Zero ABI breaking changes: All existing imports must continue working exactly
-    - Minimal facades: No business logic, only orchestration and proper delegation
-    - Centralized management: All compatibility in single module with clear organization
-    - Deprecation warnings: Proper DeprecationWarning with specific migration paths
-    - Type safety: Full typing with Python 3.13+ syntax and mypy/pyright compliance
+    # Validation Compatibility:
+    validate_email_address(email) -> FlextResult[str] # DEPRECATED: Use FlextValidation.validate_email()
+    validate_string_length(text, min_len, max_len) -> FlextResult[str] # DEPRECATED: Use FlextValidation.validate_string()
+    validate_numeric_range(value, min_val, max_val) -> FlextResult[float] # DEPRECATED: Use FlextValidation.validate_range()
 
-Examples:
-    Legacy compatibility (deprecated but functional)::
+    # Field System Compatibility:
+    flext_create_string_field(name) -> FlextResult[StringField] # DEPRECATED: Use FlextFields.Core.StringField()
+    flext_create_numeric_field(name) -> FlextResult[NumericField] # DEPRECATED: Use FlextFields.Core.NumericField()
+    flext_create_datetime_field(name) -> FlextResult[DateTimeField] # DEPRECATED: Use FlextFields.Core.DateTimeField()
 
-        # Configuration - continues working with deprecation warnings
-        config = get_flext_config()  # -> FlextConfig()
-        settings = get_flext_settings()  # -> FlextConfig.Settings()
+    # Container Compatibility:
+    get_legacy_container() -> FlextContainer    # DEPRECATED: Use get_flext_container()
+    register_legacy_service(name, service) -> FlextResult[None] # DEPRECATED: Use container.register()
 
-        # Validation - minimal facades to FlextValidation.Core
-        result = validate_email_address(
-            "test@example.com"
-        )  # -> FlextValidation.validate_email()
+    # Logging Compatibility:
+    get_legacy_logger(name) -> Logger          # DEPRECATED: Use get_logger()
+    configure_legacy_logging(config) -> FlextResult[None] # DEPRECATED: Use FlextCore.configure_logging()
 
-        # Fields - delegates to FlextFields.Core hierarchy
-        field = flext_create_string_field("name")  # -> FlextFields.Core.StringField()
+    # Utility Functions:
+    generate_legacy_id() -> str                # DEPRECATED: Use FlextUtilities.generate_id()
+    format_legacy_timestamp() -> str           # DEPRECATED: Use FlextUtilities.format_timestamp()
 
-    Modern hierarchical usage (preferred)::
+    # Payload Compatibility:
+    serialize_payload_for_go_bridge(payload) -> FlextResult[dict] # Cross-service messaging
+    create_cross_service_message(msg_type, data) -> FlextResult[CrossServiceMessage] # Message creation
+    deserialize_payload_from_go_bridge(data) -> FlextResult[dict] # Cross-service deserialization
+    validate_cross_service_protocol(payload) -> FlextResult[dict] # Protocol validation
+    get_serialization_metrics(payload) -> dict # Serialization metrics
 
+Usage Examples:
+    Legacy compatibility (with deprecation warnings):
+        # Configuration - continues working but warns
+        config = get_flext_config()  # DeprecationWarning: Use FlextConfig()
 
+        # Validation - delegates with warnings
+        result = validate_email_address("test@example.com")  # DeprecationWarning: Use FlextValidation.validate_email()
+
+        # Modern usage (preferred):
         config = FlextConfig()
         result = FlextValidation.validate_email("test@example.com")
-        field = FlextFields.Core.StringField("name")
 
 Migration Strategy:
-    All legacy functions emit DeprecationWarning pointing to specific modern
-    hierarchical APIs. Complete removal planned for next major version with
-    comprehensive migration documentation and automated refactoring tools.
+    All legacy functions emit DeprecationWarning with specific migration paths.
+    Complete removal planned for next major version with comprehensive
+    documentation and automated refactoring tools.
 
-Note:
-    This module enforces FLEXT_REFACTORING_PROMPT.md requirements including hierarchical
-    organization, proper constant usage, clean import layering, and SOLID principles.
-    All new code MUST use FlextCore hierarchical classes directly, not legacy facades.
+Integration:
+    Legacy module integrates with modern FlextCore components providing
+    seamless backward compatibility while encouraging migration to
+    hierarchical FlextCore architecture patterns.
 
 """
 
@@ -92,18 +96,6 @@ from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.schema_processing import (
-    FlextBaseConfigManager,
-    FlextBaseEntry,
-    FlextBaseFileWriter,
-    FlextBaseProcessor,
-    FlextBaseSorter,
-    FlextConfigAttributeValidator,
-    FlextEntryType,
-    FlextEntryValidator,
-    FlextProcessingPipeline,
-    FlextRegexProcessor,
-)
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 from flext_core.validation import FlextValidation
@@ -1983,32 +1975,6 @@ def FlextEmailAddress(*args: object, **kwargs: object) -> object:  # noqa: N802
     return email_class(*args, **kwargs)
 
 
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="create_version",
-    replacement="FlextModels.create_version",
-)
-def create_version(value: int) -> FlextResult[object]:
-    """Create version with validation (compatibility alias).
-
-    Deprecated: Use FlextModels.create_version() directly.
-    """
-    result = FlextCore.create_version_number(value)
-    return cast("FlextResult[object]", result)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="create_email",
-    replacement="FlextModels.create_email",
-)
-def create_email(value: str) -> FlextResult[object]:
-    """Create email address with validation (compatibility alias).
-
-    Deprecated: Use FlextModels.create_email() directly.
-    """
-    result = FlextCore.create_email_address(value)
-    return cast("FlextResult[object]", result)
-
-
 # =============================================================================
 # CONTAINER AND DI LEGACY FACADES
 # =============================================================================
@@ -3382,22 +3348,6 @@ class ListServicesQuery:
 
 
 # =============================================================================
-# SCHEMA PROCESSING LEGACY COMPATIBILITY
-# =============================================================================
-
-# Legacy aliases for schema_processing module
-BaseEntry = FlextBaseEntry
-EntryType = FlextEntryType
-EntryValidator = FlextEntryValidator
-BaseProcessor = FlextBaseProcessor  # Note: FlextBaseProcessor not exported
-ProcessingPipeline = FlextProcessingPipeline
-BaseFileWriter = FlextBaseFileWriter  # Note: FlextBaseFileWriter not exported
-RegexProcessor = FlextRegexProcessor
-ConfigAttributeValidator = FlextConfigAttributeValidator
-BaseConfigManager = FlextBaseConfigManager  # Note: FlextBaseConfigManager not exported
-BaseSorter = FlextBaseSorter
-
-# =============================================================================
 # TYPE SYSTEM COMPATIBILITY - Legacy type aliases
 # =============================================================================
 
@@ -4386,8 +4336,6 @@ __all__ += [  # noqa: RUF022
     "FlextHost",
     "FlextPort",
     "FlextEmailAddress",
-    "create_version",
-    "create_email",
     # Validation aliases
     "FlextPredicates",
     "FlextStringValidator",

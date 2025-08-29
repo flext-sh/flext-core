@@ -5,12 +5,9 @@ Provides advanced HTTP mocking, request/response validation, and API testing
 patterns with automatic retry, error simulation, and performance monitoring.
 """
 
-# ruff: noqa: S101, ARG001, ARG002
 from __future__ import annotations
 
 from datetime import UTC, datetime
-
-object
 from urllib.parse import urljoin
 
 import httpx
@@ -184,7 +181,7 @@ class APITestClient:
         self,
         response_data: JsonDict,
         required_fields: list[str],
-        optional_fields: list[str] | None = None,
+        _: list[str] | None = None,
     ) -> FlextResult[None]:
         """Validate API response structure."""
         missing_fields = [
@@ -211,7 +208,7 @@ class APITestClient:
                 error_code="INVALID_ERROR_FORMAT",
             )
 
-        error: JsonDict = response_data["error"]  # type: ignore[assignment]
+        error: JsonDict = response_data["error"]
         required_error_fields = ["message", "code"]
 
         for field in required_error_fields:
@@ -393,7 +390,7 @@ class WebhookTestUtils:
         signature: str | None = None,
     ) -> JsonDict:
         """Create webhook payload."""
-        payload = {
+        payload: JsonDict = {
             "event": event_type,
             "data": data,
             "timestamp": timestamp or datetime.now(UTC).isoformat(),

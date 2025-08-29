@@ -1,20 +1,173 @@
 """Dependency injection container with type-safe service management.
 
-Provides the FlextContainer class for managing service dependencies with type safety,
-factory patterns, and FlextResult error handling. Includes a global singleton pattern
-for ecosystem-wide service sharing.
+This module provides the FlextContainer class for managing service dependencies throughout
+the FLEXT ecosystem. Features type-safe service registration and retrieval, factory patterns
+for lazy initialization, global singleton access, and comprehensive FlextResult-based error
+handling for enterprise-grade dependency injection.
 
-Classes:
-    FlextContainer: Main dependency injection container.
-    FlextContainer.ServiceKey: Type-safe service identifier with validation.
+Architecture:
+    Infrastructure layer module providing dependency injection foundation for the FLEXT
+    ecosystem. Supports both instance-based and global singleton patterns with type-safe
+    service resolution, factory registration, and comprehensive service lifecycle management.
+
+Core Components:
+    FlextContainer: Main dependency injection container with service management
+    FlextContainer.ServiceKey[T]: Type-safe service identifier with generic type support
+    FlextContainer.Commands: Command objects for service operations (register, unregister, etc.)
+    FlextContainer.Queries: Query objects for service information retrieval
+    FlextContainer._ServiceRegistrar: Internal service registration management
+    FlextContainer._ServiceRetriever: Internal service retrieval management
+    GlobalContainerManager: Singleton manager for global container access
+
+Key Features:
+    - Type-safe service registration and retrieval with generic type parameters
+    - Factory pattern support for lazy service initialization
+    - Global singleton container for ecosystem-wide service sharing
+    - Command and query patterns for service operations
+    - FlextResult integration for comprehensive error handling
+    - Service lifecycle management with validation and metadata
+    - Environment-scoped container creation for testing and isolation
+    - Batch registration operations for configuration management
+    - Auto-wiring support for automatic dependency resolution
+    - Module utilities generation for streamlined service access
+
+Methods and Properties:
+    Container Management:
+        __init__(config: ConfigDict | None = None) -> None: Initialize container with optional config
+        configure_container(**kwargs) -> FlextResult[None]: Configure container settings
+        get_container_config() -> FlextResult[ConfigDict]: Retrieve current configuration
+        create_environment_scoped_container(env: str) -> FlextResult[FlextContainer]: Create isolated container
+        get_configuration_summary() -> FlextResult[dict]: Get configuration summary
+        clear() -> FlextResult[None]: Clear all services and factories
+        get_service_count() -> int: Get total number of registered services
+        list_services() -> ServiceListDict: List all services with metadata
+        get_service_names() -> list[str]: Get list of service names
+
+    Service Registration:
+        register(name: str, service: object) -> FlextResult[None]: Register service instance
+        register_factory(name: str, factory: Callable[[], T]) -> FlextResult[None]: Register factory function
+        batch_register(services: dict[str, object]) -> FlextResult[None]: Register multiple services
+        unregister(name: str) -> FlextResult[None]: Remove service registration
+        has(name: str) -> bool: Check if service is registered
+
+    Service Retrieval:
+        get(name: str) -> FlextResult[object]: Retrieve service by name
+        get_typed(name: str, expected_type: type[T]) -> FlextResult[T]: Type-safe service retrieval
+        get_or_create(name: str, factory: Callable[[], T]) -> FlextResult[T]: Get or lazily create service
+        get_info(name: str) -> FlextResult[dict]: Get service metadata and information
+
+    Advanced Features:
+        auto_wire(service_class: type[T], **kwargs) -> FlextResult[T]: Auto-wire dependencies
+        command_bus() -> object: Get command bus service if registered
+
+    Global Container Operations:
+        get_global() -> FlextContainer: Get global singleton container
+        configure_global(**kwargs) -> FlextResult[None]: Configure global container
+        get_global_typed(name: str, expected_type: type[T]) -> FlextResult[T]: Type-safe global retrieval
+        register_global(name: str, service: object) -> FlextResult[None]: Register in global container
+        create_module_utilities(module_name: str) -> dict[str, object]: Generate module utilities
+
+    Nested Classes:
+        ServiceKey[T](UserString, Validator): Type-safe service identifier
+            name: str - Service key name property
+            validate(data: str) -> object: Validate service name format
+            __class_getitem__(item) -> type[ServiceKey[T]]: Generic type subscription
+
+        Commands: Command objects for service operations
+            RegisterServiceCommand: Register service instance
+            RegisterFactoryCommand: Register factory function
+            UnregisterServiceCommand: Remove service
+            ClearAllCommand: Clear all services
+
+        Queries: Query objects for service information
+            GetServiceInfoQuery: Retrieve service metadata
+            ListServicesQuery: List all services
+
+        _ServiceRegistrar: Internal service registration management
+            register_service(name: str, service: object) -> FlextResult[None]
+            register_factory(name: str, factory: Callable) -> FlextResult[None]
+            unregister_service(name: str) -> FlextResult[None]
+            clear_all() -> FlextResult[None]
+            get_service_names() -> list[str]
+            get_service_count() -> int
+            has_service(name: str) -> bool
+
+        _ServiceRetriever: Internal service retrieval management
+            get_service(name: str) -> FlextResult[object]
+            get_service_info(name: str) -> FlextResult[dict]
+            list_services() -> ServiceListDict
 
 Functions:
-    get_flext_container: Get the global container instance.
-    flext_validate_service_name: Validate service name strings.
+    get_flext_container() -> FlextContainer: Get global container singleton
+    flext_validate_service_name(name: str) -> FlextResult[None]: Validate service name format
 
-The container supports service registration, factory registration for lazy initialization,
-type-safe retrieval, and hierarchical service resolution. All operations return FlextResult
-for consistent error handling.
+Examples:
+    Basic service registration and retrieval:
+    >>> container = FlextContainer()
+    >>> container.register("database", DatabaseService())
+    >>> db_result = container.get("database")
+    >>> if db_result.success:
+    ...     db = db_result.value
+
+    Type-safe service retrieval:
+    >>> db_result = container.get_typed("database", DatabaseService)
+    >>> if db_result.success:
+    ...     db: DatabaseService = db_result.value
+
+    Factory registration for lazy initialization:
+    >>> container.register_factory("cache", lambda: RedisCache("localhost"))
+    >>> cache_result = container.get("cache")  # Factory called on first access
+
+    Global container usage:
+    >>> global_container = FlextContainer.get_global()
+    >>> FlextContainer.register_global("logger", LoggerService())
+    >>> logger_result = FlextContainer.get_global_typed("logger", LoggerService)
+
+    Service key with type safety:
+    >>> key = FlextContainer.ServiceKey[DatabaseService]("database")
+    >>> container.register(key.name, DatabaseService())
+    >>> db_result = container.get_typed(key.name, DatabaseService)
+
+    Batch registration:
+    >>> services = {
+    ...     "database": DatabaseService(),
+    ...     "cache": CacheService(),
+    ...     "logger": LoggerService(),
+    ... }
+    >>> container.batch_register(services)
+
+    Environment-scoped container:
+    >>> test_container = container.create_environment_scoped_container("test")
+    >>> if test_container.success:
+    ...     isolated_container = test_container.value
+
+    Advanced FlextCore integration:
+    >>> from flext_core.core import FlextCore
+    >>> core = FlextCore.get_instance()
+    >>> # Container integrates with all FLEXT systems
+    >>> core.container.register("validator", EmailValidator())
+    >>> core.container.register("handler", UserCreationHandler())
+    >>> core.container.register("observer", DomainEventObserver())
+    >>> # Automatic dependency resolution with FlextCore facade
+    >>> user_service = core.auto_wire_service(UserService)
+    >>> if user_service.success:
+    ...     service = user_service.value
+    ...     result = service.create_user({"name": "John", "email": "john@example.com"})
+
+    Enterprise monitoring and observability:
+    >>> container_metrics = container.get_service_count()
+    >>> core.observability.record_gauge("container.services.count", container_metrics)
+    >>> core.logger.info(f"Container initialized with {container_metrics} services")
+
+Notes:
+    - Use the global container for ecosystem-wide service sharing
+    - Factory functions are called lazily on first service retrieval
+    - Service names must follow FLEXT naming conventions (validated)
+    - Type-safe retrieval provides compile-time type checking
+    - All operations return FlextResult for consistent error handling
+    - Environment-scoped containers provide isolation for testing
+    - Auto-wiring inspects constructor signatures for dependency injection
+
 """
 
 from __future__ import annotations

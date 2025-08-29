@@ -32,7 +32,7 @@ from dataclasses import dataclass
 # =============================================================================
 # LOCAL TYPE DEFINITIONS - For demonstration purposes
 # =============================================================================
-from typing import Protocol, TypeVar, cast
+from typing import Generic, Protocol, TypeVar, cast
 
 from structlog.stdlib import BoundLogger
 
@@ -47,7 +47,7 @@ from flext_core import (
 T = TypeVar("T")
 
 
-class FlextModels.Payload[T]:
+class FlextPayload(Generic[T]):
     """Generic payload base class for demonstration."""
 
     def __init__(self, data: T) -> None:

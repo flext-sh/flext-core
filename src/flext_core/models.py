@@ -1070,8 +1070,8 @@ class FlextModels:
 
     @classmethod
     def configure_models_system(
-        cls, config: FlextTypes.Config.ConfigDict
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        cls, config: FlextTypes.Models.ModelsConfigDict
+    ) -> FlextTypes.Models.ModelsConfig:
         """Configure models system using FlextTypes.Config with StrEnum validation.
 
         This method configures the FLEXT models system using the FlextTypes.Config
@@ -1130,7 +1130,7 @@ class FlextModels:
                     e.value for e in FlextConstants.Config.ConfigEnvironment
                 ]
                 if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                         f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
                     )
                 validated_config["environment"] = env_value
@@ -1144,7 +1144,7 @@ class FlextModels:
                 val_level = config["validation_level"]
                 valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
                 if val_level not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                         f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}"
                     )
                 validated_config["validation_level"] = val_level
@@ -1160,7 +1160,7 @@ class FlextModels:
                     level.value for level in FlextConstants.Config.LogLevel
                 ]
                 if log_level not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                         f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}"
                     )
                 validated_config["log_level"] = log_level
@@ -1176,15 +1176,15 @@ class FlextModels:
             validated_config.setdefault("max_validation_errors", 100)
             validated_config.setdefault("cache_model_instances", True)
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(validated_config)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                 f"Failed to configure models system: {e}"
             )
 
     @classmethod
-    def get_models_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+    def get_models_system_config(cls) -> FlextTypes.Models.ModelsSystemInfo:
         """Get current models system configuration with runtime information.
 
         Retrieves the current configuration of the FLEXT models system along with
@@ -1221,7 +1221,7 @@ class FlextModels:
         """
         try:
             # Get current system configuration
-            config: FlextTypes.Config.ConfigDict = {
+            config: FlextTypes.Models.ModelsConfigDict = {
                 # Core configuration
                 "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
@@ -1271,17 +1271,17 @@ class FlextModels:
                 ],
             }
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(config)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                 f"Failed to get models system config: {e}"
             )
 
     @classmethod
     def create_environment_models_config(
-        cls, environment: FlextTypes.Config.Environment
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        cls, environment: FlextTypes.Models.Environment
+    ) -> FlextTypes.Models.EnvironmentModelsConfig:
         """Create environment-specific models system configuration.
 
         Generates optimized configuration settings for the FLEXT models system
@@ -1323,12 +1323,12 @@ class FlextModels:
                 e.value for e in FlextConstants.Config.ConfigEnvironment
             ]
             if environment not in valid_environments:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                     f"Invalid environment '{environment}'. Valid options: {valid_environments}"
                 )
 
             # Base configuration
-            config: FlextTypes.Config.ConfigDict = {
+            config: FlextTypes.Models.ModelsConfigDict = {
                 "environment": environment,
                 "log_level": FlextConstants.Config.LogLevel.INFO.value,
             }
@@ -1395,17 +1395,17 @@ class FlextModels:
                     "validation_timeout_ms": 10000,  # Generous local timeout
                 })
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(config)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                 f"Failed to create environment models config: {e}"
             )
 
     @classmethod
     def optimize_models_performance(
-        cls, config: FlextTypes.Config.ConfigDict
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        cls, config: FlextTypes.Models.PerformanceConfig
+    ) -> FlextTypes.Models.OptimizedPerformanceConfig:
         """Optimize models system performance based on configuration.
 
         Analyzes the provided configuration and generates performance-optimized
@@ -1539,10 +1539,10 @@ class FlextModels:
                 else 0.7,
             })
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(optimized_config)
 
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[FlextTypes.Models.ModelsConfigDict].fail(
                 f"Failed to optimize models performance: {e}"
             )
 

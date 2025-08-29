@@ -11,11 +11,10 @@ import random
 import uuid
 from decimal import Decimal
 
-object
-
 from flext_core import FlextResult, FlextTypes
 
 JsonDict = FlextTypes.Core.JsonObject
+JsonValue = FlextTypes.Core.JsonValue
 
 
 class FlextResultFactory:
@@ -63,7 +62,7 @@ class UserDataFactory:
     @staticmethod
     def create(**overrides: object) -> dict[str, object]:
         """Create user data dict."""
-        data = {
+        data: dict[str, object] = {
             "id": str(uuid.uuid4()),
             "name": f"User {random.randint(100, 999)}",
             "email": f"user{random.randint(1, 1000)}@example.com",
@@ -91,7 +90,7 @@ class ConfigurationFactory:
     @staticmethod
     def create(**overrides: object) -> dict[str, object]:
         """Create configuration data dict."""
-        data = {
+        data: dict[str, object] = {
             "database_url": "postgresql://localhost:5432/test",
             "log_level": "INFO",
             "debug": False,
@@ -109,7 +108,7 @@ class ServiceDataFactory:
     @staticmethod
     def create(**overrides: object) -> dict[str, object]:
         """Create service data dict."""
-        data = {
+        data: dict[str, object] = {
             "name": f"test_service_{random.randint(1, 100)}",
             "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
             "port": random.randint(8000, 9000),
@@ -126,7 +125,7 @@ class PayloadDataFactory:
     @staticmethod
     def create(**overrides: object) -> dict[str, object]:
         """Create payload data dict."""
-        data = {
+        data: dict[str, object] = {
             "message_id": str(uuid.uuid4()),
             "type": "user_created",
             "timestamp": "2024-01-01T00:00:00Z",
@@ -184,10 +183,10 @@ class RealisticData:
             "age": random.randint(18, 65),
             "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
             "address": {
-                "street": f"{random.randint(1, 999)} Main St",
+                "street": f"{random.randint(1, 999)} Main St",  # noqa: S311
                 "city": "Test City",
                 "state": "TC",
-                "zip": f"{random.randint(10000, 99999)}",
+                "zip": f"{random.randint(10000, 99999)}",  # noqa: S311
             },
         }
 
@@ -200,7 +199,7 @@ class RealisticData:
             "items": [
                 {
                     "product_id": str(uuid.uuid4()),
-                    "name": f"Product {random.randint(1, 100)}",
+                    "name": f"Product {random.randint(1, 100)}",  # noqa: S311
                     "quantity": random.randint(1, 5),
                     "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(
                         Decimal("0.01")

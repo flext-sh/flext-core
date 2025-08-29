@@ -1,82 +1,95 @@
-"""Enterprise-grade Domain-Driven Design domain services implementation for complex business operations.
+"""FLEXT Domain Services - Domain-Driven Design services for complex business operations.
 
-This module provides comprehensive domain service patterns following Domain-Driven Design (DDD)
-principles with stateless cross-entity operations, business logic orchestration, validation
-frameworks, and type-safe error handling using the complete FLEXT foundation pattern ecosystem.
+Provides comprehensive domain service patterns following DDD principles with stateless
+cross-entity operations, business logic orchestration, validation frameworks, and
+type-safe error handling. Domain services handle complex business operations that span
+multiple entities or require coordination of multiple domain objects.
 
-Domain services represent complex business operations that:
-    - Span multiple entities or aggregates
-    - Cannot naturally belong to a single entity
-    - Require coordination of multiple domain objects
-    - Implement cross-cutting business concerns
-    - Maintain stateless operation semantics
+Module Role in Architecture:
+    FlextDomainService provides the domain service layer for complex business operations
+    that cannot naturally belong to a single entity. Implements stateless services with
+    cross-entity operations, business rule validation and FlextResult integration for
+    railway-oriented programming.
 
-Architectural Features:
-    - **Stateless Design**: Services maintain no state between operations
-    - **Cross-Entity Operations**: Coordinate operations across multiple entities
-    - **Business Rule Validation**: Comprehensive validation using FlextValidation
-    - **Type-Safe Error Handling**: FlextResult[T] railway patterns throughout
-    - **Mixin Integration**: Serializable and Loggable behaviors via FlextMixins
-    - **Configuration Management**: Environment-aware configuration with FlextTypes.Config
-    - **Performance Monitoring**: Built-in performance tracking and optimization
-    - **Abstract Base Classes**: Enforce consistent implementation patterns
+Classes and Methods:
+    FlextDomainService[T]:              # Base domain service with generic type parameter
+        # Configuration Methods:
+        configure_domain_services_system(config) -> FlextResult[ConfigDict] # Configure system
+        get_domain_services_system_config() -> FlextResult[ConfigDict] # Get current config
+        optimize_domain_services_performance(config) -> FlextResult[ConfigDict] # Performance tuning
 
-DDD Pattern Implementation:
-    - **Service Layer**: Clear separation between domain and application concerns
-    - **Business Logic Orchestration**: Coordinate complex multi-entity operations
-    - **Invariant Enforcement**: Maintain business rules across entity boundaries
-    - **Transaction Coordination**: Support for distributed transaction patterns
-    - **Domain Event Integration**: Work with domain events from aggregate roots
+        # Core Service Methods:
+        execute() -> FlextResult[T]                # Execute main business operation
+        validate_business_rules() -> FlextResult[None] # Validate business rules
+        validate_preconditions() -> FlextResult[None] # Validate preconditions
+        validate_postconditions(result: T) -> FlextResult[None] # Validate postconditions
+
+        # Business Logic Coordination:
+        coordinate_entities(entities) -> FlextResult[None] # Coordinate multiple entities
+        orchestrate_operations(operations) -> FlextResult[T] # Orchestrate complex operations
+        handle_cross_entity_invariants() -> FlextResult[None] # Handle cross-entity invariants
+
+        # Transaction Support:
+        begin_transaction() -> FlextResult[None]   # Begin distributed transaction
+        commit_transaction() -> FlextResult[None]  # Commit transaction
+        rollback_transaction() -> FlextResult[None] # Rollback transaction
+
+        # Domain Event Integration:
+        publish_domain_events(events) -> FlextResult[None] # Publish domain events
+        handle_domain_event(event) -> FlextResult[None] # Handle incoming domain event
+        collect_domain_events() -> list[DomainEvent] # Collect events from operation
+
+        # Performance and Monitoring:
+        get_service_metrics() -> dict              # Get service performance metrics
+        reset_metrics() -> None                    # Reset performance metrics
+        enable_monitoring(enabled: bool) -> None   # Enable/disable monitoring
+
+        # Validation Utilities:
+        validate_entity(entity) -> FlextResult[None] # Validate single entity
+        validate_aggregate(aggregate) -> FlextResult[None] # Validate aggregate root
+        validate_business_invariant(condition, message) -> FlextResult[None] # Validate invariant
+
+        # Mixin Integration:
+        to_dict() -> dict                          # Serialize service state (from Serializable)
+        get_logger() -> FlextLogger               # Get service logger (from Loggable)
+        log_operation(operation, **context) -> None # Log service operation
 
 Usage Examples:
     Basic domain service implementation:
+        class UserRegistrationService(FlextDomainService[User]):
+            def execute(self) -> FlextResult[User]:
+                return (
+                    self.validate_business_rules()
+                    .flat_map(lambda _: self.create_user())
+                    .flat_map(lambda user: self.send_welcome_email(user))
+                    .tap(lambda user: self.log_registration(user))
+                )
 
-        >>> from flext_core.domain_services import FlextDomainService
-        >>> from flext_core.result import FlextResult
-        >>> class UserRegistrationService(FlextDomainService[User]):
-        ...     def execute(self) -> FlextResult[User]:
-        ...         return (
-        ...             self.validate_business_rules()
-        ...             .flat_map(lambda _: self.create_user())
-        ...             .flat_map(lambda user: self.send_welcome_email(user))
-        ...             .tap(lambda user: self.log_registration(user))
-        ...         )
-        ...
-        ...     def validate_business_rules(self) -> FlextResult[None]:
-        ...         return self.validate_email_uniqueness().flat_map(
-        ...             lambda _: self.validate_password_policy()
-        ...         )
+            def validate_business_rules(self) -> FlextResult[None]:
+                return self.validate_email_uniqueness().flat_map(
+                    lambda _: self.validate_password_policy()
+                )
 
-    Configuration and performance optimization:
+    Service execution:
+        service = UserRegistrationService(email="john@example.com", password="secret123")
+        result = service.execute()
+        if result.success:
+            user = result.unwrap()
+            print(f"User registered: {user.id}")
 
-        >>> config = {
-        ...     "environment": "production",
-        ...     "service_level": "strict",
-        ...     "enable_performance_monitoring": True,
-        ...     "max_service_operations": 100,
-        ... }
-        >>> result = FlextDomainService.configure_domain_services_system(config)
-        >>> if result.success:
-        ...     pass  # Service system configured for production
-        >>> perf_config = {
-        ...     "performance_level": "high",
-        ...     "max_concurrent_services": 50,
-        ...     "enable_business_rule_caching": True,
-        ... }
-        >>> optimized = FlextDomainService.optimize_domain_services_performance(
-        ...     perf_config
-        ... )
+    Configuration:
+        config = {
+            "environment": "production",
+            "service_level": "strict",
+            "enable_performance_monitoring": True,
+            "max_service_operations": 100
+        }
+        FlextDomainService.configure_domain_services_system(config)
 
-Integration Points:
-    - **FlextResult[T]**: Type-safe error handling and railway patterns
-    - **FlextMixins**: Serializable and Loggable behavior integration
-    - **FlextModels.BaseConfig**: Configuration management and validation
-    - **FlextConstants**: Centralized error codes and message constants
-    - **FlextUtilities**: ID generation, timestamps, and utility functions
-    - **FlextTypes.Config**: Type-safe configuration with environment support
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Integration:
+    FlextDomainService integrates with FlextResult for error handling, FlextMixins for
+    behaviors, FlextModels.BaseConfig for configuration, FlextConstants for error codes,
+    FlextUtilities for common operations, and FlextTypes.Config for type-safe configuration.
 """
 
 from __future__ import annotations
@@ -129,7 +142,7 @@ class FlextDomainService[TDomainResult](
         Domain services implement the Service pattern from Domain-Driven Design,
         representing operations that:
 
-        - Don't naturally belong to a specific entity or value object
+        - Do not naturally belong to a specific entity or value object
         - Coordinate behavior across multiple domain objects
         - Implement complex business rules and invariants
         - Provide stateless operations with clear inputs and outputs
@@ -206,7 +219,7 @@ class FlextDomainService[TDomainResult](
                 logger.error(f"Service failed: {result.error}")
 
     Type Parameters:
-        TDomainResult: The type of result returned by the service's execute() method.
+        TDomainResult: The type of result returned by the service execute method.
             This allows for type-safe service definitions and ensures proper
             return type validation.
 
@@ -434,7 +447,7 @@ class FlextDomainService[TDomainResult](
     def validate_config(self) -> FlextResult[None]:
         """Validate service configuration with comprehensive checks and customization support.
 
-        Performs validation of the service's configuration including field validation,
+        Performs validation of the service configuration including field validation,
         dependency checks, and custom business requirements. The default implementation
         returns success, but concrete services should override this method to implement
         service-specific configuration validation.
@@ -1017,60 +1030,70 @@ class FlextDomainService[TDomainResult](
 
             # Environment-specific configurations
             if environment == "production":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": True,  # Critical in production
-                    "max_service_operations": 100,  # Higher concurrency
-                    "service_execution_timeout_seconds": 30,  # Stricter timeout
-                    "enable_service_caching": True,  # Performance optimization
-                    "service_retry_attempts": 5,  # More retries for reliability
-                    "enable_detailed_error_reporting": False,  # Security consideration
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": True,  # Critical in production
+                        "max_service_operations": 100,  # Higher concurrency
+                        "service_execution_timeout_seconds": 30,  # Stricter timeout
+                        "enable_service_caching": True,  # Performance optimization
+                        "service_retry_attempts": 5,  # More retries for reliability
+                        "enable_detailed_error_reporting": False,  # Security consideration
+                    }
+                )
             elif environment == "staging":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_performance_monitoring": True,  # Monitor staging performance
-                    "max_service_operations": 75,  # Moderate concurrency
-                    "service_execution_timeout_seconds": 45,  # Balanced timeout
-                    "enable_service_caching": True,  # Test caching behavior
-                    "service_retry_attempts": 3,  # Standard retry policy
-                    "enable_detailed_error_reporting": True,  # Full error details for debugging
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_performance_monitoring": True,  # Monitor staging performance
+                        "max_service_operations": 75,  # Moderate concurrency
+                        "service_execution_timeout_seconds": 45,  # Balanced timeout
+                        "enable_service_caching": True,  # Test caching behavior
+                        "service_retry_attempts": 3,  # Standard retry policy
+                        "enable_detailed_error_reporting": True,  # Full error details for debugging
+                    }
+                )
             elif environment == "development":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": True,  # Monitor development performance
-                    "max_service_operations": 25,  # Lower concurrency for debugging
-                    "service_execution_timeout_seconds": 120,  # Generous timeout for debugging
-                    "enable_service_caching": False,  # Disable caching for development
-                    "service_retry_attempts": 1,  # Minimal retries for fast failure
-                    "enable_detailed_error_reporting": True,  # Full error details for debugging
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": True,  # Monitor development performance
+                        "max_service_operations": 25,  # Lower concurrency for debugging
+                        "service_execution_timeout_seconds": 120,  # Generous timeout for debugging
+                        "enable_service_caching": False,  # Disable caching for development
+                        "service_retry_attempts": 1,  # Minimal retries for fast failure
+                        "enable_detailed_error_reporting": True,  # Full error details for debugging
+                    }
+                )
             elif environment == "test":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "max_service_operations": 10,  # Limited concurrency for testing
-                    "service_execution_timeout_seconds": 60,  # Standard timeout
-                    "enable_service_caching": False,  # No caching in tests
-                    "service_retry_attempts": 0,  # No retries in tests for deterministic behavior
-                    "enable_detailed_error_reporting": True,  # Full error details for test diagnostics
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "max_service_operations": 10,  # Limited concurrency for testing
+                        "service_execution_timeout_seconds": 60,  # Standard timeout
+                        "enable_service_caching": False,  # No caching in tests
+                        "service_retry_attempts": 0,  # No retries in tests for deterministic behavior
+                        "enable_detailed_error_reporting": True,  # Full error details for test diagnostics
+                    }
+                )
             elif environment == "local":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": False,  # No monitoring for local development
-                    "max_service_operations": 5,  # Very limited concurrency
-                    "service_execution_timeout_seconds": 300,  # Very generous timeout
-                    "enable_service_caching": False,  # No caching for local development
-                    "service_retry_attempts": 0,  # No retries for immediate feedback
-                    "enable_detailed_error_reporting": True,  # Full error details
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": False,  # No monitoring for local development
+                        "max_service_operations": 5,  # Very limited concurrency
+                        "service_execution_timeout_seconds": 300,  # Very generous timeout
+                        "enable_service_caching": False,  # No caching for local development
+                        "service_retry_attempts": 0,  # No retries for immediate feedback
+                        "enable_detailed_error_reporting": True,  # Full error details
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
 
@@ -1112,7 +1135,7 @@ class FlextDomainService[TDomainResult](
             result = FlextDomainService.optimize_domain_services_performance(config)
             if result.success:
                 optimized = result.unwrap()
-                print(f"Service cache size: {optimized['service_cache_size']}")
+                print("Service cache size:", optimized.get("service_cache_size"))
             ```
 
         """
@@ -1124,109 +1147,119 @@ class FlextDomainService[TDomainResult](
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                }
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Service execution optimization
-                    "service_cache_size": 500,
-                    "enable_service_pooling": True,
-                    "service_pool_size": 100,
-                    "max_concurrent_services": 50,
-                    "service_discovery_cache_ttl": 3600,  # 1 hour
-                    # Business rule optimization
-                    "enable_business_rule_caching": True,
-                    "business_rule_cache_size": 1000,
-                    "business_rule_validation_threads": 8,
-                    "parallel_business_rule_validation": True,
-                    # Cross-entity operation optimization
-                    "cross_entity_batch_size": 100,
-                    "enable_cross_entity_batching": True,
-                    "cross_entity_processing_threads": 16,
-                    "cross_entity_queue_size": 2000,
-                    # Memory and performance optimization
-                    "memory_pool_size_mb": 200,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "aggressive",
-                })
+                optimized_config.update(
+                    {
+                        # Service execution optimization
+                        "service_cache_size": 500,
+                        "enable_service_pooling": True,
+                        "service_pool_size": 100,
+                        "max_concurrent_services": 50,
+                        "service_discovery_cache_ttl": 3600,  # 1 hour
+                        # Business rule optimization
+                        "enable_business_rule_caching": True,
+                        "business_rule_cache_size": 1000,
+                        "business_rule_validation_threads": 8,
+                        "parallel_business_rule_validation": True,
+                        # Cross-entity operation optimization
+                        "cross_entity_batch_size": 100,
+                        "enable_cross_entity_batching": True,
+                        "cross_entity_processing_threads": 16,
+                        "cross_entity_queue_size": 2000,
+                        # Memory and performance optimization
+                        "memory_pool_size_mb": 200,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "aggressive",
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    # Balanced service settings
-                    "service_cache_size": 250,
-                    "enable_service_pooling": True,
-                    "service_pool_size": 50,
-                    "max_concurrent_services": 25,
-                    "service_discovery_cache_ttl": 1800,  # 30 minutes
-                    # Moderate business rule optimization
-                    "enable_business_rule_caching": True,
-                    "business_rule_cache_size": 500,
-                    "business_rule_validation_threads": 4,
-                    "parallel_business_rule_validation": True,
-                    # Standard cross-entity processing
-                    "cross_entity_batch_size": 50,
-                    "enable_cross_entity_batching": True,
-                    "cross_entity_processing_threads": 8,
-                    "cross_entity_queue_size": 1000,
-                    # Moderate memory settings
-                    "memory_pool_size_mb": 100,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        # Balanced service settings
+                        "service_cache_size": 250,
+                        "enable_service_pooling": True,
+                        "service_pool_size": 50,
+                        "max_concurrent_services": 25,
+                        "service_discovery_cache_ttl": 1800,  # 30 minutes
+                        # Moderate business rule optimization
+                        "enable_business_rule_caching": True,
+                        "business_rule_cache_size": 500,
+                        "business_rule_validation_threads": 4,
+                        "parallel_business_rule_validation": True,
+                        # Standard cross-entity processing
+                        "cross_entity_batch_size": 50,
+                        "enable_cross_entity_batching": True,
+                        "cross_entity_processing_threads": 8,
+                        "cross_entity_queue_size": 1000,
+                        # Moderate memory settings
+                        "memory_pool_size_mb": 100,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "balanced",
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    # Conservative service settings
-                    "service_cache_size": 50,
-                    "enable_service_pooling": False,
-                    "service_pool_size": 10,
-                    "max_concurrent_services": 5,
-                    "service_discovery_cache_ttl": 600,  # 10 minutes
-                    # Minimal business rule optimization
-                    "enable_business_rule_caching": False,
-                    "business_rule_cache_size": 100,
-                    "business_rule_validation_threads": 1,
-                    "parallel_business_rule_validation": False,
-                    # Sequential cross-entity processing
-                    "cross_entity_batch_size": 10,
-                    "enable_cross_entity_batching": False,
-                    "cross_entity_processing_threads": 1,
-                    "cross_entity_queue_size": 100,
-                    # Minimal memory usage
-                    "memory_pool_size_mb": 25,
-                    "enable_object_pooling": False,
-                    "gc_optimization_enabled": False,
-                    "optimization_level": "conservative",
-                })
+                optimized_config.update(
+                    {
+                        # Conservative service settings
+                        "service_cache_size": 50,
+                        "enable_service_pooling": False,
+                        "service_pool_size": 10,
+                        "max_concurrent_services": 5,
+                        "service_discovery_cache_ttl": 600,  # 10 minutes
+                        # Minimal business rule optimization
+                        "enable_business_rule_caching": False,
+                        "business_rule_cache_size": 100,
+                        "business_rule_validation_threads": 1,
+                        "parallel_business_rule_validation": False,
+                        # Sequential cross-entity processing
+                        "cross_entity_batch_size": 10,
+                        "enable_cross_entity_batching": False,
+                        "cross_entity_processing_threads": 1,
+                        "cross_entity_queue_size": 100,
+                        # Minimal memory usage
+                        "memory_pool_size_mb": 25,
+                        "enable_object_pooling": False,
+                        "gc_optimization_enabled": False,
+                        "optimization_level": "conservative",
+                    }
+                )
 
             # Additional performance metrics and targets
-            optimized_config.update({
-                "expected_throughput_services_per_second": 200
-                if performance_level == "high"
-                else 100
-                if performance_level == "medium"
-                else 25,
-                "target_service_latency_ms": 10
-                if performance_level == "high"
-                else 25
-                if performance_level == "medium"
-                else 100,
-                "target_business_rule_validation_ms": 5
-                if performance_level == "high"
-                else 15
-                if performance_level == "medium"
-                else 50,
-                "memory_efficiency_target": 0.90
-                if performance_level == "high"
-                else 0.80
-                if performance_level == "medium"
-                else 0.60,
-            })
+            optimized_config.update(
+                {
+                    "expected_throughput_services_per_second": 200
+                    if performance_level == "high"
+                    else 100
+                    if performance_level == "medium"
+                    else 25,
+                    "target_service_latency_ms": 10
+                    if performance_level == "high"
+                    else 25
+                    if performance_level == "medium"
+                    else 100,
+                    "target_business_rule_validation_ms": 5
+                    if performance_level == "high"
+                    else 15
+                    if performance_level == "medium"
+                    else 50,
+                    "memory_efficiency_target": 0.90
+                    if performance_level == "high"
+                    else 0.80
+                    if performance_level == "medium"
+                    else 0.60,
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

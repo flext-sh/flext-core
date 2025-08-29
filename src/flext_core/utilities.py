@@ -1,49 +1,101 @@
-"""Comprehensive utility functions for the FLEXT ecosystem.
+"""FLEXT Utilities - Comprehensive utility functions with hierarchical organization and type safety.
 
-Provides the FlextUtilities class with organized utility functions including
-ID generation, text processing, validation, performance monitoring, JSON handling,
-and decorator patterns. All utilities follow SOLID principles with nested class
-organization for better code organization and discoverability.
+Comprehensive utility collection providing FlextUtilities class with ID generation, text processing,
+validation, performance monitoring, JSON handling, and decorator patterns organized in nested classes
+following SOLID principles with FlextResult integration for consistent error handling.
 
-Main Classes:
-    FlextUtilities: Main container with nested utility classes
-    FlextUtilities.Generators: ID and timestamp generation
-    FlextUtilities.TextProcessor: Text processing and formatting
-    FlextUtilities.Validators: Data validation utilities
-    FlextUtilities.Performance: Performance monitoring and timing
-    FlextUtilities.JSON: JSON processing and serialization
-    FlextUtilities.Decorators: Utility decorators and function wrappers
+Module Role in Architecture:
+    FlextUtilities provides essential utility functions for all FLEXT ecosystem components,
+    organized hierarchically from Generators to Decorators, enabling consistent ID generation,
+    text processing, validation, and performance monitoring across the ecosystem.
 
-Key Features:
-    - Hierarchical organization with nested classes
-    - Performance monitoring with metrics collection
-    - Type-safe validation with FlextResult patterns
-    - Comprehensive text processing utilities
-    - ID generation with consistent prefixing
-    - JSON handling with error recovery
-    - Timing and performance decorators
+Classes and Methods:
+    FlextUtilities:                         # Hierarchical utility collection
+        # Generators - ID and Timestamp Generation:
+        Generators.generate_uuid() -> str               # Generate RFC4122 UUID
+        Generators.generate_entity_id(prefix="entity") -> str # Generate entity identifier
+        Generators.generate_correlation_id(prefix="corr") -> str # Generate correlation ID
+        Generators.generate_request_id(prefix="req") -> str # Generate request identifier
+        Generators.generate_timestamp() -> str          # Generate ISO timestamp
+        Generators.generate_hash(data) -> str           # Generate SHA-256 hash
 
-Example:
-    Basic utility usage::
+        # TextProcessor - Text Processing and Formatting:
+        TextProcessor.truncate(text, max_length=100) -> str # Truncate text safely
+        TextProcessor.safe_string(value) -> str         # Convert any value to safe string
+        TextProcessor.sanitize_filename(filename) -> str # Sanitize filename for filesystem
+        TextProcessor.extract_keywords(text) -> list[str] # Extract keywords from text
+        TextProcessor.format_bytes(size_bytes) -> str   # Format byte size human-readable
+        TextProcessor.slugify(text) -> str              # Convert text to URL slug
 
-        # Generate various types of IDs
+        # Validators - Data Validation Utilities:
+        Validators.validate_email(email) -> FlextResult[str] # Validate email format
+        Validators.validate_url(url) -> FlextResult[str] # Validate URL format
+        Validators.validate_json(json_str) -> FlextResult[dict] # Validate JSON string
+        Validators.validate_uuid(uuid_str) -> FlextResult[str] # Validate UUID format
+        Validators.is_valid_identifier(name) -> bool    # Check if valid Python identifier
+        Validators.validate_phone(phone) -> FlextResult[str] # Validate phone number
+
+        # Performance - Performance Monitoring and Timing:
+        Performance.time_function(func) -> Callable     # Decorator for function timing
+        Performance.measure_execution(func, *args) -> tuple[object, float] # Measure function execution
+        Performance.benchmark_operations(operations) -> dict # Benchmark multiple operations
+        Performance.memory_usage() -> dict              # Get current memory usage
+        Performance.system_metrics() -> dict            # Get system performance metrics
+
+        # JSON - JSON Processing and Serialization:
+        JSON.safe_loads(json_str) -> FlextResult[dict]  # Safe JSON deserialization
+        JSON.safe_dumps(obj) -> FlextResult[str]        # Safe JSON serialization
+        JSON.merge_dicts(*dicts) -> dict               # Deep merge multiple dictionaries
+        JSON.flatten_dict(nested_dict) -> dict         # Flatten nested dictionary
+        JSON.unflatten_dict(flat_dict) -> dict         # Unflatten dictionary
+
+        # Decorators - Utility Decorators and Function Wrappers:
+        Decorators.retry(max_attempts=3) -> Callable    # Retry decorator with exponential backoff
+        Decorators.timeout(seconds=30) -> Callable      # Timeout decorator
+        Decorators.cache_result(ttl=300) -> Callable    # Simple result caching decorator
+        Decorators.log_calls(logger=None) -> Callable   # Log function calls decorator
+        Decorators.validate_args(*validators) -> Callable # Argument validation decorator
+
+        # Configuration Methods:
+        configure_utilities_system(config) -> FlextResult[ConfigDict] # Configure utility system
+        get_utilities_system_config() -> FlextResult[ConfigDict] # Get current config
+        create_environment_utilities_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_utilities_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
+
+Usage Examples:
+    ID Generation:
         uuid = FlextUtilities.Generators.generate_uuid()
-        entity_id = FlextUtilities.Generators.generate_entity_id()
+        entity_id = FlextUtilities.Generators.generate_entity_id("user")
         correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
-        # Text processing
-        truncated = FlextUtilities.TextProcessor.truncate(long_text, 50)
-        safe_str = FlextUtilities.TextProcessor.safe_string(any_value)
+    Text Processing:
+        truncated = FlextUtilities.TextProcessor.truncate("Long text here", 50)
+        slug = FlextUtilities.TextProcessor.slugify("My Article Title")
+        safe_filename = FlextUtilities.TextProcessor.sanitize_filename("file<name>.txt")
 
-        # Validation
-        email_result = FlextUtilities.Validators.validate_email(email)
+    Validation with FlextResult:
+        email_result = FlextUtilities.Validators.validate_email("user@example.com")
         if email_result.success:
-            process_valid_email(email)
+            validated_email = email_result.value
 
-Note:
-    All utilities return FlextResult types for consistent error handling
-    and integrate with the FLEXT logging and constants systems.
+    Performance monitoring:
+        @FlextUtilities.Performance.time_function
+        def my_function():
+            # Function implementation
+            pass
 
+    Configuration:
+        config = {
+            "environment": "production",
+            "enable_caching": True,
+            "default_timeout": 30,
+        }
+        FlextUtilities.configure_utilities_system(config)
+
+Integration:
+    FlextUtilities integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for limits and defaults, providing comprehensive
+    utility functions with consistent patterns across the entire FLEXT ecosystem.
 """
 
 from __future__ import annotations
@@ -577,32 +629,70 @@ class FlextUtilities:
             return {}
 
         @staticmethod
-        def parse_json_to_model(json_text: str, model_class: type[T]) -> FlextResult[T]:
-            """Parse JSON and validate using Pydantic model."""
+        def parse_json_to_model[TModel](
+            json_text: str, model_class: type[TModel]
+        ) -> FlextResult[TModel]:
+            """Parse JSON and validate using appropriate model instantiation strategy.
+
+            This method provides type-safe JSON parsing with automatic detection of:
+            - Pydantic v2 models (using model_validate)
+            - Dictionary-constructible classes (using **kwargs)
+            - Default constructible classes (using no args)
+
+            Args:
+                json_text: JSON string to parse and validate
+                model_class: Target model class for instantiation
+
+            Returns:
+                FlextResult containing validated model instance or error details
+
+            Note:
+                Uses Python 3.13+ generic syntax with strategic casting to handle
+                dynamic method invocation while preserving type safety.
+
+            """
             try:
-                data: object = json.loads(json_text)
-                # Check if the class supports Pydantic v2 model_validate
-                if hasattr(model_class, "model_validate"):
-                    # Cast to HasModelValidate protocol for type safety
-                    pydantic_model = cast(
-                        "type[FlextProtocols.Foundation.HasModelValidate]",  # type: ignore[name-defined]
+                parsed_data: object = json.loads(json_text)
+
+                # Strategy 1: Pydantic v2 model_validate (preferred for validation)
+                if hasattr(model_class, "model_validate") and callable(
+                    getattr(model_class, "model_validate", None)
+                ):
+                    # Dynamic invocation through cast to protocol
+                    pydantic_class = cast(
+                        "type[FlextProtocols.Foundation.HasModelValidate]",
                         model_class,  # pyright: ignore[reportGeneralTypeIssues]
                     )
-                    model_obj = pydantic_model.model_validate(data)
-                    model = cast("T", model_obj)
-                else:
-                    # Fallback for regular classes - use DataConstructor protocol
-                    constructor = cast(
-                        "FlextProtocols.Foundation.DataConstructor",
-                        model_class,  # type: ignore[name-defined]
-                    )
-                    model_obj = constructor(data)
-                    model = cast("T", model_obj)
-                return FlextResult[T].ok(model)
-            except json.JSONDecodeError as e:
-                return FlextResult[T].fail(f"Invalid JSON: {e}")
-            except Exception as e:
-                return FlextResult[T].fail(f"Model validation failed: {e}")
+                    validated_obj = pydantic_class.model_validate(parsed_data)
+                    # Direct cast to target type
+                    instance = cast("TModel", validated_obj)
+                    return FlextResult[TModel].ok(instance)
+
+                # Strategy 2: Dictionary constructor (for dict-like data)
+                if isinstance(parsed_data, dict):
+                    dict_data = cast("dict[str, object]", parsed_data)
+                    instance = model_class(**dict_data)
+                    return FlextResult[TModel].ok(instance)
+
+                # Strategy 3: Default constructor (fallback)
+                instance = model_class()
+                return FlextResult[TModel].ok(instance)
+
+            except json.JSONDecodeError as json_error:
+                return FlextResult[TModel].fail(
+                    f"Invalid JSON format: {json_error}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            except (TypeError, ValueError) as validation_error:
+                return FlextResult[TModel].fail(
+                    f"Model validation failed: {validation_error}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            except Exception as unexpected_error:
+                return FlextResult[TModel].fail(
+                    f"Unexpected error during model creation: {unexpected_error}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
     class ResultUtils:
         """FlextResult processing and composition utilities.

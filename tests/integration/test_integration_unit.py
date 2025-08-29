@@ -30,8 +30,8 @@ import pytest
 
 from flext_core import (
     FlextContainer,
-    FlextEntityId,
     FlextResult,
+    FlextUtilities,
     __version__,
 )
 
@@ -122,11 +122,12 @@ class TestLibraryIntegration:
         assert result.success is True
         assert result.value == test_value
 
-        # Act - Test FlextEntityId type system
-        entity_id = FlextEntityId("entity-123")
+        # Act - Test entity ID type system using FlextUtilities
+        entity_id = FlextUtilities.Generators.generate_entity_id()
 
         # Assert - Type system coherence
-        assert entity_id == "entity-123"
+        assert isinstance(entity_id, str)
+        assert entity_id.startswith("entity_")
 
         # Act - Test FlextContainer service registration
         register_result = clean_container.register("test_service", test_value)
@@ -199,16 +200,16 @@ class TestLibraryIntegration:
         assert expected_result_data in mock_external_service.processed_items
 
     def test_entity_id_in_flext_result(self) -> None:
-        """Test FlextEntityId used in FlextResult."""
-        entity_id = FlextEntityId("user-456")
-        result = FlextResult[FlextEntityId].ok(entity_id)
+        """Test entity ID used in FlextResult."""
+        entity_id = FlextUtilities.Generators.generate_entity_id()
+        result = FlextResult[str].ok(entity_id)
 
         assert result.success
-        if result.value != "user-456":
-            msg: str = f"Expected {'user-456'}, got {result.value}"
+        if not result.value.startswith("entity_"):
+            msg: str = f"Expected entity ID starting with 'entity_', got {result.value}"
             raise AssertionError(msg)
-        # FlextEntityId behaves like str but isinstance check causes MyPy issues
-        assert str(result.value) == "user-456"
+        # Entity ID behaves like str
+        assert isinstance(result.value, str)
 
     def test_version_info_available(self) -> None:
         """Test that version info is available."""

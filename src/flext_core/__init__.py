@@ -1,19 +1,79 @@
-"""FLEXT Core - Foundation library for enterprise data integration.
+"""FLEXT Core - Enterprise data integration foundation library.
 
-Provides FlextResult for error handling, FlextContainer for DI,
-and FlextEntity/FlextValueObject for domain modeling.
+This module provides the architectural foundation for the FLEXT ecosystem with type-safe
+error handling, dependency injection, domain modeling patterns, and enterprise-grade
+functionality for data integration platforms.
 
-Main exports:
-    - FlextResult: Railway-oriented programming
-    - FlextContainer: Dependency injection
-    - FlextEntity, FlextValueObject: Domain patterns
-    - get_flext_container(): Global DI container
+Architecture:
+    Foundation Layer: FlextResult, exceptions, constants, types
+    Domain Layer: FlextEntity, FlextValueObject, FlextAggregateRoot, domain services
+    Application Layer: Commands (CQRS), handlers, validation, guards
+    Infrastructure Layer: Container (DI), config, logging, observability, context
+    Support Layer: Decorators, mixins, utilities, fields, services, adapters
 
-Example:
-    from flext_core import FlextResult, get_flext_container
+Core Components:
+    FlextAggregates: DDD aggregate pattern with domain event management
+    FlextCommands: CQRS command patterns with validation and result handling
+    FlextConfig: Pydantic-based configuration with environment variable support
+    FlextConstants: Application constants, enums, and configuration defaults
+    FlextContainer: Type-safe dependency injection container with factory support
+    FlextContext: Request/operation context management with correlation IDs
+    FlextCore: Core functionality for versioning, validation, and type management
+    FlextDecorators: Enterprise decorators for validation, caching, and metrics
+    FlextDelegationSystem: Delegation system for method chaining and composition
+    FlextDomainServices: Domain services for business logic and operations
+    FlextExceptions: Hierarchical exception system with error codes and metrics
+    FlextFields: Field validation and metadata for forms and schemas
+    FlextGuards: Type guards and runtime validation utilities
+    FlextHandlers: Request/response handlers with result composition
+    FlextLogger: Structured logging with context propagation and JSON output
+    FlextMixins: Reusable behavior patterns (timestamps, serialization, etc.)
+    FlextObservability: Metrics, tracing, and monitoring abstractions
+    FlextProcessors: Processing utilities for schema and data validation
+    FlextProtocols: Interface definitions and contracts for dependency injection
+    FlextResult[T]: Railway-oriented error handling with map/flat_map/bind operations
+    FlextServices: Service layer abstractions and patterns
+    FlextTypeAdapters: Type adapters for data transformation and validation
+    FlextTypes: Type definitions, aliases, and generic type parameters
+    FlextUtilities: Helper functions, generators, and type utilities
+    FlextValidation: Composable validation framework with predicate logic
 
-    result = FlextResult.ok("success")
-    container = get_flext_container()
+
+Examples:
+    Railway-oriented programming:
+    >>> result = (
+    ...     FlextResult.ok({"user": "john"})
+    ...     .map(lambda d: validate_user(d))
+    ...     .flat_map(lambda u: save_user(u))
+    ...     .map_error(lambda e: f"Operation failed: {e}")
+    ... )
+    >>> if result.success:
+    ...     user = result.value
+
+    Dependency injection:
+    >>> container = get_flext_container()
+    >>> container.register("database", DatabaseService())
+    >>> db_result = container.get("database")
+    >>> if db_result.success:
+    ...     db = db_result.value
+
+    Domain modeling:
+    >>> class User(FlextEntity):
+    ...     name: str
+    ...     email: str
+    ...
+    ...     def activate(self) -> FlextResult[None]:
+    ...         if self.is_active:
+    ...             return FlextResult.fail("Already active")
+    ...         self.is_active = True
+    ...         return FlextResult.ok(None)
+
+Notes:
+    - All business operations should return FlextResult[T] for composability
+    - Use the global container for dependency injection across the ecosystem
+    - Domain entities should inherit from FlextEntity or FlextValueObject
+    - Follow Clean Architecture patterns with layered imports
+    - Leverage type safety with generic parameters and protocols
 
 """
 
@@ -52,8 +112,8 @@ from flext_core.validation import *
 # =============================================================================
 
 # Infrastructure layer - explicit imports to avoid type conflicts
-from flext_core.config import *
-from flext_core.container import *
+from flext_core.config import *  # type: ignore[assignment]
+from flext_core.container import *  # type: ignore[assignment]
 from flext_core.context import *
 from flext_core.loggings import *
 from flext_core.observability import *
@@ -66,10 +126,17 @@ from flext_core.decorators import *
 from flext_core.delegation_system import *
 from flext_core.fields import *
 from flext_core.mixins import *
-from flext_core.schema_processing import *
+from flext_core.processors import *
 from flext_core.services import *
 from flext_core.type_adapters import *
 from flext_core.utilities import *
+
+# =============================================================================
+# CORE FUNCTIONALITY - Main implementation exports
+# =============================================================================
+
+# Core functionality - ensure specific exports are accessible
+# from flext_core.core import *
 
 
 # =============================================================================
@@ -77,15 +144,7 @@ from flext_core.utilities import *
 # =============================================================================
 
 # Legacy functionality - ensure specific exports are accessible
-from flext_core.legacy import *
-
-
-# =============================================================================
-# CORE FUNCTIONALITY - Main implementation exports
-# =============================================================================
-
-# Core functionality - ensure specific exports are accessible
-from flext_core.core import *
+from flext_core.legacy import *  # type: ignore[assignment]
 
 
 # =============================================================================
@@ -100,7 +159,8 @@ import flext_core.config as _config
 import flext_core.constants as _constants
 import flext_core.container as _container
 import flext_core.context as _context
-import flext_core.core as _core
+
+# import flext_core.core as _core
 import flext_core.decorators as _decorators
 import flext_core.delegation_system as _delegation_system
 import flext_core.domain_services as _domain_services
@@ -114,7 +174,7 @@ import flext_core.models as _models
 import flext_core.observability as _observability
 import flext_core.protocols as _protocols
 import flext_core.result as _result
-import flext_core.schema_processing as _schema_processing
+import flext_core.processors as _processors
 import flext_core.services as _services
 import flext_core.type_adapters as _type_adapters
 import flext_core.typings as _typings
@@ -144,14 +204,14 @@ for module in [
     _loggings,
     _observability,
     _context,
-    _core,
+    # _core,
     _mixins,
     _decorators,
     _utilities,
     _fields,
     _services,
     _delegation_system,
-    _schema_processing,
+    _processors,
     _type_adapters,
     _legacy,
 ]:

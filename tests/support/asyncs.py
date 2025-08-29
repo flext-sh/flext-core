@@ -11,16 +11,20 @@ import asyncio
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
-from typing import TYPE_CHECKING, TypeVar
+from typing import Protocol, TypeVar
 
 import pytest
 
 from flext_core import FlextLogger
 
-if TYPE_CHECKING:
-    object
-
 T = TypeVar("T")
+
+
+class AsyncMockProtocol(Protocol):
+    """Protocol for async mock functions."""
+
+    async def __call__(self, *args: object, **kwargs: object) -> object: ...
+
 
 logger = FlextLogger(__name__)
 
@@ -82,8 +86,8 @@ class AsyncTestUtils:
         results = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         if return_exceptions:
             # Filter out exceptions and return only successful results
-            return [r for r in results if not isinstance(r, BaseException)]  # type: ignore[misc]
-        return results  # type: ignore[return-value]
+            return [r for r in results if not isinstance(r, BaseException)]
+        return results
 
     @staticmethod
     async def run_concurrent(
@@ -116,8 +120,8 @@ class AsyncTestUtils:
         results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
         if return_exceptions:
             # Filter out exceptions and return only successful results
-            return [r for r in results if not isinstance(r, BaseException)]  # type: ignore[misc]
-        return results  # type: ignore[return-value]
+            return [r for r in results if not isinstance(r, BaseException)]
+        return results
 
     @staticmethod
     async def retry_async(
@@ -232,10 +236,10 @@ class AsyncMockUtils:
     @staticmethod
     def create_async_mock(
         return_value: object = None, side_effect: Exception | None = None
-    ) -> Callable[..., Awaitable[object]]:
+    ) -> AsyncMockProtocol:
         """Create async mock function."""
 
-        async def async_mock(*args: object, **kwargs: object) -> object:
+        async def async_mock(*_args: object, **_kwargs: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
@@ -250,7 +254,7 @@ class AsyncMockUtils:
     ) -> object:
         """Create async mock with delay."""
 
-        async def delayed_async_mock(*args: object, **kwargs: object) -> object:
+        async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -267,7 +271,7 @@ class AsyncMockUtils:
         """Create async mock that fails randomly."""
         import random
 
-        async def flaky_async_mock(*args: object, **kwargs: object) -> object:
+        async def flaky_async_mock(*_args: object, **_kwargs: object) -> object:
             if random.random() < failure_rate:
                 test_exception = exception or RuntimeError("Flaky operation failed")
                 raise test_exception
@@ -337,7 +341,7 @@ class AsyncConcurrencyTesting:
         iterations: int = 100,
     ) -> dict[str, object]:
         """Test for race conditions between two async functions."""
-        results = []
+        results: list[dict[str, object]] = []
 
         for _ in range(iterations):
             # Start both functions simultaneously
@@ -347,8 +351,8 @@ class AsyncConcurrencyTesting:
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
 
-                async def _wrapper1(coro: object = awaitable1) -> object:
-                    return await coro
+                async def _wrapper1(result: object = awaitable1) -> object:
+                    return result
 
                 coro1 = _wrapper1()
             else:
@@ -356,8 +360,8 @@ class AsyncConcurrencyTesting:
 
             if not asyncio.iscoroutine(awaitable2):
 
-                async def _wrapper2(coro: object = awaitable2) -> object:
-                    return await coro
+                async def _wrapper2(result: object = awaitable2) -> object:
+                    return result
 
                 coro2 = _wrapper2()
             else:
@@ -381,8 +385,10 @@ class AsyncConcurrencyTesting:
         return {
             "total_iterations": iterations,
             "results": results,
-            "error_rate1": sum(1 for r in results if r["error1"]) / iterations,
-            "error_rate2": sum(1 for r in results if r["error2"]) / iterations,
+            "error_rate1": sum(1 for r in results if r.get("error1", False))
+            / iterations,
+            "error_rate2": sum(1 for r in results if r.get("error2", False))
+            / iterations,
         }
 
     @staticmethod
@@ -393,8 +399,8 @@ class AsyncConcurrencyTesting:
     ) -> dict[str, object]:
         """Test concurrent access to a resource."""
 
-        async def worker() -> list[object]:
-            results = []
+        async def worker() -> list[dict[str, object]]:
+            results: list[dict[str, object]] = []
             for _ in range(iterations_per_worker):
                 try:
                     result = await func()
@@ -408,11 +414,11 @@ class AsyncConcurrencyTesting:
         worker_results = await asyncio.gather(*workers)
 
         # Flatten results
-        all_results = []
+        all_results: list[dict[str, object]] = []
         for worker_result in worker_results:
             all_results.extend(worker_result)
 
-        success_count = sum(1 for r in all_results if r["success"])
+        success_count = sum(1 for r in all_results if r.get("success", False))
         total_operations = concurrency_level * iterations_per_worker
 
         return {

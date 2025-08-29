@@ -6,11 +6,8 @@ import json
 from collections.abc import Callable as _Callable
 from typing import cast
 
-from flext_core import (
-    FlextEntityId,
-    FlextModels.Payload,
-    FlextTypes,
-)
+from flext_core import FlextEntityId, FlextTypes
+from flext_core.models import FlextModels
 
 FlextConfigKey = str
 FlextEventType = str
@@ -163,13 +160,17 @@ class TestTypeAliases:
             "name": "John Doe",
             "email": "john@example.com",
         }
-        user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(data=user_data)
+        user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+            data=user_data
+        )
 
         event_data: dict[str, object] = {
             "event_type": "user.created",
             "timestamp": "2025-01-01T00:00:00Z",
         }
-        event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(data=event_data)
+        event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+            data=event_data
+        )
 
         # Verify payload structure
         def process_payload(payload: FlextModels.Payload[dict[str, object]]) -> str:

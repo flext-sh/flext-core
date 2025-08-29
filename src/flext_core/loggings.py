@@ -1,33 +1,85 @@
-"""Structured logging with correlation IDs, performance tracking, and security sanitization.
+"""FLEXT Loggings - Structured logging with correlation IDs, performance tracking, and security sanitization.
 
-Provides FlextLogger class with structured JSON logging, automatic correlation ID
-generation, request context tracking, operation performance metrics, and
-sensitive data sanitization.
+Enterprise-grade structured logging system providing FlextLogger with JSON output, automatic
+correlation ID generation, request context tracking, operation performance metrics, sensitive
+data sanitization, and thread-safe request context management with structlog integration.
 
-Features:
-- ISO 8601 timestamps with timezone
-- Automatic correlation ID generation for request tracing
-- Performance tracking for operations with start/complete methods
-- Automatic sensitive data redaction (passwords, tokens, keys)
-- Thread-safe request context storage
-- Service metadata injection (name, version, environment)
-- JSON output for production, colored console for development
-- Integration with structlog for advanced formatting
+Module Role in Architecture:
+    FlextLoggings provides comprehensive structured logging for all FLEXT ecosystem components
+    with correlation tracking, performance monitoring, security sanitization, and JSON output
+    for production environments while maintaining development-friendly console output.
 
-Usage:
-    Basic logging:
+Classes and Methods:
+    FlextLogger:                            # Main structured logger with enterprise features
+        # Core Logging Methods:
+        debug(message, **context) -> None              # Debug level logging with context
+        info(message, **context) -> None               # Info level logging with context
+        warning(message, **context) -> None            # Warning level logging with context
+        error(message, **context) -> None              # Error level logging with context
+        critical(message, **context) -> None           # Critical level logging with context
+        exception(message, **context) -> None          # Exception logging with stack trace
+
+        # Performance Tracking:
+        start_operation(operation_name, **context) -> str # Start performance tracking
+        complete_operation(operation_id, success=True, **context) -> None # Complete operation tracking
+        track_duration(operation_name) -> ContextManager # Context manager for duration tracking
+
+        # Correlation and Context:
+        set_correlation_id(correlation_id) -> None      # Set correlation ID for current logger
+        get_correlation_id() -> str | None              # Get current correlation ID
+        set_global_correlation_id(correlation_id) -> None # Set global correlation ID (class method)
+        get_global_correlation_id() -> str | None       # Get global correlation ID (class method)
+
+        # Service Context:
+        set_service_context(name, version, environment) -> None # Set service metadata
+        get_service_context() -> dict                   # Get current service context
+
+        # Security and Sanitization:
+        sanitize_sensitive_data(data) -> dict           # Remove sensitive data from logs
+        add_sensitive_key(key) -> None                  # Add key to sanitization list
+        remove_sensitive_key(key) -> None               # Remove key from sanitization list
+
+        # Configuration:
+        configure_json_output(enable=True) -> None      # Enable/disable JSON output
+        configure_console_colors(enable=True) -> None   # Enable/disable colored console output
+        set_log_level(level) -> None                    # Set logging level
+
+    FlextLoggingConfig:                     # Logging system configuration
+        # Configuration Methods:
+        configure_logging_system(config) -> FlextResult[ConfigDict] # Configure logging system
+        get_logging_system_config() -> FlextResult[ConfigDict] # Get current logging config
+        create_environment_logging_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_logging_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
+
+Usage Examples:
+    Basic structured logging:
         logger = FlextLogger(__name__)
-        logger.info("Processing request", user_id=123)
-        logger.error("Failed to process", error=exception)
+        logger.info("Processing request", user_id=123, action="create")
+        logger.error("Failed to process", error=exception, request_id="req_123")
 
-    Operation tracking:
+    Performance tracking:
         op_id = logger.start_operation("user_creation", user_id=123)
-        # ... do work ...
-        logger.complete_operation(op_id, success=True)
+        # ... perform operation ...
+        logger.complete_operation(op_id, success=True, records_created=5)
 
-    Global correlation ID:
-        FlextLogger.set_global_correlation_id("req_abc123")
-        # All loggers will include this correlation ID
+    Context manager for duration:
+        with logger.track_duration("database_query") as tracker:
+            result = database.execute_query(sql)
+            tracker.add_context(rows_returned=len(result))
+
+    Configuration:
+        config = {
+            "environment": "production",
+            "log_level": "INFO",
+            "json_output": True,
+            "enable_correlation_tracking": True,
+        }
+        FlextLoggingConfig.configure_logging_system(config)
+
+Integration:
+    FlextLoggings integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for log levels, providing structured logging
+    capabilities across the entire FLEXT ecosystem with correlation tracking.
 """
 
 from __future__ import annotations
@@ -128,15 +180,16 @@ class FlextLogger:
             self.configure()
 
         self._name = name
-        # Validate level is proper LogLevel type
+        # Validate and set level (LogLevel is already a str type)
         if isinstance(level, str):
             valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-            if level.upper() in valid_levels:
-                self._level = level.upper()  # type: ignore[assignment]
+            upper_level = level.upper()
+            if upper_level in valid_levels:
+                # Cast to proper LogLevel type after validation
+                self._level = cast("FlextTypes.Config.LogLevel", upper_level)
             else:
-                self._level = "INFO"  # type: ignore[assignment]
-        else:
-            self._level = level  # type: ignore[assignment,unreachable]
+                self._level = "INFO"
+        # LogLevel type is str-based, so this branch is not needed
         self._environment = environment
 
         # Initialize service context
@@ -389,7 +442,7 @@ class FlextLogger:
 
         bound_logger = FlextLogger(
             name=self._name,
-            level=cast("FlextTypes.Config.LogLevel", self._level),
+            level=self._level,  # type: ignore[arg-type]
             service_name=getattr(self, "_service_name", None),
             service_version=getattr(self, "_service_version", None),
             correlation_id=getattr(self, "_correlation_id", None),

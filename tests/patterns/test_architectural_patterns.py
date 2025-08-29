@@ -14,12 +14,13 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextBaseHandler,
-    FlextCore,
     FlextEntity,
     FlextEntityId,
     FlextResult,
     FlextValue,
 )
+
+# Note: FlextCore removido conforme solicitado - usando APIs individuais
 
 
 class TestCleanArchitecturePatterns:
@@ -106,8 +107,8 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok("User created successfully")
 
         # Infrastructure Layer - Framework integration
-        # Initialize core instance for framework integration
-        _ = FlextCore()
+        # Use FlextResult pattern for framework integration
+        FlextResult.ok("Framework initialized")
 
         # Test the full flow
         command = CreateUserCommand(name="John Doe", email="john@example.com")

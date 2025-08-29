@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import tempfile
 from collections.abc import Callable
-
-object
 from unittest.mock import Mock
 
 from pytest_mock import MockerFixture
@@ -23,7 +21,7 @@ from flext_core import (
     FlextTypes,
 )
 
-JsonDict = FlextTypes.Core.JsonObject
+JsonDict = dict[str, object]  # Use dict[str, object] for FlextResult compatibility
 
 
 class TestBuilders:
@@ -40,7 +38,7 @@ class TestBuilders:
             self._data: object = None
             self._error: str | None = None
             self._error_code: str | None = None
-            self._error_data: JsonDict | None = None
+            self._error_data: dict[str, object] | None = None
             self._is_success: bool = True
 
         def with_success_data(self, data: object) -> TestBuilders.ResultBuilder:
@@ -53,7 +51,7 @@ class TestBuilders:
             self,
             error: str,
             error_code: str | None = None,
-            error_data: JsonDict | None = None,
+            error_data: dict[str, object] | None = None,
         ) -> TestBuilders.ResultBuilder:
             """Set failure result with error details."""
             self._error = error
@@ -66,6 +64,7 @@ class TestBuilders:
             """Build the FlextResult object."""
             if self._is_success:
                 return FlextResult[object].ok(self._data)
+
             return FlextResult[object].fail(
                 self._error or "Test error",
                 error_code=self._error_code,
@@ -154,7 +153,7 @@ class TestBuilders:
             self._field_type = field_type
             self._field_id = f"test_{field_type}_field"
             self._field_name = f"test_{field_type}_field"
-            self._config: JsonDict = {}
+            self._config: dict[str, object] = {}
 
         def with_id(self, field_id: str) -> TestBuilders.FieldBuilder:
             """Set field ID."""
@@ -168,7 +167,12 @@ class TestBuilders:
 
         def with_validation(self, **rules: object) -> TestBuilders.FieldBuilder:
             """Add validation rules."""
-            self._config.update(rules)
+            # Convert rules to JsonValue compatible format
+            for key, value in rules.items():
+                if isinstance(value, (str, int, float, bool, type(None))):
+                    self._config[key] = value
+                else:
+                    self._config[key] = str(value)
             return self
 
         def with_string_constraints(
@@ -205,15 +209,23 @@ class TestBuilders:
 
         def with_default(self, default_value: object) -> TestBuilders.FieldBuilder:
             """Set default value."""
-            self._config["default_value"] = default_value
+            # Convert default value to JsonValue format
+            if isinstance(default_value, (str, int, float, bool, type(None))):
+                self._config["default_value"] = default_value
+            else:
+                self._config["default_value"] = str(default_value)
             return self
 
-        def build(self) -> FlextFields.Core.BaseField[object]:
+        def build(
+            self,
+        ) -> (
+            object
+        ):  # Return object instead of specific field type to avoid import issues
             """Build the field object."""
-            from flext_core.fields import create_field
-
-            result = create_field(self._field_type, self._field_name, **self._config)
-            if result.failure:
+            result = FlextFields.Factory.create_field(
+                self._field_type, self._field_name, **self._config
+            )
+            if result.is_failure:
                 msg = f"Failed to create {self._field_type} field: {result.error}"
                 raise ValueError(msg)
 
@@ -223,7 +235,7 @@ class TestBuilders:
         """Builder for FlextConfig objects with various settings."""
 
         def __init__(self) -> None:
-            self._config_data: JsonDict = {}
+            self._config_data: dict[str, object] = {}
 
         def with_debug(self, *, debug: bool = True) -> TestBuilders.ConfigBuilder:
             """Set debug mode."""
@@ -249,15 +261,27 @@ class TestBuilders:
             self, key: str, value: object
         ) -> TestBuilders.ConfigBuilder:
             """Add custom configuration setting."""
-            self._config_data[key] = value
+            # Convert value to JsonValue format
+            if isinstance(value, (str, int, float, bool, type(None))):
+                self._config_data[key] = value
+            else:
+                self._config_data[key] = str(value)
             return self
 
         def build(self) -> FlextConfig:
             """Build the configuration object."""
             # Extract known fields with proper type casting
+            # Get environment with validation
+            env_value = str(self._config_data.get("environment", "test"))
+            valid_envs = ["development", "staging", "production", "test", "local"]
+            if env_value not in valid_envs:
+                env_value = "test"  # Default fallback
+
+            from typing import cast
+
             return FlextConfig(
                 log_level=str(self._config_data.get("log_level", "INFO")),
-                environment=str(self._config_data.get("environment", "test")),
+                environment=cast("FlextTypes.Config.Environment", env_value),
                 debug=bool(self._config_data.get("debug", False)),
                 # Add other fields as they become available in FlextConfig
             )
@@ -319,7 +343,9 @@ class TestBuilders:
             self._encoding = "utf-8"
             self._mode = "w"
 
-        def with_json_content(self, data: JsonDict) -> TestBuilders.FileBuilder:
+        def with_json_content(
+            self, data: dict[str, object]
+        ) -> TestBuilders.FileBuilder:
             """Set JSON content."""
             import json
 
@@ -333,7 +359,9 @@ class TestBuilders:
             self._suffix = ".txt"
             return self
 
-        def with_config_content(self, config: JsonDict) -> TestBuilders.FileBuilder:
+        def with_config_content(
+            self, config: dict[str, object]
+        ) -> TestBuilders.FileBuilder:
             """Set configuration file content."""
             return self.with_json_content(config).with_suffix(".config.json")
 
@@ -411,9 +439,11 @@ def build_string_field(
     *,
     required: bool = True,
     **constraints: object,
-) -> FlextFields.Core.BaseField[object]:
+) -> object:  # Return object to avoid field type import issues
     """Build a string field quickly."""
-    builder = TestBuilders.field("string").with_id(field_id).required(required)
+    builder = (
+        TestBuilders.field("string").with_id(field_id).required(is_required=required)
+    )
 
     if constraints:
         builder = builder.with_validation(**constraints)

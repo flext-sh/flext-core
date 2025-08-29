@@ -1,33 +1,93 @@
-"""Enterprise-grade observability system providing comprehensive monitoring, metrics collection, and distributed tracing.
+"""FLEXT Observability - Enterprise monitoring, metrics collection and distributed tracing.
 
-This module implements a complete observability solution for the FLEXT ecosystem, providing
-metrics collection, distributed tracing, health monitoring, alerting capabilities, and
-configurable logging systems. The implementation follows FLEXT consolidation patterns
-with all functionality organized within a single comprehensive class structure.
+Provides comprehensive observability solution for the FLEXT ecosystem including metrics
+collection, distributed tracing, health monitoring, alerting capabilities, and structured
+logging. All functionality consolidated into FlextObservability with nested classes for
+logical organization and easy discoverability.
 
-**ARCHITECTURAL CONSOLIDATION**: Following FLEXT architectural patterns, this module
-consolidates all observability functionality into FlextObservability with nested
-classes for logical organization and easy discoverability.
+Module Role in Architecture:
+    FlextObservability serves as the central hub for monitoring and observability across
+    FLEXT applications. Integrates with FlextResult for error handling, FlextConstants
+    for configuration, and FlextTypes.Config for environment-aware settings.
 
-Observability Capabilities:
-    - **Metrics Collection**: Counters, gauges, histograms with tag-based organization
-    - **Distributed Tracing**: Operation tracing with context propagation
-    - **Health Monitoring**: System health checks with configurable intervals
-    - **Alert Management**: Multi-level alerting with escalation support
-    - **Console Logging**: Structured logging with configurable output formats
-    - **Performance Monitoring**: Built-in performance tracking and optimization
-    - **Configuration Management**: Environment-aware configuration with FlextTypes.Config
+Classes and Methods:
+    FlextObservability:                     # Comprehensive observability system
+        # Nested Classes:
+        Console                            # Structured logging with severity levels
+        Span                               # Distributed tracing spans
+        Tracer                             # Operation tracing with context
+        Metrics                            # Counters, gauges, histograms collection
+        Alerts                             # Multi-level alerting with escalation
+        Health                             # System health checks and monitoring
 
-Integration Features:
-    - **FlextResult[T] Integration**: Type-safe error handling throughout
-    - **FlextConstants Integration**: Centralized configuration and error codes
-    - **FlextTypes.Config Support**: Environment-aware configuration management
-    - **Context Manager Support**: Automatic resource management for tracing operations
-    - **Thread Safety**: Safe for concurrent usage across multiple threads
-    - **Memory Efficiency**: Optimized data structures for minimal memory footprint
+        # Configuration Methods:
+        configure_observability_system(config) -> FlextResult[ConfigDict]
+        get_observability_system_config() -> FlextResult[ConfigDict]
+        set_performance_level(level) -> FlextResult[None]
+        get_current_config() -> FlextResult[ConfigDict]
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+        # Factory Methods:
+        create_console_logger(name, level) -> Console
+        create_tracer(service_name) -> Tracer
+        create_metrics_collector(namespace) -> Metrics
+        create_health_monitor(checks) -> Health
+        create_alert_manager(config) -> Alerts
+
+    Console Methods:
+        log_info(message, **context) -> None       # Info level logging
+        log_warn(message, **context) -> None       # Warning level logging
+        log_error(message, **context) -> None      # Error level logging
+        log_debug(message, **context) -> None      # Debug level logging
+        set_level(level) -> None                    # Set logging level
+
+    Tracer Methods:
+        start_span(operation_name, **tags) -> Span # Start new tracing span
+        finish_span(span) -> None                   # Finish tracing span
+        trace_operation(name) -> context_manager   # Context manager for tracing
+        get_active_span() -> Span | None           # Get current active span
+
+    Metrics Methods:
+        increment_counter(name, value, **tags) -> None # Increment counter metric
+        set_gauge(name, value, **tags) -> None         # Set gauge metric value
+        record_histogram(name, value, **tags) -> None  # Record histogram value
+        get_metrics_summary() -> dict                   # Get metrics summary
+
+    Health Methods:
+        check_health() -> FlextResult[dict]        # Run health checks
+        register_health_check(name, check_func) -> None # Register health check
+        get_health_status() -> dict                # Get current health status
+
+    Alerts Methods:
+        send_alert(level, message, **context) -> None # Send alert notification
+        configure_alerts(config) -> None              # Configure alert settings
+        get_alert_history() -> list[dict]             # Get alert history
+
+Usage Examples:
+    Basic observability setup:
+        obs = FlextObservability()
+        console = obs.create_console_logger("myapp", "INFO")
+        tracer = obs.create_tracer("user-service")
+        metrics = obs.create_metrics_collector("business")
+
+    Tracing operations:
+        with tracer.trace_operation("process_order") as span:
+            span.set_tag("order_id", "12345")
+            result = process_order_logic()
+
+    Metrics collection:
+        metrics.increment_counter("orders_processed", 1, status="success")
+        metrics.set_gauge("active_connections", 42)
+        metrics.record_histogram("response_time_ms", 156.7)
+
+    Health monitoring:
+        health = obs.create_health_monitor([db_check, cache_check])
+        status_result = health.check_health()
+
+Integration:
+    FlextObservability integrates with FlextResult for error handling, FlextConstants
+    for configuration management, FlextTypes.Config for environment settings, and
+    provides context managers for automatic resource management.
+
 """
 
 from __future__ import annotations
