@@ -1,47 +1,102 @@
-"""Context management and distributed tracing for the FLEXT core library.
+"""FLEXT Context - Enterprise context management with distributed tracing and cross-service correlation.
 
-Provides hierarchical context management system for the FLEXT ecosystem following
-Clean Architecture principles with thread-safe context variables, distributed tracing,
-and cross-service correlation ID propagation.
+Thread-safe context management for the FLEXT ecosystem implementing correlation ID tracking,
+service identification, performance monitoring, and cross-service context propagation using
+contextvars for enterprise-grade distributed tracing and observability.
 
-This module implements a comprehensive, hierarchical context management system
-organized into logical domains following the established flext-core patterns:
-    - Variables: Context variables by domain (Correlation, Service, etc.)
-    - Correlation: Distributed tracing and correlation ID management
-    - Service: Service identification and lifecycle context
-    - Request: User and request metadata management
-    - Performance: Operation timing and performance tracking
-    - Serialization: Cross-service context serialization
-    - Utilities: Context utility methods and helpers
+Module Role in Architecture:
+    FlextContext provides comprehensive context management across all FLEXT services,
+    enabling distributed tracing, service mesh integration, and cross-service correlation
+    while maintaining thread safety and Clean Architecture principles.
 
-Architecture Features:
-    - Thread-safe context management using Python contextvars
-    - Hierarchical organization following unified flext-core patterns
-    - Type safety with Python 3.13+ Final[type] annotations
-    - SOLID principles implementation throughout
-    - Clean Architecture domain separation
-    - Cross-service context propagation support
+Classes and Methods:
+    FlextContext:                           # Hierarchical context management system
+        # Nested Classes:
+        Variables:                         # Context variable definitions by domain
+            Correlation                    # Correlation and tracing variables
+            Service                        # Service identification variables
+            Request                        # Request and user context variables
+            Performance                    # Performance tracking variables
 
-Examples:
-    Basic context operations::
+        Correlation:                       # Distributed tracing and correlation management
+            get_correlation_id() -> str | None          # Get current correlation ID
+            set_correlation_id(correlation_id) -> None  # Set correlation ID in context
+            generate_correlation_id() -> str            # Generate new correlation ID
+            get_parent_correlation_id() -> str | None   # Get parent correlation ID
+            set_parent_correlation_id(parent_id) -> None # Set parent correlation ID
+            new_correlation(correlation_id=None, parent_id=None) -> ContextManager[str] # New correlation scope
+            inherit_correlation() -> ContextManager[str | None] # Inherit or create correlation
 
-        from flext_core.context import FlextContext
+        Service:                           # Service identification and lifecycle context
+            get_service_name() -> str | None            # Get current service name
+            set_service_name(service_name) -> None      # Set service name in context
+            get_service_version() -> str | None         # Get current service version
+            set_service_version(version) -> None        # Set service version in context
+            service_context(service_name, version=None) -> ContextManager[None] # Service scope
 
-        # Generate correlation ID
-        correlation_id = FlextContext.Correlation.generate_correlation_id()
+        Request:                           # Request-level context management
+            get_user_id() -> str | None                 # Get current user ID
+            set_user_id(user_id) -> None                # Set user ID in context
+            get_operation_name() -> str | None          # Get current operation name
+            set_operation_name(operation_name) -> None  # Set operation name in context
+            get_request_id() -> str | None              # Get current request ID
+            set_request_id(request_id) -> None          # Set request ID in context
+            request_context(user_id=None, operation_name=None, request_id=None, metadata=None) -> ContextManager[None]
 
-        # Service context with automatic cleanup
-        with FlextContext.Service.service_context("user-service", "1.2.0"):
-            # Nested correlation context
-            with FlextContext.Correlation.new_correlation() as corr_id:
-                # Performance tracking
-                with FlextContext.Performance.timed_operation("user_creation"):
-                    # All context automatically managed and restored
-                    pass
+        Performance:                       # Performance monitoring and timing
+            get_operation_start_time() -> datetime | None      # Get operation start time
+            set_operation_start_time(start_time=None) -> None  # Set operation start time
+            get_operation_metadata() -> Dict | None            # Get operation metadata
+            set_operation_metadata(metadata) -> None           # Set operation metadata
+            add_operation_metadata(key, value) -> None         # Add single metadata entry
+            timed_operation(operation_name=None) -> ContextManager[dict] # Timed operation scope
 
-Note:
-    All context variables are thread-safe and support nested scopes with automatic
-    cleanup. Context propagation is supported for cross-service communication.
+        Serialization:                     # Context serialization for cross-service communication
+            get_full_context() -> Dict                  # Get complete current context
+            get_correlation_context() -> dict[str, str] # Get correlation context for headers
+            set_from_context(context) -> None           # Set context from dictionary
+
+        Utilities:                         # Context utility methods
+            clear_context() -> None                     # Clear all context variables
+            ensure_correlation_id() -> str              # Ensure correlation ID exists
+            has_correlation_id() -> bool                # Check if correlation ID is set
+            get_context_summary() -> str                # Get readable context summary
+
+        # Configuration Methods:
+        configure_context_system(config) -> FlextResult[ConfigDict] # Configure context system
+        get_context_system_config() -> FlextResult[ConfigDict] # Get current system config
+        create_environment_context_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_context_performance(config) -> FlextResult[ConfigDict] # Performance optimization
+
+Usage Examples:
+    Basic correlation tracking:
+        with FlextContext.Correlation.new_correlation() as correlation_id:
+            FlextContext.Service.set_service_name("user-service")
+            with FlextContext.Performance.timed_operation("user_creation"):
+                # All context automatically managed and cleaned up
+                pass
+
+    Cross-service context propagation:
+        # Export context for service communication
+        headers = FlextContext.Serialization.get_correlation_context()
+        response = requests.get("/api/endpoint", headers=headers)
+
+        # Import context from incoming request
+        FlextContext.Serialization.set_from_context(request.headers)
+
+    Configuration:
+        config = {
+            "environment": "production",
+            "context_level": "strict",
+            "enable_correlation_tracking": True,
+            "enable_service_context": True,
+        }
+        FlextContext.configure_context_system(config)
+
+Integration:
+    FlextContext integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for validation, and FlextUtilities for
+    ID generation providing comprehensive context management for the FLEXT ecosystem.
 
 """
 

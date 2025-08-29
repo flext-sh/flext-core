@@ -14,17 +14,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Generator
+from typing import Protocol, runtime_checkable
 
 import pytest
 
-from tests.support.factories import (
+from flext_core import FlextResult, FlextTypes
+
+from .factories import (
+    BaseTestEntity,
     BatchFactory,
     FlextResultFactory,
     TestEntityFactory,
     UserDataFactory,
 )
-from tests.support.fixtures_advanced import *
-from tests.support.matchers import FlextMatchers, PerformanceMatchers
+from .matchers import FlextMatchers, PerformanceMatchers
+
+JsonDict = FlextTypes.Core.JsonObject  # dict[str, JsonValue]
 
 # =============================================================================
 # PYTEST CONFIGURATION
@@ -58,8 +63,26 @@ def pytest_configure(config: pytest.Config) -> None:
 # =============================================================================
 
 
+@runtime_checkable
+class BatchFactoryProtocol(Protocol):
+    """Protocol for batch factory methods."""
+
+    @staticmethod
+    def create_user_batch(count: int = 5, **kwargs: object) -> list[JsonDict]: ...
+
+    @staticmethod
+    def create_entity_batch(
+        count: int = 5, **kwargs: object
+    ) -> list[BaseTestEntity]: ...
+
+    @staticmethod
+    def create_mixed_results(
+        success_count: int = 3, failure_count: int = 2
+    ) -> list[FlextResult[object]]: ...
+
+
 @pytest.fixture(scope="session")
-def factory_registry() -> dict[str, type]:
+def factory_registry() -> dict[str, object]:
     """Provide registry of all available factories."""
     return {
         "user": UserDataFactory,
@@ -71,36 +94,44 @@ def factory_registry() -> dict[str, type]:
 
 @pytest.fixture
 def create_users(
-    factory_registry: dict[str, type],
-) -> Callable[[int], list[dict[str, object]]]:
+    factory_registry: dict[str, object],
+) -> Callable[[int], list[JsonDict]]:
     """Factory function for creating test users."""
 
-    def _create_users(count: int = 1, **kwargs: object) -> list[dict[str, object]]:
-        return factory_registry["batch"].create_user_batch(count, **kwargs)
+    def _create_users(count: int = 1, **kwargs: object) -> list[JsonDict]:
+        batch_factory = factory_registry["batch"]
+        assert isinstance(batch_factory, BatchFactoryProtocol)
+        return batch_factory.create_user_batch(count, **kwargs)
 
     return _create_users
 
 
 @pytest.fixture
-def create_entities(factory_registry: dict[str, type]) -> Callable[[int], list[object]]:
+def create_entities(
+    factory_registry: dict[str, object],
+) -> Callable[[int], list[BaseTestEntity]]:
     """Factory function for creating test entities."""
 
-    def _create_entities(count: int = 1, **kwargs: object) -> list[object]:
-        return factory_registry["batch"].create_entity_batch(count, **kwargs)
+    def _create_entities(count: int = 1, **kwargs: object) -> list[BaseTestEntity]:
+        batch_factory = factory_registry["batch"]
+        assert isinstance(batch_factory, BatchFactoryProtocol)
+        return batch_factory.create_entity_batch(count, **kwargs)
 
     return _create_entities
 
 
 @pytest.fixture
 def create_results(
-    factory_registry: dict[str, type],
-) -> Callable[[int, int], list[object]]:
+    factory_registry: dict[str, object],
+) -> Callable[[int, int], list[FlextResult[object]]]:
     """Factory function for creating FlextResult objects."""
 
-    def _create_results(success_count: int = 1, failure_count: int = 0) -> list[object]:
-        return factory_registry["batch"].create_mixed_results(
-            success_count, failure_count
-        )
+    def _create_results(
+        success_count: int = 1, failure_count: int = 0
+    ) -> list[FlextResult[object]]:
+        batch_factory = factory_registry["batch"]
+        assert isinstance(batch_factory, BatchFactoryProtocol)
+        return batch_factory.create_mixed_results(success_count, failure_count)
 
     return _create_results
 
@@ -128,7 +159,7 @@ def performance_matchers() -> type[PerformanceMatchers]:
 
 
 def pytest_collection_modifyitems(
-    config: pytest.Config,
+    _config: pytest.Config,
     items: list[pytest.Item],
 ) -> None:
     """Modify test collection to add markers based on test patterns."""
@@ -191,11 +222,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
+def pytest_runtest_makereport(item: pytest.Item, _call: pytest.CallInfo[None]) -> None:
     """Hook to customize test reports."""
     # Add factory information to test reports if applicable
     if hasattr(item, "factory_used"):
-        item.user_properties.append(("factory", item.factory_used))
+        factory_used = getattr(item, "factory_used", "unknown")
+        item.user_properties.append(("factory", factory_used))
 
 
 # =============================================================================

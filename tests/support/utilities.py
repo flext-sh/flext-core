@@ -7,8 +7,8 @@ from collections.abc import Callable
 from typing import ClassVar, Protocol, TypeVar, runtime_checkable
 
 from flext_core import (
-    FlextConstants as _FlextConstants,  # local import to avoid cycles
-    FlextModel,
+    FlextConstants,
+    FlextModels,
     FlextResult,
 )
 
@@ -666,7 +666,7 @@ class FlextTestMocker:
 # =============================================================================
 
 
-class FlextTestModel(FlextModel):
+class FlextTestModel(FlextModels.Entity):
     """Test model for testing purposes.
 
     Provides a simple model with common field types for testing.
@@ -693,7 +693,7 @@ class FlextTestModel(FlextModel):
         return FlextResult[None].ok(None)
 
 
-class FlextTestConfig(FlextModel):
+class FlextTestConfig(FlextModels.BaseConfig):
     """Test configuration model."""
 
     debug: bool = False
@@ -702,7 +702,7 @@ class FlextTestConfig(FlextModel):
     # Build base_url without deep dynamic __import__ chains to avoid runtime errors
 
     base_url: str = __import__("inspect").cleandoc(
-        f"http://{_FlextConstants.Platform.DEFAULT_HOST}:{_FlextConstants.Platform.FLEXT_API_PORT}",
+        f"http://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.FLEXT_API_PORT}",
     )
     headers: ClassVar[dict[str, str]] = {}
 

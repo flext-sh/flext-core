@@ -12,25 +12,24 @@ from __future__ import annotations
 
 import time
 
-object
-
 import pytest
 from hypothesis import assume, given, strategies as st
-from tests.support.async_utils import AsyncTestUtils
-from tests.support.hypothesis_utils import (
+
+from ..support.async_utils import AsyncTestUtils
+from ..support.hypothesis_utils import (
     CompositeStrategies,
     EdgeCaseStrategies,
     FlextStrategies,
     PerformanceStrategies,
     PropertyTestHelpers,
 )
-from tests.support.performance_utils import (
+from ..support.performance_utils import (
     BenchmarkUtils,
     ComplexityAnalyzer,
     PerformanceProfiler,
     StressTestRunner,
 )
-from tests.support.test_patterns import (
+from ..support.test_patterns import (
     FlextTestBuilder,
     GivenWhenThenBuilder,
     ParameterizedTestBuilder,
@@ -246,15 +245,19 @@ class TestAdvancedPatterns:
         param_builder = ParameterizedTestBuilder("email_validation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"email": "test@example.com", "input": "valid_email_1"},
-            {"email": "user@domain.org", "input": "valid_email_2"},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"email": "test@example.com", "input": "valid_email_1"},
+                {"email": "user@domain.org", "input": "valid_email_2"},
+            ]
+        )
 
-        param_builder.add_failure_cases([
-            {"email": "invalid-email", "input": "invalid_email_1"},
-            {"email": "@domain.com", "input": "invalid_email_2"},
-        ])
+        param_builder.add_failure_cases(
+            [
+                {"email": "invalid-email", "input": "invalid_email_1"},
+                {"email": "@domain.com", "input": "invalid_email_2"},
+            ]
+        )
 
         params = param_builder.build_pytest_params()
         test_ids = param_builder.build_test_ids()

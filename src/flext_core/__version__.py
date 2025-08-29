@@ -1,4 +1,108 @@
-"""Version management and compatibility checking for FLEXT Core."""
+"""Version management and compatibility checking for FLEXT Core.
+
+This module provides comprehensive version management functionality for the FLEXT ecosystem,
+including semantic versioning, compatibility checking, feature availability tracking,
+and programmatic version utilities following enterprise standards.
+
+Module Organization:
+    Version Constants: __version__, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
+    Release Information: RELEASE_NAME, RELEASE_DATE, BUILD_TYPE
+    Compatibility: MIN_PYTHON_VERSION, MAX_PYTHON_VERSION
+    Feature Tracking: AVAILABLE_FEATURES dictionary with feature flags
+    Manager Classes: FlextVersionManager with nested utilities
+    Utility Functions: Version comparison, validation, compatibility checking
+
+Classes:
+    FlextVersionManager: Consolidated version management functionality
+        └── VersionInfo(NamedTuple): Structured version information
+            • major: int - Major version number
+            • minor: int - Minor version number
+            • patch: int - Patch version number
+            • release_name: str - Human-readable release name
+            • release_date: str - ISO formatted release date
+            • build_type: str - Build type identifier
+        └── CompatibilityResult: Python compatibility check results
+            • is_compatible: bool - Compatibility status
+            • current_version: tuple[int, ...] - Current Python version
+            • required_version: tuple[int, ...] - Required Python version
+            • error_message: str - Descriptive error message
+            • recommendations: list[str] - Upgrade recommendations
+
+Functions:
+    get_version_tuple() -> tuple[int, int, int]
+        Get semantic version as tuple for programmatic comparison
+
+    get_version_info() -> FlextVersionManager.VersionInfo
+        Get comprehensive version information with metadata
+
+    get_version_string() -> str
+        Get formatted version string with release information
+
+    check_python_compatibility() -> FlextCompatibilityResult
+        Check current Python version compatibility with requirements
+
+    is_feature_available(feature_name: str) -> bool
+        Check if named feature is available in current version
+
+    get_available_features() -> list[str]
+        Get list of all available feature names
+
+    compare_versions(version1: str, version2: str) -> int
+        Compare two semantic version strings (-1, 0, 1)
+
+    validate_version_format(version: str) -> bool
+        Validate semantic version string format compliance
+
+Constants:
+    __version__: str - Package version from metadata
+    VERSION_MAJOR/MINOR/PATCH: int - Semantic version components
+    RELEASE_NAME: str - Human-readable release identifier
+    RELEASE_DATE: str - ISO formatted release date
+    BUILD_TYPE: str - Build type (stable, beta, alpha)
+    MIN/MAX_PYTHON_VERSION: tuple[int, int, int] - Supported Python range
+    AVAILABLE_FEATURES: dict[str, bool] - Feature availability matrix
+
+Integration with FlextCore:
+    >>> from flext_core import get_version_info, check_python_compatibility
+    >>> from flext_core.core import FlextCore
+    >>> # Version-aware initialization
+    >>> core = FlextCore.get_instance()
+    >>> version_info = get_version_info()
+    >>> core.logger.info(
+    ...     f"FLEXT Core {version_info.major}.{version_info.minor} initialized"
+    ... )
+    >>> # Compatibility validation
+    >>> compat_result = check_python_compatibility()
+    >>> if not compat_result.is_compatible:
+    >>>     core.exceptions.raise_configuration_error(compat_result.error_message)
+    >>> # Feature-based conditional logic
+    >>> if is_feature_available("distributed_tracing"):
+    >>>     core.observability.enable_distributed_tracing()
+
+Feature Management Examples:
+    >>> # Check enterprise features
+    >>> enterprise_features = [
+    ...     "enterprise_logging",
+    ...     "performance_tracking",
+    ...     "type_safety",
+    ... ]
+    >>> available = [f for f in enterprise_features if is_feature_available(f)]
+    >>> print(f"Available enterprise features: {available}")
+    >>> # Version comparison for migration
+    >>> current = get_version_string()
+    >>> target = "1.0.0"
+    >>> if compare_versions(current, target) < 0:
+    >>>     print(f"Migration available: {current} -> {target}")
+
+Notes:
+    - All version utilities follow SemVer 2.0.0 specification
+    - Feature flags enable graceful degradation across versions
+    - Compatibility checking supports automated environment validation
+    - Version management integrates with FlextCore for centralized logging
+    - Backward compatibility maintained through carefully designed aliases
+    - Module avoids circular imports by defining constants locally
+
+"""
 
 import sys
 from importlib.metadata import version as _pkg_version

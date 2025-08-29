@@ -15,10 +15,12 @@ FlextConsole = FlextObservability.Console
 FlextMetrics = FlextObservability.Metrics
 FlextTracer = FlextObservability.Tracer
 
+
 # Create stub for missing function
 def get_global_observability():
     """Stub for global observability access."""
     return FlextObservability()
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

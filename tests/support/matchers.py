@@ -4,17 +4,16 @@ Leverages pytest-clarity, pytest-benchmark, pytest-mock, and other plugins
 for comprehensive testing with clear error messages and performance insights.
 """
 
-# ruff: noqa: S101, ANN401
 from __future__ import annotations
 
 import os
 import re
 from collections.abc import Callable, Sequence
-from typing import TypeGuard, object
-
-from pytest_benchmark.fixture import BenchmarkFixture
+from typing import TypeGuard, TypeVar
 
 from flext_core import FlextResult, FlextTypes
+
+T = TypeVar("T")
 
 JsonDict = FlextTypes.Core.JsonObject
 
@@ -28,8 +27,8 @@ class FlextMatchers:
 
     @staticmethod
     def assert_result_success(
-        result: FlextResult[object],
-        expected_data: object = None,
+        result: FlextResult[T],
+        expected_data: T | None = None,
     ) -> None:
         """Assert FlextResult is successful with optional data check.
 
@@ -52,7 +51,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_result_failure(
-        result: FlextResult[object],
+        result: FlextResult[T],
         expected_error: str | None = None,
         expected_error_code: str | None = None,
     ) -> None:
@@ -107,7 +106,7 @@ class FlextMatchers:
         )
 
         if expected_type is not None:
-            service = result.value
+            service: object = result.value
             assert isinstance(service, expected_type), (
                 f"Expected service {service_name!r} to be of type "
                 f"{expected_type.__name__}, got {type(service).__name__}"
@@ -174,7 +173,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_performance_within_limit(
-        benchmark: BenchmarkFixture,
+        benchmark: object,  # BenchmarkFixture
         func: Callable[[], object],
         max_time_seconds: float = 1.0,
         *args: object,
@@ -200,7 +199,7 @@ class FlextMatchers:
 
         # Get stats from benchmark
         stats = benchmark.stats
-        mean_time = getattr(stats, "mean", 0.0)  # type: ignore[attr-defined]  # Benchmark stats
+        mean_time = getattr(stats, "mean", 0.0)
 
         assert mean_time <= max_time_seconds, (
             f"Performance test failed: mean time {mean_time:.4f}s "
@@ -286,7 +285,7 @@ class FlextMatchers:
         )
 
         if call_count > 0:
-            return_value = mock_obj.return_value
+            return_value: object = mock_obj.return_value
             assert isinstance(return_value, expected_result_type), (
                 f"Expected return type {expected_result_type.__name__}, "
                 f"got {type(return_value).__name__}"
@@ -339,7 +338,7 @@ class PerformanceMatchers:
 
     @staticmethod
     def assert_linear_complexity(
-        benchmark: BenchmarkFixture,
+        benchmark: object,  # BenchmarkFixture
         func: Callable[[int], object],
         sizes: Sequence[int],
         tolerance_factor: float = 2.0,
@@ -356,15 +355,16 @@ class PerformanceMatchers:
             AssertionError: If complexity is not linear
 
         """
-        times = []
+        times: list[float] = []
         for size in sizes:
             benchmark(func, size)
-            times.append(getattr(benchmark.stats, "mean", 0.0))  # type: ignore[attr-defined]  # Benchmark stats
+            times.append(getattr(benchmark.stats, "mean", 0.0))
 
         # Check if time growth is roughly linear
         if len(times) >= 2:
-            growth_ratio = times[-1] / times[0]
-            size_ratio = sizes[-1] / sizes[0]
+            # Ensure division results in float for type safety
+            growth_ratio: float = float(times[-1] / times[0]) if times[0] > 0 else 1.0
+            size_ratio: float = float(sizes[-1] / sizes[0]) if sizes[0] > 0 else 1.0
 
             assert growth_ratio <= size_ratio * tolerance_factor, (
                 f"Complexity appears non-linear: time grew by {growth_ratio:.2f}x "
@@ -373,7 +373,7 @@ class PerformanceMatchers:
 
     @staticmethod
     def assert_memory_efficient(
-        benchmark: BenchmarkFixture,
+        benchmark: object,  # BenchmarkFixture
         func: Callable[[], object],
         _max_memory_mb: float = 100.0,
     ) -> None:

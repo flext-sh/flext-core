@@ -1,11 +1,105 @@
-"""Protocol definitions for FLEXT ecosystem contracts.
+"""FLEXT Protocols - Enterprise protocol definitions with hierarchical architecture and Clean Architecture principles.
 
-Core protocol definitions that avoid ALL circular imports by using string annotations
-and minimal external dependencies. This is a foundation module that should not
-import from other flext_core modules at runtime.
+Runtime-checkable protocol definitions for the FLEXT ecosystem implementing type-safe contracts
+for dependency injection, validation, serialization, and enterprise patterns organized in
+hierarchical layers following Clean Architecture with comprehensive FlextResult integration.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Module Role in Architecture:
+    FlextProtocols provides the contract definitions for all FLEXT ecosystem components,
+    organized in hierarchical layers from Foundation to Extensions, enabling type-safe
+    composition, runtime validation, and Clean Architecture dependency inversion.
+
+Classes and Methods:
+    FlextProtocols:                         # Hierarchical protocol architecture
+        # Foundation Layer - Core Protocols:
+        Foundation.Callable[P, T]                   # Generic callable protocol
+        Foundation.Validator[T]                     # Data validation protocol
+        Foundation.ErrorHandler                     # Exception transformation protocol
+        Foundation.Factory[T]                       # Object creation protocol
+        Foundation.AsyncFactory[T]                  # Async object creation protocol
+        Foundation.HasToDict                        # Dictionary conversion protocol
+        Foundation.HasToDictBasic                   # Basic dictionary conversion protocol
+        Foundation.SupportsDynamicAttributes        # Dynamic attribute access protocol
+        Foundation.HasModelDump                     # Pydantic v2 model dump protocol
+        Foundation.HasDict                          # Pydantic v1 dict protocol
+        Foundation.HasModelValidate                 # Pydantic v2 validation protocol
+        Foundation.SupportsRichComparison           # Rich comparison operations protocol
+
+        # Domain Layer - Business Logic Protocols:
+        Domain.Service                              # Domain service with lifecycle management
+        Domain.Repository[T]                        # Generic repository pattern protocol
+        Domain.DomainEvent                          # Domain event protocol
+        Domain.EventStore                           # Event persistence protocol
+
+        # Application Layer - Use Case Protocols:
+        Application.Handler[TInput, TOutput]        # Generic request/response handler
+        Application.MessageHandler                  # CQRS message handler protocol
+        Application.ValidatingHandler               # Handler with validation capabilities
+        Application.AuthorizingHandler              # Handler with authorization
+        Application.EventProcessor                  # Domain event processor
+        Application.UnitOfWork                      # Transaction management protocol
+
+        # Infrastructure Layer - External System Protocols:
+        Infrastructure.Connection                   # Generic connection protocol
+        Infrastructure.LdapConnection               # LDAP-specific connection protocol
+        Infrastructure.Auth                         # Authentication/authorization protocol
+        Infrastructure.Configurable                # Configuration management protocol
+        Infrastructure.LoggerProtocol               # Structured logging protocol
+
+        # Extensions Layer - Advanced Pattern Protocols:
+        Extensions.Plugin                           # Plugin system protocol
+        Extensions.PluginContext                    # Plugin execution context protocol
+        Extensions.Middleware                       # Middleware pipeline protocol
+        Extensions.AsyncMiddleware                  # Async middleware protocol
+        Extensions.Observability                    # Monitoring and metrics protocol
+
+        # Protocol Methods:
+        # Each protocol defines abstract methods appropriate to its domain
+        # All protocols integrate with FlextResult for railway-oriented programming
+        # Runtime checking available via isinstance() and issubclass()
+        # Generic protocols support proper type parameter constraints
+
+    FlextProtocolsConfig:                   # Protocol system configuration
+        # Configuration Methods:
+        configure_protocols_system(config) -> FlextResult[ConfigDict] # Configure protocol system
+        get_protocols_system_config() -> FlextResult[ConfigDict] # Get current config
+        create_environment_protocols_config(environment) -> FlextResult[ConfigDict] # Environment config
+        optimize_protocols_performance(performance_level="balanced") -> FlextResult[ConfigDict] # Performance optimization
+
+Usage Examples:
+    Domain service implementation:
+        class UserService(FlextProtocols.Domain.Service):
+            def start(self) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+            def health_check(self) -> FlextResult[dict]:
+                return FlextResult[dict].ok({"status": "healthy"})
+
+    Repository pattern:
+        class UserRepository(FlextProtocols.Domain.Repository[User]):
+            def get_by_id(self, entity_id: str) -> FlextResult[User]:
+                # Database lookup implementation
+                return FlextResult[User].ok(user)
+
+    Handler with validation:
+        class CreateUserHandler(FlextProtocols.Application.ValidatingHandler):
+            def handle(self, message: dict) -> FlextResult[dict]:
+                # Process user creation
+                return FlextResult[dict].ok({"created": True})
+
+    Configuration:
+        config = {
+            "environment": "production",
+            "protocol_level": "strict",
+            "enable_runtime_checking": True,
+        }
+        FlextProtocolsConfig.configure_protocols_system(config)
+
+Integration:
+    FlextProtocols integrates with FlextResult for error handling, FlextTypes.Config
+    for configuration, FlextConstants for validation, providing comprehensive type-safe
+    contracts for all FLEXT ecosystem components with Clean Architecture compliance.
+
 """
 
 from __future__ import annotations

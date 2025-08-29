@@ -4,25 +4,26 @@ Provides factory_boy-based factories for creating test objects with proper
 relationships, sequences, and customization following SOLID principles.
 """
 
-# ruff: noqa: D106
 from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-
-object
+from typing import cast
 
 import factory
 from factory import (
     Faker,
     LazyAttribute,
+    LazyFunction,
     Sequence,
 )
 from pydantic import BaseModel
 
-from flext_core import FlextResult
-from flext_core.constants import FlextConstants
-from flext_core.models import FlextModels
+from flext_core import (
+    FlextConstants,  # New refactored API
+    FlextModels,  # New refactored API
+    FlextResult,  # Installed package import
+)
 
 
 # Base models for testing (these would typically come from domain models)
@@ -35,7 +36,7 @@ class TestUser(BaseModel):
     age: int
     is_active: bool
     created_at: datetime
-    metadata: dict[str, object]  # type: ignore[explicit-any]
+    metadata: dict[str, object]
 
 
 class TestConfig(BaseModel):
@@ -49,7 +50,7 @@ class TestConfig(BaseModel):
     features: list[str]
 
 
-class TestField(BaseModel):  # type: ignore[explicit-any]
+class TestField(BaseModel):
     """Test field model for factory testing."""
 
     field_id: str
@@ -61,24 +62,28 @@ class TestField(BaseModel):  # type: ignore[explicit-any]
     max_length: int | None = None
     min_value: int | None = None
     max_value: int | None = None
-    default_value: object = None  # type: ignore[explicit-any]
+    default_value: object = None
     pattern: str | None = None
 
 
 # Factory Boy Factories
-class UserFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class UserFactory(factory.Factory[TestUser]):
     """Factory for creating test users with factory_boy."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestUser
 
-    id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
-    name = Faker("name")  # type: ignore[no-untyped-call]
-    email = Faker("email")  # type: ignore[no-untyped-call]
-    age = Faker("random_int", min=18, max=80)  # type: ignore[no-untyped-call]
+    id: LazyAttribute[TestUser, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    name: Faker[TestUser, str] = Faker("name")
+    email: Faker[TestUser, str] = Faker("email")
+    age: Faker[TestUser, int] = Faker("random_int", min=18, max=80)
     is_active = True
-    created_at = LazyAttribute(lambda _: datetime.now(UTC))  # type: ignore[no-untyped-call]
-    metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
+    created_at: LazyAttribute[TestUser, datetime] = LazyAttribute(
+        lambda _: datetime.now(UTC)
+    )
+    metadata = LazyFunction(
         lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
 
@@ -86,10 +91,18 @@ class UserFactory(factory.Factory):  # type: ignore[name-defined,misc]
 class AdminUserFactory(UserFactory):
     """Factory for REDACTED_LDAP_BIND_PASSWORD users."""
 
-    name = "Admin User"  # type: ignore[assignment]
-    email = "REDACTED_LDAP_BIND_PASSWORD@example.com"  # type: ignore[assignment]
-    metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
-        lambda: {"department": "REDACTED_LDAP_BIND_PASSWORD", "level": "REDACTED_LDAP_BIND_PASSWORD", "permissions": ["all"]},
+    # Use build/create methods to override values instead of class attributes
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs: object) -> dict[str, object]:
+        # Override default kwargs for REDACTED_LDAP_BIND_PASSWORD users
+        if "name" not in kwargs:
+            kwargs["name"] = "Admin User"
+        if "email" not in kwargs:
+            kwargs["email"] = "REDACTED_LDAP_BIND_PASSWORD@example.com"
+        return super()._adjust_kwargs(**kwargs)
+
+    metadata = LazyFunction(
+        lambda: {"department": "REDACTED_LDAP_BIND_PASSWORD", "level": "REDACTED_LDAP_BIND_PASSWORD", "permissions": "all"},
     )
 
 
@@ -97,7 +110,7 @@ class InactiveUserFactory(UserFactory):
     """Factory for inactive users."""
 
     is_active = False
-    metadata = factory.LazyFunction(  # type: ignore[attr-defined,no-untyped-call]
+    metadata = LazyFunction(
         lambda: {
             "department": "archived",
             "level": "inactive",
@@ -106,10 +119,12 @@ class InactiveUserFactory(UserFactory):
     )
 
 
-class ConfigFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class ConfigFactory(factory.Factory[TestConfig]):
     """Factory for creating test configurations."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestConfig
 
     database_url = "postgresql://test:test@localhost/test_db"
@@ -117,7 +132,7 @@ class ConfigFactory(factory.Factory):  # type: ignore[name-defined,misc]
     debug = True
     timeout = 30
     max_connections = 100
-    features = factory.LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring"])  # type: ignore[attr-defined,no-untyped-call]
+    features = LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring"])
 
 
 class ProductionConfigFactory(ConfigFactory):
@@ -128,67 +143,83 @@ class ProductionConfigFactory(ConfigFactory):
     debug = False
     timeout = 60
     max_connections = 500
-    features = factory.LazyFunction(
+    features = LazyFunction(
         lambda: ["auth", "cache", "metrics", "monitoring", "alerts"]
-    )  # type: ignore[attr-defined,no-untyped-call]
+    )
 
 
-class StringFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class StringFieldFactory(factory.Factory[TestField]):
     """Factory for string field testing."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestField
 
-    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
-    field_name = Sequence(lambda n: f"string_field_{n}")  # type: ignore[no-untyped-call]
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"string_field_{n}")
     field_type = FlextConstants.Enums.FieldType.STRING.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test string field: {obj.field_name}")  # type: ignore[no-untyped-call]
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test string field: {obj.field_name}"
+    )
     min_length = 1
     max_length = 100
     pattern = r"^[a-zA-Z0-9_]+$"
 
 
-class IntegerFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class IntegerFieldFactory(factory.Factory[TestField]):
     """Factory for integer field testing."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestField
 
-    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
-    field_name = Sequence(lambda n: f"integer_field_{n}")  # type: ignore[no-untyped-call]
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"integer_field_{n}")
     field_type = FlextConstants.Enums.FieldType.INTEGER.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test integer field: {obj.field_name}")  # type: ignore[no-untyped-call]
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test integer field: {obj.field_name}"
+    )
     min_value = 0
     max_value = 1000
 
 
-class BooleanFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class BooleanFieldFactory(factory.Factory[TestField]):
     """Factory for boolean field testing."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestField
 
-    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
-    field_name = Sequence(lambda n: f"boolean_field_{n}")  # type: ignore[no-untyped-call]
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"boolean_field_{n}")
     field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test boolean field: {obj.field_name}")  # type: ignore[no-untyped-call]
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test boolean field: {obj.field_name}"
+    )
     default_value = False
 
 
-class FloatFieldFactory(factory.Factory):  # type: ignore[name-defined,misc]
+class FloatFieldFactory(factory.Factory[TestField]):
     """Factory for float field testing."""
 
-    class Meta:  # type: ignore[name-defined,misc]
+    class Meta:
+        """Factory meta compatibility."""
+
         model = TestField
 
-    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))  # type: ignore[no-untyped-call]
-    field_name = Sequence(lambda n: f"float_field_{n}")  # type: ignore[no-untyped-call]
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"float_field_{n}")
     field_type = FlextConstants.Enums.FieldType.FLOAT.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test float field: {obj.field_name}")  # type: ignore[no-untyped-call]
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test float field: {obj.field_name}"
+    )
     min_value = 0.0
     max_value = 1000.0
 
@@ -205,20 +236,20 @@ class FlextResultFactory:
     @staticmethod
     def failure(
         error: str = "test_error", error_code: str = "TEST_ERROR"
-    ) -> FlextResult[object]:  # type: ignore[explicit-any]
+    ) -> FlextResult[object]:
         """Create failed FlextResult."""
         return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
     def success_with_user() -> FlextResult[TestUser]:
         """Create successful FlextResult with user data."""
-        user = UserFactory()
+        user = cast("TestUser", UserFactory())
         return FlextResult[TestUser].ok(user)
 
     @staticmethod
     def success_with_config() -> FlextResult[TestConfig]:
         """Create successful FlextResult with config data."""
-        config = ConfigFactory()
+        config = cast("TestConfig", ConfigFactory())
         return FlextResult[TestConfig].ok(config)
 
 
@@ -254,7 +285,7 @@ class BatchFactories:
     @staticmethod
     def create_users(count: int = 10) -> list[TestUser]:
         """Create batch of test users."""
-        return UserFactory.create_batch(count)  # type: ignore[no-any-return]
+        return UserFactory.create_batch(count)
 
     @staticmethod
     def create_mixed_users(count: int = 10) -> list[TestUser]:
@@ -262,17 +293,17 @@ class BatchFactories:
         users: list[TestUser] = []
         for i in range(count):
             if i % 3 == 0:
-                users.append(AdminUserFactory())
+                users.append(cast("TestUser", AdminUserFactory()))
             elif i % 5 == 0:
-                users.append(InactiveUserFactory())
+                users.append(cast("TestUser", InactiveUserFactory()))
             else:
-                users.append(UserFactory())
+                users.append(cast("TestUser", UserFactory()))
         return users
 
     @staticmethod
     def create_field_matrix() -> list[TestField]:
         """Create comprehensive field test matrix."""
-        fields = []
+        fields: list[TestField] = []
         fields.extend(StringFieldFactory.create_batch(3))
         fields.extend(IntegerFieldFactory.create_batch(3))
         fields.extend(BooleanFieldFactory.create_batch(2))
@@ -300,12 +331,12 @@ class EdgeCaseGenerators:
         return [0, -1, 1, 999999999, -999999999, 1e-10, float("inf"), float("-inf")]
 
     @staticmethod
-    def empty_values() -> list[object]:  # type: ignore[explicit-any]
+    def empty_values() -> list[object]:
         """Generate empty/null test values."""
         return ["", [], {}, None, 0, False]
 
     @staticmethod
-    def large_values() -> list[object]:  # type: ignore[explicit-any]
+    def large_values() -> list[object]:
         """Generate large value test cases."""
         return [
             "x" * 10000,
@@ -315,38 +346,38 @@ class EdgeCaseGenerators:
 
 
 # Utility functions for common test patterns
-def create_test_hierarchy() -> dict[str, object]:  # type: ignore[explicit-any]
+def create_test_hierarchy() -> dict[str, object]:
     """Create hierarchical test data structure."""
     return {
-        "root": UserFactory(),
-        "children": UserFactory.create_batch(3),
-        "REDACTED_LDAP_BIND_PASSWORD": AdminUserFactory(),
-        "config": ConfigFactory(),
+        "root": cast("TestUser", UserFactory()),
+        "children": UserFactory.create_batch(3),  # Remove redundant cast
+        "REDACTED_LDAP_BIND_PASSWORD": cast("TestUser", AdminUserFactory()),
+        "config": cast("TestConfig", ConfigFactory()),
         "fields": BatchFactories.create_field_matrix(),
     }
 
 
-def create_validation_test_cases() -> list[dict[str, object]]:  # type: ignore[explicit-any]
+def create_validation_test_cases() -> list[dict[str, object]]:
     """Create comprehensive validation test cases."""
     return [
         {
             "name": "valid_user",
-            "data": UserFactory(),
+            "data": cast("TestUser", UserFactory()),
             "expected_valid": True,
         },
         {
             "name": "invalid_email",
-            "data": UserFactory(email="invalid-email"),
+            "data": cast("TestUser", UserFactory(email="invalid-email")),
             "expected_valid": False,
         },
         {
             "name": "negative_age",
-            "data": UserFactory(age=-5),
+            "data": cast("TestUser", UserFactory(age=-5)),
             "expected_valid": False,
         },
         {
             "name": "unicode_name",
-            "data": UserFactory(name="测试用户"),
+            "data": cast("TestUser", UserFactory(name="测试用户")),
             "expected_valid": True,
         },
     ]

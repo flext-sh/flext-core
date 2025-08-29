@@ -14,11 +14,16 @@ from __future__ import annotations
 import contextlib
 import sys
 from decimal import Decimal
-from typing import override
 
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextContext,
+    FlextMixins,
+    FlextResult,
+)
 
 # =============================================================================
 # TYPE ALIASES - For better type safety
@@ -65,7 +70,6 @@ class AdvancedExamplesConfig(FlextConfig):
         extra="forbid",
     )
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rule constraints."""
         if self.max_order_items <= 0:
@@ -87,97 +91,76 @@ class AdvancedExamplesConfig(FlextConfig):
 # =============================================================================
 
 
-class OrderProcessor:
+class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
     """Advanced order processing with comprehensive validation and error handling."""
 
     def __init__(self, config: AdvancedExamplesConfig) -> None:
         """Initialize order processor with configuration."""
+        super().__init__()
         self._config = config
+        self.container = FlextContainer()
+        self.context = FlextContext()
+        self.container.register("config", config)
 
     def create_order(
         self, user_id: str, items_data: list[ItemData]
     ) -> FlextResult[OrderData]:
-        """Create and validate order with comprehensive business rules."""
-        try:
-            # Validate order items count
-            if len(items_data) > self._config.max_order_items:
-                return FlextResult[OrderData].fail(
-                    f"Too many items: {len(items_data)} > {self._config.max_order_items}"
+        """Create and validate order with comprehensive business rules using railway pattern."""
+        return (
+            self._validate_items_count(items_data)
+            .flat_map(lambda _: self._process_all_items(items_data))
+            .flat_map(lambda items_and_total: self._validate_and_create_order(
+                user_id, items_and_total[0], items_and_total[1]
+            ))
+        )
+
+    def _validate_items_count(self, items_data: list[ItemData]) -> FlextResult[list[ItemData]]:
+        """Validate order items count."""
+        if len(items_data) > self._config.max_order_items:
+            return FlextResult[list[ItemData]].fail(
+                f"Too many items: {len(items_data)} > {self._config.max_order_items}"
+            )
+        if not items_data:
+            return FlextResult[list[ItemData]].fail("Order must have at least one item")
+        return FlextResult[list[ItemData]].ok(items_data)
+
+    def _process_all_items(self, items_data: list[ItemData]) -> FlextResult[tuple[list[ItemData], Decimal]]:
+        """Process all items and calculate total."""
+        processed_items: list[ItemData] = []
+        total_amount = Decimal("0.00")
+
+        for item_data in items_data:
+            item_result = self._process_order_item(item_data)
+            if not item_result.success:
+                return FlextResult[tuple[list[ItemData], Decimal]].fail(
+                    f"Item validation failed: {item_result.error}"
                 )
 
-            if not items_data:
-                return FlextResult[OrderData].fail("Order must have at least one item")
+            item = item_result.value
+            processed_items.append(item)
+            if "total_price" in item:
+                total_amount += Decimal(str(item["total_price"]))
 
-            # Process order items
-            processed_items: list[ItemData] = []
-            total_amount = Decimal("0.00")
+        return FlextResult[tuple[list[ItemData], Decimal]].ok((processed_items, total_amount))
 
-            for item_data in items_data:
-                item_result = self._process_order_item(item_data)
-                if not item_result.success:
-                    return FlextResult[OrderData].fail(
-                        f"Item validation failed: {item_result.error}"
-                    )
+    def _validate_and_create_order(
+        self, user_id: str, processed_items: list[ItemData], total_amount: Decimal
+    ) -> FlextResult[OrderData]:
+        """Validate amount and create final order."""
+        amount_validation = self._validate_order_amount(total_amount)
+        if not amount_validation.success:
+            return FlextResult[OrderData].fail(
+                amount_validation.error or "Amount validation failed"
+            )
 
-                item = item_result.value
-                processed_items.append(item)
-                if "total_price" in item:
-                    total_amount += Decimal(str(item["total_price"]))
-
-            # Validate total amount
-            amount_validation = self._validate_order_amount(total_amount)
-            if not amount_validation.success:
-                return FlextResult[OrderData].fail(
-                    amount_validation.error or "Amount validation failed"
-                )
-
-            # Create order dictionary
-            order: OrderData = {
-                "id": f"ORDER-{user_id}-001",
-                "user_id": user_id,
-                "items": processed_items,
-                "total_amount": float(total_amount),
-                "status": "created",
-            }
-
-            return FlextResult[OrderData].ok(order)
-
-        except Exception as e:
-            return FlextResult[OrderData].fail(f"Unexpected error creating order: {e}")
-
-    def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
-        """Process and validate individual order item."""
-        required_fields = ["product_id", "quantity", "unit_price"]
-
-        for field in required_fields:
-            if field not in item_data:
-                return FlextResult[ItemData].fail(f"Missing required field: {field}")
-
-        try:
-            # Safe conversion with proper error handling
-            quantity_str = str(item_data["quantity"])
-            quantity = int(quantity_str)
-            unit_price = Decimal(str(item_data["unit_price"]))
-
-            if quantity <= 0:
-                return FlextResult[ItemData].fail("Quantity must be positive")
-
-            if unit_price <= 0:
-                return FlextResult[ItemData].fail("Unit price must be positive")
-
-            total_price = unit_price * quantity
-
-            processed_item: ItemData = {
-                **item_data,
-                "quantity": quantity,
-                "unit_price": float(unit_price),
-                "total_price": float(total_price),
-            }
-
-            return FlextResult[ItemData].ok(processed_item)
-
-        except (ValueError, TypeError) as e:
-            return FlextResult[ItemData].fail(f"Invalid item data: {e}")
+        order: OrderData = {
+            "id": f"ORDER-{user_id}-001",
+            "user_id": user_id,
+            "items": processed_items,
+            "total_amount": float(total_amount),
+            "status": "created",
+        }
+        return FlextResult[OrderData].ok(order)
 
     def _validate_order_amount(self, amount: Decimal) -> FlextResult[None]:
         """Validate order total amount against business rules."""
@@ -192,6 +175,43 @@ class OrderProcessor:
             )
 
         return FlextResult[None].ok(None)
+
+    def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
+        """Process and validate individual order item using railway pattern."""
+        return (
+            self._validate_required_fields(item_data, ["product_id", "quantity", "unit_price"])
+            .flat_map(lambda _: self._parse_and_validate_item_values(item_data))
+        )
+
+    def _validate_required_fields(self, item_data: ItemData, fields: list[str]) -> FlextResult[ItemData]:
+        """Validate required fields exist."""
+        for field in fields:
+            if field not in item_data:
+                return FlextResult[ItemData].fail(f"Missing required field: {field}")
+        return FlextResult[ItemData].ok(item_data)
+
+    def _parse_and_validate_item_values(self, item_data: ItemData) -> FlextResult[ItemData]:
+        """Parse and validate item values."""
+        try:
+            quantity = int(str(item_data["quantity"]))
+            unit_price = Decimal(str(item_data["unit_price"]))
+
+            if quantity <= 0:
+                return FlextResult[ItemData].fail("Quantity must be positive")
+            if unit_price <= 0:
+                return FlextResult[ItemData].fail("Unit price must be positive")
+
+            total_price = unit_price * quantity
+            processed_item: ItemData = {
+                **item_data,
+                "quantity": quantity,
+                "unit_price": float(unit_price),
+                "total_price": float(total_price),
+            }
+            return FlextResult[ItemData].ok(processed_item)
+
+        except (ValueError, TypeError) as e:
+            return FlextResult[ItemData].fail(f"Invalid item data: {e}")
 
 
 # =============================================================================

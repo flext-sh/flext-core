@@ -1,65 +1,148 @@
 """Comprehensive exception system with structured error handling and metrics.
 
-Provides a hierarchical exception system with the FlextExceptions class containing
-specialized exception types, error codes, context tracking, and metrics monitoring.
-All exceptions follow a consistent pattern with error codes, correlation IDs,
-and structured context for better debugging and monitoring.
-
-Main Classes:
-    FlextExceptions: Hierarchical container for all FLEXT exception types and utilities.
-
-Key Features:
-    - Hierarchical exception organization with specialized types
-    - Structured error codes using FlextConstants integration
-    - Context tracking with correlation IDs for distributed tracing
-    - Automatic metrics collection for exception monitoring
-    - Multiple inheritance from appropriate Python builtin exceptions
-    - Legacy compatibility aliases for backward compatibility
-    - Direct callable interface for automatic exception type selection
+This module provides a hierarchical exception system for the FLEXT ecosystem featuring
+structured error handling, automatic metrics collection, distributed tracing support,
+and comprehensive error codes. All exceptions follow consistent patterns with correlation
+IDs, context tracking, and enterprise-grade monitoring capabilities.
 
 Architecture:
-    The exception system follows Clean Architecture principles with clear separation
-    of concerns. All exceptions inherit from a common BaseError that provides:
-    - Structured error codes
-    - Context tracking with correlation IDs
-    - Automatic metrics recording
-    - Timestamp tracking
-    - Consistent string representation
+    Foundation layer module providing exception hierarchy used throughout the FLEXT
+    ecosystem. Implements Clean Architecture principles with clear separation of concerns
+    and multiple inheritance from Python builtin exceptions for proper exception handling.
 
-Example:
-    Basic exception usage with context::
+Core Components:
+    FlextExceptions: Central container and factory for all FLEXT exception types
+    FlextExceptions.BaseError: Common base class with error codes and context tracking
+    FlextExceptions.Metrics: Centralized exception occurrence tracking and monitoring
+    FlextExceptions.ErrorCodes: Structured error code definitions and categories
 
-        # Direct usage with specific exception type
-        raise FlextExceptions.ValidationError(
-            "Invalid email format",
-            field="email",
-            value="invalid-email",
-            context={"user_id": "123"},
-        )
+Key Features:
+    - Hierarchical exception organization with specialized types for different error categories
+    - Structured error codes with automatic categorization and consistent naming patterns
+    - Context tracking with correlation IDs for distributed tracing and request tracking
+    - Automatic metrics collection for exception monitoring and observability
+    - Multiple inheritance from appropriate Python builtin exceptions for proper handling
+    - Legacy compatibility aliases for backward compatibility with existing code
+    - Direct callable interface for automatic exception type selection based on context
+    - Enterprise-grade error handling with configurable error handling strategies
 
-        # Automatic type selection via callable interface
-        raise FlextExceptions(
-            "Operation failed", operation="create_user", context={"attempt": 3}
-        )
+Exception Types:
+    FlextExceptions.ValidationError(BaseError, ValueError): Input validation and data format errors
+    FlextExceptions.ConfigurationError(BaseError, ValueError): Configuration and settings errors
+    FlextExceptions.ConnectionError(BaseError, ConnectionError): Network and service connection failures
+    FlextExceptions.ProcessingError(BaseError, RuntimeError): Data processing and transformation errors
+    FlextExceptions.TimeoutError(BaseError, TimeoutError): Operation timeout and deadline exceeded errors
+    FlextExceptions.NotFoundError(BaseError, FileNotFoundError): Resource not found errors
+    FlextExceptions.AlreadyExistsError(BaseError, FileExistsError): Resource already exists errors
+    FlextExceptions.PermissionError(BaseError, PermissionError): Access control and permission errors
+    FlextExceptions.AuthenticationError(BaseError, PermissionError): Authentication and identity errors
+    FlextExceptions.TypeError(BaseError, TypeError): Type-related errors and mismatches
+    FlextExceptions.CriticalError(BaseError, SystemError): Critical system errors requiring immediate attention
+    FlextExceptions.Error(BaseError, RuntimeError): General FLEXT runtime errors
+    FlextExceptions.UserError(BaseError, TypeError): User input and interface errors
+    FlextExceptions.AttributeError(BaseError, AttributeError): Attribute access and object errors
+    FlextExceptions.OperationError(BaseError, RuntimeError): Business logic and operation errors
 
-        # Configuration errors with structured context
-        raise FlextExceptions.ConfigurationError(
-            "Database URL not configured", config_key="DATABASE_URL", config_file=".env"
-        )
+Methods and Properties:
+    FlextExceptions Class Methods:
+        __new__(message: str, **kwargs) -> BaseError: Factory method for automatic type selection
+        get_metrics() -> dict[str, int]: Get exception occurrence metrics by type
+        clear_metrics() -> None: Clear all collected exception metrics
+        configure_error_handling(**kwargs) -> FlextResult[None]: Configure error handling strategy
+        get_error_handling_config() -> FlextResult[ConfigDict]: Get current error handling configuration
+        create_environment_specific_config(env: str) -> FlextResult[dict]: Create environment-specific config
 
-    Exception metrics and monitoring::
+    BaseError Class Properties and Methods:
+        message: str - Human-readable error message
+        error_code: str - Structured error code for programmatic handling
+        correlation_id: str - Unique identifier for distributed tracing
+        timestamp: datetime - When the exception occurred
+        context: dict[str, object] - Additional error context and metadata
+        metrics: dict[str, object] - Exception metrics and tracking data
+        __init__(message: str, **kwargs) -> None: Initialize with message and context
+        __str__() -> str: String representation with error code and context
 
-        # Get exception occurrence metrics
-        metrics = FlextExceptions.get_metrics()
-        print(f"ValidationError occurred: {metrics.get('ValidationError', 0)} times")
+    Metrics Class Methods:
+        record_exception(exception_type: str) -> None: Record exception occurrence
+        get_metrics() -> dict[str, int]: Retrieve exception metrics by type
+        clear_metrics() -> None: Reset all metrics counters
 
-        # Clear metrics for new monitoring period
-        FlextExceptions.clear_metrics()
+    ErrorCodes Class Properties:
+        VALIDATION_ERROR: str - Input validation failure codes
+        CONFIGURATION_ERROR: str - Configuration and settings error codes
+        CONNECTION_ERROR: str - Network and connection failure codes
+        PROCESSING_ERROR: str - Data processing error codes
+        TIMEOUT_ERROR: str - Timeout and deadline error codes
+        NOT_FOUND_ERROR: str - Resource not found error codes
+        ALREADY_EXISTS_ERROR: str - Resource exists error codes
+        PERMISSION_ERROR: str - Access control error codes
+        AUTHENTICATION_ERROR: str - Authentication failure codes
+        TYPE_ERROR: str - Type mismatch error codes
+        CRITICAL_ERROR: str - Critical system error codes
+        GENERAL_ERROR: str - General runtime error codes
+        USER_ERROR: str - User input error codes
+        ATTRIBUTE_ERROR: str - Attribute access error codes
+        OPERATION_ERROR: str - Business operation error codes
 
-Note:
-    All exceptions automatically record metrics and include correlation IDs
-    for distributed tracing. The system is designed to provide maximum
-    debugging information while maintaining clean APIs.
+Examples:
+    Direct exception usage with structured context:
+    >>> raise FlextExceptions.ValidationError(
+    ...     "Invalid email format",
+    ...     field="email",
+    ...     value="invalid-email@",
+    ...     context={"user_id": "12345", "request_id": "req_abc123"},
+    ... )
+
+    Automatic type selection via callable interface:
+    >>> raise FlextExceptions(
+    ...     "Operation failed",
+    ...     operation="create_user",
+    ...     context={"attempt": 3, "max_retries": 5},
+    ... )
+
+    Configuration errors with environment context:
+    >>> raise FlextExceptions.ConfigurationError(
+    ...     "Database URL not configured",
+    ...     config_key="DATABASE_URL",
+    ...     config_file=".env",
+    ...     environment="production",
+    ... )
+
+    Exception metrics and monitoring:
+    >>> try:
+    ...     risky_operation()
+    ... except FlextExceptions.BaseError as e:
+    ...     logger.error(
+    ...         f"Operation failed: {e}",
+    ...         extra={
+    ...             "error_code": e.error_code,
+    ...             "correlation_id": e.correlation_id,
+    ...             "context": e.context,
+    ...         },
+    ...     )
+    ...     metrics = FlextExceptions.get_metrics()
+    ...     print(f"Total validation errors: {metrics.get('ValidationError', 0)}")
+
+    Distributed tracing with correlation IDs:
+    >>> try:
+    ...     external_api_call()
+    ... except FlextExceptions.ConnectionError as e:
+    ...     trace_context = {
+    ...         "correlation_id": e.correlation_id,
+    ...         "timestamp": e.timestamp.isoformat(),
+    ...         "service": "external_api",
+    ...         "operation": "fetch_user_data",
+    ...     }
+    ...     send_to_monitoring_system(trace_context)
+
+Notes:
+    - All FLEXT exceptions inherit from FlextExceptions.BaseError for consistency
+    - Error codes follow structured naming patterns for programmatic handling
+    - Context dictionaries support arbitrary key-value pairs for debugging
+    - Correlation IDs enable distributed tracing across service boundaries
+    - Metrics collection supports observability and monitoring strategies
+    - Multiple inheritance ensures compatibility with Python exception handling
+    - Legacy aliases maintain backward compatibility with existing code
 
 """
 

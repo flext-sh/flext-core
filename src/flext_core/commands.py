@@ -194,6 +194,83 @@ Module Role in Architecture:
     between the Domain layer (business logic) and Infrastructure layer (persistence,
     messaging) while maintaining strict separation of concerns and dependency inversion.
 
+**Classes and Methods**:
+    Complete FlextCommands class hierarchy with all nested classes and their key methods:
+
+    FlextCommands.Types: Type definitions extending FlextTypes
+        • CommandType = str - Command classification type
+        • QueryType = str - Query classification type
+        • HandlerType = str - Handler classification type
+        • ResultType[T] = FlextResult[T] - Generic result wrapper
+        • PayloadType = FlextModels.Payload[dict] - Message payload type
+
+    FlextCommands.Protocols: Interface definitions for type safety
+        • CommandProtocol: Interface for command objects
+        • QueryProtocol: Interface for query objects
+        • HandlerProtocol[TRequest, TResponse]: Generic handler interface
+        • BusProtocol: Interface for command bus operations
+        • MiddlewareProtocol: Interface for middleware components
+
+    FlextCommands.Models: Base classes for commands and queries
+        • Command: Base command class with Pydantic validation
+            - validate_command(self) -> FlextResult[None]: Command-specific validation
+            - get_metadata(self) -> dict[str, object]: Extract command metadata
+            - to_payload(self) -> FlextModels.Payload[dict]: Serialize to payload
+            - log_operation(self, operation: str, **kwargs) -> None: Log command operations
+        • Query: Base query class with pagination and sorting
+            - validate_query(self) -> FlextResult[None]: Query validation
+            - get_pagination_info(self) -> dict[str, int]: Extract pagination details
+            - apply_sorting(self, data: list[T]) -> list[T]: Apply sorting to results
+        • BaseModel: Foundation model with common functionality
+            - require_field(field_name: str, value: object) -> FlextResult[None]: Field validation
+            - require_email(email: str) -> FlextResult[None]: Email format validation
+            - require_min_length(value: str, min_len: int, field_name: str) -> FlextResult[None]: Length validation
+
+    FlextCommands.Handlers: Handler base classes for command/query processing
+        • AbstractHandler[TRequest, TResponse]: Abstract base handler
+            - handle(self, request: TRequest) -> FlextResult[TResponse]: Process request
+            - can_handle(self, request: object) -> bool: Check if handler supports request
+            - get_handler_info(self) -> dict[str, object]: Handler metadata
+        • CommandHandler[TCommand, TResult]: Command-specific handler
+            - handle_command(self, command: TCommand) -> FlextResult[TResult]: Process command
+            - validate_command(self, command: TCommand) -> FlextResult[None]: Pre-processing validation
+            - log_command_execution(self, command: TCommand, result: TResult) -> None: Execution logging
+        • QueryHandler[TQuery, TResult]: Query-specific handler
+            - handle_query(self, query: TQuery) -> FlextResult[TResult]: Process query
+            - apply_pagination(self, results: list[T], query: TQuery) -> list[T]: Paginate results
+            - apply_filters(self, results: list[T], query: TQuery) -> list[T]: Filter results
+
+    FlextCommands.Bus: Central command bus for routing and execution
+        • CommandBus: Main bus implementation
+            - execute(self, command: object) -> FlextResult[object]: Execute command
+            - register_handler(self, handler: object) -> FlextResult[None]: Register command handler
+            - add_middleware(self, middleware: object) -> None: Add middleware to pipeline
+            - get_registered_handlers(self) -> dict[str, object]: List registered handlers
+        • QueryBus: Query processing bus
+            - query(self, query: object) -> FlextResult[object]: Execute query
+            - register_query_handler(self, handler: object) -> FlextResult[None]: Register query handler
+        • EventBus: Domain event processing
+            - publish(self, event: object) -> FlextResult[None]: Publish domain event
+            - subscribe(self, handler: object, event_type: str) -> None: Subscribe to events
+
+    FlextCommands.Decorators: Function-based handler registration
+        • command_handler(command_type: type) -> Callable: Decorator for command handlers
+        • query_handler(query_type: type) -> Callable: Decorator for query handlers
+        • middleware(order: int = 0) -> Callable: Decorator for middleware registration
+        • validation_middleware() -> Callable: Pre-built validation middleware
+
+    FlextCommands.Results: Factory methods for consistent result creation
+        • success(data: T) -> FlextResult[T]: Create successful result
+        • failure(error: str, error_code: str = None) -> FlextResult[None]: Create failure result
+        • validation_error(message: str, field: str = None) -> FlextResult[None]: Validation error result
+        • not_found(resource: str) -> FlextResult[None]: Not found error result
+
+    FlextCommands.Factories: Instance creation with dependency injection
+        • create_command_bus(**kwargs) -> CommandBus: Create configured command bus
+        • create_query_bus(**kwargs) -> QueryBus: Create configured query bus
+        • create_handler(handler_type: str, **config) -> AbstractHandler: Create handler instance
+        • create_middleware(middleware_type: str, **config) -> object: Create middleware instance
+
 **Migration Notes**:
     This implementation replaces legacy command processing patterns with:
 

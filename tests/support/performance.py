@@ -4,21 +4,37 @@ Provides comprehensive performance testing, profiling, and benchmarking
 capabilities with memory tracking, complexity analysis, and regression detection.
 """
 
-# ruff: noqa: S101, ARG001, ARG002, ANN401, PLC0415
 from __future__ import annotations
 
+import asyncio
 import concurrent.futures
 import gc
 import time
 import tracemalloc
-from collections.abc import Callable, Generator
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
-from typing import TypeVar
+from typing import ParamSpec, Protocol, TypeVar
 
 import pytest
-from pytest_benchmark.fixture import BenchmarkFixture
 
 T = TypeVar("T")
+P = ParamSpec("P")
+
+# Type aliases to avoid object usage
+BenchmarkStats = object
+
+
+class BenchmarkProtocol(Protocol):
+    """Protocol for pytest-benchmark fixture."""
+
+    def __call__(self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+        """Call the benchmark function."""
+        ...
+
+    @property
+    def stats(self) -> BenchmarkStats:
+        """Benchmark statistics."""
+        ...
 
 
 class ComplexityAnalyzer:
@@ -34,7 +50,7 @@ class ComplexityAnalyzer:
         operation_name: str = "operation",
     ) -> dict[str, object]:
         """Measure function performance across different input sizes."""
-        results = []
+        results: list[dict[str, object]] = []
 
         for size in input_sizes:
             start_time = time.perf_counter()
@@ -46,18 +62,17 @@ class ComplexityAnalyzer:
             end_time = time.perf_counter()
             duration = end_time - start_time
 
-            results.append(
-                {
-                    "input_size": size,
-                    "duration_seconds": duration,
-                    "duration_ms": duration * 1000,
-                },
-            )
+            result_dict: dict[str, object] = {
+                "input_size": size,
+                "duration_seconds": duration,
+                "duration_ms": duration * 1000,
+            }
+            results.append(result_dict)
 
         # Analyze complexity pattern
         complexity_analysis = self._analyze_complexity_pattern(results)
 
-        measurement = {
+        measurement: dict[str, object] = {
             "operation": operation_name,
             "results": results,
             "complexity_analysis": complexity_analysis,
@@ -75,9 +90,17 @@ class ComplexityAnalyzer:
         if len(results) < 2:
             return {"pattern": "insufficient_data"}
 
-        # Simple pattern detection
-        sizes = [r["input_size"] for r in results]
-        times = [r["duration_seconds"] for r in results]
+        # Simple pattern detection with type casting
+        sizes = [
+            float(r["input_size"])
+            for r in results
+            if isinstance(r["input_size"], (int, float))
+        ]
+        times = [
+            float(r["duration_seconds"])
+            for r in results
+            if isinstance(r["duration_seconds"], (int, float))
+        ]
 
         # Check if it's roughly linear
         if len(times) >= 3:
@@ -107,7 +130,7 @@ class StressTestRunner:
         function: Callable[[], object],
         iterations: int = 1000,
         *,  # concurrent is keyword-only to avoid boolean trap
-        concurrent: bool = False,
+        concurrent: bool = False,  # Currently unused but reserved for future use  # noqa: ARG002
         operation_name: str = "load_test",
     ) -> dict[str, object]:
         """Run load test with specified iterations."""
@@ -125,7 +148,7 @@ class StressTestRunner:
         end_time = time.perf_counter()
         total_duration = end_time - start_time
 
-        result = {
+        result: dict[str, object] = {
             "operation": operation_name,
             "iterations": iterations,
             "successes": successes,
@@ -166,7 +189,7 @@ class StressTestRunner:
 
         actual_duration = time.perf_counter() - start_time
 
-        result = {
+        result: dict[str, object] = {
             "operation": operation_name,
             "planned_duration_seconds": duration_seconds,
             "actual_duration_seconds": actual_duration,
@@ -232,7 +255,11 @@ class PerformanceProfiler:
             msg = f"Expected operation {operation_name}, got {last_measurement['operation']}"
             raise AssertionError(msg)
 
-        memory_used = last_measurement["memory_mb"]
+        memory_used = (
+            float(last_measurement["memory_mb"])
+            if isinstance(last_measurement["memory_mb"], (int, float, str))
+            else 0.0
+        )
         assert memory_used <= max_memory_mb, (
             f"Memory usage {memory_used:.2f}MB exceeds limit {max_memory_mb:.2f}MB\n"
             f"Top allocations: {last_measurement['peak_memory_stats']}"
@@ -244,11 +271,11 @@ class BenchmarkUtils:
 
     @staticmethod
     def benchmark_with_warmup(
-        benchmark: BenchmarkFixture,
-        func: Callable[..., T],
+        benchmark: BenchmarkProtocol,
+        func: Callable[P, T],
         warmup_rounds: int = 5,
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> T:
         """Benchmark function with warmup rounds for consistent results."""
         # Warmup rounds
@@ -260,25 +287,25 @@ class BenchmarkUtils:
 
     @staticmethod
     def benchmark_complexity(
-        benchmark: BenchmarkFixture,
+        benchmark: BenchmarkProtocol,
         func: Callable[[int], T],
         sizes: list[int],
         expected_complexity: str = "O(n)",
     ) -> dict[str, object]:
         """Benchmark function complexity across different input sizes."""
-        results = {}
+        results: dict[int, dict[str, object]] = {}
 
         for size in sizes:
             # Benchmark for this size
             result = benchmark(func, size)
-            stats = benchmark.stats
+            stats = getattr(benchmark, "stats", None)
 
             results[size] = {
                 "result": result,
-                "mean_time": stats.mean,
-                "stddev": stats.stddev,
-                "min_time": stats.min,
-                "max_time": stats.max,
+                "mean_time": getattr(stats, "mean", 0.0) if stats else 0.0,
+                "stddev": getattr(stats, "stddev", 0.0) if stats else 0.0,
+                "min_time": getattr(stats, "min", 0.0) if stats else 0.0,
+                "max_time": getattr(stats, "max", 0.0) if stats else 0.0,
             }
 
         # Analyze complexity
@@ -286,9 +313,12 @@ class BenchmarkUtils:
             results,
             expected_complexity,
         )
-        results["complexity_analysis"] = complexity_analysis
 
-        return results
+        # Convert to dict[str, object] for return type
+        final_results: dict[str, object] = {str(k): v for k, v in results.items()}
+        final_results["complexity_analysis"] = complexity_analysis
+
+        return final_results
 
     @staticmethod
     def _analyze_complexity(
@@ -297,19 +327,33 @@ class BenchmarkUtils:
     ) -> dict[str, object]:
         """Analyze time complexity from benchmark results."""
         sizes = sorted(results.keys())
-        times = [results[size]["mean_time"] for size in sizes]
+        times: list[float] = []
+        for size in sizes:
+            mean_time = results[size]["mean_time"]
+            if isinstance(mean_time, (int, float)):
+                times.append(float(mean_time))
+            elif isinstance(mean_time, str):
+                try:
+                    times.append(float(mean_time))
+                except ValueError:
+                    times.append(0.0)
+            else:
+                times.append(0.0)
 
         if len(sizes) < 2:
             return {"error": "Need at least 2 data points"}
 
         # Calculate growth ratios
-        growth_ratios = []
+        growth_ratios: list[float] = []
         for i in range(1, len(sizes)):
             size_ratio = sizes[i] / sizes[i - 1]
-            time_ratio = times[i] / times[i - 1]
-            growth_ratios.append(time_ratio / size_ratio)
+            time_ratio = times[i] / times[i - 1] if times[i - 1] != 0 else 1.0
+            growth_ratio = time_ratio / size_ratio if size_ratio != 0 else 1.0
+            growth_ratios.append(growth_ratio)
 
-        avg_growth = sum(growth_ratios) / len(growth_ratios)
+        # Calculate average growth ratio
+        growth_sum = sum(growth_ratios)  # All elements are already floats
+        avg_growth = growth_sum / len(growth_ratios) if growth_ratios else 1.0
 
         # Determine actual complexity
         if avg_growth < 1.5:
@@ -331,16 +375,17 @@ class BenchmarkUtils:
 
     @staticmethod
     def benchmark_regression(
-        benchmark: BenchmarkFixture,
-        func: Callable[..., T],
+        benchmark: BenchmarkProtocol,
+        func: Callable[P, T],
         baseline_time: float,
         tolerance_percent: float = 10.0,
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> T:
         """Benchmark with regression detection."""
         result = benchmark(func, *args, **kwargs)
-        current_time = benchmark.stats.mean
+        stats = getattr(benchmark, "stats", None)
+        current_time = getattr(stats, "mean", 0.0) if stats else 0.0
 
         # Check for regression
         max_allowed_time = baseline_time * (1 + tolerance_percent / 100)
@@ -357,14 +402,14 @@ class BenchmarkUtils:
 
     @staticmethod
     def parallel_benchmark(
-        benchmark: BenchmarkFixture,
-        func: Callable[..., T],
+        benchmark: BenchmarkProtocol,
+        func: Callable[P, T],
         thread_counts: list[int],
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> dict[int, dict[str, object]]:
         """Benchmark function with different thread counts."""
-        results = {}
+        results: dict[int, dict[str, object]] = {}
 
         for thread_count in thread_counts:
 
@@ -378,14 +423,18 @@ class BenchmarkUtils:
                     return [future.result() for future in futures]
 
             benchmark_result = benchmark(parallel_execution)
-            stats = benchmark.stats
+            stats = getattr(benchmark, "stats", None)
+            mean_time = getattr(stats, "mean", 0.0) if stats else 0.0
 
             results[thread_count] = {
                 "result": benchmark_result,
-                "mean_time": stats.mean,
-                "throughput": thread_count / stats.mean,  # operations per second
-                "efficiency": (thread_count / stats.mean)
-                / thread_count,  # relative to single thread
+                "mean_time": mean_time,
+                "throughput": thread_count / mean_time
+                if mean_time > 0
+                else 0.0,  # operations per second
+                "efficiency": (thread_count / mean_time / thread_count)
+                if mean_time > 0
+                else 0.0,  # relative to single thread
             }
 
         return results
@@ -423,20 +472,23 @@ class MemoryProfiler:
 
     @staticmethod
     def memory_stress_test(
-        func: Callable[..., T],
+        func: Callable[P, T],
         iterations: int = 1000,
         max_memory_growth_mb: float = 10.0,
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> T:
         """Stress test function for memory stability."""
         with MemoryProfiler.track_memory_leaks(max_memory_growth_mb):
-            last_result = None
+            last_result: T | None = None
             for _ in range(iterations):
                 last_result = func(*args, **kwargs)
                 if _ % 100 == 0:  # Periodic cleanup
                     gc.collect()
 
+            if last_result is None:
+                msg = "Function never returned a value"
+                raise RuntimeError(msg)
             return last_result
 
 
@@ -445,13 +497,13 @@ class AsyncBenchmark:
 
     @staticmethod
     async def benchmark_async(
-        func: Callable[..., object],
+        func: Callable[P, Awaitable[T]],
         iterations: int = 100,
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> dict[str, float]:
         """Benchmark async function."""
-        times = []
+        times: list[float] = []
 
         for _ in range(iterations):
             start_time = time.perf_counter()
@@ -459,27 +511,26 @@ class AsyncBenchmark:
             end_time = time.perf_counter()
             times.append(end_time - start_time)
 
+        if not times:
+            return {"mean": 0.0, "min": 0.0, "max": 0.0, "stddev": 0.0}
+
+        mean_time = sum(times) / len(times)
         return {
-            "mean": sum(times) / len(times),
+            "mean": mean_time,
             "min": min(times),
             "max": max(times),
-            "stddev": (
-                sum((t - sum(times) / len(times)) ** 2 for t in times) / len(times)
-            )
-            ** 0.5,
+            "stddev": (sum((t - mean_time) ** 2 for t in times) / len(times)) ** 0.5,
         }
 
     @staticmethod
     async def benchmark_concurrency(
-        func: Callable[..., object],
+        func: Callable[P, Awaitable[T]],
         concurrency_levels: list[int],
-        *args: object,
-        **kwargs: object,
+        *args: P.args,
+        **kwargs: P.kwargs,
     ) -> dict[int, dict[str, object]]:
         """Benchmark async function with different concurrency levels."""
-        import asyncio
-
-        results = {}
+        results: dict[int, dict[str, object]] = {}
 
         for concurrency in concurrency_levels:
 
@@ -492,13 +543,15 @@ class AsyncBenchmark:
             end_time = time.perf_counter()
 
             total_time = end_time - start_time
-            throughput = concurrency / total_time
+            throughput = concurrency / total_time if total_time > 0 else 0.0
 
             results[concurrency] = {
                 "result": result,
                 "total_time": total_time,
                 "throughput": throughput,
-                "avg_time_per_operation": total_time / concurrency,
+                "avg_time_per_operation": total_time / concurrency
+                if concurrency > 0
+                else 0.0,
             }
 
         return results
@@ -534,7 +587,9 @@ class PerformanceMarkers:
 __all__ = [
     "AsyncBenchmark",
     "BenchmarkUtils",
+    "ComplexityAnalyzer",
     "MemoryProfiler",
     "PerformanceMarkers",
     "PerformanceProfiler",
+    "StressTestRunner",
 ]

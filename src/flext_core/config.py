@@ -1,17 +1,137 @@
-"""Configuration management with Pydantic models and FlextResult error handling.
+"""Enterprise configuration management with type-safe validation and environment integration.
 
-Provides the main FlextConfig class that consolidates all configuration functionality
-using pure Pydantic BaseModel patterns. Includes environment variable integration,
-JSON serialization, validation, and utility functions for safe configuration loading.
+This module provides comprehensive configuration management for the FLEXT ecosystem using
+Pydantic v2 BaseModel patterns with FlextResult error handling, environment variable
+integration, JSON serialization/deserialization, and business rule validation for
+enterprise-grade configuration reliability.
 
-Main Classes:
-    FlextConfig: Main configuration BaseModel with nested SystemDefaults and Settings.
-    FlextConfig.Settings: BaseSettings subclass for environment-aware configuration.
-    FlextConfig.SystemDefaults: Nested class containing default values for security, network, pagination, logging, and environment.
-    FlextConfig.BaseConfigModel: Backward-compatible alias for FlextConfig.Settings.
+Module Organization:
+    Core Configuration: FlextConfig with nested SystemDefaults and Settings
+    Environment Integration: BaseSettings with automatic environment variable loading
+    Validation System: Multi-layer validation with business rules and type checking
+    Utility Functions: Safe loading, serialization, and configuration operations
+    Type Safety: FlextTypes.Core integration for consistent typing
 
-Types:
-    Uses FlextTypes.Core.Dict, FlextTypes.Core.Value, FlextTypes.Core.String, and FlextTypes.Core.Serializer directly.
+Classes:
+    FlextConfig: Main configuration management class with consolidated functionality
+        └── SystemDefaults: Centralized system defaults organized by domain
+            ├── Security: Password length, secret key requirements, authentication
+            ├── Network: Timeouts, retries, connection limits, service discovery
+            ├── Pagination: Page sizes, limits, sorting defaults
+            ├── Logging: Log levels, formats, rotation settings
+            └── Environment: Development, staging, production configurations
+        └── Settings(BaseSettings): Environment-aware configuration loading
+            • model_config: SettingsConfigDict with environment variable mapping
+            • field validation: Automatic type coercion and constraint checking
+            • nested configuration: Support for complex hierarchical configurations
+        └── BaseConfigModel: Backward-compatibility alias for Settings
+
+Functions:
+    validate_business_rules(config_data) -> FlextResult[dict]
+        Validate business-specific configuration rules and constraints
+
+    create_with_validation(config_data) -> FlextResult[FlextConfig]
+        Create validated configuration instance with comprehensive error handling
+
+    load_from_file(file_path, validate_business=True) -> FlextResult[FlextConfig]
+        Load configuration from JSON file with optional business validation
+
+    load_and_validate_from_file(file_path, required_keys) -> FlextResult[FlextConfig]
+        Load configuration with required key validation and business rules
+
+    safe_load_json_file(file_path) -> FlextResult[dict]
+        Safely load JSON file with comprehensive error handling
+
+    safe_get_env_var(var_name, default_value) -> FlextResult[str]
+        Safely retrieve environment variable with default fallback
+
+Type Integration:
+    dict[str, object]: Configuration dictionary type
+    FlextTypes.Core.Value: Generic configuration value type
+    FlextTypes.Core.String: String configuration type
+    FlextTypes.Core.Serializer: JSON serialization interface
+
+Integration with FlextCore:
+    >>> from flext_core import FlextConfig, FlextResult
+    >>> from flext_core.core import FlextCore
+    >>> # Environment-aware configuration loading
+    >>> core = FlextCore.get_instance()
+    >>> config_result = FlextConfig.load_from_file("config/production.json")
+    >>> if config_result.success:
+    ...     config = config_result.value
+    ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
+    >>> # Business rule validation
+    >>> validation_result = FlextConfig.validate_business_rules({
+    ...     "database_url": "postgresql://localhost/prod",
+    ...     "secret_key": "secure-key-with-sufficient-length",
+    ...     "log_level": "INFO",
+    ... })
+
+Environment Configuration Examples:
+    >>> # Development configuration
+    >>> dev_config = FlextConfig.Settings(
+    ...     debug=True,
+    ...     log_level="DEBUG",
+    ...     database_url="sqlite:///dev.db",
+    ...     enable_profiling=True,
+    ... )
+    >>> # Production configuration with environment variables
+    >>> # Set via: export FLEXT_DATABASE_URL="postgresql://prod-server/db"
+    >>> prod_config = FlextConfig.Settings()  # Automatically loads from env
+    >>> # Validate and apply configuration
+    >>> validation = FlextConfig.validate_business_rules(prod_config.model_dump())
+    >>> if validation.success:
+    ...     core.configure_from_settings(prod_config)
+
+Security Configuration Examples:
+    >>> # Access security defaults
+    >>> max_password = FlextConfig.SystemDefaults.Security.max_password_length
+    >>> min_secret_key = (
+    ...     FlextConfig.SystemDefaults.Security.min_secret_key_length_strong
+    ... )
+    >>> # Validate security settings
+    >>> security_config = {
+    ...     "password_policy": {"min_length": 12, "require_special": True},
+    ...     "secret_key": "very-long-secret-key-for-production-security",
+    ...     "token_expiry_seconds": 3600,
+    ... }
+    >>> security_result = FlextConfig.validate_business_rules(security_config)
+
+File-Based Configuration:
+    >>> # Load from JSON with validation
+    >>> config_file = "configs/api-service.json"
+    >>> required_keys = ["database_url", "secret_key", "service_name"]
+    >>> config_result = FlextConfig.load_and_validate_from_file(
+    ...     config_file, required_keys
+    ... )
+    >>> # Handle configuration errors gracefully
+    >>> if config_result.failure:
+    ...     core.logger.error(f"Configuration error: {config_result.error}")
+    ...     fallback_config = FlextConfig.SystemDefaults()
+
+Nested Configuration Structure:
+    >>> # Complex hierarchical configuration
+    >>> complex_config = FlextConfig(
+    ...     database={
+    ...         "primary": {"url": "postgresql://primary/db", "pool_size": 20},
+    ...         "readonly": {"url": "postgresql://readonly/db", "pool_size": 10},
+    ...     },
+    ...     services={
+    ...         "auth": {"endpoint": "https://auth.example.com", "timeout": 30},
+    ...         "metrics": {"endpoint": "https://metrics.example.com", "enabled": True},
+    ...     },
+    ...     feature_flags={"new_ui": True, "beta_features": False},
+    ... )
+
+Notes:
+    - All configuration operations return FlextResult for type-safe error handling
+    - Environment variable integration follows FLEXT_* naming convention
+    - Business rule validation enforces enterprise security and operational requirements
+    - SystemDefaults provide consistent baseline values across FLEXT ecosystem
+    - Configuration serialization supports both JSON and environment variable formats
+    - Backward compatibility maintained through BaseConfigModel alias
+    - Integration with FlextCore enables centralized configuration management
+
 """
 
 from __future__ import annotations
@@ -211,9 +331,10 @@ class FlextConfig(BaseModel):
             data: FlextTypes.Config.ConfigDict = {}
             for key, value in base_data.items():
                 if isinstance(value, (str, int, float, bool, list, dict)):
-                    data[key] = value  # type: ignore[assignment]
+                    # Cast to ConfigValue after type check
+                    data[key] = cast("FlextTypes.Config.ConfigValue", value)
                 else:
-                    data[key] = str(value)  # type: ignore[assignment]
+                    data[key] = str(value)
 
             # Add settings-specific API metadata
             data["_settings"] = {
@@ -237,7 +358,7 @@ class FlextConfig(BaseModel):
                 instance = cls()
 
                 # Prepare overrides dict - support both overrides parameter and kwargs
-                all_overrides: FlextTypes.Core.Dict = {}
+                all_overrides: dict[str, object] = {}
                 if overrides:
                     # Mapping -> dict
                     all_overrides.update(dict(overrides))
@@ -290,15 +411,15 @@ class FlextConfig(BaseModel):
     debug: bool = Field(default=False, description="Debug mode enabled")
 
     # Configuration source tracking
-    config_source: FlextTypes.Config.ConfigSource = Field(
+    config_source: str = Field(
         default="default",
         description="Source of configuration (file, env, cli, default)",
     )
-    config_priority: FlextTypes.Config.ConfigPriority = Field(
+    config_priority: int = Field(
         default=FlextConstants.Config.CONSTANTS_PRIORITY,
         description="Configuration provider priority",
     )
-    config_namespace: FlextTypes.Config.ConfigNamespace = Field(
+    config_namespace: str = Field(
         default="flext",
         description="Configuration namespace for isolation",
     )
@@ -479,7 +600,7 @@ class FlextConfig(BaseModel):
         return FlextResult[None].ok(None)
 
     @field_serializer("environment", when_used="json")
-    def serialize_environment(self, value: str) -> FlextTypes.Core.Dict:
+    def serialize_environment(self, value: str) -> dict[str, object]:
         """Serialize environment field with metadata for JSON serialization.
 
         Args:
@@ -498,7 +619,7 @@ class FlextConfig(BaseModel):
         }
 
     @field_serializer("log_level", when_used="json")
-    def serialize_log_level(self, value: str) -> FlextTypes.Core.Dict:
+    def serialize_log_level(self, value: str) -> dict[str, object]:
         """Serialize log level field with metadata for JSON serialization.
 
         Args:
@@ -530,7 +651,7 @@ class FlextConfig(BaseModel):
         self,
         serializer: FlextTypes.Core.Serializer,
         info: SerializationInfo,
-    ) -> FlextTypes.Core.Dict:
+    ) -> dict[str, object]:
         """Serialize complete configuration model for API output with metadata.
 
         Args:
@@ -543,7 +664,7 @@ class FlextConfig(BaseModel):
 
         """
         _ = info  # Acknowledge parameter for future use
-        data: FlextTypes.Core.Dict = serializer(self)
+        data: dict[str, object] = serializer(self)
         # Add config-specific API metadata
         if data and hasattr(data, "get"):
             data["_config"] = {
@@ -564,11 +685,11 @@ class FlextConfig(BaseModel):
     def create_complete_config(
         cls,
         config_data: Mapping[str, object],
-        defaults: FlextTypes.Core.Dict | None = None,
+        defaults: dict[str, object] | None = None,
         *,
         apply_defaults: bool = True,
         validate_all: bool = True,
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Create complete configuration with defaults and validation.
 
         Args:
@@ -584,7 +705,7 @@ class FlextConfig(BaseModel):
         """
         try:
             # Convert config_data to dict for manipulation
-            working_config: FlextTypes.Core.Dict = dict(config_data)
+            working_config: dict[str, object] = dict(config_data)
 
             # Apply defaults if requested
             if apply_defaults:
@@ -602,14 +723,14 @@ class FlextConfig(BaseModel):
             if validate_all:
                 validation_result = instance.validate_business_rules()
                 if validation_result.is_failure:
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         validation_result.error
                         or FlextConstants.Messages.VALIDATION_FAILED,
                     )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(instance.model_dump())
+            return FlextResult[dict[str, object]].ok(instance.model_dump())
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to create complete config: {e}"
             )
 
@@ -618,7 +739,7 @@ class FlextConfig(BaseModel):
         cls,
         file_path: str,
         required_keys: list[str] | None = None,
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Load and validate configuration from JSON file.
 
         Args:
@@ -633,7 +754,7 @@ class FlextConfig(BaseModel):
         try:
             file_result = cls.safe_load_json_file(file_path)
             if file_result.is_failure:
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     file_result.error or "Failed to load file"
                 )
 
@@ -646,20 +767,20 @@ class FlextConfig(BaseModel):
                 missing_keys = [key for key in required_keys if key not in data]
                 if missing_keys:
                     missing_str = ", ".join(missing_keys)
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"Missing required configuration keys: {missing_str}",
                     )
 
             instance = cls.model_validate(data)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     validation_result.error or FlextConstants.Messages.VALIDATION_FAILED
                 )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(instance.model_dump())
+            return FlextResult[dict[str, object]].ok(instance.model_dump())
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to load and validate from file: {e}"
             )
 
@@ -667,7 +788,7 @@ class FlextConfig(BaseModel):
     def safe_load_from_dict(
         cls,
         config_data: Mapping[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Safely load and validate configuration from dictionary mapping.
 
         Args:
@@ -682,22 +803,20 @@ class FlextConfig(BaseModel):
             instance = cls.model_validate(dict(config_data))
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     validation_result.error or FlextConstants.Messages.VALIDATION_FAILED
                 )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(instance.model_dump())
+            return FlextResult[dict[str, object]].ok(instance.model_dump())
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Failed to load from dict: {e}"
-            )
+            return FlextResult[dict[str, object]].fail(f"Failed to load from dict: {e}")
 
     @classmethod
     def merge_and_validate_configs(
         cls,
         base_config: Mapping[str, object],
         override_config: Mapping[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Merge base and override configurations with validation.
 
         Args:
@@ -716,20 +835,20 @@ class FlextConfig(BaseModel):
             none_keys = [k for k, v in merged.items() if v is None]
             if none_keys:
                 keys_str = ", ".join(none_keys)
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     f"Configuration cannot contain None values for keys: {keys_str}",
                 )
 
             instance = cls.model_validate(merged)
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     validation_result.error or FlextConstants.Messages.VALIDATION_FAILED
                 )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(instance.model_dump())
+            return FlextResult[dict[str, object]].ok(instance.model_dump())
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"Failed to merge and validate configs: {e}"
             )
 
@@ -901,7 +1020,7 @@ class FlextConfig(BaseModel):
         return FlextConfig.safe_get_env_var(var_name, default)
 
     @staticmethod
-    def load_json_file(file_path: str | Path) -> FlextResult[FlextTypes.Core.Dict]:
+    def load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
         """Load JSON file safely with validation and error handling.
 
         Args:
@@ -918,7 +1037,7 @@ class FlextConfig(BaseModel):
     def merge_config_dicts(
         base_config: dict[str, object],
         override_config: dict[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Merge base and override configuration dictionaries safely.
 
         Args:
@@ -999,7 +1118,7 @@ class FlextConfig(BaseModel):
             return FlextResult[str].fail(f"{FlextConstants.Errors.CONFIG_ERROR}: {e}")
 
     @staticmethod
-    def safe_load_json_file(file_path: str | Path) -> FlextResult[FlextTypes.Core.Dict]:
+    def safe_load_json_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
         """Safely load JSON configuration file with validation.
 
         Foundation utility function providing safe JSON file loading with
@@ -1018,23 +1137,21 @@ class FlextConfig(BaseModel):
                 data = json.load(f)
 
             if not isinstance(data, dict):
-                return FlextResult[FlextTypes.Core.Dict].fail(
+                return FlextResult[dict[str, object]].fail(
                     FlextConstants.Messages.TYPE_MISMATCH
                 )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(
-                cast("FlextTypes.Core.Dict", data)
-            )
+            return FlextResult[dict[str, object]].ok(cast("dict[str, object]", data))
         except FileNotFoundError:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"{FlextConstants.Errors.NOT_FOUND}: {file_path}"
             )
         except json.JSONDecodeError as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"{FlextConstants.Errors.SERIALIZATION_ERROR}: {e}"
             )
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(
+            return FlextResult[dict[str, object]].fail(
                 f"{FlextConstants.Errors.CONFIG_ERROR}: {e}"
             )
 
@@ -1042,7 +1159,7 @@ class FlextConfig(BaseModel):
     def merge_configs(
         base_config: dict[str, object],
         override_config: dict[str, object],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Merge two configuration dictionaries with validation.
 
         Foundation utility function providing safe configuration dictionary merging
@@ -1063,13 +1180,13 @@ class FlextConfig(BaseModel):
             # Validate for None values which are invalid
             for key, value in merged.items():
                 if value is None:
-                    return FlextResult[FlextTypes.Core.Dict].fail(
+                    return FlextResult[dict[str, object]].fail(
                         f"{FlextConstants.Messages.VALIDATION_FAILED} for {key}: {FlextConstants.Messages.NULL_DATA}",
                     )
 
-            return FlextResult[FlextTypes.Core.Dict].ok(merged)
+            return FlextResult[dict[str, object]].ok(merged)
         except Exception as e:
-            return FlextResult[FlextTypes.Core.Dict].fail(f"Config merge failed: {e}")
+            return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
 
 
 # Export only the classes and functions defined in this module

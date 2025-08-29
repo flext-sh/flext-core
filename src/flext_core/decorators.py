@@ -1,82 +1,99 @@
-"""Enterprise decorator system providing reliability, validation, performance monitoring, and observability.
+"""FLEXT Decorators - Enterprise decorator system for reliability, validation and observability.
 
-This module implements a comprehensive decorator system for the FLEXT ecosystem,
-organized hierarchically into concern-specific categories following SOLID principles
-and Clean Architecture patterns. All decorators integrate with FlextResult railway
-patterns and FlextConstants for consistent configuration.
+Comprehensive decorator system organized hierarchically into concern-specific categories
+following SOLID principles. All decorators integrate with FlextResult railway patterns
+and FlextConstants for consistent configuration across reliability, validation,
+performance monitoring, observability and lifecycle management.
 
-**Architectural Design**:
-    The decorator system is structured as a hierarchical class system where each
-    nested class handles a specific concern area:
+Module Role in Architecture:
+    FlextDecorators provides enterprise-grade decorator patterns for cross-cutting
+    concerns including safe execution, input validation, performance monitoring,
+    structured logging and API lifecycle management. Integrates with FlextResult
+    for railway-oriented programming.
 
-    - **FlextDecorators.Reliability**: Safe execution, retries, timeouts, error handling
-    - **FlextDecorators.Validation**: Input/output validation, type checking, constraints
-    - **FlextDecorators.Performance**: Monitoring, caching, profiling, optimization
-    - **FlextDecorators.Observability**: Logging, tracing, metrics, debugging
-    - **FlextDecorators.Lifecycle**: Deprecation, versioning, compatibility warnings
-    - **FlextDecorators.Integration**: Cross-cutting decorator composition and factories
+Classes and Methods:
+    FlextDecorators:                    # Hierarchical enterprise decorator system
+        # Nested Decorator Classes:
+        Reliability                     # Safe execution, retries, timeouts, error handling
+        Validation                      # Input/output validation, type checking, constraints
+        Performance                     # Monitoring, caching, profiling, optimization
+        Observability                   # Logging, tracing, metrics, debugging
+        Lifecycle                       # Deprecation, versioning, compatibility warnings
+        Integration                     # Cross-cutting decorator composition and factories
 
-**Key Features**:
-    - Railway-oriented programming with automatic FlextResult wrapping
-    - Integration with FlextConstants for configuration defaults
-    - Structured logging with correlation IDs and context tracking
-    - Type-safe decorator composition with proper generic constraints
-    - Enterprise-grade error handling and observability patterns
-    - Thread-safe caching with TTL and LRU eviction policies
-    - Performance monitoring with configurable thresholds
-    - Comprehensive lifecycle management for API evolution
+    Reliability Decorators:
+        @safe_result                    # Automatic FlextResult wrapping with error handling
+        @retry(max_attempts=3, delay=1.0) # Retry on failure with exponential backoff
+        @timeout(seconds=30)            # Function timeout with configurable limits
+        @circuit_breaker(failure_threshold=5) # Circuit breaker pattern for resilience
+        @fallback(fallback_func)        # Fallback execution on failure
 
-**Usage Patterns**:
-    Safe function execution with automatic error handling::
+    Validation Decorators:
+        @validate_input(validator, error_message) # Input validation with custom rules
+        @validate_output(validator, error_message) # Output validation with type checking
+        @validate_types                 # Automatic type validation from annotations
+        @sanitize_input                 # Input sanitization and normalization
+        @check_preconditions(conditions) # Precondition validation before execution
 
+    Performance Decorators:
+        @monitor(threshold, collect_metrics) # Performance monitoring with thresholds
+        @cache(ttl=3600, max_size=1000) # LRU caching with TTL and size limits
+        @profile                        # Function profiling with execution metrics
+        @throttle(rate_limit)           # Rate limiting and throttling
+        @optimize                       # Performance optimization hints
+
+    Observability Decorators:
+        @log_calls                      # Structured logging of function calls
+        @trace                          # Distributed tracing with correlation IDs
+        @metrics                        # Metrics collection and reporting
+        @debug                          # Debug information and context tracking
+        @audit                          # Audit logging for compliance
+
+    Lifecycle Decorators:
+        @deprecated(version, alternative) # Deprecation warnings with migration path
+        @experimental                   # Mark experimental APIs
+        @version(api_version)          # API versioning support
+        @compatibility(min_version)    # Version compatibility checking
+
+    Integration Decorators:
+        create_enterprise_decorator(**options) # Compose multiple decorators
+        create_validation_decorator(validator) # Create custom validation decorator
+        create_monitoring_decorator(config)   # Create custom monitoring decorator
+        complete_decorator(**options)         # Complete decorator with all concerns
+
+Usage Examples:
+    Safe execution with error handling:
         @FlextDecorators.Reliability.safe_result
         def process_data(data: dict) -> int:
             return len(data["items"])  # May raise KeyError
 
+        result = process_data({})  # Returns FlextResult.fail with error
 
-        result = process_data({})
-        # Returns: FlextResult.fail("process_data failed: 'items'")
-
-    Performance monitoring with enterprise thresholds::
-
-        @FlextDecorators.Performance.monitor(
-            threshold=FlextConstants.Performance.SLOW_QUERY_THRESHOLD,
-            collect_metrics=True,
-        )
-        def database_query() -> list[dict]:
-            return [{"id": 1, "name": "test"}]
-
-
-        # Logs warnings and collects metrics for slow operations
-
-    Input validation with business rules::
-
+    Input validation with business rules:
         @FlextDecorators.Validation.validate_input(
             lambda x: isinstance(x, int) and x > 0,
-            error_message="Value must be positive integer",
+            error_message="Value must be positive integer"
         )
         def calculate_factorial(n: int) -> int:
             return n * calculate_factorial(n - 1) if n > 1 else 1
 
-    Enterprise decorator composition::
+    Performance monitoring:
+        @FlextDecorators.Performance.monitor(threshold=1.0, collect_metrics=True)
+        def database_query() -> list[dict]:
+            return [{"id": 1, "name": "test"}]
 
+    Enterprise decorator composition:
         @FlextDecorators.Integration.create_enterprise_decorator(
-            with_validation=True,
-            validator=lambda data: isinstance(data, dict) and "id" in data,
-            with_retry=True,
-            with_caching=True,
-            with_monitoring=True,
-            with_logging=True,
+            with_validation=True, with_retry=True, with_caching=True,
+            with_monitoring=True, with_logging=True
         )
         def process_business_entity(data: dict) -> dict:
             return {"processed": True, "entity_id": data["id"]}
 
-**Integration Points**:
-    - **FlextResult**: All reliability decorators integrate with railway patterns
-    - **FlextConstants**: Configuration defaults for timeouts, thresholds, cache sizes
-    - **FlextLogger**: Structured logging with correlation IDs and context
-    - **FlextTypes**: Type system integration for generic constraints
-    - **FlextProtocols**: Interface definitions for validator patterns
+Integration:
+    FlextDecorators integrates with FlextResult for railway patterns, FlextConstants
+    for configuration defaults, FlextLogger for structured logging, FlextTypes for
+    type constraints, and FlextProtocols for validator patterns.
 
 **Design Patterns**:
     - **Decorator Pattern**: Core pattern for function enhancement
@@ -95,6 +112,57 @@ patterns and FlextConstants for consistent configuration.
     - Lazy evaluation for expensive operations (logging, metrics collection)
     - Configurable observability levels to balance insight vs. performance
     - Memory-efficient caching with proper eviction policies
+
+**Classes and Methods**:
+    Complete FlextDecorators class hierarchy with all nested decorator categories:
+
+    FlextDecorators.Reliability: Safe execution, retries, timeouts, error handling
+        • safe_result(func: Callable[P, T]) -> Callable[P, FlextResult[T]]: Auto-wrap with FlextResult
+        • retry(max_attempts: int = 3, delay: float = 1.0) -> Callable: Retry failed operations
+        • timeout(seconds: float) -> Callable: Add timeout to function execution
+        • circuit_breaker(failure_threshold: int = 5, recovery_time: float = 60.0) -> Callable: Circuit breaker pattern
+        • with_fallback(fallback: Callable[P, T]) -> Callable: Provide fallback function
+        • resilient(max_attempts: int = 3, timeout: float = 30.0) -> Callable: Combined resilience patterns
+
+    FlextDecorators.Validation: Input/output validation, type checking, constraints
+        • validate_input(validator: Callable[[object], bool], error_message: str = "") -> Callable: Input validation
+        • validate_output(validator: Callable[[object], bool], error_message: str = "") -> Callable: Output validation
+        • validate_types(**type_specs) -> Callable: Type validation decorator
+        • require_fields(*fields: str) -> Callable: Required field validation
+        • validate_business_rules(rules: list[Callable]) -> Callable: Business rule validation
+        • sanitize_input(sanitizer: Callable[[object], object]) -> Callable: Input sanitization
+
+    FlextDecorators.Performance: Monitoring, caching, profiling, optimization
+        • monitor(threshold: float = 1.0, collect_metrics: bool = True) -> Callable: Performance monitoring
+        • cache(ttl: int = 300, max_size: int = 128) -> Callable: Function result caching
+        • profile(detailed: bool = False) -> Callable: Function execution profiling
+        • throttle(calls_per_second: float) -> Callable: Rate limiting decorator
+        • memoize(max_size: int = 256) -> Callable: Function memoization
+        • optimize_memory() -> Callable: Memory usage optimization
+
+    FlextDecorators.Observability: Logging, tracing, metrics, debugging
+        • log_calls(level: str = "INFO", include_args: bool = False) -> Callable: Function call logging
+        • trace(correlation_id: str = None) -> Callable: Distributed tracing
+        • metrics(metric_name: str, tags: dict = None) -> Callable: Metrics collection
+        • debug_time(detailed: bool = False) -> Callable: Execution timing debug
+        • audit_trail(event_type: str) -> Callable: Audit logging decorator
+        • structured_logging(**context) -> Callable: Context-aware structured logging
+
+    FlextDecorators.Lifecycle: Deprecation, versioning, compatibility warnings
+        • deprecated(message: str = "", version: str = "1.0.0") -> Callable: Deprecation warnings
+        • version(version_string: str) -> Callable: Version tracking decorator
+        • experimental(message: str = "") -> Callable: Experimental feature warnings
+        • backwards_compatible(since_version: str) -> Callable: Compatibility tracking
+        • migration_warning(old_name: str, new_name: str) -> Callable: Migration guidance
+        • feature_flag(flag_name: str, default: bool = True) -> Callable: Feature flag control
+
+    FlextDecorators.Integration: Cross-cutting decorator composition and factories
+        • compose(*decorators: Callable) -> Callable: Compose multiple decorators
+        • create_enterprise_decorator(**options) -> Callable: Enterprise decorator factory
+        • conditional(condition: Callable[[], bool]) -> Callable: Conditional decorator application
+        • with_context(**context) -> Callable: Context injection decorator
+        • async_wrapper() -> Callable: Sync to async function wrapper
+        • complete_decorator(with_logging: bool = True, with_validation: bool = True) -> Callable: Complete enhancement decorator
 
 Module Role in Architecture:
     This module serves as the cross-cutting concern layer in the FLEXT Clean
@@ -1216,7 +1284,7 @@ class FlextDecorators:
                     original_init(self, *args, **kwargs)
 
                 # Replace __init__ with the wrapped version
-                cls.__init__ = new_init  # type: ignore[assignment]
+                cls.__init__ = new_init  # type: ignore[method-assign]
                 return cls
 
             return decorator

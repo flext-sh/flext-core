@@ -1,59 +1,75 @@
-"""Enterprise-grade type adaptation and conversion system providing comprehensive type safety and validation.
+"""FLEXT Type Adapters - Type conversion, validation and serialization system.
 
-This module implements a complete type adaptation architecture for the FLEXT ecosystem,
-providing unified type conversion, validation, serialization, and schema generation
-capabilities. The architecture follows FLEXT Core consolidation patterns with all
-functionality organized within a single comprehensive class structure.
+Provides comprehensive type adaptation capabilities for the FLEXT ecosystem including
+type conversion with error handling, validation pipeline, schema generation, and
+JSON/dict serialization. Built on Pydantic v2 TypeAdapter with FlextResult integration
+for enterprise-grade type safety and error handling.
 
-**ARCHITECTURAL FOCUS**: This module serves as the central hub for all type adaptation
-concerns in the FLEXT ecosystem, providing enterprise-grade type conversion patterns,
-validation strategies, and serialization capabilities with comprehensive error handling
-through FlextResult[T] patterns.
+Module Role in Architecture:
+    FlextTypeAdapters serves as the central hub for type conversion, validation and
+    serialization across FLEXT applications. Integrates with FlextResult for error
+    handling, FlextProtocols for dependency injection, and FlextConstants for
+    validation limits and error codes.
 
-Core Type Adaptation Features:
-    - **Foundation Type Adapters**: Basic type conversion with error handling
-    - **Domain Type Validation**: Business rule enforcement and domain-specific validation
-    - **Application Serialization**: JSON/dict serialization with schema generation
-    - **Infrastructure Protocols**: Protocol-based adapter composition and registry
-    - **Migration Utilities**: Legacy code migration tools and compatibility bridges
+Classes and Methods:
+    FlextTypeAdapters:                  # Main type adaptation system
+        # Nested Classes:
+        AdaptationConfig               # Configuration for type adaptation
+        ValidationResults              # Validation result aggregation
+        AdapterRegistry                # Registry for type adapters
 
-Type Conversion Capabilities:
-    - **Pydantic TypeAdapter Integration**: Native Pydantic v2 TypeAdapter support
-    - **Validation Pipeline**: Multi-stage validation with business rule enforcement
-    - **Error Collection**: Comprehensive error aggregation for batch operations
-    - **Schema Generation**: OpenAPI-compatible JSON schema generation
-    - **Serialization/Deserialization**: Bidirectional JSON and dict conversion
+        # Type Conversion Methods:
+        adapt_type(data, target_type) -> FlextResult[T] # Convert data to target type
+        validate_type(data, target_type) -> FlextResult[T] # Validate with type constraints
+        adapt_with_schema(data, schema) -> FlextResult[T] # Adapt using JSON schema
 
-Enterprise Patterns:
-    - **Template Method Pattern**: Standardized type adaptation workflows
-    - **Strategy Pattern**: Pluggable validation and conversion strategies
-    - **Factory Pattern**: Dynamic adapter creation and configuration
-    - **Registry Pattern**: Global adapter discovery and management
-    - **Bridge Pattern**: Legacy compatibility during migration
+        # Batch Processing:
+        adapt_batch(items, target_type) -> FlextResult[list[T]] # Batch type conversion
+        validate_batch(items, target_type) -> ValidationResults # Batch validation
 
-Validation Features:
-    - **Type Safety**: Compile-time type checking with runtime validation
-    - **Business Rules**: Domain-specific validation with custom constraints
-    - **Cross-Field Validation**: Complex validation across multiple fields
-    - **Batch Processing**: High-performance batch validation with error collection
-    - **Error Categorization**: Structured error reporting with error codes
+        # Schema Generation:
+        generate_schema(target_type) -> FlextResult[dict] # Generate JSON schema
+        get_type_info(target_type) -> FlextResult[dict] # Get type information
 
-Integration Features:
-    - **FlextResult[T] Integration**: Type-safe error handling throughout adaptation
-    - **FlextConstants Integration**: Centralized validation limits and error codes
-    - **FlextProtocols Integration**: Protocol-based interfaces for dependency injection
-    - **Pydantic v2 Integration**: Native TypeAdapter support with full feature access
-    - **Migration Support**: Tools for transitioning from BaseModel to TypeAdapter patterns
+        # Serialization:
+        serialize_to_json(data, target_type) -> FlextResult[str] # JSON serialization
+        deserialize_from_json(json_str, target_type) -> FlextResult[T] # JSON deserialization
+        serialize_to_dict(data, target_type) -> FlextResult[dict] # Dict serialization
+        deserialize_from_dict(data_dict, target_type) -> FlextResult[T] # Dict deserialization
 
-Architectural Principles:
-    - **Clean Architecture**: Proper layering with clear separation of concerns
-    - **SOLID Principles**: Single responsibility, dependency injection, interface segregation
-    - **Domain-Driven Design**: Type validation aligned with business domains
-    - **Railway-Oriented Programming**: Composition-friendly error handling patterns
-    - **Type Safety**: Comprehensive type checking at compile time and runtime
+        # Registry Management:
+        register_adapter(type_key, adapter) -> FlextResult[None] # Register custom adapter
+        get_adapter(type_key) -> FlextResult[TypeAdapter] # Retrieve registered adapter
+        list_adapters() -> FlextResult[list[str]] # List all registered adapters
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Usage Examples:
+    Basic type adaptation:
+        adapter = FlextTypeAdapters()
+        result = adapter.adapt_type({"name": "John", "age": 30}, Person)
+        if result.success:
+            person = result.unwrap()
+
+    Batch processing:
+        items = [{"id": 1}, {"id": 2}, {"id": 3}]
+        result = adapter.adapt_batch(items, Item)
+        if result.success:
+            item_list = result.unwrap()
+
+    Schema generation:
+        schema_result = adapter.generate_schema(Person)
+        if schema_result.success:
+            json_schema = schema_result.unwrap()
+
+    JSON serialization:
+        json_result = adapter.serialize_to_json(person, Person)
+        if json_result.success:
+            json_str = json_result.unwrap()
+
+Integration:
+    FlextTypeAdapters integrates with FlextResult for railway-oriented error handling,
+    FlextProtocols for protocol-based interfaces, FlextConstants for validation limits,
+    and Pydantic v2 TypeAdapter for core type adaptation functionality.
+
 """
 
 from __future__ import annotations
@@ -72,39 +88,20 @@ from flext_core.result import FlextResult
 
 
 class FlextTypeAdapters:
-    """Comprehensive enterprise type adaptation system providing unified type safety, validation, and conversion.
+    """Comprehensive type adaptation system for type conversion, validation and serialization.
 
-    This class serves as the central hub for all type adaptation functionality in the FLEXT
-    ecosystem, implementing enterprise-grade type conversion, validation, serialization, and
-    schema generation capabilities. The design follows FLEXT Core consolidation patterns with
-    nested classes providing logical organization of type adaptation functionality.
+    Central hub for all type adaptation functionality including type conversion with error
+    handling, validation pipeline with business rules, JSON/dict serialization, schema
+    generation, and batch processing. Built on Pydantic v2 TypeAdapter with FlextResult
+    integration for enterprise-grade type safety.
 
-    **ARCHITECTURAL ROLE**: Acts as the comprehensive type adaptation foundation for the
-    FLEXT ecosystem, providing standardized patterns for type conversion, validation, and
-    serialization while ensuring type safety and comprehensive error handling through
-    FlextResult[T] patterns.
-
-    Type Adaptation Architecture:
-        - **Foundation**: Core type adapters with fundamental conversion capabilities
-        - **Domain**: Business-specific validation with domain rules and constraints
-        - **Application**: Serialization, deserialization, and schema generation
-        - **Infrastructure**: Protocol-based interfaces and adapter registry patterns
-        - **Utilities**: Migration tools, batch processing, and compatibility bridges
-
-    Core Type Adaptation Features:
-        - **Type Conversion**: Comprehensive type conversion with validation and error handling
-        - **Validation Pipeline**: Multi-stage validation with business rule enforcement
-        - **Serialization**: Bidirectional JSON and dictionary serialization/deserialization
-        - **Schema Generation**: OpenAPI-compatible JSON schema generation for documentation
-        - **Batch Processing**: High-performance batch operations with error collection
-        - **Error Handling**: Structured error reporting with categorization and error codes
-
-    Enterprise Validation Capabilities:
-        - **Type Safety**: Runtime type validation with compile-time type checking
-        - **Business Rules**: Domain-specific validation constraints and business logic
-        - **Cross-Field Validation**: Complex validation patterns across multiple fields
-        - **Range Validation**: Numeric range checking with configurable limits
-        - **Format Validation**: String format validation for IDs, versions, networks
+    Key Features:
+        - Type conversion with validation
+        - JSON/dict serialization and deserialization
+        - Schema generation (OpenAPI compatible)
+        - Batch processing with error collection
+        - Registry for custom adapters
+        - FlextResult error handling
         - **Custom Validation**: Extensible validation framework with pluggable validators
 
     Serialization and Schema Features:
@@ -1205,20 +1202,21 @@ class FlextTypeAdapters:
         """
 
         @staticmethod
-        def create_validator_protocol() -> FlextProtocols.Foundation.Validator[object]:
+        def create_validator_protocol() -> FlextProtocols.Foundation.Validator[object] | None:
             """Create validator protocol for adapter composition.
 
             Returns:
-                Validator protocol instance for type safety
+                Validator protocol instance for type safety, or None if not implemented
 
             Note:
-                Enables composition of validators using protocol-based design.
+                Placeholder method - currently returns None as protocol implementation
+                requires concrete validator classes.
 
             """
             # This would return a concrete implementation of the validator protocol
             # For now, we return None as placeholder since protocol implementation
             # requires concrete validator classes
-            return None  # type: ignore[return-value]
+            return None
 
         @staticmethod
         def register_adapter(

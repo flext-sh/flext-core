@@ -198,6 +198,8 @@ no_implicit_reexport = true
 incremental = true
 warn_incomplete_stub = true
 
+
+
 exclude = [
     "__pycache__/",
     ".*/generate_config.py",
@@ -215,8 +217,17 @@ exclude = [
     "examples/",
 ]
 
-## Keep strict mypy across the project (no per-module overrides)
+## Per-module mypy overrides for third-party packages without stubs
 
+[[tool.mypy.overrides]]
+module = "pytest_benchmark.*"
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = "pytest_benchmark"
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -268,6 +279,7 @@ markers = [
 ]
 minversion = "8.0"
 testpaths = ["tests"]
+
 
 [tool.ruff]
 extend = "../ruff-shared.toml"

@@ -1,23 +1,197 @@
-"""FLEXT Core Services - Consolidated enterprise service architecture.
+"""FLEXT Services - Enterprise service layer architecture with processing and orchestration.
 
-This module provides the consolidated FLEXT service architecture following
-strict FLEXT_REFACTORING_PROMPT.md guidelines:
-    - Single consolidated FlextServices class with nested organization
-    - Massive usage of FlextTypes, FlextConstants, FlextProtocols
-    - Zero TYPE_CHECKING, lazy loading, or import tricks
-    - Python 3.13+ syntax with Pydantic v2 integration
-    - SOLID principles with professional Google docstrings
-    - Railway-oriented programming via FlextResult patterns
+Provides comprehensive service layer functionality for the FLEXT ecosystem implementing
+Clean Architecture principles. All services use FlextResult patterns, dependency injection,
+validation, performance monitoring and error handling for enterprise-grade scalability.
 
-The service architecture is organized into nested classes:
-    - ServiceProcessor: Template base for processors with boilerplate elimination
-    - ServiceOrchestrator: Service orchestration and coordination patterns
-    - ServiceRegistry: Service discovery and registration management
-    - ServiceMetrics: Performance tracking and observability integration
-    - ServiceValidation: Service input/output validation patterns
+Module Role in Architecture:
+    FlextServices serves as the consolidated service layer foundation providing data processing
+    templates, service orchestration, registry management, performance monitoring and validation
+    patterns for all FLEXT applications.
 
-All services follow Clean Architecture principles with proper separation
-of concerns and dependency inversion through FlextProtocols.
+Classes and Methods:
+    FlextServices:                          # Consolidated enterprise service architecture
+        # Nested Classes:
+        ServiceProcessor                   # Template base for data processing services
+        ServiceOrchestrator               # Service composition and workflow coordination
+        ServiceRegistry                   # Service discovery and registration management
+        ServiceMetrics                    # Performance tracking and observability
+        ServiceValidation                 # Service boundary validation patterns
+
+        # Factory Methods:
+        create_processor_service(processor_func) -> ServiceProcessor
+        create_async_processor(async_func) -> AsyncServiceProcessor
+        chain_processors(processors) -> CompositeProcessor
+        create_workflow(steps) -> WorkflowOrchestrator
+        create_parallel_executor(services) -> ParallelOrchestrator
+        create_conditional_service(condition, service) -> ConditionalService
+        create_service_registry() -> ServiceRegistry
+        register_singleton_service(name, service) -> FlextResult[None]
+        create_service_factory(factory_func) -> ServiceFactory
+
+    ServiceProcessor Methods:
+        process_data(input_data) -> FlextResult[output] # Generic data processing
+        validate_input(data) -> FlextResult[None]      # Input validation
+        transform_data(data) -> FlextResult[transformed] # Data transformation
+        validate_output(result) -> FlextResult[None]    # Output validation
+        handle_processing_error(error) -> FlextResult[recovery] # Error handling
+
+    ServiceOrchestrator Methods:
+        orchestrate_workflow(steps) -> FlextResult[result] # Multi-step workflows
+        coordinate_services(services) -> FlextResult[results] # Service coordination
+        manage_dependencies(deps) -> FlextResult[None] # Dependency management
+        handle_workflow_failure(error) -> FlextResult[recovery] # Workflow error handling
+
+    ServiceRegistry Methods:
+        register_service(name, service) -> FlextResult[None] # Service registration
+        discover_service(name) -> FlextResult[service]       # Service discovery
+        health_check_service(name) -> FlextResult[status]    # Health monitoring
+        unregister_service(name) -> FlextResult[None]        # Service deregistration
+
+    ServiceMetrics Methods:
+        track_service_call(service, duration) -> None # Call tracking
+        measure_throughput(service) -> dict           # Throughput measurement
+        collect_error_metrics(service, error) -> None # Error metrics collection
+        generate_service_report(service) -> dict      # Service performance report
+
+    ServiceValidation Methods:
+        validate_service_input(data, schema) -> FlextResult[None] # Input validation
+        validate_service_output(result, schema) -> FlextResult[None] # Output validation
+        validate_service_contract(service) -> FlextResult[None] # Contract validation
+        sanitize_service_data(data) -> FlextResult[sanitized] # Data sanitization
+
+Usage Examples:
+    Service creation and registration:
+        def process_user_data(data: dict) -> FlextResult[dict]:
+            processed = {"user_id": data.get("id"), "status": "processed"}
+            return FlextResult.ok(processed)
+
+        user_service = FlextServices.create_processor_service(process_user_data)
+        registry = FlextServices.ServiceRegistry()
+        registry.register_service("user_processor", user_service)
+
+    Service orchestration:
+        steps = [validate_step, process_step, notify_step]
+        workflow = FlextServices.create_workflow(steps)
+        result = workflow.orchestrate_workflow(input_data)
+
+    Performance monitoring:
+        metrics = FlextServices.ServiceMetrics()
+        metrics.track_service_call("user_processor", 0.123)
+        report = metrics.generate_service_report("user_processor")
+
+Integration:
+    FlextServices integrates with FlextResult for error handling, FlextCore for
+    logging and configuration, FlextContainer for dependency injection, and
+    FlextValidation for comprehensive service boundary validation.
+    ...         validation = self.validate_input(order_data)
+    ...         if validation.failure:
+    ...             return validation
+    ...
+    ...         # Transform data
+    ...         transform_result = self.transform_data(order_data)
+    ...         if transform_result.failure:
+    ...             return transform_result
+    ...
+    ...         # Validate output
+    ...         output_validation = self.validate_output(transform_result.value)
+    ...         return (
+    ...             transform_result if output_validation.success else output_validation
+    ...         )
+    >>> processor = OrderProcessor()
+    >>> result = processor.process_data({"order_id": "123", "amount": 99.99})
+
+Service Orchestration Examples:
+    >>> # Complex workflow with multiple services
+    >>> orchestrator = FlextServices.ServiceOrchestrator()
+    >>> workflow_steps = [
+    ...     ("validate_user", user_validation_service),
+    ...     ("process_payment", payment_service),
+    ...     ("update_inventory", inventory_service),
+    ...     ("send_notification", notification_service),
+    ... ]
+    >>> workflow_result = orchestrator.orchestrate_workflow(workflow_steps)
+    >>> if workflow_result.failure:
+    ...     core.logger.error(f"Workflow failed: {workflow_result.error}")
+
+Service Registry with Health Monitoring:
+    >>> # Service registry with health checks
+    >>> registry = FlextServices.ServiceRegistry()
+    >>> # Register services
+    >>> registry.register_service("auth", auth_service)
+    >>> registry.register_service("payment", payment_service)
+    >>> registry.register_service("notification", notification_service)
+    >>> # Health check all services
+    >>> for service_name in ["auth", "payment", "notification"]:
+    ...     health_result = registry.health_check_service(service_name)
+    ...     if health_result.failure:
+    ...         core.logger.warning(f"Service {service_name} health check failed")
+
+Performance Monitoring Integration:
+    >>> # Service metrics and monitoring
+    >>> metrics = FlextServices.ServiceMetrics()
+    >>> # Track service performance
+    >>> with core.observability.timer("user_service_call"):
+    ...     result = user_service.process_data(user_data)
+    >>> metrics.track_service_call("user_service", core.observability.last_duration)
+    >>> throughput = metrics.measure_throughput("user_service")
+    >>> service_report = metrics.generate_service_report("user_service")
+    >>> core.observability.record_metrics("service_performance", service_report)
+
+Async Service Processing:
+    >>> # Asynchronous service processing
+    >>> import asyncio
+    >>> async def async_data_processor(data: dict) -> FlextResult[dict]:
+    ...     await asyncio.sleep(0.1)  # Simulate async work
+    ...     return FlextResult.ok({"processed": True, **data})
+    >>> async_service = FlextServices.create_async_processor(async_data_processor)
+    >>> async def process_batch():
+    ...     tasks = [async_service.process_async(item) for item in batch_data]
+    ...     results = await asyncio.gather(*tasks)
+    ...     return results
+
+Service Validation Patterns:
+    >>> # Input/output validation for services
+    >>> validator = FlextServices.ServiceValidation()
+    >>> input_schema = {
+    ...     "type": "object",
+    ...     "properties": {
+    ...         "user_id": {"type": "string"},
+    ...         "amount": {"type": "number", "minimum": 0},
+    ...     },
+    ...     "required": ["user_id", "amount"],
+    ... }
+    >>> # Validate service inputs
+    >>> input_data = {"user_id": "123", "amount": 50.0}
+    >>> validation_result = validator.validate_service_input(input_data, input_schema)
+    >>> if validation_result.success:
+    ...     service_result = payment_service.process(input_data)
+    ...     output_validation = validator.validate_service_output(
+    ...         service_result.value, output_schema
+    ...     )
+
+Error Handling and Recovery:
+    >>> # Service error handling with recovery
+    >>> class ResilientService(FlextServices.ServiceProcessor):
+    ...     def handle_processing_error(self, error: Exception) -> FlextResult[dict]:
+    ...         # Implement retry logic
+    ...         if isinstance(error, TimeoutError):
+    ...             return FlextResult.fail("Service timeout - retry recommended")
+    ...         elif isinstance(error, ConnectionError):
+    ...             return FlextResult.fail("Connection failed - check network")
+    ...         else:
+    ...             return FlextResult.fail(f"Unhandled error: {error}")
+
+Notes:
+    - All services return FlextResult for consistent error handling and railway-oriented programming
+    - Service registry supports dynamic service discovery and health monitoring
+    - Performance metrics provide comprehensive observability into service behavior
+    - Orchestration patterns enable complex workflow composition with proper error handling
+    - Validation ensures service boundaries maintain data integrity and type safety
+    - Async service support enables high-throughput concurrent processing
+    - Integration with FlextCore provides centralized logging, configuration, and observability
+    - Clean Architecture principles ensure proper separation of concerns and testability
+
 """
 
 from __future__ import annotations

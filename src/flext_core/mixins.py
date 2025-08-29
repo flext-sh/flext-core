@@ -1,4 +1,188 @@
-"""Reusable behavioral patterns for enterprise applications."""
+"""FLEXT Mixins - Reusable behavioral patterns and enterprise mixin system.
+
+Provides comprehensive suite of behavioral patterns for enterprise applications including
+timestamp tracking, logging integration, serialization, validation, identification, state
+management, caching, performance timing and error handling. All functionality consolidated
+through FlextMixins class with both utility methods and inheritable mixin classes.
+
+Module Role in Architecture:
+    FlextMixins serves as the behavioral pattern foundation providing reusable components
+    for timestamp management, logging, serialization, validation and state management across
+    FLEXT applications. Integrates with FlextResult, FlextLogger and FlextProtocols.
+
+Classes and Methods:
+    FlextMixins:                        # Consolidated mixin system with all patterns
+        # Configuration Methods:
+        configure_mixins_system(config) -> FlextResult[ConfigDict] # Configure system
+        get_mixins_system_config() -> FlextResult[ConfigDict] # Get current config
+        create_environment_mixins_config(env) -> FlextResult[ConfigDict] # Environment config
+        optimize_mixins_performance(config) -> FlextResult[ConfigDict] # Performance tuning
+
+        # Timestamp Management:
+        create_timestamp_fields(obj) -> None       # Add timestamp fields to object
+        update_timestamp(obj) -> None              # Update modification timestamp
+        get_age_seconds(obj) -> int                # Get object age in seconds
+
+        # Identification Management:
+        ensure_id(obj) -> None                     # Ensure object has ID (generate if missing)
+        set_id(obj, id) -> None                    # Set object ID
+        has_id(obj) -> bool                        # Check if object has ID
+
+        # Logging Integration:
+        get_logger(obj) -> FlextLogger             # Get logger for object
+        log_operation(obj, operation) -> None      # Log operation with context
+        log_error(obj, error) -> None              # Log error with context
+        log_info(obj, message) -> None             # Log info message
+        log_debug(obj, message) -> None            # Log debug message
+
+        # Serialization:
+        to_dict(obj) -> dict                       # Convert object to dictionary
+        to_dict_basic(obj) -> dict                 # Basic dict conversion
+        to_json(obj) -> str                        # Convert object to JSON string
+        load_from_dict(obj, data) -> FlextResult[None] # Load object from dict
+        load_from_json(obj, json_str) -> FlextResult[None] # Load object from JSON
+
+        # Validation:
+        validate_required_fields(obj, fields) -> FlextResult[None] # Validate required fields
+        validate_field_types(obj, schema) -> FlextResult[None] # Validate field types
+        add_validation_error(obj, error) -> None   # Add validation error
+
+        # State Management:
+        initialize_state(obj) -> None              # Initialize object state
+        get_state(obj) -> dict                     # Get current state
+        set_state(obj, state) -> None              # Set object state
+        get_state_history(obj) -> list[dict]       # Get state change history
+
+        # Caching:
+        get_cached_value(obj, key) -> object | None # Get cached value
+        set_cached_value(obj, key, value) -> None  # Set cached value
+        clear_cache(obj) -> None                   # Clear all cached values
+        has_cached_value(obj, key) -> bool         # Check if value cached
+
+        # Performance Timing:
+        start_timing(obj) -> None                  # Start performance timer
+        stop_timing(obj) -> None                   # Stop performance timer
+        get_average_elapsed_time(obj) -> float     # Get average execution time
+
+        # Error Handling:
+        handle_error(obj, error) -> FlextResult[None] # Handle error with logging
+        safe_operation(obj, operation) -> FlextResult[object] # Execute operation safely
+
+    # Inheritable Mixin Classes:
+    Loggable                           # Logging functionality mixin
+    Serializable                       # JSON/dict serialization mixin
+    Timestampable                      # Automatic timestamp tracking mixin
+    Identifiable                       # ID management mixin
+    Validatable                        # Data validation mixin
+    Service                            # Composite mixin (Loggable + Validatable)
+    Entity                             # Complete composite mixin (all behaviors)
+
+Usage Examples:
+    Using mixin utilities:
+        obj = MyClass()
+        FlextMixins.ensure_id(obj)  # Adds unique ID
+        FlextMixins.create_timestamp_fields(obj)  # Adds created/updated timestamps
+        logger = FlextMixins.get_logger(obj)  # Gets logger instance
+
+    Using mixin inheritance:
+        class User(FlextMixins.Entity):  # Inherits all behaviors
+            def __init__(self, name: str):
+                self.name = name
+                self.ensure_id()  # From Identifiable
+                self.create_timestamp_fields()  # From Timestampable
+
+    Configuration:
+        config_result = FlextMixins.create_environment_mixins_config("production")
+        if config_result.success:
+            config = config_result.unwrap()
+
+Integration:
+    FlextMixins integrates with FlextResult for error handling, FlextLogger for
+    structured logging, FlextProtocols for type safety, and FlextConstants for
+    configuration management across the FLEXT ecosystem.
+    >>> if perf_result.success:
+    ...     core.observability.track_performance_config(perf_result.value)
+
+Enterprise Object Management:
+    >>> # Using mixin functionality on any object
+    >>> class UserService:
+    ...     def __init__(self, name: str):
+    ...         self.name = name
+    ...         FlextMixins.create_timestamp_fields(self)
+    ...         FlextMixins.initialize_validation(self)
+    >>> service = UserService("user-api-v1")
+    >>> service_id = FlextMixins.ensure_id(service)  # Generates UUID
+    >>> FlextMixins.log_operation(service, "service_created", service_id=service_id)
+    >>> # Validation and serialization
+    >>> FlextMixins.mark_valid(service)
+    >>> service_dict = FlextMixins.to_dict(service)
+    >>> service_json = FlextMixins.to_json(service, indent=2)
+
+Inheritance-Based Usage:
+    >>> # Using real mixin classes
+    >>> class OrderEntity(FlextMixins.Entity):
+    ...     def __init__(self, order_id: str, amount: float):
+    ...         super().__init__()
+    ...         self.order_id = order_id
+    ...         self.amount = amount
+    >>> order = OrderEntity("ORD-123", 99.99)
+    >>> print(f"Order created at: {order.created_at}")
+    >>> order.log_info("Order created", order_id=order.order_id, amount=order.amount)
+    >>> # Automatic serialization and validation
+    >>> order_data = order.to_dict()
+    >>> print(f"Order is valid: {order.is_valid}")
+
+Performance Optimization Examples:
+    >>> # High-performance configuration
+    >>> high_perf_config = {
+    ...     "performance_level": "high",
+    ...     "memory_limit_mb": 4096,
+    ...     "cpu_cores": 16,
+    ...     "enable_caching": True,
+    ...     "enable_async_operations": True,
+    ... }
+    >>> result = FlextMixins.optimize_mixins_performance(high_perf_config)
+    >>> # Environment-specific optimization
+    >>> prod_config = FlextMixins.create_environment_mixins_config("production")
+    >>> if prod_config.success:
+    ...     config = prod_config.value
+    ...     # Production has: caching=True, large cache, thread safety, metrics
+
+Behavioral Pattern Examples:
+    >>> # State management with history
+    >>> service = UserService("payment-service")
+    >>> FlextMixins.initialize_state(service, "initializing")
+    >>> FlextMixins.set_state(service, "running")
+    >>> FlextMixins.set_state(service, "maintenance")
+    >>> history = FlextMixins.get_state_history(
+    ...     service
+    ... )  # ["initializing", "running", "maintenance"]
+    >>> # Performance timing
+    >>> FlextMixins.start_timing(service)
+    >>> # ... perform operations ...
+    >>> elapsed = FlextMixins.stop_timing(service)
+    >>> avg_time = FlextMixins.get_average_elapsed_time(service)
+
+Error Handling Integration:
+    >>> # Safe operations with FlextResult
+    >>> def risky_operation():
+    ...     raise ValueError("Something went wrong")
+    >>> service = UserService("error-service")
+    >>> result = FlextMixins.safe_operation(service, risky_operation)
+    >>> if result and hasattr(result, "failure") and result.failure:
+    ...     FlextMixins.log_error(service, f"Operation failed: {result.error}")
+
+Notes:
+    - All mixin functionality returns FlextResult for type-safe error handling
+    - Configuration supports environment-specific optimization (dev/test/staging/prod)
+    - Performance tuning includes caching, threading, memory management, and async operations
+    - Real mixin classes support multiple inheritance for complex behavioral composition
+    - Integration with FlextCore provides centralized logging, observability, and configuration
+    - Type safety maintained through FlextTypes and FlextProtocols integration
+    - Backward compatibility preserved through individual mixin class exports
+    - Thread-safe operations supported for concurrent enterprise applications
+
+"""
 
 from __future__ import annotations
 
@@ -509,7 +693,8 @@ class FlextMixins:
         if not hasattr(obj, "_logger"):
             logger_name = f"{obj.__class__.__module__}.{obj.__class__.__name__}"
             obj._logger = FlextLogger(logger_name)
-        return obj._logger  # type: ignore[return-value]
+        # Cast to FlextLogger since we know _logger is always FlextLogger
+        return cast("FlextLogger", obj._logger)
 
     @classmethod
     def log_operation(
@@ -1266,16 +1451,5 @@ class FlextMixins:
 # =============================================================================
 
 __all__: list[str] = [
-    # Backward compatibility - individual mixin classes
-    "FlextLoggableMixin",
     "FlextMixins",  # ONLY main class exported
-    "FlextSerializableMixin",
-    "FlextTimestampMixin",
-    "FlextValidatableMixin",
 ]
-
-# Backward compatibility - export nested classes with Flext prefix
-FlextLoggableMixin = FlextMixins.Loggable
-FlextSerializableMixin = FlextMixins.Serializable
-FlextTimestampMixin = FlextMixins.Timestampable
-FlextValidatableMixin = FlextMixins.Validatable

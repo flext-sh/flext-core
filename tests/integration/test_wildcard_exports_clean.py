@@ -303,10 +303,13 @@ class TestFlextCoreIntegrationScenarios:
         assert "timestamp" in processed_result.value
 
         # 4. Handle any potential errors using exception system
-        try:
-            if not processed_result.success:
+        def _handle_workflow_failure(result: FlextResult[object]) -> None:
+            if not result.success:
                 error_msg = "Workflow failed"
                 raise FlextExceptions.OperationError(error_msg)
+
+        try:
+            _handle_workflow_failure(processed_result)
         except FlextExceptions.OperationError as e:
             pytest.fail(f"Unexpected workflow failure: {e}")
 

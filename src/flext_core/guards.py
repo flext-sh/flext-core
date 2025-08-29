@@ -1,83 +1,97 @@
-"""Enterprise validation and type guard system providing comprehensive data integrity enforcement.
+"""FLEXT Guards - Validation, type guards and data integrity enforcement system.
 
-This module implements a sophisticated validation and guard system for the FLEXT ecosystem,
-consolidating all guard functionality including pure function enforcement with memoization,
-immutable class creation, assertion-style validation, type guards, and performance optimization.
-Built on Clean Architecture principles with extensive FlextTypes, FlextConstants, and FlextResult
-integration for type-safe, high-performance validation operations.
+Provides sophisticated validation and guard system including pure function enforcement
+with memoization, immutable class creation, assertion-style validation, type guards,
+and performance optimization. Built on Clean Architecture principles with FlextResult
+integration for type-safe, composable validation operations.
 
-The system provides:
-    - Pure function enforcement with intelligent memoization caching
-    - Immutable class creation with descriptor protocol support
-    - Assertion-style validation utilities with comprehensive error handling
-    - Type guards for collection validation and structural integrity
-    - Environment-specific configuration management with performance optimization
-    - Thread-safe operation with context manager support
-    - Integration with FlextResult railway patterns for composable validation flows
+Module Role in Architecture:
+    FlextGuards serves as the validation and data integrity foundation providing
+    type guards, validation utilities, function memoization and immutable class
+    creation across FLEXT applications. Integrates with FlextResult for error handling.
 
-Architectural Patterns:
-    - Consolidated Class Design: All functionality organized within FlextGuards main class
-    - Nested Class Organization: Related functionality grouped in logical nested classes
-    - Railway-Oriented Programming: All operations return FlextResult for composition
-    - Strategy Pattern: Environment-specific configuration strategies
-    - Decorator Pattern: Pure function and immutable class decorators
-    - Template Method Pattern: Configurable validation and optimization workflows
+Classes and Methods:
+    FlextGuards:                        # Consolidated validation and guard system
+        # Configuration Methods:
+        configure_guards_system(config) -> FlextResult[ConfigDict] # Configure system
+        get_guards_system_config() -> FlextResult[ConfigDict] # Get current config
+        set_validation_level(level) -> FlextResult[None] # Set validation strictness
 
-Key Features:
-    - Zero-exception validation with FlextResult error handling
-    - Performance-optimized caching with configurable size limits
-    - Environment-aware configuration (development, test, production)
-    - Type-safe operations with comprehensive generic type support
-    - Memory-efficient validation with lazy evaluation options
-    - Metrics collection and performance monitoring capabilities
+        # Decorators:
+        @pure                           # Pure function decorator with memoization
+        @immutable                      # Immutable class decorator
+        @validate_args                  # Argument validation decorator
 
-Example Usage:
-    ```python
-    from flext_core import FlextGuards
+        # Type Guards:
+        is_dict_of(obj, key_type, value_type=None) -> bool # Check dict type
+        is_list_of(obj, item_type) -> bool          # Check list type
+        is_sequence_of(obj, item_type) -> bool      # Check sequence type
+        is_optional(obj, expected_type) -> bool     # Check optional type
+        is_union_of(obj, *types) -> bool            # Check union type
 
+        # Validation Utilities (ValidationUtils):
+        require_not_none(value, message) -> FlextResult[T] # Require non-None value
+        require_type(value, expected_type, message) -> FlextResult[T] # Require specific type
+        require_in_range(value, min_val, max_val) -> FlextResult[T] # Require value in range
+        require_string_not_empty(value, message) -> FlextResult[str] # Require non-empty string
+        require_list_not_empty(value, message) -> FlextResult[list[T]] # Require non-empty list
+        require_dict_has_key(dict_obj, key, message) -> FlextResult[dict] # Require key exists
 
-    # Pure function with memoization
-    @FlextGuards.pure
-    def expensive_calculation(x: int) -> int:
-        return x * x * x
+        # Pure Function Cache Management:
+        clear_pure_cache() -> None              # Clear all memoization cache
+        get_cache_stats() -> dict               # Get cache statistics
+        set_cache_size_limit(limit) -> None     # Set cache size limit
 
+        # Immutable Class Utilities:
+        make_immutable(cls) -> type             # Convert class to immutable
+        is_immutable(obj) -> bool               # Check if object is immutable
+        freeze_object(obj) -> object            # Make object immutable
 
-    # Immutable class creation
-    @FlextGuards.immutable
-    class DataClass:
-        def __init__(self, value: str):
-            self.value = value
+        # Assertion Utilities:
+        assert_not_none(value, message) -> None # Assert value is not None
+        assert_type(value, expected_type, message) -> None # Assert type matches
+        assert_condition(condition, message) -> None # Assert condition is true
 
+        # Performance Monitoring:
+        get_validation_metrics() -> dict       # Get validation performance metrics
+        reset_metrics() -> None                # Reset performance metrics
+        enable_metrics_collection(enabled) -> None # Enable/disable metrics
 
-    # Validation utilities
-    validated = FlextGuards.ValidationUtils.require_not_none(
-        data, "Data cannot be None"
-    )
+Usage Examples:
+    Type guards and validation:
+        # Type guards
+        if FlextGuards.is_dict_of(obj, str, int):
+            # obj is guaranteed to be dict[str, int]
+            process_string_int_dict(obj)
 
-    # Type guards
-    if FlextGuards.is_dict_of(obj, str):
-        # obj is guaranteed to be dict[str, str]
-        process_string_dict(obj)
+        # Validation utilities
+        result = FlextGuards.ValidationUtils.require_not_none(data, "Data required")
+        if result.success:
+            validated_data = result.unwrap()
 
-    # Configuration management
-    config_result = FlextGuards.configure_guards_system({
-        "environment": "production",
-        "validation_level": "strict",
-        "enable_pure_function_caching": True,
-    })
-    ```
+    Decorators:
+        # Pure function with memoization
+        @FlextGuards.pure
+        def expensive_calculation(x: int) -> int:
+            return x * x * x
 
-Integration Points:
-    - FlextTypes.Config: Type-safe configuration management
-    - FlextConstants.Config: Standardized configuration values and limits
-    - FlextResult: Railway-oriented error handling and composition
-    - FlextExceptions: Structured exception hierarchy for validation errors
+        # Immutable class
+        @FlextGuards.immutable
+        class DataClass:
+            def __init__(self, value: str):
+                self.value = value
 
-Performance Characteristics:
-    - O(1) cache lookups for pure function memoization
-    - O(n) validation for collection type guards
-    - Configurable memory usage with automatic cache cleanup
-    - Thread-safe operations with minimal locking overhead
+    Configuration:
+        config_result = FlextGuards.configure_guards_system({
+            "environment": "production",
+            "validation_level": "strict",
+            "enable_pure_function_caching": True
+        })
+
+Integration:
+    FlextGuards integrates with FlextResult for railway-oriented error handling,
+    FlextTypes.Config for configuration management, FlextConstants for validation
+    limits, and FlextExceptions for structured error reporting.
 
 Thread Safety:
     All operations are thread-safe with proper synchronization for shared resources.
