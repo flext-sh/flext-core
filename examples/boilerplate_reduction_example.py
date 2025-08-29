@@ -245,10 +245,14 @@ def demonstrate_traditional_approach() -> int:
 
 
 def demonstrate_ultra_modern_approach() -> int:
-    """Demonstrate ULTRA-MODERN approach with MASSIVE boilerplate reduction (29 lines vs 77!)."""
+    """Demonstrate ULTRA-MODERN approach with MASSIVE boilerplate reduction.
+
+    29 lines vs 77 traditional lines!
+    """
     print("\n" + "=" * 80)
     print(
-        "🚀 ULTRA-MODERN FLEXT APPROACH - 29 lines vs 78 traditional with ALL enterprise features!"
+        "🚀 ULTRA-MODERN FLEXT APPROACH - 29 lines vs 78 traditional "
+        "with ALL enterprise features!"
     )
     print("=" * 80)
 
@@ -314,7 +318,8 @@ def demonstrate_enterprise_orchestration() -> int:
             print("✅ Complete enterprise business process executed successfully!")
             print(f"📋 Response: {response}")
             print(
-                "   🔥 Includes: validation, auth, logging, monitoring, caching, retry logic!"
+                "   🔥 Includes: validation, auth, logging, monitoring, "
+                "caching, retry logic!"
             )
             return 0
         print(f"❌ Enterprise orchestration failed: {result.error}")

@@ -285,7 +285,10 @@ class TestFlextCoreIntegrationScenarios:
 
         # 2. Create a result and validate it
         result = FlextResult[dict].ok(
-            {"operation_id": operation_id, "status": "started"}
+            {
+                "operation_id": operation_id,
+                "status": "started",
+            }
         )
         validation_result = FlextValidation.Guards.require_non_empty_string(
             operation_id

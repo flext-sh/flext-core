@@ -30,7 +30,7 @@ Classes and Methods:
     register_legacy_service(name, service) -> FlextResult[None] # DEPRECATED: Use container.register()
 
     # Logging Compatibility:
-    get_legacy_logger(name) -> Logger          # DEPRECATED: Use get_logger()
+    get_legacy_logger(name) -> Logger          # DEPRECATED: Use FlextLogger()
     configure_legacy_logging(config) -> FlextResult[None] # DEPRECATED: Use FlextCore.configure_logging()
 
     # Utility Functions:
@@ -91,7 +91,7 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.fields import FlextFields
 from flext_core.guards import FlextGuards
 from flext_core.handlers import FlextHandlers
-from flext_core.loggings import FlextLogger
+from flext_core.loggings import FlextLogger as _FlextLoggerClass
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
@@ -109,9 +109,9 @@ from flext_core.validation import FlextValidation
 
 # Base model classes - now facades to FlextModels nested classes
 FlextModel = FlextModels.BaseConfig  # Base model facade
-FlextRootModel = FlextModels.EntityId  # Example RootModel facade
-FlextValue = FlextModels.Value  # Value object facade
-FlextEntity = FlextModels.Entity  # Entity facade
+FlextRootModel = FlextModels.BaseConfig  # Root model facade using BaseConfig
+# FlextModels.Value = FlextModels.Value  # Value object facade - removed self-assignment
+# FlextModels.Entity = FlextModels.Entity  # Entity facade - removed self-assignment
 FlextAggregateRoot = FlextModels.AggregateRoot  # Aggregate root facade
 
 # Root model aliases
@@ -133,17 +133,17 @@ T = TypeVar("T")
 
 
 @FlextDecorators.Lifecycle.deprecated_legacy_function(
-    old_name="get_logger",
+    old_name="FlextLogger",
     new_path="FlextLogger",
     migration_guide="Import FlextLogger directly: from flext_core import FlextLogger; logger = FlextLogger(__name__)",
 )
-def get_logger(
+def FlextLogger(
     name: str,
     version: str = "1.0.0",
     level: str = "INFO",
     service_name: str | None = None,
     service_version: str | None = None,
-) -> FlextLogger:
+) -> _FlextLoggerClass:
     """Get a FlextLogger instance - compatibility function.
 
     .. deprecated:: 0.9.0
@@ -158,7 +158,7 @@ def get_logger(
         else "INFO",
     )
 
-    return FlextLogger(
+    return _FlextLoggerClass(
         name=name,
         level=valid_level,
         service_name=service_name,
@@ -173,7 +173,7 @@ def get_logger(
 )
 def set_global_correlation_id(correlation_id: str | None) -> None:
     """Set global correlation ID for request tracing - compatibility function."""
-    FlextLogger.set_global_correlation_id(correlation_id)
+    _FlextLoggerClass.set_global_correlation_id(correlation_id)
 
 
 @FlextDecorators.Lifecycle.deprecated_legacy_function(
@@ -183,10 +183,10 @@ def set_global_correlation_id(correlation_id: str | None) -> None:
 )
 def get_correlation_id() -> str | None:
     """Get current correlation ID, generating one if needed - compatibility function."""
-    current_id = FlextLogger.get_global_correlation_id()
+    current_id = _FlextLoggerClass.get_global_correlation_id()
     if current_id is None:
         new_id = f"test_{uuid.uuid4().hex[:8]}"
-        FlextLogger.set_global_correlation_id(new_id)
+        _FlextLoggerClass.set_global_correlation_id(new_id)
         return new_id
     return current_id
 
@@ -1176,7 +1176,7 @@ class MixinLegacy:
         @property
         def logger(self) -> object:
             """Get logger via FlextMixins."""
-            return FlextMixins.get_logger(self)
+            return FlextLogger(self)
 
         def log_operation(self, operation: str, **kwargs: object) -> None:
             """Log operation via FlextMixins."""
@@ -1683,7 +1683,7 @@ __all__ = [  # noqa: RUF022
     # NOTE: FlextContainer removed - already exported from container.py
     # Core services
     # NOTE: FlextDomainService removed - exported from domain_services.py (not legacy)
-    # Note: FlextEntity removed from public exports - conflicts with models.py
+    # Note: FlextModels.Entity removed from public exports - conflicts with models.py
     # Use EntityLegacyFacade for legacy compatibility
     # Note: FlextEntityMixin removed from public exports - conflicts with mixins.py
     # Use EntityMixinLegacyFacade for legacy compatibility
@@ -1765,7 +1765,7 @@ __all__ = [  # noqa: RUF022
     # Legacy config functions
     "get_flext_config",
     "get_flext_container",
-    "configure_flext_container",
+    # "configure_flext_container",  # Function does not exist
     "get_typed",
     "register_typed",
     "create_module_container_utilities",
@@ -1774,12 +1774,12 @@ __all__ = [  # noqa: RUF022
     "safe_get_env_var",
     "safe_load_json_file",
     # Logging
-    "get_logger",
+    "FlextLogger",
 ]
 
 
 # =============================================================================
-# MODEL LEGACY FACADES - FlextModel, FlextEntity, FlextValueObject compatibility
+# MODEL LEGACY FACADES - FlextModel, FlextModels.Entity, FlextValueObject compatibility
 # =============================================================================
 
 
@@ -1793,13 +1793,13 @@ class ModelLegacy:
 
     @staticmethod
     def get_flext_entity() -> type[object] | None:
-        """Get FlextEntity class via lazy import."""
+        """Get FlextModels.Entity class via lazy import."""
         return FlextModels.Entity
 
     @staticmethod
     def get_flext_value_object() -> type[object]:
         """Get FlextValueObject class via lazy import."""
-        return FlextValue
+        return FlextModels.Value
 
 
 # Model facades for direct access - ABI compatibility
@@ -1813,10 +1813,10 @@ def create_flext_model(*args: object, **kwargs: object) -> object:
 
 
 def create_flext_entity(*args: object, **kwargs: object) -> object:
-    """Create FlextEntity instance - maintains exact ABI."""
+    """Create FlextModels.Entity instance - maintains exact ABI."""
     entity_class = ModelLegacy.get_flext_entity()
     if entity_class is None:
-        error_message = "FlextEntity class not available"
+        error_message = "FlextModels.Entity class not available"
         raise ValueError(error_message)
     return entity_class(*args, **kwargs)
 
@@ -1883,72 +1883,6 @@ class RootModelsLegacy:
         return FlextModels.EmailAddress
 
 
-# Legacy class aliases (deprecated but functional)
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="FlextEntityId",
-    replacement="FlextModels.EntityId",
-)
-def FlextEntityId(*args: object, **kwargs: object) -> object:  # noqa: N802
-    """Create EntityId instance (compatibility alias).
-
-    Deprecated: Use FlextModels.EntityId directly.
-    """
-    entity_id_class = RootModelsLegacy.get_entity_id_class()
-    return entity_id_class(*args, **kwargs)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="FlextVersion",
-    replacement="FlextModels.Version",
-)
-def FlextVersion(*args: object, **kwargs: object) -> object:  # noqa: N802
-    """Create Version instance (compatibility alias).
-
-    Deprecated: Use FlextModels.Version directly.
-    """
-    version_class = RootModelsLegacy.get_version_class()
-    return version_class(*args, **kwargs)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="FlextTimestamp",
-    replacement="FlextModels.Timestamp",
-)
-def FlextTimestamp(*args: object, **kwargs: object) -> object:  # noqa: N802
-    """Create Timestamp instance (compatibility alias).
-
-    Deprecated: Use FlextModels.Timestamp directly.
-    """
-    timestamp_class = RootModelsLegacy.get_timestamp_class()
-    return timestamp_class(*args, **kwargs)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="FlextMetadata",
-    replacement="FlextModels.Metadata",
-)
-def FlextMetadata(*args: object, **kwargs: object) -> object:  # noqa: N802
-    """Create Metadata instance (compatibility alias).
-
-    Deprecated: Use FlextModels.Metadata directly.
-    """
-    metadata_class = RootModelsLegacy.get_metadata_class()
-    return metadata_class(*args, **kwargs)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="FlextHost",
-    replacement="FlextModels.Host",
-)
-def FlextHost(*args: object, **kwargs: object) -> object:  # noqa: N802
-    """Create Host instance (compatibility alias).
-
-    Deprecated: Use FlextModels.Host directly.
-    """
-    host_class = RootModelsLegacy.get_host_class()
-    return host_class(*args, **kwargs)
-
-
 @FlextDecorators.Lifecycle.deprecated_alias(
     old_name="FlextPort",
     replacement="FlextModels.Port",
@@ -2008,27 +1942,13 @@ def get_flext_container() -> FlextContainer:
 
 
 @FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="configure_flext_container",
-    replacement="FlextContainer.configure_global()",
-)
-def configure_flext_container(
-    container: FlextContainer | None = None,
-) -> FlextContainer:
-    """Configure global container (compatibility alias).
-
-    Deprecated: Use FlextContainer.configure_global() directly.
-    """
-    return FlextContainer.configure_global(container)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
     old_name="get_typed",
     replacement="FlextContainer.get_global_typed()",
 )
 def get_typed[T](key: str, expected_type: type[T]) -> FlextResult[T]:
     """Get typed service from global container (compatibility alias).
 
-    Deprecated: Use FlextContainer.get_global_typed() directly.
+    Deprecated: Use FlextContainer.get_typed() directly.
     """
     return FlextContainer.get_global_typed(key, expected_type)
 
@@ -2096,8 +2016,8 @@ class LoggingLegacy:
 
     @staticmethod
     def get_logger_function() -> Callable[[str], object]:
-        """Get get_logger function via lazy import."""
-        return get_logger
+        """Get FlextLogger function via lazy import."""
+        return FlextLogger
 
     @staticmethod
     def get_logger_class() -> type[FlextLogger]:
@@ -2118,10 +2038,10 @@ class FlextLoggerFactory:
     """DEPRECATED: Use FlextLogger() directly instead."""
 
     @staticmethod
-    def get_logger(name: str | None = None, level: str = "INFO") -> object:
+    def FlextLogger(name: str | None = None, level: str = "INFO") -> object:
         """DEPRECATED: Use FlextLogger() directly instead."""
         LoggingLegacy.deprecation_warning(
-            "FlextLoggerFactory.get_logger", "FlextLogger"
+            "FlextLoggerFactory.FlextLogger", "FlextLogger"
         )
         # Cast level to LogLevel type for compatibility
         valid_level = cast(
@@ -2178,7 +2098,7 @@ class FlextLogContextManager:
         """Exit context manager."""
 
 
-# Note: get_logger is defined earlier in the file with proper signature
+# Note: FlextLogger is defined earlier in the file with proper signature
 
 
 def create_log_context(logger: object, **context: object) -> object:
@@ -3214,12 +3134,6 @@ def flext_track_performance(
 # =============================================================================
 
 
-# Container class facades - restored for test compatibility
-FlextServiceKey = FlextContainer.ServiceKey
-FlextServiceRegistrar = FlextContainer.ServiceRegistrar
-FlextServiceRetriever = FlextContainer.ServiceRetriever
-
-
 # Legacy command/query facades (simplified for test compatibility)
 class RegisterServiceCommand:
     """Legacy command facade for service registration."""
@@ -3357,27 +3271,6 @@ FlextCoreTypes = FlextTypes
 # =============================================================================
 # DELEGATION SYSTEM LEGACY ALIASES - Simple compatibility aliases
 # =============================================================================
-
-
-# DEPRECATED: Use FlextDelegationSystem class methods directly
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="create_mixin_delegator",
-    replacement="FlextDelegationSystem.create_mixin_delegator()",
-)
-def create_mixin_delegator(host_instance: object, *mixin_classes: type) -> object:
-    """DEPRECATED: Use FlextDelegationSystem.create_mixin_delegator() instead."""
-    return FlextDelegationSystem.create_mixin_delegator(host_instance, *mixin_classes)
-
-
-@FlextDecorators.Lifecycle.deprecated_alias(
-    old_name="validate_delegation_system",
-    replacement="FlextDelegationSystem.validate_delegation_system()",
-)
-def validate_delegation_system() -> FlextResult[
-    dict[str, str | list[str] | dict[str, object]]
-]:
-    """DEPRECATED: Use FlextDelegationSystem.validate_delegation_system() instead."""
-    return FlextDelegationSystem.validate_delegation_system()
 
 
 # Legacy class aliases - DEPRECATED: Use FlextDelegationSystem nested classes
@@ -3593,10 +3486,6 @@ __all__ += [
     "FlextIdGenerator",  # Legacy backward compatibility - use FlextUtilities.Generators
     "FlextPerformance",  # Legacy backward compatibility - use FlextUtilities.Performance
     "FlextProcessingUtils",  # Legacy backward compatibility - use FlextUtilities.ProcessingUtils
-    # Container facades and Commands/Queries - restored for test compatibility
-    "FlextServiceKey",
-    "FlextServiceRegistrar",
-    "FlextServiceRetriever",
     "FlextTextProcessor",  # Legacy backward compatibility - use FlextUtilities.truncate
     "FlextTimeUtils",  # Legacy backward compatibility - use FlextUtilities.format_duration
     "FlextTypeGuards",  # Legacy backward compatibility - use FlextUtilities.TypeGuards
@@ -3646,7 +3535,7 @@ class _CompatibilityMixin:
 #     @property
 #     def logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
 #         """Get logger via FlextMixins."""
-#         return FlextMixins.get_logger(self)
+#         return FlextLogger(self)
 #
 #     def log_operation(self, operation: str, **kwargs: object) -> None:
 #         """Log operation via FlextMixins."""
@@ -3911,11 +3800,11 @@ FlextCoreLogging = _create_flext_core_logging_alias()
 # Add logging legacy exports
 __all__ += [
     "FlextCoreLogging",
+    "FlextLogger",
     "bind_context",
     "create_log_context",
     "flext_get_logger",
     "get_base_logger",
-    "get_logger",
     "with_performance_tracking",
 ]
 
@@ -4053,21 +3942,10 @@ __all__ += [
     "FlextOperationStatus",
 ]
 
-# =============================================================================
-# CONFIG MODULE LEGACY ALIASES
-# =============================================================================
-
-# Config module compatibility facades
-FlextSettings = FlextConfig.Settings
-FlextBaseConfigModel = FlextConfig.BaseConfigModel
-FlextSystemDefaults = FlextConfig.SystemDefaults
 
 # =============================================================================
 # CONTEXT MODULE LEGACY ALIASES
 # =============================================================================
-
-# Context compatibility alias
-FlextContexts = FlextContext
 
 # Context variable aliases for backward compatibility
 _correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID
@@ -4084,8 +3962,7 @@ _operation_metadata = FlextContext.Variables.Performance.OPERATION_METADATA
 # CORE MODULE LEGACY ALIASES
 # =============================================================================
 
-# Core compatibility alias
-FlextCores = FlextCore
+# Core compatibility alias - FlextCore class already imported and available
 
 
 # Helper function for global access (moved from core.py)
@@ -4266,18 +4143,18 @@ __all__ += [  # noqa: RUF022
     # Model class facades (consolidated from FlextModels)
     "FlextModel",
     "FlextRootModel",
-    "FlextValue",
-    "FlextEntity",
+    # "FlextModels.Value",  # Removed - invalid module attribute
+    # "FlextModels.Entity",  # Removed - invalid module attribute
     "FlextAggregateRoot",
     "FlextRootModels",
     "FlextFactory",
     "FlextEntityFactory",
-    # Config aliases
-    "FlextSettings",
-    "FlextBaseConfigModel",
-    "FlextSystemDefaults",
-    # Context aliases
-    "FlextContexts",
+    # Config aliases removed - these were not properly defined and caused import errors
+    # "FlextSettings",  # Not implemented, causes AttributeError
+    # "FlextConfig.BaseConfigModel",  # Not implemented, causes AttributeError
+    # "FlextConfig.SystemDefaults",  # Not implemented, causes AttributeError
+    # Context aliases removed - not properly defined
+    # "FlextContexts",  # Not implemented, causes AttributeError
     "_correlation_id",
     "_parent_correlation_id",
     "_service_name",
@@ -4288,11 +4165,11 @@ __all__ += [  # noqa: RUF022
     "_operation_start_time",
     "_operation_metadata",
     # Logging helper functions (compatibility)
-    "get_logger",
+    "FlextLogger",
     "set_global_correlation_id",
     "get_correlation_id",
     # Core aliases
-    "FlextCores",
+    "FlextCore",
     "flext_core",  # Helper function for global access
     # Payload aliases
     "FlextMessage",
@@ -4329,11 +4206,6 @@ __all__ += [  # noqa: RUF022
     "FlextPluginLoader",
     # Root Models Legacy aliases
     "RootModelsLegacy",
-    "FlextEntityId",
-    "FlextVersion",
-    "FlextTimestamp",
-    "FlextMetadata",
-    "FlextHost",
     "FlextPort",
     "FlextEmailAddress",
     # Validation aliases

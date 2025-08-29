@@ -64,8 +64,8 @@ class FlextResult[T]:
 
 **Domain-Driven Design Components**
 
-- `entities.py` - FlextEntity base class
-- `value_objects.py` - FlextValue immutable types
+- `entities.py` - FlextModels.Entity base class
+- `value_objects.py` - FlextModels.Value immutable types
 - `aggregate_root.py` - FlextAggregates with events
 - `domain_services.py` - Domain services
 - `models.py` - General models

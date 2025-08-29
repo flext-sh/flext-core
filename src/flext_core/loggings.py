@@ -15,8 +15,8 @@ Classes and Methods:
         debug(message, **context) -> None              # Debug level logging with context
         info(message, **context) -> None               # Info level logging with context
         warning(message, **context) -> None            # Warning level logging with context
-        error(message, **context) -> None              # Error level logging with context
-        critical(message, **context) -> None           # Critical level logging with context
+        error(message, error=None, **context) -> None  # Error level logging with context and optional error (Exception or str)
+        critical(message, error=None, **context) -> None # Critical level logging with context and optional error (Exception or str)
         exception(message, **context) -> None          # Exception logging with stack trace
 
         # Performance Tracking:
@@ -56,6 +56,7 @@ Usage Examples:
         logger = FlextLogger(__name__)
         logger.info("Processing request", user_id=123, action="create")
         logger.error("Failed to process", error=exception, request_id="req_123")
+        logger.error("Validation failed", error="Invalid email format", user_id=123)
 
     Performance tracking:
         op_id = logger.start_operation("user_creation", user_id=123)
@@ -126,6 +127,7 @@ class FlextLogger:
             logger = FlextLogger(__name__)
             logger.info("Processing user request", user_id=123, action="login")
             logger.error("Database connection failed", error=exception)
+            logger.error("Validation error", error="Invalid email format")
 
         Operation tracking:
             op_id = logger.start_operation("user_creation", user_id=123)
@@ -320,7 +322,7 @@ class FlextLogger:
         level: str,
         message: str,
         context: dict[str, object] | None = None,
-        error: Exception | None = None,
+        error: Exception | str | None = None,
         duration_ms: float | None = None,
     ) -> dict[str, object]:
         """Build comprehensive structured log entry.
@@ -329,7 +331,7 @@ class FlextLogger:
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
             message: Primary log message.
             context: Optional additional context data for the log entry.
-            error: Optional exception to include error details.
+            error: Optional exception or error message string to include error details.
             duration_ms: Optional operation duration in milliseconds.
 
         Returns:
@@ -354,6 +356,11 @@ class FlextLogger:
         if request_context:
             entry["request"] = request_context
 
+        # Add permanent context if available
+        permanent_context = getattr(self, "_permanent_context", {})
+        if permanent_context:
+            entry["permanent"] = permanent_context
+
         # Add performance metrics
         if duration_ms is not None:
             entry["performance"] = {
@@ -363,14 +370,24 @@ class FlextLogger:
 
         # Add error details if present
         if error:
-            entry["error"] = {
-                "type": error.__class__.__name__,
-                "message": str(error),
-                "stack_trace": traceback.format_exception(
-                    type(error), error, error.__traceback__
-                ),
-                "module": getattr(error, "__module__", "unknown"),
-            }
+            if isinstance(error, Exception):
+                # Handle Exception objects with full details
+                entry["error"] = {
+                    "type": error.__class__.__name__,
+                    "message": str(error),
+                    "stack_trace": traceback.format_exception(
+                        type(error), error, error.__traceback__
+                    ),
+                    "module": getattr(error, "__module__", "unknown"),
+                }
+            else:
+                # Handle string error messages
+                entry["error"] = {
+                    "type": "StringError",
+                    "message": str(error),
+                    "stack_trace": None,
+                    "module": "unknown",
+                }
 
         # Add sanitized user context
         if context:
@@ -449,14 +466,80 @@ class FlextLogger:
             environment=getattr(self, "_environment", "development"),
         )
 
-        # Copy existing context
+        # Copy existing request context
         if hasattr(self._local, "request_context"):
             bound_logger.set_request_context(**self._local.request_context)
+
+        # Copy existing permanent context
+        if hasattr(self, "_permanent_context"):
+            bound_logger._permanent_context = self._permanent_context.copy()
 
         # Add new bound context
         bound_logger.set_request_context(**context)
 
         return bound_logger
+
+    def set_context(
+        self, context_dict: dict[str, object] | None = None, **context: object
+    ) -> None:
+        """Set permanent context data for this logger instance.
+
+        Args:
+            context_dict: Dictionary of context data to set. If provided, will completely
+                replace the existing permanent context.
+            **context: Additional key-value pairs to add to the permanent context.
+                If context_dict is provided, these will be merged with it.
+                If context_dict is None, these will be added to existing context.
+
+        Note:
+            This context will be included in all future log entries from this logger.
+            Unlike set_request_context which uses thread-local storage, this sets
+            instance-level permanent context.
+
+        Example:
+            >>> logger.set_context({"service": "auth", "version": "1.0"})
+            >>> logger.set_context(user_id="123", session_id="abc")
+            >>> # Both approaches work and can be combined
+
+        """
+        if not hasattr(self, "_permanent_context"):
+            self._permanent_context: dict[str, object] = {}
+
+        if context_dict is not None:
+            # Replace existing context with new dict
+            self._permanent_context = dict(context_dict)
+            # Add any additional kwargs
+            self._permanent_context.update(context)
+        else:
+            # Just update existing context with kwargs
+            self._permanent_context.update(context)
+
+    def with_context(self, **context: object) -> FlextLogger:
+        """Create a new logger instance with additional bound context.
+
+        This method creates a new FlextLogger instance that inherits all the
+        configuration and state of the current logger but includes additional
+        bound context that will be automatically included in all log messages.
+
+        Args:
+            **context: Key-value pairs to bind to the new logger context.
+
+        Returns:
+            FlextLogger: New logger instance with additional bound context.
+
+        Example:
+            >>> logger = FlextLogger("main")
+            >>> child_logger = logger.with_context(operation="login", user_id="123")
+            >>> child_logger.info(
+            ...     "User logged in"
+            ... )  # Will include operation and user_id
+
+        Note:
+            This is an alias for the bind() method to provide a more intuitive name
+            for creating contextual loggers.
+
+        """
+        return self.bind(**context)
 
     def start_operation(self, operation_name: str, **context: object) -> str:
         """Start tracking an operation with performance metrics.
@@ -595,7 +678,7 @@ class FlextLogger:
         self,
         message: str,
         *args: object,
-        error: Exception | None = None,
+        error: Exception | str | None = None,
         **context: object,
     ) -> None:
         """Log error message with full context and error details.
@@ -603,7 +686,7 @@ class FlextLogger:
         Args:
             message: Log message with optional printf-style formatting.
             *args: Arguments for message formatting (printf-style).
-            error: Optional exception to include error details and stack trace.
+            error: Optional exception or error message string to include error details and stack trace.
             **context: Additional context data for the log entry.
 
         """
@@ -615,7 +698,7 @@ class FlextLogger:
         self,
         message: str,
         *args: object,
-        error: Exception | None = None,
+        error: Exception | str | None = None,
         **context: object,
     ) -> None:
         """Log critical message with full context and error details.
@@ -623,7 +706,7 @@ class FlextLogger:
         Args:
             message: Log message with optional printf-style formatting.
             *args: Arguments for message formatting (printf-style).
-            error: Optional exception to include error details and stack trace.
+            error: Optional exception or error message string to include error details and stack trace.
             **context: Additional context data for the log entry.
 
         """
@@ -707,11 +790,13 @@ class FlextLogger:
 
         # Add structured processors
         if structured_output:
-            processors.extend([
-                cls._add_correlation_processor,
-                cls._add_performance_processor,
-                cls._sanitize_processor,
-            ])
+            processors.extend(
+                [
+                    cls._add_correlation_processor,
+                    cls._add_performance_processor,
+                    cls._sanitize_processor,
+                ]
+            )
 
         # Choose output format
         if json_output:
@@ -1119,24 +1204,28 @@ class FlextLogger:
             performance_level = config.get("performance_level", "standard")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_logging_enabled": True,
-                    "buffer_size": 5000,
-                    "flush_interval_ms": 1000,
-                    "max_concurrent_operations": 500,
-                    "enable_log_compression": True,
-                    "batch_log_processing": True,
-                    "disable_trace_logging": True,
-                })
+                optimized_config.update(
+                    {
+                        "async_logging_enabled": True,
+                        "buffer_size": 5000,
+                        "flush_interval_ms": 1000,
+                        "max_concurrent_operations": 500,
+                        "enable_log_compression": True,
+                        "batch_log_processing": True,
+                        "disable_trace_logging": True,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "async_logging_enabled": False,
-                    "buffer_size": 100,
-                    "flush_interval_ms": 10000,
-                    "max_concurrent_operations": 10,
-                    "enable_log_compression": False,
-                    "batch_log_processing": False,
-                })
+                optimized_config.update(
+                    {
+                        "async_logging_enabled": False,
+                        "buffer_size": 100,
+                        "flush_interval_ms": 10000,
+                        "max_concurrent_operations": 10,
+                        "enable_log_compression": False,
+                        "batch_log_processing": False,
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

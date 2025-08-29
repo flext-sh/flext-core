@@ -11,13 +11,13 @@ and extensibility through protocols and abstract base classes.
     - Protocol-based structural typing for maximum flexibility
 
 Key Components:
-    - FlextProtocols.Foundation.Validator: Protocol for flexible validation implementations
+    - FlextProtocols.Foundation.Validator: Protocol for flexible validation
     - FlextProtocols.Foundation.Validator: ABC for reusable validation rules
     - FlextService: ABC for service lifecycle management
     - FlextConfigurable: Protocol for configuration injection
     - FlextMessageHandler/FlextMiddleware: ABCs for message processing pipelines
     - FlextRepository/FlextUnitOfWork: ABCs for data access patterns
-    - FlextProtocols.Plugin/FlextProtocols.PluginContext: ABCs and protocols for extensibility
+    - FlextProtocols.Plugin/FlextProtocols.PluginContext: ABCs for extensibility
     - FlextEventPublisher/FlextEventSubscriber: ABCs for event-driven patterns
 
 This example shows real-world enterprise architecture scenarios
@@ -32,22 +32,20 @@ from dataclasses import dataclass
 # =============================================================================
 # LOCAL TYPE DEFINITIONS - For demonstration purposes
 # =============================================================================
-from typing import Generic, Protocol, TypeVar, cast
+from typing import Protocol, cast
 
 from structlog.stdlib import BoundLogger
 
 from flext_core import (
     FlextConstants,
+    FlextLogger,
     FlextProtocols,
     FlextResult,
     FlextTypes,
-    get_logger,
 )
 
-T = TypeVar("T")
 
-
-class FlextPayload(Generic[T]):
+class DemoPayload[T]:
     """Generic payload base class for demonstration."""
 
     def __init__(self, data: T) -> None:
@@ -88,7 +86,7 @@ class FlextPluginContext:
         """Get configuration value."""
         return object()
 
-    def get_logger(self) -> FlextLoggerProtocol:
+    def FlextLogger(self) -> FlextLoggerProtocol:
         """Get logger instance."""
         return cast("FlextLoggerProtocol", object())
 
@@ -113,12 +111,12 @@ class FlextEvent:
 # =============================================================================
 
 # Network port validation constants using FlextConstants
-MAX_TCP_PORT: FlextTypes.Core.Integer = FlextConstants.Network.MAX_PORT or 65535
-MIN_AGE: FlextTypes.Core.Integer = 18  # Default age validation
-MAX_AGE: FlextTypes.Core.Integer = 120  # Default max age validation
+MAX_TCP_PORT: int = FlextConstants.Network.MAX_PORT or 65535
+MIN_AGE: int = 18  # Default age validation
+MAX_AGE: int = 120  # Default max age validation
 
 # Logger using centralized logging
-logger = get_logger("flext.examples.interfaces")
+logger = FlextLogger("flext.examples.interfaces")
 
 # =============================================================================
 # DOMAIN MODELS - Business entities for examples
@@ -132,7 +130,7 @@ class User:
     id: FlextTypes.Core.String
     name: FlextTypes.Core.String
     email: FlextTypes.Core.String
-    age: FlextTypes.Core.Integer | None = None
+    age: int | None = None
     is_active: FlextTypes.Core.Boolean = True
 
 
@@ -144,7 +142,7 @@ class Product:
     name: FlextTypes.Core.String
     price: FlextTypes.Core.Float
     category: FlextTypes.Core.String
-    stock: FlextTypes.Core.Integer = 0
+    stock: int = 0
 
 
 @dataclass
@@ -221,7 +219,7 @@ class OrderPlacedEvent(FlextEvent):
 
 
 class EmailValidator:
-    """Protocol-compliant email validator demonstrating FlextProtocols.Foundation.Validator."""
+    """Protocol-compliant email validator demonstrating Foundation.Validator."""
 
     def validate(self, value: object) -> FlextResult[object]:
         """Validate email format and normalize."""
@@ -248,12 +246,12 @@ class EmailValidator:
 
 
 class AgeRangeRule:
-    """Age validation rule demonstrating FlextProtocols.Foundation.Validator protocol."""
+    """Age validation rule demonstrating Foundation.Validator protocol."""
 
     def __init__(
         self,
-        min_age: FlextTypes.Core.Integer = MIN_AGE,
-        max_age: FlextTypes.Core.Integer = MAX_AGE,
+        min_age: int = MIN_AGE,
+        max_age: int = MAX_AGE,
     ) -> None:
         """Initialize AgeRangeRule.
 
@@ -292,7 +290,7 @@ class AgeRangeRule:
 
 
 class NonEmptyStringRule:
-    """Non-empty string validation rule implementing FlextProtocols.Foundation.Validator protocol."""
+    """Non-empty string validation rule implementing Foundation.Validator protocol."""
 
     def validate(self, data: object) -> FlextResult[None]:
         """Validate non-empty string data."""
@@ -313,7 +311,7 @@ class NonEmptyStringRule:
 
 
 class PositiveNumberRule:
-    """Positive number validation rule implementing FlextProtocols.Foundation.Validator protocol."""
+    """Positive number validation rule implementing Foundation.Validator protocol."""
 
     def validate(self, data: object) -> FlextResult[None]:
         """Validate positive number data."""
@@ -347,7 +345,7 @@ class UserService:
         self._is_running = False
         self._next_id = 1
 
-    def __call__(self, *args: object, **kwargs: object) -> FlextResult[None]:
+    def __call__(self, *_args: object, **_kwargs: object) -> FlextResult[None]:
         """Callable interface for service invocation."""
         # Simple implementation for protocol compliance
         if not self._is_running:
@@ -384,7 +382,7 @@ class UserService:
         self,
         name: FlextTypes.Core.String,
         email: FlextTypes.Core.String,
-        age: FlextTypes.Core.Integer | None = None,
+        age: int | None = None,
     ) -> FlextResult[User]:
         """Create new user."""
         if not self._is_running:
@@ -495,7 +493,7 @@ class UserCommandHandler(FlextBaseHandler):
         if not hasattr(request, "type"):
             return FlextResult[object].fail("Message must have type attribute")
 
-        message_type = request.type  # type: ignore[attr-defined]
+        message_type = request.type
 
         if message_type == "user_create":
             name = getattr(request, "name", "")
@@ -575,7 +573,8 @@ class ValidationMiddleware:
                 not isinstance(age, int) or not (min_age <= age <= max_age)
             ):
                 return FlextResult[object].fail(
-                    f"Age validation failed: Age must be between {min_age} and {max_age}",
+                    f"Age validation failed: Age must be between "
+                    f"{min_age} and {max_age}",
                 )
 
         # Continue to next handler
@@ -818,7 +817,7 @@ class SimplePluginContext(FlextPluginContext):
         self._services: dict[str, object] = {}
         self._logger = MockLogger()
 
-    def get_logger(self) -> FlextLoggerProtocol:
+    def FlextLogger(self) -> FlextLoggerProtocol:
         """Get logger for plugin (simplified)."""
         return cast("FlextLoggerProtocol", self._logger)
 
@@ -888,7 +887,7 @@ class EmailNotificationPlugin:
                     return config_result
 
             self._initialized = True
-            context.get_logger().info(
+            context.FlextLogger().info(
                 f"Plugin initialized: {self.name} v{self.version}"
             )
             return FlextResult[None].ok(None)
@@ -948,7 +947,7 @@ class AuditLogPlugin:
     def initialize(self, context: FlextPluginContext) -> FlextResult[None]:
         """Initialize plugin with context."""
         self._initialized = True
-        context.get_logger().info(f"Plugin initialized: {self.name} v{self.version}")
+        context.FlextLogger().info(f"Plugin initialized: {self.name} v{self.version}")
         return FlextResult[None].ok(None)
 
     def get_info(self) -> dict[str, object]:
@@ -1201,9 +1200,11 @@ def demonstrate_validation_interfaces() -> None:
     ]
 
     for rule, value, _description in test_cases:
-        apply_result = rule.apply(value, "value")
-        is_valid = apply_result.success
-        "" if is_valid else f" - {rule.get_error_message('value', value)}"
+        validate_result = rule.validate(value)
+        is_valid = validate_result.success
+        if not is_valid:
+            # Log validation result for demonstration
+            pass
 
 
 def demonstrate_service_interfaces() -> None:
@@ -1387,7 +1388,7 @@ def _basic_repo_operations(user_repo: UserRepository) -> None:
 def _unit_of_work_success_flow(fresh_repo: UserRepository) -> None:
     with DatabaseUnitOfWork(fresh_repo) as uow:
         new_user = User("user_100", "Transaction User", "transaction@example.com", 40)
-        uow.add_change("save", new_user)  # type: ignore[attr-defined]
+        uow.add_change("save", new_user)
         commit_result = uow.commit()
         if commit_result.success:
             pass
@@ -1404,7 +1405,7 @@ def _unit_of_work_failure_flow(fresh_repo: UserRepository) -> None:
     try:
         with DatabaseUnitOfWork(fresh_repo) as uow:
             failing_user = User("user_101", "Failing User", "fail@example.com", 50)
-            uow.add_change("save", failing_user)  # type: ignore[attr-defined]
+            uow.add_change("save", failing_user)
             _simulate_transaction_error()
     except ValueError:
         pass

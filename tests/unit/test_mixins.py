@@ -44,11 +44,13 @@ class CompositeStrategies:
 
     @staticmethod
     def user_profiles() -> object:
-        return st.fixed_dictionaries({
-            "name": st.text(min_size=1, max_size=50),
-            "email": st.emails(),
-            "active": st.booleans(),
-        })
+        return st.fixed_dictionaries(
+            {
+                "name": st.text(min_size=1, max_size=50),
+                "email": st.emails(),
+                "active": st.booleans(),
+            }
+        )
 
 
 class EdgeCaseStrategies:
@@ -70,20 +72,25 @@ class PropertyTestHelpers:
     def assume_valid_email(email: object) -> bool:
         return isinstance(email, str) and "@" in email
 
+
 class ComplexityAnalyzer:
     """Analyze algorithm complexity."""
 
-    def measure_complexity(self, func: Callable[[int], object], input_sizes: list[int], operation_name: str) -> dict[str, object]:
+    def measure_complexity(
+        self, func: Callable[[int], object], input_sizes: list[int], operation_name: str
+    ) -> dict[str, object]:
         return {
             "operation": operation_name,
-            "results": [func(size) for size in input_sizes]
+            "results": [func(size) for size in input_sizes],
         }
 
 
 class StressTestRunner:
     """Run stress tests with load testing."""
 
-    def run_load_test(self, func: Callable[[], object], iterations: int, _operation_name: str) -> dict[str, object]:
+    def run_load_test(
+        self, func: Callable[[], object], iterations: int, _operation_name: str
+    ) -> dict[str, object]:
         failures = 0
         for _ in range(iterations):
             try:
@@ -92,8 +99,9 @@ class StressTestRunner:
                 failures += 1
         return {
             "failure_rate": failures / iterations,
-            "operations_per_second": max(100, iterations / 10)
+            "operations_per_second": max(100, iterations / 10),
         }
+
 
 class GivenWhenThenBuilder:
     """Given-When-Then test pattern builder."""
@@ -125,6 +133,7 @@ class GivenWhenThenBuilder:
     def build(self) -> GivenWhenThenBuilder:
         return self
 
+
 class TestAssertionBuilder:
     """Fluent assertion builder."""
 
@@ -133,16 +142,25 @@ class TestAssertionBuilder:
         self.assertions: list[tuple[str, Callable[[object], bool], str]] = []
 
     def is_not_none(self) -> TestAssertionBuilder:
-        self.assertions.append(("not_none", lambda x: x is not None, "should not be None"))
+        self.assertions.append(
+            (
+                "not_none",
+                lambda x: x is not None,
+                "should not be None",
+            )
+        )
         return self
 
-    def satisfies(self, predicate: Callable[[object], bool], message: str) -> TestAssertionBuilder:
+    def satisfies(
+        self, predicate: Callable[[object], bool], message: str
+    ) -> TestAssertionBuilder:
         self.assertions.append(("satisfies", predicate, message))
         return self
 
     def assert_all(self) -> None:
         for name, predicate, message in self.assertions:
             assert predicate(self.value), f"{message} - failed {name}"
+
 
 class ParameterizedTestBuilder:
     """Build parametrized test cases."""
@@ -152,39 +170,57 @@ class ParameterizedTestBuilder:
         self.success_cases: list[dict[str, object]] = []
         self.failure_cases: list[dict[str, object]] = []
 
-    def add_success_cases(self, cases: list[dict[str, object]]) -> ParameterizedTestBuilder:
+    def add_success_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
         self.success_cases.extend(cases)
         return self
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
-        return [(str(case["entity_id"]), str(case["name"]), True) for case in self.success_cases]
+        return [
+            (str(case["entity_id"]), str(case["name"]), True)
+            for case in self.success_cases
+        ]
+
 
 class TestCaseFactory:
     """Factory for test cases."""
 
     @staticmethod
-    def create_failure_case(name: str, input_data: dict[str, object], expected_error: str) -> dict[str, object]:
-        return {
-            "name": name,
-            "input": input_data,
-            "expected_error": expected_error
-        }
+    def create_failure_case(
+        name: str, input_data: dict[str, object], expected_error: str
+    ) -> dict[str, object]:
+        return {"name": name, "input": input_data, "expected_error": expected_error}
 
-def arrange_act_assert(arrange_func: Callable[[], dict[str, object]], act_func: Callable[[dict[str, object]], dict[str, object]], assert_func: Callable[[dict[str, object], dict[str, object]], None]) -> Callable[[Callable[[], None]], Callable[[], None]]:
+
+def arrange_act_assert(
+    arrange_func: Callable[[], dict[str, object]],
+    act_func: Callable[[dict[str, object]], dict[str, object]],
+    assert_func: Callable[[dict[str, object], dict[str, object]], None],
+) -> Callable[[Callable[[], None]], Callable[[], None]]:
     """Decorator for AAA pattern."""
+
     def decorator(_test_func: Callable[[], None]) -> Callable[[], None]:
         def wrapper() -> None:
             data = arrange_func()
             result = act_func(data)
             assert_func(result, data)
+
         return wrapper
+
     return decorator
 
-def mark_test_pattern(_pattern_name: str) -> Callable[[Callable[[], None]], Callable[[], None]]:
+
+def mark_test_pattern(
+    _pattern_name: str,
+) -> Callable[[Callable[[], None]], Callable[[], None]]:
     """Mark test with pattern."""
+
     def decorator(func: Callable[[], None]) -> Callable[[], None]:
         return func
+
     return decorator
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -678,11 +714,13 @@ class TestEntityMixin:
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"entity_id": "entity-123", "name": "Test Entity 1"},
-            {"entity_id": "entity-456", "name": "Test Entity 2"},
-            {"entity_id": "entity-789", "name": "Test Entity 3"},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"entity_id": "entity-123", "name": "Test Entity 1"},
+                {"entity_id": "entity-456", "name": "Test Entity 2"},
+                {"entity_id": "entity-789", "name": "Test Entity 3"},
+            ]
+        )
 
         class EntityModel(FlextMixins.Entity):
             def __init__(self, entity_id: str, name: str) -> None:

@@ -1901,7 +1901,7 @@ class FlextCommands:
         @property
         def logger(self) -> FlextLogger:
             """Get logger instance for this bus using FlextMixins."""
-            return FlextMixins.get_logger(self)
+            return FlextLogger(self)
 
         # FlextMixins integration methods
         def log_operation(self, operation: str, **kwargs: object) -> None:

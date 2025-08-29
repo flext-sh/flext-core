@@ -21,14 +21,16 @@ import logging
 import tempfile
 import time
 import uuid
-from collections.abc import AsyncGenerator, Callable, Generator
+from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 import pytest_asyncio
-from pytest_benchmark.fixture import BenchmarkFixture
+from pytest_benchmark.fixture import (  # type: ignore[import-untyped,reportMissingTypeStubs]
+    BenchmarkFixture,
+)
 from pytest_mock import MockerFixture
 
 from flext_core import (
@@ -45,18 +47,6 @@ from .factories import (
     TestEntityFactory,
     TestValueObjectFactory,
 )
-
-if TYPE_CHECKING:
-    from typing import Protocol
-
-    class BenchmarkProtocol(Protocol):
-        """Protocol for benchmark fixture with proper typing."""
-
-        group: str
-        timer: Callable[[], float]
-        disable_gc: bool
-        min_rounds: int
-
 
 # Configure logging for test fixtures
 logger = logging.getLogger(__name__)
@@ -286,22 +276,22 @@ def config_builder() -> FlextConfig:
 
 # Performance testing fixtures
 @pytest.fixture
-def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:
+def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:  # type: ignore[no-any-unimported]
     """Fixture providing configured benchmark for performance tests."""
-    # Configure benchmark settings safely using __dict__ to avoid type issues
-    benchmark.group = "flext_core"
+    # Configure benchmark settings
+    benchmark.group = "flext_core"  # type: ignore[attr-defined]
 
     # Configure timer if available
     if hasattr(benchmark, "timer"):
-        benchmark.__dict__["timer"] = time.perf_counter
+        benchmark.timer = time.perf_counter  # type: ignore[attr-defined]
 
-    # Configure GC settings if available
+        # Configure GC settings if available
     if hasattr(benchmark, "disable_gc"):
-        benchmark.__dict__["disable_gc"] = True
+        benchmark.disable_gc = True  # type: ignore[attr-defined]
 
     # Configure minimum rounds if available
     if hasattr(benchmark, "min_rounds"):
-        benchmark.__dict__["min_rounds"] = 5
+        benchmark.min_rounds = 5  # type: ignore[attr-defined]
 
     return benchmark
 
@@ -457,7 +447,7 @@ def factory_registry() -> FactoryRegistry:
 @pytest.fixture
 def mock_logger(mocker: MockerFixture) -> object:
     """Fixture providing mocked logger."""
-    return mocker.patch("flext_core.legacy.get_logger")
+    return mocker.patch("flext_core.legacy.FlextLogger")
 
 
 @pytest.fixture

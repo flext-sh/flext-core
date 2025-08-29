@@ -61,11 +61,13 @@ Integration with FlextCore:
     ...     config = config_result.value
     ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
     >>> # Business rule validation
-    >>> validation_result = FlextConfig.validate_business_rules({
-    ...     "database_url": "postgresql://localhost/prod",
-    ...     "secret_key": "secure-key-with-sufficient-length",
-    ...     "log_level": "INFO",
-    ... })
+    >>> validation_result = FlextConfig.validate_business_rules(
+    ...     {
+    ...         "database_url": "postgresql://localhost/prod",
+    ...         "secret_key": "secure-key-with-sufficient-length",
+    ...         "log_level": "INFO",
+    ...     }
+    ... )
 
 Environment Configuration Examples:
     >>> # Development configuration

@@ -512,11 +512,13 @@ class FlextExceptions:
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
-            context.update({
-                "field": field,
-                "value": value,
-                "validation_details": validation_details,
-            })
+            context.update(
+                {
+                    "field": field,
+                    "value": value,
+                    "validation_details": validation_details,
+                }
+            )
             super().__init__(
                 message,
                 code=FlextConstants.Errors.VALIDATION_ERROR,

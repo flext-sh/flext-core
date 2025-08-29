@@ -155,7 +155,7 @@ class TestFlextLogger:
         assert logger is not None
 
     def test_get_logger_creates_instance(self) -> None:
-        """Test that get_logger creates logger instances."""
+        """Test that FlextLogger creates logger instances."""
         logger = FlextLogger("test_logger")
 
         assert logger is not None
@@ -164,7 +164,7 @@ class TestFlextLogger:
         assert hasattr(logger, "debug")
 
     def test_get_logger_caches_instances(self) -> None:
-        """Test that get_logger caches logger instances."""
+        """Test that FlextLogger caches logger instances."""
         logger1 = FlextLogger("cached_test")
         logger2 = FlextLogger("cached_test")
 
@@ -279,7 +279,7 @@ class TestFlextLoggerUsage:
 
     def test_basic_logging(self) -> None:
         """Test basic logging functionality."""
-        # Use FlextLogger constructor directly, not get_logger()
+        # Use FlextLogger constructor directly, not FlextLogger()
         logger = FlextLogger("usage_test", "DEBUG")
 
         # These should not raise errors

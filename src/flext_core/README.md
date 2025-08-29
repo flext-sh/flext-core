@@ -100,7 +100,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 ```python
 # Essential imports for all FLEXT projects
-from flext_core import FlextResult, FlextContainer, FlextEntity
+from flext_core import FlextResult, FlextContainer, FlextModels.Entity
 from flext_core.typings import FlextTypes, TAnyDict, TLogMessage
 from flext_core.constants import FlextLogLevel, Platform
 ```
@@ -122,7 +122,7 @@ def process_data(data: dict) -> FlextResult[ProcessedData]:
 
 ```python
 # Rich domain entities with business logic
-class User(FlextEntity):
+class User(FlextModels.Entity):
     name: str
     email: str
 
@@ -151,7 +151,7 @@ class AppSettings(FlextConfig):
 
 ```python
 # Correlation ID support and enterprise observability
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 with create_log_context(logger, request_id="123", user_id="456"):
     logger.info("Processing request", operation="create_user")
 ```

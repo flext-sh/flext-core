@@ -26,6 +26,7 @@ Classes and Methods:
         TextProcessor.extract_keywords(text) -> list[str] # Extract keywords from text
         TextProcessor.format_bytes(size_bytes) -> str   # Format byte size human-readable
         TextProcessor.slugify(text) -> str              # Convert text to URL slug
+        TextProcessor.generate_camel_case_alias(field_name) -> str # Convert snake_case to camelCase
 
         # Validators - Data Validation Utilities:
         Validators.validate_email(email) -> FlextResult[str] # Validate email format
@@ -326,6 +327,32 @@ class FlextUtilities:
             visible_part = text[-visible_chars:]
             masked_part = mask_char * (len(text) - visible_chars)
             return masked_part + visible_part
+
+        @staticmethod
+        def generate_camel_case_alias(field_name: str) -> str:
+            """Generate camelCase alias from snake_case field name.
+
+            Used for Pydantic field aliasing to convert Python snake_case field names
+            to camelCase for JSON serialization and API compatibility.
+
+            Args:
+                field_name: Snake_case field name to convert
+
+            Returns:
+                camelCase version of the field name
+            Examples:
+                >>> TextProcessor.generate_camel_case_alias("user_name")
+                "userName"
+                >>> TextProcessor.generate_camel_case_alias("is_active")
+                "isActive"
+                >>> TextProcessor.generate_camel_case_alias("created_at")
+                "createdAt"
+
+            """
+            if not field_name:
+                return ""
+            components = field_name.split("_")
+            return components[0] + "".join(word.capitalize() for word in components[1:])
 
     class TimeUtils:
         """Time and duration utilities with formatting and conversion.

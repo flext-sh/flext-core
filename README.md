@@ -84,9 +84,9 @@ if db_result.success:
 #### Domain-Driven Design
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 
-class Email(FlextValue):
+class Email(FlextModels.Value):
     """Immutable value object with built-in validation."""
     address: str
 
@@ -95,7 +95,7 @@ class Email(FlextValue):
             return FlextResult[None].fail("Invalid email format")
         return FlextResult[None].ok(None)
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """Entity with identity and business logic."""
     name: str
     email: Email

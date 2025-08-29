@@ -68,10 +68,10 @@ cache = container.get("cache").unwrap()
 #### Domain-Driven Design
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 from decimal import Decimal
 
-class Money(FlextValue):
+class Money(FlextModels.Value):
     """Immutable value object."""
     amount: Decimal
     currency: str
@@ -84,7 +84,7 @@ class Money(FlextValue):
             currency=self.currency
         ))
 
-class Account(FlextEntity):
+class Account(FlextModels.Entity):
     """Entity with identity and lifecycle."""
     owner_name: str
     balance: Money
@@ -160,8 +160,8 @@ class Account(FlextEntity):
 | ---------------------- | ------------------------------- | ---------- |
 | **FlextResult[T]**     | Railway-oriented error handling | ✅ Stable  |
 | **FlextContainer**     | Dependency injection container  | ✅ Stable  |
-| **FlextEntity**        | DDD entities with identity      | ✅ Stable  |
-| **FlextValue**   | Immutable value objects         | ✅ Stable  |
+| **FlextModels.Entity**        | DDD entities with identity      | ✅ Stable  |
+| **FlextModels.Value**   | Immutable value objects         | ✅ Stable  |
 | **FlextAggregates** | Aggregate consistency boundary  | ✅ Stable  |
 | **FlextCommand**       | CQRS command pattern            | 🔄 Active  |
 | **FlextMessageHandler**       | Command/query handlers          | 🔄 Active  |

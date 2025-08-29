@@ -103,9 +103,9 @@ Organize code by architectural boundaries:
 ```python
 # Domain Layer - Pure business logic
 # domain/entities.py
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextModels.Entity, FlextResult
 
-class Product(FlextEntity):
+class Product(FlextModels.Entity):
     """Domain entity with business rules."""
     name: str
     price: Decimal
@@ -188,10 +188,10 @@ class OrderRepository:
 Model your domain with rich entities:
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 
 # Value Object - Immutable, no identity
-class Address(FlextValue):
+class Address(FlextModels.Value):
     """Address value object."""
     street: str
     city: str
@@ -203,7 +203,7 @@ class Address(FlextValue):
         return f"{self.street}, {self.city} {self.postal_code}, {self.country}"
 
 # Entity - Has identity, mutable
-class OrderItem(FlextEntity):
+class OrderItem(FlextModels.Entity):
     """Order item entity."""
     product_id: str
     product_name: str

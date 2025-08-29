@@ -259,7 +259,7 @@ else:
 
 ## 🏛️ Domain Model Migration
 
-### From Simple Data Classes to FlextEntity
+### From Simple Data Classes to FlextModels.Entity
 
 **Before (Simple data classes):**
 
@@ -286,13 +286,13 @@ class UserService:
         self.repository.save(user)
 ```
 
-**After (FlextEntity with business logic):**
+**After (FlextModels.Entity with business logic):**
 
 ```python
-from flext_core.models import FlextEntity
+from flext_core.models import FlextModels.Entity
 from flext_core import FlextResult
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """User domain entity with business logic."""
 
     def __init__(self, user_id: str, name: str, email: str):

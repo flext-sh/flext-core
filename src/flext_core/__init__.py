@@ -6,7 +6,7 @@ functionality for data integration platforms.
 
 Architecture:
     Foundation Layer: FlextResult, exceptions, constants, types
-    Domain Layer: FlextEntity, FlextValueObject, FlextAggregateRoot, domain services
+    Domain Layer: FlextModels.Entity, FlextValueObject, FlextAggregateRoot, domain services
     Application Layer: Commands (CQRS), handlers, validation, guards
     Infrastructure Layer: Container (DI), config, logging, observability, context
     Support Layer: Decorators, mixins, utilities, fields, services, adapters
@@ -58,7 +58,7 @@ Examples:
     ...     db = db_result.value
 
     Domain modeling:
-    >>> class User(FlextEntity):
+    >>> class User(FlextModels.Entity):
     ...     name: str
     ...     email: str
     ...
@@ -71,7 +71,7 @@ Examples:
 Notes:
     - All business operations should return FlextResult[T] for composability
     - Use the global container for dependency injection across the ecosystem
-    - Domain entities should inherit from FlextEntity or FlextValueObject
+    - Domain entities should inherit from FlextModels.Entity or FlextValueObject
     - Follow Clean Architecture patterns with layered imports
     - Leverage type safety with generic parameters and protocols
 

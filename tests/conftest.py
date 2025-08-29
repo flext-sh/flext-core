@@ -9,9 +9,10 @@ from __future__ import annotations
 import pytest
 
 from .support import (
+    APITestClient,
     AsyncTestUtils,
     BenchmarkUtils,
-    ConfigurationFactory,
+    ConfigFactory,
     FlextMatchers,
     FlextResultFactory,
     HTTPTestUtils,
@@ -19,8 +20,10 @@ from .support import (
     PayloadDataFactory,
     PerformanceProfiler,
     ServiceDataFactory,
+    SimpleConfigurationFactory,
     TestBuilders,
     UserDataFactory,
+    UserFactory,
 )
 
 
@@ -34,14 +37,26 @@ def test_scenario() -> dict[str, str]:
 # Factory Fixtures - using consolidated tests/support
 @pytest.fixture
 def user_factory() -> type[UserDataFactory]:
-    """User data factory fixture."""
+    """User data factory fixture (simple dict-based)."""
     return UserDataFactory
 
 
 @pytest.fixture
-def config_factory() -> type[ConfigurationFactory]:
+def advanced_user_factory() -> type[UserFactory]:
+    """Advanced user factory fixture (factory-boy with Pydantic)."""
+    return UserFactory
+
+
+@pytest.fixture
+def config_factory() -> type[SimpleConfigurationFactory]:
     """Configuration factory fixture."""
-    return ConfigurationFactory
+    return SimpleConfigurationFactory
+
+
+@pytest.fixture
+def advanced_config_factory() -> type[ConfigFactory]:
+    """Advanced configuration factory fixture (factory-boy)."""
+    return ConfigFactory
 
 
 @pytest.fixture
@@ -86,6 +101,12 @@ def performance_profiler() -> PerformanceProfiler:
 def http_test_utils() -> HTTPTestUtils:
     """HTTP testing utilities."""
     return HTTPTestUtils()
+
+
+@pytest.fixture
+def api_test_client() -> APITestClient:
+    """API test client for HTTP testing."""
+    return APITestClient()
 
 
 # Async Testing Fixtures

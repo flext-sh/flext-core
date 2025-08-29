@@ -1001,10 +1001,12 @@ class FlextDecorators:
                         result = func(*args, **kwargs)
 
                         elapsed_time = time.perf_counter() - start_time
-                        log_data.update({
-                            "elapsed_time": elapsed_time,
-                            "status": "success",
-                        })
+                        log_data.update(
+                            {
+                                "elapsed_time": elapsed_time,
+                                "status": "success",
+                            }
+                        )
 
                         if include_result:
                             log_data["result_type"] = type(result).__name__
@@ -1014,12 +1016,14 @@ class FlextDecorators:
 
                     except Exception as e:
                         elapsed_time = time.perf_counter() - start_time
-                        log_data.update({
-                            "elapsed_time": elapsed_time,
-                            "status": "error",
-                            "exception": type(e).__name__,
-                            "error_message": str(e),
-                        })
+                        log_data.update(
+                            {
+                                "elapsed_time": elapsed_time,
+                                "status": "error",
+                                "exception": type(e).__name__,
+                                "error_message": str(e),
+                            }
+                        )
 
                         logger.exception("Function execution failed", extra=log_data)
                         raise
@@ -1659,60 +1663,70 @@ class FlextDecorators:
 
             # Environment-specific configurations
             if environment == "production":
-                base_config.update({
-                    "decorator_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": True,  # Critical in production
-                    "enable_observability_decorators": True,  # Full observability
-                    "enable_lifecycle_decorators": True,  # Deprecation warnings
-                    "decorator_caching_enabled": True,  # Performance optimization
-                    "decorator_timeout_enabled": True,  # Prevent hanging operations
-                    "decorator_retry_max_attempts": 5,  # More retries for reliability
-                })
+                base_config.update(
+                    {
+                        "decorator_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": True,  # Critical in production
+                        "enable_observability_decorators": True,  # Full observability
+                        "enable_lifecycle_decorators": True,  # Deprecation warnings
+                        "decorator_caching_enabled": True,  # Performance optimization
+                        "decorator_timeout_enabled": True,  # Prevent hanging operations
+                        "decorator_retry_max_attempts": 5,  # More retries for reliability
+                    }
+                )
             elif environment == "staging":
-                base_config.update({
-                    "decorator_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_performance_monitoring": True,  # Monitor staging performance
-                    "enable_observability_decorators": True,  # Full observability for testing
-                    "enable_lifecycle_decorators": True,  # Test deprecation handling
-                    "decorator_caching_enabled": True,  # Test caching behavior
-                    "decorator_timeout_enabled": True,  # Test timeout behavior
-                    "decorator_retry_max_attempts": 3,  # Standard retry policy
-                })
+                base_config.update(
+                    {
+                        "decorator_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_performance_monitoring": True,  # Monitor staging performance
+                        "enable_observability_decorators": True,  # Full observability for testing
+                        "enable_lifecycle_decorators": True,  # Test deprecation handling
+                        "decorator_caching_enabled": True,  # Test caching behavior
+                        "decorator_timeout_enabled": True,  # Test timeout behavior
+                        "decorator_retry_max_attempts": 3,  # Standard retry policy
+                    }
+                )
             elif environment == "development":
-                base_config.update({
-                    "decorator_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": True,  # Monitor development performance
-                    "enable_observability_decorators": True,  # Full logging for debugging
-                    "enable_lifecycle_decorators": True,  # Show all deprecation warnings
-                    "decorator_caching_enabled": False,  # Disable caching for development
-                    "decorator_timeout_enabled": False,  # No timeouts for debugging
-                    "decorator_retry_max_attempts": 1,  # Minimal retries for fast failure
-                })
+                base_config.update(
+                    {
+                        "decorator_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": True,  # Monitor development performance
+                        "enable_observability_decorators": True,  # Full logging for debugging
+                        "enable_lifecycle_decorators": True,  # Show all deprecation warnings
+                        "decorator_caching_enabled": False,  # Disable caching for development
+                        "decorator_timeout_enabled": False,  # No timeouts for debugging
+                        "decorator_retry_max_attempts": 1,  # Minimal retries for fast failure
+                    }
+                )
             elif environment == "test":
-                base_config.update({
-                    "decorator_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "enable_observability_decorators": False,  # Minimal logging in tests
-                    "enable_lifecycle_decorators": False,  # No deprecation warnings in tests
-                    "decorator_caching_enabled": False,  # No caching in tests
-                    "decorator_timeout_enabled": False,  # No timeouts in unit tests
-                    "decorator_retry_max_attempts": 0,  # No retries in tests for deterministic behavior
-                })
+                base_config.update(
+                    {
+                        "decorator_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "enable_observability_decorators": False,  # Minimal logging in tests
+                        "enable_lifecycle_decorators": False,  # No deprecation warnings in tests
+                        "decorator_caching_enabled": False,  # No caching in tests
+                        "decorator_timeout_enabled": False,  # No timeouts in unit tests
+                        "decorator_retry_max_attempts": 0,  # No retries in tests for deterministic behavior
+                    }
+                )
             elif environment == "local":
-                base_config.update({
-                    "decorator_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": False,  # No monitoring for local
-                    "enable_observability_decorators": True,  # Full logging for local debugging
-                    "enable_lifecycle_decorators": True,  # Show deprecation warnings
-                    "decorator_caching_enabled": False,  # No caching for local development
-                    "decorator_timeout_enabled": False,  # No timeouts for local debugging
-                    "decorator_retry_max_attempts": 0,  # No retries for immediate feedback
-                })
+                base_config.update(
+                    {
+                        "decorator_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": False,  # No monitoring for local
+                        "enable_observability_decorators": True,  # Full logging for local debugging
+                        "enable_lifecycle_decorators": True,  # Show deprecation warnings
+                        "decorator_caching_enabled": False,  # No caching for local development
+                        "decorator_timeout_enabled": False,  # No timeouts for local debugging
+                        "decorator_retry_max_attempts": 0,  # No retries for immediate feedback
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
 
@@ -1766,109 +1780,119 @@ class FlextDecorators:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": "2025-01-01T00:00:00Z",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": "2025-01-01T00:00:00Z",
+                }
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Decorator execution optimization
-                    "decorator_cache_size": 2000,
-                    "enable_decorator_pooling": True,
-                    "decorator_pool_size": 500,
-                    "max_concurrent_decorators": 200,
-                    "decorator_discovery_cache_ttl": 3600,  # 1 hour
-                    # Reliability decorator optimization
-                    "enable_reliability_caching": True,
-                    "reliability_cache_size": 1000,
-                    "reliability_processing_threads": 8,
-                    "parallel_reliability_processing": True,
-                    # Validation decorator optimization
-                    "validation_batch_size": 200,
-                    "enable_validation_batching": True,
-                    "validation_processing_threads": 16,
-                    "validation_queue_size": 4000,
-                    # Memory and performance optimization
-                    "memory_pool_size_mb": 100,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "aggressive",
-                })
+                optimized_config.update(
+                    {
+                        # Decorator execution optimization
+                        "decorator_cache_size": 2000,
+                        "enable_decorator_pooling": True,
+                        "decorator_pool_size": 500,
+                        "max_concurrent_decorators": 200,
+                        "decorator_discovery_cache_ttl": 3600,  # 1 hour
+                        # Reliability decorator optimization
+                        "enable_reliability_caching": True,
+                        "reliability_cache_size": 1000,
+                        "reliability_processing_threads": 8,
+                        "parallel_reliability_processing": True,
+                        # Validation decorator optimization
+                        "validation_batch_size": 200,
+                        "enable_validation_batching": True,
+                        "validation_processing_threads": 16,
+                        "validation_queue_size": 4000,
+                        # Memory and performance optimization
+                        "memory_pool_size_mb": 100,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "aggressive",
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    # Balanced decorator settings
-                    "decorator_cache_size": 1000,
-                    "enable_decorator_pooling": True,
-                    "decorator_pool_size": 250,
-                    "max_concurrent_decorators": 100,
-                    "decorator_discovery_cache_ttl": 1800,  # 30 minutes
-                    # Moderate reliability optimization
-                    "enable_reliability_caching": True,
-                    "reliability_cache_size": 500,
-                    "reliability_processing_threads": 4,
-                    "parallel_reliability_processing": True,
-                    # Standard validation processing
-                    "validation_batch_size": 100,
-                    "enable_validation_batching": True,
-                    "validation_processing_threads": 8,
-                    "validation_queue_size": 2000,
-                    # Moderate memory settings
-                    "memory_pool_size_mb": 50,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        # Balanced decorator settings
+                        "decorator_cache_size": 1000,
+                        "enable_decorator_pooling": True,
+                        "decorator_pool_size": 250,
+                        "max_concurrent_decorators": 100,
+                        "decorator_discovery_cache_ttl": 1800,  # 30 minutes
+                        # Moderate reliability optimization
+                        "enable_reliability_caching": True,
+                        "reliability_cache_size": 500,
+                        "reliability_processing_threads": 4,
+                        "parallel_reliability_processing": True,
+                        # Standard validation processing
+                        "validation_batch_size": 100,
+                        "enable_validation_batching": True,
+                        "validation_processing_threads": 8,
+                        "validation_queue_size": 2000,
+                        # Moderate memory settings
+                        "memory_pool_size_mb": 50,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "balanced",
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    # Conservative decorator settings
-                    "decorator_cache_size": 200,
-                    "enable_decorator_pooling": False,
-                    "decorator_pool_size": 50,
-                    "max_concurrent_decorators": 25,
-                    "decorator_discovery_cache_ttl": 600,  # 10 minutes
-                    # Minimal reliability optimization
-                    "enable_reliability_caching": False,
-                    "reliability_cache_size": 100,
-                    "reliability_processing_threads": 1,
-                    "parallel_reliability_processing": False,
-                    # Sequential validation processing
-                    "validation_batch_size": 25,
-                    "enable_validation_batching": False,
-                    "validation_processing_threads": 1,
-                    "validation_queue_size": 200,
-                    # Minimal memory usage
-                    "memory_pool_size_mb": 10,
-                    "enable_object_pooling": False,
-                    "gc_optimization_enabled": False,
-                    "optimization_level": "conservative",
-                })
+                optimized_config.update(
+                    {
+                        # Conservative decorator settings
+                        "decorator_cache_size": 200,
+                        "enable_decorator_pooling": False,
+                        "decorator_pool_size": 50,
+                        "max_concurrent_decorators": 25,
+                        "decorator_discovery_cache_ttl": 600,  # 10 minutes
+                        # Minimal reliability optimization
+                        "enable_reliability_caching": False,
+                        "reliability_cache_size": 100,
+                        "reliability_processing_threads": 1,
+                        "parallel_reliability_processing": False,
+                        # Sequential validation processing
+                        "validation_batch_size": 25,
+                        "enable_validation_batching": False,
+                        "validation_processing_threads": 1,
+                        "validation_queue_size": 200,
+                        # Minimal memory usage
+                        "memory_pool_size_mb": 10,
+                        "enable_object_pooling": False,
+                        "gc_optimization_enabled": False,
+                        "optimization_level": "conservative",
+                    }
+                )
 
             # Additional performance metrics and targets
-            optimized_config.update({
-                "expected_throughput_decorators_per_second": 1000
-                if performance_level == "high"
-                else 500
-                if performance_level == "medium"
-                else 100,
-                "target_decorator_overhead_ms": 1
-                if performance_level == "high"
-                else 5
-                if performance_level == "medium"
-                else 20,
-                "target_composition_time_ms": 2
-                if performance_level == "high"
-                else 10
-                if performance_level == "medium"
-                else 50,
-                "memory_efficiency_target": 0.95
-                if performance_level == "high"
-                else 0.85
-                if performance_level == "medium"
-                else 0.70,
-            })
+            optimized_config.update(
+                {
+                    "expected_throughput_decorators_per_second": 1000
+                    if performance_level == "high"
+                    else 500
+                    if performance_level == "medium"
+                    else 100,
+                    "target_decorator_overhead_ms": 1
+                    if performance_level == "high"
+                    else 5
+                    if performance_level == "medium"
+                    else 20,
+                    "target_composition_time_ms": 2
+                    if performance_level == "high"
+                    else 10
+                    if performance_level == "medium"
+                    else 50,
+                    "memory_efficiency_target": 0.95
+                    if performance_level == "high"
+                    else 0.85
+                    if performance_level == "medium"
+                    else 0.70,
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

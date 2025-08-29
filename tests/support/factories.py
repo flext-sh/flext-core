@@ -1,458 +1,502 @@
-"""Unified factories for flext-core tests using factory_boy and pytest ecosystem.
+"""Advanced test factories using factory_boy for consistent test data generation.
 
-Advanced factory patterns with comprehensive test data generation using:
-- factory_boy for object factories
-- pytest-benchmark for performance data
-- faker for realistic data generation
-- Pydantic models for type safety
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Provides factory_boy-based factories for creating test objects with proper
+relationships, sequences, and customization following SOLID principles.
 """
 
 from __future__ import annotations
 
 import uuid
-from typing import override
+from datetime import UTC, datetime
+from typing import cast
 
 import factory
-import factory.fuzzy
-from factory.base import DictFactory, Factory
-from factory.declarations import (
+from factory import (
+    Faker,
     LazyAttribute,
     LazyFunction,
     Sequence,
-    SubFactory,
-    Trait,
 )
-from factory.faker import Faker
+from pydantic import BaseModel
 
 from flext_core import (
-    FlextExceptions,
-    FlextModels,
-    FlextResult,
-    FlextTypes,
+    FlextConstants,  # New refactored API
+    FlextModels,  # New refactored API
+    FlextResult,  # Installed package import
 )
 
-JsonDict = FlextTypes.Core.JsonObject
+
+# Base models for testing (these would typically come from domain models)
+class TestUser(BaseModel):
+    """Test user model for factory testing."""
+
+    id: str
+    name: str
+    email: str
+    age: int
+    is_active: bool
+    created_at: datetime
+    metadata: dict[str, object]
 
 
-class BaseTestEntity(FlextModels.Entity):
-    """Base entity for testing with proper FlextCore integration."""
+class TestConfig(BaseModel):
+    """Test configuration model for factory testing."""
 
-    # Using proper FlextCore types for compatibility
-    name: str = "test_entity"
-    description: str = ""
-    active: bool = True
-    # Note: version field inherited from Entity base class (int type)
-    metadata: FlextModels.Metadata = FlextModels.Metadata(root={})
-
-    @override
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for test entity."""
-        if not self.name.strip():
-            return FlextResult[None].fail(
-                "Entity name cannot be empty",
-                error_code="INVALID_NAME",
-            )
-        return FlextResult[None].ok(None)
+    database_url: str
+    log_level: str
+    debug: bool
+    timeout: int
+    max_connections: int
+    features: list[str]
 
 
-class BaseTestValueObject(FlextModels.Value):
-    """Base value object for testing with proper FlextCore integration."""
+class TestField(BaseModel):
+    """Test field model for factory testing."""
 
-    value: str = "test_value"
+    field_id: str
+    field_name: str
+    field_type: str
+    required: bool
+    description: str
+    min_length: int | None = None
+    max_length: int | None = None
+    min_value: int | None = None
+    max_value: int | None = None
+    default_value: object = None
+    pattern: str | None = None
 
-    @override
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for test value object."""
-        if not self.value:
-            return FlextResult[None].fail(
-                "Value cannot be empty",
-                error_code="INVALID_VALUE",
-            )
-        return FlextResult[None].ok(None)
+
+class BaseTestEntity(BaseModel):
+    """Base test entity for domain testing."""
+
+    id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    version: int = 1
+    metadata: dict[str, object] = {}
 
 
-class UserDataFactory(DictFactory[dict[str, object]]):
-    """Factory for generating user test data with realistic attributes."""
+class BaseTestValueObject(BaseModel):
+    """Base test value object for domain testing."""
 
-    class Meta:
+    value: str
+    description: str
+    category: str
+    tags: list[str] = []
+
+
+# Factory Boy Factories
+class UserFactory(factory.Factory[TestUser]):
+    """Factory for creating test users with factory_boy."""
+
+    class Meta:  # type: ignore[misc]
         """Factory meta compatibility."""
 
-        model = dict
+        model = TestUser
 
-    id = LazyFunction(lambda: str(uuid.uuid4()))
-    username = Sequence(lambda n: f"user_{n}")
-    email: LazyAttribute[object, str] = LazyAttribute(
-        lambda obj: f"{obj.username}@example.com"
-    )
-    first_name: Faker[str, str] = Faker("first_name")
-    last_name: Faker[str, str] = Faker("last_name")
-    age = factory.fuzzy.FuzzyInteger(18, 80)
+    id: LazyAttribute[TestUser, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    name: Faker[TestUser, str] = Faker("name")
+    email: Faker[TestUser, str] = Faker("email")
+    age: Faker[TestUser, int] = Faker("random_int", min=18, max=80)
     is_active = True
-    created_at: Faker[str, str] = Faker("date_time_this_year")
-
-    # Traits for different user types
-    class Params:
-        """User factory parameters for different user types."""
-
-        is_admin: Trait[dict[str, object]] = Trait(
-            is_active=True,
-            permissions=["read", "write", "admin"],
-            role="administrator",
-        )
-        is_guest: Trait[dict[str, object]] = Trait(
-            is_active=True,
-            permissions=["read"],
-            role="guest",
-        )
-        is_inactive: Trait[dict[str, object]] = Trait(
-            is_active=False,
-            deactivated_at=Faker("date_time_this_month"),
-        )
-
-    # Complex nested data
-    profile = LazyFunction(
-        lambda: {
-            "bio": "Sample bio text",
-            "location": "Sample City",
-            "avatar_url": "https://example.com/avatar.jpg",
-        }
+    created_at: LazyAttribute[TestUser, datetime] = LazyAttribute(
+        lambda _: datetime.now(UTC)
     )
-
-    preferences: LazyFunction[dict[str, object]] = LazyFunction(
-        lambda: {
-            "theme": factory.fuzzy.FuzzyChoice(["light", "dark", "auto"]).fuzz(),
-            "notifications": {
-                "email": True,
-                "push": False,
-                "sms": False,
-            },
-            "language": "en_US",
-            "timezone": "UTC",
-        }
+    metadata = LazyFunction(
+        lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
 
 
-class ConfigurationFactory(DictFactory[dict[str, object]]):
-    """Factory for generating configuration test data."""
+class AdminUserFactory(UserFactory):
+    """Factory for admin users."""
 
-    class Meta:
+    # Use build/create methods to override values instead of class attributes
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs: object) -> dict[str, object]:
+        # Override default kwargs for admin users
+        if "name" not in kwargs:
+            kwargs["name"] = "Admin User"
+        if "email" not in kwargs:
+            kwargs["email"] = "admin@example.com"
+        return super()._adjust_kwargs(**kwargs)
+
+    metadata = LazyFunction(
+        lambda: {"department": "admin", "level": "admin", "permissions": "all"},
+    )
+
+
+class InactiveUserFactory(UserFactory):
+    """Factory for inactive users."""
+
+    is_active = False
+    metadata = LazyFunction(
+        lambda: {
+            "department": "archived",
+            "level": "inactive",
+            "archived_at": str(datetime.now(UTC)),
+        },
+    )
+
+
+class ConfigFactory(factory.Factory[TestConfig]):
+    """Factory for creating test configurations."""
+
+    class Meta:  # type: ignore[misc]
         """Factory meta compatibility."""
 
-        model = dict
+        model = TestConfig
 
-    name = Sequence(lambda n: f"config_{n}")
-    version = "1.0.0"
-    debug = False
-
-    # Database configuration with sub-factory
-    database: SubFactory[dict[str, object], dict[str, object]] = SubFactory(
-        "tests.support.factories.DatabaseConfigFactory"
-    )
-
-    # Logging configuration
-    logging: LazyFunction[dict[str, object]] = LazyFunction(
-        lambda: {
-            "level": factory.fuzzy.FuzzyChoice([
-                "DEBUG",
-                "INFO",
-                "WARNING",
-                "ERROR",
-            ]).fuzz(),
-            "format": "json",
-            "handlers": ["console", "file"],
-            "file_path": "/var/log/app.log",
-        }
-    )
-
-    # Feature flags
-    features: LazyFunction[dict[str, object]] = LazyFunction(
-        lambda: {
-            "cache_enabled": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
-            "metrics_enabled": True,
-            "auth_required": True,
-            "rate_limiting": factory.fuzzy.FuzzyChoice([True, False]).fuzz(),
-        }
-    )
-
-    class Params:
-        """Configuration factory parameters for different environments."""
-
-        production: Trait[dict[str, object]] = Trait(
-            debug=False,
-            logging__level="INFO",
-            features__cache_enabled=True,
-        )
-        development: Trait[dict[str, object]] = Trait(
-            debug=True,
-            logging__level="DEBUG",
-            features__rate_limiting=False,
-        )
-
-
-class DatabaseConfigFactory(DictFactory[dict[str, object]]):
-    """Factory for database configuration data."""
-
-    class Meta:
-        """Factory meta compatibility."""
-
-        model = dict
-
-    host = "localhost"
-    port = factory.fuzzy.FuzzyInteger(3000, 9999)
-    database = Sequence(lambda n: f"testdb_{n}")
-    username = "testuser"
-    password = "testpass"
-    pool_size = factory.fuzzy.FuzzyInteger(5, 20)
+    database_url = "postgresql://test:test@localhost/test_db"
+    log_level = "DEBUG"
+    debug = True
     timeout = 30
-    ssl_enabled = False
+    max_connections = 100
+    features = LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring"])
 
-    # Build URL from components
-    url: LazyAttribute[object, str] = LazyAttribute(
-        lambda obj: f"postgresql://{obj.username}:{obj.password}@{obj.host}:{obj.port}/{obj.database}",
+
+class ProductionConfigFactory(ConfigFactory):
+    """Factory for production-like configurations."""
+
+    database_url = "postgresql://prod:prod@prod-db/prod_db"
+    log_level = "INFO"
+    debug = False
+    timeout = 60
+    max_connections = 500
+    features = LazyFunction(
+        lambda: ["auth", "cache", "metrics", "monitoring", "alerts"]
     )
 
 
-class ServiceDefinitionFactory(DictFactory[dict[str, object]]):
-    """Factory for service definition data."""
+class StringFieldFactory(factory.Factory[TestField]):
+    """Factory for string field testing."""
 
-    class Meta:
+    class Meta:  # type: ignore[misc]
         """Factory meta compatibility."""
 
-        model = dict
+        model = TestField
 
-    name = Sequence(lambda n: f"service_{n}")
-    version: factory.fuzzy.FuzzyChoice[str, str] = factory.fuzzy.FuzzyChoice([
-        "1.0.0",
-        "1.1.0",
-        "2.0.0",
-    ])
-    description: Faker[str, str] = Faker("sentence", nb_words=8)
-
-    endpoints = LazyFunction(
-        lambda: [
-            {"path": "/health", "method": "GET", "description": "Health check"},
-            {"path": "/api/v1/users", "method": "GET", "description": "List users"},
-            {"path": "/api/v1/users", "method": "POST", "description": "Create user"},
-        ]
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"string_field_{n}")
+    field_type = FlextConstants.Enums.FieldType.STRING.value
+    required = True
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test string field: {obj.field_name}"
     )
+    min_length = 1
+    max_length = 100
+    pattern = r"^[a-zA-Z0-9_]+$"
 
-    dependencies = LazyFunction(
-        lambda: [
-            {"name": "database", "version": ">=1.0.0", "required": True},
-            {"name": "cache", "version": ">=2.0.0", "required": False},
-        ]
+
+class IntegerFieldFactory(factory.Factory[TestField]):
+    """Factory for integer field testing."""
+
+    class Meta:  # type: ignore[misc]
+        """Factory meta compatibility."""
+
+        model = TestField
+
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"integer_field_{n}")
+    field_type = FlextConstants.Enums.FieldType.INTEGER.value
+    required = True
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test integer field: {obj.field_name}"
     )
+    min_value = 0
+    max_value = 1000
 
-    health_check = LazyFunction(
-        lambda: {
-            "endpoint": "/health",
-            "interval": 30,
-            "timeout": 5,
-            "retries": 3,
-        }
+
+class BooleanFieldFactory(factory.Factory[TestField]):
+    """Factory for boolean field testing."""
+
+    class Meta:  # type: ignore[misc]
+        """Factory meta compatibility."""
+
+        model = TestField
+
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"boolean_field_{n}")
+    field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
+    required = True
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test boolean field: {obj.field_name}"
     )
+    default_value = False
 
 
+class FloatFieldFactory(factory.Factory[TestField]):
+    """Factory for float field testing."""
+
+    class Meta:  # type: ignore[misc]
+        """Factory meta compatibility."""
+
+        model = TestField
+
+    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name: Sequence[str] = Sequence(lambda n: f"float_field_{n}")
+    field_type = FlextConstants.Enums.FieldType.FLOAT.value
+    required = True
+    description: LazyAttribute[TestField, str] = LazyAttribute(
+        lambda obj: f"Test float field: {obj.field_name}"
+    )
+    min_value = 0.0
+    max_value = 1000.0
+
+
+class TestEntityFactory(factory.Factory[BaseTestEntity]):
+    """Factory for creating test entities."""
+
+    class Meta:  # type: ignore[misc]
+        """Factory meta compatibility."""
+
+        model = BaseTestEntity
+
+    id: LazyAttribute[BaseTestEntity, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    name: Faker[BaseTestEntity, str] = Faker("company")
+    created_at: LazyAttribute[BaseTestEntity, datetime] = LazyAttribute(
+        lambda _: datetime.now(UTC)
+    )
+    updated_at: LazyAttribute[BaseTestEntity, datetime] = LazyAttribute(
+        lambda _: datetime.now(UTC)
+    )
+    version = 1
+    metadata = LazyFunction(lambda: {"type": "test", "environment": "testing"})
+
+
+class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
+    """Factory for creating test value objects."""
+
+    class Meta:  # type: ignore[misc]
+        """Factory meta compatibility."""
+
+        model = BaseTestValueObject
+
+    value: Faker[BaseTestValueObject, str] = Faker("word")
+    description: Faker[BaseTestValueObject, str] = Faker("sentence")
+    category: Faker[BaseTestValueObject, str] = Faker("word")
+    tags = LazyFunction(lambda: ["test", "domain", "value-object"])
+
+
+# FlextResult factories
 class FlextResultFactory:
-    """Factory for FlextResult objects."""
+    """Factory for creating FlextResult instances for testing."""
 
     @staticmethod
-    def create_success(data: object = "test_data") -> FlextResult[object]:
+    def success(data: object = None) -> FlextResult[object]:
         """Create successful FlextResult."""
-        return FlextResult[object].ok(data)
+        return FlextResult[object].ok(data or "test_success_data")
 
     @staticmethod
-    def create_failure(
-        error: str = "Test error",
-        error_code: str = "TEST_ERROR",
+    def failure(
+        error: str = "test_error", error_code: str = "TEST_ERROR"
     ) -> FlextResult[object]:
         """Create failed FlextResult."""
         return FlextResult[object].fail(error, error_code=error_code)
 
     @staticmethod
-    def create_validation_failure(field: str = "test_field") -> FlextResult[object]:
-        """Create validation failure FlextResult."""
-        return FlextResult[object].fail(
-            f"Validation failed for field: {field}",
-            error_code="VALIDATION_ERROR",
-        )
-
-
-class ExceptionFactory:
-    """Factory for creating various exception types."""
+    def success_with_user() -> FlextResult[TestUser]:
+        """Create successful FlextResult with user data."""
+        user = cast("TestUser", UserFactory())
+        return FlextResult[TestUser].ok(user)
 
     @staticmethod
-    def create_domain_error(
-        message: str = "Domain error occurred",
-        error_code: str = "DOMAIN_ERROR",
-    ) -> Exception:
-        """Create FlextExceptions."""
-        return FlextExceptions.Error(message, error_code=error_code)
+    def success_with_config() -> FlextResult[TestConfig]:
+        """Create successful FlextResult with config data."""
+        config = cast("TestConfig", ConfigFactory())
+        return FlextResult[TestConfig].ok(config)
 
     @staticmethod
-    def create_validation_error(
-        message: str = "Validation failed",
-        error_code: str = "VALIDATION_ERROR",
-    ) -> Exception:
-        """Create FlextExceptions."""
-        return FlextExceptions.Error(message, error_code=error_code)
-
-
-class TestEntityFactory(Factory[BaseTestEntity]):
-    """Factory for creating FlextEntity test objects."""
-
-    class Meta:
-        """Factory meta compatibility."""
-
-        model = BaseTestEntity
-
-    name = Sequence(lambda n: f"test_entity_{n}")
-    description: Faker[str, str] = Faker("sentence", nb_words=6)
-    active = True
-    version = LazyFunction(
-        lambda: FlextModels.Version(root=factory.fuzzy.FuzzyInteger(1, 10).fuzz())
-    )
-
-    metadata = LazyFunction(
-        lambda: FlextModels.Metadata(
-            root={
-                "created_by": "test_user",
-                "tags": "test,automated",  # Convert list to string for Metadata compatibility
-                "priority": factory.fuzzy.FuzzyChoice(["low", "medium", "high"]).fuzz(),
-            }
-        )
-    )
-
-    class Params:
-        """Test entity factory parameters for different entity states."""
-
-        inactive: Trait[BaseTestEntity] = Trait(
-            active=False,
-            metadata=LazyFunction(
-                lambda: FlextModels.Metadata(root={"status": "deactivated"})
-            ),
-        )
-        high_priority: Trait[BaseTestEntity] = Trait(
-            metadata=LazyFunction(
-                lambda: FlextModels.Metadata(
-                    root={
-                        "priority": "high",
-                        "urgent": "true",  # Convert bool to string for Metadata compatibility
-                    }
-                )
-            ),
-        )
-
-
-class TestValueObjectFactory(Factory[BaseTestValueObject]):
-    """Factory for creating FlextValue test objects."""
-
-    class Meta:
-        """Factory meta compatibility."""
-
-        model = BaseTestValueObject
-
-    value = Sequence(lambda n: f"test_value_{n}")
-
-    class Params:
-        """Test value object parameters."""
-
-        empty: Trait[BaseTestValueObject] = Trait(value="")
-        long: Trait[BaseTestValueObject] = Trait(value=LazyFunction(lambda: "x" * 1000))
-        unicode: Trait[BaseTestValueObject] = Trait(value="🚀 Test Value 测试 مرحبا")
-
-
-# Batch creation utilities
-class BatchFactory:
-    """Utility for creating batches of test objects."""
+    def create_success(data: object = None) -> FlextResult[object]:
+        """Create successful FlextResult (alias for success method)."""
+        return FlextResultFactory.success(data)
 
     @staticmethod
-    def create_user_batch(count: int = 5, **kwargs: object) -> list[dict[str, object]]:
-        """Create batch of users."""
-        return UserDataFactory.create_batch(count, **kwargs)
+    def create_failure(
+        error: str = "test_error", error_code: str = "TEST_ERROR"
+    ) -> FlextResult[object]:
+        """Create failed FlextResult (alias for failure method)."""
+        return FlextResultFactory.failure(error, error_code)
 
     @staticmethod
-    def create_config_batch(
-        count: int = 3, **kwargs: object
-    ) -> list[dict[str, object]]:
-        """Create batch of configurations."""
-        return ConfigurationFactory.create_batch(count, **kwargs)
+    def create_batch(size: int = 10) -> list[FlextResult[object]]:
+        """Create batch of successful FlextResults."""
+        return [FlextResultFactory.success(f"test_data_{i}") for i in range(size)]
+
+
+# Sequence generators for common patterns
+class SequenceGenerators:
+    """Generators for common sequence patterns in tests."""
 
     @staticmethod
-    def create_entity_batch(count: int = 5, **kwargs: object) -> list[BaseTestEntity]:
-        """Create batch of entities."""
-        return TestEntityFactory.create_batch(count, **kwargs)
+    def entity_id_sequence() -> str:
+        """Generate sequence of entity IDs."""
+        return str(FlextModels.EntityId(root=f"test_entity_{uuid.uuid4()}"))
 
     @staticmethod
-    def create_mixed_results(
-        success_count: int = 3, failure_count: int = 2
-    ) -> list[FlextResult[object]]:
-        """Create mixed success/failure results."""
-        results: list[FlextResult[object]] = [
-            FlextResultFactory.create_success(
-                data=f"success_data_{uuid.uuid4()}",
-            )
-            for _ in range(success_count)
+    def timestamp_sequence() -> FlextModels.Timestamp:
+        """Generate sequence of timestamps."""
+        return FlextModels.Timestamp(root=datetime.now(UTC))
+
+    @staticmethod
+    def email_sequence(domain: str = "example.com") -> str:
+        """Generate sequence of email addresses."""
+        return f"test_{uuid.uuid4().hex[:8]}@{domain}"
+
+    @staticmethod
+    def username_sequence() -> str:
+        """Generate sequence of usernames."""
+        return f"user_{uuid.uuid4().hex[:8]}"
+
+
+# Batch factory functions for performance testing
+class BatchFactories:
+    """Batch creation utilities for performance and integration testing."""
+
+    @staticmethod
+    def create_users(count: int = 10) -> list[TestUser]:
+        """Create batch of test users."""
+        return UserFactory.create_batch(count)
+
+    @staticmethod
+    def create_mixed_users(count: int = 10) -> list[TestUser]:
+        """Create batch of mixed user types."""
+        users: list[TestUser] = []
+        for i in range(count):
+            if i % 3 == 0:
+                users.append(cast("TestUser", AdminUserFactory()))
+            elif i % 5 == 0:
+                users.append(cast("TestUser", InactiveUserFactory()))
+            else:
+                users.append(cast("TestUser", UserFactory()))
+        return users
+
+    @staticmethod
+    def create_field_matrix() -> list[TestField]:
+        """Create comprehensive field test matrix."""
+        fields: list[TestField] = []
+        fields.extend(StringFieldFactory.create_batch(3))
+        fields.extend(IntegerFieldFactory.create_batch(3))
+        fields.extend(BooleanFieldFactory.create_batch(2))
+        fields.extend(FloatFieldFactory.create_batch(2))
+        return fields
+
+
+# Edge case data generators
+class EdgeCaseGenerators:
+    """Generators for edge case testing scenarios."""
+
+    @staticmethod
+    def unicode_strings() -> list[str]:
+        """Generate unicode test strings."""
+        return ["🚀", "测试", "مرحبا", "🔥🎯", "Ñoño", "café"]
+
+    @staticmethod
+    def special_characters() -> list[str]:
+        """Generate special character test strings."""
+        return ["!@#$%^&*()", "\n\t\r", "\\", "'\"", "<script>", "SELECT * FROM"]
+
+    @staticmethod
+    def boundary_numbers() -> list[int | float]:
+        """Generate boundary number test values."""
+        return [0, -1, 1, 999999999, -999999999, 1e-10, float("inf"), float("-inf")]
+
+    @staticmethod
+    def empty_values() -> list[object]:
+        """Generate empty/null test values."""
+        return ["", [], {}, None, 0, False]
+
+    @staticmethod
+    def large_values() -> list[object]:
+        """Generate large value test cases."""
+        return [
+            "x" * 10000,
+            list(range(1000)),
+            {f"key_{i}": f"value_{i}" for i in range(100)},
         ]
 
-        results.extend(
-            FlextResultFactory.create_failure(
-                error=f"Error {i + 1}",
-                error_code=f"ERR_{i + 1:03d}",
-            )
-            for i in range(failure_count)
-        )
 
-        return results
-
-
-# Convenience aliases for common patterns
-create_user = UserDataFactory
-create_config = ConfigurationFactory
-create_db_config = DatabaseConfigFactory
-create_service = ServiceDefinitionFactory
-create_entity = TestEntityFactory
-create_value_object = TestValueObjectFactory
-create_batch = BatchFactory
-
-# Result creators
-success_result = FlextResultFactory.create_success
-failure_result = FlextResultFactory.create_failure
-validation_failure = FlextResultFactory.create_validation_failure
-
-# Exception creators
-domain_error = ExceptionFactory.create_domain_error
-validation_error = ExceptionFactory.create_validation_error
+# Utility functions for common test patterns
+def create_test_hierarchy() -> dict[str, object]:
+    """Create hierarchical test data structure."""
+    return {
+        "root": cast("TestUser", UserFactory()),
+        "children": UserFactory.create_batch(3),  # Remove redundant cast
+        "admin": cast("TestUser", AdminUserFactory()),
+        "config": cast("TestConfig", ConfigFactory()),
+        "fields": BatchFactories.create_field_matrix(),
+    }
 
 
+def create_validation_test_cases() -> list[dict[str, object]]:
+    """Create comprehensive validation test cases."""
+    return [
+        {
+            "name": "valid_user",
+            "data": cast("TestUser", UserFactory()),
+            "expected_valid": True,
+        },
+        {
+            "name": "invalid_email",
+            "data": cast("TestUser", UserFactory(email="invalid-email")),
+            "expected_valid": False,
+        },
+        {
+            "name": "negative_age",
+            "data": cast("TestUser", UserFactory(age=-5)),
+            "expected_valid": False,
+        },
+        {
+            "name": "unicode_name",
+            "data": cast("TestUser", UserFactory(name="测试用户")),
+            "expected_valid": True,
+        },
+    ]
+
+
+# Convenience functions for backward compatibility
+def success_result(data: object = "test_data") -> FlextResult[object]:
+    """Create successful FlextResult."""
+    return FlextResult[object].ok(data)
+
+
+def failure_result(
+    error: str = "Test error", error_code: str = "TEST_ERROR"
+) -> FlextResult[object]:
+    """Create failed FlextResult."""
+    return FlextResult[object].fail(error, error_code=error_code)
+
+
+def validation_failure(field: str = "test_field") -> FlextResult[object]:
+    """Create validation failure FlextResult."""
+    return FlextResult[object].fail(
+        f"Validation failed for field: {field}",
+        error_code="VALIDATION_ERROR",
+    )
+
+
+# Export commonly used factories and utilities
 __all__ = [
-    # Test base classes
+    "AdminUserFactory",
     "BaseTestEntity",
     "BaseTestValueObject",
-    "BatchFactory",
-    "ConfigurationFactory",
-    "DatabaseConfigFactory",
-    "ExceptionFactory",
+    "BatchFactories",
+    "BooleanFieldFactory",
+    "ConfigFactory",
+    "EdgeCaseGenerators",
     "FlextResultFactory",
-    "ServiceDefinitionFactory",
+    "FloatFieldFactory",
+    "InactiveUserFactory",
+    "IntegerFieldFactory",
+    "ProductionConfigFactory",
+    "SequenceGenerators",
+    "StringFieldFactory",
     "TestEntityFactory",
     "TestValueObjectFactory",
-    # Main factories
-    "UserDataFactory",
-    "create_batch",
-    "create_config",
-    "create_db_config",
-    "create_entity",
-    "create_service",
-    # Convenience aliases
-    "create_user",
-    "create_value_object",
-    "domain_error",
+    "UserFactory",
+    "create_test_hierarchy",
+    "create_validation_test_cases",
     "failure_result",
     "success_result",
-    "validation_error",
     "validation_failure",
 ]

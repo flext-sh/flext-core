@@ -19,12 +19,21 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import override
+from typing import Any, cast, override
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextConfig, FlextResult
+
+# =============================================================================
+# DEMONSTRATION CONSTANTS
+# =============================================================================
+
+# Example security keys for demonstration purposes only - NOT FOR PRODUCTION
+_DEMO_SECRET_KEY_1 = "ValidSecretKey123WithComplexity456"  # noqa: S105
+_DEMO_SECRET_KEY_2 = "ValidSecretKey123WithComplexityAndLength"  # noqa: S105
+_LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
 # =============================================================================
 # ENTERPRISE DATABASE CONFIGURATION
@@ -49,7 +58,9 @@ class DatabaseConfig(FlextConfig):
         if self.host == "localhost" and not self.password:
             return FlextResult[None].fail("Password required for localhost connections")
 
-        if self.port == 22:
+        # SSH port not allowed for database connections
+        ssh_port = 22
+        if self.port == ssh_port:
             return FlextResult[None].fail(
                 "SSH port not allowed for database connections"
             )
@@ -86,7 +97,9 @@ class CacheConfig(FlextConfig):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate cache configuration."""
-        if self.provider == "redis" and self.db > 15:
+        # Redis supports database indices 0-15
+        max_redis_db_index = 15
+        if self.provider == "redis" and self.db > max_redis_db_index:
             return FlextResult[None].fail("Redis database index must be 0-15")
 
         if self.provider == "memcached" and self.db != 0:
@@ -136,7 +149,9 @@ class SecurityConfig(FlextConfig):
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
         """Validate secret key complexity."""
-        if len(v) < 32:
+        # Minimum secure key length
+        min_secret_key_length = 32
+        if len(v) < min_secret_key_length:
             msg = "Secret key must be at least 32 characters"
             raise ValueError(msg)
 
@@ -154,7 +169,9 @@ class SecurityConfig(FlextConfig):
     @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate security configuration rules."""
-        if self.enable_2fa and self.max_login_attempts > 10:
+        # Conservative max login attempts when 2FA is enabled
+        max_2fa_login_attempts = 10
+        if self.enable_2fa and self.max_login_attempts > max_2fa_login_attempts:
             return FlextResult[None].fail(
                 "Reduce max login attempts when 2FA is enabled"
             )
@@ -182,7 +199,7 @@ class EnterpriseConfig(BaseSettings):
     debug: bool = Field(default=False)
 
     # Server settings
-    host: str = Field(default="0.0.0.0")
+    host: str = Field(default=_LOCALHOST_IP)
     port: int = Field(default=8000, ge=1, le=65535)
     workers: int = Field(default=4, ge=1, le=32)
 
@@ -265,11 +282,11 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
             data = json.load(f)
 
         if not isinstance(data, dict):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[dict[str, Any]].fail(
                 "Configuration must be a JSON object"
             )
 
-        return FlextResult[dict[str, object]].ok(dict(data))
+        return FlextResult[dict[str, Any]].ok(dict(data))
 
     except json.JSONDecodeError as e:
         return FlextResult[dict[str, object]].fail(f"Invalid JSON: {e}")
@@ -302,7 +319,13 @@ def merge_configurations(
 
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = merge_configurations(result[key], value)
+            # Cast to dict for type safety
+            result_dict = cast("dict[str, object]", result[key])
+            value_dict = cast("dict[str, object]", value)
+            result[key] = merge_configurations(
+                result_dict,
+                value_dict,
+            )
         else:
             result[key] = value
 
@@ -327,7 +350,9 @@ def mask_sensitive_data(config_data: dict[str, object]) -> dict[str, object]:
             return [mask_recursive(item) for item in obj]
         return obj
 
-    return mask_recursive(config_data)  # type: ignore[return-value]
+    # Cast result to expected return type
+    masked_result = mask_recursive(config_data)
+    return cast("dict[str, object]", masked_result)
 
 
 # =============================================================================
@@ -411,8 +436,10 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
             # Show summary
             summary = config.get_summary()
             print("\n📋 Configuration Summary:")
-            for key, value in summary.items():
-                print(f"  {key}: {value}")
+            if isinstance(summary, dict):
+                # Handle dict summary
+                for summary_key, summary_value in summary.items():
+                    print(f"  {summary_key}: {summary_value}")
         else:
             print(f"❌ Environment configuration invalid: {validation.error}")
             return validation
@@ -424,11 +451,11 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
 
     finally:
         # Restore original environment
-        for key, value in original_env.items():
-            if value is None:
+        for key, original_value in original_env.items():
+            if original_value is None:
                 os.environ.pop(key, None)
             else:
-                os.environ[key] = str(value)
+                os.environ[key] = str(original_value)
 
 
 def demonstrate_file_configuration() -> FlextResult[None]:
@@ -483,7 +510,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             print(f"Loaded keys: {list(loaded_data.keys())}")
 
             # Create configuration with loaded data
-            config = EnterpriseConfig(**loaded_data)
+            config = EnterpriseConfig.model_validate(loaded_data)
 
             validation = config.validate_all_components()
             if validation.success:
@@ -573,7 +600,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = EnterpriseConfig(**final_config)
+        config = EnterpriseConfig.model_validate(final_config)
 
         validation = config.validate_all_components()
         if validation.success:
@@ -613,7 +640,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
             "2FA with too many login attempts",
             {
                 "security": SecurityConfig(
-                    secret_key="ValidSecretKey123WithComplexity456",
+                    secret_key=_DEMO_SECRET_KEY_1,
                     enable_2fa=True,
                     max_login_attempts=15,  # Too high for 2FA
                 )
@@ -624,7 +651,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = EnterpriseConfig(**config_data)
+            config = EnterpriseConfig.model_validate(config_data)
             validation = config.validate_all_components()
 
             if not validation.success:
@@ -641,9 +668,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
         valid_config = EnterpriseConfig(
             app_name="Valid Test App",
             environment="development",
-            security=SecurityConfig(
-                secret_key="ValidSecretKey123WithComplexityAndLength"
-            ),
+            security=SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
         )
         validation = valid_config.validate_all_components()
 

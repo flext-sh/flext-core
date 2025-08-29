@@ -9,13 +9,38 @@ from __future__ import annotations
 import os
 import re
 from collections.abc import Callable, Sequence
-from typing import TypeGuard, TypeVar
+from typing import Protocol, TypeGuard, TypeVar
 
 from flext_core import FlextResult, FlextTypes
+
+from .performance import BenchmarkProtocol
 
 T = TypeVar("T")
 
 JsonDict = FlextTypes.Core.JsonObject
+
+
+class ContainerProtocol(Protocol):
+    """Protocol for container objects with get method."""
+
+    def get(self, service_name: str) -> FlextResult[object]:
+        """Get service from container."""
+        ...
+
+
+class FieldProtocol(Protocol):
+    """Protocol for field validation objects."""
+
+    def validate_field_value(self, value: object) -> tuple[bool, str]:
+        """Validate field value."""
+        ...
+
+
+class MockProtocol(Protocol):
+    """Protocol for mock objects."""
+
+    call_count: int
+    return_value: object
 
 
 class FlextMatchers:
@@ -84,7 +109,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_container_has_service(
-        container: object,
+        container: ContainerProtocol,
         service_name: str,
         expected_type: type | None = None,
     ) -> None:
@@ -114,7 +139,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_field_validates(
-        field: object,
+        field: FieldProtocol,
         value: object,
         *,
         should_pass: bool = True,
@@ -173,12 +198,12 @@ class FlextMatchers:
 
     @staticmethod
     def assert_performance_within_limit(
-        benchmark: object,  # BenchmarkFixture
-        func: Callable[[], object],
+        benchmark: BenchmarkProtocol,
+        func: Callable[[], T],
         max_time_seconds: float = 1.0,
         *args: object,
         **kwargs: object,
-    ) -> object:
+    ) -> T:
         """Assert function performance is within time limit.
 
         Args:
@@ -265,7 +290,7 @@ class FlextMatchers:
 
     @staticmethod
     def assert_mock_called_with_result(
-        mock_obj: object,
+        mock_obj: MockProtocol,
         expected_result_type: type,
         call_count: int = 1,
     ) -> None:
@@ -338,7 +363,7 @@ class PerformanceMatchers:
 
     @staticmethod
     def assert_linear_complexity(
-        benchmark: object,  # BenchmarkFixture
+        benchmark: BenchmarkProtocol,
         func: Callable[[int], object],
         sizes: Sequence[int],
         tolerance_factor: float = 2.0,
@@ -373,10 +398,10 @@ class PerformanceMatchers:
 
     @staticmethod
     def assert_memory_efficient(
-        benchmark: object,  # BenchmarkFixture
-        func: Callable[[], object],
+        benchmark: BenchmarkProtocol,
+        func: Callable[[], T],
         _max_memory_mb: float = 100.0,
-    ) -> None:
+    ) -> T:
         """Assert function is memory efficient.
 
         Args:

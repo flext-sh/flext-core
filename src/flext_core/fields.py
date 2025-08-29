@@ -1791,28 +1791,34 @@ class FlextFields:
 
             # Type-specific capabilities
             if isinstance(field, FlextFields.Core.StringField):
-                capabilities.update({
-                    "supports_length_validation": True,
-                    "supports_pattern_validation": field.pattern is not None,
-                })
+                capabilities.update(
+                    {
+                        "supports_length_validation": True,
+                        "supports_pattern_validation": field.pattern is not None,
+                    }
+                )
             elif isinstance(
                 field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)
             ):
-                capabilities.update({
-                    "supports_range_validation": True,
-                    "supports_precision": isinstance(
-                        field, FlextFields.Core.FloatField
-                    ),
-                })
+                capabilities.update(
+                    {
+                        "supports_range_validation": True,
+                        "supports_precision": isinstance(
+                            field, FlextFields.Core.FloatField
+                        ),
+                    }
+                )
             elif isinstance(field, FlextFields.Core.EmailField):
                 capabilities["validates_email_format"] = True
             elif isinstance(field, FlextFields.Core.UuidField):
                 capabilities["validates_uuid_format"] = True
             elif isinstance(field, FlextFields.Core.DateTimeField):
-                capabilities.update({
-                    "supports_date_format": True,
-                    "supports_date_range": True,
-                })
+                capabilities.update(
+                    {
+                        "supports_date_format": True,
+                        "supports_date_range": True,
+                    }
+                )
 
             return capabilities
 
@@ -2027,55 +2033,63 @@ class FlextFields:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_field_validation": True,  # Strict validation in production
-                    "enable_type_checking": True,  # Type checking for safety
-                    "enable_constraint_validation": True,  # All constraints in production
-                    "max_field_cache_size": 1000,  # Larger cache for production
-                    "enable_field_metadata": False,  # Minimal metadata for performance
-                    "enable_schema_validation": True,  # Schema validation for safety
-                    "cache_validation_results": True,  # Cache for performance
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_field_validation": True,  # Strict validation in production
+                        "enable_type_checking": True,  # Type checking for safety
+                        "enable_constraint_validation": True,  # All constraints in production
+                        "max_field_cache_size": 1000,  # Larger cache for production
+                        "enable_field_metadata": False,  # Minimal metadata for performance
+                        "enable_schema_validation": True,  # Schema validation for safety
+                        "cache_validation_results": True,  # Cache for performance
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_field_validation": True,  # Validation for development
-                    "enable_type_checking": True,  # Type checking for catching issues
-                    "enable_constraint_validation": True,  # Full constraints for development
-                    "max_field_cache_size": 200,  # Smaller cache for development
-                    "enable_field_metadata": True,  # Full metadata for debugging
-                    "enable_schema_validation": True,  # Schema validation for development
-                    "cache_validation_results": False,  # No caching for fresh results
-                    "enable_detailed_error_messages": True,  # Detailed errors for debugging
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_field_validation": True,  # Validation for development
+                        "enable_type_checking": True,  # Type checking for catching issues
+                        "enable_constraint_validation": True,  # Full constraints for development
+                        "max_field_cache_size": 200,  # Smaller cache for development
+                        "enable_field_metadata": True,  # Full metadata for debugging
+                        "enable_schema_validation": True,  # Schema validation for development
+                        "cache_validation_results": False,  # No caching for fresh results
+                        "enable_detailed_error_messages": True,  # Detailed errors for debugging
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_field_validation": True,  # Strict validation for tests
-                    "enable_type_checking": True,  # Type checking for test accuracy
-                    "enable_constraint_validation": True,  # Full constraints for tests
-                    "max_field_cache_size": 50,  # Minimal cache for tests
-                    "enable_field_metadata": True,  # Metadata for test inspection
-                    "enable_schema_validation": True,  # Schema validation for tests
-                    "cache_validation_results": False,  # No caching in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_field_validation": True,  # Strict validation for tests
+                        "enable_type_checking": True,  # Type checking for test accuracy
+                        "enable_constraint_validation": True,  # Full constraints for tests
+                        "max_field_cache_size": 50,  # Minimal cache for tests
+                        "enable_field_metadata": True,  # Metadata for test inspection
+                        "enable_schema_validation": True,  # Schema validation for tests
+                        "cache_validation_results": False,  # No caching in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    }
+                )
             else:  # staging, local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_field_validation": True,  # Standard validation
-                    "enable_type_checking": True,  # Standard type checking
-                    "enable_constraint_validation": True,  # Standard constraints
-                    "max_field_cache_size": 500,  # Standard cache size
-                    "enable_field_metadata": True,  # Standard metadata
-                    "enable_schema_validation": True,  # Standard schema validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_field_validation": True,  # Standard validation
+                        "enable_type_checking": True,  # Standard type checking
+                        "enable_constraint_validation": True,  # Standard constraints
+                        "max_field_cache_size": 500,  # Standard cache size
+                        "enable_field_metadata": True,  # Standard metadata
+                        "enable_schema_validation": True,  # Standard schema validation
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -2101,55 +2115,71 @@ class FlextFields:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 2000),
-                    "enable_field_caching": True,
-                    "cache_validation_results": True,
-                    "enable_lazy_validation": True,
-                    "batch_validation_size": 100,
-                    "enable_concurrent_validation": True,
-                    "memory_optimization": "aggressive",
-                    "enable_field_pooling": True,
-                    "precompile_constraints": True,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get(
+                            "max_field_cache_size", 2000
+                        ),
+                        "enable_field_caching": True,
+                        "cache_validation_results": True,
+                        "enable_lazy_validation": True,
+                        "batch_validation_size": 100,
+                        "enable_concurrent_validation": True,
+                        "memory_optimization": "aggressive",
+                        "enable_field_pooling": True,
+                        "precompile_constraints": True,
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 1000),
-                    "enable_field_caching": True,
-                    "cache_validation_results": False,
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 50,
-                    "enable_concurrent_validation": False,
-                    "memory_optimization": "balanced",
-                    "enable_field_pooling": False,
-                    "precompile_constraints": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get(
+                            "max_field_cache_size", 1000
+                        ),
+                        "enable_field_caching": True,
+                        "cache_validation_results": False,
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 50,
+                        "enable_concurrent_validation": False,
+                        "memory_optimization": "balanced",
+                        "enable_field_pooling": False,
+                        "precompile_constraints": False,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 200),
-                    "enable_field_caching": False,
-                    "cache_validation_results": False,
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 10,
-                    "enable_concurrent_validation": False,
-                    "memory_optimization": "conservative",
-                    "enable_field_pooling": False,
-                    "precompile_constraints": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get("max_field_cache_size", 200),
+                        "enable_field_caching": False,
+                        "cache_validation_results": False,
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 10,
+                        "enable_concurrent_validation": False,
+                        "memory_optimization": "conservative",
+                        "enable_field_pooling": False,
+                        "precompile_constraints": False,
+                    }
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 500),
-                    "enable_field_caching": config.get("enable_field_caching", True),
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get("max_field_cache_size", 500),
+                        "enable_field_caching": config.get(
+                            "enable_field_caching", True
+                        ),
+                        "memory_optimization": "balanced",
+                    }
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -2415,7 +2445,9 @@ class _FlextFieldCoreCompat(FlextFields.Core.BaseField[object]):
                 ):
                     # It's an iterable that's not a string - convert to list
                     # Cast to iterable after checking __iter__ exists
-                    self._allowed_values = list(cast("Iterable[object]", allowed_values_val))
+                    self._allowed_values = list(
+                        cast("Iterable[object]", allowed_values_val)
+                    )
             except (TypeError, ValueError):
                 # If conversion fails, leave as None
                 pass

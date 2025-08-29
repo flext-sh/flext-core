@@ -20,7 +20,7 @@
 #### **1. FlextCoreModels - CRÍTICO**
 **Arquivo**: `src/flext_core/models.py`  
 **Status**: Parcialmente consolidado - precisa completar estruturas aninhadas  
-**Problema**: Classes individuais (FlextModel, FlextEntity, FlextValue) existem, mas falta classe consolidada principal  
+**Problema**: Classes individuais (FlextModel, FlextModels.Entity, FlextModels.Value) existem, mas falta classe consolidada principal  
 
 **Ação Necessária**:
 ```python
@@ -29,8 +29,8 @@ class FlextCoreModels:
     
     # Existing classes become nested
     class Model(FlextModel): ...  # Atual FlextModel
-    class Entity(FlextEntity): ...  # Atual FlextEntity  
-    class Value(FlextValue): ...  # Atual FlextValue
+    class Entity(FlextModels.Entity): ...  # Atual FlextModels.Entity  
+    class Value(FlextModels.Value): ...  # Atual FlextModels.Value
     class RootModel(FlextRootModel): ...  # Atual FlextRootModel
     
     # Factory methods consolidados
@@ -39,7 +39,7 @@ class FlextCoreModels:
     class ValueObjectFactory: ...
 ```
 
-**Compatibilidade**: Manter FlextModel, FlextEntity, FlextValue como aliases
+**Compatibilidade**: Manter FlextModel, FlextModels.Entity, FlextModels.Value como aliases
 
 #### **2. FlextCoreHandlers - CRÍTICO**  
 **Arquivo**: `src/flext_core/handlers.py`  
@@ -176,7 +176,7 @@ FlextModel = FlextCoreModels.Model  # OU FlextCoreModels().Model
 ### **Prioridade 2: Testes de Compatibilidade**  
 ```bash
 # Validar que imports legados funcionam
-python -c "from flext_core import FlextModel, FlextEntity, FlextResult"
+python -c "from flext_core import FlextModel, FlextModels.Entity, FlextResult"
 python -c "from flext_core import FlextHandlerRegistry, FlextAbstractHandler"  
 python -c "from flext_core import FlextValidation, FlextValidators"
 
@@ -215,7 +215,7 @@ pytest tests/unit/core/ -v --tb=short
 python -c "
 from flext_core import FlextCoreModels, FlextCoreHandlers, FlextCoreDecorators
 from flext_core import FlextCoreValidation, FlextCoreConstants, FlextProtocols
-from flext_core import FlextModel, FlextEntity, FlextResult  # Legacy
+from flext_core import FlextModel, FlextModels.Entity, FlextResult  # Legacy
 print('✅ ALL consolidated classes import successfully')
 print('✅ ALL legacy aliases working')
 print('🎯 FLEXT-CORE REFACTORING: COMPLETE')

@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from shared_domain import SharedDomainFactory, User
-
-from flext_core import FlextResult
+from flext_core import FlextModels, FlextResult
 
 # Constants to avoid magic numbers
 MAX_EMAIL_LENGTH = 100
@@ -103,7 +101,7 @@ class ValidationChains:
     def validate_age(age: int) -> FlextResult[int]:
         """Validate age with business rules."""
         return BasicValidators.age_range(age, 16, 120).tap(
-            lambda a: None  # Age validation completed
+            lambda _: None  # Age validation completed
         )
 
 
@@ -138,7 +136,7 @@ class FormValidator:
             })
 
         # Collect all errors
-        errors = []
+        errors: list[str] = []
         if name_result.is_failure:
             errors.append(name_result.error or "Unknown error")
         if email_result.is_failure:
@@ -180,7 +178,7 @@ class FormValidator:
                 "category": category_result.value,
             })
 
-        errors = []
+        errors: list[str] = []
         if name_result.is_failure:
             errors.append(name_result.error or "Unknown error")
         if price_result.is_failure:
@@ -201,33 +199,40 @@ class BusinessRules:
     """Business rule validators."""
 
     @staticmethod
-    def validate_user_registration(user_data: dict[str, object]) -> FlextResult[User]:
+    def validate_user_registration(
+        user_data: dict[str, object],
+    ) -> FlextResult[FlextModels.Entity]:
         """Validate user registration with business rules."""
         return (
             FormValidator.validate_user_data(user_data)
             .flat_map(
-                lambda data: SharedDomainFactory.create_user(
-                    str(data["name"]),
-                    str(data["email"]),
-                    int(data["age"]) if isinstance(data["age"], int) else 0,
-                )
+                lambda data: FlextModels.create_entity({
+                    "id": "user_123",
+                    "name": str(data["name"]),
+                    "email": str(data["email"]),
+                    "age": int(data["age"]) if isinstance(data["age"], int) else 0,
+                })
             )
             .flat_map(BusinessRules._check_user_eligibility)
         )
 
     @staticmethod
-    def _check_user_eligibility(user: User) -> FlextResult[User]:
+    def _check_user_eligibility(
+        user: FlextModels.Entity,
+    ) -> FlextResult[FlextModels.Entity]:
         """Check if user meets business eligibility requirements."""
         # Business rule: Users under 18 need parental consent
-        if user.age.value < MIN_AGE_ADULT:
-            return FlextResult[User].fail("Users under 18 require parental consent")
+        if hasattr(user, "age") and user.age < MIN_AGE_ADULT:
+            return FlextResult[FlextModels.Entity].fail(
+                "Users under 18 require parental consent"
+            )
 
         # Business rule: Email domain validation
-        email = user.email_address.email
+        email = getattr(user, "email", "")
         if email.endswith("@blacklisted.com"):
-            return FlextResult[User].fail("Email domain not allowed")
+            return FlextResult[FlextModels.Entity].fail("Email domain not allowed")
 
-        return FlextResult[User].ok(user)
+        return FlextResult[FlextModels.Entity].ok(user)
 
 
 # =============================================================================
@@ -246,13 +251,20 @@ class BatchValidator:
         if not user_list:
             return FlextResult[dict[str, object]].fail("No users to validate")
 
-        results = []
-        errors = []
+        results: list[dict[str, object]] = []
+        errors: list[str] = []
 
         for i, user_data in enumerate(user_list):
             validation_result = BusinessRules.validate_user_registration(user_data)
             if validation_result.success:
-                results.append(validation_result.value)
+                # Convert Entity to dict for batch results
+                entity = validation_result.value
+                user_dict = {
+                    "id": str(entity.id),
+                    "name": entity.name if hasattr(entity, "name") else "Unknown",
+                    "email": entity.email if hasattr(entity, "email") else "Unknown",
+                }
+                results.append(user_dict)
             else:
                 errors.append(f"User {i}: {validation_result.error}")
 
@@ -320,9 +332,7 @@ def demo_form_validation() -> None:
     # Valid user form
     valid_user_data = {"name": "Carol Davis", "email": "carol@example.com", "age": 28}
 
-    user_result = FormValidator.validate_user_data(
-        cast("dict[str, object]", valid_user_data)
-    )
+    user_result = FormValidator.validate_user_data(valid_user_data)
     if user_result.success:
         pass
 
@@ -333,9 +343,7 @@ def demo_form_validation() -> None:
         "category": "Electronics",
     }
 
-    product_result = FormValidator.validate_product_data(
-        cast("dict[str, object]", valid_product_data)
-    )
+    product_result = FormValidator.validate_product_data(valid_product_data)
     if product_result.success:
         pass
 
@@ -345,18 +353,14 @@ def demo_business_rules() -> None:
     # Valid registration
     valid_data = {"name": "David Wilson", "email": "david@example.com", "age": 25}
 
-    registration_result = BusinessRules.validate_user_registration(
-        cast("dict[str, object]", valid_data)
-    )
+    registration_result = BusinessRules.validate_user_registration(valid_data)
     if registration_result.success:
         pass
 
     # Invalid registration - underage
     underage_data = {"name": "Young User", "email": "young@example.com", "age": 16}
 
-    underage_result = BusinessRules.validate_user_registration(
-        cast("dict[str, object]", underage_data)
-    )
+    underage_result = BusinessRules.validate_user_registration(underage_data)
     if underage_result.is_failure:
         pass
 
@@ -370,9 +374,7 @@ def demo_batch_validation() -> None:
         {"name": "Grace Lee", "email": "grace@example.com", "age": 35},
     ]
 
-    batch_result = BatchValidator.validate_user_batch(
-        cast("list[dict[str, object]]", user_batch)
-    )
+    batch_result = BatchValidator.validate_user_batch(user_batch)
     if batch_result.success:
         result = batch_result.value
 
@@ -392,11 +394,12 @@ def demo_functional_composition() -> FlextResult[dict[str, object]]:
         })
         .flat_map(FormValidator.validate_user_data)
         .flat_map(
-            lambda data: SharedDomainFactory.create_user(
-                str(data["name"]),
-                str(data["email"]),
-                int(data["age"]) if isinstance(data["age"], int) else 0,
-            )
+            lambda data: FlextModels.create_entity({
+                "id": "user_demo",
+                "name": str(data["name"]),
+                "email": str(data["email"]),
+                "age": int(data["age"]) if isinstance(data["age"], int) else 0,
+            })
         )
         .map(lambda user: dict[str, object]({"user": user, "status": "validated"}))
     )
@@ -404,7 +407,7 @@ def demo_functional_composition() -> FlextResult[dict[str, object]]:
     # Use success pattern for cleaner error handling
     if result.success:
         response = result.value
-        cast("User", response["user"])
+        cast("FlextModels.Entity", response["user"])
 
     return result
 

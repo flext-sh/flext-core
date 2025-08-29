@@ -8,6 +8,7 @@ patterns with automatic retry, error simulation, and performance monitoring.
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 from urllib.parse import urljoin
 
 import httpx
@@ -17,6 +18,7 @@ from pytest_httpx import HTTPXMock
 from flext_core import FlextResult, FlextTypes
 
 JsonDict = FlextTypes.Core.JsonObject
+JsonValue = FlextTypes.Core.JsonValue
 
 
 class HTTPTestUtils:
@@ -208,7 +210,14 @@ class APITestClient:
                 error_code="INVALID_ERROR_FORMAT",
             )
 
-        error: JsonDict = response_data["error"]
+        error_data = response_data["error"]
+        if not isinstance(error_data, dict):
+            return FlextResult[None].fail(
+                "Error field must be an object",
+                error_code="INVALID_ERROR_FORMAT",
+            )
+
+        error: JsonDict = cast("JsonDict", error_data)  # Now we know it's a dict
         required_error_fields = ["message", "code"]
 
         for field in required_error_fields:
@@ -264,12 +273,14 @@ class HTTPScenarioBuilder:
             status_code,
         )
 
-        self.scenarios.append({
-            "type": "success",
-            "url": url,
-            "method": method,
-            "status_code": status_code,
-        })
+        self.scenarios.append(
+            {
+                "type": "success",
+                "url": url,
+                "method": method,
+                "status_code": status_code,
+            }
+        )
 
         return self
 
@@ -289,12 +300,14 @@ class HTTPScenarioBuilder:
             error_message,
         )
 
-        self.scenarios.append({
-            "type": "error",
-            "url": url,
-            "method": method,
-            "status_code": status_code,
-        })
+        self.scenarios.append(
+            {
+                "type": "error",
+                "url": url,
+                "method": method,
+                "status_code": status_code,
+            }
+        )
 
         return self
 
@@ -323,12 +336,14 @@ class HTTPScenarioBuilder:
             final_response or {"status": "success", "retry_succeeded": True},
         )
 
-        self.scenarios.append({
-            "type": "retry",
-            "url": url,
-            "method": method,
-            "failure_count": failure_count,
-        })
+        self.scenarios.append(
+            {
+                "type": "retry",
+                "url": url,
+                "method": method,
+                "failure_count": failure_count,
+            }
+        )
 
         return self
 
@@ -362,12 +377,14 @@ class HTTPScenarioBuilder:
             },
         )
 
-        self.scenarios.append({
-            "type": "circuit_breaker",
-            "url": url,
-            "method": method,
-            "failure_threshold": failure_threshold,
-        })
+        self.scenarios.append(
+            {
+                "type": "circuit_breaker",
+                "url": url,
+                "method": method,
+                "failure_threshold": failure_threshold,
+            }
+        )
 
         return self
 
@@ -385,7 +402,7 @@ class WebhookTestUtils:
     @staticmethod
     def create_webhook_payload(
         event_type: str,
-        data: JsonDict,
+        data: JsonValue,
         timestamp: str | None = None,
         signature: str | None = None,
     ) -> JsonDict:

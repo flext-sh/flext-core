@@ -14,9 +14,7 @@ from typing import cast
 
 import pytest
 
-from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
-from flext_core.validation import FlextValidation
+from flext_core import FlextConstants, FlextTypes, FlextValidation
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -200,28 +198,16 @@ class TestFlextValidationRealFunctionality:
 
             # Verify performance level specific settings
             if config["performance_level"] == "high":
-                assert (
-                    isinstance(optimized["concurrent_validations"], int)
-                )
-                assert (
-                    optimized["concurrent_validations"] >= 4
-                )
-                assert (
-                    isinstance(optimized["validation_batch_size"], int)
-                )
-                assert (
-                    optimized["validation_batch_size"] >= 500
-                )
+                assert isinstance(optimized["concurrent_validations"], int)
+                assert optimized["concurrent_validations"] >= 4
+                assert isinstance(optimized["validation_batch_size"], int)
+                assert optimized["validation_batch_size"] >= 500
             elif config["performance_level"] == "low":
                 max_threads = optimized.get("max_validation_threads", 1)
                 assert isinstance(max_threads, int)
                 assert max_threads <= 2
-                assert (
-                    isinstance(optimized["validation_batch_size"], int)
-                )
-                assert (
-                    optimized["validation_batch_size"] <= 500
-                )
+                assert isinstance(optimized["validation_batch_size"], int)
+                assert optimized["validation_batch_size"] <= 500
 
     def test_validation_performance_optimization_invalid_config_real(self) -> None:
         """Test performance optimization with invalid configuration."""

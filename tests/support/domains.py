@@ -11,49 +11,10 @@ import random
 import uuid
 from decimal import Decimal
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextTypes
 
 JsonDict = FlextTypes.Core.JsonObject
 JsonValue = FlextTypes.Core.JsonValue
-
-
-class FlextResultFactory:
-    """Factory for creating FlextResult objects with realistic scenarios."""
-
-    @staticmethod
-    def success_result(data: object = None) -> FlextResult[object]:
-        """Create successful result."""
-        return FlextResult[object].ok(
-            data or {"status": "success", "id": str(uuid.uuid4())}
-        )
-
-    @staticmethod
-    def create_success(data: object = None) -> FlextResult[object]:
-        """Create successful result (alias for success_result)."""
-        return FlextResultFactory.success_result(data)
-
-    @staticmethod
-    def create_failure(
-        error: str = "Operation failed", error_code: str | None = None
-    ) -> FlextResult[object]:
-        """Create failed result with optional error code."""
-        return FlextResult[object].fail(error, error_code=error_code)
-
-    @staticmethod
-    def failed_result(error: str = "Operation failed") -> FlextResult[object]:
-        """Create failed result."""
-        return FlextResult[object].fail(error, error_code="OPERATION_ERROR")
-
-    @staticmethod
-    def validation_error(
-        field: str = "unknown", value: object = None
-    ) -> FlextResult[object]:
-        """Create validation failure FlextResult."""
-        return FlextResult[object].fail(
-            f"Validation failed for field '{field}'",
-            error_code="VALIDATION_ERROR",
-            error_data={"field": field, "value": value},
-        )
 
 
 class UserDataFactory:
@@ -84,7 +45,7 @@ class UserDataFactory:
         return [UserDataFactory.create() for _ in range(count)]
 
 
-class ConfigurationFactory:
+class SimpleConfigurationFactory:
     """Factory for creating realistic configuration data."""
 
     @staticmethod
@@ -224,11 +185,10 @@ class RealisticData:
 
 # Export all factories
 __all__ = [
-    "ConfigurationFactory",
-    "FlextResultFactory",
     "PayloadDataFactory",
     "RealisticData",
     "ServiceDataFactory",
+    "SimpleConfigurationFactory",
     "UserDataFactory",
     "ValidationTestCases",
 ]

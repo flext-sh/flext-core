@@ -244,14 +244,14 @@ class DatabaseSettings(FlextConfig):
 
 ## Domain Patterns
 
-### FlextEntity - Domain Entities
+### FlextModels.Entity - Domain Entities
 
 Entities with identity and business logic.
 
 ```python
-from flext_core import FlextEntity
+from flext_core import FlextModels.Entity
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """User entity with business logic."""
     username: str
     email: str
@@ -286,15 +286,15 @@ class User(FlextEntity):
         return FlextResult[None].ok(None)
 ```
 
-### FlextValue - Immutable Values
+### FlextModels.Value - Immutable Values
 
 Value objects for domain concepts.
 
 ```python
-from flext_core import FlextValue
+from flext_core import FlextModels.Value
 from decimal import Decimal
 
-class Money(FlextValue):
+class Money(FlextModels.Value):
     """Immutable money value object."""
     amount: Decimal
     currency: str
@@ -319,7 +319,7 @@ class Money(FlextValue):
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
-class Email(FlextValue):
+class Email(FlextModels.Value):
     """Email value object with validation."""
     address: str
 
@@ -421,10 +421,10 @@ class ShoppingCart(FlextAggregates):
 ### Logging
 
 ```python
-from flext_core import get_logger
+from flext_core import FlextLogger
 
 # Get configured logger
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 # Structured logging
 logger.info("Processing request",

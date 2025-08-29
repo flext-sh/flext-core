@@ -175,7 +175,10 @@ class TestFlextCoreIntegrationScenarios:
 
         # 2. Create a result
         result = FlextResult[dict].ok(
-            {"operation_id": operation_id, "status": "started"}
+            {
+                "operation_id": operation_id,
+                "status": "started",
+            }
         )
         assert result.success is True
 

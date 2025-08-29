@@ -16,6 +16,7 @@ import json
 from decimal import Decimal
 
 from flext_core import (
+    FlextConfig,
     FlextConstants,
     FlextCore,
     FlextModels,
@@ -24,8 +25,8 @@ from flext_core import (
     FlextUtilities,
 )
 
-# Singleton FlextCore instance for all utilities
-core = FlextCore.get_instance()
+# FlextCore instance for all utilities
+core = FlextCore
 
 # =============================================================================
 # DOMAIN ENTITIES - Using FlextModels.Entity with FlextCore factory
@@ -40,12 +41,28 @@ class User(FlextModels.Entity):
 
     name: FlextTypes.Core.String
     email: FlextTypes.Core.String
-    age: FlextTypes.Core.Integer
+    age: int
     status: FlextTypes.Core.String = FlextConstants.Status.ACTIVE
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for user entity."""
+        min_name_length = 2
+        max_age = 120
+
+        if len(self.name) < min_name_length:
+            return FlextResult[None].fail("Name must be at least 2 characters")
+
+        if "@" not in self.email:
+            return FlextResult[None].fail("Invalid email format")
+
+        if self.age < 0 or self.age > max_age:
+            return FlextResult[None].fail(f"Age must be between 0 and {max_age}")
+
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
-# STRUCTURED DATA MODELS - Using FlextModels + FlextModels.Value base
+# STRUCTURED DATA MODELS - Using FlextModels.Value + FlextConfig.BaseConfigModel base
 # =============================================================================
 
 
@@ -57,7 +74,7 @@ class UserRegistrationRequest(FlextModels.Value):
 
     name: FlextTypes.Core.String
     email: FlextTypes.Core.String
-    age: FlextTypes.Core.Integer
+    age: int
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate business rules using centralized validation protocols.
@@ -73,8 +90,8 @@ class UserRegistrationRequest(FlextModels.Value):
         return FlextResult[None].ok(None)
 
 
-class RegistrationResult(FlextModels.BaseConfig):
-    """Registration result using FlextModels for enterprise features.
+class RegistrationResult(FlextConfig.BaseConfigModel):
+    """Registration result using FlextConfig.BaseConfigModel for enterprise features.
 
     Follows SOLID principles with proper typing using FlextTypes.
     """
@@ -85,15 +102,15 @@ class RegistrationResult(FlextModels.BaseConfig):
     correlation_id: FlextTypes.Core.String
 
 
-class BatchResult(FlextModels.BaseConfig):
+class BatchResult(FlextConfig.BaseConfigModel):
     """Batch processing result with enterprise metrics.
 
     Uses FlextTypes for consistent typing across the ecosystem.
     """
 
-    total: FlextTypes.Core.Integer
-    successful: FlextTypes.Core.Integer
-    failed: FlextTypes.Core.Integer
+    total: int
+    successful: int
+    failed: int
     success_rate: Decimal
     results: list[RegistrationResult]
     errors: list[FlextTypes.Core.String]

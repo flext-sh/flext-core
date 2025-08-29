@@ -1202,7 +1202,9 @@ class FlextTypeAdapters:
         """
 
         @staticmethod
-        def create_validator_protocol() -> FlextProtocols.Foundation.Validator[object] | None:
+        def create_validator_protocol() -> (
+            FlextProtocols.Foundation.Validator[object] | None
+        ):
             """Create validator protocol for adapter composition.
 
             Returns:

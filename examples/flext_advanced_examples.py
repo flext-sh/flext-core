@@ -105,16 +105,20 @@ class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
     def create_order(
         self, user_id: str, items_data: list[ItemData]
     ) -> FlextResult[OrderData]:
-        """Create and validate order with comprehensive business rules using railway pattern."""
+        """Create and validate order with comprehensive business rules."""
         return (
             self._validate_items_count(items_data)
             .flat_map(lambda _: self._process_all_items(items_data))
-            .flat_map(lambda items_and_total: self._validate_and_create_order(
-                user_id, items_and_total[0], items_and_total[1]
-            ))
+            .flat_map(
+                lambda items_and_total: self._validate_and_create_order(
+                    user_id, items_and_total[0], items_and_total[1]
+                )
+            )
         )
 
-    def _validate_items_count(self, items_data: list[ItemData]) -> FlextResult[list[ItemData]]:
+    def _validate_items_count(
+        self, items_data: list[ItemData]
+    ) -> FlextResult[list[ItemData]]:
         """Validate order items count."""
         if len(items_data) > self._config.max_order_items:
             return FlextResult[list[ItemData]].fail(
@@ -124,7 +128,9 @@ class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
             return FlextResult[list[ItemData]].fail("Order must have at least one item")
         return FlextResult[list[ItemData]].ok(items_data)
 
-    def _process_all_items(self, items_data: list[ItemData]) -> FlextResult[tuple[list[ItemData], Decimal]]:
+    def _process_all_items(
+        self, items_data: list[ItemData]
+    ) -> FlextResult[tuple[list[ItemData], Decimal]]:
         """Process all items and calculate total."""
         processed_items: list[ItemData] = []
         total_amount = Decimal("0.00")
@@ -141,7 +147,10 @@ class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
             if "total_price" in item:
                 total_amount += Decimal(str(item["total_price"]))
 
-        return FlextResult[tuple[list[ItemData], Decimal]].ok((processed_items, total_amount))
+        return FlextResult[tuple[list[ItemData], Decimal]].ok((
+            processed_items,
+            total_amount,
+        ))
 
     def _validate_and_create_order(
         self, user_id: str, processed_items: list[ItemData], total_amount: Decimal
@@ -178,19 +187,22 @@ class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
 
     def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
         """Process and validate individual order item using railway pattern."""
-        return (
-            self._validate_required_fields(item_data, ["product_id", "quantity", "unit_price"])
-            .flat_map(lambda _: self._parse_and_validate_item_values(item_data))
-        )
+        return self._validate_required_fields(
+            item_data, ["product_id", "quantity", "unit_price"]
+        ).flat_map(lambda _: self._parse_and_validate_item_values(item_data))
 
-    def _validate_required_fields(self, item_data: ItemData, fields: list[str]) -> FlextResult[ItemData]:
+    def _validate_required_fields(
+        self, item_data: ItemData, fields: list[str]
+    ) -> FlextResult[ItemData]:
         """Validate required fields exist."""
         for field in fields:
             if field not in item_data:
                 return FlextResult[ItemData].fail(f"Missing required field: {field}")
         return FlextResult[ItemData].ok(item_data)
 
-    def _parse_and_validate_item_values(self, item_data: ItemData) -> FlextResult[ItemData]:
+    def _parse_and_validate_item_values(
+        self, item_data: ItemData
+    ) -> FlextResult[ItemData]:
         """Parse and validate item values."""
         try:
             quantity = int(str(item_data["quantity"]))
@@ -298,7 +310,8 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
                 print("⚠️  Invalid configuration unexpectedly passed validation")
             else:
                 print(
-                    f"✅ Invalid configuration correctly failed: {invalid_result1.error}"
+                    f"✅ Invalid configuration correctly failed: "
+                    f"{invalid_result1.error}"
                 )
 
         print("Configuration validation demonstration completed successfully")

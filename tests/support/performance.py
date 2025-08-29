@@ -586,6 +586,7 @@ class PerformanceMarkers:
 # Export utilities
 __all__ = [
     "AsyncBenchmark",
+    "BenchmarkProtocol",
     "BenchmarkUtils",
     "ComplexityAnalyzer",
     "MemoryProfiler",
