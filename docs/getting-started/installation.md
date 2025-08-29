@@ -143,8 +143,8 @@ from flext_core import (
 def verify_domain_imports():
     """Test domain pattern imports."""
 from flext_core import (
-        FlextEntity,
-        FlextValue,
+        FlextModels.Entity,
+        FlextModels.Value,
         FlextAggregates,
     )
 
@@ -154,7 +154,7 @@ from flext_core import (
 def verify_utility_imports():
     """Test utility imports."""
 from flext_core.utilities import generate_id, generate_uuid
-from flext_core import get_logger
+from flext_core import FlextLogger
 
     # Test utilities
     entity_id = generate_id("test")
@@ -163,7 +163,7 @@ from flext_core import get_logger
     uuid = generate_uuid()
     assert len(uuid) == 36
 
-    logger = get_logger(__name__)
+    logger = FlextLogger(__name__)
     assert logger is not None
 
     print("✅ Utilities working")
@@ -335,10 +335,10 @@ if config_result.success:
 ### 3. Domain Modeling
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextResult
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextResult
 from datetime import datetime
 
-class Email(FlextValue):
+class Email(FlextModels.Value):
     """Email value object."""
     address: str
 
@@ -349,7 +349,7 @@ class Email(FlextValue):
         data['address'] = address.lower()
         super().__init__(**data)
 
-class User(FlextEntity):
+class User(FlextModels.Entity):
     """User entity."""
     username: str
     email: Email

@@ -11,13 +11,18 @@ import asyncio
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeGuard, TypeVar
 
 import pytest
 
 from flext_core import FlextLogger
 
 T = TypeVar("T")
+
+
+def _is_not_exception[T](value: T | BaseException) -> TypeGuard[T]:
+    """Type guard to filter out BaseException instances."""
+    return not isinstance(value, BaseException)
 
 
 class AsyncMockProtocol(Protocol):
@@ -85,9 +90,10 @@ class AsyncTestUtils:
 
         results = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         if return_exceptions:
-            # Filter out exceptions and return only successful results
-            return [r for r in results if not isinstance(r, BaseException)]
-        return results
+            # Filter out exceptions and return only successful results using type guard
+            return [r for r in results if _is_not_exception(r)]
+        # When return_exceptions=False, asyncio.gather returns list[T] directly
+        return results  # type: ignore[return-value]  # asyncio.gather type inference limitation
 
     @staticmethod
     async def run_concurrent(
@@ -119,9 +125,10 @@ class AsyncTestUtils:
             return []
         results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
         if return_exceptions:
-            # Filter out exceptions and return only successful results
-            return [r for r in results if not isinstance(r, BaseException)]
-        return results
+            # Filter out exceptions and return only successful results using type guard
+            return [r for r in results if _is_not_exception(r)]
+        # When return_exceptions=False, asyncio.gather returns list[T] directly
+        return results  # type: ignore[return-value]  # asyncio.gather type inference limitation
 
     @staticmethod
     async def retry_async(
@@ -375,12 +382,14 @@ class AsyncConcurrencyTesting:
                 task1, task2, return_exceptions=True
             )
 
-            results.append({
-                "result1": result1,
-                "result2": result2,
-                "error1": isinstance(result1, Exception),
-                "error2": isinstance(result2, Exception),
-            })
+            results.append(
+                {
+                    "result1": result1,
+                    "result2": result2,
+                    "error1": isinstance(result1, Exception),
+                    "error2": isinstance(result2, Exception),
+                }
+            )
 
         return {
             "total_iterations": iterations,

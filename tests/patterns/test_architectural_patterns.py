@@ -14,10 +14,8 @@ from pydantic import BaseModel
 
 from flext_core import (
     FlextBaseHandler,
-    FlextEntity,
-    FlextEntityId,
+    FlextModels,
     FlextResult,
-    FlextValue,
 )
 
 # Note: FlextCore removido conforme solicitado - usando APIs individuais
@@ -31,7 +29,7 @@ class TestCleanArchitecturePatterns:
         """Test proper Clean Architecture layer separation."""
 
         # Domain Layer - Entities and Value Objects
-        class UserEmail(FlextValue):
+        class UserEmail(FlextModels.Value):
             """Domain value object."""
 
             email: str
@@ -42,7 +40,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Invalid email format")
                 return FlextResult[None].ok(None)
 
-        class User(FlextEntity):
+        class User(FlextModels.Entity):
             """Domain entity."""
 
             name: str
@@ -93,7 +91,7 @@ class TestCleanArchitecturePatterns:
 
                 # Create entity
                 user = User(
-                    id=FlextEntityId("user_123"),
+                    id=FlextModels.EntityId("user_123"),
                     name=command.name,
                     email_obj=email_obj,
                 )
@@ -130,7 +128,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD value objects for testing."""
 
         # Value Objects
-        class OrderId(FlextValue):
+        class OrderId(FlextModels.Value):
             """Order identifier value object."""
 
             value: str
@@ -141,7 +139,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Order ID must start with ORD-")
                 return FlextResult[None].ok(None)
 
-        class Money(FlextValue):
+        class Money(FlextModels.Value):
             """Money value object."""
 
             amount: float
@@ -161,7 +159,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
-        class Order(FlextEntity):
+        class Order(FlextModels.Entity):
             """Order aggregate root."""
 
             order_id: object
@@ -208,7 +206,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[None].ok(None)
 
         return Order(
-            id=FlextEntityId("order_123"),
+            id=FlextModels.EntityId("order_123"),
             order_id=order_id,
             total=money,
         )

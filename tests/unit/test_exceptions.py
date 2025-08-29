@@ -11,9 +11,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult
-from flext_core.constants import FlextConstants
-from flext_core.exceptions import FlextExceptions
+from flext_core import FlextConstants, FlextExceptions, FlextResult
 
 # Constants
 EXPECTED_DATA_COUNT = 3

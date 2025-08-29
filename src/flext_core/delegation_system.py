@@ -13,12 +13,12 @@ Module Role in Architecture:
 Classes and Methods:
     FlextDelegationSystem:              # Consolidated delegation system
         # Core Delegation:
-        create_mixin_delegator(host, mixins) -> MixinDelegator # Create delegator with mixins
+        FlextDelegationSystem.create_mixin_delegator(host, mixins) -> MixinDelegator # Create delegator with mixins
         create_method_delegator(host, target, methods) -> MethodDelegator # Delegate specific methods
         create_property_delegator(host, target, properties) -> PropertyDelegator # Delegate properties
 
         # Delegation Validation:
-        validate_delegation_system(host) -> FlextResult[ValidationReport] # Validate delegation setup
+        FlextDelegationSystem.validate_delegation_system(host) -> FlextResult[ValidationReport] # Validate delegation setup
         test_delegated_methods(host, methods) -> FlextResult[TestResults] # Test method delegation
         verify_mixin_compatibility(mixins) -> FlextResult[CompatibilityReport] # Check mixin compatibility
 
@@ -59,7 +59,7 @@ Usage Examples:
     Basic mixin delegation:
         class BusinessLogic:
             def __init__(self):
-                self.delegator = FlextDelegationSystem.create_mixin_delegator(
+                self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
                     self, [FlextMixins.Loggable, FlextMixins.Serializable]
                 )
 
@@ -88,7 +88,7 @@ Usage Examples:
             # Now has database_url, api_key, timeout properties
 
     Validation:
-        validation_result = FlextDelegationSystem.validate_delegation_system(business_logic)
+        validation_result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(business_logic)
         if validation_result.success:
             report = validation_result.unwrap()
             print(f"Delegation validation: {report.status}")
@@ -144,7 +144,9 @@ Integration:
     Validation and testing::
 
         # Comprehensive system validation
-        validation_result = FlextDelegationSystem.validate_delegation_system()
+        validation_result = (
+            FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
+        )
 
         if validation_result.success:
             report = validation_result.value
@@ -227,7 +229,7 @@ class FlextDelegationSystem:
             # Create host class that will receive delegated functionality
             class DataProcessor:
                 def __init__(self):
-                    self.delegator = FlextDelegationSystem.create_mixin_delegator(
+                    self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
                         self, ValidationMixin, SerializationMixin, CachingMixin
                     )
 
@@ -256,7 +258,9 @@ class FlextDelegationSystem:
         System-wide validation::
 
             # Comprehensive system validation
-            system_validation = FlextDelegationSystem.validate_delegation_system()
+            system_validation = (
+                FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
+            )
 
             if system_validation.success:
                 report = system_validation.value
@@ -272,8 +276,8 @@ class FlextDelegationSystem:
         - **MixinDelegator**: Core delegation engine managing mixin composition
 
     Static Methods:
-        - **create_mixin_delegator()**: Factory method for creating delegation configurations
-        - **FlextDelegationSystem.validate_delegation_system()**: Comprehensive system validation with test cases
+        - **FlextDelegationSystem.create_mixin_delegator()**: Factory method for creating delegation configurations
+        - **FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()**: Comprehensive system validation with test cases
         - **_validate_delegation_methods()**: Internal method validation testing
         - **_validate_delegation_info()**: Internal delegation information validation
 
@@ -299,8 +303,8 @@ class FlextDelegationSystem:
         - FlextMixins: FLEXT mixin system for behavioral composition
         - FlextExceptions: Exception handling framework
         - FlextLogger: Structured logging system
-        - create_mixin_delegator(): Factory function for delegation setup
-        - validate_delegation_system(): System validation and testing
+        - FlextDelegationSystem.create_mixin_delegator(): Factory function for delegation setup
+        - FlextDelegationSystem.validate_delegation_system(): System validation and testing
 
     """
 
@@ -1016,7 +1020,7 @@ class FlextDelegationSystem:
             See Also:
                 - get_mixin_instance(): Retrieve specific mixin instances
                 - _validate_delegation(): Comprehensive validation of delegation correctness
-                - FlextDelegationSystem.validate_delegation_system(): System-wide validation
+                - FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(): System-wide validation
 
             """
             return {
@@ -1073,7 +1077,7 @@ class FlextDelegationSystem:
                 class DataService:
                     def __init__(self):
                         # Use factory method for clean delegation setup
-                        self.delegator = FlextDelegationSystem.create_mixin_delegator(
+                        self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
                             self,
                             ValidationMixin,  # Input validation
                             SerializationMixin,  # JSON serialization
@@ -1130,7 +1134,7 @@ class FlextDelegationSystem:
             Error handling::
 
                 try:
-                    delegator = FlextDelegationSystem.create_mixin_delegator(
+                    delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
                         host_instance,
                         ValidMixin,
                         InvalidMixin,  # This might fail instantiation
@@ -1162,7 +1166,7 @@ class FlextDelegationSystem:
 
         See Also:
             - MixinDelegator.__init__(): Direct constructor for advanced configuration
-            - FlextDelegationSystem.validate_delegation_system(): System-wide validation capabilities
+            - FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(): System-wide validation capabilities
             - get_delegation_info(): Introspection of delegation configuration
 
         """
@@ -1234,7 +1238,7 @@ class FlextDelegationSystem:
             Basic system validation::
 
                 # Validate the entire delegation system
-                validation_result = FlextDelegationSystem.validate_delegation_system()
+                validation_result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
 
                 if validation_result.success:
                     report = validation_result.value
@@ -1254,7 +1258,7 @@ class FlextDelegationSystem:
 
                 def system_health_check() -> bool:
                     # Check if delegation system is healthy
-                    validation = FlextDelegationSystem.validate_delegation_system()
+                    validation = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
 
                     if validation.success:
                         report = validation.value
@@ -1280,7 +1284,7 @@ class FlextDelegationSystem:
                 def monitor_delegation_system():
                     # Periodic validation monitoring
                     while True:
-                        result = FlextDelegationSystem.validate_delegation_system()
+                        result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
 
                         if result.success:
                             report = result.value
@@ -1316,7 +1320,7 @@ class FlextDelegationSystem:
 
         See Also:
             - MixinDelegator._validate_delegation(): Instance-level delegation validation
-            - create_mixin_delegator(): Factory method for delegation setup
+            - FlextDelegationSystem.create_mixin_delegator(): Factory method for delegation setup
             - get_delegation_info(): Delegation introspection capabilities
 
         """

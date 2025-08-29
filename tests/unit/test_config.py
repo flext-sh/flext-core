@@ -19,10 +19,10 @@ from flext_core import (
 )
 
 from ..support import (
+    BenchmarkProtocol,
     BenchmarkUtils,
     PerformanceProfiler,
 )
-from ..support.performance import BenchmarkProtocol
 
 
 # Simple config factory for testing

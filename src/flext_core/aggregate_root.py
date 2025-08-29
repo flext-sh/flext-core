@@ -253,21 +253,25 @@ class FlextAggregates:
             }
 
             if environment == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value:
-                base_config.update({
-                    "aggregate_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "max_aggregate_size": 500,
-                    "enable_snapshot_storage": True,
-                })
+                base_config.update(
+                    {
+                        "aggregate_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "max_aggregate_size": 500,
+                        "enable_snapshot_storage": True,
+                    }
+                )
             elif (
                 environment == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
             ):
-                base_config.update({
-                    "aggregate_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "max_aggregate_size": 2000,
-                    "enable_snapshot_storage": False,
-                })
+                base_config.update(
+                    {
+                        "aggregate_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "max_aggregate_size": 2000,
+                        "enable_snapshot_storage": False,
+                    }
+                )
 
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(
                 base_config
@@ -300,20 +304,24 @@ class FlextAggregates:
             }
 
             if performance_level == "high":
-                optimized_config.update({
-                    "enable_async_event_processing": True,
-                    "event_batch_size": 100,
-                    "enable_aggregate_caching": True,
-                    "max_concurrent_aggregates": 500,
-                })
+                optimized_config.update(
+                    {
+                        "enable_async_event_processing": True,
+                        "event_batch_size": 100,
+                        "enable_aggregate_caching": True,
+                        "max_concurrent_aggregates": 500,
+                    }
+                )
             elif performance_level == "extreme":
-                optimized_config.update({
-                    "enable_async_event_processing": True,
-                    "event_batch_size": 1000,
-                    "enable_aggregate_caching": True,
-                    "max_concurrent_aggregates": 5000,
-                    "enable_domain_rules_validation": False,  # Skip for max speed
-                })
+                optimized_config.update(
+                    {
+                        "enable_async_event_processing": True,
+                        "event_batch_size": 1000,
+                        "enable_aggregate_caching": True,
+                        "max_concurrent_aggregates": 5000,
+                        "enable_domain_rules_validation": False,  # Skip for max speed
+                    }
+                )
 
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(
                 optimized_config

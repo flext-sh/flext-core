@@ -19,7 +19,6 @@ from flext_core import (
     FlextLogger,
     FlextResult,
     FlextTypes,
-    FlextValidation,
 )
 
 # Logger using centralized logging
@@ -29,14 +28,22 @@ logger = FlextLogger("flext.examples.validation")
 def flext_validate_string(
     value: FlextTypes.Core.String,
     field_name: FlextTypes.Core.String,
-    min_length: FlextTypes.Core.Integer = 0,
-    max_length: FlextTypes.Core.Integer = 1000,
+    min_length: int = 0,
+    max_length: int = 1000,
 ) -> FlextResult[FlextTypes.Core.String]:
     """Validate string with length constraints."""
-    length_result = FlextValidation.validate_length(value, min_length, max_length)
-    if length_result.is_success:
-        return FlextResult[FlextTypes.Core.String].ok(value)
-    return FlextResult[FlextTypes.Core.String].fail(str(length_result.error))
+    # Simple string length validation
+    if len(value) < min_length:
+        return FlextResult[FlextTypes.Core.String].fail(
+            f"{field_name}: Must be at least {min_length} characters"
+        )
+
+    if len(value) > max_length:
+        return FlextResult[FlextTypes.Core.String].fail(
+            f"{field_name}: Must not exceed {max_length} characters"
+        )
+
+    return FlextResult[FlextTypes.Core.String].ok(value)
 
 
 def flext_validate_numeric(
@@ -92,53 +99,58 @@ def flext_validate_required(
 
 
 def demonstrate_modern_validation() -> None:
-    """Demonstrate modern validation with FlextResult patterns and centralized logging."""
+    """Demonstrate modern validation with FlextResult patterns.
+
+    Uses centralized logging for better observability.
+    """
     logger.info("Starting modern validation demonstration")
 
     # Test string validation using FlextTypes
-    result = flext_validate_string(
+    string_result = flext_validate_string(
         "Hello World",
         "greeting",
         min_length=5,
         max_length=20,
     )
-    if result.failure:
-        logger.error(f"String validation failed: {result.error}")
+    if string_result.is_failure:
+        logger.error(f"String validation failed: {string_result.error}")
     else:
-        logger.info(f"String validation passed: {result.unwrap()}")
+        logger.info(f"String validation passed: {string_result.value}")
 
     # Test numeric validation using FlextTypes
-    result = flext_validate_numeric(25.5, "age", min_val=0.0, max_val=120.0)
-    if result.failure:
-        logger.error(f"Numeric validation failed: {result.error}")
+    numeric_result = flext_validate_numeric(25.5, "age", min_val=0.0, max_val=120.0)
+    if numeric_result.is_failure:
+        logger.error(f"Numeric validation failed: {numeric_result.error}")
     else:
-        logger.info(f"Numeric validation passed: {result.unwrap()}")
+        logger.info(f"Numeric validation passed: {numeric_result.value}")
 
     # Test email validation using centralized patterns
-    result = flext_validate_email("user@example.com", "email")
-    if result.failure:
-        logger.error(f"Email validation failed: {result.error}")
+    email_result = flext_validate_email("user@example.com", "email")
+    if email_result.is_failure:
+        logger.error(f"Email validation failed: {email_result.error}")
     else:
-        logger.info(f"Email validation passed: {result.unwrap()}")
+        logger.info(f"Email validation passed: {email_result.value}")
 
     # Test required field validation
-    result = flext_validate_required("some value", "required_field")
-    if result.failure:
-        logger.error(f"Required field validation failed: {result.error}")
+    required_result = flext_validate_required("some value", "required_field")
+    if required_result.is_failure:
+        logger.error(f"Required field validation failed: {required_result.error}")
     else:
         logger.info("Required field validation passed")
 
     # Test email validation with invalid email (expected failure)
-    result = flext_validate_email("invalid-email", "email")
-    if result.failure:
-        logger.info(f"Email validation correctly failed: {result.error}")
+    invalid_email_result = flext_validate_email("invalid-email", "email")
+    if invalid_email_result.is_failure:
+        logger.info(f"Email validation correctly failed: {invalid_email_result.error}")
     else:
         logger.warning("Email validation unexpectedly passed for invalid email")
 
     # Test required field with None (expected failure)
-    result = flext_validate_required(None, "required_field")
-    if result.failure:
-        logger.info(f"Required field validation correctly failed: {result.error}")
+    none_required_result = flext_validate_required(None, "required_field")
+    if none_required_result.is_failure:
+        logger.info(
+            f"Required field validation correctly failed: {none_required_result.error}"
+        )
     else:
         logger.warning("Required field validation unexpectedly passed for None value")
 
@@ -174,8 +186,8 @@ def demonstrate_type_safety() -> None:
 
         flext_validate_string("hello", "greeting")
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Validation demo failed: {e}")
 
     # These will raise ValidationError due to wrong types
 

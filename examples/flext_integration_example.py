@@ -8,12 +8,11 @@ domain models.
 from decimal import Decimal
 from typing import cast
 
-from shared_domain import EmailAddress, Money, Order, SharedDomainFactory, User
-
 from flext_core import (
     FlextContainer,
     FlextFields,
     FlextLogger,
+    FlextModels,
     FlextResult,
     FlextTypes,
 )
@@ -23,9 +22,60 @@ from flext_core import (
 # =============================================================================
 
 # Email validation constants using proper FlextTypes annotations
-MIN_EMAIL_LENGTH: FlextTypes.Core.Integer = (
-    5  # Minimum characters for basic email validation
-)
+MIN_EMAIL_LENGTH: int = 5  # Minimum characters for basic email validation
+
+
+# Simple classes for the example
+class Money:
+    """Simple money value object for demonstration."""
+
+    def __init__(self, amount: Decimal, currency: str) -> None:
+        self.amount = amount
+        self.currency = currency
+
+    def __str__(self) -> str:
+        """String representation of money."""
+        return f"{self.amount} {self.currency}"
+
+
+class Order:
+    """Simple order class for demonstration."""
+
+    def __init__(
+        self, order_id: str, customer_id: str, items: list[dict[str, object]]
+    ) -> None:
+        self.id = order_id
+        self.customer_id = customer_id
+        self.items = items
+
+    def calculate_total(self) -> FlextResult[Money]:
+        """Calculate order total."""
+        # Simple calculation for demo
+        total = Decimal(0)
+        for item in self.items:
+            price = item.get("price", 0)
+            if isinstance(price, (int, float, str)):
+                total += Decimal(str(price))
+        return FlextResult[Money].ok(Money(total, "USD"))
+
+    def __str__(self) -> str:
+        """String representation of order."""
+        return (
+            f"Order({self.id}, customer: {self.customer_id}, items: {len(self.items)})"
+        )
+
+
+class User:
+    """Simple user class for demonstration."""
+
+    def __init__(self, user_id: str, name: str, email: str) -> None:
+        self.id = user_id
+        self.name = name
+        self.email = email
+
+    def __str__(self) -> str:
+        """String representation of user."""
+        return f"User({self.id}, {self.name}, {self.email})"
 
 
 def _print_header() -> None:
@@ -38,18 +88,17 @@ def _setup_logger() -> FlextLogger:
     return logger
 
 
-def _shared_domain_vo_demo() -> tuple[EmailAddress, Money]:
-    email = EmailAddress(email="customer@example.com")
+def _shared_domain_vo_demo() -> tuple[FlextModels.EmailAddress, Money]:
+    email = FlextModels.EmailAddress(root="customer@example.com")
     money = Money(amount=Decimal("100.0"), currency="USD")
     return email, money
 
 
-def _create_customer(email: EmailAddress) -> FlextResult[User]:
-    return SharedDomainFactory.create_user(
-        name="John Customer",
-        email=email.email,
-        age=35,
-    )
+def _create_customer(
+    email: FlextModels.EmailAddress,
+) -> FlextResult[User]:
+    user = User(user_id="customer_123", name="John Customer", email=str(email.root))
+    return FlextResult[User].ok(user)
 
 
 def _print_customer(customer: User) -> None:
@@ -66,10 +115,23 @@ def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
             "currency": money.currency,
         },
     ]
-    return SharedDomainFactory.create_order(
-        customer_id=customer_id,
-        items=cast("list[dict[str, object]]", order_items),
+    # Add price for calculate_total method
+    order_items_with_price: list[dict[str, object]] = []
+    for item in order_items:
+        item_copy: dict[str, object] = {
+            "product_id": item["product_id"],
+            "product_name": item["product_name"],
+            "quantity": item["quantity"],
+            "unit_price": item["unit_price"],
+            "currency": item["currency"],
+            "price": float(item["unit_price"]),  # Convert to float for calculation
+        }
+        order_items_with_price.append(item_copy)
+
+    order = Order(
+        order_id="order_456", customer_id=customer_id, items=order_items_with_price
     )
+    return FlextResult[Order].ok(order)
 
 
 def _print_order(order: Order) -> None:
@@ -115,7 +177,7 @@ def _demo_repository_pattern(order: Order) -> object:
         def save(self, order: object) -> FlextResult[object]:
             """Save order with FlextResult error handling."""
             if hasattr(order, "id"):
-                self.orders[order.id] = order  # type: ignore[attr-defined]
+                self.orders[order.id] = order
                 return FlextResult[object].ok(order)
             return FlextResult[object].fail("Order must have an id")
 
@@ -127,7 +189,7 @@ def _demo_repository_pattern(order: Order) -> object:
 
     repository = OrderRepository()
     repository.save(order)
-    fetch_result = repository.get_by_id(order.id.root)  # type: ignore[attr-defined]
+    fetch_result = repository.get_by_id(order.id)
     if fetch_result.success:
         pass
     return repository
@@ -167,17 +229,22 @@ def _demo_fields_validation() -> None:
 
 
 def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> None:
-    order2_result = SharedDomainFactory.create_order(
-        customer_id=str(customer.id),
-        items=[
-            {
-                "product_id": "product456",
-                "product_name": "Another Product",
-                "quantity": "2",
-                "unit_price": "50.0",
-                "currency": "USD",
-            },
-        ],
+    # Create order using simple constructor instead of non-existent factory
+    order2_result = FlextResult[Order].ok(
+        Order(
+            order_id="order_456",
+            customer_id=str(customer.id),
+            items=[
+                {
+                    "product_id": "product456",
+                    "product_name": "Another Product",
+                    "quantity": "2",
+                    "unit_price": "50.0",
+                    "price": 100.0,  # Added price for calculate_total
+                    "currency": "USD",
+                },
+            ],
+        )
     )
     # Modern pattern: Check success and use value directly
     if order2_result.success:

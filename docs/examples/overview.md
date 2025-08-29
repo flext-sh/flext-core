@@ -18,14 +18,14 @@ from flext_core import FlextResult
 from flext_core import FlextContainer, get_flext_container
 
 # Domain patterns
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 
 # Configuration management
 from flext_core import FlextConfig
 
 # Utilities
 from flext_core.utilities import generate_id, generate_uuid
-from flext_core import get_logger
+from flext_core import FlextLogger
 ```
 
 ## Example 1: Railway-Oriented Programming with FlextResult
@@ -211,11 +211,11 @@ if __name__ == "__main__":
 ### Entities with Business Logic
 
 ```python
-from flext_core import FlextEntity, FlextResult
+from flext_core import FlextModels.Entity, FlextResult
 from datetime import datetime
 from typing import Optional
 
-class Account(FlextEntity):
+class Account(FlextModels.Entity):
     """Bank account entity with business rules."""
 
     account_number: str
@@ -323,10 +323,10 @@ if transfer_result.success:
 ### Value Objects for Domain Concepts
 
 ```python
-from flext_core import FlextValue, FlextResult
+from flext_core import FlextModels.Value, FlextResult
 from decimal import Decimal
 
-class Money(FlextValue):
+class Money(FlextModels.Value):
     """Immutable money value object."""
 
     amount: Decimal
@@ -352,7 +352,7 @@ class Money(FlextValue):
     def __str__(self) -> str:
         return f"{self.currency} {self.amount:.2f}"
 
-class Address(FlextValue):
+class Address(FlextModels.Value):
     """Immutable address value object."""
 
     street: str
@@ -861,7 +861,7 @@ python example_events.py
 """Template for FLEXT Core examples."""
 
 from flext_core import FlextResult, FlextContainer, FlextConfig
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 
 def main():
     """Main example function."""
@@ -934,7 +934,7 @@ class ServiceBad:
 
 ```python
 # Good: Business logic in entity
-class Order(FlextEntity):
+class Order(FlextModels.Entity):
     def apply_discount(self, percentage: float) -> FlextResult[None]:
         if percentage < 0 or percentage > 100:
             return FlextResult[None].fail("Invalid discount percentage")

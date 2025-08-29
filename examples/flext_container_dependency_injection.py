@@ -13,10 +13,12 @@ Architecture Overview:
 from __future__ import annotations
 
 import json
+from typing import cast
 
 from pydantic import Field, field_validator
 
 from flext_core import (
+    FlextConfig,
     FlextConstants,
     FlextContainer,
     FlextCore,
@@ -39,9 +41,7 @@ logger = FlextLogger("flext.examples.container_di")
 class UserAgeValidator:
     """Age validator using centralized FlextConstants and patterns."""
 
-    def validate(
-        self, value: FlextTypes.Core.Integer
-    ) -> FlextResult[FlextTypes.Core.Integer]:
+    def validate(self, value: int) -> FlextResult[int]:
         """Validate age using FlextConstants and proper error handling.
 
         Args:
@@ -53,18 +53,18 @@ class UserAgeValidator:
         """
         # Use sensible age limits since specific age constants don't exist
         if value < 0:
-            return FlextResult[FlextTypes.Core.Integer].fail("Age cannot be negative")
+            return FlextResult[int].fail("Age cannot be negative")
 
         max_age = 150  # Maximum reasonable age
         if value > max_age:
             error_message = "Age exceeds reasonable maximum"
-            return FlextResult[FlextTypes.Core.Integer].fail(error_message)
+            return FlextResult[int].fail(error_message)
 
         min_adult_age = 18  # Legal adult age
         if value < min_adult_age:
             logger.warning("Age below warning threshold", age=value)
 
-        return FlextResult[FlextTypes.Core.Integer].ok(value)
+        return FlextResult[int].ok(value)
 
 
 class UserNameValidator:
@@ -113,7 +113,7 @@ class User(FlextModels.Entity):
 
     name: FlextTypes.Core.String
     email: FlextTypes.Core.String
-    age: FlextTypes.Core.Integer
+    age: int
     status: FlextTypes.Core.String = FlextConstants.Status.PENDING
     registration_id: FlextTypes.Core.String = Field(
         default_factory=lambda: FlextUtilities.Generators.generate_uuid()[:10]
@@ -142,7 +142,7 @@ class User(FlextModels.Entity):
 
     @field_validator("age")
     @classmethod
-    def validate_age_field(cls, v: FlextTypes.Core.Integer) -> FlextTypes.Core.Integer:
+    def validate_age_field(cls, v: int) -> int:
         """Validate age using centralized validator."""
         validator = UserAgeValidator()
         result = validator.validate(v)
@@ -150,6 +150,25 @@ class User(FlextModels.Entity):
             error_msg = result.error or FlextConstants.Errors.VALIDATION_ERROR
             raise ValueError(error_msg)
         return result.unwrap()
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate user business rules using FlextCore patterns."""
+        # Check age business rules
+        if self.age < FlextConstants.Validation.MIN_AGE:
+            return FlextResult[None].fail("User must be of legal age")
+
+        # Check email business rules using EmailAddress validation
+        email_validator = EmailAddress(email=self.email)
+        email_validation = email_validator.validate_business_rules()
+        if email_validation.is_failure:
+            return email_validation
+
+        # Check service tier consistency
+        valid_tiers = ["standard", "premium", "enterprise"]
+        if self.service_tier not in valid_tiers:
+            return FlextResult[None].fail(f"Invalid service tier: {self.service_tier}")
+
+        return FlextResult[None].ok(None)
 
 
 class EmailAddress(FlextModels.Value):
@@ -180,7 +199,7 @@ class UserRegistrationRequest(FlextModels.Value):
 
     name: FlextTypes.Core.String
     email: FlextTypes.Core.String
-    age: FlextTypes.Core.Integer
+    age: int
     preferred_service_tier: FlextTypes.Core.String = "standard"
 
     @field_validator("name")
@@ -205,7 +224,7 @@ class UserRegistrationRequest(FlextModels.Value):
 
     @field_validator("age")
     @classmethod
-    def validate_age_field(cls, v: FlextTypes.Core.Integer) -> FlextTypes.Core.Integer:
+    def validate_age_field(cls, v: int) -> int:
         """Validate age using centralized validator."""
         validator = UserAgeValidator()
         result = validator.validate(v)
@@ -227,11 +246,11 @@ class UserRegistrationRequest(FlextModels.Value):
 
 
 # =============================================================================
-# RESULT MODELS - Using FlextModels.BaseConfig with centralized types
+# RESULT MODELS - Using FlextConfig.BaseConfigModel with centralized types
 # =============================================================================
 
 
-class DatabaseSaveResult(FlextModels.BaseConfig):
+class DatabaseSaveResult(FlextConfig.BaseConfigModel):
     """Database save result with centralized patterns."""
 
     user_id: FlextTypes.Core.String
@@ -245,7 +264,7 @@ class DatabaseSaveResult(FlextModels.BaseConfig):
     performance_metrics: dict[str, float] = Field(default_factory=dict)
 
 
-class EmailSendResult(FlextModels.BaseConfig):
+class EmailSendResult(FlextConfig.BaseConfigModel):
     """Email send result with centralized patterns."""
 
     recipient: FlextTypes.Core.String
@@ -255,11 +274,11 @@ class EmailSendResult(FlextModels.BaseConfig):
     correlation_id: FlextTypes.Core.String = Field(
         default_factory=FlextUtilities.Generators.generate_uuid
     )
-    delivery_attempts: FlextTypes.Core.Integer = 1
+    delivery_attempts: int = 1
     performance_metrics: dict[str, float] = Field(default_factory=dict)
 
 
-class RegistrationResult(FlextModels.BaseConfig):
+class RegistrationResult(FlextConfig.BaseConfigModel):
     """Complete registration result with centralized patterns."""
 
     user_id: FlextTypes.Core.String
@@ -359,10 +378,11 @@ class EmailServiceProcessor:
         )
         email_validation = EmailAddress(email=email_str).validate_business_rules()
         if email_validation.is_failure:
+            error_msg = email_validation.error or "Email validation failed"
             self._logger.error(
                 "Email validation failed",
                 recipient=email_str,
-                error=email_validation.error,
+                error=ValueError(error_msg),
             )
             return FlextResult[EmailSendResult].fail(
                 email_validation.error or FlextConstants.Errors.VALIDATION_ERROR
@@ -428,10 +448,11 @@ class UserRegistrationProcessor:
         # Validate business rules using centralized patterns
         validation_result = request.validate_business_rules()
         if validation_result.is_failure:
+            error_msg = validation_result.error or "Registration validation failed"
             self._logger.error(
                 "Registration validation failed",
                 email=request.email,
-                error=validation_result.error,
+                error=ValueError(error_msg),
             )
             return FlextResult[User].fail(
                 validation_result.error or FlextConstants.Errors.VALIDATION_ERROR
@@ -596,7 +617,9 @@ def get_service_with_fallback[T](
 
     if result.is_success:
         logger.debug("Service retrieved from container", service_name=service_name)
-        return result.unwrap()  # type: ignore[return-value]
+        service = result.unwrap()
+        # Cast to expected type - in real implementation you'd validate this
+        return cast("T", service)
 
     logger.warning(
         "Service not found in container, using default factory",
@@ -619,7 +642,8 @@ def log_result[T](
         logger.info(f"✅ {success_msg}", result_type=type(result.unwrap()).__name__)
         return result
 
-    logger.error(f"❌ {success_msg} failed", error=result.error)
+    error_msg = result.error or "Operation failed"
+    logger.error(f"❌ {success_msg} failed", error=ValueError(error_msg))
     return result
 
 
@@ -691,7 +715,8 @@ def demo_batch_processing() -> FlextTypes.Core.String:
     failure_count = len([r for r in results if r.is_failure])
 
     logger.info(
-        f"Batch processing completed: {success_count} successes, {failure_count} failures"
+        f"Batch processing completed: {success_count} successes, "
+        f"{failure_count} failures"
     )
 
     return "batch_processing_completed"

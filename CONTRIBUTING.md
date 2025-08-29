@@ -140,7 +140,7 @@ from datetime import datetime
 
 # Third-party
 import pydantic
-from structlog import get_logger
+from structlog import FlextLogger
 
 # Local application
 from flext_core import FlextResult, FlextContainer
@@ -267,7 +267,7 @@ git commit -m "feat(result): add async support for FlextResult"
 git commit -m "fix(container): resolve singleton registration issue"
 
 # Documentation
-git commit -m "docs(api): update FlextEntity examples"
+git commit -m "docs(api): update FlextModels.Entity examples"
 
 # Breaking change
 git commit -m "feat(core): redesign FlextResult API

@@ -16,11 +16,9 @@ from pydantic import Field, SecretStr
 from flext_core import (
     FlextConfig,
     FlextConstants,
-    FlextEntity,
-    FlextEntityId,
+    FlextModels,
     FlextResult,
     FlextTypes,
-    FlextValue,
 )
 
 # =============================================================================
@@ -38,19 +36,19 @@ class DatabaseConfig(FlextConfig):
     """
 
     host: FlextTypes.Core.String = "localhost"
-    port: FlextTypes.Core.Integer = 5432  # PostgreSQL default for generic example
+    port: int = 5432  # PostgreSQL default for generic example
     database_name: FlextTypes.Core.String = "example_db"
     username: FlextTypes.Core.String
     password: SecretStr
-    max_connections: FlextTypes.Core.Integer = 10
+    max_connections: int = 10
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified business rule validation pattern using FlextConstants."""
         if not self.database_name:
             return FlextResult[None].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
-        min_port: FlextTypes.Core.Integer = FlextConstants.Network.MIN_PORT or 1
-        max_port: FlextTypes.Core.Integer = FlextConstants.Network.MAX_PORT or 65535
+        min_port: int = FlextConstants.Network.MIN_PORT or 1
+        max_port: int = FlextConstants.Network.MAX_PORT or 65535
         if not (min_port <= self.port <= max_port):
             return FlextResult[None].fail(
                 f"Port out of range: {self.port} not between {min_port} and {max_port}",
@@ -64,7 +62,7 @@ class DatabaseConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
 
-class FlextUserProfile(FlextValue):
+class FlextUserProfile(FlextModels.Value):
     """User profile value object using unified patterns."""
 
     email: str
@@ -86,7 +84,7 @@ class FlextUserProfile(FlextValue):
         return FlextResult[None].ok(None)
 
 
-class FlextDataPipeline(FlextEntity):
+class FlextDataPipeline(FlextModels.Entity):
     """Data pipeline entity using unified patterns."""
 
     name: str
@@ -149,7 +147,7 @@ class FlextDataPipeline(FlextEntity):
 def pipeline_factory() -> FlextDataPipeline:
     """Create a default FlextDataPipeline instance."""
     return FlextDataPipeline(
-        id=FlextEntityId("default"),
+        id="default",
         name="default_pipeline",
         source_config=DatabaseConfig(
             username="user",
@@ -246,7 +244,7 @@ class FlextPipelineService:
         ) -> FlextResult[FlextDataPipeline]:
             try:
                 instance = FlextDataPipeline(
-                    id=FlextEntityId(f"pipeline_{len(self._pipelines) + 1}"),
+                    id=f"pipeline_{len(self._pipelines) + 1}",
                     name=name,
                     source_config=cfg,
                     owner=owner,
@@ -391,7 +389,7 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     }
 
     # Create user profile
-    owner_profile = {
+    owner_profile: dict[str, object] = {
         "email": "data.engineer@company.com",
         "full_name": "Senior Data Engineer",
         "role": "REDACTED_LDAP_BIND_PASSWORD",
@@ -401,17 +399,14 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     # Create pipeline using unified patterns
     pipeline_result = service.create_pipeline(
         name="Customer Data ETL Pipeline",
-        database_config=cast("dict[str, object]", database_config),
-        owner_profile=cast("dict[str, object]", owner_profile),
+        database_config=database_config,
+        owner_profile=owner_profile,
     )
 
     if pipeline_result.is_failure:
         return None
 
-    pipeline = pipeline_result.value
-    if pipeline is not None:
-        return pipeline
-    return None
+    return pipeline_result.value
 
 
 def demonstrate_semantic_types() -> None:
@@ -473,7 +468,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
 def demonstrate_error_handling(service: FlextPipelineService) -> None:
     """Demonstrate error handling patterns."""
     # Create user profile for error demonstration
-    owner_profile = {
+    owner_profile: dict[str, object] = {
         "email": "data.engineer@company.com",
         "full_name": "Senior Data Engineer",
         "role": "REDACTED_LDAP_BIND_PASSWORD",
@@ -484,8 +479,8 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
     invalid_config = {"host": "invalid", "port": -1, "username": "test"}
     invalid_result = service.create_pipeline(
         "Invalid Pipeline",
-        cast("dict[str, object]", invalid_config),
-        cast("dict[str, object]", owner_profile),
+        invalid_config,
+        owner_profile,
     )
 
     if invalid_result.is_failure:
@@ -495,7 +490,7 @@ def demonstrate_error_handling(service: FlextPipelineService) -> None:
 def demonstrate_domain_events(pipeline: FlextDataPipeline) -> None:
     """Demonstrate domain events."""
     if hasattr(pipeline, "clear_domain_events"):
-        events = pipeline.clear_domain_events()  # type: ignore[attr-defined]
+        events = pipeline.clear_domain_events()
     else:
         events = []
     for _event in events:

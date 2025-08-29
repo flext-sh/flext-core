@@ -2,8 +2,9 @@
 """03 - CQRS Commands: Maximum FlextCore Ecosystem Showcase.
 
 Demonstrates 20+ FlextCore features in minimal code:
-• FlextEntity/ValueObject (DDD) • FlextResult railway pattern • FlextContainer DI
-• FlextCommands/Handlers (CQRS) • FlextDecorators enterprise • FlextValidation predicates
+• FlextModels.Entity/ValueObject (DDD) • FlextResult railway pattern
+• FlextContainer DI • FlextCommands/Handlers (CQRS)
+• FlextDecorators enterprise • FlextValidation predicates
 • FlextContext correlation • FlextLogger structured • FlextObservability metrics
 • FlextGuards type safety • FlextMixins timestamps • FlextUtilities generators
 """
@@ -106,8 +107,12 @@ class UserCommandHandler(
 
     def _save_user(self, user: User) -> None:
         """FlextContainer + FlextLogger integration."""
-        db = cast("dict[str, User]", container.get("user_db").value)  # FlextContainer DI
-        events = cast("list[dict[str, object]]", container.get("events").value)  # FlextContainer DI
+        db = cast(
+            "dict[str, User]", container.get("user_db").value
+        )  # FlextContainer DI
+        events = cast(
+            "list[dict[str, object]]", container.get("events").value
+        )  # FlextContainer DI
 
         if user.id:
             db[user.id] = user  # Save to "database"
@@ -140,9 +145,18 @@ def demo_flext_ecosystem() -> None:
     if result.success:
         user = cast("User", result.value)
         print(f"✅ User created: {user.name} ({user.email.address})")
-        print(
-            f"📊 Features demonstrated: {len(['FlextResult', 'FlextCommands', 'FlextContainer', 'FlextUtilities', 'FlextLogger', 'FlextDecorators.safe_result', 'FlextConstants', 'FlextLogger', 'FlextContainer.get_global', 'Pydantic'])} FlextCore components!"
-        )
+        features = [
+            "FlextResult",
+            "FlextCommands",
+            "FlextContainer",
+            "FlextUtilities",
+            "FlextLogger",
+            "FlextDecorators.safe_result",
+            "FlextConstants",
+            "FlextContainer.get_global",
+            "Pydantic",
+        ]
+        print(f"📊 Features demonstrated: {len(features)} FlextCore components!")
 
         # Show stored data
         db = cast("dict[str, User]", container.get("user_db").value)

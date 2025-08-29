@@ -124,11 +124,15 @@ Integration with FlextCore:
 
 Validation Chaining Examples:
     >>> # Chain multiple validators
-    >>> user_validators = FlextValidation.chain_validators([
-    ...     lambda email: FlextValidation.is_email(email),
-    ...     lambda email: FlextValidation.validate_length(email, 5, 100),
-    ...     lambda email: FlextValidation.validate_regex(email, r".*@company\\\\.com$"),
-    ... ])
+    >>> user_validators = FlextValidation.chain_validators(
+    ...     [
+    ...         lambda email: FlextValidation.is_email(email),
+    ...         lambda email: FlextValidation.validate_length(email, 5, 100),
+    ...         lambda email: FlextValidation.validate_regex(
+    ...             email, r".*@company\\\\.com$"
+    ...         ),
+    ...     ]
+    ... )
     >>> email_validation = user_validators("john.doe@company.com")
     >>> if email_validation.failure:
     ...     print(f"Email validation failed: {email_validation.error}")

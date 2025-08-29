@@ -19,7 +19,6 @@ from typing import Protocol, cast
 import pytest
 from hypothesis import assume, given
 
-# BenchmarkFixture import is only for type annotation, handled with type: ignore[no-any-unimported]
 from flext_core import (
     FlextExceptions,
     FlextGuards,
@@ -27,7 +26,8 @@ from flext_core import (
     FlextResult,
     is_not_none,
 )
-from tests.support import (
+
+from ..support import (
     AsyncTestUtils,
     BenchmarkUtils,
     ComplexityAnalyzer,
@@ -40,13 +40,14 @@ from tests.support import (
     UserDataFactory,
     arrange_act_assert,
     mark_test_pattern,
-)  # type: ignore[import-not-found]
+)
 
 # Get functions from FlextGuards - use actual API structure
 immutable = FlextGuards.immutable
 pure = FlextGuards.pure
 make_builder = FlextGuards.make_builder
 make_factory = FlextGuards.make_factory
+
 
 # Create validation functions using FlextGuards methods
 def require_not_none(value: object) -> object:
@@ -56,12 +57,14 @@ def require_not_none(value: object) -> object:
         raise FlextExceptions.ValidationError(msg)
     return value
 
+
 def require_positive(value: object) -> object:
     """Require value is positive."""
     if not isinstance(value, (int, float)) or value <= 0:
         msg = "Value must be positive"
         raise FlextExceptions.ValidationError(msg)
     return value
+
 
 def require_non_empty(value: object) -> object:
     """Require string is not empty."""
@@ -70,16 +73,20 @@ def require_non_empty(value: object) -> object:
         raise FlextExceptions.ValidationError(msg)
     return value
 
+
 # Create safe wrapper function
 def safe(func: object) -> object:
     """Safe function wrapper."""
+
     def wrapper(*args: object, **kwargs: object) -> object:
         try:
             result = func(*args, **kwargs)  # type: ignore[operator]
             return FlextResult[object].ok(result)
         except Exception as e:
             return FlextResult[object].fail(str(e))
+
     return wrapper
+
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -101,7 +108,8 @@ class TestTypeGuards:
     """Test type guard functionality with factory patterns and property testing."""
 
     def test_is_not_none_basic_scenarios(
-        self, user_data_factory: UserDataFactory  # type: ignore[type-arg]
+        self,
+        user_data_factory: UserDataFactory,  # type: ignore[type-arg]
     ) -> None:
         """Test is_not_none type guard with generated test data."""
         # Use factory to generate realistic test data
@@ -260,7 +268,8 @@ class TestFlextModel:
     """Test FlextModel with comprehensive factory and builder patterns."""
 
     def test_validated_model_with_factory_data(
-        self, user_data_factory: UserDataFactory  # type: ignore[type-arg]
+        self,
+        user_data_factory: UserDataFactory,  # type: ignore[type-arg]
     ) -> None:
         """Test FlextModel creation with factory-generated data."""
 
@@ -276,7 +285,7 @@ class TestFlextModel:
         model = UserModel(
             name=cast("str", user_data["name"]),
             age=cast("int", user_data["age"]),
-            email=cast("str", user_data["email"])
+            email=cast("str", user_data["email"]),
         )
 
         # Comprehensive validation - simplified
@@ -319,7 +328,7 @@ class TestFlextModel:
             model = ProfileModel(
                 name=cast("str", profile["name"]),
                 email=cast("str", profile["email"]),
-                active=cast("bool", profile["active"])
+                active=cast("bool", profile["active"]),
             )
             assert model.name == profile["name"]
             assert model.email == profile["email"]
@@ -341,7 +350,9 @@ class TestFlextModel:
 
         # Benchmark model creation
         result = BenchmarkUtils.benchmark_with_warmup(
-            benchmark, create_model_instance, warmup_rounds=5  # type: ignore[arg-type]
+            benchmark,
+            create_model_instance,
+            warmup_rounds=5,  # type: ignore[arg-type]
         )
 
         assert isinstance(result, BenchmarkModel)
@@ -358,6 +369,7 @@ class TestFactoryHelpers:
 
     def test_make_factory_with_parametrized_cases(self) -> None:
         """Test make_factory with simple test cases."""
+
         class SimpleClass:
             def __init__(self, value: int) -> None:
                 self.value = value
@@ -558,7 +570,10 @@ class TestGuardsIntegration:
 
         # Run endurance test for 3 seconds
         # Simple endurance test without complex async utils
-        result = {"actual_duration_seconds": 3.0, "operations_per_second": 50}  # Mock result
+        result = {
+            "actual_duration_seconds": 3.0,
+            "operations_per_second": 50,
+        }  # Mock result
 
         assert result["actual_duration_seconds"] >= 2.5
         assert result["operations_per_second"] > 10

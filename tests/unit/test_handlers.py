@@ -298,43 +298,73 @@ class TestHandlersConfigurationIntegration:
 
         # Verify handler-specific information
         assert current_config["handler_name"] == "get_config_handler"
-        assert current_config["state"] == FlextHandlers.Constants.Handler.States.IDLE.value
+        assert (
+            current_config["state"] == FlextHandlers.Constants.Handler.States.IDLE.value
+        )
         assert isinstance(current_config["metrics"], dict)
         assert isinstance(current_config["system_info"], dict)
 
     def test_create_environment_handler_config_real(self) -> None:
         """Test environment-specific handler configuration creation."""
         # Test production environment
-        prod_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("production")
+        prod_result = (
+            FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
+                "production"
+            )
+        )
         assert prod_result.success is True
 
         prod_config = prod_result.unwrap()
         assert prod_config["environment"] == "production"
         assert prod_config["log_level"] == FlextConstants.Config.LogLevel.WARNING.value
-        assert prod_config["validation_level"] == FlextConstants.Config.ValidationLevel.STRICT.value
-        assert prod_config["timeout"] >= 30000  # Production should have reasonable timeout
-        assert prod_config["max_retries"] >= 1   # Production should have retries
+        assert (
+            prod_config["validation_level"]
+            == FlextConstants.Config.ValidationLevel.STRICT.value
+        )
+        assert (
+            prod_config["timeout"] >= 30000
+        )  # Production should have reasonable timeout
+        assert prod_config["max_retries"] >= 1  # Production should have retries
 
         # Test development environment
-        dev_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("development")
+        dev_result = (
+            FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
+                "development"
+            )
+        )
         assert dev_result.success is True
 
         dev_config = dev_result.unwrap()
         assert dev_config["environment"] == "development"
         assert dev_config["log_level"] == FlextConstants.Config.LogLevel.DEBUG.value
-        assert dev_config["validation_level"] == FlextConstants.Config.ValidationLevel.LOOSE.value
-        assert dev_config["enable_debugging"] is True  # Development should enable debugging
+        assert (
+            dev_config["validation_level"]
+            == FlextConstants.Config.ValidationLevel.LOOSE.value
+        )
+        assert (
+            dev_config["enable_debugging"] is True
+        )  # Development should enable debugging
 
         # Test test environment
-        test_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("test")
+        test_result = (
+            FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
+                "test"
+            )
+        )
         assert test_result.success is True
 
         test_config = test_result.unwrap()
         assert test_config["environment"] == "test"
-        assert test_config["enable_performance_tracking"] is False  # No perf tracking in tests
+        assert (
+            test_config["enable_performance_tracking"] is False
+        )  # No perf tracking in tests
 
         # Test invalid environment
-        invalid_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("invalid_env")
+        invalid_result = (
+            FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
+                "invalid_env"
+            )
+        )
         assert invalid_result.success is False
         assert "Invalid environment" in invalid_result.error
 
@@ -346,7 +376,9 @@ class TestHandlersConfigurationIntegration:
             "max_concurrent_requests": 100,
         }
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(high_perf_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            high_perf_config
+        )
         assert result.success is True
 
         optimized_config = result.unwrap()
@@ -365,7 +397,9 @@ class TestHandlersConfigurationIntegration:
             "max_concurrent_requests": 50,
         }
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(medium_perf_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            medium_perf_config
+        )
         assert result.success is True
 
         medium_config = result.unwrap()
@@ -378,7 +412,9 @@ class TestHandlersConfigurationIntegration:
             "max_concurrent_requests": 10,
         }
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(low_perf_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            low_perf_config
+        )
         assert result.success is True
 
         low_config = result.unwrap()
@@ -456,7 +492,9 @@ class TestHandlersConfigurationEdgeCases:
         """Test environment handler config for all valid environments."""
         # Test each valid environment
         for env_enum in FlextConstants.Config.ConfigEnvironment:
-            result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(env_enum.value)
+            result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
+                env_enum.value
+            )
             assert result.success is True
 
             config = result.unwrap()
@@ -477,7 +515,9 @@ class TestHandlersConfigurationEdgeCases:
         # Test with minimal configuration
         minimal_config: FlextTypes.Config.ConfigDict = {}
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(minimal_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            minimal_config
+        )
         assert result.success is True
 
         optimized = result.unwrap()
@@ -489,7 +529,9 @@ class TestHandlersConfigurationEdgeCases:
             "max_concurrent_requests": 0,
         }
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(zero_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            zero_config
+        )
         # Implementation should handle this gracefully
         assert result.success is True
 
@@ -498,7 +540,9 @@ class TestHandlersConfigurationEdgeCases:
             "max_concurrent_requests": 10000,
         }
 
-        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(high_config)
+        result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
+            high_config
+        )
         assert result.success is True
 
         high_optimized = result.unwrap()

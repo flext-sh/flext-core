@@ -28,9 +28,9 @@ from dataclasses import dataclass
 from typing import cast
 
 from flext_core import (
-    FlextEntity,
     FlextHandlers,
     FlextLogger,
+    FlextModels,
     FlextResult,
 )
 
@@ -70,7 +70,7 @@ class Order:
     status: str = "pending"
 
 
-class UserEntity(FlextEntity):
+class UserEntity(FlextModels.Entity):
     """User entity with domain behavior."""
 
     name: str
@@ -86,6 +86,10 @@ class UserEntity(FlextEntity):
         if "@" not in self.email:
             return FlextResult[None].fail("Invalid email format")
         return FlextResult[None].ok(None)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules (required by FlextModels.Entity)."""
+        return self.validate_domain_rules()
 
     def activate(self) -> FlextResult["UserEntity"]:
         """Activate user."""
@@ -843,7 +847,7 @@ def demonstrate_event_handlers() -> None:
         timestamp=time.time(),
     )
 
-    result = user_updated_handler.handle(user_updated_event)  # type: ignore[attr-defined]
+    result = user_updated_handler.handle(user_updated_event)
     if result.success:
         pass
 
@@ -857,7 +861,7 @@ def demonstrate_event_handlers() -> None:
         timestamp=time.time(),
     )
 
-    result = order_created_handler.handle(order_created_event)  # type: ignore[attr-defined]
+    result = order_created_handler.handle(order_created_event)
     if result.success:
         pass
 

@@ -32,8 +32,8 @@ this repository today.
 ### Level 4: Domain Model Layer
 
 - `models.py` — Shared model primitives
-- `entities.py` — FlextEntity
-- `value_objects.py` — FlextValue
+- `entities.py` — FlextModels.Entity
+- `value_objects.py` — FlextModels.Value
 - `aggregate_root.py` — FlextAggregates
 - `domain_services.py` — Domain service patterns
 

@@ -29,18 +29,16 @@ from flext_core import (
     FlextCommands,
     FlextModels,
     FlextResult,
+    FlextTypes,
 )
 
-# Import comprehensive tests/support/ utilities
-from ..support import (
+# Use centralized tests.support module for optimized fixture usage
+from tests.support import (
     AsyncTestUtils,
+    BenchmarkProtocol,
     FlextMatchers,
     MemoryProfiler,
-    ServiceDataFactory,
-    TestBuilders,
-    UserDataFactory,
 )
-from ..support.builders import build_test_container
 
 
 # Test scenario enumeration for testing patterns
@@ -560,14 +558,14 @@ class TestFlextCommandsImmutability:
             match=r".*frozen.*|.*immutable.*|.*read.*only.*|.*cannot.*assign.*|.*dataclass.*frozen.*",
         ):
             # This should fail because SampleCommand inherits from frozen Command model
-            setattr(command, "name", "changed")
+            command.name = "changed"
 
         with pytest.raises(
             (ValidationError, AttributeError, TypeError),
             match=r".*frozen.*|.*immutable.*|.*read.*only.*|.*cannot.*assign.*|.*dataclass.*frozen.*",
         ):
             # This should fail because SampleCommand inherits from frozen Command model
-            setattr(command, "value", 100)
+            command.value = 100
 
 
 class TestFlextCommandsWithoutValidation:
@@ -735,15 +733,17 @@ class TestFlextCommandsEnhanced:
     - Async testing and concurrency scenarios
     """
 
-    def test_command_creation_with_user_factory(self) -> None:
-        """Test command creation using UserDataFactory for realistic data."""
-        # Use factory for realistic user data
-        user_data = UserDataFactory.create(name="John Smith", email="john@example.com")
+    def test_command_creation_with_user_factory(self, user_factory) -> None:
+        """Test command creation using user_factory fixture for realistic data."""
+        # Use factory fixture for realistic user data
+        user_data = user_factory.create(name="John Smith", email="john@example.com")
 
-        # Create command with realistic data - ensure type safety
-        user_name = user_data.get("name", "default_name")
-        if not isinstance(user_name, str):
-            user_name = str(user_name)
+        # Create command with realistic data - handle both dict and model types
+        user_name = (
+            user_data.name
+            if hasattr(user_data, "name")
+            else user_data.get("name", "John Smith")
+        )
         command = SampleCommand(name=user_name, value=42)
 
         # Use FlextMatchers for sophisticated assertions
@@ -788,23 +788,28 @@ class TestFlextCommandsEnhanced:
             result = command.validate_command()
             FlextMatchers.assert_result_failure(result)
 
-    def test_command_performance_benchmarking(self, benchmark: object) -> None:
+    def test_command_performance_benchmarking(
+        self, benchmark: object, user_factory
+    ) -> None:
         """Test command creation performance using pytest-benchmark."""
 
         def create_multiple_commands() -> list[SampleCommand]:
             commands = []
             for i in range(100):
-                user_data = UserDataFactory.create(name=f"User {i}")
-                user_name = user_data.get("name", f"User {i}")
-                if not isinstance(user_name, str):
-                    user_name = str(user_name)
+                user_data = user_factory.create(name=f"User {i}")
+                # Handle both dict and Pydantic model response
+                if hasattr(user_data, "name"):
+                    user_name = user_data.name  # Pydantic model
+                else:
+                    user_name = user_data.get("name", f"User {i}")  # Dict
                 command = SampleCommand(name=user_name, value=i)
                 commands.append(command)
             return commands
 
-        # Benchmark command creation
+        # Benchmark command creation - cast benchmark to compatible protocol
+        benchmark_typed = cast("BenchmarkProtocol", benchmark)
         result = FlextMatchers.assert_performance_within_limit(
-            benchmark, create_multiple_commands, max_time_seconds=0.1
+            benchmark_typed, create_multiple_commands, max_time_seconds=0.1
         )
 
         # Validate results - ensure result is a list
@@ -817,21 +822,26 @@ class TestFlextCommandsEnhanced:
         else:
             pytest.fail("Expected list result from benchmark")
 
-    def test_command_memory_efficiency(self) -> None:
+    def test_command_memory_efficiency(self, service_factory) -> None:
         """Test command memory usage with MemoryProfiler."""
         with MemoryProfiler.track_memory_leaks(max_increase_mb=5.0):
             # Create commands and clean up periodically to test memory management
             commands = []
             for i in range(500):  # Reduced number to be more realistic
-                service_data = ServiceDataFactory.create(name=f"service_{i}")
-                service_name = service_data.get("name", f"service_{i}")
-                service_port = service_data.get("port", i)
-                if not isinstance(service_name, str):
-                    service_name = str(service_name)
-                if not isinstance(service_port, int):
+                service_data = service_factory.create(name=f"service_{i}")
+                # Extract service data directly - handle both dict and model types
+                if hasattr(service_data, "name"):
+                    service_name = service_data.name  # Pydantic model
                     service_port = (
-                        int(service_port) if str(service_port).isdigit() else i
+                        service_data.port if hasattr(service_data, "port") else i
                     )
+                else:
+                    service_name = service_data.get("name", f"service_{i}")  # Dict
+                    service_port = service_data.get("port", i)  # Dict
+
+                # Ensure service_port is an integer for SampleCommand
+                if not isinstance(service_port, int):
+                    service_port = i
                 command = SampleCommand(name=service_name, value=service_port)
                 commands.append(command)
 
@@ -882,13 +892,13 @@ class TestFlextCommandsEnhanced:
         assert results[2]["processed"] is False
         assert "error" in results[2]
 
-    def test_command_builder_pattern(self) -> None:
-        """Test command creation using TestBuilders pattern."""
-        # Use TestBuilders for sophisticated test setup
-        container = TestBuilders.container().build()
+    def test_command_builder_pattern(self, user_factory, test_builders) -> None:
+        """Test command creation using TestBuilders fixture."""
+        # Use TestBuilders fixture for sophisticated test setup
+        container = test_builders.container().build()
 
-        # Register command-related services
-        user_service = UserDataFactory.create()
+        # Register command-related services using fixtures
+        user_service = user_factory.create()
         validation_service = {"strict_mode": True, "max_errors": 5}
 
         container.register("user_service", user_service)
@@ -913,8 +923,12 @@ class TestFlextCommandsEnhanced:
         test_command = SampleCommand(name="Service Test", value=50)
         result = process_with_services(test_command)
 
+        # Type-safe conversion for FlextMatchers compatibility
+        result_json: FlextTypes.Core.JsonObject = cast(
+            "FlextTypes.Core.JsonObject", {str(k): v for k, v in result.items()}
+        )
         FlextMatchers.assert_json_structure(
-            result,
+            result_json,
             [
                 "command_processed",
                 "user_service_available",
@@ -968,23 +982,33 @@ class TestFlextCommandsEnhanced:
         for i, (name, _) in enumerate(command_data):
             result_item = results[i]
             if isinstance(result_item, dict) and "command" in result_item:
-                command = result_item["command"]
-                if hasattr(command, "validate_command"):
+                command_obj = result_item["command"]
+                if isinstance(command_obj, SampleCommand) and hasattr(
+                    command_obj, "validate_command"
+                ):
                     if name.strip():  # Non-empty name
-                        FlextMatchers.assert_result_success(command.validate_command())
+                        FlextMatchers.assert_result_success(
+                            command_obj.validate_command()
+                        )
                     else:  # Empty name should fail
-                        FlextMatchers.assert_result_failure(command.validate_command())
+                        FlextMatchers.assert_result_failure(
+                            command_obj.validate_command()
+                        )
 
-    def test_real_world_cqrs_scenario(self) -> None:
+    def test_real_world_cqrs_scenario(self, service_factory, test_builders) -> None:
         """Test realistic CQRS scenario with microservice dependencies."""
-        # Setup realistic microservice container
-        container = build_test_container()
+        # Use test_builders fixture for CQRS setup
+        container = test_builders.container().build()
 
-        # Add command-specific services
-        command_bus_config = ServiceDataFactory.create(
+        # Add command-specific services using fixture
+        command_bus_config = service_factory.create(
             name="command_bus", port=8080, version="1.0.0"
         )
+        database_config = service_factory.create(
+            name="test_db", port=5432, version="2.0.0"
+        )
         container.register("command_bus", command_bus_config)
+        container.register("database", database_config)
 
         # Simulate CQRS command processing pipeline
         def cqrs_pipeline(command: SampleCommand) -> dict[str, object]:

@@ -9,11 +9,11 @@ Module Organization:
     Release Information: RELEASE_NAME, RELEASE_DATE, BUILD_TYPE
     Compatibility: MIN_PYTHON_VERSION, MAX_PYTHON_VERSION
     Feature Tracking: AVAILABLE_FEATURES dictionary with feature flags
-    Manager Classes: FlextVersionManager with nested utilities
+    Manager Classes: FlextModels.VersionManager with nested utilities
     Utility Functions: Version comparison, validation, compatibility checking
 
 Classes:
-    FlextVersionManager: Consolidated version management functionality
+    FlextModels.VersionManager: Consolidated version management functionality
         └── VersionInfo(NamedTuple): Structured version information
             • major: int - Major version number
             • minor: int - Minor version number
@@ -32,7 +32,7 @@ Functions:
     get_version_tuple() -> tuple[int, int, int]
         Get semantic version as tuple for programmatic comparison
 
-    get_version_info() -> FlextVersionManager.VersionInfo
+    get_version_info() -> FlextModels.VersionManager.VersionInfo
         Get comprehensive version information with metadata
 
     get_version_string() -> str

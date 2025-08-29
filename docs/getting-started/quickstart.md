@@ -128,11 +128,11 @@ if settings.debug:
 Build rich domain models with business logic:
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 from decimal import Decimal
 
 # Value Object - Immutable, no identity
-class Money(FlextValue):
+class Money(FlextModels.Value):
     amount: Decimal
     currency: str
 
@@ -145,7 +145,7 @@ class Money(FlextValue):
         ))
 
 # Entity - Has identity, mutable
-class Product(FlextEntity):
+class Product(FlextModels.Entity):
     name: str
     price: Money
     stock: int
@@ -225,7 +225,7 @@ Here's a real-world example combining all patterns:
 from flext_core import (
     FlextResult,
     get_flext_container,
-    FlextEntity,
+    FlextModels.Entity,
     FlextConfig
 )
 import hashlib
@@ -242,7 +242,7 @@ class AppConfig(FlextConfig):
         env_prefix = "USER_SYSTEM_"
 
 # Domain Model
-class User(FlextEntity):
+class User(FlextModels.Entity):
     username: str
     email: str
     password_hash: str

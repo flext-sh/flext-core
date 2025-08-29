@@ -1,4 +1,3 @@
-# ruff: noqa: ARG001, ARG002, PLR0904, PLR0913
 """Comprehensive tests for FlextResult with 100% coverage using advanced pytest features.
 
 Tests all FlextResult functionality including:
@@ -19,17 +18,14 @@ from typing import cast
 
 import pytest
 from hypothesis import given, strategies as st
+from pytest_mock import MockerFixture
 
-from flext_core import FlextResult
-
-from ..support import (
-    AsyncTestUtils,
-    FlextMatchers,
-    FlextResultFactory,
-    MemoryProfiler,
-    TestBuilders,
-    UserDataFactory,
-)
+from flext_core import FlextResult, FlextTypes
+from tests.support.asyncs import AsyncTestUtils
+from tests.support.builders import TestBuilders
+from tests.support.factories import FlextResultFactory
+from tests.support.matchers import FlextMatchers
+from tests.support.performance import BenchmarkProtocol, MemoryProfiler
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -40,9 +36,14 @@ class TestFlextResultFactoryMethods:
 
     def test_ok_factory_method(self) -> None:
         """Test FlextResult.ok creates successful result using FlextMatchers."""
-        # Using TestBuilders for consistent test data
-        test_data = UserDataFactory.create(name="John Doe", email="john@example.com")
-        result = FlextResult[dict].ok(test_data)
+        # Using test data for FlextResult validation
+        test_data: FlextTypes.Core.JsonObject = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "is_active": True,
+        }
+        result = FlextResult[FlextTypes.Core.JsonObject].ok(test_data)
 
         # Using FlextMatchers for assertions
         FlextMatchers.assert_result_success(result, expected_data=test_data)
@@ -70,7 +71,9 @@ class TestFlextResultFactoryMethods:
         )
 
         # Test value access raises exception
-        with pytest.raises(TypeError, match="Attempted to access value on failed result"):
+        with pytest.raises(
+            TypeError, match="Attempted to access value on failed result"
+        ):
             _ = result.value
 
     def test_fail_with_error_code_and_data(self) -> None:
@@ -116,7 +119,8 @@ class TestFlextResultFactoryMethods:
 
         result = FlextResult.from_exception(failing_function)
         assert result.is_failure
-        assert result.error is not None and "test error" in result.error
+        assert result.error is not None
+        assert "test error" in result.error
 
     def test_safe_call_success(self) -> None:
         """Test safe_call with successful function."""
@@ -137,7 +141,8 @@ class TestFlextResultFactoryMethods:
 
         result = FlextResult.safe_call(unsafe_func)
         assert result.is_failure
-        assert result.error is not None and "runtime error" in result.error
+        assert result.error is not None
+        assert "runtime error" in result.error
 
 
 class TestFlextResultProperties:
@@ -201,7 +206,7 @@ class TestFlextResultRailwayOperations:
     def test_flat_map_failure_in_chain(self) -> None:
         """Test flat_map propagates failures in chain."""
 
-        def failing_operation(x: int) -> FlextResult[int]:
+        def failing_operation(_: int) -> FlextResult[int]:
             return FlextResult[int].fail("chain error")
 
         result = FlextResult[int].ok(5)
@@ -314,7 +319,7 @@ class TestFlextResultAdvancedOperations:
         chained = FlextResult.chain_results(
             cast("FlextResult[object]", result1),
             cast("FlextResult[object]", result2),
-            cast("FlextResult[object]", result3)
+            cast("FlextResult[object]", result3),
         )
 
         assert chained.is_success
@@ -336,7 +341,7 @@ class TestFlextResultAdvancedOperations:
         collected = FlextResult.combine(
             cast("FlextResult[object]", result1),
             cast("FlextResult[object]", result2),
-            cast("FlextResult[object]", result3)
+            cast("FlextResult[object]", result3),
         )
         assert collected.is_success
         assert collected.value == [1, 2, 3]
@@ -350,10 +355,11 @@ class TestFlextResultAdvancedOperations:
         collected = FlextResult.combine(
             cast("FlextResult[object]", result1),
             cast("FlextResult[object]", result2),
-            cast("FlextResult[object]", result3)
+            cast("FlextResult[object]", result3),
         )
         assert collected.is_failure
-        assert collected.error is not None and "error" in collected.error
+        assert collected.error is not None
+        assert "error" in collected.error
 
     def test_combine_empty_varargs(self) -> None:
         """Test combine with no arguments returns empty success."""
@@ -370,7 +376,7 @@ class TestFlextResultAdvancedOperations:
         chained = FlextResult.chain_results(
             cast("FlextResult[object]", result1),
             cast("FlextResult[object]", result2),
-            cast("FlextResult[object]", result3)
+            cast("FlextResult[object]", result3),
         )
 
         assert chained.is_failure
@@ -407,8 +413,7 @@ class TestFlextResultAdvancedOperations:
         result2 = FlextResult[int].ok(42)
 
         chained = FlextResult.chain_results(
-            cast("FlextResult[object]", result1),
-            cast("FlextResult[object]", result2)
+            cast("FlextResult[object]", result1), cast("FlextResult[object]", result2)
         )
 
         assert chained.is_failure
@@ -418,7 +423,9 @@ class TestFlextResultAdvancedOperations:
     def test_chain_results_hypothesis(self, values: list[int]) -> None:
         """Property-based test for chain_results."""
         results = [FlextResult[int].ok(v) for v in values]
-        chained = FlextResult.chain_results(*[cast("FlextResult[object]", r) for r in results])
+        chained = FlextResult.chain_results(
+            *[cast("FlextResult[object]", r) for r in results]
+        )
 
         assert chained.is_success
         assert chained.value == values
@@ -515,20 +522,21 @@ class TestFlextResultRecoveryOperations:
         """Test recover handles exceptions in recovery function."""
         result = FlextResult[int].fail("error")
 
-        def failing_recovery(error: str) -> int:
+        def failing_recovery(_: str) -> int:
             msg = "Recovery failed"
             raise ValueError(msg)
 
         recovered = result.recover(failing_recovery)
 
         assert recovered.is_failure
-        assert recovered.error is not None and "Recovery failed" in recovered.error
+        assert recovered.error is not None
+        assert "Recovery failed" in recovered.error
 
     def test_recover_with_success_flow(self) -> None:
         """Test recover_with with successful recovery result."""
         result = FlextResult[int].fail("database error")
 
-        def recovery_with_result(error: str) -> FlextResult[int]:
+        def recovery_with_result(_: str) -> FlextResult[int]:
             return FlextResult[int].ok(100)  # Recovery value
 
         recovered = result.recover_with(recovery_with_result)
@@ -540,7 +548,7 @@ class TestFlextResultRecoveryOperations:
         """Test recover_with with failing recovery result."""
         result = FlextResult[int].fail("original error")
 
-        def failing_recovery(error: str) -> FlextResult[int]:
+        def failing_recovery(_: str) -> FlextResult[int]:
             return FlextResult[int].fail("recovery also failed")
 
         recovered = result.recover_with(failing_recovery)
@@ -552,14 +560,15 @@ class TestFlextResultRecoveryOperations:
         """Test recover_with handles exceptions in recovery function."""
         result = FlextResult[int].fail("error")
 
-        def failing_recovery_with_exception(error: str) -> FlextResult[int]:
+        def failing_recovery_with_exception(_: str) -> FlextResult[int]:
             msg = "Recovery function crashed"
             raise TypeError(msg)
 
         recovered = result.recover_with(failing_recovery_with_exception)
 
         assert recovered.is_failure
-        assert recovered.error is not None and "Recovery function crashed" in recovered.error
+        assert recovered.error is not None
+        assert "Recovery function crashed" in recovered.error
 
 
 class TestFlextResultSideEffectOperations:
@@ -597,7 +606,7 @@ class TestFlextResultSideEffectOperations:
         """Test tap suppresses exceptions in side effect function."""
         result = FlextResult[str].ok("test")
 
-        def failing_side_effect(data: str) -> None:
+        def failing_side_effect(_: str) -> None:
             msg = "Side effect failed"
             raise ValueError(msg)
 
@@ -639,7 +648,7 @@ class TestFlextResultSideEffectOperations:
         """Test tap_error suppresses specific exceptions in error handler."""
         result = FlextResult[str].fail("error")
 
-        def failing_error_handler_with_type_error(error: str) -> None:
+        def failing_error_handler_with_type_error(_: str) -> None:
             msg = "Error handler failed"
             raise TypeError(msg)
 
@@ -653,7 +662,7 @@ class TestFlextResultSideEffectOperations:
         """Test tap_error allows RuntimeError to propagate (not in suppress list)."""
         result = FlextResult[str].fail("error")
 
-        def failing_error_handler_with_runtime_error(error: str) -> None:
+        def failing_error_handler_with_runtime_error(_: str) -> None:
             msg = "Error handler failed"
             raise RuntimeError(msg)
 
@@ -702,14 +711,15 @@ class TestFlextResultFilterOperations:
         """Test filter handles exceptions in predicate function."""
         result = FlextResult[str].ok("test")
 
-        def failing_predicate(x: str) -> bool:
+        def failing_predicate(_: str) -> bool:
             msg = "Predicate failed"
             raise ValueError(msg)
 
         filtered = result.filter(failing_predicate, "filter error")
 
         assert filtered.is_failure
-        assert filtered.error is not None and "Predicate failed" in filtered.error
+        assert filtered.error is not None
+        assert "Predicate failed" in filtered.error
 
 
 class TestFlextResultCombinationOperations:
@@ -754,7 +764,8 @@ class TestFlextResultCombinationOperations:
         combined = result1.zip_with(result2, lambda x, y: (x, y))
 
         assert combined.is_failure
-        assert combined.error is not None and "Missing data for zip operation" in combined.error
+        assert combined.error is not None
+        assert "Missing data for zip operation" in combined.error
 
     def test_zip_with_function_exception(self) -> None:
         """Test zip_with handles exceptions in combination function."""
@@ -767,7 +778,8 @@ class TestFlextResultCombinationOperations:
         combined = result1.zip_with(result2, failing_function)
 
         assert combined.is_failure
-        assert combined.error is not None and (
+        assert combined.error is not None
+        assert (
             "ZeroDivisionError" in combined.error
             or "division by zero" in combined.error
         )
@@ -876,11 +888,14 @@ class TestFlextResultEdgeCases:
             "metadata": {"total": 2, "page": 1},
         }
 
-        result = FlextResult[dict[str, object]].ok(complex_data)
+        result = FlextResult[FlextTypes.Core.JsonObject].ok(
+            cast("FlextTypes.Core.JsonObject", complex_data)
+        )
 
         assert result.is_success
         assert result.value == complex_data
-        assert isinstance(result.value["users"], list)
+        users = result.value.get("users")
+        assert isinstance(users, list)
 
 
 class TestFlextResultTypeNarrowing:
@@ -1024,7 +1039,7 @@ class TestFlextResultRailwayOrientedComposition:
         def step_1(x: int) -> FlextResult[int]:
             return FlextResult[int].ok(x + 1)
 
-        def step_2(x: int) -> FlextResult[int]:
+        def step_2(_: int) -> FlextResult[int]:
             return FlextResult[int].fail("Step 2 failed")  # Always fails
 
         def step_3(x: int) -> FlextResult[int]:
@@ -1046,10 +1061,10 @@ class TestFlextResultRailwayOrientedComposition:
 class TestFlextResultAdvancedFeatures:
     """Advanced FlextResult tests using all tests/support/ capabilities."""
 
-    def test_performance_benchmarking(self, benchmark) -> None:
+    def test_performance_benchmarking(self, benchmark: BenchmarkProtocol) -> None:
         """Test FlextResult performance using pytest-benchmark."""
 
-        def create_and_chain_results():
+        def create_and_chain_results() -> int:
             return (
                 FlextResult[int]
                 .ok(42)
@@ -1110,7 +1125,7 @@ class TestFlextResultAdvancedFeatures:
         for i, result in enumerate(results):
             FlextMatchers.assert_result_success(result, expected_data=i * 2)
 
-    def test_builder_pattern_integration(self, mocker) -> None:
+    def test_builder_pattern_integration(self, mocker: MockerFixture) -> None:
         """Test FlextResult with TestBuilders integration."""
         # Build complex test scenario
         container = TestBuilders.container().with_database_service().build()
@@ -1148,28 +1163,40 @@ class TestFlextResultAdvancedFeatures:
     def test_real_world_user_workflow(self) -> None:
         """Test real-world user processing workflow."""
         # Create realistic user data
-        user_data = UserDataFactory.create(
-            name="Alice Johnson", email="alice.johnson@company.com", age=28
-        )
+        user_data: FlextTypes.Core.JsonObject = {
+            "name": "Alice Johnson",
+            "email": "alice.johnson@company.com",
+            "age": 28,
+        }
 
-        def validate_user(data: dict) -> FlextResult[dict]:
+        def validate_user(
+            data: FlextTypes.Core.JsonObject,
+        ) -> FlextResult[FlextTypes.Core.JsonObject]:
             """Realistic user validation."""
             if not data.get("email"):
-                return cast("FlextResult[dict]", FlextResultFactory.validation_error("email", None))
-            if data.get("age", 0) < 18:
-                return cast("FlextResult[dict]", FlextResultFactory.validation_error("age", data.get("age")))
-            return FlextResult[dict].ok(data)
+                return FlextResult[FlextTypes.Core.JsonObject].fail(
+                    "Email is required", error_code="VALIDATION_ERROR"
+                )
+            age = data.get("age")
+            if isinstance(age, int) and age < 18:
+                return FlextResult[FlextTypes.Core.JsonObject].fail(
+                    "Age must be 18 or older", error_code="VALIDATION_ERROR"
+                )
+            return FlextResult[FlextTypes.Core.JsonObject].ok(data)
 
-        def enrich_user(data: dict) -> FlextResult[dict]:
+        def enrich_user(
+            data: FlextTypes.Core.JsonObject,
+        ) -> FlextResult[FlextTypes.Core.JsonObject]:
             """Add computed fields."""
             enriched = data.copy()
             enriched["display_name"] = f"{data['name']} <{data['email']}>"
-            enriched["is_adult"] = data["age"] >= 18
-            return FlextResult[dict].ok(enriched)
+            age = data["age"]
+            enriched["is_adult"] = isinstance(age, int) and age >= 18
+            return FlextResult[FlextTypes.Core.JsonObject].ok(enriched)
 
         # Process user through pipeline
         result = (
-            FlextResult[dict]
+            FlextResult[FlextTypes.Core.JsonObject]
             .ok(user_data)
             .flat_map(validate_user)
             .flat_map(enrich_user)
@@ -1197,9 +1224,9 @@ class TestFlextResultAdvancedFeatures:
 
         def risky_operation(value: int) -> FlextResult[str]:
             if value < 0:
-                return cast("FlextResult[str]", FlextResultFactory.create_failure(
-                    "Negative values not allowed", "VALIDATION_ERROR"
-                ))
+                return FlextResult[str].fail(
+                    "Negative values not allowed", error_code="VALIDATION_ERROR"
+                )
             return FlextResult[str].ok(f"processed_{value}")
 
         def fallback_operation(error: str) -> FlextResult[str]:
@@ -1229,17 +1256,27 @@ class TestFlextResultAdvancedFeatures:
             {"id": i, "amount": i * 10.0, "status": "pending"} for i in range(1, 6)
         ]
 
-        def process_orders(orders_data: list[dict]) -> FlextResult[dict]:
-            total_amount = sum(order["amount"] for order in orders_data)
+        def process_orders(
+            orders_data: list[FlextTypes.Core.JsonObject],
+        ) -> FlextResult[FlextTypes.Core.JsonObject]:
+            total_amount = 0.0
+            for order in orders_data:
+                amount = order.get("amount")
+                if isinstance(amount, (int, float)):
+                    total_amount += float(amount)
             processed = {
                 "order_count": len(orders_data),
                 "total_amount": total_amount,
                 "average_order": total_amount / len(orders_data),
                 "summary": f"{len(orders_data)} orders worth ${total_amount}",
             }
-            return FlextResult[dict].ok(processed)
+            return FlextResult[FlextTypes.Core.JsonObject].ok(processed)
 
-        result = FlextResult[list].ok(orders).flat_map(process_orders)
+        result = (
+            FlextResult[list[FlextTypes.Core.JsonObject]]
+            .ok(orders)
+            .flat_map(process_orders)
+        )
 
         FlextMatchers.assert_result_success(result)
         summary = result.value
@@ -1247,3 +1284,597 @@ class TestFlextResultAdvancedFeatures:
         assert summary["order_count"] == 5
         assert summary["total_amount"] == 150.0  # 10+20+30+40+50
         assert summary["average_order"] == 30.0
+
+
+class TestFlextResultUtilityMethods:
+    """Test FlextResult utility class methods for 100% coverage."""
+
+    def test_safe_unwrap_or_none_success(self) -> None:
+        """Test safe_unwrap_or_none returns value for success."""
+        result = FlextResult[str].ok("success_value")
+        value = FlextResult.safe_unwrap_or_none(result)
+        assert value == "success_value"
+
+    def test_safe_unwrap_or_none_failure(self) -> None:
+        """Test safe_unwrap_or_none returns None for failure."""
+        result = FlextResult[str].fail("error")
+        value = FlextResult.safe_unwrap_or_none(result)
+        assert value is None
+
+    def test_unwrap_or_raise_success(self) -> None:
+        """Test unwrap_or_raise returns value for success."""
+        result = FlextResult[int].ok(42)
+        value = FlextResult.unwrap_or_raise(result)
+        assert value == 42
+
+    def test_unwrap_or_raise_failure_default_exception(self) -> None:
+        """Test unwrap_or_raise raises RuntimeError by default."""
+        result = FlextResult[int].fail("operation failed")
+        with pytest.raises(RuntimeError, match="operation failed"):
+            FlextResult.unwrap_or_raise(result)
+
+    def test_unwrap_or_raise_failure_custom_exception(self) -> None:
+        """Test unwrap_or_raise raises custom exception type."""
+        result = FlextResult[int].fail("validation error")
+        with pytest.raises(ValueError, match="validation error"):
+            FlextResult.unwrap_or_raise(result, ValueError)
+
+    def test_unwrap_or_raise_failure_no_error_message(self) -> None:
+        """Test unwrap_or_raise with empty error message."""
+        result = FlextResult[int].fail("")
+        with pytest.raises(RuntimeError, match="Unknown error occurred|Operation failed"):
+            FlextResult.unwrap_or_raise(result)
+
+    def test_collect_successes_all_successful(self) -> None:
+        """Test collect_successes with all successful results."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
+        ]
+        successes = FlextResult.collect_successes(results)
+        assert successes == [1, 2, 3]
+
+    def test_collect_successes_mixed_results(self) -> None:
+        """Test collect_successes with mixed success/failure results."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("error1"),
+            FlextResult[int].ok(3),
+            FlextResult[int].fail("error2"),
+        ]
+        successes = FlextResult.collect_successes(results)
+        assert successes == [1, 3]
+
+    def test_collect_successes_empty_list(self) -> None:
+        """Test collect_successes with empty list."""
+        results: list[FlextResult[int]] = []
+        successes = FlextResult.collect_successes(results)
+        assert successes == []
+
+    def test_collect_failures_all_failures(self) -> None:
+        """Test collect_failures with all failed results."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].fail("error2"),
+            FlextResult[int].fail("error3"),
+        ]
+        failures = FlextResult.collect_failures(results)
+        assert failures == ["error1", "error2", "error3"]
+
+    def test_collect_failures_mixed_results(self) -> None:
+        """Test collect_failures with mixed success/failure results."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("error1"),
+            FlextResult[int].ok(3),
+            FlextResult[int].fail("error2"),
+        ]
+        failures = FlextResult.collect_failures(results)
+        assert failures == ["error1", "error2"]
+
+    def test_collect_failures_empty_list(self) -> None:
+        """Test collect_failures with empty list."""
+        results: list[FlextResult[int]] = []
+        failures = FlextResult.collect_failures(results)
+        assert failures == []
+
+    def test_success_rate_all_successful(self) -> None:
+        """Test success_rate with 100% success."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
+        ]
+        rate = FlextResult.success_rate(results)
+        assert rate == 100.0
+
+    def test_success_rate_all_failures(self) -> None:
+        """Test success_rate with 0% success."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].fail("error2"),
+        ]
+        rate = FlextResult.success_rate(results)
+        assert rate == 0.0
+
+    def test_success_rate_mixed_results(self) -> None:
+        """Test success_rate with mixed results."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("error1"),
+            FlextResult[int].ok(3),
+            FlextResult[int].fail("error2"),
+        ]
+        rate = FlextResult.success_rate(results)
+        assert rate == 50.0
+
+    def test_success_rate_empty_list(self) -> None:
+        """Test success_rate with empty list returns 0."""
+        results: list[FlextResult[int]] = []
+        rate = FlextResult.success_rate(results)
+        assert rate == 0.0
+
+    def test_batch_process_all_successful(self) -> None:
+        """Test batch_process with all successful operations."""
+        items = [1, 2, 3, 4]
+
+        def double_value(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x * 2)
+
+        successes, failures = FlextResult.batch_process(items, double_value)
+        assert successes == [2, 4, 6, 8]
+        assert failures == []
+
+    def test_batch_process_with_failures(self) -> None:
+        """Test batch_process with some failures."""
+        items = [1, 2, 3, 4]
+
+        def process_even_only(x: int) -> FlextResult[int]:
+            if x % 2 == 0:
+                return FlextResult[int].ok(x * 10)
+            return FlextResult[int].fail(f"Odd number {x} not allowed")
+
+        successes, failures = FlextResult.batch_process(items, process_even_only)
+        assert successes == [20, 40]  # 2*10=20, 4*10=40
+        assert failures == ["Odd number 1 not allowed", "Odd number 3 not allowed"]
+
+    def test_batch_process_empty_list(self) -> None:
+        """Test batch_process with empty input."""
+        items: list[int] = []
+
+        def identity(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x)
+
+        successes, failures = FlextResult.batch_process(items, identity)
+        assert successes == []
+        assert failures == []
+
+
+class TestFlextResultCollectionOperations:
+    """Test FlextResult collection operations and advanced methods."""
+
+    def test_all_success_all_successful(self) -> None:
+        """Test all_success returns True when all results are successful."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].ok(2),
+            FlextResult[int].ok(3),
+        ]
+        assert FlextResult.all_success(*results) is True
+
+    def test_all_success_with_failure(self) -> None:
+        """Test all_success returns False when any result fails."""
+        results = [
+            FlextResult[int].ok(1),
+            FlextResult[int].fail("error"),
+            FlextResult[int].ok(3),
+        ]
+        assert FlextResult.all_success(*results) is False
+
+    def test_all_success_empty(self) -> None:
+        """Test all_success returns True for empty list."""
+        assert FlextResult.all_success() is True
+
+    def test_any_success_with_successes(self) -> None:
+        """Test any_success returns True when any result is successful."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].ok(2),
+            FlextResult[int].fail("error2"),
+        ]
+        assert FlextResult.any_success(*results) is True
+
+    def test_any_success_all_failures(self) -> None:
+        """Test any_success returns False when all results fail."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].fail("error2"),
+        ]
+        assert FlextResult.any_success(*results) is False
+
+    def test_any_success_empty(self) -> None:
+        """Test any_success returns False for empty list."""
+        assert FlextResult.any_success() is False
+
+    def test_first_success_with_successes(self) -> None:
+        """Test first_success returns first successful result."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].ok(42),
+            FlextResult[int].ok(100),
+        ]
+        first = FlextResult.first_success(*results)
+        assert first.is_success
+        assert first.value == 42
+
+    def test_first_success_all_failures(self) -> None:
+        """Test first_success returns failure when no successes."""
+        results = [
+            FlextResult[int].fail("error1"),
+            FlextResult[int].fail("error2"),
+        ]
+        first = FlextResult.first_success(*results)
+        assert first.is_failure
+        assert first.error is not None  # Just ensure error exists
+
+    def test_first_success_empty(self) -> None:
+        """Test first_success with empty list."""
+        first = FlextResult[int].first_success()
+        assert first.is_failure
+
+    def test_try_all_first_succeeds(self) -> None:
+        """Test try_all returns result from first successful function."""
+
+        def failing_func1() -> int:
+            raise ValueError("First function failed")
+
+        def succeeding_func() -> int:
+            return 42
+
+        def failing_func2() -> int:
+            raise RuntimeError("Should not reach here")
+
+        result = FlextResult.try_all(failing_func1, succeeding_func, failing_func2)
+        assert result.is_success
+        assert result.value == 42
+
+    def test_try_all_all_fail(self) -> None:
+        """Test try_all returns failure when all functions fail."""
+
+        def failing_func1() -> int:
+            raise ValueError("First failed")
+
+        def failing_func2() -> int:
+            raise RuntimeError("Second failed")
+
+        result = FlextResult.try_all(failing_func1, failing_func2)
+        assert result.is_failure
+        assert result.error is not None
+
+    def test_try_all_empty(self) -> None:
+        """Test try_all with no functions returns failure."""
+        result = FlextResult[int].try_all()
+        assert result.is_failure
+
+
+class TestFlextResultSpecialMethods:
+    """Test FlextResult special methods and protocols."""
+
+    def test_bool_conversion_success(self) -> None:
+        """Test __bool__ returns True for successful results."""
+        result = FlextResult[int].ok(42)
+        assert bool(result) is True
+
+    def test_bool_conversion_failure(self) -> None:
+        """Test __bool__ returns False for failed results."""
+        result = FlextResult[int].fail("error")
+        assert bool(result) is False
+
+    def test_iterator_protocol_success(self) -> None:
+        """Test __iter__ yields value and None for success."""
+        result = FlextResult[str].ok("test")
+        value, error = result
+        assert value == "test"
+        assert error is None
+
+    def test_iterator_protocol_failure(self) -> None:
+        """Test __iter__ yields None and error for failure."""
+        result = FlextResult[str].fail("error message")
+        value, error = result
+        assert value is None
+        assert error == "error message"
+
+    def test_getitem_protocol_success(self) -> None:
+        """Test __getitem__ provides subscript access for success."""
+        result = FlextResult[str].ok("success")
+        assert result[0] == "success"  # value
+        assert result[1] is None  # error
+
+    def test_getitem_protocol_failure(self) -> None:
+        """Test __getitem__ provides subscript access for failure."""
+        result = FlextResult[str].fail("error")
+        assert result[0] is None  # value
+        assert result[1] == "error"  # error
+
+    def test_getitem_invalid_index(self) -> None:
+        """Test __getitem__ raises IndexError for invalid indices."""
+        result = FlextResult[str].ok("test")
+        with pytest.raises(IndexError):
+            _ = result[2]
+        with pytest.raises(IndexError):
+            _ = result[-1]
+
+    def test_or_operator_success(self) -> None:
+        """Test __or__ returns value for successful result."""
+        result = FlextResult[str].ok("success")
+        value = result | "default"
+        assert value == "success"
+
+    def test_or_operator_failure(self) -> None:
+        """Test __or__ returns default for failed result."""
+        result = FlextResult[str].fail("error")
+        value = result | "default"
+        assert value == "default"
+
+    def test_equality_both_success(self) -> None:
+        """Test __eq__ compares successful results by value."""
+        result1 = FlextResult[int].ok(42)
+        result2 = FlextResult[int].ok(42)
+        result3 = FlextResult[int].ok(100)
+
+        assert result1 == result2
+        assert result1 != result3
+
+    def test_equality_both_failure(self) -> None:
+        """Test __eq__ compares failed results by error."""
+        result1 = FlextResult[int].fail("error")
+        result2 = FlextResult[int].fail("error")
+        result3 = FlextResult[int].fail("different error")
+
+        assert result1 == result2
+        assert result1 != result3
+
+    def test_equality_mixed_states(self) -> None:
+        """Test __eq__ returns False for different states."""
+        success = FlextResult[int].ok(42)
+        failure = FlextResult[int].fail("error")
+
+        assert success != failure
+        assert failure != success
+
+    def test_equality_different_types(self) -> None:
+        """Test __eq__ returns False for different types."""
+        result = FlextResult[int].ok(42)
+        assert result != 42
+        assert result != "not a result"
+        assert result != None
+
+    def test_hash_success(self) -> None:
+        """Test __hash__ works for successful results."""
+        result = FlextResult[str].ok("test")
+        hash_value = hash(result)
+        assert isinstance(hash_value, int)
+
+    def test_hash_failure(self) -> None:
+        """Test __hash__ works for failed results."""
+        result = FlextResult[str].fail("error")
+        hash_value = hash(result)
+        assert isinstance(hash_value, int)
+
+    def test_hash_consistency(self) -> None:
+        """Test __hash__ is consistent for equal results."""
+        result1 = FlextResult[int].ok(42)
+        result2 = FlextResult[int].ok(42)
+        assert hash(result1) == hash(result2)
+
+    def test_hash_in_set(self) -> None:
+        """Test FlextResult can be used in sets."""
+        result1 = FlextResult[int].ok(42)
+        result2 = FlextResult[int].ok(42)
+        result3 = FlextResult[int].fail("error")
+
+        result_set = {result1, result2, result3}
+        assert len(result_set) == 2  # result1 and result2 are equal
+
+    def test_repr_success(self) -> None:
+        """Test __repr__ for successful result."""
+        result = FlextResult[str].ok("test")
+        repr_str = repr(result)
+        assert "FlextResult" in repr_str
+        assert "success" in repr_str.lower()
+
+    def test_repr_failure(self) -> None:
+        """Test __repr__ for failed result."""
+        result = FlextResult[str].fail("error")
+        repr_str = repr(result)
+        assert "FlextResult" in repr_str
+        assert "failure" in repr_str.lower() or "error" in repr_str
+
+
+class TestFlextResultContextManager:
+    """Test FlextResult context manager protocol."""
+
+    def test_context_manager_success(self) -> None:
+        """Test context manager with successful result."""
+        result = FlextResult[str].ok("resource")
+
+        with result as resource:
+            assert resource == "resource"
+
+    def test_context_manager_failure_raises(self) -> None:
+        """Test context manager raises for failed result."""
+        result = FlextResult[str].fail("resource not available")
+
+        with pytest.raises(RuntimeError, match="resource not available"):
+            with result as resource:
+                # Should not reach here
+                pass
+
+    def test_context_manager_exception_handling(self) -> None:
+        """Test context manager handles exceptions in block."""
+        result = FlextResult[str].ok("resource")
+
+        with pytest.raises(ValueError, match="test error"):
+            with result as resource:
+                assert resource == "resource"
+                raise ValueError("test error")
+
+    def test_context_manager_return_false_on_exception(self) -> None:
+        """Test context manager __exit__ returns False to propagate exceptions."""
+        result = FlextResult[str].ok("resource")
+
+        try:
+            with result as resource:
+                assert resource == "resource"
+                raise ValueError("test error")
+        except ValueError:
+            # Exception should propagate (not be suppressed)
+            pass
+        else:
+            pytest.fail("Exception should have been raised")
+
+
+class TestFlextResultAdditionalMethods:
+    """Test additional FlextResult methods for complete coverage."""
+
+    def test_expect_success(self) -> None:
+        """Test expect returns value for successful result."""
+        result = FlextResult[str].ok("success")
+        value = result.expect("Should not fail")
+        assert value == "success"
+
+    def test_expect_failure_with_custom_message(self) -> None:
+        """Test expect raises with custom message for failed result."""
+        result = FlextResult[str].fail("original error")
+        with pytest.raises(RuntimeError, match="Custom failure message"):
+            result.expect("Custom failure message")
+
+    def test_to_exception_failure_creates_exception(self) -> None:
+        """Test to_exception creates Exception from failed result."""
+        result = FlextResult[str].fail("operation failed")
+        exception = result.to_exception()
+
+        assert isinstance(exception, Exception)
+        assert str(exception) == "operation failed"
+
+    def test_then_alias_for_flat_map(self) -> None:
+        """Test then as alias for flat_map."""
+
+        def increment(x: int) -> FlextResult[int]:
+            return FlextResult[int].ok(x + 1)
+
+        result = FlextResult[int].ok(41)
+        chained = result.then(increment)
+
+        assert chained.is_success
+        assert chained.value == 42
+
+
+class TestFlextResultStandaloneFunctions:
+    """Test standalone utility functions."""
+
+    def test_ok_result_function(self) -> None:
+        """Test ok_result standalone function."""
+        from flext_core.result import ok_result
+
+        result = ok_result("test data")
+        assert result.is_success
+        assert result.value == "test data"
+
+    def test_fail_result_function_basic(self) -> None:
+        """Test fail_result standalone function with basic error."""
+        from flext_core.result import fail_result
+
+        result = fail_result("operation failed")
+        assert result.is_failure
+        assert result.error == "operation failed"
+
+    def test_fail_result_function_with_metadata(self) -> None:
+        """Test fail_result standalone function with error code and data."""
+        from flext_core.result import fail_result
+
+        result = fail_result(
+            "validation error",
+            error_code="VALIDATION_ERROR",
+            error_data={"field": "email", "reason": "invalid format"},
+        )
+        assert result.is_failure
+        assert result.error == "validation error"
+        assert result.error_code == "VALIDATION_ERROR"
+        assert result.error_data["field"] == "email"
+        assert result.error_data["reason"] == "invalid format"
+
+
+class TestFlextResultEdgeCasesAndBoundaryConditions:
+    """Test edge cases and boundary conditions for 100% coverage."""
+
+    def test_map_with_exception_in_function(self) -> None:
+        """Test map handles exceptions in mapping function."""
+        result = FlextResult[int].ok(10)
+
+        def failing_map(x: int) -> str:
+            if x > 5:
+                raise ValueError("Value too large")
+            return str(x)
+
+        mapped = result.map(failing_map)
+        assert mapped.is_failure
+        assert "Value too large" in mapped.error
+
+    def test_flat_map_with_exception_in_function(self) -> None:
+        """Test flat_map handles exceptions in mapping function."""
+        result = FlextResult[int].ok(10)
+
+        def failing_flat_map(x: int) -> FlextResult[str]:
+            if x > 5:
+                raise RuntimeError("Processing failed")
+            return FlextResult[str].ok(str(x))
+
+        mapped = result.flat_map(failing_flat_map)
+        assert mapped.is_failure
+        assert "Processing failed" in mapped.error
+
+    def test_large_error_data_serialization(self) -> None:
+        """Test FlextResult with large error data structures."""
+        large_error_data = {
+            f"field_{i}": f"error_message_{i}" * 100 for i in range(100)
+        }
+        result = FlextResult[str].fail(
+            "validation failed", error_data=large_error_data
+        )
+
+        assert result.is_failure
+        assert len(result.error_data) == 100
+        assert result.error_data["field_50"] == "error_message_50" * 100
+
+    def test_very_long_error_message(self) -> None:
+        """Test FlextResult with extremely long error messages."""
+        long_error = "A" * 10000  # 10KB error message
+        result = FlextResult[str].fail(long_error)
+
+        assert result.is_failure
+        assert result.error == long_error
+        assert len(result.error) == 10000
+
+    def test_property_based_empty_error_message(self) -> None:
+        """Test specific case of empty error message."""
+        result = FlextResult[str].fail("")
+
+        assert result.is_failure
+        assert result.error == "Unknown error occurred"  # Default behavior
+
+    def test_property_based_whitespace_error_message(self) -> None:
+        """Test whitespace-only error message."""
+        result = FlextResult[str].fail("   ")
+
+        assert result.is_failure
+        assert result.error == "Unknown error occurred"  # FlextResult normalizes whitespace
+
+    @given(st.integers())
+    def test_property_based_success_values(self, value: int) -> None:
+        """Property-based test for success value handling."""
+        result = FlextResult[int].ok(value)
+
+        assert result.is_success
+        assert result.value == value

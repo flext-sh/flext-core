@@ -1290,27 +1290,31 @@ class FlextHandlers:
                     performance_level = config.get("performance_level", "standard")
 
                     if performance_level == "high":
-                        optimized_config.update({
-                            "concurrent_handlers": 50,
-                            "request_batch_size": 500,
-                            "response_caching_enabled": True,
-                            "metrics_collection_interval": 1000,
-                            "enable_request_pooling": True,
-                            "thread_pool_size": 16,
-                            "memory_limit_mb": 2048,
-                            "enable_compression": True,
-                        })
+                        optimized_config.update(
+                            {
+                                "concurrent_handlers": 50,
+                                "request_batch_size": 500,
+                                "response_caching_enabled": True,
+                                "metrics_collection_interval": 1000,
+                                "enable_request_pooling": True,
+                                "thread_pool_size": 16,
+                                "memory_limit_mb": 2048,
+                                "enable_compression": True,
+                            }
+                        )
                     elif performance_level == "low":
-                        optimized_config.update({
-                            "concurrent_handlers": 2,
-                            "request_batch_size": 10,
-                            "response_caching_enabled": False,
-                            "metrics_collection_interval": 10000,
-                            "enable_request_pooling": False,
-                            "thread_pool_size": 1,
-                            "memory_limit_mb": 128,
-                            "enable_compression": False,
-                        })
+                        optimized_config.update(
+                            {
+                                "concurrent_handlers": 2,
+                                "request_batch_size": 10,
+                                "response_caching_enabled": False,
+                                "metrics_collection_interval": 10000,
+                                "enable_request_pooling": False,
+                                "thread_pool_size": 1,
+                                "memory_limit_mb": 128,
+                                "enable_compression": False,
+                            }
+                        )
 
                     return FlextResult[FlextTypes.Config.ConfigDict].ok(
                         optimized_config

@@ -18,6 +18,12 @@ from pydantic import BaseModel, Field
 from flext_core import FlextConfig, FlextResult
 
 # =============================================================================
+# CONSTANTS
+# =============================================================================
+
+MINIMUM_AGE_REQUIREMENT = 21
+
+# =============================================================================
 # SIMPLE EXAMPLES - Basic FLEXT patterns
 # =============================================================================
 
@@ -217,8 +223,10 @@ def demonstrate_error_handling() -> FlextResult[None]:
         user = user_result.value
 
         # Step 2: Validate business rules (example)
-        if user.age < 21:
-            return FlextResult[str].fail("User must be at least 21 years old")
+        if user.age < MINIMUM_AGE_REQUIREMENT:
+            return FlextResult[str].fail(
+                f"User must be at least {MINIMUM_AGE_REQUIREMENT} years old"
+            )
 
         # Step 3: Format result
         result = f"User {user.name} ({user.email}) processed successfully"

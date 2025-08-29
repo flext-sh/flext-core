@@ -3,6 +3,8 @@
 This test suite provides complete coverage of the domain service system,
 testing all aspects including abstract service base, validation, execution,
 configuration, and integration with mixins to achieve near 100% coverage.
+
+Optimized with full fixture usage and tests/support infrastructure.
 """
 
 from __future__ import annotations
@@ -160,7 +162,8 @@ class TestFlextDomainService:
     def test_execute_method_is_abstract(self) -> None:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
-            FlextDomainService()
+            # This is intentionally testing abstract class instantiation
+            FlextDomainService()  # type: ignore[abstract]
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""

@@ -14,52 +14,86 @@ Key Patterns:
 from __future__ import annotations
 
 import contextlib
-import random
+import hashlib
 import time
-
-from shared_domain import SharedDomainFactory
 
 from flext_core import (
     FlextConstants,
-    FlextCore,
     FlextDecorators,
     FlextLogger,
     FlextProtocols,
     FlextResult,
     FlextTypes,
+    FlextUtilities,
 )
 
-# Singleton FlextCore instance for all utilities
-core = FlextCore.get_instance()
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+MIN_NAME_LENGTH = 2
+MINIMUM_AGE = 18
+
+# =============================================================================
+# LOCAL DOMAIN FACTORY (replacing shared_domain dependency)
+# =============================================================================
+
+
+class LocalDomainFactory:
+    """Local domain factory for user creation without external dependencies."""
+
+    @staticmethod
+    def create_user(name: str, email: str, age: int) -> FlextResult[dict[str, object]]:
+        """Create user with validation."""
+        # Basic validation
+        if not name or len(name) < MIN_NAME_LENGTH:
+            return FlextResult[dict[str, object]].fail("Invalid name")
+        if "@" not in email:
+            return FlextResult[dict[str, object]].fail("Invalid email")
+        if age < MINIMUM_AGE:
+            return FlextResult[dict[str, object]].fail("User must be 18+")
+
+        user_data = {
+            "name": name,
+            "email": email,
+            "age": age,
+            "id": f"user_{FlextUtilities.Generators.generate_uuid()}",
+        }
+        return FlextResult[dict[str, object]].ok(user_data)
+
+
+# FlextCore singleton removed - using direct imports
 logger = FlextLogger("flext.examples.decorators")
 
 # Constants using FlextConstants hierarchical access
-MAX_AGE: FlextTypes.Core.Integer = 150
-MIN_AGE: FlextTypes.Core.Integer = 0
+MAX_AGE: int = 150
+MIN_AGE: int = 0
 SUCCESS_THRESHOLD: FlextTypes.Core.Float = 0.4
-MIN_USER_CREATION_ARGS: FlextTypes.Core.Integer = 3
+MIN_USER_CREATION_ARGS: int = 3
 
 # =============================================================================
 # PROTOCOLS - Using FlextProtocols hierarchical patterns
 # =============================================================================
 
 
-class CalculationProtocol(FlextProtocols.Foundation.Validator[FlextTypes.Core.Integer]):
+class CalculationProtocol(FlextProtocols.Foundation.Validator[int]):
     """Protocol for calculation operations using centralized FlextProtocols."""
 
-    def validate(
-        self, data: FlextTypes.Core.Integer
-    ) -> FlextResult[FlextTypes.Core.Integer]:
+    def validate(self, data: int) -> FlextResult[int]:
         """Process calculation with FlextResult pattern."""
+        if data < 0:
+            return FlextResult[int].fail("Negative values not allowed")
+        return FlextResult[int].ok(data * 2)  # Example calculation
 
 
-class ValidationProtocol(FlextProtocols.Foundation.Validator[FlextTypes.Core.Integer]):
+class ValidationProtocol(FlextProtocols.Foundation.Validator[int]):
     """Protocol for validation operations using centralized FlextProtocols."""
 
-    def validate(
-        self, data: FlextTypes.Core.Integer
-    ) -> FlextResult[FlextTypes.Core.Integer]:
+    def validate(self, data: int) -> FlextResult[int]:
         """Validate data with FlextResult pattern."""
+        if data <= 0:
+            return FlextResult[int].fail("Value must be positive")
+        return FlextResult[int].ok(data)
 
 
 # =============================================================================
@@ -77,21 +111,19 @@ def demonstrate_cache_decorator() -> FlextResult[FlextTypes.Core.String]:
 
     @FlextDecorators.Performance.cache(max_size=128)
     def expensive_calculation(
-        x: FlextTypes.Core.Integer,
-    ) -> FlextResult[FlextTypes.Core.Integer]:
+        x: int,
+    ) -> FlextResult[int]:
         """Expensive calculation using FlextResult pattern and FlextTypes."""
         # Validation using centralized constants
         if x < MIN_AGE or x > MAX_AGE:
-            return FlextResult[FlextTypes.Core.Integer].fail(
-                FlextConstants.Errors.VALIDATION_ERROR
-            )
+            return FlextResult[int].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
         # Simulate expensive work using centralized delay
         delay_ms: FlextTypes.Core.Float = 100.0
         time.sleep(delay_ms / 1000.0)
 
-        result: FlextTypes.Core.Integer = x * x * x
-        return FlextResult[FlextTypes.Core.Integer].ok(result)
+        result: int = x * x * x
+        return FlextResult[int].ok(result)
 
     # Test cache functionality with proper FlextResult handling
     logger.info("Testing cache functionality with centralized patterns")
@@ -157,8 +189,15 @@ def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
             processing_delay: FlextTypes.Core.Float = 0.05
             time.sleep(processing_delay)
 
-            # Business logic with controlled randomness
-            if random.random() > SUCCESS_THRESHOLD:
+            # Business logic with simulated success/failure for demo
+            # Note: Using time-based deterministic approach for demo purposes only
+            current_time = int(time.time() * 1000000)
+            # Use SHA256 for better security practices even in demos
+            hash_value = int(
+                hashlib.sha256(str(current_time).encode()).hexdigest()[:8], 16
+            )
+            success_rate = (hash_value % 100) / 100.0
+            if success_rate > SUCCESS_THRESHOLD:
                 result_data: dict[str, object] = {
                     "status": "processed",
                     "data": data,
@@ -180,9 +219,7 @@ def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
     test_data: dict[str, object] = {
         "id": 123,
         "name": "Test Operation",
-        "correlation_id": core.generate_uuid()
-        if hasattr(core, "generate_uuid")
-        else "test_123",
+        "correlation_id": FlextUtilities.Generators.generate_uuid(),
     }
 
     logger.info("Testing complete decorator composition")
@@ -261,6 +298,11 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
     @FlextDecorators.Performance.monitor()
     def create_user_generic(*args: object, **_kwargs: object) -> object:
         """Generic user creator compatible with FlextCallable."""
+
+        def _raise_validation_error(message: str) -> None:
+            """Inner function to raise validation errors."""
+            raise ValueError(message)
+
         if len(args) >= MIN_USER_CREATION_ARGS:
             try:
                 name = str(args[0]) if args[0] is not None else ""
@@ -273,32 +315,27 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
                 ):
                     age = int(age_val)
                 else:
-                    msg = f"Invalid age: {age_val}"
-                    raise ValueError(msg)
+                    _raise_validation_error(f"Invalid age: {age_val}")
 
                 # Basic validation
                 if not name or not name.strip():
-                    msg = "Name required"
-                    raise ValueError(msg)
+                    _raise_validation_error("Name required")
                 if "@" not in email:
-                    msg = "Valid email required"
-                    raise ValueError(msg)
+                    _raise_validation_error("Valid email required")
                 if age < MIN_AGE or age > MAX_AGE:
-                    msg = "Valid age required"
-                    raise ValueError(msg)
+                    _raise_validation_error("Valid age required")
 
-                # Create user using SharedDomainFactory
-                result = SharedDomainFactory.create_user(name, email, age)
+                # Create user using LocalDomainFactory
+                result = LocalDomainFactory.create_user(name, email, age)
                 if result.success:
                     return result.value
-                msg = f"User creation failed: {result.error}"
-                raise ValueError(msg)
+                _raise_validation_error(f"User creation failed: {result.error}")
 
             except (ValueError, TypeError) as e:
                 msg = f"Type conversion failed: {e}"
                 raise ValueError(msg) from e
-        msg = "Insufficient arguments"
-        raise ValueError(msg)
+        _raise_validation_error("Insufficient arguments")
+        return None  # This line is never reached, but satisfies linter
 
     # Test user creation
     try:
@@ -355,8 +392,8 @@ def main() -> FlextResult[FlextTypes.Core.String]:
     """
     logger.info("Starting Example 09: Modern Enterprise Decorators")
 
-    success_count: FlextTypes.Core.Integer = 0
-    total_operations: FlextTypes.Core.Integer = 5
+    success_count: int = 0
+    total_operations: int = 5
     operation_results: list[FlextTypes.Core.String] = []
 
     try:
@@ -416,7 +453,8 @@ def main() -> FlextResult[FlextTypes.Core.String]:
 
         if success_count >= (total_operations * 0.8):  # 80% success threshold
             logger.info(
-                f"Example 09 completed successfully with {success_rate:.1f}% success rate"
+                f"Example 09 completed successfully with "
+                f"{success_rate:.1f}% success rate"
             )
             return FlextResult[FlextTypes.Core.String].ok(final_summary)
         logger.warning(

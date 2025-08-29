@@ -29,7 +29,7 @@ Classes and Methods:
 
         # Logging and Observability:
         configure_logging(log_level="INFO", _json_output=None) -> None # Global logging setup
-        get_logger(name) -> FlextLogger                     # Logger instance creation
+        FlextLogger(name) -> FlextLogger                     # Logger instance creation
         create_log_context(logger=None, **context) -> FlextLogger # Contextual logger
         log_info(msg, **ctx) -> None                        # Info logging
         log_error(msg, **ctx) -> None                       # Error logging
@@ -287,7 +287,7 @@ class FlextCore:
                 .flat_map(lambda data: core.validate_email(data.get("email")))
                 .flat_map(lambda email: core.create_entity(User, **user_data))
                 .tap(
-                    lambda user: core.get_logger(__name__).info(
+                    lambda user: core.FlextLogger(__name__).info(
                         "User created", user_id=user.id
                     )
                 )
@@ -332,7 +332,7 @@ class FlextCore:
         The FlextCore class integrates seamlessly with all FLEXT ecosystem components:
 
         - **flext-api**: HTTP API services with FlextResult responses
-        - **flext-auth**: Authentication services with FlextEntity users
+        - **flext-auth**: Authentication services with FlextModels.Entity users
         - **flext-db-oracle**: Database operations with FlextResult patterns
         - **flext-ldap**: LDAP integration with FlextContainer services
         - **flext-web**: Web applications with FlextContainer dependency injection
@@ -933,7 +933,7 @@ class FlextCore:
             For request-specific context, use create_log_context() instead.
 
         See Also:
-            - get_logger(): Create logger instances
+            - FlextLogger(): Create logger instances
             - create_log_context(): Create context-aware loggers
             - FlextLogger: Core logging implementation
 
@@ -1926,7 +1926,7 @@ class FlextCore:
     @property
     def loggable_mixin(self) -> object:
         """Access loggable mixin."""
-        return FlextMixins.get_logger
+        return FlextLogger
 
     @property
     def validatable_mixin(self) -> object:
@@ -2407,7 +2407,7 @@ class FlextCore:
 
         class DynamicServiceProcessor:
             def __init__(self) -> None:
-                # Use class method to get logger (get_logger may not be available)
+                # Use class method to get logger (FlextLogger may not be available)
                 self._logger = FlextLogger(f"flext.services.{name.lower()}")
 
             def process(self, request: object) -> FlextResult[object]:

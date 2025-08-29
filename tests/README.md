@@ -231,7 +231,7 @@ def mock_repository(mocker):
 
 ```python
 # Shared domain models for testing
-class TestUser(FlextEntity):
+class TestUser(FlextModels.Entity):
     """Test user entity."""
     username: str
     email: str

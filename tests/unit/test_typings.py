@@ -6,8 +6,7 @@ import json
 from collections.abc import Callable as _Callable
 from typing import cast
 
-from flext_core import FlextEntityId, FlextTypes
-from flext_core.models import FlextModels
+from flext_core import FlextModels, FlextTypes
 
 FlextConfigKey = str
 FlextEventType = str
@@ -103,13 +102,13 @@ class TestTypeAliases:
     """Test essential type aliases used throughout FLEXT ecosystem."""
 
     def test_entity_id_basic_usage(self) -> None:
-        """Test FlextEntityId type alias in typical usage."""
-        user_id = FlextEntityId("user-123")
-        order_id = FlextEntityId("order-456")
+        """Test FlextModels.EntityId type alias in typical usage."""
+        user_id = FlextModels.EntityId("user-123")
+        order_id = FlextModels.EntityId("order-456")
 
-        # FlextEntityId is a RootModel with string root
-        assert isinstance(user_id, FlextEntityId)
-        assert isinstance(order_id, FlextEntityId)
+        # FlextModels.EntityId is a RootModel with string root
+        assert isinstance(user_id, FlextModels.EntityId)
+        assert isinstance(order_id, FlextModels.EntityId)
         assert user_id == "user-123", f"Expected {'user-123'}, got {user_id}"
         assert order_id == "order-456"
 

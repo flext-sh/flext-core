@@ -1,464 +1,384 @@
 #!/usr/bin/env python3
-"""06 - Domain-Driven Design: Entity & Value Object Patterns.
+"""FlextCore Entity and Value Object DDD Patterns - Working Example.
 
-Shows how FlextEntity and FlextValue simplify DDD implementation.
-Demonstrates entity lifecycle, domain events, and value object immutability.
+This example demonstrates Domain-Driven Design patterns using FlextCore:
+- Entity base class with identity and events
+- Value objects for data modeling
+- Domain event handling
+- Factory patterns for object creation
 
-Key Patterns:
-• FlextEntity for objects with identity
-• FlextValue for immutable domain concepts
-• Domain events and entity lifecycle
-• Aggregate patterns
+Key concepts:
+- Entities have identity and lifecycle
+- Value objects are immutable and equality-based
+- Domain events for side effects
+- Clean separation of concerns
+
+Author: FlextCore Team
 """
-
-from __future__ import annotations
 
 from decimal import Decimal
 
 from pydantic import Field
 
-from flext_core import (
-    FlextEntity,
-    FlextEntityId,
-    FlextGenerators,
-    FlextModels,
-    FlextResult,
-    FlextValue,
-    FlextVersion,
-)
+from flext_core import FlextModels, FlextResult
 
-# Constants to avoid magic numbers
-MIN_PRODUCT_CODE_LENGTH = 3
-CURRENCY_CODE_LENGTH = 3
-MAX_DISCOUNT_PERCENT = 100
-
-# =============================================================================
-# VALUE OBJECTS - Immutable domain concepts
-# =============================================================================
+# Constants
+MIN_PRICE = Decimal("0.01")
+MAX_DISCOUNT = Decimal(100)
+COUNTRY_CODE_LENGTH = 2
 
 
-class Address(FlextValue):
-    """Address value object for customer addresses."""
+class Money(FlextModels.Value):
+    """Value object for monetary amounts."""
 
-    street: str
-    city: str
-    postal_code: str
-    country: str = "US"
-
-
-class ProductCode(FlextValue):
-    """Product code value object."""
-
-    code: str
+    amount: Decimal = Field(..., description="Monetary amount")
+    currency: str = Field(..., min_length=3, max_length=3, description="Currency code")
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate product code format."""
-        if not self.code or len(self.code) < MIN_PRODUCT_CODE_LENGTH:
-            return FlextResult[None].fail("Product code must be at least 3 characters")
-        if not self.code.isalnum():
-            return FlextResult[None].fail("Product code must be alphanumeric")
+        """Validate money business rules."""
+        if self.amount < Decimal(0):
+            return FlextResult[None].fail("Amount cannot be negative")
         return FlextResult[None].ok(None)
 
-
-class Price(FlextValue):
-    """Price value object with currency."""
-
-    amount: Decimal
-    currency: str = "USD"
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate price rules."""
-        if self.amount < 0:
-            return FlextResult[None].fail("Price cannot be negative")
-        if len(self.currency) != CURRENCY_CODE_LENGTH:
-            return FlextResult[None].fail("Currency must be 3 characters")
-        return FlextResult[None].ok(None)
-
-    def add(self, other: Price) -> FlextResult[Price]:
-        """Add two prices with currency validation."""
+    def add(self, other: "Money") -> "Money":
+        """Add two money amounts."""
         if self.currency != other.currency:
-            return FlextResult[Price].fail(
-                "Cannot add prices with different currencies"
+            msg = "Cannot add different currencies"
+            raise ValueError(msg)
+        return Money(amount=self.amount + other.amount, currency=self.currency)
+
+    def multiply(self, factor: Decimal) -> "Money":
+        """Multiply money by a factor."""
+        return Money(amount=self.amount * factor, currency=self.currency)
+
+    def __str__(self) -> str:
+        """String representation of money amount."""
+        return f"{self.amount} {self.currency}"
+
+
+class Address(FlextModels.Value):
+    """Value object for addresses."""
+
+    street: str = Field(..., min_length=1, description="Street address")
+    city: str = Field(..., min_length=1, description="City")
+    postal_code: str = Field(..., min_length=5, description="Postal code")
+    country: str = Field(..., min_length=2, description="Country code")
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate address business rules."""
+        if len(self.country) != COUNTRY_CODE_LENGTH:
+            return FlextResult[None].fail(
+                f"Country code must be {COUNTRY_CODE_LENGTH} characters"
             )
-        return FlextResult[Price].ok(
-            Price.model_validate({
-                "amount": self.amount + other.amount,
-                "currency": self.currency,
-            })
-        )
+        return FlextResult[None].ok(None)
+
+    def __str__(self) -> str:
+        """String representation of address."""
+        return f"{self.street}, {self.city} {self.postal_code}, {self.country}"
 
 
-# =============================================================================
-# ENTITIES - Objects with identity and lifecycle
-# =============================================================================
+class Product(FlextModels.Entity):
+    """Product entity with business logic."""
 
+    name: str = Field(..., min_length=1, description="Product name")
+    price: Money = Field(..., description="Product price")
+    active: bool = Field(default=True, description="Product active status")
 
-class Product(FlextEntity):
-    """Product entity with lifecycle management."""
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate product business rules."""
+        if self.price.amount <= Decimal(0):
+            return FlextResult[None].fail("Product price must be positive")
+        return FlextResult[None].ok(None)
 
-    code: ProductCode
-    name: str
-    price: Price
-    active: bool = True
-
-    def activate(self) -> FlextResult[Product]:
-        """Activate product and raise domain event."""
-        if self.active:
-            return FlextResult[Product].fail("Product already active")
-
-        self.active = True
-        self.add_domain_event(
-            "ProductActivated",
-            {"product_id": self.id, "code": self.code.code, "timestamp": "now"},
-        )
-        return FlextResult[Product].ok(self)
-
-    def update_price(self, new_price: Price) -> FlextResult[Product]:
-        """Update product price."""
+    def activate(self) -> None:
+        """Activate the product."""
         if not self.active:
-            return FlextResult[Product].fail("Cannot update price of inactive product")
+            self.active = True
+            self.add_domain_event({
+                "event_type": "ProductActivated",
+                "product_id": self.id,
+                "product_name": self.name,
+            })
+
+    def update_price(self, new_price: Money) -> FlextResult[None]:
+        """Update product price with validation."""
+        if new_price.amount < MIN_PRICE:
+            return FlextResult[None].fail("Price too low")
 
         old_price = self.price
         self.price = new_price
-        self.add_domain_event(
-            "PriceChanged",
-            {
-                "product_id": self.id,
-                "old_price": str(old_price.amount),
-                "new_price": str(new_price.amount),
-                "currency": new_price.currency,
-            },
-        )
-        return FlextResult[Product].ok(self)
+
+        self.add_domain_event({
+            "event_type": "PriceChanged",
+            "product_id": self.id,
+            "old_price": str(old_price),
+            "new_price": str(new_price),
+        })
+
+        return FlextResult[None].ok(None)
 
 
-class Customer(FlextEntity):
-    """Customer entity with business rules."""
+class Customer(FlextModels.Entity):
+    """Customer entity with address management."""
 
-    name: str
-    email: str
-    address: Address
-    active: bool = True
+    name: str = Field(..., min_length=1, description="Customer name")
+    email: str = Field(..., description="Customer email")
+    address: Address = Field(..., description="Customer address")
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate customer business rules."""
-        if not self.name.strip():
-            return FlextResult[None].fail("Customer name required")
         if "@" not in self.email:
-            return FlextResult[None].fail("Valid email required")
+            return FlextResult[None].fail("Invalid email address")
         return FlextResult[None].ok(None)
 
-    def update_address(self, new_address: Address) -> FlextResult[Customer]:
+    def update_address(self, new_address: Address) -> None:
         """Update customer address."""
+        old_address = self.address
         self.address = new_address
-        self.add_domain_event(
-            "AddressChanged",
-            {
+
+        if old_address != new_address:
+            self.add_domain_event({
+                "event_type": "AddressChanged",
                 "customer_id": self.id,
-                "city": new_address.city,
-                "country": new_address.country,
-            },
+                "old_address": str(old_address),
+                "new_address": str(new_address),
+            })
+
+
+class CartItem(FlextModels.Value):
+    """Shopping cart item value object."""
+
+    product_id: str = Field(..., description="Product identifier")
+    product_name: str = Field(..., description="Product name")
+    price: Money = Field(..., description="Unit price")
+    quantity: int = Field(..., ge=1, description="Item quantity")
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate cart item business rules."""
+        if self.quantity <= 0:
+            return FlextResult[None].fail("Quantity must be positive")
+        return FlextResult[None].ok(None)
+
+    def total_price(self) -> Money:
+        """Calculate total price for this item."""
+        return self.price.multiply(Decimal(str(self.quantity)))
+
+
+class ShoppingCart(FlextModels.Entity):
+    """Shopping cart entity with business rules."""
+
+    customer_id: str = Field(..., description="Customer identifier")
+    items: list[CartItem] = Field(default_factory=list, description="Cart items")
+    discount_percent: Decimal = Field(
+        default=Decimal(0), description="Discount percentage"
+    )
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate shopping cart business rules."""
+        if self.discount_percent < Decimal(0) or self.discount_percent > Decimal(100):
+            return FlextResult[None].fail("Discount must be between 0 and 100")
+        return FlextResult[None].ok(None)
+
+    def add_item(self, product: Product, quantity: int = 1) -> FlextResult[None]:
+        """Add item to cart."""
+        if quantity < 1:
+            return FlextResult[None].fail("Quantity must be positive")
+
+        # Check if item already exists
+        for existing_item in self.items:
+            if existing_item.product_id == product.id:
+                return FlextResult[None].fail("Item already in cart")
+
+        cart_item = CartItem(
+            product_id=product.id,
+            product_name=product.name,
+            price=product.price,
+            quantity=quantity,
         )
-        return FlextResult[Customer].ok(self)
 
+        self.items.append(cart_item)
 
-# =============================================================================
-# AGGREGATES - Consistency boundaries
-# =============================================================================
-
-
-class ShoppingCart(FlextEntity):
-    """Shopping cart aggregate root."""
-
-    customer_id: str
-    total: Price = Price.model_validate({"amount": Decimal("0.00")})
-    items: list[dict[str, object]] = Field(default_factory=list)
-
-    @classmethod
-    def create(cls, customer_id: str, **kwargs: object) -> ShoppingCart:
-        """Create a shopping cart with proper initialization."""
-        cart_id = kwargs.get("id", f"cart_{customer_id}")
-        items = kwargs.get("items", [])
-
-        return cls(
-            id=str(cart_id),
-            customer_id=customer_id,
-            items=list(items) if isinstance(items, list) else [],
-        )
-
-    def add_item(
-        self, product: Product, quantity: int = 1
-    ) -> FlextResult[ShoppingCart]:
-        """Add item to cart with business rules."""
-        if not product.active:
-            return FlextResult[ShoppingCart].fail("Cannot add inactive product")
-        if quantity <= 0:
-            return FlextResult[ShoppingCart].fail("Quantity must be positive")
-
-        # Add item
-        item: dict[str, object] = {
+        self.add_domain_event({
+            "event_type": "ItemAdded",
+            "cart_id": self.id,
             "product_id": product.id,
-            "code": product.code.code,
-            "name": product.name,
-            "price": str(product.price.amount),
             "quantity": quantity,
-        }
-        self.items.append(item)
-
-        # Update total
-        item_total = Price.model_validate({
-            "amount": product.price.amount * quantity,
-            "currency": product.price.currency,
         })
-        total_result = self.total.add(item_total)
-        if total_result.success:
-            self.total = total_result.value
 
-        # Raise domain event
-        self.add_domain_event(
-            "ItemAdded",
-            {
-                "cart_id": self.id,
-                "product_code": product.code.code,
-                "quantity": quantity,
-            },
-        )
+        return FlextResult[None].ok(None)
 
-        return FlextResult[ShoppingCart].ok(self)
-
-    def checkout(self) -> FlextResult[dict[str, object]]:
-        """Convert cart to order."""
+    def calculate_total(self) -> Money:
+        """Calculate cart total with discount."""
         if not self.items:
-            return FlextResult[dict[str, object]].fail("Cannot checkout empty cart")
+            return Money(amount=Decimal(0), currency="USD")
 
-        order_data: dict[str, object] = {
-            "customer_id": self.customer_id,
-            "items": self.items.copy(),
-            "total": str(self.total.amount),
-            "currency": self.total.currency,
-        }
+        # Assume all items have same currency as first item
+        currency = self.items[0].price.currency
+        subtotal = sum((item.total_price().amount for item in self.items), Decimal(0))
 
-        # Clear cart after checkout
-        self.items.clear()
-        self.total = Price.model_validate({"amount": Decimal("0.00")})
+        discount_amount = subtotal * (self.discount_percent / Decimal(100))
+        total = subtotal - discount_amount
 
-        self.add_domain_event(
-            "CheckoutCompleted",
-            {
-                "cart_id": self.id,
-                "customer_id": self.customer_id,
-                "item_count": len(
-                    self.items
-                ),  # Use self.items instead of order_data["items"]
-            },
-        )
+        return Money(amount=total, currency=currency)
 
-        return FlextResult[dict[str, object]].ok(order_data)
+    def apply_discount(self, discount_percent: Decimal) -> FlextResult[None]:
+        """Apply discount to cart."""
+        if discount_percent < Decimal(0) or discount_percent > MAX_DISCOUNT:
+            return FlextResult[None].fail("Invalid discount percentage")
 
+        self.discount_percent = discount_percent
 
-# =============================================================================
-# DOMAIN SERVICES - Complex business logic
-# =============================================================================
+        self.add_domain_event({
+            "event_type": "DiscountApplied",
+            "cart_id": self.id,
+            "discount_percent": float(discount_percent),
+        })
 
-
-class PricingService:
-    """Domain service for pricing calculations."""
-
-    @staticmethod
-    def calculate_discount(
-        price: Price, discount_percent: Decimal
-    ) -> FlextResult[Price]:
-        """Calculate discounted price."""
-        if discount_percent < 0 or discount_percent > MAX_DISCOUNT_PERCENT:
-            return FlextResult[Price].fail("Discount must be between 0 and 100")
-
-        discount_amount = price.amount * (discount_percent / 100)
-        final_amount = price.amount - discount_amount
-
-        return FlextResult[Price].ok(
-            Price.model_validate({"amount": final_amount, "currency": price.currency})
-        )
-
-    @staticmethod
-    def apply_bulk_discount(
-        items: list[Product], min_quantity: int = 10
-    ) -> FlextResult[list[Price]]:
-        """Apply bulk discount to products."""
-        if len(items) < min_quantity:
-            # No discount, return original prices
-            return FlextResult[list[Price]].ok([item.price for item in items])
-
-        # Apply 10% bulk discount
-        discounted_prices = []
-        for item in items:
-            discount_result = PricingService.calculate_discount(item.price, Decimal(10))
-            if discount_result.success:
-                discounted_prices.append(discount_result.value)
-            else:
-                return FlextResult[list[Price]].fail(
-                    f"Bulk discount failed: {discount_result.error}"
-                )
-
-        return FlextResult[list[Price]].ok(discounted_prices)
-
-
-# =============================================================================
-# FACTORY PATTERN - Domain object creation
-# =============================================================================
+        return FlextResult[None].ok(None)
 
 
 class DomainObjectFactory:
     """Factory for creating domain objects."""
 
     @staticmethod
-    def create_product(
-        code: str, name: str, price_amount: str, currency: str = "USD"
-    ) -> FlextResult[Product]:
-        """Create product with validation."""
+    def create_product(name: str, price: Money) -> FlextResult[Product]:
+        """Create a new product."""
         try:
-            # Create value objects
-            product_code = ProductCode.model_validate({"code": code})
-            price = Price.model_validate({
-                "amount": Decimal(str(price_amount)),
-                "currency": currency,
-            })
-
-            # Create entity with proper initialization
             product = Product(
-                code=product_code,
-                name=name,
-                price=price,
-                id=FlextEntityId("product_" + code),
-                version=FlextVersion(1),
-                created_at=FlextModels.Timestamp.now(),
-                updated_at=FlextModels.Timestamp.now(),
-                domain_events=FlextModels.EventList(root=[]),
-                metadata=FlextModels.Metadata(root={}),
+                id=f"product_{name.lower().replace(' ', '_')}", name=name, price=price
             )
-
-            # Validate business rules
-            validation_result = product.validate_business_rules()
-            if not validation_result.success:
-                error_msg = validation_result.error or "Validation failed"
-                return FlextResult[Product].fail(error_msg)
-
             return FlextResult[Product].ok(product)
-
-        except (ValueError, TypeError) as e:
+        except Exception as e:
             return FlextResult[Product].fail(f"Failed to create product: {e}")
 
     @staticmethod
     def create_customer(
-        name: str, email: str, city: str = "Unknown", country: str = "Unknown"
+        name: str, email: str, address: Address
     ) -> FlextResult[Customer]:
-        """Create customer with validation."""
-        address = Address.model_validate({
-            "street": "123 Main St",
-            "city": city,
-            "postal_code": "12345",
-            "country": country,
-        })
-
-        customer = Customer(
-            name=name,
-            email=email,
-            address=address,
-            id=FlextEntityId(f"customer_{name.replace(' ', '_').lower()}"),
-            version=FlextVersion(1),
-            created_at=FlextModels.Timestamp.now(),
-            updated_at=FlextModels.Timestamp.now(),
-            domain_events=FlextModels.EventList(root=[]),
-            metadata=FlextModels.Metadata(root={}),
-        )
-        validation_result = customer.validate_business_rules()
-        if not validation_result.success:
-            error_msg = validation_result.error or "Validation failed"
-            return FlextResult[Customer].fail(error_msg)
-        return FlextResult[Customer].ok(customer)
+        """Create a new customer."""
+        try:
+            customer = Customer(
+                id=f"customer_{name.lower().replace(' ', '_')}",
+                name=name,
+                email=email,
+                address=address,
+            )
+            return FlextResult[Customer].ok(customer)
+        except Exception as e:
+            return FlextResult[Customer].fail(f"Failed to create customer: {e}")
 
     @staticmethod
     def create_shopping_cart(customer_id: str) -> FlextResult[ShoppingCart]:
-        """Create shopping cart for customer."""
-        return FlextResult.ok(
-            ShoppingCart.create(
-                customer_id=customer_id,
-                id=f"cart_{customer_id}_{FlextGenerators.generate_uuid()[:8]}",
-            )
-        )
+        """Create a new shopping cart."""
+        try:
+            cart = ShoppingCart(id=f"cart_{customer_id}", customer_id=customer_id)
+            return FlextResult[ShoppingCart].ok(cart)
+        except Exception as e:
+            return FlextResult[ShoppingCart].fail(f"Failed to create cart: {e}")
 
 
-# =============================================================================
-# DEMONSTRATIONS - Real-world usage patterns
-# =============================================================================
-
-
-def demo_value_objects() -> None:
+def demonstrate_value_objects() -> None:
     """Demonstrate value object patterns."""
-    # Create prices
-    price1 = Price.model_validate({"amount": Decimal("10.99"), "currency": "USD"})
-    price2 = Price.model_validate({"amount": Decimal("5.00"), "currency": "USD"})
+    print("=== Value Objects Demo ===")
 
-    # Add prices
-    total_result = price1.add(price2)
-    if total_result.success:
-        pass
+    # Money value object
+    price1 = Money(amount=Decimal("19.99"), currency="USD")
+    price2 = Money(amount=Decimal("5.00"), currency="USD")
 
+    total = price1.add(price2)
+    print(f"Price 1: {price1}")
+    print(f"Price 2: {price2}")
+    print(f"Total: {total}")
 
-def demo_entity_lifecycle() -> None:
-    """Demonstrate entity lifecycle."""
-    # Create product
-    product_result = DomainObjectFactory.create_product(
-        "LAPTOP01", "Gaming Laptop", "999.99"
+    # Address value object
+    address = Address(
+        street="123 Main St", city="New York", postal_code="10001", country="US"
     )
+    print(f"Address: {address}")
+
+
+def demonstrate_entities() -> None:
+    """Demonstrate entity patterns."""
+    print("\n=== Entities Demo ===")
+
+    # Create product
+    price = Money(amount=Decimal("99.99"), currency="USD")
+    product_result = DomainObjectFactory.create_product("Laptop", price)
 
     if product_result.success:
         product = product_result.value
+        print(f"Created product: {product.name} - {product.price}")
 
-        # Activate product
-        activate_result = product.activate()
-        if activate_result.success:
-            pass
+        # Update price
+        new_price = Money(amount=Decimal("89.99"), currency="USD")
+        update_result = product.update_price(new_price)
 
+        if update_result.success:
+            print(f"Updated price to: {product.price}")
 
-def demo_aggregate_patterns() -> None:
-    """Demonstrate aggregate patterns."""
-    # Create shopping cart
-    cart_result = DomainObjectFactory.create_shopping_cart("customer_123")
-    product_result = DomainObjectFactory.create_product(
-        "MOUSE01", "Gaming Mouse", "49.99"
+        # Check domain events
+        print(f"Domain events: {len(product.domain_events)} events")
+
+    # Create customer
+    customer_address = Address(
+        street="456 Oak Ave", city="Boston", postal_code="02101", country="US"
     )
 
-    if cart_result.success and product_result.success:
+    customer_result = DomainObjectFactory.create_customer(
+        "John Doe", "john@example.com", customer_address
+    )
+
+    if customer_result.success:
+        customer = customer_result.value
+        print(f"Created customer: {customer.name}")
+
+
+def demonstrate_aggregates() -> None:
+    """Demonstrate aggregate patterns."""
+    print("\n=== Aggregates Demo ===")
+
+    # Create shopping cart
+    cart_result = DomainObjectFactory.create_shopping_cart("customer_john_doe")
+
+    if cart_result.success:
         cart = cart_result.value
-        product = product_result.value
+        print(f"Created cart: {cart.id}")
 
-        # Add item to cart
-        add_result = cart.add_item(product, quantity=2)
-        if add_result.success:
-            pass
+        # Create product
+        laptop_price = Money(amount=Decimal("999.99"), currency="USD")
+        laptop_result = DomainObjectFactory.create_product(
+            "Gaming Laptop", laptop_price
+        )
 
-        # Checkout
-        checkout_result = cart.checkout()
-        if checkout_result.success:
-            pass
+        if laptop_result.success:
+            laptop = laptop_result.value
 
+            # Add item to cart
+            add_result = cart.add_item(laptop, 1)
 
-def demo_domain_services() -> None:
-    """Demonstrate domain services."""
-    price = Price.model_validate({"amount": Decimal("100.00"), "currency": "USD"})
-    discount_result = PricingService.calculate_discount(price, Decimal(20))
+            if add_result.success:
+                print(f"Added {laptop.name} to cart")
 
-    if discount_result.success:
-        pass
+                # Apply discount
+                discount_result = cart.apply_discount(Decimal(10))
+
+                if discount_result.success:
+                    total = cart.calculate_total()
+                    print(f"Cart total with discount: {total}")
+                    print(f"Domain events: {len(cart.domain_events)} events")
 
 
 def main() -> None:
-    """🎯 Example 06: Domain-Driven Design Patterns."""
-    # Show the refactored examples
-    demo_value_objects()
-    demo_entity_lifecycle()
-    demo_aggregate_patterns()
-    demo_domain_services()
+    """Run DDD patterns demonstration."""
+    print("FlextCore DDD Patterns Example")
+    print("=" * 40)
+
+    demonstrate_value_objects()
+    demonstrate_entities()
+    demonstrate_aggregates()
+
+    print("\n" + "=" * 40)
+    print("✅ All DDD patterns demonstrated successfully!")
 
 
 if __name__ == "__main__":

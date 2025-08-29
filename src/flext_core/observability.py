@@ -390,53 +390,63 @@ class FlextObservability:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_console_output": False,  # No console output in production
-                    "metrics_buffer_size": 50000,  # Large buffer for production load
-                    "trace_sampling_rate": 0.01,  # Lower sampling rate for production
-                    "health_check_interval_seconds": 60,  # Less frequent checks
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                    "enable_error_aggregation": True,  # Error aggregation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_console_output": False,  # No console output in production
+                        "metrics_buffer_size": 50000,  # Large buffer for production load
+                        "trace_sampling_rate": 0.01,  # Lower sampling rate for production
+                        "health_check_interval_seconds": 60,  # Less frequent checks
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                        "enable_error_aggregation": True,  # Error aggregation
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_console_output": True,  # Console output for development
-                    "metrics_buffer_size": 5000,  # Smaller buffer for development
-                    "trace_sampling_rate": 1.0,  # Full sampling for development
-                    "health_check_interval_seconds": 15,  # Frequent checks for debugging
-                    "enable_debug_metrics": True,  # Additional debug metrics
-                    "enable_detailed_logging": True,  # Detailed logging for development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_console_output": True,  # Console output for development
+                        "metrics_buffer_size": 5000,  # Smaller buffer for development
+                        "trace_sampling_rate": 1.0,  # Full sampling for development
+                        "health_check_interval_seconds": 15,  # Frequent checks for debugging
+                        "enable_debug_metrics": True,  # Additional debug metrics
+                        "enable_detailed_logging": True,  # Detailed logging for development
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_console_output": False,  # No console output in tests
-                    "metrics_buffer_size": 1000,  # Small buffer for tests
-                    "trace_sampling_rate": 0.0,  # No tracing in tests
-                    "health_check_interval_seconds": 5,  # Frequent checks for test validation
-                    "enable_performance_monitoring": False,  # No perf monitoring in tests
-                    "enable_test_mode": True,  # Special test mode
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_console_output": False,  # No console output in tests
+                        "metrics_buffer_size": 1000,  # Small buffer for tests
+                        "trace_sampling_rate": 0.0,  # No tracing in tests
+                        "health_check_interval_seconds": 5,  # Frequent checks for test validation
+                        "enable_performance_monitoring": False,  # No perf monitoring in tests
+                        "enable_test_mode": True,  # Special test mode
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_console_output": True,  # Console output for staging validation
-                    "metrics_buffer_size": 20000,  # Medium buffer for staging
-                    "trace_sampling_rate": 0.1,  # Medium sampling for staging
-                    "health_check_interval_seconds": 30,  # Standard checks
-                    "enable_staging_validation": True,  # Staging-specific validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_console_output": True,  # Console output for staging validation
+                        "metrics_buffer_size": 20000,  # Medium buffer for staging
+                        "trace_sampling_rate": 0.1,  # Medium sampling for staging
+                        "health_check_interval_seconds": 30,  # Standard checks
+                        "enable_staging_validation": True,  # Staging-specific validation
+                    }
+                )
             else:  # local environment
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_console_output": True,  # Console output for local development
-                    "metrics_buffer_size": 2000,  # Small buffer for local
-                    "trace_sampling_rate": 1.0,  # Full sampling for local debugging
-                    "health_check_interval_seconds": 10,  # Frequent checks for immediate feedback
-                    "enable_local_debugging": True,  # Local debugging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_console_output": True,  # Console output for local development
+                        "metrics_buffer_size": 2000,  # Small buffer for local
+                        "trace_sampling_rate": 1.0,  # Full sampling for local debugging
+                        "health_check_interval_seconds": 10,  # Frequent checks for immediate feedback
+                        "enable_local_debugging": True,  # Local debugging features
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -466,36 +476,42 @@ class FlextObservability:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_metrics_collection": True,
-                    "metrics_buffer_size": 100000,  # Very large buffer
-                    "trace_sampling_rate": 0.001,  # Very low sampling
-                    "batch_processing_enabled": True,  # Batch processing
-                    "compression_enabled": True,  # Data compression
-                    "max_concurrent_operations": 1000,  # High concurrency
-                    "buffer_flush_interval_ms": 5000,  # Less frequent flushes
-                    "enable_caching": True,  # Enable caching
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": True,
+                        "metrics_buffer_size": 100000,  # Very large buffer
+                        "trace_sampling_rate": 0.001,  # Very low sampling
+                        "batch_processing_enabled": True,  # Batch processing
+                        "compression_enabled": True,  # Data compression
+                        "max_concurrent_operations": 1000,  # High concurrency
+                        "buffer_flush_interval_ms": 5000,  # Less frequent flushes
+                        "enable_caching": True,  # Enable caching
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "async_metrics_collection": True,
-                    "metrics_buffer_size": 25000,  # Medium buffer
-                    "trace_sampling_rate": 0.01,  # Low sampling
-                    "batch_processing_enabled": True,  # Batch processing
-                    "max_concurrent_operations": 100,  # Medium concurrency
-                    "buffer_flush_interval_ms": 2000,  # Medium flush interval
-                    "enable_caching": False,  # No caching for medium
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": True,
+                        "metrics_buffer_size": 25000,  # Medium buffer
+                        "trace_sampling_rate": 0.01,  # Low sampling
+                        "batch_processing_enabled": True,  # Batch processing
+                        "max_concurrent_operations": 100,  # Medium concurrency
+                        "buffer_flush_interval_ms": 2000,  # Medium flush interval
+                        "enable_caching": False,  # No caching for medium
+                    }
+                )
             else:  # low performance level
-                optimized_config.update({
-                    "async_metrics_collection": False,  # Synchronous processing
-                    "metrics_buffer_size": 1000,  # Small buffer
-                    "trace_sampling_rate": 0.1,  # Higher sampling for debugging
-                    "batch_processing_enabled": False,  # No batch processing
-                    "max_concurrent_operations": 10,  # Low concurrency
-                    "buffer_flush_interval_ms": 500,  # Frequent flushes
-                    "enable_detailed_metrics": True,  # More detailed metrics
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": False,  # Synchronous processing
+                        "metrics_buffer_size": 1000,  # Small buffer
+                        "trace_sampling_rate": 0.1,  # Higher sampling for debugging
+                        "batch_processing_enabled": False,  # No batch processing
+                        "max_concurrent_operations": 10,  # Low concurrency
+                        "buffer_flush_interval_ms": 500,  # Frequent flushes
+                        "enable_detailed_metrics": True,  # More detailed metrics
+                    }
+                )
 
             # Memory optimization settings - safe type conversion
             memory_limit_value = config.get("memory_limit_mb", 512)
@@ -532,13 +548,15 @@ class FlextObservability:
             optimized_config["max_processing_threads"] = min(cpu_cores * 2, 16)
 
             # Add performance metrics
-            optimized_config.update({
-                "performance_level": performance_level,
-                "memory_limit_mb": memory_limit_mb,
-                "cpu_cores": cpu_cores,
-                "optimization_applied": True,
-                "optimization_timestamp": "runtime",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "memory_limit_mb": memory_limit_mb,
+                    "cpu_cores": cpu_cores,
+                    "optimization_applied": True,
+                    "optimization_timestamp": "runtime",
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -2718,12 +2736,14 @@ class FlextObservability:
                         health_info = health.check()
 
                         # Export to monitoring system
-                        monitoring_client.send_health_data({
-                            "service_name": "flext-core",
-                            "health_status": health_info["status"],
-                            "check_timestamp": health_info["timestamp"],
-                            "additional_data": health_info,
-                        })
+                        monitoring_client.send_health_data(
+                            {
+                                "service_name": "flext-core",
+                                "health_status": health_info["status"],
+                                "check_timestamp": health_info["timestamp"],
+                                "additional_data": health_info,
+                            }
+                        )
 
             Note:
                 The returned dictionary is suitable for JSON serialization and

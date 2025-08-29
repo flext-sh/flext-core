@@ -52,8 +52,8 @@ Business logic and domain models, independent of frameworks:
 
 ```python
 # src/flext_core/
-├── entities.py         # FlextEntity - Entities with identity
-├── value_objects.py    # FlextValue - Immutable values
+├── entities.py         # FlextModels.Entity - Entities with identity
+├── value_objects.py    # FlextModels.Value - Immutable values
 ├── aggregate_root.py   # FlextAggregates - Consistency boundaries
 └── domain_services.py  # FlextDomainService - Domain operations
 ```
@@ -61,10 +61,10 @@ Business logic and domain models, independent of frameworks:
 **Domain Modeling Example:**
 
 ```python
-from flext_core import FlextEntity, FlextValue, FlextAggregates
+from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
 from decimal import Decimal
 
-class Money(FlextValue):
+class Money(FlextModels.Value):
     """Value object - compared by value, immutable."""
     amount: Decimal
     currency: str
@@ -77,7 +77,7 @@ class Money(FlextValue):
             currency=self.currency
         ))
 
-class Account(FlextEntity):
+class Account(FlextModels.Entity):
     """Entity - has identity, mutable state."""
     account_number: str
     balance: Money
@@ -190,7 +190,7 @@ External concerns and framework integrations:
 **Infrastructure Example:**
 
 ```python
-from flext_core import FlextConfig, get_logger
+from flext_core import FlextConfig, FlextLogger
 
 class DatabaseSettings(FlextConfig):
     """Configuration with environment support."""
@@ -202,7 +202,7 @@ class DatabaseSettings(FlextConfig):
         env_prefix = "DB_"
 
 # Structured logging with correlation
-logger = get_logger(__name__)
+logger = FlextLogger(__name__)
 
 def connect_database(settings: DatabaseSettings) -> FlextResult[Connection]:
     logger.info("Connecting to database",
@@ -292,8 +292,8 @@ class Order(FlextAggregates):
 
 ### DDD Tactical Patterns
 
-- **Entities**: Objects with identity (`FlextEntity`)
-- **Value Objects**: Immutable values (`FlextValue`)
+- **Entities**: Objects with identity (`FlextModels.Entity`)
+- **Value Objects**: Immutable values (`FlextModels.Value`)
 - **Aggregates**: Consistency boundaries (`FlextAggregates`)
 - **Domain Services**: Stateless operations (`FlextDomainService`)
 - **Domain Events**: State change notifications

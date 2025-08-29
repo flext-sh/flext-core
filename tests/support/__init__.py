@@ -1,125 +1,113 @@
-"""Unified test support libraries for flext-core testing.
+"""FLEXT Core Test Support - Comprehensive testing utilities and fixtures.
 
-This package provides centralized test utilities, fixtures, and patterns
-following SOLID principles and modern Python testing practices.
+This module provides the test support foundation for the FLEXT ecosystem with test utilities,
+fixtures, builders, matchers, performance testing, and domain-specific test helpers following
+modern testing patterns and SOLID principles.
+
+Architecture:
+    Foundation Layer: Utilities, matchers, builders
+    Domain Layer: Domain factories, test models, test entities
+    Application Layer: Fixtures, hypothesis testing, async utilities
+    Infrastructure Layer: HTTP testing, performance testing
+    Support Layer: Legacy factories, advanced patterns
+
+Core Components:
+    AsyncTestUtils: Async testing utilities with context managers and mocking
+    TestBuilders: Builder patterns for test data creation and validation
+    ConfigurationFactory: Test configuration objects with environment overrides
+    FlextMatchers: Custom pytest matchers for FlextResult and domain objects
+    HTTPTestUtils: HTTP/API testing utilities with scenario builders
+    HypothesisStrategies: Property-based testing strategies for domain objects
+    PerformanceProfiler: Performance testing and benchmarking utilities
+    TestFactories: Factory patterns for creating test fixtures and data
+    TestUtilities: General testing helpers and validation utilities
+
+Examples:
+    Test data builders:
+    >>> user = TestBuilders.user().with_email("test@example.com").build()
+    >>> result = TestBuilders.success_result(user).build()
+
+    Custom matchers:
+    >>> assert result | should | be_successful
+    >>> assert result | should | contain_value(user)
+
+    Performance testing:
+    >>> with PerformanceProfiler() as profiler:
+    ...     expensive_operation()
+    >>> assert profiler.duration < 1.0
+
+    HTTP testing:
+    >>> async with APITestClient() as client:
+    ...     response = await client.post("/api/users", json=user_data)
+    ...     assert response.status_code == 201
+
+Notes:
+    - All test utilities should follow SOLID principles and be composable
+    - Use factories for creating consistent test data across test suites
+    - Leverage hypothesis for property-based testing of domain logic
+    - HTTP utilities require pytest-httpx for full functionality
+    - Performance utilities integrate with pytest benchmarking plugins
+
 """
 
 from __future__ import annotations
 
-from .asyncs import (
-    AsyncConcurrencyTesting,
-    AsyncContextManagers,
-    AsyncFixtureUtils,
-    AsyncMarkers,
-    AsyncMockUtils,
-    AsyncTestUtils,
-)
-from .builders import (
-    TestBuilders,
-    build_failure_result,
-    build_string_field,
-    build_success_result,
-    build_test_container,
-)
 
-from .domains import (
-    ConfigurationFactory,
-    FlextResultFactory,
-    PayloadDataFactory,
-    ServiceDataFactory,
-    UserDataFactory,
-)
+from .asyncs import *
+from .builders import *
+from .domains import *
+from .factories import *
+from .http import *
+from .hypothesis import *
+from .matchers import *
+from .performance import *
+from .utilities import *
 
-# HTTP testing utilities (optional - requires pytest-httpx)
-try:
-    from .http import (
-        APITestClient,
-        HTTPScenarioBuilder,
-        HTTPTestUtils,
-        WebhookTestUtils,
-    )
-except ImportError:
-    # Create dummy classes when pytest-httpx is not available
-    class APITestClient:
-        """Dummy APITestClient when pytest-httpx not available."""
-        pass
-    
-    class HTTPScenarioBuilder:
-        """Dummy HTTPScenarioBuilder when pytest-httpx not available."""
-        pass
-    
-    class HTTPTestUtils:
-        """Dummy HTTPTestUtils when pytest-httpx not available."""
-        pass
-    
-    class WebhookTestUtils:
-        """Dummy WebhookTestUtils when pytest-httpx not available."""
-        pass
-from .matchers import FlextMatchers
-from .performance import (
-    AsyncBenchmark,
-    BenchmarkUtils,
-    MemoryProfiler,
-    PerformanceMarkers,
-    PerformanceProfiler,
-)
+# =============================================================================
+# CONSOLIDATED EXPORTS - Combine all __all__ from modules
+# =============================================================================
 
-# Build __all__ dynamically based on available imports
-_all = [
-    # Domain factories
-    "FlextResultFactory",
-    "UserDataFactory",
-    "ConfigurationFactory", 
-    "PayloadDataFactory",
-    "ServiceDataFactory",
-    # Core utilities
-    "FlextMatchers",
-    "TestBuilders",
-    # Builder convenience functions
-    "build_failure_result",
-    "build_string_field",
-    "build_success_result",
-    "build_test_container",
-    # Performance testing
-    "PerformanceProfiler",
-    "BenchmarkUtils",
-    "MemoryProfiler",
-    "AsyncBenchmark",
-    "PerformanceMarkers",
-    # Async testing
-    "AsyncTestUtils",
-    "AsyncContextManagers",
-    "AsyncMockUtils",
-    "AsyncFixtureUtils",
-    "AsyncConcurrencyTesting",
-    "AsyncMarkers",
+# Import modules for __all__ collection
+from . import asyncs as _asyncs
+from . import builders as _builders
+from . import domains as _domains
+from . import factories as _factories
+from . import http as _http
+from . import hypothesis as _hypothesis
+from . import matchers as _matchers
+from . import performance as _performance
+from . import utilities as _utilities
+
+
+# Collect all __all__ exports from imported modules
+_temp_exports: list[str] = []
+
+_modules_to_check = [
+    _asyncs,
+    _builders,
+    _domains,
+    _factories,
+    _http,
+    _hypothesis,
+    _matchers,
+    _performance,
+    _utilities,
 ]
 
-# Add HTTP testing if available
-try:
-    # Check if we have real HTTP classes (not dummies)
-    if hasattr(HTTPTestUtils, '__module__') and HTTPTestUtils.__module__ == 'tests.support.http':
-        _all.extend([
-            "HTTPTestUtils",
-            "APITestClient", 
-            "HTTPScenarioBuilder",
-            "WebhookTestUtils",
-        ])
-    else:
-        # Add dummy classes to __all__ for consistency
-        _all.extend([
-            "HTTPTestUtils",
-            "APITestClient",
-            "HTTPScenarioBuilder", 
-            "WebhookTestUtils",
-        ])
-except AttributeError:
-    # Add dummy classes to __all__ for consistency
-    _all.extend([
-        "HTTPTestUtils",
-        "APITestClient",
-        "HTTPScenarioBuilder",
-        "WebhookTestUtils",
-    ])
 
-__all__ = _all
+for module in _modules_to_check:
+    if hasattr(module, "__all__"):
+        _temp_exports.extend(module.__all__)
+
+# Remove duplicates and sort for consistent exports - build complete list first
+_seen: set[str] = set()
+_final_exports: list[str] = []
+for item in _temp_exports:
+    if item not in _seen:
+        _seen.add(item)
+        _final_exports.append(item)
+_final_exports.sort()
+
+# Define __all__ as literal list for linter compatibility
+# This dynamic assignment is necessary for aggregating module exports
+__all__: list[str] = _final_exports  # pyright: ignore[reportUnsupportedDunderAll] # noqa: PLE0605
