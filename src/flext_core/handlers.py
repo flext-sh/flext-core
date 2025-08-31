@@ -1127,6 +1127,7 @@ class FlextHandlers:
                     current_config: FlextTypes.Config.ConfigDict = {
                         "handler_name": self._handler_name,
                         "handler_state": self._state,
+                        "state": self._state,  # Include both forms for compatibility
                         "log_level": self._config.get(
                             "log_level", FlextConstants.Config.LogLevel.INFO.value
                         ),
@@ -1169,6 +1170,11 @@ class FlextHandlers:
                             "timeout",
                             "max_retries",
                         ],
+                        "metrics": {
+                            "requests_processed": cast("int", self._metrics["requests_processed"]),
+                            "successful_requests": cast("int", self._metrics["successful_requests"]),
+                            "average_processing_time": cast("float", self._metrics["average_processing_time"]),
+                        },
                     }
 
                     return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
@@ -1207,7 +1213,7 @@ class FlextHandlers:
                             "environment": environment,
                             "log_level": FlextConstants.Config.LogLevel.WARNING.value,
                             "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                            "timeout": 15000,  # Shorter timeout for production
+                            "timeout": 30000,  # Reasonable timeout for production
                             "max_retries": 1,  # Fewer retries for production
                             "enable_detailed_logging": False,
                             "enable_performance_metrics": True,
@@ -1223,6 +1229,7 @@ class FlextHandlers:
                             "enable_detailed_logging": True,
                             "enable_performance_metrics": True,
                             "enable_error_reporting": True,
+                            "enable_debugging": True,  # Enable debugging for development environment
                         }
                     elif environment == "test":
                         config = {
@@ -1233,6 +1240,7 @@ class FlextHandlers:
                             "max_retries": 0,  # No retries in tests
                             "enable_detailed_logging": False,
                             "enable_performance_metrics": False,  # No metrics in tests
+                            "enable_performance_tracking": False,  # No performance tracking in tests
                             "enable_error_reporting": False,
                         }
                     else:  # staging, local, etc.
@@ -1268,9 +1276,16 @@ class FlextHandlers:
 
                 """
                 try:
+                    # Optimize based on performance level
+                    performance_level = config.get("performance_level", "standard")
+
                     # Default performance configuration
                     optimized_config: FlextTypes.Config.ConfigDict = {
+                        "performance_level": performance_level,  # Include performance level in result
                         "concurrent_handlers": config.get("concurrent_handlers", 10),
+                        "max_concurrent_requests": config.get("max_concurrent_requests", 100),  # Add max concurrent requests
+                        "request_queue_size": config.get("request_queue_size", 1000),  # Add request queue size
+                        "processing_timeout": config.get("processing_timeout", 30000),  # Add processing timeout
                         "request_batch_size": config.get("request_batch_size", 100),
                         "response_caching_enabled": config.get(
                             "response_caching_enabled", False
@@ -1286,35 +1301,28 @@ class FlextHandlers:
                         "enable_compression": config.get("enable_compression", False),
                     }
 
-                    # Optimize based on performance level
-                    performance_level = config.get("performance_level", "standard")
-
                     if performance_level == "high":
-                        optimized_config.update(
-                            {
-                                "concurrent_handlers": 50,
-                                "request_batch_size": 500,
-                                "response_caching_enabled": True,
-                                "metrics_collection_interval": 1000,
-                                "enable_request_pooling": True,
-                                "thread_pool_size": 16,
-                                "memory_limit_mb": 2048,
-                                "enable_compression": True,
-                            }
-                        )
+                        optimized_config.update({
+                            "concurrent_handlers": 50,
+                            "request_batch_size": 500,
+                            "response_caching_enabled": True,
+                            "metrics_collection_interval": 1000,
+                            "enable_request_pooling": True,
+                            "thread_pool_size": 16,
+                            "memory_limit_mb": 2048,
+                            "enable_compression": True,
+                        })
                     elif performance_level == "low":
-                        optimized_config.update(
-                            {
-                                "concurrent_handlers": 2,
-                                "request_batch_size": 10,
-                                "response_caching_enabled": False,
-                                "metrics_collection_interval": 10000,
-                                "enable_request_pooling": False,
-                                "thread_pool_size": 1,
-                                "memory_limit_mb": 128,
-                                "enable_compression": False,
-                            }
-                        )
+                        optimized_config.update({
+                            "concurrent_handlers": 2,
+                            "request_batch_size": 10,
+                            "response_caching_enabled": False,
+                            "metrics_collection_interval": 10000,
+                            "enable_request_pooling": False,
+                            "thread_pool_size": 1,
+                            "memory_limit_mb": 128,
+                            "enable_compression": False,
+                        })
 
                     return FlextResult[FlextTypes.Config.ConfigDict].ok(
                         optimized_config

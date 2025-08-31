@@ -65,7 +65,7 @@ Based on actual files in src/flext_core/:
 
 - `entities.py` - Domain entities
 - `value_objects.py` - Value objects
-- `aggregate_root.py` - Aggregate root pattern
+- `models.py` - Domain model patterns (Entity, Value, AggregateRoot)
 - `domain_services.py` - Domain services
 - `models.py` - General models
 

@@ -17,7 +17,6 @@ Author: FlextCore Team
 from __future__ import annotations
 
 import time
-from typing import Any
 
 from flext_core import FlextMixins, FlextResult
 
@@ -48,7 +47,7 @@ class EnhancedUserService:
         self._mixins = FlextMixins()
 
         # Get logger for this instance
-        self._logger = FlextMixins.FlextLogger(self)
+        self._logger = FlextMixins.get_logger(self)
 
     def create_user(self, username: str, email: str, age: int) -> FlextResult[User]:
         """Create a user with validation and logging."""
@@ -78,7 +77,7 @@ class EnhancedUserService:
             self._logger.exception("User creation failed", error=error)
             return FlextResult[User].fail(error)
 
-    def get_user_summary(self, user: User) -> dict[str, Any]:
+    def get_user_summary(self, user: User) -> dict[str, object]:
         """Get user summary with mixins functionality."""
         # Use mixins to add metadata
         summary = {
@@ -97,19 +96,19 @@ class CacheableService:
 
     def __init__(self) -> None:
         """Initialize cacheable service."""
-        self._cache: dict[str, Any] = {}
-        self._logger = FlextMixins.FlextLogger(self)
+        self._cache: dict[str, object] = {}
+        self._logger = FlextMixins.get_logger(self)
 
-    def get_cached_data(self, key: str) -> FlextResult[Any]:
+    def get_cached_data(self, key: str) -> FlextResult[object]:
         """Get data from cache."""
         if key in self._cache:
             self._logger.info("Cache hit", key=key)
-            return FlextResult[Any].ok(self._cache[key])
+            return FlextResult[object].ok(self._cache[key])
 
         self._logger.info("Cache miss", key=key)
-        return FlextResult[Any].fail(f"Key '{key}' not found in cache")
+        return FlextResult[object].fail(f"Key '{key}' not found in cache")
 
-    def set_cached_data(self, key: str, value: Any) -> FlextResult[None]:
+    def set_cached_data(self, key: str, value: object) -> FlextResult[None]:
         """Set data in cache."""
         try:
             self._cache[key] = value
@@ -133,7 +132,7 @@ class ValidationService:
 
     def __init__(self) -> None:
         """Initialize validation service."""
-        self._logger = FlextMixins.FlextLogger(self)
+        self._logger = FlextMixins.get_logger(self)
 
     def validate_email(self, email: str) -> FlextResult[bool]:
         """Validate email format."""
@@ -166,7 +165,7 @@ class ComposedUserManager:
         self._user_service = EnhancedUserService()
         self._cache_service = CacheableService()
         self._validation_service = ValidationService()
-        self._logger = FlextMixins.FlextLogger(self)
+        self._logger = FlextMixins.get_logger(self)
 
     def create_and_cache_user(
         self, username: str, email: str, age: int
@@ -191,7 +190,12 @@ class ComposedUserManager:
         cached_result = self._cache_service.get_cached_data(cache_key)
         if cached_result.success:
             self._logger.info("User found in cache", username=username)
-            return FlextResult[User].ok(cached_result.value)
+            # Cast from cache (assume it's a User object)
+            cached_user = cached_result.value
+            if isinstance(cached_user, User):
+                return FlextResult[User].ok(cached_user)
+            # If not a User, continue to create new one
+            self._logger.warning("Invalid cached data type", type=type(cached_user))
 
         # Step 4: Create user
         create_result = self._user_service.create_user(username, email, age)
@@ -207,7 +211,7 @@ class ComposedUserManager:
         self._logger.info("User created and cached", username=username)
         return FlextResult[User].ok(user)
 
-    def get_user_info(self, username: str) -> FlextResult[dict[str, Any]]:
+    def get_user_info(self, username: str) -> FlextResult[dict[str, object]]:
         """Get comprehensive user information."""
         cache_key = f"user_{username}"
         cached_result = self._cache_service.get_cached_data(cache_key)
@@ -291,15 +295,15 @@ def demonstrate_caching_patterns() -> None:
     ]
 
     for key, value in test_data:
-        result = cache_service.set_cached_data(key, value)
-        if result.success:
+        set_result = cache_service.set_cached_data(key, value)
+        if set_result.success:
             print(f"✅ Cached: {key}")
 
     # Retrieve data
     for key, _ in test_data:
-        result = cache_service.get_cached_data(key)
-        if result.success:
-            print(f"✅ Retrieved {key}: {result.value}")
+        get_result = cache_service.get_cached_data(key)
+        if get_result.success:
+            print(f"✅ Retrieved {key}: {get_result.value}")
 
     # Clear cache
     clear_result = cache_service.clear_cache()

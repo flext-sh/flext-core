@@ -18,7 +18,7 @@ from flext_core import FlextResult
 from flext_core import FlextContainer, get_flext_container
 
 # Domain patterns
-from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
+from flext_core import FlextModels
 
 # Configuration management
 from flext_core import FlextConfig
@@ -390,11 +390,11 @@ print(f"Address: {address.full_address}")
 ### Aggregate Roots for Consistency
 
 ```python
-from flext_core import FlextAggregates, FlextResult
+from flext_core import FlextModels, FlextResult
 from typing import List
 from datetime import datetime
 
-class ShoppingCart(FlextAggregates):
+class ShoppingCart(FlextModels.AggregateRoot):
     """Shopping cart aggregate maintaining consistency."""
 
     customer_id: str
@@ -861,7 +861,7 @@ python example_events.py
 """Template for FLEXT Core examples."""
 
 from flext_core import FlextResult, FlextContainer, FlextConfig
-from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
+from flext_core import FlextModels
 
 def main():
     """Main example function."""

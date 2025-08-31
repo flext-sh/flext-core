@@ -57,7 +57,7 @@ from .asyncs import *
 from .builders import *
 from .domains import *
 from .factories import *
-from .http import *
+from .http_support import *
 from .hypothesis import *
 from .matchers import *
 from .performance import *
@@ -72,7 +72,7 @@ from . import asyncs as _asyncs
 from . import builders as _builders
 from . import domains as _domains
 from . import factories as _factories
-from . import http as _http
+from . import http_support as _http
 from . import hypothesis as _hypothesis
 from . import matchers as _matchers
 from . import performance as _performance

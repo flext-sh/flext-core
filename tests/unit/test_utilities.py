@@ -601,11 +601,11 @@ class TestFlextUtilitiesProcessingUtils:
     def test_parse_json_to_model(self) -> None:
         """Test JSON parsing to model."""
 
-        # Test with simple class
+        # Test with simple class that accepts kwargs
         class SimpleModel:
-            def __init__(self, data: dict[str, object]) -> None:
-                self.name = data.get("name", "")
-                self.value = data.get("value", 0)
+            def __init__(self, **kwargs: object) -> None:
+                self.name = kwargs.get("name", "")
+                self.value = kwargs.get("value", 0)
 
         json_text = '{"name": "test", "value": 123}'
         result = FlextUtilities.ProcessingUtils.parse_json_to_model(

@@ -2145,41 +2145,35 @@ class FlextConstants:
         MAX_BUFFER_SIZE: Final[int] = 65536
 
         # LDAP Object Classes (RFC Compliant)
-        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
-            {
-                "person",
-                "organizationalPerson",
-                "inetOrgPerson",
-                "posixAccount",
-                "shadowAccount",
-                "sambaSamAccount",
-                "mailRecipient",
-                "uidObject",
-            }
-        )
+        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
+            "person",
+            "organizationalPerson",
+            "inetOrgPerson",
+            "posixAccount",
+            "shadowAccount",
+            "sambaSamAccount",
+            "mailRecipient",
+            "uidObject",
+        })
 
-        LDAP_ORGANIZATIONAL_CLASSES: Final[frozenset[str]] = frozenset(
-            {
-                "organization",
-                "organizationalUnit",
-                "organizationalRole",
-                "organizationalPerson",
-                "dcObject",
-                "domainComponent",
-            }
-        )
+        LDAP_ORGANIZATIONAL_CLASSES: Final[frozenset[str]] = frozenset({
+            "organization",
+            "organizationalUnit",
+            "organizationalRole",
+            "organizationalPerson",
+            "dcObject",
+            "domainComponent",
+        })
 
-        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
-            {
-                "groupOfNames",
-                "groupOfUniqueNames",
-                "posixGroup",
-                "sambaGroupMapping",
-                "mailGroup",
-                "distributionList",
-                "organizationalRole",
-            }
-        )
+        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
+            "groupOfNames",
+            "groupOfUniqueNames",
+            "posixGroup",
+            "sambaGroupMapping",
+            "mailGroup",
+            "distributionList",
+            "organizationalRole",
+        })
 
         # LDIF Change Types (RFC 2849)
         CHANGETYPE_ADD: Final[str] = "add"
@@ -2244,22 +2238,18 @@ class FlextConstants:
         BIND_TIMEOUT: Final[int] = 10
 
         # Schema Validation Constants
-        REQUIRED_PERSON_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-            {
-                "cn",
-                "sn",
-                "objectClass",
-            }
-        )
+        REQUIRED_PERSON_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+            "cn",
+            "sn",
+            "objectClass",
+        })
 
         REQUIRED_ORG_ATTRIBUTES: Final[frozenset[str]] = frozenset({"o", "objectClass"})
 
-        REQUIRED_ORGUNIT_ATTRIBUTES: Final[frozenset[str]] = frozenset(
-            {
-                "ou",
-                "objectClass",
-            }
-        )
+        REQUIRED_ORGUNIT_ATTRIBUTES: Final[frozenset[str]] = frozenset({
+            "ou",
+            "objectClass",
+        })
 
         # Performance Tuning Constants
         OPTIMAL_THREAD_COUNT: Final[int] = 4

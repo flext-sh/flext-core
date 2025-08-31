@@ -188,7 +188,7 @@ class OrderRepository:
 Model your domain with rich entities:
 
 ```python
-from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
+from flext_core import FlextModels
 
 # Value Object - Immutable, no identity
 class Address(FlextModels.Value):
@@ -232,7 +232,7 @@ class OrderItem(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
 # Aggregate Root - Consistency boundary
-class Order(FlextAggregates):
+class Order(FlextModels.AggregateRoot):
     """Order aggregate root."""
     customer_id: str
     items: list[OrderItem]
@@ -449,7 +449,7 @@ def test_order(test_product):
 Load data only when needed:
 
 ```python
-class Order(FlextAggregates):
+class Order(FlextModels.AggregateRoot):
     """Order with lazy-loaded items."""
 
     def __init__(self, **data):

@@ -24,7 +24,7 @@ Classes:
             • model_config: SettingsConfigDict with environment variable mapping
             • field validation: Automatic type coercion and constraint checking
             • nested configuration: Support for complex hierarchical configurations
-        └── BaseConfigModel: Backward-compatibility alias for Settings
+        └── BaseModel: Backward-compatibility alias for Settings
 
 Functions:
     validate_business_rules(config_data) -> FlextResult[dict]
@@ -61,13 +61,11 @@ Integration with FlextCore:
     ...     config = config_result.value
     ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
     >>> # Business rule validation
-    >>> validation_result = FlextConfig.validate_business_rules(
-    ...     {
-    ...         "database_url": "postgresql://localhost/prod",
-    ...         "secret_key": "secure-key-with-sufficient-length",
-    ...         "log_level": "INFO",
-    ...     }
-    ... )
+    >>> validation_result = FlextConfig.validate_business_rules({
+    ...     "database_url": "postgresql://localhost/prod",
+    ...     "secret_key": "secure-key-with-sufficient-length",
+    ...     "log_level": "INFO",
+    ... })
 
 Environment Configuration Examples:
     >>> # Development configuration
@@ -131,7 +129,7 @@ Notes:
     - Business rule validation enforces enterprise security and operational requirements
     - SystemDefaults provide consistent baseline values across FLEXT ecosystem
     - Configuration serialization supports both JSON and environment variable formats
-    - Backward compatibility maintained through BaseConfigModel alias
+    - Backward compatibility maintained through BaseModel alias
     - Integration with FlextCore enables centralized configuration management
 
 """
@@ -387,7 +385,7 @@ class FlextConfig(BaseModel):
                     f"Settings creation failed: {e}"
                 )
 
-    class BaseConfigModel(Settings):
+    class BaseModel(Settings):
         """Backward-compatible base for configuration models.
 
         Subclassing this class is equivalent to subclassing ``FlextConfig.Settings``.

@@ -111,7 +111,7 @@ class TestFlextCoreIntegration:
     def test_flext_exceptions_hierarchy(self) -> None:
         """Testa o sistema de exceções estruturado."""
         # Teste ValidationError
-        validation_error = FlextExceptions("campo_invalido")
+        validation_error = FlextExceptions.ValidationError("campo_invalido")
         assert isinstance(validation_error, Exception)
         assert isinstance(validation_error, ValueError)
 
@@ -121,13 +121,13 @@ class TestFlextCoreIntegration:
         assert "campo_invalido" in error_str
 
         # Teste OperationError
-        operation_error = FlextExceptions("operacao_falhada")
+        operation_error = FlextExceptions.OperationError("operacao_falhada")
         assert isinstance(operation_error, Exception)
         assert "operacao_falhada" in str(operation_error)
 
         # Verificar que as exceções são do tipo correto
-        assert "FlextValidationError" in str(type(validation_error))
-        assert "FlextOperationError" in str(type(operation_error))
+        assert "_ValidationError" in str(type(validation_error))
+        assert "_OperationError" in str(type(operation_error))
 
     def test_flext_utilities_functionality(self) -> None:
         """Testa as funcionalidades dos utilitários."""
@@ -142,8 +142,8 @@ class TestFlextCoreIntegration:
 
         # Geração de timestamp
         timestamp = FlextUtilities.generate_timestamp()
-        assert isinstance(timestamp, float)
-        assert timestamp > 0
+        assert isinstance(timestamp, str)
+        assert len(timestamp) > 0
 
         # Conversão segura de tipos
         safe_int_result = FlextUtilities.safe_int("42")

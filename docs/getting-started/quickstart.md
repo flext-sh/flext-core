@@ -128,7 +128,7 @@ if settings.debug:
 Build rich domain models with business logic:
 
 ```python
-from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
+from flext_core import FlextModels
 from decimal import Decimal
 
 # Value Object - Immutable, no identity
@@ -170,7 +170,7 @@ class Product(FlextModels.Entity):
         return FlextResult[None].ok(total)
 
 # Aggregate Root - Consistency boundary
-class ShoppingCart(FlextAggregates):
+class ShoppingCart(FlextModels.AggregateRoot):
     customer_id: str
     items: list[tuple[Product, int]] = []
 

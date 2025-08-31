@@ -53,7 +53,7 @@ The source code follows Clean Architecture principles with clear separation of c
 | -------------------- | --------------- | ------------------------------- |
 | `entities.py`        | Domain entities | Business entities with identity |
 | `value_objects.py`   | Value objects   | Immutable domain values         |
-| `aggregate_root.py`  | Aggregates      | Consistency boundaries          |
+| `models.py`          | Models          | Entities, Values, Aggregates    |
 | `domain_services.py` | Domain services | Stateless domain operations     |
 | `models.py`          | Domain models   | Shared model definitions        |
 
@@ -246,9 +246,7 @@ src/flext_core/
 ├── loggings.py              # Logging system
 │
 ├── # Domain Patterns
-├── entities.py              # Domain entities
-├── value_objects.py         # Value objects
-├── aggregate_root.py        # Aggregates
+├── models.py                # Domain models (entities, values, aggregates)  
 ├── domain_services.py       # Domain services
 │
 ├── # Application Patterns

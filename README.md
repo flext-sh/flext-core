@@ -84,7 +84,7 @@ if db_result.success:
 #### Domain-Driven Design
 
 ```python
-from flext_core import FlextModels.Entity, FlextModels.Value, FlextAggregates
+from flext_core import FlextModels
 
 class Email(FlextModels.Value):
     """Immutable value object with built-in validation."""
@@ -110,7 +110,7 @@ class User(FlextModels.Entity):
         self.add_domain_event("UserActivated", {"user_id": self.id})
         return FlextResult[None].ok(None)
 
-class Account(FlextAggregates):
+class Account(FlextModels.AggregateRoot):
     """Aggregate root managing consistency boundaries."""
     owner: User
     balance: Decimal
@@ -140,9 +140,7 @@ flext-core/
 │   └── constants.py             # Enums and constants
 │
 ├── Domain Layer                  # Business logic patterns
-│   ├── entities.py              # DDD entities
-│   ├── value_objects.py         # DDD value objects
-│   ├── aggregate_root.py        # DDD aggregates
+│   ├── models.py                # DDD entities, values, aggregates
 │   └── domain_services.py       # Domain services
 │
 ├── Application Layer             # Use case orchestration

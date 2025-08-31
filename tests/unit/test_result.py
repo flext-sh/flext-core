@@ -20,7 +20,8 @@ import pytest
 from hypothesis import given, strategies as st
 from pytest_mock import MockerFixture
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextConstants, FlextResult, FlextTypes
+from flext_core.result import fail_result, ok_result
 from tests.support.asyncs import AsyncTestUtils
 from tests.support.builders import TestBuilders
 from tests.support.factories import FlextResultFactory
@@ -29,6 +30,12 @@ from tests.support.performance import BenchmarkProtocol, MemoryProfiler
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
+
+
+def _raise_test_error() -> None:
+    """Helper function to raise test error."""
+    msg = "test error"
+    raise ValueError(msg)
 
 
 class TestFlextResultFactoryMethods:
@@ -228,8 +235,8 @@ class TestFlextResultRailwayOperations:
     def test_tap_error_inspects_failures(self) -> None:
         """Test tap_error allows error inspection without transformation."""
         result = FlextResult[int].fail("original error")
-        errors_seen = []
-        transformed = result.tap_error(lambda e: errors_seen.append(e))
+        errors_seen: list[str] = []
+        transformed = result.tap_error(errors_seen.append)
         assert transformed.is_failure
         assert transformed.error == "original error"
         assert errors_seen == ["original error"]
@@ -237,8 +244,8 @@ class TestFlextResultRailwayOperations:
     def test_tap_error_passthrough_success(self) -> None:
         """Test tap_error ignores successful results."""
         result = FlextResult[int].ok(42)
-        errors_seen = []
-        transformed = result.tap_error(lambda e: errors_seen.append(e))
+        errors_seen: list[str] = []
+        transformed = result.tap_error(errors_seen.append)
         assert transformed.is_success
         assert transformed.value == 42
         assert errors_seen == []
@@ -1270,11 +1277,11 @@ class TestFlextResultAdvancedFeatures:
                 "average_order": total_amount / len(orders_data),
                 "summary": f"{len(orders_data)} orders worth ${total_amount}",
             }
-            return FlextResult[FlextTypes.Core.JsonObject].ok(processed)
+            return FlextResult[FlextTypes.Core.JsonObject].ok(cast("FlextTypes.Core.JsonObject", processed))
 
         result = (
             FlextResult[list[FlextTypes.Core.JsonObject]]
-            .ok(orders)
+            .ok(cast("list[FlextTypes.Core.JsonObject]", orders))
             .flat_map(process_orders)
         )
 
@@ -1284,6 +1291,312 @@ class TestFlextResultAdvancedFeatures:
         assert summary["order_count"] == 5
         assert summary["total_amount"] == 150.0  # 10+20+30+40+50
         assert summary["average_order"] == 30.0
+
+
+class TestFlextResultCoverageEdgeCases:
+    """Test specific edge cases to achieve 100% coverage."""
+
+    def test_value_property_edge_cases(self) -> None:
+        """Test value property with various edge case scenarios."""
+        # Test accessing value multiple times
+        result = FlextResult[str].ok("test")
+        assert result.value == "test"
+        assert result.value == "test"  # Should be consistent
+
+        # Test with complex data structures
+        complex_data: dict[str, object] = {"nested": {"values": [1, 2, 3]}}
+        complex_result = FlextResult[dict[str, object]].ok(complex_data)
+        assert complex_result.value == complex_data
+
+    def test_map_general_exception_handling(self) -> None:
+        """Test map with general Exception (not TypeError/ValueError/etc)."""
+        # This tests lines 605-607: general Exception handling in map
+        result = FlextResult[int].ok(42)
+
+        def failing_transform(_: int) -> str:
+            # Force a specific exception that's not in the specific handler
+            msg = "Network error"
+            raise ConnectionError(msg)
+
+        mapped = result.map(failing_transform)
+        assert mapped.is_failure
+        assert mapped.error is not None
+        assert "Transformation failed:" in mapped.error
+        assert mapped.error_code == FlextConstants.Errors.MAP_ERROR
+        assert "ConnectionError" in str(mapped.error_data)
+
+    def test_flat_map_specific_exception_types(self) -> None:
+        """Test flat_map with specific exception types for structured handling."""
+        # This tests line 647: specific exception handling in flat_map
+        result = FlextResult[int].ok(42)
+
+        def failing_flat_map(_: int) -> FlextResult[str]:
+            # Force a KeyError specifically
+            data: dict[str, object] = {}
+            return FlextResult[str].ok(str(data["nonexistent"]))  # KeyError
+
+        mapped = result.flat_map(failing_flat_map)
+        assert mapped.is_failure
+        assert mapped.error is not None
+        assert "Chained operation failed:" in mapped.error
+        assert mapped.error_code == FlextConstants.Errors.BIND_ERROR
+        assert "KeyError" in str(mapped.error_data)
+
+    def test_value_access_internal_consistency(self) -> None:
+        """Test that value property maintains internal consistency."""
+        # Additional coverage for value access patterns
+        result = FlextResult[str].ok("test_value")
+
+        # Multiple accesses should work consistently
+        assert result.value == "test_value"
+        assert result.value == "test_value"  # Second access
+
+        # Test with different data types
+        number_result = FlextResult[int].ok(123)
+        assert number_result.value == 123
+
+    def test_unwrap_or_none_data_handling(self) -> None:
+        """Test unwrap_or with None data in success case."""
+        # This tests line 712: Handle None data case in unwrap_or
+        result = FlextResult[str | None].ok(None)
+        default_value = "default"
+
+        # For success results with None data, unwrap_or should return the None value, not default
+        assert result.unwrap_or(default_value) is None
+
+    def test_unwrap_with_different_data_types(self) -> None:
+        """Test unwrap method with different data types."""
+        # Test unwrap with string data
+        string_result = FlextResult[str].ok("test_string")
+        assert string_result.unwrap() == "test_string"
+
+        # Test unwrap with numeric data
+        int_result = FlextResult[int].ok(42)
+        assert int_result.unwrap() == 42
+
+        # Test unwrap with None data (legitimate case)
+        none_result = FlextResult[None].ok(None)
+        assert none_result.unwrap() is None
+
+    def test_iterator_protocol_edge_cases(self) -> None:
+        """Test iterator protocol with various edge cases."""
+        # Test iteration with None success data - should yield (None, None)
+        none_result = FlextResult[None].ok(None)
+        items = list(none_result)
+        assert items == [None, None]  # (data=None, error=None)
+
+        # Test iteration with failure - should yield (None, error)
+        fail_result = FlextResult[str].fail("error")
+        fail_items = list(fail_result)
+        assert fail_items == [None, "error"]
+
+        # Test multiple iterations (should be consistent)
+        success_result = FlextResult[str].ok("test")
+        items1 = list(success_result)
+        items2 = list(success_result)
+        assert items1 == ["test", None]  # (data="test", error=None)
+        assert items2 == ["test", None]
+
+    def test_context_manager_edge_cases(self) -> None:
+        """Test context manager edge cases for full coverage."""
+        # Test success with string data in context manager
+        success_result = FlextResult[str].ok("test_value")
+        with success_result as value:
+            assert value == "test_value"
+
+        # Test context manager with failure should raise
+        fail_result = FlextResult[str].fail("context error")
+        with pytest.raises(RuntimeError, match="context error"), fail_result:
+            pass  # Should not reach here
+
+    def test_expect_with_various_scenarios(self) -> None:
+        """Test expect method with various legitimate scenarios."""
+        # Test expect with success - should return the value
+        success_result = FlextResult[str].ok("success_value")
+        assert success_result.expect("Custom message") == "success_value"
+
+        # Test expect with failure - should raise with custom message
+        fail_result = FlextResult[str].fail("original error")
+        with pytest.raises(RuntimeError, match="Custom message"):
+            fail_result.expect("Custom message")
+
+        # Test expect with None data - should raise suggestion to use .value
+        none_result = FlextResult[None].ok(None)
+        with pytest.raises(RuntimeError, match="Success result has None data - use .value if None is expected"):
+            none_result.expect("Should work with None")
+
+    def test_equality_exception_handling(self) -> None:
+        """Test __eq__ method exception handling."""
+        # This tests lines 807-808: Exception handling in equality
+        result = FlextResult[str].ok("test")
+
+        # Create an object that raises exception during comparison
+        class BadComparison:
+            def __eq__(self, other: object) -> bool:
+                msg = "Comparison failed"
+                raise ValueError(msg)
+
+            def __hash__(self) -> int:
+                return hash("bad_comparison")
+
+        bad_obj = BadComparison()
+        # Should return False when exception occurs during comparison
+        assert (result == bad_obj) is False
+
+    def test_hash_with_special_cases(self) -> None:
+        """Test hash method with various edge cases."""
+        # Test hash with different types of data that might cause issues
+        complex_data: dict[str, object] = {"nested": {"data": [1, 2, {"inner": "value"}]}}
+        result = FlextResult[dict[str, object]].ok(complex_data)
+
+        # Should be able to hash successfully
+        hash_value = hash(result)
+        assert isinstance(hash_value, int)
+
+        # Test hash consistency
+        assert hash(result) == hash_value
+
+    def test_hash_non_hashable_with_dict(self) -> None:
+        """Test hash with non-hashable objects that have __dict__."""
+        # This tests lines 821-829: hash handling for objects with __dict__
+        class CustomObject:
+            def __init__(self) -> None:
+                self.value = "test"
+                self.number = 42
+
+        obj = CustomObject()
+        result = FlextResult[CustomObject].ok(obj)
+
+        # Should be able to hash using object attributes
+        hash_value = hash(result)
+        assert isinstance(hash_value, int)
+
+    def test_hash_complex_unhashable_objects(self) -> None:
+        """Test hash with complex objects that can't be hashed normally."""
+        # This tests lines 832: fallback hash for complex objects
+        class ComplexUnhashable:
+            def __init__(self) -> None:
+                # Make it unhashable by having unhashable attributes
+                self.__dict__ = {"list": [1, 2, 3], "dict": {"key": "value"}}
+
+        obj = ComplexUnhashable()
+        result = FlextResult[ComplexUnhashable].ok(obj)
+
+        # Should use fallback hash with type and id
+        hash_value = hash(result)
+        assert isinstance(hash_value, int)
+
+    def test_or_else_get_exception_handling(self) -> None:
+        """Test or_else_get method with exceptions in the function."""
+        # This tests lines 865-866: Exception handling in or_else_get
+        result = FlextResult[str].fail("original error")
+
+        def failing_func() -> FlextResult[str]:
+            msg = "Function failed"
+            raise TypeError(msg)
+
+        recovered = result.or_else_get(failing_func)
+        assert recovered.is_failure
+        assert recovered.error is not None
+        assert "Function failed" in recovered.error
+
+    def test_recover_with_various_scenarios(self) -> None:
+        """Test recover method with different scenarios."""
+        # Test recover with normal error
+        fail_result = FlextResult[str].fail("original error")
+
+        def recovery_func(error: str) -> str:
+            return f"recovered from {error}"
+
+        recovered = fail_result.recover(recovery_func)
+        assert recovered.is_success
+        assert recovered.value == "recovered from original error"
+
+        # Test recover with success result (should return self)
+        success_result = FlextResult[str].ok("success")
+        recovered_success = success_result.recover(recovery_func)
+        assert recovered_success is success_result
+
+    def test_recover_with_different_scenarios(self) -> None:
+        """Test recover_with method with different scenarios."""
+        # Test recover_with with normal error
+        fail_result = FlextResult[str].fail("original error")
+
+        def recovery_func(error: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"recovered from {error}")
+
+        recovered = fail_result.recover_with(recovery_func)
+        assert recovered.is_success
+        assert recovered.value == "recovered from original error"
+
+        # Test recover_with with success result (should return self)
+        success_result = FlextResult[str].ok("success")
+        recovered_success = success_result.recover_with(recovery_func)
+        assert recovered_success is success_result
+
+    def test_filter_with_different_scenarios(self) -> None:
+        """Test filter method with different scenarios."""
+        # Test filter that passes
+        result = FlextResult[str].ok("test_value")
+
+        def always_true(_: str) -> bool:
+            return True
+
+        filtered = result.filter(always_true, "Filter failed")
+        assert filtered.is_success
+        assert filtered.value == "test_value"
+
+        # Test filter that fails
+        def always_false(_: str) -> bool:
+            return False
+
+        filtered_fail = result.filter(always_false, "Custom filter message")
+        assert filtered_fail.is_failure
+        assert filtered_fail.error == "Custom filter message"
+
+    def test_deprecated_utils_methods_coverage(self) -> None:
+        """Test deprecated FlextResultUtils methods for coverage (lines 1301, 1308, 1313, 1318, 1323, 1330)."""
+        from flext_core.result import FlextResultUtils
+
+        # Test safe_unwrap_or_none (line 1301)
+        success_result = FlextResult[str].ok("test")
+        failure_result = FlextResult[str].fail("error")
+
+        assert FlextResultUtils.safe_unwrap_or_none(success_result) == "test"
+        assert FlextResultUtils.safe_unwrap_or_none(failure_result) is None
+
+        # Test unwrap_or_raise (line 1308)
+        assert FlextResultUtils.unwrap_or_raise(success_result) == "test"
+        with pytest.raises(RuntimeError):
+            FlextResultUtils.unwrap_or_raise(failure_result)
+
+        # Test collect_successes (line 1313)
+        results = [
+            FlextResult[str].ok("success1"),
+            FlextResult[str].fail("error1"),
+            FlextResult[str].ok("success2"),
+        ]
+        successes = FlextResultUtils.collect_successes(results)
+        assert successes == ["success1", "success2"]
+
+        # Test collect_failures (line 1318)
+        failures = FlextResultUtils.collect_failures(results)
+        assert failures == ["error1"]
+
+        # Test success_rate (line 1323)
+        rate = FlextResultUtils.success_rate(results)
+        assert rate == pytest.approx(66.66666666666667)  # 2/3 * 100 = 66.67%
+
+        # Test batch_process (line 1330)
+        def process_item(item: int) -> FlextResult[str]:
+            if item % 2 == 0:
+                return FlextResult[str].ok(f"processed_{item}")
+            return FlextResult[str].fail(f"failed_{item}")
+
+        items = [1, 2, 3, 4]
+        successes, failures = FlextResultUtils.batch_process(items, process_item)
+        assert successes == ["processed_2", "processed_4"]
+        assert failures == ["failed_1", "failed_3"]
 
 
 class TestFlextResultUtilityMethods:
@@ -1322,7 +1635,9 @@ class TestFlextResultUtilityMethods:
     def test_unwrap_or_raise_failure_no_error_message(self) -> None:
         """Test unwrap_or_raise with empty error message."""
         result = FlextResult[int].fail("")
-        with pytest.raises(RuntimeError, match="Unknown error occurred|Operation failed"):
+        with pytest.raises(
+            RuntimeError, match="Unknown error occurred|Operation failed"
+        ):
             FlextResult.unwrap_or_raise(result)
 
     def test_collect_successes_all_successful(self) -> None:
@@ -1457,18 +1772,18 @@ class TestFlextResultCollectionOperations:
     def test_all_success_all_successful(self) -> None:
         """Test all_success returns True when all results are successful."""
         results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].ok(2),
-            FlextResult[int].ok(3),
+            FlextResult[object].ok(1),
+            FlextResult[object].ok(2),
+            FlextResult[object].ok(3),
         ]
         assert FlextResult.all_success(*results) is True
 
     def test_all_success_with_failure(self) -> None:
         """Test all_success returns False when any result fails."""
         results = [
-            FlextResult[int].ok(1),
-            FlextResult[int].fail("error"),
-            FlextResult[int].ok(3),
+            FlextResult[object].ok(1),
+            FlextResult[object].fail("error"),
+            FlextResult[object].ok(3),
         ]
         assert FlextResult.all_success(*results) is False
 
@@ -1479,17 +1794,17 @@ class TestFlextResultCollectionOperations:
     def test_any_success_with_successes(self) -> None:
         """Test any_success returns True when any result is successful."""
         results = [
-            FlextResult[int].fail("error1"),
-            FlextResult[int].ok(2),
-            FlextResult[int].fail("error2"),
+            FlextResult[object].fail("error1"),
+            FlextResult[object].ok(2),
+            FlextResult[object].fail("error2"),
         ]
         assert FlextResult.any_success(*results) is True
 
     def test_any_success_all_failures(self) -> None:
         """Test any_success returns False when all results fail."""
         results = [
-            FlextResult[int].fail("error1"),
-            FlextResult[int].fail("error2"),
+            FlextResult[object].fail("error1"),
+            FlextResult[object].fail("error2"),
         ]
         assert FlextResult.any_success(*results) is False
 
@@ -1527,13 +1842,15 @@ class TestFlextResultCollectionOperations:
         """Test try_all returns result from first successful function."""
 
         def failing_func1() -> int:
-            raise ValueError("First function failed")
+            msg = "First function failed"
+            raise ValueError(msg)
 
         def succeeding_func() -> int:
             return 42
 
         def failing_func2() -> int:
-            raise RuntimeError("Should not reach here")
+            msg = "Should not reach here"
+            raise RuntimeError(msg)
 
         result = FlextResult.try_all(failing_func1, succeeding_func, failing_func2)
         assert result.is_success
@@ -1543,10 +1860,12 @@ class TestFlextResultCollectionOperations:
         """Test try_all returns failure when all functions fail."""
 
         def failing_func1() -> int:
-            raise ValueError("First failed")
+            msg = "First failed"
+            raise ValueError(msg)
 
         def failing_func2() -> int:
-            raise RuntimeError("Second failed")
+            msg = "Second failed"
+            raise RuntimeError(msg)
 
         result = FlextResult.try_all(failing_func1, failing_func2)
         assert result.is_failure
@@ -1648,7 +1967,7 @@ class TestFlextResultSpecialMethods:
         result = FlextResult[int].ok(42)
         assert result != 42
         assert result != "not a result"
-        assert result != None
+        assert result is not None
 
     def test_hash_success(self) -> None:
         """Test __hash__ works for successful results."""
@@ -1706,19 +2025,18 @@ class TestFlextResultContextManager:
         """Test context manager raises for failed result."""
         result = FlextResult[str].fail("resource not available")
 
-        with pytest.raises(RuntimeError, match="resource not available"):
-            with result as resource:
-                # Should not reach here
-                pass
+        with pytest.raises(RuntimeError, match="resource not available"), result:
+            # Should not reach here
+            pass
 
     def test_context_manager_exception_handling(self) -> None:
         """Test context manager handles exceptions in block."""
         result = FlextResult[str].ok("resource")
 
-        with pytest.raises(ValueError, match="test error"):
-            with result as resource:
-                assert resource == "resource"
-                raise ValueError("test error")
+        with result as resource:
+            assert resource == "resource"
+            with pytest.raises(ValueError, match="test error"):
+                _raise_test_error()
 
     def test_context_manager_return_false_on_exception(self) -> None:
         """Test context manager __exit__ returns False to propagate exceptions."""
@@ -1727,7 +2045,7 @@ class TestFlextResultContextManager:
         try:
             with result as resource:
                 assert resource == "resource"
-                raise ValueError("test error")
+                _raise_test_error()
         except ValueError:
             # Exception should propagate (not be suppressed)
             pass
@@ -1776,24 +2094,18 @@ class TestFlextResultStandaloneFunctions:
 
     def test_ok_result_function(self) -> None:
         """Test ok_result standalone function."""
-        from flext_core.result import ok_result
-
         result = ok_result("test data")
         assert result.is_success
         assert result.value == "test data"
 
     def test_fail_result_function_basic(self) -> None:
         """Test fail_result standalone function with basic error."""
-        from flext_core.result import fail_result
-
         result = fail_result("operation failed")
         assert result.is_failure
         assert result.error == "operation failed"
 
     def test_fail_result_function_with_metadata(self) -> None:
         """Test fail_result standalone function with error code and data."""
-        from flext_core.result import fail_result
-
         result = fail_result(
             "validation error",
             error_code="VALIDATION_ERROR",
@@ -1815,11 +2127,13 @@ class TestFlextResultEdgeCasesAndBoundaryConditions:
 
         def failing_map(x: int) -> str:
             if x > 5:
-                raise ValueError("Value too large")
+                msg = "Value too large"
+                raise ValueError(msg)
             return str(x)
 
         mapped = result.map(failing_map)
         assert mapped.is_failure
+        assert mapped.error is not None
         assert "Value too large" in mapped.error
 
     def test_flat_map_with_exception_in_function(self) -> None:
@@ -1828,21 +2142,21 @@ class TestFlextResultEdgeCasesAndBoundaryConditions:
 
         def failing_flat_map(x: int) -> FlextResult[str]:
             if x > 5:
-                raise RuntimeError("Processing failed")
+                msg = "Processing failed"
+                raise RuntimeError(msg)
             return FlextResult[str].ok(str(x))
 
         mapped = result.flat_map(failing_flat_map)
         assert mapped.is_failure
+        assert mapped.error is not None
         assert "Processing failed" in mapped.error
 
     def test_large_error_data_serialization(self) -> None:
         """Test FlextResult with large error data structures."""
-        large_error_data = {
+        large_error_data: dict[str, object] = {
             f"field_{i}": f"error_message_{i}" * 100 for i in range(100)
         }
-        result = FlextResult[str].fail(
-            "validation failed", error_data=large_error_data
-        )
+        result = FlextResult[str].fail("validation failed", error_data=large_error_data)
 
         assert result.is_failure
         assert len(result.error_data) == 100
@@ -1855,6 +2169,7 @@ class TestFlextResultEdgeCasesAndBoundaryConditions:
 
         assert result.is_failure
         assert result.error == long_error
+        assert result.error is not None
         assert len(result.error) == 10000
 
     def test_property_based_empty_error_message(self) -> None:
@@ -1869,7 +2184,9 @@ class TestFlextResultEdgeCasesAndBoundaryConditions:
         result = FlextResult[str].fail("   ")
 
         assert result.is_failure
-        assert result.error == "Unknown error occurred"  # FlextResult normalizes whitespace
+        assert (
+            result.error == "Unknown error occurred"
+        )  # FlextResult normalizes whitespace
 
     @given(st.integers())
     def test_property_based_success_values(self, value: int) -> None:

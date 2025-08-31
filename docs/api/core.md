@@ -341,14 +341,14 @@ class Email(FlextModels.Value):
         return self.address.split("@")[0]
 ```
 
-### FlextAggregates - Consistency Boundaries
+### FlextModels.AggregateRoot - Consistency Boundaries
 
 Aggregates that maintain consistency.
 
 ```python
-from flext_core import FlextAggregates
+from flext_core import FlextModels.AggregateRoot
 
-class ShoppingCart(FlextAggregates):
+class ShoppingCart(FlextModels.AggregateRoot):
     """Shopping cart aggregate."""
     customer_id: str
     items: list[CartItem] = []

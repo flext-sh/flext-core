@@ -177,7 +177,8 @@ def _demo_repository_pattern(order: Order) -> object:
         def save(self, order: object) -> FlextResult[object]:
             """Save order with FlextResult error handling."""
             if hasattr(order, "id"):
-                self.orders[order.id] = order
+                order_id = order.id  # type: ignore[attr-defined]  # Dynamic attribute access
+                self.orders[order_id] = order
                 return FlextResult[object].ok(order)
             return FlextResult[object].fail("Order must have an id")
 

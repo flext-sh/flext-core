@@ -34,7 +34,7 @@ this repository today.
 - `models.py` — Shared model primitives
 - `entities.py` — FlextModels.Entity
 - `value_objects.py` — FlextModels.Value
-- `aggregate_root.py` — FlextAggregates
+- `models.py` — FlextModels (Entity, Value, AggregateRoot)
 - `domain_services.py` — Domain service patterns
 
 ### Level 5: Architectural Patterns

@@ -424,13 +424,23 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, attribute_name: str | None = None, **kwargs: object
+            self,
+            message: str,
+            *,
+            attribute_name: str | None = None,
+            attribute_context: Mapping[str, object] | None = None,
+            **kwargs: object
         ) -> None:
             self.attribute_name = attribute_name
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
             context["attribute_name"] = attribute_name
+
+            # Add attribute_context if provided (RESTORED FUNCTIONALITY)
+            if attribute_context:
+                context["attribute_context"] = dict(attribute_context)
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.OPERATION_ERROR,
@@ -512,13 +522,11 @@ class FlextExceptions:
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
-            context.update(
-                {
-                    "field": field,
-                    "value": value,
-                    "validation_details": validation_details,
-                }
-            )
+            context.update({
+                "field": field,
+                "value": value,
+                "validation_details": validation_details,
+            })
             super().__init__(
                 message,
                 code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -701,13 +709,20 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, resource_id: str | None = None, **kwargs: object
+            self,
+            message: str,
+            *,
+            resource_id: str | None = None,
+            resource_type: str | None = None,
+            **kwargs: object
         ) -> None:
             self.resource_id = resource_id
+            self.resource_type = resource_type
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
             context["resource_id"] = resource_id
+            context["resource_type"] = resource_type
             super().__init__(
                 message,
                 code=FlextConstants.Errors.ALREADY_EXISTS,
@@ -783,7 +798,41 @@ class FlextExceptions:
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
-            context.update({"expected_type": expected_type, "actual_type": actual_type})
+
+            # Convert type names to actual types for better functionality
+            expected_type_obj: type | str = expected_type or ""
+            actual_type_obj: type | str = actual_type or ""
+
+            if expected_type == "str":
+                expected_type_obj = str
+            elif expected_type == "int":
+                expected_type_obj = int
+            elif expected_type == "float":
+                expected_type_obj = float
+            elif expected_type == "bool":
+                expected_type_obj = bool
+            elif expected_type == "list":
+                expected_type_obj = list
+            elif expected_type == "dict":
+                expected_type_obj = dict
+
+            if actual_type == "str":
+                actual_type_obj = str
+            elif actual_type == "int":
+                actual_type_obj = int
+            elif actual_type == "float":
+                actual_type_obj = float
+            elif actual_type == "bool":
+                actual_type_obj = bool
+            elif actual_type == "list":
+                actual_type_obj = list
+            elif actual_type == "dict":
+                actual_type_obj = dict
+
+            context.update({
+                "expected_type": expected_type_obj,
+                "actual_type": actual_type_obj
+            })
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,
@@ -799,11 +848,23 @@ class FlextExceptions:
         """
 
         def __init__(self, message: str, **kwargs: object) -> None:
+            # Extract special parameters
+            context = cast("Mapping[str, object] | None", kwargs.pop("context", None))
+            correlation_id = cast("str | None", kwargs.pop("correlation_id", None))
+
+            # Add remaining kwargs to context for full functionality
+            if context is not None:
+                full_context = dict(context)
+                full_context.update(kwargs)
+                context = full_context
+            elif kwargs:
+                context = dict(kwargs)
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.CRITICAL_ERROR,
-                context=cast("Mapping[str, object] | None", kwargs.get("context")),
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _Error(BaseError, RuntimeError):
@@ -814,11 +875,23 @@ class FlextExceptions:
         """
 
         def __init__(self, message: str, **kwargs: object) -> None:
+            # Extract special parameters
+            context = cast("Mapping[str, object] | None", kwargs.pop("context", None))
+            correlation_id = cast("str | None", kwargs.pop("correlation_id", None))
+
+            # Add remaining kwargs to context for full functionality
+            if context is not None:
+                full_context = dict(context)
+                full_context.update(kwargs)
+                context = full_context
+            elif kwargs:
+                context = dict(kwargs)
+
             super().__init__(
                 message,
                 code=FlextConstants.Errors.GENERIC_ERROR,
-                context=cast("Mapping[str, object] | None", kwargs.get("context")),
-                correlation_id=cast("str | None", kwargs.get("correlation_id")),
+                context=context,
+                correlation_id=correlation_id,
             )
 
     class _UserError(BaseError, TypeError):
@@ -952,7 +1025,7 @@ class FlextExceptions:
     # DIRECT CALLABLE INTERFACE - For general usage
     # =============================================================================
 
-    def __new__(  # type: ignore[misc]
+    def __new__(
         cls,
         message: str,
         *,

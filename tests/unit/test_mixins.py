@@ -21,6 +21,7 @@ from typing import cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
+from hypothesis.strategies import SearchStrategy
 
 from flext_core import (
     FlextExceptions,
@@ -31,11 +32,12 @@ from ..support import (
     AsyncTestUtils,
     BenchmarkUtils,
     PerformanceProfiler,
-    UserDataFactory,
 )
+from ..support.factories import UserFactory
 from ..support.hypothesis import (
     FlextStrategies,
 )
+from ..support.performance import BenchmarkProtocol, StressTestRunner
 
 
 # Test patterns functionality - local implementations
@@ -44,13 +46,11 @@ class CompositeStrategies:
 
     @staticmethod
     def user_profiles() -> object:
-        return st.fixed_dictionaries(
-            {
-                "name": st.text(min_size=1, max_size=50),
-                "email": st.emails(),
-                "active": st.booleans(),
-            }
-        )
+        return st.fixed_dictionaries({
+            "name": st.text(min_size=1, max_size=50),
+            "email": st.emails(),
+            "active": st.booleans(),
+        })
 
 
 class EdgeCaseStrategies:
@@ -85,43 +85,25 @@ class ComplexityAnalyzer:
         }
 
 
-class StressTestRunner:
-    """Run stress tests with load testing."""
-
-    def run_load_test(
-        self, func: Callable[[], object], iterations: int, _operation_name: str
-    ) -> dict[str, object]:
-        failures = 0
-        for _ in range(iterations):
-            try:
-                func()
-            except Exception:
-                failures += 1
-        return {
-            "failure_rate": failures / iterations,
-            "operations_per_second": max(100, iterations / 10),
-        }
-
-
 class GivenWhenThenBuilder:
     """Given-When-Then test pattern builder."""
 
     def __init__(self, scenario_name: str) -> None:
         self.scenario_name = scenario_name
-        self.given: dict[str, object] = {}
-        self.when: dict[str, object] = {}
-        self.then: dict[str, object] = {}
+        self._given_data: dict[str, object] = {}
+        self._when_data: dict[str, object] = {}
+        self._then_data: dict[str, object] = {}
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        self.given.update(kwargs)
+        self._given_data.update(kwargs)
         return self
 
     def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        self.when.update(kwargs)
+        self._when_data.update(kwargs)
         return self
 
     def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
-        self.then.update(kwargs)
+        self._then_data.update(kwargs)
         return self
 
     def with_tag(self, _tag: str) -> GivenWhenThenBuilder:
@@ -142,13 +124,11 @@ class TestAssertionBuilder:
         self.assertions: list[tuple[str, Callable[[object], bool], str]] = []
 
     def is_not_none(self) -> TestAssertionBuilder:
-        self.assertions.append(
-            (
-                "not_none",
-                lambda x: x is not None,
-                "should not be None",
-            )
-        )
+        self.assertions.append((
+            "not_none",
+            lambda x: x is not None,
+            "should not be None",
+        ))
         return self
 
     def satisfies(
@@ -211,17 +191,6 @@ def arrange_act_assert(
     return decorator
 
 
-def mark_test_pattern(
-    _pattern_name: str,
-) -> Callable[[Callable[[], None]], Callable[[], None]]:
-    """Mark test with pattern."""
-
-    def decorator(func: Callable[[], None]) -> Callable[[], None]:
-        return func
-
-    return decorator
-
-
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
 
@@ -234,7 +203,7 @@ class TestTimestampMixin:
     """Test FlextMixins.Timestampable with factory patterns and property testing."""
 
     def test_timestamp_mixin_with_factory_data(
-        self, user_data_factory: UserDataFactory
+        self, user_factory: UserFactory
     ) -> None:
         """Test timestamp mixin with factory-generated data."""
 
@@ -253,18 +222,20 @@ class TestTimestampMixin:
                 pass
 
         # Use factory data
-        user_data = user_data_factory.build()
-        model = TimestampedModel(user_data["name"])
+        user_data = user_factory.build()
+        user_name = user_data["name"]  # type: ignore[index]  # UserDataFactory returns dict
+        assert isinstance(user_name, str)
+        model = TimestampedModel(user_name)
 
-        # Test with assertion builder
+        # Test with assertion builder - use properly typed lambda
         TestAssertionBuilder(model).is_not_none().satisfies(
             lambda x: hasattr(x, "created_at"), "should have created_at"
         ).satisfies(
             lambda x: hasattr(x, "updated_at"), "should have updated_at"
         ).satisfies(
-            lambda x: x.created_at is not None, "created_at should not be None"
+            lambda x: hasattr(x, "created_at") and x.created_at is not None, "created_at should not be None"  # type: ignore[attr-defined]
         ).satisfies(
-            lambda x: x.updated_at is not None, "updated_at should not be None"
+            lambda x: hasattr(x, "updated_at") and x.updated_at is not None, "updated_at should not be None"  # type: ignore[attr-defined]
         ).assert_all()
 
     def test_timestamp_age_calculation_complexity(self) -> None:
@@ -294,7 +265,7 @@ class TestTimestampMixin:
         )
 
         assert result["operation"] == "timestamp_age_calculation"
-        assert len(result["results"]) == len(input_sizes)
+        assert len(cast("list[object]", result["results"])) == len(input_sizes)
 
     @given(FlextStrategies.timestamps())
     def test_timestamp_property_based(self, timestamp: datetime) -> None:
@@ -345,11 +316,11 @@ class TestIdentifiableMixin:
                 pass
 
         # Execute the scenario
-        model = IdentifiableModel(cast("str", scenario.given["entity_id"]))
+        model = IdentifiableModel(cast("str", scenario._given_data["entity_id"]))
 
-        assert model.id == scenario.given["entity_id"]
-        assert scenario.when["action"] == "create"
-        assert scenario.then["success"] is True
+        assert model.id == scenario._given_data["entity_id"]
+        assert scenario._when_data["action"] == "create"
+        assert scenario._then_data["success"] is True
 
     def test_identifiable_invalid_id_edge_cases(self) -> None:
         """Test identifiable mixin with edge cases using test case factory."""
@@ -375,7 +346,7 @@ class TestIdentifiableMixin:
         # Test failure cases
         for case in failure_cases:
             with pytest.raises(FlextExceptions.ValidationError):
-                identifiable_obj.id = cast("str", case["input"]["id"])
+                identifiable_obj.id = cast("str", cast("dict[str, object]", case["input"])["id"])
 
     @given(FlextStrategies.flext_ids())
     def test_identifiable_property_based(self, generated_id: str) -> None:
@@ -423,7 +394,7 @@ class TestTimingMixin:
 
         # Benchmark timing operations
         result = BenchmarkUtils.benchmark_with_warmup(
-            benchmark, create_and_time, warmup_rounds=3
+            cast("BenchmarkProtocol", benchmark), create_and_time, warmup_rounds=3
         )
 
         assert isinstance(result, TimedModel)
@@ -452,7 +423,7 @@ class TestTimingMixin:
         )
 
         assert result["failure_rate"] == 0.0
-        assert result["operations_per_second"] > 100
+        assert cast("float", result["operations_per_second"]) > 100
 
 
 class TestCacheableMixin:
@@ -549,7 +520,6 @@ class TestCacheableMixin:
 class TestValidatableMixin:
     """Test FlextMixins.Validatable with comprehensive validation patterns."""
 
-    @mark_test_pattern("arrange_act_assert")
     def test_validatable_mixin_aaa_pattern(self) -> None:
         """Test validatable mixin using Arrange-Act-Assert pattern."""
 
@@ -597,7 +567,7 @@ class TestValidatableMixin:
 
         test_validation_workflow()
 
-    @given(CompositeStrategies.user_profiles())
+    @given(cast("SearchStrategy[dict[str, object]]", CompositeStrategies.user_profiles()))
     def test_validatable_property_based(self, profile: dict[str, object]) -> None:
         """Property-based test for validatable mixin."""
         assume(PropertyTestHelpers.assume_non_empty_string(profile.get("name", "")))
@@ -633,7 +603,7 @@ class TestSerializableMixin:
     """Test FlextMixins.Serializable with comprehensive serialization patterns."""
 
     def test_serializable_collection_handling_comprehensive(
-        self, user_data_factory: UserDataFactory
+        self, user_factory: UserFactory
     ) -> None:
         """Test serializable mixin collection handling with factory data."""
 
@@ -660,16 +630,16 @@ class TestSerializableMixin:
                 pass
 
         # Use factory data
-        user_data = user_data_factory.build()
-        serializable_obj = ConcreteSerializable(user_data)
+        user_data = user_factory.build()  # UserDataFactory returns dict directly
+        serializable_obj = ConcreteSerializable(user_data)  # type: ignore[arg-type]  # Factory returns dict
 
         # Test serialization with comprehensive validation
         result = serializable_obj.to_dict_basic()
 
         TestAssertionBuilder(result).is_not_none().satisfies(
             lambda x: isinstance(x, dict), "should be a dictionary"
-        ).satisfies(lambda x: "user_name" in x, "should have user_name").satisfies(
-            lambda x: "test_list_attr" in x, "should have test_list_attr"
+        ).satisfies(lambda x: "user_name" in cast("dict[str, object]", x), "should have user_name").satisfies(
+            lambda x: "test_list_attr" in cast("dict[str, object]", x), "should have test_list_attr"
         ).assert_all()
 
     def test_serializable_mixin_performance_large_objects(
@@ -693,7 +663,7 @@ class TestSerializableMixin:
 
         # Benchmark large object serialization
         result = BenchmarkUtils.benchmark_with_warmup(
-            benchmark, serialize_large_object, warmup_rounds=3
+            cast("BenchmarkProtocol", benchmark), serialize_large_object, warmup_rounds=3
         )
 
         assert isinstance(result, dict)
@@ -714,13 +684,11 @@ class TestEntityMixin:
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases(
-            [
-                {"entity_id": "entity-123", "name": "Test Entity 1"},
-                {"entity_id": "entity-456", "name": "Test Entity 2"},
-                {"entity_id": "entity-789", "name": "Test Entity 3"},
-            ]
-        )
+        param_builder.add_success_cases([
+            {"entity_id": "entity-123", "name": "Test Entity 1"},
+            {"entity_id": "entity-456", "name": "Test Entity 2"},
+            {"entity_id": "entity-789", "name": "Test Entity 3"},
+        ])
 
         class EntityModel(FlextMixins.Entity):
             def __init__(self, entity_id: str, name: str) -> None:
@@ -806,7 +774,7 @@ class TestEntityMixin:
         )
 
         assert result["failure_rate"] == 0.0
-        assert result["operations_per_second"] > 100
+        assert cast("float", result["operations_per_second"]) > 100
 
 
 # ============================================================================
@@ -962,7 +930,7 @@ class TestMixinComposition:
 class TestMixinPropertyBased:
     """Comprehensive property-based testing for all mixin behaviors."""
 
-    @given(CompositeStrategies.user_profiles())
+    @given(cast("SearchStrategy[dict[str, object]]", CompositeStrategies.user_profiles()))
     def test_serializable_mixin_properties(self, profile: dict[str, object]) -> None:
         """Property-based test for serializable mixin with user profiles."""
         assume(PropertyTestHelpers.assume_valid_email(profile.get("email", "")))
@@ -1010,7 +978,7 @@ class TestMixinPropertyBased:
         assert hasattr(model, "_id")
         assert model.get_id() == correlation_id
 
-    @given(EdgeCaseStrategies.unicode_edge_cases())
+    @given(cast("SearchStrategy[str]", EdgeCaseStrategies.unicode_edge_cases()))
     def test_validation_mixin_unicode_properties(self, unicode_text: str) -> None:
         """Property-based test for validation mixin with Unicode edge cases."""
 

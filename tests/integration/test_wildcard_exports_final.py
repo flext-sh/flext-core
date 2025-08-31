@@ -11,6 +11,10 @@ import uuid
 
 import pytest
 
+# Wildcard import to populate globals() for export count tests
+from flext_core import *  # noqa: F403,F401
+
+# Specific imports for type checking and IDE support
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -174,7 +178,7 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(operation_id, str)
 
         # 2. Create a result
-        result = FlextResult[dict].ok(
+        result = FlextResult[dict[str, object]].ok(
             {
                 "operation_id": operation_id,
                 "status": "started",
@@ -206,7 +210,8 @@ class TestFlextCoreIntegrationScenarios:
         assert failed_result.success is False
 
         # Convert to exception
-        error = FlextExceptions.ValidationError(failed_result.error)
+        error_msg = failed_result.error or "unknown error"
+        error = FlextExceptions.ValidationError(error_msg)
         assert FlextConstants.Errors.VALIDATION_ERROR in str(error)
 
     def test_constants_and_exceptions_integration(self) -> None:

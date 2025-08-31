@@ -91,12 +91,10 @@ class FlextModels:
         Basic domain modeling::
 
             # Create entity with factory method
-            user_result = FlextModels.create_entity(
-                {
-                    "id": "user_123",
-                    "name": "John Doe",
-                }
-            )
+            user_result = FlextModels.create_entity({
+                "id": "user_123",
+                "name": "John Doe",
+            })
 
             # Create validated primitives
             email = FlextModels.EmailAddress(root="test@example.com")
@@ -504,16 +502,16 @@ class FlextModels:
             default=0, ge=0, description="Number of processing attempts"
         )
 
-        @property
         @computed_field
+        @property
         def is_expired(self) -> bool:
             """Check if message has expired."""
             if self.expires_at is None:
                 return False
             return datetime.now(UTC) > self.expires_at
 
-        @property
         @computed_field
+        @property
         def age_seconds(self) -> float:
             """Get message age in seconds."""
             return (datetime.now(UTC) - self.timestamp).total_seconds()
@@ -1271,6 +1269,14 @@ class FlextModels:
                     "create_payload",
                     "create_domain_event",
                 ],
+                "performance_model_classes": [
+                    "Entity",
+                    "Value",
+                    "AggregateRoot",
+                    "Payload",
+                    "Message",
+                    "Event",
+                ],
             }
 
             return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(config)
@@ -1337,75 +1343,65 @@ class FlextModels:
 
             # Environment-specific configurations
             if environment == "production":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "enable_strict_validation": True,
-                        "enable_json_schema_validation": True,
-                        "enable_performance_tracking": True,
-                        "max_validation_errors": 50,  # Limited in production
-                        "cache_model_instances": True,
-                        "enable_detailed_error_messages": False,  # Security in production
-                        "validation_timeout_ms": 1000,  # Fast validation required
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_strict_validation": True,
+                    "enable_json_schema_validation": True,
+                    "enable_performance_tracking": True,
+                    "max_validation_errors": 50,  # Limited in production
+                    "cache_model_instances": True,
+                    "enable_detailed_error_messages": False,  # Security in production
+                    "validation_timeout_ms": 1000,  # Fast validation required
+                })
             elif environment == "development":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_strict_validation": True,
-                        "enable_json_schema_validation": True,
-                        "enable_performance_tracking": False,  # Not needed in dev
-                        "max_validation_errors": 500,  # Detailed debugging
-                        "cache_model_instances": False,  # Fresh validation each time
-                        "enable_detailed_error_messages": True,  # Full debugging info
-                        "validation_timeout_ms": 5000,  # More time for debugging
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_strict_validation": True,
+                    "enable_json_schema_validation": True,
+                    "enable_performance_tracking": False,  # Not needed in dev
+                    "max_validation_errors": 500,  # Detailed debugging
+                    "cache_model_instances": False,  # Fresh validation each time
+                    "enable_detailed_error_messages": True,  # Full debugging info
+                    "validation_timeout_ms": 5000,  # More time for debugging
+                })
             elif environment == "test":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
-                        "enable_strict_validation": False,  # Fast test execution
-                        "enable_json_schema_validation": False,  # Skip for speed
-                        "enable_performance_tracking": False,  # No tracking in tests
-                        "max_validation_errors": 10,  # Limited for test speed
-                        "cache_model_instances": False,  # Clean state between tests
-                        "enable_detailed_error_messages": False,  # Clean test output
-                        "validation_timeout_ms": 100,  # Very fast for tests
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
+                    "enable_strict_validation": False,  # Fast test execution
+                    "enable_json_schema_validation": False,  # Skip for speed
+                    "enable_performance_tracking": False,  # No tracking in tests
+                    "max_validation_errors": 10,  # Limited for test speed
+                    "cache_model_instances": False,  # Clean state between tests
+                    "enable_detailed_error_messages": False,  # Clean test output
+                    "validation_timeout_ms": 100,  # Very fast for tests
+                })
             elif environment == "staging":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_strict_validation": True,
-                        "enable_json_schema_validation": True,
-                        "enable_performance_tracking": True,  # Monitor staging performance
-                        "max_validation_errors": 100,
-                        "cache_model_instances": True,
-                        "enable_detailed_error_messages": True,  # Debug staging issues
-                        "validation_timeout_ms": 2000,  # Reasonable staging timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_strict_validation": True,
+                    "enable_json_schema_validation": True,
+                    "enable_performance_tracking": True,  # Monitor staging performance
+                    "max_validation_errors": 100,
+                    "cache_model_instances": True,
+                    "enable_detailed_error_messages": True,  # Debug staging issues
+                    "validation_timeout_ms": 2000,  # Reasonable staging timeout
+                })
             elif environment == "local":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_strict_validation": True,
-                        "enable_json_schema_validation": True,
-                        "enable_performance_tracking": False,
-                        "max_validation_errors": 1000,  # Local development flexibility
-                        "cache_model_instances": False,  # Fresh validation for development
-                        "enable_detailed_error_messages": True,  # Full local debugging
-                        "validation_timeout_ms": 10000,  # Generous local timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_strict_validation": True,
+                    "enable_json_schema_validation": True,
+                    "enable_performance_tracking": False,
+                    "max_validation_errors": 1000,  # Local development flexibility
+                    "cache_model_instances": False,  # Fresh validation for development
+                    "enable_detailed_error_messages": True,  # Full local debugging
+                    "validation_timeout_ms": 10000,  # Generous local timeout
+                })
 
             return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(config)
 
@@ -1467,99 +1463,89 @@ class FlextModels:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update(
-                {
-                    "performance_level": performance_level,
-                    "optimization_enabled": True,
-                    "optimization_timestamp": datetime.now(UTC).isoformat(),
-                }
-            )
+            optimized_config.update({
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+                "optimization_timestamp": datetime.now(UTC).isoformat(),
+            })
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        # Validation optimization
-                        "enable_validation_caching": True,
-                        "validation_cache_size": 10000,
-                        "max_concurrent_validations": 20,
-                        "validation_batch_size": 500,
-                        "validation_thread_count": 8,
-                        # Memory and caching
-                        "cache_size": 50000,
-                        "enable_aggressive_caching": True,
-                        "cache_ttl_seconds": 3600,  # 1 hour
-                        "memory_pool_size_mb": 100,
-                        # Processing optimization
-                        "enable_parallel_processing": True,
-                        "processing_queue_size": 1000,
-                        "enable_bulk_operations": True,
-                        "optimization_level": "aggressive",
-                    }
-                )
+                optimized_config.update({
+                    # Validation optimization
+                    "enable_validation_caching": True,
+                    "validation_cache_size": 10000,
+                    "max_concurrent_validations": 20,
+                    "validation_batch_size": 500,
+                    "validation_thread_count": 8,
+                    # Memory and caching
+                    "cache_size": 50000,
+                    "enable_aggressive_caching": True,
+                    "cache_ttl_seconds": 3600,  # 1 hour
+                    "memory_pool_size_mb": 100,
+                    # Processing optimization
+                    "enable_parallel_processing": True,
+                    "processing_queue_size": 1000,
+                    "enable_bulk_operations": True,
+                    "optimization_level": "aggressive",
+                })
             elif performance_level == "medium":
-                optimized_config.update(
-                    {
-                        # Balanced validation
-                        "enable_validation_caching": True,
-                        "validation_cache_size": 5000,
-                        "max_concurrent_validations": 10,
-                        "validation_batch_size": 200,
-                        "validation_thread_count": 4,
-                        # Moderate caching
-                        "cache_size": 25000,
-                        "enable_aggressive_caching": False,
-                        "cache_ttl_seconds": 1800,  # 30 minutes
-                        "memory_pool_size_mb": 50,
-                        # Standard processing
-                        "enable_parallel_processing": True,
-                        "processing_queue_size": 500,
-                        "enable_bulk_operations": True,
-                        "optimization_level": "balanced",
-                    }
-                )
+                optimized_config.update({
+                    # Balanced validation
+                    "enable_validation_caching": True,
+                    "validation_cache_size": 5000,
+                    "max_concurrent_validations": 10,
+                    "validation_batch_size": 200,
+                    "validation_thread_count": 4,
+                    # Moderate caching
+                    "cache_size": 25000,
+                    "enable_aggressive_caching": False,
+                    "cache_ttl_seconds": 1800,  # 30 minutes
+                    "memory_pool_size_mb": 50,
+                    # Standard processing
+                    "enable_parallel_processing": True,
+                    "processing_queue_size": 500,
+                    "enable_bulk_operations": True,
+                    "optimization_level": "balanced",
+                })
             elif performance_level == "low":
-                optimized_config.update(
-                    {
-                        # Conservative validation
-                        "enable_validation_caching": False,
-                        "validation_cache_size": 1000,
-                        "max_concurrent_validations": 2,
-                        "validation_batch_size": 50,
-                        "validation_thread_count": 1,
-                        # Minimal caching
-                        "cache_size": 5000,
-                        "enable_aggressive_caching": False,
-                        "cache_ttl_seconds": 300,  # 5 minutes
-                        "memory_pool_size_mb": 20,
-                        # Single-threaded processing
-                        "enable_parallel_processing": False,
-                        "processing_queue_size": 100,
-                        "enable_bulk_operations": False,
-                        "optimization_level": "conservative",
-                    }
-                )
+                optimized_config.update({
+                    # Conservative validation
+                    "enable_validation_caching": False,
+                    "validation_cache_size": 1000,
+                    "max_concurrent_validations": 2,
+                    "validation_batch_size": 50,
+                    "validation_thread_count": 1,
+                    # Minimal caching
+                    "cache_size": 5000,
+                    "enable_aggressive_caching": False,
+                    "cache_ttl_seconds": 300,  # 5 minutes
+                    "memory_pool_size_mb": 20,
+                    # Single-threaded processing
+                    "enable_parallel_processing": False,
+                    "processing_queue_size": 100,
+                    "enable_bulk_operations": False,
+                    "optimization_level": "conservative",
+                })
 
             # Additional performance metrics
-            optimized_config.update(
-                {
-                    "expected_throughput_per_second": 1000
-                    if performance_level == "high"
-                    else 500
-                    if performance_level == "medium"
-                    else 100,
-                    "target_validation_latency_ms": 1
-                    if performance_level == "high"
-                    else 5
-                    if performance_level == "medium"
-                    else 20,
-                    "memory_efficiency_target": 0.9
-                    if performance_level == "high"
-                    else 0.8
-                    if performance_level == "medium"
-                    else 0.7,
-                }
-            )
+            optimized_config.update({
+                "expected_throughput_per_second": 1000
+                if performance_level == "high"
+                else 500
+                if performance_level == "medium"
+                else 100,
+                "target_validation_latency_ms": 1
+                if performance_level == "high"
+                else 5
+                if performance_level == "medium"
+                else 20,
+                "memory_efficiency_target": 0.9
+                if performance_level == "high"
+                else 0.8
+                if performance_level == "medium"
+                else 0.7,
+            })
 
             return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(optimized_config)
 

@@ -6,13 +6,12 @@ functionality for data integration platforms.
 
 Architecture:
     Foundation Layer: FlextResult, exceptions, constants, types
-    Domain Layer: FlextModels.Entity, FlextValueObject, FlextAggregateRoot, domain services
+    Domain Layer: FlextModels.Entity, FlextModels.Value, domain services
     Application Layer: Commands (CQRS), handlers, validation, guards
     Infrastructure Layer: Container (DI), config, logging, observability, context
     Support Layer: Decorators, mixins, utilities, fields, services, adapters
 
 Core Components:
-    FlextAggregates: DDD aggregate pattern with domain event management
     FlextCommands: CQRS command patterns with validation and result handling
     FlextConfig: Pydantic-based configuration with environment variable support
     FlextConstants: Application constants, enums, and configuration defaults
@@ -94,7 +93,6 @@ from flext_core.protocols import *
 # DOMAIN LAYER - Depends only on Foundation layer
 # =============================================================================
 
-from flext_core.aggregate_root import *
 from flext_core.domain_services import *
 from flext_core.models import *
 
@@ -136,15 +134,14 @@ from flext_core.utilities import *
 # =============================================================================
 
 # Core functionality - ensure specific exports are accessible
-# from flext_core.core import *
+from flext_core.core import *  # type: ignore[assignment]
 
 
 # =============================================================================
 # LEGACY FUNCTIONALITY - Legacy implementation exports
 # =============================================================================
 
-# Legacy functionality - ensure specific exports are accessible
-from flext_core.legacy import *  # type: ignore[assignment]
+# Legacy functionality removed - all core functionality now in main modules
 
 
 # =============================================================================
@@ -153,14 +150,14 @@ from flext_core.legacy import *  # type: ignore[assignment]
 
 # Combine all __all__ exports from imported modules
 import flext_core.__version__ as _version
-import flext_core.aggregate_root as _aggregate_root
+# Removed aggregate_root module
 import flext_core.commands as _commands
 import flext_core.config as _config
 import flext_core.constants as _constants
 import flext_core.container as _container
 import flext_core.context as _context
 
-# import flext_core.core as _core
+import flext_core.core as _core
 import flext_core.decorators as _decorators
 import flext_core.delegation_system as _delegation_system
 import flext_core.domain_services as _domain_services
@@ -180,7 +177,6 @@ import flext_core.type_adapters as _type_adapters
 import flext_core.typings as _typings
 import flext_core.utilities as _utilities
 import flext_core.validation as _validation
-import flext_core.legacy as _legacy
 
 # Collect all __all__ exports from imported modules
 _temp_exports: list[str] = []
@@ -193,7 +189,6 @@ for module in [
     _exceptions,
     _protocols,
     _models,
-    _aggregate_root,
     _domain_services,
     _commands,
     _validation,
@@ -204,7 +199,7 @@ for module in [
     _loggings,
     _observability,
     _context,
-    # _core,
+    _core,
     _mixins,
     _decorators,
     _utilities,
@@ -213,7 +208,6 @@ for module in [
     _delegation_system,
     _processors,
     _type_adapters,
-    _legacy,
 ]:
     if hasattr(module, "__all__"):
         _temp_exports.extend(module.__all__)
