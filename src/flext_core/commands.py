@@ -1458,7 +1458,7 @@ class FlextCommands:
                 validate_method = getattr(command, "validate_command", None)
                 if callable(validate_method):
                     result = validate_method()
-                    if hasattr(result, "success") and hasattr(result, "data"):
+                    if hasattr(result, "success") and hasattr(result, "error"):
                         return cast("FlextResult[None]", result)
                 return FlextResult[None].ok(None)
 
@@ -1901,7 +1901,7 @@ class FlextCommands:
         @property
         def logger(self) -> FlextLogger:
             """Get logger instance for this bus using FlextMixins."""
-            return FlextLogger(self)
+            return FlextLogger(self.__class__.__name__)
 
         # FlextMixins integration methods
         def log_operation(self, operation: str, **kwargs: object) -> None:

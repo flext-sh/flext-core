@@ -109,8 +109,8 @@ class TestTypeAliases:
         # FlextModels.EntityId is a RootModel with string root
         assert isinstance(user_id, FlextModels.EntityId)
         assert isinstance(order_id, FlextModels.EntityId)
-        assert user_id == "user-123", f"Expected {'user-123'}, got {user_id}"
-        assert order_id == "order-456"
+        assert user_id.root == "user-123", f"Expected {'user-123'}, got {user_id.root}"
+        assert order_id.root == "order-456"
 
     def test_service_name_basic_usage(self) -> None:
         """Test FlextServiceName type alias for DI container."""
@@ -160,6 +160,8 @@ class TestTypeAliases:
             "email": "john@example.com",
         }
         user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+            source_service="user_service",
+            message_type="user.data",
             data=user_data
         )
 
@@ -168,21 +170,23 @@ class TestTypeAliases:
             "timestamp": "2025-01-01T00:00:00Z",
         }
         event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+            source_service="event_service",
+            message_type="event.created",
             data=event_data
         )
 
         # Verify payload structure
         def process_payload(payload: FlextModels.Payload[dict[str, object]]) -> str:
-            data_dict = payload.model_dump()
+            data_dict = payload.data
             return f"Processing: {len(data_dict)} fields"
 
-        payload_data = cast("dict[str, object]", user_payload.value)
+        payload_data = user_payload.data
         assert payload_data["id"] == "123", (
             f"Expected {'123'}, got {payload_data['id']}"
         )
         assert "name" in payload_data, f"Expected {'name'} in {payload_data}"
-        assert process_payload(user_payload) == "Processing: 2 fields", (
-            f"Expected {'Processing: 2 fields'}, got {process_payload(user_payload)}"
+        assert process_payload(user_payload) == "Processing: 3 fields", (
+            f"Expected {'Processing: 3 fields'}, got {process_payload(user_payload)}"
         )
         assert process_payload(event_payload) == "Processing: 2 fields"
 
@@ -288,14 +292,14 @@ class TestTypeAliasComprehensive:
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
         # Test available identifiers
-        correlation_id: FlextTypes.Domain.CorrelationId = "corr-456"
+        correlation_id: FlextTypes.Utilities.CorrelationId = "corr-456"
 
         assert isinstance(correlation_id, str)
 
     def test_available_type_aliases(self) -> None:
         """Test available type aliases."""
         entity_id: FlextTypes.Domain.EntityId = "entity-123"
-        correlation_id: FlextTypes.Domain.CorrelationId = "corr-456"
+        correlation_id: FlextTypes.Utilities.CorrelationId = "corr-456"
 
         assert isinstance(entity_id, str)
         assert isinstance(correlation_id, str)
@@ -303,7 +307,7 @@ class TestTypeAliasComprehensive:
     def test_data_type_aliases(self) -> None:
         """Test data-related type aliases."""
         # Test FlextTypes.Core.Data generic
-        test_data: FlextTypes.Core.Data = {"key": "value"}
+        test_data: FlextTypes.Core.Dict = {"key": "value"}
         assert isinstance(test_data, dict)
 
     def test_function_type_aliases(self) -> None:

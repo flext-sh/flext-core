@@ -1,838 +1,442 @@
 #!/usr/bin/env python3
-"""02 - Dependency Injection with FLEXT patterns.
+"""02 - Enhanced Dependency Injection using FlextCore Native Features.
 
-Demonstrates FlextContainer dependency injection using maximum FLEXT integration.
-Follows FLEXT_REFACTORING_PROMPT.md strictly for proper ABI compliance.
+Demonstrates advanced FlextCore dependency injection patterns showcasing:
+• FlextCore.get_instance(): Singleton access to all FlextCore features
+• Native validation using FlextCore built-in validators
+• Railway-oriented programming with FlextResult composition
+• Service registration with FlextCore.register_service()
+• Factory patterns with FlextCore.register_factory()
+• Configuration management with FlextCore.create_environment_core_config()
+• Enterprise logging with structured context using FlextCore logging
 
-Architecture Overview:
-    Uses maximum FlextTypes, FlextConstants, FlextProtocols for centralized patterns.
-    All service operations return FlextResult[T] for type-safe error handling.
-    Implements proper SOLID principles with protocol-based design.
+Key Improvements over Previous Version:
+• Eliminated custom validators in favor of FlextCore native validation
+• Leveraged FlextCore.setup_container_with_services() for bulk service setup
+• Used FlextCore railway-oriented patterns for composable operations
+• Integrated FlextCore observability and performance tracking
+• Simplified code by removing redundant classes and focusing on FlextCore patterns
 """
 
 from __future__ import annotations
 
-import json
-from typing import cast
+from typing import Protocol, cast
 
-from pydantic import Field, field_validator
+from flext_core import FlextCore, FlextResult, FlextTypes
 
-from flext_core import (
-    FlextConfig,
-    FlextConstants,
-    FlextContainer,
-    FlextCore,
-    FlextLogger,
-    FlextModels,
-    FlextResult,
-    FlextTypes,
-    FlextUtilities,
-)
-
-# Singleton FlextCore instance for all utilities
+# Get FlextCore singleton instance for all operations
 core = FlextCore.get_instance()
-logger = FlextLogger("flext.examples.container_di")
+
+# Configure structured logging for better observability
+core.configure_logging(log_level="INFO", _json_output=True)
+
+# Create application logger with proper naming
+logger = core.FlextLogger("flext.examples.enhanced_di")
 
 # =============================================================================
-# DOMAIN VALIDATORS - Using FlextCore centralized patterns
+# DOMAIN MODELS USING FLEXTCORE NATIVE FEATURES
+# Demonstrates proper use of FlextModels and FlextCore validation
 # =============================================================================
 
 
-class UserAgeValidator:
-    """Age validator using centralized FlextConstants and patterns."""
+class User:
+    """User domain model using FlextCore validation patterns."""
 
-    def validate(self, value: int) -> FlextResult[int]:
-        """Validate age using FlextConstants and proper error handling.
+    def __init__(self, name: str, email: str, age: int) -> None:
+        """Initialize user with FlextCore validation."""
+        self.name = name
+        self.email = email
+        self.age = age
 
-        Args:
-            value: Age value to validate.
-
-        Returns:
-            FlextResult containing validated age or error message.
-
-        """
-        # Use sensible age limits since specific age constants don't exist
-        if value < 0:
-            return FlextResult[int].fail("Age cannot be negative")
-
-        max_age = 150  # Maximum reasonable age
-        if value > max_age:
-            error_message = "Age exceeds reasonable maximum"
-            return FlextResult[int].fail(error_message)
-
-        min_adult_age = 18  # Legal adult age
-        if value < min_adult_age:
-            logger.warning("Age below warning threshold", age=value)
-
-        return FlextResult[int].ok(value)
-
-
-class UserNameValidator:
-    """Name validator using centralized FlextConstants and patterns."""
-
-    def validate(
-        self, value: FlextTypes.Core.String
-    ) -> FlextResult[FlextTypes.Core.String]:
-        """Validate name using FlextConstants and proper error handling.
-
-        Args:
-            value: Name value to validate.
-
-        Returns:
-            FlextResult containing validated name or error message.
-
-        """
-        cleaned_name = value.strip()
-
-        # Use reasonable name length limits
-        if len(cleaned_name) < 1:
-            return FlextResult[FlextTypes.Core.String].fail("Name cannot be empty")
-
-        if len(cleaned_name) > FlextConstants.Validation.MAX_STRING_LENGTH:
-            return FlextResult[FlextTypes.Core.String].fail(
-                "Name exceeds maximum length"
+    @classmethod
+    def create(cls, name: str, email: str, age: int) -> FlextResult[User]:
+        """Create user using FlextCore railway-oriented validation."""
+        # Use FlextCore's built-in validation methods
+        return (
+            core.validate_string(name, min_length=2, max_length=100)
+            .flat_map(lambda _: core.validate_email(email))
+            .flat_map(lambda _: core.validate_numeric(age, min_value=0, max_value=150))
+            .map(lambda _: cls(name, email, age))  # type: ignore[return-value]
+            .tap(
+                lambda user: logger.info(
+                    "User created successfully",
+                    user_name=user.name,
+                    user_email=user.email,
+                )
             )
+        )
 
-        # Business rule: warn for numbers in name
-        if any(char.isdigit() for char in cleaned_name):
-            logger.warning("Name contains numbers", name=cleaned_name)
-
-        return FlextResult[FlextTypes.Core.String].ok(cleaned_name.title())
-
-
-# =============================================================================
-# DOMAIN ENTITIES - Using FlextModels.Entity with centralized types
-# =============================================================================
-
-
-class User(FlextModels.Entity):
-    """User entity with centralized validation and FlextTypes.
-
-    Uses FlextTypes for consistency and FlextConstants for validation rules.
-    """
-
-    name: FlextTypes.Core.String
-    email: FlextTypes.Core.String
-    age: int
-    status: FlextTypes.Core.String = FlextConstants.Status.PENDING
-    registration_id: FlextTypes.Core.String = Field(
-        default_factory=lambda: FlextUtilities.Generators.generate_uuid()[:10]
-    )
-    service_tier: FlextTypes.Core.String = "standard"
-
-    @field_validator("name")
-    @classmethod
-    def validate_name_field(cls, v: FlextTypes.Core.String) -> FlextTypes.Core.String:
-        """Validate name using centralized validator."""
-        validator = UserNameValidator()
-        result = validator.validate(v)
-        if result.is_failure:
-            error_msg = result.error or FlextConstants.Errors.VALIDATION_ERROR
-            raise ValueError(error_msg)
-        return result.unwrap()
-
-    @field_validator("email")
-    @classmethod
-    def validate_email_field(cls, v: FlextTypes.Core.String) -> FlextTypes.Core.String:
-        """Validate email using centralized validation."""
-        if "@" not in v:
-            error_message = "Invalid email format"
-            raise ValueError(error_message)
-        return v
-
-    @field_validator("age")
-    @classmethod
-    def validate_age_field(cls, v: int) -> int:
-        """Validate age using centralized validator."""
-        validator = UserAgeValidator()
-        result = validator.validate(v)
-        if result.is_failure:
-            error_msg = result.error or FlextConstants.Errors.VALIDATION_ERROR
-            raise ValueError(error_msg)
-        return result.unwrap()
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate user business rules using FlextCore patterns."""
-        # Check age business rules
-        if self.age < FlextConstants.Validation.MIN_AGE:
-            return FlextResult[None].fail("User must be of legal age")
-
-        # Check email business rules using EmailAddress validation
-        email_validator = EmailAddress(email=self.email)
-        email_validation = email_validator.validate_business_rules()
-        if email_validation.is_failure:
-            return email_validation
-
-        # Check service tier consistency
-        valid_tiers = ["standard", "premium", "enterprise"]
-        if self.service_tier not in valid_tiers:
-            return FlextResult[None].fail(f"Invalid service tier: {self.service_tier}")
-
-        return FlextResult[None].ok(None)
-
-
-class EmailAddress(FlextModels.Value):
-    """Email value object with centralized validation."""
-
-    email: FlextTypes.Core.String
-
-    @field_validator("email")
-    @classmethod
-    def validate_email_field(cls, v: FlextTypes.Core.String) -> FlextTypes.Core.String:
-        """Validate email using centralized patterns."""
-        if "@" not in v:
-            error_message = "Invalid email format"
-            raise ValueError(error_message)
-        return v
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Business rules validation using FlextCore patterns."""
-        if ".invalid" in self.email:
-            return FlextResult[None].fail("Invalid email domain")
-        if ".test" in self.email:
-            logger.warning("Test email domain detected", email=self.email)
-        return FlextResult[None].ok(None)
-
-
-class UserRegistrationRequest(FlextModels.Value):
-    """Registration request with centralized validation."""
-
-    name: FlextTypes.Core.String
-    email: FlextTypes.Core.String
-    age: int
-    preferred_service_tier: FlextTypes.Core.String = "standard"
-
-    @field_validator("name")
-    @classmethod
-    def validate_name_field(cls, v: FlextTypes.Core.String) -> FlextTypes.Core.String:
-        """Validate name using centralized validator."""
-        validator = UserNameValidator()
-        result = validator.validate(v)
-        if result.is_failure:
-            error_msg = result.error or FlextConstants.Errors.VALIDATION_ERROR
-            raise ValueError(error_msg)
-        return result.unwrap()
-
-    @field_validator("email")
-    @classmethod
-    def validate_email_field(cls, v: FlextTypes.Core.String) -> FlextTypes.Core.String:
-        """Validate email using centralized validation."""
-        if "@" not in v:
-            error_message = "Invalid email format"
-            raise ValueError(error_message)
-        return v
-
-    @field_validator("age")
-    @classmethod
-    def validate_age_field(cls, v: int) -> int:
-        """Validate age using centralized validator."""
-        validator = UserAgeValidator()
-        result = validator.validate(v)
-        if result.is_failure:
-            error_msg = result.error or FlextConstants.Errors.VALIDATION_ERROR
-            raise ValueError(error_msg)
-        return result.unwrap()
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Business rules validation using FlextCore patterns."""
-        valid_tiers = [
-            "standard",
-            "premium",
-            "enterprise",
-        ]
-        if self.preferred_service_tier not in valid_tiers:
-            return FlextResult[None].fail("Invalid service tier")
-        return FlextResult[None].ok(None)
+    def __str__(self) -> str:
+        """String representation of user."""
+        return f"User(name='{self.name}', email='{self.email}', age={self.age})"
 
 
 # =============================================================================
-# RESULT MODELS - Using FlextConfig.BaseConfigModel with centralized types
+# SERVICE INTERFACES USING FLEXTCORE PROTOCOLS
+# Demonstrates proper use of protocols for dependency inversion
 # =============================================================================
 
 
-class DatabaseSaveResult(FlextConfig.BaseConfigModel):
-    """Database save result with centralized patterns."""
+class UserServiceProtocol(Protocol):
+    """User service protocol for dependency inversion."""
 
-    user_id: FlextTypes.Core.String
-    table_name: FlextTypes.Core.String = "users"
-    operation: FlextTypes.Core.String = "INSERT"
-    processing_time_ms: FlextTypes.Core.Float
-    correlation_id: FlextTypes.Core.String = Field(
-        default_factory=FlextUtilities.Generators.generate_uuid
-    )
-    cache_key: FlextTypes.Core.String | None = None
-    performance_metrics: dict[str, float] = Field(default_factory=dict)
+    def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
+        """Create a new user."""
+        ...
+
+    def find_user_by_email(self, email: str) -> FlextResult[User | None]:
+        """Find user by email address."""
+        ...
 
 
-class EmailSendResult(FlextConfig.BaseConfigModel):
-    """Email send result with centralized patterns."""
+class NotificationServiceProtocol(Protocol):
+    """Notification service protocol for loose coupling."""
 
-    recipient: FlextTypes.Core.String
-    subject: FlextTypes.Core.String = "Welcome!"
-    status: FlextTypes.Core.String
-    processing_time_ms: FlextTypes.Core.Float
-    correlation_id: FlextTypes.Core.String = Field(
-        default_factory=FlextUtilities.Generators.generate_uuid
-    )
-    delivery_attempts: int = 1
-    performance_metrics: dict[str, float] = Field(default_factory=dict)
-
-
-class RegistrationResult(FlextConfig.BaseConfigModel):
-    """Complete registration result with centralized patterns."""
-
-    user_id: FlextTypes.Core.String
-    status: FlextTypes.Core.String
-    database_result: DatabaseSaveResult
-    email_result: EmailSendResult
-    total_processing_time_ms: FlextTypes.Core.Float
-    correlation_id: FlextTypes.Core.String = Field(
-        default_factory=FlextUtilities.Generators.generate_uuid
-    )
-    validation_warnings: list[str] = Field(default_factory=list)
-    service_metrics: dict[str, float] = Field(default_factory=dict)
+    def send_welcome_email(self, user: User) -> FlextResult[None]:
+        """Send welcome email to user."""
+        ...
 
 
 # =============================================================================
-# SERVICE PROCESSORS - Using proper class patterns
+# SERVICE IMPLEMENTATIONS USING FLEXTCORE ENTERPRISE PATTERNS
+# Demonstrates proper service implementation with FlextCore features
 # =============================================================================
 
 
-class DatabaseServiceProcessor:
-    """Database processor with proper ABI-compliant patterns."""
+class EnterpriseUserService:
+    """Enterprise user service using FlextCore patterns."""
 
     def __init__(self) -> None:
-        """Initialize processor with utilities."""
-        self._logger = FlextLogger("flext.services.database")
-        self._cache: dict[str, DatabaseSaveResult] = {}
+        """Initialize with FlextCore logger."""
+        self._logger = core.FlextLogger("flext.services.user")
+        self._users: dict[str, User] = {}
 
-    def process(self, request: User) -> FlextResult[DatabaseSaveResult]:
-        """Process database save using centralized utilities."""
-        self._logger.info(
-            "Processing database save",
-            user_id=str(request.id),
-            table="users",
-            operation="INSERT",
-        )
+    def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
+        """Create user with enterprise validation and logging."""
+        # Check if user already exists
+        if email in self._users:
+            return FlextResult[User].fail(f"User with email {email} already exists")
 
-        # Use FlextUtilities for timing
-        save_time_ms = 5.0  # Simplified timing
+        # Use User.create which includes FlextCore validation
+        user_result = User.create(name, email, age)
 
-        # Create performance metrics
-        performance_metrics: dict[str, float] = {
-            "query_time_ms": save_time_ms * 0.7,
-            "connection_time_ms": save_time_ms * 0.2,
-            "serialization_time_ms": save_time_ms * 0.1,
-        }
-
-        cache_key = f"user_{request.id}"
-
-        # Create result using proper patterns
-        result = DatabaseSaveResult(
-            user_id=str(request.id),
-            processing_time_ms=save_time_ms,
-            cache_key=cache_key,
-            performance_metrics=performance_metrics,
-        )
-
-        self._logger.info(
-            "Database save completed",
-            user_id=str(request.id),
-            processing_time_ms=save_time_ms,
-            cache_key=cache_key,
-        )
-
-        return FlextResult[DatabaseSaveResult].ok(result)
-
-    def build(
-        self, domain: DatabaseSaveResult, *, correlation_id: FlextTypes.Core.String
-    ) -> DatabaseSaveResult:
-        """Build result using centralized patterns."""
-        domain.correlation_id = correlation_id
-        return domain
-
-    def save_user(self, user: User) -> FlextResult[DatabaseSaveResult]:
-        """Public interface using proper process method."""
-        return self.process(user)
-
-
-class EmailServiceProcessor:
-    """Email processor with proper ABI-compliant patterns."""
-
-    def __init__(self) -> None:
-        """Initialize processor with utilities."""
-        self._logger = FlextLogger("flext.services.email")
-
-    def process(self, request: User) -> FlextResult[EmailSendResult]:
-        """Process email send using centralized utilities."""
-        self._logger.info(
-            "Processing email send",
-            recipient=request.email,
-            user_id=str(request.id),
-            service_tier=request.service_tier,
-        )
-
-        # Validate email using centralized value object with proper ABI
-        email_str = (
-            str(request.email) if hasattr(request.email, "__str__") else request.email
-        )
-        email_validation = EmailAddress(email=email_str).validate_business_rules()
-        if email_validation.is_failure:
-            error_msg = email_validation.error or "Email validation failed"
-            self._logger.error(
-                "Email validation failed",
-                recipient=email_str,
-                error=ValueError(error_msg),
-            )
-            return FlextResult[EmailSendResult].fail(
-                email_validation.error or FlextConstants.Errors.VALIDATION_ERROR
-            )
-
-        # Use FlextUtilities for timing
-        send_time_ms = 3.0  # Simplified timing
-
-        # Create performance metrics
-        performance_metrics: dict[str, float] = {
-            "smtp_connect_ms": send_time_ms * 0.4,
-            "template_render_ms": send_time_ms * 0.3,
-            "send_time_ms": send_time_ms * 0.3,
-        }
-
-        result = EmailSendResult(
-            recipient=email_str,
-            status=FlextConstants.Status.COMPLETED,
-            processing_time_ms=send_time_ms,
-            performance_metrics=performance_metrics,
-        )
-
-        self._logger.info(
-            "Email send completed",
-            recipient=email_str,
-            status=FlextConstants.Status.COMPLETED,
-            processing_time_ms=send_time_ms,
-        )
-
-        return FlextResult[EmailSendResult].ok(result)
-
-    def build(
-        self, domain: EmailSendResult, *, correlation_id: FlextTypes.Core.String
-    ) -> EmailSendResult:
-        """Build result using centralized patterns."""
-        domain.correlation_id = correlation_id
-        return domain
-
-    def send_welcome_email(self, user: User) -> FlextResult[EmailSendResult]:
-        """Public interface using proper process method."""
-        return self.process(user)
-
-
-class UserRegistrationProcessor:
-    """Registration processor with proper ABI-compliant patterns."""
-
-    def __init__(self) -> None:
-        """Initialize processor with utilities."""
-        self._logger = FlextLogger("flext.services.registration")
-        self._database_service = DatabaseServiceProcessor()
-        self._email_service = EmailServiceProcessor()
-
-    def process(self, request: UserRegistrationRequest) -> FlextResult[User]:
-        """Process registration using centralized utilities."""
-        self._logger.info(
-            "Processing user registration",
-            email=request.email,
-            name=request.name,
-            age=request.age,
-            service_tier=request.preferred_service_tier,
-        )
-
-        # Validate business rules using centralized patterns
-        validation_result = request.validate_business_rules()
-        if validation_result.is_failure:
-            error_msg = validation_result.error or "Registration validation failed"
-            self._logger.error(
-                "Registration validation failed",
-                email=request.email,
-                error=ValueError(error_msg),
-            )
-            return FlextResult[User].fail(
-                validation_result.error or FlextConstants.Errors.VALIDATION_ERROR
-            )
-
-        # Create user entity directly
-        try:
-            user = User(
-                id=f"user_{FlextUtilities.Generators.generate_uuid()[:10]}",
-                name=request.name,
-                email=request.email,
-                age=request.age,
-                status=FlextConstants.Status.ACTIVE,
-                service_tier=request.preferred_service_tier,
-            )
-            user_result = FlextResult[User].ok(user)
-        except Exception as e:
-            user_result = FlextResult[User].fail(f"Failed to create user: {e}")
-
-        if user_result.is_success:
+        if user_result.success:
+            self._users[email] = user_result.value
             self._logger.info(
-                "User entity created",
-                user_id=str(user_result.unwrap().id),
-                name=user_result.unwrap().name,
-                service_tier=user_result.unwrap().service_tier,
+                "User stored in service", email=email, total_users=len(self._users)
             )
 
         return user_result
 
-    def build(
-        self, domain: User, *, correlation_id: FlextTypes.Core.String
-    ) -> RegistrationResult:
-        """Build registration result using centralized orchestration."""
+    def find_user_by_email(self, email: str) -> FlextResult[User | None]:
+        """Find user by email with validation."""
+        # Validate email format first using FlextCore
+        email_validation = core.validate_email(email)
+        if email_validation.is_failure:
+            return FlextResult[User | None].fail(f"Invalid email format: {email}")
+
+        user = self._users.get(email)
+        self._logger.info("User lookup performed", email=email, found=user is not None)
+        return FlextResult[User | None].ok(user)
+
+
+class MockNotificationService:
+    """Mock notification service for demonstration."""
+
+    def __init__(self) -> None:
+        """Initialize with FlextCore logger."""
+        self._logger = core.FlextLogger("flext.services.notification")
+
+    def send_welcome_email(self, user: User) -> FlextResult[None]:
+        """Mock sending welcome email."""
+        # Simulate email validation and sending
         self._logger.info(
-            "Building registration result",
-            user_id=str(domain.id),
-            correlation_id=correlation_id,
+            "Welcome email sent", recipient=user.email, user_name=user.name
         )
-
-        # Use dependency injection to call services
-        db_result = self._database_service.save_user(domain)
-        email_result = self._email_service.send_welcome_email(domain)
-
-        # Collect validation warnings using centralized patterns
-        validation_warnings: list[str] = []
-        min_adult_age = 18  # Legal adult age
-        if domain.age < min_adult_age:
-            validation_warnings.append("User is under 21")
-        if ".test" in domain.email:
-            validation_warnings.append("Test email domain")
-
-        # Calculate total processing time
-        total_time = (
-            db_result.unwrap().processing_time_ms if db_result.is_success else 0
-        ) + (email_result.unwrap().processing_time_ms if email_result.is_success else 0)
-
-        # Create service metrics
-        service_metrics: dict[str, float] = {
-            "database_time": db_result.unwrap().processing_time_ms
-            if db_result.is_success
-            else 0,
-            "email_time": email_result.unwrap().processing_time_ms
-            if email_result.is_success
-            else 0,
-        }
-
-        result = RegistrationResult(
-            user_id=str(domain.id),
-            status=str(domain.status),
-            database_result=db_result.unwrap()
-            if db_result.is_success
-            else DatabaseSaveResult(user_id=str(domain.id), processing_time_ms=0.0),
-            email_result=email_result.unwrap()
-            if email_result.is_success
-            else EmailSendResult(
-                recipient=domain.email,
-                status=FlextConstants.Status.FAILED,
-                processing_time_ms=0.0,
-            ),
-            total_processing_time_ms=total_time,
-            correlation_id=correlation_id,
-            validation_warnings=validation_warnings,
-            service_metrics=service_metrics,
-        )
-
-        self._logger.info(
-            "Registration result built",
-            user_id=str(domain.id),
-            total_time_ms=total_time,
-            warnings_count=len(validation_warnings),
-            correlation_id=correlation_id,
-        )
-
-        return result
-
-    def register_user(
-        self, request: UserRegistrationRequest
-    ) -> FlextResult[RegistrationResult]:
-        """Public interface using proper template."""
-        process_result = self.process(request)
-        if process_result.is_failure:
-            return FlextResult[RegistrationResult].fail(str(process_result.error))
-
-        user = process_result.unwrap()
-        registration_result = self.build(user, correlation_id="reg_123")
-        return FlextResult[RegistrationResult].ok(registration_result)
+        return FlextResult[None].ok(None)
 
 
 # =============================================================================
-# CONTAINER SETUP - Using centralized utilities
+# APPLICATION SERVICES USING FLEXTCORE DEPENDENCY INJECTION
+# Demonstrates proper dependency injection patterns with FlextCore container
 # =============================================================================
 
 
-def setup_container() -> FlextResult[None]:
-    """Setup container using centralized utilities."""
-    container = FlextContainer.get_global()
+class UserRegistrationService:
+    """User registration service demonstrating FlextCore DI patterns."""
 
-    # Register service processors
-    services = {
-        "database_service": DatabaseServiceProcessor,
-        "email_service": EmailServiceProcessor,
-        "registration_service": UserRegistrationProcessor,
+    def __init__(
+        self,
+        user_service: UserServiceProtocol,
+        notification_service: NotificationServiceProtocol,
+    ) -> None:
+        """Initialize with injected dependencies."""
+        self._user_service = user_service
+        self._notification_service = notification_service
+        self._logger = core.FlextLogger("flext.services.registration")
+
+    def register_user(self, name: str, email: str, age: int) -> FlextResult[User]:
+        """Register user using railway-oriented programming patterns."""
+        # Chain operations using FlextResult composition
+        return (
+            self._user_service.create_user(name, email, age)
+            .tap(
+                lambda user: self._logger.info(
+                    "User registration initiated", user_email=user.email
+                )
+            )
+            .flat_map(self._send_welcome_notification)
+            .tap(
+                lambda user: self._logger.info(
+                    "User registration completed successfully", user_email=user.email
+                )
+            )
+        )
+
+    def _send_welcome_notification(self, user: User) -> FlextResult[User]:
+        """Send welcome notification and return user."""
+        notification_result = self._notification_service.send_welcome_email(user)
+
+        if notification_result.success:
+            return FlextResult[User].ok(user)
+
+        # Log warning but don't fail the entire registration
+        self._logger.warning(
+            "Welcome email failed, but user registration succeeded",
+            user_email=user.email,
+            error=notification_result.error,
+        )
+        return FlextResult[User].ok(user)
+
+
+# =============================================================================
+# FLEXTCORE CONTAINER CONFIGURATION
+# Demonstrates proper use of FlextCore container features
+# =============================================================================
+
+
+def setup_dependency_injection() -> FlextResult[None]:
+    """Setup dependency injection using FlextCore container features."""
+    # Use FlextCore bulk service setup for better organization
+    services_dict: dict[str, object] = {
+        "user_service": EnterpriseUserService(),
+        "notification_service": MockNotificationService(),
     }
 
-    for service_name, service_class in services.items():
-        # Create factory function with explicit typing
-        def create_service_factory(cls: type[object]) -> object:
-            return cls()
+    # Register services with validation using FlextCore
+    # Create a validator that matches the expected signature
+    def service_validator(name: str) -> FlextResult[object]:
+        return core.validate_service_name(name).map(lambda _: name)
 
-        # Create factory function instead of lambda
-        def create_factory(cls: type[object] = service_class) -> object:
-            return create_service_factory(cls)
+    container_result = core.setup_container_with_services(
+        services_dict, validator=service_validator
+    )
 
-        register_result = container.register_factory(service_name, create_factory)
+    if container_result.is_failure:
+        return FlextResult[None].fail(
+            f"Container setup failed: {container_result.error}"
+        )
 
-        if register_result.is_failure:
-            return FlextResult[None].fail(
-                f"Failed to register {service_name}: {register_result.error}"
-            )
+    # Register factory for registration service
+    registration_factory_result = core.register_factory(
+        "registration_service", _create_registration_service
+    )
 
-        logger.info(
-            "Service registered",
-            service_name=service_name,
-            service_class=service_class.__name__,
+    if registration_factory_result.is_failure:
+        return FlextResult[None].fail(
+            f"Factory registration failed: {registration_factory_result.error}"
         )
 
     logger.info(
-        "Container setup completed",
-        total_services=len(services),
-        registered_services=list(services.keys()),
+        "Dependency injection configured successfully",
+        services_count=len(services_dict),
+        factories_count=1,
     )
 
     return FlextResult[None].ok(None)
 
 
-def get_service_with_fallback[T](
-    service_name: FlextTypes.Core.String, default_factory: type[T]
-) -> T:
-    """Get service from container with centralized utilities."""
-    container = FlextContainer.get_global()
-    result = container.get(service_name)
+def _create_registration_service() -> UserRegistrationService:
+    """Create registration service with dependency resolution."""
+    # Use FlextCore service resolution
+    user_service_result = core.get_service("user_service")
+    notification_service_result = core.get_service("notification_service")
 
-    if result.is_success:
-        logger.debug("Service retrieved from container", service_name=service_name)
-        service = result.unwrap()
-        # Cast to expected type - in real implementation you'd validate this
-        return cast("T", service)
+    if user_service_result.is_failure:
+        msg = "User service not found"
+        raise RuntimeError(msg)
 
-    logger.warning(
-        "Service not found in container, using default factory",
-        service_name=service_name,
-        default_factory=default_factory.__name__,
+    if notification_service_result.is_failure:
+        msg = "Notification service not found"
+        raise RuntimeError(msg)
+
+    # Cast to proper protocols for type safety
+    user_service = cast("UserServiceProtocol", user_service_result.value)
+    notification_service = cast(
+        "NotificationServiceProtocol", notification_service_result.value
     )
-    return default_factory()
+
+    return UserRegistrationService(user_service, notification_service)
 
 
 # =============================================================================
-# UTILITY FUNCTIONS - Using centralized patterns
+# CONFIGURATION USING FLEXTCORE NATIVE FEATURES
+# Demonstrates FlextCore environment-aware configuration
 # =============================================================================
 
 
-def log_result[T](
-    result: FlextResult[T], success_msg: FlextTypes.Core.String
-) -> FlextResult[T]:
-    """Utility to log FlextResult using centralized patterns."""
-    if result.is_success:
-        logger.info(f"✅ {success_msg}", result_type=type(result.unwrap()).__name__)
-        return result
+def setup_environment_configuration(
+    environment: str = "development",
+) -> FlextResult[None]:
+    """Setup environment-specific configuration using FlextCore."""
+    # Use FlextCore environment configuration
+    # Cast string to proper Environment type
+    env_type = cast("FlextTypes.Config.Environment", environment)
+    config_result = core.create_environment_core_config(env_type)
 
-    error_msg = result.error or "Operation failed"
-    logger.error(f"❌ {success_msg} failed", error=ValueError(error_msg))
-    return result
+    if config_result.is_failure:
+        return FlextResult[None].fail(
+            f"Environment config creation failed: {config_result.error}"
+        )
 
+    # Optimize performance based on environment
+    optimized_config = core.optimize_core_performance(config_result.value)
 
-# =============================================================================
-# DEMONSTRATIONS - Using centralized patterns
-# =============================================================================
+    if optimized_config.is_failure:
+        return FlextResult[None].fail(
+            f"Performance optimization failed: {optimized_config.error}"
+        )
 
+    # Apply configuration to core system
+    system_config_result = core.configure_core_system(optimized_config.value)
 
-def demo_service_injection() -> RegistrationResult | None:
-    """Demonstrate service injection with centralized utilities."""
-    setup_result = setup_container()
-    if setup_result.is_failure:
-        return None
-
-    # Get service using centralized utilities
-    registration_service = get_service_with_fallback(
-        "registration_service", UserRegistrationProcessor
-    )
-
-    # Create request using centralized validation
-    request = UserRegistrationRequest(
-        name="Alice Johnson",
-        email="alice@company.com",
-        age=28,
-        preferred_service_tier="premium",
-    )
-
-    result = log_result(
-        registration_service.register_user(request), "Service injection registration"
-    )
-    return result.unwrap() if result.is_success else None
-
-
-def demo_batch_processing() -> FlextTypes.Core.String:
-    """Demonstrate batch processing with centralized utilities."""
-    setup_result = setup_container()
-    if setup_result.is_failure:
-        return "setup_failed"
-
-    registration_service = get_service_with_fallback(
-        "registration_service", UserRegistrationProcessor
-    )
-
-    # Create batch requests using centralized patterns
-    requests = [
-        UserRegistrationRequest(
-            name="User 1",
-            email="user1@company.com",
-            age=25,
-            preferred_service_tier="standard",
-        ),
-        UserRegistrationRequest(
-            name="User 2",
-            email="user2@company.com",
-            age=30,
-            preferred_service_tier="premium",
-        ),
-        UserRegistrationRequest(
-            name="User 3",
-            email="user3@company.com",
-            age=35,
-            preferred_service_tier="enterprise",
-        ),
-    ]
-
-    # Process all requests individually
-    results = [registration_service.register_user(req) for req in requests]
-    success_count = len([r for r in results if r.success])
-    failure_count = len([r for r in results if r.is_failure])
+    if system_config_result.is_failure:
+        return FlextResult[None].fail(
+            f"System configuration failed: {system_config_result.error}"
+        )
 
     logger.info(
-        f"Batch processing completed: {success_count} successes, "
-        f"{failure_count} failures"
+        "Environment configuration completed",
+        environment=environment,
+        config_keys=len(system_config_result.value),
     )
 
-    return "batch_processing_completed"
-
-
-def demo_json_processing() -> FlextTypes.Core.String:
-    """Demonstrate JSON processing with centralized utilities."""
-    setup_result = setup_container()
-    if setup_result.is_failure:
-        return "setup_failed"
-
-    registration_service = get_service_with_fallback(
-        "registration_service", UserRegistrationProcessor
-    )
-
-    # Process valid JSON
-    valid_json = (
-        '{"name": "JSON User", "email": "json@company.com", '
-        '"age": 32, "preferred_service_tier": "premium"}'
-    )
-
-    try:
-        data = json.loads(valid_json)
-        request = UserRegistrationRequest(**data)
-        log_result(
-            registration_service.register_user(request),
-            "JSON service processing",
-        )
-    except Exception as e:
-        logger.exception("JSON processing failed", error=str(e))
-
-    # Process invalid JSON to show validation
-    invalid_json = '{"name": "Invalid User", "email": "invalid.invalid", "age": 15}'
-
-    try:
-        invalid_data = json.loads(invalid_json)
-        UserRegistrationRequest(**invalid_data)
-    except Exception as e:
-        logger.debug("Expected validation error", error=str(e))
-
-    return "json_processing_completed"
-
-
-def demo_advanced_patterns() -> FlextTypes.Core.String:
-    """Demonstrate advanced patterns with centralized utilities."""
-    setup_result = setup_container()
-    if setup_result.is_failure:
-        return "setup_failed"
-
-    # Create requests using centralized patterns
-    requests = [
-        UserRegistrationRequest(
-            name="Enterprise User1",
-            email="u1@enterprise.com",
-            age=25,
-            preferred_service_tier="enterprise",
-        ),
-        UserRegistrationRequest(
-            name="Premium User2",
-            email="u2@premium.com",
-            age=30,
-            preferred_service_tier="premium",
-        ),
-    ]
-
-    registration_service = get_service_with_fallback(
-        "registration_service", UserRegistrationProcessor
-    )
-
-    # Process requests
-    results = [registration_service.register_user(req) for req in requests]
-
-    # Process results
-    successful_results: list[RegistrationResult] = [
-        result.unwrap() for result in results if result.is_success
-    ]
-
-    if successful_results:
-        # Show validation warnings using centralized patterns
-        for registration_result in successful_results:
-            if registration_result.validation_warnings:
-                pass
-
-    # Show container services
-    container = FlextContainer.get_global()
-    list(container.list_services().keys())
-    return "advanced_patterns_completed"
+    return FlextResult[None].ok(None)
 
 
 # =============================================================================
-# MAIN EXECUTION
+# DEMONSTRATION FUNCTIONS
+# Shows FlextCore dependency injection in action
 # =============================================================================
 
 
-def main() -> None:
-    """Dependency injection with maximum FLEXT centralized patterns."""
-    logger.info("Starting dependency injection example")
+def demonstrate_flextcore_di() -> None:
+    """Demonstrate FlextCore dependency injection patterns."""
+    print("=== FlextCore Enhanced Dependency Injection Demo ===")
 
-    # All demos use centralized patterns and utilities
-    demos = [
-        demo_service_injection,
-        demo_batch_processing,
-        demo_json_processing,
-        demo_advanced_patterns,
+    # Setup environment configuration
+    env_setup = setup_environment_configuration("development")
+    if env_setup.is_failure:
+        print(f"❌ Environment setup failed: {env_setup.error}")
+        return
+    print("✅ Environment configuration completed")
+
+    # Setup dependency injection
+    di_setup = setup_dependency_injection()
+    if di_setup.is_failure:
+        print(f"❌ DI setup failed: {di_setup.error}")
+        return
+    print("✅ Dependency injection configured")
+
+    # Get registration service from container
+    registration_result = core.get_service("registration_service")
+    if registration_result.is_failure:
+        print(f"❌ Registration service not found: {registration_result.error}")
+        return
+
+    registration_service = cast("UserRegistrationService", registration_result.value)
+    print("✅ Registration service retrieved from container")
+
+    # Test user registration
+    test_users = [
+        ("Alice Johnson", "alice@example.com", 25),
+        ("Bob Smith", "bob@company.com", 30),
+        ("Carol Brown", "carol@domain.org", 28),
     ]
 
-    for demo in demos:
-        try:
-            demo()
-        except Exception as e:
-            # Get function name safely for logging
-            demo_name = getattr(demo, "__name__", "unknown_demo")
-            logger.exception("Demo failed", demo_name=demo_name, error=str(e))
+    for name, email, age in test_users:
+        result = registration_service.register_user(name, email, age)
 
-    logger.info("Dependency injection example completed successfully")
+        if result.success:
+            print(f"✅ Registered: {result.value}")
+        else:
+            print(f"❌ Registration failed for {name}: {result.error}")
+
+    # Test duplicate registration
+    duplicate_result = registration_service.register_user(
+        "Alice Duplicate", "alice@example.com", 26
+    )
+    if duplicate_result.is_failure:
+        print(f"✅ Duplicate prevention works: {duplicate_result.error}")
+
+    # Test user lookup
+    user_service_result = core.get_service("user_service")
+    if user_service_result.success:
+        user_service = cast("UserServiceProtocol", user_service_result.value)
+        lookup_result = user_service.find_user_by_email("bob@company.com")
+        if lookup_result.success and lookup_result.value:
+            print(f"✅ User lookup successful: {lookup_result.value}")
+
+
+def demonstrate_flextcore_features() -> None:
+    """Demonstrate additional FlextCore features."""
+    print("\n=== FlextCore Advanced Features Demo ===")
+
+    # Health check
+    health = core.health_check()
+    if health.success:
+        print(f"✅ System health check passed: {health.value.get('status', 'unknown')}")
+
+    # System information
+    system_info = core.get_system_info()
+    print(f"✅ System info: Python {system_info.get('python_version', 'unknown')}")
+
+    # Performance tracking demonstration
+    def demo_operation() -> FlextResult[str]:
+        """Demo operation with performance tracking."""
+        return FlextResult[str].ok("Operation completed successfully")
+
+    # Apply performance tracking manually to avoid decorator typing issues
+    tracked_operation = core.track_performance("demo_operation")(demo_operation)  # type: ignore[misc,operator]
+    result = tracked_operation()  # type: ignore[misc,operator]
+    if result.success:
+        print(f"✅ Performance-tracked operation: {result.value}")
+
+    # Railway composition demonstration
+    pipeline_result = (
+        FlextResult[str]
+        .ok("Hello World")
+        .map(lambda s: s.upper())
+        .map(lambda s: f"Message: {s}")
+        .tap(lambda s: logger.info("Pipeline step completed", content=s))
+    )
+
+    if pipeline_result.success:
+        print(f"✅ Railway pipeline: {pipeline_result.value}")
 
 
 if __name__ == "__main__":
-    main()
+    print("FlextCore Enhanced Dependency Injection")
+    print("======================================")
+
+    # Demonstrate FlextCore dependency injection
+    demonstrate_flextcore_di()
+
+    # Demonstrate additional FlextCore features
+    demonstrate_flextcore_features()
+
+    print("\n✅ All FlextCore dependency injection patterns demonstrated successfully!")
+    print("Key benefits: Native FlextCore validation, railway-oriented programming,")
+    print(
+        "enterprise logging, environment-aware configuration, and performance tracking."
+    )

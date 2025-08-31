@@ -23,7 +23,7 @@ demonstrating the power and flexibility of the FlextLoggerFactory system.
 import contextlib
 import time
 import traceback
-from collections.abc import Iterator
+from collections.abc import Generator
 from types import TracebackType
 from typing import cast
 
@@ -35,7 +35,7 @@ from flext_core import (
 
 # Simple context manager using existing FlextLogger functionality
 @contextlib.contextmanager
-def create_log_context(logger: FlextLogger, **context: object) -> Iterator[FlextLogger]:
+def create_log_context(logger: FlextLogger, **context: object) -> Generator[FlextLogger]:
     """Create a log context using existing FlextLogger with_context method.
 
     This function creates a context manager that temporarily adds context

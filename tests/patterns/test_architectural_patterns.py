@@ -13,7 +13,7 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import (
-    FlextBaseHandler,
+    FlextHandlers,
     FlextModels,
     FlextResult,
 )
@@ -46,11 +46,15 @@ class TestCleanArchitecturePatterns:
             name: str
             email_obj: UserEmail
 
-            def validate_domain_rules(self) -> FlextResult[None]:
-                """Validate user domain rules."""
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for user entity."""
                 if not self.name.strip():
                     return FlextResult[None].fail("Name cannot be empty")
                 return self.email_obj.validate_business_rules()
+
+            def validate_domain_rules(self) -> FlextResult[None]:
+                """Validate user domain rules."""
+                return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
         class CreateUserCommand(BaseModel):
@@ -59,7 +63,7 @@ class TestCleanArchitecturePatterns:
             name: str
             email: str
 
-        class CreateUserHandler(FlextBaseHandler):
+        class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
             """Application command handler."""
 
             @property
@@ -67,9 +71,9 @@ class TestCleanArchitecturePatterns:
                 """Get handler name."""
                 return "CreateUserHandler"
 
-            def can_handle(self, request: object) -> bool:
-                """Check if handler can handle the request."""
-                return isinstance(request, CreateUserCommand)
+            def can_handle(self, message_type: type) -> bool:
+                """Check if handler can handle the message type."""
+                return message_type == CreateUserCommand or issubclass(message_type, CreateUserCommand)
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user creation."""
@@ -91,7 +95,7 @@ class TestCleanArchitecturePatterns:
 
                 # Create entity
                 user = User(
-                    id=FlextModels.EntityId("user_123"),
+                    id="user_123",
                     name=command.name,
                     email_obj=email_obj,
                 )
@@ -166,11 +170,16 @@ class TestCleanArchitecturePatterns:
             total: object
             status: str = "pending"
 
+            def validate_business_rules(self) -> FlextResult[None]:
+                """Validate business rules for order entity."""
+                return self.validate_domain_rules()
+
             def validate_domain_rules(self) -> FlextResult[None]:
                 """Validate order business rules."""
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_business_rules"):
-                    order_id_validation = self.order_id.validate_business_rules()
+                    validate_method = getattr(self.order_id, "validate_business_rules", None)
+                    order_id_validation = validate_method() if validate_method else FlextResult[None].ok(None)
                     if (
                         hasattr(order_id_validation, "is_failure")
                         and order_id_validation.is_failure
@@ -178,7 +187,8 @@ class TestCleanArchitecturePatterns:
                         return FlextResult[None].fail(str(order_id_validation.error))
 
                 if hasattr(self.total, "validate_business_rules"):
-                    total_validation = self.total.validate_business_rules()
+                    validate_method = getattr(self.total, "validate_business_rules", None)
+                    total_validation = validate_method() if validate_method else FlextResult[None].ok(None)
                     if (
                         hasattr(total_validation, "is_failure")
                         and total_validation.is_failure
@@ -197,7 +207,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Can only confirm pending orders")
 
                 # Create new instance with updated status (immutable pattern)
-                result = self.copy_with(status="confirmed")
+                result = FlextResult[Order].ok(self.model_copy(update={"status": "confirmed"}))
                 if result.is_failure:
                     return FlextResult[None].fail(
                         f"Failed to confirm order: {result.error}"
@@ -206,7 +216,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[None].ok(None)
 
         return Order(
-            id=FlextModels.EntityId("order_123"),
+            id="order_123",
             order_id=order_id,
             total=money,
         )
@@ -215,13 +225,15 @@ class TestCleanArchitecturePatterns:
         """Test DDD validation and behavior."""
         # Test domain validation
         if hasattr(order, "validate_business_rules"):
-            validation_result = order.validate_business_rules()
+            validate_method = getattr(order, "validate_business_rules", None)
+            validation_result = validate_method() if validate_method else FlextResult[None].ok(None)
             assert hasattr(validation_result, "success")
             assert validation_result.success
 
         # Test domain behavior
         if hasattr(order, "confirm_order"):
-            confirm_result = order.confirm_order()
+            confirm_method = getattr(order, "confirm_order", None)
+            confirm_result = confirm_method() if confirm_method else FlextResult[None].ok(None)
             assert hasattr(confirm_result, "success")
             assert confirm_result.success
 
@@ -236,7 +248,7 @@ class TestCleanArchitecturePatterns:
             user_id: str
             name: str
 
-        class UpdateUserHandler(FlextBaseHandler):
+        class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
             """Handler for user update commands."""
 
             @property
@@ -244,9 +256,9 @@ class TestCleanArchitecturePatterns:
                 """Get handler name."""
                 return "UpdateUserHandler"
 
-            def can_handle(self, request: object) -> bool:
-                """Check if handler can handle the request."""
-                return isinstance(request, UpdateUserCommand)
+            def can_handle(self, message_type: type) -> bool:
+                """Check if handler can handle the message type."""
+                return message_type == UpdateUserCommand or issubclass(message_type, UpdateUserCommand)
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user update command."""
@@ -267,7 +279,7 @@ class TestCleanArchitecturePatterns:
 
             user_id: str
 
-        class GetUserHandler(FlextBaseHandler):
+        class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
             """Handler for user queries."""
 
             @property
@@ -275,9 +287,9 @@ class TestCleanArchitecturePatterns:
                 """Get handler name."""
                 return "GetUserHandler"
 
-            def can_handle(self, request: object) -> bool:
-                """Check if handler can handle the request."""
-                return isinstance(request, GetUserQuery)
+            def can_handle(self, message_type: type) -> bool:
+                """Check if handler can handle the message type."""
+                return message_type == GetUserQuery or issubclass(message_type, GetUserQuery)
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user query."""
@@ -457,9 +469,8 @@ class TestEnterprisePatterns:
         start_time = time.time()
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
-            result = cast("FlextResult[object]", query_result)
-            assert result.success
-            entity_data = cast("dict[str, object]", result.value)
+            assert query_result.success
+            entity_data = cast("dict[str, object]", query_result.value)
             assert entity_data["id"] == i
 
         query_duration = time.time() - start_time

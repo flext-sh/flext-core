@@ -382,14 +382,12 @@ class AsyncConcurrencyTesting:
                 task1, task2, return_exceptions=True
             )
 
-            results.append(
-                {
-                    "result1": result1,
-                    "result2": result2,
-                    "error1": isinstance(result1, Exception),
-                    "error2": isinstance(result2, Exception),
-                }
-            )
+            results.append({
+                "result1": result1,
+                "result2": result2,
+                "error1": isinstance(result1, Exception),
+                "error2": isinstance(result2, Exception),
+            })
 
         return {
             "total_iterations": iterations,

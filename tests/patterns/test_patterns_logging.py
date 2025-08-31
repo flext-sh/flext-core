@@ -7,10 +7,12 @@ import time
 import pytest
 
 from flext_core import (
+    FlextConstants,
     FlextLogger,
-    FlextLogLevel,
-    FlextTypes,
 )
+
+# Alias for the LogLevel enum
+FlextLogLevel = FlextConstants.Config.LogLevel
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -21,7 +23,7 @@ class TestFlextContext:
 
     def test_context_creation_empty(self) -> None:
         """Test creating empty log context."""
-        context: FlextTypes.Logging.LogContext = {}
+        context: dict[str, object] = {}
 
         assert isinstance(context, dict)
         if len(context) != 0:
@@ -29,7 +31,7 @@ class TestFlextContext:
 
     def test_context_creation_with_values(self) -> None:
         """Test creating log context with values."""
-        context: FlextTypes.Logging.LogContext = {
+        context: dict[str, object] = {
             "user_id": "123",
             "request_id": "req-456",
             "operation": "login",
@@ -46,7 +48,7 @@ class TestFlextContext:
     def test_context_optional_fields(self) -> None:
         """Test that all context fields are optional."""
         # Test with partial context
-        context: FlextTypes.Logging.LogContext = {
+        context: dict[str, object] = {
             "user_id": "123",
         }
 
@@ -56,7 +58,7 @@ class TestFlextContext:
 
     def test_context_enterprise_fields(self) -> None:
         """Test enterprise-specific context fields."""
-        context: FlextTypes.Logging.LogContext = {
+        context: dict[str, object] = {
             "tenant_id": "tenant-123",
             "session_id": "session-456",
             "transaction_id": "tx-789",
@@ -77,7 +79,7 @@ class TestFlextContext:
 
     def test_context_performance_fields(self) -> None:
         """Test performance-related context fields."""
-        context: FlextTypes.Logging.LogContext = {
+        context: dict[str, object] = {
             "duration_ms": 250.0,
             "memory_mb": 128.5,
             "cpu_percent": 75.2,
@@ -91,7 +93,7 @@ class TestFlextContext:
 
     def test_context_error_fields(self) -> None:
         """Test error-related context fields."""
-        context: FlextTypes.Logging.LogContext = {
+        context: dict[str, object] = {
             "error_code": "E001",
             "error_type": "ValidationError",
             "stack_trace": "Traceback...",
@@ -200,10 +202,9 @@ class TestFlextLogger:
         FlextLogger._configured = False
 
         FlextLogger.configure(
-            log_level=FlextLogLevel.DEBUG,
+            log_level="DEBUG",
             json_output=True,
-            add_timestamp=True,
-            add_caller=False,
+            include_source=False,
         )
 
         if not (FlextLogger._configured):
@@ -223,7 +224,7 @@ class TestFlextLogger:
 
     def test_get_base_logger(self) -> None:
         """Test getting base logger instance."""
-        base_logger = FlextLogger.get_base_logger("base_test")
+        base_logger = FlextLogger("base_test")
 
         assert base_logger is not None
         # Base logger should have observability features
@@ -231,13 +232,14 @@ class TestFlextLogger:
 
     def test_get_base_logger_with_level(self) -> None:
         """Test getting base logger with specific level."""
-        base_logger = FlextLogger.get_base_logger("level_test", _level="DEBUG")
+        base_logger = FlextLogger("level_test", level="DEBUG")
 
         assert base_logger is not None
 
     def test_bind_context(self) -> None:
         """Test binding context to logger."""
-        bound_logger = FlextLogger.bind_context(
+        logger = FlextLogger("bind_test")
+        bound_logger = logger.bind(
             user_id="123",
             operation="test",
         )
@@ -250,11 +252,14 @@ class TestFlextLogger:
         # Create a logger instance first
         logger = FlextLogger("test_clear_context")
         # This should not raise an error
-        logger.clear_context()
+        logger.clear_request_context()
 
     def test_with_performance_tracking(self) -> None:
         """Test getting logger with performance tracking."""
-        perf_logger = FlextLogger.with_performance_tracking("perf_test")
+        perf_logger = FlextLogger("perf_test")
+        # FlextLogger has built-in performance tracking methods
+        assert hasattr(perf_logger, "start_operation")
+        assert hasattr(perf_logger, "complete_operation")
 
         assert perf_logger is not None
         assert hasattr(perf_logger, "info")
@@ -320,7 +325,7 @@ class TestFlextLoggerUsage:
     @pytest.mark.performance
     def test_performance_logging(self) -> None:
         """Test performance-focused logging."""
-        perf_logger = FlextLogger.with_performance_tracking("performance_test")
+        perf_logger = FlextLogger("performance_test")
 
         # Performance loggers should support similar operations
         # Type check to ensure we have a logger-like object
@@ -329,8 +334,7 @@ class TestFlextLoggerUsage:
 
     def test_logger_factory_real_execution(self) -> None:
         """Test logger factory with real execution instead of mocks."""
-        # Clear cache to ensure fresh logger creation
-        FlextLogger._loggers.clear()
+        # Test real logger creation (FlextLogger doesn't have _loggers cache)
 
         # Test real logger creation
         logger1 = FlextLogger("factory_test")

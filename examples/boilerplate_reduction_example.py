@@ -170,9 +170,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
     ) -> FlextResult[dict[str, object]]:
         """Complete business process orchestration."""
         return (
-            self._validate_data(data)
-            .map(lambda validated: self._process_data(validated))
-            .map(lambda result: self._enhance_result(result))
+            self._validate_data(data).map(self._process_data).map(self._enhance_result)
         )
 
     def _validate_data(

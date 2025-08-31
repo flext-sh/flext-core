@@ -59,6 +59,7 @@ class TestFlextHandlersRealFunctionality:
 
         result = handler.configure(invalid_config)
         assert result.success is False
+        assert result.error is not None
         assert "Invalid log_level" in result.error
 
     def test_handler_environment_validation_real(self) -> None:
@@ -74,9 +75,10 @@ class TestFlextHandlersRealFunctionality:
             assert result.success is True, f"Failed for environment: {env}"
 
         # Test invalid environment
-        config: FlextTypes.Config.ConfigDict = {"environment": "invalid_env"}
-        result = handler.configure(config)
+        invalid_config: FlextTypes.Config.ConfigDict = {"environment": "invalid_env"}
+        result = handler.configure(invalid_config)
         assert result.success is False
+        assert result.error is not None
         assert "Invalid environment" in result.error
 
     def test_handler_log_level_validation_real(self) -> None:
@@ -292,17 +294,17 @@ class TestHandlersConfigurationIntegration:
 
         current_config = result.unwrap()
         assert "handler_name" in current_config
-        assert "state" in current_config
-        assert "metrics" in current_config
-        assert "system_info" in current_config
+        assert "handler_state" in current_config
+        assert "requests_processed" in current_config
+        assert "success_rate" in current_config
 
         # Verify handler-specific information
         assert current_config["handler_name"] == "get_config_handler"
         assert (
-            current_config["state"] == FlextHandlers.Constants.Handler.States.IDLE.value
+            current_config["handler_state"] == FlextHandlers.Constants.Handler.States.IDLE
         )
-        assert isinstance(current_config["metrics"], dict)
-        assert isinstance(current_config["system_info"], dict)
+        assert isinstance(current_config["requests_processed"], int)
+        assert isinstance(current_config["success_rate"], float)
 
     def test_create_environment_handler_config_real(self) -> None:
         """Test environment-specific handler configuration creation."""
@@ -321,10 +323,14 @@ class TestHandlersConfigurationIntegration:
             prod_config["validation_level"]
             == FlextConstants.Config.ValidationLevel.STRICT.value
         )
-        assert (
-            prod_config["timeout"] >= 30000
-        )  # Production should have reasonable timeout
-        assert prod_config["max_retries"] >= 1  # Production should have retries
+        # Type-safe assertions for config values
+        timeout_value = prod_config["timeout"]
+        assert isinstance(timeout_value, (int, str))
+        assert int(timeout_value) >= 30000  # Production should have reasonable timeout
+
+        max_retries_value = prod_config["max_retries"]
+        assert isinstance(max_retries_value, (int, str))
+        assert int(max_retries_value) >= 1  # Production should have retries
 
         # Test development environment
         dev_result = (
@@ -362,10 +368,11 @@ class TestHandlersConfigurationIntegration:
         # Test invalid environment
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "invalid_env"
+                "invalid_env"  # type: ignore[arg-type]
             )
         )
         assert invalid_result.success is False
+        assert invalid_result.error is not None
         assert "Invalid environment" in invalid_result.error
 
     def test_optimize_handler_performance_real(self) -> None:
@@ -388,8 +395,13 @@ class TestHandlersConfigurationIntegration:
         assert "processing_timeout" in optimized_config
 
         # High performance should have optimized values
-        assert optimized_config["max_concurrent_requests"] >= 50
-        assert optimized_config["request_queue_size"] >= 1000
+        max_concurrent = optimized_config["max_concurrent_requests"]
+        assert isinstance(max_concurrent, (int, str))
+        assert int(max_concurrent) >= 50
+
+        queue_size = optimized_config["request_queue_size"]
+        assert isinstance(queue_size, (int, str))
+        assert int(queue_size) >= 1000
 
         # Test medium performance configuration
         medium_perf_config: FlextTypes.Config.ConfigDict = {
@@ -404,7 +416,10 @@ class TestHandlersConfigurationIntegration:
 
         medium_config = result.unwrap()
         assert medium_config["performance_level"] == "medium"
-        assert 10 <= medium_config["max_concurrent_requests"] <= 100
+
+        medium_concurrent = medium_config["max_concurrent_requests"]
+        assert isinstance(medium_concurrent, (int, str, float))
+        assert 10 <= int(medium_concurrent) <= 100
 
         # Test low performance configuration
         low_perf_config: FlextTypes.Config.ConfigDict = {
@@ -419,7 +434,10 @@ class TestHandlersConfigurationIntegration:
 
         low_config = result.unwrap()
         assert low_config["performance_level"] == "low"
-        assert low_config["max_concurrent_requests"] <= 20
+
+        low_concurrent = low_config["max_concurrent_requests"]
+        assert isinstance(low_concurrent, (int, str, float))
+        assert int(low_concurrent) <= 20
 
     def test_configuration_state_persistence_real(self) -> None:
         """Test that handler configuration state is maintained across calls."""
@@ -457,7 +475,11 @@ class TestHandlersConfigurationIntegration:
         assert "metrics" in updated_config
         # Metrics should show processed requests
         metrics = updated_config["metrics"]
-        assert metrics["requests_processed"] >= 2
+        assert isinstance(metrics, dict)
+
+        requests_processed = metrics["requests_processed"]
+        assert isinstance(requests_processed, (int, str))
+        assert int(requests_processed) >= 2
 
 
 class TestHandlersConfigurationEdgeCases:
@@ -547,4 +569,6 @@ class TestHandlersConfigurationEdgeCases:
 
         high_optimized = result.unwrap()
         # Should have reasonable limits even with high input
-        assert high_optimized["max_concurrent_requests"] <= 10000
+        high_concurrent = high_optimized["max_concurrent_requests"]
+        assert isinstance(high_concurrent, (int, str, float))
+        assert int(high_concurrent) <= 10000

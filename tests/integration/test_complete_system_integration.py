@@ -8,9 +8,14 @@ hierarquia de constantes, sistema de exceções e utilitários.
 from __future__ import annotations
 
 import uuid
+from typing import cast
 
 import pytest
 
+# Wildcard import to populate globals() for export count tests
+from flext_core import *  # noqa: F403,F401
+
+# Specific imports for type checking and IDE support
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -148,7 +153,7 @@ class TestCompleteFlextSystemIntegration:
         # Teste da hierarquia de exceções
         validation_exception = FlextExceptions.ValidationError("campo_invalido")
         assert isinstance(validation_exception, Exception)
-        assert isinstance(validation_exception, FlextExceptions.Base)
+        assert isinstance(validation_exception, FlextExceptions.BaseError)
 
         # Verificar formato da mensagem de erro
         error_message = str(validation_exception)
@@ -157,12 +162,12 @@ class TestCompleteFlextSystemIntegration:
 
         # Teste de outras exceções da hierarquia
         operation_exception = FlextExceptions.OperationError("operacao_falhada")
-        assert isinstance(operation_exception, FlextExceptions.Base)
+        assert isinstance(operation_exception, FlextExceptions.BaseError)
         assert "operacao_falhada" in str(operation_exception)
 
         # Verificar que as exceções seguem a hierarquia correta
-        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.Base)
-        assert issubclass(FlextExceptions.OperationError, FlextExceptions.Base)
+        assert issubclass(FlextExceptions.ValidationError, FlextExceptions.BaseError)
+        assert issubclass(FlextExceptions.OperationError, FlextExceptions.BaseError)
 
         # =========================================================================
         # FASE 5: Utilitários e funções auxiliares
@@ -206,14 +211,15 @@ class TestCompleteFlextSystemIntegration:
         # Validação de campo - caso de falha (muito curto)
         invalid_username = string_field.validate("jo")
         assert invalid_username.success is False
-        assert "length" in invalid_username.error.lower()
+        assert invalid_username.error is not None
+        assert "short" in invalid_username.error.lower()
 
         # Criação usando factory pattern
         email_field_result = FlextFields.Factory.create_field(
             "email", "user_email", required=True, description="Email do usuário"
         )
         assert email_field_result.success is True
-        email_field = email_field_result.value
+        email_field = cast("FlextFields.Core.EmailField", email_field_result.value)
 
         # Validação de email
         valid_email = email_field.validate("user@example.com")
@@ -230,7 +236,7 @@ class TestCompleteFlextSystemIntegration:
         registry = FlextFields.Registry.FieldRegistry()
 
         # Registrar campo
-        register_result = registry.register_field("user_name", string_field)
+        register_result = registry.register_field("user_name", cast("FlextFields.Core.BaseField[object]", string_field))
         assert register_result.success is True
 
         # Recuperar campo registrado
@@ -242,6 +248,7 @@ class TestCompleteFlextSystemIntegration:
         # Teste de campo não encontrado
         not_found_result = registry.get_field("campo_inexistente")
         assert not_found_result.success is False
+        assert not_found_result.error is not None
         assert "not found" in not_found_result.error.lower()
 
         # =========================================================================
@@ -254,7 +261,10 @@ class TestCompleteFlextSystemIntegration:
         )
 
         # Validação múltipla usando o sistema
-        fields = [string_field, integer_field]
+        fields: list[FlextFields.Core.BaseField[object]] = [
+            cast("FlextFields.Core.BaseField[object]", string_field),
+            cast("FlextFields.Core.BaseField[object]", integer_field)
+        ]
         values = {"username": "maria123", "age": 25}
 
         validation_result = FlextFields.Validation.validate_multiple_fields(
@@ -276,8 +286,13 @@ class TestCompleteFlextSystemIntegration:
         )
         assert invalid_validation.success is False
         assert (
-            "length" in invalid_validation.error.lower()
-            or "value" in invalid_validation.error.lower()
+            invalid_validation.error is not None
+        )
+        assert (
+
+                "length" in invalid_validation.error.lower()
+                or "value" in invalid_validation.error.lower()
+
         )
 
         # =========================================================================
@@ -332,6 +347,7 @@ class TestCompleteFlextSystemIntegration:
         resultado_falha = processar_dados_usuario(dados_invalidos)
 
         assert resultado_falha.success is False
+        assert resultado_falha.error is not None
         assert "username inválido" in resultado_falha.error.lower()
 
         # =========================================================================
@@ -339,9 +355,9 @@ class TestCompleteFlextSystemIntegration:
         # =========================================================================
 
         # Verificar que os tipos estão disponíveis
-        assert hasattr(FlextTypes, "ResultProtocol")
-        assert hasattr(FlextTypes, "ConfigProtocol")
-        assert hasattr(FlextTypes, "ContainerProtocol")
+        assert hasattr(FlextTypes, "Core")
+        assert hasattr(FlextTypes, "Config")
+        assert hasattr(FlextTypes, "Result")
 
         # =========================================================================
         # CONCLUSÃO: Sistema totalmente integrado e funcional

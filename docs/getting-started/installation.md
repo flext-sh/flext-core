@@ -145,7 +145,7 @@ def verify_domain_imports():
 from flext_core import (
         FlextModels.Entity,
         FlextModels.Value,
-        FlextAggregates,
+        FlextModels,
     )
 
     # Test domain patterns are importable

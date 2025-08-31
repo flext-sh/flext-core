@@ -237,7 +237,7 @@ class TestFlextDelegationSystemCore:
     ) -> None:
         """Test method delegation using builder pattern."""
         # Given: Delegation scenario built with builder
-        host, mixins, expected_methods, _ = (
+        host, _mixins, _expected_methods, _ = (
             delegation_builder.with_mixin(test_mixin_class)
             .expecting_methods(["simple_method", "method_with_args"])
             .build()
@@ -317,7 +317,7 @@ class TestFlextDelegationSystemErrorHandling:
 
         # When/Then: Error is properly wrapped
         with pytest.raises(
-            (FlextExceptions.BaseError, FlextExceptions.FlextOperationError),
+            (FlextExceptions.BaseError, FlextExceptions.OperationError),
         ):
             host_object.error_method()  # type: ignore[attr-defined]
 
@@ -399,15 +399,13 @@ class TestFlextDelegationSystemAsync:
 class TestFlextDelegationSystemPropertyBased:
     """Property-based tests using Hypothesis strategies."""
 
-    @given(method_name=st.text(min_size=1, max_size=50))
+    @given(method_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=["Lu", "Ll", "Nd"], whitelist_characters="_")).filter(lambda x: x.isidentifier() and not x.startswith("_")))
     def test_method_name_handling(
         self,
         method_name: str,
     ) -> None:
         """Test delegation with various method names."""
-        # Skip invalid Python identifiers
-        if not method_name.isidentifier() or method_name.startswith("_"):
-            pytest.skip("Invalid Python identifier")
+        # All method names from strategy are now valid Python identifiers
 
         # Create host object for each test iteration
         host_object = HostObject()
@@ -451,7 +449,7 @@ class TestFlextDelegationSystemPropertyBased:
 
         # When: Creating delegation and processing data
         FlextDelegationSystem.MixinDelegator(host_object, DataMixin)
-        result_type, result_data = host_object.process_data(test_data)  # type: ignore[attr-defined]
+        _result_type, result_data = host_object.process_data(test_data)  # type: ignore[attr-defined]
 
         # Then: Data is processed correctly
         assert isinstance(result_data, type(test_data))
@@ -688,7 +686,7 @@ class TestFlextDelegationSystemEdgeCases:
 
         # Then: Verify delegation worked (implementation-dependent which wins)
         result = host_object.shared_method()  # type: ignore[attr-defined]
-        assert result in ["first", "second"]  # Either order could win
+        assert result in {"first", "second"}  # Either order could win
 
     def test_delegation_with_class_methods_and_static_methods(
         self,
@@ -773,12 +771,10 @@ class TestFlextDelegationSystemCoverage:
         # Test delegation error wrapping
         FlextDelegationSystem.MixinDelegator(host_object, error_mixin_class)
 
-        with pytest.raises(
-            (
-                FlextExceptions.BaseError,
-                FlextExceptions.FlextOperationError,
-            )
-        ):
+        with pytest.raises((
+            FlextExceptions.BaseError,
+            FlextExceptions.OperationError,
+        )):
             host_object.error_method()  # type: ignore[attr-defined]
 
         # Test various error scenarios
@@ -1019,9 +1015,7 @@ class TestFlextDelegationSystemAdditionalCoverage:
         # Given: Host object
 
         # When: Using the factory method to create delegator
-        delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
-            host_object
-        )
+        delegator = FlextDelegationSystem.create_mixin_delegator(host_object)
 
         # Then: Delegator is created successfully
         assert delegator is not None

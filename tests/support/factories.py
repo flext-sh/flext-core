@@ -90,7 +90,7 @@ class BaseTestValueObject(BaseModel):
 class UserFactory(factory.Factory[TestUser]):
     """Factory for creating test users with factory_boy."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestUser
@@ -142,7 +142,7 @@ class InactiveUserFactory(UserFactory):
 class ConfigFactory(factory.Factory[TestConfig]):
     """Factory for creating test configurations."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestConfig
@@ -171,7 +171,7 @@ class ProductionConfigFactory(ConfigFactory):
 class StringFieldFactory(factory.Factory[TestField]):
     """Factory for string field testing."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestField
@@ -191,7 +191,7 @@ class StringFieldFactory(factory.Factory[TestField]):
 class IntegerFieldFactory(factory.Factory[TestField]):
     """Factory for integer field testing."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestField
@@ -210,7 +210,7 @@ class IntegerFieldFactory(factory.Factory[TestField]):
 class BooleanFieldFactory(factory.Factory[TestField]):
     """Factory for boolean field testing."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestField
@@ -228,7 +228,7 @@ class BooleanFieldFactory(factory.Factory[TestField]):
 class FloatFieldFactory(factory.Factory[TestField]):
     """Factory for float field testing."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = TestField
@@ -247,7 +247,7 @@ class FloatFieldFactory(factory.Factory[TestField]):
 class TestEntityFactory(factory.Factory[BaseTestEntity]):
     """Factory for creating test entities."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = BaseTestEntity
@@ -267,7 +267,7 @@ class TestEntityFactory(factory.Factory[BaseTestEntity]):
 class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
     """Factory for creating test value objects."""
 
-    class Meta:  # type: ignore[misc]
+    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
         """Factory meta compatibility."""
 
         model = BaseTestValueObject

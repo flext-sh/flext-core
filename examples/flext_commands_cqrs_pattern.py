@@ -102,7 +102,7 @@ class UserCommandHandler(
                     age=command.age,
                 )
             )
-            .tap(lambda u: self._save_user(u))  # FlextResult tap
+            .tap(self._save_user)  # FlextResult tap
         )
 
     def _save_user(self, user: User) -> None:

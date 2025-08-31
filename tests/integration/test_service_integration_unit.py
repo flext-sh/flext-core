@@ -24,6 +24,7 @@ Testing Patterns Demonstrated:
 
 import time
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -84,7 +85,7 @@ class FunctionalUserService:
             )
 
         # Default user data for testing
-        default_user = {
+        default_user: dict[str, str | int | bool | list[str]] = {
             "id": user_id,
             "email": f"user{user_id}@example.com",
             "name": f"User {user_id}",
@@ -311,8 +312,8 @@ class TestServiceIntegrationPatterns:
             ):
                 return FlextResult[str].fail("Service unavailable")
 
-            retrieved_user_service = user_service_result.value
-            retrieved_notification_service = notification_service_result.value
+            retrieved_user_service = cast("FunctionalUserService", user_service_result.value)
+            retrieved_notification_service = cast("FunctionalNotificationService", notification_service_result.value)
 
             # Get user data first
             user_result = retrieved_user_service.get_user(workflow_user_id)
@@ -379,8 +380,8 @@ class TestServiceIntegrationPatterns:
         assert service_result.success is True
         assert config_fetch_result.success is True
 
-        service = service_result.value  # This is our FunctionalLifecycleService
-        config = config_fetch_result.value
+        service = cast("FunctionalLifecycleService", service_result.value)  # This is our FunctionalLifecycleService
+        config = cast("dict[str, object]", config_fetch_result.value)
 
         # Act - Test service lifecycle
         init_result = service.initialize(config)

@@ -108,7 +108,6 @@ class CreateUserCommandHandler(
         super().__init__(handler_id="create_user_handler")
         self.created_users: list[dict[str, object]] = []
 
-    @override
     def get_command_type(self) -> FlextCommandType:
         """Get command type this handler processes."""
         return "create_user"
@@ -414,7 +413,7 @@ class TestFlextCommandHandler:
             email="jane@example.com",
         )
 
-        result = handler.process_command(command)
+        result = handler.handle(command)
 
         if not result.success:
             raise AssertionError(f"Expected True, got {result.success}")
@@ -431,7 +430,7 @@ class TestFlextCommandHandler:
             email="invalid",
         )
 
-        result = handler.process_command(command)
+        result = handler.execute(command)
 
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
@@ -454,15 +453,15 @@ class TestFlextCommandHandler:
 
         # We need to cast to the expected type to bypass type checking for this test
         # This tests the runtime behavior when wrong command type is passed
-        result = handler.process_command(cast("CreateUserCommand", wrong_command))
+        result = handler.execute(cast("CreateUserCommand", wrong_command))
 
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "cannot process" not in result.error.lower():
+        if "cannot handle" not in result.error.lower():
             raise AssertionError(
-                f"Expected {'cannot process'} in {result.error.lower()}",
+                f"Expected {'cannot handle'} in {result.error.lower()}",
             )
 
     def test_process_command_handling_failure(self) -> None:
@@ -470,7 +469,7 @@ class TestFlextCommandHandler:
         handler: FlextCommandHandler[FailingCommand, None] = FailingCommandHandler()
         command: FailingCommand = FailingCommand()
 
-        result = handler.process_command(command)
+        result = handler.handle(command)
 
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")

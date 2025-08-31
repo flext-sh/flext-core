@@ -66,7 +66,7 @@ class FlextResult[T]:
 
 - `entities.py` - FlextModels.Entity base class
 - `value_objects.py` - FlextModels.Value immutable types
-- `aggregate_root.py` - FlextAggregates with events
+- `models.py` - FlextModels with entities, values, and aggregates
 - `domain_services.py` - Domain services
 - `models.py` - General models
 

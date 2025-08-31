@@ -19,7 +19,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, cast, override
+from typing import cast, override
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -282,11 +282,11 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
             data = json.load(f)
 
         if not isinstance(data, dict):
-            return FlextResult[dict[str, Any]].fail(
+            return FlextResult[dict[str, object]].fail(
                 "Configuration must be a JSON object"
             )
 
-        return FlextResult[dict[str, Any]].ok(dict(data))
+        return FlextResult[dict[str, object]].ok(dict(data))
 
     except json.JSONDecodeError as e:
         return FlextResult[dict[str, object]].fail(f"Invalid JSON: {e}")

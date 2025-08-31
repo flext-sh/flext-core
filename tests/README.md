@@ -28,9 +28,7 @@ tests/
 │   │   ├── test_payload.py          # Payload patterns
 │   │   ├── test_mixins.py           # Mixin behaviors
 │   │   ├── test_decorators.py       # Decorator patterns
-│   │   ├── test_entities.py         # Domain entities
-│   │   ├── test_value_objects.py    # Value objects
-│   │   ├── test_aggregate_root.py   # Aggregate roots
+│   │   ├── test_models.py           # Domain models (entities, values, aggregates)
 │   │   ├── test_interfaces.py       # Interface definitions
 │   │   ├── test_loggings.py         # Logging system
 │   │   ├── test_semantic.py         # Semantic patterns
@@ -237,7 +235,7 @@ class TestUser(FlextModels.Entity):
     email: str
     is_active: bool = True
 
-class TestOrder(FlextAggregates):
+class TestOrder(FlextModels.AggregateRoot):
     """Test order aggregate."""
     customer_id: str
     items: list

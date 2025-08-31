@@ -94,7 +94,7 @@ import time
 import traceback
 import uuid
 from datetime import UTC, datetime
-from typing import ClassVar, cast
+from typing import ClassVar, Self, cast
 
 import structlog
 from structlog.typing import EventDict, Processor
@@ -147,8 +147,34 @@ class FlextLogger:
     _request_context: ClassVar[dict[str, object]] = {}
     _performance_tracking: ClassVar[dict[str, float]] = {}
 
+    # Logger instance cache for singleton pattern
+    _instances: ClassVar[dict[str, FlextLogger]] = {}
+
     # Thread-local storage for per-request context
     _local = internal.invalid()
+
+    def __new__(cls, name: str, *_args: object, **kwargs: object) -> Self:
+        """Create or return cached logger instance for singleton pattern.
+
+        Args:
+            name: Logger name
+            *_args: Positional arguments passed to __init__ (unused in __new__)
+            **kwargs: Keyword arguments, including special _force_new for bind()
+
+        Returns:
+            FlextLogger instance (cached or new if _force_new=True)
+
+        """
+        # Check if this is a bind() call that needs a new instance
+        force_new = kwargs.pop("_force_new", False)
+
+        if force_new or name not in cls._instances:
+            instance = super().__new__(cls)
+            if not force_new:  # Only cache if not forced new
+                cls._instances[name] = instance
+            return instance
+
+        return cast("Self", cls._instances[name])
 
     def __init__(
         self,
@@ -158,6 +184,8 @@ class FlextLogger:
         service_version: str | None = None,
         correlation_id: str | None = None,
         environment: FlextTypes.Config.Environment = "development",
+        *,
+        _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
         """Initialize structured logger instance with FlextTypes.Config integration.
 
@@ -202,9 +230,18 @@ class FlextLogger:
         self._start_time = time.time()
 
         # Instance-level correlation ID (can override global)
+        # Use local import to avoid circular dependency
+        try:
+            from flext_core.context import FlextContext
+
+            context_id = FlextContext.Correlation.get_correlation_id()
+        except ImportError:
+            context_id = None
+
         self._correlation_id = (
             correlation_id
             or self._global_correlation_id
+            or context_id  # Check global context
             or self._generate_correlation_id()
         )
 
@@ -456,14 +493,15 @@ class FlextLogger:
 
         """
         # Create a new logger instance with same configuration
-
+        # Use _force_new=True to bypass singleton pattern for bind()
         bound_logger = FlextLogger(
             name=self._name,
-            level=self._level,  # type: ignore[arg-type]
+            level=cast("FlextTypes.Config.LogLevel", self._level),  # type: ignore[redundant-cast]
             service_name=getattr(self, "_service_name", None),
             service_version=getattr(self, "_service_version", None),
             correlation_id=getattr(self, "_correlation_id", None),
             environment=getattr(self, "_environment", "development"),
+            _force_new=True,
         )
 
         # Copy existing request context
@@ -790,13 +828,11 @@ class FlextLogger:
 
         # Add structured processors
         if structured_output:
-            processors.extend(
-                [
-                    cls._add_correlation_processor,
-                    cls._add_performance_processor,
-                    cls._sanitize_processor,
-                ]
-            )
+            processors.extend([
+                cls._add_correlation_processor,
+                cls._add_performance_processor,
+                cls._sanitize_processor,
+            ])
 
         # Choose output format
         if json_output:
@@ -1204,28 +1240,24 @@ class FlextLogger:
             performance_level = config.get("performance_level", "standard")
 
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        "async_logging_enabled": True,
-                        "buffer_size": 5000,
-                        "flush_interval_ms": 1000,
-                        "max_concurrent_operations": 500,
-                        "enable_log_compression": True,
-                        "batch_log_processing": True,
-                        "disable_trace_logging": True,
-                    }
-                )
+                optimized_config.update({
+                    "async_logging_enabled": True,
+                    "buffer_size": 5000,
+                    "flush_interval_ms": 1000,
+                    "max_concurrent_operations": 500,
+                    "enable_log_compression": True,
+                    "batch_log_processing": True,
+                    "disable_trace_logging": True,
+                })
             elif performance_level == "low":
-                optimized_config.update(
-                    {
-                        "async_logging_enabled": False,
-                        "buffer_size": 100,
-                        "flush_interval_ms": 10000,
-                        "max_concurrent_operations": 10,
-                        "enable_log_compression": False,
-                        "batch_log_processing": False,
-                    }
-                )
+                optimized_config.update({
+                    "async_logging_enabled": False,
+                    "buffer_size": 100,
+                    "flush_interval_ms": 10000,
+                    "max_concurrent_operations": 10,
+                    "enable_log_compression": False,
+                    "batch_log_processing": False,
+                })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

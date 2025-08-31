@@ -17,9 +17,10 @@ FlextTracer = FlextObservability.Tracer
 
 
 # Create stub for missing function
-def get_global_observability():
+def get_global_observability(*, log_level: str = "INFO", force_recreate: bool = False) -> FlextObservability.Observability:  # noqa: ARG001
     """Stub for global observability access."""
-    return FlextObservability()
+    # Return the proper Observability instance that has all the attributes
+    return FlextObservability.Observability()
 
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]

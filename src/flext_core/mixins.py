@@ -1402,7 +1402,10 @@ class FlextMixins:
             """Set entity ID with validation."""
             result = FlextMixins.set_id(self, value)
             if result.is_failure:
-                raise ValueError(result.error or "Invalid entity ID")
+                from flext_core.exceptions import FlextExceptions
+                raise FlextExceptions.ValidationError(
+                    result.error or "Invalid entity ID"
+                )
 
         def has_id(self) -> bool:
             """Check if object has a valid ID."""

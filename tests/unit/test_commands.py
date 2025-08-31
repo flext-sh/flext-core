@@ -38,6 +38,9 @@ from tests.support import (
     BenchmarkProtocol,
     FlextMatchers,
     MemoryProfiler,
+    ServiceDataFactory,
+    TestBuilders,
+    UserDataFactory,
 )
 
 
@@ -733,17 +736,20 @@ class TestFlextCommandsEnhanced:
     - Async testing and concurrency scenarios
     """
 
-    def test_command_creation_with_user_factory(self, user_factory) -> None:
+    def test_command_creation_with_user_factory(self, user_factory: type[UserDataFactory]) -> None:
         """Test command creation using user_factory fixture for realistic data."""
         # Use factory fixture for realistic user data
         user_data = user_factory.create(name="John Smith", email="john@example.com")
 
         # Create command with realistic data - handle both dict and model types
+        from typing import cast
         user_name = (
-            user_data.name
+            cast("str", getattr(user_data, "name", None))
             if hasattr(user_data, "name")
-            else user_data.get("name", "John Smith")
+            else cast("str", user_data.get("name", "John Smith"))
         )
+        # Ensure user_name is a string for type safety
+        assert isinstance(user_name, str)
         command = SampleCommand(name=user_name, value=42)
 
         # Use FlextMatchers for sophisticated assertions
@@ -789,7 +795,7 @@ class TestFlextCommandsEnhanced:
             FlextMatchers.assert_result_failure(result)
 
     def test_command_performance_benchmarking(
-        self, benchmark: object, user_factory
+        self, benchmark: object, user_factory: type[UserDataFactory]
     ) -> None:
         """Test command creation performance using pytest-benchmark."""
 
@@ -799,9 +805,9 @@ class TestFlextCommandsEnhanced:
                 user_data = user_factory.create(name=f"User {i}")
                 # Handle both dict and Pydantic model response
                 if hasattr(user_data, "name"):
-                    user_name = user_data.name  # Pydantic model
+                    user_name = cast("str", getattr(user_data, "name", None))  # Pydantic model
                 else:
-                    user_name = user_data.get("name", f"User {i}")  # Dict
+                    user_name = cast("str", user_data.get("name", f"User {i}"))  # Dict
                 command = SampleCommand(name=user_name, value=i)
                 commands.append(command)
             return commands
@@ -822,7 +828,7 @@ class TestFlextCommandsEnhanced:
         else:
             pytest.fail("Expected list result from benchmark")
 
-    def test_command_memory_efficiency(self, service_factory) -> None:
+    def test_command_memory_efficiency(self, service_factory: type[ServiceDataFactory]) -> None:
         """Test command memory usage with MemoryProfiler."""
         with MemoryProfiler.track_memory_leaks(max_increase_mb=5.0):
             # Create commands and clean up periodically to test memory management
@@ -831,17 +837,15 @@ class TestFlextCommandsEnhanced:
                 service_data = service_factory.create(name=f"service_{i}")
                 # Extract service data directly - handle both dict and model types
                 if hasattr(service_data, "name"):
-                    service_name = service_data.name  # Pydantic model
+                    service_name = cast("str", getattr(service_data, "name", None))  # Pydantic model
                     service_port = (
-                        service_data.port if hasattr(service_data, "port") else i
+                        cast("int", getattr(service_data, "port", i)) if hasattr(service_data, "port") else i
                     )
                 else:
-                    service_name = service_data.get("name", f"service_{i}")  # Dict
-                    service_port = service_data.get("port", i)  # Dict
+                    service_name = cast("str", service_data.get("name", f"service_{i}"))  # Dict
+                    service_port = cast("int", service_data.get("port", i))  # Dict
 
-                # Ensure service_port is an integer for SampleCommand
-                if not isinstance(service_port, int):
-                    service_port = i
+                # service_port is already cast to int above
                 command = SampleCommand(name=service_name, value=service_port)
                 commands.append(command)
 
@@ -892,7 +896,9 @@ class TestFlextCommandsEnhanced:
         assert results[2]["processed"] is False
         assert "error" in results[2]
 
-    def test_command_builder_pattern(self, user_factory, test_builders) -> None:
+    def test_command_builder_pattern(
+        self, user_factory: type[UserDataFactory], test_builders: TestBuilders
+    ) -> None:
         """Test command creation using TestBuilders fixture."""
         # Use TestBuilders fixture for sophisticated test setup
         container = test_builders.container().build()
@@ -965,15 +971,13 @@ class TestFlextCommandsEnhanced:
         results = []
         for command in commands:
             validation_result = command.validate_command()
-            results.append(
-                {
-                    "command": command,
-                    "valid": validation_result.is_success,
-                    "error": validation_result.error
-                    if validation_result.is_failure
-                    else None,
-                }
-            )
+            results.append({
+                "command": command,
+                "valid": validation_result.is_success,
+                "error": validation_result.error
+                if validation_result.is_failure
+                else None,
+            })
 
         # Validate batch results
         assert len(results) == len(command_data)
@@ -995,7 +999,9 @@ class TestFlextCommandsEnhanced:
                             command_obj.validate_command()
                         )
 
-    def test_real_world_cqrs_scenario(self, service_factory, test_builders) -> None:
+    def test_real_world_cqrs_scenario(
+        self, service_factory: type[ServiceDataFactory], test_builders: TestBuilders
+    ) -> None:
         """Test realistic CQRS scenario with microservice dependencies."""
         # Use test_builders fixture for CQRS setup
         container = test_builders.container().build()

@@ -62,7 +62,7 @@ class User(FlextModels.Entity):
 
 
 # =============================================================================
-# STRUCTURED DATA MODELS - Using FlextModels.Value + FlextConfig.BaseConfigModel base
+# STRUCTURED DATA MODELS - Using FlextModels.Value + FlextConfig.BaseModel base
 # =============================================================================
 
 
@@ -90,8 +90,8 @@ class UserRegistrationRequest(FlextModels.Value):
         return FlextResult[None].ok(None)
 
 
-class RegistrationResult(FlextConfig.BaseConfigModel):
-    """Registration result using FlextConfig.BaseConfigModel for enterprise features.
+class RegistrationResult(FlextConfig.BaseModel):
+    """Registration result using FlextConfig.BaseModel for enterprise features.
 
     Follows SOLID principles with proper typing using FlextTypes.
     """
@@ -102,7 +102,7 @@ class RegistrationResult(FlextConfig.BaseConfigModel):
     correlation_id: FlextTypes.Core.String
 
 
-class BatchResult(FlextConfig.BaseConfigModel):
+class BatchResult(FlextConfig.BaseModel):
     """Batch processing result with enterprise metrics.
 
     Uses FlextTypes for consistent typing across the ecosystem.

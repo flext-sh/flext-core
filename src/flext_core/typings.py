@@ -704,7 +704,7 @@ class FlextTypes:
     # =========================================================================
 
     class Aggregates:
-        """Aggregates-specific types optimized for aggregate_root.py implementation.
+        """Aggregates-specific types for FlextModels.AggregateRoot implementation.
 
         Refactored following FLEXT requirements with Pydantic 2.11+ and Python 3.13+
         enhancements. Only heavily used types are kept, unused types are commented out.
@@ -752,9 +752,9 @@ class FlextTypes:
         # =====================================================================
 
         # # Runtime metrics - rarely used directly
-        # type RuntimeMetrics = dict[str, int | float | str]  # Not used in actual aggregate_root.py
+        # type RuntimeMetrics = dict[str, int | float | str]  # Runtime metrics for aggregates
 
-        # # Domain event types - not used in current aggregate_root.py implementation
+        # # Domain event types - for future aggregate event sourcing
         # type EventId = str  # Not used
         # type EventType = str  # Not used
         # type EventData = dict[str, object]  # Not used

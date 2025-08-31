@@ -309,7 +309,8 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
                 email = str(args[1]) if args[1] is not None else ""
                 age_val = args[2]
 
-                # Safe age conversion
+                # Safe age conversion with default
+                age: int = 0  # Default value for type safety
                 if isinstance(age_val, (int, float)) or (
                     isinstance(age_val, str) and age_val.isdigit()
                 ):
@@ -342,10 +343,10 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
         user_result = create_user_generic(
             "Alice Modern", "alice.modern@example.com", 25
         )
-        if hasattr(user_result, "name"):
-            pass
-    except Exception:
-        pass
+        if isinstance(user_result, dict) and "name" in user_result:
+            logger.info("User creation test passed", user=user_result["name"])
+    except Exception as e:
+        logger.warning("User creation test failed", error=str(e))
 
     # Test validation failure
     with contextlib.suppress(Exception):
