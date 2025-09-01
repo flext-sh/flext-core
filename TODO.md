@@ -76,14 +76,14 @@ class FlextCoreHandlers:
 #### **4. FlextCoreValidation - ALTO**
 **Arquivo**: `src/flext_core/validation.py`  
 **Status**: Classes individuais existem, falta consolidação principal  
-**Problema**: FlextValidation, FlextValidationPipeline, FlextDomainValidator como classes separadas  
+**Problema**: FlextValidations, FlextValidationPipeline, FlextDomainValidator como classes separadas  
 
 **Ação Necessária**:
 ```python
 class FlextCoreValidation:
     """Consolidated validation system."""
     
-    class Validation(FlextValidation): ...  # Classe principal
+    class Validation(FlextValidations): ...  # Classe principal
     class Pipeline(FlextValidationPipeline): ...
     class DomainValidator(FlextDomainValidator): ...
     class AbstractValidator(FlextAbstractValidator): ...
@@ -178,7 +178,7 @@ FlextModels = FlextCoreModels.Model  # OU FlextCoreModels().Model
 # Validar que imports legados funcionam
 python -c "from flext_core import FlextModels, FlextModels.Entity, FlextResult"
 python -c "from flext_core import FlextHandlerRegistry, FlextAbstractHandler"  
-python -c "from flext_core import FlextValidation, FlextValidators"
+python -c "from flext_core import FlextValidations, FlextValidators"
 
 # Testar patterns consolidados  
 python -c "from flext_core import FlextCoreModels, FlextCoreHandlers"

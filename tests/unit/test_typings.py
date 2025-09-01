@@ -160,9 +160,7 @@ class TestTypeAliases:
             "email": "john@example.com",
         }
         user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
-            source_service="user_service",
-            message_type="user.data",
-            data=user_data
+            source_service="user_service", message_type="user.data", data=user_data
         )
 
         event_data: dict[str, object] = {
@@ -172,7 +170,7 @@ class TestTypeAliases:
         event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
             source_service="event_service",
             message_type="event.created",
-            data=event_data
+            data=event_data,
         )
 
         # Verify payload structure

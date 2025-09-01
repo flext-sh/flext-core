@@ -60,7 +60,7 @@ class TestCompleteFlextSystemIntegration:
             "FlextConfig",
             "FlextContainer",
             "FlextFields",
-            "FlextValidation",
+            "FlextValidations",
             "FlextCommands",
         ]
 
@@ -236,7 +236,9 @@ class TestCompleteFlextSystemIntegration:
         registry = FlextFields.Registry.FieldRegistry()
 
         # Registrar campo
-        register_result = registry.register_field("user_name", cast("FlextFields.Core.BaseField[object]", string_field))
+        register_result = registry.register_field(
+            "user_name", cast("FlextFields.Core.BaseField[object]", string_field)
+        )
         assert register_result.success is True
 
         # Recuperar campo registrado
@@ -263,7 +265,7 @@ class TestCompleteFlextSystemIntegration:
         # Validação múltipla usando o sistema
         fields: list[FlextFields.Core.BaseField[object]] = [
             cast("FlextFields.Core.BaseField[object]", string_field),
-            cast("FlextFields.Core.BaseField[object]", integer_field)
+            cast("FlextFields.Core.BaseField[object]", integer_field),
         ]
         values = {"username": "maria123", "age": 25}
 
@@ -285,14 +287,10 @@ class TestCompleteFlextSystemIntegration:
             fields, invalid_values
         )
         assert invalid_validation.success is False
+        assert invalid_validation.error is not None
         assert (
-            invalid_validation.error is not None
-        )
-        assert (
-
-                "length" in invalid_validation.error.lower()
-                or "value" in invalid_validation.error.lower()
-
+            "length" in invalid_validation.error.lower()
+            or "value" in invalid_validation.error.lower()
         )
 
         # =========================================================================

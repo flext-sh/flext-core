@@ -301,7 +301,8 @@ class TestHandlersConfigurationIntegration:
         # Verify handler-specific information
         assert current_config["handler_name"] == "get_config_handler"
         assert (
-            current_config["handler_state"] == FlextHandlers.Constants.Handler.States.IDLE
+            current_config["handler_state"]
+            == FlextHandlers.Constants.Handler.States.IDLE
         )
         assert isinstance(current_config["requests_processed"], int)
         assert isinstance(current_config["success_rate"], float)

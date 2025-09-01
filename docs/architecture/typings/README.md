@@ -619,8 +619,6 @@ class FlextApiTypes(FlextTypes):
         """API domain types."""
         type RequestData = FlextTypes.Config.ConfigDict
         type ResponseData = FlextTypes.Config.ConfigDict
-        type HandlerName = str
-        type HandlerConfig = FlextTypes.Service.ServiceDict
         
     class Http:
         """HTTP-specific types."""

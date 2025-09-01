@@ -232,7 +232,7 @@ import hashlib
 from datetime import datetime
 
 # Configuration
-class AppConfig(FlextConfig):
+class FlextConfigSchemaAppConfig(FlextConfig):
     database_url: str = "sqlite:///users.db"
     smtp_host: str = "localhost"
     smtp_port: int = 587
@@ -285,7 +285,7 @@ class PasswordService:
         return FlextResult[None].ok(check_hash == hash)
 
 class EmailService:
-    def __init__(self, config: AppConfig):
+    def __init__(self, config: FlextConfigSchemaAppConfig):
         self.config = config
 
     def send_verification_email(self, user: User) -> FlextResult[None]:
@@ -314,7 +314,7 @@ class UserRepository:
 class UserRegistrationService:
     def __init__(self):
         container = FlextContainer.get_global()
-        self.config = AppConfig()
+        self.config = FlextConfigSchemaAppConfig()
         self.password_service = PasswordService()
         self.email_service = EmailService(self.config)
         self.repository = UserRepository()

@@ -46,7 +46,7 @@ graph TB
     D --> K[FlextObservability]
     E --> L[FlextModels]
     E --> M[FlextDomainService]
-    F --> N[FlextValidation]
+    F --> N[FlextValidations]
     F --> O[FlextGuards]
     G --> P[FlextResult]
     
@@ -272,7 +272,7 @@ FlextCore provides direct access to all FLEXT subsystems through properties:
 - `core.processors` → FlextProcessors (Data processing)
 - `core.services` → FlextServices (Service layer)
 - `core.utilities` → FlextUtilities (Helper functions)
-- `core.validation` → FlextValidation (Validation systems)
+- `core.validation` → FlextValidations (Validation systems)
 
 ---
 
@@ -484,7 +484,7 @@ if config.success:
 - **[FlextResult](../result/README.md)**: Railway-oriented programming patterns  
 - **[FlextConfig](../config/README.md)**: Configuration management system
 - **[FlextObservability](../observability/README.md)**: Monitoring and observability
-- **[FlextValidation](../validation/README.md)**: Comprehensive validation system
+- **[FlextValidations](../validation/README.md)**: Comprehensive validation system
 - **[FlextModels](../models/README.md)**: Domain modeling patterns
 - **[FlextHandlers](../handlers/README.md)**: Enterprise handler patterns
 

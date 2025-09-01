@@ -1554,7 +1554,9 @@ class TestUncoveredLinesTargeted:
                     TestCoverageTargetedTests._raise_runtime_error("line 1084-1085")
 
                 def keys(self) -> NoReturn:
-                    TestCoverageTargetedTests._raise_runtime_error("line 1084-1085 keys")
+                    TestCoverageTargetedTests._raise_runtime_error(
+                        "line 1084-1085 keys"
+                    )
 
             logging_module.FlextLogger._current_config = ExceptionConfig()  # type: ignore[attr-defined]
 
@@ -1644,7 +1646,9 @@ class TestUncoveredLinesTargeted:
             class InvalidConfig(UserDict[str, object]):
                 def get(self, key: str, default: object = None) -> object:
                     if key == "buffer_size":
-                        TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                        TestCoverageTargetedTests._raise_runtime_error(
+                            "lines 1226-1227"
+                        )
                     return super().get(key, default)
 
             invalid_config = InvalidConfig({"performance_level": "high"})
@@ -1731,19 +1735,27 @@ class TestUncoveredLinesTargeted:
                 class Config:
                     class ConfigEnvironment:
                         def __iter__(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
                         @property
                         def development(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
                     class LogLevel:
                         def __iter__(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
                         @property
                         def info(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
             logging_module.FlextConstants = ExceptionConstants()  # type: ignore[attr-defined,assignment]
 
@@ -1786,12 +1798,16 @@ class TestUncoveredLinesTargeted:
                     class ConfigEnvironment:
                         @property
                         def development(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
                     class LogLevel:
                         @property
                         def info(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error("lines 1226-1227")
+                            TestCoverageTargetedTests._raise_runtime_error(
+                                "lines 1226-1227"
+                            )
 
             logging_module.FlextConstants = ExceptionConstants()  # type: ignore[attr-defined,assignment]
 

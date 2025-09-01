@@ -136,7 +136,7 @@ if config_result.success:
 
 - Domain patterns (FlextModels.Entity, FlextModels.Value)
 - Command/Handler patterns (FlextCommands, FlextHandlers)
-- Validation patterns (FlextValidation)
+- Validation patterns (FlextValidations)
 
 ### 📋 **Planned:**
 

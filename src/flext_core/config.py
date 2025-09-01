@@ -140,10 +140,11 @@ import json
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, Final, cast
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     SerializationInfo,
     field_serializer,
@@ -253,6 +254,172 @@ class FlextConfig(BaseModel):
             """
 
             DEFAULT_ENV = FlextConstants.Config.DEFAULT_ENVIRONMENT
+
+        class PerformanceConfigDicts:
+            """Centralized ConfigDict definitions for performance-related configurations.
+
+            This class consolidates all performance-related ConfigDict patterns that were
+            previously scattered across the codebase, providing a single source of truth
+            for performance configuration settings.
+            """
+
+            # Main performance configuration
+            PERFORMANCE_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Validation performance settings
+                validate_assignment=True,
+                validate_default=True,
+                use_enum_values=True,
+                # Memory efficiency settings
+                arbitrary_types_allowed=False,
+                extra="forbid",
+                str_strip_whitespace=True,
+                # Serialization performance
+                ser_json_bytes="base64",
+                ser_json_timedelta="iso8601",
+                hide_input_in_errors=True,
+                # Performance optimizations
+                frozen=False,  # Allow mutation for performance
+                json_schema_extra={"performance_optimized": True},
+            )
+
+            # Timeout configuration
+            TIMEOUT_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Basic validation only for timeout-critical operations
+                validate_assignment=True,
+                validate_default=False,  # Skip default validation for speed
+                # Minimal type checking
+                arbitrary_types_allowed=True,
+                extra="ignore",  # Ignore extra fields for flexibility
+                # Fast serialization
+                use_enum_values=True,
+                hide_input_in_errors=True,
+                # Performance settings for timeout-sensitive operations
+                frozen=True,  # Immutable timeout settings
+                # Custom timeout field configurations
+                json_schema_extra={
+                    "timeout_defaults": {
+                        "default_timeout": FlextConstants.Performance.TIMEOUT,
+                        "connection_timeout": FlextConstants.Network.CONNECTION_TIMEOUT,
+                        "read_timeout": FlextConstants.Network.READ_TIMEOUT,
+                        "command_timeout": FlextConstants.Performance.COMMAND_TIMEOUT,
+                        "keepalive_timeout": FlextConstants.Performance.KEEP_ALIVE_TIMEOUT,
+                    }
+                },
+            )
+
+            # Batch processing configuration
+            BATCH_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Efficient validation for batch operations
+                validate_assignment=True,
+                validate_default=True,
+                use_enum_values=True,
+                # Memory-efficient settings for large batches
+                arbitrary_types_allowed=True,
+                extra="forbid",
+                str_strip_whitespace=True,
+                # Optimized for batch processing
+                frozen=False,  # Allow batch modification
+                # Batch-specific JSON schema
+                json_schema_extra={
+                    "batch_defaults": {
+                        "default_batch_size": FlextConstants.Performance.DEFAULT_BATCH_SIZE,
+                        "max_batch_size": FlextConstants.Performance.MAX_BATCH_SIZE,
+                        "large_batch_size": FlextConstants.DBT.LARGE_BATCH_SIZE,
+                        "memory_efficient_batch_size": FlextConstants.LDIF.MEMORY_EFFICIENT_BATCH_SIZE,
+                        "max_entries_per_operation": FlextConstants.Performance.MAX_ENTRIES_PER_OPERATION,
+                    }
+                },
+            )
+
+            # Memory management configuration
+            MEMORY_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Lightweight validation for memory-sensitive operations
+                validate_assignment=False,  # Skip for memory performance
+                validate_default=False,
+                use_enum_values=True,
+                # Memory optimization settings
+                arbitrary_types_allowed=True,
+                extra="ignore",
+                str_strip_whitespace=False,  # Skip string processing
+                # Maximum memory efficiency
+                frozen=True,  # Immutable memory settings
+                hide_input_in_errors=True,  # Reduce memory usage in errors
+                # Memory-related defaults
+                json_schema_extra={
+                    "memory_defaults": {
+                        "high_memory_threshold": FlextConstants.Performance.HIGH_MEMORY_THRESHOLD,
+                        "memory_pressure_threshold": FlextConstants.GRPC.MEMORY_PRESSURE_THRESHOLD,
+                        "low_memory_threshold": FlextConstants.GRPC.LOW_MEMORY_THRESHOLD,
+                        "max_buffer_size": FlextConstants.GRPC.MAX_BUFFER_SIZE_BYTES,
+                        "buffer_cleanup_batch_size": FlextConstants.GRPC.BUFFER_CLEANUP_BATCH_SIZE,
+                        "adaptive_buffer_scaling": FlextConstants.GRPC.ADAPTIVE_BUFFER_SCALING_FACTOR,
+                    }
+                },
+            )
+
+            # Concurrency and threading configuration
+            CONCURRENCY_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Thread-safe validation settings
+                validate_assignment=True,
+                validate_default=True,
+                use_enum_values=True,
+                # Concurrency-safe settings
+                arbitrary_types_allowed=True,
+                extra="forbid",
+                str_strip_whitespace=True,
+                # Thread-safe serialization
+                ser_json_bytes="base64",
+                ser_json_timedelta="iso8601",
+                # Concurrency optimizations
+                frozen=True,  # Thread-safe immutable configuration
+                # Concurrency defaults
+                json_schema_extra={
+                    "concurrency_defaults": {
+                        "thread_pool_size": FlextConstants.Performance.THREAD_POOL_SIZE,
+                        "max_threads": FlextConstants.Limits.MAX_THREADS,
+                        "max_workers": FlextConstants.GRPC.DEFAULT_MAX_WORKERS,
+                        "max_connections": FlextConstants.Performance.MAX_CONNECTIONS,
+                        "pool_size": FlextConstants.Performance.POOL_SIZE,
+                        "default_pool_size": FlextConstants.Infrastructure.DEFAULT_POOL_SIZE,
+                        "max_pool_size": FlextConstants.Infrastructure.MAX_POOL_SIZE,
+                        "max_parallel_streams": FlextConstants.Targets.DEFAULT_MAX_PARALLEL_STREAMS,
+                        "max_concurrent_streams": FlextConstants.GRPC.MAX_CONCURRENT_STREAMS_PER_CLIENT,
+                    }
+                },
+            )
+
+            # Cache configuration
+            CACHE_CONFIG: Final[ConfigDict] = ConfigDict(
+                # Optimized validation for cache operations
+                validate_assignment=True,
+                validate_default=False,  # Skip validation for cache performance
+                use_enum_values=True,
+                # Cache-friendly settings
+                arbitrary_types_allowed=True,
+                extra="ignore",  # Allow cache metadata
+                str_strip_whitespace=True,
+                # Fast serialization for cache
+                ser_json_bytes="base64",
+                hide_input_in_errors=True,
+                # Cache performance optimizations
+                frozen=False,  # Allow cache updates
+                # Cache-specific defaults
+                json_schema_extra={
+                    "cache_defaults": {
+                        "cache_ttl": FlextConstants.Performance.CACHE_TTL,
+                        "cache_max_size": FlextConstants.Performance.CACHE_MAX_SIZE,
+                        "metadata_cache_ttl": FlextConstants.Cache.METADATA_CACHE_TTL,
+                        "query_cache_ttl": FlextConstants.Cache.QUERY_CACHE_TTL,
+                        "short_cache_ttl": FlextConstants.Cache.SHORT_CACHE_TTL,
+                        "long_cache_ttl": FlextConstants.Cache.LONG_CACHE_TTL,
+                        "max_cache_entries": FlextConstants.Cache.MAX_CACHE_ENTRIES,
+                        "default_cache_size": FlextConstants.Cache.DEFAULT_CACHE_SIZE,
+                        "large_cache_size": FlextConstants.Cache.LARGE_CACHE_SIZE,
+                        "cache_cleanup_interval": FlextConstants.Cache.CACHE_CLEANUP_INTERVAL,
+                        "cache_eviction_threshold": FlextConstants.Cache.CACHE_EVICTION_THRESHOLD,
+                    }
+                },
+            )
 
     class Settings(BaseSettings):
         """Environment-aware configuration using Pydantic BaseSettings.
@@ -580,9 +747,12 @@ class FlextConfig(BaseModel):
             )
 
         # Validate critical fields are not None when they exist as extra fields
-        extra_data = (
-            dict(self.__pydantic_extra__.items()) if self.__pydantic_extra__ else {}
-        )
+        # Use model_extra for Pydantic 2 compatibility
+        extra_data = self.model_extra if hasattr(self, "model_extra") else {}
+
+        # Ensure extra_data is a dict for type checking
+        if extra_data is None:
+            extra_data = {}
 
         # Check for None values in critical fields
         critical_fields = ["database_url", "key"]

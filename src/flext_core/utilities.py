@@ -110,7 +110,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import cast
 
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
@@ -706,20 +706,22 @@ class FlextUtilities:
                 return FlextResult[TModel].ok(instance)
 
             except json.JSONDecodeError as json_error:
-                return FlextResult[TModel].fail(
-                    f"Invalid JSON format: {json_error}",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+                error_message = f"Invalid JSON format: {json_error}"
+            except ValidationError as pydantic_error:
+                # Handle Pydantic ValidationError specifically for better error messages
+                error_message = f"Pydantic validation failed: {pydantic_error}"
             except (TypeError, ValueError) as validation_error:
-                return FlextResult[TModel].fail(
-                    f"Model validation failed: {validation_error}",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                )
+                error_message = f"Model validation failed: {validation_error}"
             except Exception as unexpected_error:
-                return FlextResult[TModel].fail(
-                    f"Unexpected error during model creation: {unexpected_error}",
-                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                error_message = (
+                    f"Unexpected error during model creation: {unexpected_error}"
                 )
+
+            # Single return point for all error cases
+            return FlextResult[TModel].fail(
+                error_message,
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
 
     class ResultUtils:
         """FlextResult processing and composition utilities.

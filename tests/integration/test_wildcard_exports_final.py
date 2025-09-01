@@ -44,7 +44,7 @@ class TestFlextCoreWildcardExports:
             "FlextConfig",
             "FlextContainer",
             "FlextFields",
-            "FlextValidation",
+            "FlextValidations",
             "FlextCommands",
         ]
 
@@ -178,12 +178,10 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(operation_id, str)
 
         # 2. Create a result
-        result = FlextResult[dict[str, object]].ok(
-            {
-                "operation_id": operation_id,
-                "status": "started",
-            }
-        )
+        result = FlextResult[dict[str, object]].ok({
+            "operation_id": operation_id,
+            "status": "started",
+        })
         assert result.success is True
 
         # 3. Process the result through transformations

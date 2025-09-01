@@ -265,7 +265,7 @@ class DatabaseConfig(FlextConfig):
     class Config:
         env_prefix = "DB_"
 
-class AppConfig(FlextConfig):
+class FlextConfigSchemaAppConfig(FlextConfig):
     """Main application configuration."""
     app_name: str = Field("My FLEXT App", description="Application name")
     version: str = Field("0.9.0", description="Application version")
@@ -293,7 +293,7 @@ class AppConfig(FlextConfig):
 
 # Global configuration instances
 database_config = DatabaseConfig()
-app_config = AppConfig()
+app_config = FlextConfigSchemaAppConfig()
 ```
 
 ## Common Usage Patterns

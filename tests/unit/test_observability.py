@@ -17,8 +17,12 @@ FlextTracer = FlextObservability.Tracer
 
 
 # Create stub for missing function
-def get_global_observability(*, log_level: str = "INFO", force_recreate: bool = False) -> FlextObservability.Observability:  # noqa: ARG001
+def get_global_observability(
+    *, log_level: str = "INFO", force_recreate: bool = False
+) -> FlextObservability.Observability:
     """Stub for global observability access."""
+    _ = log_level  # Explicitly mark as unused
+    _ = force_recreate  # Explicitly mark as unused
     # Return the proper Observability instance that has all the attributes
     return FlextObservability.Observability()
 

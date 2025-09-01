@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import cast, override
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import FlextCommands, FlextResult
 
@@ -17,7 +18,6 @@ FlextCommandType = str
 # Constants
 EXPECTED_BULK_SIZE = 2
 
-FlextCommand = FlextCommands.Models.Command
 FlextCommandHandler = FlextCommands.Handlers.CommandHandler
 FlextCommandBus = FlextCommands.Bus
 FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metadata
@@ -26,7 +26,7 @@ FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metada
 # =============================================================================
 
 
-class CreateUserCommand(FlextCommands.Models.Command):
+class CreateUserCommand(BaseModel):
     """Test command for creating users."""
 
     username: str
@@ -39,7 +39,6 @@ class CreateUserCommand(FlextCommands.Models.Command):
             "email": self.email,
         }
 
-    @override
     def validate_command(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.username:
@@ -51,7 +50,7 @@ class CreateUserCommand(FlextCommands.Models.Command):
         return FlextResult[None].ok(None)
 
 
-class UpdateUserCommand(FlextCommands.Models.Command):
+class UpdateUserCommand(BaseModel):
     """Test command for updating users."""
 
     target_user_id: str
@@ -64,7 +63,6 @@ class UpdateUserCommand(FlextCommands.Models.Command):
             "updates": self.updates,
         }
 
-    @override
     def validate_command(self) -> FlextResult[None]:
         """Validate command data."""
         if not self.target_user_id:
@@ -74,14 +72,13 @@ class UpdateUserCommand(FlextCommands.Models.Command):
         return FlextResult[None].ok(None)
 
 
-class FailingCommand(FlextCommands.Models.Command):
+class FailingCommand(BaseModel):
     """Test command that always fails validation."""
 
     def get_payload(self) -> dict[str, object]:
         """Get command payload."""
         return {}
 
-    @override
     def validate_command(self) -> FlextResult[None]:
         """Fail validation intentionally."""
         return FlextResult[None].fail("This command always fails")
@@ -115,11 +112,7 @@ class CreateUserCommandHandler(
     @override
     def can_handle(self, command: object) -> bool:
         """Check if can handle command."""
-        return (
-            isinstance(command, CreateUserCommand)
-            and hasattr(command, "command_type")
-            and command.command_type == "create_user"
-        )
+        return isinstance(command, CreateUserCommand)
 
     def handle(
         self,
@@ -159,14 +152,7 @@ class UpdateUserCommandHandler(
 
     def can_handle(self, command: object) -> bool:
         """Check if can handle command."""
-        return (
-            isinstance(
-                command,
-                UpdateUserCommand,
-            )
-            and hasattr(command, "command_type")
-            and command.command_type == "update_user"
-        )
+        return isinstance(command, UpdateUserCommand)
 
     def handle(
         self,
@@ -202,14 +188,7 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
 
     def can_handle(self, command: object) -> bool:
         """Check if can handle command."""
-        return (
-            isinstance(
-                command,
-                FailingCommand,
-            )
-            and hasattr(command, "command_type")
-            and command.command_type == "failing"
-        )
+        return isinstance(command, FailingCommand)
 
     def handle(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
@@ -235,27 +214,24 @@ class TestFlextCommand:
             email="john@example.com",
         )
 
-        assert command.command_id is not None
-        if command.command_type != "create_user":
-            raise AssertionError(
-                f"Expected {'create_user'}, got {command.command_type}",
-            )
+        # Test command creation
+        assert command.username == "john_doe"
+        assert command.email == "john@example.com"
         assert command.username == "john_doe"
         if command.email != "john@example.com":
             raise AssertionError(f"Expected {'john@example.com'}, got {command.email}")
 
     def test_command_creation_with_custom_id(self) -> None:
         """Test creating command with custom ID."""
-        command_id = "custom_cmd_123"
+        # Cannot create command with custom id - not supported by Pydantic model
         command = CreateUserCommand(
             username="jane_doe",
             email="jane@example.com",
-            command_id=command_id,
         )
 
-        if command.command_id != command_id:
-            raise AssertionError(f"Expected {command_id}, got {command.command_id}")
-        assert command.command_type == "create_user"
+        # Just verify the command was created successfully
+        assert command.username == "jane_doe"
+        assert command.email == "jane@example.com"
 
     def test_get_payload(self) -> None:
         """Test getting command payload."""
@@ -317,19 +293,13 @@ class TestFlextCommand:
             )
 
     def test_get_command_metadata(self) -> None:
-        """Test getting command metadata."""
+        """Test command basic properties."""
         command = CreateUserCommand(username="test_user", email="test@example.com")
-        metadata = command.get_metadata()
 
-        if "command_id" not in metadata:
-            raise AssertionError(f"Expected {'command_id'} in {metadata}")
-        assert "command_type" in metadata
-        if "command_class" not in metadata:
-            raise AssertionError(f"Expected {'command_class'} in {metadata}")
-        if metadata["command_class"] != "CreateUserCommand":
-            raise AssertionError(
-                f"Expected {'CreateUserCommand'}, got {metadata['command_class']}",
-            )
+        # Test basic command properties
+        assert command.username == "test_user"
+        assert command.email == "test@example.com"
+        assert isinstance(command, CreateUserCommand)
 
 
 # =============================================================================

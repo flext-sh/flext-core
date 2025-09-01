@@ -249,6 +249,26 @@ class FlextExceptions:
 
     """
 
+    def __call__(
+        self,
+        message: str,
+        *,
+        operation: str | None = None,
+        field: str | None = None,
+        config_key: str | None = None,
+        error_code: str | None = None,
+        **kwargs: object,
+    ) -> FlextExceptions.BaseError:
+        """Allow FlextExceptions() to be called directly."""
+        return self.create(
+            message,
+            operation=operation,
+            field=field,
+            config_key=config_key,
+            error_code=error_code,
+            **kwargs,
+        )
+
     # =============================================================================
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
@@ -429,7 +449,7 @@ class FlextExceptions:
             *,
             attribute_name: str | None = None,
             attribute_context: Mapping[str, object] | None = None,
-            **kwargs: object
+            **kwargs: object,
         ) -> None:
             self.attribute_name = attribute_name
             context = dict(
@@ -714,7 +734,7 @@ class FlextExceptions:
             *,
             resource_id: str | None = None,
             resource_type: str | None = None,
-            **kwargs: object
+            **kwargs: object,
         ) -> None:
             self.resource_id = resource_id
             self.resource_type = resource_type
@@ -831,7 +851,7 @@ class FlextExceptions:
 
             context.update({
                 "expected_type": expected_type_obj,
-                "actual_type": actual_type_obj
+                "actual_type": actual_type_obj,
             })
             super().__init__(
                 message,
@@ -1025,7 +1045,8 @@ class FlextExceptions:
     # DIRECT CALLABLE INTERFACE - For general usage
     # =============================================================================
 
-    def __new__(
+    @classmethod
+    def create(
         cls,
         message: str,
         *,
@@ -1035,14 +1056,14 @@ class FlextExceptions:
         error_code: str | None = None,
         **kwargs: object,
     ) -> BaseError:
-        """Direct callable interface for FlextExceptions.
+        """Factory method for FlextExceptions.
 
         Automatically selects appropriate exception type based on context.
 
         Usage:
-            raise FlextExceptions("Failed", operation="create")
-            raise FlextExceptions("Invalid", field="name", value="")
-            raise FlextExceptions("Config error", config_key="database_url")
+            raise FlextExceptions.create("Failed", operation="create")
+            raise FlextExceptions.create("Invalid", field="name", value="")
+            raise FlextExceptions.create("Config error", config_key="database_url")
         """
         # Extract common kwargs that all exceptions understand
         context = cast("Mapping[str, object] | None", kwargs.get("context", {}))
@@ -1294,8 +1315,9 @@ class FlextExceptions:
                 f"Environment config failed: {e}"
             )
 
+    # =============================================================================
 
-# =============================================================================
+
 # EXPORTS - Clean public API
 # =============================================================================
 

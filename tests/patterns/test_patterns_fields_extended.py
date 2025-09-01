@@ -205,7 +205,10 @@ class TestFlextFieldRegistry:
 
         assert field1_result.success
         assert field2_result.success
-        field1, field2 = cast("FieldInstance", field1_result.value), cast("FieldInstance", field2_result.value)
+        field1, field2 = (
+            cast("FieldInstance", field1_result.value),
+            cast("FieldInstance", field2_result.value),
+        )
 
         reg1_result = registry.register_field("field1", field1)
         reg2_result = registry.register_field("field2", field2)
@@ -225,7 +228,10 @@ class TestFlextFieldRegistry:
 
         assert field1_result.success
         assert field2_result.success
-        field1, field2 = cast("FieldInstance", field1_result.value), cast("FieldInstance", field2_result.value)
+        field1, field2 = (
+            cast("FieldInstance", field1_result.value),
+            cast("FieldInstance", field2_result.value),
+        )
 
         reg1_result = registry.register_field("field1", field1)
         reg2_result = registry.register_field("field2", field2)

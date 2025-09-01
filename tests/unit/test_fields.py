@@ -1818,6 +1818,7 @@ class TestFlextFieldsWithTestSupport:
 # COVERAGE IMPROVEMENT TESTS - Target uncovered functionality
 # ============================================================================
 
+
 class TestFlextFieldsCoverageImprovement:
     """Tests specifically designed to improve coverage of uncovered code paths."""
 
@@ -1876,7 +1877,7 @@ class TestFlextFieldsCoverageImprovement:
                 result = FlextFields.Factory.create_field(
                     str(config["field_type"]),
                     str(config["name"]),
-                    required=config["required"]
+                    required=config["required"],
                 )
                 # Should succeed or fail gracefully
                 assert isinstance(result, FlextResult)
@@ -1889,10 +1890,7 @@ class TestFlextFieldsCoverageImprovement:
         """Test numeric field range validation (lines 558-577)."""
         # Create numeric field with constraints
         numeric_result = FlextFields.Factory.create_field(
-            "integer",
-            "range_test",
-            min_value=10,
-            max_value=100
+            "integer", "range_test", min_value=10, max_value=100
         )
         if not numeric_result.success:
             pytest.skip("Numeric field with constraints not supported")
@@ -1940,10 +1938,14 @@ class TestFlextFieldsCoverageImprovement:
             dummy_field_result = FlextFields.Factory.create_field("string", "dummy")
             if dummy_field_result.success:
                 dummy_field = dummy_field_result.unwrap()
-                result = registry.register_field("", cast("FlextFields.Core.BaseField[object]", dummy_field))
+                result = registry.register_field(
+                    "", cast("FlextFields.Core.BaseField[object]", dummy_field)
+                )
             # If we get here, expect a failure result
             if isinstance(result, FlextResult):
-                assert not result.success, "Empty string should cause registration failure"
+                assert not result.success, (
+                    "Empty string should cause registration failure"
+                )
         except Exception:
             # Exception is also acceptable behavior for invalid input
             result = "exception_raised"  # Mark that exception was raised appropriately
@@ -1955,11 +1957,17 @@ class TestFlextFieldsCoverageImprovement:
         try:
             get_result = registry.get_field("non_existent_field")
             if isinstance(get_result, FlextResult):
-                assert not get_result.success, "Non-existent field should return failure"
+                assert not get_result.success, (
+                    "Non-existent field should return failure"
+                )
         except Exception:
-            get_result = "exception_raised"  # Mark that exception was raised appropriately
+            get_result = (
+                "exception_raised"  # Mark that exception was raised appropriately
+            )
 
-        assert get_result is not None, "Should either return FlextResult or raise exception"
+        assert get_result is not None, (
+            "Should either return FlextResult or raise exception"
+        )
 
     def test_schema_processing_coverage(self) -> None:
         """Test schema processing functionality (lines 2106-2187)."""
@@ -1971,10 +1979,10 @@ class TestFlextFieldsCoverageImprovement:
             test_schema: dict[str, object] = {
                 "fields": [
                     {"name": "test_field", "type": "string"},
-                    {"name": "age", "type": "integer"}
+                    {"name": "age", "type": "integer"},
                 ],
                 "metadata": {},
-                "validation_rules": []
+                "validation_rules": [],
             }
 
             # Test the actual method that exists
@@ -2004,7 +2012,7 @@ class TestFlextFieldsCoverageImprovement:
             {"required": 1, "description": "Numeric true"},
             {"required": 0, "description": "Numeric false"},
             {"required": [], "description": "Empty list"},
-            ]
+        ]
 
         # Config processor not available in current API, test alternative functionality
         for config in test_configs:
@@ -2087,9 +2095,7 @@ class TestFlextFieldsCoverageImprovement:
         if hasattr(FlextFields, "Metadata"):
             # Create a field with metadata
             field_result = FlextFields.Factory.create_field(
-                "string",
-                "metadata_test",
-                description="Test field with metadata"
+                "string", "metadata_test", description="Test field with metadata"
             )
 
             if field_result.success:
@@ -2103,9 +2109,9 @@ class TestFlextFieldsCoverageImprovement:
 
         # Test factory edge cases for coverage
         edge_cases: list[tuple[str, str]] = [
-            ("", "empty_type"),          # Empty field type
-            ("unknown_type", "test"),    # Unknown field type
-            ("string", ""),              # Empty name
+            ("", "empty_type"),  # Empty field type
+            ("unknown_type", "test"),  # Unknown field type
+            ("string", ""),  # Empty name
         ]
 
         for field_type, name in edge_cases:
@@ -2117,12 +2123,16 @@ class TestFlextFieldsCoverageImprovement:
                 # Some implementations might raise exceptions for invalid inputs instead of FlextResult
                 # This is acceptable for edge case testing - we're validating error boundaries
                 # Mark that we tested this error case
-                assert True, "Exception raised for invalid field creation - this is acceptable behavior"
+                assert True, (
+                    "Exception raised for invalid field creation - this is acceptable behavior"
+                )
 
     def test_datetime_field_comprehensive_coverage(self) -> None:
         """Test datetime field validation paths (lines 616-659) - critical datetime handling."""
         # Create datetime field for testing
-        datetime_field_result = FlextFields.Factory.create_field("datetime", "test_datetime")
+        datetime_field_result = FlextFields.Factory.create_field(
+            "datetime", "test_datetime"
+        )
         if datetime_field_result.success:
             datetime_field = safe_get_field(datetime_field_result)
 
@@ -2136,6 +2146,7 @@ class TestFlextFieldsCoverageImprovement:
 
             # Test datetime object input (lines 620-621)
             from datetime import datetime
+
             dt_obj = datetime.now(UTC)
             result = FlextFields.Validation.validate_field(datetime_field, dt_obj)
             assert isinstance(result, FlextResult)
@@ -2146,14 +2157,18 @@ class TestFlextFieldsCoverageImprovement:
             assert isinstance(result, FlextResult)
 
             # Test invalid datetime string
-            result = FlextFields.Validation.validate_field(datetime_field, "invalid-date")
+            result = FlextFields.Validation.validate_field(
+                datetime_field, "invalid-date"
+            )
             assert isinstance(result, FlextResult)
 
     def test_schema_factory_comprehensive_coverage(self) -> None:
         """Test schema factory functionality (lines 1523-1585) - major uncovered area."""
         # Test schema factory methods if available
         # Use correct Factory method name
-        if hasattr(FlextFields, "Factory") and hasattr(FlextFields.Factory, "create_fields_from_schema"):
+        if hasattr(FlextFields, "Factory") and hasattr(
+            FlextFields.Factory, "create_fields_from_schema"
+        ):
             # Test schema without 'fields' key (lines 1523-1527)
             invalid_schema: dict[str, object] = {"invalid": "schema"}
             result = FlextFields.Factory.create_fields_from_schema(invalid_schema)
@@ -2164,7 +2179,7 @@ class TestFlextFieldsCoverageImprovement:
             valid_schema: dict[str, object] = {
                 "fields": [
                     {"name": "test_field", "type": "string", "required": True},
-                    {"name": "age", "type": "integer", "min_value": 0}
+                    {"name": "age", "type": "integer", "min_value": 0},
                 ]
             }
             result = FlextFields.Factory.create_fields_from_schema(valid_schema)
@@ -2174,7 +2189,7 @@ class TestFlextFieldsCoverageImprovement:
             error_schema: dict[str, object] = {
                 "fields": [
                     {"name": "", "type": "invalid"},  # Should cause errors
-                    {"name": "test", "type": "string"}
+                    {"name": "test", "type": "string"},
                 ]
             }
             result = FlextFields.Factory.create_fields_from_schema(error_schema)
@@ -2191,7 +2206,7 @@ class TestFlextFieldsCoverageImprovement:
                 "min_length": 5,
                 "max_length": 50,
                 "pattern": r"^[A-Za-z]+$",
-                "required": True
+                "required": True,
             },
             # Numeric field with range constraints
             {
@@ -2200,14 +2215,10 @@ class TestFlextFieldsCoverageImprovement:
                 "min_value": 0,
                 "max_value": 100,
                 "required": False,
-                "default": 50
+                "default": 50,
             },
             # Email field with validation
-            {
-                "type": "email",
-                "name": "comprehensive_email",
-                "required": True
-            }
+            {"type": "email", "name": "comprehensive_email", "required": True},
         ]
 
         for config in field_configs:
@@ -2215,7 +2226,7 @@ class TestFlextFieldsCoverageImprovement:
             field_result = FlextFields.Factory.create_field(
                 str(config["type"]),
                 str(config["name"]),
-                **{k: v for k, v in config.items() if k not in {"type", "name"}}
+                **{k: v for k, v in config.items() if k not in {"type", "name"}},
             )
 
             if field_result.success:
@@ -2223,13 +2234,13 @@ class TestFlextFieldsCoverageImprovement:
 
                 # Test various validation scenarios
                 test_values = [
-                    None,                    # Test None handling
-                    "",                      # Test empty string
-                    "valid_value_12345",     # Test valid value
-                    "x" * 100,              # Test too long
-                    "x",                     # Test too short
-                    123,                     # Test wrong type
-                    {"invalid": "object"},   # Test invalid object
+                    None,  # Test None handling
+                    "",  # Test empty string
+                    "valid_value_12345",  # Test valid value
+                    "x" * 100,  # Test too long
+                    "x",  # Test too short
+                    123,  # Test wrong type
+                    {"invalid": "object"},  # Test invalid object
                 ]
 
                 for value in test_values:
@@ -2240,4 +2251,6 @@ class TestFlextFieldsCoverageImprovement:
                         # Some validation combinations might raise exceptions instead of FlextResult failures
                         # This is part of testing comprehensive validation edge cases
                         # Mark that we tested this validation boundary case
-                        assert True, f"Exception raised for validation of {value} - this is acceptable behavior"
+                        assert True, (
+                            f"Exception raised for validation of {value} - this is acceptable behavior"
+                        )

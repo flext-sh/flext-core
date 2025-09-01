@@ -751,7 +751,7 @@ def test_metrics_collection():
 - **[FlextResult](../result/README.md)**: Railway-oriented programming for error handling
 - **[FlextObservability](../observability/README.md)**: Monitoring and observability integration
 - **[FlextLogger](../logging/README.md)**: Structured logging integration
-- **[FlextValidation](../validation/README.md)**: Input validation that raises FlextExceptions
+- **[FlextValidations](../validation/README.md)**: Input validation that raises FlextExceptions
 - **[FlextCore](../core/README.md)**: Central orchestration hub that uses FlextExceptions
 
 ---

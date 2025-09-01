@@ -14,7 +14,10 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextConstants, FlextTypes, FlextValidation
+from flext_core import FlextConstants, FlextTypes, FlextValidations
+
+# Create alias for backward compatibility
+FlextValidation = FlextValidations
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -34,7 +37,7 @@ class TestFlextValidationRealFunctionality:
             "fail_fast_validation": True,
         }
 
-        result = FlextValidation.configure_validation_system(valid_config)
+        result = FlextValidations.configure_validation_system(valid_config)
         assert result.success is True
 
         config = result.unwrap()
@@ -51,7 +54,7 @@ class TestFlextValidationRealFunctionality:
         invalid_env_config: FlextTypes.Config.ConfigDict = {
             "environment": "invalid_environment"
         }
-        result = FlextValidation.configure_validation_system(invalid_env_config)
+        result = FlextValidations.configure_validation_system(invalid_env_config)
         assert result.success is False
         assert result.error
         assert "Invalid environment" in result.error
@@ -60,7 +63,7 @@ class TestFlextValidationRealFunctionality:
         invalid_val_config: FlextTypes.Config.ConfigDict = {
             "validation_level": "invalid_validation"
         }
-        result = FlextValidation.configure_validation_system(invalid_val_config)
+        result = FlextValidations.configure_validation_system(invalid_val_config)
         assert result.success is False
         assert result.error
         assert "Invalid validation_level" in result.error
@@ -69,7 +72,7 @@ class TestFlextValidationRealFunctionality:
         invalid_log_config: FlextTypes.Config.ConfigDict = {
             "log_level": "INVALID_LEVEL"
         }
-        result = FlextValidation.configure_validation_system(invalid_log_config)
+        result = FlextValidations.configure_validation_system(invalid_log_config)
         assert result.success is False
         assert result.error
         assert "Invalid log_level" in result.error
@@ -78,7 +81,7 @@ class TestFlextValidationRealFunctionality:
         """Test validation system with minimal configuration using defaults."""
         minimal_config: FlextTypes.Config.ConfigDict = {}
 
-        result = FlextValidation.configure_validation_system(minimal_config)
+        result = FlextValidations.configure_validation_system(minimal_config)
         assert result.success is True
 
         config = result.unwrap()
@@ -97,7 +100,7 @@ class TestFlextValidationRealFunctionality:
 
     def test_get_validation_system_config_real(self) -> None:
         """Test retrieving current validation system configuration."""
-        result = FlextValidation.get_validation_system_config()
+        result = FlextValidations.get_validation_system_config()
         assert result.success is True
 
         config = result.unwrap()
@@ -118,7 +121,7 @@ class TestFlextValidationRealFunctionality:
     def test_environment_specific_validation_config_real(self) -> None:
         """Test creation of environment-specific validation configurations."""
         # Test production configuration
-        prod_result = FlextValidation.create_environment_validation_config("production")
+        prod_result = FlextValidations.create_environment_validation_config("production")
         assert prod_result.success is True
 
         prod_config = prod_result.unwrap()
@@ -133,7 +136,7 @@ class TestFlextValidationRealFunctionality:
         assert prod_config["fail_fast_validation"] is True  # Fail fast in production
 
         # Test development configuration
-        dev_result = FlextValidation.create_environment_validation_config("development")
+        dev_result = FlextValidations.create_environment_validation_config("development")
         assert dev_result.success is True
 
         dev_config = dev_result.unwrap()
@@ -148,7 +151,7 @@ class TestFlextValidationRealFunctionality:
         assert dev_config["fail_fast_validation"] is False  # Don't fail fast in dev
 
         # Test test environment configuration
-        test_result = FlextValidation.create_environment_validation_config("test")
+        test_result = FlextValidations.create_environment_validation_config("test")
         assert test_result.success is True
 
         test_config = test_result.unwrap()
@@ -160,7 +163,7 @@ class TestFlextValidationRealFunctionality:
 
     def test_invalid_environment_validation_config_real(self) -> None:
         """Test environment-specific validation config with invalid environment."""
-        invalid_result = FlextValidation.create_environment_validation_config(
+        invalid_result = FlextValidations.create_environment_validation_config(
             cast("FlextTypes.Config.Environment", "invalid_env")
         )
         assert invalid_result.success is False
@@ -187,7 +190,7 @@ class TestFlextValidationRealFunctionality:
         ]
 
         for config in configs:
-            result = FlextValidation.optimize_validation_performance(config)
+            result = FlextValidations.optimize_validation_performance(config)
             assert result.success is True
 
             optimized = result.unwrap()
@@ -216,7 +219,7 @@ class TestFlextValidationRealFunctionality:
         invalid_config = cast(
             "FlextTypes.Config.ConfigDict", {"performance_level": "invalid_level"}
         )
-        result = FlextValidation.optimize_validation_performance(invalid_config)
+        result = FlextValidations.optimize_validation_performance(invalid_config)
         # Current implementation doesn't validate performance_level strictly
         assert result.success is True
 
@@ -224,7 +227,7 @@ class TestFlextValidationRealFunctionality:
         invalid_thread_config = cast(
             "FlextTypes.Config.ConfigDict", {"max_validation_threads": 0}
         )
-        result = FlextValidation.optimize_validation_performance(invalid_thread_config)
+        result = FlextValidations.optimize_validation_performance(invalid_thread_config)
         # Current implementation doesn't validate max_validation_threads
         assert result.success is True
 
@@ -237,7 +240,7 @@ class TestFlextValidationStrEnumIntegration:
         # Test each environment enum value
         for env_enum in FlextConstants.Config.ConfigEnvironment:
             config: FlextTypes.Config.ConfigDict = {"environment": env_enum.value}
-            result = FlextValidation.configure_validation_system(config)
+            result = FlextValidations.configure_validation_system(config)
             assert result.success is True
 
             validated_config = result.unwrap()
@@ -257,7 +260,7 @@ class TestFlextValidationStrEnumIntegration:
         # Test each log level enum value
         for log_enum in FlextConstants.Config.LogLevel:
             config: FlextTypes.Config.ConfigDict = {"log_level": log_enum.value}
-            result = FlextValidation.configure_validation_system(config)
+            result = FlextValidations.configure_validation_system(config)
             assert result.success is True
 
             validated_config = result.unwrap()
@@ -280,7 +283,7 @@ class TestFlextValidationStrEnumIntegration:
         # Test each validation level enum value
         for val_enum in FlextConstants.Config.ValidationLevel:
             config: FlextTypes.Config.ConfigDict = {"validation_level": val_enum.value}
-            result = FlextValidation.configure_validation_system(config)
+            result = FlextValidations.configure_validation_system(config)
             assert result.success is True
 
             validated_config = result.unwrap()
@@ -297,7 +300,7 @@ class TestFlextValidationStrEnumIntegration:
         """Test environment-specific validation configuration for all valid environments."""
         # Test each valid environment
         for env_enum in FlextConstants.Config.ConfigEnvironment:
-            result = FlextValidation.create_environment_validation_config(
+            result = FlextValidations.create_environment_validation_config(
                 env_enum.value
             )
             assert result.success is True
@@ -339,7 +342,7 @@ class TestValidationPerformanceReal:
 
         # Configure multiple times to test performance
         for _ in range(100):
-            result = FlextValidation.configure_validation_system(config)
+            result = FlextValidations.configure_validation_system(config)
             assert result.success is True
 
         end_time = time.perf_counter()
@@ -356,7 +359,7 @@ class TestValidationPerformanceReal:
         environments = ["development", "production", "test", "staging"]
         for _ in range(25):  # 25 * 4 environments = 100 operations
             for env in environments:
-                result = FlextValidation.create_environment_validation_config(
+                result = FlextValidations.create_environment_validation_config(
                     cast("FlextTypes.Config.Environment", env)
                 )
                 assert result.success is True
@@ -391,7 +394,7 @@ class TestValidationPerformanceReal:
         # Create many performance optimizations to test performance
         for _ in range(50):
             for config in configs:
-                result = FlextValidation.optimize_validation_performance(config)
+                result = FlextValidations.optimize_validation_performance(config)
                 assert result.success is True
 
         end_time = time.perf_counter()
@@ -418,7 +421,7 @@ class TestValidationConfigurationIntegration:
             "fail_fast_validation": False,
         }
 
-        result = FlextValidation.configure_validation_system(complete_config)
+        result = FlextValidations.configure_validation_system(complete_config)
         assert result.success is True
 
         config = result.unwrap()
@@ -449,7 +452,7 @@ class TestValidationConfigurationIntegration:
                         "validation_level": val_level.value,
                     }
 
-                    result = FlextValidation.configure_validation_system(config)
+                    result = FlextValidations.configure_validation_system(config)
                     assert result.success is True, (
                         f"Failed for {env.value}, {log_level.value}, {val_level.value}"
                     )
@@ -469,11 +472,11 @@ class TestValidationConfigurationIntegration:
             "enable_detailed_errors": False,
         }
 
-        result = FlextValidation.configure_validation_system(config)
+        result = FlextValidations.configure_validation_system(config)
         assert result.success is True
 
         # Get current configuration
-        current_result = FlextValidation.get_validation_system_config()
+        current_result = FlextValidations.get_validation_system_config()
         assert current_result.success is True
 
         current_config = current_result.unwrap()

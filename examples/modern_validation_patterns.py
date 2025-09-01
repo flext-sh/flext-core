@@ -159,7 +159,7 @@ def demonstrate_modern_validation() -> None:
 
 def demonstrate_modern_validators() -> None:
     """Demonstrate modern validator classes with validate_call."""
-    # Since FlextValidation is not available, demonstrate basic validation concepts
+    # Since FlextValidations is not available, demonstrate basic validation concepts
 
     # Demonstrate validation concepts
 

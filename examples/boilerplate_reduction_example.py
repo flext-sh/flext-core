@@ -6,7 +6,7 @@ Demonstrates massive boilerplate reduction across FLEXT projects using:
 - FlextMixins for behavioral patterns
 - FlextHandlers for request processing
 - FlextDecorators for cross-cutting concerns
-- FlextValidation for data validation
+- FlextValidations for data validation
 - FlextObservability for metrics
 - Complete railway-oriented programming
 
@@ -117,7 +117,7 @@ class TraditionalDatabaseService:
 # ==============================================================================
 
 
-class UltraModernDatabaseService(FlextMixins.Entity, FlextMixins.Loggable):
+class UltraModernDatabaseService(FlextMixins.Entity):
     """ULTIMATE concise service - 20+ classes in minimal code!."""
 
     def __init__(self) -> None:
@@ -405,7 +405,7 @@ def main() -> int:
     print("   ✅ FlextMixins: Automatic timestamps, logging, configuration")
     print("   ✅ FlextServices: Service patterns with zero boilerplate")
     print("   ✅ FlextDecorators: Enterprise features via simple decorators")
-    print("   ✅ FlextValidation: Composable validation with predicates")
+    print("   ✅ FlextValidations: Composable validation with predicates")
     print("   ✅ FlextObservability: Automatic monitoring and tracing")
     print("   ✅ FlextHandlers: CQRS and orchestration patterns")
     print("   ✅ FlextResult: Complete railway-oriented programming")

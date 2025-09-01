@@ -24,10 +24,7 @@ class TestExamplesExecution:
     @pytest.fixture(scope="class")
     def example_files(self, examples_dir: Path) -> list[Path]:
         """Get all Python example files."""
-        return [
-            f for f in examples_dir.glob("*.py")
-            if f.name != "__init__.py"
-        ]
+        return [f for f in examples_dir.glob("*.py") if f.name != "__init__.py"]
 
     def test_examples_directory_exists(self, examples_dir: Path) -> None:
         """Test examples directory exists."""
@@ -36,7 +33,9 @@ class TestExamplesExecution:
 
     def test_all_examples_found(self, example_files: list[Path]) -> None:
         """Test that we found the expected number of examples."""
-        assert len(example_files) >= 20, f"Expected at least 20 examples, found {len(example_files)}"
+        assert len(example_files) >= 20, (
+            f"Expected at least 20 examples, found {len(example_files)}"
+        )
 
         # Check for key examples
         example_names = [f.name for f in example_files]
@@ -51,28 +50,31 @@ class TestExamplesExecution:
         for key_example in key_examples:
             assert key_example in example_names, f"Key example {key_example} not found"
 
-    @pytest.mark.parametrize("example_file", [
-        "flext_result_railway_pattern.py",
-        "flext_container_dependency_injection.py",
-        "flext_commands_cqrs_pattern.py",
-        "flext_validation_advanced_system.py",
-        "flext_exceptions_enterprise_handling.py",
-        "flext_working_examples.py",
-        "flext_config_enterprise_configuration.py",
-        "flext_decorators_enterprise_patterns.py",
-        "flext_entity_valueobject_ddd_patterns.py",
-        "flext_handlers_enterprise_patterns.py",
-        "flext_integration_example.py",
-        "flext_interfaces_architecture_patterns.py",
-        "flext_logging_structured_system.py",
-        "flext_mixins_multiple_inheritance.py",
-        "flext_payload_messaging_events.py",
-        "flext_unified_semantic_patterns_example.py",
-        "flext_advanced_examples.py",
-        "modern_patterns_showcase.py",
-        "modern_validation_patterns.py",
-        "boilerplate_reduction_example.py",
-    ])
+    @pytest.mark.parametrize(
+        "example_file",
+        [
+            "flext_result_railway_pattern.py",
+            "flext_container_dependency_injection.py",
+            "flext_commands_cqrs_pattern.py",
+            "flext_validation_advanced_system.py",
+            "flext_exceptions_enterprise_handling.py",
+            "flext_working_examples.py",
+            "flext_config_enterprise_configuration.py",
+            "flext_decorators_enterprise_patterns.py",
+            "flext_entity_valueobject_ddd_patterns.py",
+            "flext_handlers_enterprise_patterns.py",
+            "flext_integration_example.py",
+            "flext_interfaces_architecture_patterns.py",
+            "flext_logging_structured_system.py",
+            "flext_mixins_multiple_inheritance.py",
+            "flext_payload_messaging_events.py",
+            "flext_unified_semantic_patterns_example.py",
+            "flext_advanced_examples.py",
+            "modern_patterns_showcase.py",
+            "modern_validation_patterns.py",
+            "boilerplate_reduction_example.py",
+        ],
+    )
     def test_example_execution(self, example_file: str, examples_dir: Path) -> None:
         """Test that each example executes without errors."""
         example_path = examples_dir / example_file
@@ -81,11 +83,12 @@ class TestExamplesExecution:
         # Run example with timeout
         result = subprocess.run(
             [sys.executable, str(example_path)],
-            check=False, cwd=str(examples_dir.parent),
+            check=False,
+            cwd=str(examples_dir.parent),
             env={"PYTHONPATH": "src"},
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         assert result.returncode == 0, (
@@ -142,7 +145,8 @@ class TestExamplesFunctionality:
 
         # Test railway pattern chaining
         chained_result = (
-            FlextResult[int].ok(5)
+            FlextResult[int]
+            .ok(5)
             .map(lambda x: x * 2)
             .flat_map(lambda x: FlextResult[int].ok(x + 1))
         )
@@ -195,7 +199,7 @@ class TestExamplesFunctionality:
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
             raise FlextExceptions.ValidationError(
                 validation_message,
-                validation_details={"field": "email", "error": "invalid"}
+                validation_details={"field": "email", "error": "invalid"},
             )
 
         assert validation_message in str(exc_info.value)
@@ -233,9 +237,12 @@ class TestExamplesCodeQuality:
                     tree = ast.parse(f.read())
 
                 # Check for module docstring
-                if not (tree.body and isinstance(tree.body[0], ast.Expr)
-                       and isinstance(tree.body[0].value, ast.Constant)
-                       and isinstance(tree.body[0].value.value, str)):
+                if not (
+                    tree.body
+                    and isinstance(tree.body[0], ast.Expr)
+                    and isinstance(tree.body[0].value, ast.Constant)
+                    and isinstance(tree.body[0].value.value, str)
+                ):
                     missing_docstrings.append(example_file.name)
 
             except Exception as e:

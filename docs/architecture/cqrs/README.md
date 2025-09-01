@@ -63,13 +63,13 @@ graph TB
         FlextResult[FlextResult<br/>Railway Programming]
         FlextLogger[FlextLogger<br/>Structured Logging]
         FlextContainer[FlextContainer<br/>Dependency Injection]
-        FlextValidation[FlextValidation<br/>Business Rules]
+        FlextValidations[FlextValidations<br/>Business Rules]
     end
     
     Models --> FlextResult
     Handlers --> FlextLogger
     Bus --> FlextContainer
-    Models --> FlextValidation
+    Models --> FlextValidations
 ```
 
 ## 🎯 Strategic Recommendations

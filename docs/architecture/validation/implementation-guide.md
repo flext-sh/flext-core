@@ -1,4 +1,4 @@
-# FlextValidation Implementation Guide
+# FlextValidations Implementation Guide
 
 **Version**: 0.9.0  
 **Target Audience**: FLEXT Developers, Validation Architects  
@@ -7,7 +7,7 @@
 
 ## 📖 Overview
 
-This guide provides step-by-step instructions for implementing the hierarchical `FlextValidation` system across FLEXT services. The validation framework offers comprehensive domain-organized validation patterns, composable validation chains, performance optimization, and enterprise-grade data integrity enforcement.
+This guide provides step-by-step instructions for implementing the hierarchical `FlextValidations` system across FLEXT services. The validation framework offers comprehensive domain-organized validation patterns, composable validation chains, performance optimization, and enterprise-grade data integrity enforcement.
 
 ### Prerequisites
 
@@ -28,14 +28,14 @@ This guide provides step-by-step instructions for implementing the hierarchical 
 
 ## 🚀 Quick Start
 
-### Basic FlextValidation Usage
+### Basic FlextValidations Usage
 
 ```python
-from flext_core.validation import FlextValidation
+from flext_core.validations import FlextValidations
 from flext_core.typings import FlextTypes
 
 # Hierarchical validation with domain separation
-email_validator = FlextValidation.create_email_validator()
+email_validator = FlextValidations.create_email_validator()
 result = email_validator("user@example.com")
 
 if result.success:
@@ -45,24 +45,24 @@ else:
 
 # Schema validation for complex data
 user_schema = {
-    "username": lambda x: FlextValidation.Rules.StringRules.validate_length(x, 3, 30),
-    "email": FlextValidation.Rules.StringRules.validate_email,
-    "age": lambda x: FlextValidation.Rules.NumericRules.validate_range(x, 18, 120)
+    "username": lambda x: FlextValidations.Rules.StringRules.validate_length(x, 3, 30),
+    "email": FlextValidations.Rules.StringRules.validate_email,
+    "age": lambda x: FlextValidations.Rules.NumericRules.validate_range(x, 18, 120)
 }
 
-schema_validator = FlextValidation.Advanced.SchemaValidator(user_schema)
+schema_validator = FlextValidations.Advanced.SchemaValidator(user_schema)
 validation_result = schema_validator.validate(user_data)
 ```
 
 ### Service-Specific Validation Extension
 
 ```python
-# Extend FlextValidation for domain-specific services
+# Extend FlextValidations for domain-specific services
 class FlextUserValidationService:
     def __init__(self):
-        self.user_validator = FlextValidation.Domain.UserValidator()
-        self.api_validator = FlextValidation.Service.ApiRequestValidator()
-        self.performance_validator = FlextValidation.Advanced.PerformanceValidator()
+        self.user_validator = FlextValidations.Domain.UserValidator()
+        self.api_validator = FlextValidations.Service.ApiRequestValidator()
+        self.performance_validator = FlextValidations.Advanced.PerformanceValidator()
     
     def validate_user_registration(
         self, 
@@ -91,27 +91,27 @@ class FlextUserValidationService:
 #### Core Domain-Based Organization
 
 ```python
-from flext_core.validation import FlextValidation
+from flext_core.validations import FlextValidations
 
 # Core Validation - Basic primitives and type checking
-email_predicate = FlextValidation.Core.Predicates.create_email_predicate()
-type_validator = FlextValidation.Core.TypeValidators.validate_string("text")
+email_predicate = FlextValidations.Core.Predicates.create_email_predicate()
+type_validator = FlextValidations.Core.TypeValidators.validate_string("text")
 
 # Domain Validation - Business logic and entity validation  
-user_validator = FlextValidation.Domain.UserValidator()
-entity_validator = FlextValidation.Domain.EntityValidator()
+user_validator = FlextValidations.Domain.UserValidator()
+entity_validator = FlextValidations.Domain.EntityValidator()
 
 # Service Validation - Service-level and API validation
-api_validator = FlextValidation.Service.ApiRequestValidator()
-config_validator = FlextValidation.Service.ConfigValidator()
+api_validator = FlextValidations.Service.ApiRequestValidator()
+config_validator = FlextValidations.Service.ConfigValidator()
 
 # Rules Catalog - Comprehensive validation rule library
-email_rule = FlextValidation.Rules.StringRules.validate_email("user@example.com")
-range_rule = FlextValidation.Rules.NumericRules.validate_range(25, 18, 120)
+email_rule = FlextValidations.Rules.StringRules.validate_email("user@example.com")
+range_rule = FlextValidations.Rules.NumericRules.validate_range(25, 18, 120)
 
 # Advanced Patterns - Complex composition and performance
-schema_validator = FlextValidation.Advanced.SchemaValidator(schema_definition)
-performance_validator = FlextValidation.Advanced.PerformanceValidator()
+schema_validator = FlextValidations.Advanced.SchemaValidator(schema_definition)
+performance_validator = FlextValidations.Advanced.PerformanceValidator()
 ```
 
 ### Step 2: Implementing Composable Validation Patterns
@@ -120,15 +120,15 @@ performance_validator = FlextValidation.Advanced.PerformanceValidator()
 
 ```python
 class ComposableValidationService:
-    def create_complex_email_validator(self) -> FlextValidation.Core.Predicates:
+    def create_complex_email_validator(self) -> FlextValidations.Core.Predicates:
         """Create complex email validator using predicate composition."""
         
         # Base predicates
-        email_format = FlextValidation.Core.Predicates.create_email_predicate()
-        length_check = FlextValidation.Core.Predicates.create_string_length_predicate(5, 100)
+        email_format = FlextValidations.Core.Predicates.create_email_predicate()
+        length_check = FlextValidations.Core.Predicates.create_string_length_predicate(5, 100)
         
         # Business rule predicates
-        company_domain = FlextValidation.Core.Predicates(
+        company_domain = FlextValidations.Core.Predicates(
             lambda x: isinstance(x, str) and x.endswith("@company.com"),
             name="company_domain"
         )
@@ -154,8 +154,8 @@ class ComposableValidationService:
             return FlextResult.fail(f"Email validation failed: {email_result.error}")
         
         # Username validation with composition
-        username_length = FlextValidation.Core.Predicates.create_string_length_predicate(3, 30)
-        username_pattern = FlextValidation.Core.Predicates(
+        username_length = FlextValidations.Core.Predicates.create_string_length_predicate(3, 30)
+        username_pattern = FlextValidations.Core.Predicates(
             lambda x: isinstance(x, str) and x.replace("_", "").replace("-", "").isalnum(),
             name="username_characters"
         )
@@ -178,7 +178,7 @@ class SchemaValidationService:
         
         return {
             "username": self._create_username_validator(),
-            "email": FlextValidation.Rules.StringRules.validate_email,
+            "email": FlextValidations.Rules.StringRules.validate_email,
             "password": self._create_password_validator(),
             "profile": self._create_profile_validator(),
             "permissions": self._create_permissions_validator(),
@@ -194,14 +194,14 @@ class SchemaValidationService:
                 return FlextResult.fail("Username must be a string")
             
             # Length validation
-            length_result = FlextValidation.Rules.StringRules.validate_length(
+            length_result = FlextValidations.Rules.StringRules.validate_length(
                 username, min_length=3, max_length=30
             )
             if length_result.is_failure:
                 return length_result
             
             # Pattern validation
-            pattern_result = FlextValidation.Rules.StringRules.validate_pattern(
+            pattern_result = FlextValidations.Rules.StringRules.validate_pattern(
                 username, r"^[a-zA-Z0-9_-]+$", "username_characters"
             )
             if pattern_result.is_failure:
@@ -223,7 +223,7 @@ class SchemaValidationService:
         """Validate user data using comprehensive schema."""
         
         user_schema = self.create_comprehensive_user_schema()
-        schema_validator = FlextValidation.Advanced.SchemaValidator(user_schema)
+        schema_validator = FlextValidations.Advanced.SchemaValidator(user_schema)
         
         return schema_validator.validate(user_data)
 ```
@@ -235,8 +235,8 @@ class SchemaValidationService:
 ```python
 class PerformanceValidationService:
     def __init__(self):
-        self.performance_validator = FlextValidation.Advanced.PerformanceValidator()
-        self.email_validator = FlextValidation.create_email_validator()
+        self.performance_validator = FlextValidations.Advanced.PerformanceValidator()
+        self.email_validator = FlextValidations.create_email_validator()
     
     def validate_email_batch_with_caching(
         self, 
@@ -304,17 +304,17 @@ class ValidationConfigurationService:
         """Configure validation system for production environment."""
         
         # Production-specific configuration
-        prod_config = FlextValidation.create_environment_validation_config("production")
+        prod_config = FlextValidations.create_environment_validation_config("production")
         if prod_config.is_failure:
             return prod_config
         
         # Apply configuration
-        config_result = FlextValidation.configure_validation_system(prod_config.value)
+        config_result = FlextValidations.configure_validation_system(prod_config.value)
         if config_result.is_failure:
             return config_result
         
         # Performance optimization for production
-        optimized_config = FlextValidation.optimize_validation_performance(config_result.value)
+        optimized_config = FlextValidations.optimize_validation_performance(config_result.value)
         
         return optimized_config
     
@@ -323,7 +323,7 @@ class ValidationConfigurationService:
         """Configure validation system for development environment."""
         
         # Development configuration with detailed errors
-        dev_config = FlextValidation.create_environment_validation_config("development")
+        dev_config = FlextValidations.create_environment_validation_config("development")
         if dev_config.is_failure:
             return dev_config
         
@@ -336,7 +336,7 @@ class ValidationConfigurationService:
             "debug_validation_steps": True
         }
         
-        return FlextValidation.configure_validation_system(enhanced_config)
+        return FlextValidations.configure_validation_system(enhanced_config)
 ```
 
 ### Step 5: Business Rule Validation
@@ -346,8 +346,8 @@ class ValidationConfigurationService:
 ```python
 class BusinessRuleValidationService:
     def __init__(self):
-        self.user_validator = FlextValidation.Domain.UserValidator()
-        self.entity_validator = FlextValidation.Domain.EntityValidator()
+        self.user_validator = FlextValidations.Domain.UserValidator()
+        self.entity_validator = FlextValidations.Domain.EntityValidator()
     
     def validate_order_business_rules(
         self, 
@@ -425,10 +425,10 @@ class CompositeValidationService:
     def create_validation_pipeline(
         self, 
         validation_steps: list[Callable]
-    ) -> FlextValidation.Advanced.CompositeValidator:
+    ) -> FlextValidations.Advanced.CompositeValidator:
         """Create validation pipeline using railway pattern."""
         
-        return FlextValidation.Advanced.CompositeValidator(validation_steps)
+        return FlextValidations.Advanced.CompositeValidator(validation_steps)
     
     def validate_complex_entity(
         self, 
@@ -514,7 +514,7 @@ class CustomDomainValidationService:
 - [ ] **Define Business Rules**: Catalog business rule requirements for validation
 
 ### Core Implementation  
-- [ ] **Basic Validation Integration**: Replace manual validation with FlextValidation patterns
+- [ ] **Basic Validation Integration**: Replace manual validation with FlextValidations patterns
 - [ ] **Domain Validators**: Implement domain-specific business rule validation
 - [ ] **Service Validators**: Add service-level API and configuration validation
 - [ ] **Schema Validators**: Implement schema-based validation for complex data structures
@@ -538,4 +538,4 @@ class CustomDomainValidationService:
 - [ ] **Documentation Updates**: Update service documentation with validation patterns
 - [ ] **Team Training**: Train team on hierarchical validation system usage
 
-This implementation guide provides comprehensive coverage of FlextValidation integration patterns, from basic hierarchical usage through advanced performance-optimized validation pipelines, ensuring consistent validation patterns and data integrity across all FLEXT services.
+This implementation guide provides comprehensive coverage of FlextValidations integration patterns, from basic hierarchical usage through advanced performance-optimized validation pipelines, ensuring consistent validation patterns and data integrity across all FLEXT services.

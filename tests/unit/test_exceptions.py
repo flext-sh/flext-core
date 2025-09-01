@@ -98,10 +98,7 @@ class TestFlextError:
         assert context_obj["operation"] == "test_operation"
         assert context_obj["user_id"] == "test_user"
         # Error code should be generic since no validation context hints provided
-        assert (
-            cast("str", get_dynamic_attr(error, "error_code", ""))
-            == "FLEXT_0001"
-        )
+        assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_0001"
 
     def test_flext_error_context_enhancement(self) -> None:
         """Test automatic context enhancement."""
@@ -409,7 +406,9 @@ class TestFlextOperationError:
         )
         # Use direct context access
         if (
-            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["operation"]  # noqa: TC006
+            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
+                "operation"
+            ]  # noqa: TC006
             != "file_read"
         ):
             raise AssertionError(
@@ -522,7 +521,9 @@ class TestSpecificErrors:
 
         # config_file becomes direct context, passed context becomes nested
         assert (
-            cast("dict[str, object]", get_dynamic_attr(config_error, "context", {}))["config_file"]  # noqa: TC006
+            cast("dict[str, object]", get_dynamic_attr(config_error, "context", {}))[
+                "config_file"
+            ]  # noqa: TC006
             == "/etc/app/config.yml"
         )
         context_obj = cast(
@@ -619,12 +620,16 @@ class TestExceptionIntegration:
             == "User creation validation failed"
         )
         # validation_details becomes direct context, passed context becomes nested
-        assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["validation_details"] == {  # noqa: TC006
+        assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
+            "validation_details"
+        ] == {  # noqa: TC006
             "field": "email",
             "value": "invalid_format",
         }
         # Verify original context is preserved (can have additional data)
-        error_context = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
+        error_context = cast(
+            "dict[str, object]", get_dynamic_attr(error, "context", {})
+        )
         for key, value in original_context.items():
             assert error_context[key] == value
         # validation_details should also be in context
@@ -682,23 +687,26 @@ class TestErrorCodeIntegration:
         )
 
         # Error code should be generic since no context hints provided
-        assert (
-            cast("str", get_dynamic_attr(error, "error_code", ""))
-            == "FLEXT_0001"
-        )
+        assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_0001"
         assert isinstance(cast("str", get_dynamic_attr(error, "error_code", "")), str)
 
     def test_error_context_variations(self) -> None:
         """Test error creation with different context variations."""
         low_error = FlextExceptions.Error("Basic error", context={"priority": "low"})
-        high_error = FlextExceptions.Error("Important error", context={"priority": "high"})
+        high_error = FlextExceptions.Error(
+            "Important error", context={"priority": "high"}
+        )
 
-        nested_ctx_low = cast("dict[str, object]", get_dynamic_attr(low_error, "context", {}))
+        nested_ctx_low = cast(
+            "dict[str, object]", get_dynamic_attr(low_error, "context", {})
+        )
         if nested_ctx_low["priority"] != "low":
             raise AssertionError(
                 f"Expected {'low'}, got {nested_ctx_low['priority']}",
             )
-        nested_ctx_high = cast("dict[str, object]", get_dynamic_attr(high_error, "context", {}))
+        nested_ctx_high = cast(
+            "dict[str, object]", get_dynamic_attr(high_error, "context", {})
+        )
         assert nested_ctx_high["priority"] == "high"
         assert low_error.context != high_error.context
 
@@ -891,11 +899,15 @@ class TestAdditionalExceptions:
         ) or "FLEXT_NOT_FOUND" in cast("str", get_dynamic_attr(error, "error_code", ""))
         # FlextExceptions.NotFoundError uses direct context, not nested
         assert (
-            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_id"]  # noqa: TC006
+            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
+                "resource_id"
+            ]  # noqa: TC006
             == "123"
         )
         assert (
-            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))["resource_type"]  # noqa: TC006
+            cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
+                "resource_type"
+            ]  # noqa: TC006
             == "user"
         )
 

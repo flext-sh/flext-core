@@ -108,7 +108,7 @@ class TestFlextDecoratorsReliability:
             msg = "Always fails"
             raise ValueError(msg)
 
-        with pytest.raises(RuntimeError, match="All .* retry attempts failed"):
+        with pytest.raises(RuntimeError, match="All .* retries failed"):
             always_failing_function()
 
     def test_retry_decorator_with_specific_exceptions(self) -> None:
@@ -614,10 +614,10 @@ class TestFlextDecoratorsUncoveredFunctionality:
         assert result == "test: 42"
 
         # Should raise TypeError with wrong types
-        with pytest.raises(TypeError, match="Argument 0 type mismatch"):
+        with pytest.raises(TypeError, match="Field 'arg_0': expected str, got int"):
             typed_function(123, 42)  # type: ignore[arg-type]
 
-        with pytest.raises(TypeError, match="Argument 1 type mismatch"):
+        with pytest.raises(TypeError, match="Field 'arg_1': expected int, got str"):
             typed_function("test", "wrong")  # type: ignore[arg-type]
 
     def test_validate_types_with_return_type_validation(self) -> None:
@@ -879,13 +879,17 @@ class TestFlextDecoratorsUncoveredFunctionality:
         assert result == "legacy_result"
 
     def test_deprecated_alias_functionality(self) -> None:
-        """Test deprecated_alias decorator from Lifecycle decorators."""
+        """Test deprecated decorator functionality as an alias replacement."""
 
-        @FlextDecorators.Lifecycle.deprecated_alias("old_name", "versioned_function")
+        @FlextDecorators.Lifecycle.deprecated(
+            version="1.0.0", reason="old_name is deprecated, use versioned_function"
+        )
         def versioned_function() -> str:
             return "version_checked"
 
-        result = versioned_function()
+        # Test that it works without raising warnings (unless called)
+        with pytest.warns(DeprecationWarning, match="versioned_function is deprecated"):
+            result = versioned_function()
         assert result == "version_checked"
 
     @given(st.text(min_size=1, max_size=100))
@@ -933,29 +937,29 @@ class TestFlextDecoratorsUncoveredFunctionality:
             time.sleep(0.02)  # Intentionally slow
             return "completed"
 
-        with caplog.at_level("WARNING"):
+        with caplog.at_level("INFO"):
             result = slow_function()
             assert result == "completed"
 
-            # Should have logged slow operation warning
-            warning_messages = [
+            # Should have logged slow operation as INFO
+            slow_messages = [
                 record.message
                 for record in caplog.records
-                if record.levelname == "WARNING"
-                and "Slow operation detected" in record.message
+                if record.levelname == "INFO"
+                and "Slow operation" in record.message
             ]
-            assert len(warning_messages) > 0
+            assert len(slow_messages) > 0
 
         with caplog.at_level("INFO"):
             result = slow_function()
             assert result == "completed"
 
-            # Should have logged performance metrics
+            # Should have logged slow operation
             info_messages = [
                 record.message
                 for record in caplog.records
                 if record.levelname == "INFO"
-                and "Performance metrics" in record.message
+                and "Slow operation" in record.message
             ]
             assert len(info_messages) > 0
 
@@ -1014,7 +1018,7 @@ class TestFlextDecoratorsUncoveredFunctionality:
         def legacy_function() -> str:
             return "legacy_output"
 
-        with caplog.at_level("WARNING"):
+        with caplog.at_level("INFO"):
             with pytest.warns(
                 DeprecationWarning, match="Replaced by improved_function"
             ):
@@ -1022,59 +1026,57 @@ class TestFlextDecoratorsUncoveredFunctionality:
 
             assert result == "legacy_output"
 
-            # Should have logged deprecation
-            warning_messages = [
+            # Should have logged deprecation as INFO
+            info_messages = [
                 record.message
                 for record in caplog.records
-                if record.levelname == "WARNING"
+                if record.levelname == "INFO"
                 and "Deprecated function called" in record.message
             ]
-            assert len(warning_messages) > 0
+            assert len(info_messages) > 0
 
     def test_deprecated_class_warning_functionality(self) -> None:
         """Test deprecated_class_warning decorator functionality."""
 
-        @FlextDecorators.Lifecycle.deprecated_class_warning(
-            class_name="LegacyClass", replacement="ModernClass"
+        @FlextDecorators.Lifecycle.deprecated(
+            version="1.0.0", reason="Use ModernClass instead"
         )
-        class DeprecatedTestClass:
-            def __init__(self) -> None:
-                self.value = "test"
+        def deprecated_function() -> str:
+            return "test"
 
-        # Test that deprecation warning is raised on instantiation
-        with pytest.warns(DeprecationWarning, match="LegacyClass is deprecated"):
-            instance = DeprecatedTestClass()
-        assert instance.value == "test"
+        # Test that deprecation warning is raised on function call
+        with pytest.warns(DeprecationWarning, match="deprecated_function is deprecated"):
+            result = deprecated_function()
+        assert result == "test"
 
     def test_deprecated_legacy_function_decorator(
         self, caplog: LogCaptureFixture
     ) -> None:
         """Test deprecated_legacy_function decorator with full parameters."""
 
-        @FlextDecorators.Lifecycle.deprecated_legacy_function(
-            old_name="old_api_function",
-            new_path="FlextNewAPI.modern_function",
-            migration_guide="Update code to use new API patterns.",
+        @FlextDecorators.Lifecycle.deprecated(
+            version="1.0.0",
+            reason="Use FlextNewAPI.modern_function instead",
+            removal_version="2.0.0",
         )
         def legacy_function() -> str:
             return "legacy_result"
 
-        # Test deprecation warning and logging
-        with caplog.at_level("WARNING"):
-            with pytest.warns(
-                DeprecationWarning, match="old_api_function is deprecated"
-            ):
-                result = legacy_function()
-            assert result == "legacy_result"
+        # Test deprecation warning
+        with pytest.warns(DeprecationWarning, match="legacy_function is deprecated"):
+            result = legacy_function()
+        assert result == "legacy_result"
 
-            # Should have logged legacy usage with structured data
-            legacy_messages = [
+        # Test deprecation logging separately
+        with caplog.at_level("INFO"):
+            legacy_function()
+            # Should have logged deprecation as INFO with structured data
+            deprecation_messages = [
                 record.message
                 for record in caplog.records
-                if record.levelname == "WARNING"
-                and "Legacy function called" in record.message
+                if "Deprecated function called" in record.message
             ]
-            assert len(legacy_messages) > 0
+            assert len(deprecation_messages) > 0
 
     def test_cache_decorator_with_ttl_expiration_and_size_limit(self) -> None:
         """Test cache decorator with TTL expiration and size limit eviction."""

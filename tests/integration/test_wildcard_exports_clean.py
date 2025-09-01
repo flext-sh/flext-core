@@ -30,7 +30,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
     FlextUtilities,
-    FlextValidation,
+    FlextValidations,
 )
 
 
@@ -55,7 +55,7 @@ class TestFlextCoreWildcardExports:
             "FlextConfig": "Configuration management system",
             "FlextContainer": "Dependency injection container",
             "FlextFields": "Pydantic field extensions",
-            "FlextValidation": "Validation system",
+            "FlextValidations": "Validation system",
             "FlextCommands": "Command pattern implementations",
         }
 
@@ -201,16 +201,16 @@ class TestFlextCoreWildcardExports:
         assert string_field is not None
 
     def test_flext_validation_functionality(self) -> None:
-        """Test that FlextValidation works after wildcard import."""
+        """Test that FlextValidations works after wildcard import."""
         # Test validation decorators and functions
-        assert hasattr(FlextValidation, "Rules")
-        assert hasattr(FlextValidation, "Validators")
+        assert hasattr(FlextValidations, "Rules")
+        assert hasattr(FlextValidations, "Validators")
 
         # Test basic validation
-        guard_result = FlextValidation.validate_non_empty_string_func("test")
+        guard_result = FlextValidations.validate_non_empty_string_func("test")
         assert guard_result is True
 
-        empty_result = FlextValidation.validate_non_empty_string_func("")
+        empty_result = FlextValidations.validate_non_empty_string_func("")
         assert empty_result is False
 
     def test_flext_commands_functionality(self) -> None:
@@ -265,7 +265,7 @@ class TestFlextCoreWildcardExports:
             "Config",  # FlextConfig
             "Container",  # FlextContainer
             "Fields",  # FlextFields
-            "Validation",  # FlextValidation
+            "Validation",  # FlextValidations
             "Commands",  # FlextCommands
         ]
 
@@ -287,13 +287,11 @@ class TestFlextCoreIntegrationScenarios:
         operation_id = FlextUtilities.generate_uuid()
 
         # 2. Create a result and validate it
-        result = FlextResult[dict[str, str]].ok(
-            {
-                "operation_id": operation_id,
-                "status": "started",
-            }
-        )
-        validation_result = FlextValidation.validate_non_empty_string_func(
+        result = FlextResult[dict[str, str]].ok({
+            "operation_id": operation_id,
+            "status": "started",
+        })
+        validation_result = FlextValidations.validate_non_empty_string_func(
             operation_id
         )
 
@@ -332,7 +330,7 @@ class TestFlextCoreIntegrationScenarios:
         """Test error handling across multiple components."""
         # Test validation error propagation
         invalid_data = ""
-        validation_result = FlextValidation.validate_non_empty_string_func(
+        validation_result = FlextValidations.validate_non_empty_string_func(
             invalid_data
         )
 

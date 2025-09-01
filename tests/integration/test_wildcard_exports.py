@@ -13,7 +13,12 @@ import pytest
 
 # Wildcard import para testar todo o sistema (intencional para validar __all__)
 from flext_core import *  # noqa: F403, F401
-from flext_core import FlextConstants, FlextExceptions, FlextResult, FlextUtilities
+from flext_core import (
+    FlextConstants,
+    FlextExceptions,
+    FlextResult,
+    FlextUtilities,
+)
 
 
 class TestFlextCoreIntegration:

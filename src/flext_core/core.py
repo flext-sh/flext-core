@@ -102,7 +102,7 @@ Classes and Methods:
         handlers -> FlextHandlers                           # Request handlers
         models -> FlextModels                               # Domain models
         utilities -> FlextUtilities                         # Utility functions
-        validation -> FlextValidation                       # Validation framework
+        validation -> FlextValidations                       # Validation framework
 
 Usage Examples:
     Basic system setup:
@@ -125,7 +125,7 @@ Usage Examples:
 
 Integration:
     FlextCore integrates with all FLEXT ecosystem components providing unified access
-    to FlextContainer, FlextResult, _FlextLogger, FlextValidation, and all architectural
+    to FlextContainer, FlextResult, _FlextLogger, FlextValidations, and all architectural
     patterns through a single, thread-safe interface with comprehensive functionality.
 
 """
@@ -163,7 +163,7 @@ from flext_core.services import FlextServices
 from flext_core.type_adapters import FlextTypeAdapters
 from flext_core.typings import FlextTypes, P, R, T
 from flext_core.utilities import FlextUtilities
-from flext_core.validation import FlextValidation
+from flext_core.validations import FlextValidations
 
 
 def flext_validate_service_name(name: str) -> FlextResult[None]:
@@ -352,7 +352,7 @@ class FlextCore:
     See Also:
         - FlextContainer: Dependency injection implementation
         - FlextResult[T]: Railway-oriented programming patterns
-        - FlextValidation: Comprehensive validation system
+        - FlextValidations: Comprehensive validation system
         - FlextHandlers: Enterprise handler patterns
         - FlextDecorators: Cross-cutting concern implementations
 
@@ -421,7 +421,7 @@ class FlextCore:
         self.services = FlextServices
         self.type_adapters = FlextTypeAdapters
         self.utilities = FlextUtilities
-        self.validation = FlextValidation
+        self.validation = FlextValidations
 
     @classmethod
     def get_instance(cls) -> FlextCore:
@@ -531,7 +531,9 @@ class FlextCore:
             self._aggregate_config.update(cfg)
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(cfg)
         except Exception as e:
-            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(f"Configuration failed: {e}")
+            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
+                f"Configuration failed: {e}"
+            )
 
     def get_aggregates_config(self) -> FlextTypes.Aggregates.SystemConfig:
         """Get current aggregates system configuration."""
@@ -539,7 +541,9 @@ class FlextCore:
             config = getattr(self, "_aggregate_config", {})
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(config)
         except Exception as e:
-            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(f"Get config failed: {e}")
+            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
+                f"Get config failed: {e}"
+            )
 
     def optimize_aggregates_system(
         self, lvl: FlextTypes.Aggregates.PerformanceLevel
@@ -549,13 +553,29 @@ class FlextCore:
             # Create performance configuration
             performance_config: FlextTypes.Aggregates.AggregatesConfigDict = {
                 "level": str(lvl),
-                "cache_size": 1000 if lvl == "low" else 5000 if lvl == "balanced" else 10000 if lvl == "high" else 50000,
-                "batch_size": 10 if lvl == "low" else 50 if lvl == "balanced" else 100 if lvl == "high" else 500,
-                "optimization_enabled": True
+                "cache_size": 1000
+                if lvl == "low"
+                else 5000
+                if lvl == "balanced"
+                else 10000
+                if lvl == "high"
+                else 50000,
+                "batch_size": 10
+                if lvl == "low"
+                else 50
+                if lvl == "balanced"
+                else 100
+                if lvl == "high"
+                else 500,
+                "optimization_enabled": True,
             }
-            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(performance_config)
+            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(
+                performance_config
+            )
         except Exception as e:
-            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(f"Optimization failed: {e}")
+            return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
+                f"Optimization failed: {e}"
+            )
 
     def configure_commands_system(
         self, cfg: FlextTypes.Commands.CommandsConfigDict
@@ -762,7 +782,7 @@ class FlextCore:
             for k, v in config.items()
             if isinstance(v, (str, int, float, bool, list, dict))
         }
-        return self.decorators.configure_decorators_system(config_dict)
+        return self.mixins.configure_mixins_system(config_dict)
 
     def get_decorators_config(
         self,
@@ -770,7 +790,7 @@ class FlextCore:
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Get decorators system configuration."""
-        return self.decorators.get_decorators_system_config()
+        return self.mixins.get_mixins_system_config()
 
     def optimize_decorators_performance(
         self, performance_level: FlextTypes.Core.String
@@ -782,7 +802,7 @@ class FlextCore:
         config: dict[
             str, str | int | float | bool | list[object] | dict[str, object]
         ] = {"performance_level": performance_level}
-        return self.decorators.optimize_decorators_performance(config)
+        return self.mixins.optimize_mixins_performance(config)
 
     # Field Methods
     def create_boolean_field(
@@ -1601,12 +1621,12 @@ class FlextCore:
     @property
     def validators(self) -> object:
         """Access validation utilities."""
-        return FlextValidation
+        return FlextValidations
 
     @property
     def predicates(self) -> object:
         """Access predicate functions."""
-        return FlextValidation.Core.Predicates
+        return FlextValidations.Core.Predicates
 
     def get_settings(self, settings_class: type[object]) -> object:
         """Get settings instance with caching."""
@@ -2398,17 +2418,17 @@ class FlextCore:
         self,
         name: str,
         validation_func: Callable[[T], FlextResult[T]],
-    ) -> type[FlextValidation.Domain.BaseValidator]:
+    ) -> type[FlextValidations.Domain.BaseValidator]:
         """Create validator class dynamically to reduce boilerplate."""
         # Import already at module level
 
-        class DynamicValidator(FlextValidation.Domain.BaseValidator):
+        class DynamicValidator(FlextValidations.Domain.BaseValidator):
             def validate(self, value: T) -> FlextResult[T]:
                 return validation_func(value)
 
         DynamicValidator.__name__ = name
         DynamicValidator.__qualname__ = name
-        return cast("type[FlextValidation.Domain.BaseValidator]", DynamicValidator)
+        return cast("type[FlextValidations.Domain.BaseValidator]", DynamicValidator)
 
     def create_service_processor(
         self,
