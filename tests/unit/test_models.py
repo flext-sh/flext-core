@@ -1341,6 +1341,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         except Exception as e:
             # Expected exception for coverage testing
             import logging
+
             logging.getLogger(__name__).debug("Expected exception in test: %s", e)
 
         # Test safe_parse_datetime with invalid string
@@ -1359,7 +1360,9 @@ class TestFlextModelsFactoryRemainingCoverage:
     def test_create_entity_with_validation_errors(self) -> None:
         """Test create_entity with validation errors (lines 920-948)."""
         # Test with missing required field
-        invalid_data: dict[str, object] = {"name": "Test User"}  # Missing required fields
+        invalid_data: dict[str, object] = {
+            "name": "Test User"
+        }  # Missing required fields
 
         # Create a simple test entity class
         class SimpleEntity(FlextModels.Entity):
@@ -1407,7 +1410,9 @@ class TestFlextModelsFactoryRemainingCoverage:
             required_field: str
 
         # Test with missing required field
-        invalid_data: dict[str, object] = {"name": "Test Value"}  # Missing required_field
+        invalid_data: dict[str, object] = {
+            "name": "Test Value"
+        }  # Missing required_field
         result = FlextModels.create_value_object(invalid_data, SimpleValue)
         assert result.is_failure
         assert result.error is not None
@@ -1739,7 +1744,9 @@ class TestFlextModelsSpecificMissingLines:
                 """Required implementation of abstract method."""
                 return FlextResult[None].ok(None)
 
-        custom_entity = CustomEntity(id="test_id", name="Custom Entity", custom_field="custom")
+        custom_entity = CustomEntity(
+            id="test_id", name="Custom Entity", custom_field="custom"
+        )
 
         # Even with same ID, different classes should return False (Line 257)
         assert entity != custom_entity
@@ -1828,6 +1835,7 @@ class TestFlextModelsSpecificMissingLines:
 
     def test_factory_methods_default_classes(self) -> None:
         """Test factory methods with None class parameters - Lines 922, 959."""
+
         # Test create_entity with None entity_class - Line 922
         # Since Entity is abstract, create a simple concrete entity for testing
         class SimpleTestEntity(FlextModels.Entity):
@@ -1865,25 +1873,28 @@ class TestFlextModelsSpecificMissingLines:
         """Test factory methods exception handling - Lines 947-948, 978-979."""
         # Test create_entity generic Exception path - Lines 947-948
         # Force a generic Exception by using invalid entity class
-        invalid_data: dict[str, object] = {"id": 123}  # Invalid type that might cause non-validation exception
+        invalid_data: dict[str, object] = {
+            "id": 123
+        }  # Invalid type that might cause non-validation exception
         result = FlextModels.create_entity(invalid_data)
         assert result.is_failure
         assert result.error is not None
-        assert ("creation failed" in result.error or "validation failed" in result.error)
+        assert "creation failed" in result.error or "validation failed" in result.error
 
         # Test create_value_object generic Exception path - Lines 978-979
         value_result2 = FlextModels.create_value_object({"value": 123})  # Invalid type
         assert value_result2.is_failure
         assert value_result2.error is not None
-        assert ("creation failed" in value_result2.error or "validation failed" in value_result2.error)
+        assert (
+            "creation failed" in value_result2.error
+            or "validation failed" in value_result2.error
+        )
 
     def test_create_payload_exception_paths(self) -> None:
         """Test create_payload exception handling - Lines 1003-1008."""
         # Test successful creation first to ensure method works
         result = FlextModels.create_payload(
-            data="valid_data",
-            message_type="test_type",
-            source_service="test_source"
+            data="valid_data", message_type="test_type", source_service="test_source"
         )
         assert result.is_success
         payload = result.unwrap()
@@ -1905,7 +1916,10 @@ class TestFlextModelsSpecificMissingLines:
         except Exception as e:
             # Direct exceptions are also acceptable behavior for invalid input
             import logging
-            logging.getLogger(__name__).debug("Expected exception for invalid input: %s", e)
+
+            logging.getLogger(__name__).debug(
+                "Expected exception for invalid input: %s", e
+            )
 
     def test_additional_missing_lines_coverage(self) -> None:
         """Test additional missing lines for comprehensive coverage."""
@@ -1922,7 +1936,7 @@ class TestFlextModelsSpecificMissingLines:
         aggregate = ConcreteAggregateRoot(id="agg_123", name="Test Aggregate")
         event: FlextTypes.Core.JsonObject = {
             "event_type": "TestEvent",
-            "data": {"key": "value"}
+            "data": {"key": "value"},
         }
 
         # Test apply_domain_event success path
@@ -1936,9 +1950,7 @@ class TestFlextModelsSpecificMissingLines:
 
         # Test payload expiration functionality
         payload = FlextModels.Payload[str](
-            data="test",
-            message_type="test_type",
-            source_service="test_service"
+            data="test", message_type="test_type", source_service="test_service"
         )
 
         # Test expiration logic
@@ -1950,7 +1962,7 @@ class TestFlextModelsSpecificMissingLines:
             aggregate_id="test_agg",
             aggregate_type="TestAggregate",
             data={"test": "data"},
-            source_service="test_source"
+            source_service="test_source",
         )
         assert domain_event_result.is_success or domain_event_result.is_failure
 

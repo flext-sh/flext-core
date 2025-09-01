@@ -1,16 +1,16 @@
 r"""FLEXT Validation - Enterprise validation framework with hierarchical predicates and railway-oriented error handling.
 
-Comprehensive validation system providing FlextValidation class with domain-organized validation
+Comprehensive validation system providing FlextValidations class with domain-organized validation
 patterns, composable validation chains, business rule enforcement, and enterprise-grade data
 validation using FlextResult for type-safe error handling with performance optimization.
 
 Module Role in Architecture:
-    FlextValidation provides comprehensive validation capabilities for all FLEXT ecosystem
+    FlextValidations provides comprehensive validation capabilities for all FLEXT ecosystem
     components, organized hierarchically by domain from basic format validation to complex
     business rule validation with composable patterns and performance optimization.
 
 Classes and Methods:
-    FlextValidation:                        # Consolidated validation system with hierarchical organization
+    FlextValidations:                        # Consolidated validation system with hierarchical organization
         # Basic Validators - Core Format and Data Type Validation:
         is_email(email) -> FlextResult[None]            # RFC-compliant email validation
         is_url(url) -> FlextResult[None]                # URL format and protocol validation
@@ -61,25 +61,25 @@ Classes and Methods:
 
 Usage Examples:
     Basic validation:
-        email_result = FlextValidation.is_email("user@example.com")
+        email_result = FlextValidations.is_email("user@example.com")
         if email_result.success:
             print("Valid email")
 
         # Chain validations
         result = (
-            FlextValidation.validate_required(data.get("name"), "name")
-            .flat_map(lambda _: FlextValidation.validate_length(data["name"], 2, 50))
-            .flat_map(lambda _: FlextValidation.is_email(data.get("email", "")))
+            FlextValidations.validate_required(data.get("name"), "name")
+            .flat_map(lambda _: FlextValidations.validate_length(data["name"], 2, 50))
+            .flat_map(lambda _: FlextValidations.is_email(data.get("email", "")))
         )
 
     Business rule validation:
-        tax_id_result = FlextValidation.validate_tax_id("123-45-6789", "US")
-        sku_result = FlextValidation.validate_sku("PROD-123-ABC", r"^PROD-\\d+-[A-Z]+$")
+        tax_id_result = FlextValidations.validate_tax_id("123-45-6789", "US")
+        sku_result = FlextValidations.validate_sku("PROD-123-ABC", r"^PROD-\\d+-[A-Z]+$")
 
     Validation composition:
-        email_validator = FlextValidation.chain_validators(
-            lambda email: FlextValidation.validate_required(email, "email"),
-            lambda email: FlextValidation.is_email(email)
+        email_validator = FlextValidations.chain_validators(
+            lambda email: FlextValidations.validate_required(email, "email"),
+            lambda email: FlextValidations.is_email(email)
         )
 
         result = email_validator("user@example.com")
@@ -90,10 +90,10 @@ Usage Examples:
             "validation_level": "strict",
             "enable_caching": True,
         }
-        FlextValidation.configure_validation_system(config)
+        FlextValidations.configure_validation_system(config)
 
 Integration:
-    FlextValidation integrates with FlextResult for error handling, FlextTypes.Config
+    FlextValidations integrates with FlextResult for error handling, FlextTypes.Config
     for configuration, FlextConstants for validation limits, providing comprehensive
     validation capabilities across the entire FLEXT ecosystem with composable patterns.
         validate_required(value: object, field_name: str) -> FlextResult[None] - Required field check
@@ -106,33 +106,31 @@ Integration:
         validate_security_constraints(data: dict, policies: dict) -> FlextResult[None] - Security validation
 
 Integration with FlextCore:
-    >>> from flext_core import FlextValidation, FlextResult
+    >>> from flext_core import FlextValidations, FlextResult
     >>> from flext_core.core import FlextCore
     >>> # Basic validation with logging
     >>> core = FlextCore.get_instance()
-    >>> email_result = FlextValidation.is_email("user@example.com")
+    >>> email_result = FlextValidations.is_email("user@example.com")
     >>> if email_result.success:
     ...     core.logger.info("Email validation passed")
     >>> else:
     ...     core.logger.error(f"Email validation failed: {email_result.error}")
     >>> # Complex business validation
     >>> business_data = {"tax_id": "12-3456789", "country": "US"}
-    >>> tax_result = FlextValidation.validate_tax_id(
+    >>> tax_result = FlextValidations.validate_tax_id(
     ...     business_data["tax_id"], business_data["country"]
     ... )
     >>> core.observability.track_validation_result("tax_id", tax_result.success)
 
 Validation Chaining Examples:
     >>> # Chain multiple validators
-    >>> user_validators = FlextValidation.chain_validators(
-    ...     [
-    ...         lambda email: FlextValidation.is_email(email),
-    ...         lambda email: FlextValidation.validate_length(email, 5, 100),
-    ...         lambda email: FlextValidation.validate_regex(
-    ...             email, r".*@company\\\\.com$"
-    ...         ),
-    ...     ]
-    ... )
+    >>> user_validators = FlextValidations.chain_validators([
+    ...     lambda email: FlextValidations.is_email(email),
+    ...     lambda email: FlextValidations.validate_length(email, 5, 100),
+    ...     lambda email: FlextValidations.validate_regex(
+    ...         email, r".*@company\\\\.com$"
+    ...     ),
+    ... ])
     >>> email_validation = user_validators("john.doe@company.com")
     >>> if email_validation.failure:
     ...     print(f"Email validation failed: {email_validation.error}")
@@ -153,19 +151,21 @@ Business Rule Validation:
     ...         "values": ["credit_card", "paypal", "bank_transfer"],
     ...     },
     ... ]
-    >>> validation_result = FlextValidation.validate_business_rules(
+    >>> validation_result = FlextValidations.validate_business_rules(
     ...     order_data, business_rules
     ... )
 
 Performance Optimization Examples:
     >>> # Cached validation for repeated checks
-    >>> email_validator_cached = FlextValidation.cached_validator(
-    ...     FlextValidation.is_email,
+    >>> email_validator_cached = FlextValidations.cached_validator(
+    ...     FlextValidations.is_email,
     ...     ttl=3600,  # Cache for 1 hour
     ... )
     >>> # Batch validation for multiple items
     >>> emails = ["user1@example.com", "user2@example.com", "invalid-email"]
-    >>> batch_result = FlextValidation.batch_validator(emails, FlextValidation.is_email)
+    >>> batch_result = FlextValidations.batch_validator(
+    ...     emails, FlextValidations.is_email
+    ... )
     >>> valid_emails = [
     ...     email for email, result in zip(emails, batch_result.value) if result.success
     ... ]
@@ -174,7 +174,7 @@ Conditional Validation Examples:
     >>> # Validate based on conditions
     >>> def validate_user_data(user_data: dict) -> FlextResult[None]:
     ...     # Required field validation
-    ...     email_validation = FlextValidation.validate_required(
+    ...     email_validation = FlextValidations.validate_required(
     ...         user_data.get("email"), "email"
     ...     )
     ...     if email_validation.failure:
@@ -182,7 +182,7 @@ Conditional Validation Examples:
     ...
     ...     # Conditional validation based on user type
     ...     if user_data.get("type") == "business":
-    ...         return FlextValidation.validate_tax_id(user_data.get("tax_id"), "US")
+    ...         return FlextValidations.validate_tax_id(user_data.get("tax_id"), "US")
     ...
     ...     return FlextResult.ok(None)
 
@@ -195,7 +195,7 @@ Custom Validator Creation:
     ...         and any(c.islower() for c in password)
     ...         and any(c.isdigit() for c in password)
     ...     )
-    >>> password_validator = FlextValidation.custom_validator(
+    >>> password_validator = FlextValidations.custom_validator(
     ...     is_strong_password,
     ...     "Password must be at least 8 characters with upper, lower, and digits",
     ... )
@@ -216,7 +216,7 @@ Data Integrity Validation:
     ...     "age": {"required": True, "min": 18, "max": 120},
     ...     "status": {"required": True, "enum": ["active", "inactive", "suspended"]},
     ... }
-    >>> integrity_result = FlextValidation.validate_data_integrity(
+    >>> integrity_result = FlextValidations.validate_data_integrity(
     ...     user_data, integrity_constraints
     ... )
 
@@ -249,11 +249,11 @@ from flext_core.typings import FlextTypes, T
 # =============================================================================
 
 
-class FlextValidation:
+class FlextValidations:
     """Hierarchical validation system organizing all validation components by domain.
 
     This is the single consolidated class for all FLEXT validation functionality,
-    following the Flext[Area][Module] pattern where this represents FlextValidation.
+    following the Flext[Area][Module] pattern where this represents FlextValidations.
     All validation patterns are organized within this class hierarchy.
 
     The validation system is organized into the following domains:
@@ -275,19 +275,19 @@ class FlextValidation:
         Using hierarchical validation patterns::
 
             # Core validation primitives
-            predicate = FlextValidation.Core.Predicates.create_email_predicate()
+            predicate = FlextValidations.Core.Predicates.create_email_predicate()
             result = predicate("user@example.com")
 
             # Domain business validation
-            user_validator = FlextValidation.Domain.UserValidator()
+            user_validator = FlextValidations.Domain.UserValidator()
             result = user_validator.validate_business_rules(user_data)
 
             # Service-level validation
-            api_validator = FlextValidation.Service.ApiRequestValidator()
+            api_validator = FlextValidations.Service.ApiRequestValidator()
             result = api_validator.validate_request(request_data)
 
             # Advanced schema validation
-            schema_validator = FlextValidation.Advanced.SchemaValidator(schema)
+            schema_validator = FlextValidations.Advanced.SchemaValidator(schema)
             result = schema_validator.validate(complex_data)
 
     """
@@ -335,44 +335,44 @@ class FlextValidation:
                     )
 
             def __and__(
-                self, other: FlextValidation.Core.Predicates
-            ) -> FlextValidation.Core.Predicates:
+                self, other: FlextValidations.Core.Predicates
+            ) -> FlextValidations.Core.Predicates:
                 """Combine predicates with AND logic."""
 
                 def combined_func(value: object) -> bool:
                     return self.func(value) and other.func(value)
 
-                return FlextValidation.Core.Predicates(
+                return FlextValidations.Core.Predicates(
                     combined_func, name=f"({self.name} AND {other.name})"
                 )
 
             def __or__(
-                self, other: FlextValidation.Core.Predicates
-            ) -> FlextValidation.Core.Predicates:
+                self, other: FlextValidations.Core.Predicates
+            ) -> FlextValidations.Core.Predicates:
                 """Combine predicates with OR logic."""
 
                 def combined_func(value: object) -> bool:
                     return self.func(value) or other.func(value)
 
-                return FlextValidation.Core.Predicates(
+                return FlextValidations.Core.Predicates(
                     combined_func, name=f"({self.name} OR {other.name})"
                 )
 
-            def __invert__(self) -> FlextValidation.Core.Predicates:
+            def __invert__(self) -> FlextValidations.Core.Predicates:
                 """Negate predicate with NOT logic."""
 
                 def negated_func(value: object) -> bool:
                     return not self.func(value)
 
-                return FlextValidation.Core.Predicates(
+                return FlextValidations.Core.Predicates(
                     negated_func, name=f"NOT({self.name})"
                 )
 
             @staticmethod
-            def create_email_predicate() -> FlextValidation.Core.Predicates:
+            def create_email_predicate() -> FlextValidations.Core.Predicates:
                 """Create email validation predicate using FlextConstants pattern."""
                 pattern = FlextConstants.Patterns.EMAIL_PATTERN
-                return FlextValidation.Core.Predicates(
+                return FlextValidations.Core.Predicates(
                     lambda x: isinstance(x, str) and re.match(pattern, x) is not None,
                     name="email_format",
                 )
@@ -380,7 +380,7 @@ class FlextValidation:
             @staticmethod
             def create_string_length_predicate(
                 min_length: int | None = None, max_length: int | None = None
-            ) -> FlextValidation.Core.Predicates:
+            ) -> FlextValidations.Core.Predicates:
                 """Create string length validation predicate."""
 
                 def length_check(value: object) -> bool:
@@ -398,12 +398,12 @@ class FlextValidation:
                     name_parts.append(f"max_{max_length}")
                 name = f"string_length_{'_'.join(name_parts)}"
 
-                return FlextValidation.Core.Predicates(length_check, name=name)
+                return FlextValidations.Core.Predicates(length_check, name=name)
 
             @staticmethod
             def create_numeric_range_predicate(
                 min_value: float | None = None, max_value: float | None = None
-            ) -> FlextValidation.Core.Predicates:
+            ) -> FlextValidations.Core.Predicates:
                 """Create numeric range validation predicate."""
 
                 def range_check(value: object) -> bool:
@@ -420,7 +420,7 @@ class FlextValidation:
                     name_parts.append(f"max_{max_value}")
                 name = f"numeric_range_{'_'.join(name_parts)}"
 
-                return FlextValidation.Core.Predicates(range_check, name=name)
+                return FlextValidations.Core.Predicates(range_check, name=name)
 
         class TypeValidators:
             """Type-safe validators using FlextTypes system."""
@@ -845,7 +845,7 @@ class FlextValidation:
             def validate_email(value: str) -> FlextResult[str]:
                 """Validate email format using centralized FlextConstants pattern."""
                 email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
-                return FlextValidation.Rules.StringRules.validate_pattern(
+                return FlextValidations.Rules.StringRules.validate_pattern(
                     value, email_pattern, "email"
                 )
 
@@ -1537,7 +1537,7 @@ class FlextValidation:
         @staticmethod
         def validate_email(value: object) -> FlextResult[None]:
             """Validate email using validators pattern."""
-            return FlextValidation.validate_email_field(value)
+            return FlextValidations.validate_email_field(value)
 
     @property
     def is_valid(self) -> bool:
@@ -1550,5 +1550,5 @@ class FlextValidation:
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextValidation",  # ONLY main class exported
+    "FlextValidations",  # ONLY main class exported
 ]

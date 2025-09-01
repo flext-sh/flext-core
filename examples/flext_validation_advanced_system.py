@@ -3,13 +3,13 @@
 
 Demonstrates enterprise-grade validation patterns using FlextCore's built-in
 validation utilities, guards, and enterprise patterns. Shows how to leverage
-FlextUtilities.Validators, FlextGuards, and FlextValidation for robust,
+FlextUtilities.Validators, FlextGuards, and FlextValidations for robust,
 type-safe validation workflows with minimal code duplication.
 
 Key FlextCore Features Demonstrated:
 • FlextUtilities.Validators: Built-in email, URL, JSON, UUID validators
 • FlextGuards.ValidationUtils: Enterprise validation with FlextResult integration
-• FlextValidation: Advanced validation patterns and composition
+• FlextValidations: Advanced validation patterns and composition
 • FlextTypes and FlextConstants: Centralized type safety and validation limits
 • Clean Architecture: Dependency inversion and protocol-based validation
 • Integration Patterns: Composing validators for complex business rules
@@ -22,7 +22,7 @@ from typing import Protocol, TypeVar
 
 from flext_core import (
     FlextResult,
-    FlextValidation,
+    FlextValidations,
 )
 
 T = TypeVar("T")
@@ -72,14 +72,16 @@ class EnterpriseValidation:
 
     @staticmethod
     def validate_name(name: str) -> FlextResult[str]:
-        """Validate user name using FlextValidation utilities."""
-        # Use FlextValidation for enterprise validation with proper error messages
+        """Validate user name using FlextValidations utilities."""
+        # Use FlextValidations for enterprise validation with proper error messages
         if not name.strip():
             return FlextResult[str].fail("Name is required")
 
         # Manual length validation since validate_string_field doesn't support min/max
         if len(name) < MIN_NAME_LENGTH or len(name) > MAX_NAME_LENGTH:
-            return FlextResult[str].fail(f"Name must be between {MIN_NAME_LENGTH} and {MAX_NAME_LENGTH} characters")
+            return FlextResult[str].fail(
+                f"Name must be between {MIN_NAME_LENGTH} and {MAX_NAME_LENGTH} characters"
+            )
 
         # Check for numbers in name (business rule)
         if any(c.isdigit() for c in name):
@@ -89,29 +91,29 @@ class EnterpriseValidation:
 
     @staticmethod
     def validate_email(email: str) -> FlextResult[str]:
-        """Validate email using native FlextValidation validator."""
+        """Validate email using native FlextValidations validator."""
         # Use built-in email validator instead of reimplementing
-        validation_result = FlextValidation.validate_email(email)
+        validation_result = FlextValidations.validate_email(email)
         if validation_result.success:
             return FlextResult[str].ok(email)
         return FlextResult[str].fail(validation_result.error or "Invalid email format")
 
     @staticmethod
     def validate_age(age: int) -> FlextResult[int]:
-        """Validate age using FlextValidation range validation."""
-        # Use FlextValidation for enterprise range validation with business rules
+        """Validate age using FlextValidations range validation."""
+        # Use FlextValidations for enterprise range validation with business rules
         if age < MIN_AGE or age > MAX_AGE:
             return FlextResult[int].fail(f"Age must be between {MIN_AGE} and {MAX_AGE}")
 
         # Use validate_numeric_field which exists (simple validation)
-        validation_result = FlextValidation.validate_numeric_field(age)
+        validation_result = FlextValidations.validate_numeric_field(age)
         if validation_result.success:
             return FlextResult[int].ok(age)
         return FlextResult[int].fail(validation_result.error or "Invalid age")
 
     @staticmethod
     def validate_url(url: str) -> FlextResult[str]:
-        """Validate URL using native FlextValidation validator."""
+        """Validate URL using native FlextValidations validator."""
         # Simple URL validation (since is_url doesn't exist)
         if not url.startswith(("http://", "https://")):
             return FlextResult[str].fail("URL must start with http:// or https://")
@@ -119,7 +121,7 @@ class EnterpriseValidation:
 
     @staticmethod
     def validate_uuid(uuid_str: str) -> FlextResult[str]:
-        """Validate UUID using native FlextValidation validator."""
+        """Validate UUID using native FlextValidations validator."""
         # Simple UUID validation (since is_uuid doesn't exist)
         import uuid
 
@@ -131,7 +133,7 @@ class EnterpriseValidation:
 
     @staticmethod
     def validate_json(json_str: str) -> FlextResult[dict[str, object]]:
-        """Validate JSON using native FlextValidation validator."""
+        """Validate JSON using native FlextValidations validator."""
         # Simple JSON validation (since is_json doesn't exist)
         try:
             parsed = json.loads(json_str)
@@ -141,7 +143,7 @@ class EnterpriseValidation:
 
     @staticmethod
     def validate_phone(phone: str) -> FlextResult[str]:
-        """Validate phone number using native FlextValidation validator."""
+        """Validate phone number using native FlextValidations validator."""
         # Simple phone validation (since is_phone doesn't exist)
         import re
 
@@ -227,7 +229,7 @@ class EnterpriseFormValidator:
         price = float(price_obj) if isinstance(price_obj, (int, float, str)) else 0.0
         category = str(data.get("category", ""))
 
-        # Use FlextValidation for complex validation
+        # Use FlextValidations for complex validation
         # Simple validation instead of using non-existent methods
         if not name.strip():
             name_result = FlextResult[str].fail("Product name is required")
@@ -391,7 +393,7 @@ def demonstrate_native_validators() -> None:
 
     print()
 
-    # UUID validation using FlextValidation
+    # UUID validation using FlextValidations
     uuid_tests = [
         "550e8400-e29b-41d4-a716-446655440000",  # Valid UUID
         "invalid-uuid",

@@ -1,4 +1,4 @@
-# FlextValidation Migration Roadmap
+# FlextValidations Migration Roadmap
 
 **Version**: 0.9.0  
 **Timeline**: 8 weeks (2 months)  
@@ -8,7 +8,7 @@
 
 ## 📋 Executive Summary
 
-This roadmap outlines the strategic migration to comprehensive validation standardization across the FLEXT ecosystem using the hierarchical FlextValidation system. The plan focuses on eliminating manual validation patterns, implementing domain-organized validation architecture, and establishing enterprise-grade data integrity with performance optimization across all services.
+This roadmap outlines the strategic migration to comprehensive validation standardization across the FLEXT ecosystem using the hierarchical FlextValidations system. The plan focuses on eliminating manual validation patterns, implementing domain-organized validation architecture, and establishing enterprise-grade data integrity with performance optimization across all services.
 
 **Key Objectives**:
 - ✅ Implement hierarchical validation organization across all FLEXT services
@@ -18,7 +18,7 @@ This roadmap outlines the strategic migration to comprehensive validation standa
 - ✅ Reduce validation-related errors by 95% across the ecosystem
 
 **Success Criteria**:
-- 90% hierarchical FlextValidation adoption across services
+- 90% hierarchical FlextValidations adoption across services
 - 95% reduction in validation-related data integrity issues  
 - Complete domain-based validation organization implementation
 - Performance-optimized validation with caching across high-volume services
@@ -29,7 +29,7 @@ This roadmap outlines the strategic migration to comprehensive validation standa
 
 ```mermaid
 gantt
-    title FlextValidation Data Integrity Migration Timeline
+    title FlextValidations Data Integrity Migration Timeline
     dateFormat  YYYY-MM-DD
     section Phase 1: Critical Data Integrity
     flext-api          :2025-02-01, 2w
@@ -69,31 +69,31 @@ gantt
 - [ ] **Hierarchical Design**: Design comprehensive API validation architecture
   ```python
   class FlextApiValidationService:
-      """Complete API validation using FlextValidation hierarchy."""
+      """Complete API validation using FlextValidations hierarchy."""
       
       def __init__(self):
-          self.api_validator = FlextValidation.Service.ApiRequestValidator()
-          self.schema_validator = FlextValidation.Advanced.SchemaValidator({
-              "action": FlextValidation.Rules.StringRules.validate_non_empty,
-              "version": lambda x: FlextValidation.Rules.StringRules.validate_pattern(
+          self.api_validator = FlextValidations.Service.ApiRequestValidator()
+          self.schema_validator = FlextValidations.Advanced.SchemaValidator({
+              "action": FlextValidations.Rules.StringRules.validate_non_empty,
+              "version": lambda x: FlextValidations.Rules.StringRules.validate_pattern(
                   x, r"^\d+\.\d+\.\d+$", "semantic_version"
               ),
-              "payload": FlextValidation.Core.TypeValidators.validate_dict
+              "payload": FlextValidations.Core.TypeValidators.validate_dict
           })
-          self.performance_validator = FlextValidation.Advanced.PerformanceValidator()
+          self.performance_validator = FlextValidations.Advanced.PerformanceValidator()
   ```
 - [ ] **Schema Definition**: Define comprehensive validation schemas for all API endpoints
 - [ ] **Performance Planning**: Plan caching strategy for high-throughput validation
 
 #### Week 2: API Validation Implementation and Integration
-- [ ] **FlextValidation Implementation**: Complete API validation implementation
+- [ ] **FlextValidations Implementation**: Complete API validation implementation
 - [ ] **Endpoint Migration**: Migrate all API endpoints to hierarchical validation
 - [ ] **Error Handling Enhancement**: Implement detailed error reporting with context
 - [ ] **Performance Optimization**: Add caching for repeated API request patterns
 - [ ] **Integration Testing**: Test API validation with comprehensive test coverage
 
 **Deliverables**:
-- ✅ Complete API validation with hierarchical FlextValidation architecture
+- ✅ Complete API validation with hierarchical FlextValidations architecture
 - ✅ 95% reduction in API validation errors with detailed error reporting
 - ✅ Performance-optimized validation with caching for high-throughput scenarios
 - ✅ Comprehensive schema validation for all API endpoints
@@ -108,22 +108,22 @@ gantt
 - [ ] **Singer Protocol Design**: Design comprehensive Singer protocol validation
   ```python
   class FlextMeltanoValidationService:
-      """Comprehensive ETL validation using FlextValidation hierarchy."""
+      """Comprehensive ETL validation using FlextValidations hierarchy."""
       
       def __init__(self):
           self.singer_validator = self._create_singer_validator()
           self.tap_validator = self._create_tap_validator()
-          self.performance_validator = FlextValidation.Advanced.PerformanceValidator()
+          self.performance_validator = FlextValidations.Advanced.PerformanceValidator()
       
-      def _create_singer_validator(self) -> FlextValidation.Advanced.SchemaValidator:
+      def _create_singer_validator(self) -> FlextValidations.Advanced.SchemaValidator:
           singer_schema = {
-              "type": lambda x: FlextValidation.Rules.StringRules.validate_pattern(
+              "type": lambda x: FlextValidations.Rules.StringRules.validate_pattern(
                   x, r"^(RECORD|SCHEMA|STATE|ACTIVATE_VERSION)$", "singer_type"
               ),
-              "stream": FlextValidation.Rules.StringRules.validate_non_empty,
-              "record": FlextValidation.Core.TypeValidators.validate_dict
+              "stream": FlextValidations.Rules.StringRules.validate_non_empty,
+              "record": FlextValidations.Core.TypeValidators.validate_dict
           }
-          return FlextValidation.Advanced.SchemaValidator(singer_schema)
+          return FlextValidations.Advanced.SchemaValidator(singer_schema)
   ```
 - [ ] **Tap Configuration Validation**: Design tap/target configuration validation
 - [ ] **Batch Processing Planning**: Plan batch validation for high-volume ETL data
@@ -147,7 +147,7 @@ gantt
 - ✅ 90% improvement in ETL data pipeline integrity
 
 ### Phase 1 Success Criteria
-- [ ] **API Data Integrity** achieved with systematic FlextValidation adoption
+- [ ] **API Data Integrity** achieved with systematic FlextValidations adoption
 - [ ] **ETL Pipeline Consistency** implemented with Singer protocol validation
 - [ ] **Performance Optimization** validated with 70% improvement in validation speed
 - [ ] **Error Reporting** enhanced with detailed validation messages and context
@@ -175,7 +175,7 @@ gantt
 - [ ] **FlextWebValidation Implementation**: Complete web validation implementation
   ```python
   class FlextWebValidationService:
-      """Web validation using FlextValidation hierarchy."""
+      """Web validation using FlextValidations hierarchy."""
       
       def __init__(self):
           self.form_validator = self._create_form_validator()
@@ -240,11 +240,11 @@ gantt
       @staticmethod
       def create_api_data_schema() -> dict[str, Callable]:
           return {
-              "action": FlextValidation.Rules.StringRules.validate_non_empty,
-              "version": lambda x: FlextValidation.Rules.StringRules.validate_pattern(
+              "action": FlextValidations.Rules.StringRules.validate_non_empty,
+              "version": lambda x: FlextValidations.Rules.StringRules.validate_pattern(
                   x, r"^\d+\.\d+\.\d+$", "semantic_version"
               ),
-              "correlation_id": lambda x: FlextValidation.Rules.StringRules.validate_pattern(
+              "correlation_id": lambda x: FlextValidations.Rules.StringRules.validate_pattern(
                   x, r"^[a-zA-Z0-9_-]+$", "correlation_id"
               ) if x else FlextResult.ok(None)
           }
@@ -269,13 +269,13 @@ gantt
 **Effort**: 1 week combined effort
 
 #### Week 9: Documentation and Enablement
-- [ ] **Comprehensive Documentation**: Complete FlextValidation usage documentation
+- [ ] **Comprehensive Documentation**: Complete FlextValidations usage documentation
 - [ ] **Best Practices Guide**: Create validation best practices guide
 - [ ] **Training Materials**: Develop comprehensive training program
 - [ ] **Migration Validation**: Validate all migration objectives achieved
 
 **Deliverables**:
-- ✅ Complete FlextValidation documentation and guides
+- ✅ Complete FlextValidations documentation and guides
 - ✅ Training program for development teams
 - ✅ Best practices documentation for validation patterns
 
@@ -287,14 +287,14 @@ gantt
 
 | Metric | Current | Target | Measurement |
 |--------|---------|--------|-------------|
-| **Hierarchical Validation Adoption** | 15% | 90% | FlextValidation usage across services |
+| **Hierarchical Validation Adoption** | 15% | 90% | FlextValidations usage across services |
 | **Data Integrity Issues** | High | 90% reduction | Validation-related data errors |
 | **Validation Performance** | Baseline | 70% improvement | Validation execution time |
 | **Error Reporting Quality** | Basic | Comprehensive | Detailed validation messages |
 
 ### Implementation Metrics
 
-| Library | Current Validation Approach | Target FlextValidation Coverage | Key Benefits |
+| Library | Current Validation Approach | Target FlextValidations Coverage | Key Benefits |
 |---------|----------------------------|-------------------------------|--------------|
 | **flext-api** | Manual validation | 95% hierarchical validation | API data consistency |
 | **flext-meltano** | Basic checks | 90% ETL validation coverage | Data pipeline integrity |
@@ -303,7 +303,7 @@ gantt
 
 ### Quality Metrics
 
-| Quality Aspect | Current State | With FlextValidation | Improvement |
+| Quality Aspect | Current State | With FlextValidations | Improvement |
 |---------------|---------------|---------------------|-------------|
 | **Validation Architecture** | Manual patterns | Hierarchical domain system | +400% |
 | **Data Integrity** | Variable quality | Comprehensive business rules | +350% |
@@ -314,34 +314,34 @@ gantt
 
 ## 🔧 Tools & Automation
 
-### FlextValidation Development Tools
+### FlextValidations Development Tools
 ```python
 class FlextValidationMigrationTools:
     """Tools for validation migration and monitoring."""
     
     @staticmethod
     def analyze_service_validation(service_path: str) -> dict[str, list[str]]:
-        """Analyze service for FlextValidation migration opportunities."""
+        """Analyze service for FlextValidations migration opportunities."""
         return {
             "manual_validation_patterns": ["if not data.get('field')", "basic validation"],
-            "flext_validation_candidates": ["FlextValidation.Rules", "Schema validation"],
+            "flext_validation_candidates": ["FlextValidations.Rules", "Schema validation"],
             "migration_priority": "high"
         }
     
     @staticmethod
     def generate_validation_schema_template(data_sample: dict) -> str:
-        """Generate FlextValidation schema template from data sample."""
+        """Generate FlextValidations schema template from data sample."""
         return f"""
 schema = {{
-    "field_name": FlextValidation.Rules.StringRules.validate_non_empty,
-    "email": FlextValidation.Rules.StringRules.validate_email,
-    "number": FlextValidation.Rules.NumericRules.validate_positive
+    "field_name": FlextValidations.Rules.StringRules.validate_non_empty,
+    "email": FlextValidations.Rules.StringRules.validate_email,
+    "number": FlextValidations.Rules.NumericRules.validate_positive
 }}
 """
     
     @staticmethod
     def validate_migration_completeness(service_instance: object) -> dict[str, bool]:
-        """Validate FlextValidation migration completeness."""
+        """Validate FlextValidations migration completeness."""
         return {
             "hierarchical_validation": True,
             "domain_organization": True,
@@ -368,7 +368,7 @@ class ValidationMigrationAutomation:
     def generate_migration_plan(library_name: str) -> dict[str, list[str]]:
         """Generate validation migration plan."""
         return {
-            "phase_1": ["Analyze current validation", "Design FlextValidation architecture"],
+            "phase_1": ["Analyze current validation", "Design FlextValidations architecture"],
             "phase_2": ["Implement hierarchical validation", "Add performance optimization"],
             "phase_3": ["Test integration", "Validate data integrity"]
         }
@@ -379,7 +379,7 @@ class ValidationMigrationAutomation:
 ## ✅ Final Migration Checklist
 
 ### Pre-Migration (Week 0)
-- [ ] **Team Training**: All developers trained on FlextValidation hierarchical system
+- [ ] **Team Training**: All developers trained on FlextValidations hierarchical system
 - [ ] **Migration Tools**: Validation analysis and migration tools prepared
 - [ ] **Baseline Metrics**: Current validation quality and performance metrics established
 - [ ] **Environment Setup**: Development and testing environments configured
@@ -391,7 +391,7 @@ class ValidationMigrationAutomation:
 - [ ] **Cross-Service Integration**: Test validation consistency across service boundaries
 
 ### Post-Migration (Week 10+)
-- [ ] **Complete Validation Architecture**: 90% hierarchical FlextValidation adoption achieved
+- [ ] **Complete Validation Architecture**: 90% hierarchical FlextValidations adoption achieved
 - [ ] **Data Integrity Validation**: 90% reduction in validation-related data issues confirmed
 - [ ] **Performance Optimization**: 70% validation performance improvement validated
 - [ ] **Developer Enablement**: Team fully trained on hierarchical validation system
@@ -423,4 +423,4 @@ class ValidationMigrationAutomation:
 - ✅ **Learning Curve**: Clear hierarchical organization simplifies validation understanding
 - ✅ **Productivity**: Systematic validation patterns eliminate manual validation development work
 
-This roadmap provides a comprehensive path to achieving complete data integrity and validation consistency across the entire FLEXT ecosystem through systematic FlextValidation adoption while ensuring optimal performance and developer experience throughout the migration process.
+This roadmap provides a comprehensive path to achieving complete data integrity and validation consistency across the entire FLEXT ecosystem through systematic FlextValidations adoption while ensuring optimal performance and developer experience throughout the migration process.

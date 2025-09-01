@@ -49,6 +49,7 @@ from pydantic import (
     field_validator,
 )
 
+# Import for centralized ConfigDict definitions
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -285,6 +286,7 @@ class FlextModels:
         immutable once created. They encapsulate business logic and validation.
         """
 
+        # Inherit BaseConfig settings and add frozen for immutability
         model_config = ConfigDict(
             # Validation settings
             validate_assignment=True,
@@ -302,8 +304,8 @@ class FlextModels:
             str_strip_whitespace=True,
             str_to_upper=False,
             str_to_lower=False,
-            # Value object specific
-            frozen=True,  # Make immutable
+            # Value object specific - immutable
+            frozen=True,
         )
 
         def __eq__(self, other: object) -> bool:
@@ -503,7 +505,6 @@ class FlextModels:
         )
 
         @computed_field
-        @property
         def is_expired(self) -> bool:
             """Check if message has expired."""
             if self.expires_at is None:
@@ -511,7 +512,6 @@ class FlextModels:
             return datetime.now(UTC) > self.expires_at
 
         @computed_field
-        @property
         def age_seconds(self) -> float:
             """Get message age in seconds."""
             return (datetime.now(UTC) - self.timestamp).total_seconds()

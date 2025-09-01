@@ -114,7 +114,7 @@ Usage Examples:
 Integration:
     FlextProcessors integrates with FlextResult for railway-oriented programming,
     FlextServices.ServiceRegistry for processor registration and discovery,
-    FlextHandlers for enterprise processing patterns, and FlextValidation
+    FlextHandlers for enterprise processing patterns, and FlextValidations
     for comprehensive data validation across the FLEXT ecosystem.
 
 """
@@ -132,7 +132,7 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.services import FlextServices
 from flext_core.typings import FlextTypes
-from flext_core.validation import FlextValidation
+from flext_core.validations import FlextValidations
 
 
 class FlextProcessors:
@@ -198,7 +198,7 @@ class FlextProcessors:
             """Hash based on entry type and identifier."""
             return hash((self.entry_type, self.identifier))
 
-    class EntryValidator(FlextValidation.Domain.BaseValidator):
+    class EntryValidator(FlextValidations.Domain.BaseValidator):
         """Entry validator using FLEXT validation framework."""
 
         def __init__(self, whitelist: list[str] | None = None) -> None:
@@ -207,7 +207,7 @@ class FlextProcessors:
             self.whitelist = whitelist or []
 
         def validate_entry(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
-            """Validate entry content and structure using FlextValidation."""
+            """Validate entry content and structure using FlextValidations."""
             # Validate entry_type is not empty
             if not entry.entry_type or not entry.entry_type.strip():
                 return FlextResult[None].fail(

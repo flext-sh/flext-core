@@ -6,32 +6,32 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextResult, FlextValidation
+from flext_core import FlextResult, FlextValidations
 
 # =============================================================================
 # TEST VALIDATION UTILITIES
 # =============================================================================
 
 
-class TestFlextValidation:
+class TestFlextValidations:
     """Test FlextValidation functionality."""
 
     def test_validation_utilities_exist(self) -> None:
         """Test that validation utilities are available."""
-        assert hasattr(FlextValidation, "validate_non_empty_string_func")
-        assert hasattr(FlextValidation, "validate_email_field")
-        assert hasattr(FlextValidation, "validate_numeric_field")
+        assert hasattr(FlextValidations, "validate_non_empty_string_func")
+        assert hasattr(FlextValidations, "validate_email_field")
+        assert hasattr(FlextValidations, "validate_numeric_field")
 
     def test_is_non_empty_string_valid(self) -> None:
         """Test non-empty string validation with valid input."""
-        assert FlextValidation.validate_non_empty_string_func("test") is True
-        assert FlextValidation.validate_non_empty_string_func("hello world") is True
+        assert FlextValidations.validate_non_empty_string_func("test") is True
+        assert FlextValidations.validate_non_empty_string_func("hello world") is True
 
     def test_is_non_empty_string_invalid(self) -> None:
         """Test non-empty string validation with invalid input."""
-        assert FlextValidation.validate_non_empty_string_func("") is False
-        assert FlextValidation.validate_non_empty_string_func(None) is False  # type: ignore[arg-type]
-        assert FlextValidation.validate_non_empty_string_func(123) is False  # type: ignore[arg-type]
+        assert FlextValidations.validate_non_empty_string_func("") is False
+        assert FlextValidations.validate_non_empty_string_func(None) is False  # type: ignore[arg-type]
+        assert FlextValidations.validate_non_empty_string_func(123) is False  # type: ignore[arg-type]
 
     def test_is_callable_valid(self) -> None:
         """Test callable validation with valid input."""
@@ -51,107 +51,107 @@ class TestFlextValidation:
 
     def test_is_list_valid(self) -> None:
         """Test list validation with valid input."""
-        result = FlextValidation.Core.TypeValidators.validate_list([])
+        result = FlextValidations.Core.TypeValidators.validate_list([])
         assert result.success is True
 
-        result = FlextValidation.Core.TypeValidators.validate_list([1, 2, 3])
+        result = FlextValidations.Core.TypeValidators.validate_list([1, 2, 3])
         assert result.success is True
 
-        result = FlextValidation.Core.TypeValidators.validate_list(["a", "b"])
+        result = FlextValidations.Core.TypeValidators.validate_list(["a", "b"])
         assert result.success is True
 
     def test_is_list_invalid(self) -> None:
         """Test list validation with invalid input."""
-        result = FlextValidation.Core.TypeValidators.validate_list("not a list")
+        result = FlextValidations.Core.TypeValidators.validate_list("not a list")
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_list(123)
+        result = FlextValidations.Core.TypeValidators.validate_list(123)
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_list(None)
+        result = FlextValidations.Core.TypeValidators.validate_list(None)
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_list({"key": "value"})
+        result = FlextValidations.Core.TypeValidators.validate_list({"key": "value"})
         assert result.success is False
 
     def test_is_dict_valid(self) -> None:
         """Test dict validation with valid input."""
-        result = FlextValidation.Core.TypeValidators.validate_dict({})
+        result = FlextValidations.Core.TypeValidators.validate_dict({})
         assert result.success is True
 
-        result = FlextValidation.Core.TypeValidators.validate_dict({"key": "value"})
+        result = FlextValidations.Core.TypeValidators.validate_dict({"key": "value"})
         assert result.success is True
 
-        result = FlextValidation.Core.TypeValidators.validate_dict({"a": 1, "b": 2})
+        result = FlextValidations.Core.TypeValidators.validate_dict({"a": 1, "b": 2})
         assert result.success is True
 
     def test_is_dict_invalid(self) -> None:
         """Test dict validation with invalid input."""
-        result = FlextValidation.Core.TypeValidators.validate_dict("not a dict")
+        result = FlextValidations.Core.TypeValidators.validate_dict("not a dict")
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_dict(123)
+        result = FlextValidations.Core.TypeValidators.validate_dict(123)
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_dict(None)
+        result = FlextValidations.Core.TypeValidators.validate_dict(None)
         assert result.success is False
 
-        result = FlextValidation.Core.TypeValidators.validate_dict([1, 2, 3])
+        result = FlextValidations.Core.TypeValidators.validate_dict([1, 2, 3])
         assert result.success is False
 
     def test_none_handling_with_string_validation(self) -> None:
         """Test None handling using string validation."""
         # Test that None fails string validation
-        result = FlextValidation.validate_non_empty_string_func(None)
+        result = FlextValidations.validate_non_empty_string_func(None)
         assert result is False
 
         # Test that non-None strings work as expected
-        result = FlextValidation.validate_non_empty_string_func("test")
+        result = FlextValidations.validate_non_empty_string_func("test")
         assert result is True
 
-        result = FlextValidation.validate_non_empty_string_func("")
+        result = FlextValidations.validate_non_empty_string_func("")
         assert result is False
 
     def test_none_handling_with_type_validation(self) -> None:
         """Test None handling using type validation."""
         # Test that None fails various type validations
-        string_result = FlextValidation.Core.TypeValidators.validate_string(None)
+        string_result = FlextValidations.Core.TypeValidators.validate_string(None)
         assert string_result.success is False
 
-        list_result = FlextValidation.Core.TypeValidators.validate_list(None)
+        list_result = FlextValidations.Core.TypeValidators.validate_list(None)
         assert list_result.success is False
 
-        dict_result = FlextValidation.Core.TypeValidators.validate_dict(None)
+        dict_result = FlextValidations.Core.TypeValidators.validate_dict(None)
         assert dict_result.success is False
 
     def test_email_validation(self) -> None:
         """Test email validation using real FlextValidation API."""
         # Test valid email
-        result = FlextValidation.Validators.validate_email("test@example.com")
+        result = FlextValidations.Validators.validate_email("test@example.com")
         assert result.success is True
 
         # Test invalid email
-        result = FlextValidation.Validators.validate_email("invalid")
+        result = FlextValidations.Validators.validate_email("invalid")
         assert result.success is False
 
         # Test empty string
-        result = FlextValidation.Validators.validate_email("")
+        result = FlextValidations.Validators.validate_email("")
         assert result.success is False
 
     def test_uuid_validation_with_string_check(self) -> None:
         """Test UUID validation using string validation."""
         # Test valid UUID format as string
-        result = FlextValidation.validate_non_empty_string_func(
+        result = FlextValidations.validate_non_empty_string_func(
             "550e8400-e29b-41d4-a716-446655440000"
         )
         assert result is True
 
         # Test empty string
-        result = FlextValidation.validate_non_empty_string_func("")
+        result = FlextValidations.validate_non_empty_string_func("")
         assert result is False
 
         # Test with type validation
-        string_result = FlextValidation.Core.TypeValidators.validate_string(
+        string_result = FlextValidations.Core.TypeValidators.validate_string(
             "550e8400-e29b-41d4-a716-446655440000"
         )
         assert string_result.success is True
@@ -159,15 +159,17 @@ class TestFlextValidation:
     def test_url_validation_with_string_check(self) -> None:
         """Test URL validation using string validation."""
         # Test valid URL format as string
-        result = FlextValidation.validate_non_empty_string_func("https://example.com")
+        result = FlextValidations.validate_non_empty_string_func("https://example.com")
         assert result is True
 
         # Test empty string
-        result = FlextValidation.validate_non_empty_string_func("")
+        result = FlextValidations.validate_non_empty_string_func("")
         assert result is False
 
         # Test with type validation
-        string_result = FlextValidation.Core.TypeValidators.validate_string("https://example.com")
+        string_result = FlextValidations.Core.TypeValidators.validate_string(
+            "https://example.com"
+        )
         assert string_result.success is True
 
 
@@ -252,7 +254,7 @@ class TestValidationIntegration:
         ) -> FlextResult[dict[str, object]]:
             """Validate user data using FlextValidation utilities."""
             # Check if data is a dict using type validation
-            dict_validation = FlextValidation.Core.TypeValidators.validate_dict(data)
+            dict_validation = FlextValidations.Core.TypeValidators.validate_dict(data)
             if not dict_validation.success:
                 return FlextResult[dict[str, object]].fail("Data must be a dictionary")
 
@@ -261,7 +263,7 @@ class TestValidationIntegration:
 
             # Check required fields using string validation
             name = data_dict.get("name")
-            if not FlextValidation.validate_non_empty_string_func(name):
+            if not FlextValidations.validate_non_empty_string_func(name):
                 return FlextResult[dict[str, object]].fail(
                     "Name is required and must be a non-empty string",
                 )
@@ -269,14 +271,16 @@ class TestValidationIntegration:
             # Check email format using real email validation
             email = data_dict.get("email")
             if email:
-                email_validation = FlextValidation.Validators.validate_email(email)
+                email_validation = FlextValidations.Validators.validate_email(email)
                 if not email_validation.success:
                     return FlextResult[dict[str, object]].fail("Invalid email format")
 
             # Check if roles is a list when provided using type validation
             roles = data_dict.get("roles")
             if roles is not None:
-                roles_validation = FlextValidation.Core.TypeValidators.validate_list(roles)
+                roles_validation = FlextValidations.Core.TypeValidators.validate_list(
+                    roles
+                )
                 if not roles_validation.success:
                     return FlextResult[dict[str, object]].fail("Roles must be a list")
 
@@ -363,7 +367,7 @@ class TestValidationIntegration:
 
         def validate_step1(value: str) -> FlextResult[str]:
             """First validation step."""
-            if not FlextValidation.validate_non_empty_string_func(value):
+            if not FlextValidations.validate_non_empty_string_func(value):
                 return FlextResult[str].fail("Step 1: Value must be a non-empty string")
             return FlextResult[str].ok(value)
 

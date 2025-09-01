@@ -1171,9 +1171,15 @@ class FlextHandlers:
                             "max_retries",
                         ],
                         "metrics": {
-                            "requests_processed": cast("int", self._metrics["requests_processed"]),
-                            "successful_requests": cast("int", self._metrics["successful_requests"]),
-                            "average_processing_time": cast("float", self._metrics["average_processing_time"]),
+                            "requests_processed": cast(
+                                "int", self._metrics["requests_processed"]
+                            ),
+                            "successful_requests": cast(
+                                "int", self._metrics["successful_requests"]
+                            ),
+                            "average_processing_time": cast(
+                                "float", self._metrics["average_processing_time"]
+                            ),
                         },
                     }
 
@@ -1283,9 +1289,15 @@ class FlextHandlers:
                     optimized_config: FlextTypes.Config.ConfigDict = {
                         "performance_level": performance_level,  # Include performance level in result
                         "concurrent_handlers": config.get("concurrent_handlers", 10),
-                        "max_concurrent_requests": config.get("max_concurrent_requests", 100),  # Add max concurrent requests
-                        "request_queue_size": config.get("request_queue_size", 1000),  # Add request queue size
-                        "processing_timeout": config.get("processing_timeout", 30000),  # Add processing timeout
+                        "max_concurrent_requests": config.get(
+                            "max_concurrent_requests", 100
+                        ),  # Add max concurrent requests
+                        "request_queue_size": config.get(
+                            "request_queue_size", 1000
+                        ),  # Add request queue size
+                        "processing_timeout": config.get(
+                            "processing_timeout", 30000
+                        ),  # Add processing timeout
                         "request_batch_size": config.get("request_batch_size", 100),
                         "response_caching_enabled": config.get(
                             "response_caching_enabled", False

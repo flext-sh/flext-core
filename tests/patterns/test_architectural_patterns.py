@@ -73,7 +73,9 @@ class TestCleanArchitecturePatterns:
 
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
-                return message_type == CreateUserCommand or issubclass(message_type, CreateUserCommand)
+                return message_type == CreateUserCommand or issubclass(
+                    message_type, CreateUserCommand
+                )
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user creation."""
@@ -178,8 +180,14 @@ class TestCleanArchitecturePatterns:
                 """Validate order business rules."""
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_business_rules"):
-                    validate_method = getattr(self.order_id, "validate_business_rules", None)
-                    order_id_validation = validate_method() if validate_method else FlextResult[None].ok(None)
+                    validate_method = getattr(
+                        self.order_id, "validate_business_rules", None
+                    )
+                    order_id_validation = (
+                        validate_method()
+                        if validate_method
+                        else FlextResult[None].ok(None)
+                    )
                     if (
                         hasattr(order_id_validation, "is_failure")
                         and order_id_validation.is_failure
@@ -187,8 +195,14 @@ class TestCleanArchitecturePatterns:
                         return FlextResult[None].fail(str(order_id_validation.error))
 
                 if hasattr(self.total, "validate_business_rules"):
-                    validate_method = getattr(self.total, "validate_business_rules", None)
-                    total_validation = validate_method() if validate_method else FlextResult[None].ok(None)
+                    validate_method = getattr(
+                        self.total, "validate_business_rules", None
+                    )
+                    total_validation = (
+                        validate_method()
+                        if validate_method
+                        else FlextResult[None].ok(None)
+                    )
                     if (
                         hasattr(total_validation, "is_failure")
                         and total_validation.is_failure
@@ -207,7 +221,9 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Can only confirm pending orders")
 
                 # Create new instance with updated status (immutable pattern)
-                result = FlextResult[Order].ok(self.model_copy(update={"status": "confirmed"}))
+                result = FlextResult[Order].ok(
+                    self.model_copy(update={"status": "confirmed"})
+                )
                 if result.is_failure:
                     return FlextResult[None].fail(
                         f"Failed to confirm order: {result.error}"
@@ -226,14 +242,18 @@ class TestCleanArchitecturePatterns:
         # Test domain validation
         if hasattr(order, "validate_business_rules"):
             validate_method = getattr(order, "validate_business_rules", None)
-            validation_result = validate_method() if validate_method else FlextResult[None].ok(None)
+            validation_result = (
+                validate_method() if validate_method else FlextResult[None].ok(None)
+            )
             assert hasattr(validation_result, "success")
             assert validation_result.success
 
         # Test domain behavior
         if hasattr(order, "confirm_order"):
             confirm_method = getattr(order, "confirm_order", None)
-            confirm_result = confirm_method() if confirm_method else FlextResult[None].ok(None)
+            confirm_result = (
+                confirm_method() if confirm_method else FlextResult[None].ok(None)
+            )
             assert hasattr(confirm_result, "success")
             assert confirm_result.success
 
@@ -258,7 +278,9 @@ class TestCleanArchitecturePatterns:
 
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
-                return message_type == UpdateUserCommand or issubclass(message_type, UpdateUserCommand)
+                return message_type == UpdateUserCommand or issubclass(
+                    message_type, UpdateUserCommand
+                )
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user update command."""
@@ -289,7 +311,9 @@ class TestCleanArchitecturePatterns:
 
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
-                return message_type == GetUserQuery or issubclass(message_type, GetUserQuery)
+                return message_type == GetUserQuery or issubclass(
+                    message_type, GetUserQuery
+                )
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user query."""
@@ -337,19 +361,15 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "email",
-                            "provider": "smtp",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "email",
+                        "provider": "smtp",
+                    })
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "sms",
-                            "provider": "twilio",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "sms",
+                        "provider": "twilio",
+                    })
                 return FlextResult[dict[str, str]].fail(
                     f"Unknown service type: {service_type}"
                 )

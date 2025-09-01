@@ -178,7 +178,7 @@ from __future__ import annotations
 
 import contextlib
 import time
-from typing import ClassVar, NoReturn, Protocol, cast
+from typing import ClassVar, NoReturn, Protocol, cast, runtime_checkable
 
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
@@ -313,6 +313,7 @@ class FlextDelegationSystem:
     # Type-safe interfaces and descriptor implementations for delegation patterns
     # ==========================================================================
 
+    @runtime_checkable
     class HasDelegator(Protocol):
         """Protocol interface defining objects with delegation capabilities.
 
@@ -342,6 +343,7 @@ class FlextDelegationSystem:
 
         delegator: FlextDelegationSystem.DelegatorProtocol
 
+    @runtime_checkable
     class DelegatorProtocol(Protocol):
         """Protocol contract defining the interface for delegator implementations.
 
@@ -372,6 +374,7 @@ class FlextDelegationSystem:
 
         def get_delegation_info(self) -> dict[str, object]: ...
 
+    @runtime_checkable
     class DelegatedMethodProtocol(Protocol):
         """Protocol interface for delegated method callable objects.
 

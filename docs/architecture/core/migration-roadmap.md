@@ -38,7 +38,7 @@ This migration roadmap outlines a strategic 12-month plan for integrating FlextC
 #### 🔍 **Dependencies**
 - FlextResult patterns (already implemented)
 - FlextContainer system (already implemented)
-- FlextValidation framework (already implemented)
+- FlextValidations framework (already implemented)
 - Testing infrastructure (already implemented)
 
 ### Risk Assessment

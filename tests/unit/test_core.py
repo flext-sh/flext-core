@@ -522,12 +522,14 @@ class TestFlextCoreResultOperations:
             FlextResult[int].ok(3),
         ]
 
-        sequence_result = clean_flext_core.sequence([
-            FlextResult[object].ok(r.value)
-            if r.success
-            else FlextResult[object].fail(r.error or "Error")
-            for r in results
-        ])
+        sequence_result = clean_flext_core.sequence(
+            [
+                FlextResult[object].ok(r.value)
+                if r.success
+                else FlextResult[object].fail(r.error or "Error")
+                for r in results
+            ]
+        )
 
         assert sequence_result.success
         assert sequence_result.value == [1, 2, 3]
@@ -541,12 +543,14 @@ class TestFlextCoreResultOperations:
             FlextResult[int].ok(3),
         ]
 
-        sequence_result = clean_flext_core.sequence([
-            FlextResult[object].ok(r.value)
-            if r.success
-            else FlextResult[object].fail(r.error or "Error")
-            for r in results
-        ])
+        sequence_result = clean_flext_core.sequence(
+            [
+                FlextResult[object].ok(r.value)
+                if r.success
+                else FlextResult[object].fail(r.error or "Error")
+                for r in results
+            ]
+        )
 
         assert sequence_result.is_failure
         assert sequence_result.error is not None
@@ -562,12 +566,14 @@ class TestFlextCoreResultOperations:
             FlextResult[str].fail("Fourth error"),
         ]
 
-        first_success_result = clean_flext_core.first_success([
-            FlextResult[object].ok(r.value)
-            if r.success
-            else FlextResult[object].fail(r.error or "Error")
-            for r in results
-        ])
+        first_success_result = clean_flext_core.first_success(
+            [
+                FlextResult[object].ok(r.value)
+                if r.success
+                else FlextResult[object].fail(r.error or "Error")
+                for r in results
+            ]
+        )
 
         assert first_success_result.success
         assert first_success_result.value == "Success value"

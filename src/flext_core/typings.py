@@ -597,7 +597,7 @@ class FlextTypes:
     # =========================================================================
 
     class Validation:
-        """Validation-specific types based on actual FlextValidation implementation.
+        """Validation-specific types based on actual FlextValidations implementation.
 
         These types match the actual method signatures found in validation.py
         for better type coherence between definitions and implementations.

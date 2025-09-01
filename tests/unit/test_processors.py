@@ -485,6 +485,7 @@ class TestFlextProcessorsConfigProcessor:
         bad_dict = BadDict()
         # Cast to expected type for type checker
         from typing import cast
+
         bad_dict_typed = cast("dict[str, object]", bad_dict)
         result = config_processor.get_config_value(bad_dict_typed, "error_key")
 
@@ -1420,9 +1421,7 @@ class TestFlextProcessorsIntegration:
 
         # Configure system with validated config - cast to expected type
         config_dict: FlextTypes.Config.ConfigDict = validated_config  # type: ignore[assignment]
-        system_config_result = FlextProcessors.configure_processors_system(
-            config_dict
-        )
+        system_config_result = FlextProcessors.configure_processors_system(config_dict)
         assert system_config_result.success
         system_config = system_config_result.unwrap()
 
@@ -1521,12 +1520,14 @@ class TestFlextProcessorsAdditionalCoverage:
         validator = FlextProcessors.EntryValidator(whitelist=["user_1", "user_2"])
 
         # Test entry with empty entry_type (spaces only)
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "   ",  # Only spaces
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "   ",  # Only spaces
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         empty_type_entry = entry_result.unwrap()
 
@@ -1540,12 +1541,14 @@ class TestFlextProcessorsAdditionalCoverage:
         validator = FlextProcessors.EntryValidator()
 
         # Test entry with empty clean_content (spaces only)
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "   ",  # Only spaces
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "   ",  # Only spaces
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         empty_content_entry = entry_result.unwrap()
 
@@ -1559,12 +1562,14 @@ class TestFlextProcessorsAdditionalCoverage:
         validator = FlextProcessors.EntryValidator()
 
         # Test entry with empty identifier (spaces only)
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "   ",  # Only spaces
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "   ",  # Only spaces
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         empty_id_entry = entry_result.unwrap()
 
@@ -1579,12 +1584,14 @@ class TestFlextProcessorsAdditionalCoverage:
 
         # Create entry with very long identifier
         long_identifier = "x" * 300  # Exceeds MAX_NAME_LENGTH (255)
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": long_identifier,
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": long_identifier,
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         long_id_entry = entry_result.unwrap()
 
@@ -1612,12 +1619,14 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test BaseProcessor transform_data method."""
         processor = FlextProcessors.BaseProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1629,6 +1638,7 @@ class TestFlextProcessorsAdditionalCoverage:
 
     def test_base_processor_process_method_with_validation_failure(self) -> None:
         """Test BaseProcessor process method when validation fails."""
+
         # Create validator that always fails
         class FailingValidator(FlextProcessors.EntryValidator):
             def validate_entry(self, entry: FlextProcessors.Entry) -> FlextResult[None]:  # noqa: ARG002
@@ -1637,12 +1647,14 @@ class TestFlextProcessorsAdditionalCoverage:
         failing_validator = FailingValidator()
         processor = FlextProcessors.BaseProcessor(validator=failing_validator)
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1656,12 +1668,14 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test BaseProcessor build method with correlation_id."""
         processor = FlextProcessors.BaseProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1674,19 +1688,25 @@ class TestFlextProcessorsAdditionalCoverage:
 
     def test_base_processor_build_with_processing_failure(self) -> None:
         """Test BaseProcessor build method when process_data fails."""
+
         # Create processor that fails during process_data
         class FailingProcessor(FlextProcessors.BaseProcessor):
-            def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:  # noqa: ARG002
+            def process_data(
+                self, entry: FlextProcessors.Entry
+            ) -> FlextResult[dict[str, object]]:
+                _ = entry  # Explicitly mark as unused
                 return FlextResult[dict[str, object]].fail("Processing failed")
 
         processor = FailingProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1699,13 +1719,15 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test DefaultProcessor process_data method."""
         processor = FlextProcessors.DefaultProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "test content",
-            "original_content": "original",
-            "metadata": {"key": "value"}
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "test content",
+                "original_content": "original",
+                "metadata": {"key": "value"},
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1723,12 +1745,14 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test EntryValidator successful validation path (line 234)."""
         validator = FlextProcessors.EntryValidator(whitelist=["test_id"])
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",  # Valid length and in whitelist
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",  # Valid length and in whitelist
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         valid_entry = entry_result.unwrap()
 
@@ -1738,27 +1762,34 @@ class TestFlextProcessorsAdditionalCoverage:
 
     def test_base_processor_transform_data_path(self) -> None:
         """Test BaseProcessor transform_data method execution (line 309)."""
+
         class TestTransformProcessor(FlextProcessors.BaseProcessor):
             def validate_input(self, entry: FlextProcessors.Entry) -> FlextResult[None]:  # noqa: ARG002
                 return FlextResult[None].ok(None)
 
-            def transform_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextProcessors.Entry]:
+            def transform_data(
+                self, entry: FlextProcessors.Entry
+            ) -> FlextResult[FlextProcessors.Entry]:
                 # Create a new entry with modified content
-                return FlextProcessors.create_entry({
-                    "entry_type": entry.entry_type,
-                    "identifier": entry.identifier,
-                    "clean_content": f"transformed_{entry.clean_content}",
-                    "original_content": entry.original_content
-                })
+                return FlextProcessors.create_entry(
+                    {
+                        "entry_type": entry.entry_type,
+                        "identifier": entry.identifier,
+                        "clean_content": f"transformed_{entry.clean_content}",
+                        "original_content": entry.original_content,
+                    }
+                )
 
         processor = TestTransformProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1791,12 +1822,14 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test RegexProcessor complete process_data execution (lines 382-400)."""
         processor = FlextProcessors.RegexProcessor(pattern=r"user_(\w+)")
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "user_123",
-            "clean_content": "user_456 data here",
-            "original_content": "original user_456"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "user_123",
+                "clean_content": "user_456 data here",
+                "original_content": "original user_456",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1828,12 +1861,14 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test DefaultProcessor build method execution."""
         processor = FlextProcessors.DefaultProcessor()
 
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "identifier": "test_id",
-            "clean_content": "content",
-            "original_content": "original"
-        })
+        entry_result = FlextProcessors.create_entry(
+            {
+                "entry_type": "user",
+                "identifier": "test_id",
+                "clean_content": "content",
+                "original_content": "original",
+            }
+        )
         assert entry_result.is_success
         entry = entry_result.unwrap()
 
@@ -1846,17 +1881,21 @@ class TestFlextProcessorsAdditionalCoverage:
     def test_processors_additional_edge_cases(self) -> None:
         """Test additional edge cases for better coverage."""
         # Test create_entry with minimal valid data
-        minimal_entry = FlextProcessors.create_entry({
-            "entry_type": "type",
-            "identifier": "id",
-            "clean_content": "",
-            "original_content": ""
-        })
+        minimal_entry = FlextProcessors.create_entry(
+            {
+                "entry_type": "type",
+                "identifier": "id",
+                "clean_content": "",
+                "original_content": "",
+            }
+        )
         assert minimal_entry.is_success
 
         # Test EntryValidator without whitelist
         validator = FlextProcessors.EntryValidator()
-        assert validator.is_identifier_whitelisted("any_id") is True  # No whitelist means allow all
+        assert (
+            validator.is_identifier_whitelisted("any_id") is True
+        )  # No whitelist means allow all
 
         # Test ProcessingPipeline with steps
         pipeline = FlextProcessors.ProcessingPipeline()
@@ -1890,16 +1929,20 @@ class TestFlextProcessorsAdditionalCoverage:
             entry_type="test",
             identifier="test_id",
             clean_content="test content",
-            original_content="test content"
+            original_content="test content",
         )
         result = processor.handle(entry)
         assert result.is_success
 
         # Test with validator that fails validation
         mock_validator = Mock(spec=FlextProcessors.EntryValidator)
-        mock_validator.validate_entry.return_value = FlextResult[None].fail("Validation error")
+        mock_validator.validate_entry.return_value = FlextResult[None].fail(
+            "Validation error"
+        )
 
-        processor_with_validator = FlextProcessors.ValidatingProcessor(validator=mock_validator)
+        processor_with_validator = FlextProcessors.ValidatingProcessor(
+            validator=mock_validator
+        )
         result = processor_with_validator.handle(entry)
         assert result.is_failure
         assert result.error is not None
@@ -1918,8 +1961,12 @@ class TestFlextProcessorsAdditionalCoverage:
         assert "Validation error" in entry_result.error
 
         # Test process_entry with successful validation but wrong return type
-        mock_validator.validate_entry.return_value = FlextResult[object].ok("not an entry")
-        processor_wrong_type = FlextProcessors.ValidatingProcessor(validator=mock_validator)
+        mock_validator.validate_entry.return_value = FlextResult[object].ok(
+            "not an entry"
+        )
+        processor_wrong_type = FlextProcessors.ValidatingProcessor(
+            validator=mock_validator
+        )
 
         # Mock the handle method to return wrong type
         with patch.object(processor_wrong_type, "handle") as mock_handle:
@@ -1943,14 +1990,14 @@ class TestFlextProcessorsAdditionalCoverage:
                     entry_type="test",
                     identifier="1",
                     clean_content="content1",
-                    original_content="content1"
+                    original_content="content1",
                 ),
                 FlextProcessors.Entry(
                     entry_type="test",
                     identifier="2",
                     clean_content="content2",
-                    original_content="content2"
-                )
+                    original_content="content2",
+                ),
             ]
 
             result = FlextProcessors.Sorter.sort_entries(entries)
@@ -1961,14 +2008,18 @@ class TestFlextProcessorsAdditionalCoverage:
     def test_factory_methods_exception_handling(self) -> None:
         """Test factory method exception handling (lines 632-633, 647-648)."""
         # Test create_entry exception handling
-        with patch.object(FlextProcessors.Entry, "model_validate") as mock_model_validate:
+        with patch.object(
+            FlextProcessors.Entry, "model_validate"
+        ) as mock_model_validate:
             mock_model_validate.side_effect = Exception("Entry creation error")
 
-            result = FlextProcessors.create_entry({
-                "identifier": "test_id",
-                "clean_content": "test_content",
-                "original_content": "test_content"
-            })
+            result = FlextProcessors.create_entry(
+                {
+                    "identifier": "test_id",
+                    "clean_content": "test_content",
+                    "original_content": "test_content",
+                }
+            )
             assert result.is_failure
             assert result.error is not None
             assert "Entry creation failed:" in result.error
@@ -2012,14 +2063,18 @@ class TestFlextProcessorsAdditionalCoverage:
 
         # Create an entry that will cause base processing to fail
         # We'll need to mock the parent's process_data method
-        with patch.object(FlextProcessors.BaseProcessor, "process_data") as mock_process:
-            mock_process.return_value = FlextResult[dict[str, object]].fail("Base processing failed")
+        with patch.object(
+            FlextProcessors.BaseProcessor, "process_data"
+        ) as mock_process:
+            mock_process.return_value = FlextResult[dict[str, object]].fail(
+                "Base processing failed"
+            )
 
             entry = FlextProcessors.Entry(
                 entry_type="test",
                 identifier="test_id",
                 clean_content="test content",
-                original_content="test content"
+                original_content="test content",
             )
 
             result = processor.process_data(entry)
@@ -2031,14 +2086,18 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test ValidatingProcessor process_entry edge cases (lines 464, 482)."""
         # Test process_entry with validation failure (covers line 464 indirectly)
         mock_validator = Mock(spec=FlextProcessors.EntryValidator)
-        mock_validator.validate_entry.return_value = FlextResult[None].fail("Validation failed")
-        processor_with_validator = FlextProcessors.ValidatingProcessor(validator=mock_validator)
+        mock_validator.validate_entry.return_value = FlextResult[None].fail(
+            "Validation failed"
+        )
+        processor_with_validator = FlextProcessors.ValidatingProcessor(
+            validator=mock_validator
+        )
 
         entry = FlextProcessors.Entry(
             entry_type="test",
             identifier="test_id",
             clean_content="test content",
-            original_content="test content"
+            original_content="test content",
         )
 
         result = processor_with_validator.process_entry(entry)

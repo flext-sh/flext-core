@@ -1277,7 +1277,9 @@ class TestFlextResultAdvancedFeatures:
                 "average_order": total_amount / len(orders_data),
                 "summary": f"{len(orders_data)} orders worth ${total_amount}",
             }
-            return FlextResult[FlextTypes.Core.JsonObject].ok(cast("FlextTypes.Core.JsonObject", processed))
+            return FlextResult[FlextTypes.Core.JsonObject].ok(
+                cast("FlextTypes.Core.JsonObject", processed)
+            )
 
         result = (
             FlextResult[list[FlextTypes.Core.JsonObject]]
@@ -1422,7 +1424,10 @@ class TestFlextResultCoverageEdgeCases:
 
         # Test expect with None data - should raise suggestion to use .value
         none_result = FlextResult[None].ok(None)
-        with pytest.raises(RuntimeError, match="Success result has None data - use .value if None is expected"):
+        with pytest.raises(
+            RuntimeError,
+            match="Success result has None data - use .value if None is expected",
+        ):
             none_result.expect("Should work with None")
 
     def test_equality_exception_handling(self) -> None:
@@ -1446,7 +1451,9 @@ class TestFlextResultCoverageEdgeCases:
     def test_hash_with_special_cases(self) -> None:
         """Test hash method with various edge cases."""
         # Test hash with different types of data that might cause issues
-        complex_data: dict[str, object] = {"nested": {"data": [1, 2, {"inner": "value"}]}}
+        complex_data: dict[str, object] = {
+            "nested": {"data": [1, 2, {"inner": "value"}]}
+        }
         result = FlextResult[dict[str, object]].ok(complex_data)
 
         # Should be able to hash successfully
@@ -1458,6 +1465,7 @@ class TestFlextResultCoverageEdgeCases:
 
     def test_hash_non_hashable_with_dict(self) -> None:
         """Test hash with non-hashable objects that have __dict__."""
+
         # This tests lines 821-829: hash handling for objects with __dict__
         class CustomObject:
             def __init__(self) -> None:
@@ -1473,6 +1481,7 @@ class TestFlextResultCoverageEdgeCases:
 
     def test_hash_complex_unhashable_objects(self) -> None:
         """Test hash with complex objects that can't be hashed normally."""
+
         # This tests lines 832: fallback hash for complex objects
         class ComplexUnhashable:
             def __init__(self) -> None:

@@ -18,7 +18,7 @@ The `FlextProcessors` module is a **production-ready, enterprise-grade data proc
 - **Entry-based data model** with type enumeration and validation
 - **Regex processing capabilities** for pattern extraction and content validation
 - **Pipeline orchestration** with chainable processing steps
-- **Service integration** with FlextServices, FlextHandlers, and FlextValidation
+- **Service integration** with FlextServices, FlextHandlers, and FlextValidations
 
 **Key Finding**: FlextProcessors provides powerful data processing capabilities but is **significantly underutilized** across the FLEXT ecosystem, with most libraries implementing custom processing patterns instead of leveraging this centralized system.
 
@@ -68,7 +68,7 @@ graph TB
         FlextResult[FlextResult<br/>Error Handling]
         FlextServices[FlextServices<br/>Service Architecture]
         FlextHandlers[FlextHandlers<br/>Enterprise Patterns]
-        FlextValidation[FlextValidation<br/>Data Validation]
+        FlextValidations[FlextValidations<br/>Data Validation]
     end
     
     Entry --> EntryType
@@ -82,7 +82,7 @@ graph TB
     BaseProc --> FlextResult
     ValidatingProc --> FlextHandlers
     BaseProc --> FlextServices
-    Validator --> FlextValidation
+    Validator --> FlextValidations
 ```
 
 ## 🔍 Implementation Analysis

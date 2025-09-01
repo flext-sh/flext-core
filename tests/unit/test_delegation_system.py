@@ -399,7 +399,15 @@ class TestFlextDelegationSystemAsync:
 class TestFlextDelegationSystemPropertyBased:
     """Property-based tests using Hypothesis strategies."""
 
-    @given(method_name=st.text(min_size=1, max_size=50, alphabet=st.characters(whitelist_categories=["Lu", "Ll", "Nd"], whitelist_characters="_")).filter(lambda x: x.isidentifier() and not x.startswith("_")))
+    @given(
+        method_name=st.text(
+            min_size=1,
+            max_size=50,
+            alphabet=st.characters(
+                whitelist_categories=["Lu", "Ll", "Nd"], whitelist_characters="_"
+            ),
+        ).filter(lambda x: x.isidentifier() and not x.startswith("_"))
+    )
     def test_method_name_handling(
         self,
         method_name: str,
@@ -771,10 +779,12 @@ class TestFlextDelegationSystemCoverage:
         # Test delegation error wrapping
         FlextDelegationSystem.MixinDelegator(host_object, error_mixin_class)
 
-        with pytest.raises((
-            FlextExceptions.BaseError,
-            FlextExceptions.OperationError,
-        )):
+        with pytest.raises(
+            (
+                FlextExceptions.BaseError,
+                FlextExceptions.OperationError,
+            )
+        ):
             host_object.error_method()  # type: ignore[attr-defined]
 
         # Test various error scenarios

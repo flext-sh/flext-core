@@ -35,7 +35,7 @@ Core Components:
     FlextTypeAdapters: Type adapters for data transformation and validation
     FlextTypes: Type definitions, aliases, and generic type parameters
     FlextUtilities: Helper functions, generators, and type utilities
-    FlextValidation: Composable validation framework with predicate logic
+    FlextValidations: Composable validation framework with predicate logic
 
 
 Examples:
@@ -103,7 +103,7 @@ from flext_core.models import *
 from flext_core.commands import *
 from flext_core.guards import *
 from flext_core.handlers import *
-from flext_core.validation import *
+from flext_core.validations import *
 
 # =============================================================================
 # INFRASTRUCTURE LAYER - Depends on Application + Domain + Foundation
@@ -150,6 +150,7 @@ from flext_core.core import *  # type: ignore[assignment]
 
 # Combine all __all__ exports from imported modules
 import flext_core.__version__ as _version
+
 # Removed aggregate_root module
 import flext_core.commands as _commands
 import flext_core.config as _config
@@ -176,7 +177,7 @@ import flext_core.services as _services
 import flext_core.type_adapters as _type_adapters
 import flext_core.typings as _typings
 import flext_core.utilities as _utilities
-import flext_core.validation as _validation
+import flext_core.validations as _validations
 
 # Collect all __all__ exports from imported modules
 _temp_exports: list[str] = []
@@ -191,7 +192,7 @@ for module in [
     _models,
     _domain_services,
     _commands,
-    _validation,
+    _validations,
     _guards,
     _handlers,
     _container,

@@ -597,6 +597,9 @@ class FunctionalTestContext:
             delattr(self.target, self.attribute)
 
 
+# Backward-compatible aliases (older tests may import these names)
+TestUtilities = FlextTestUtilities
+
 class FlextTestMocker:
     """Functional test object creation utilities.
 
@@ -802,6 +805,7 @@ __all__: list[str] = [
     "FlextTestMocker",
     "FlextTestModel",
     "FlextTestUtilities",
+    "TestUtilities",
     "ITestAssertion",
     "ITestFactory",
     "ITestMocker",

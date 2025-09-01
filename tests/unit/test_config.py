@@ -103,8 +103,8 @@ class TestFlextConfigCore:
         class TestConfig(FlextConfig):
             database_url: str
             log_level: str = "INFO"  # Override with default
-            debug: bool = False      # Override with default
-            timeout: int = 30        # Override with default
+            debug: bool = False  # Override with default
+            timeout: int = 30  # Override with default
             max_connections: int
 
         test_config = TestConfig(
@@ -128,8 +128,8 @@ class TestFlextConfigCore:
         class ProdConfig(FlextConfig):
             database_url: str
             log_level: str = "INFO"  # Override with default
-            debug: bool = False      # Override with default
-            timeout: int = 30        # Override with default
+            debug: bool = False  # Override with default
+            timeout: int = 30  # Override with default
             max_connections: int
 
         config = ProdConfig(
@@ -374,8 +374,8 @@ class TestConfigPerformance:
                 class TestConfig(FlextConfig):
                     database_url: str
                     log_level: str = "INFO"  # Override with default
-                    debug: bool = False      # Override with default
-                    timeout: int = 30        # Override with default
+                    debug: bool = False  # Override with default
+                    timeout: int = 30  # Override with default
                     max_connections: int
 
                 test_config = TestConfig(
@@ -439,7 +439,7 @@ class TestConfigPerformance:
                 class TestConfig(FlextConfig):
                     database_url: str
                     log_level: str = "INFO"  # Override with default
-                    debug: bool = False      # Override with default
+                    debug: bool = False  # Override with default
 
                 test_config = TestConfig(
                     database_url=config.database_url,

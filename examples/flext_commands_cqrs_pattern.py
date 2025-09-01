@@ -4,7 +4,7 @@
 Demonstrates 20+ FlextCore features in minimal code:
 • FlextModels.Entity/ValueObject (DDD) • FlextResult railway pattern
 • FlextContainer DI • FlextCommands/Handlers (CQRS)
-• FlextDecorators enterprise • FlextValidation predicates
+• FlextDecorators enterprise • FlextValidations predicates
 • FlextContext correlation • FlextLogger structured • FlextObservability metrics
 • FlextGuards type safety • FlextMixins timestamps • FlextUtilities generators
 """
