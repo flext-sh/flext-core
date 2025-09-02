@@ -510,8 +510,8 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             print(f"✅ Configuration loaded from: {config_file}")
             print(f"Loaded keys: {list(loaded_data.keys())}")
 
-            # Create configuration with loaded data
-            config = EnterpriseConfig(**loaded_data)
+            # Create configuration with loaded data - use model_validate for proper type handling
+            config = EnterpriseConfig.model_validate(loaded_data)
 
             validation = config.validate_all_components()
             if validation.success:
@@ -601,7 +601,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = EnterpriseConfig(**final_config)
+        config = EnterpriseConfig.model_validate(final_config)
 
         validation = config.validate_all_components()
         if validation.success:
@@ -652,7 +652,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = EnterpriseConfig(**cast("dict[str, object]", config_data))
+            config = EnterpriseConfig.model_validate(config_data)
             validation = config.validate_all_components()
 
             if not validation.success:
@@ -671,7 +671,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
             "environment": "development",
             "security": SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
         }
-        valid_config = EnterpriseConfig(**valid_config_data)
+        valid_config = EnterpriseConfig.model_validate(valid_config_data)
         validation = valid_config.validate_all_components()
 
         if validation.success:
