@@ -113,7 +113,7 @@ class TestExceptions100PercentCoverage:
             "context_tracking": True,
         }
 
-        result = FlextExceptions.configure_error_handling(config)
+        result = FlextExceptions.configure_error_handling(cast("FlextTypes.Config.ConfigDict", config))
         assert result.success
 
         # Test get_error_handling_config

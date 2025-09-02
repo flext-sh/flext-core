@@ -220,11 +220,12 @@ class TestFlextCommandsComprehensive:
             email="alice@example.com",
             age=25,
             is_admin=False,
-            metadata={"source": "web", "campaign": "signup_2024"},
         )
 
         validation = valid_command.validate_command()
-        assert FlextMatchers.is_successful_result(validation)
+        # FlextMatchers expects FlextResult[object], so cast to match signature
+        from typing import cast
+        assert FlextMatchers.is_successful_result(cast("FlextResult[object]", validation))
 
         # Verify all fields
         assert valid_command.username == "alice_smith"
@@ -293,7 +294,6 @@ class TestFlextCommandsComprehensive:
             username="new_user",
             email="new@example.com",
             age=28,
-            metadata={"registration_source": "mobile_app"},
         )
 
         # Execute handler
