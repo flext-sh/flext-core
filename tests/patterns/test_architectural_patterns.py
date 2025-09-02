@@ -28,7 +28,7 @@ class TestCleanArchitecturePatterns:
         """Test proper Clean Architecture layer separation."""
 
         # Domain Layer - Entities and Value Objects
-        class UserEmail(FlextModels):
+        class UserEmail(FlextModels.Value):
             """Domain value object."""
 
             email: str
@@ -39,7 +39,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Invalid email format")
                 return FlextResult[None].ok(None)
 
-        class User(FlextModels):
+        class User(FlextModels.Entity):
             """Domain entity."""
 
             name: str
@@ -133,7 +133,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD value objects for testing."""
 
         # Value Objects
-        class OrderId(FlextModels):
+        class OrderId(FlextModels.Value):
             """Order identifier value object."""
 
             value: str
@@ -144,7 +144,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Order ID must start with ORD-")
                 return FlextResult[None].ok(None)
 
-        class Money(FlextModels):
+        class Money(FlextModels.Value):
             """Money value object."""
 
             amount: float
@@ -164,7 +164,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
-        class Order(FlextModels):
+        class Order(FlextModels.AggregateRoot):
             """Order aggregate root."""
 
             order_id: object
@@ -538,7 +538,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
-                self.processed_events: list[BaseModel] = []
+                self.processed_events: list[FlextModels.BaseConfig] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""

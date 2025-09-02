@@ -158,7 +158,7 @@ class ConfigurationModel(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class DataRootModel(FlextModels):
+class DataRootModel(FlextModels.Value):
     """Real root model for testing FlextRootModel."""
 
     application_name: str = Field(..., description="Application name")
@@ -1289,7 +1289,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test the missing factory method coverage (lines 1322-1413, 1462-1567)."""
 
         # Test with a concrete entity class that implements abstract method
-        class TestEntity(FlextModels):
+        class TestEntity(FlextModels.Entity):
             name: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1301,7 +1301,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         assert entity_result.is_success
 
         # Test create_value_object factory
-        class TestValue(FlextModels):
+        class TestValue(FlextModels.Value):
             value: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1366,7 +1366,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         }  # Missing required fields
 
         # Create a simple test entity class
-        class SimpleEntity(FlextModels):
+        class SimpleEntity(FlextModels.Entity):
             name: str
             required_field: str
 
@@ -1379,7 +1379,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         assert "validation failed" in result.error.lower()
 
         # Test with valid data but business rule failure
-        class BusinessRuleEntity(FlextModels):
+        class BusinessRuleEntity(FlextModels.Entity):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1406,7 +1406,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test create_value_object with validation errors (lines 957-979)."""
 
         # Create a simple test value object class
-        class SimpleValue(FlextModels):
+        class SimpleValue(FlextModels.Value):
             name: str
             required_field: str
 
@@ -1420,7 +1420,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         assert "validation failed" in result.error.lower()
 
         # Test with valid data but business rule failure
-        class BusinessRuleValue(FlextModels):
+        class BusinessRuleValue(FlextModels.Value):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1446,15 +1446,15 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test create_payload factory method (lines 993-1008)."""
         # Test successful payload creation
         test_data = {"test": "data"}
-        result = FlextModels(
+        result = FlextModels.Message(
             data=test_data,
             message_type="test_message",
             source_service="test_service",
             target_service="target_service",
         )
 
-        assert result.is_success
-        payload = result.value
+        # Message construction doesn't return FlextResult, it creates the object directly
+        payload = result
         assert payload.data == test_data
         assert payload.message_type == "test_message"
         assert payload.source_service == "test_service"
@@ -1463,15 +1463,15 @@ class TestFlextModelsFactoryRemainingCoverage:
 
         # Test with custom correlation_id
         custom_corr_id = "custom_correlation_123"
-        result = FlextModels(
+        result = FlextModels.Message(
             data=test_data,
             message_type="test_message",
             source_service="test_service",
             correlation_id=custom_corr_id,
         )
 
-        assert result.is_success
-        payload = result.value
+        # Message construction doesn't return FlextResult, it creates the object directly
+        payload = result
         assert payload.correlation_id == custom_corr_id
 
 
@@ -1511,7 +1511,7 @@ class TestFlextModelsAggregateRootApplyEvent:
         """Test lines 353-354: handler execution when event_type matches."""
 
         # Create a test aggregate root
-        class TestAggregateRoot(FlextModels):
+        class TestAggregateRoot(FlextModels.AggregateRoot):
             name: str
             handler_called: bool = False
 
@@ -1542,7 +1542,7 @@ class TestFlextModelsAggregateRootApplyEvent:
         """Test lines 357-358: exception handling in apply_domain_event."""
 
         # Create aggregate with handler that raises exception
-        class FailingAggregateRoot(FlextModels):
+        class FailingAggregateRoot(FlextModels.AggregateRoot):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1720,7 +1720,7 @@ class TestFlextModelsSpecificMissingLines:
         """Test Entity.__eq__ with different types - Line 257."""
 
         # Create concrete Entity subclass since FlextModels is abstract
-        class ConcreteEntity(FlextModels):
+        class ConcreteEntity(FlextModels.Entity):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1735,7 +1735,7 @@ class TestFlextModelsSpecificMissingLines:
         assert entity != {}
 
         # Test comparison with different entity class - Line 257
-        class CustomEntity(FlextModels):
+        class CustomEntity(FlextModels.Entity):
             name: str = "Custom Entity"
             custom_field: str = "custom"
 
@@ -1753,7 +1753,7 @@ class TestFlextModelsSpecificMissingLines:
     def test_value_object_eq_different_types(self) -> None:
         """Test Value.__eq__ with different types - Line 314."""
 
-        class ConcreteValue(FlextModels):
+        class ConcreteValue(FlextModels.Value):
             value: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1769,7 +1769,7 @@ class TestFlextModelsSpecificMissingLines:
         assert value != {}
 
         # Test comparison with different value object class - Line 314
-        class CustomValue(FlextModels):
+        class CustomValue(FlextModels.Value):
             value: str = "test"
             custom_field: str = "custom"
 
@@ -1837,7 +1837,7 @@ class TestFlextModelsSpecificMissingLines:
 
         # Test create_entity with None entity_class - Line 922
         # Since Entity is abstract, create a simple concrete entity for testing
-        class SimpleTestEntity(FlextModels):
+        class SimpleTestEntity(FlextModels.Entity):
             name: str = Field(default="test", description="Test name")
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1851,7 +1851,7 @@ class TestFlextModelsSpecificMissingLines:
 
         # Test create_value_object with None value_class - Line 959
         # Since Value is abstract, create a simple concrete value object for testing
-        class SimpleTestValue(FlextModels):
+        class SimpleTestValue(FlextModels.Value):
             data: str = Field(..., description="Test data")
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1921,7 +1921,7 @@ class TestFlextModelsSpecificMissingLines:
         # Test various edge cases that might hit remaining missing lines
 
         # Test domain events and aggregate functionality
-        class ConcreteAggregateRoot(FlextModels):
+        class ConcreteAggregateRoot(FlextModels.AggregateRoot):
             name: str = "Test Aggregate"
 
             def validate_business_rules(self) -> FlextResult[None]:

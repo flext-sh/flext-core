@@ -15,7 +15,7 @@ Usage:
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Annotated, cast, override
 
@@ -531,7 +531,7 @@ class FlextCore:
         data: FlextTypes.Core.JsonObject,
         source_service: str,
         sequence_number: int = 1,
-    ) -> FlextResult[FlextModels]:
+    ) -> FlextResult[FlextModels.Event]:
         return self.models.create_domain_event(
             event_type,
             aggregate_id,
@@ -548,7 +548,7 @@ class FlextCore:
         source_service: str,
         target_service: str | None = None,
         correlation_id: str | None = None,
-    ) -> FlextResult[FlextModels[FlextTypes.Core.JsonObject]]:
+    ) -> FlextResult[FlextModels.Payload[FlextTypes.Core.JsonObject]]:
         return self.models.create_payload(
             data, message_type, source_service, target_service, correlation_id
         )
@@ -1125,64 +1125,54 @@ class FlextCore:
 
             # Environment-specific settings
             if environment == "production":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "enable_container_debugging": False,  # No debugging in production
-                        "enable_performance_monitoring": True,  # Performance monitoring in production
-                        "max_service_registrations": 500,  # Conservative limit for production
-                        "cache_configuration": True,  # Cache for performance
-                        "enable_error_reporting": True,  # Error reporting in production
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "enable_container_debugging": False,  # No debugging in production
+                    "enable_performance_monitoring": True,  # Performance monitoring in production
+                    "max_service_registrations": 500,  # Conservative limit for production
+                    "cache_configuration": True,  # Cache for performance
+                    "enable_error_reporting": True,  # Error reporting in production
+                })
             elif environment == "development":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "enable_container_debugging": True,  # Full debugging for development
-                        "enable_performance_monitoring": False,  # No performance monitoring in dev
-                        "max_service_registrations": 2000,  # Higher limit for development
-                        "cache_configuration": False,  # No caching for development (fresh data)
-                        "enable_detailed_logging": True,  # Detailed logging for debugging
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "enable_container_debugging": True,  # Full debugging for development
+                    "enable_performance_monitoring": False,  # No performance monitoring in dev
+                    "max_service_registrations": 2000,  # Higher limit for development
+                    "cache_configuration": False,  # No caching for development (fresh data)
+                    "enable_detailed_logging": True,  # Detailed logging for debugging
+                })
             elif environment == "test":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "enable_container_debugging": False,  # No debugging in tests
-                        "enable_performance_monitoring": False,  # No performance monitoring in tests
-                        "max_service_registrations": 100,  # Limited for tests
-                        "cache_configuration": False,  # No caching in tests
-                        "enable_test_utilities": True,  # Special test utilities
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "enable_container_debugging": False,  # No debugging in tests
+                    "enable_performance_monitoring": False,  # No performance monitoring in tests
+                    "max_service_registrations": 100,  # Limited for tests
+                    "cache_configuration": False,  # No caching in tests
+                    "enable_test_utilities": True,  # Special test utilities
+                })
             elif environment == "staging":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "enable_container_debugging": False,  # No debugging in staging
-                        "enable_performance_monitoring": True,  # Performance monitoring in staging
-                        "max_service_registrations": 750,  # Staging limit
-                        "cache_configuration": True,  # Cache for staging performance
-                        "enable_staging_features": True,  # Special staging features
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "enable_container_debugging": False,  # No debugging in staging
+                    "enable_performance_monitoring": True,  # Performance monitoring in staging
+                    "max_service_registrations": 750,  # Staging limit
+                    "cache_configuration": True,  # Cache for staging performance
+                    "enable_staging_features": True,  # Special staging features
+                })
             else:  # local, etc.
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "enable_container_debugging": True,  # Debugging for local development
-                        "enable_performance_monitoring": False,  # No performance monitoring locally
-                        "max_service_registrations": 1000,  # Standard limit for local
-                        "cache_configuration": False,  # No caching for local development
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "enable_container_debugging": True,  # Debugging for local development
+                    "enable_performance_monitoring": False,  # No performance monitoring locally
+                    "max_service_registrations": 1000,  # Standard limit for local
+                    "cache_configuration": False,  # No caching for local development
+                })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1208,77 +1198,67 @@ class FlextCore:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        "max_service_registrations": config.get(
-                            "max_service_registrations", 2000
-                        ),
-                        "container_cache_size": 1000,
-                        "enable_lazy_loading": True,
-                        "enable_service_pooling": True,
-                        "max_concurrent_operations": 200,
-                        "memory_optimization": "aggressive",
-                        "gc_optimization": True,
-                        "enable_async_processing": True,
-                        "buffer_size": 10000,
-                    }
-                )
+                optimized_config.update({
+                    "max_service_registrations": config.get(
+                        "max_service_registrations", 2000
+                    ),
+                    "container_cache_size": 1000,
+                    "enable_lazy_loading": True,
+                    "enable_service_pooling": True,
+                    "max_concurrent_operations": 200,
+                    "memory_optimization": "aggressive",
+                    "gc_optimization": True,
+                    "enable_async_processing": True,
+                    "buffer_size": 10000,
+                })
             elif performance_level == "medium":
-                optimized_config.update(
-                    {
-                        "max_service_registrations": config.get(
-                            "max_service_registrations", 1000
-                        ),
-                        "container_cache_size": 500,
-                        "enable_lazy_loading": True,
-                        "enable_service_pooling": False,
-                        "max_concurrent_operations": 100,
-                        "memory_optimization": "balanced",
-                        "gc_optimization": False,
-                        "enable_async_processing": False,
-                        "buffer_size": 5000,
-                    }
-                )
+                optimized_config.update({
+                    "max_service_registrations": config.get(
+                        "max_service_registrations", 1000
+                    ),
+                    "container_cache_size": 500,
+                    "enable_lazy_loading": True,
+                    "enable_service_pooling": False,
+                    "max_concurrent_operations": 100,
+                    "memory_optimization": "balanced",
+                    "gc_optimization": False,
+                    "enable_async_processing": False,
+                    "buffer_size": 5000,
+                })
             elif performance_level == "low":
-                optimized_config.update(
-                    {
-                        "max_service_registrations": config.get(
-                            "max_service_registrations", 500
-                        ),
-                        "container_cache_size": 100,
-                        "enable_lazy_loading": False,
-                        "enable_service_pooling": False,
-                        "max_concurrent_operations": 50,
-                        "memory_optimization": "conservative",
-                        "gc_optimization": False,
-                        "enable_async_processing": False,
-                        "buffer_size": 1000,
-                    }
-                )
+                optimized_config.update({
+                    "max_service_registrations": config.get(
+                        "max_service_registrations", 500
+                    ),
+                    "container_cache_size": 100,
+                    "enable_lazy_loading": False,
+                    "enable_service_pooling": False,
+                    "max_concurrent_operations": 50,
+                    "memory_optimization": "conservative",
+                    "gc_optimization": False,
+                    "enable_async_processing": False,
+                    "buffer_size": 1000,
+                })
             else:
                 # Default/custom performance level
-                optimized_config.update(
-                    {
-                        "max_service_registrations": config.get(
-                            "max_service_registrations", 1000
-                        ),
-                        "container_cache_size": 500,
-                        "enable_lazy_loading": config.get("enable_lazy_loading", True),
-                        "max_concurrent_operations": config.get(
-                            "max_concurrent_operations", 100
-                        ),
-                        "memory_optimization": "balanced",
-                    }
-                )
+                optimized_config.update({
+                    "max_service_registrations": config.get(
+                        "max_service_registrations", 1000
+                    ),
+                    "container_cache_size": 500,
+                    "enable_lazy_loading": config.get("enable_lazy_loading", True),
+                    "max_concurrent_operations": config.get(
+                        "max_concurrent_operations", 100
+                    ),
+                    "memory_optimization": "balanced",
+                })
 
             # Merge with original config
-            optimized_config.update(
-                {
-                    key: value
-                    for key, value in config.items()
-                    if key not in optimized_config
-                }
-            )
+            optimized_config.update({
+                key: value
+                for key, value in config.items()
+                if key not in optimized_config
+            })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -1681,7 +1661,7 @@ class FlextCore:
     @staticmethod
     def create_message(
         message_type: str, **kwargs: object
-    ) -> FlextResult[FlextModels[str]]:
+    ) -> FlextResult[FlextModels.Message]:
         """Create cross-service message."""
         try:
             correlation_id = (
@@ -1690,50 +1670,62 @@ class FlextCore:
                 else None
             )
             # Use FlextModels factory method instead
-            message_result = FlextModels(
-                kwargs.get("data", {}),
-                message_type,
-                "flext-core",
+            message_result = FlextModels.create_payload(
+                data=kwargs.get("data", {}),
+                message_type=message_type,
+                source_service="flext-core",
                 correlation_id=correlation_id,
             )
 
             if message_result.is_failure:
-                return FlextResult[FlextModels[str]].fail(
+                return FlextResult[FlextModels.Message].fail(
                     message_result.error or "Message creation failed"
                 )
-            return cast("FlextResult[FlextModels[str]]", message_result)
+            # Return the payload as message
+            payload = message_result.unwrap()
+            # Convert payload data to proper JsonObject type
+            message_data = payload.data
+            if not isinstance(message_data, dict):
+                message_data = {"data": message_data}
+            message = FlextModels.Message(
+                data=cast("FlextTypes.Core.JsonObject", message_data),
+                message_type=payload.message_type,
+                source_service=payload.source_service,
+                correlation_id=payload.correlation_id,
+            )
+            return FlextResult[FlextModels.Message].ok(message)
         except Exception as e:
-            return FlextResult[FlextModels[str]].fail(f"Message creation failed: {e}")
+            return FlextResult[FlextModels.Message].fail(
+                f"Message creation failed: {e}"
+            )
 
     @staticmethod
     def create_event(
         event_type: str, data: dict[str, object], **kwargs: object
-    ) -> FlextResult[FlextModels[Mapping[str, object]]]:
+    ) -> FlextResult[FlextModels.Event]:
         """Create cross-service event."""
         try:
             # Remove unused correlation_id processing
             kwargs.pop("correlation_id", None)
             # Use FlextModels factory method instead
-            event_result = FlextModels(
-                event_type,
-                str(kwargs.get("aggregate_id", "unknown")),
-                str(kwargs.get("aggregate_type", "Unknown")),
-                cast(
+            event_result = FlextModels.create_domain_event(
+                event_type=event_type,
+                aggregate_id=str(kwargs.get("aggregate_id", "unknown")),
+                aggregate_type=str(kwargs.get("aggregate_type", "Unknown")),
+                data=cast(
                     "FlextTypes.Core.JsonObject",
                     data if isinstance(data, dict) else {"data": data},
                 ),
-                "flext-core",
+                source_service="flext-core",
             )
 
             if event_result.is_failure:
-                return FlextResult[FlextModels[Mapping[str, object]]].fail(
+                return FlextResult[FlextModels.Event].fail(
                     event_result.error or "Event creation failed"
                 )
-            return cast("FlextResult[FlextModels[Mapping[str, object]]]", event_result)
+            return event_result
         except Exception as e:
-            return FlextResult[FlextModels[Mapping[str, object]]].fail(
-                f"Event creation failed: {e}"
-            )
+            return FlextResult[FlextModels.Event].fail(f"Event creation failed: {e}")
 
     @staticmethod
     def validate_protocol(payload: dict[str, object]) -> FlextResult[dict[str, object]]:
@@ -1753,19 +1745,19 @@ class FlextCore:
         return {"total_payloads": 0, "average_size": 0, "max_size": 0, "min_size": 0}
 
     @property
-    def payload_base(self) -> type[FlextModels[object]]:
+    def payload_base(self) -> type[FlextModels.Payload[object]]:
         """Access payload base class."""
-        return FlextModels[object]
+        return FlextModels.Payload[object]
 
     @property
-    def message_base(self) -> type[FlextModels[str]]:
+    def message_base(self) -> type[FlextModels.Message]:
         """Access message base class."""
-        return cast("type[FlextModels[str]]", FlextModels)
+        return FlextModels.Message
 
     @property
-    def event_base(self) -> type[FlextModels[Mapping[str, object]]]:
+    def event_base(self) -> type[FlextModels.Event]:
         """Access event base class."""
-        return cast("type[FlextModels[Mapping[str, object]]]", FlextModels)
+        return FlextModels.Event
 
     # =========================================================================
     # HANDLERS & CQRS
@@ -1887,60 +1879,74 @@ class FlextCore:
     @staticmethod
     def create_entity_id(
         value: str | None = None,
-    ) -> FlextResult[FlextModels]:
+    ) -> FlextResult[FlextModels.EntityId]:
         """Create entity ID."""
         if value is None:
-            return FlextResult[FlextModels].fail("Entity ID value cannot be None")
+            return FlextResult[FlextModels.EntityId].fail(
+                "Entity ID value cannot be None"
+            )
         try:
             entity_id = FlextModels.EntityId(root=value)
-            return FlextResult[FlextModels].ok(entity_id)
+            return FlextResult[FlextModels.EntityId].ok(entity_id)
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Entity ID creation failed: {e}")
+            return FlextResult[FlextModels.EntityId].fail(
+                f"Entity ID creation failed: {e}"
+            )
 
     @staticmethod
-    def create_version_number(value: int) -> FlextResult[FlextModels]:
+    def create_version_number(value: int) -> FlextResult[FlextModels.Version]:
         """Create version number."""
         try:
             version = FlextModels.Version(root=value)
-            return FlextResult[FlextModels].ok(version)
+            return FlextResult[FlextModels.Version].ok(version)
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Version creation failed: {e}")
+            return FlextResult[FlextModels.Version].fail(
+                f"Version creation failed: {e}"
+            )
 
     @staticmethod
-    def create_email_address(value: str) -> FlextResult[FlextModels]:
+    def create_email_address(value: str) -> FlextResult[FlextModels.EmailAddress]:
         """Create email address."""
         try:
             email = FlextModels.EmailAddress(root=value)
-            return FlextResult[FlextModels].ok(email)
+            return FlextResult[FlextModels.EmailAddress].ok(email)
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Email creation failed: {e}")
+            return FlextResult[FlextModels.EmailAddress].fail(
+                f"Email creation failed: {e}"
+            )
 
     @staticmethod
     def create_service_name_value(
         value: str,
-    ) -> FlextResult[FlextModels]:
+    ) -> FlextResult[FlextModels.EntityId]:
         """Create service name (using Host as fallback)."""
         try:
             service_name = FlextModels.EntityId(root=value)
-            return FlextResult[FlextModels].ok(service_name)
+            return FlextResult[FlextModels.EntityId].ok(service_name)
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Service name creation failed: {e}")
+            return FlextResult[FlextModels.EntityId].fail(
+                f"Service name creation failed: {e}"
+            )
 
     @staticmethod
-    def create_timestamp() -> FlextModels:
+    def create_timestamp() -> datetime:
         """Create current timestamp."""
         return datetime.now(UTC)
 
     @staticmethod
-    def create_metadata(**data: object) -> FlextResult[FlextModels]:
+    def create_metadata(**data: object) -> FlextResult[FlextModels.JsonData]:
         """Create metadata object."""
         try:
-            # Convert all values to strings for Metadata compatibility
-            typed_data = {str(k): str(v) for k, v in data.items()}
+            # Convert all values to proper JSON types
+            typed_data = cast(
+                "FlextTypes.Core.JsonObject", {str(k): v for k, v in data.items()}
+            )
             metadata = FlextModels.JsonData(root=typed_data)
-            return FlextResult[FlextModels].ok(metadata)
+            return FlextResult[FlextModels.JsonData].ok(metadata)
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Metadata creation failed: {e}")
+            return FlextResult[FlextModels.JsonData].fail(
+                f"Metadata creation failed: {e}"
+            )
 
     # =========================================================================
     # EXCEPTIONS & ERROR HANDLING
@@ -2424,7 +2430,7 @@ class FlextCore:
             class_attrs["validate_business_rules"] = validate_business_rules_method
 
         # Create dynamic class
-        return type(name, (FlextModels,), class_attrs)
+        return type(name, (FlextModels.Value,), class_attrs)
 
     # Service Setup Methods - Compact Delegations
     def setup_container_with_services(

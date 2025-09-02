@@ -194,7 +194,7 @@ def demonstrate_type_safety() -> None:
 
 def main() -> None:
     """Main demonstration function with centralized logging and error handling."""
-    logger.info("Starting Example 21: Modern Validation Patterns")
+    logger.info("Starting Example 04: Modern Validation Patterns")
 
     try:
         demonstrate_modern_validation()
@@ -203,10 +203,10 @@ def main() -> None:
         demonstrate_validation_pipeline()
         demonstrate_type_safety()
 
-        logger.info("Example 21 completed successfully")
+        logger.info("Example 04 completed successfully")
 
     except Exception:
-        logger.exception("Example 21 failed with exception")
+        logger.exception("Example 04 failed with exception")
         raise
 
 

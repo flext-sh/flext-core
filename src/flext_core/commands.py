@@ -87,6 +87,8 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import cast
 
+from pydantic import ConfigDict
+
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
@@ -150,7 +152,19 @@ class FlextCommands:
             without forcing inheritance in tests that use Pydantic directly.
             """
 
-            model_config = {"frozen": True, "extra": "ignore"}
+            model_config = ConfigDict(
+                # Validation settings (inherited from BaseConfig)
+                validate_assignment=True,
+                validate_default=True,
+                use_enum_values=True,
+                # JSON settings (inherited from BaseConfig)
+                arbitrary_types_allowed=True,
+                ser_json_bytes="base64",
+                ser_json_timedelta="iso8601",
+                # Command-specific overrides
+                frozen=True,
+                extra="ignore",
+            )
 
             def validate_command(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
@@ -195,8 +209,8 @@ class FlextCommands:
             def to_payload(
                 self,
             ) -> (
-                FlextModels[dict[str, object]]
-                | FlextResult[FlextModels[dict[str, object]]]
+                FlextModels.Payload[dict[str, object]]
+                | FlextResult[FlextModels.Payload[dict[str, object]]]
             ):
                 from flext_core.models import FlextModels
 
@@ -213,17 +227,17 @@ class FlextCommands:
                         "command_type",
                     }
                 }
-                result = FlextModels(
+                result = FlextModels.create_payload(
                     data=data,
                     message_type=self.__class__.__name__,
                     source_service="command_service",
                 )
-                return result.unwrap() if result.success else result
+                return result.unwrap() if result.is_success else result
 
             @classmethod
             def from_payload(
                 cls: type[FlextModels.BaseConfig],
-                payload: FlextModels[dict[str, object]],
+                payload: FlextModels.Payload[dict[str, object]],
             ) -> FlextResult[FlextModels.BaseConfig]:
                 try:
                     data = payload.data if hasattr(payload, "data") else None
@@ -243,7 +257,19 @@ class FlextCommands:
             without forcing inheritance in tests that use Pydantic directly.
             """
 
-            model_config = {"frozen": True, "extra": "ignore"}
+            model_config = ConfigDict(
+                # Validation settings (inherited from BaseConfig)
+                validate_assignment=True,
+                validate_default=True,
+                use_enum_values=True,
+                # JSON settings (inherited from BaseConfig)
+                arbitrary_types_allowed=True,
+                ser_json_bytes="base64",
+                ser_json_timedelta="iso8601",
+                # Query-specific overrides
+                frozen=True,
+                extra="ignore",
+            )
 
             def validate_query(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
@@ -1330,80 +1356,70 @@ class FlextCommands:
 
             # Environment-specific configurations
             if environment == "production":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": True,  # Monitor production performance
-                        "max_concurrent_commands": 50,  # Controlled concurrency in production
-                        "command_timeout_seconds": 15,  # Strict timeout for production
-                        "enable_detailed_error_messages": False,  # Security in production
-                        "enable_handler_caching": True,  # Performance optimization
-                        "middleware_timeout_seconds": 5,  # Fast middleware processing
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": True,  # Monitor production performance
+                    "max_concurrent_commands": 50,  # Controlled concurrency in production
+                    "command_timeout_seconds": 15,  # Strict timeout for production
+                    "enable_detailed_error_messages": False,  # Security in production
+                    "enable_handler_caching": True,  # Performance optimization
+                    "middleware_timeout_seconds": 5,  # Fast middleware processing
+                })
             elif environment == "development":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": False,  # Not needed in dev
-                        "max_concurrent_commands": 200,  # Higher concurrency for dev testing
-                        "command_timeout_seconds": 60,  # More time for debugging
-                        "enable_detailed_error_messages": True,  # Full debugging info
-                        "enable_handler_caching": False,  # Fresh handler lookup each time
-                        "middleware_timeout_seconds": 30,  # More time for debugging
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": False,  # Not needed in dev
+                    "max_concurrent_commands": 200,  # Higher concurrency for dev testing
+                    "command_timeout_seconds": 60,  # More time for debugging
+                    "enable_detailed_error_messages": True,  # Full debugging info
+                    "enable_handler_caching": False,  # Fresh handler lookup each time
+                    "middleware_timeout_seconds": 30,  # More time for debugging
+                })
             elif environment == "test":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
-                        "enable_handler_discovery": True,  # Still need discovery for tests
-                        "enable_middleware_pipeline": False,  # Skip for test speed
-                        "enable_performance_monitoring": False,  # No monitoring in tests
-                        "max_concurrent_commands": 10,  # Limited for test isolation
-                        "command_timeout_seconds": 5,  # Fast timeout for tests
-                        "enable_detailed_error_messages": False,  # Clean test output
-                        "enable_handler_caching": False,  # Clean state between tests
-                        "middleware_timeout_seconds": 1,  # Very fast for tests
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
+                    "enable_handler_discovery": True,  # Still need discovery for tests
+                    "enable_middleware_pipeline": False,  # Skip for test speed
+                    "enable_performance_monitoring": False,  # No monitoring in tests
+                    "max_concurrent_commands": 10,  # Limited for test isolation
+                    "command_timeout_seconds": 5,  # Fast timeout for tests
+                    "enable_detailed_error_messages": False,  # Clean test output
+                    "enable_handler_caching": False,  # Clean state between tests
+                    "middleware_timeout_seconds": 1,  # Very fast for tests
+                })
             elif environment == "staging":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": True,  # Monitor staging performance
-                        "max_concurrent_commands": 75,  # Moderate concurrency for staging
-                        "command_timeout_seconds": 20,  # Reasonable staging timeout
-                        "enable_detailed_error_messages": True,  # Debug staging issues
-                        "enable_handler_caching": True,  # Test caching behavior
-                        "middleware_timeout_seconds": 10,  # Balanced timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": True,  # Monitor staging performance
+                    "max_concurrent_commands": 75,  # Moderate concurrency for staging
+                    "command_timeout_seconds": 20,  # Reasonable staging timeout
+                    "enable_detailed_error_messages": True,  # Debug staging issues
+                    "enable_handler_caching": True,  # Test caching behavior
+                    "middleware_timeout_seconds": 10,  # Balanced timeout
+                })
             elif environment == "local":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": False,  # Not needed locally
-                        "max_concurrent_commands": 500,  # High concurrency for local testing
-                        "command_timeout_seconds": 120,  # Generous local timeout
-                        "enable_detailed_error_messages": True,  # Full local debugging
-                        "enable_handler_caching": False,  # Fresh behavior for development
-                        "middleware_timeout_seconds": 60,  # Generous local timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": False,  # Not needed locally
+                    "max_concurrent_commands": 500,  # High concurrency for local testing
+                    "command_timeout_seconds": 120,  # Generous local timeout
+                    "enable_detailed_error_messages": True,  # Full local debugging
+                    "enable_handler_caching": False,  # Fresh behavior for development
+                    "middleware_timeout_seconds": 60,  # Generous local timeout
+                })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1433,119 +1449,109 @@ class FlextCommands:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update(
-                {
-                    "performance_level": performance_level,
-                    "optimization_enabled": True,
-                    "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-                }
-            )
+            optimized_config.update({
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            })
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        # Handler optimization
-                        "handler_cache_size": 1000,
-                        "enable_handler_pooling": True,
-                        "handler_pool_size": 100,
-                        "max_concurrent_handlers": 50,
-                        "handler_discovery_cache_ttl": 3600,  # 1 hour
-                        # Middleware optimization
-                        "enable_middleware_caching": True,
-                        "middleware_thread_count": 8,
-                        "middleware_queue_size": 500,
-                        "parallel_middleware_processing": True,
-                        # Command processing optimization
-                        "command_batch_size": 100,
-                        "enable_command_batching": True,
-                        "command_processing_threads": 16,
-                        "command_queue_size": 2000,
-                        # Memory optimization
-                        "memory_pool_size_mb": 200,
-                        "enable_object_pooling": True,
-                        "gc_optimization_enabled": True,
-                        "optimization_level": "aggressive",
-                    }
-                )
+                optimized_config.update({
+                    # Handler optimization
+                    "handler_cache_size": 1000,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 100,
+                    "max_concurrent_handlers": 50,
+                    "handler_discovery_cache_ttl": 3600,  # 1 hour
+                    # Middleware optimization
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 8,
+                    "middleware_queue_size": 500,
+                    "parallel_middleware_processing": True,
+                    # Command processing optimization
+                    "command_batch_size": 100,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 16,
+                    "command_queue_size": 2000,
+                    # Memory optimization
+                    "memory_pool_size_mb": 200,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "aggressive",
+                })
             elif performance_level == "medium":
-                optimized_config.update(
-                    {
-                        # Balanced handler settings
-                        "handler_cache_size": 500,
-                        "enable_handler_pooling": True,
-                        "handler_pool_size": 50,
-                        "max_concurrent_handlers": 25,
-                        "handler_discovery_cache_ttl": 1800,  # 30 minutes
-                        # Moderate middleware settings
-                        "enable_middleware_caching": True,
-                        "middleware_thread_count": 4,
-                        "middleware_queue_size": 250,
-                        "parallel_middleware_processing": True,
-                        # Standard command processing
-                        "command_batch_size": 50,
-                        "enable_command_batching": True,
-                        "command_processing_threads": 8,
-                        "command_queue_size": 1000,
-                        # Moderate memory settings
-                        "memory_pool_size_mb": 100,
-                        "enable_object_pooling": True,
-                        "gc_optimization_enabled": True,
-                        "optimization_level": "balanced",
-                    }
-                )
+                optimized_config.update({
+                    # Balanced handler settings
+                    "handler_cache_size": 500,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 50,
+                    "max_concurrent_handlers": 25,
+                    "handler_discovery_cache_ttl": 1800,  # 30 minutes
+                    # Moderate middleware settings
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 4,
+                    "middleware_queue_size": 250,
+                    "parallel_middleware_processing": True,
+                    # Standard command processing
+                    "command_batch_size": 50,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 8,
+                    "command_queue_size": 1000,
+                    # Moderate memory settings
+                    "memory_pool_size_mb": 100,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "balanced",
+                })
             elif performance_level == "low":
-                optimized_config.update(
-                    {
-                        # Conservative handler settings
-                        "handler_cache_size": 100,
-                        "enable_handler_pooling": False,
-                        "handler_pool_size": 10,
-                        "max_concurrent_handlers": 5,
-                        "handler_discovery_cache_ttl": 300,  # 5 minutes
-                        # Minimal middleware settings
-                        "enable_middleware_caching": False,
-                        "middleware_thread_count": 1,
-                        "middleware_queue_size": 50,
-                        "parallel_middleware_processing": False,
-                        # Single-threaded command processing
-                        "command_batch_size": 10,
-                        "enable_command_batching": False,
-                        "command_processing_threads": 1,
-                        "command_queue_size": 100,
-                        # Minimal memory footprint
-                        "memory_pool_size_mb": 50,
-                        "enable_object_pooling": False,
-                        "gc_optimization_enabled": False,
-                        "optimization_level": "conservative",
-                    }
-                )
+                optimized_config.update({
+                    # Conservative handler settings
+                    "handler_cache_size": 100,
+                    "enable_handler_pooling": False,
+                    "handler_pool_size": 10,
+                    "max_concurrent_handlers": 5,
+                    "handler_discovery_cache_ttl": 300,  # 5 minutes
+                    # Minimal middleware settings
+                    "enable_middleware_caching": False,
+                    "middleware_thread_count": 1,
+                    "middleware_queue_size": 50,
+                    "parallel_middleware_processing": False,
+                    # Single-threaded command processing
+                    "command_batch_size": 10,
+                    "enable_command_batching": False,
+                    "command_processing_threads": 1,
+                    "command_queue_size": 100,
+                    # Minimal memory footprint
+                    "memory_pool_size_mb": 50,
+                    "enable_object_pooling": False,
+                    "gc_optimization_enabled": False,
+                    "optimization_level": "conservative",
+                })
 
             # Additional performance metrics and targets
-            optimized_config.update(
-                {
-                    "expected_throughput_commands_per_second": 500
-                    if performance_level == "high"
-                    else 200
-                    if performance_level == "medium"
-                    else 50,
-                    "target_handler_latency_ms": 5
-                    if performance_level == "high"
-                    else 15
-                    if performance_level == "medium"
-                    else 50,
-                    "target_middleware_latency_ms": 2
-                    if performance_level == "high"
-                    else 8
-                    if performance_level == "medium"
-                    else 25,
-                    "memory_efficiency_target": 0.95
-                    if performance_level == "high"
-                    else 0.85
-                    if performance_level == "medium"
-                    else 0.70,
-                }
-            )
+            optimized_config.update({
+                "expected_throughput_commands_per_second": 500
+                if performance_level == "high"
+                else 200
+                if performance_level == "medium"
+                else 50,
+                "target_handler_latency_ms": 5
+                if performance_level == "high"
+                else 15
+                if performance_level == "medium"
+                else 50,
+                "target_middleware_latency_ms": 2
+                if performance_level == "high"
+                else 8
+                if performance_level == "medium"
+                else 25,
+                "memory_efficiency_target": 0.95
+                if performance_level == "high"
+                else 0.85
+                if performance_level == "medium"
+                else 0.70,
+            })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

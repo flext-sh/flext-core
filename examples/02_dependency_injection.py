@@ -5,8 +5,13 @@ Demonstrates advanced FlextCore dependency injection patterns showcasing:
 • FlextCore.get_instance(): Singleton access to all FlextCore features
 • Native validation using FlextCore built-in validators
 • Railway-oriented programming with FlextResult composition
-• Service registration with FlextCore.register_service()
-• Factory patterns with FlextCore.register_factory()
+• Service registration with FlextCore.register_servi    # Apply performance tracking manually to avoid decorator typing issues
+    tracker = cast(Callable[[Callable[[], FlextResult[str]]], Callable[[], FlextResult[str]]],
+                   core.track_performance("demo_operation"))
+    tracked_operation = tracker(demo_operation)
+    result = tracked_operation()
+    if result.success:
+        print(f"✅ Performance-tracked operation: {result.value}")ctory patterns with FlextCore.register_factory()
 • Configuration management with FlextCore.create_environment_core_config()
 • Enterprise logging with structured context using FlextCore logging
 
@@ -22,7 +27,7 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from flext_core import FlextCore, FlextResult, FlextTypes
+from flext_core import FlextCore, FlextResult, FlextTypes, FlextUtilities
 
 # Get FlextCore singleton instance for all operations
 core = FlextCore.get_instance()
@@ -132,7 +137,7 @@ class EnterpriseUserService:
         """Find user by email with validation."""
         # Validate email format first using FlextCore
         email_validation = core.validate_email(email)
-        if email_validation.is_failure:
+        if not email_validation.success:
             return FlextResult[User | None].fail(f"Invalid email format: {email}")
 
         user = self._users.get(email)
@@ -232,7 +237,7 @@ def setup_dependency_injection() -> FlextResult[None]:
         services_dict, validator=service_validator
     )
 
-    if container_result.is_failure:
+    if not container_result.success:
         return FlextResult[None].fail(
             f"Container setup failed: {container_result.error}"
         )
@@ -242,7 +247,7 @@ def setup_dependency_injection() -> FlextResult[None]:
         "registration_service", _create_registration_service
     )
 
-    if registration_factory_result.is_failure:
+    if not registration_factory_result.success:
         return FlextResult[None].fail(
             f"Factory registration failed: {registration_factory_result.error}"
         )
@@ -262,11 +267,11 @@ def _create_registration_service() -> UserRegistrationService:
     user_service_result = core.get_service("user_service")
     notification_service_result = core.get_service("notification_service")
 
-    if user_service_result.is_failure:
+    if not user_service_result.success:
         msg = "User service not found"
         raise RuntimeError(msg)
 
-    if notification_service_result.is_failure:
+    if not notification_service_result.success:
         msg = "Notification service not found"
         raise RuntimeError(msg)
 
@@ -294,7 +299,7 @@ def setup_environment_configuration(
     env_type = cast("FlextTypes.Config.Environment", environment)
     config_result = core.create_environment_core_config(env_type)
 
-    if config_result.is_failure:
+    if not config_result.success:
         return FlextResult[None].fail(
             f"Environment config creation failed: {config_result.error}"
         )
@@ -302,7 +307,7 @@ def setup_environment_configuration(
     # Optimize performance based on environment
     optimized_config = core.optimize_core_performance(config_result.value)
 
-    if optimized_config.is_failure:
+    if not optimized_config.success:
         return FlextResult[None].fail(
             f"Performance optimization failed: {optimized_config.error}"
         )
@@ -310,7 +315,7 @@ def setup_environment_configuration(
     # Apply configuration to core system
     system_config_result = core.configure_core_system(optimized_config.value)
 
-    if system_config_result.is_failure:
+    if not system_config_result.success:
         return FlextResult[None].fail(
             f"System configuration failed: {system_config_result.error}"
         )
@@ -336,21 +341,21 @@ def demonstrate_flextcore_di() -> None:
 
     # Setup environment configuration
     env_setup = setup_environment_configuration("development")
-    if env_setup.is_failure:
+    if not env_setup.success:
         print(f"❌ Environment setup failed: {env_setup.error}")
         return
     print("✅ Environment configuration completed")
 
     # Setup dependency injection
     di_setup = setup_dependency_injection()
-    if di_setup.is_failure:
+    if not di_setup.success:
         print(f"❌ DI setup failed: {di_setup.error}")
         return
     print("✅ Dependency injection configured")
 
     # Get registration service from container
     registration_result = core.get_service("registration_service")
-    if registration_result.is_failure:
+    if not registration_result.success:
         print(f"❌ Registration service not found: {registration_result.error}")
         return
 
@@ -376,7 +381,7 @@ def demonstrate_flextcore_di() -> None:
     duplicate_result = registration_service.register_user(
         "Alice Duplicate", "alice@example.com", 26
     )
-    if duplicate_result.is_failure:
+    if not duplicate_result.success:
         print(f"✅ Duplicate prevention works: {duplicate_result.error}")
 
     # Test user lookup
@@ -406,13 +411,13 @@ def demonstrate_flextcore_features() -> None:
         """Demo operation with performance tracking."""
         return FlextResult[str].ok("Operation completed successfully")
 
-    # Apply performance tracking manually to avoid decorator typing issues
-    tracker = core.track_performance("demo_operation")
-    tracked_operation = tracker(demo_operation)
-    if callable(tracked_operation):
-        result = tracked_operation()
-    else:
-        result = FlextResult[str].fail("Tracking failed")
+    # Apply performance tracking using proper FlextUtilities with correct types
+    @FlextUtilities.Performance.track_performance("demo_operation")
+    def tracked_demo_operation() -> FlextResult[str]:
+        """Demo operation with performance tracking using proper types."""
+        return FlextResult[str].ok("Operation completed successfully")
+
+    result = tracked_demo_operation()
     if result.success:
         print(f"✅ Performance-tracked operation: {result.value}")
 

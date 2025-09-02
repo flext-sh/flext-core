@@ -131,7 +131,7 @@ class SecurityConfig(FlextConfig):
     """Security configuration with comprehensive validation."""
 
     secret_key: str = Field(
-        default="", min_length=32, description="Application secret key"
+        default=_DEMO_SECRET_KEY_1, min_length=32, description="Application secret key"
     )
     token_expiry_hours: int = Field(
         default=24, ge=1, le=8760, description="Token expiry in hours"
@@ -511,7 +511,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             print(f"Loaded keys: {list(loaded_data.keys())}")
 
             # Create configuration with loaded data
-            config = EnterpriseConfig.model_validate(loaded_data)
+            config = EnterpriseConfig(**loaded_data)
 
             validation = config.validate_all_components()
             if validation.success:
@@ -601,7 +601,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = EnterpriseConfig.model_validate(final_config)
+        config = EnterpriseConfig(**final_config)
 
         validation = config.validate_all_components()
         if validation.success:
@@ -652,7 +652,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = EnterpriseConfig.model_validate(config_data)
+            config = EnterpriseConfig(**cast("dict[str, object]", config_data))
             validation = config.validate_all_components()
 
             if not validation.success:
@@ -666,11 +666,12 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     # Test valid configuration
     print("\nTesting: Valid configuration")
     try:
-        valid_config = EnterpriseConfig(
-            app_name="Valid Test App",
-            environment="development",
-            security=SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
-        )
+        valid_config_data = {
+            "app_name": "Valid Test App",
+            "environment": "development",
+            "security": SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
+        }
+        valid_config = EnterpriseConfig(**valid_config_data)
         validation = valid_config.validate_all_components()
 
         if validation.success:

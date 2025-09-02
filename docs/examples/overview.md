@@ -959,12 +959,12 @@ def apply_discount_to_order(order: dict, percentage: float) -> dict:
 
 For more comprehensive examples, check the `examples/` directory in the repository:
 
-- `01_flext_result_railway_pattern.py`: Advanced railway pattern usage
-- `02_flext_container_dependency_injection.py`: Complex DI scenarios
-- `03_flext_commands_cqrs_pattern.py`: CQRS implementation
-- `04_flext_utilities_modular.py`: Utility functions
-- `05_flext_validation_advanced_system.py`: Validation patterns
-- `06_flext_entity_valueobject_ddd_patterns.py`: DDD examples
+- `01_railway_result.py`: Advanced railway pattern usage
+- `02_dependency_injection.py`: Complex DI scenarios
+- `03_cqrs_commands.py`: CQRS implementation
+- `04_validation_modern.py`: Modern validation patterns
+- `05_validation_advanced.py`: Validation patterns
+- `06_ddd_entities_value_objects.py`: DDD examples
 - And many more...
 
 ---

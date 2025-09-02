@@ -172,21 +172,19 @@ def _demo_repository_pattern(order: Order) -> object:
         """Repository pattern implementation with FlextTypes."""
 
         def __init__(self) -> None:
-            self.orders: dict[FlextTypes.Core.String, object] = {}
+            self.orders: dict[FlextTypes.Core.String, Order] = {}
 
-        def save(self, order: object) -> FlextResult[object]:
+        def save(self, order: Order) -> FlextResult[Order]:
             """Save order with FlextResult error handling."""
-            if hasattr(order, "id"):
-                order_id = order.id
-                self.orders[order_id] = order
-                return FlextResult[object].ok(order)
-            return FlextResult[object].fail("Order must have an id")
+            order_id = order.id
+            self.orders[order_id] = order
+            return FlextResult[Order].ok(order)
 
-        def get_by_id(self, order_id: FlextTypes.Core.String) -> FlextResult[object]:
+        def get_by_id(self, order_id: FlextTypes.Core.String) -> FlextResult[Order]:
             """Retrieve order by ID with FlextResult."""
             if order_id in self.orders:
-                return FlextResult[object].ok(self.orders[order_id])
-            return FlextResult[object].fail(f"Order {order_id} not found")
+                return FlextResult[Order].ok(self.orders[order_id])
+            return FlextResult[Order].fail(f"Order {order_id} not found")
 
     repository = OrderRepository()
     repository.save(order)

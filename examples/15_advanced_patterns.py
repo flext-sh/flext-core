@@ -15,7 +15,7 @@ import contextlib
 import sys
 from decimal import Decimal
 
-from pydantic_settings import SettingsConfigDict
+from pydantic import ConfigDict
 
 from flext_core import (
     FlextConfig,
@@ -64,10 +64,11 @@ class AdvancedExamplesConfig(FlextConfig):
     require_email_verification: bool = True
     password_complexity_required: bool = True
 
-    model_config = SettingsConfigDict(
-        env_prefix="FLEXT_EXAMPLES_",
-        case_sensitive=False,
+    model_config = ConfigDict(
         extra="forbid",
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        use_enum_values=True,
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -91,7 +92,7 @@ class AdvancedExamplesConfig(FlextConfig):
 # =============================================================================
 
 
-class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
+class OrderProcessor(FlextMixins.Entity):
     """Advanced order processing with comprehensive validation and error handling."""
 
     def __init__(self, config: AdvancedExamplesConfig) -> None:
@@ -147,12 +148,10 @@ class OrderProcessor(FlextMixins.Entity, FlextMixins.Loggable):
             if "total_price" in item:
                 total_amount += Decimal(str(item["total_price"]))
 
-        return FlextResult[tuple[list[ItemData], Decimal]].ok(
-            (
-                processed_items,
-                total_amount,
-            )
-        )
+        return FlextResult[tuple[list[ItemData], Decimal]].ok((
+            processed_items,
+            total_amount,
+        ))
 
     def _validate_and_create_order(
         self, user_id: str, processed_items: list[ItemData], total_amount: Decimal

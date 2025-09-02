@@ -12,12 +12,13 @@ Tests 100% coverage of FlextCommands functionality:
 from __future__ import annotations
 
 import asyncio
-from typing import cast
+from typing import ClassVar, cast
 from unittest.mock import Mock
 
 import pytest
 
 # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+from pydantic import ValidationError
 from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_mock import MockerFixture
 
@@ -37,7 +38,7 @@ class CreateUserCommand(FlextModels.BaseConfig):
     email: str
     age: int = 18
     is_REDACTED_LDAP_BIND_PASSWORD: bool = False
-    metadata: dict[str, object] = {}
+    metadata: ClassVar[dict[str, object]] = {}
 
     def validate_command(self) -> FlextResult[None]:
         """Custom validation for the command."""
