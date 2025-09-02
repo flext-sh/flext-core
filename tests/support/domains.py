@@ -144,10 +144,10 @@ class RealisticData:
             "age": random.randint(18, 65),
             "phone": f"+1-{random.randint(100, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}",
             "address": {
-                "street": f"{random.randint(1, 999)} Main St",  # noqa: S311
+                "street": f"{random.randint(1, 999)} Main St",
                 "city": "Test City",
                 "state": "TC",
-                "zip": f"{random.randint(10000, 99999)}",  # noqa: S311
+                "zip": f"{random.randint(10000, 99999)}",
             },
         }
 
@@ -160,7 +160,7 @@ class RealisticData:
             "items": [
                 {
                     "product_id": str(uuid.uuid4()),
-                    "name": f"Product {random.randint(1, 100)}",  # noqa: S311
+                    "name": f"Product {random.randint(1, 100)}",
                     "quantity": random.randint(1, 5),
                     "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(
                         Decimal("0.01")

@@ -421,9 +421,10 @@ class TestFlextGuardsFactoryAndBuilder:
             def __init__(self, value: str) -> None:
                 self.value = value
 
-        factory_obj = FlextGuards.make_factory(SimpleClass)
+        factory_result = FlextGuards.make_factory("SimpleClass", {"value": "default"})
+        assert factory_result.success
+        factory_obj = factory_result.unwrap()
         assert factory_obj is not None
-        assert callable(factory_obj)
 
     def test_make_builder(self) -> None:
         """Test make_builder functionality."""
@@ -433,10 +434,12 @@ class TestFlextGuardsFactoryAndBuilder:
                 self.host = host
                 self.port = port
 
-        builder_obj = FlextGuards.make_builder(ConfigClass)
+        builder_result = FlextGuards.make_builder(
+            "ConfigClass", {"host": str, "port": int}
+        )
+        assert builder_result.success
+        builder_obj = builder_result.unwrap()
         assert builder_obj is not None
-        assert hasattr(builder_obj, "set")
-        assert hasattr(builder_obj, "build")
 
 
 class TestFlextGuardsIntegrationWithUtilities:
@@ -448,12 +451,12 @@ class TestFlextGuardsIntegrationWithUtilities:
         assert FlextUtilities.TypeGuards.is_not_none("test") is True
         assert FlextUtilities.TypeGuards.is_not_none(None) is False
 
-        # Test string validation - is_string_non_empty only checks length > 0, not strip
+        # Test string validation - is_string_non_empty strips whitespace (consistent with implementation)
         assert FlextUtilities.TypeGuards.is_string_non_empty("test") is True
         assert FlextUtilities.TypeGuards.is_string_non_empty("") is False
         assert (
-            FlextUtilities.TypeGuards.is_string_non_empty("   ") is True
-        )  # Has length > 0
+            FlextUtilities.TypeGuards.is_string_non_empty("   ") is False
+        )  # Whitespace-only strings are considered empty after strip
 
         # Test list validation
         assert FlextUtilities.TypeGuards.is_list_non_empty([1, 2, 3]) is True

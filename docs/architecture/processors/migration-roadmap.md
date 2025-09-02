@@ -471,7 +471,7 @@ gantt
 |--------------|-----------|-----------|----------|
 | **Performance** | Processing time | >20% regression | Immediate optimization |
 | **Data Integrity** | Processing errors | >1% failure rate | Migration pause and investigation |
-| **Compatibility** | API breaking changes | Any | Compatibility layer implementation |
+| **Compatibility** | API breaking changes | object | Compatibility layer implementation |
 | **Quality** | Test coverage | <90% | Mandatory test completion |
 
 ---

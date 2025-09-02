@@ -1,32 +1,24 @@
-"""FLEXT Models - Complete consolidated model system using Pydantic RootModel.
+"""Consolidated model system using Pydantic with RootModel validation.
 
-CONSOLIDAÇÃO COMPLETA seguindo solicitação do usuário:
-- Apenas UMA classe FlextModels com toda funcionalidade
-- Baseado em Pydantic RootModel para validação de primitivos
-- Todas as outras classes antigas movidas para legacy.py como facades
-- Arquitetura hierárquica limpa seguindo padrão FLEXT
+Provides FlextModels class with nested entity types, value objects, and factory methods
+for creating type-safe domain models with efficient validation.
 
-Architecture Overview:
-    FlextModels - Single consolidated class containing:
-        - Nested classes for different model types (Entity, Value, etc.)
-        - RootModel classes for primitive validation
-        - Factory methods for creating instances
-        - Validation utilities and helpers
+Usage:
+    # Entity creation
+    user = FlextModels(id="user_123", name="John")
 
-Examples:
-    Using consolidated FlextModels:
-        user = FlextModels.Entity(id="user_123", name="John")
-        email = FlextModels.EmailAddress(root="test@example.com")
-        port = FlextModels.Port(root=8080)
+    # Value objects with validation
+    email = FlextModels(root="test@example.com")
+    port = FlextModels(root=8080)
 
-    Factory methods:
-        user = FlextModels.create_entity({"id": "user_123", "name": "John"})
-        value = FlextModels.create_value_object({"address": "test@example.com"})
+    # Factory methods
+    entity = FlextModels({"id": "123", "name": "Test"})
 
-Note:
-    This is the ONLY model module following complete consolidation.
-    All legacy classes are now facades in legacy.py pointing to FlextModels.
-
+Features:
+    - Consolidated FlextModels class with nested types
+    - Pydantic RootModel validation for primitives
+    - Factory methods for instance creation
+    - Type-safe domain modeling patterns
 """
 
 from __future__ import annotations
@@ -92,19 +84,21 @@ class FlextModels:
         Basic domain modeling::
 
             # Create entity with factory method
-            user_result = FlextModels.create_entity({
-                "id": "user_123",
-                "name": "John Doe",
-            })
+            user_result = FlextModels(
+                {
+                    "id": "user_123",
+                    "name": "John Doe",
+                }
+            )
 
             # Create validated primitives
-            email = FlextModels.EmailAddress(root="test@example.com")
-            port = FlextModels.Port(root=8080)
+            email = FlextModels(root="test@example.com")
+            port = FlextModels(root=8080)
 
         Message creation::
 
             # Create structured message
-            message_result = FlextModels.create_payload(
+            message_result = FlextModels(
                 data={"action": "login", "user_id": "123"},
                 message_type="user_login",
                 source_service="auth_service",
@@ -112,7 +106,7 @@ class FlextModels:
             )
 
             # Create domain event
-            event_result = FlextModels.create_domain_event(
+            event_result = FlextModels(
                 event_type="UserRegistered",
                 aggregate_id="user_123",
                 aggregate_type="User",
@@ -186,7 +180,7 @@ class FlextModels:
         Example:
             Models inheriting from BaseConfig automatically get these settings::
 
-                class UserModel(FlextModels.BaseConfig):
+                class UserModel(FlextModels):
                     name: str  # Automatically trimmed
                     email: str  # Validated on assignment
 
@@ -365,7 +359,7 @@ class FlextModels:
         """Generic type-safe payload container for structured data transport and messaging.
 
         This class provides a standardized message format for inter-service communication
-        within the FLEXT ecosystem. It includes comprehensive metadata for message
+        within the FLEXT ecosystem. It includes efficient metadata for message
         routing, correlation tracking, expiration handling, and retry management.
         The generic type parameter ensures type safety for payload data.
 
@@ -427,7 +421,7 @@ class FlextModels:
 
             # Basic message creation
             user_data = {"id": "123", "name": "John"}
-            message = FlextModels.Payload[dict](
+            message = FlextModels[dict](
                 data=user_data,
                 message_type="user_update",
                 source_service="user_service",
@@ -437,7 +431,7 @@ class FlextModels:
 
             # With expiration
             expires_at = datetime.now(UTC) + timedelta(minutes=5)
-            urgent_message = FlextModels.Payload[str](
+            urgent_message = FlextModels[str](
                 data="System maintenance in 10 minutes",
                 message_type="system_alert",
                 source_service="REDACTED_LDAP_BIND_PASSWORD_service",
@@ -541,7 +535,7 @@ class FlextModels:
         Example Usage::
 
             # API request message
-            api_request = FlextModels.Message(
+            api_request = FlextModels(
                 data={
                     "action": "create_user",
                     "payload": {"name": "John Doe", "email": "john@example.com"},
@@ -552,7 +546,7 @@ class FlextModels:
             )
 
             # Configuration update
-            config_update = FlextModels.Message(
+            config_update = FlextModels(
                 data={
                     "config_section": "database",
                     "updates": {"pool_size": 20, "timeout": 30},
@@ -647,7 +641,7 @@ class FlextModels:
         Example Usage::
 
             # User registration event
-            user_registered = FlextModels.Event(
+            user_registered = FlextModels(
                 data={
                     "user_id": "user_123",
                     "email": "john@example.com",
@@ -662,7 +656,7 @@ class FlextModels:
             )
 
             # Order item added event
-            item_added = FlextModels.Event(
+            item_added = FlextModels(
                 data={"item_id": "item_456", "quantity": 2, "unit_price": "29.99"},
                 message_type="OrderItemAdded",
                 source_service="order_service",
@@ -758,6 +752,16 @@ class FlextModels:
                 msg = "Aggregate ID cannot be empty"
                 raise ValueError(msg)
             return v.strip()
+
+        @property
+        def event_type(self) -> str:
+            """Alias for message_type to maintain backward compatibility.
+
+            Returns:
+                The event type (message_type).
+
+            """
+            return self.message_type
 
     # =============================================================================
     # ROOTMODEL CLASSES FOR PRIMITIVE VALIDATION
@@ -986,7 +990,7 @@ class FlextModels:
         source_service: str,
         target_service: str | None = None,
         correlation_id: str | None = None,
-    ) -> FlextResult[FlextModels.Payload[T]]:
+    ) -> FlextResult[FlextModels[T]]:
         """Create payload instance with proper metadata."""
         try:
             payload = cls.Payload[T](
@@ -996,16 +1000,12 @@ class FlextModels:
                 target_service=target_service,
                 correlation_id=correlation_id or f"corr_{uuid.uuid4().hex[:8]}",
             )
-            return FlextResult[FlextModels.Payload[T]].ok(payload)
+            return FlextResult[FlextModels[T]].ok(payload)
 
         except ValidationError as e:
-            return FlextResult[FlextModels.Payload[T]].fail(
-                f"Payload validation failed: {e}"
-            )
+            return FlextResult[FlextModels[T]].fail(f"Payload validation failed: {e}")
         except Exception as e:
-            return FlextResult[FlextModels.Payload[T]].fail(
-                f"Payload creation failed: {e}"
-            )
+            return FlextResult[FlextModels[T]].fail(f"Payload creation failed: {e}")
 
     @classmethod
     def create_domain_event(
@@ -1016,7 +1016,7 @@ class FlextModels:
         data: FlextTypes.Core.JsonObject,
         source_service: str,
         sequence_number: int = 1,
-    ) -> FlextResult[FlextModels.Event]:
+    ) -> FlextResult[FlextModels]:
         """Create domain event with proper structure."""
         try:
             event = cls.Event(
@@ -1027,12 +1027,12 @@ class FlextModels:
                 aggregate_type=aggregate_type,
                 sequence_number=sequence_number,
             )
-            return FlextResult[FlextModels.Event].ok(event)
+            return FlextResult[FlextModels].ok(event)
 
         except ValidationError as e:
-            return FlextResult[FlextModels.Event].fail(f"Event validation failed: {e}")
+            return FlextResult[FlextModels].fail(f"Event validation failed: {e}")
         except Exception as e:
-            return FlextResult[FlextModels.Event].fail(f"Event creation failed: {e}")
+            return FlextResult[FlextModels].fail(f"Event creation failed: {e}")
 
     @classmethod
     def validate_json_serializable(
@@ -1075,7 +1075,7 @@ class FlextModels:
         """Configure models system using FlextTypes.Config with StrEnum validation.
 
         This method configures the FLEXT models system using the FlextTypes.Config
-        type system with comprehensive StrEnum validation. It validates environment,
+        type system with efficient StrEnum validation. It validates environment,
         validation settings, and performance configurations to ensure the models
         system operates correctly across different deployment environments.
 
@@ -1104,7 +1104,7 @@ class FlextModels:
                 "enable_json_schema_validation": True,
                 "max_validation_errors": 50,
             }
-            result = FlextModels.configure_models_system(config)
+            result = FlextModels(config)
             if result.success:
                 validated_config = result.unwrap()
                 print(f"Models configured for {validated_config['environment']}")
@@ -1188,7 +1188,7 @@ class FlextModels:
         """Get current models system configuration with runtime information.
 
         Retrieves the current configuration of the FLEXT models system along with
-        runtime metrics and system information. This method provides comprehensive
+        runtime metrics and system information. This method provides efficient
         system state information for monitoring, debugging, and REDACTED_LDAP_BIND_PASSWORDistration.
 
         Returns:
@@ -1201,7 +1201,7 @@ class FlextModels:
 
         Example:
             ```python
-            result = FlextModels.get_models_system_config()
+            result = FlextModels()
             if result.success:
                 config = result.unwrap()
                 print(f"Environment: {config['environment']}")
@@ -1307,7 +1307,7 @@ class FlextModels:
         Example:
             ```python
             # Get production configuration
-            result = FlextModels.create_environment_models_config("production")
+            result = FlextModels("production")
             if result.success:
                 prod_config = result.unwrap()
                 print(f"Validation level: {prod_config['validation_level']}")
@@ -1319,7 +1319,7 @@ class FlextModels:
 
         Environment Configurations:
             - **production**: Strict validation, performance tracking, minimal errors
-            - **development**: Normal validation, detailed debugging, comprehensive logging
+            - **development**: Normal validation, detailed debugging, efficient logging
             - **test**: Loose validation, no performance tracking, fast execution
             - **staging**: Strict validation, full monitoring, production-like settings
             - **local**: Flexible validation, full debugging, development features
@@ -1343,65 +1343,75 @@ class FlextModels:
 
             # Environment-specific configurations
             if environment == "production":
-                config.update({
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_strict_validation": True,
-                    "enable_json_schema_validation": True,
-                    "enable_performance_tracking": True,
-                    "max_validation_errors": 50,  # Limited in production
-                    "cache_model_instances": True,
-                    "enable_detailed_error_messages": False,  # Security in production
-                    "validation_timeout_ms": 1000,  # Fast validation required
-                })
+                config.update(
+                    {
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_strict_validation": True,
+                        "enable_json_schema_validation": True,
+                        "enable_performance_tracking": True,
+                        "max_validation_errors": 50,  # Limited in production
+                        "cache_model_instances": True,
+                        "enable_detailed_error_messages": False,  # Security in production
+                        "validation_timeout_ms": 1000,  # Fast validation required
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_strict_validation": True,
-                    "enable_json_schema_validation": True,
-                    "enable_performance_tracking": False,  # Not needed in dev
-                    "max_validation_errors": 500,  # Detailed debugging
-                    "cache_model_instances": False,  # Fresh validation each time
-                    "enable_detailed_error_messages": True,  # Full debugging info
-                    "validation_timeout_ms": 5000,  # More time for debugging
-                })
+                config.update(
+                    {
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_strict_validation": True,
+                        "enable_json_schema_validation": True,
+                        "enable_performance_tracking": False,  # Not needed in dev
+                        "max_validation_errors": 500,  # Detailed debugging
+                        "cache_model_instances": False,  # Fresh validation each time
+                        "enable_detailed_error_messages": True,  # Full debugging info
+                        "validation_timeout_ms": 5000,  # More time for debugging
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
-                    "enable_strict_validation": False,  # Fast test execution
-                    "enable_json_schema_validation": False,  # Skip for speed
-                    "enable_performance_tracking": False,  # No tracking in tests
-                    "max_validation_errors": 10,  # Limited for test speed
-                    "cache_model_instances": False,  # Clean state between tests
-                    "enable_detailed_error_messages": False,  # Clean test output
-                    "validation_timeout_ms": 100,  # Very fast for tests
-                })
+                config.update(
+                    {
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
+                        "enable_strict_validation": False,  # Fast test execution
+                        "enable_json_schema_validation": False,  # Skip for speed
+                        "enable_performance_tracking": False,  # No tracking in tests
+                        "max_validation_errors": 10,  # Limited for test speed
+                        "cache_model_instances": False,  # Clean state between tests
+                        "enable_detailed_error_messages": False,  # Clean test output
+                        "validation_timeout_ms": 100,  # Very fast for tests
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_strict_validation": True,
-                    "enable_json_schema_validation": True,
-                    "enable_performance_tracking": True,  # Monitor staging performance
-                    "max_validation_errors": 100,
-                    "cache_model_instances": True,
-                    "enable_detailed_error_messages": True,  # Debug staging issues
-                    "validation_timeout_ms": 2000,  # Reasonable staging timeout
-                })
+                config.update(
+                    {
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_strict_validation": True,
+                        "enable_json_schema_validation": True,
+                        "enable_performance_tracking": True,  # Monitor staging performance
+                        "max_validation_errors": 100,
+                        "cache_model_instances": True,
+                        "enable_detailed_error_messages": True,  # Debug staging issues
+                        "validation_timeout_ms": 2000,  # Reasonable staging timeout
+                    }
+                )
             elif environment == "local":
-                config.update({
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_strict_validation": True,
-                    "enable_json_schema_validation": True,
-                    "enable_performance_tracking": False,
-                    "max_validation_errors": 1000,  # Local development flexibility
-                    "cache_model_instances": False,  # Fresh validation for development
-                    "enable_detailed_error_messages": True,  # Full local debugging
-                    "validation_timeout_ms": 10000,  # Generous local timeout
-                })
+                config.update(
+                    {
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_strict_validation": True,
+                        "enable_json_schema_validation": True,
+                        "enable_performance_tracking": False,
+                        "max_validation_errors": 1000,  # Local development flexibility
+                        "cache_model_instances": False,  # Fresh validation for development
+                        "enable_detailed_error_messages": True,  # Full local debugging
+                        "validation_timeout_ms": 10000,  # Generous local timeout
+                    }
+                )
 
             return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(config)
 
@@ -1441,7 +1451,7 @@ class FlextModels:
                 "max_concurrent_validations": 10,
                 "validation_batch_size": 100,
             }
-            result = FlextModels.optimize_models_performance(config)
+            result = FlextModels(config)
             if result.success:
                 optimized = result.unwrap()
                 print(f"Cache size: {optimized['cache_size']}")
@@ -1463,89 +1473,99 @@ class FlextModels:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": datetime.now(UTC).isoformat(),
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": datetime.now(UTC).isoformat(),
+                }
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Validation optimization
-                    "enable_validation_caching": True,
-                    "validation_cache_size": 10000,
-                    "max_concurrent_validations": 20,
-                    "validation_batch_size": 500,
-                    "validation_thread_count": 8,
-                    # Memory and caching
-                    "cache_size": 50000,
-                    "enable_aggressive_caching": True,
-                    "cache_ttl_seconds": 3600,  # 1 hour
-                    "memory_pool_size_mb": 100,
-                    # Processing optimization
-                    "enable_parallel_processing": True,
-                    "processing_queue_size": 1000,
-                    "enable_bulk_operations": True,
-                    "optimization_level": "aggressive",
-                })
+                optimized_config.update(
+                    {
+                        # Validation optimization
+                        "enable_validation_caching": True,
+                        "validation_cache_size": 10000,
+                        "max_concurrent_validations": 20,
+                        "validation_batch_size": 500,
+                        "validation_thread_count": 8,
+                        # Memory and caching
+                        "cache_size": 50000,
+                        "enable_aggressive_caching": True,
+                        "cache_ttl_seconds": 3600,  # 1 hour
+                        "memory_pool_size_mb": 100,
+                        # Processing optimization
+                        "enable_parallel_processing": True,
+                        "processing_queue_size": 1000,
+                        "enable_bulk_operations": True,
+                        "optimization_level": "aggressive",
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    # Balanced validation
-                    "enable_validation_caching": True,
-                    "validation_cache_size": 5000,
-                    "max_concurrent_validations": 10,
-                    "validation_batch_size": 200,
-                    "validation_thread_count": 4,
-                    # Moderate caching
-                    "cache_size": 25000,
-                    "enable_aggressive_caching": False,
-                    "cache_ttl_seconds": 1800,  # 30 minutes
-                    "memory_pool_size_mb": 50,
-                    # Standard processing
-                    "enable_parallel_processing": True,
-                    "processing_queue_size": 500,
-                    "enable_bulk_operations": True,
-                    "optimization_level": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        # Balanced validation
+                        "enable_validation_caching": True,
+                        "validation_cache_size": 5000,
+                        "max_concurrent_validations": 10,
+                        "validation_batch_size": 200,
+                        "validation_thread_count": 4,
+                        # Moderate caching
+                        "cache_size": 25000,
+                        "enable_aggressive_caching": False,
+                        "cache_ttl_seconds": 1800,  # 30 minutes
+                        "memory_pool_size_mb": 50,
+                        # Standard processing
+                        "enable_parallel_processing": True,
+                        "processing_queue_size": 500,
+                        "enable_bulk_operations": True,
+                        "optimization_level": "balanced",
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    # Conservative validation
-                    "enable_validation_caching": False,
-                    "validation_cache_size": 1000,
-                    "max_concurrent_validations": 2,
-                    "validation_batch_size": 50,
-                    "validation_thread_count": 1,
-                    # Minimal caching
-                    "cache_size": 5000,
-                    "enable_aggressive_caching": False,
-                    "cache_ttl_seconds": 300,  # 5 minutes
-                    "memory_pool_size_mb": 20,
-                    # Single-threaded processing
-                    "enable_parallel_processing": False,
-                    "processing_queue_size": 100,
-                    "enable_bulk_operations": False,
-                    "optimization_level": "conservative",
-                })
+                optimized_config.update(
+                    {
+                        # Conservative validation
+                        "enable_validation_caching": False,
+                        "validation_cache_size": 1000,
+                        "max_concurrent_validations": 2,
+                        "validation_batch_size": 50,
+                        "validation_thread_count": 1,
+                        # Minimal caching
+                        "cache_size": 5000,
+                        "enable_aggressive_caching": False,
+                        "cache_ttl_seconds": 300,  # 5 minutes
+                        "memory_pool_size_mb": 20,
+                        # Single-threaded processing
+                        "enable_parallel_processing": False,
+                        "processing_queue_size": 100,
+                        "enable_bulk_operations": False,
+                        "optimization_level": "conservative",
+                    }
+                )
 
             # Additional performance metrics
-            optimized_config.update({
-                "expected_throughput_per_second": 1000
-                if performance_level == "high"
-                else 500
-                if performance_level == "medium"
-                else 100,
-                "target_validation_latency_ms": 1
-                if performance_level == "high"
-                else 5
-                if performance_level == "medium"
-                else 20,
-                "memory_efficiency_target": 0.9
-                if performance_level == "high"
-                else 0.8
-                if performance_level == "medium"
-                else 0.7,
-            })
+            optimized_config.update(
+                {
+                    "expected_throughput_per_second": 1000
+                    if performance_level == "high"
+                    else 500
+                    if performance_level == "medium"
+                    else 100,
+                    "target_validation_latency_ms": 1
+                    if performance_level == "high"
+                    else 5
+                    if performance_level == "medium"
+                    else 20,
+                    "memory_efficiency_target": 0.9
+                    if performance_level == "high"
+                    else 0.8
+                    if performance_level == "medium"
+                    else 0.7,
+                }
+            )
 
             return FlextResult[FlextTypes.Models.ModelsConfigDict].ok(optimized_config)
 

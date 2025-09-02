@@ -148,7 +148,7 @@ This migration roadmap provides a systematic 22-week strategy for implementing F
 **Objective**: Implement Infrastructure.LdapConnection for LDAP operations
 
 **Tasks**:
-- [ ] Implement FlextLdapService using Infrastructure.LdapConnection
+- [ ] Implement FlextLDAPService using Infrastructure.LdapConnection
 - [ ] Create LdapUserRepository using Domain.Repository pattern
 - [ ] Add Infrastructure.Auth protocols for LDAP authentication
 - [ ] Implement connection pooling and management

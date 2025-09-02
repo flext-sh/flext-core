@@ -1724,33 +1724,33 @@ class TestFlextFieldsWithTestSupport:
         assert hasattr(string_field_typed, "field_name")
         assert hasattr(string_field_typed, "field_type")
         # Factory field_type is lowercase, not uppercase
-        field_type = string_field_typed.field_type  # type: ignore[attr-defined]
+        field_type = string_field_typed.field_type
         assert field_type == "string"
 
         assert hasattr(integer_field_typed, "field_name")
         assert hasattr(integer_field_typed, "field_type")
-        assert integer_field_typed.field_type == "integer"  # type: ignore[attr-defined]
+        assert integer_field_typed.field_type == "integer"
 
         assert hasattr(boolean_field_typed, "field_name")
         assert hasattr(boolean_field_typed, "field_type")
-        assert boolean_field_typed.field_type == "boolean"  # type: ignore[attr-defined]
+        assert boolean_field_typed.field_type == "boolean"
 
         assert hasattr(float_field_typed, "field_name")
         assert hasattr(float_field_typed, "field_type")
-        assert float_field_typed.field_type == "float"  # type: ignore[attr-defined]
+        assert float_field_typed.field_type == "float"
 
         # Test using factory data to create actual FlextFields
         string_result = FlextFields.Factory.create_field(
-            str(string_field_typed.field_type),  # type: ignore[attr-defined]
-            str(string_field_typed.field_name),  # type: ignore[attr-defined]
-            min_length=cast("int", string_field_typed.min_length),  # type: ignore[attr-defined]
-            max_length=cast("int", string_field_typed.max_length),  # type: ignore[attr-defined]
+            str(string_field_typed.field_type),
+            str(string_field_typed.field_name),
+            min_length=cast("int", string_field_typed.min_length),
+            max_length=cast("int", string_field_typed.max_length),
         )
         string_flext_field = safe_get_field(string_result)
 
         # Verify FlextField creation works with factory data
         assert hasattr(string_flext_field, "name")
-        assert string_flext_field.name == str(string_field_typed.field_name)  # type: ignore[attr-defined]
+        assert string_flext_field.name == str(string_field_typed.field_name)
 
     def test_flext_result_factory_integration(self) -> None:
         """Test integration with FlextResultFactory from tests/support."""

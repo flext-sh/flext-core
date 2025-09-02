@@ -299,7 +299,7 @@ for i, test_data in enumerate(test_cases):
 
 #### **AuthorizingHandler** - Enterprise Security Integration
 ```python
-from typing import Dict, Any
+from typing import Dict, object
 
 def role_based_authorizer(data: dict) -> bool:
     """Role-based authorization with comprehensive security checks."""
@@ -398,7 +398,7 @@ class CreateUserCommand:
 class UpdateUserCommand:
     """Command to update existing user."""
     user_id: str
-    updates: Dict[str, Any]
+    updates: Dict[str, object]
     
     def validate(self) -> FlextResult[None]:
         if not self.user_id:
@@ -652,7 +652,7 @@ class UserCreatedEvent:
 class UserUpdatedEvent:
     """Domain event for user updates."""
     user_id: str
-    updated_fields: Dict[str, Any]
+    updated_fields: Dict[str, object]
     updated_at: datetime
     updated_by: str
     event_version: str = "1.0"

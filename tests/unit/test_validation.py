@@ -121,7 +121,9 @@ class TestFlextValidationRealFunctionality:
     def test_environment_specific_validation_config_real(self) -> None:
         """Test creation of environment-specific validation configurations."""
         # Test production configuration
-        prod_result = FlextValidations.create_environment_validation_config("production")
+        prod_result = FlextValidations.create_environment_validation_config(
+            "production"
+        )
         assert prod_result.success is True
 
         prod_config = prod_result.unwrap()
@@ -136,7 +138,9 @@ class TestFlextValidationRealFunctionality:
         assert prod_config["fail_fast_validation"] is True  # Fail fast in production
 
         # Test development configuration
-        dev_result = FlextValidations.create_environment_validation_config("development")
+        dev_result = FlextValidations.create_environment_validation_config(
+            "development"
+        )
         assert dev_result.success is True
 
         dev_config = dev_result.unwrap()

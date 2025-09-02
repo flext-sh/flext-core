@@ -508,7 +508,7 @@ gantt
 |--------------|-----------|-----------|----------|
 | **Business Logic** | Validation failures | >2% failure rate | Business rule review |
 | **Performance** | Model operation time | >100ms average | Performance optimization |
-| **Data Consistency** | Aggregate violations | Any occurrence | Boundary redesign |
+| **Data Consistency** | Aggregate violations | object occurrence | Boundary redesign |
 | **Event Processing** | Event lag | >1 second | Event processing optimization |
 
 ---

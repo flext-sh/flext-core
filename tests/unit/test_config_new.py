@@ -42,7 +42,9 @@ class TestFlextConfigCore:
 
     def test_from_file_success(self) -> None:
         """Test loading from JSON file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(
                 {
                     "app_name": "file-app",
@@ -73,7 +75,9 @@ class TestFlextConfigCore:
         """Test merged configuration from multiple sources."""
         monkeypatch.setenv("FLEXT_APP_NAME", "env-app")
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump({"app_version": "3.0.0"}, f)
             temp_path = f.name
 
@@ -166,7 +170,9 @@ class TestFlextConfigCore:
     def test_legacy_methods(self) -> None:
         """Test legacy compatibility methods."""
         # Test safe_load_json_file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump({"app_name": "legacy-app"}, f)
             temp_path = f.name
 
@@ -253,7 +259,9 @@ class TestFlextConfigProviders:
 
     def test_from_file_json(self) -> None:
         """Test loading from JSON file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump({"app_name": "json-app", "debug": True}, f)
             temp_path = f.name
 
@@ -268,7 +276,9 @@ class TestFlextConfigProviders:
 
     def test_from_file_yaml(self) -> None:
         """Test loading from YAML file (should fail without yaml)."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write("app_name: yaml-app\n")
             temp_path = f.name
 

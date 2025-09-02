@@ -400,8 +400,8 @@ gantt
 | Risk Category | Indicator | Threshold | Response |
 |--------------|-----------|-----------|----------|
 | **Performance** | Config load time | >100ms | Optimize loading mechanism |
-| **Compatibility** | API breaking changes | Any | Implement compatibility layer |  
-| **Security** | Production exposure | Any unsafe config | Immediate security validation |
+| **Compatibility** | API breaking changes | object | Implement compatibility layer |  
+| **Security** | Production exposure | object unsafe config | Immediate security validation |
 | **Quality** | Test coverage drop | <90% | Mandatory test completion |
 
 ---

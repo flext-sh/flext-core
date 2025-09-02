@@ -68,7 +68,7 @@ class FlextValidation:
 
             adapter = FlextTypeAdapters.Foundation.create_basic_adapter(expected_type)
             validation_result = FlextTypeAdapters.Foundation.validate_with_adapter(
-                adapter, value
+                value, expected_type, adapter
             )
 
             if validation_result.is_failure:
@@ -136,17 +136,6 @@ class FlextValidation:
         obj._is_valid = False
 
     @staticmethod
-    def clear_validation_errors(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
-    ) -> None:
-        """Clear all validation errors."""
-        if not hasattr(obj, "_validation_initialized"):
-            FlextValidation.initialize_validation(obj)
-
-        obj._validation_errors = []
-        obj._is_valid = True
-
-    @staticmethod
     def get_validation_errors(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> list[str]:
@@ -175,6 +164,73 @@ class FlextValidation:
         if not hasattr(obj, "_validation_initialized"):
             FlextValidation.initialize_validation(obj)
 
+        obj._is_valid = True
+
+    @staticmethod
+    def validate_field(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        _field_name: str,
+        field_value: object,
+    ) -> bool:
+        """Validate a single field value.
+
+        Args:
+            obj: Object to validate field on
+            field_name: Name of the field
+            field_value: Value to validate
+
+        Returns:
+            True if field is valid
+
+        """
+        if not hasattr(obj, "_validation_initialized"):
+            FlextValidation.initialize_validation(obj)
+
+        # Basic validation - check if field value is not None or empty string
+        return not (
+            field_value is None
+            or (isinstance(field_value, str) and not field_value.strip())
+        )
+
+    @staticmethod
+    def validate_fields(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        field_values: dict[str, object],
+    ) -> bool:
+        """Validate multiple fields.
+
+        Args:
+            obj: Object to validate fields on
+            field_values: Dictionary of field names and values to validate
+
+        Returns:
+            True if all fields are valid
+
+        """
+        if not hasattr(obj, "_validation_initialized"):
+            FlextValidation.initialize_validation(obj)
+
+        all_valid = True
+        for field_name, field_value in field_values.items():
+            if not FlextValidation.validate_field(obj, field_name, field_value):
+                all_valid = False
+
+        return all_valid
+
+    @staticmethod
+    def clear_validation_errors(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> None:
+        """Clear all validation errors.
+
+        Args:
+            obj: Object to clear validation errors from
+
+        """
+        if not hasattr(obj, "_validation_initialized"):
+            FlextValidation.initialize_validation(obj)
+
+        obj._validation_errors = []
         obj._is_valid = True
 
     class Validatable:
@@ -214,3 +270,12 @@ class FlextValidation:
         def mark_valid(self) -> None:
             """Mark object as valid."""
             FlextValidation.mark_valid(self)
+
+        @property
+        def validation_errors(self) -> list[str]:
+            """Get validation errors as property (alias for get_validation_errors)."""
+            return self.get_validation_errors()
+
+        def has_validation_errors(self) -> bool:
+            """Check if object has validation errors."""
+            return len(self.get_validation_errors()) > 0

@@ -23,9 +23,7 @@ import pytest
 from hypothesis import assume, given, strategies as st
 from hypothesis.strategies import SearchStrategy
 
-from flext_core import (
-    FlextMixins,
-)
+from flext_core import FlextMixins
 from tests.support import (
     AsyncTestUtils,
     BenchmarkUtils,
@@ -44,11 +42,13 @@ class CompositeStrategies:
 
     @staticmethod
     def user_profiles() -> object:
-        return st.fixed_dictionaries({
-            "name": st.text(min_size=1, max_size=50),
-            "email": st.emails(),
-            "active": st.booleans(),
-        })
+        return st.fixed_dictionaries(
+            {
+                "name": st.text(min_size=1, max_size=50),
+                "email": st.emails(),
+                "active": st.booleans(),
+            }
+        )
 
 
 class EdgeCaseStrategies:
@@ -122,11 +122,13 @@ class TestAssertionBuilder:
         self.assertions: list[tuple[str, Callable[[object], bool], str]] = []
 
     def is_not_none(self) -> TestAssertionBuilder:
-        self.assertions.append((
-            "not_none",
-            lambda x: x is not None,
-            "should not be None",
-        ))
+        self.assertions.append(
+            (
+                "not_none",
+                lambda x: x is not None,
+                "should not be None",
+            )
+        )
         return self
 
     def satisfies(
@@ -219,7 +221,7 @@ class TestTimestampMixin:
 
         # Use factory data
         user_data = user_factory.build()
-        user_name = user_data["name"]  # type: ignore[index]  # UserDataFactory returns dict
+        user_name = user_data["name"]
         assert isinstance(user_name, str)
         model = TimestampedModel(user_name)
 
@@ -230,10 +232,10 @@ class TestTimestampMixin:
             lambda x: hasattr(x, "updated_at"), "should have updated_at"
         ).satisfies(
             lambda x: hasattr(x, "created_at") and x.created_at is not None,
-            "created_at should not be None",  # type: ignore[attr-defined]
+            "created_at should not be None",
         ).satisfies(
             lambda x: hasattr(x, "updated_at") and x.updated_at is not None,
-            "updated_at should not be None",  # type: ignore[attr-defined]
+            "updated_at should not be None",
         ).assert_all()
 
     def test_timestamp_age_calculation_complexity(self) -> None:
@@ -343,7 +345,7 @@ class TestIdentifiableMixin:
         for case in edge_cases:
             id_value = case["id"]
             # Direct assignment doesn't validate or convert
-            identifiable_obj.id = id_value  # type: ignore[assignment]
+            identifiable_obj.id = id_value
             # Check that the ID was set as-is (no conversion)
             assert identifiable_obj.id == id_value
 
@@ -638,7 +640,7 @@ class TestSerializableMixin:
 
         # Use factory data
         user_data = user_factory.build()  # UserDataFactory returns dict directly
-        serializable_obj = ConcreteSerializable(user_data)  # type: ignore[arg-type]  # Factory returns dict
+        serializable_obj = ConcreteSerializable(user_data)
 
         # Test serialization with comprehensive validation
         result = serializable_obj.to_dict_basic()
@@ -697,11 +699,13 @@ class TestEntityMixin:
         param_builder = ParameterizedTestBuilder("entity_creation")
 
         # Add various test cases
-        param_builder.add_success_cases([
-            {"entity_id": "entity-123", "name": "Test Entity 1"},
-            {"entity_id": "entity-456", "name": "Test Entity 2"},
-            {"entity_id": "entity-789", "name": "Test Entity 3"},
-        ])
+        param_builder.add_success_cases(
+            [
+                {"entity_id": "entity-123", "name": "Test Entity 1"},
+                {"entity_id": "entity-456", "name": "Test Entity 2"},
+                {"entity_id": "entity-789", "name": "Test Entity 3"},
+            ]
+        )
 
         class EntityModel(FlextMixins.Entity):
             def __init__(self, entity_id: str, name: str) -> None:

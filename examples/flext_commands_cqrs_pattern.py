@@ -2,7 +2,7 @@
 """03 - CQRS Commands: Maximum FlextCore Ecosystem Showcase.
 
 Demonstrates 20+ FlextCore features in minimal code:
-• FlextModels.Entity/ValueObject (DDD) • FlextResult railway pattern
+• FlextModels/ValueObject (DDD) • FlextResult railway pattern
 • FlextContainer DI • FlextCommands/Handlers (CQRS)
 • FlextDecorators enterprise • FlextValidations predicates
 • FlextContext correlation • FlextLogger structured • FlextObservability metrics
@@ -13,13 +13,12 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from pydantic import BaseModel
-
 from flext_core.commands import FlextCommands
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.decorators import FlextDecorators
 from flext_core.loggings import FlextLogger
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.utilities import FlextUtilities
 
@@ -33,7 +32,7 @@ logger = FlextLogger(__name__)  # FlextLogger structured output
 container = FlextContainer.get_global()  # FlextContainer dependency injection
 
 
-class Email(BaseModel):
+class Email(FlextModels.BaseConfig):
     """Email with FlextResult validation."""
 
     address: str
@@ -48,7 +47,7 @@ class Email(BaseModel):
         return cls(address=address)
 
 
-class User(BaseModel):
+class User(FlextModels.BaseConfig):
     """User entity with FlextUtilities integration."""
 
     id: str | None = None

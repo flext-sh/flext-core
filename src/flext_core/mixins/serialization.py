@@ -1,8 +1,8 @@
 """FLEXT Serialization - JSON and dictionary conversion functionality.
 
-Provides comprehensive serialization capabilities through hierarchical organization
+Provides serialization capabilities through hierarchical organization
 of conversion utilities and mixin classes. Built for JSON serialization, dictionary
-conversion, and data loading with enterprise-grade patterns.
+conversion, and data loading with production-ready patterns.
 
 Module Role in Architecture:
     FlextSerialization serves as the serialization foundation providing data
@@ -30,7 +30,7 @@ class FlextSerialization:
     """Unified serialization system implementing single class pattern.
 
     This class serves as the single main export consolidating ALL serialization
-    functionality with enterprise-grade patterns. Provides comprehensive
+    functionality with production-ready patterns. Provides
     JSON and dictionary conversion capabilities while maintaining clean API.
 
     Tier 1 Module Pattern: serialization.py -> FlextSerialization
@@ -211,7 +211,7 @@ class FlextSerialization:
         for key, value in data.items():
             try:
                 setattr(obj, key, value)
-            except Exception:  # noqa: S112  # nosec B112
+            except (AttributeError, TypeError, ValueError):
                 # Best-effort: skip attributes that cannot be set
                 continue
 

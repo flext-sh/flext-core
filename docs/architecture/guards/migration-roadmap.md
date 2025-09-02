@@ -68,7 +68,7 @@ This migration roadmap provides a systematic 16-week plan for adopting FlextGuar
 **Objective**: Migrate custom type guards to FlextGuards patterns
 
 **Tasks**:
-- [ ] Create `FlextLdapGuards` extending FlextGuards
+- [ ] Create `FlextLDAPGuards` extending FlextGuards
 - [ ] Migrate LDAP DN validation to enhanced patterns
 - [ ] Implement LDAP search parameter validation
 - [ ] Create immutable LDAP entry objects

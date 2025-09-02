@@ -69,7 +69,7 @@ else:
 
 ```python
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, object
 import datetime
 
 # Define Commands and Queries
@@ -1116,7 +1116,7 @@ else:
 
 ```python
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, object, Optional
 from enum import Enum
 import json
 import uuid
@@ -1138,17 +1138,17 @@ class DomainEvent:
     aggregate_id: str = ""
     event_version: int = 1
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
-    event_data: Dict[str, Any] = field(default_factory=dict)
+    event_data: Dict[str, object] = field(default_factory=dict)
     correlation_id: str = ""
     causation_id: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, object] = field(default_factory=dict)
 
 class EventStore:
     """In-memory event store for event sourcing."""
     
     def __init__(self):
         self.events: List[DomainEvent] = []
-        self.snapshots: Dict[str, Dict[str, Any]] = {}
+        self.snapshots: Dict[str, Dict[str, object]] = {}
         self.event_handlers: Dict[EventType, List[Callable]] = {}
     
     def append_event(self, event: DomainEvent) -> FlextResult[str]:
@@ -1195,7 +1195,7 @@ class EnterpriseAggregateRoot:
         self._handle_event(event)
         self.version += 1
     
-    def raise_event(self, event_type: EventType, event_data: Dict[str, Any], correlation_id: str = ""):
+    def raise_event(self, event_type: EventType, event_data: Dict[str, object], correlation_id: str = ""):
         """Raise new domain event."""
         event = DomainEvent(
             event_type=event_type,
@@ -1246,7 +1246,7 @@ class User(EnterpriseAggregateRoot):
         
         self.raise_event(EventType.USER_CREATED, event_data, correlation_id)
     
-    def update_user(self, updates: Dict[str, Any], correlation_id: str = ""):
+    def update_user(self, updates: Dict[str, object], correlation_id: str = ""):
         """Update user - raises UserUpdated event."""
         if not self.created_at:
             raise ValueError(f"User {self.aggregate_id} does not exist")

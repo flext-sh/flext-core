@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 
 
@@ -20,11 +19,11 @@ class FlextTimestamps:
     def create_timestamp_fields(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> None:
-        """Initialize timestamp fields on an object using FlextModels.Timestamp."""
-        current_time = FlextModels.Timestamp(root=datetime.now(UTC))
+        """Initialize timestamp fields on an object using FlextModels."""
+        current_time = datetime.now(UTC)
         # Initialize internal fields to avoid property recursion
-        obj._created_at = current_time.root
-        obj._updated_at = current_time.root
+        obj._created_at = current_time
+        obj._updated_at = current_time
         obj._timestamp_initialized = True
 
     @staticmethod
@@ -38,21 +37,21 @@ class FlextTimestamps:
             if not (isinstance(d, dict) and ("updated_at" in d or "created_at" in d)):
                 FlextTimestamps.create_timestamp_fields(obj)
 
-        updated_time = FlextModels.Timestamp(root=datetime.now(UTC))
+        updated_time = datetime.now(UTC)
         if getattr(obj, "_timestamp_initialized", False):
-            obj._updated_at = updated_time.root
+            obj._updated_at = updated_time
         else:
             # For plain objects with public attribute; update both representations
             try:
                 old = getattr(obj, "__dict__", {}).get("updated_at")
-                new_val = updated_time.root
+                new_val = updated_time
                 if isinstance(old, datetime) and new_val == old:
                     new_val = old + timedelta(microseconds=1)
                 obj.__dict__["updated_at"] = new_val
                 # Maintain internal mirror for consistency
                 obj._updated_at = new_val
             except Exception:
-                obj._updated_at = updated_time.root
+                obj._updated_at = updated_time
 
     @staticmethod
     def get_created_at(

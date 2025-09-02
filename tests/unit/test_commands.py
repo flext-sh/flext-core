@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-from pydantic import BaseModel
 
-from flext_core import FlextCommands, FlextResult
+# from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+from flext_core import FlextCommands, FlextModels, FlextResult
 
 
-class SampleCommand(BaseModel):
+class SampleCommand(FlextModels.BaseConfig):
     """Test command for comprehensive testing."""
 
     name: str
@@ -23,7 +23,7 @@ class SampleCommand(BaseModel):
         return FlextResult[None].ok(None)
 
 
-class SampleCommandWithoutValidation(BaseModel):
+class SampleCommandWithoutValidation(FlextModels.BaseConfig):
     """Test command without custom validation."""
 
     description: str

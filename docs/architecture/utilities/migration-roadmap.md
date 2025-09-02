@@ -241,7 +241,7 @@ def test_library_integration():
     """Test complete library functionality after FlextUtilities migration."""
     
     # Test flext-ldif integration
-    ldif_processor = FlextLdifProcessor()
+    ldif_processor = FlextLDIFProcessor()
     
     # Generate test data
     test_entry = {

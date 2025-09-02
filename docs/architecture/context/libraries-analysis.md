@@ -659,7 +659,7 @@ class FlextGrpcServiceMeshOrchestrator:
 ##### Recommended FlextContext Integration
 ```python
 # RECOMMENDED: LDAP operations with context tracking
-class FlextLdapDirectoryOrchestrator:
+class FlextLDAPDirectoryOrchestrator:
     """LDAP directory operations with comprehensive context tracking and audit trails."""
     
     def perform_directory_operation_with_context(self, operation: str, **kwargs) -> FlextResult[dict]:

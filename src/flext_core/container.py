@@ -1,53 +1,22 @@
 """Dependency injection container with type-safe service management.
 
-This module provides the FlextContainer class for managing service dependencies throughout
-the FLEXT ecosystem. Features type-safe service registration and retrieval, factory patterns
-for lazy initialization, global singleton access, and comprehensive FlextResult-based error
-handling for enterprise-grade dependency injection.
+Provides FlextContainer for managing service dependencies with type-safe registration,
+factory patterns, and global singleton access using FlextResult error handling.
 
-Architecture:
-    Infrastructure layer module providing dependency injection foundation for the FLEXT
-    ecosystem. Supports both instance-based and global singleton patterns with type-safe
-    service resolution, factory registration, and comprehensive service lifecycle management.
+Usage:
+    container = get_flext_container()
+    container.register("db", DatabaseService())
+    container.register_factory("logger", lambda: create_logger())
 
-Core Components:
-    FlextContainer: Main dependency injection container with service management
-    FlextContainer.ServiceKey[T]: Type-safe service identifier with generic type support
-    FlextContainer.Commands: Command objects for service operations (register, unregister, etc.)
-    FlextContainer.Queries: Query objects for service information retrieval
-    FlextContainer._ServiceRegistrar: Internal service registration management
-    FlextContainer._ServiceRetriever: Internal service retrieval management
-    GlobalContainerManager: Singleton manager for global container access
+    db_result = container.get("db")
+    if db_result.success:
+        db = db_result.unwrap()
 
-Key Features:
-    - Type-safe service registration and retrieval with generic type parameters
-    - Factory pattern support for lazy service initialization
-    - Global singleton container for ecosystem-wide service sharing
-    - Command and query patterns for service operations
-    - FlextResult integration for comprehensive error handling
-    - Service lifecycle management with validation and metadata
-    - Environment-scoped container creation for testing and isolation
-    - Batch registration operations for configuration management
-    - Auto-wiring support for automatic dependency resolution
-    - Module utilities generation for streamlined service access
-
-Methods and Properties:
-    Container Management:
-        __init__(config: ConfigDict | None = None) -> None: Initialize container with optional config
-        configure_container(**kwargs) -> FlextResult[None]: Configure container settings
-        get_container_config() -> FlextResult[ConfigDict]: Retrieve current configuration
-        create_environment_scoped_container(env: str) -> FlextResult[FlextContainer]: Create isolated container
-        get_configuration_summary() -> FlextResult[dict]: Get configuration summary
-        clear() -> FlextResult[None]: Clear all services and factories
-        get_service_count() -> int: Get total number of registered services
-        list_services() -> ServiceListDict: List all services with metadata
-        get_service_names() -> list[str]: Get list of service names
-
-    Service Registration:
-        register(name: str, service: object) -> FlextResult[None]: Register service instance
-        register_factory(name: str, factory: Callable[[], T]) -> FlextResult[None]: Register factory function
-        batch_register(services: dict[str, object]) -> FlextResult[None]: Register multiple services
-        unregister(name: str) -> FlextResult[None]: Remove service registration
+Features:
+    - Type-safe service registration and retrieval
+    - Factory pattern support for lazy initialization
+    - Global singleton container access
+    - FlextResult integration for error handling
         has(name: str) -> bool: Check if service is registered
 
     Service Retrieval:
@@ -1095,7 +1064,7 @@ class FlextContainer:
     # CONFIGURATION MANAGEMENT WITH FlextTypes.Config - Massive Integration
     # =========================================================================
 
-    def configure_container(  # noqa: PLR0911, PLR0912
+    def configure_container(
         self, config: FlextTypes.Config.ConfigDict
     ) -> FlextResult[None]:
         """Configure container with FlextTypes.Config and StrEnum validation.
@@ -1243,7 +1212,7 @@ class FlextContainer:
             )
 
     def get_configuration_summary(self) -> FlextResult[dict[str, object]]:
-        """Get comprehensive configuration summary with FlextTypes.Config integration.
+        """Get efficient configuration summary with FlextTypes.Config integration.
 
         Returns:
             FlextResult containing detailed configuration summary with metadata.

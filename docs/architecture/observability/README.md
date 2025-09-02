@@ -138,16 +138,16 @@ class FlextObservability.Console:
     """Structured logging implementing FlextLoggerProtocol."""
     
     # Multi-level logging with context
-    def trace(self, message: str, **context: Any) -> None
-    def debug(self, message: str, **context: Any) -> None  
-    def info(self, message: str, **context: Any) -> None
-    def warn(self, message: str, **context: Any) -> None
-    def error(self, message: str, **context: Any) -> None
-    def fatal(self, message: str, **context: Any) -> None
-    def audit(self, message: str, **context: Any) -> None
+    def trace(self, message: str, **context: object) -> None
+    def debug(self, message: str, **context: object) -> None  
+    def info(self, message: str, **context: object) -> None
+    def warn(self, message: str, **context: object) -> None
+    def error(self, message: str, **context: object) -> None
+    def fatal(self, message: str, **context: object) -> None
+    def audit(self, message: str, **context: object) -> None
     
     # Exception handling with context
-    def exception(self, message: str, **context: Any) -> None
+    def exception(self, message: str, **context: object) -> None
 ```
 
 **Key Features**:
@@ -179,7 +179,7 @@ logger.info(
 class FlextObservability.Tracer:
     """Distributed tracing with context propagation."""
     
-    def start_span(self, operation_name: str, **tags: Any) -> Span
+    def start_span(self, operation_name: str, **tags: object) -> Span
     def finish_span(self, span: Span) -> None
     def trace_operation(self, name: str) -> ContextManager[Span]
     def get_active_span(self) -> Span | None
@@ -187,8 +187,8 @@ class FlextObservability.Tracer:
 class FlextObservability.Span:
     """Trace span with timing and context."""
     
-    def set_tag(self, key: str, value: Any) -> None
-    def log_event(self, event: str, **data: Any) -> None
+    def set_tag(self, key: str, value: object) -> None
+    def log_event(self, event: str, **data: object) -> None
     def finish(self) -> None
 ```
 
@@ -222,13 +222,13 @@ class FlextObservability.Metrics:
     """Comprehensive metrics collection system."""
     
     # Core metric types
-    def increment_counter(self, name: str, value: float = 1, **tags: Any) -> None
-    def set_gauge(self, name: str, value: float, **tags: Any) -> None  
-    def record_histogram(self, name: str, value: float, **tags: Any) -> None
-    def record_timer(self, name: str, duration_ms: float, **tags: Any) -> None
+    def increment_counter(self, name: str, value: float = 1, **tags: object) -> None
+    def set_gauge(self, name: str, value: float, **tags: object) -> None  
+    def record_histogram(self, name: str, value: float, **tags: object) -> None
+    def record_timer(self, name: str, duration_ms: float, **tags: object) -> None
     
     # Metrics management
-    def get_metrics_summary(self) -> dict[str, Any]
+    def get_metrics_summary(self) -> dict[str, object]
     def reset_metrics(self, pattern: str | None = None) -> None
 ```
 
@@ -269,7 +269,7 @@ with metrics.timer_context("database_query"):
 class FlextObservability.Alerts:
     """Multi-level alerting system with escalation."""
     
-    def send_alert(self, level: str, message: str, **context: Any) -> None
+    def send_alert(self, level: str, message: str, **context: object) -> None
     def configure_alerts(self, config: dict) -> None
     def register_alert_handler(self, level: str, handler: Callable) -> None
     def get_alert_history(self) -> list[dict]

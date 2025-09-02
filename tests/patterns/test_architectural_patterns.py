@@ -10,7 +10,6 @@ import time
 from typing import cast
 
 import pytest
-from pydantic import BaseModel
 
 from flext_core import (
     FlextHandlers,
@@ -29,7 +28,7 @@ class TestCleanArchitecturePatterns:
         """Test proper Clean Architecture layer separation."""
 
         # Domain Layer - Entities and Value Objects
-        class UserEmail(FlextModels.Value):
+        class UserEmail(FlextModels):
             """Domain value object."""
 
             email: str
@@ -40,7 +39,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Invalid email format")
                 return FlextResult[None].ok(None)
 
-        class User(FlextModels.Entity):
+        class User(FlextModels):
             """Domain entity."""
 
             name: str
@@ -57,7 +56,7 @@ class TestCleanArchitecturePatterns:
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(BaseModel):
+        class CreateUserCommand(FlextModels.BaseConfig):
             """Application command."""
 
             name: str
@@ -134,7 +133,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD value objects for testing."""
 
         # Value Objects
-        class OrderId(FlextModels.Value):
+        class OrderId(FlextModels):
             """Order identifier value object."""
 
             value: str
@@ -145,7 +144,7 @@ class TestCleanArchitecturePatterns:
                     return FlextResult[None].fail("Order ID must start with ORD-")
                 return FlextResult[None].ok(None)
 
-        class Money(FlextModels.Value):
+        class Money(FlextModels):
             """Money value object."""
 
             amount: float
@@ -165,7 +164,7 @@ class TestCleanArchitecturePatterns:
         """Create DDD aggregate for testing."""
 
         # Aggregate Root
-        class Order(FlextModels.Entity):
+        class Order(FlextModels):
             """Order aggregate root."""
 
             order_id: object
@@ -262,7 +261,7 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(BaseModel):
+        class UpdateUserCommand(FlextModels.BaseConfig):
             """Command to update user information."""
 
             user_id: str
@@ -296,7 +295,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(BaseModel):
+        class GetUserQuery(FlextModels.BaseConfig):
             """Query to get user information."""
 
             user_id: str
@@ -361,15 +360,19 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok({
-                        "type": "email",
-                        "provider": "smtp",
-                    })
+                    return FlextResult[dict[str, str]].ok(
+                        {
+                            "type": "email",
+                            "provider": "smtp",
+                        }
+                    )
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok({
-                        "type": "sms",
-                        "provider": "twilio",
-                    })
+                    return FlextResult[dict[str, str]].ok(
+                        {
+                            "type": "sms",
+                            "provider": "twilio",
+                        }
+                    )
                 return FlextResult[dict[str, str]].fail(
                     f"Unknown service type: {service_type}"
                 )
@@ -514,14 +517,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(BaseModel):
+        class UserCreatedEvent(FlextModels.BaseConfig):
             """Domain event for user creation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(BaseModel):
+        class UserUpdatedEvent(FlextModels.BaseConfig):
             """Domain event for user updates."""
 
             user_id: str

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextGuards, FlextResult, FlextUtilities
+from flext_core import FlextExceptions, FlextGuards, FlextUtilities
 
 
 class TestFlextGuards:
@@ -57,57 +57,57 @@ class TestFlextGuards:
 
     def test_validation_utils(self) -> None:
         """Test validation utilities."""
-        # Test require_not_none
-        result = FlextGuards.ValidationUtils.require_not_none("test", "should not be none")
-        assert result.success is True
-        assert result.value == "test"
+        # Test require_not_none - success case
+        result = FlextGuards.ValidationUtils.require_not_none(
+            "test", "should not be none"
+        )
+        assert result == "test"
 
-        result_none = FlextGuards.ValidationUtils.require_not_none(None, "should not be none")
-        assert result_none.success is False
-        assert "should not be none" in result_none.error
+        # Test require_not_none - failure case
+        with pytest.raises(FlextExceptions.ValidationError, match="should not be none"):
+            FlextGuards.ValidationUtils.require_not_none(None, "should not be none")
 
-        # Test require_non_empty
-        result_non_empty = FlextGuards.ValidationUtils.require_non_empty("test", "should not be empty")
-        assert result_non_empty.success is True
-        assert result_non_empty.value == "test"
+        # Test require_non_empty - success case
+        result_non_empty = FlextGuards.ValidationUtils.require_non_empty(
+            "test", "should not be empty"
+        )
+        assert result_non_empty == "test"
 
-        result_empty = FlextGuards.ValidationUtils.require_non_empty("", "should not be empty")
-        assert result_empty.success is False
+        # Test require_non_empty - failure case
+        with pytest.raises(
+            FlextExceptions.ValidationError, match="should not be empty"
+        ):
+            FlextGuards.ValidationUtils.require_non_empty("", "should not be empty")
 
     def test_require_in_range(self) -> None:
         """Test require_in_range validation."""
         # Test valid range
         result = FlextGuards.ValidationUtils.require_in_range(5, 1, 10)
-        assert result.success is True
-        assert result.value == 5
+        assert result == 5
 
         # Test invalid range
-        result_invalid = FlextGuards.ValidationUtils.require_in_range(15, 1, 10)
-        assert result_invalid.success is False
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_in_range(15, 1, 10)
 
         # Test boundary values
         result_min = FlextGuards.ValidationUtils.require_in_range(1, 1, 10)
-        assert result_min.success is True
+        assert result_min == 1
 
         result_max = FlextGuards.ValidationUtils.require_in_range(10, 1, 10)
-        assert result_max.success is True
+        assert result_max == 10
 
     def test_require_positive(self) -> None:
         """Test require_positive validation."""
         # Test positive numbers
         result = FlextGuards.ValidationUtils.require_positive(5, "should be positive")
-        assert result.success is True
-        assert result.value == 5
+        assert result == 5
 
-        result_float = FlextGuards.ValidationUtils.require_positive(3.14, "should be positive")
-        assert result_float.success is True
+        # Test non-positive numbers raise exceptions
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_positive(0, "should be positive")
 
-        # Test non-positive numbers
-        result_zero = FlextGuards.ValidationUtils.require_positive(0, "should be positive")
-        assert result_zero.success is False
-
-        result_negative = FlextGuards.ValidationUtils.require_positive(-5, "should be positive")
-        assert result_negative.success is False
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_positive(-5, "should be positive")
 
     def test_pure_function_decorator(self) -> None:
         """Test pure function decorator."""
@@ -136,6 +136,7 @@ class TestFlextGuards:
 
     def test_immutable_decorator(self) -> None:
         """Test immutable decorator."""
+
         @FlextGuards.immutable
         class ImmutableClass:
             def __init__(self, value: int) -> None:
@@ -146,45 +147,49 @@ class TestFlextGuards:
 
         # Attempting to modify should raise an error
         with pytest.raises(AttributeError):
-            obj.value = 100  # type: ignore[misc]
+            obj.value = 100
 
     def test_make_builder_and_factory(self) -> None:
         """Test builder and factory creation."""
-        # Test make_builder
-        builder_result = FlextGuards.make_builder("UserBuilder", {
-            "name": str,
-            "age": int,
-            "email": str
-        })
-        assert builder_result.success is True
 
-        # Test make_factory
-        factory_result = FlextGuards.make_factory("UserFactory", {
-            "name": "default_name",
-            "age": 0,
-            "email": "default@example.com"
-        })
-        assert factory_result.success is True
+        # Create a simple class to test with
+        class User:
+            def __init__(self, name: str, age: int, email: str) -> None:
+                self.name = name
+                self.age = age
+                self.email = email
+
+        # Test make_builder (takes name and fields)
+        user_fields = {"name": str, "age": int, "email": str}
+        builder_result = FlextGuards.make_builder("User", user_fields)
+        assert builder_result.success
+        builder = builder_result.unwrap()
+        assert builder is not None
+
+        # Test make_factory with name and defaults
+        factory_result = FlextGuards.make_factory(
+            "User",
+            {"name": "default_name", "age": 0, "email": "default@example.com"},
+        )
+        assert factory_result.success
+        factory = factory_result.unwrap()
+        assert factory is not None
 
     def test_integration_with_flext_result(self) -> None:
-        """Test integration with FlextResult pattern."""
-        # Chain validation operations
-        result = (
-            FlextGuards.ValidationUtils.require_not_none("test", "should not be none")
-            .flat_map(lambda x: FlextGuards.ValidationUtils.require_non_empty(x, "should not be empty"))
+        """Test integration with exception-based validation pattern."""
+        # Test successful validation chain
+        validated_value = FlextGuards.ValidationUtils.require_not_none(
+            "test", "should not be none"
         )
-        
-        assert result.success is True
-        assert result.value == "test"
+        final_result = FlextGuards.ValidationUtils.require_non_empty(
+            validated_value, "should not be empty"
+        )
 
-        # Test failure case
-        failure_result = (
+        assert final_result == "test"
+
+        # Test failure case - expect exception
+        with pytest.raises(FlextExceptions.ValidationError, match="should not be none"):
             FlextGuards.ValidationUtils.require_not_none(None, "should not be none")
-            .flat_map(lambda x: FlextGuards.ValidationUtils.require_non_empty(x, "should not be empty"))
-        )
-        
-        assert failure_result.success is False
-        assert "should not be none" in failure_result.error
 
 
 class TestFlextGuardsAdvanced:
@@ -195,7 +200,7 @@ class TestFlextGuardsAdvanced:
         config = {
             "validation_level": "strict",
             "cache_enabled": True,
-            "max_cache_size": 1000
+            "max_cache_size": 1000,
         }
 
         result = FlextGuards.configure_guards_system(config)
@@ -209,21 +214,20 @@ class TestFlextGuardsAdvanced:
         """Test guards performance optimization."""
         # Test valid performance levels
         for level in ["low", "balanced", "high", "extreme"]:
-            result = FlextGuards.optimize_guards_performance(level)
+            config = {"performance_level": level}
+            result = FlextGuards.optimize_guards_performance(config)
             assert result.success is True
+            if result.success:
+                optimized = result.unwrap()
+                assert optimized["performance_level"] == level
+                assert "optimization_enabled" in optimized
 
     def test_complex_type_guards(self) -> None:
         """Test complex type guard scenarios."""
         # Test nested structures
         nested_data = {
-            "users": [
-                {"name": "John", "age": 30},
-                {"name": "Jane", "age": 25}
-            ],
-            "metadata": {
-                "version": "1.0",
-                "created": "2024-01-01"
-            }
+            "users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}],
+            "metadata": {"version": "1.0", "created": "2024-01-01"},
         }
 
         # Test that we have a dict with different value types
@@ -233,19 +237,19 @@ class TestFlextGuardsAdvanced:
 
     def test_environment_guards_config(self) -> None:
         """Test environment-specific guards configuration."""
-        # Test environment configuration
-        env_config = FlextGuards.create_environment_guards_config(
-            "production", 
-            validation_level="strict",
-            cache_enabled=True
-        )
+        # Test environment configuration (without unexpected kwargs)
+        env_config = FlextGuards.create_environment_guards_config("production")
         assert env_config.success is True
+        if env_config.success:
+            config = env_config.unwrap()
+            assert isinstance(config, dict)
+            assert "environment" in config
 
     def test_performance_validation(self) -> None:
         """Test performance aspects of guards."""
         # Create a large dataset
         large_list = list(range(1000))
-        
+
         # Type checking should be efficient
         result = FlextGuards.is_list_of(large_list, int)
         assert result is True
@@ -258,7 +262,7 @@ class TestFlextGuardsAdvanced:
     def test_pure_wrapper_functionality(self) -> None:
         """Test PureWrapper functionality."""
         # Test that PureWrapper exists and is accessible
-        assert hasattr(FlextGuards, 'PureWrapper')
+        assert hasattr(FlextGuards, "PureWrapper")
         assert callable(FlextGuards.PureWrapper)
 
         # Create a pure wrapper instance
@@ -267,20 +271,20 @@ class TestFlextGuardsAdvanced:
 
     def test_validation_edge_cases(self) -> None:
         """Test validation edge cases."""
-        # Test with edge case values
-        result_empty_string = FlextGuards.ValidationUtils.require_non_empty("")
-        assert result_empty_string.success is False
+        # Test with edge case values - should raise exceptions
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_non_empty("")
 
-        result_whitespace = FlextGuards.ValidationUtils.require_non_empty("   ")
-        assert result_whitespace.success is False
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_non_empty("   ")
 
         # Test boundary values for range validation
         result_boundary = FlextGuards.ValidationUtils.require_in_range(0, 0, 100)
-        assert result_boundary.success is True
+        assert result_boundary == 0
 
-        # Test require_positive edge cases
-        result_zero = FlextGuards.ValidationUtils.require_positive(0)
-        assert result_zero.success is False
+        # Test require_positive edge cases - should raise exceptions
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_positive(0)
 
-        result_negative = FlextGuards.ValidationUtils.require_positive(-1)
-        assert result_negative.success is False
+        with pytest.raises(FlextExceptions.ValidationError):
+            FlextGuards.ValidationUtils.require_positive(-1)

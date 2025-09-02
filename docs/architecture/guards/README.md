@@ -475,7 +475,7 @@ def is_ldap_dn(value: object) -> bool:
     # Custom implementation
 
 # Recommended: Integrate with FlextGuards
-class FlextLdapGuards:
+class FlextLDAPGuards:
     """LDAP-specific guards extending FlextGuards."""
     
     @staticmethod
@@ -514,7 +514,7 @@ def search_ldap_entries(search_params: object) -> FlextResult[list[dict[str, obj
     
     # Validate search filter
     if "filter" in search_params:
-        if not FlextLdapGuards.is_ldap_search_filter(search_params["filter"]):
+        if not FlextLDAPGuards.is_ldap_search_filter(search_params["filter"]):
             return FlextResult[list[dict[str, object]]].fail("Invalid LDAP search filter format")
     
     # Perform search (placeholder)

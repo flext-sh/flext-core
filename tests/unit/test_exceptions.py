@@ -41,9 +41,9 @@ class TestFlextError:
         )  # Should have FLEXT_ prefix
         # FlextExceptions uses FLEXT_0001 as default error code
         assert cast("str", get_dynamic_attr(error, "error_code", "")) == "FLEXT_0001"
-        assert isinstance(error.context, dict)  # type: ignore[attr-defined]
-        assert isinstance(error.timestamp, float)  # type: ignore[attr-defined]
-        assert isinstance(error.correlation_id, str)  # type: ignore[attr-defined]
+        assert isinstance(error.context, dict)
+        assert isinstance(error.timestamp, float)
+        assert isinstance(error.correlation_id, str)
 
     def test_flext_error_with_error_code(self) -> None:
         """Test FlextExceptions with specific error code."""
@@ -408,7 +408,7 @@ class TestFlextOperationError:
         if (
             cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
                 "operation"
-            ]  # noqa: TC006
+            ]
             != "file_read"
         ):
             raise AssertionError(
@@ -523,7 +523,7 @@ class TestSpecificErrors:
         assert (
             cast("dict[str, object]", get_dynamic_attr(config_error, "context", {}))[
                 "config_file"
-            ]  # noqa: TC006
+            ]
             == "/etc/app/config.yml"
         )
         context_obj = cast(
@@ -622,7 +622,7 @@ class TestExceptionIntegration:
         # validation_details becomes direct context, passed context becomes nested
         assert cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
             "validation_details"
-        ] == {  # noqa: TC006
+        ] == {
             "field": "email",
             "value": "invalid_format",
         }
@@ -901,13 +901,13 @@ class TestAdditionalExceptions:
         assert (
             cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
                 "resource_id"
-            ]  # noqa: TC006
+            ]
             == "123"
         )
         assert (
             cast("dict[str, object]", get_dynamic_attr(error, "context", {}))[
                 "resource_type"
-            ]  # noqa: TC006
+            ]
             == "user"
         )
 
@@ -1019,7 +1019,7 @@ class TestAdditionalExceptions:
         )
         # FlextExceptions.AttributeError uses direct context with attribute_context key
         context_obj = cast("dict[str, object]", get_dynamic_attr(error, "context", {}))
-        attr_ctx = cast("dict[str, object]", context_obj["attribute_context"])  # noqa: TC006
+        attr_ctx = cast("dict[str, object]", context_obj["attribute_context"])
         assert attr_ctx["class_name"] == "TestClass"
         assert attr_ctx["attribute_name"] == "missing_attr"
 

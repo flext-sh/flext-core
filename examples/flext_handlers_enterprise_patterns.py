@@ -88,7 +88,7 @@ class UserEntity(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules (required by FlextModels.Entity)."""
+        """Validate business rules (required by FlextModels)."""
         return self.validate_domain_rules()
 
     def activate(self) -> FlextResult["UserEntity"]:

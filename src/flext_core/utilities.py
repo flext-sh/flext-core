@@ -1,53 +1,30 @@
-"""FLEXT Utilities - Comprehensive utility functions with hierarchical organization and type safety.
+"""Comprehensive utility functions with hierarchical organization and type safety.
 
-Comprehensive utility collection providing FlextUtilities class with ID generation, text processing,
-validation, performance monitoring, JSON handling, and decorator patterns organized in nested classes
-following SOLID principles with FlextResult integration for consistent error handling.
+Provides FlextUtilities class with ID generation, text processing, validation, performance
+monitoring, and JSON handling organized in nested classes with FlextResult integration.
 
-Module Role in Architecture:
-    FlextUtilities provides essential utility functions for all FLEXT ecosystem components,
-    organized hierarchically from Generators to Decorators, enabling consistent ID generation,
-    text processing, validation, and performance monitoring across the ecosystem.
+Usage:
+    # ID generation
+    uuid = FlextUtilities.Generators.generate_uuid()
+    entity_id = FlextUtilities.Generators.generate_entity_id("user")
 
-Classes and Methods:
-    FlextUtilities:                         # Hierarchical utility collection
-        # Generators - ID and Timestamp Generation:
-        Generators.generate_uuid() -> str               # Generate RFC4122 UUID
-        Generators.generate_entity_id(prefix="entity") -> str # Generate entity identifier
-        Generators.generate_correlation_id(prefix="corr") -> str # Generate correlation ID
-        Generators.generate_request_id(prefix="req") -> str # Generate request identifier
-        Generators.generate_timestamp() -> str          # Generate ISO timestamp
-        Generators.generate_hash(data) -> str           # Generate SHA-256 hash
+    # Text processing
+    safe_text = FlextUtilities.TextProcessor.truncate(text, 50)
+    slug = FlextUtilities.TextProcessor.slugify("Hello World")
 
-        # TextProcessor - Text Processing and Formatting:
-        TextProcessor.truncate(text, max_length=100) -> str # Truncate text safely
-        TextProcessor.safe_string(value) -> str         # Convert any value to safe string
-        TextProcessor.sanitize_filename(filename) -> str # Sanitize filename for filesystem
-        TextProcessor.extract_keywords(text) -> list[str] # Extract keywords from text
-        TextProcessor.format_bytes(size_bytes) -> str   # Format byte size human-readable
-        TextProcessor.slugify(text) -> str              # Convert text to URL slug
-        TextProcessor.generate_camel_case_alias(field_name) -> str # Convert snake_case to camelCase
+    # Validation with FlextResult
+    email_result = FlextUtilities.Validators.validate_email("test@example.com")
+    if email_result.success:
+        email = email_result.unwrap()
 
-        # Validators - Data Validation Utilities:
-        Validators.validate_email(email) -> FlextResult[str] # Validate email format
-        Validators.validate_url(url) -> FlextResult[str] # Validate URL format
-        Validators.validate_json(json_str) -> FlextResult[dict] # Validate JSON string
-        Validators.validate_uuid(uuid_str) -> FlextResult[str] # Validate UUID format
-        Validators.is_valid_identifier(name) -> bool    # Check if valid Python identifier
-        Validators.validate_phone(phone) -> FlextResult[str] # Validate phone number
+    # JSON handling
+    data_result = FlextUtilities.JSON.safe_loads('{"key": "value"}')
 
-        # Performance - Performance Monitoring and Timing:
-        Performance.time_function(func) -> Callable     # Decorator for function timing
-        Performance.measure_execution(func, *args) -> tuple[object, float] # Measure function execution
-        Performance.benchmark_operations(operations) -> dict # Benchmark multiple operations
-        Performance.memory_usage() -> dict              # Get current memory usage
-        Performance.system_metrics() -> dict            # Get system performance metrics
-
-        # JSON - JSON Processing and Serialization:
-        JSON.safe_loads(json_str) -> FlextResult[dict]  # Safe JSON deserialization
-        JSON.safe_dumps(obj) -> FlextResult[str]        # Safe JSON serialization
-        JSON.merge_dicts(*dicts) -> dict               # Deep merge multiple dictionaries
-        JSON.flatten_dict(nested_dict) -> dict         # Flatten nested dictionary
+Features:
+    - Hierarchical organization with nested utility classes
+    - FlextResult integration for error handling
+    - ID generation, text processing, validation
+    - Performance monitoring and JSON utilities
         JSON.unflatten_dict(flat_dict) -> dict         # Unflatten dictionary
 
         # Decorators - Utility Decorators and Function Wrappers:
@@ -95,7 +72,7 @@ Usage Examples:
 
 Integration:
     FlextUtilities integrates with FlextResult for error handling, FlextTypes.Config
-    for configuration, FlextConstants for limits and defaults, providing comprehensive
+    for configuration, FlextConstants for limits and defaults, providing efficient
     utility functions with consistent patterns across the entire FLEXT ecosystem.
 """
 
@@ -108,7 +85,7 @@ import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import cast
+from typing import TypeGuard, cast
 
 from pydantic import ConfigDict, ValidationError
 
@@ -329,6 +306,43 @@ class FlextUtilities:
             return masked_part + visible_part
 
         @staticmethod
+        def sanitize_filename(name: str) -> str:
+            """Sanitize a filename for safe filesystem usage.
+
+            Rules applied:
+            - Strip leading/trailing whitespace
+            - Remove path separators and reserved characters
+            - Collapse consecutive whitespace
+            - Trim leading/trailing dots
+            - Fallback to "untitled" when result is empty or only dots
+            - Limit to 255 characters
+            """
+            # Basic cleanup
+            cleaned = FlextUtilities.TextProcessor.clean_text(name)
+            cleaned = cleaned.strip()
+
+            # Replace reserved characters commonly invalid on filesystems
+            # < > : " / \ | ? * and control chars
+            cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "", cleaned)
+
+            # Remove remaining control chars and condense spaces
+            cleaned = FlextUtilities.TextProcessor.clean_text(cleaned)
+
+            # Trim leading/trailing dots and spaces again
+            cleaned = cleaned.strip(" .")
+
+            # Fallback when empty or only dots
+            if not cleaned or set(cleaned) == {"."}:
+                cleaned = "untitled"
+
+            # Enforce length limit
+            max_len = 255
+            if len(cleaned) > max_len:
+                cleaned = cleaned[:max_len]
+
+            return cleaned
+
+        @staticmethod
         def generate_camel_case_alias(field_name: str) -> str:
             """Generate camelCase alias from snake_case field name.
 
@@ -546,8 +560,8 @@ class FlextUtilities:
 
         @staticmethod
         def is_string_non_empty(value: object) -> bool:
-            """Check if value is non-empty string."""
-            return isinstance(value, str) and len(value) > 0
+            """Check if value is non-empty string after stripping whitespace."""
+            return isinstance(value, str) and len(value.strip()) > 0
 
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
@@ -682,15 +696,16 @@ class FlextUtilities:
                 parsed_data: object = json.loads(json_text)
 
                 # Strategy 1: Pydantic v2 model_validate (preferred for validation)
-                if hasattr(model_class, "model_validate") and callable(
-                    getattr(model_class, "model_validate", None)
-                ):
-                    # Dynamic invocation through cast to protocol
-                    pydantic_class = cast(
-                        "type[FlextProtocols.Foundation.HasModelValidate]",
-                        model_class,  # pyright: ignore[reportGeneralTypeIssues]
+                # Use a type guard to narrow to classes supporting model_validate
+                def _supports_model_validate(
+                    cls: type[object],
+                ) -> TypeGuard[type[FlextProtocols.Foundation.HasModelValidate]]:
+                    return hasattr(cls, "model_validate") and callable(
+                        getattr(cls, "model_validate", None)
                     )
-                    validated_obj = pydantic_class.model_validate(parsed_data)
+
+                if _supports_model_validate(model_class):
+                    validated_obj = model_class.model_validate(parsed_data)
                     # Direct cast to target type
                     instance = cast("TModel", validated_obj)
                     return FlextResult[TModel].ok(instance)
@@ -770,7 +785,7 @@ class FlextUtilities:
     class Configuration:
         """Configuration utilities with FlextTypes.Config and StrEnum integration.
 
-        Provides comprehensive configuration management utilities including
+        Provides efficient configuration management utilities including
         environment detection, configuration validation, and system configuration
         generation using FlextTypes.Config hierarchical structure.
 
@@ -843,10 +858,10 @@ class FlextUtilities:
                 )
 
         @staticmethod
-        def validate_configuration_with_types(  # noqa: PLR0911, PLR0912
+        def validate_configuration_with_types(
             config: FlextTypes.Config.ConfigDict,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Validate configuration using FlextTypes.Config with comprehensive StrEnum validation.
+            """Validate configuration using FlextTypes.Config with efficient StrEnum validation.
 
             Args:
                 config: Configuration dictionary to validate.
@@ -966,7 +981,7 @@ class FlextUtilities:
         def get_environment_configuration(
             environment: FlextTypes.Config.Environment,
         ) -> FlextResult[dict[str, object]]:
-            """Get comprehensive environment-specific configuration using FlextTypes.Config.
+            """Get efficient environment-specific configuration using FlextTypes.Config.
 
             Args:
                 environment: Target environment for configuration.
@@ -987,7 +1002,7 @@ class FlextUtilities:
 
                 base_config: ConfigDict = cast("ConfigDict", config_result.value)
 
-                # Create comprehensive environment configuration
+                # Create efficient environment configuration
                 env_config: dict[str, object] = {
                     "base_configuration": base_config,
                     "environment_metadata": {

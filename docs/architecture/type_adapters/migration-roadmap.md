@@ -125,8 +125,8 @@ class FlextSingerTypeConverter:
         }
     
     def convert_singer_type(
-        self, singer_type: str, value: Any, format: str = None
-    ) -> FlextResult[Any]:
+        self, singer_type: str, value: object, format: str = None
+    ) -> FlextResult[object]:
         """Convert Singer type to Python type with validation."""
         
         # Handle format-specific types first
@@ -189,7 +189,7 @@ class FlextMeltanoConfigAdapters:
             namespace: str
             executable: str
             pip_url: Optional[str] = None
-            settings: Dict[str, Any] = field(default_factory=dict)
+            settings: Dict[str, object] = field(default_factory=dict)
             select_filter: List[str] = field(default_factory=list)
         
         @dataclass
@@ -198,7 +198,7 @@ class FlextMeltanoConfigAdapters:
             namespace: str
             executable: str
             pip_url: Optional[str] = None
-            settings: Dict[str, Any] = field(default_factory=dict)
+            settings: Dict[str, object] = field(default_factory=dict)
             schema: Optional[str] = None
         
         @dataclass
@@ -244,7 +244,7 @@ class FlextMeltanoUtilities:
     @classmethod
     def create_meltano_config_dict(
         cls, project_id: str, project_name: str = ""
-    ) -> FlextResult[Dict[str, Any]]:
+    ) -> FlextResult[Dict[str, object]]:
         """Create Meltano configuration with validation."""
         
         config_data = {
@@ -266,7 +266,7 @@ class FlextMeltanoUtilities:
         namespace: str = "",
         pip_url: str = "",
         executable: str = "",
-    ) -> FlextResult[Dict[str, Any]]:
+    ) -> FlextResult[Dict[str, object]]:
         """Create plugin configuration with validation."""
         
         config_data = {
@@ -333,7 +333,7 @@ class FlextMeltanoAdapters:
             
             return FlextTypeAdapters.Foundation.validate_with_adapter(adapter, config)
         
-        def discover_schema(self) -> FlextResult[Dict[str, Any]]:
+        def discover_schema(self) -> FlextResult[Dict[str, object]]:
             """Discover tap schema with validation."""
             
             try:
@@ -387,8 +387,8 @@ class OICTypeConverter:
         }
     
     def convert_singer_to_oic(
-        self, singer_type: str, value: Any, format: str = None
-    ) -> FlextResult[Any]:
+        self, singer_type: str, value: object, format: str = None
+    ) -> FlextResult[object]:
         """Convert Singer type to OIC-compatible type."""
         
         # First validate using Singer converter
@@ -421,8 +421,8 @@ class OICTypeConverter:
         )
     
     def batch_convert_records(
-        self, records: List[Dict[str, Any]], stream_schema: Dict[str, Any]
-    ) -> FlextResult[List[Dict[str, Any]]]:
+        self, records: List[Dict[str, object]], stream_schema: Dict[str, object]
+    ) -> FlextResult[List[Dict[str, object]]]:
         """Batch convert Singer records to OIC format."""
         
         converted_records = []
@@ -671,7 +671,7 @@ class FlextApiModels(FlextModels):
         return FlextTypeAdapters.Foundation.create_basic_adapter(cls)
     
     @classmethod
-    def generate_openapi_schema(cls) -> FlextResult[Dict[str, Any]]:
+    def generate_openapi_schema(cls) -> FlextResult[Dict[str, object]]:
         """Generate OpenAPI schema for API documentation."""
         
         adapter = cls.create_api_adapter()
@@ -689,13 +689,13 @@ class FlextApiModels(FlextModels):
         return FlextResult.success(api_schema)
     
     @classmethod
-    def validate_api_request(cls, request_data: Dict[str, Any]) -> FlextResult[Dict[str, Any]]:
+    def validate_api_request(cls, request_data: Dict[str, object]) -> FlextResult[Dict[str, object]]:
         """Validate API request data."""
         adapter = cls.create_api_adapter()
         return FlextTypeAdapters.Foundation.validate_with_adapter(adapter, request_data)
     
     @classmethod
-    def serialize_api_response(cls, response_data: object) -> FlextResult[Dict[str, Any]]:
+    def serialize_api_response(cls, response_data: object) -> FlextResult[Dict[str, object]]:
         """Serialize API response with error handling."""
         adapter = cls.create_api_adapter()
         return FlextTypeAdapters.Application.serialize_to_dict(adapter, response_data)
@@ -706,7 +706,7 @@ class FlextApiModels(FlextModels):
         """Standard API response format."""
         success: bool
         message: str
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, object]] = None
         error_code: Optional[str] = None
         timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     
@@ -714,7 +714,7 @@ class FlextApiModels(FlextModels):
     class APIRequest(BaseConfig):
         """Standard API request format."""
         action: str
-        parameters: Dict[str, Any] = field(default_factory=dict)
+        parameters: Dict[str, object] = field(default_factory=dict)
         request_id: str = field(default_factory=lambda: f"req_{uuid.uuid4().hex[:12]}")
         timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     
@@ -731,7 +731,7 @@ class FlextApiModels(FlextModels):
     @dataclass
     class PaginationResponse(BaseConfig):
         """Paginated response format."""
-        items: List[Dict[str, Any]]
+        items: List[Dict[str, object]]
         page: int = 1
         per_page: int = 20
         total_items: int = 0
@@ -779,7 +779,7 @@ class FlextOpenAPIGenerator:
         
         return FlextResult.success(None)
     
-    def generate_openapi_specification(self) -> FlextResult[Dict[str, Any]]:
+    def generate_openapi_specification(self) -> FlextResult[Dict[str, object]]:
         """Generate complete OpenAPI 3.0 specification."""
         
         try:
@@ -918,11 +918,11 @@ class FlextWebTypes:
         created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
         
         @classmethod
-        def validate(cls, data: Dict[str, Any]) -> FlextResult[Self]:
+        def validate(cls, data: Dict[str, object]) -> FlextResult[Self]:
             adapter = FlextTypeAdapters.Foundation.create_basic_adapter(cls)
             return FlextTypeAdapters.Foundation.validate_with_adapter(adapter, data)
         
-        def to_dict(self) -> FlextResult[Dict[str, Any]]:
+        def to_dict(self) -> FlextResult[Dict[str, object]]:
             adapter = FlextTypeAdapters.Foundation.create_basic_adapter(self.__class__)
             return FlextTypeAdapters.Application.serialize_to_dict(adapter, self)
     
@@ -935,7 +935,7 @@ class FlextWebTypes:
         auto_start: bool = False
         
         @classmethod
-        def validate(cls, data: Dict[str, Any]) -> FlextResult[Self]:
+        def validate(cls, data: Dict[str, object]) -> FlextResult[Self]:
             adapter = FlextTypeAdapters.Foundation.create_basic_adapter(cls)
             
             # Add business rule validation
@@ -962,7 +962,7 @@ class FlextWebTypes:
         timeout_seconds: int = 30
         
         @classmethod
-        def validate(cls, data: Dict[str, Any]) -> FlextResult[Self]:
+        def validate(cls, data: Dict[str, object]) -> FlextResult[Self]:
             adapter = FlextTypeAdapters.Foundation.create_basic_adapter(cls)
             
             # Validate configuration
@@ -1021,8 +1021,8 @@ class FlextWebTypes:
     # Utility methods for web applications
     @classmethod
     def validate_web_request(
-        cls, request_type: str, request_data: Dict[str, Any]
-    ) -> FlextResult[Dict[str, Any]]:
+        cls, request_type: str, request_data: Dict[str, object]
+    ) -> FlextResult[Dict[str, object]]:
         """Validate web request using registered type adapters."""
         
         instance = cls()
@@ -1035,7 +1035,7 @@ class FlextWebTypes:
         return FlextTypeAdapters.Foundation.validate_with_adapter(adapter, request_data)
     
     @classmethod
-    def generate_web_schemas(cls) -> FlextResult[Dict[str, Dict[str, Any]]]:
+    def generate_web_schemas(cls) -> FlextResult[Dict[str, Dict[str, object]]]:
         """Generate JSON schemas for all web types."""
         
         instance = cls()
@@ -1111,8 +1111,8 @@ class FlextRESTAdapter:
         return FlextResult.success(None)
     
     def handle_request(
-        self, method: str, path: str, request_data: Dict[str, Any]
-    ) -> FlextResult[Dict[str, Any]]:
+        self, method: str, path: str, request_data: Dict[str, object]
+    ) -> FlextResult[Dict[str, object]]:
         """Handle REST request with automatic validation."""
         
         endpoint_key = f"{method.upper()}:{path}"
@@ -1170,7 +1170,7 @@ class FlextRESTAdapter:
         except Exception as e:
             return FlextResult.failure(f"Request handling failed: {e}")
     
-    def generate_endpoint_documentation(self) -> FlextResult[Dict[str, Any]]:
+    def generate_endpoint_documentation(self) -> FlextResult[Dict[str, object]]:
         """Generate documentation for all registered endpoints."""
         
         documentation = {

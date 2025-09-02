@@ -93,7 +93,7 @@ class AsyncTestUtils:
             # Filter out exceptions and return only successful results using type guard
             return [r for r in results if _is_not_exception(r)]
         # When return_exceptions=False, asyncio.gather returns list[T] directly
-        return results  # type: ignore[return-value]  # asyncio.gather type inference limitation
+        return results
 
     @staticmethod
     async def run_concurrent(
@@ -128,7 +128,7 @@ class AsyncTestUtils:
             # Filter out exceptions and return only successful results using type guard
             return [r for r in results if _is_not_exception(r)]
         # When return_exceptions=False, asyncio.gather returns list[T] directly
-        return results  # type: ignore[return-value]  # asyncio.gather type inference limitation
+        return results
 
     @staticmethod
     async def retry_async(

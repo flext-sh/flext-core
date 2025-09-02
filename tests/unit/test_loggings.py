@@ -25,8 +25,13 @@ import pytest
 import structlog
 from structlog.testing import LogCapture
 
-from flext_core import FlextConstants, FlextContext, FlextResult, FlextTypes
-from flext_core.loggings import FlextLogger
+from flext_core import (
+    FlextConstants,
+    FlextContext,
+    FlextLogger,
+    FlextResult,
+    FlextTypes,
+)
 from tests.support import FlextMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -878,7 +883,7 @@ class TestLoggingConfiguration:
         assert result.is_failure
 
         # Test invalid environment for environment config
-        result = FlextLogger.create_environment_logging_config("invalid_env")  # type: ignore[arg-type]
+        result = FlextLogger.create_environment_logging_config("invalid_env")
         assert result.is_failure
 
 
@@ -888,7 +893,7 @@ class TestAdvancedLoggingFeatures:
     def test_invalid_log_level_during_initialization(self) -> None:
         """Test handling of invalid log level during logger initialization."""
         # Test with invalid log level - should default to INFO
-        logger = FlextLogger("invalid_level_test", level="INVALID_LEVEL")  # type: ignore[arg-type]
+        logger = FlextLogger("invalid_level_test", level="INVALID_LEVEL")
 
         # Should default to INFO level
         assert logger._level == "INFO"
@@ -964,11 +969,11 @@ class TestAdvancedLoggingFeatures:
             "local",
         ]
         for env in valid_envs:
-            result = FlextLogger.create_environment_logging_config(env)  # type: ignore[arg-type]
+            result = FlextLogger.create_environment_logging_config(env)
             assert result.success, f"Failed for environment: {env}"
 
         # Test invalid environment with type ignore for testing purposes
-        result = FlextLogger.create_environment_logging_config("invalid")  # type: ignore[arg-type]
+        result = FlextLogger.create_environment_logging_config("invalid")
         assert result.is_failure
         assert result.error is not None
         assert "Invalid environment" in result.error
@@ -1060,15 +1065,15 @@ class TestAdvancedLoggingFeatures:
     def test_log_level_validation_edge_cases(self) -> None:
         """Test log level validation with various edge cases."""
         # Test with invalid level - should default to INFO
-        logger = FlextLogger("level_edge_test", level="INVALID_LEVEL")  # type: ignore[arg-type]
+        logger = FlextLogger("level_edge_test", level="INVALID_LEVEL")
         assert logger._level == "INFO"  # Should default to INFO
 
         # Test with empty string level - should default to INFO
-        logger = FlextLogger("level_edge_test", level="")  # type: ignore[arg-type]
+        logger = FlextLogger("level_edge_test", level="")
         assert logger._level == "INFO"  # Should default to INFO
 
         # Test with lowercase valid level - should convert to uppercase
-        logger = FlextLogger("level_edge_test", level="debug")  # type: ignore[arg-type]
+        logger = FlextLogger("level_edge_test", level="debug")
         assert logger._level == "DEBUG"  # Should convert to uppercase
 
     def test_service_name_extraction_from_environment(
@@ -1400,7 +1405,7 @@ class TestUncoveredLinesTargeted:
                 "local",
             ]
             for env in edge_environments:
-                result = FlextLogger.create_environment_logging_config(env)  # type: ignore[arg-type]
+                result = FlextLogger.create_environment_logging_config(env)
                 assert isinstance(result, FlextResult)
         except Exception as e:
             # Lines 1168-1169 should handle any exceptions - verify it's handled correctly
@@ -1513,7 +1518,7 @@ class TestUncoveredLinesTargeted:
             def force_exception(*_args: object, **_kwargs: object) -> NoReturn:
                 TestCoverageTargetedTests._raise_validation_error()
 
-            logging_module.FlextLogger._validate_logging_config = force_exception  # type: ignore[attr-defined]
+            logging_module.FlextLogger._validate_logging_config = force_exception
 
             # This should trigger lines 1047-1048
             result = FlextLogger.configure_logging_system(
@@ -1534,7 +1539,7 @@ class TestUncoveredLinesTargeted:
         finally:
             # Restore original method
             if original_method:
-                logging_module.FlextLogger._validate_logging_config = original_method  # type: ignore[attr-defined]
+                logging_module.FlextLogger._validate_logging_config = original_method
 
     def test_100_percent_coverage_lines_1084_1085_get_config_exception(self) -> None:
         """Test to force exception in get_logging_system_config (lines 1084-1085)."""
@@ -1558,7 +1563,7 @@ class TestUncoveredLinesTargeted:
                         "line 1084-1085 keys"
                     )
 
-            logging_module.FlextLogger._current_config = ExceptionConfig()  # type: ignore[attr-defined]
+            logging_module.FlextLogger._current_config = ExceptionConfig()
 
             # This should trigger lines 1084-1085
             result = FlextLogger.get_logging_system_config()
@@ -1579,7 +1584,7 @@ class TestUncoveredLinesTargeted:
         finally:
             # Restore original config
             if original_config:
-                logging_module.FlextLogger._current_config = original_config  # type: ignore[attr-defined]
+                logging_module.FlextLogger._current_config = original_config
 
     def test_100_percent_coverage_lines_1168_1169_env_config_exception(self) -> None:
         """Test to force exception in create_environment_logging_config."""
@@ -1600,7 +1605,7 @@ class TestUncoveredLinesTargeted:
                         def __contains__(self, item: object) -> bool:
                             TestCoverageTargetedTests._raise_validation_error()
 
-            logging_module.FlextConstants = MockConstants()  # type: ignore[attr-defined,assignment]
+            logging_module.FlextConstants = MockConstants()
 
             # This should trigger lines 1168-1169
             result = FlextLogger.create_environment_logging_config("development")
@@ -1619,7 +1624,7 @@ class TestUncoveredLinesTargeted:
         finally:
             # Restore original constants
             if original_constants:
-                logging_module.FlextConstants = original_constants  # type: ignore[attr-defined]
+                logging_module.FlextConstants = original_constants
 
     def test_100_percent_coverage_lines_1215_1226_1227_perf_exception(self) -> None:
         """Test to force exception in optimize_logging_performance."""
@@ -1654,7 +1659,7 @@ class TestUncoveredLinesTargeted:
             invalid_config = InvalidConfig({"performance_level": "high"})
 
             # This should trigger lines 1226-1227
-            result = FlextLogger.optimize_logging_performance(invalid_config)  # type: ignore[arg-type]
+            result = FlextLogger.optimize_logging_performance(invalid_config)
 
             # Should handle exception gracefully
             assert result.is_failure
@@ -1727,7 +1732,7 @@ class TestUncoveredLinesTargeted:
         import flext_core.loggings as logging_module
 
         # Try more direct approach - force exception during FlextConstants access
-        original_constants = logging_module.FlextConstants  # type: ignore[attr-defined]
+        original_constants = logging_module.FlextConstants
 
         try:
             # Create mock FlextConstants that will raise exception when accessed
@@ -1757,7 +1762,7 @@ class TestUncoveredLinesTargeted:
                                 "lines 1226-1227"
                             )
 
-            logging_module.FlextConstants = ExceptionConstants()  # type: ignore[attr-defined,assignment]
+            logging_module.FlextConstants = ExceptionConstants()
 
             # This should trigger the exception handling (lines 1049-1050)
             result = FlextLogger.configure_logging_system(
@@ -1782,14 +1787,14 @@ class TestUncoveredLinesTargeted:
             logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
         finally:
             # Restore original constants
-            logging_module.FlextConstants = original_constants  # type: ignore[attr-defined]
+            logging_module.FlextConstants = original_constants
 
     def test_100_percent_coverage_lines_1086_1087_ultimate(self) -> None:
         """Ultimate test to force exception in get_logging_system_config."""
         import flext_core.loggings as logging_module
 
         # Force exception during dictionary creation inside get_logging_system_config
-        original_constants = logging_module.FlextConstants  # type: ignore[attr-defined]
+        original_constants = logging_module.FlextConstants
 
         try:
             # Mock FlextConstants to raise exception when accessing Config values
@@ -1809,7 +1814,7 @@ class TestUncoveredLinesTargeted:
                                 "lines 1226-1227"
                             )
 
-            logging_module.FlextConstants = ExceptionConstants()  # type: ignore[attr-defined,assignment]
+            logging_module.FlextConstants = ExceptionConstants()
 
             # This should trigger the exception handling (lines 1086-1087)
             result = FlextLogger.get_logging_system_config()
@@ -1829,7 +1834,7 @@ class TestUncoveredLinesTargeted:
             logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
         finally:
             # Restore original constants
-            logging_module.FlextConstants = original_constants  # type: ignore[attr-defined]
+            logging_module.FlextConstants = original_constants
 
 
 class TestCoverageTargetedTests:
@@ -1972,7 +1977,7 @@ class TestCoverageTargetedTests:
         ]
 
         for invalid_config in invalid_configs:
-            result = FlextLogger.configure_logging_system(invalid_config)  # type: ignore[arg-type]
+            result = FlextLogger.configure_logging_system(invalid_config)
             assert result.is_failure, f"Should fail for config: {invalid_config}"
 
     def test_edge_cases_for_remaining_coverage(self) -> None:
@@ -2036,7 +2041,7 @@ class TestCoverageTargetedTests:
         def mock_getframe(_depth: int) -> object:
             raise ValueError(frame_error_msg)
 
-        sys._getframe = mock_getframe  # type: ignore[assignment]
+        sys._getframe = mock_getframe
 
         try:
             with capture_structured_logs() as output:
@@ -2260,7 +2265,7 @@ class TestCoverageTargetedTests:
         ]
 
         for config in invalid_configs:
-            result = FlextLogger.configure_logging_system(config)  # type: ignore[arg-type]
+            result = FlextLogger.configure_logging_system(config)
             # Should return FlextResult (may succeed or fail depending on config)
             assert isinstance(result, FlextResult)
 
@@ -2270,7 +2275,7 @@ class TestCoverageTargetedTests:
         valid_environments = ["development", "test", "staging", "production", "local"]
 
         for env in valid_environments:
-            result = FlextLogger.create_environment_logging_config(env)  # type: ignore[arg-type]
+            result = FlextLogger.create_environment_logging_config(env)
             assert result.success
             config = result.unwrap()
 

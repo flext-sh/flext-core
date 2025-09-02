@@ -14,7 +14,7 @@ import io
 import time
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import cast, override
+from typing import cast
 
 import pytest
 from pydantic import Field
@@ -54,8 +54,8 @@ class UserRole(StrEnum):
     ADMIN = "REDACTED_LDAP_BIND_PASSWORD"
 
 
-class TestUser(FlextModels.Entity):
-    """REAL production-style user entity using FlextModels.Entity inheritance.
+class TestUser(FlextModels):
+    """REAL production-style user entity using FlextModels inheritance.
 
     This is a minimal production-style implementation within tests/
     that follows real flext-core patterns without importing flext-auth.
@@ -68,7 +68,6 @@ class TestUser(FlextModels.Entity):
     status: UserStatus = UserStatus.ACTIVE
     failed_login_attempts: int = 0
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """REAL business validation using production business rules."""
         username_result = self._validate_username()
@@ -189,16 +188,16 @@ class UserManagementService(FlextDomainService[TestUser]):
         return user.validate_domain_rules()
 
 
-# Real Data Repository using flext-core patterns and inheriting from FlextModels.Entity
-class UserRepository(FlextModels.Entity):
-    """REAL repository using FlextModels.Entity inheritance with production patterns."""
+# Real Data Repository using flext-core patterns and inheriting from FlextModels
+class UserRepository(FlextModels):
+    """REAL repository using FlextModels inheritance with production patterns."""
 
     # Instance storage - each repository instance gets its own storage
     storage: dict[str, TestUser] = Field(default_factory=dict)
 
     def __init__(self, repository_id: str = "user_repository", **data: object) -> None:
-        """Initialize repository with FlextModels.Entity inheritance."""
-        super().__init__(id=repository_id, **data)  # type: ignore[arg-type]
+        """Initialize repository with FlextModels inheritance."""
+        super().__init__(id=repository_id, **data)
 
     def save_user(self, user: TestUser) -> FlextResult[TestUser]:
         """Save user using real entity storage with production validation."""
@@ -222,7 +221,7 @@ class UserRepository(FlextModels.Entity):
         return FlextResult[list[TestUser]].ok(list(self.storage.values()))
 
     def validate_business_rules(self) -> FlextResult[None]:
-        """Repository business validation (required by FlextModels.Entity)."""
+        """Repository business validation (required by FlextModels)."""
         if not self.id:
             return FlextResult[None].fail("Repository ID cannot be empty")
         return FlextResult[None].ok(None)
@@ -750,7 +749,7 @@ class TestFlextCoreEntityCreation:
         )
 
         assert isinstance(entity, TestUser)
-        assert isinstance(entity, FlextModels.Entity)
+        assert isinstance(entity, FlextModels)
         assert entity.username == "test_entity"
         assert entity.email == "test@entity.com"
 
@@ -1065,7 +1064,7 @@ class TestFlextCoreAdvancedPatterns:
         # For test files, use pragma ignores for complex type issues
         # that don't affect functionality
         config_result = observability.configure_observability_system(
-            observability_config  # type: ignore[arg-type]
+            observability_config
         )
         assert config_result.success
 
@@ -1100,7 +1099,7 @@ class TestFlextCoreAdvancedPatterns:
         }
 
         optimize_result = observability.optimize_observability_performance(
-            performance_config  # type: ignore[arg-type]
+            performance_config
         )
         assert optimize_result.success
 
@@ -1117,7 +1116,7 @@ class TestFlextCoreAdvancedPatterns:
             "request_timeout": 30,
         }
 
-        config_result = context.configure_context_system(context_config)  # type: ignore[arg-type]
+        config_result = context.configure_context_system(context_config)
         assert config_result.success
 
         # Test getting context configuration
@@ -1132,7 +1131,7 @@ class TestFlextCoreAdvancedPatterns:
         }
 
         # For test files, use pragma ignores for complex type issues
-        optimize_result = context.optimize_context_performance(performance_config)  # type: ignore[arg-type]
+        optimize_result = context.optimize_context_performance(performance_config)
         assert optimize_result.success
 
         # Test correlation ID generation using utilities
@@ -1183,7 +1182,7 @@ class TestFlextCoreAdvancedPatterns:
             "serialization": {"format": "json"},
         }
 
-        config_result = clean_flext_core.configure_aggregates_system(aggregate_config)  # type: ignore[arg-type]
+        config_result = clean_flext_core.configure_aggregates_system(aggregate_config)
         assert config_result.success
 
         # Test getting aggregate configuration
@@ -1208,7 +1207,7 @@ class TestFlextCoreAdvancedPatterns:
             "circuit_breaker": {"threshold": 5, "timeout": 60},
         }
 
-        config_result = clean_flext_core.configure_commands_system(commands_config)  # type: ignore[arg-type]
+        config_result = clean_flext_core.configure_commands_system(commands_config)
         assert config_result.success
 
         # Test getting commands configuration
@@ -1244,21 +1243,21 @@ class TestFlextCoreAdvancedPatterns:
         )
         FlextMatchers.assert_result_success(success_result, valid_user_data)
 
-        validation_result = clean_flext_core.validate_user_data(valid_user_data)  # type: ignore[arg-type]
+        validation_result = clean_flext_core.validate_user_data(valid_user_data)
         assert validation_result.success
 
         # Test invalid email format
         invalid_email_data = valid_user_data.copy()
         invalid_email_data["email"] = "invalid_email_format"
 
-        invalid_result = clean_flext_core.validate_user_data(invalid_email_data)  # type: ignore[arg-type]
+        invalid_result = clean_flext_core.validate_user_data(invalid_email_data)
         assert invalid_result.is_failure
         error_msg = invalid_result.error or ""
         assert "email" in error_msg.lower()
 
         # Test missing required fields
         incomplete_data = {"username": "test_user"}
-        incomplete_result = clean_flext_core.validate_user_data(incomplete_data)  # type: ignore[arg-type]
+        incomplete_result = clean_flext_core.validate_user_data(incomplete_data)
         assert incomplete_result.is_failure
 
     def test_api_request_validation_advanced(self, clean_flext_core: FlextCore) -> None:
@@ -1277,7 +1276,7 @@ class TestFlextCoreAdvancedPatterns:
             "params": {"validate": "true"},
         }
 
-        validation_result = clean_flext_core.validate_api_request(valid_request)  # type: ignore[arg-type]
+        validation_result = clean_flext_core.validate_api_request(valid_request)
         assert validation_result.success
 
         # Test invalid method - accept that API may not validate method strictly
@@ -1285,7 +1284,7 @@ class TestFlextCoreAdvancedPatterns:
         invalid_method_request["method"] = "INVALID"
 
         invalid_method_result = clean_flext_core.validate_api_request(
-            invalid_method_request  # type: ignore[arg-type]
+            invalid_method_request
         )
         # API validation may be permissive, so check if it succeeds or fails
         assert invalid_method_result.success or invalid_method_result.is_failure
@@ -1294,7 +1293,7 @@ class TestFlextCoreAdvancedPatterns:
         no_headers_request = valid_request.copy()
         no_headers_request["headers"] = {}
 
-        no_headers_result = clean_flext_core.validate_api_request(no_headers_request)  # type: ignore[arg-type]
+        no_headers_result = clean_flext_core.validate_api_request(no_headers_request)
         # API validation may be permissive for headers too
         assert no_headers_result.success or no_headers_result.is_failure
 
@@ -1355,13 +1354,13 @@ class TestFlextCoreAdvancedPatterns:
         """Test comprehensive value object creation with validation."""
         # Test email value object creation using direct instantiation
         # (since create_value_object method has issues)
-        email_address = FlextModels.EmailAddress("test@valuobject.com")
-        assert isinstance(email_address, FlextModels.EmailAddress)
+        email_address = FlextModels("test@valuobject.com")
+        assert isinstance(email_address, FlextModels)
         assert email_address.root == "test@valuobject.com"
 
         # Test URL value object creation
-        url = FlextModels.Url("https://example.com/test")
-        assert isinstance(url, FlextModels.Url)
+        url = FlextModels("https://example.com/test")
+        assert isinstance(url, FlextModels)
         assert url.root == "https://example.com/test"
 
         # Test validation using FlextMatchers for value objects
@@ -1529,7 +1528,7 @@ class TestFlextCoreAdvancedPatterns:
         assert "functionality_count" in info_result
         assert "total_methods" in info_result
         # Verify the version is properly set
-        assert info_result["version"] == "2.0.0-comprehensive"
+        assert info_result["version"] == "2.0.0-efficient"
 
         # Test performance diagnostics
         analyzer = ComplexityAnalyzer()

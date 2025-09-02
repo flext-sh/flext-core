@@ -600,6 +600,7 @@ class FunctionalTestContext:
 # Backward-compatible aliases (older tests may import these names)
 TestUtilities = FlextTestUtilities
 
+
 class FlextTestMocker:
     """Functional test object creation utilities.
 
@@ -669,7 +670,7 @@ class FlextTestMocker:
 # =============================================================================
 
 
-class FlextTestModel(FlextModels.Entity):
+class FlextTestModel(FlextModels.BaseConfig):
     """Test model for testing purposes.
 
     Provides a simple model with common field types for testing.
@@ -805,10 +806,10 @@ __all__: list[str] = [
     "FlextTestMocker",
     "FlextTestModel",
     "FlextTestUtilities",
-    "TestUtilities",
     "ITestAssertion",
     "ITestFactory",
     "ITestMocker",
+    "TestUtilities",
     "create_api_test_response",
     "create_ldap_test_config",
     "create_oud_connection_config",

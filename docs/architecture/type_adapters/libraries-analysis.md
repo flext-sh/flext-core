@@ -181,7 +181,7 @@ class FlextMeltanoUtilities:
             project_id: str
             project_name: str
             created_at: datetime
-            metadata: Dict[str, Any] = field(default_factory=dict)
+            metadata: Dict[str, object] = field(default_factory=dict)
         
         # Create adapter and validate
         adapter = FlextTypeAdapters.Foundation.create_basic_adapter(MeltanoConfig)
@@ -436,8 +436,8 @@ class FlextOracleTypeAdapters:
         }
     
     def convert_python_to_oracle(
-        self, oracle_type: str, value: Any
-    ) -> FlextResult[Any]:
+        self, oracle_type: str, value: object
+    ) -> FlextResult[object]:
         """Convert Python value to Oracle-compatible type."""
         
         adapter = self.oracle_adapters.get(oracle_type)
@@ -447,8 +447,8 @@ class FlextOracleTypeAdapters:
         return FlextTypeAdapters.Foundation.validate_with_adapter(adapter, value)
     
     def batch_convert(
-        self, conversions: List[Tuple[str, Any]]
-    ) -> FlextResult[List[Any]]:
+        self, conversions: List[Tuple[str, object]]
+    ) -> FlextResult[List[object]]:
         """Batch convert multiple values for performance."""
         
         results = []

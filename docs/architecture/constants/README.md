@@ -65,8 +65,8 @@ graph TB
         
         subgraph "Extension Libraries"
             E1[flext-grpc → FlextGrpcConstants]
-            E2[flext-ldap → FlextLdapConstants]
-            E3[flext-ldif → FlextLdifConstants]
+            E2[flext-ldap → FlextLDAPConstants]
+            E3[flext-ldif → FlextLDIFConstants]
             E4[flext-auth → FlextAuthConstants]
         end
     end
@@ -566,8 +566,8 @@ def configure_logging(log_level: str) -> dict:
 |-------------------|--------------------|--------------------|-------------------|
 | **flext-core** | ✅ Native | Base implementation | All 15+ domains |
 | **flext-grpc** | ✅ Extended | FlextGrpcConstants(FlextConstants) | Network, gRPC-specific |
-| **flext-ldap** | ✅ Extended | FlextLdapConstants(FlextCoreConstants) | Protocol, LDAP-specific |
-| **flext-ldif** | ✅ Extended | FlextLdifConstants(FlextConstants) | LDIF, file processing |
+| **flext-ldap** | ✅ Extended | FlextLDAPConstants(FlextCoreConstants) | Protocol, LDAP-specific |
+| **flext-ldif** | ✅ Extended | FlextLDIFConstants(FlextConstants) | LDIF, file processing |
 | **flext-auth** | ✅ Extended | FlextAuthConstants(FlextConstants) | Security, authentication |
 | **flext-cli** | ✅ Partial | Direct usage | CLI, terminal output |
 | **flext-api** | ✅ Partial | Direct usage | API, HTTP responses |
@@ -601,7 +601,7 @@ class FlextGrpcConstants(FlextConstants):
 # flext-ldap/src/flext_ldap/constants.py  
 from flext_core import FlextCoreConstants  # Should be FlextConstants
 
-class FlextLdapConstants(FlextCoreConstants):  # Should inherit from FlextConstants
+class FlextLDAPConstants(FlextCoreConstants):  # Should inherit from FlextConstants
     """LDAP constants with legacy inheritance pattern."""
     
     class Protocol:

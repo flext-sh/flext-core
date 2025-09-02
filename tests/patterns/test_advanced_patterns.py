@@ -21,10 +21,297 @@ from ..support import (
     ComplexityAnalyzer,
     PerformanceProfiler,
     StressTestRunner,
-    TestBuilders,
+)
+from ..support.hypothesis import (
+    CompositeStrategies,
+    EdgeCaseStrategies,
+    FlextStrategies,
+    PerformanceStrategies,
+    PropertyTestHelpers,
 )
 
+
+def mark_test_pattern(pattern: str) -> object:
+    """Mark test with a specific pattern for demonstration purposes."""
+
+    def decorator(func: object) -> object:
+        func._test_pattern = pattern
+        return func
+
+    return decorator
+
+
 pytestmark = [pytest.mark.unit, pytest.mark.architecture, pytest.mark.advanced]
+
+
+# ============================================================================
+# STUB CLASSES FOR ADVANCED PATTERNS DEMONSTRATION
+# ============================================================================
+
+
+class MockScenario:
+    """Mock scenario object for testing purposes."""
+
+    def __init__(self, name: str, data: dict[str, object]) -> None:
+        self.name = name
+        self.given = data.get("given", {})
+        self.when = data.get("when", {})
+        self.then = data.get("then", {})
+        self.tags = data.get("tags", [])
+        self.priority = data.get("priority", "normal")
+
+
+class GivenWhenThenBuilder:
+    """Builder for Given-When-Then test scenarios."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._given: dict[str, object] = {}
+        self._when: dict[str, object] = {}
+        self._then: dict[str, object] = {}
+        self._tags: list[str] = []
+        self._priority = "normal"
+
+    def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        self._given.update(kwargs)
+        return self
+
+    def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        self._when.update(kwargs)
+        return self
+
+    def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        self._then.update(kwargs)
+        return self
+
+    def with_tag(self, tag: str) -> GivenWhenThenBuilder:
+        self._tags.append(tag)
+        return self
+
+    def with_priority(self, priority: str) -> GivenWhenThenBuilder:
+        self._priority = priority
+        return self
+
+    def build(self) -> MockScenario:
+        return MockScenario(
+            self.name,
+            {
+                "given": self._given,
+                "when": self._when,
+                "then": self._then,
+                "tags": self._tags,
+                "priority": self._priority,
+            },
+        )
+
+
+class FlextTestBuilder:
+    """Builder for test data objects."""
+
+    def __init__(self) -> None:
+        self._data: dict[str, object] = {}
+
+    def with_id(self, id_: str) -> FlextTestBuilder:
+        self._data["id"] = id_
+        return self
+
+    def with_correlation_id(self, correlation_id: str) -> FlextTestBuilder:
+        self._data["correlation_id"] = correlation_id
+        return self
+
+    def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+        self._data.update(kwargs)
+        return self
+
+    def with_user_data(self, name: str, email: str) -> FlextTestBuilder:
+        self._data["name"] = name
+        self._data["email"] = email
+        return self
+
+    def with_timestamp(self) -> FlextTestBuilder:
+        self._data.setdefault("created_at", "2023-01-01T00:00:00+00:00")
+        self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
+        return self
+
+    def with_validation_rules(self) -> FlextTestBuilder:
+        # No-op stub to keep example API; could attach schema metadata here
+        return self
+
+    def build(self) -> dict[str, object]:
+        return self._data.copy()
+
+
+class ParameterizedTestBuilder:
+    """Builder for parametrized test cases."""
+
+    def __init__(self, test_name: str) -> None:
+        self.test_name = test_name
+        self._cases: list[dict[str, object]] = []
+        self._success_cases: list[dict[str, object]] = []
+        self._failure_cases: list[dict[str, object]] = []
+
+    def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
+        self._cases.append(kwargs)
+        return self
+
+    def add_success_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
+        self._success_cases.extend(cases)
+        return self
+
+    def add_failure_cases(
+        self, cases: list[dict[str, object]]
+    ) -> ParameterizedTestBuilder:
+        self._failure_cases.extend(cases)
+        return self
+
+    def build(self) -> list[dict[str, object]]:
+        return self._cases.copy()
+
+    def build_pytest_params(self) -> list[tuple[str, str, bool]]:
+        success_params = [
+            (str(c.get("email", "")), str(c.get("input", "")), True)
+            for c in self._success_cases
+        ]
+        failure_params = [
+            (str(c.get("email", "")), str(c.get("input", "")), False)
+            for c in self._failure_cases
+        ]
+        return success_params + failure_params
+
+    def build_test_ids(self) -> list[str]:
+        return [
+            str(c.get("input", ""))
+            for c in (*self._success_cases, *self._failure_cases)
+        ]
+
+
+class TestAssertionBuilder:
+    """Builder for complex test assertions."""
+
+    def __init__(self, data: object) -> None:
+        self._data = data
+        self._checks: list[tuple[str, object]] = []
+
+    def is_not_none(self) -> TestAssertionBuilder:
+        assert self._data is not None
+        return self
+
+    def has_length(self, length: int) -> TestAssertionBuilder:
+        assert len(self._data) == length
+        return self
+
+    def contains(self, item: object) -> TestAssertionBuilder:
+        assert item in self._data
+        return self
+
+    def satisfies(self, predicate: object, message: str = "") -> TestAssertionBuilder:
+        if callable(predicate):
+            assert predicate(self._data), message
+        return self
+
+    def assert_all(self) -> None:
+        # All checks are executed inline in this simple stub
+        return None
+
+
+class TestSuiteBuilder:
+    """Builder for test suites."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._scenarios: list[object] = []
+        self._setup_data: dict[str, object] = {}
+        self._tags: list[str] = []
+
+    def add_scenarios(self, scenarios: list[object]) -> TestSuiteBuilder:
+        self._scenarios.extend(scenarios)
+        return self
+
+    def with_setup_data(self, **kwargs: object) -> TestSuiteBuilder:
+        self._setup_data.update(kwargs)
+        return self
+
+    def with_tag(self, tag: str) -> TestSuiteBuilder:
+        self._tags.append(tag)
+        return self
+
+    def build(self) -> dict[str, object]:
+        return {
+            "suite_name": self.name,
+            "scenario_count": len(self._scenarios),
+            "tags": self._tags,
+            "setup_data": self._setup_data,
+        }
+
+
+class TestFixtureBuilder:
+    """Builder for test fixtures."""
+
+    def __init__(self) -> None:
+        self._fixtures: dict[str, object] = {}
+        self._setups: list[object] = []
+        self._teardowns: list[object] = []
+
+    def with_user(self, **kwargs: object) -> TestFixtureBuilder:
+        self._fixtures["user"] = kwargs
+        return self
+
+    def with_request(self, **kwargs: object) -> TestFixtureBuilder:
+        self._fixtures["request"] = kwargs
+        return self
+
+    def build(self) -> dict[str, object]:
+        return self._fixtures.copy()
+
+    def add_setup(self, func: object) -> TestFixtureBuilder:
+        self._setups.append(func)
+        return self
+
+    def add_teardown(self, func: object) -> TestFixtureBuilder:
+        self._teardowns.append(func)
+        return self
+
+    def add_fixture(self, key: str, value: object) -> TestFixtureBuilder:
+        self._fixtures[key] = value
+        return self
+
+    def setup_context(self) -> object:
+        from collections.abc import Iterator
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _ctx() -> Iterator[dict[str, object]]:
+            for f in self._setups:
+                if callable(f):
+                    f()
+            try:
+                yield self._fixtures
+            finally:
+                for f in self._teardowns:
+                    if callable(f):
+                        f()
+
+        return _ctx()
+
+
+def arrange_act_assert(
+    _arrange_func: object, _act_func: object, _assert_func: object
+) -> object:
+    """Decorator for AAA pattern testing."""
+
+    def decorator(_test_func: object) -> object:
+        def wrapper() -> object:
+            data = _arrange_func() if callable(_arrange_func) else {}
+            result = _act_func(data) if callable(_act_func) else None
+            if callable(_assert_func):
+                _assert_func(result, data)
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 # ============================================================================

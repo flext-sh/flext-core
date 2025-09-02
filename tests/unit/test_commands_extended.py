@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
-from typing import Any
 
 import pytest
 
@@ -19,7 +18,7 @@ class ExtendedTestCommand(FlextCommands.Models.Command):
 
     name: str
     value: int = 0
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, object] | None = None
 
     def validate_command(self) -> FlextResult[None]:
         """Validate the command."""
@@ -38,7 +37,7 @@ class ExtendedQuery(FlextCommands.Models.Query):
     """Extended query with additional features."""
 
     search_term: str
-    filters: dict[str, Any] | None = None
+    filters: dict[str, object] | None = None
     limit: int = 10
 
     def validate_query(self) -> FlextResult[None]:
@@ -107,10 +106,14 @@ class TestCommandValidation:
 
     def test_command_with_metadata(self) -> None:
         """Test command with metadata."""
-        metadata = {"user_id": "123", "timestamp": datetime.now(UTC).isoformat()}
+        metadata: dict[str, object] = {
+            "user_id": "123",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
         cmd = ExtendedTestCommand(name="test", value=42, metadata=metadata)
 
         assert cmd.metadata == metadata
+        assert cmd.metadata is not None
         assert cmd.metadata["user_id"] == "123"
 
         # Test validation still works
@@ -146,10 +149,14 @@ class TestQueryHandling:
 
     def test_query_with_filters(self) -> None:
         """Test query with filter parameters."""
-        filters = {"category": "electronics", "price_range": [100, 500]}
+        filters: dict[str, object] = {
+            "category": "electronics",
+            "price_range": [100, 500],
+        }
         query = ExtendedQuery(search_term="laptop", filters=filters, limit=20)
 
         assert query.filters == filters
+        assert query.filters is not None
         assert query.filters["category"] == "electronics"
         assert query.limit == 20
 
@@ -173,17 +180,23 @@ class TestQueryHandling:
 
     def test_query_handler_execution(self) -> None:
         """Test query handler execution."""
-        class SearchHandler(FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict]]):
-            def handle(self, query: ExtendedQuery) -> FlextResult[list[dict]]:
+
+        class SearchHandler(
+            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict[str, object]]]
+        ):
+            def handle(
+                self, query: ExtendedQuery
+            ) -> FlextResult[list[dict[str, object]]]:
                 # Simulate search results
-                results = []
-                for i in range(min(query.limit, 5)):
-                    results.append({
+                results = [
+                    {
                         "id": f"item_{i}",
                         "name": f"{query.search_term}_{i}",
-                        "score": 1.0 - (i * 0.1)
-                    })
-                return FlextResult[list[dict]].ok(results)
+                        "score": 1.0 - (i * 0.1),
+                    }
+                    for i in range(min(query.limit, 5))
+                ]
+                return FlextResult[list[dict[str, object]]].ok(results)
 
             def can_handle(self, query: object) -> bool:
                 return isinstance(query, ExtendedQuery)
@@ -268,7 +281,8 @@ class TestCommandChaining:
             assert "conditional" in result.value
         else:
             # Should not reach here
-            assert False, "Command should have executed"
+            msg = "Command should have executed"
+            raise AssertionError(msg)
 
 
 class TestAsyncCommandPatterns:
@@ -277,6 +291,7 @@ class TestAsyncCommandPatterns:
     @pytest.mark.asyncio
     async def test_async_command_execution(self) -> None:
         """Test async command execution pattern."""
+
         class AsyncCommand(ExtendedTestCommand):
             async def execute_async(self) -> FlextResult[str]:
                 await asyncio.sleep(0.01)  # Simulate async work
@@ -291,8 +306,13 @@ class TestAsyncCommandPatterns:
     @pytest.mark.asyncio
     async def test_async_query_handler(self) -> None:
         """Test async query handler."""
-        class AsyncQueryHandler(FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]]):
-            async def handle_async(self, query: ExtendedQuery) -> FlextResult[list[str]]:
+
+        class AsyncQueryHandler(
+            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]]
+        ):
+            async def handle_async(
+                self, query: ExtendedQuery
+            ) -> FlextResult[list[str]]:
                 await asyncio.sleep(0.01)  # Simulate async work
                 results = [f"Async result {i}" for i in range(query.limit)]
                 return FlextResult[list[str]].ok(results)
@@ -322,13 +342,17 @@ class TestCommandMiddleware:
         logged_commands = []
 
         class LoggingMiddleware:
-            def process(self, command: object, next_handler: object) -> FlextResult[Any]:
+            def process(
+                self,
+                command: object,
+                _next_handler: object,
+            ) -> FlextResult[object]:
                 # Log command before processing
                 if isinstance(command, ExtendedTestCommand):
                     logged_commands.append(command.name)
 
                 # Call next handler (simulated)
-                return FlextResult[str].ok("Processed")
+                return FlextResult[object].ok("Processed")
 
         middleware = LoggingMiddleware()
         cmd = ExtendedTestCommand(name="logged_command", value=50)
@@ -341,16 +365,23 @@ class TestCommandMiddleware:
 
     def test_validation_middleware(self) -> None:
         """Test validation middleware pattern."""
+
         class ValidationMiddleware:
-            def process(self, command: object, next_handler: object) -> FlextResult[Any]:
+            def process(
+                self,
+                command: object,
+                _next_handler: object,
+            ) -> FlextResult[object]:
                 # Validate command before processing
                 if isinstance(command, ExtendedTestCommand):
                     validation = command.validate_command()
                     if validation.is_failure:
-                        return FlextResult[str].fail(f"Validation failed: {validation.error}")
+                        return FlextResult[object].fail(
+                            f"Validation failed: {validation.error}"
+                        )
 
                 # Proceed if valid
-                return FlextResult[str].ok("Valid and processed")
+                return FlextResult[object].ok("Valid and processed")
 
         middleware = ValidationMiddleware()
 
@@ -358,7 +389,7 @@ class TestCommandMiddleware:
         valid_cmd = ExtendedTestCommand(name="valid", value=10)
         result = middleware.process(valid_cmd, None)
         assert result.success
-        assert "Valid and processed" in result.value
+        assert result.value == "Valid and processed"
 
         # Test with invalid command
         invalid_cmd = ExtendedTestCommand(name="", value=10)
@@ -406,15 +437,11 @@ class TestCommandAggregation:
     def test_batch_command_execution(self) -> None:
         """Test batch execution of multiple commands."""
         commands = [
-            ExtendedTestCommand(name=f"batch_{i}", value=i * 10)
-            for i in range(5)
+            ExtendedTestCommand(name=f"batch_{i}", value=i * 10) for i in range(5)
         ]
 
         # Execute batch
-        results = []
-        for cmd in commands:
-            if cmd.validate_command().success:
-                results.append(cmd.execute())
+        results = [cmd.execute() for cmd in commands if cmd.validate_command().success]
 
         assert len(results) == 5
         assert all(r.success for r in results)

@@ -389,9 +389,9 @@ class FlextOracleDatabaseService:
 ```python
 # LDAP service with FlextCore integration
 from flext_core.core import FlextCore
-from flext_ldap import FlextLdapConnection
+from flext_ldap import FlextLDAPConnection
 
-class FlextLdapService:
+class FlextLDAPService:
     def __init__(self, ldap_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_ldap_services(ldap_config)

@@ -1,13 +1,21 @@
 """FLEXT State - Object lifecycle and state management functionality.
 
-Provides comprehensive state management capabilities through hierarchical organization
-of state utilities and mixin classes. Built for object lifecycle tracking, state
-transitions, and history management with enterprise-grade patterns.
+Provides state management capabilities for object lifecycle tracking, state transitions,
+and history management with production-ready patterns.
 
-Module Role in Architecture:
-    FlextState serves as the state management foundation providing lifecycle
-    tracking patterns for object-oriented applications. Integrates with
-    FlextResult for type-safe state transitions and FlextLogging for state change auditing.
+Usage:
+    # Basic state management
+    obj = MyObject()
+    FlextState.initialize_state(obj)
+    state = FlextState.get_state(obj)
+
+    # State transitions with validation
+    transition_result = FlextState.transition_state(obj, "active", "inactive")
+    if transition_result.success:
+        print("State transitioned successfully")
+
+    # State history tracking
+    history = FlextState.get_state_history(obj)
 """
 
 from __future__ import annotations
@@ -23,9 +31,8 @@ from flext_core.result import FlextResult
 class FlextState:
     """Unified state management system implementing single class pattern.
 
-    This class serves as the single main export consolidating ALL state
-    functionality with enterprise-grade patterns. Provides comprehensive
-    object lifecycle and state management capabilities while maintaining clean API.
+    Single main export consolidating state functionality with production-ready patterns.
+    Provides object lifecycle and state management capabilities with clean API.
 
     Tier 1 Module Pattern: state.py -> FlextState
     All state functionality is accessible through this single interface.
@@ -123,6 +130,107 @@ class FlextState:
         if not hasattr(obj, "_state_initialized"):
             FlextState.initialize_state(obj)
         return list(getattr(obj, "_state_history", ["created"]))
+
+    @staticmethod
+    def set_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+        value: object,
+    ) -> None:
+        """Set a state attribute with key-value pair.
+
+        Args:
+            obj: Object to set state on
+            key: Attribute key
+            value: Attribute value
+
+        """
+        if not hasattr(obj, "_state_attributes"):
+            obj._state_attributes = {}
+
+        state_attrs = getattr(obj, "_state_attributes", {})
+        state_attrs[key] = value
+        obj._state_attributes = state_attrs
+
+    @staticmethod
+    def get_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+    ) -> object:
+        """Get a state attribute value.
+
+        Args:
+            obj: Object to get state from
+            key: Attribute key
+
+        Returns:
+            Attribute value or None if not found
+
+        """
+        state_attrs = getattr(obj, "_state_attributes", {})
+        return state_attrs.get(key)
+
+    @staticmethod
+    def has_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+    ) -> bool:
+        """Check if state attribute exists.
+
+        Args:
+            obj: Object to check state on
+            key: Attribute key
+
+        Returns:
+            True if attribute exists
+
+        """
+        state_attrs = getattr(obj, "_state_attributes", {})
+        return key in state_attrs
+
+    @staticmethod
+    def update_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        updates: dict[str, object],
+    ) -> None:
+        """Update multiple state attributes.
+
+        Args:
+            obj: Object to update state on
+            updates: Dictionary of key-value pairs to update
+
+        """
+        for key, value in updates.items():
+            FlextState.set_attribute(obj, key, value)
+
+    @staticmethod
+    def validate_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> bool:
+        """Validate current state.
+
+        Args:
+            obj: Object to validate state on
+
+        Returns:
+            True if state is valid
+
+        """
+        # Basic validation - ensure state is initialized
+        return hasattr(obj, "_state_initialized") or hasattr(obj, "_state_attributes")
+
+    @staticmethod
+    def clear_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> None:
+        """Clear all state attributes.
+
+        Args:
+            obj: Object to clear state from
+
+        """
+        if hasattr(obj, "_state_attributes"):
+            obj._state_attributes = {}
 
     # =============================================================================
     # MIXIN CLASS

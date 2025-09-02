@@ -6,12 +6,9 @@ ecosystem components for consistent logging patterns.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
 
 
 class FlextLogging:
@@ -45,8 +42,8 @@ class FlextLogging:
         for key, value in kwargs.items():
             match value:
                 # Pydantic v2 BaseModel
-                case BaseModel():
-                    normalized[key] = value.model_dump()
+                case model if hasattr(model, "model_dump"):
+                    normalized[key] = model.model_dump()
 
                 # Basic JSON-serializable types
                 case str() | int() | float() | bool() | None:

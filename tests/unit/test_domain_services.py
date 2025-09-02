@@ -163,7 +163,7 @@ class TestFlextDomainService:
         """Test that execute method is abstract."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             # This is intentionally testing abstract class instantiation
-            FlextDomainService()  # type: ignore[abstract]
+            FlextDomainService()
 
     def test_execute_success(self) -> None:
         """Test successful service execution."""

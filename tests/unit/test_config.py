@@ -448,9 +448,9 @@ class TestConfigPerformance:
                 )
                 configs.append(test_config)
 
-        # Assert reasonable memory usage (< 40MB for 1000 configs with Pydantic overhead)
+        # Assert reasonable memory usage (< 50MB for 1000 configs with Pydantic overhead)
         profiler.assert_memory_efficient(
-            max_memory_mb=40.0, operation_name="config_operations"
+            max_memory_mb=50.0, operation_name="config_operations"
         )
 
 

@@ -369,7 +369,7 @@ class TestHandlersConfigurationIntegration:
         # Test invalid environment
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "invalid_env"  # type: ignore[arg-type]
+                "invalid_env"
             )
         )
         assert invalid_result.success is False

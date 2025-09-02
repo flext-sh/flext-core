@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FlextCore Payload and Messaging Events - Simplified Example.
 
-This example demonstrates the correct usage of FlextModels.Payload for messaging
+This example demonstrates the correct usage of FlextModels for messaging
 and event handling patterns using the current API.
 
 Key concepts demonstrated:
@@ -25,7 +25,7 @@ def demonstrate_basic_payload_creation() -> None:
     print("=== Basic Payload Creation ===")
 
     # Simple string payload
-    greeting_payload = FlextModels.Payload(
+    greeting_payload = FlextModels(
         data="Hello, World!", source_service="demo_service", message_type="greeting"
     )
     print(f"Greeting: {greeting_payload.data}")
@@ -39,7 +39,7 @@ def demonstrate_basic_payload_creation() -> None:
         "email": "john@example.com",
     }
 
-    user_payload = FlextModels.Payload(
+    user_payload = FlextModels(
         data=user_data,
         source_service="user_service",
         message_type="user_registered",
@@ -56,7 +56,7 @@ def demonstrate_message_routing() -> None:
     print("\n=== Message Routing ===")
 
     # Order processing message
-    order_payload = FlextModels.Payload(
+    order_payload = FlextModels(
         data={"order_id": "ORD001", "amount": 99.99},
         source_service="order_service",
         target_service="payment_service",
@@ -83,7 +83,7 @@ def demonstrate_event_messaging() -> None:
         "timestamp": time.time(),
     }
 
-    domain_event = FlextModels.Payload(
+    domain_event = FlextModels(
         data=event_data,
         source_service="user_service",
         message_type="domain_event",
@@ -107,7 +107,7 @@ def demonstrate_payload_properties() -> None:
 
     expire_time = datetime.now(UTC) + timedelta(minutes=5)
 
-    temp_message = FlextModels.Payload(
+    temp_message = FlextModels(
         data="Temporary notification",
         source_service="notification_service",
         message_type="temp_notification",
@@ -126,7 +126,7 @@ def demonstrate_typed_payloads() -> None:
     print("\n=== Typed Payloads ===")
 
     # String payload
-    string_payload = FlextModels.Payload[str](
+    string_payload = FlextModels[str](
         data="Hello typed world",
         source_service="demo_service",
         message_type="typed_greeting",
@@ -137,7 +137,7 @@ def demonstrate_typed_payloads() -> None:
     print(f"String payload: {string_payload.data} (length: {message_length})")
 
     # Dict payload
-    dict_payload = FlextModels.Payload[dict[str, object]](
+    dict_payload = FlextModels[dict[str, object]](
         data={"key": "value", "number": 42},
         source_service="demo_service",
         message_type="typed_dict",
@@ -152,8 +152,8 @@ def demonstrate_message_specialization() -> None:
     """Show the specialized Message class."""
     print("\n=== Specialized Message Class ===")
 
-    # FlextModels.Message is a specialized Payload for JSON data
-    json_message = FlextModels.Message(
+    # FlextModels is a specialized Payload for JSON data
+    json_message = FlextModels(
         data={"content": "This is a JSON message", "level": "info"},
         source_service="logger_service",
         message_type="log_message",

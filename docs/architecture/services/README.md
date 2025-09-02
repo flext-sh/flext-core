@@ -1391,7 +1391,7 @@ else:
 | Library | Current FlextServices Usage | Integration Level | Service Architecture Sophistication |
 |---------|----------------------------|-------------------|-------------------------------------|
 | **flext-core** | ✅ **Complete** | Full Template Method system implemented | Very High |
-| **flext-ldap** | ✅ **Extended** | FlextLdapServices extends FlextServiceProcessor | High |
+| **flext-ldap** | ✅ **Extended** | FlextLDAPServices extends FlextServiceProcessor | High |
 | **flext-plugin** | ✅ **Extended** | FlextPluginServices extends FlextDomainService | High |
 | **client-a-oud-mig** | ✅ **Extended** | client-aMigSchemaProcessor extends FlextDomainService | High |
 | **flext-observability** | ⚠️ **Partial** | Uses FlextServices patterns in factories, custom services | Medium |
@@ -1403,8 +1403,8 @@ else:
 #### 1. **Excellent Integration - flext-ldap**
 ```python
 # Current: Excellent Template Method pattern usage
-class FlextLdapServices(FlextServiceProcessor[dict[str, object], object, dict[str, object]]):
-    """Single FlextLdapServices class inheriting from FlextServiceProcessor.
+class FlextLDAPServices(FlextServiceProcessor[dict[str, object], object, dict[str, object]]):
+    """Single FlextLDAPServices class inheriting from FlextServiceProcessor.
     
     Consolidates ALL LDAP services into a single class following FLEXT patterns.
     Everything from the previous service definitions is now available as

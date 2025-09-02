@@ -251,11 +251,11 @@ class TestFlextDelegationSystemCore:
         assert hasattr(host, "method_with_args")
 
         # Verify method calls work
-        result = host.simple_method()  # type: ignore[attr-defined]
+        result = host.simple_method()
         assert result == "test_result"
 
         # Verify method with arguments
-        result_with_args = host.method_with_args("test", 42)  # type: ignore[attr-defined]
+        result_with_args = host.method_with_args("test", 42)
         assert result_with_args == "test_42"
 
     def test_property_delegation(
@@ -274,7 +274,7 @@ class TestFlextDelegationSystemCore:
             assert prop_value == "property_value"
         else:
             # If property delegation isn't supported, verify methods still work
-            result = host_object.simple_method()  # type: ignore[attr-defined]
+            result = host_object.simple_method()
             assert result == "test_result"
 
     def test_private_method_exclusion(
@@ -319,7 +319,7 @@ class TestFlextDelegationSystemErrorHandling:
         with pytest.raises(
             (FlextExceptions.BaseError, FlextExceptions.OperationError),
         ):
-            host_object.error_method()  # type: ignore[attr-defined]
+            host_object.error_method()
 
     def test_invalid_mixin_handling(
         self,
@@ -327,8 +327,8 @@ class TestFlextDelegationSystemErrorHandling:
     ) -> None:
         """Test handling of invalid mixin types."""
         # When/Then: Invalid mixin should raise appropriate error
-        with pytest.raises((TypeError, AttributeError)):
-            FlextDelegationSystem.MixinDelegator(host_object, "not_a_class")  # type: ignore[arg-type]
+        with pytest.raises(FlextExceptions.BaseError):
+            FlextDelegationSystem.MixinDelegator(host_object, "not_a_class")
 
     def test_none_host_handling(
         self,
@@ -337,7 +337,7 @@ class TestFlextDelegationSystemErrorHandling:
         """Test handling of None host object."""
         # When/Then: None host should raise appropriate error
         with pytest.raises((TypeError, AttributeError)):
-            FlextDelegationSystem.MixinDelegator(None, test_mixin_class)  # type: ignore[arg-type]
+            FlextDelegationSystem.MixinDelegator(None, test_mixin_class)
 
 
 # =============================================================================
@@ -360,7 +360,7 @@ class TestFlextDelegationSystemAsync:
         FlextDelegationSystem.MixinDelegator(host_object, async_mixin_class)
 
         # When: Calling async method
-        result = await host_object.async_method()  # type: ignore[attr-defined]
+        result = await host_object.async_method()
 
         # Then: Async method works correctly
         assert result == "async_result"
@@ -378,10 +378,7 @@ class TestFlextDelegationSystemAsync:
 
         # When: Profiling async method calls
         with performance_profiler.profile_memory("async_delegation"):
-            tasks = [
-                host_object.async_method()  # type: ignore[attr-defined]
-                for _ in range(10)
-            ]
+            tasks = [host_object.async_method() for _ in range(10)]
             results = await asyncio.gather(*tasks)
 
         # Then: Performance is within acceptable bounds
@@ -457,7 +454,7 @@ class TestFlextDelegationSystemPropertyBased:
 
         # When: Creating delegation and processing data
         FlextDelegationSystem.MixinDelegator(host_object, DataMixin)
-        _result_type, result_data = host_object.process_data(test_data)  # type: ignore[attr-defined]
+        _result_type, result_data = host_object.process_data(test_data)
 
         # Then: Data is processed correctly
         assert isinstance(result_data, type(test_data))
@@ -509,7 +506,7 @@ class TestFlextDelegationSystemPerformance:
         # When: Benchmarking method calls
         with performance_profiler.profile_memory("method_calls"):
             for _ in range(1000):
-                host_object.simple_method()  # type: ignore[attr-defined]
+                host_object.simple_method()
 
         # Then: Method calls should be fast
         performance_profiler.assert_memory_efficient(1.0, "method_calls")
@@ -567,11 +564,11 @@ class TestFlextDelegationSystemIntegration:
         user_data = user_data_factory.create(email="test@example.com")
 
         # Test logging capability
-        log_result = service.log_operation("user_creation")  # type: ignore[attr-defined]
+        log_result = service.log_operation("user_creation")
         assert log_result == "Logged: user_creation"
 
         # Test validation capability
-        validation_result = service.validate_user_data(user_data)  # type: ignore[attr-defined]
+        validation_result = service.validate_user_data(user_data)
         FlextMatchers.assert_result_success(validation_result)
 
     def test_delegation_with_flext_result_integration(
@@ -603,13 +600,13 @@ class TestFlextDelegationSystemIntegration:
         FlextDelegationSystem.MixinDelegator(host_object, ResultMixin)
 
         # Then: FlextResult operations work correctly
-        success_result = host_object.operation_with_result("test")  # type: ignore[attr-defined]
+        success_result = host_object.operation_with_result("test")
         FlextMatchers.assert_result_success(success_result, "processed_test")
 
-        failure_result = host_object.operation_with_result("")  # type: ignore[attr-defined]
+        failure_result = host_object.operation_with_result("")
         FlextMatchers.assert_result_failure(failure_result, "Value required")
 
-        chained_result = host_object.chained_operations(10)  # type: ignore[attr-defined]
+        chained_result = host_object.chained_operations(10)
         FlextMatchers.assert_result_success(chained_result, 21)  # (10 * 2) + 1
 
 
@@ -693,7 +690,7 @@ class TestFlextDelegationSystemEdgeCases:
         FlextDelegationSystem.MixinDelegator(host_object, SecondMixin)
 
         # Then: Verify delegation worked (implementation-dependent which wins)
-        result = host_object.shared_method()  # type: ignore[attr-defined]
+        result = host_object.shared_method()
         assert result in {"first", "second"}  # Either order could win
 
     def test_delegation_with_class_methods_and_static_methods(
@@ -721,7 +718,7 @@ class TestFlextDelegationSystemEdgeCases:
         # Then: Different method types are handled appropriately
         # Instance methods should be delegated
         assert hasattr(host_object, "instance_method")
-        instance_result = host_object.instance_method()  # type: ignore[attr-defined]
+        instance_result = host_object.instance_method()
         assert instance_result == "instance_method_result"
 
         # Class and static methods behavior depends on implementation
@@ -751,7 +748,7 @@ class TestFlextDelegationSystemCoverage:
 
         # Test method delegation
         assert hasattr(host_object, "simple_method")
-        result = host_object.simple_method()  # type: ignore[attr-defined]
+        result = host_object.simple_method()
         assert result == "test_result"
 
         # Test property delegation (if supported)
@@ -763,11 +760,11 @@ class TestFlextDelegationSystemCoverage:
             assert hasattr(host_object, "simple_method")
 
         # Test method with arguments
-        args_result = host_object.method_with_args("coverage", 100)  # type: ignore[attr-defined]
+        args_result = host_object.method_with_args("coverage", 100)
         assert args_result == "coverage_100"
 
         # Test kwargs method
-        kwargs_result = host_object.method_with_kwargs(test="coverage")  # type: ignore[attr-defined]
+        kwargs_result = host_object.method_with_kwargs(test="coverage")
         assert kwargs_result.get("test") == "coverage"
 
     def test_all_exception_paths(
@@ -785,14 +782,14 @@ class TestFlextDelegationSystemCoverage:
                 FlextExceptions.OperationError,
             )
         ):
-            host_object.error_method()  # type: ignore[attr-defined]
+            host_object.error_method()
 
         # Test various error scenarios
         with pytest.raises((TypeError, AttributeError)):
-            FlextDelegationSystem.MixinDelegator(None, error_mixin_class)  # type: ignore[arg-type]
+            FlextDelegationSystem.MixinDelegator(None, error_mixin_class)
 
-        with pytest.raises((TypeError, AttributeError)):
-            FlextDelegationSystem.MixinDelegator(host_object, "invalid")  # type: ignore[arg-type]
+        with pytest.raises(FlextExceptions.BaseError):
+            FlextDelegationSystem.MixinDelegator(host_object, "invalid")
 
     @pytest.mark.performance
     def test_stress_testing_for_coverage(
@@ -821,7 +818,7 @@ class TestFlextDelegationSystemCoverage:
 
                 # Test at least one delegated method
                 if hasattr(host, "method_0"):
-                    result = host.method_0()  # type: ignore[attr-defined]
+                    result = host.method_0()
                     assert result == "result_0"
 
         # Performance should still be reasonable under stress
@@ -848,7 +845,7 @@ class TestFlextDelegationSystemAdditionalCoverage:
         # When: Accessing property directly (may trigger __get__)
         if hasattr(host_object, "test_property"):
             # Test both instance and class access
-            value = host_object.test_property  # type: ignore[attr-defined]
+            value = host_object.test_property
             descriptor = getattr(type(host_object), "test_property", None)
 
             # Then: Property works correctly
@@ -875,7 +872,7 @@ class TestFlextDelegationSystemAdditionalCoverage:
         FlextDelegationSystem.MixinDelegator(host_object, NullMixin)
 
         # Then: Methods are delegated and can return None
-        result = host_object.nullable_method()  # type: ignore[attr-defined]
+        result = host_object.nullable_method()
         assert result is None
 
     def test_delegation_error_paths(
@@ -899,10 +896,10 @@ class TestFlextDelegationSystemAdditionalCoverage:
 
         # Then: Different errors are properly handled
         with pytest.raises((AttributeError, FlextExceptions.BaseError)):
-            host_object.attribute_error_method()  # type: ignore[attr-defined]
+            host_object.attribute_error_method()
 
         with pytest.raises((RuntimeError, FlextExceptions.BaseError)):
-            host_object.runtime_error_method()  # type: ignore[attr-defined]
+            host_object.runtime_error_method()
 
     def test_delegation_with_special_methods(
         self,
@@ -953,9 +950,9 @@ class TestFlextDelegationSystemAdditionalCoverage:
         FlextDelegationSystem.MixinDelegator(host_object, ThirdMixin)
 
         # Then: All methods are accessible
-        assert host_object.first_method() == "first"  # type: ignore[attr-defined]
-        assert host_object.second_method() == "second"  # type: ignore[attr-defined]
-        assert host_object.third_method() == "third"  # type: ignore[attr-defined]
+        assert host_object.first_method() == "first"
+        assert host_object.second_method() == "second"
+        assert host_object.third_method() == "third"
 
     def test_delegation_with_complex_inheritance(
         self,
@@ -979,8 +976,8 @@ class TestFlextDelegationSystemAdditionalCoverage:
         FlextDelegationSystem.MixinDelegator(host_object, DerivedMixin)
 
         # Then: Both inherited and own methods are available
-        assert host_object.derived_method() == "derived"  # type: ignore[attr-defined]
-        assert host_object.base_method() == "overridden_base"  # type: ignore[attr-defined]
+        assert host_object.derived_method() == "derived"
+        assert host_object.base_method() == "overridden_base"
 
     def test_edge_case_mixin_structures(
         self,
@@ -1010,11 +1007,11 @@ class TestFlextDelegationSystemAdditionalCoverage:
 
         # Then: Methods with different signatures work
         if hasattr(host_object, "varargs_method"):
-            result = host_object.varargs_method(1, 2, 3)  # type: ignore[attr-defined]
+            result = host_object.varargs_method(1, 2, 3)
             assert result == (1, 2, 3)
 
         if hasattr(host_object, "kwargs_only_method"):
-            result = host_object.kwargs_only_method(keyword_only="test")  # type: ignore[attr-defined]
+            result = host_object.kwargs_only_method(keyword_only="test")
             assert result == "test"
 
     def test_create_mixin_delegator_factory_method(
@@ -1048,4 +1045,4 @@ class TestFlextDelegationSystemAdditionalCoverage:
 
         # Then: All components work together
         assert isinstance(info, dict)
-        assert host.complete_method() == "complete"  # type: ignore[attr-defined]
+        assert host.complete_method() == "complete"

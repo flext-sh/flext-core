@@ -691,7 +691,7 @@ async def bulk_update_users(request: dict):
 
 ```python
 from enum import Enum
-from typing import Dict, Any
+from typing import Dict, object
 
 class ErrorCode(Enum):
     VALIDATION_ERROR = "VALIDATION_ERROR"
@@ -705,7 +705,7 @@ class APIErrorResponse(BaseModel):
     success: bool = False
     error_code: str
     message: str
-    details: Dict[str, Any] | None = None
+    details: Dict[str, object] | None = None
     timestamp: str
     request_id: str
 

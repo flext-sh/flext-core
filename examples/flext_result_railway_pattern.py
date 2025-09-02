@@ -16,7 +16,6 @@ import json
 from decimal import Decimal
 
 from flext_core import (
-    FlextConfig,
     FlextConstants,
     FlextCore,
     FlextModels,
@@ -29,7 +28,7 @@ from flext_core import (
 core = FlextCore
 
 # =============================================================================
-# DOMAIN ENTITIES - Using FlextModels.Entity with FlextCore factory
+# DOMAIN ENTITIES - Using FlextModels with FlextCore factory
 # =============================================================================
 
 
@@ -62,12 +61,12 @@ class User(FlextModels.Entity):
 
 
 # =============================================================================
-# STRUCTURED DATA MODELS - Using FlextModels.Value + FlextConfig.BaseModel base
+# STRUCTURED DATA MODELS - Using FlextModels + FlextConfig.BaseModel base
 # =============================================================================
 
 
 class UserRegistrationRequest(FlextModels.Value):
-    """Registration request using FlextModels.Value for immutability and validation.
+    """Registration request using FlextModels for immutability and validation.
 
     Follows SOLID principles with proper validation using FlextProtocols.
     """
@@ -90,7 +89,7 @@ class UserRegistrationRequest(FlextModels.Value):
         return FlextResult[None].ok(None)
 
 
-class RegistrationResult(FlextConfig.BaseModel):
+class RegistrationResult(FlextModels.BaseConfig):
     """Registration result using FlextConfig.BaseModel for enterprise features.
 
     Follows SOLID principles with proper typing using FlextTypes.
@@ -102,7 +101,7 @@ class RegistrationResult(FlextConfig.BaseModel):
     correlation_id: FlextTypes.Core.String
 
 
-class BatchResult(FlextConfig.BaseModel):
+class BatchResult(FlextModels.BaseConfig):
     """Batch processing result with enterprise metrics.
 
     Uses FlextTypes for consistent typing across the ecosystem.
@@ -309,7 +308,7 @@ def demo_railway_processing() -> None:
     """Demonstrate railway processing with flext-core components."""
     processor = RegistrationProcessor()
 
-    # Valid request using FlextModels.Value
+    # Valid request using FlextModels
     request = UserRegistrationRequest(
         name="Alice Johnson", email="alice@company.com", age=28
     )
@@ -323,7 +322,7 @@ def demo_batch_processing() -> None:
     """Demonstrate batch processing."""
     batch_processor = BatchProcessor()
 
-    # Create batch requests using FlextModels.Value
+    # Create batch requests using FlextModels
     requests = [
         UserRegistrationRequest(name="User 1", email="user1@company.com", age=25),
         UserRegistrationRequest(name="User 2", email="user2@company.com", age=30),

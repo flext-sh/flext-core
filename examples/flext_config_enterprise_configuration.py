@@ -19,7 +19,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import cast, override
+from typing import cast
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,8 +31,12 @@ from flext_core import FlextConfig, FlextResult
 # =============================================================================
 
 # Example security keys for demonstration purposes only - NOT FOR PRODUCTION
-_DEMO_SECRET_KEY_1 = "ValidSecretKey123WithComplexity456"  # noqa: S105
-_DEMO_SECRET_KEY_2 = "ValidSecretKey123WithComplexityAndLength"  # noqa: S105
+_DEMO_SECRET_KEY_1 = os.getenv(
+    "FLEXT_DEMO_SECRET_KEY_1", "ValidSecretKey123WithComplexity456"
+)
+_DEMO_SECRET_KEY_2 = os.getenv(
+    "FLEXT_DEMO_SECRET_KEY_2", "ValidSecretKey123WithComplexityAndLength"
+)
 _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
 # =============================================================================
@@ -52,7 +56,6 @@ class DatabaseConfig(FlextConfig):
     timeout: int = Field(default=30, ge=5, le=300, description="Connection timeout")
     ssl_enabled: bool = Field(default=False, description="Enable SSL connections")
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate database configuration business rules."""
         if self.host == "localhost" and not self.password:
@@ -94,7 +97,6 @@ class CacheConfig(FlextConfig):
     timeout: int = Field(default=5, ge=1, le=60)
     max_connections: int = Field(default=50, ge=1, le=1000)
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate cache configuration."""
         # Redis supports database indices 0-15
@@ -166,7 +168,6 @@ class SecurityConfig(FlextConfig):
 
         return v
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate security configuration rules."""
         # Conservative max login attempts when 2FA is enabled

@@ -30,8 +30,8 @@ class TestFlextValidations:
     def test_is_non_empty_string_invalid(self) -> None:
         """Test non-empty string validation with invalid input."""
         assert FlextValidations.validate_non_empty_string_func("") is False
-        assert FlextValidations.validate_non_empty_string_func(None) is False  # type: ignore[arg-type]
-        assert FlextValidations.validate_non_empty_string_func(123) is False  # type: ignore[arg-type]
+        assert FlextValidations.validate_non_empty_string_func(None) is False
+        assert FlextValidations.validate_non_empty_string_func(123) is False
 
     def test_is_callable_valid(self) -> None:
         """Test callable validation with valid input."""
@@ -198,7 +198,7 @@ class TestFlextResultValidation:
             raise AssertionError(f"Expected False, got {result.success}")
         if not (result.is_failure):
             raise AssertionError(f"Expected True, got {result.is_failure}")
-        # Cannot access .value on failed result - should raise TypeError
+        # Em falha, `.value` raises TypeError
         with pytest.raises(
             TypeError, match="Attempted to access value on failed result"
         ):

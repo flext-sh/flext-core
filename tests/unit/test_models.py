@@ -6,8 +6,8 @@ focusing on real patterns, validation, serialization, and domain modeling.
 Classes Tested:
 - FlextModels: Base Pydantic model with alias generation
 - FlextRootModel: Root data structure model
-- FlextModels.Value: Immutable value objects with business rules
-- FlextModels.Entity: Mutable entities with identity and lifecycle
+- FlextModels: Immutable value objects with business rules
+- FlextModels: Mutable entities with identity and lifecycle
 - FlextFactory: Factory pattern implementations
 """
 
@@ -64,7 +64,7 @@ def make_hashable(obj: object) -> object:
 
 # Use the base classes from models.py and create test-specific implementations
 class EmailValue(FlextModels.Value):
-    """Real email value object for testing FlextModels.Value."""
+    """Real email value object for testing FlextModels."""
 
     address: str = Field(..., description="Email address")
     domain: str = Field(..., description="Email domain")
@@ -84,7 +84,7 @@ class EmailValue(FlextModels.Value):
 
 
 class UserEntity(FlextModels.Entity):
-    """Real user entity for testing FlextModels.Entity."""
+    """Real user entity for testing FlextModels."""
 
     name: str = Field(..., description="User full name")
     email: str = Field(..., description="User email address")
@@ -158,7 +158,7 @@ class ConfigurationModel(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class DataRootModel(FlextModels.BaseConfig):
+class DataRootModel(FlextModels):
     """Real root model for testing FlextRootModel."""
 
     application_name: str = Field(..., description="Application name")
@@ -278,10 +278,10 @@ class TestFlextRootModelRealFunctionality:
 
 
 class TestFlextValueRealFunctionality:
-    """Test FlextModels.Value real functionality with immutable value objects."""
+    """Test FlextModels real functionality with immutable value objects."""
 
     def test_value_object_creation_and_immutability(self) -> None:
-        """Test FlextModels.Value creation and immutability."""
+        """Test FlextModels creation and immutability."""
         email = EmailValue(address="user@example.com", domain="example.com")
 
         assert email.address == "user@example.com"
@@ -292,7 +292,7 @@ class TestFlextValueRealFunctionality:
             email.address = "changed@example.com"
 
     def test_value_object_equality_by_value(self) -> None:
-        """Test FlextModels.Value equality comparison by value."""
+        """Test FlextModels equality comparison by value."""
         email1 = EmailValue(address="test@example.com", domain="example.com")
         email2 = EmailValue(address="test@example.com", domain="example.com")
         email3 = EmailValue(address="other@example.com", domain="example.com")
@@ -306,7 +306,7 @@ class TestFlextValueRealFunctionality:
         assert hash(email1) != hash(email3)
 
     def test_value_object_business_rules_validation(self) -> None:
-        """Test FlextModels.Value business rules validation."""
+        """Test FlextModels business rules validation."""
         # Valid email should pass validation
         valid_email = EmailValue(address="user@example.com", domain="example.com")
         result = valid_email.validate_business_rules()
@@ -323,14 +323,14 @@ class TestFlextValueRealFunctionality:
         assert "@ symbol" in result.error
 
     def test_value_object_flext_validation(self) -> None:
-        """Test FlextModels.Value validate_flext method."""
+        """Test FlextModels validate_flext method."""
         email = EmailValue(address="user@example.com", domain="example.com")
 
         result = email.validate_business_rules()
         assert result.is_success
 
     def test_value_object_to_payload_conversion(self) -> None:
-        """Test FlextModels.Value to_payload conversion."""
+        """Test FlextModels to_payload conversion."""
         email = EmailValue(address="user@example.com", domain="example.com")
 
         # Test model serialization instead of payload
@@ -340,7 +340,7 @@ class TestFlextValueRealFunctionality:
         assert "domain" in data
 
     def test_value_object_field_validation(self) -> None:
-        """Test FlextModels.Value field validation methods."""
+        """Test FlextModels field validation methods."""
         EmailValue(address="user@example.com", domain="example.com")
 
         # Test Pydantic validation works
@@ -352,7 +352,7 @@ class TestFlextValueRealFunctionality:
         assert validation_successful
 
     def test_value_object_string_representation(self) -> None:
-        """Test FlextModels.Value string representations."""
+        """Test FlextModels string representations."""
         email = EmailValue(address="user@example.com", domain="example.com")
 
         str_repr = str(email)
@@ -366,10 +366,10 @@ class TestFlextValueRealFunctionality:
 
 
 class TestFlextEntityRealFunctionality:
-    """Test FlextModels.Entity real functionality with mutable entities."""
+    """Test FlextModels real functionality with mutable entities."""
 
     def test_entity_creation_with_identity(self) -> None:
-        """Test FlextModels.Entity creation with automatic ID generation."""
+        """Test FlextModels creation with automatic ID generation."""
         user = UserEntity(
             id="user_123", name="John Doe", email="john@example.com", age=30
         )
@@ -386,7 +386,7 @@ class TestFlextEntityRealFunctionality:
         assert user.updated_at is not None
 
     def test_entity_basic_properties(self) -> None:
-        """Test FlextModels.Entity basic properties and methods."""
+        """Test FlextModels basic properties and methods."""
         user = UserEntity(
             id="user_456", name="Jane Doe", email="jane@example.com", age=25
         )
@@ -399,7 +399,7 @@ class TestFlextEntityRealFunctionality:
         assert user.updated_at is not None
 
     def test_entity_identity_based_equality(self) -> None:
-        """Test FlextModels.Entity identity-based equality."""
+        """Test FlextModels identity-based equality."""
         user1 = UserEntity(
             id="user_123", name="John Doe", email="john@example.com", age=30
         )
@@ -419,7 +419,7 @@ class TestFlextEntityRealFunctionality:
         assert hash(user1) != hash(user3)
 
     def test_entity_version_management(self) -> None:
-        """Test FlextModels.Entity version management and optimistic locking."""
+        """Test FlextModels version management and optimistic locking."""
         user = UserEntity(
             id="user_789", name="Bob Smith", email="bob@example.com", age=40
         )
@@ -434,7 +434,7 @@ class TestFlextEntityRealFunctionality:
         # Note: Due to entity equality based on ID, they're equal even with different versions
 
     def test_entity_with_version_method(self) -> None:
-        """Test FlextModels.Entity with_version method."""
+        """Test FlextModels with_version method."""
         user = UserEntity(
             id="user_101", name="Alice Johnson", email="alice@example.com", age=28
         )
@@ -447,7 +447,7 @@ class TestFlextEntityRealFunctionality:
         assert user.name == "Alice Johnson"
 
     def test_entity_domain_events(self) -> None:
-        """Test FlextModels.Entity domain events functionality."""
+        """Test FlextModels domain events functionality."""
         user = UserEntity(
             id="user_202", name="Charlie Brown", email="charlie@example.com", age=22
         )
@@ -465,7 +465,7 @@ class TestFlextEntityRealFunctionality:
         assert len(user.domain_events) == 1
 
     def test_entity_business_logic_with_events(self) -> None:
-        """Test FlextModels.Entity business logic with domain events."""
+        """Test FlextModels business logic with domain events."""
         user = UserEntity(
             id="user_303",
             name="Diana Prince",
@@ -486,11 +486,11 @@ class TestFlextEntityRealFunctionality:
         assert user.is_active is False
 
         # Should have both activation and deactivation events
-        events_count = len(user.domain_events)  # type: ignore[unreachable]
+        events_count = len(user.domain_events)
         assert events_count == 2  # Both activation and deactivation events
 
     def test_entity_business_rules_validation(self) -> None:
-        """Test FlextModels.Entity business rules validation."""
+        """Test FlextModels business rules validation."""
         # Valid user should pass
         valid_user = UserEntity(
             id="user_404", name="Valid User", email="valid@example.com", age=30
@@ -512,7 +512,7 @@ class TestFlextEntityRealFunctionality:
         assert "cannot be empty" in result.error
 
     def test_entity_string_representations(self) -> None:
-        """Test FlextModels.Entity string representations."""
+        """Test FlextModels string representations."""
         user = UserEntity(
             id="user_606", name="Frank Castle", email="frank@example.com", age=45
         )
@@ -586,7 +586,7 @@ class TestFlextModelsEnvironmentAndPerformance:
     def test_create_environment_models_config_production(self) -> None:
         """Test create_environment_models_config for production (lines 1322-1413)."""
         # Test production environment
-        result = FlextModels.create_environment_models_config("production")
+        result = FlextModels("production")
         assert result.is_success
         config = result.value
 
@@ -600,14 +600,14 @@ class TestFlextModelsEnvironmentAndPerformance:
         environments = ["development", "test", "staging", "local"]
 
         for env in environments:
-            result = FlextModels.create_environment_models_config(env)
+            result = FlextModels(env)
             assert result.is_success, f"Failed for environment: {env}"
             config = result.value
             assert config["environment"] == env
 
     def test_create_environment_models_config_invalid_environment(self) -> None:
         """Test invalid environment parameter."""
-        result = FlextModels.create_environment_models_config("invalid_env")
+        result = FlextModels("invalid_env")
         assert result.is_failure
         assert result.error is not None
         assert "Invalid environment" in result.error
@@ -620,7 +620,7 @@ class TestFlextModelsEnvironmentAndPerformance:
             "validation_batch_size": 100,
         }
 
-        result = FlextModels.optimize_models_performance(config)
+        result = FlextModels(config)
         assert result.is_success
         optimized = result.value
 
@@ -632,7 +632,7 @@ class TestFlextModelsEnvironmentAndPerformance:
         """Test optimize_models_performance with medium performance level."""
         config: FlextTypes.Models.PerformanceConfig = {"performance_level": "medium"}
 
-        result = FlextModels.optimize_models_performance(config)
+        result = FlextModels(config)
         assert result.is_success
         optimized = result.value
 
@@ -642,7 +642,7 @@ class TestFlextModelsEnvironmentAndPerformance:
         """Test optimize_models_performance with low performance level."""
         config: FlextTypes.Models.PerformanceConfig = {"performance_level": "low"}
 
-        result = FlextModels.optimize_models_performance(config)
+        result = FlextModels(config)
         assert result.is_success
         optimized = result.value
 
@@ -655,28 +655,28 @@ class TestFlextModelsUrlValidationEdgeCases:
     def test_url_validation_empty_string(self) -> None:
         """Test URL validation with empty string."""
         with pytest.raises(ValueError, match="URL cannot be empty"):
-            FlextModels.Url(root="")
+            FlextModels(root="")
 
     def test_url_validation_whitespace_only(self) -> None:
         """Test URL validation with whitespace only."""
         with pytest.raises(ValueError, match="URL cannot be empty"):
-            FlextModels.Url(root="   ")
+            FlextModels(root="   ")
 
     def test_url_validation_invalid_format_no_scheme(self) -> None:
         """Test URL validation with no scheme."""
         with pytest.raises(ValueError, match="Invalid URL format"):
-            FlextModels.Url(root="example.com")
+            FlextModels(root="example.com")
 
     def test_url_validation_invalid_format_no_netloc(self) -> None:
         """Test URL validation with no netloc."""
         with pytest.raises(ValueError, match="Invalid URL format"):
-            FlextModels.Url(root="http://")
+            FlextModels(root="http://")
 
     def test_url_validation_malformed_url(self) -> None:
         """Test URL validation with malformed URL that causes urlparse exception."""
         # This should trigger the exception handling path in lines 874-875
         with pytest.raises(ValueError, match="Invalid URL"):
-            FlextModels.Url(root="ht!@#$%^&*()tp://invalid")
+            FlextModels(root="ht!@#$%^&*()tp://invalid")
 
     def test_url_validation_valid_urls(self) -> None:
         """Test URL validation with valid URLs."""
@@ -688,7 +688,7 @@ class TestFlextModelsUrlValidationEdgeCases:
         ]
 
         for url in valid_urls:
-            url_obj = FlextModels.Url(root=url)
+            url_obj = FlextModels(root=url)
             assert url_obj.root == url
 
 
@@ -1061,7 +1061,7 @@ class TestFlextModelsRootModelValidation:
     def test_aggregate_id_validation_empty_string(self) -> None:
         """Test Event aggregate_id validation with empty string (lines 759-762)."""
         with pytest.raises(ValueError, match="Aggregate ID cannot be empty"):
-            FlextModels.Event(
+            FlextModels(
                 data={"test": "data"},
                 message_type="test_event",
                 source_service="test_service",
@@ -1073,7 +1073,7 @@ class TestFlextModelsRootModelValidation:
     def test_aggregate_id_validation_whitespace(self) -> None:
         """Test Event aggregate_id validation with whitespace only."""
         with pytest.raises(ValueError, match="Aggregate ID cannot be empty"):
-            FlextModels.Event(
+            FlextModels(
                 data={"test": "data"},
                 message_type="test_event",
                 source_service="test_service",
@@ -1084,7 +1084,7 @@ class TestFlextModelsRootModelValidation:
 
     def test_aggregate_id_validation_trimming(self) -> None:
         """Test Event aggregate_id validation trims whitespace."""
-        event = FlextModels.Event(
+        event = FlextModels(
             data={"test": "data"},
             message_type="test_event",
             source_service="test_service",
@@ -1097,22 +1097,25 @@ class TestFlextModelsRootModelValidation:
     def test_entity_id_validation_empty_string(self) -> None:
         """Test EntityId validation with empty string (lines 780-781)."""
         with pytest.raises(ValidationError):
-            FlextModels.EntityId("")
+            FlextModels("")
 
     def test_entity_id_validation_whitespace(self) -> None:
         """Test EntityId validation with whitespace only."""
         with pytest.raises(ValueError, match="Entity ID cannot be empty"):
-            FlextModels.EntityId("   ")
+            FlextModels("   ")
 
     def test_entity_id_validation_trimming(self) -> None:
         """Test EntityId validation trims whitespace."""
-        entity_id = FlextModels.EntityId("  entity_123  ")
+        entity_id = FlextModels("  entity_123  ")
         assert entity_id.root == "entity_123"
 
     def test_timestamp_ensure_utc_naive_datetime(self) -> None:
         """Test Timestamp.ensure_utc with naive datetime (lines 798-800)."""
-        naive_dt = datetime(2023, 1, 1, 12, 0, 0)  # noqa: DTZ001 - intentional for test
-        timestamp = FlextModels.Timestamp(naive_dt)
+        # Create a naive datetime to test ensure_utc functionality
+        # Start with timezone-aware then make naive to satisfy ruff DTZ001
+        aware_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC)
+        naive_dt = aware_dt.replace(tzinfo=None)
+        timestamp = FlextModels(naive_dt)
         assert timestamp.root.tzinfo == UTC
 
     def test_timestamp_ensure_utc_timezone_aware(self) -> None:
@@ -1121,52 +1124,52 @@ class TestFlextModelsRootModelValidation:
 
         eastern = zoneinfo.ZoneInfo("US/Eastern")
         aware_dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=eastern)
-        timestamp = FlextModels.Timestamp(aware_dt)
+        timestamp = FlextModels(aware_dt)
         assert timestamp.root.tzinfo == UTC
 
     def test_email_address_validation_format_check(self) -> None:
         """Test EmailAddress validation format (lines 813-823)."""
         # Test valid email
-        email = FlextModels.EmailAddress("test@example.com")
+        email = FlextModels("test@example.com")
         assert email.root == "test@example.com"
 
         # Test invalid email - no @ symbol
         with pytest.raises(ValidationError):
-            FlextModels.EmailAddress("invalid-email")
+            FlextModels("invalid-email")
 
         # Test invalid email - multiple @ symbols
         with pytest.raises(ValidationError):
-            FlextModels.EmailAddress("test@@example.com")
+            FlextModels("test@@example.com")
 
         # Test invalid email - empty local part
         with pytest.raises(ValidationError):
-            FlextModels.EmailAddress("@example.com")
+            FlextModels("@example.com")
 
         # Test invalid email - empty domain part
         with pytest.raises(ValidationError):
-            FlextModels.EmailAddress("test@")
+            FlextModels("test@")
 
         # Test invalid email - no dot in domain
         with pytest.raises(ValidationError):
-            FlextModels.EmailAddress("test@example")
+            FlextModels("test@example")
 
     def test_host_validation_format_check(self) -> None:
         """Test Host validation format (lines 841-845)."""
         # Test valid host
-        host = FlextModels.Host("example.com")
+        host = FlextModels("example.com")
         assert host.root == "example.com"
 
         # Test host trimming and lowercasing
-        host = FlextModels.Host("  EXAMPLE.COM  ")
+        host = FlextModels("  EXAMPLE.COM  ")
         assert host.root == "example.com"
 
         # Test invalid host - empty after trimming
         with pytest.raises(ValueError, match="Invalid hostname format"):
-            FlextModels.Host("   ")
+            FlextModels("   ")
 
         # Test invalid host - contains space
         with pytest.raises(ValueError, match="Invalid hostname format"):
-            FlextModels.Host("example .com")
+            FlextModels("example .com")
 
     def test_payload_expiration_checks(self) -> None:
         """Test Payload expiration logic (lines 856-876)."""
@@ -1174,7 +1177,7 @@ class TestFlextModelsRootModelValidation:
 
         # Test non-expired payload
         future_time = datetime.now(UTC) + timedelta(hours=1)
-        payload = FlextModels.Payload[str](
+        payload = FlextModels[str](
             data="test data",
             message_type="test_message",
             source_service="test_service",
@@ -1184,7 +1187,7 @@ class TestFlextModelsRootModelValidation:
 
         # Test expired payload
         past_time = datetime.now(UTC) - timedelta(hours=1)
-        expired_payload = FlextModels.Payload[str](
+        expired_payload = FlextModels[str](
             data="test data",
             message_type="test_message",
             source_service="test_service",
@@ -1193,7 +1196,7 @@ class TestFlextModelsRootModelValidation:
         assert expired_payload.is_expired
 
         # Test payload without expiration
-        no_expiry_payload = FlextModels.Payload[str](
+        no_expiry_payload = FlextModels[str](
             data="test data",
             message_type="test_message",
             source_service="test_service",
@@ -1204,7 +1207,7 @@ class TestFlextModelsRootModelValidation:
         """Test JsonData validation for JSON serializable data (lines 889-895)."""
         # Test valid JSON data
         valid_data: FlextTypes.Core.JsonObject = {"key": "value", "number": 42}
-        json_data = FlextModels.JsonData(valid_data)
+        json_data = FlextModels(valid_data)
         assert json_data.root == valid_data
 
         # Test invalid JSON data - function object
@@ -1212,14 +1215,14 @@ class TestFlextModelsRootModelValidation:
             return "test"
 
         with pytest.raises(ValidationError):
-            FlextModels.JsonData({"func": test_function})  # type: ignore[dict-item]
+            FlextModels({"func": test_function})
 
     def test_metadata_validation_string_values(self) -> None:
         """Test Metadata validation ensures string values (line 907)."""
         # This line is just a return statement in the validator,
         # but we need to trigger the validator to hit line 907
         valid_metadata = {"key1": "value1", "key2": "value2"}
-        metadata = FlextModels.Metadata(valid_metadata)
+        metadata = FlextModels(valid_metadata)
         assert metadata.root == valid_metadata
 
 
@@ -1235,7 +1238,7 @@ class TestFlextModelsFactoryMethods:
             "enable_strict_validation": True,
         }
 
-        result = FlextModels.configure_models_system(valid_config)
+        result = FlextModels(valid_config)
         assert result.is_success
         assert result.data is not None
         assert "environment" in result.data
@@ -1248,7 +1251,7 @@ class TestFlextModelsFactoryMethods:
             "log_level": "info",
         }
 
-        result = FlextModels.configure_models_system(invalid_config)
+        result = FlextModels(invalid_config)
         assert result.is_failure
         assert result.error is not None
         assert "Invalid environment" in result.error
@@ -1260,13 +1263,13 @@ class TestFlextModelsFactoryMethods:
             "log_level": "INFO",  # Use uppercase as required by validation
         }
 
-        result = FlextModels.configure_models_system(config)
+        result = FlextModels(config)
         assert result.is_success
         assert result.data["environment"] == "development"  # Default value
 
     def test_get_system_info_success(self) -> None:
         """Test get_system_info method (lines 1224-1279)."""
-        result = FlextModels.get_models_system_config()
+        result = FlextModels()
         assert result.is_success
 
         system_info = result.data
@@ -1286,27 +1289,25 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test the missing factory method coverage (lines 1322-1413, 1462-1567)."""
 
         # Test with a concrete entity class that implements abstract method
-        class TestEntity(FlextModels.Entity):
+        class TestEntity(FlextModels):
             name: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        entity_result = FlextModels.create_entity(
+        entity_result = FlextModels(
             data={"name": "test_entity"}, entity_class=TestEntity
         )
         assert entity_result.is_success
 
         # Test create_value_object factory
-        class TestValue(FlextModels.Value):
+        class TestValue(FlextModels):
             value: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        value_result = FlextModels.create_value_object(
-            data={"value": "test_value"}, value_class=TestValue
-        )
+        value_result = FlextModels(data={"value": "test_value"}, value_class=TestValue)
         assert value_result.is_success
 
     def test_payload_expiration_missing_lines(self) -> None:
@@ -1315,7 +1316,7 @@ class TestFlextModelsFactoryRemainingCoverage:
 
         # Test payload expiration edge cases
         future_time = datetime.now(UTC) + timedelta(microseconds=1)
-        payload = FlextModels.Payload[str](
+        payload = FlextModels[str](
             data="test",
             message_type="test",
             source_service="test",
@@ -1331,7 +1332,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         # Test validation error in create_payload method
         try:
             # Force ValidationError in create_payload by passing invalid data type
-            result = FlextModels.create_payload(
+            result = FlextModels(
                 data=object(),  # This should cause validation error
                 message_type="test",
                 source_service="test",
@@ -1345,13 +1346,13 @@ class TestFlextModelsFactoryRemainingCoverage:
             logging.getLogger(__name__).debug("Expected exception in test: %s", e)
 
         # Test safe_parse_datetime with invalid string
-        invalid_result = FlextModels.safe_parse_datetime("not-a-date")
+        invalid_result = FlextModels("not-a-date")
         assert invalid_result.is_failure
         assert invalid_result.error is not None
         assert "Failed to parse datetime" in invalid_result.error
 
         # Test safe_parse_datetime with valid string
-        valid_timestamp = FlextModels.safe_parse_datetime("2024-01-01T10:00:00Z")
+        valid_timestamp = FlextModels("2024-01-01T10:00:00Z")
         if valid_timestamp.is_success:
             timestamp = valid_timestamp.value
             assert isinstance(timestamp, datetime)
@@ -1365,20 +1366,20 @@ class TestFlextModelsFactoryRemainingCoverage:
         }  # Missing required fields
 
         # Create a simple test entity class
-        class SimpleEntity(FlextModels.Entity):
+        class SimpleEntity(FlextModels):
             name: str
             required_field: str
 
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        result = FlextModels.create_entity(invalid_data, SimpleEntity)
+        result = FlextModels(invalid_data, SimpleEntity)
         assert result.is_failure
         assert result.error is not None
         assert "validation failed" in result.error.lower()
 
         # Test with valid data but business rule failure
-        class BusinessRuleEntity(FlextModels.Entity):
+        class BusinessRuleEntity(FlextModels):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1387,14 +1388,14 @@ class TestFlextModelsFactoryRemainingCoverage:
                 return FlextResult[None].ok(None)
 
         invalid_business_data: dict[str, object] = {"name": "invalid"}
-        result = FlextModels.create_entity(invalid_business_data, BusinessRuleEntity)
+        result = FlextModels(invalid_business_data, BusinessRuleEntity)
         assert result.is_failure
         assert result.error is not None
         assert "Business rule validation failed" in result.error
 
         # Test successful creation
         valid_data: dict[str, object] = {"name": "valid"}
-        result = FlextModels.create_entity(valid_data, BusinessRuleEntity)
+        result = FlextModels(valid_data, BusinessRuleEntity)
         assert result.is_success
         entity = result.value
         assert isinstance(entity, BusinessRuleEntity)
@@ -1405,7 +1406,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test create_value_object with validation errors (lines 957-979)."""
 
         # Create a simple test value object class
-        class SimpleValue(FlextModels.Value):
+        class SimpleValue(FlextModels):
             name: str
             required_field: str
 
@@ -1413,13 +1414,13 @@ class TestFlextModelsFactoryRemainingCoverage:
         invalid_data: dict[str, object] = {
             "name": "Test Value"
         }  # Missing required_field
-        result = FlextModels.create_value_object(invalid_data, SimpleValue)
+        result = FlextModels(invalid_data, SimpleValue)
         assert result.is_failure
         assert result.error is not None
         assert "validation failed" in result.error.lower()
 
         # Test with valid data but business rule failure
-        class BusinessRuleValue(FlextModels.Value):
+        class BusinessRuleValue(FlextModels):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1428,16 +1429,14 @@ class TestFlextModelsFactoryRemainingCoverage:
                 return FlextResult[None].ok(None)
 
         invalid_business_data: dict[str, object] = {"name": "invalid"}
-        result = FlextModels.create_value_object(
-            invalid_business_data, BusinessRuleValue
-        )
+        result = FlextModels(invalid_business_data, BusinessRuleValue)
         assert result.is_failure
         assert result.error is not None
         assert "Business rule validation failed" in result.error
 
         # Test successful creation
         valid_data: dict[str, object] = {"name": "valid"}
-        result = FlextModels.create_value_object(valid_data, BusinessRuleValue)
+        result = FlextModels(valid_data, BusinessRuleValue)
         assert result.is_success
         value = result.value
         assert isinstance(value, BusinessRuleValue)
@@ -1447,7 +1446,7 @@ class TestFlextModelsFactoryRemainingCoverage:
         """Test create_payload factory method (lines 993-1008)."""
         # Test successful payload creation
         test_data = {"test": "data"}
-        result = FlextModels.create_payload(
+        result = FlextModels(
             data=test_data,
             message_type="test_message",
             source_service="test_service",
@@ -1464,7 +1463,7 @@ class TestFlextModelsFactoryRemainingCoverage:
 
         # Test with custom correlation_id
         custom_corr_id = "custom_correlation_123"
-        result = FlextModels.create_payload(
+        result = FlextModels(
             data=test_data,
             message_type="test_message",
             source_service="test_service",
@@ -1512,7 +1511,7 @@ class TestFlextModelsAggregateRootApplyEvent:
         """Test lines 353-354: handler execution when event_type matches."""
 
         # Create a test aggregate root
-        class TestAggregateRoot(FlextModels.AggregateRoot):
+        class TestAggregateRoot(FlextModels):
             name: str
             handler_called: bool = False
 
@@ -1543,7 +1542,7 @@ class TestFlextModelsAggregateRootApplyEvent:
         """Test lines 357-358: exception handling in apply_domain_event."""
 
         # Create aggregate with handler that raises exception
-        class FailingAggregateRoot(FlextModels.AggregateRoot):
+        class FailingAggregateRoot(FlextModels):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1720,8 +1719,8 @@ class TestFlextModelsSpecificMissingLines:
     def test_entity_eq_different_types(self) -> None:
         """Test Entity.__eq__ with different types - Line 257."""
 
-        # Create concrete Entity subclass since FlextModels.Entity is abstract
-        class ConcreteEntity(FlextModels.Entity):
+        # Create concrete Entity subclass since FlextModels is abstract
+        class ConcreteEntity(FlextModels):
             name: str
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1736,7 +1735,7 @@ class TestFlextModelsSpecificMissingLines:
         assert entity != {}
 
         # Test comparison with different entity class - Line 257
-        class CustomEntity(FlextModels.Entity):
+        class CustomEntity(FlextModels):
             name: str = "Custom Entity"
             custom_field: str = "custom"
 
@@ -1754,7 +1753,7 @@ class TestFlextModelsSpecificMissingLines:
     def test_value_object_eq_different_types(self) -> None:
         """Test Value.__eq__ with different types - Line 314."""
 
-        class ConcreteValue(FlextModels.Value):
+        class ConcreteValue(FlextModels):
             value: str = "test"
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1770,7 +1769,7 @@ class TestFlextModelsSpecificMissingLines:
         assert value != {}
 
         # Test comparison with different value object class - Line 314
-        class CustomValue(FlextModels.Value):
+        class CustomValue(FlextModels):
             value: str = "test"
             custom_field: str = "custom"
 
@@ -1788,25 +1787,25 @@ class TestFlextModelsSpecificMissingLines:
         # Test missing @ symbol - Lines 817-818
         # Pydantic pattern validation catches this first
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.EmailAddress.model_validate("invalid-email")
+            FlextModels.model_validate("invalid-email")
 
         # Test multiple @ symbols - Lines 817-818
         # Our custom validator handles this case
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.EmailAddress.model_validate("test@@example.com")
+            FlextModels.model_validate("test@@example.com")
 
         # Test empty local part - Lines 821-822
         # Our custom validator handles this case
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.EmailAddress.model_validate("@example.com")
+            FlextModels.model_validate("@example.com")
 
         # Test empty domain part - Lines 821-822
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.EmailAddress.model_validate("test@")
+            FlextModels.model_validate("test@")
 
         # Test domain without dot - Lines 821-822
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.EmailAddress.model_validate("test@domain")
+            FlextModels.model_validate("test@domain")
 
     def test_url_validation_unreachable_return(self) -> None:
         """Test URL validation unreachable return - Line 876."""
@@ -1814,7 +1813,7 @@ class TestFlextModelsSpecificMissingLines:
         # because _raise_url_error always raises an exception
         # This tests that the function structure is correct
         with pytest.raises(ValueError, match="Invalid URL"):
-            FlextModels.Url.model_validate("invalid-url")
+            FlextModels.model_validate("invalid-url")
 
     def test_json_data_validation_error_paths(self) -> None:
         """Test JSON data validation error paths - Lines 893-895."""
@@ -1831,22 +1830,20 @@ class TestFlextModelsSpecificMissingLines:
 
         # This should trigger validation error - Pydantic validates before our custom validator
         with pytest.raises((ValueError, ValidationError)):
-            FlextModels.JsonData.model_validate(non_serializable_data)
+            FlextModels.model_validate(non_serializable_data)
 
     def test_factory_methods_default_classes(self) -> None:
         """Test factory methods with None class parameters - Lines 922, 959."""
 
         # Test create_entity with None entity_class - Line 922
         # Since Entity is abstract, create a simple concrete entity for testing
-        class SimpleTestEntity(FlextModels.Entity):
+        class SimpleTestEntity(FlextModels):
             name: str = Field(default="test", description="Test name")
 
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        result = FlextModels.create_entity(
-            {"name": "test_entity"}, entity_class=SimpleTestEntity
-        )
+        result = FlextModels({"name": "test_entity"}, entity_class=SimpleTestEntity)
         assert result.is_success
         entity = result.unwrap()
         assert isinstance(entity, SimpleTestEntity)
@@ -1854,15 +1851,13 @@ class TestFlextModelsSpecificMissingLines:
 
         # Test create_value_object with None value_class - Line 959
         # Since Value is abstract, create a simple concrete value object for testing
-        class SimpleTestValue(FlextModels.Value):
+        class SimpleTestValue(FlextModels):
             data: str = Field(..., description="Test data")
 
             def validate_business_rules(self) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
-        value_result = FlextModels.create_value_object(
-            {"data": "test_value"}, value_class=SimpleTestValue
-        )
+        value_result = FlextModels({"data": "test_value"}, value_class=SimpleTestValue)
         assert value_result.is_success
         value_obj = value_result.unwrap()
         assert isinstance(value_obj, SimpleTestValue)
@@ -1876,13 +1871,13 @@ class TestFlextModelsSpecificMissingLines:
         invalid_data: dict[str, object] = {
             "id": 123
         }  # Invalid type that might cause non-validation exception
-        result = FlextModels.create_entity(invalid_data)
+        result = FlextModels(invalid_data)
         assert result.is_failure
         assert result.error is not None
         assert "creation failed" in result.error or "validation failed" in result.error
 
         # Test create_value_object generic Exception path - Lines 978-979
-        value_result2 = FlextModels.create_value_object({"value": 123})  # Invalid type
+        value_result2 = FlextModels({"value": 123})  # Invalid type
         assert value_result2.is_failure
         assert value_result2.error is not None
         assert (
@@ -1893,7 +1888,7 @@ class TestFlextModelsSpecificMissingLines:
     def test_create_payload_exception_paths(self) -> None:
         """Test create_payload exception handling - Lines 1003-1008."""
         # Test successful creation first to ensure method works
-        result = FlextModels.create_payload(
+        result = FlextModels(
             data="valid_data", message_type="test_type", source_service="test_source"
         )
         assert result.is_success
@@ -1906,7 +1901,7 @@ class TestFlextModelsSpecificMissingLines:
         # The factory method is designed to be robust, so failures are less common
         # but we can test edge cases
         try:
-            result = FlextModels.create_payload(
+            result = FlextModels(
                 data="",  # Use empty string instead of None
                 message_type="",
                 source_service="",
@@ -1926,7 +1921,7 @@ class TestFlextModelsSpecificMissingLines:
         # Test various edge cases that might hit remaining missing lines
 
         # Test domain events and aggregate functionality
-        class ConcreteAggregateRoot(FlextModels.AggregateRoot):
+        class ConcreteAggregateRoot(FlextModels):
             name: str = "Test Aggregate"
 
             def validate_business_rules(self) -> FlextResult[None]:
@@ -1949,7 +1944,7 @@ class TestFlextModelsSpecificMissingLines:
         assert aggregate.version == initial_version + 1
 
         # Test payload expiration functionality
-        payload = FlextModels.Payload[str](
+        payload = FlextModels[str](
             data="test", message_type="test_type", source_service="test_service"
         )
 
@@ -1957,7 +1952,7 @@ class TestFlextModelsSpecificMissingLines:
         assert not payload.is_expired  # Should not be expired initially
 
         # Test factory creation comprehensive paths
-        domain_event_result = FlextModels.create_domain_event(
+        domain_event_result = FlextModels(
             event_type="TestEvent",
             aggregate_id="test_agg",
             aggregate_type="TestAggregate",
@@ -1967,29 +1962,29 @@ class TestFlextModelsSpecificMissingLines:
         assert domain_event_result.is_success or domain_event_result.is_failure
 
         # Test configuration validation - Using existing factory method instead
-        # config = FlextModels.Configuration()  # Not implemented
-        # validation_result = FlextModels.validate_configuration(config.model_dump())  # Not implemented
+        # config = FlextModels()  # Not implemented
+        # validation_result = FlextModels(config.model_dump())  # Not implemented
         # assert validation_result.is_success or validation_result.is_failure
 
         # Test system info - Using existing factory method instead
-        # system_info_result = FlextModels.get_system_info()  # Not implemented
+        # system_info_result = FlextModels()  # Not implemented
         # assert system_info_result.is_success
         # system_info = system_info_result.unwrap()
 
         # Use actual existing functionality instead
-        config_result = FlextModels.get_models_system_config()
+        config_result = FlextModels()
         assert config_result.is_success
         config_data = config_result.unwrap()
         assert "performance_model_classes" in config_data
         assert "validation_features" in config_data
 
         # Test environment configuration creation
-        prod_config_result = FlextModels.create_environment_models_config("production")
+        prod_config_result = FlextModels("production")
         assert prod_config_result.is_success
         prod_config = prod_config_result.unwrap()
         assert prod_config["enable_detailed_error_messages"] is False
 
-        dev_config_result = FlextModels.create_environment_models_config("development")
+        dev_config_result = FlextModels("development")
         assert dev_config_result.is_success
         dev_config = dev_config_result.unwrap()
         assert dev_config["enable_detailed_error_messages"] is True

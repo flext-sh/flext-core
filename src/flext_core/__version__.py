@@ -1,6 +1,6 @@
 """Version management and compatibility checking for FLEXT Core.
 
-This module provides comprehensive version management functionality for the FLEXT ecosystem,
+This module provides efficient version management functionality for the FLEXT ecosystem,
 including semantic versioning, compatibility checking, feature availability tracking,
 and programmatic version utilities following enterprise standards.
 
@@ -9,11 +9,11 @@ Module Organization:
     Release Information: RELEASE_NAME, RELEASE_DATE, BUILD_TYPE
     Compatibility: MIN_PYTHON_VERSION, MAX_PYTHON_VERSION
     Feature Tracking: AVAILABLE_FEATURES dictionary with feature flags
-    Manager Classes: FlextModels.VersionManager with nested utilities
+    Manager Classes: FlextModels with nested utilities
     Utility Functions: Version comparison, validation, compatibility checking
 
 Classes:
-    FlextModels.VersionManager: Consolidated version management functionality
+    FlextModels: Consolidated version management functionality
         └── VersionInfo(NamedTuple): Structured version information
             • major: int - Major version number
             • minor: int - Minor version number
@@ -32,8 +32,8 @@ Functions:
     get_version_tuple() -> tuple[int, int, int]
         Get semantic version as tuple for programmatic comparison
 
-    get_version_info() -> FlextModels.VersionManager.VersionInfo
-        Get comprehensive version information with metadata
+    get_version_info() -> FlextModels.VersionInfo
+        Get efficient version information with metadata
 
     get_version_string() -> str
         Get formatted version string with release information
@@ -105,12 +105,13 @@ Notes:
 """
 
 import sys
-from importlib.metadata import version as _pkg_version
 from typing import NamedTuple
 
 # from flext_core.typings import FlextTypes  # Avoid circular import
 
-__version__: str = _pkg_version("flext-core")
+# Avoid importlib.metadata at import time to keep import footprint low
+# The version is synchronized with pyproject.toml
+__version__: str = "0.9.0"
 
 # Version metadata for programmatic access
 VERSION_MAJOR: int = 0
@@ -207,7 +208,7 @@ def get_version_tuple() -> tuple[int, int, int]:
 
 
 def get_version_info() -> FlextVersionManager.VersionInfo:
-    """Get comprehensive version information.
+    """Get efficient version information.
 
     Returns:
       FlextVersionManager.VersionInfo with complete version and metadata information.

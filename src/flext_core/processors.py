@@ -1,53 +1,29 @@
-r"""FLEXT Processors - Schema and entry processing system with validation and transformation.
+r"""Schema and entry processing system with validation and transformation.
 
-FLEXT Processors provides comprehensive data processing capabilities including entry validation,
-regex-based pattern matching, configuration management, and pipeline processing for the
-FLEXT ecosystem. All processor types are consolidated into a single FlextProcessors class
-with nested components for consistent configuration and type safety.
+Provides FlextProcessors with efficient data processing capabilities including entry
+validation, regex-based pattern matching, configuration management, and pipeline processing.
 
-Module Role in Architecture:
-    FlextProcessors serves as the unified processing engine for data transformation,
-    validation, and pipeline operations across FLEXT applications. It integrates with
-    FlextResult for error handling, FlextServices for registry patterns, and FlextHandlers
-    for enterprise processing workflows.
+Usage:
+    processors = FlextProcessors()
 
-Classes and Methods:
-    FlextProcessors:                    # Main consolidated processing system
-        # Nested Classes:
-        EntryType(StrEnum)             # Entry type enumeration (USER, GROUP, ROLE, etc.)
-        Entry(BaseConfig)              # Immutable entry value object with validation
-        EntryValidator(BaseValidator)   # Entry validation using FLEXT validation framework
-        BaseProcessor(ServiceProcessor) # Base processor with service architecture patterns
-        DefaultProcessor(BaseProcessor) # Default concrete processor implementation
-        RegexProcessor(BaseProcessor)  # Regex-based pattern matching and extraction
-        ConfigProcessor                # Configuration validation and management
-        ValidatingProcessor(BasicHandler) # Enterprise validation using FlextHandlers
-        ProcessingPipeline             # Chainable processing operations with handlers
-        Sorter                         # Entry sorting functionality
-        FileWriter(Protocol)           # Protocol for file writing operations
+    # Create and process entries
+    entry_result = processors.create_entry({"id": "user123", "name": "John"}, "USER")
+    if entry_result.success:
+        entry = entry_result.unwrap()
 
-        # Factory Methods:
-        create_entry(data, entry_type=None) -> FlextResult[Entry]
-        create_regex_processor(pattern, validator=None) -> FlextResult[RegexProcessor]
-        create_processing_pipeline(input_proc=None, output_proc=None) -> FlextResult[ProcessingPipeline]
-        validate_configuration(config) -> FlextResult[dict]
+    # Regex processing
+    regex_proc = processors.create_regex_processor(r"user_(\d+)")
 
-        # Instance Methods:
-        __init__()                     # Initialize with ServiceRegistry and ConfigProcessor
-        register_processor(name, processor) -> FlextResult[None]
-        get_processor(name) -> FlextResult[BaseProcessor]
-        process_entries(entries, processor_name=None) -> FlextResult[list[Entry]]
+    # Pipeline processing
+    pipeline = processors.create_processing_pipeline()
+    results = pipeline.process(entries)
 
-        # Configuration Methods:
-        configure_processors_system(config) -> FlextResult[ConfigDict]
-        get_processors_system_config() -> FlextResult[ConfigDict]
-
-    Entry Methods:
-        __eq__(other) -> bool          # Equality based on type and identifier
-        __hash__() -> int              # Hash based on type and identifier
-
-    EntryValidator Methods:
-        __init__(whitelist=None)       # Initialize with optional identifier whitelist
+Features:
+    - Entry validation with type safety
+    - Regex-based pattern matching and extraction
+    - Configurable processing pipelines
+    - Service registry integration
+    - FlextResult error handling
         validate_entry(entry) -> FlextResult[None] # Validate entry structure and content
         is_identifier_whitelisted(identifier) -> bool # Check whitelist membership
 
@@ -114,8 +90,8 @@ Usage Examples:
 Integration:
     FlextProcessors integrates with FlextResult for railway-oriented programming,
     FlextServices.ServiceRegistry for processor registration and discovery,
-    FlextHandlers for enterprise processing patterns, and FlextValidations
-    for comprehensive data validation across the FLEXT ecosystem.
+    FlextHandlers for processing patterns, and FlextValidations
+    for efficient data validation across the FLEXT ecosystem.
 
 """
 
@@ -125,6 +101,8 @@ import re
 from collections.abc import Callable
 from enum import StrEnum
 from typing import Protocol, cast
+
+from pydantic import Field
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -183,7 +161,7 @@ class FlextProcessors:
         original_content: str
 
         # Optional metadata
-        metadata: dict[str, object] = {}  # noqa: RUF012
+        metadata: dict[str, object] = Field(default_factory=dict)
 
         def __eq__(self, other: object) -> bool:
             """Entries are equal if they have same type and identifier."""
@@ -439,7 +417,7 @@ class FlextProcessors:
                 return FlextResult[object].fail(f"Config retrieval failed: {e}")
 
     class ValidatingProcessor(FlextHandlers.Implementation.BasicHandler):
-        """Entry processor with enterprise validation using FlextHandlers."""
+        """Entry processor with validation using FlextHandlers."""
 
         def __init__(
             self,
@@ -486,7 +464,7 @@ class FlextProcessors:
             )
 
     class ProcessingPipeline:
-        """Processing pipeline using enterprise handler patterns."""
+        """Processing pipeline using handler patterns."""
 
         def __init__(
             self,

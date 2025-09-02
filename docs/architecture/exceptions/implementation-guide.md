@@ -435,7 +435,7 @@ class UserService:
 ```python
 import sqlite3
 import psycopg2
-from typing import Any, Callable, TypeVar
+from typing import object, Callable, TypeVar
 
 T = TypeVar('T')
 
@@ -568,7 +568,7 @@ class DatabaseService:
 
 ```python
 import requests
-from typing import Dict, Any
+from typing import Dict, object
 
 class HTTPClientWithFlextExceptions:
     """HTTP client with automatic FlextException translation."""
@@ -578,23 +578,23 @@ class HTTPClientWithFlextExceptions:
         self.timeout = timeout
         self.session = requests.Session()
     
-    def get(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def get(self, endpoint: str, **kwargs) -> Dict[str, object]:
         """GET request with FlextException handling."""
         return self._make_request('GET', endpoint, **kwargs)
     
-    def post(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def post(self, endpoint: str, **kwargs) -> Dict[str, object]:
         """POST request with FlextException handling."""
         return self._make_request('POST', endpoint, **kwargs)
     
-    def put(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def put(self, endpoint: str, **kwargs) -> Dict[str, object]:
         """PUT request with FlextException handling."""
         return self._make_request('PUT', endpoint, **kwargs)
     
-    def delete(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def delete(self, endpoint: str, **kwargs) -> Dict[str, object]:
         """DELETE request with FlextException handling."""
         return self._make_request('DELETE', endpoint, **kwargs)
     
-    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
+    def _make_request(self, method: str, endpoint: str, **kwargs) -> Dict[str, object]:
         """Make HTTP request with comprehensive exception handling."""
         url = f"{self.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
         correlation_id = kwargs.pop('correlation_id', f"http_{int(time.time() * 1000)}")

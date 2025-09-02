@@ -9,9 +9,7 @@ from __future__ import annotations
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import FlextServices
-from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextServices, FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -77,7 +75,9 @@ class TestFlextServices:
         assert validated_config["batch_size"] == 50
 
     @given(st.integers(min_value=1, max_value=1000))
-    def test_configure_services_system_concurrent_services(self, max_concurrent: int) -> None:
+    def test_configure_services_system_concurrent_services(
+        self, max_concurrent: int
+    ) -> None:
         """Test configuration with various concurrent service limits."""
         config = {"max_concurrent_services": max_concurrent}
         result = FlextServices.configure_services_system(config)
@@ -151,17 +151,17 @@ class TestServiceComponents:
 
     def test_service_processor_class_exists(self) -> None:
         """Test that ServiceProcessor class exists."""
-        assert hasattr(FlextServices, 'ServiceProcessor')
+        assert hasattr(FlextServices, "ServiceProcessor")
 
     def test_service_processor_abstract(self) -> None:
         """Test that ServiceProcessor is abstract."""
         # ServiceProcessor should be abstract and not directly instantiable
         with pytest.raises(TypeError):
-            FlextServices.ServiceProcessor()  # type: ignore[abstract]
+            FlextServices.ServiceProcessor()
 
     def test_service_orchestrator_class_exists(self) -> None:
         """Test that ServiceOrchestrator class exists."""
-        assert hasattr(FlextServices, 'ServiceOrchestrator')
+        assert hasattr(FlextServices, "ServiceOrchestrator")
 
     def test_service_orchestrator_creation(self) -> None:
         """Test creating a ServiceOrchestrator."""
@@ -170,7 +170,7 @@ class TestServiceComponents:
 
     def test_service_registry_class_exists(self) -> None:
         """Test that ServiceRegistry class exists."""
-        assert hasattr(FlextServices, 'ServiceRegistry')
+        assert hasattr(FlextServices, "ServiceRegistry")
 
     def test_service_registry_creation(self) -> None:
         """Test creating a ServiceRegistry."""
@@ -179,7 +179,7 @@ class TestServiceComponents:
 
     def test_service_metrics_class_exists(self) -> None:
         """Test that ServiceMetrics class exists."""
-        assert hasattr(FlextServices, 'ServiceMetrics')
+        assert hasattr(FlextServices, "ServiceMetrics")
 
     def test_service_metrics_creation(self) -> None:
         """Test creating ServiceMetrics."""
@@ -188,7 +188,7 @@ class TestServiceComponents:
 
     def test_service_validation_class_exists(self) -> None:
         """Test that ServiceValidation class exists."""
-        assert hasattr(FlextServices, 'ServiceValidation')
+        assert hasattr(FlextServices, "ServiceValidation")
 
     def test_service_validation_creation(self) -> None:
         """Test creating ServiceValidation."""
@@ -259,7 +259,7 @@ class TestServiceConfiguration:
             {"environment": 123},
             {"log_level": 456},
         ]
-        
+
         for invalid_config in invalid_configs:
             result = FlextServices.configure_services_system(invalid_config)
             # Should either succeed with defaults or fail gracefully
@@ -303,14 +303,17 @@ class TestServiceEdgeCases:
         assert concurrent_services is not None
 
     @given(st.dictionaries(st.text(), st.text()))
-    def test_config_with_random_string_values(self, random_config: dict[str, str]) -> None:
+    def test_config_with_random_string_values(
+        self, random_config: dict[str, str]
+    ) -> None:
         """Property-based test with random configuration values."""
         # Filter out potentially problematic keys
         filtered_config = {
-            k: v for k, v in random_config.items() 
+            k: v
+            for k, v in random_config.items()
             if k not in {"environment", "log_level"} and len(k) < 50
         }
-        
+
         result = FlextServices.configure_services_system(filtered_config)
         # Should always succeed with unknown fields
         assert result.success
@@ -324,14 +327,16 @@ class TestServiceEdgeCases:
             FlextServices.ServiceMetrics(),
             FlextServices.ServiceValidation(),
         ]
-        
+
         for component in components:
             assert component is not None
-            assert hasattr(component, '__class__')
-            assert component.__class__.__name__ in [
-                'ServiceOrchestrator', 'ServiceRegistry', 
-                'ServiceMetrics', 'ServiceValidation'
-            ]
+            assert hasattr(component, "__class__")
+            assert component.__class__.__name__ in {
+                "ServiceOrchestrator",
+                "ServiceRegistry",
+                "ServiceMetrics",
+                "ServiceValidation",
+            }
 
 
 class TestServiceIntegration:
@@ -351,9 +356,9 @@ class TestServiceIntegration:
 
         # Create components
         registry = FlextServices.ServiceRegistry()
-        orchestrator = FlextServices.ServiceOrchestrator() 
+        orchestrator = FlextServices.ServiceOrchestrator()
         metrics = FlextServices.ServiceMetrics()
-        
+
         assert registry is not None
         assert orchestrator is not None
         assert metrics is not None
@@ -365,7 +370,7 @@ class TestServiceIntegration:
             {"environment": "test"},
             {"environment": "production"},
         ]
-        
+
         for config in configs:
             result = FlextServices.configure_services_system(config)
             assert result.success
@@ -379,13 +384,13 @@ class TestServiceIntegration:
         orchestrators = [FlextServices.ServiceOrchestrator() for _ in range(5)]
         metrics = [FlextServices.ServiceMetrics() for _ in range(5)]
         validations = [FlextServices.ServiceValidation() for _ in range(5)]
-        
+
         all_components = registries + orchestrators + metrics + validations
-        
+
         # All should be created successfully
         assert len(all_components) == 20
         assert all(component is not None for component in all_components)
-        
+
         # Each should be a unique instance
-        assert len(set(id(component) for component in registries)) == 5
-        assert len(set(id(component) for component in orchestrators)) == 5
+        assert len({id(component) for component in registries}) == 5
+        assert len({id(component) for component in orchestrators}) == 5

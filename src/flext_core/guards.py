@@ -1,33 +1,36 @@
-"""FLEXT Guards - Validation, type guards and data integrity enforcement system.
+"""Validation, type guards and data integrity enforcement system.
 
-Provides sophisticated validation and guard system including pure function enforcement
-with memoization, immutable class creation, assertion-style validation, type guards,
-and performance optimization. Built on Clean Architecture principles with FlextResult
-integration for type-safe, composable validation operations.
+Provides efficient validation and guard system with type guards, function memoization,
+immutable class creation, and assertion-style validation using FlextResult integration.
 
-Module Role in Architecture:
-    FlextGuards serves as the validation and data integrity foundation providing
-    type guards, validation utilities, function memoization and immutable class
-    creation across FLEXT applications. Integrates with FlextResult for error handling.
+Usage:
+    # Type guards
+    if FlextGuards.is_dict_of(data, str, int):
+        # data is Dict[str, int]
+        process_string_int_dict(data)
 
-Classes and Methods:
-    FlextGuards:                        # Consolidated validation and guard system
-        # Configuration Methods:
-        configure_guards_system(config) -> FlextResult[ConfigDict] # Configure system
-        get_guards_system_config() -> FlextResult[ConfigDict] # Get current config
-        set_validation_level(level) -> FlextResult[None] # Set validation strictness
+    # Validation decorators
+    @FlextGuards.pure
+    def calculate_sum(a: int, b: int) -> int:
+        return a + b  # Automatically memoized
 
-        # Decorators:
-        @pure                           # Pure function decorator with memoization
-        @immutable                      # Immutable class decorator
-        @validate_args                  # Argument validation decorator
+    @FlextGuards.immutable
+    class Point:
+        x: int
+        y: int
 
-        # Type Guards:
-        is_dict_of(obj, key_type, value_type=None) -> bool # Check dict type
-        is_list_of(obj, item_type) -> bool          # Check list type
-        is_sequence_of(obj, item_type) -> bool      # Check sequence type
-        is_optional(obj, expected_type) -> bool     # Check optional type
-        is_union_of(obj, *types) -> bool            # Check union type
+    # Assertions with FlextResult
+    result = FlextGuards.assert_type(value, int)
+    if result.success:
+        # value is guaranteed to be int
+        process_integer(value)
+
+Features:
+    - Type guards for runtime type checking
+    - Pure function decorator with memoization
+    - Immutable class decorator
+    - Assertion-style validation with FlextResult
+    - Performance optimization utilities
 
         # Validation Utilities (ValidationUtils):
         require_not_none(value, message) -> FlextResult[T] # Require non-None value
@@ -111,7 +114,7 @@ from flext_core.typings import FlextTypes
 
 
 class FlextGuards:
-    """Enterprise validation and guard system providing comprehensive data integrity enforcement.
+    """Enterprise validation and guard system providing efficient data integrity enforcement.
 
     This class serves as the central container for all validation and guard functionality
     in the FLEXT ecosystem, implementing sophisticated patterns for pure function enforcement,
@@ -145,7 +148,7 @@ class FlextGuards:
             - Descriptor protocol compliance for method resolution
 
         Validation System:
-            - Assertion-style validation with comprehensive error messages
+            - Assertion-style validation with efficient error messages
             - Range validation with configurable bounds checking
             - Non-empty string validation with whitespace handling
             - Type-safe validation with FlextExceptions integration
@@ -182,11 +185,13 @@ class FlextGuards:
     Example Usage:
         ```python
         # Configure for production environment
-        config_result = FlextGuards.configure_guards_system({
-            "environment": "production",
-            "validation_level": "strict",
-            "max_cache_size": 5000,
-        })
+        config_result = FlextGuards.configure_guards_system(
+            {
+                "environment": "production",
+                "validation_level": "strict",
+                "max_cache_size": 5000,
+            }
+        )
 
 
         # Create pure function with memoization
@@ -454,7 +459,7 @@ class FlextGuards:
 
             # Safely add the __pure__ attribute to the function using setattr
             with contextlib.suppress(AttributeError, TypeError):
-                bound_method.__pure__ = True  # type: ignore[attr-defined]
+                setattr(bound_method, "__pure__", True)
             return bound_method
 
     class ValidationUtils:
@@ -467,7 +472,7 @@ class FlextGuards:
 
         The validation utilities are designed for high-performance operation with
         minimal overhead, making them suitable for hot paths in enterprise applications.
-        Each method performs comprehensive type and value validation while providing
+        Each method performs efficient type and value validation while providing
         clear, actionable error messages.
 
         Design Principles:
@@ -545,7 +550,7 @@ class FlextGuards:
             value: object,
             message: str = "Value cannot be None",
         ) -> object:
-            """Validate that a value is not None with comprehensive error handling.
+            """Validate that a value is not None with efficient error handling.
 
             This method provides null-safety validation following the assertion-style
             pattern. It performs an immediate check for None values and raises a
@@ -606,7 +611,7 @@ class FlextGuards:
             value: object,
             message: str = "Value must be positive",
         ) -> object:
-            """Validate that a value is a positive integer with comprehensive type and value checking.
+            """Validate that a value is a positive integer with efficient type and value checking.
 
             This method provides robust validation for positive integer values, combining
             both type checking and value validation in a single operation. It ensures
@@ -680,7 +685,7 @@ class FlextGuards:
         ) -> object:
             """Validate that a numeric value falls within specified inclusive bounds.
 
-            This method provides comprehensive range validation for numeric values,
+            This method provides efficient range validation for numeric values,
             supporting both integer and float types. It performs type checking to ensure
             the value is numeric, then validates that it falls within the specified
             inclusive range [min_val, max_val].
@@ -768,7 +773,7 @@ class FlextGuards:
         ) -> object:
             r"""Validate that a string value is non-empty with whitespace handling.
 
-            This method provides comprehensive string validation, ensuring that the value
+            This method provides efficient string validation, ensuring that the value
             is a string type and contains non-whitespace content. It performs both type
             checking and content validation, treating whitespace-only strings as empty.
 
@@ -1537,7 +1542,12 @@ class FlextGuards:
 
     @classmethod
     def create_environment_guards_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls,
+        environment: FlextTypes.Config.Environment,
+        validation_level: str | None = None,
+        *,
+        cache_enabled: bool | None = None,
+        **kwargs: object,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific guards system configuration."""
         try:
@@ -1557,51 +1567,74 @@ class FlextGuards:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_pure_function_caching": True,  # Caching for performance
-                    "enable_immutable_classes": True,  # Immutability for safety
-                    "enable_validation_guards": True,  # Strict validation in production
-                    "max_cache_size": 2000,  # Larger cache for production
-                    "enable_strict_validation": True,  # Strict validation in production
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                    "enable_debug_logging": False,  # No debug logging in production
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_pure_function_caching": True,  # Caching for performance
+                        "enable_immutable_classes": True,  # Immutability for safety
+                        "enable_validation_guards": True,  # Strict validation in production
+                        "max_cache_size": 2000,  # Larger cache for production
+                        "enable_strict_validation": True,  # Strict validation in production
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                        "enable_debug_logging": False,  # No debug logging in production
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_pure_function_caching": False,  # No caching for fresh results
-                    "enable_immutable_classes": True,  # Immutability for consistency
-                    "enable_validation_guards": True,  # Validation for catching issues
-                    "max_cache_size": 100,  # Small cache for development
-                    "enable_strict_validation": False,  # Flexible validation in development
-                    "enable_performance_monitoring": False,  # No performance monitoring
-                    "enable_debug_logging": True,  # Full debug logging for development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_pure_function_caching": False,  # No caching for fresh results
+                        "enable_immutable_classes": True,  # Immutability for consistency
+                        "enable_validation_guards": True,  # Validation for catching issues
+                        "max_cache_size": 100,  # Small cache for development
+                        "enable_strict_validation": False,  # Flexible validation in development
+                        "enable_performance_monitoring": False,  # No performance monitoring
+                        "enable_debug_logging": True,  # Full debug logging for development
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_pure_function_caching": False,  # No caching in tests
-                    "enable_immutable_classes": True,  # Immutability for test consistency
-                    "enable_validation_guards": True,  # Validation for test accuracy
-                    "max_cache_size": 50,  # Minimal cache for tests
-                    "enable_strict_validation": True,  # Strict validation for tests
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_pure_function_caching": False,  # No caching in tests
+                        "enable_immutable_classes": True,  # Immutability for test consistency
+                        "enable_validation_guards": True,  # Validation for test accuracy
+                        "max_cache_size": 50,  # Minimal cache for tests
+                        "enable_strict_validation": True,  # Strict validation for tests
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    }
+                )
             else:  # staging, local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_pure_function_caching": True,  # Caching for performance
-                    "enable_immutable_classes": True,  # Immutability for safety
-                    "enable_validation_guards": True,  # Standard validation
-                    "max_cache_size": 1000,  # Standard cache size
-                    "enable_strict_validation": False,  # Balanced validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_pure_function_caching": True,  # Caching for performance
+                        "enable_immutable_classes": True,  # Immutability for safety
+                        "enable_validation_guards": True,  # Standard validation
+                        "max_cache_size": 1000,  # Standard cache size
+                        "enable_strict_validation": False,  # Balanced validation
+                    }
+                )
+
+            # Apply custom overrides if provided
+            if validation_level is not None:
+                config["validation_level"] = validation_level
+            if cache_enabled is not None:
+                config["enable_pure_function_caching"] = cache_enabled
+
+            # Apply any additional kwargs (filter to compatible config types)
+            for key, value in kwargs.items():
+                if isinstance(value, (str, int, float, bool)):
+                    config[key] = value
+                elif isinstance(value, list):
+                    config[key] = list(value)  # Ensure it's a proper list
+                elif isinstance(value, dict):
+                    config[key] = dict(value)  # Ensure it's a proper dict
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1627,55 +1660,65 @@ class FlextGuards:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 5000),
-                    "enable_pure_function_caching": True,
-                    "cache_cleanup_interval": 600,  # 10 minutes
-                    "enable_lazy_validation": True,
-                    "batch_validation_size": 100,
-                    "enable_concurrent_guards": True,
-                    "memory_optimization": "aggressive",
-                    "enable_cache_prewarming": True,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 5000),
+                        "enable_pure_function_caching": True,
+                        "cache_cleanup_interval": 600,  # 10 minutes
+                        "enable_lazy_validation": True,
+                        "batch_validation_size": 100,
+                        "enable_concurrent_guards": True,
+                        "memory_optimization": "aggressive",
+                        "enable_cache_prewarming": True,
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 2000),
-                    "enable_pure_function_caching": True,
-                    "cache_cleanup_interval": 300,  # 5 minutes
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 50,
-                    "enable_concurrent_guards": False,
-                    "memory_optimization": "balanced",
-                    "enable_cache_prewarming": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 2000),
+                        "enable_pure_function_caching": True,
+                        "cache_cleanup_interval": 300,  # 5 minutes
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 50,
+                        "enable_concurrent_guards": False,
+                        "memory_optimization": "balanced",
+                        "enable_cache_prewarming": False,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 500),
-                    "enable_pure_function_caching": False,
-                    "cache_cleanup_interval": 60,  # 1 minute
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 10,
-                    "enable_concurrent_guards": False,
-                    "memory_optimization": "conservative",
-                    "enable_cache_prewarming": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 500),
+                        "enable_pure_function_caching": False,
+                        "cache_cleanup_interval": 60,  # 1 minute
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 10,
+                        "enable_concurrent_guards": False,
+                        "memory_optimization": "conservative",
+                        "enable_cache_prewarming": False,
+                    }
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 1000),
-                    "enable_pure_function_caching": config.get(
-                        "enable_pure_function_caching", True
-                    ),
-                    "cache_cleanup_interval": 300,
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 1000),
+                        "enable_pure_function_caching": config.get(
+                            "enable_pure_function_caching", True
+                        ),
+                        "cache_cleanup_interval": 300,
+                        "memory_optimization": "balanced",
+                    }
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -1686,30 +1729,44 @@ class FlextGuards:
 
     # Factory and builder methods removed - use direct class construction
     @staticmethod
-    def make_factory(target_class: type) -> object:
-        """Create simple factory for target class."""
+    def make_factory(name: str, defaults: dict[str, object]) -> FlextResult[object]:
+        """Create simple factory with name and defaults."""
+        try:
 
-        def factory(*args: object, **kwargs: object) -> object:
-            return target_class(*args, **kwargs)
+            class Factory:
+                def __init__(self) -> None:
+                    self.defaults = defaults
+                    self.name = name
 
-        return factory
+                def create(self, **overrides: object) -> object:
+                    kwargs = {**self.defaults, **overrides}
+                    return type(self.name, (), kwargs)()
+
+            return FlextResult[object].ok(Factory())
+        except Exception as e:
+            return FlextResult[object].fail(f"Failed to create factory: {e!s}")
 
     @staticmethod
-    def make_builder(target_class: type) -> object:
-        """Create simple builder for target class."""
+    def make_builder(name: str, fields: dict[str, type]) -> FlextResult[object]:
+        """Create simple builder with name and fields."""
+        try:
 
-        class Builder:
-            def __init__(self) -> None:
-                self._kwargs: dict[str, object] = {}
+            class Builder:
+                def __init__(self) -> None:
+                    self._kwargs: dict[str, object] = {}
+                    self.name = name
+                    self.fields = fields
 
-            def set(self, key: str, value: object) -> Builder:
-                self._kwargs[key] = value
-                return self
+                def set(self, key: str, value: object) -> Builder:
+                    self._kwargs[key] = value
+                    return self
 
-            def build(self) -> object:
-                return target_class(**self._kwargs)
+                def build(self) -> object:
+                    return type(self.name, (), self._kwargs)()
 
-        return Builder()
+            return FlextResult[object].ok(Builder())
+        except Exception as e:
+            return FlextResult[object].fail(f"Failed to create builder: {e!s}")
 
 
 # =============================================================================

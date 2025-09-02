@@ -1,53 +1,30 @@
-"""FLEXT Protocols - Enterprise protocol definitions with hierarchical architecture and Clean Architecture principles.
+"""Enterprise protocol definitions with hierarchical architecture and Clean Architecture principles.
 
-Runtime-checkable protocol definitions for the FLEXT ecosystem implementing type-safe contracts
-for dependency injection, validation, serialization, and enterprise patterns organized in
-hierarchical layers following Clean Architecture with comprehensive FlextResult integration.
+Provides runtime-checkable protocol definitions organized in hierarchical layers for
+type-safe contracts, dependency injection, validation, and enterprise patterns.
 
-Module Role in Architecture:
-    FlextProtocols provides the contract definitions for all FLEXT ecosystem components,
-    organized in hierarchical layers from Foundation to Extensions, enabling type-safe
-    composition, runtime validation, and Clean Architecture dependency inversion.
+Usage:
+    # Domain protocols
+    class UserRepository(FlextProtocols.Domain.Repository[User]):
+        def find_by_id(self, user_id: str) -> FlextResult[User]:
+            # Implementation
 
-Classes and Methods:
-    FlextProtocols:                         # Hierarchical protocol architecture
-        # Foundation Layer - Core Protocols:
-        Foundation.Callable[P, T]                   # Generic callable protocol
-        Foundation.Validator[T]                     # Data validation protocol
-        Foundation.ErrorHandler                     # Exception transformation protocol
-        Foundation.Factory[T]                       # Object creation protocol
-        Foundation.AsyncFactory[T]                  # Async object creation protocol
-        Foundation.HasToDict                        # Dictionary conversion protocol
-        Foundation.HasToDictBasic                   # Basic dictionary conversion protocol
-        Foundation.SupportsDynamicAttributes        # Dynamic attribute access protocol
-        Foundation.HasModelDump                     # Pydantic v2 model dump protocol
-        Foundation.HasDict                          # Pydantic v1 dict protocol
-        Foundation.HasModelValidate                 # Pydantic v2 validation protocol
-        Foundation.SupportsRichComparison           # Rich comparison operations protocol
+    # Application protocols
+    class CreateUserHandler(FlextProtocols.Application.Handler[CreateUser, User]):
+        def handle(self, command: CreateUser) -> FlextResult[User]:
+            # Implementation
 
-        # Domain Layer - Business Logic Protocols:
-        Domain.Service                              # Domain service with lifecycle management
-        Domain.Repository[T]                        # Generic repository pattern protocol
-        Domain.DomainEvent                          # Domain event protocol
-        Domain.EventStore                           # Event persistence protocol
+    # Infrastructure protocols
+    class DatabaseConnection(FlextProtocols.Infrastructure.Connection):
+        def connect(self) -> FlextResult[None]:
+            # Implementation
 
-        # Application Layer - Use Case Protocols:
-        Application.Handler[TInput, TOutput]        # Generic request/response handler
-        Application.MessageHandler                  # CQRS message handler protocol
-        Application.ValidatingHandler               # Handler with validation capabilities
-        Application.AuthorizingHandler              # Handler with authorization
-        Application.EventProcessor                  # Domain event processor
-        Application.UnitOfWork                      # Transaction management protocol
-
-        # Infrastructure Layer - External System Protocols:
-        Infrastructure.Connection                   # Generic connection protocol
-        Infrastructure.LdapConnection               # LDAP-specific connection protocol
-        Infrastructure.Auth                         # Authentication/authorization protocol
-        Infrastructure.Configurable                # Configuration management protocol
-        Infrastructure.LoggerProtocol               # Structured logging protocol
-
-        # Extensions Layer - Advanced Pattern Protocols:
-        Extensions.Plugin                           # Plugin system protocol
+Features:
+    - Hierarchical protocol organization (Foundation, Domain, Application, Infrastructure)
+    - Runtime-checkable contracts
+    - Generic type support with type variables
+    - Clean Architecture dependency inversion
+    - FlextResult integration for error handling
         Extensions.PluginContext                    # Plugin execution context protocol
         Extensions.Middleware                       # Middleware pipeline protocol
         Extensions.AsyncMiddleware                  # Async middleware protocol
@@ -97,7 +74,7 @@ Usage Examples:
 
 Integration:
     FlextProtocols integrates with FlextResult for error handling, FlextTypes.Config
-    for configuration, FlextConstants for validation, providing comprehensive type-safe
+    for configuration, FlextConstants for validation, providing efficient type-safe
     contracts for all FLEXT ecosystem components with Clean Architecture compliance.
 
 """
@@ -806,7 +783,7 @@ class FlextProtocolsConfig:
         Configures the FLEXT protocol management system including interface validation,
         protocol inheritance checking, runtime type validation, contract enforcement,
         composition pattern optimization, and hierarchical protocol organization
-        with comprehensive validation and type safety.
+        with efficient validation and type safety.
 
         Args:
             config: Configuration dictionary supporting:
@@ -1022,65 +999,75 @@ class FlextProtocolsConfig:
 
             # Environment-specific optimizations
             if environment == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value:
-                base_config.update({
-                    "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": True,  # Performance optimization
-                    "enable_type_safety_checks": True,
-                    "protocol_inheritance_depth": 3,  # Limit for performance
-                    "enable_protocol_metrics": True,
-                    "cache_protocol_validations": True,
-                })
+                base_config.update(
+                    {
+                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": True,  # Performance optimization
+                        "enable_type_safety_checks": True,
+                        "protocol_inheritance_depth": 3,  # Limit for performance
+                        "enable_protocol_metrics": True,
+                        "cache_protocol_validations": True,
+                    }
+                )
 
             elif environment == FlextConstants.Config.ConfigEnvironment.STAGING.value:
-                base_config.update({
-                    "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": True,
-                    "enable_type_safety_checks": True,
-                    "protocol_inheritance_depth": 5,
-                    "enable_protocol_metrics": True,
-                })
+                base_config.update(
+                    {
+                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": True,
+                        "enable_type_safety_checks": True,
+                        "protocol_inheritance_depth": 5,
+                        "enable_protocol_metrics": True,
+                    }
+                )
 
             elif (
                 environment == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
             ):
-                base_config.update({
-                    "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": False,  # Disable for debugging
-                    "enable_type_safety_checks": True,
-                    "protocol_inheritance_depth": 10,  # More flexible for development
-                    "enable_detailed_logging": True,
-                    "enable_protocol_debugging": True,
-                })
+                base_config.update(
+                    {
+                        "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": False,  # Disable for debugging
+                        "enable_type_safety_checks": True,
+                        "protocol_inheritance_depth": 10,  # More flexible for development
+                        "enable_detailed_logging": True,
+                        "enable_protocol_debugging": True,
+                    }
+                )
 
             elif environment == FlextConstants.Config.ConfigEnvironment.TEST.value:
-                base_config.update({
-                    "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": False,  # Disable for test clarity
-                    "enable_type_safety_checks": True,
-                    "protocol_inheritance_depth": 7,
-                    "enable_test_assertions": True,
-                    "enable_contract_debugging": True,
-                })
+                base_config.update(
+                    {
+                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": False,  # Disable for test clarity
+                        "enable_type_safety_checks": True,
+                        "protocol_inheritance_depth": 7,
+                        "enable_test_assertions": True,
+                        "enable_contract_debugging": True,
+                    }
+                )
 
             elif environment == internal.invalid.value:
-                base_config.update({
-                    "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_runtime_checking": False,  # Minimal overhead
-                    "enable_protocol_caching": False,
-                    "enable_type_safety_checks": False,  # Minimal for experimentation
-                    "protocol_inheritance_depth": 15,  # Very flexible
-                    "enable_debug_output": True,
-                    "enable_experimental_features": True,
-                })
+                base_config.update(
+                    {
+                        "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_runtime_checking": False,  # Minimal overhead
+                        "enable_protocol_caching": False,
+                        "enable_type_safety_checks": False,  # Minimal for experimentation
+                        "protocol_inheritance_depth": 15,  # Very flexible
+                        "enable_debug_output": True,
+                        "enable_experimental_features": True,
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
 
@@ -1130,77 +1117,87 @@ class FlextProtocolsConfig:
             }
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": "2025-01-01T00:00:00Z",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": "2025-01-01T00:00:00Z",
+                }
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Protocol validation optimization
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": True,
-                    "protocol_cache_size": 1000,
-                    "cache_validation_results": True,
-                    # Composition optimization
-                    "protocol_composition_mode": "FLAT",  # Faster than hierarchical
-                    "enable_composition_caching": True,
-                    "composition_cache_size": 500,
-                    # Contract enforcement optimization
-                    "enable_contract_enforcement": True,
-                    "contract_check_mode": "fast",
-                    "skip_redundant_checks": True,
-                    # Memory and processing optimization
-                    "protocol_inheritance_depth": 3,  # Limit depth for speed
-                    "enable_protocol_pooling": True,
-                    "protocol_pool_size": 200,
-                })
+                optimized_config.update(
+                    {
+                        # Protocol validation optimization
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": True,
+                        "protocol_cache_size": 1000,
+                        "cache_validation_results": True,
+                        # Composition optimization
+                        "protocol_composition_mode": "FLAT",  # Faster than hierarchical
+                        "enable_composition_caching": True,
+                        "composition_cache_size": 500,
+                        # Contract enforcement optimization
+                        "enable_contract_enforcement": True,
+                        "contract_check_mode": "fast",
+                        "skip_redundant_checks": True,
+                        # Memory and processing optimization
+                        "protocol_inheritance_depth": 3,  # Limit depth for speed
+                        "enable_protocol_pooling": True,
+                        "protocol_pool_size": 200,
+                    }
+                )
 
             elif performance_level == "extreme":
-                optimized_config.update({
-                    # Maximum performance settings
-                    "enable_runtime_checking": False,  # Skip for maximum speed
-                    "enable_protocol_caching": True,
-                    "protocol_cache_size": 5000,
-                    "enable_aggressive_caching": True,
-                    # Minimal composition overhead
-                    "protocol_composition_mode": "FLAT",
-                    "skip_composition_validation": True,
-                    "enable_zero_copy_composition": True,
-                    # Minimal contract enforcement
-                    "enable_contract_enforcement": False,  # Skip for speed
-                    "skip_all_validations": True,
-                    # Maximum performance settings
-                    "protocol_inheritance_depth": 1,  # Minimal inheritance
-                    "enable_protocol_pooling": True,
-                    "protocol_pool_size": 1000,
-                    "enable_lock_free_operations": True,
-                })
+                optimized_config.update(
+                    {
+                        # Maximum performance settings
+                        "enable_runtime_checking": False,  # Skip for maximum speed
+                        "enable_protocol_caching": True,
+                        "protocol_cache_size": 5000,
+                        "enable_aggressive_caching": True,
+                        # Minimal composition overhead
+                        "protocol_composition_mode": "FLAT",
+                        "skip_composition_validation": True,
+                        "enable_zero_copy_composition": True,
+                        # Minimal contract enforcement
+                        "enable_contract_enforcement": False,  # Skip for speed
+                        "skip_all_validations": True,
+                        # Maximum performance settings
+                        "protocol_inheritance_depth": 1,  # Minimal inheritance
+                        "enable_protocol_pooling": True,
+                        "protocol_pool_size": 1000,
+                        "enable_lock_free_operations": True,
+                    }
+                )
 
             elif performance_level == "balanced":
-                optimized_config.update({
-                    # Balanced settings
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": False,  # No caching overhead
-                    "protocol_composition_mode": "HIERARCHICAL",
-                    "enable_contract_enforcement": True,
-                    "protocol_inheritance_depth": 5,
-                    "protocol_pool_size": 50,
-                })
+                optimized_config.update(
+                    {
+                        # Balanced settings
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": False,  # No caching overhead
+                        "protocol_composition_mode": "HIERARCHICAL",
+                        "enable_contract_enforcement": True,
+                        "protocol_inheritance_depth": 5,
+                        "protocol_pool_size": 50,
+                    }
+                )
 
             else:  # low performance
-                optimized_config.update({
-                    # Conservative settings
-                    "enable_runtime_checking": True,
-                    "enable_protocol_caching": False,
-                    "protocol_inheritance_depth": 10,
-                    "protocol_pool_size": 10,
-                    "enable_all_validations": True,
-                    "enable_detailed_logging": True,
-                    "enable_protocol_debugging": True,
-                })
+                optimized_config.update(
+                    {
+                        # Conservative settings
+                        "enable_runtime_checking": True,
+                        "enable_protocol_caching": False,
+                        "protocol_inheritance_depth": 10,
+                        "protocol_pool_size": 10,
+                        "enable_all_validations": True,
+                        "enable_detailed_logging": True,
+                        "enable_protocol_debugging": True,
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

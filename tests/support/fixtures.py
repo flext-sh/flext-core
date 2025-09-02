@@ -28,9 +28,7 @@ from typing import cast
 
 import pytest
 import pytest_asyncio
-from pytest_benchmark.fixture import (  # type: ignore[import-untyped,reportMissingTypeStubs]
-    BenchmarkFixture,
-)
+from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_mock import MockerFixture
 
 from flext_core import (
@@ -276,22 +274,22 @@ def config_builder() -> FlextConfig:
 
 # Performance testing fixtures
 @pytest.fixture
-def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:  # type: ignore[no-any-unimported]
+def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:
     """Fixture providing configured benchmark for performance tests."""
     # Configure benchmark settings
-    benchmark.group = "flext_core"  # type: ignore[attr-defined]
+    benchmark.group = "flext_core"
 
     # Configure timer if available
     if hasattr(benchmark, "timer"):
-        benchmark.timer = time.perf_counter  # type: ignore[attr-defined]
+        benchmark.timer = time.perf_counter
 
         # Configure GC settings if available
     if hasattr(benchmark, "disable_gc"):
-        benchmark.disable_gc = True  # type: ignore[attr-defined]
+        benchmark.disable_gc = True
 
     # Configure minimum rounds if available
     if hasattr(benchmark, "min_rounds"):
-        benchmark.min_rounds = 5  # type: ignore[attr-defined]
+        benchmark.min_rounds = 5
 
     return benchmark
 

@@ -1,41 +1,25 @@
-"""FLEXT Core - Enterprise data integration foundation library.
+"""FLEXT Core - Data integration foundation library.
 
-This module provides the architectural foundation for the FLEXT ecosystem with type-safe
-error handling, dependency injection, domain modeling patterns, and enterprise-grade
-functionality for data integration platforms.
+Architectural foundation for the FLEXT ecosystem with type-safe error handling,
+dependency injection, domain modeling patterns, and data integration functionality.
 
 Architecture:
-    Foundation Layer: FlextResult, exceptions, constants, types
-    Domain Layer: FlextModels.Entity, FlextModels.Value, domain services
-    Application Layer: Commands (CQRS), handlers, validation, guards
-    Infrastructure Layer: Container (DI), config, logging, observability, context
-    Support Layer: Decorators, mixins, utilities, fields, services, adapters
+    Foundation: FlextResult, exceptions, constants, types
+    Domain: FlextModels, FlextModels, domain services
+    Application: Commands (CQRS), handlers, validation, guards
+    Infrastructure: Container (DI), config, logging, observability, context
+    Support: Decorators, mixins, utilities, fields, services, adapters
 
-Core Components:
-    FlextCommands: CQRS command patterns with validation and result handling
-    FlextConfig: Pydantic-based configuration with environment variable support
-    FlextConstants: Application constants, enums, and configuration defaults
-    FlextContainer: Type-safe dependency injection container with factory support
-    FlextContext: Request/operation context management with correlation IDs
-    FlextCore: Core functionality for versioning, validation, and type management
-    FlextDecorators: Enterprise decorators for validation, caching, and metrics
-    FlextDelegationSystem: Delegation system for method chaining and composition
-    FlextDomainServices: Domain services for business logic and operations
-    FlextExceptions: Hierarchical exception system with error codes and metrics
-    FlextFields: Field validation and metadata for forms and schemas
-    FlextGuards: Type guards and runtime validation utilities
-    FlextHandlers: Request/response handlers with result composition
-    FlextLogger: Structured logging with context propagation and JSON output
-    FlextMixins: Reusable behavior patterns (timestamps, serialization, etc.)
-    FlextObservability: Metrics, tracing, and monitoring abstractions
-    FlextProcessors: Processing utilities for schema and data validation
-    FlextProtocols: Interface definitions and contracts for dependency injection
-    FlextResult[T]: Railway-oriented error handling with map/flat_map/bind operations
-    FlextServices: Service layer abstractions and patterns
-    FlextTypeAdapters: Type adapters for data transformation and validation
-    FlextTypes: Type definitions, aliases, and generic type parameters
-    FlextUtilities: Helper functions, generators, and type utilities
-    FlextValidations: Composable validation framework with predicate logic
+Key Components:
+    FlextResult[T]: Railway-oriented error handling with map/flat_map operations
+    FlextContainer: Type-safe dependency injection with factory support
+    FlextCommands: CQRS command patterns with validation
+    FlextConfig: Pydantic configuration with environment variables
+    FlextLogger: Structured logging with context and JSON output
+    FlextValidations: Composable validation framework
+    FlextMixins: Reusable behavior patterns (timestamps, serialization)
+    FlextObservability: Metrics, tracing, and monitoring
+    FlextDecorators: Validation, caching, and performance decorators
 
 
 Examples:
@@ -70,7 +54,7 @@ Examples:
 Notes:
     - All business operations should return FlextResult[T] for composability
     - Use the global container for dependency injection across the ecosystem
-    - Domain entities should inherit from FlextModels.Entity or FlextValueObject
+    - Domain entities should inherit from FlextModels.Entity or FlextModels.Value
     - Follow Clean Architecture patterns with layered imports
     - Leverage type safety with generic parameters and protocols
 
@@ -110,8 +94,8 @@ from flext_core.validations import *
 # =============================================================================
 
 # Infrastructure layer - explicit imports to avoid type conflicts
-from flext_core.config import *  # type: ignore[assignment]
-from flext_core.container import *  # type: ignore[assignment]
+from flext_core.config import *
+from flext_core.container import *
 from flext_core.context import *
 from flext_core.loggings import *
 from flext_core.observability import *
@@ -134,15 +118,7 @@ from flext_core.utilities import *
 # =============================================================================
 
 # Core functionality - ensure specific exports are accessible
-from flext_core.core import *  # type: ignore[assignment]
-
-
-# =============================================================================
-# LEGACY FUNCTIONALITY - Legacy implementation exports
-# =============================================================================
-
-# Legacy functionality removed - all core functionality now in main modules
-
+from flext_core.core import *
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules
