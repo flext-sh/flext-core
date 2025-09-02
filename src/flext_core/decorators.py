@@ -33,12 +33,12 @@ import signal
 import time
 import warnings
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar, cast
+from typing import cast
 
 from flext_core.constants import FlextConstants
 from flext_core.mixins.core import FlextMixins
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, P, T
 
 
 class _Context:
@@ -49,11 +49,6 @@ class _Context:
 
     def __getattribute__(self, name: str) -> object:
         return object.__getattribute__(self, name)
-
-# Type variables for decorator patterns
-P = ParamSpec("P")
-T = TypeVar("T")
-
 
 
 class FlextDecorators(FlextMixins.Entity):
