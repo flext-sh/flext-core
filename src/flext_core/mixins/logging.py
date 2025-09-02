@@ -9,6 +9,7 @@ from __future__ import annotations
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextLogging:
@@ -43,7 +44,7 @@ class FlextLogging:
             match value:
                 # Pydantic v2 BaseModel
                 case model if hasattr(model, "model_dump"):
-                    normalized[key] = model.model_dump()
+                    normalized[key] = getattr(model, "model_dump")()
 
                 # Basic JSON-serializable types
                 case str() | int() | float() | bool() | None:
@@ -52,8 +53,8 @@ class FlextLogging:
                 # Lists (recursively normalize)
                 case list():
                     normalized[key] = [
-                        item.model_dump()
-                        if isinstance(item, BaseModel)
+                        getattr(item, "model_dump")()
+                        if hasattr(item, "model_dump")
                         else str(item)
                         if item is not None
                         else None
@@ -63,8 +64,8 @@ class FlextLogging:
                 # Dictionaries (recursively normalize)
                 case dict():
                     normalized[key] = {
-                        k: v.model_dump()
-                        if isinstance(v, BaseModel)
+                        k: getattr(v, "model_dump")()
+                        if hasattr(v, "model_dump")
                         else str(v)
                         if v is not None
                         else None

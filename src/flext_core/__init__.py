@@ -93,9 +93,9 @@ from flext_core.validations import *
 # INFRASTRUCTURE LAYER - Depends on Application + Domain + Foundation
 # =============================================================================
 
-# Infrastructure layer - explicit imports to avoid type conflicts
-from flext_core.config import *
-from flext_core.container import *
+# Infrastructure layer - wildcard imports only
+from flext_core.config import *  # type: ignore[assignment]
+from flext_core.container import *  # type: ignore[assignment]
 from flext_core.context import *
 from flext_core.loggings import *
 from flext_core.observability import *
@@ -117,8 +117,8 @@ from flext_core.utilities import *
 # CORE FUNCTIONALITY - Main implementation exports
 # =============================================================================
 
-# Core functionality - ensure specific exports are accessible
-from flext_core.core import *
+# Core functionality - wildcard import only
+from flext_core.core import *  # type: ignore[assignment]
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules

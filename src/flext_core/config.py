@@ -61,13 +61,11 @@ Integration with FlextCore:
     ...     config = config_result.value
     ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
     >>> # Business rule validation
-    >>> validation_result = FlextConfig.validate_business_rules(
-    ...     {
-    ...         "database_url": "postgresql://localhost/prod",
-    ...         "secret_key": "secure-key-with-sufficient-length",
-    ...         "log_level": "INFO",
-    ...     }
-    ... )
+    >>> validation_result = FlextConfig.validate_business_rules({
+    ...     "database_url": "postgresql://localhost/prod",
+    ...     "secret_key": "secure-key-with-sufficient-length",
+    ...     "log_level": "INFO",
+    ... })
 
 Environment Configuration Examples:
     >>> # Development configuration
@@ -145,6 +143,7 @@ from pathlib import Path
 from typing import ClassVar, Final, cast
 
 from pydantic import (
+    BaseModel,
     ConfigDict,
     Field,
     SerializationInfo,
@@ -498,7 +497,7 @@ class FlextConfig(FlextModels.BaseConfig):
             _ = info  # Acknowledge parameter for future use
             _ = serializer  # Acknowledge serializer parameter for Pydantic compatibility
             # Get the base dict representation first
-            base_data = self.model_dump()
+            base_data = cast("BaseModel", self).model_dump()
             # Ensure all values are of the correct types for ConfigDict
             data: FlextTypes.Config.ConfigDict = {}
             for key, value in base_data.items():
@@ -539,11 +538,14 @@ class FlextConfig(FlextModels.BaseConfig):
                 # Apply overrides if any provided
                 if all_overrides:
                     # Get current values as dict
-                    current_data = instance.model_dump()
+                    current_data = cast("BaseModel", instance).model_dump()
                     # Update with overrides
                     current_data.update(all_overrides)
                     # Create new instance with merged data (cast for MyPy)
-                    instance = cls.model_validate(current_data)
+                    instance = cast(
+                        "FlextConfig.Settings",
+                        cast("type[BaseModel]", cls).model_validate(current_data),
+                    )
 
                 validation_result = instance.validate_business_rules()
                 if validation_result.is_failure:

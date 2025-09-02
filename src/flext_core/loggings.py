@@ -128,6 +128,11 @@ class FlextLogger:
     # Thread-local storage for per-request context
     _local = threading.local()
 
+    # Instance attributes type declarations
+    _name: str
+    _level: FlextTypes.Config.LogLevel
+    _environment: FlextTypes.Config.Environment
+
     def __new__(cls, name: str, *_args: object, **kwargs: object) -> Self:
         """Create or return cached logger instance for singleton pattern.
 

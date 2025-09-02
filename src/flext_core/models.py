@@ -5,14 +5,14 @@ for creating type-safe domain models with efficient validation.
 
 Usage:
     # Entity creation
-    user = FlextModels(id="user_123", name="John")
+    user = FlextModels.Entity(id="user_123", name="John")
 
     # Value objects with validation
-    email = FlextModels(root="test@example.com")
-    port = FlextModels(root=8080)
+    email = FlextModels.Value(root="test@example.com")
+    port = FlextModels.Value(root=8080)
 
     # Factory methods
-    entity = FlextModels({"id": "123", "name": "Test"})
+    entity = FlextModels.Entity({"id": "123", "name": "Test"})
 
 Features:
     - Consolidated FlextModels class with nested types
@@ -84,7 +84,7 @@ class FlextModels:
         Basic domain modeling::
 
             # Create entity with factory method
-            user_result = FlextModels(
+            user_result = FlextModels.Entity(
                 {
                     "id": "user_123",
                     "name": "John Doe",
@@ -92,13 +92,13 @@ class FlextModels:
             )
 
             # Create validated primitives
-            email = FlextModels(root="test@example.com")
-            port = FlextModels(root=8080)
+            email = FlextModels.Value(root="test@example.com")
+            port = FlextModels.Value(root=8080)
 
         Message creation::
 
             # Create structured message
-            message_result = FlextModels(
+            message_result = FlextModels.Message(
                 data={"action": "login", "user_id": "123"},
                 message_type="user_login",
                 source_service="auth_service",
@@ -106,12 +106,12 @@ class FlextModels:
             )
 
             # Create domain event
-            event_result = FlextModels(
-                event_type="UserRegistered",
+            event_result = FlextModels.Event(
+                data={"email": "test@example.com"},
+                message_type="UserRegistered",
+                source_service="registration_service",
                 aggregate_id="user_123",
                 aggregate_type="User",
-                data={"email": "test@example.com"},
-                source_service="registration_service",
             )
 
     Thread Safety:
@@ -421,7 +421,7 @@ class FlextModels:
 
             # Basic message creation
             user_data = {"id": "123", "name": "John"}
-            message = FlextModels[dict](
+            message = FlextModels.Payload[dict](
                 data=user_data,
                 message_type="user_update",
                 source_service="user_service",
@@ -431,7 +431,7 @@ class FlextModels:
 
             # With expiration
             expires_at = datetime.now(UTC) + timedelta(minutes=5)
-            urgent_message = FlextModels[str](
+            urgent_message = FlextModels.Payload[str](
                 data="System maintenance in 10 minutes",
                 message_type="system_alert",
                 source_service="admin_service",
@@ -535,7 +535,7 @@ class FlextModels:
         Example Usage::
 
             # API request message
-            api_request = FlextModels(
+            api_request = FlextModels.Message(
                 data={
                     "action": "create_user",
                     "payload": {"name": "John Doe", "email": "john@example.com"},
@@ -546,7 +546,7 @@ class FlextModels:
             )
 
             # Configuration update
-            config_update = FlextModels(
+            config_update = FlextModels.Message(
                 data={
                     "config_section": "database",
                     "updates": {"pool_size": 20, "timeout": 30},
@@ -641,7 +641,7 @@ class FlextModels:
         Example Usage::
 
             # User registration event
-            user_registered = FlextModels(
+            user_registered = FlextModels.Event(
                 data={
                     "user_id": "user_123",
                     "email": "john@example.com",
@@ -656,7 +656,7 @@ class FlextModels:
             )
 
             # Order item added event
-            item_added = FlextModels(
+            item_added = FlextModels.Event(
                 data={"item_id": "item_456", "quantity": 2, "unit_price": "29.99"},
                 message_type="OrderItemAdded",
                 source_service="order_service",
@@ -990,7 +990,7 @@ class FlextModels:
         source_service: str,
         target_service: str | None = None,
         correlation_id: str | None = None,
-    ) -> FlextResult[FlextModels[T]]:
+    ) -> FlextResult[FlextModels.Payload[T]]:
         """Create payload instance with proper metadata."""
         try:
             payload = cls.Payload[T](
@@ -1000,12 +1000,16 @@ class FlextModels:
                 target_service=target_service,
                 correlation_id=correlation_id or f"corr_{uuid.uuid4().hex[:8]}",
             )
-            return FlextResult[FlextModels[T]].ok(payload)
+            return FlextResult[FlextModels.Payload[T]].ok(payload)
 
         except ValidationError as e:
-            return FlextResult[FlextModels[T]].fail(f"Payload validation failed: {e}")
+            return FlextResult[FlextModels.Payload[T]].fail(
+                f"Payload validation failed: {e}"
+            )
         except Exception as e:
-            return FlextResult[FlextModels[T]].fail(f"Payload creation failed: {e}")
+            return FlextResult[FlextModels.Payload[T]].fail(
+                f"Payload creation failed: {e}"
+            )
 
     @classmethod
     def create_domain_event(
@@ -1016,7 +1020,7 @@ class FlextModels:
         data: FlextTypes.Core.JsonObject,
         source_service: str,
         sequence_number: int = 1,
-    ) -> FlextResult[FlextModels]:
+    ) -> FlextResult[FlextModels.Event]:
         """Create domain event with proper structure."""
         try:
             event = cls.Event(
@@ -1027,12 +1031,12 @@ class FlextModels:
                 aggregate_type=aggregate_type,
                 sequence_number=sequence_number,
             )
-            return FlextResult[FlextModels].ok(event)
+            return FlextResult[FlextModels.Event].ok(event)
 
         except ValidationError as e:
-            return FlextResult[FlextModels].fail(f"Event validation failed: {e}")
+            return FlextResult[FlextModels.Event].fail(f"Event validation failed: {e}")
         except Exception as e:
-            return FlextResult[FlextModels].fail(f"Event creation failed: {e}")
+            return FlextResult[FlextModels.Event].fail(f"Event creation failed: {e}")
 
     @classmethod
     def validate_json_serializable(
@@ -1104,7 +1108,7 @@ class FlextModels:
                 "enable_json_schema_validation": True,
                 "max_validation_errors": 50,
             }
-            result = FlextModels(config)
+            result = FlextModels.configure_models_system(config)
             if result.success:
                 validated_config = result.unwrap()
                 print(f"Models configured for {validated_config['environment']}")
@@ -1201,7 +1205,7 @@ class FlextModels:
 
         Example:
             ```python
-            result = FlextModels()
+            result = FlextModels.get_models_system_config()
             if result.success:
                 config = result.unwrap()
                 print(f"Environment: {config['environment']}")
@@ -1307,7 +1311,7 @@ class FlextModels:
         Example:
             ```python
             # Get production configuration
-            result = FlextModels("production")
+            result = FlextModels.create_environment_models_config("production")
             if result.success:
                 prod_config = result.unwrap()
                 print(f"Validation level: {prod_config['validation_level']}")
@@ -1451,7 +1455,7 @@ class FlextModels:
                 "max_concurrent_validations": 10,
                 "validation_batch_size": 100,
             }
-            result = FlextModels(config)
+            result = FlextModels.optimize_models_performance(config)
             if result.success:
                 optimized = result.unwrap()
                 print(f"Cache size: {optimized['cache_size']}")

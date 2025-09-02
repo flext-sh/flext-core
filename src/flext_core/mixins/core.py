@@ -405,65 +405,55 @@ class FlextMixins:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "enable_caching": True,  # Enable caching in production
-                        "default_cache_size": 10000,  # Large cache for production
-                        "enable_thread_safety": True,  # Thread safety critical in production
-                        "enable_metrics": True,  # Metrics for production monitoring
-                        "enable_performance_optimization": True,  # Performance optimizations
-                        "cache_ttl_seconds": 600,  # 10 minute cache TTL
-                        "enable_lazy_initialization": True,  # Lazy init for performance
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_caching": True,  # Enable caching in production
+                    "default_cache_size": 10000,  # Large cache for production
+                    "enable_thread_safety": True,  # Thread safety critical in production
+                    "enable_metrics": True,  # Metrics for production monitoring
+                    "enable_performance_optimization": True,  # Performance optimizations
+                    "cache_ttl_seconds": 600,  # 10 minute cache TTL
+                    "enable_lazy_initialization": True,  # Lazy init for performance
+                })
             elif environment == "development":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_caching": False,  # No caching for development
-                        "default_cache_size": 100,  # Small cache for development
-                        "enable_thread_safety": False,  # Not needed in single-threaded dev
-                        "enable_metrics": True,  # Metrics for debugging
-                        "enable_debug_logging": True,  # Debug logging for development
-                        "enable_validation_verbose": True,  # Verbose validation messages
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_caching": False,  # No caching for development
+                    "default_cache_size": 100,  # Small cache for development
+                    "enable_thread_safety": False,  # Not needed in single-threaded dev
+                    "enable_metrics": True,  # Metrics for debugging
+                    "enable_debug_logging": True,  # Debug logging for development
+                    "enable_validation_verbose": True,  # Verbose validation messages
+                })
             elif environment == "test":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_caching": False,  # No caching in tests
-                        "default_cache_size": 10,  # Very small cache for tests
-                        "enable_thread_safety": False,  # Single-threaded tests
-                        "enable_metrics": False,  # No metrics in tests
-                        "enable_test_mode": True,  # Special test mode
-                        "enable_mock_behavior": True,  # Enable mock behavior
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_caching": False,  # No caching in tests
+                    "default_cache_size": 10,  # Very small cache for tests
+                    "enable_thread_safety": False,  # Single-threaded tests
+                    "enable_metrics": False,  # No metrics in tests
+                    "enable_test_mode": True,  # Special test mode
+                    "enable_mock_behavior": True,  # Enable mock behavior
+                })
             elif environment == "staging":
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_caching": True,  # Test caching in staging
-                        "default_cache_size": 5000,  # Medium cache for staging
-                        "enable_thread_safety": True,  # Test thread safety
-                        "enable_metrics": True,  # Metrics for staging validation
-                        "cache_ttl_seconds": 300,  # 5 minute cache TTL
-                        "enable_staging_validation": True,  # Staging-specific validation
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_caching": True,  # Test caching in staging
+                    "default_cache_size": 5000,  # Medium cache for staging
+                    "enable_thread_safety": True,  # Test thread safety
+                    "enable_metrics": True,  # Metrics for staging validation
+                    "cache_ttl_seconds": 300,  # 5 minute cache TTL
+                    "enable_staging_validation": True,  # Staging-specific validation
+                })
             else:  # local environment
-                config.update(
-                    {
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_caching": False,  # No caching locally
-                        "default_cache_size": 50,  # Tiny cache for local
-                        "enable_thread_safety": False,  # Single-threaded local development
-                        "enable_metrics": False,  # No metrics locally
-                        "enable_local_debugging": True,  # Local debugging features
-                    }
-                )
+                config.update({
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_caching": False,  # No caching locally
+                    "default_cache_size": 50,  # Tiny cache for local
+                    "enable_thread_safety": False,  # Single-threaded local development
+                    "enable_metrics": False,  # No metrics locally
+                    "enable_local_debugging": True,  # Local debugging features
+                })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -493,44 +483,38 @@ class FlextMixins:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        "enable_caching": True,
-                        "default_cache_size": 50000,  # Very large cache
-                        "cache_ttl_seconds": 3600,  # 1 hour cache TTL
-                        "enable_lazy_initialization": True,  # Lazy initialization
-                        "enable_object_pooling": True,  # Object pooling
-                        "pool_size": 1000,  # Large object pool
-                        "enable_batch_operations": True,  # Batch operations
-                        "batch_size": 1000,  # Large batch size
-                        "enable_async_operations": True,  # Async operations
-                        "max_concurrent_operations": 100,  # High concurrency
-                    }
-                )
+                optimized_config.update({
+                    "enable_caching": True,
+                    "default_cache_size": 50000,  # Very large cache
+                    "cache_ttl_seconds": 3600,  # 1 hour cache TTL
+                    "enable_lazy_initialization": True,  # Lazy initialization
+                    "enable_object_pooling": True,  # Object pooling
+                    "pool_size": 1000,  # Large object pool
+                    "enable_batch_operations": True,  # Batch operations
+                    "batch_size": 1000,  # Large batch size
+                    "enable_async_operations": True,  # Async operations
+                    "max_concurrent_operations": 100,  # High concurrency
+                })
             elif performance_level == "medium":
-                optimized_config.update(
-                    {
-                        "enable_caching": True,
-                        "default_cache_size": 10000,  # Medium cache
-                        "cache_ttl_seconds": 1800,  # 30 minute cache TTL
-                        "enable_lazy_initialization": True,  # Lazy initialization
-                        "enable_batch_operations": True,  # Batch operations
-                        "batch_size": 100,  # Medium batch size
-                        "max_concurrent_operations": 25,  # Medium concurrency
-                    }
-                )
+                optimized_config.update({
+                    "enable_caching": True,
+                    "default_cache_size": 10000,  # Medium cache
+                    "cache_ttl_seconds": 1800,  # 30 minute cache TTL
+                    "enable_lazy_initialization": True,  # Lazy initialization
+                    "enable_batch_operations": True,  # Batch operations
+                    "batch_size": 100,  # Medium batch size
+                    "max_concurrent_operations": 25,  # Medium concurrency
+                })
             else:  # low performance level
-                optimized_config.update(
-                    {
-                        "enable_caching": False,  # No caching
-                        "default_cache_size": 100,  # Small cache if needed
-                        "enable_lazy_initialization": False,  # No lazy initialization
-                        "enable_batch_operations": False,  # No batch operations
-                        "batch_size": 1,  # Single operations
-                        "max_concurrent_operations": 1,  # Single-threaded
-                        "enable_detailed_monitoring": True,  # More detailed monitoring
-                    }
-                )
+                optimized_config.update({
+                    "enable_caching": False,  # No caching
+                    "default_cache_size": 100,  # Small cache if needed
+                    "enable_lazy_initialization": False,  # No lazy initialization
+                    "enable_batch_operations": False,  # No batch operations
+                    "batch_size": 1,  # Single operations
+                    "max_concurrent_operations": 1,  # Single-threaded
+                    "enable_detailed_monitoring": True,  # More detailed monitoring
+                })
 
             # Memory optimization settings - define constants for thresholds
             low_memory_threshold = 256
@@ -569,15 +553,13 @@ class FlextMixins:
             optimized_config["thread_pool_size"] = cpu_cores * 2
 
             # Add performance metrics
-            optimized_config.update(
-                {
-                    "performance_level": performance_level,
-                    "memory_limit_mb": memory_limit_mb,
-                    "cpu_cores": cpu_cores,
-                    "optimization_applied": True,
-                    "optimization_timestamp": "runtime",
-                }
-            )
+            optimized_config.update({
+                "performance_level": performance_level,
+                "memory_limit_mb": memory_limit_mb,
+                "cpu_cores": cpu_cores,
+                "optimization_applied": True,
+                "optimization_timestamp": "runtime",
+            })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

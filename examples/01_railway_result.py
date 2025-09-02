@@ -61,7 +61,7 @@ class User(FlextModels.Entity):
 
 
 # =============================================================================
-# STRUCTURED DATA MODELS - Using FlextModels + FlextConfig.BaseModel base
+# STRUCTURED DATA MODELS - Using FlextModels + FlextModels.BaseConfig base
 # =============================================================================
 
 
@@ -90,7 +90,7 @@ class UserRegistrationRequest(FlextModels.Value):
 
 
 class RegistrationResult(FlextModels.BaseConfig):
-    """Registration result using FlextConfig.BaseModel for enterprise features.
+    """Registration result using FlextModels.BaseConfig for enterprise features.
 
     Follows SOLID principles with proper typing using FlextTypes.
     """

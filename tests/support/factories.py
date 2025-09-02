@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import cast
+from typing import ClassVar, cast
 
 import factory
 from factory import (
@@ -73,7 +73,7 @@ class BaseTestEntity(FlextModels.BaseConfig):
     created_at: datetime
     updated_at: datetime
     version: int = 1
-    metadata: dict[str, object] = {}
+    metadata: ClassVar[dict[str, object]] = {}
 
 
 class BaseTestValueObject(FlextModels.BaseConfig):
@@ -82,7 +82,7 @@ class BaseTestValueObject(FlextModels.BaseConfig):
     value: str
     description: str
     category: str
-    tags: list[str] = []
+    tags: ClassVar[list[str]] = []
 
 
 # Factory Boy Factories

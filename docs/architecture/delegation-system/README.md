@@ -165,11 +165,11 @@ if validation.success:
 #### 5. **Enterprise Configuration Management**
 ```python
 # Environment-specific delegation configuration
-config = FlextDelegationSystemConfig.create_environment_delegation_config("production")
-configured_system = FlextDelegationSystemConfig.configure_delegation_system(config)
+config = FlextDelegationSystem.create_environment_delegation_config("production")
+configured_system = FlextDelegationSystem.configure_delegation_system(config)
 
 # Performance optimization
-perf_config = FlextDelegationSystemConfig.optimize_delegation_performance("high")
+perf_config = FlextDelegationSystem.optimize_delegation_performance("high")
 ```
 
 ---

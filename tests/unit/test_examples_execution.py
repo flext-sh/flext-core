@@ -40,11 +40,11 @@ class TestExamplesExecution:
         # Check for key examples
         example_names = [f.name for f in example_files]
         key_examples = [
-            "flext_result_railway_pattern.py",
-            "flext_container_dependency_injection.py",
-            "flext_validation_advanced_system.py",
-            "flext_exceptions_enterprise_handling.py",
-            "flext_working_examples.py",
+            "01_railway_result.py",
+            "02_dependency_injection.py",
+            "05_validation_advanced.py",
+            "14_exceptions_handling.py",
+            "17_end_to_end.py",
         ]
 
         for key_example in key_examples:
@@ -53,26 +53,26 @@ class TestExamplesExecution:
     @pytest.mark.parametrize(
         "example_file",
         [
-            "flext_result_railway_pattern.py",
-            "flext_container_dependency_injection.py",
-            "flext_commands_cqrs_pattern.py",
-            "flext_validation_advanced_system.py",
-            "flext_exceptions_enterprise_handling.py",
-            "flext_working_examples.py",
-            "flext_config_enterprise_configuration.py",
-            "flext_decorators_enterprise_patterns.py",
-            "flext_entity_valueobject_ddd_patterns.py",
-            "flext_handlers_enterprise_patterns.py",
-            "flext_integration_example.py",
-            "flext_interfaces_architecture_patterns.py",
-            "flext_logging_structured_system.py",
-            "flext_mixins_multiple_inheritance.py",
-            "flext_payload_messaging_events.py",
-            "flext_unified_semantic_patterns_example.py",
-            "flext_advanced_examples.py",
-            "modern_patterns_showcase.py",
-            "modern_validation_patterns.py",
-            "boilerplate_reduction_example.py",
+            "01_railway_result.py",
+            "02_dependency_injection.py",
+            "03_cqrs_commands.py",
+            "04_validation_modern.py",
+            "05_validation_advanced.py",
+            "06_ddd_entities_value_objects.py",
+            "07_mixins_multiple_inheritance.py",
+            "08_configuration.py",
+            "09_decorators_cross_cutting.py",
+            "10_events_messaging.py",
+            "11_handlers_pipeline.py",
+            "12_logging_structured.py",
+            "13_architecture_interfaces.py",
+            "14_exceptions_handling.py",
+            "15_advanced_patterns.py",
+            "16_integration.py",
+            "17_end_to_end.py",
+            "18_semantic_modeling.py",
+            "19_modern_showcase.py",
+            "20_boilerplate_reduction.py",
         ],
     )
     def test_example_execution(self, example_file: str, examples_dir: Path) -> None:

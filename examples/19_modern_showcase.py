@@ -15,8 +15,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Self
 
-from pydantic import Field
-from pydantic_settings import SettingsConfigDict
+from pydantic import ConfigDict, Field
 
 from flext_core import FlextConfig, FlextResult
 from flext_core.models import FlextModels
@@ -29,6 +28,7 @@ MIN_AGE = 18
 MAX_AGE = 120
 MIN_PRICE = Decimal("0.01")
 MAX_PRICE = Decimal("100000.00")
+CURRENCY_CODE_LENGTH = 3
 
 
 # =============================================================================
@@ -91,7 +91,7 @@ class Money(FlextModels.Value):
             return FlextResult[None].fail(f"Amount must be at least {MIN_PRICE}")
         if self.amount > MAX_PRICE:
             return FlextResult[None].fail(f"Amount cannot exceed {MAX_PRICE}")
-        if len(self.currency) != 3:
+        if len(self.currency) != CURRENCY_CODE_LENGTH:
             return FlextResult[None].fail("Currency must be 3 characters")
         return FlextResult[None].ok(None)
 
@@ -171,10 +171,11 @@ class ECommerceConfig(FlextConfig):
     enable_email_notifications: bool = True
     enable_sms_notifications: bool = False
 
-    model_config = SettingsConfigDict(
-        env_prefix="ECOMMERCE_",
-        case_sensitive=False,
+    model_config = ConfigDict(
         extra="forbid",
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        use_enum_values=True,
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -574,7 +575,7 @@ class PaymentService:
                 return FlextResult[str].fail("Payment already processed")
 
             # Simulate payment processing
-            payment_id = f"PAY-{order.order_id}-{hash(payment_method) % 10000:04d}"
+            payment_id = f"PAY-{order.id}-{hash(payment_method) % 10000:04d}"
 
             # In real implementation, this would call external payment gateway
             print(f"Processing payment: {payment_id} for ${order.total_amount.amount}")
@@ -712,7 +713,7 @@ def demonstrate_order_processing(
 
     if order_result.success:
         order = order_result.value
-        print(f"✅ Order processed: {order.order_id} - ${order.total_amount.amount}")
+        print(f"✅ Order processed: {order.id} - ${order.total_amount.amount}")
         print(f"   Status: {order.status}")
         print(f"   Payment: {order.payment_status}")
     else:
