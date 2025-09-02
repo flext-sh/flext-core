@@ -315,7 +315,7 @@ class TestFlextConfigComprehensive:
             def validator(value: str) -> FlextResult[str]:
                 return FlextResult[str].ok(value.upper())
 
-            result = FlextConfig.get_env_with_validation("TEST_CONFIG_VAR", validator)
+            result = FlextConfig.get_env_with_validation("TEST_CONFIG_VAR")
             assert result.success
             assert result.unwrap() == "TEST_VALUE"
         finally:
