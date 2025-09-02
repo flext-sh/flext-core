@@ -245,7 +245,7 @@ class FlextOracleExceptions(FlextExceptions):
 **Integration Pattern**:
 ```python
 # flext-ldap/src/flext_ldap/exceptions.py
-class FlextLdapExceptions(FlextExceptions):
+class FlextLDAPExceptions(FlextExceptions):
     """LDAP directory service exceptions with DN context."""
     
     class LdapConnectionError(FlextExceptions.ConnectionError):

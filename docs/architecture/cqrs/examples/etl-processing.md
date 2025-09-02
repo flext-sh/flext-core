@@ -24,7 +24,7 @@ This document provides practical examples of implementing FlextCommands CQRS pat
 ### Extract from Database Source
 
 ```python
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, object, Optional
 from datetime import datetime, timedelta
 from flext_core import FlextCommands, FlextResult
 from enum import Enum
@@ -105,7 +105,7 @@ class ExtractDataCommand(FlextCommands.Models.Command):
         
         return FlextResult[None].ok(None)
 
-class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataCommand, Dict[str, Any]]):
+class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataCommand, Dict[str, object]]):
     """Handler for data extraction operations."""
     
     def __init__(self, 
@@ -119,7 +119,7 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
         self.storage_service = storage_service
         self.quality_service = quality_service
     
-    def handle(self, command: ExtractDataCommand) -> FlextResult[Dict[str, Any]]:
+    def handle(self, command: ExtractDataCommand) -> FlextResult[Dict[str, object]]:
         """Execute data extraction with comprehensive error handling."""
         
         extraction_start = datetime.utcnow()
@@ -135,14 +135,14 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
             # Get source connection
             source_connection = self.source_service.get_connection(command.source_name)
             if not source_connection:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Source connection '{command.source_name}' not found",
                     error_code="SOURCE_NOT_FOUND"
                 )
             
             # Validate source table exists
             if not source_connection.table_exists(command.table_name):
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Table '{command.table_name}' not found in source '{command.source_name}'",
                     error_code="TABLE_NOT_FOUND"
                 )
@@ -153,7 +153,7 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
                 stored_schema = self.metadata_service.get_schema(command.source_name, command.table_name)
                 
                 if stored_schema and not self._schemas_compatible(source_schema, stored_schema):
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Schema mismatch detected for table '{command.table_name}'",
                         error_code="SCHEMA_MISMATCH"
                     )
@@ -161,7 +161,7 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
             # Build extraction query
             query_result = self._build_extraction_query(command, source_connection)
             if query_result.is_failure:
-                return FlextResult[Dict[str, Any]].fail(f"Query building failed: {query_result.error}")
+                return FlextResult[Dict[str, object]].fail(f"Query building failed: {query_result.error}")
             
             extraction_query = query_result.value
             
@@ -195,7 +195,7 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
                 )
                 
                 if quality_result.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Data quality validation failed: {quality_result.error}",
                         error_code="QUALITY_CHECK_FAILED"
                     )
@@ -210,7 +210,7 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
                 )
                 
                 if storage_result.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Data storage failed: {storage_result.error}",
                         error_code="STORAGE_FAILED"
                     )
@@ -264,13 +264,13 @@ class ExtractDataHandler(FlextCommands.Handlers.CommandHandler[ExtractDataComman
                          duration_seconds=duration,
                          throughput_records_per_sec=total_records / duration if duration > 0 else 0)
             
-            return FlextResult[Dict[str, Any]].ok(extraction_metadata)
+            return FlextResult[Dict[str, object]].ok(extraction_metadata)
             
         except Exception as e:
             self.log_error("Data extraction failed",
                           extraction_id=extraction_id,
                           error=str(e))
-            return FlextResult[Dict[str, Any]].fail(f"Extraction failed: {e}")
+            return FlextResult[Dict[str, object]].fail(f"Extraction failed: {e}")
     
     def _build_extraction_query(self, command: ExtractDataCommand, connection) -> FlextResult[str]:
         """Build SQL query based on extraction parameters."""
@@ -353,7 +353,7 @@ class TransformationRule(BaseModel):
     rule_type: str  # "column_rename", "data_type", "calculation", "filter", "aggregation"
     source_columns: List[str]
     target_column: str
-    parameters: Dict[str, Any] = Field(default_factory=dict)
+    parameters: Dict[str, object] = Field(default_factory=dict)
     condition: Optional[str] = None  # SQL-like condition
 
 class TransformDataCommand(FlextCommands.Models.Command):
@@ -425,7 +425,7 @@ class TransformDataCommand(FlextCommands.Models.Command):
         
         return FlextResult[None].ok(None)
 
-class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCommand, Dict[str, Any]]):
+class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCommand, Dict[str, object]]):
     """Handler for data transformation operations."""
     
     def __init__(self, 
@@ -439,7 +439,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
         self.quality_service = quality_service
         self.metadata_service = metadata_service
     
-    def handle(self, command: TransformDataCommand) -> FlextResult[Dict[str, Any]]:
+    def handle(self, command: TransformDataCommand) -> FlextResult[Dict[str, object]]:
         """Execute data transformation with error handling."""
         
         transformation_start = datetime.utcnow()
@@ -454,7 +454,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
             # Load input data
             input_data_result = self.storage_service.load_data(command.input_source)
             if input_data_result.is_failure:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Failed to load input data: {input_data_result.error}",
                     error_code="INPUT_LOAD_FAILED"
                 )
@@ -488,12 +488,12 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                     error_percentage = (error_count / total_input_records) * 100
                     
                     if command.error_handling == "fail":
-                        return FlextResult[Dict[str, Any]].fail(
+                        return FlextResult[Dict[str, object]].fail(
                             f"Transformation failed: {chunk_result.error}",
                             error_code="TRANSFORMATION_FAILED"
                         )
                     elif error_percentage > command.max_error_percentage:
-                        return FlextResult[Dict[str, Any]].fail(
+                        return FlextResult[Dict[str, object]].fail(
                             f"Error rate {error_percentage:.2f}% exceeds maximum {command.max_error_percentage}%",
                             error_code="ERROR_RATE_EXCEEDED"
                         )
@@ -515,7 +515,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
             
             # Combine transformed chunks
             if not transformed_chunks:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     "No data successfully transformed",
                     error_code="NO_DATA_TRANSFORMED"
                 )
@@ -529,7 +529,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                     command.expected_output_schema
                 )
                 if schema_validation.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Output schema validation failed: {schema_validation.error}",
                         error_code="SCHEMA_VALIDATION_FAILED"
                     )
@@ -541,7 +541,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                     rules=command.data_quality_rules
                 )
                 if quality_result.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Data quality validation failed: {quality_result.error}",
                         error_code="QUALITY_VALIDATION_FAILED"
                     )
@@ -553,7 +553,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
             )
             
             if output_result.is_failure:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Failed to save transformed data: {output_result.error}",
                     error_code="OUTPUT_SAVE_FAILED"
                 )
@@ -584,13 +584,13 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                          output_records=len(transformed_data),
                          duration_seconds=duration)
             
-            return FlextResult[Dict[str, Any]].ok(transformation_metadata)
+            return FlextResult[Dict[str, object]].ok(transformation_metadata)
             
         except Exception as e:
             self.log_error("Data transformation failed",
                           transformation_id=transformation_id,
                           error=str(e))
-            return FlextResult[Dict[str, Any]].fail(f"Transformation failed: {e}")
+            return FlextResult[Dict[str, object]].fail(f"Transformation failed: {e}")
     
     def _transform_chunk(self, 
                         chunk_data: pd.DataFrame, 
@@ -759,7 +759,7 @@ class LoadDataCommand(FlextCommands.Models.Command):
         
         return FlextResult[None].ok(None)
 
-class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dict[str, Any]]):
+class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dict[str, object]]):
     """Handler for data loading operations."""
     
     def __init__(self,
@@ -773,7 +773,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
         self.quality_service = quality_service
         self.metadata_service = metadata_service
     
-    def handle(self, command: LoadDataCommand) -> FlextResult[Dict[str, Any]]:
+    def handle(self, command: LoadDataCommand) -> FlextResult[Dict[str, object]]:
         """Execute data loading with comprehensive validation."""
         
         load_start = datetime.utcnow()
@@ -789,7 +789,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             # Load source data
             source_data_result = self.storage_service.load_data(command.source_data)
             if source_data_result.is_failure:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Failed to load source data: {source_data_result.error}",
                     error_code="SOURCE_LOAD_FAILED"
                 )
@@ -799,7 +799,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             
             # Validate expected record count
             if command.expected_record_count and total_records != command.expected_record_count:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Record count mismatch. Expected: {command.expected_record_count}, Got: {total_records}",
                     error_code="RECORD_COUNT_MISMATCH"
                 )
@@ -812,7 +812,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
                     target_table=command.target_table
                 )
                 if validation_result.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Pre-load validation failed: {validation_result.error}",
                         error_code="PRE_LOAD_VALIDATION_FAILED"
                     )
@@ -820,7 +820,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             # Get target connection
             target_connection = self.target_service.get_connection(command.target_connection)
             if not target_connection:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Target connection '{command.target_connection}' not found",
                     error_code="TARGET_CONNECTION_NOT_FOUND"
                 )
@@ -840,7 +840,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             if command.create_table_if_not_exists and not target_connection.table_exists(command.target_table):
                 create_result = target_connection.create_table_from_data(command.target_table, source_data)
                 if not create_result:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Failed to create target table '{command.target_table}'",
                         error_code="TABLE_CREATION_FAILED"
                     )
@@ -860,7 +860,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             )
             
             if load_result.is_failure:
-                return FlextResult[Dict[str, Any]].fail(
+                return FlextResult[Dict[str, object]].fail(
                     f"Data load failed: {load_result.error}",
                     error_code="LOAD_EXECUTION_FAILED"
                 )
@@ -876,7 +876,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
                     command.load_mode
                 )
                 if post_validation.is_failure:
-                    return FlextResult[Dict[str, Any]].fail(
+                    return FlextResult[Dict[str, object]].fail(
                         f"Post-load validation failed: {post_validation.error}",
                         error_code="POST_LOAD_VALIDATION_FAILED"
                     )
@@ -908,17 +908,17 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
                          loaded_records=load_stats.get("loaded_records", total_records),
                          duration_seconds=duration)
             
-            return FlextResult[Dict[str, Any]].ok(load_metadata)
+            return FlextResult[Dict[str, object]].ok(load_metadata)
             
         except Exception as e:
             self.log_error("Data load failed", load_id=load_id, error=str(e))
-            return FlextResult[Dict[str, Any]].fail(f"Load failed: {e}")
+            return FlextResult[Dict[str, object]].fail(f"Load failed: {e}")
     
     def _execute_load_by_mode(self, 
                              connection, 
                              data: pd.DataFrame, 
                              command: LoadDataCommand,
-                             load_id: str) -> FlextResult[Dict[str, Any]]:
+                             load_id: str) -> FlextResult[Dict[str, object]]:
         """Execute loading based on the specified load mode."""
         try:
             if command.load_mode == "append":
@@ -930,12 +930,12 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
             elif command.load_mode == "merge":
                 return self._merge_load(connection, data, command, load_id)
             else:
-                return FlextResult[Dict[str, Any]].fail(f"Unsupported load mode: {command.load_mode}")
+                return FlextResult[Dict[str, object]].fail(f"Unsupported load mode: {command.load_mode}")
                 
         except Exception as e:
-            return FlextResult[Dict[str, Any]].fail(f"Load execution failed: {e}")
+            return FlextResult[Dict[str, object]].fail(f"Load execution failed: {e}")
     
-    def _append_load(self, connection, data: pd.DataFrame, command: LoadDataCommand, load_id: str) -> FlextResult[Dict[str, Any]]:
+    def _append_load(self, connection, data: pd.DataFrame, command: LoadDataCommand, load_id: str) -> FlextResult[Dict[str, object]]:
         """Execute append load."""
         try:
             loaded_records = 0
@@ -947,7 +947,7 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
                 
                 result = connection.insert_batch(command.target_table, batch_data)
                 if not result:
-                    return FlextResult[Dict[str, Any]].fail(f"Batch insert failed at index {start_idx}")
+                    return FlextResult[Dict[str, object]].fail(f"Batch insert failed at index {start_idx}")
                 
                 batch_count += 1
                 loaded_records += len(batch_data)
@@ -958,14 +958,14 @@ class LoadDataHandler(FlextCommands.Handlers.CommandHandler[LoadDataCommand, Dic
                              records=len(batch_data),
                              total_loaded=loaded_records)
             
-            return FlextResult[Dict[str, Any]].ok({
+            return FlextResult[Dict[str, object]].ok({
                 "loaded_records": loaded_records,
                 "batch_count": batch_count,
                 "load_mode": "append"
             })
             
         except Exception as e:
-            return FlextResult[Dict[str, Any]].fail(f"Append load failed: {e}")
+            return FlextResult[Dict[str, object]].fail(f"Append load failed: {e}")
     
     def _validate_post_load(self, connection, table: str, expected_count: int, load_mode: str) -> FlextResult[None]:
         """Validate data after loading."""

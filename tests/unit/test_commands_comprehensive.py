@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from datetime import UTC, datetime
 
 import pytest
@@ -58,18 +59,20 @@ class TestCommandsAdvancedFeatures:
         assert command.value == 42
 
         # Test creating metadata with proper types
-        # FlextModels.Metadata has a root field that expects dict[str, str]
+        # FlextModels has a root field that expects dict[str, str]
         import json
+
         metadata_dict = {
             "created_at": datetime.now(UTC).isoformat(),
-            "tags": json.dumps({"test": "value"})  # Must be string
+            "tags": json.dumps({"test": "value"}),  # Must be string
         }
-        metadata = FlextModels.Metadata(root=metadata_dict)
+        metadata = FlextModels(root=metadata_dict)
         assert json.loads(metadata.root["tags"]) == {"test": "value"}
         assert "created_at" in metadata.root
 
     def test_command_validation_helpers(self) -> None:
         """Test command validation helper methods."""
+
         # Test custom validation helpers
         def require_field(field_name: str, value: str) -> FlextResult[None]:
             if not value:
@@ -98,9 +101,13 @@ class TestCommandsAdvancedFeatures:
         assert result.success
 
         # Test min length validation
-        def require_min_length(value: str, min_len: int, field: str) -> FlextResult[None]:
+        def require_min_length(
+            value: str, min_len: int, field: str
+        ) -> FlextResult[None]:
             if len(value) < min_len:
-                return FlextResult[None].fail(f"{field} must be at least {min_len} characters")
+                return FlextResult[None].fail(
+                    f"{field} must be at least {min_len} characters"
+                )
             return FlextResult[None].ok(None)
 
         result = require_min_length("ab", 3, "field")
@@ -177,12 +184,11 @@ class TestCommandHandlers:
     def test_command_handler_base(self) -> None:
         """Test CommandHandler base functionality."""
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]):
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]
+        ):
             def handle(self, command: TestCommandCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Handled: {command.name}")
-
-            def can_handle(self, command: object) -> bool:
-                return isinstance(command, TestCommandCommand)
 
             def can_handle(self, command: object) -> bool:
                 return isinstance(command, TestCommandCommand)
@@ -205,7 +211,9 @@ class TestCommandHandlers:
     def test_query_handler_base(self) -> None:
         """Test QueryHandler base functionality."""
 
-        class TestQueryHandler(FlextCommands.Handlers.QueryHandler[TestQueryModel, list[str]]):
+        class TestQueryHandler(
+            FlextCommands.Handlers.QueryHandler[TestQueryModel, list[str]]
+        ):
             def handle(self, query: TestQueryModel) -> FlextResult[list[str]]:
                 results = [f"Result {i}" for i in range(query.limit)]
                 return FlextResult[list[str]].ok(results)
@@ -237,7 +245,9 @@ class TestCommandBus:
         """Test handler registration in command bus."""
         bus = FlextCommands.Bus()
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]):
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]
+        ):
             def handle(self, command: TestCommandCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Handled: {command.name}")
 
@@ -259,7 +269,7 @@ class TestCommandBus:
         bus = FlextCommands.Bus()
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 # Simple middleware that logs
                 return FlextResult[None].ok(None)
 
@@ -273,7 +283,9 @@ class TestCommandBus:
         """Test command execution through bus."""
         bus = FlextCommands.Bus()
 
-        class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]):
+        class TestHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]
+        ):
             def handle(self, command: TestCommandCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Executed: {command.name}")
 
@@ -297,19 +309,23 @@ class TestCommandTypes:
     def test_type_aliases(self) -> None:
         """Test FlextCommands.Types aliases."""
         # Test CommandId type
-        cmd_id: FlextCommands.Types.CommandId = "cmd_123"
+        cmd_id = "cmd_123"
         assert isinstance(cmd_id, str)
+        # Verify type alias exists
+        assert hasattr(FlextCommands.Types, "CommandId")
 
         # Test CommandType type
-        cmd_type: FlextCommands.Types.CommandType = "create_user"
+        cmd_type = "create_user"
         assert isinstance(cmd_type, str)
+        # Verify type alias exists
+        assert hasattr(FlextCommands.Types, "CommandType")
 
         # Test CommandMetadata type
-        metadata: FlextCommands.Types.CommandMetadata = {"key": "value"}
+        metadata = {"key": "value"}
         assert isinstance(metadata, dict)
 
         # Test CommandParameters type
-        params: FlextCommands.Types.CommandParameters = {"param1": "value1"}
+        params = {"param1": "value1"}
         assert isinstance(params, dict)
 
 
@@ -319,21 +335,16 @@ class TestCommandConfiguration:
     def test_command_config_pattern(self) -> None:
         """Test command configuration patterns."""
         # Test configuration dictionary pattern
-        config = {
-            "retry_config": {
-                "max_retries": 3,
-                "backoff_factor": 2.0
-            },
-            "timeout_config": {
-                "default_timeout": 30,
-                "max_timeout": 300
-            }
+        config: dict[str, dict[str, int | float]] = {
+            "retry_config": {"max_retries": 3, "backoff_factor": 2.0},
+            "timeout_config": {"default_timeout": 30, "max_timeout": 300},
         }
 
         assert isinstance(config, dict)
         assert "retry_config" in config
         assert "timeout_config" in config
-        assert config["retry_config"]["max_retries"] == 3
+        retry_config = config["retry_config"]
+        assert retry_config["max_retries"] == 3
 
     def test_environment_specific_config(self) -> None:
         """Test environment-specific configuration patterns."""
@@ -346,7 +357,7 @@ class TestCommandConfiguration:
                 "environment": env,
                 "debug": env == "development",
                 "max_retries": 1 if env == "development" else 3,
-                "timeout": 10 if env == "test" else 30
+                "timeout": 10 if env == "test" else 30,
             }
 
             assert config["environment"] == env
@@ -360,19 +371,25 @@ class TestCommandDecorators:
 
     def test_command_handler_decorator(self) -> None:
         """Test command_handler decorator pattern."""
+
         # Test custom command handler decorator pattern
-        def command_handler(command_type):
-            def decorator(func):
+        def command_handler(
+            command_type: type[TestCommandCommand],
+        ) -> Callable[
+            [Callable[[TestCommandCommand], str]], Callable[[TestCommandCommand], str]
+        ]:
+            def decorator(
+                func: Callable[[TestCommandCommand], str],
+            ) -> Callable[[TestCommandCommand], str]:
                 func.__dict__ = getattr(func, "__dict__", {})
                 func.__dict__["command_type"] = command_type
                 return func
+
             return decorator
 
         @command_handler(TestCommandCommand)
-        def my_handler(command: object) -> object:
-            if isinstance(command, TestCommandCommand):
-                return f"Decorated: {command.name}"
-            return "Unknown command"
+        def my_handler(command: TestCommandCommand) -> str:
+            return f"Decorated: {command.name}"
 
         # Test decorator sets attributes
         assert hasattr(my_handler, "__dict__")
@@ -385,14 +402,18 @@ class TestCommandDecorators:
 
     def test_validate_command_decorator(self) -> None:
         """Test validate_command decorator pattern."""
+
         # Test custom validation decorator pattern
-        def validate_command(func):
+        def validate_command(
+            func: Callable[[TestCommandCommand], str],
+        ) -> Callable[[TestCommandCommand], str]:
             def wrapper(command: TestCommandCommand) -> str:
                 # Validate command before processing
                 validation = command.validate_command()
                 if validation.is_failure:
                     raise ValueError(validation.error)
                 return func(command)
+
             return wrapper
 
         @validate_command
@@ -417,8 +438,12 @@ class TestAsyncCommandFeatures:
     async def test_async_command_handler(self) -> None:
         """Test async command handler pattern."""
 
-        class AsyncTestHandler(FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]):
-            async def handle_async(self, command: TestCommandCommand) -> FlextResult[str]:
+        class AsyncTestHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]
+        ):
+            async def handle_async(
+                self, command: TestCommandCommand
+            ) -> FlextResult[str]:
                 await asyncio.sleep(0.01)  # Simulate async work
                 return FlextResult[str].ok(f"Async handled: {command.name}")
 
@@ -441,19 +466,22 @@ class TestCommandFactories:
 
     def test_create_simple_handler(self) -> None:
         """Test creating simple handler from function."""
+
         # Test factory pattern for simple handler creation
-        class SimpleHandler(FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]):
-            def __init__(self, handler_func):
+        class SimpleHandler(
+            FlextCommands.Handlers.CommandHandler[TestCommandCommand, str]
+        ):
+            def __init__(
+                self, handler_func: Callable[[TestCommandCommand], str]
+            ) -> None:
                 self.handler_func = handler_func
 
             def handle(self, command: TestCommandCommand) -> FlextResult[str]:
                 result = self.handler_func(command)
                 return FlextResult[str].ok(result)
 
-        def my_handler_func(command: object) -> object:
-            if isinstance(command, TestCommandCommand):
-                return f"Simple: {command.name}"
-            return "Unknown"
+        def my_handler_func(command: TestCommandCommand) -> str:
+            return f"Simple: {command.name}"
 
         # Create handler using factory pattern
         handler = SimpleHandler(my_handler_func)
@@ -467,19 +495,22 @@ class TestCommandFactories:
 
     def test_create_query_handler(self) -> None:
         """Test creating query handler from function."""
+
         # Test factory pattern for query handler creation
-        class SimpleQueryHandler(FlextCommands.Handlers.QueryHandler[TestQueryModel, list[str]]):
-            def __init__(self, handler_func):
+        class SimpleQueryHandler(
+            FlextCommands.Handlers.QueryHandler[TestQueryModel, list[str]]
+        ):
+            def __init__(
+                self, handler_func: Callable[[TestQueryModel], list[str]]
+            ) -> None:
                 self.handler_func = handler_func
 
             def handle(self, query: TestQueryModel) -> FlextResult[list[str]]:
                 result = self.handler_func(query)
                 return FlextResult[list[str]].ok(result)
 
-        def my_query_func(query: object) -> object:
-            if isinstance(query, TestQueryModel):
-                return [f"Result for: {query.search_term}"]
-            return []
+        def my_query_func(query: TestQueryModel) -> list[str]:
+            return [f"Result for: {query.search_term}"]
 
         # Create handler using factory pattern
         handler = SimpleQueryHandler(my_query_func)
@@ -515,7 +546,7 @@ class TestCommandResults:
         assert result.error_code == "CMD_ERROR"
 
         # Test failure attributes
-        result_with_data = FlextResult.fail("error message")
+        result_with_data: FlextResult[None] = FlextResult.fail("error message")
         assert result_with_data.is_failure
         assert result_with_data.error == "error message"
 

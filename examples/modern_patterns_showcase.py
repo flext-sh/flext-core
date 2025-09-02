@@ -13,12 +13,13 @@ from __future__ import annotations
 import sys
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self, override
+from typing import Self
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextConfig, FlextResult
+from flext_core.models import FlextModels
 
 # =============================================================================
 # TYPE ALIASES AND CONSTANTS
@@ -55,10 +56,18 @@ class PaymentStatus(StrEnum):
     REFUNDED = "refunded"
 
 
-class Age(BaseModel):
+class Age(FlextModels.Value):
     """Age value object with validation."""
 
     value: int = Field(..., ge=MIN_AGE, le=MAX_AGE)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate age business rules."""
+        if self.value < MIN_AGE:
+            return FlextResult[None].fail(f"Age must be at least {MIN_AGE}")
+        if self.value > MAX_AGE:
+            return FlextResult[None].fail(f"Age cannot exceed {MAX_AGE}")
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, age: int) -> FlextResult[Self]:
@@ -70,11 +79,21 @@ class Age(BaseModel):
             return FlextResult[Self].fail(f"Invalid age: {e}")
 
 
-class Money(BaseModel):
+class Money(FlextModels.Value):
     """Money value object with currency support."""
 
     amount: Decimal = Field(..., ge=MIN_PRICE, le=MAX_PRICE)
     currency: str = Field(default="USD", min_length=3, max_length=3)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate money business rules."""
+        if self.amount < MIN_PRICE:
+            return FlextResult[None].fail(f"Amount must be at least {MIN_PRICE}")
+        if self.amount > MAX_PRICE:
+            return FlextResult[None].fail(f"Amount cannot exceed {MAX_PRICE}")
+        if len(self.currency) != 3:
+            return FlextResult[None].fail("Currency must be 3 characters")
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(
@@ -101,10 +120,18 @@ class Money(BaseModel):
         return Money.create(self.amount * Decimal(str(factor)), self.currency)
 
 
-class EmailAddress(BaseModel):
+class EmailAddress(FlextModels.Value):
     """Email address value object with validation."""
 
     address: str = Field(..., min_length=5, max_length=254)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate email business rules."""
+        if "@" not in self.address:
+            return FlextResult[None].fail("Email must contain @")
+        if "." not in self.address.split("@")[1]:
+            return FlextResult[None].fail("Email domain must contain .")
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, email: str) -> FlextResult[Self]:
@@ -150,7 +177,6 @@ class ECommerceConfig(FlextConfig):
         extra="forbid",
     )
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate configuration business rules."""
         if self.min_order_value >= self.max_order_value:
@@ -167,14 +193,25 @@ class ECommerceConfig(FlextConfig):
 # =============================================================================
 
 
-class User(BaseModel):
+class User(FlextModels.Entity):
     """User entity with comprehensive validation."""
 
-    user_id: str = Field(..., alias="id")
     email: EmailAddress
     name: str = Field(..., min_length=1, max_length=100)
     age: Age
     is_active: bool = True
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate user business rules."""
+        email_result = self.email.validate_business_rules()
+        if email_result.failure:
+            return email_result
+
+        age_result = self.age.validate_business_rules()
+        if age_result.failure:
+            return age_result
+
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(
@@ -213,14 +250,24 @@ class User(BaseModel):
             return FlextResult[User].fail(f"Failed to create user: {e}")
 
 
-class Product(BaseModel):
+class Product(FlextModels.Entity):
     """Product entity with pricing and inventory."""
 
-    product_id: str = Field(..., alias="id")
     name: str = Field(..., min_length=1, max_length=200)
     price: Money
     stock_quantity: int = Field(default=0, ge=0)
     is_available: bool = True
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate product business rules."""
+        price_result = self.price.validate_business_rules()
+        if price_result.failure:
+            return price_result
+
+        if self.stock_quantity < 0:
+            return FlextResult[None].fail("Stock quantity cannot be negative")
+
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(
@@ -264,12 +311,24 @@ class Product(BaseModel):
         return FlextResult[None].ok(None)
 
 
-class OrderItem(BaseModel):
+class OrderItem(FlextModels.Value):
     """Order item with product and quantity."""
 
     product: Product
     quantity: int = Field(..., ge=1)
     total_price: Money
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate order item business rules."""
+        if self.quantity <= 0:
+            return FlextResult[None].fail("Quantity must be positive")
+        product_result = self.product.validate_business_rules()
+        if product_result.failure:
+            return product_result
+        total_result = self.total_price.validate_business_rules()
+        if total_result.failure:
+            return total_result
+        return FlextResult[None].ok(None)
 
     @classmethod
     def create(cls, product: Product, quantity: int) -> FlextResult[OrderItem]:
@@ -294,15 +353,34 @@ class OrderItem(BaseModel):
         return FlextResult[OrderItem].ok(item)
 
 
-class Order(BaseModel):
+class Order(FlextModels.AggregateRoot):
     """Order aggregate with comprehensive business logic."""
 
-    order_id: str = Field(..., alias="id")
     user: User
     items: list[OrderItem]
     status: OrderStatus = OrderStatus.PENDING
     payment_status: PaymentStatus = PaymentStatus.PENDING
     total_amount: Money
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate order business rules."""
+        if not self.items:
+            return FlextResult[None].fail("Order must have at least one item")
+
+        user_result = self.user.validate_business_rules()
+        if user_result.failure:
+            return user_result
+
+        for item in self.items:
+            item_result = item.validate_business_rules()
+            if item_result.failure:
+                return item_result
+
+        total_result = self.total_amount.validate_business_rules()
+        if total_result.failure:
+            return total_result
+
+        return FlextResult[None].ok(None)
 
     def model_post_init(self, __context: dict[str, object] | None = None, /) -> None:
         """Calculate total after initialization."""
@@ -407,7 +485,7 @@ class Order(BaseModel):
         """Build final order with validation."""
         # Generate ID
         if order_id is None:
-            order_id = f"ORDER-{user.user_id}-{len(items):03d}"
+            order_id = f"ORDER-{user.id}-{len(items):03d}"
 
         # Calculate and validate total
         total_result = cls._calculate_and_validate_total(items, config)

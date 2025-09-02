@@ -201,7 +201,7 @@ class EnterpriseFormValidator:
 
         # Enterprise error aggregation pattern
         if name_result.success and email_result.success and age_result.success:
-            # Create FlextModels.Entity with validated data
+            # Create FlextModels with validated data
             entity_data = {
                 "name": name_result.value,
                 "email": email_result.value,
@@ -273,11 +273,13 @@ class EnterpriseFormValidator:
             # Return validated data dictionary instead of Entity
             return FlextResult[dict[str, object]].ok(entity_data)
 
-        errors = _aggregate_validation_errors([
-            name_result,
-            price_result,
-            category_result,
-        ])
+        errors = _aggregate_validation_errors(
+            [
+                name_result,
+                price_result,
+                category_result,
+            ]
+        )
         return FlextResult[dict[str, object]].fail(
             f"Product validation failed: {errors}"
         )

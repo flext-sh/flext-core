@@ -1,53 +1,29 @@
-"""FLEXT Mixins - Reusable behavioral patterns and enterprise mixin system.
+"""Reusable behavioral patterns and mixin system.
 
-Provides comprehensive suite of behavioral patterns for enterprise applications including
-timestamp tracking, logging integration, serialization, validation, identification, state
-management, caching, performance timing and error handling. All functionality consolidated
-through FlextMixins class with both utility methods and inheritable mixin classes.
+Provides behavioral patterns including timestamp tracking, logging integration,
+serialization, validation, identification, and state management through FlextMixins class.
 
-Module Role in Architecture:
-    FlextMixins serves as the behavioral pattern foundation providing reusable components
-    for timestamp management, logging, serialization, validation and state management across
-    FLEXT applications. Integrates with FlextResult, FlextLogger and FlextProtocols.
+Usage:
+    # Inheritable mixins
+    class User(FlextMixins.Timestampable, FlextMixins.Loggable):
+        name: str
+        email: str
 
-Classes and Methods:
-    FlextMixins:                        # Consolidated mixin system with all patterns
-        # Configuration Methods:
-        configure_mixins_system(config) -> FlextResult[ConfigDict] # Configure system
-        get_mixins_system_config() -> FlextResult[ConfigDict] # Get current config
-        create_environment_mixins_config(env) -> FlextResult[ConfigDict] # Environment config
-        optimize_mixins_performance(config) -> FlextResult[ConfigDict] # Performance tuning
+    user = User(name="John", email="john@example.com")
+    user.touch()  # Update timestamps
+    user.log_info("User created")
 
-        # Timestamp Management:
-        create_timestamp_fields(obj) -> None       # Add timestamp fields to object
-        update_timestamp(obj) -> None              # Update modification timestamp
-        get_age_seconds(obj) -> int                # Get object age in seconds
+    # Utility methods
+    FlextMixins.ensure_id(entity)  # Ensure entity has ID
+    FlextMixins.to_dict(entity)    # Serialize to dict
+    validation_result = FlextMixins.validate_required_fields(entity, ["name", "email"])
 
-        # Identification Management:
-        ensure_id(obj) -> None                     # Ensure object has ID (generate if missing)
-        set_id(obj, id) -> None                    # Set object ID
-        has_id(obj) -> bool                        # Check if object has ID
-
-        # Logging Integration:
-        get_logger(obj) -> FlextLogger             # Get logger for object
-        log_operation(obj, operation) -> None      # Log operation with context
-        log_error(obj, error) -> None              # Log error with context
-        log_info(obj, message) -> None             # Log info message
-        log_debug(obj, message) -> None            # Log debug message
-
-        # Serialization:
-        to_dict(obj) -> dict                       # Convert object to dictionary
-        to_dict_basic(obj) -> dict                 # Basic dict conversion
-        to_json(obj) -> str                        # Convert object to JSON string
-        load_from_dict(obj, data) -> FlextResult[None] # Load object from dict
-        load_from_json(obj, json_str) -> FlextResult[None] # Load object from JSON
-
-        # Validation:
-        validate_required_fields(obj, fields) -> FlextResult[None] # Validate required fields
-        validate_field_types(obj, schema) -> FlextResult[None] # Validate field types
-        add_validation_error(obj, error) -> None   # Add validation error
-
-        # State Management:
+Features:
+    - Inheritable mixin classes (Timestampable, Loggable, Serializable, etc.)
+    - Utility methods for common object operations
+    - FlextResult integration for error handling
+    - Validation and state management
+    - Performance timing and caching patterns
         initialize_state(obj) -> None              # Initialize object state
         get_state(obj) -> dict                     # Get current state
         set_state(obj, state) -> None              # Set object state
@@ -212,7 +188,7 @@ class FlextMixins:
     """Unified mixin system implementing Tier 1 Module Pattern.
 
     This class serves as the single main export consolidating ALL mixin
-    functionality from the flext-core mixins ecosystem. Provides comprehensive
+    functionality from the flext-core mixins ecosystem. Provides
     behavioral patterns while maintaining backward compatibility.
 
     Tier 1 Module Pattern: mixins.py -> FlextMixins
@@ -238,7 +214,7 @@ class FlextMixins:
     # ==========================================================================
 
     @classmethod
-    def configure_mixins_system(  # noqa: PLR0912
+    def configure_mixins_system(
         cls, config: FlextTypes.Config.ConfigDict
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure mixins system using FlextTypes.Config with StrEnum validation.
@@ -307,9 +283,7 @@ class FlextMixins:
             )
             validated_config["enable_caching"] = config.get("enable_caching", False)
             # Ensure explicit cache_enabled flag is always present
-            validated_config["cache_enabled"] = bool(
-                config.get("cache_enabled", True)
-            )
+            validated_config["cache_enabled"] = bool(config.get("cache_enabled", True))
             # Pass-through legacy-style flags used in tests
             if "cache_enabled" in config:
                 validated_config["cache_enabled"] = bool(config["cache_enabled"])
@@ -431,55 +405,65 @@ class FlextMixins:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_caching": True,  # Enable caching in production
-                    "default_cache_size": 10000,  # Large cache for production
-                    "enable_thread_safety": True,  # Thread safety critical in production
-                    "enable_metrics": True,  # Metrics for production monitoring
-                    "enable_performance_optimization": True,  # Performance optimizations
-                    "cache_ttl_seconds": 600,  # 10 minute cache TTL
-                    "enable_lazy_initialization": True,  # Lazy init for performance
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_caching": True,  # Enable caching in production
+                        "default_cache_size": 10000,  # Large cache for production
+                        "enable_thread_safety": True,  # Thread safety critical in production
+                        "enable_metrics": True,  # Metrics for production monitoring
+                        "enable_performance_optimization": True,  # Performance optimizations
+                        "cache_ttl_seconds": 600,  # 10 minute cache TTL
+                        "enable_lazy_initialization": True,  # Lazy init for performance
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_caching": False,  # No caching for development
-                    "default_cache_size": 100,  # Small cache for development
-                    "enable_thread_safety": False,  # Not needed in single-threaded dev
-                    "enable_metrics": True,  # Metrics for debugging
-                    "enable_debug_logging": True,  # Debug logging for development
-                    "enable_validation_verbose": True,  # Verbose validation messages
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_caching": False,  # No caching for development
+                        "default_cache_size": 100,  # Small cache for development
+                        "enable_thread_safety": False,  # Not needed in single-threaded dev
+                        "enable_metrics": True,  # Metrics for debugging
+                        "enable_debug_logging": True,  # Debug logging for development
+                        "enable_validation_verbose": True,  # Verbose validation messages
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_caching": False,  # No caching in tests
-                    "default_cache_size": 10,  # Very small cache for tests
-                    "enable_thread_safety": False,  # Single-threaded tests
-                    "enable_metrics": False,  # No metrics in tests
-                    "enable_test_mode": True,  # Special test mode
-                    "enable_mock_behavior": True,  # Enable mock behavior
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_caching": False,  # No caching in tests
+                        "default_cache_size": 10,  # Very small cache for tests
+                        "enable_thread_safety": False,  # Single-threaded tests
+                        "enable_metrics": False,  # No metrics in tests
+                        "enable_test_mode": True,  # Special test mode
+                        "enable_mock_behavior": True,  # Enable mock behavior
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_caching": True,  # Test caching in staging
-                    "default_cache_size": 5000,  # Medium cache for staging
-                    "enable_thread_safety": True,  # Test thread safety
-                    "enable_metrics": True,  # Metrics for staging validation
-                    "cache_ttl_seconds": 300,  # 5 minute cache TTL
-                    "enable_staging_validation": True,  # Staging-specific validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_caching": True,  # Test caching in staging
+                        "default_cache_size": 5000,  # Medium cache for staging
+                        "enable_thread_safety": True,  # Test thread safety
+                        "enable_metrics": True,  # Metrics for staging validation
+                        "cache_ttl_seconds": 300,  # 5 minute cache TTL
+                        "enable_staging_validation": True,  # Staging-specific validation
+                    }
+                )
             else:  # local environment
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_caching": False,  # No caching locally
-                    "default_cache_size": 50,  # Tiny cache for local
-                    "enable_thread_safety": False,  # Single-threaded local development
-                    "enable_metrics": False,  # No metrics locally
-                    "enable_local_debugging": True,  # Local debugging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_caching": False,  # No caching locally
+                        "default_cache_size": 50,  # Tiny cache for local
+                        "enable_thread_safety": False,  # Single-threaded local development
+                        "enable_metrics": False,  # No metrics locally
+                        "enable_local_debugging": True,  # Local debugging features
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -509,38 +493,44 @@ class FlextMixins:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "enable_caching": True,
-                    "default_cache_size": 50000,  # Very large cache
-                    "cache_ttl_seconds": 3600,  # 1 hour cache TTL
-                    "enable_lazy_initialization": True,  # Lazy initialization
-                    "enable_object_pooling": True,  # Object pooling
-                    "pool_size": 1000,  # Large object pool
-                    "enable_batch_operations": True,  # Batch operations
-                    "batch_size": 1000,  # Large batch size
-                    "enable_async_operations": True,  # Async operations
-                    "max_concurrent_operations": 100,  # High concurrency
-                })
+                optimized_config.update(
+                    {
+                        "enable_caching": True,
+                        "default_cache_size": 50000,  # Very large cache
+                        "cache_ttl_seconds": 3600,  # 1 hour cache TTL
+                        "enable_lazy_initialization": True,  # Lazy initialization
+                        "enable_object_pooling": True,  # Object pooling
+                        "pool_size": 1000,  # Large object pool
+                        "enable_batch_operations": True,  # Batch operations
+                        "batch_size": 1000,  # Large batch size
+                        "enable_async_operations": True,  # Async operations
+                        "max_concurrent_operations": 100,  # High concurrency
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "enable_caching": True,
-                    "default_cache_size": 10000,  # Medium cache
-                    "cache_ttl_seconds": 1800,  # 30 minute cache TTL
-                    "enable_lazy_initialization": True,  # Lazy initialization
-                    "enable_batch_operations": True,  # Batch operations
-                    "batch_size": 100,  # Medium batch size
-                    "max_concurrent_operations": 25,  # Medium concurrency
-                })
+                optimized_config.update(
+                    {
+                        "enable_caching": True,
+                        "default_cache_size": 10000,  # Medium cache
+                        "cache_ttl_seconds": 1800,  # 30 minute cache TTL
+                        "enable_lazy_initialization": True,  # Lazy initialization
+                        "enable_batch_operations": True,  # Batch operations
+                        "batch_size": 100,  # Medium batch size
+                        "max_concurrent_operations": 25,  # Medium concurrency
+                    }
+                )
             else:  # low performance level
-                optimized_config.update({
-                    "enable_caching": False,  # No caching
-                    "default_cache_size": 100,  # Small cache if needed
-                    "enable_lazy_initialization": False,  # No lazy initialization
-                    "enable_batch_operations": False,  # No batch operations
-                    "batch_size": 1,  # Single operations
-                    "max_concurrent_operations": 1,  # Single-threaded
-                    "enable_detailed_monitoring": True,  # More detailed monitoring
-                })
+                optimized_config.update(
+                    {
+                        "enable_caching": False,  # No caching
+                        "default_cache_size": 100,  # Small cache if needed
+                        "enable_lazy_initialization": False,  # No lazy initialization
+                        "enable_batch_operations": False,  # No batch operations
+                        "batch_size": 1,  # Single operations
+                        "max_concurrent_operations": 1,  # Single-threaded
+                        "enable_detailed_monitoring": True,  # More detailed monitoring
+                    }
+                )
 
             # Memory optimization settings - define constants for thresholds
             low_memory_threshold = 256
@@ -579,13 +569,15 @@ class FlextMixins:
             optimized_config["thread_pool_size"] = cpu_cores * 2
 
             # Add performance metrics
-            optimized_config.update({
-                "performance_level": performance_level,
-                "memory_limit_mb": memory_limit_mb,
-                "cpu_cores": cpu_cores,
-                "optimization_applied": True,
-                "optimization_timestamp": "runtime",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "memory_limit_mb": memory_limit_mb,
+                    "cpu_cores": cpu_cores,
+                    "optimization_applied": True,
+                    "optimization_timestamp": "runtime",
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

@@ -170,9 +170,13 @@ class FlextStrategies:
     @staticmethod
     def timestamps() -> st.SearchStrategy[datetime]:
         """Generate timestamps within reasonable ranges."""
+        # Hypothesis requires min/max to be naive when supplying timezones parameter
+        # Create timezone-aware datetime first, then make naive for Hypothesis compatibility
+        min_dt = datetime(2020, 1, 1, tzinfo=UTC).replace(tzinfo=None)
+        max_dt = datetime(2030, 12, 31, tzinfo=UTC).replace(tzinfo=None)
         return st.datetimes(
-            min_value=datetime(2020, 1, 1),  # noqa: DTZ001 - Required by Hypothesis when using timezones
-            max_value=datetime(2030, 12, 31),  # noqa: DTZ001 - Required by Hypothesis when using timezones
+            min_value=min_dt,
+            max_value=max_dt,
             timezones=st.just(UTC),
         )
 

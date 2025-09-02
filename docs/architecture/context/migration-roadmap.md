@@ -397,9 +397,9 @@ gantt
 - [ ] **Security Context**: Plan LDAP security context tracking
 
 #### Week 14: LDAP Context Implementation and Testing
-- [ ] **FlextLdapDirectoryOrchestrator**: Create LDAP operations context
+- [ ] **FlextLDAPDirectoryOrchestrator**: Create LDAP operations context
   ```python
-  class FlextLdapDirectoryOrchestrator:
+  class FlextLDAPDirectoryOrchestrator:
       def perform_directory_operation_with_context(self, operation: str, **kwargs) -> FlextResult[dict]:
           """Perform LDAP operation with comprehensive audit context."""
           

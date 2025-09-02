@@ -138,7 +138,7 @@ class FlextLoggingOps:
     ) -> None:
         logger = FlextLoggingOps.get_logger(obj)
         context = FlextLoggingOps._normalize_context(**kwargs)
-        logger.exception(message, **context)
+        logger.error(message, extra=context)
 
     @staticmethod
     def with_logger_context(

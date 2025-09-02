@@ -301,7 +301,7 @@ class FlextPluginPlatformOrchestrator:
 ##### Current Implementation Analysis
 ```python
 # CURRENT: Some domain services, but missing delegation composition
-class FlextLdapDirectoryService:
+class FlextLDAPDirectoryService:
     def __init__(self):
         # Partial use of domain services, but manual directory operation coordination
         self.connection_manager = LdapConnectionManager()
@@ -312,7 +312,7 @@ class FlextLdapDirectoryService:
 ##### Recommended FlextDelegationSystem Integration
 ```python
 # RECOMMENDED: LDAP directory orchestration through delegation
-class FlextLdapDirectoryOrchestrator:
+class FlextLDAPDirectoryOrchestrator:
     """LDAP directory orchestration with delegation composition."""
     
     def __init__(self, ldap_config: dict):

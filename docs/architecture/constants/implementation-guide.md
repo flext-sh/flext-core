@@ -165,13 +165,13 @@ test_user_validation()
 
 ```python
 from flext_core import FlextConstants, FlextResult
-from typing import Dict, Any
+from typing import Dict, object
 
 class ErrorHandler:
     """Comprehensive error handling using FlextConstants error codes."""
     
     @staticmethod
-    def categorize_error(error_code: str) -> Dict[str, Any]:
+    def categorize_error(error_code: str) -> Dict[str, object]:
         """Categorize error based on FlextConstants error code structure."""
         
         error_info = {
@@ -249,7 +249,7 @@ class ErrorHandler:
             )
     
     @staticmethod
-    def create_error_response(error_code: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+    def create_error_response(error_code: str, context: Dict[str, object] = None) -> Dict[str, object]:
         """Create standardized error response using FlextConstants."""
         
         error_info = ErrorHandler.categorize_error(error_code)
@@ -634,7 +634,7 @@ test_meltano_constants()
 ```python
 from flext_core import FlextConstants, FlextResult
 from enum import StrEnum
-from typing import Dict, Any, Final
+from typing import Dict, object, Final
 
 class FlextWebConstants(FlextConstants):
     """Web service constants extending FlextConstants."""
@@ -676,7 +676,7 @@ class FlextWebConstants(FlextConstants):
         # Security settings
         CSRF_TOKEN_LENGTH: Final[int] = 32
         SESSION_ID_LENGTH: Final[int] = 32
-        SECURE_COOKIE_ATTRIBUTES: Final[dict[str, Any]] = {
+        SECURE_COOKIE_ATTRIBUTES: Final[dict[str, object]] = {
             "secure": True,
             "httponly": True,
             "samesite": "strict"
@@ -706,9 +706,9 @@ class FlextConfigManager:
     
     def __init__(self, environment: str = None):
         self.environment = environment or FlextConstants.Config.DEFAULT_ENVIRONMENT
-        self.config_cache: Dict[str, Any] = {}
+        self.config_cache: Dict[str, object] = {}
     
-    def get_environment_config(self) -> Dict[str, Any]:
+    def get_environment_config(self) -> Dict[str, object]:
         """Get environment-specific configuration."""
         
         base_config = {
@@ -797,7 +797,7 @@ class FlextConfigManager:
         
         return base_config
     
-    def _merge_config(self, base: Dict[str, Any], overrides: Dict[str, Any]) -> None:
+    def _merge_config(self, base: Dict[str, object], overrides: Dict[str, object]) -> None:
         """Recursively merge configuration overrides."""
         for key, value in overrides.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -805,7 +805,7 @@ class FlextConfigManager:
             else:
                 base[key] = value
     
-    def validate_configuration(self, config: Dict[str, Any]) -> FlextResult[Dict[str, Any]]:
+    def validate_configuration(self, config: Dict[str, object]) -> FlextResult[Dict[str, object]]:
         """Validate configuration against FlextConstants constraints."""
         
         # Validate logging level
@@ -859,7 +859,7 @@ class FlextConfigManager:
         
         return FlextResult.ok(config)
     
-    def get_web_service_config(self) -> Dict[str, Any]:
+    def get_web_service_config(self) -> Dict[str, object]:
         """Get web service specific configuration."""
         
         return {

@@ -665,7 +665,7 @@ def setup_meltano_with_protocols():
 ##### A. LDAP Connection with Infrastructure.LdapConnection
 ```python
 # LDAP service following Infrastructure.LdapConnection protocol
-class FlextLdapService(FlextProtocols.Infrastructure.LdapConnection):
+class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
     """LDAP service implementing Infrastructure.LdapConnection protocol."""
     
     def __init__(self):
@@ -995,7 +995,7 @@ def setup_ldap_with_protocols():
     """Setup LDAP service with standardized FlextProtocols."""
     
     # Create LDAP service
-    ldap_service = FlextLdapService()
+    ldap_service = FlextLDAPService()
     
     # Connect to LDAP server
     connect_result = ldap_service.connect(

@@ -374,22 +374,22 @@ class FlextPluginServices(FlextDomainService[object]):
 #### ✅ Good Pattern - LDAP Domain Services
 ```python
 # flext-ldap implementation
-class FlextLdapDomain:
+class FlextLDAPDomain:
     """LDAP domain with proper service implementation."""
     
-    class UserManagementService(FlextDomainService[FlextLdapUser]):
+    class UserManagementService(FlextDomainService[FlextLDAPUser]):
         """User management with DDD patterns."""
         
         def __init__(self, **data: object) -> None:
             """Initialize user management service."""
             super().__init__(**data)
-            self._password_spec = FlextLdapDomain.PasswordSpecification()
-            self._email_spec = FlextLdapDomain.EmailSpecification()
+            self._password_spec = FlextLDAPDomain.PasswordSpecification()
+            self._email_spec = FlextLDAPDomain.EmailSpecification()
         
-        def execute(self) -> FlextResult[FlextLdapUser]:
+        def execute(self) -> FlextResult[FlextLDAPUser]:
             """Execute user management operation."""
-            return FlextResult[FlextLdapUser].ok(
-                FlextLdapUser(
+            return FlextResult[FlextLDAPUser].ok(
+                FlextLDAPUser(
                     id=FlextModels.EntityId("default_user"),
                     dn="cn=default,dc=example,dc=com",
                     uid="default",

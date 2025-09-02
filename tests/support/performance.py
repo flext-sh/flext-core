@@ -130,7 +130,7 @@ class StressTestRunner:
         function: Callable[[], object],
         iterations: int = 1000,
         *,  # concurrent is keyword-only to avoid boolean trap
-        concurrent: bool = False,  # Currently unused but reserved for future use  # noqa: ARG002
+        _concurrent: bool = False,  # Currently unused but reserved for future use
         operation_name: str = "load_test",
     ) -> dict[str, object]:
         """Run load test with specified iterations."""

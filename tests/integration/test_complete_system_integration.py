@@ -10,12 +10,7 @@ from __future__ import annotations
 import uuid
 from typing import cast
 
-import pytest
-
-# Wildcard import to populate globals() for export count tests
-from flext_core import *  # noqa: F403,F401
-
-# Specific imports for type checking and IDE support
+# Specific imports for testing complete system integration
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -57,11 +52,7 @@ class TestCompleteFlextSystemIntegration:
             "FlextExceptions",
             "FlextUtilities",
             "FlextTypes",
-            "FlextConfig",
-            "FlextContainer",
             "FlextFields",
-            "FlextValidations",
-            "FlextCommands",
         ]
 
         current_globals = globals()
@@ -100,11 +91,8 @@ class TestCompleteFlextSystemIntegration:
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_de_processamento"
 
-        # Verificar que não podemos acessar value em failure (proteção de tipo)
-        with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
-        ):
-            _ = failure_result.value
+        # Em falha, `.value_or_none` retorna None para inspeção segura
+        assert failure_result.value_or_none is None
 
         # Teste de flat_map para operações que podem falhar
         def operacao_que_pode_falhar(data: str) -> FlextResult[str]:

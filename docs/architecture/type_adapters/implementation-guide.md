@@ -633,7 +633,7 @@ The Infrastructure layer provides protocol-based interfaces for custom adapters:
 
 ```python
 # Define custom validation protocol
-from typing import Protocol, Any
+from typing import Protocol, object
 
 class CustomStringValidator(Protocol):
     """Protocol for custom string validation logic."""

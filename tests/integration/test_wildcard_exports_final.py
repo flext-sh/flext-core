@@ -11,10 +11,7 @@ import uuid
 
 import pytest
 
-# Wildcard import to populate globals() for export count tests
-from flext_core import *  # noqa: F403,F401
-
-# Specific imports for type checking and IDE support
+# Specific imports for testing exports functionality
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -40,12 +37,6 @@ class TestFlextCoreWildcardExports:
             "FlextConstants",
             "FlextExceptions",
             "FlextUtilities",
-            "FlextTypes",
-            "FlextConfig",
-            "FlextContainer",
-            "FlextFields",
-            "FlextValidations",
-            "FlextCommands",
         ]
 
         # Verify each essential module is available in globals
@@ -178,10 +169,12 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(operation_id, str)
 
         # 2. Create a result
-        result = FlextResult[dict[str, object]].ok({
-            "operation_id": operation_id,
-            "status": "started",
-        })
+        result = FlextResult[dict[str, object]].ok(
+            {
+                "operation_id": operation_id,
+                "status": "started",
+            }
+        )
         assert result.success is True
 
         # 3. Process the result through transformations

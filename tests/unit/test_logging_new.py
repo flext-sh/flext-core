@@ -1,13 +1,12 @@
 """Test suite for logging_new module."""
 
-
-from pydantic import BaseModel
-
+# # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+from flext_core import FlextModels
 from flext_core.logging_new import FlextLoggingCore, FlextLoggingMixin
 from flext_core.loggings import FlextLogger
 
 
-class TestModel(BaseModel):
+class TestModel(FlextModels.BaseConfig):
     """Test Pydantic model."""
 
     name: str
@@ -45,10 +44,7 @@ class TestFlextLoggingCore:
 
         # Should not raise
         FlextLoggingCore.log_operation(
-            obj,
-            "test_operation",
-            user="john",
-            action="test"
+            obj, "test_operation", user="john", action="test"
         )
 
     def test_log_error(self) -> None:
@@ -91,9 +87,7 @@ class TestFlextLoggingCore:
         """Test creating logger with context."""
         obj = DummyObject()
         logger = FlextLoggingCore.with_logger_context(
-            obj,
-            request_id="123",
-            user="john"
+            obj, request_id="123", user="john"
         )
         assert isinstance(logger, FlextLogger)
 
@@ -101,9 +95,7 @@ class TestFlextLoggingCore:
         """Test starting an operation."""
         obj = DummyObject()
         operation_id = FlextLoggingCore.start_operation(
-            obj,
-            "data_processing",
-            input_size=100
+            obj, "data_processing", input_size=100
         )
         assert isinstance(operation_id, str)
         assert len(operation_id) > 0
@@ -117,19 +109,13 @@ class TestFlextLoggingCore:
 
         # Complete it successfully
         FlextLoggingCore.complete_operation(
-            obj,
-            operation_id,
-            success=True,
-            result="completed"
+            obj, operation_id, success=True, result="completed"
         )
 
         # Complete with failure
         operation_id2 = FlextLoggingCore.start_operation(obj, "failing_op")
         FlextLoggingCore.complete_operation(
-            obj,
-            operation_id2,
-            success=False,
-            error="failed"
+            obj, operation_id2, success=False, error="failed"
         )
 
     def test_logging_with_pydantic_model(self) -> None:
@@ -137,12 +123,7 @@ class TestFlextLoggingCore:
         obj = DummyObject()
         model = TestModel(name="test", value=42)
 
-        FlextLoggingCore.log_info(
-            obj,
-            "Model test",
-            model=model,
-            extra="data"
-        )
+        FlextLoggingCore.log_info(obj, "Model test", model=model, extra="data")
 
     def test_logging_with_various_types(self) -> None:
         """Test logging with various data types."""
@@ -157,7 +138,7 @@ class TestFlextLoggingCore:
             none_value=None,
             list_data=[1, 2, 3],
             dict_data={"key": "value"},
-            model=TestModel(name="model", value=99)
+            model=TestModel(name="model", value=99),
         )
 
 
@@ -169,7 +150,6 @@ class TestFlextLoggingMixin:
 
         class TestClass(FlextLoggingMixin):
             """Test class using logging mixin."""
-
 
         obj = TestClass()
 
@@ -210,7 +190,7 @@ class TestFlextLoggingMixin:
                 """Handle an error with logging."""
                 try:
                     msg = "Test error"
-                    raise ValueError(msg)  # noqa: TRY301
+                    raise ValueError(msg)
                 except ValueError as e:
                     self.log_error(e, context="error_handling")
                     self.log_exception("Exception caught")
@@ -250,10 +230,7 @@ class TestFlextLoggingMixin:
 
             def with_context_operation(self) -> None:
                 """Perform operation with context."""
-                logger = self.with_logger_context(
-                    request_id="req123",
-                    user="test_user"
-                )
+                logger = self.with_logger_context(request_id="req123", user="test_user")
                 # Logger should have context bound
                 assert isinstance(logger, FlextLogger)
 

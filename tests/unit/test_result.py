@@ -20,13 +20,15 @@ import pytest
 from hypothesis import given, strategies as st
 from pytest_mock import MockerFixture
 
-from flext_core import FlextConstants, FlextResult, FlextTypes
-from flext_core.result import fail_result, ok_result
-from tests.support.asyncs import AsyncTestUtils
-from tests.support.builders import TestBuilders
-from tests.support.factories import FlextResultFactory
-from tests.support.matchers import FlextMatchers
-from tests.support.performance import BenchmarkProtocol, MemoryProfiler
+from flext_core import FlextConstants, FlextResult, FlextTypes, fail_result, ok_result
+from tests.support import (
+    AsyncTestUtils,
+    BenchmarkProtocol,
+    FlextMatchers,
+    FlextResultFactory,
+    MemoryProfiler,
+    TestBuilders,
+)
 
 # Test markers
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -95,8 +97,9 @@ class TestFlextResultFactoryMethods:
         assert result.error_data["field"] == "email"
 
     def test_failure_alias(self) -> None:
-        """Test FlextResult.failure as alias for fail."""
-        result = FlextResult[str].failure("error")
+        """Test FlextResult.failure as alias for is_failure."""
+        result = FlextResult[str].fail("error")
+        assert result.failure  # Test failure property (alias for is_failure)
         assert result.is_failure
         assert result.error == "error"
 

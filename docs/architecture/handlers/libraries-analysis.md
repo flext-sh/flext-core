@@ -443,7 +443,7 @@ class FlextPluginRegistrationHandler(FlextPluginHandler):
 # RECOMMENDED: Complete plugin handler system with CQRS and lifecycle management
 from flext_core.handlers import FlextHandlers
 from dataclasses import dataclass
-from typing import Dict, Any, Optional
+from typing import Dict, object, Optional
 from enum import Enum
 
 class PluginStatus(Enum):
@@ -459,7 +459,7 @@ class RegisterPluginCommand:
     plugin_name: str
     plugin_version: str
     plugin_path: str
-    config: Dict[str, Any]
+    config: Dict[str, object]
     auto_activate: bool = False
     
     def validate(self) -> FlextResult[None]:
@@ -475,7 +475,7 @@ class RegisterPluginCommand:
 class ActivatePluginCommand:
     """Command to activate a plugin."""
     plugin_name: str
-    activation_config: Dict[str, Any] = None
+    activation_config: Dict[str, object] = None
     
     def validate(self) -> FlextResult[None]:
         if not self.plugin_name:
@@ -488,7 +488,7 @@ class PluginLifecycleEvent:
     plugin_name: str
     event_type: str  # registered, loaded, activated, deactivated, error
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: Dict[str, object]
 
 class FlextPluginHandlers(FlextHandlers):
     """Complete plugin handler system with lifecycle management and CQRS."""
@@ -649,7 +649,7 @@ class FlextPluginHandlers(FlextHandlers):
         
         return command_result
     
-    def activate_plugin(self, plugin_name: str, config: Dict[str, Any] = None) -> FlextResult[bool]:
+    def activate_plugin(self, plugin_name: str, config: Dict[str, object] = None) -> FlextResult[bool]:
         """Activate plugin through CQRS command processing."""
         
         activate_cmd = ActivatePluginCommand(

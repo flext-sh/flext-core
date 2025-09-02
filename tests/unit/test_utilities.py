@@ -12,8 +12,7 @@ from datetime import datetime
 
 import pytest
 
-from flext_core.result import FlextResult
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextResult, FlextUtilities
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

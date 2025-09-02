@@ -13,13 +13,7 @@ FlextEventType = str
 FlextServiceName = str
 
 
-# Rebuild Pydantic models to resolve forward references
-# Make types available in the global namespace for model_rebuild()
-
-# Modern types - no globals needed
-
-# Now safely call model_rebuild() with types in scope
-FlextModels.Payload.model_rebuild()
+# FlextModels is a container class, not a Pydantic model, so no model_rebuild() needed
 
 
 class TestTypeProtocols:
@@ -102,11 +96,11 @@ class TestTypeAliases:
     """Test essential type aliases used throughout FLEXT ecosystem."""
 
     def test_entity_id_basic_usage(self) -> None:
-        """Test FlextModels.EntityId type alias in typical usage."""
+        """Test EntityId type usage from FlextModels container."""
         user_id = FlextModels.EntityId("user-123")
         order_id = FlextModels.EntityId("order-456")
 
-        # FlextModels.EntityId is a RootModel with string root
+        # EntityId is a RootModel with string root
         assert isinstance(user_id, FlextModels.EntityId)
         assert isinstance(order_id, FlextModels.EntityId)
         assert user_id.root == "user-123", f"Expected {'user-123'}, got {user_id.root}"
@@ -152,14 +146,14 @@ class TestTypeAliases:
         assert order_placed == "order.placed"
 
     def test_payload_basic_usage(self) -> None:
-        """Test FlextModels.Payload type alias for data payloads."""
-        # FlextModels.Payload is a Pydantic BaseModel for structured data
+        """Test Payload class from FlextModels container for data payloads."""
+        # Use the actual Payload class from FlextModels
         user_data: dict[str, object] = {
             "id": "123",
             "name": "John Doe",
             "email": "john@example.com",
         }
-        user_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+        user_payload = FlextModels.Payload(
             source_service="user_service", message_type="user.data", data=user_data
         )
 
@@ -167,7 +161,7 @@ class TestTypeAliases:
             "event_type": "user.created",
             "timestamp": "2025-01-01T00:00:00Z",
         }
-        event_payload: FlextModels.Payload[dict[str, object]] = FlextModels.Payload(
+        event_payload = FlextModels.Payload(
             source_service="event_service",
             message_type="event.created",
             data=event_data,

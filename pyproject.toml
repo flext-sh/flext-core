@@ -198,25 +198,6 @@ no_implicit_reexport = true
 incremental = true
 warn_incomplete_stub = true
 
-
-
-exclude = [
-    "__pycache__/",
-    ".*/generate_config.py",
-    ".*/manage.py",
-    ".coverage.*",
-    ".git/",
-    ".mypy_cache/",
-    ".ruff_cache/",
-    ".pytest_cache/",
-    ".venv/",
-    "build/",
-    "dist/",
-    "node_modules/",
-    "vendor/",
-    "examples/",
-]
-
 ## Per-module mypy overrides for third-party packages without stubs
 
 [[tool.mypy.overrides]]

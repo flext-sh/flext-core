@@ -401,9 +401,9 @@ gantt
 - [ ] **Group Management Coordination**: Design group and permission coordination
 
 #### Week 23: Enhanced LDAP Domain Services
-- [ ] **FlextLdapDirectoryOrchestrationService**: Enhanced directory operation coordination
+- [ ] **FlextLDAPDirectoryOrchestrationService**: Enhanced directory operation coordination
   ```python
-  class FlextLdapDirectoryOrchestrationService(FlextDomainService[DirectoryOperationResult]):
+  class FlextLDAPDirectoryOrchestrationService(FlextDomainService[DirectoryOperationResult]):
       """Enhanced LDAP directory operation orchestration service."""
       
       directory_operation_config: DirectoryOperationConfig
@@ -651,8 +651,8 @@ gantt
 |--------------|-----------|-----------|----------|
 | **Performance** | Service execution time | >200ms average | Performance optimization |
 | **Transaction** | Transaction failure rate | >1% failures | Transaction pattern refinement |
-| **Coordination** | Cross-entity coordination failures | Any failure | Coordination logic review |
-| **Integration** | System integration issues | Any failure | Integration pattern adjustment |
+| **Coordination** | Cross-entity coordination failures | object failure | Coordination logic review |
+| **Integration** | System integration issues | object failure | Integration pattern adjustment |
 
 ---
 

@@ -1,7 +1,5 @@
 """Test suite for context_new module."""
 
-
-
 from flext_core.constants import FlextConstants
 from flext_core.context_new import FlextContextConfig, FlextContextCore
 from flext_core.context_new.headers import FlextContextHeaders
@@ -31,7 +29,7 @@ class TestFlextContextConfig:
             environment=FlextConstants.Config.ConfigEnvironment.PRODUCTION,
             log_level=FlextConstants.Config.LogLevel.ERROR,
             enable_correlation_tracking=False,
-            max_context_depth=10
+            max_context_depth=10,
         )
 
         assert config.environment == FlextConstants.Config.ConfigEnvironment.PRODUCTION
@@ -46,7 +44,7 @@ class TestFlextContextConfig:
         # Valid config
         config = FlextContextConfig(
             environment=FlextConstants.Config.ConfigEnvironment.STAGING,
-            max_context_depth=5
+            max_context_depth=5,
         )
         assert config.environment == FlextConstants.Config.ConfigEnvironment.STAGING
         assert config.max_context_depth == 5
@@ -55,7 +53,7 @@ class TestFlextContextConfig:
         """Test dumping config to dict."""
         config = FlextContextConfig(
             environment=FlextConstants.Config.ConfigEnvironment.TEST,
-            enable_nested_contexts=False
+            enable_nested_contexts=False,
         )
 
         data = config.model_dump(exclude_unset=True)
@@ -69,9 +67,7 @@ class TestFlextContextConfig:
 
     def test_config_model_dump_json(self) -> None:
         """Test dumping config to JSON."""
-        config = FlextContextConfig(
-            log_level=FlextConstants.Config.LogLevel.WARNING
-        )
+        config = FlextContextConfig(log_level=FlextConstants.Config.LogLevel.WARNING)
 
         json_str = config.model_dump_json()
         assert "WARNING" in json_str or "warning" in json_str
@@ -105,7 +101,7 @@ class TestFlextContextCore:
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION,
             "log_level": FlextConstants.Config.LogLevel.INFO,
             "enable_correlation_tracking": True,
-            "max_context_depth": 15
+            "max_context_depth": 15,
         }
 
         result = FlextContextCore.validate_config(config_dict)
@@ -119,9 +115,7 @@ class TestFlextContextCore:
 
     def test_validate_config_with_defaults(self) -> None:
         """Test config validation with partial input."""
-        config_dict = {
-            "environment": FlextConstants.Config.ConfigEnvironment.STAGING
-        }
+        config_dict = {"environment": FlextConstants.Config.ConfigEnvironment.STAGING}
 
         result = FlextContextCore.validate_config(config_dict)
 
@@ -161,7 +155,7 @@ class TestFlextContextCore:
             "parent_correlation_id": "parent456",
             "service_name": "test-service",
             "user_id": "user789",
-            "extra_field": "ignored"  # Should be ignored
+            "extra_field": "ignored",  # Should be ignored
         }
 
         headers = FlextContextCore.to_header_context(context)
@@ -193,7 +187,7 @@ class TestFlextContextCore:
             "X-Parent-Correlation-Id": "parent456",
             "X-Service-Name": "test-service",
             "X-User-Id": "user789",
-            "Other-Header": "ignored"  # Should be ignored
+            "Other-Header": "ignored",  # Should be ignored
         }
 
         context = FlextContextCore.from_header_context(headers)
@@ -213,10 +207,7 @@ class TestFlextContextCore:
 
     def test_from_header_context_partial(self) -> None:
         """Test converting partial headers."""
-        headers = {
-            "X-Correlation-Id": "corr123",
-            "X-Service-Name": "service"
-        }
+        headers = {"X-Correlation-Id": "corr123", "X-Service-Name": "service"}
 
         context = FlextContextCore.from_header_context(headers)
 
@@ -231,7 +222,7 @@ class TestFlextContextCore:
             "correlation_id": "corr123",
             "parent_correlation_id": "parent456",
             "service_name": "test-service",
-            "user_id": "user789"
+            "user_id": "user789",
         }
 
         # Convert to headers
@@ -242,7 +233,10 @@ class TestFlextContextCore:
 
         # Should match original (for supported fields)
         assert recovered_context["correlation_id"] == original_context["correlation_id"]
-        assert recovered_context["parent_correlation_id"] == original_context["parent_correlation_id"]
+        assert (
+            recovered_context["parent_correlation_id"]
+            == original_context["parent_correlation_id"]
+        )
         assert recovered_context["service_name"] == original_context["service_name"]
         assert recovered_context["user_id"] == original_context["user_id"]
 
@@ -253,7 +247,7 @@ class TestFlextContextCore:
             environment=FlextConstants.Config.ConfigEnvironment.PRODUCTION,
             log_level=FlextConstants.Config.LogLevel.WARNING,
             enable_correlation_tracking=True,
-            max_context_depth=10
+            max_context_depth=10,
         )
 
         # Convert to dict
@@ -267,7 +261,7 @@ class TestFlextContextCore:
         context = {
             "correlation_id": "corr123",
             "service_name": "api-gateway",
-            "user_id": "user456"
+            "user_id": "user456",
         }
 
         # Convert to headers

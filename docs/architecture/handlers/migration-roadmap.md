@@ -214,14 +214,14 @@ class LibraryHandlers(FlextHandlers):
 #### 2. Command and Query Design Patterns
 ```python
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, object
 
 # Standard command pattern
 @dataclass
 class LibraryCommand:
     """Standard command with validation."""
     operation: str
-    data: Dict[str, Any]
+    data: Dict[str, object]
     correlation_id: str = ""
     
     def validate(self) -> FlextResult[None]:
@@ -237,7 +237,7 @@ class LibraryCommand:
 class LibraryQuery:
     """Standard query with filtering."""
     query_type: str
-    filters: Dict[str, Any] = None
+    filters: Dict[str, object] = None
     pagination: Dict[str, int] = None
     
     def validate(self) -> FlextResult[None]:
@@ -251,7 +251,7 @@ class LibraryQuery:
 class LibraryEvent:
     """Standard event for event sourcing."""
     event_type: str
-    event_data: Dict[str, Any]
+    event_data: Dict[str, object]
     timestamp: datetime
     correlation_id: str = ""
 ```

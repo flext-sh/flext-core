@@ -778,7 +778,7 @@ test_enterprise_composition()
 
 ```python
 from flext_core import FlextDecorators, FlextResult
-from typing import Dict, Any
+from typing import Dict, object
 
 # API endpoint with comprehensive enterprise enhancements
 class UserMicroservice:
@@ -807,7 +807,7 @@ class UserMicroservice:
         # Observability
         with_logging=True
     )
-    def get_user_profile(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def get_user_profile(self, request: Dict[str, object]) -> Dict[str, object]:
         """Get user profile with enterprise-grade enhancements."""
         
         user_id = request["user_id"]
@@ -853,7 +853,7 @@ class UserMicroservice:
         monitor_threshold=2.0,  # More time allowed for writes
         with_logging=True
     )
-    def create_user_account(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def create_user_account(self, request: Dict[str, object]) -> Dict[str, object]:
         """Create user account with validation and monitoring."""
         
         user_data = request["user_data"]
@@ -951,7 +951,7 @@ class DataPipelineService:
         monitor_threshold=30.0,  # 30 second threshold for extracts
         with_logging=True
     )
-    def extract_data(self, extraction_config: Dict[str, Any]) -> Dict[str, Any]:
+    def extract_data(self, extraction_config: Dict[str, object]) -> Dict[str, object]:
         """Extract data from source with enterprise reliability."""
         
         source_connection = extraction_config["source_connection"]
@@ -993,7 +993,7 @@ class DataPipelineService:
         cache_size=100,  # Cache transformation rules
         with_logging=True
     )
-    def transform_data(self, extraction_result: Dict[str, Any]) -> Dict[str, Any]:
+    def transform_data(self, extraction_result: Dict[str, object]) -> Dict[str, object]:
         """Transform extracted data with validation and caching."""
         
         records_count = extraction_result["records_extracted"]
@@ -1034,7 +1034,7 @@ class DataPipelineService:
         monitor_threshold=45.0,  # 45 second threshold for loads
         with_logging=True
     )
-    def load_data(self, transformation_result: Dict[str, Any]) -> Dict[str, Any]:
+    def load_data(self, transformation_result: Dict[str, object]) -> Dict[str, object]:
         """Load transformed data to destination with reliability."""
         
         records_count = transformation_result["transformed_records"]

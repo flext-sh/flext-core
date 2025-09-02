@@ -35,7 +35,9 @@ from flext_core import (
 
 # Simple context manager using existing FlextLogger functionality
 @contextlib.contextmanager
-def create_log_context(logger: FlextLogger, **context: object) -> Generator[FlextLogger]:
+def create_log_context(
+    logger: FlextLogger, **context: object
+) -> Generator[FlextLogger]:
     """Create a log context using existing FlextLogger with_context method.
 
     This function creates a context manager that temporarily adds context

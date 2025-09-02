@@ -259,9 +259,9 @@ gantt
 - [ ] **Security Integration**: LDAP security delegation patterns
 
 #### Week 12: LDAP Implementation and Testing
-- [ ] **FlextLdapDirectoryOrchestrator**: Create LDAP delegation system
+- [ ] **FlextLDAPDirectoryOrchestrator**: Create LDAP delegation system
   ```python
-  class FlextLdapDirectoryOrchestrator:
+  class FlextLDAPDirectoryOrchestrator:
       def __init__(self, ldap_config):
           self.delegator = FlextDelegationSystem.create_mixin_delegator(
               self,

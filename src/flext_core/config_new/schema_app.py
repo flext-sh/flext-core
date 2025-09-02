@@ -3,7 +3,7 @@
 Single-class module: defines `FlextConfigSchemaAppConfig` only.
 
 Design:
-- Base class is `FlextModels.BaseConfig` to inherit unified model_config.
+- Base class is `FlextModels` to inherit unified model_config.
 - Uses enums from `FlextConstants.Config` directly for strict values.
 - Uses `FlextTypes` for common aliases and computed helpers.
 - Business rules via Pydantic v2 `@field_validator` and `@model_validator`.

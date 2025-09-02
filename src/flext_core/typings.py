@@ -1,33 +1,30 @@
 """Type definitions and aliases for the FLEXT core library.
 
-This module provides comprehensive type definitions, generic patterns, and type utilities
-for the FLEXT ecosystem. Built with Python 3.13+ syntax and strict typing enforcement
-following Clean Architecture principles with hierarchical organization and zero circular
-dependencies through proper layering design.
+Provides efficient type definitions, generic patterns, and type utilities for the
+FLEXT ecosystem with hierarchical organization and Python 3.13+ syntax.
 
-Architecture:
-    Foundation layer module providing type definitions used throughout the FLEXT
-    ecosystem. Implements hierarchical type organization with domain-based separation
-    and integration with FlextConstants and FlextProtocols for comprehensive type safety.
+Usage:
+    # Basic type imports
+    from flext_core.typings import FlextTypes, T, U, V
 
-Core Components:
-    FlextTypes: Main hierarchical type container with domain-organized nested classes
-    T, U, V: Generic type variables for widespread use across the ecosystem
+    # Using hierarchical types
+    user_id: FlextTypes.Core.EntityId = "user-123"
+    result: FlextTypes.Result.Success[User] = FlextResult.ok(user)
 
-Key Features:
-    - Hierarchical type organization with domain-based separation of concerns
-    - Integration with FlextConstants for type-related constants and configurations
-    - Centralized protocol imports from protocols.py to avoid circular dependencies
-    - Python 3.13+ generic syntax with strict typing enforcement
-    - Complex generic types for Result patterns and container operations
-    - Type utility functions and validation helpers for runtime checking
-    - Protocol-based type definitions for interface contracts
-    - Backward compatibility aliases for ecosystem migration support
+    # Generic function definitions
+    def process_data[T, U](input_data: T) -> FlextResult[U]:
+        # Implementation with generic type support
 
-Nested Classes (Type Organization):
-    FlextTypes.Core: Basic foundation types (String, Number, Boolean, etc.)
-    FlextTypes.Result: FlextResult pattern types (Success, Failure, etc.)
-    FlextTypes.Domain: Domain-driven design types (Entity, ValueObject, etc.)
+    # Protocol types
+    repository: FlextTypes.Infrastructure.Repository[User] = UserRepository()
+
+Features:
+    - Hierarchical type organization (Core, Result, Domain, Infrastructure)
+    - Integration with FlextConstants and FlextProtocols
+    - Python 3.13+ generic syntax support
+    - Type utility functions and validation helpers
+    - Protocol-based type definitions for interfaces
+    - Backward compatibility aliases for ecosystem migration
     FlextTypes.Service: Service layer types (ServiceDict, FactoryDict, etc.)
     FlextTypes.Payload: Message and payload types for integration patterns
     FlextTypes.Config: Configuration and settings types (ConfigDict, etc.)
@@ -704,7 +701,7 @@ class FlextTypes:
     # =========================================================================
 
     class Aggregates:
-        """Aggregates-specific types for FlextModels.AggregateRoot implementation.
+        """Aggregates-specific types for FlextModels implementation.
 
         Refactored following FLEXT requirements with Pydantic 2.11+ and Python 3.13+
         enhancements. Only heavily used types are kept, unused types are commented out.

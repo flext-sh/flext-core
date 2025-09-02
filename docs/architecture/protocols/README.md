@@ -374,7 +374,7 @@ class FlextProtocols.Infrastructure:
 **Usage Example**:
 ```python
 # LDAP service implementation
-class FlextLdapService(FlextProtocols.Infrastructure.LdapConnection):
+class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
     def __init__(self, config: dict[str, object]):
         self.config = config
         self.connection = None

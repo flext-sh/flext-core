@@ -1,105 +1,12 @@
-"""FLEXT Constants - Hierarchical constants system with domain organization and type-safe immutable values.
+"""FLEXT Constants - Hierarchical constants system with domain organization.
 
-Comprehensive hierarchical constants system providing FlextConstants class as single source of truth
-for all FLEXT ecosystem constants, organized by domain with type-safe Final annotations, eliminating
-magic numbers and providing structured error codes, validation limits, and configuration defaults.
+Provides FlextConstants class as single source of truth for all FLEXT ecosystem
+constants, organized by domain with type-safe Final annotations.
 
-Module Role in Architecture:
-    FlextConstants serves as the foundation constants system for all FLEXT ecosystem components,
-    providing hierarchical organization by domain, type-safe immutable constants, structured
-    error codes, and validation limits used throughout the ecosystem.
-
-Classes and Methods:
-    FlextConstants:                         # Hierarchical constants system with 15+ domain classes
-        # Core Domain - Fundamental System Constants:
-        Core.NAME: Final[str] = "FLEXT"             # System identification name
-        Core.VERSION: Final[str] = "0.9.0"          # Current system version
-        Core.DESCRIPTION: Final[str] = "..."        # System description
-        Core.AUTHOR: Final[str] = "FLEXT Team"      # System author
-
-        # Network Domain - Network Configuration Constants:
-        Network.DEFAULT_PORT: Final[int] = 8080     # Default service port
-        Network.DEFAULT_TIMEOUT: Final[int] = 30    # Default request timeout seconds
-        Network.MAX_RETRIES: Final[int] = 3         # Maximum retry attempts
-        Network.KEEPALIVE_TIMEOUT: Final[int] = 65  # Connection keepalive timeout
-
-        # Validation Domain - Input Validation Limits and Patterns:
-        Validation.MIN_PASSWORD_LENGTH: Final[int] = 8      # Minimum password length
-        Validation.MAX_TEXT_LENGTH: Final[int] = 10000      # Maximum text input length
-        Validation.EMAIL_PATTERN: Final[str] = r"..."       # Email regex pattern
-        Validation.UUID_PATTERN: Final[str] = r"..."        # UUID regex pattern
-
-        # Errors Domain - Structured Error Code System:
-        Errors.VALIDATION_ERROR: Final[str] = "VALIDATION_ERROR"    # Input validation failure
-        Errors.NETWORK_ERROR: Final[str] = "NETWORK_ERROR"          # Network communication failure
-        Errors.DATABASE_ERROR: Final[str] = "DATABASE_ERROR"        # Database operation failure
-        Errors.AUTHENTICATION_ERROR: Final[str] = "AUTH_ERROR"      # Authentication failure
-
-        # Config Domain - Configuration Enumerations:
-        Config.ConfigEnvironment(StrEnum)           # Environment enum (DEVELOPMENT, PRODUCTION, etc.)
-        Config.LogLevel(StrEnum)                    # Log level enum (DEBUG, INFO, WARNING, etc.)
-        Config.ValidationLevel(StrEnum)             # Validation strictness enum (LOOSE, STRICT)
-
-        # Messages Domain - Standardized System Messages:
-        Messages.SUCCESS_CREATED: Final[str] = "Resource created successfully"
-        Messages.ERROR_NOT_FOUND: Final[str] = "Resource not found"
-        Messages.ERROR_UNAUTHORIZED: Final[str] = "Unauthorized access"
-
-        # Status Domain - Entity and Operation Status Values:
-        Status.ACTIVE: Final[str] = "active"        # Active status
-        Status.INACTIVE: Final[str] = "inactive"    # Inactive status
-        Status.PENDING: Final[str] = "pending"      # Pending status
-
-        # Performance Domain - Performance and Optimization Constants:
-        # (These are already defined in the Performance class below)
-
-        # Infrastructure Domain - Database and External Service Constants:
-        # (These are already defined in the Infrastructure class below)
-
-Usage Examples:
-    System identification:
-        system_name = FlextConstants.Core.NAME
-        version = FlextConstants.Core.VERSION
-        print(f"{system_name} v{version}")
-
-    Network configuration:
-        port = FlextConstants.Network.DEFAULT_PORT
-        timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-
-    Validation with constants:
-        if len(password) < FlextConstants.Validation.MIN_PASSWORD_LENGTH:
-            return FlextResult.fail(
-                FlextConstants.Messages.ERROR_VALIDATION,
-                error_code=FlextConstants.Errors.VALIDATION_ERROR
-            )
-
-    Using configuration enums:
-        environment = FlextConstants.Config.ConfigEnvironment.PRODUCTION
-        log_level = FlextConstants.Config.LogLevel.INFO
-
-Integration:
-    FlextConstants integrates with all FLEXT ecosystem components providing consistent
-    constants, error codes, validation limits, configuration defaults, and system
-    messages used throughout the ecosystem for maintainable constant management.
-    >>> port = FlextConstants.Network.FLEXT_SERVICE_PORT
-    >>> connection_string = f"http://localhost:{port}"
-
-    Error handling with structured codes:
-    >>> error_code = FlextConstants.Errors.VALIDATION_ERROR
-    >>> error_message = FlextConstants.Messages.VALIDATION_FAILED
-    >>> raise ValidationError(error_message, error_code=error_code)
-
-    Performance and system limits:
-    >>> batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
-    >>> threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
-    >>> max_retries = FlextConstants.Limits.MAX_RETRY_ATTEMPTS
-
-Notes:
-    - All constants are marked as Final for immutability and type safety
-    - Domain classes follow single responsibility principle organization
-    - Constants use UPPER_CASE naming convention for easy identification
-    - System is designed for extension while maintaining backward compatibility
-    - Hierarchical access provides clear namespace separation and discoverability
+Usage:
+    system_name = FlextConstants.Core.NAME
+    timeout = FlextConstants.Network.DEFAULT_TIMEOUT
+    error_code = FlextConstants.Errors.VALIDATION_ERROR
 
 """
 
@@ -116,68 +23,14 @@ from typing import ClassVar, Final, override
 class FlextConstants:
     """Hierarchical constants system organizing FLEXT constants by domain.
 
-    This is the single consolidated class for all FLEXT Core constants, following the
-    Flext[Area][Module] pattern where this represents FlextConstants.
-    All other FLEXT libraries should inherit from this class to maintain hierarchy.
+    Provides structured organization of constants grouped by domain:
+    Core, Network, Validation, Errors, Messages, Status, Performance,
+    Configuration, Infrastructure, and more.
 
-    This class provides a structured organization of all constants used throughout
-    the FLEXT ecosystem, grouped by domain and functionality for better
-    maintainability, discoverability, and adherence to SOLID principles.
-
-    The constants system is organized into the following domains:
-        - Core: Fundamental system constants (name, version, architecture)
-        - Network: Network-related constants (ports, protocols, timeouts)
-        - Validation: Validation rules, patterns, and limits
-        - Errors: Comprehensive error codes with structured hierarchy
-        - Messages: User-facing and system messages
-        - Status: Operation and entity status values
-        - Patterns: Regular expressions for validation
-        - Defaults: Default values for various system components
-        - Limits: System limitations and boundaries
-        - Performance: Performance-related constants and thresholds
-        - Configuration: Configuration system constants
-        - CLI: Command-line interface constants
-        - Infrastructure: Database, cache, and external service constants
-        - Models: Pydantic model configuration constants
-        - Observability: Logging, monitoring, and tracing constants
-        - Handlers: Handler system constants for CQRS patterns
-        - Entities: Entity system constants for DDD patterns
-        - ValidationSystem: Extended validation constants
-        - InfrastructureMessages: Infrastructure layer messaging
-        - Platform: FLEXT platform-specific constants
-
-    Architecture Principles:
-        - Single Responsibility: Each nested class has a single domain focus
-        - Open/Closed: Easy to extend with new constant categories
-        - Liskov Substitution: Consistent interface across all categories
-        - Interface Segregation: Clients depend only on constants they use
-        - Dependency Inversion: High-level constants don't depend on low-level details
-
-    Examples:
-        Using hierarchical constants for better organization::
-
-            # Core system information
-            app_name = FlextConstants.Core.NAME
-            version = FlextConstants.Core.VERSION
-
-            # Network configuration
-            timeout = FlextConstants.Network.DEFAULT_TIMEOUT
-            port = FlextConstants.Platform.FLEXT_SERVICE_PORT
-
-            # Error handling
-            error_code = FlextConstants.Errors.VALIDATION_ERROR
-            error_message = FlextConstants.Messages.VALIDATION_FAILED
-
-            # Performance tuning
-            batch_size = FlextConstants.Performance.DEFAULT_BATCH_SIZE
-            threshold = FlextConstants.Performance.SLOW_QUERY_THRESHOLD
-
-        Type-safe constant access::
-
-            # All constants are typed and validated
-            max_retries: int = FlextConstants.Defaults.MAX_RETRIES
-            error_codes: dict[str, str] = FlextConstants.Errors.MESSAGES
-            log_levels: list[str] = FlextConstants.Observability.LOG_LEVELS
+    Usage:
+        app_name = FlextConstants.Core.NAME
+        timeout = FlextConstants.Network.DEFAULT_TIMEOUT
+        error_code = FlextConstants.Errors.VALIDATION_ERROR
 
     """
 
@@ -190,17 +43,7 @@ class FlextConstants:
     # =========================================================================
 
     class Core:
-        """Core fundamental constants used throughout the ecosystem.
-
-        This class contains the most basic constants that form the foundation
-        of the FLEXT system, including system identity, versioning, architecture
-        information, and fundamental constraints following SOLID principles.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only core system metadata
-            - Open/Closed: Easy to extend with new core constants
-            - Interface Segregation: Core constants separated from operational ones
-        """
+        """Core fundamental constants: system identity, versioning, architecture."""
 
         # System identity constants
         NAME: Final[str] = "FLEXT"
@@ -229,16 +72,7 @@ class FlextConstants:
     # =========================================================================
 
     class Network:
-        """Network and connectivity constants for the FLEXT ecosystem.
-
-        This class contains network-related constants including port ranges,
-        common service ports, protocol definitions, and networking defaults
-        following separation of concerns.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only network-related constants
-            - Interface Segregation: Network constants separated from application logic
-        """
+        """Network and connectivity constants: ports, protocols, timeouts."""
 
         # Port range boundaries
         MIN_PORT: Final[int] = 1
@@ -267,17 +101,7 @@ class FlextConstants:
     # =========================================================================
 
     class Validation:
-        """Validation constants for data integrity and business rules.
-
-        This class contains validation-related constants including length limits,
-        range boundaries, format requirements, and validation thresholds
-        following the principle of explicit validation rules.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only validation constraints
-            - Open/Closed: Easy to extend with new validation rules
-            - Explicit Dependencies: Clear validation boundaries
-        """
+        """Validation constants: length limits, range boundaries, format requirements."""
 
         # String length constraints
         MIN_SERVICE_NAME_LENGTH: Final[int] = 2
@@ -324,7 +148,7 @@ class FlextConstants:
     class Errors:
         """Error codes and categorization for the FLEXT ecosystem.
 
-        This class provides a comprehensive error code system organized by
+        This class provides a efficient error code system organized by
         category with structured hierarchy following error handling best practices.
         Uses structured error codes with clear categorization for better
         error tracking, monitoring, and resolution.
@@ -549,7 +373,7 @@ class FlextConstants:
     class Patterns:
         """Regular expression patterns for validation across the FLEXT ecosystem.
 
-        This class contains comprehensive regex patterns used throughout the system
+        This class contains efficient regex patterns used throughout the system
         for data validation, format checking, and input sanitization following
         security best practices and standard validation patterns.
 
@@ -1114,7 +938,7 @@ class FlextConstants:
     class Web:
         """Web interface and HTTP application constants for the FLEXT web ecosystem.
 
-        This class provides comprehensive web-related constants used by the flext-web
+        This class provides efficient web-related constants used by the flext-web
         module and other web-facing components. Includes HTTP configuration, port
         management, application limits, status codes, and security settings for
         consistent web application behavior across the FLEXT platform.
@@ -1195,7 +1019,7 @@ class FlextConstants:
     class CLI:
         """Command-line interface constants for the FLEXT CLI ecosystem.
 
-        This class provides comprehensive CLI-related constants used by the flext-cli
+        This class provides efficient CLI-related constants used by the flext-cli
         module and other command-line tools. Includes terminal display settings,
         table formatting, command-line operations, and user interaction defaults
         for consistent CLI behavior across the FLEXT platform.
@@ -1264,7 +1088,7 @@ class FlextConstants:
     class Observability:
         """Observability and monitoring constants for the FLEXT ecosystem.
 
-        This class provides comprehensive observability constants including logging
+        This class provides efficient observability constants including logging
         configuration, distributed tracing, metrics collection, alerting thresholds,
         and monitoring infrastructure for complete system visibility and performance
         tracking across the entire FLEXT ecosystem.
@@ -1363,7 +1187,7 @@ class FlextConstants:
     class Quality:
         """Code quality and static analysis constants for the FLEXT ecosystem.
 
-        This class provides comprehensive code quality constants used by the
+        This class provides efficient code quality constants used by the
         flext-quality module and static analysis tools for maintaining high
         code standards across the FLEXT ecosystem. Includes complexity metrics,
         coverage thresholds, PEP8 compliance rules, and quality gates.
@@ -1428,7 +1252,7 @@ class FlextConstants:
     class Oracle:
         """Oracle database integration constants for the FLEXT Oracle ecosystem.
 
-        This class provides comprehensive Oracle-specific constants used by the
+        This class provides efficient Oracle-specific constants used by the
         flext-db-oracle module and other Oracle integration components. Includes
         connection configuration, query optimization, data type limits, performance
         tuning, and security settings for optimal Oracle database operations.
@@ -1539,7 +1363,7 @@ class FlextConstants:
     class GRPC:
         """gRPC service constants for high-performance remote procedure calls.
 
-        This class provides comprehensive constants for gRPC services within the
+        This class provides efficient constants for gRPC services within the
         FLEXT ecosystem, supporting service configuration, connection management,
         streaming operations, memory management, and performance optimization
         for scalable and efficient gRPC communication.
@@ -1661,7 +1485,7 @@ class FlextConstants:
     class DBT:
         """DBT (Data Build Tool) constants for data transformation in the FLEXT ecosystem.
 
-        This class provides comprehensive constants for DBT-based data transformation
+        This class provides efficient constants for DBT-based data transformation
         operations within the FLEXT ecosystem. Includes model configuration,
         materialization strategies, testing frameworks, freshness monitoring,
         and performance optimization for scalable data transformation pipelines.
@@ -1748,7 +1572,7 @@ class FlextConstants:
         VERY_LARGE_OBJECT_COUNT_THRESHOLD: Final[int] = 1000
 
     class WebExtended:
-        """Extended web constants for comprehensive web operations.
+        """Extended web constants for efficient web operations.
 
         Additional web constants beyond the basic Web class for advanced
         web application features and validations.
@@ -1773,10 +1597,10 @@ class FlextConstants:
         MAX_HTTP_STATUS_CODE: Final[int] = 599
 
     class QualityExtended:
-        """Extended quality constants for comprehensive quality assessment.
+        """Extended quality constants for efficient quality assessment.
 
         Quality thresholds and assessment levels used by flext-quality
-        for comprehensive code quality evaluation.
+        for efficient code quality evaluation.
         """
 
         # Quality score thresholds
@@ -1801,7 +1625,7 @@ class FlextConstants:
         TARGET_MAINTAINABILITY: Final[float] = 90.0
 
     class Metrics:
-        """Metrics and observability constants for comprehensive monitoring.
+        """Metrics and observability constants for efficient monitoring.
 
         Metric types, alert levels, trace statuses, and health check
         configurations used across the observability ecosystem.
@@ -1914,7 +1738,7 @@ class FlextConstants:
     class Targets:
         """Singer target constants for data loading and processing.
 
-        This class provides comprehensive constants for Singer targets within
+        This class provides efficient constants for Singer targets within
         the FLEXT ecosystem, supporting data loading operations, stream processing,
         batch management, error handling, and data validation for consistent
         target implementation across all data destination systems.
@@ -1979,7 +1803,7 @@ class FlextConstants:
     class Taps:
         """Singer tap constants for data extraction and discovery.
 
-        This class provides comprehensive constants for Singer taps within
+        This class provides efficient constants for Singer taps within
         the FLEXT ecosystem, supporting data extraction operations, schema
         discovery, stream management, replication strategies, and state
         management for consistent tap implementation across all data sources.
@@ -2052,7 +1876,7 @@ class FlextConstants:
     class Meltano:
         """Meltano pipeline orchestration constants for the FLEXT ecosystem.
 
-        This class provides comprehensive constants for Meltano-based data pipeline
+        This class provides efficient constants for Meltano-based data pipeline
         orchestration within the FLEXT ecosystem. Includes database connections,
         pipeline timeouts, environment configurations, and operational settings
         for consistent Meltano deployment and management.
@@ -2145,35 +1969,41 @@ class FlextConstants:
         MAX_BUFFER_SIZE: Final[int] = 65536
 
         # LDAP Object Classes (RFC Compliant)
-        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset({
-            "person",
-            "organizationalPerson",
-            "inetOrgPerson",
-            "posixAccount",
-            "shadowAccount",
-            "sambaSamAccount",
-            "mailRecipient",
-            "uidObject",
-        })
+        LDAP_PERSON_CLASSES: Final[frozenset[str]] = frozenset(
+            {
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+                "posixAccount",
+                "shadowAccount",
+                "sambaSamAccount",
+                "mailRecipient",
+                "uidObject",
+            }
+        )
 
-        LDAP_ORGANIZATIONAL_CLASSES: Final[frozenset[str]] = frozenset({
-            "organization",
-            "organizationalUnit",
-            "organizationalRole",
-            "organizationalPerson",
-            "dcObject",
-            "domainComponent",
-        })
+        LDAP_ORGANIZATIONAL_CLASSES: Final[frozenset[str]] = frozenset(
+            {
+                "organization",
+                "organizationalUnit",
+                "organizationalRole",
+                "organizationalPerson",
+                "dcObject",
+                "domainComponent",
+            }
+        )
 
-        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset({
-            "groupOfNames",
-            "groupOfUniqueNames",
-            "posixGroup",
-            "sambaGroupMapping",
-            "mailGroup",
-            "distributionList",
-            "organizationalRole",
-        })
+        LDAP_GROUP_CLASSES: Final[frozenset[str]] = frozenset(
+            {
+                "groupOfNames",
+                "groupOfUniqueNames",
+                "posixGroup",
+                "sambaGroupMapping",
+                "mailGroup",
+                "distributionList",
+                "organizationalRole",
+            }
+        )
 
         # LDIF Change Types (RFC 2849)
         CHANGETYPE_ADD: Final[str] = "add"
@@ -2238,18 +2068,22 @@ class FlextConstants:
         BIND_TIMEOUT: Final[int] = 10
 
         # Schema Validation Constants
-        REQUIRED_PERSON_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-            "cn",
-            "sn",
-            "objectClass",
-        })
+        REQUIRED_PERSON_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            {
+                "cn",
+                "sn",
+                "objectClass",
+            }
+        )
 
         REQUIRED_ORG_ATTRIBUTES: Final[frozenset[str]] = frozenset({"o", "objectClass"})
 
-        REQUIRED_ORGUNIT_ATTRIBUTES: Final[frozenset[str]] = frozenset({
-            "ou",
-            "objectClass",
-        })
+        REQUIRED_ORGUNIT_ATTRIBUTES: Final[frozenset[str]] = frozenset(
+            {
+                "ou",
+                "objectClass",
+            }
+        )
 
         # Performance Tuning Constants
         OPTIMAL_THREAD_COUNT: Final[int] = 4
@@ -2931,7 +2765,7 @@ class FlextConstants:
     class ValidationSystem:
         """Extended validation system constants beyond basic pattern validation.
 
-        This class provides comprehensive validation constants that extend beyond
+        This class provides efficient validation constants that extend beyond
         the basic Validation class, focusing on error categorization, business rules,
         type validation, and validation system infrastructure. These constants
         support advanced validation scenarios and error handling patterns.

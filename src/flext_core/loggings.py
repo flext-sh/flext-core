@@ -1,53 +1,28 @@
-"""FLEXT Loggings - Structured logging with correlation IDs, performance tracking, and security sanitization.
+"""Structured logging with correlation IDs, performance tracking, and security sanitization.
 
-Enterprise-grade structured logging system providing FlextLogger with JSON output, automatic
-correlation ID generation, request context tracking, operation performance metrics, sensitive
-data sanitization, and thread-safe request context management with structlog integration.
+Provides FlextLogger with structured logging, JSON output, correlation ID
+tracking, performance metrics, and sensitive data sanitization using structlog.
 
-Module Role in Architecture:
-    FlextLoggings provides comprehensive structured logging for all FLEXT ecosystem components
-    with correlation tracking, performance monitoring, security sanitization, and JSON output
-    for production environments while maintaining development-friendly console output.
+Usage:
+    logger = get_logger(__name__)
 
-Classes and Methods:
-    FlextLogger:                            # Main structured logger with enterprise features
-        # Core Logging Methods:
-        debug(message, **context) -> None              # Debug level logging with context
-        info(message, **context) -> None               # Info level logging with context
-        warning(message, **context) -> None            # Warning level logging with context
-        error(message, error=None, **context) -> None  # Error level logging with context and optional error (Exception or str)
-        critical(message, error=None, **context) -> None # Critical level logging with context and optional error (Exception or str)
-        exception(message, **context) -> None          # Exception logging with stack trace
+    # Basic logging with context
+    logger.info("User created", user_id="123", email="user@test.com")
 
-        # Performance Tracking:
-        start_operation(operation_name, **context) -> str # Start performance tracking
-        complete_operation(operation_id, success=True, **context) -> None # Complete operation tracking
-        track_duration(operation_name) -> ContextManager # Context manager for duration tracking
+    # Performance tracking
+    with logger.track_duration("database_query"):
+        result = db.query("SELECT * FROM users")
 
-        # Correlation and Context:
-        set_correlation_id(correlation_id) -> None      # Set correlation ID for current logger
-        get_correlation_id() -> str | None              # Get current correlation ID
-        set_global_correlation_id(correlation_id) -> None # Set global correlation ID (class method)
-        get_global_correlation_id() -> str | None       # Get global correlation ID (class method)
+    # Error logging with correlation
+    logger.set_correlation_id("req-123")
+    logger.error("Database connection failed", error=e, table="users")
 
-        # Service Context:
-        set_service_context(name, version, environment) -> None # Set service metadata
-        get_service_context() -> dict                   # Get current service context
-
-        # Security and Sanitization:
-        sanitize_sensitive_data(data) -> dict           # Remove sensitive data from logs
-        add_sensitive_key(key) -> None                  # Add key to sanitization list
-        remove_sensitive_key(key) -> None               # Remove key from sanitization list
-
-        # Configuration:
-        configure_json_output(enable=True) -> None      # Enable/disable JSON output
-        configure_console_colors(enable=True) -> None   # Enable/disable colored console output
-        set_log_level(level) -> None                    # Set logging level
-
-    FlextLoggingConfig:                     # Logging system configuration
-        # Configuration Methods:
-        configure_logging_system(config) -> FlextResult[ConfigDict] # Configure logging system
-        get_logging_system_config() -> FlextResult[ConfigDict] # Get current logging config
+Features:
+    - Structured JSON logging with context
+    - Correlation ID tracking for requests
+    - Performance monitoring and duration tracking
+    - Sensitive data sanitization
+    - Thread-safe context management
         create_environment_logging_config(environment) -> FlextResult[ConfigDict] # Environment config
         optimize_logging_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
 
@@ -245,7 +220,8 @@ class FlextLogger:
             or self._generate_correlation_id()
         )
 
-        # Set up structured logger with enriched context
+        # Set up structured logger with enriched context (import locally)
+
         self._structlog_logger = structlog.get_logger(name)
 
         # Initialize persistent context
@@ -362,7 +338,7 @@ class FlextLogger:
         error: Exception | str | None = None,
         duration_ms: float | None = None,
     ) -> dict[str, object]:
-        """Build comprehensive structured log entry.
+        """Build efficient structured log entry.
 
         Args:
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
@@ -496,7 +472,7 @@ class FlextLogger:
         # Use _force_new=True to bypass singleton pattern for bind()
         bound_logger = FlextLogger(
             name=self._name,
-            level=cast("FlextTypes.Config.LogLevel", self._level),  # type: ignore[redundant-cast]
+            level=self._level,
             service_name=getattr(self, "_service_name", None),
             service_version=getattr(self, "_service_version", None),
             correlation_id=getattr(self, "_correlation_id", None),
@@ -828,11 +804,13 @@ class FlextLogger:
 
         # Add structured processors
         if structured_output:
-            processors.extend([
-                cls._add_correlation_processor,
-                cls._add_performance_processor,
-                cls._sanitize_processor,
-            ])
+            processors.extend(
+                [
+                    cls._add_correlation_processor,
+                    cls._add_performance_processor,
+                    cls._sanitize_processor,
+                ]
+            )
 
         # Choose output format
         if json_output:
@@ -843,7 +821,7 @@ class FlextLogger:
                 )
             )
         else:
-            processors.append(cls._create_enhanced_console_renderer())
+            processors.append(FlextLogger._create_enhanced_console_renderer())
 
         # Configure structlog
         structlog.configure(
@@ -1240,24 +1218,28 @@ class FlextLogger:
             performance_level = config.get("performance_level", "standard")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_logging_enabled": True,
-                    "buffer_size": 5000,
-                    "flush_interval_ms": 1000,
-                    "max_concurrent_operations": 500,
-                    "enable_log_compression": True,
-                    "batch_log_processing": True,
-                    "disable_trace_logging": True,
-                })
+                optimized_config.update(
+                    {
+                        "async_logging_enabled": True,
+                        "buffer_size": 5000,
+                        "flush_interval_ms": 1000,
+                        "max_concurrent_operations": 500,
+                        "enable_log_compression": True,
+                        "batch_log_processing": True,
+                        "disable_trace_logging": True,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "async_logging_enabled": False,
-                    "buffer_size": 100,
-                    "flush_interval_ms": 10000,
-                    "max_concurrent_operations": 10,
-                    "enable_log_compression": False,
-                    "batch_log_processing": False,
-                })
+                optimized_config.update(
+                    {
+                        "async_logging_enabled": False,
+                        "buffer_size": 100,
+                        "flush_interval_ms": 10000,
+                        "max_concurrent_operations": 10,
+                        "enable_log_compression": False,
+                        "batch_log_processing": False,
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

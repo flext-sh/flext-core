@@ -1,92 +1,14 @@
 """FLEXT Observability - Enterprise monitoring, metrics collection and distributed tracing.
 
-Provides comprehensive observability solution for the FLEXT ecosystem including metrics
-collection, distributed tracing, health monitoring, alerting capabilities, and structured
-logging. All functionality consolidated into FlextObservability with nested classes for
-logical organization and easy discoverability.
+Provides efficient observability solution including metrics collection,
+distributed tracing, health monitoring, alerting, and structured logging.
 
-Module Role in Architecture:
-    FlextObservability serves as the central hub for monitoring and observability across
-    FLEXT applications. Integrates with FlextResult for error handling, FlextConstants
-    for configuration, and FlextTypes.Config for environment-aware settings.
-
-Classes and Methods:
-    FlextObservability:                     # Comprehensive observability system
-        # Nested Classes:
-        Console                            # Structured logging with severity levels
-        Span                               # Distributed tracing spans
-        Tracer                             # Operation tracing with context
-        Metrics                            # Counters, gauges, histograms collection
-        Alerts                             # Multi-level alerting with escalation
-        Health                             # System health checks and monitoring
-
-        # Configuration Methods:
-        configure_observability_system(config) -> FlextResult[ConfigDict]
-        get_observability_system_config() -> FlextResult[ConfigDict]
-        set_performance_level(level) -> FlextResult[None]
-        get_current_config() -> FlextResult[ConfigDict]
-
-        # Factory Methods:
-        create_console_logger(name, level) -> Console
-        create_tracer(service_name) -> Tracer
-        create_metrics_collector(namespace) -> Metrics
-        create_health_monitor(checks) -> Health
-        create_alert_manager(config) -> Alerts
-
-    Console Methods:
-        log_info(message, **context) -> None       # Info level logging
-        log_warn(message, **context) -> None       # Warning level logging
-        log_error(message, **context) -> None      # Error level logging
-        log_debug(message, **context) -> None      # Debug level logging
-        set_level(level) -> None                    # Set logging level
-
-    Tracer Methods:
-        start_span(operation_name, **tags) -> Span # Start new tracing span
-        finish_span(span) -> None                   # Finish tracing span
-        trace_operation(name) -> context_manager   # Context manager for tracing
-        get_active_span() -> Span | None           # Get current active span
-
-    Metrics Methods:
-        increment_counter(name, value, **tags) -> None # Increment counter metric
-        set_gauge(name, value, **tags) -> None         # Set gauge metric value
-        record_histogram(name, value, **tags) -> None  # Record histogram value
-        get_metrics_summary() -> dict                   # Get metrics summary
-
-    Health Methods:
-        check_health() -> FlextResult[dict]        # Run health checks
-        register_health_check(name, check_func) -> None # Register health check
-        get_health_status() -> dict                # Get current health status
-
-    Alerts Methods:
-        send_alert(level, message, **context) -> None # Send alert notification
-        configure_alerts(config) -> None              # Configure alert settings
-        get_alert_history() -> list[dict]             # Get alert history
-
-Usage Examples:
-    Basic observability setup:
-        obs = FlextObservability()
-        console = obs.create_console_logger("myapp", "INFO")
-        tracer = obs.create_tracer("user-service")
-        metrics = obs.create_metrics_collector("business")
-
-    Tracing operations:
-        with tracer.trace_operation("process_order") as span:
-            span.set_tag("order_id", "12345")
-            result = process_order_logic()
-
-    Metrics collection:
-        metrics.increment_counter("orders_processed", 1, status="success")
-        metrics.set_gauge("active_connections", 42)
-        metrics.record_histogram("response_time_ms", 156.7)
-
-    Health monitoring:
-        health = obs.create_health_monitor([db_check, cache_check])
-        status_result = health.check_health()
-
-Integration:
-    FlextObservability integrates with FlextResult for error handling, FlextConstants
-    for configuration management, FlextTypes.Config for environment settings, and
-    provides context managers for automatic resource management.
+Usage:
+    obs = FlextObservability()
+    console = obs.create_console_logger("myapp", "INFO")
+    metrics = obs.create_metrics_collector("business")
+    with tracer.trace_operation("process_order"):
+        metrics.increment_counter("orders_processed")
 
 """
 
@@ -105,121 +27,17 @@ GeneratorT = Generator
 
 
 class FlextObservability:
-    """Comprehensive observability system providing enterprise-grade monitoring and observability capabilities.
+    """Comprehensive observability system providing monitoring capabilities.
 
-    This class serves as the central hub for all observability functionality in the FLEXT
-    ecosystem, implementing comprehensive monitoring, metrics collection, distributed tracing,
-    health checks, and alerting systems. The design follows FLEXT consolidation patterns
-    with nested classes providing logical organization of functionality.
+    Central hub for observability functionality including monitoring, metrics collection,
+    distributed tracing, health checks, and alerting systems with nested classes for
+    Console, Span, Tracer, Metrics, Alerts, and Health components.
 
-    **CONSOLIDATED ARCHITECTURE**: This class consolidates functionality that was previously
-    scattered across multiple classes into a single, well-organized system:
-    - FlextConsole → Console (structured logging)
-    - FlextSpan → Span (distributed tracing spans)
-    - FlextTracer → Tracer (operation tracing)
-    - FlextMetrics → Metrics (metrics collection)
-    - FlextAlerts → Alerts (alerting system)
-    - _SimpleHealth → Health (health monitoring)
-
-    Core Components:
-        - **Configuration System**: Environment-aware configuration with FlextTypes.Config
-        - **Console Logging**: Structured logging with multiple severity levels
-        - **Distributed Tracing**: Operation tracing with context and tag support
-        - **Metrics Collection**: Counters, gauges, and histograms with tag-based organization
-        - **Health Monitoring**: System health checks with status reporting
-        - **Alert Management**: Multi-level alerting with context information
-        - **Performance Optimization**: Configurable performance settings for different environments
-
-    Configuration Features:
-        The system provides comprehensive configuration management:
-        - **Environment-Specific Settings**: Optimized configurations for production, development, test, staging, and local environments
-        - **Performance Optimization**: Configurable performance levels (high, medium, low) with appropriate resource allocation
-        - **Memory Management**: Buffer sizing and memory limits based on available resources
-        - **Sampling Rates**: Configurable trace sampling for performance optimization
-        - **Feature Toggles**: Enable/disable specific observability features based on requirements
-
-    Usage Examples:
-        Basic observability setup::
-
-            # Configure for development environment
-            config = {
-                "environment": "development",
-                "log_level": "DEBUG",
-                "enable_metrics_collection": True,
-                "enable_tracing": True,
-                "trace_sampling_rate": 1.0,
-            }
-
-            result = FlextObservability.configure_observability_system(config)
-            if result.success:
-                print("Observability system configured")
-
-        Using nested components::
-
-            # Create observability instance
-            obs = FlextObservability.Observability()
-
-            # Use structured logging
-            obs.logger.info("Processing request", user_id="12345", action="create")
-            obs.logger.error("Operation failed", error_code="VALIDATION_ERROR")
-
-            # Collect metrics
-            obs.metrics.increment_counter("requests_total", {"endpoint": "/api/users"})
-            obs.metrics.record_gauge("active_connections", 42.0)
-
-            # Use distributed tracing
-            with obs.tracer.trace_operation("user_creation") as span:
-                span.set_tag("user_id", "12345")
-                span.add_context("request_type", "registration")
-                # Perform operation
-                if error_occurred:
-                    span.add_error(ValueError("Invalid email format"))
-
-        Environment-specific configuration::
-
-            # Production configuration
-            prod_config = FlextObservability.create_environment_observability_config(
-                "production"
-            )
-            if prod_config.success:
-                config = prod_config.value
-                print(f"Buffer size: {config['metrics_buffer_size']}")
-                print(f"Sampling rate: {config['trace_sampling_rate']}")
-
-        Performance optimization::
-
-            # High-performance configuration
-            perf_config = {
-                "performance_level": "high",
-                "memory_limit_mb": 1024,
-                "cpu_cores": 8,
-            }
-
-            optimized = FlextObservability.optimize_observability_performance(
-                perf_config
-            )
-            if optimized.success:
-                settings = optimized.value
-                print(f"Max threads: {settings['max_processing_threads']}")
-                print(f"Buffer size: {settings['metrics_buffer_size']}")
-
-    Thread Safety:
-        All components are designed to be thread-safe for concurrent usage.
-        Metrics collection and logging operations can be safely called from
-        multiple threads simultaneously.
-
-    Performance Considerations:
-        - **Configurable Sampling**: Trace sampling rates can be adjusted to balance observability with performance
-        - **Buffer Management**: Configurable buffer sizes for optimal memory usage
-        - **Async Support**: Optional asynchronous processing for high-throughput scenarios
-        - **Batch Processing**: Efficient batch processing of metrics and traces
-        - **Memory Optimization**: Efficient data structures and memory management
-
-    See Also:
-        - configure_observability_system(): System configuration management
-        - create_environment_observability_config(): Environment-specific configuration
-        - optimize_observability_performance(): Performance optimization
-        - Observability: Main observability instance with all components
+    Usage:
+        obs = FlextObservability.Observability()
+        obs.logger.info("Processing request", user_id="12345")
+        obs.metrics.increment_counter("requests_total")
+        with obs.tracer.trace_operation("user_creation"): pass
 
     """
 
@@ -390,53 +208,63 @@ class FlextObservability:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_console_output": False,  # No console output in production
-                    "metrics_buffer_size": 50000,  # Large buffer for production load
-                    "trace_sampling_rate": 0.01,  # Lower sampling rate for production
-                    "health_check_interval_seconds": 60,  # Less frequent checks
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                    "enable_error_aggregation": True,  # Error aggregation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_console_output": False,  # No console output in production
+                        "metrics_buffer_size": 50000,  # Large buffer for production load
+                        "trace_sampling_rate": 0.01,  # Lower sampling rate for production
+                        "health_check_interval_seconds": 60,  # Less frequent checks
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                        "enable_error_aggregation": True,  # Error aggregation
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_console_output": True,  # Console output for development
-                    "metrics_buffer_size": 5000,  # Smaller buffer for development
-                    "trace_sampling_rate": 1.0,  # Full sampling for development
-                    "health_check_interval_seconds": 15,  # Frequent checks for debugging
-                    "enable_debug_metrics": True,  # Additional debug metrics
-                    "enable_detailed_logging": True,  # Detailed logging for development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_console_output": True,  # Console output for development
+                        "metrics_buffer_size": 5000,  # Smaller buffer for development
+                        "trace_sampling_rate": 1.0,  # Full sampling for development
+                        "health_check_interval_seconds": 15,  # Frequent checks for debugging
+                        "enable_debug_metrics": True,  # Additional debug metrics
+                        "enable_detailed_logging": True,  # Detailed logging for development
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_console_output": False,  # No console output in tests
-                    "metrics_buffer_size": 1000,  # Small buffer for tests
-                    "trace_sampling_rate": 0.0,  # No tracing in tests
-                    "health_check_interval_seconds": 5,  # Frequent checks for test validation
-                    "enable_performance_monitoring": False,  # No perf monitoring in tests
-                    "enable_test_mode": True,  # Special test mode
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_console_output": False,  # No console output in tests
+                        "metrics_buffer_size": 1000,  # Small buffer for tests
+                        "trace_sampling_rate": 0.0,  # No tracing in tests
+                        "health_check_interval_seconds": 5,  # Frequent checks for test validation
+                        "enable_performance_monitoring": False,  # No perf monitoring in tests
+                        "enable_test_mode": True,  # Special test mode
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_console_output": True,  # Console output for staging validation
-                    "metrics_buffer_size": 20000,  # Medium buffer for staging
-                    "trace_sampling_rate": 0.1,  # Medium sampling for staging
-                    "health_check_interval_seconds": 30,  # Standard checks
-                    "enable_staging_validation": True,  # Staging-specific validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_console_output": True,  # Console output for staging validation
+                        "metrics_buffer_size": 20000,  # Medium buffer for staging
+                        "trace_sampling_rate": 0.1,  # Medium sampling for staging
+                        "health_check_interval_seconds": 30,  # Standard checks
+                        "enable_staging_validation": True,  # Staging-specific validation
+                    }
+                )
             else:  # local environment
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_console_output": True,  # Console output for local development
-                    "metrics_buffer_size": 2000,  # Small buffer for local
-                    "trace_sampling_rate": 1.0,  # Full sampling for local debugging
-                    "health_check_interval_seconds": 10,  # Frequent checks for immediate feedback
-                    "enable_local_debugging": True,  # Local debugging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_console_output": True,  # Console output for local development
+                        "metrics_buffer_size": 2000,  # Small buffer for local
+                        "trace_sampling_rate": 1.0,  # Full sampling for local debugging
+                        "health_check_interval_seconds": 10,  # Frequent checks for immediate feedback
+                        "enable_local_debugging": True,  # Local debugging features
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -466,36 +294,42 @@ class FlextObservability:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_metrics_collection": True,
-                    "metrics_buffer_size": 100000,  # Very large buffer
-                    "trace_sampling_rate": 0.001,  # Very low sampling
-                    "batch_processing_enabled": True,  # Batch processing
-                    "compression_enabled": True,  # Data compression
-                    "max_concurrent_operations": 1000,  # High concurrency
-                    "buffer_flush_interval_ms": 5000,  # Less frequent flushes
-                    "enable_caching": True,  # Enable caching
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": True,
+                        "metrics_buffer_size": 100000,  # Very large buffer
+                        "trace_sampling_rate": 0.001,  # Very low sampling
+                        "batch_processing_enabled": True,  # Batch processing
+                        "compression_enabled": True,  # Data compression
+                        "max_concurrent_operations": 1000,  # High concurrency
+                        "buffer_flush_interval_ms": 5000,  # Less frequent flushes
+                        "enable_caching": True,  # Enable caching
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "async_metrics_collection": True,
-                    "metrics_buffer_size": 25000,  # Medium buffer
-                    "trace_sampling_rate": 0.01,  # Low sampling
-                    "batch_processing_enabled": True,  # Batch processing
-                    "max_concurrent_operations": 100,  # Medium concurrency
-                    "buffer_flush_interval_ms": 2000,  # Medium flush interval
-                    "enable_caching": False,  # No caching for medium
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": True,
+                        "metrics_buffer_size": 25000,  # Medium buffer
+                        "trace_sampling_rate": 0.01,  # Low sampling
+                        "batch_processing_enabled": True,  # Batch processing
+                        "max_concurrent_operations": 100,  # Medium concurrency
+                        "buffer_flush_interval_ms": 2000,  # Medium flush interval
+                        "enable_caching": False,  # No caching for medium
+                    }
+                )
             else:  # low performance level
-                optimized_config.update({
-                    "async_metrics_collection": False,  # Synchronous processing
-                    "metrics_buffer_size": 1000,  # Small buffer
-                    "trace_sampling_rate": 0.1,  # Higher sampling for debugging
-                    "batch_processing_enabled": False,  # No batch processing
-                    "max_concurrent_operations": 10,  # Low concurrency
-                    "buffer_flush_interval_ms": 500,  # Frequent flushes
-                    "enable_detailed_metrics": True,  # More detailed metrics
-                })
+                optimized_config.update(
+                    {
+                        "async_metrics_collection": False,  # Synchronous processing
+                        "metrics_buffer_size": 1000,  # Small buffer
+                        "trace_sampling_rate": 0.1,  # Higher sampling for debugging
+                        "batch_processing_enabled": False,  # No batch processing
+                        "max_concurrent_operations": 10,  # Low concurrency
+                        "buffer_flush_interval_ms": 500,  # Frequent flushes
+                        "enable_detailed_metrics": True,  # More detailed metrics
+                    }
+                )
 
             # Memory optimization settings - safe type conversion
             memory_limit_value = config.get("memory_limit_mb", 512)
@@ -532,13 +366,15 @@ class FlextObservability:
             optimized_config["max_processing_threads"] = min(cpu_cores * 2, 16)
 
             # Add performance metrics
-            optimized_config.update({
-                "performance_level": performance_level,
-                "memory_limit_mb": memory_limit_mb,
-                "cpu_cores": cpu_cores,
-                "optimization_applied": True,
-                "optimization_timestamp": "runtime",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "memory_limit_mb": memory_limit_mb,
+                    "cpu_cores": cpu_cores,
+                    "optimization_applied": True,
+                    "optimization_timestamp": "runtime",
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -1700,7 +1536,7 @@ class FlextObservability:
     class Metrics:
         """In-memory metrics collection system for performance and operational monitoring.
 
-        This class provides comprehensive metrics collection capabilities including
+        This class provides efficient metrics collection capabilities including
         counters, gauges, and histograms with tag-based organization and efficient
         in-memory storage. The metrics system is designed for high-throughput
         environments with minimal overhead and flexible aggregation capabilities.
@@ -2263,7 +2099,7 @@ class FlextObservability:
         def record_metric(
             self, name: str, value: float, tags: dict[str, str] | None = None
         ) -> FlextResult[None]:
-            """Record a gauge metric with comprehensive error handling and FlextResult integration.
+            """Record a gauge metric with efficient error handling and FlextResult integration.
 
             This method provides a high-level interface for recording metrics with
             full error handling and type safety. It wraps the underlying metrics
@@ -2323,10 +2159,10 @@ class FlextObservability:
     class Alerts:
         """Multi-level alerting system for operational notifications and escalation management.
 
-        This class provides a comprehensive alerting system with multiple severity levels,
+        This class provides a efficient alerting system with multiple severity levels,
         structured context support, and integration capabilities for operational monitoring
         and incident response. The alerting system is designed to work seamlessly with
-        logging, metrics, and tracing systems for comprehensive observability.
+        logging, metrics, and tracing systems for efficient observability.
 
         **ARCHITECTURAL ROLE**: The Alerts class serves as the centralized alerting
         component within the FLEXT observability system, providing standardized
@@ -2584,7 +2420,7 @@ class FlextObservability:
     class Health:
         """System health monitoring component for status tracking and health check operations.
 
-        This class provides comprehensive system health monitoring capabilities including
+        This class provides efficient system health monitoring capabilities including
         health status tracking, health check operations, and integration with alerting
         and monitoring systems. The health component is designed to provide both simple
         boolean health status and detailed health information for operational teams.
@@ -2596,7 +2432,7 @@ class FlextObservability:
 
         Health Monitoring Capabilities:
             - **Status Tracking**: Maintain current system health status
-            - **Health Checks**: Perform comprehensive health check operations
+            - **Health Checks**: Perform efficient health check operations
             - **Status Reporting**: Detailed health status reporting with timestamps
             - **Integration Ready**: Seamless integration with monitoring and alerting systems
             - **API Compatibility**: Full compatibility with testing and legacy systems
@@ -2680,7 +2516,7 @@ class FlextObservability:
             self._status = "healthy"
 
         def check(self) -> dict[str, object]:
-            """Perform a comprehensive health check and return detailed status information.
+            """Perform a efficient health check and return detailed status information.
 
             This method performs a complete health check of the system and returns
             detailed health information including status, timestamp, and additional
@@ -2718,12 +2554,14 @@ class FlextObservability:
                         health_info = health.check()
 
                         # Export to monitoring system
-                        monitoring_client.send_health_data({
-                            "service_name": "flext-core",
-                            "health_status": health_info["status"],
-                            "check_timestamp": health_info["timestamp"],
-                            "additional_data": health_info,
-                        })
+                        monitoring_client.send_health_data(
+                            {
+                                "service_name": "flext-core",
+                                "health_status": health_info["status"],
+                                "check_timestamp": health_info["timestamp"],
+                                "additional_data": health_info,
+                            }
+                        )
 
             Note:
                 The returned dictionary is suitable for JSON serialization and

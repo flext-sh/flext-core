@@ -1,8 +1,8 @@
 """FLEXT Cache - In-memory caching and memoization functionality.
 
-Provides comprehensive caching capabilities through hierarchical organization
+Provides caching capabilities through hierarchical organization
 of cache utilities and mixin classes. Built for result memoization and
-performance optimization with enterprise-grade patterns.
+performance optimization with production-ready patterns.
 
 Module Role in Architecture:
     FlextCache serves as the caching foundation providing in-memory memoization
@@ -32,7 +32,7 @@ class FlextCache:
     """Unified caching system implementing single class pattern.
 
     This class serves as the single main export consolidating ALL caching
-    functionality with enterprise-grade patterns. Provides comprehensive
+    functionality with production-ready patterns. Provides
     in-memory caching capabilities while maintaining clean API.
 
     Tier 1 Module Pattern: cache.py -> FlextCache

@@ -24,7 +24,7 @@ class FlextIdentification:
             # Generate ID using FlextUtilities
             entity_id = FlextUtilities.Generators.generate_entity_id()
 
-            # Validate using FlextModels.EntityId
+            # Validate using FlextModels
             validated_id = FlextModels.EntityId(root=entity_id)
 
             setattr(obj, id_field, validated_id.root)
@@ -37,7 +37,7 @@ class FlextIdentification:
         id_field: str = "id",
     ) -> None:
         """Set object ID with validation."""
-        # Validate ID using FlextModels.EntityId
+        # Validate ID using FlextModels
         validated_id = FlextModels.EntityId(root=id_value)
 
         setattr(obj, id_field, validated_id.root)

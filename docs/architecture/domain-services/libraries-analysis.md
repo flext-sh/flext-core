@@ -872,7 +872,7 @@ class FlextWebApplicationOrchestrationService(FlextDomainService[WebApplicationR
 #### Enhancement Opportunity
 
 ```python
-class FlextLdapUserManagementOrchestrationService(FlextDomainService[UserManagementResult]):
+class FlextLDAPUserManagementOrchestrationService(FlextDomainService[UserManagementResult]):
     """Enhanced LDAP user management with comprehensive coordination."""
     
     def execute(self) -> FlextResult[UserManagementResult]:
@@ -883,7 +883,7 @@ class FlextLdapUserManagementOrchestrationService(FlextDomainService[UserManagem
             .flat_map(lambda memberships: self.coordinate_permission_assignments(memberships))
         )
 
-class FlextLdapDirectoryOrchestrationService(FlextDomainService[DirectoryOperationResult]):
+class FlextLDAPDirectoryOrchestrationService(FlextDomainService[DirectoryOperationResult]):
     """LDAP directory operation orchestration service."""
     
     def execute(self) -> FlextResult[DirectoryOperationResult]:

@@ -110,14 +110,14 @@ else:
 
 ```python
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional
+from typing import object, Callable, Dict, Optional
 import threading
 from datetime import datetime
 
 class ObservableService(ABC):
     """Base class for FLEXT services with comprehensive observability."""
     
-    def __init__(self, service_name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, service_name: str, config: Optional[Dict[str, object]] = None):
         self.service_name = service_name
         self.config = config or {}
         self._lock = threading.RLock()
@@ -203,7 +203,7 @@ class ObservableService(ABC):
         operation_func: Callable,
         *args,
         **kwargs
-    ) -> Any:
+    ) -> object:
         """Execute operation with comprehensive observability."""
         
         with self.tracer.trace_operation(operation_name) as span:
@@ -502,9 +502,9 @@ if __name__ == "__main__":
 
 ```python
 from functools import wraps
-from typing import TypeVar, Callable, Any
+from typing import TypeVar, Callable, object
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar('F', bound=Callable[..., object])
 
 def observable_operation(operation_name: str, service_name: str = "default"):
     """Decorator for automatic operation observability."""
@@ -843,9 +843,9 @@ except ValueError:
 
 ```python
 import os
-from typing import Dict, Any
+from typing import Dict, object
 
-def get_observability_config(service_name: str) -> Dict[str, Any]:
+def get_observability_config(service_name: str) -> Dict[str, object]:
     """Get environment-specific observability configuration."""
     
     env = os.getenv("ENVIRONMENT", "development")
@@ -971,7 +971,7 @@ class ResilientObservabilityService(ObservableService):
         operation_func: Callable,
         *args,
         **kwargs
-    ) -> Any:
+    ) -> object:
         """Execute operation with resilient observability."""
         
         # Check observability health

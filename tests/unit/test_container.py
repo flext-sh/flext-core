@@ -17,9 +17,11 @@ from typing import TypedDict, cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+# from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
 from flext_core import FlextContainer, FlextResult, FlextTypes
+from flext_core.models import FlextModels
 from tests.support import (
     AsyncTestUtils,
     FlextMatchers,
@@ -55,7 +57,7 @@ class ConfigurationSummary(TypedDict, total=False):
 class ContainerTestModels:
     """Pydantic models for comprehensive container testing."""
 
-    class ServiceConfig(BaseModel):
+    class ServiceConfig(FlextModels.BaseConfig):
         """Service configuration model."""
 
         name: str = Field(..., min_length=1, max_length=100)
@@ -71,7 +73,7 @@ class ContainerTestModels:
             validate_assignment = True
             str_strip_whitespace = True
 
-    class DatabaseConfig(BaseModel):
+    class DatabaseConfig(FlextModels.BaseConfig):
         """Database configuration model."""
 
         url: str = Field(..., pattern=r"^[a-zA-Z][a-zA-Z0-9+.-]*://.*")
@@ -80,7 +82,7 @@ class ContainerTestModels:
         echo: bool = Field(default=False)
         ssl_required: bool = Field(default=True)
 
-    class ComplexService(BaseModel):
+    class ComplexService(FlextModels.BaseConfig):
         """Complex service with dependencies."""
 
         id: str = Field(default_factory=lambda: str(uuid.uuid4()))

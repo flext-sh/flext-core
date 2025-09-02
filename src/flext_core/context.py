@@ -1,33 +1,33 @@
-"""FLEXT Context - Enterprise context management with distributed tracing and cross-service correlation.
+"""Enterprise context management with distributed tracing and cross-service correlation.
 
-Thread-safe context management for the FLEXT ecosystem implementing correlation ID tracking,
-service identification, performance monitoring, and cross-service context propagation using
-contextvars for enterprise-grade distributed tracing and observability.
+Thread-safe context management implementing correlation ID tracking, service identification,
+and performance monitoring using contextvars for distributed tracing and observability.
 
-Module Role in Architecture:
-    FlextContext provides comprehensive context management across all FLEXT services,
-    enabling distributed tracing, service mesh integration, and cross-service correlation
-    while maintaining thread safety and Clean Architecture principles.
+Usage:
+    # Correlation tracking
+    with FlextContext.Correlation.new_correlation() as correlation_id:
+        logger.info("Processing request", correlation_id=correlation_id)
+        result = process_request()
 
-Classes and Methods:
-    FlextContext:                           # Hierarchical context management system
-        # Nested Classes:
-        Variables:                         # Context variable definitions by domain
-            Correlation                    # Correlation and tracing variables
-            Service                        # Service identification variables
-            Request                        # Request and user context variables
-            Performance                    # Performance tracking variables
+    # Service context
+    FlextContext.Service.set_service_name("user-service")
+    FlextContext.Service.set_version("1.2.0")
 
-        Correlation:                       # Distributed tracing and correlation management
-            get_correlation_id() -> str | None          # Get current correlation ID
-            set_correlation_id(correlation_id) -> None  # Set correlation ID in context
-            generate_correlation_id() -> str            # Generate new correlation ID
-            get_parent_correlation_id() -> str | None   # Get parent correlation ID
-            set_parent_correlation_id(parent_id) -> None # Set parent correlation ID
-            new_correlation(correlation_id=None, parent_id=None) -> ContextManager[str] # New correlation scope
-            inherit_correlation() -> ContextManager[str | None] # Inherit or create correlation
+    # Request context
+    with FlextContext.Request.new_request("user-123") as request_id:
+        user_data = fetch_user_data()
 
-        Service:                           # Service identification and lifecycle context
+    # Performance tracking
+    with FlextContext.Performance.track_operation("database_query") as tracker:
+        results = db.query("SELECT * FROM users")
+        tracker.add_metadata({"rows": len(results)})
+
+Features:
+    - Thread-safe correlation ID tracking
+    - Service identification and lifecycle context
+    - Request and user context management
+    - Performance monitoring with metadata
+    - Cross-service context propagation
             get_service_name() -> str | None            # Get current service name
             set_service_name(service_name) -> None      # Set service name in context
             get_service_version() -> str | None         # Get current service version
@@ -96,7 +96,7 @@ Usage Examples:
 Integration:
     FlextContext integrates with FlextResult for error handling, FlextTypes.Config
     for configuration, FlextConstants for validation, and FlextUtilities for
-    ID generation providing comprehensive context management for the FLEXT ecosystem.
+    ID generation providing efficient context management for the FLEXT ecosystem.
 
 """
 
@@ -122,7 +122,7 @@ from flext_core.utilities import FlextUtilities
 class FlextContext:
     """Hierarchical context management system following Clean Architecture principles.
 
-    This class implements a comprehensive, hierarchical context management system
+    This class implements a efficient, hierarchical context management system
     for the FLEXT ecosystem, organizing context functionality by domain and following
     Clean Architecture principles with SOLID design patterns.
 
@@ -235,7 +235,7 @@ class FlextContext:
     class Correlation:
         """Distributed tracing and correlation ID management.
 
-        Provides comprehensive correlation ID management functionality for the FLEXT
+        Provides efficient correlation ID management functionality for the FLEXT
         ecosystem, implementing distributed tracing patterns, parent-child relationship
         tracking, and cross-service correlation for observability.
 
@@ -244,7 +244,7 @@ class FlextContext:
             - Parent-child relationship tracking for nested operations
             - Context-aware scope management with automatic cleanup
             - Inheritance patterns for existing correlation propagation
-            - Type-safe operations with comprehensive error handling
+            - Type-safe operations with efficient error handling
 
         Examples:
             Basic correlation management::
@@ -402,7 +402,7 @@ class FlextContext:
     class Service:
         """Service identification and lifecycle context management.
 
-        Provides comprehensive service identification functionality for the FLEXT
+        Provides efficient service identification functionality for the FLEXT
         ecosystem, implementing service-to-service communication patterns, versioning
         support, and service mesh integration for microservices.
 
@@ -516,7 +516,7 @@ class FlextContext:
     class Request:
         """Request-level context management for user and operation metadata.
 
-        Provides comprehensive request metadata management functionality for the FLEXT
+        Provides efficient request metadata management functionality for the FLEXT
         ecosystem, implementing user identification, operation tracking, and request
         lifecycle management following security and audit best practices.
 
@@ -683,7 +683,7 @@ class FlextContext:
     class Performance:
         """Performance monitoring and timing context management for operations.
 
-        Provides comprehensive performance tracking functionality for the FLEXT
+        Provides efficient performance tracking functionality for the FLEXT
         ecosystem, implementing operation timing, metadata collection, and resource
         monitoring following observability and performance engineering patterns.
 
@@ -824,10 +824,12 @@ class FlextContext:
                 # Calculate duration
                 end_time = datetime.now(UTC)
                 duration = (end_time - start_time).total_seconds()
-                operation_metadata.update({
-                    "end_time": end_time,
-                    "duration_seconds": duration,
-                })
+                operation_metadata.update(
+                    {
+                        "end_time": end_time,
+                        "duration_seconds": duration,
+                    }
+                )
 
                 # Restore previous context
                 FlextContext.Variables.Performance.OPERATION_START_TIME.reset(
@@ -1301,60 +1303,70 @@ class FlextContext:
 
             # Environment-specific configurations
             if environment == "production":
-                base_config.update({
-                    "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_tracking": True,  # Critical in production
-                    "max_context_depth": 15,  # Limited depth for performance
-                    "context_propagation_enabled": True,  # Essential for microservices
-                    "context_cleanup_enabled": True,  # Memory management
-                    "enable_nested_contexts": True,  # Full nesting support
-                    "context_serialization_compression": True,  # Optimize bandwidth
-                })
+                base_config.update(
+                    {
+                        "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_tracking": True,  # Critical in production
+                        "max_context_depth": 15,  # Limited depth for performance
+                        "context_propagation_enabled": True,  # Essential for microservices
+                        "context_cleanup_enabled": True,  # Memory management
+                        "enable_nested_contexts": True,  # Full nesting support
+                        "context_serialization_compression": True,  # Optimize bandwidth
+                    }
+                )
             elif environment == "staging":
-                base_config.update({
-                    "context_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_performance_tracking": True,  # Monitor staging performance
-                    "max_context_depth": 20,  # Moderate depth limit
-                    "context_propagation_enabled": True,  # Test propagation behavior
-                    "context_cleanup_enabled": True,  # Memory management
-                    "enable_nested_contexts": True,  # Full feature testing
-                    "context_serialization_compression": False,  # No compression for debugging
-                })
+                base_config.update(
+                    {
+                        "context_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_performance_tracking": True,  # Monitor staging performance
+                        "max_context_depth": 20,  # Moderate depth limit
+                        "context_propagation_enabled": True,  # Test propagation behavior
+                        "context_cleanup_enabled": True,  # Memory management
+                        "enable_nested_contexts": True,  # Full feature testing
+                        "context_serialization_compression": False,  # No compression for debugging
+                    }
+                )
             elif environment == "development":
-                base_config.update({
-                    "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_tracking": True,  # Monitor development performance
-                    "max_context_depth": 50,  # Higher depth for debugging
-                    "context_propagation_enabled": True,  # Test propagation locally
-                    "context_cleanup_enabled": False,  # Keep contexts for debugging
-                    "enable_nested_contexts": True,  # Full nesting for development
-                    "context_serialization_compression": False,  # No compression for clarity
-                })
+                base_config.update(
+                    {
+                        "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_tracking": True,  # Monitor development performance
+                        "max_context_depth": 50,  # Higher depth for debugging
+                        "context_propagation_enabled": True,  # Test propagation locally
+                        "context_cleanup_enabled": False,  # Keep contexts for debugging
+                        "enable_nested_contexts": True,  # Full nesting for development
+                        "context_serialization_compression": False,  # No compression for clarity
+                    }
+                )
             elif environment == "test":
-                base_config.update({
-                    "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_tracking": False,  # No performance monitoring in tests
-                    "max_context_depth": 10,  # Limited depth for testing
-                    "context_propagation_enabled": False,  # No propagation in unit tests
-                    "context_cleanup_enabled": True,  # Clean context between tests
-                    "enable_nested_contexts": True,  # Test nested behavior
-                    "context_serialization_compression": False,  # No compression in tests
-                })
+                base_config.update(
+                    {
+                        "context_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_tracking": False,  # No performance monitoring in tests
+                        "max_context_depth": 10,  # Limited depth for testing
+                        "context_propagation_enabled": False,  # No propagation in unit tests
+                        "context_cleanup_enabled": True,  # Clean context between tests
+                        "enable_nested_contexts": True,  # Test nested behavior
+                        "context_serialization_compression": False,  # No compression in tests
+                    }
+                )
             elif environment == "local":
-                base_config.update({
-                    "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_tracking": False,  # No monitoring for local
-                    "max_context_depth": 100,  # Very high depth for local development
-                    "context_propagation_enabled": False,  # No propagation locally
-                    "context_cleanup_enabled": False,  # Keep everything for debugging
-                    "enable_nested_contexts": True,  # Full nesting support
-                    "context_serialization_compression": False,  # No compression
-                })
+                base_config.update(
+                    {
+                        "context_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_tracking": False,  # No monitoring for local
+                        "max_context_depth": 100,  # Very high depth for local development
+                        "context_propagation_enabled": False,  # No propagation locally
+                        "context_cleanup_enabled": False,  # Keep everything for debugging
+                        "enable_nested_contexts": True,  # Full nesting support
+                        "context_serialization_compression": False,  # No compression
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
 
@@ -1408,109 +1420,119 @@ class FlextContext:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                }
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Context management optimization
-                    "context_cache_size": 1000,
-                    "enable_context_pooling": True,
-                    "context_pool_size": 200,
-                    "max_concurrent_contexts": 100,
-                    "context_discovery_cache_ttl": 3600,  # 1 hour
-                    # Correlation tracking optimization
-                    "enable_correlation_caching": True,
-                    "correlation_cache_size": 2000,
-                    "correlation_tracking_threads": 8,
-                    "parallel_correlation_processing": True,
-                    # Service context optimization
-                    "service_context_batch_size": 200,
-                    "enable_service_context_batching": True,
-                    "service_context_processing_threads": 16,
-                    "service_context_queue_size": 4000,
-                    # Memory and performance optimization
-                    "memory_pool_size_mb": 150,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "aggressive",
-                })
+                optimized_config.update(
+                    {
+                        # Context management optimization
+                        "context_cache_size": 1000,
+                        "enable_context_pooling": True,
+                        "context_pool_size": 200,
+                        "max_concurrent_contexts": 100,
+                        "context_discovery_cache_ttl": 3600,  # 1 hour
+                        # Correlation tracking optimization
+                        "enable_correlation_caching": True,
+                        "correlation_cache_size": 2000,
+                        "correlation_tracking_threads": 8,
+                        "parallel_correlation_processing": True,
+                        # Service context optimization
+                        "service_context_batch_size": 200,
+                        "enable_service_context_batching": True,
+                        "service_context_processing_threads": 16,
+                        "service_context_queue_size": 4000,
+                        # Memory and performance optimization
+                        "memory_pool_size_mb": 150,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "aggressive",
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    # Balanced context settings
-                    "context_cache_size": 500,
-                    "enable_context_pooling": True,
-                    "context_pool_size": 100,
-                    "max_concurrent_contexts": 50,
-                    "context_discovery_cache_ttl": 1800,  # 30 minutes
-                    # Moderate correlation optimization
-                    "enable_correlation_caching": True,
-                    "correlation_cache_size": 1000,
-                    "correlation_tracking_threads": 4,
-                    "parallel_correlation_processing": True,
-                    # Standard service context processing
-                    "service_context_batch_size": 100,
-                    "enable_service_context_batching": True,
-                    "service_context_processing_threads": 8,
-                    "service_context_queue_size": 2000,
-                    # Moderate memory settings
-                    "memory_pool_size_mb": 75,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        # Balanced context settings
+                        "context_cache_size": 500,
+                        "enable_context_pooling": True,
+                        "context_pool_size": 100,
+                        "max_concurrent_contexts": 50,
+                        "context_discovery_cache_ttl": 1800,  # 30 minutes
+                        # Moderate correlation optimization
+                        "enable_correlation_caching": True,
+                        "correlation_cache_size": 1000,
+                        "correlation_tracking_threads": 4,
+                        "parallel_correlation_processing": True,
+                        # Standard service context processing
+                        "service_context_batch_size": 100,
+                        "enable_service_context_batching": True,
+                        "service_context_processing_threads": 8,
+                        "service_context_queue_size": 2000,
+                        # Moderate memory settings
+                        "memory_pool_size_mb": 75,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "balanced",
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    # Conservative context settings
-                    "context_cache_size": 100,
-                    "enable_context_pooling": False,
-                    "context_pool_size": 25,
-                    "max_concurrent_contexts": 10,
-                    "context_discovery_cache_ttl": 600,  # 10 minutes
-                    # Minimal correlation optimization
-                    "enable_correlation_caching": False,
-                    "correlation_cache_size": 200,
-                    "correlation_tracking_threads": 1,
-                    "parallel_correlation_processing": False,
-                    # Sequential service context processing
-                    "service_context_batch_size": 25,
-                    "enable_service_context_batching": False,
-                    "service_context_processing_threads": 1,
-                    "service_context_queue_size": 200,
-                    # Minimal memory usage
-                    "memory_pool_size_mb": 20,
-                    "enable_object_pooling": False,
-                    "gc_optimization_enabled": False,
-                    "optimization_level": "conservative",
-                })
+                optimized_config.update(
+                    {
+                        # Conservative context settings
+                        "context_cache_size": 100,
+                        "enable_context_pooling": False,
+                        "context_pool_size": 25,
+                        "max_concurrent_contexts": 10,
+                        "context_discovery_cache_ttl": 600,  # 10 minutes
+                        # Minimal correlation optimization
+                        "enable_correlation_caching": False,
+                        "correlation_cache_size": 200,
+                        "correlation_tracking_threads": 1,
+                        "parallel_correlation_processing": False,
+                        # Sequential service context processing
+                        "service_context_batch_size": 25,
+                        "enable_service_context_batching": False,
+                        "service_context_processing_threads": 1,
+                        "service_context_queue_size": 200,
+                        # Minimal memory usage
+                        "memory_pool_size_mb": 20,
+                        "enable_object_pooling": False,
+                        "gc_optimization_enabled": False,
+                        "optimization_level": "conservative",
+                    }
+                )
 
             # Additional performance metrics and targets
-            optimized_config.update({
-                "expected_throughput_contexts_per_second": 500
-                if performance_level == "high"
-                else 200
-                if performance_level == "medium"
-                else 50,
-                "target_context_latency_ms": 5
-                if performance_level == "high"
-                else 15
-                if performance_level == "medium"
-                else 50,
-                "target_correlation_tracking_ms": 2
-                if performance_level == "high"
-                else 8
-                if performance_level == "medium"
-                else 25,
-                "memory_efficiency_target": 0.92
-                if performance_level == "high"
-                else 0.85
-                if performance_level == "medium"
-                else 0.70,
-            })
+            optimized_config.update(
+                {
+                    "expected_throughput_contexts_per_second": 500
+                    if performance_level == "high"
+                    else 200
+                    if performance_level == "medium"
+                    else 50,
+                    "target_context_latency_ms": 5
+                    if performance_level == "high"
+                    else 15
+                    if performance_level == "medium"
+                    else 50,
+                    "target_correlation_tracking_ms": 2
+                    if performance_level == "high"
+                    else 8
+                    if performance_level == "medium"
+                    else 25,
+                    "memory_efficiency_target": 0.92
+                    if performance_level == "high"
+                    else 0.85
+                    if performance_level == "medium"
+                    else 0.70,
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

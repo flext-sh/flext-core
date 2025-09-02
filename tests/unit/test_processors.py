@@ -30,9 +30,7 @@ from unittest.mock import Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextTypes
-from flext_core.processors import FlextProcessors
-from flext_core.result import FlextResult
+from flext_core import FlextProcessors, FlextResult, FlextTypes
 
 
 class ConfigObjectProtocol(Protocol):
@@ -218,7 +216,7 @@ class TestFlextProcessorsBaseProcessor:
         processor = FlextProcessors.BaseProcessor()
         bad_entry = BadEntry()
         # Cast to Entry protocol for type checker
-        bad_entry_typed: FlextProcessors.Entry = bad_entry  # type: ignore[assignment]
+        bad_entry_typed: FlextProcessors.Entry = bad_entry
         result = processor.extract_info_from_entry(bad_entry_typed)
 
         # Should fail due to exception
@@ -299,13 +297,13 @@ class TestFlextProcessorsRegexProcessor:
                         msg = "Pattern search error"
                         raise RuntimeError(msg)
 
-                self.pattern = BadPattern()  # type: ignore[assignment]
+                self.pattern = BadPattern()
 
             def extract_identifier_from_content(self, content: str) -> FlextResult[str]:
                 """Extract identifier method that will fail."""
                 try:
                     # This will cause an exception due to bad pattern
-                    self.pattern.search(content)  # type: ignore[attr-defined]
+                    self.pattern.search(content)
                     # This code is unreachable but left for completeness
                     # if match:  # pragma: no cover - Commented to avoid mypy unreachable error
                     #     return FlextResult[str].ok(str(match))  # pragma: no cover
@@ -335,7 +333,7 @@ class TestFlextProcessorsRegexProcessor:
                         msg = "Pattern validation error"
                         raise RuntimeError(msg)
 
-                self.pattern = BadPattern()  # type: ignore[assignment]
+                self.pattern = BadPattern()
 
         bad_processor = BadProcessor()
         result = bad_processor.validate_content_format("test")
@@ -815,7 +813,7 @@ class TestFlextProcessorsFactoryMethods:
         assert result.success
         validated_config = result.unwrap()
         # Access the numeric key directly since validation preserves original types
-        assert validated_config[42] == "numeric_key"  # type: ignore[index]
+        assert validated_config[42] == "numeric_key"
 
     def test_validate_configuration_invalid_value_type(self) -> None:
         """Test configuration validation with invalid value type."""
@@ -1420,7 +1418,7 @@ class TestFlextProcessorsIntegration:
         validated_config = validation_result.unwrap()
 
         # Configure system with validated config - cast to expected type
-        config_dict: FlextTypes.Config.ConfigDict = validated_config  # type: ignore[assignment]
+        config_dict: FlextTypes.Config.ConfigDict = validated_config
         system_config_result = FlextProcessors.configure_processors_system(config_dict)
         assert system_config_result.success
         system_config = system_config_result.unwrap()
@@ -1641,7 +1639,7 @@ class TestFlextProcessorsAdditionalCoverage:
 
         # Create validator that always fails
         class FailingValidator(FlextProcessors.EntryValidator):
-            def validate_entry(self, entry: FlextProcessors.Entry) -> FlextResult[None]:  # noqa: ARG002
+            def validate_entry(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
                 return FlextResult[None].fail("Validation always fails")
 
         failing_validator = FailingValidator()
@@ -1764,7 +1762,7 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test BaseProcessor transform_data method execution (line 309)."""
 
         class TestTransformProcessor(FlextProcessors.BaseProcessor):
-            def validate_input(self, entry: FlextProcessors.Entry) -> FlextResult[None]:  # noqa: ARG002
+            def validate_input(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
             def transform_data(

@@ -9,7 +9,7 @@ reimplementing common patterns manually.
 Key FlextCore Features Demonstrated:
 • FlextProtocols: Native protocol definitions for enterprise patterns
 • FlextCore.register_service(): Service registration with dependency injection
-• FlextModels.Entity: Domain-driven design with built-in validation
+• FlextModels: Domain-driven design with built-in validation
 • FlextHandlers: CQRS command/query handlers with enterprise patterns
 • FlextResult: Railway-oriented programming for composable operations
 • FlextCore.create_entity(): Dynamic entity creation with validation
@@ -67,10 +67,10 @@ class User:
             .flat_map(lambda _: core.validate_email(email))
             .flat_map(lambda _: core.validate_numeric(age, min_value=18, max_value=120))
             .map(
-                lambda _: cls(
+                lambda _: User(
                     id=core.generate_entity_id(), name=name, email=email, age=int(age)
                 )
-            )  # type: ignore[return-value]
+            )
             .tap(
                 lambda user: logger.info(
                     "User created with validation", user_id=user.id, email=user.email

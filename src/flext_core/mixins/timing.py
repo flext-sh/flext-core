@@ -1,13 +1,22 @@
 """FLEXT Timing - Performance tracking and timing functionality.
 
-Provides comprehensive performance timing capabilities through hierarchical organization
-of timing utilities and mixin classes. Built for operation timing, performance
-measurement, and execution statistics with enterprise-grade patterns.
+Provides performance timing capabilities for operation timing, performance measurement,
+and execution statistics with production-ready patterns.
 
-Module Role in Architecture:
-    FlextTiming serves as the performance measurement foundation providing timing
-    patterns for object-oriented applications. Integrates with all FLEXT ecosystem
-    components requiring performance tracking and optimization analysis.
+Usage:
+    # Basic timing
+    obj = MyObject()
+    FlextTiming.start_timer(obj, "operation")
+    # ... perform operation ...
+    duration = FlextTiming.end_timer(obj, "operation")
+
+    # Timing context manager
+    with FlextTiming.time_operation("database_query") as timer:
+        result = db.query("SELECT * FROM users")
+        timer.add_metadata({"rows": len(result)})
+
+    # Performance statistics
+    stats = FlextTiming.get_performance_stats(obj)
 """
 
 from __future__ import annotations
@@ -25,7 +34,7 @@ class FlextTiming:
     """Unified performance timing system implementing single class pattern.
 
     This class serves as the single main export consolidating ALL timing
-    functionality with enterprise-grade patterns. Provides comprehensive
+    functionality with production-ready patterns. Provides
     performance measurement capabilities while maintaining clean API.
 
     Tier 1 Module Pattern: timing.py -> FlextTiming

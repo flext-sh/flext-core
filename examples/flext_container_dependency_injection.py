@@ -56,7 +56,7 @@ class User:
             core.validate_string(name, min_length=2, max_length=100)
             .flat_map(lambda _: core.validate_email(email))
             .flat_map(lambda _: core.validate_numeric(age, min_value=0, max_value=150))
-            .map(lambda _: cls(name, email, age))  # type: ignore[return-value]
+            .map(lambda _: User(name, email, age))
             .tap(
                 lambda user: logger.info(
                     "User created successfully",
@@ -407,8 +407,12 @@ def demonstrate_flextcore_features() -> None:
         return FlextResult[str].ok("Operation completed successfully")
 
     # Apply performance tracking manually to avoid decorator typing issues
-    tracked_operation = core.track_performance("demo_operation")(demo_operation)  # type: ignore[misc,operator]
-    result = tracked_operation()  # type: ignore[misc,operator]
+    tracker = core.track_performance("demo_operation")
+    tracked_operation = tracker(demo_operation)
+    if callable(tracked_operation):
+        result = tracked_operation()
+    else:
+        result = FlextResult[str].fail("Tracking failed")
     if result.success:
         print(f"✅ Performance-tracked operation: {result.value}")
 

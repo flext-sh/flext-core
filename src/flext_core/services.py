@@ -1,52 +1,28 @@
-"""FLEXT Services - Enterprise service layer architecture with processing and orchestration.
+"""Enterprise service layer architecture with processing and orchestration.
 
-Provides comprehensive service layer functionality for the FLEXT ecosystem implementing
-Clean Architecture principles. All services use FlextResult patterns, dependency injection,
-validation, performance monitoring and error handling for enterprise-grade scalability.
+Provides efficient service layer functionality implementing Clean Architecture
+principles with FlextResult patterns, dependency injection, and performance monitoring.
 
-Module Role in Architecture:
-    FlextServices serves as the consolidated service layer foundation providing data processing
-    templates, service orchestration, registry management, performance monitoring and validation
-    patterns for all FLEXT applications.
+Usage:
+    # Service processor
+    processor = FlextServices.create_processor_service(lambda data: process(data))
+    result = processor.process_data(input_data)
 
-Classes and Methods:
-    FlextServices:                          # Consolidated enterprise service architecture
-        # Nested Classes:
-        ServiceProcessor                   # Template base for data processing services
-        ServiceOrchestrator               # Service composition and workflow coordination
-        ServiceRegistry                   # Service discovery and registration management
-        ServiceMetrics                    # Performance tracking and observability
-        ServiceValidation                 # Service boundary validation patterns
+    # Service orchestration
+    orchestrator = FlextServices.ServiceOrchestrator()
+    workflow_result = orchestrator.orchestrate_workflow([step1, step2, step3])
 
-        # Factory Methods:
-        create_processor_service(processor_func) -> ServiceProcessor
-        create_async_processor(async_func) -> AsyncServiceProcessor
-        chain_processors(processors) -> CompositeProcessor
-        create_workflow(steps) -> WorkflowOrchestrator
-        create_parallel_executor(services) -> ParallelOrchestrator
-        create_conditional_service(condition, service) -> ConditionalService
-        create_service_registry() -> ServiceRegistry
-        register_singleton_service(name, service) -> FlextResult[None]
-        create_service_factory(factory_func) -> ServiceFactory
+    # Service registry
+    registry = FlextServices.create_service_registry()
+    registry.register_service("user_service", user_service)
+    service_result = registry.discover_service("user_service")
 
-    ServiceProcessor Methods:
-        process_data(input_data) -> FlextResult[output] # Generic data processing
-        validate_input(data) -> FlextResult[None]      # Input validation
-        transform_data(data) -> FlextResult[transformed] # Data transformation
-        validate_output(result) -> FlextResult[None]    # Output validation
-        handle_processing_error(error) -> FlextResult[recovery] # Error handling
-
-    ServiceOrchestrator Methods:
-        orchestrate_workflow(steps) -> FlextResult[result] # Multi-step workflows
-        coordinate_services(services) -> FlextResult[results] # Service coordination
-        manage_dependencies(deps) -> FlextResult[None] # Dependency management
-        handle_workflow_failure(error) -> FlextResult[recovery] # Workflow error handling
-
-    ServiceRegistry Methods:
-        register_service(name, service) -> FlextResult[None] # Service registration
-        discover_service(name) -> FlextResult[service]       # Service discovery
-        health_check_service(name) -> FlextResult[status]    # Health monitoring
-        unregister_service(name) -> FlextResult[None]        # Service deregistration
+Features:
+    - ServiceProcessor for data processing templates
+    - ServiceOrchestrator for workflow coordination
+    - ServiceRegistry for service discovery
+    - Performance monitoring and validation
+    - FlextResult integration for error handling
 
     ServiceMetrics Methods:
         track_service_call(service, duration) -> None # Call tracking
@@ -83,7 +59,7 @@ Usage Examples:
 Integration:
     FlextServices integrates with FlextResult for error handling, FlextCore for
     logging and configuration, FlextContainer for dependency injection, and
-    FlextValidations for comprehensive service boundary validation.
+    FlextValidations for efficient service boundary validation.
     ...         validation = self.validate_input(order_data)
     ...         if validation.failure:
     ...             return validation
@@ -185,7 +161,7 @@ Error Handling and Recovery:
 Notes:
     - All services return FlextResult for consistent error handling and railway-oriented programming
     - Service registry supports dynamic service discovery and health monitoring
-    - Performance metrics provide comprehensive observability into service behavior
+    - Performance metrics provide efficient observability into service behavior
     - Orchestration patterns enable complex workflow composition with proper error handling
     - Validation ensures service boundaries maintain data integrity and type safety
     - Async service support enables high-throughput concurrent processing
@@ -402,60 +378,70 @@ class FlextServices:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "max_concurrent_services": 1000,  # High concurrency for production
-                    "service_timeout_seconds": 60,  # Longer timeout for production
-                    "enable_batch_processing": True,  # Batch processing for efficiency
-                    "batch_size": 200,  # Large batch size for production
-                    "enable_service_caching": True,  # Enable caching in production
-                    "cache_ttl_seconds": 300,  # 5 minute cache TTL
-                    "enable_circuit_breaker": True,  # Circuit breaker pattern
-                    "enable_retry_mechanism": True,  # Retry failed operations
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "max_concurrent_services": 1000,  # High concurrency for production
+                        "service_timeout_seconds": 60,  # Longer timeout for production
+                        "enable_batch_processing": True,  # Batch processing for efficiency
+                        "batch_size": 200,  # Large batch size for production
+                        "enable_service_caching": True,  # Enable caching in production
+                        "cache_ttl_seconds": 300,  # 5 minute cache TTL
+                        "enable_circuit_breaker": True,  # Circuit breaker pattern
+                        "enable_retry_mechanism": True,  # Retry failed operations
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "max_concurrent_services": 50,  # Moderate concurrency for development
-                    "service_timeout_seconds": 15,  # Shorter timeout for quick feedback
-                    "enable_batch_processing": True,  # Test batch processing
-                    "batch_size": 10,  # Small batch size for development
-                    "enable_service_caching": False,  # No caching for development
-                    "enable_debug_logging": True,  # Detailed debug logging
-                    "enable_service_profiling": True,  # Performance profiling
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "max_concurrent_services": 50,  # Moderate concurrency for development
+                        "service_timeout_seconds": 15,  # Shorter timeout for quick feedback
+                        "enable_batch_processing": True,  # Test batch processing
+                        "batch_size": 10,  # Small batch size for development
+                        "enable_service_caching": False,  # No caching for development
+                        "enable_debug_logging": True,  # Detailed debug logging
+                        "enable_service_profiling": True,  # Performance profiling
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "max_concurrent_services": 20,  # Low concurrency for tests
-                    "service_timeout_seconds": 10,  # Quick timeout for tests
-                    "enable_batch_processing": False,  # No batch processing in tests
-                    "batch_size": 5,  # Very small batch size
-                    "enable_service_caching": False,  # No caching in tests
-                    "enable_test_mode": True,  # Special test mode
-                    "enable_mock_services": True,  # Enable mock services
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "max_concurrent_services": 20,  # Low concurrency for tests
+                        "service_timeout_seconds": 10,  # Quick timeout for tests
+                        "enable_batch_processing": False,  # No batch processing in tests
+                        "batch_size": 5,  # Very small batch size
+                        "enable_service_caching": False,  # No caching in tests
+                        "enable_test_mode": True,  # Special test mode
+                        "enable_mock_services": True,  # Enable mock services
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "max_concurrent_services": 200,  # Medium concurrency for staging
-                    "service_timeout_seconds": 45,  # Medium timeout
-                    "enable_batch_processing": True,  # Test batch processing
-                    "batch_size": 100,  # Medium batch size
-                    "enable_service_caching": True,  # Test caching behavior
-                    "cache_ttl_seconds": 120,  # 2 minute cache TTL
-                    "enable_staging_validation": True,  # Staging-specific validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "max_concurrent_services": 200,  # Medium concurrency for staging
+                        "service_timeout_seconds": 45,  # Medium timeout
+                        "enable_batch_processing": True,  # Test batch processing
+                        "batch_size": 100,  # Medium batch size
+                        "enable_service_caching": True,  # Test caching behavior
+                        "cache_ttl_seconds": 120,  # 2 minute cache TTL
+                        "enable_staging_validation": True,  # Staging-specific validation
+                    }
+                )
             else:  # local environment
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "max_concurrent_services": 25,  # Low concurrency for local
-                    "service_timeout_seconds": 10,  # Quick timeout for local development
-                    "enable_batch_processing": False,  # No batch processing locally
-                    "batch_size": 1,  # Single item processing
-                    "enable_service_caching": False,  # No caching locally
-                    "enable_local_debugging": True,  # Local debugging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "max_concurrent_services": 25,  # Low concurrency for local
+                        "service_timeout_seconds": 10,  # Quick timeout for local development
+                        "enable_batch_processing": False,  # No batch processing locally
+                        "batch_size": 1,  # Single item processing
+                        "enable_service_caching": False,  # No caching locally
+                        "enable_local_debugging": True,  # Local debugging features
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -485,44 +471,50 @@ class FlextServices:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_service_processing": True,
-                    "max_concurrent_services": 2000,  # Very high concurrency
-                    "service_timeout_seconds": 120,  # Extended timeout
-                    "enable_connection_pooling": True,  # Connection pooling
-                    "pool_size": 100,  # Large connection pool
-                    "enable_batch_processing": True,  # Batch processing
-                    "batch_size": 500,  # Large batch size
-                    "enable_parallel_processing": True,  # Parallel execution
-                    "worker_threads": 16,  # Many worker threads
-                    "enable_service_caching": True,  # Aggressive caching
-                    "cache_size_mb": 512,  # Large cache
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": True,
+                        "max_concurrent_services": 2000,  # Very high concurrency
+                        "service_timeout_seconds": 120,  # Extended timeout
+                        "enable_connection_pooling": True,  # Connection pooling
+                        "pool_size": 100,  # Large connection pool
+                        "enable_batch_processing": True,  # Batch processing
+                        "batch_size": 500,  # Large batch size
+                        "enable_parallel_processing": True,  # Parallel execution
+                        "worker_threads": 16,  # Many worker threads
+                        "enable_service_caching": True,  # Aggressive caching
+                        "cache_size_mb": 512,  # Large cache
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "async_service_processing": True,
-                    "max_concurrent_services": 500,  # Medium concurrency
-                    "service_timeout_seconds": 60,  # Standard timeout
-                    "enable_connection_pooling": True,  # Connection pooling
-                    "pool_size": 25,  # Medium connection pool
-                    "enable_batch_processing": True,  # Batch processing
-                    "batch_size": 100,  # Medium batch size
-                    "worker_threads": 8,  # Moderate worker threads
-                    "enable_service_caching": True,  # Standard caching
-                    "cache_size_mb": 128,  # Medium cache
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": True,
+                        "max_concurrent_services": 500,  # Medium concurrency
+                        "service_timeout_seconds": 60,  # Standard timeout
+                        "enable_connection_pooling": True,  # Connection pooling
+                        "pool_size": 25,  # Medium connection pool
+                        "enable_batch_processing": True,  # Batch processing
+                        "batch_size": 100,  # Medium batch size
+                        "worker_threads": 8,  # Moderate worker threads
+                        "enable_service_caching": True,  # Standard caching
+                        "cache_size_mb": 128,  # Medium cache
+                    }
+                )
             else:  # low performance level
-                optimized_config.update({
-                    "async_service_processing": False,  # Synchronous processing
-                    "max_concurrent_services": 50,  # Low concurrency
-                    "service_timeout_seconds": 30,  # Short timeout
-                    "enable_connection_pooling": False,  # No connection pooling
-                    "enable_batch_processing": False,  # No batch processing
-                    "batch_size": 1,  # Single item processing
-                    "worker_threads": 2,  # Minimal worker threads
-                    "enable_service_caching": False,  # No caching
-                    "enable_detailed_monitoring": True,  # More detailed monitoring
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": False,  # Synchronous processing
+                        "max_concurrent_services": 50,  # Low concurrency
+                        "service_timeout_seconds": 30,  # Short timeout
+                        "enable_connection_pooling": False,  # No connection pooling
+                        "enable_batch_processing": False,  # No batch processing
+                        "batch_size": 1,  # Single item processing
+                        "worker_threads": 2,  # Minimal worker threads
+                        "enable_service_caching": False,  # No caching
+                        "enable_detailed_monitoring": True,  # More detailed monitoring
+                    }
+                )
 
             # Memory optimization settings - safe type conversion
             memory_limit_value = config.get("memory_limit_mb", 1024)
@@ -562,13 +554,15 @@ class FlextServices:
             optimized_config["max_parallel_operations"] = cpu_cores * 4
 
             # Add performance metrics
-            optimized_config.update({
-                "performance_level": performance_level,
-                "memory_limit_mb": memory_limit_mb,
-                "cpu_cores": cpu_cores,
-                "optimization_applied": True,
-                "optimization_timestamp": "runtime",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "memory_limit_mb": memory_limit_mb,
+                    "cpu_cores": cpu_cores,
+                    "optimization_applied": True,
+                    "optimization_timestamp": "runtime",
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -586,8 +580,8 @@ class FlextServices:
 
         This abstract base class implements the Template Method pattern for service processing,
         providing a standardized framework for service operations while eliminating common
-        boilerplate code. It offers enterprise-grade capabilities including automatic JSON
-        processing, batch operations, performance tracking, and comprehensive error handling
+        boilerplate code. It offers production-ready capabilities including automatic JSON
+        processing, batch operations, performance tracking, and efficient error handling
         through FlextResult[T] patterns.
 
         **ARCHITECTURAL ROLE**: Serves as the foundation template for all service processors
@@ -890,7 +884,7 @@ class FlextServices:
 
             Note:
                 Processes all items and collects both successes and failures
-                for comprehensive batch operation reporting.
+                for efficient batch operation reporting.
 
             """
             return FlextResultUtils.batch_process(items, handler)
@@ -898,7 +892,7 @@ class FlextServices:
     class ServiceOrchestrator:
         """Service orchestration and coordination patterns.
 
-        Provides enterprise-grade service orchestration capabilities with:
+        Provides production-ready service orchestration capabilities with:
             - Service composition and workflow management
             - Dependency injection and service resolution
             - Transaction coordination and rollback patterns
@@ -954,15 +948,17 @@ class FlextServices:
             # Implementation would handle service coordination based on workflow_definition
             # This is a placeholder for the actual orchestration logic
             workflow_id = getattr(workflow_definition, "id", "default_workflow")
-            return FlextResult[dict[str, object]].ok({
-                "status": "success",
-                "results": {"workflow_id": workflow_id},
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "status": "success",
+                    "results": {"workflow_id": workflow_id},
+                }
+            )
 
     class ServiceRegistry:
         """Service discovery and registration management.
 
-        Provides enterprise-grade service registry capabilities with:
+        Provides production-ready service registry capabilities with:
             - Dynamic service discovery and registration
             - Health checking and service monitoring
             - Load balancing and service routing
@@ -1034,14 +1030,14 @@ class FlextServices:
     class ServiceMetrics:
         """Performance tracking and observability integration.
 
-        Provides enterprise-grade service metrics capabilities with:
+        Provides production-ready service metrics capabilities with:
             - Real-time performance monitoring
             - Service level indicator (SLI) tracking
             - Distributed tracing integration
             - Custom metrics collection and reporting
             - Alerting and notification patterns
 
-        This class implements comprehensive observability patterns
+        This class implements efficient observability patterns
         for service monitoring and performance optimization.
         """
 
@@ -1082,14 +1078,14 @@ class FlextServices:
     class ServiceValidation:
         """Service input/output validation patterns.
 
-        Provides enterprise-grade service validation capabilities with:
+        Provides production-ready service validation capabilities with:
             - Schema-based input validation
             - Output contract verification
             - Cross-service data consistency checks
             - Business rule validation integration
             - Validation result aggregation
 
-        This class implements comprehensive validation patterns
+        This class implements efficient validation patterns
         for ensuring service data integrity and contract compliance.
         """
 

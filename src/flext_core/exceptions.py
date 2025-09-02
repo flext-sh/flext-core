@@ -1,53 +1,23 @@
-"""Comprehensive exception system with structured error handling and metrics.
+"""Hierarchical exception system with structured error handling and metrics.
 
-This module provides a hierarchical exception system for the FLEXT ecosystem featuring
-structured error handling, automatic metrics collection, distributed tracing support,
-and comprehensive error codes. All exceptions follow consistent patterns with correlation
-IDs, context tracking, and enterprise-grade monitoring capabilities.
+Provides FlextExceptions container with specialized exception types, error codes,
+context tracking, and automatic metrics collection for FLEXT ecosystem.
 
-Architecture:
-    Foundation layer module providing exception hierarchy used throughout the FLEXT
-    ecosystem. Implements Clean Architecture principles with clear separation of concerns
-    and multiple inheritance from Python builtin exceptions for proper exception handling.
+Usage:
+    # Specific exception types
+    raise FlextExceptions.ValidationError("Invalid input", error_code="VALIDATION_001")
 
-Core Components:
-    FlextExceptions: Central container and factory for all FLEXT exception types
-    FlextExceptions.BaseError: Common base class with error codes and context tracking
-    FlextExceptions.Metrics: Centralized exception occurrence tracking and monitoring
-    FlextExceptions.ErrorCodes: Structured error code definitions and categories
+    # Auto-selection factory
+    error = FlextExceptions("Processing failed", context={"user_id": 123})
 
-Key Features:
-    - Hierarchical exception organization with specialized types for different error categories
-    - Structured error codes with automatic categorization and consistent naming patterns
-    - Context tracking with correlation IDs for distributed tracing and request tracking
-    - Automatic metrics collection for exception monitoring and observability
-    - Multiple inheritance from appropriate Python builtin exceptions for proper handling
-    - Legacy compatibility aliases for backward compatibility with existing code
-    - Direct callable interface for automatic exception type selection based on context
-    - Enterprise-grade error handling with configurable error handling strategies
+    # Metrics collection
+    metrics = FlextExceptions.get_metrics()
 
-Exception Types:
-    FlextExceptions.ValidationError(BaseError, ValueError): Input validation and data format errors
-    FlextExceptions.ConfigurationError(BaseError, ValueError): Configuration and settings errors
-    FlextExceptions.ConnectionError(BaseError, ConnectionError): Network and service connection failures
-    FlextExceptions.ProcessingError(BaseError, RuntimeError): Data processing and transformation errors
-    FlextExceptions.TimeoutError(BaseError, TimeoutError): Operation timeout and deadline exceeded errors
-    FlextExceptions.NotFoundError(BaseError, FileNotFoundError): Resource not found errors
-    FlextExceptions.AlreadyExistsError(BaseError, FileExistsError): Resource already exists errors
-    FlextExceptions.PermissionError(BaseError, PermissionError): Access control and permission errors
-    FlextExceptions.AuthenticationError(BaseError, PermissionError): Authentication and identity errors
-    FlextExceptions.TypeError(BaseError, TypeError): Type-related errors and mismatches
-    FlextExceptions.CriticalError(BaseError, SystemError): Critical system errors requiring immediate attention
-    FlextExceptions.Error(BaseError, RuntimeError): General FLEXT runtime errors
-    FlextExceptions.UserError(BaseError, TypeError): User input and interface errors
-    FlextExceptions.AttributeError(BaseError, AttributeError): Attribute access and object errors
-    FlextExceptions.OperationError(BaseError, RuntimeError): Business logic and operation errors
-
-Methods and Properties:
-    FlextExceptions Class Methods:
-        __new__(message: str, **kwargs) -> BaseError: Factory method for automatic type selection
-        get_metrics() -> dict[str, int]: Get exception occurrence metrics by type
-        clear_metrics() -> None: Clear all collected exception metrics
+Features:
+    - Hierarchical exception organization
+    - Structured error codes and context tracking
+    - Automatic metrics collection
+    - Multiple inheritance from builtin exceptions
         configure_error_handling(**kwargs) -> FlextResult[None]: Configure error handling strategy
         get_error_handling_config() -> FlextResult[ConfigDict]: Get current error handling configuration
         create_environment_specific_config(env: str) -> FlextResult[dict]: Create environment-specific config
@@ -542,11 +512,13 @@ class FlextExceptions:
             context = dict(
                 cast("Mapping[str, object]", kwargs.get("context", {})) or {}
             )
-            context.update({
-                "field": field,
-                "value": value,
-                "validation_details": validation_details,
-            })
+            context.update(
+                {
+                    "field": field,
+                    "value": value,
+                    "validation_details": validation_details,
+                }
+            )
             super().__init__(
                 message,
                 code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -849,10 +821,12 @@ class FlextExceptions:
             elif actual_type == "dict":
                 actual_type_obj = dict
 
-            context.update({
-                "expected_type": expected_type_obj,
-                "actual_type": actual_type_obj,
-            })
+            context.update(
+                {
+                    "expected_type": expected_type_obj,
+                    "actual_type": actual_type_obj,
+                }
+            )
             super().__init__(
                 message,
                 code=FlextConstants.Errors.TYPE_ERROR,

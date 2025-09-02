@@ -17,8 +17,8 @@ This analysis examines FlextConstants integration patterns across the 33+ FLEXT 
 | **Library** | **Priority** | **Current Constants Usage** | **Extension Pattern** | **Integration Opportunity** | **Expected Impact** |
 |-------------|-------------|------------------------------|---------------------|---------------------------|-------------------|
 | **flext-grpc** | ✅ Exemplary | Complete FlextGrpcConstants extension | Proper inheritance pattern | Standardization reference | High - Reference implementation |
-| **flext-ldap** | 🟡 Partial | FlextLdapConstants via FlextCoreConstants | Legacy inheritance pattern | Migration to FlextConstants | Medium - Pattern correction |
-| **flext-ldif** | ✅ Good | FlextLdifConstants extension | Proper inheritance pattern | Minor enhancements | Low - Already compliant |
+| **flext-ldap** | 🟡 Partial | FlextLDAPConstants via FlextCoreConstants | Legacy inheritance pattern | Migration to FlextConstants | Medium - Pattern correction |
+| **flext-ldif** | ✅ Good | FlextLDIFConstants extension | Proper inheritance pattern | Minor enhancements | Low - Already compliant |
 | **flext-auth** | ✅ Good | FlextAuthConstants extension | Proper inheritance pattern | Security constants expansion | Medium - Domain enhancement |
 | **flext-meltano** | 🔴 Critical | Direct usage only | No extension pattern | Complete ETL constants system | High - New domain creation |
 | **flext-web** | 🔴 Critical | Direct usage only | No extension pattern | Web service constants system | High - HTTP/session constants |

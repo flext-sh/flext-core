@@ -107,6 +107,15 @@ class FlextMatchers:
                 f"Expected error code {expected_error_code!r}, got {actual_code!r}"
             )
 
+    # Convenience boolean helpers used by some tests
+    @staticmethod
+    def is_successful_result(result: FlextResult[object]) -> bool:
+        return bool(getattr(result, "success", False))
+
+    @staticmethod
+    def is_failed_result(result: FlextResult[object]) -> bool:
+        return bool(getattr(result, "is_failure", False))
+
     @staticmethod
     def assert_container_has_service(
         container: ContainerProtocol,

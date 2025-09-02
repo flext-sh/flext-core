@@ -259,9 +259,9 @@ gantt
 
 #### Week 8: LDAP Service Behavioral Implementation
 - [ ] **LDAP Behavioral Audit**: Identify behavioral pattern opportunities in LDAP operations
-- [ ] **FlextLdapDirectoryService**: Implement LDAP service with behavioral patterns
+- [ ] **FlextLDAPDirectoryService**: Implement LDAP service with behavioral patterns
   ```python
-  class FlextLdapDirectoryService(FlextMixins.Service):  # Loggable + Validatable
+  class FlextLDAPDirectoryService(FlextMixins.Service):  # Loggable + Validatable
       def __init__(self, server_config: dict):
           super().__init__()
           self.server_config = server_config

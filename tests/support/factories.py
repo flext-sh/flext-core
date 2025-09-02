@@ -17,7 +17,6 @@ from factory import (
     LazyFunction,
     Sequence,
 )
-from pydantic import BaseModel
 
 from flext_core import (
     FlextConstants,  # New refactored API
@@ -27,7 +26,7 @@ from flext_core import (
 
 
 # Base models for testing (these would typically come from domain models)
-class TestUser(BaseModel):
+class TestUser(FlextModels.BaseConfig):
     """Test user model for factory testing."""
 
     id: str
@@ -39,7 +38,7 @@ class TestUser(BaseModel):
     metadata: dict[str, object]
 
 
-class TestConfig(BaseModel):
+class TestConfig(FlextModels.BaseConfig):
     """Test configuration model for factory testing."""
 
     database_url: str
@@ -50,7 +49,7 @@ class TestConfig(BaseModel):
     features: list[str]
 
 
-class TestField(BaseModel):
+class TestField(FlextModels.BaseConfig):
     """Test field model for factory testing."""
 
     field_id: str
@@ -66,7 +65,7 @@ class TestField(BaseModel):
     pattern: str | None = None
 
 
-class BaseTestEntity(BaseModel):
+class BaseTestEntity(FlextModels.BaseConfig):
     """Base test entity for domain testing."""
 
     id: str
@@ -77,7 +76,7 @@ class BaseTestEntity(BaseModel):
     metadata: dict[str, object] = {}
 
 
-class BaseTestValueObject(BaseModel):
+class BaseTestValueObject(FlextModels.BaseConfig):
     """Base test value object for domain testing."""
 
     value: str
@@ -90,7 +89,7 @@ class BaseTestValueObject(BaseModel):
 class UserFactory(factory.Factory[TestUser]):
     """Factory for creating test users with factory_boy."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestUser
@@ -142,7 +141,7 @@ class InactiveUserFactory(UserFactory):
 class ConfigFactory(factory.Factory[TestConfig]):
     """Factory for creating test configurations."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestConfig
@@ -171,7 +170,7 @@ class ProductionConfigFactory(ConfigFactory):
 class StringFieldFactory(factory.Factory[TestField]):
     """Factory for string field testing."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestField
@@ -191,7 +190,7 @@ class StringFieldFactory(factory.Factory[TestField]):
 class IntegerFieldFactory(factory.Factory[TestField]):
     """Factory for integer field testing."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestField
@@ -210,7 +209,7 @@ class IntegerFieldFactory(factory.Factory[TestField]):
 class BooleanFieldFactory(factory.Factory[TestField]):
     """Factory for boolean field testing."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestField
@@ -228,7 +227,7 @@ class BooleanFieldFactory(factory.Factory[TestField]):
 class FloatFieldFactory(factory.Factory[TestField]):
     """Factory for float field testing."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = TestField
@@ -247,7 +246,7 @@ class FloatFieldFactory(factory.Factory[TestField]):
 class TestEntityFactory(factory.Factory[BaseTestEntity]):
     """Factory for creating test entities."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = BaseTestEntity
@@ -267,7 +266,7 @@ class TestEntityFactory(factory.Factory[BaseTestEntity]):
 class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
     """Factory for creating test value objects."""
 
-    class Meta:  # type: ignore[misc]  # Factory Boy Meta class compatibility
+    class Meta:
         """Factory meta compatibility."""
 
         model = BaseTestValueObject
@@ -331,12 +330,12 @@ class SequenceGenerators:
     @staticmethod
     def entity_id_sequence() -> str:
         """Generate sequence of entity IDs."""
-        return str(FlextModels.EntityId(root=f"test_entity_{uuid.uuid4()}"))
+        return str(FlextModels(root=f"test_entity_{uuid.uuid4()}"))
 
     @staticmethod
-    def timestamp_sequence() -> FlextModels.Timestamp:
+    def timestamp_sequence() -> FlextModels:
         """Generate sequence of timestamps."""
-        return FlextModels.Timestamp(root=datetime.now(UTC))
+        return FlextModels(root=datetime.now(UTC))
 
     @staticmethod
     def email_sequence(domain: str = "example.com") -> str:

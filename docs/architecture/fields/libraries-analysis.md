@@ -781,7 +781,7 @@ def validate_inventory_business_rules(inventory_data: dict) -> FlextResult[None]
 # Current: Basic LDAP field handling
 # Recommended: FlextFields integration for LDAP attributes
 
-class FlextLdapFieldsEnhanced:
+class FlextLDAPFieldsEnhanced:
     """Enhanced LDAP fields with FlextFields integration."""
     
     @staticmethod
@@ -871,9 +871,9 @@ class FlextLdapFieldsEnhanced:
         """Validate LDAP entry against schema."""
         
         if entry_type == "user":
-            schema = FlextLdapFieldsEnhanced.create_ldap_user_schema()
+            schema = FlextLDAPFieldsEnhanced.create_ldap_user_schema()
         elif entry_type == "group":
-            schema = FlextLdapFieldsEnhanced.create_ldap_group_schema()
+            schema = FlextLDAPFieldsEnhanced.create_ldap_group_schema()
         else:
             return FlextResult[dict].fail(f"Unknown LDAP entry type: {entry_type}")
         
@@ -904,7 +904,7 @@ def create_ldap_user(user_data: dict) -> FlextResult[dict]:
     """Create LDAP user with comprehensive validation."""
     
     # Validate user data
-    validation_result = FlextLdapFieldsEnhanced.validate_ldap_entry("user", user_data)
+    validation_result = FlextLDAPFieldsEnhanced.validate_ldap_entry("user", user_data)
     
     if not validation_result.success:
         return validation_result

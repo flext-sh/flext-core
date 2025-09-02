@@ -138,8 +138,10 @@ class DatabaseConnection:
 
         # Demo credentials - in production use environment variables or secure vault
         demo_username: FlextTypes.Core.String = "admin"
-        # Password hardcoded for demo only - use os.environ["DB_PASSWORD"] in production
-        demo_password: FlextTypes.Core.String = "demo_secret_not_for_production"  # noqa: S105
+        # Password from environment or demo fallback
+        demo_password: FlextTypes.Core.String = os.getenv(
+            "FLEXT_DEMO_DB_PASSWORD", "demo_secret_not_for_production"
+        )
         if username != demo_username or password != demo_password:
             msg: FlextTypes.Core.String = "Invalid database credentials"
             return FlextResult[None].fail(
@@ -901,7 +903,7 @@ def demonstrate_validation_exceptions() -> None:
     # Examples created (not raised for demonstration)
 
 
-def demonstrate_operational_exceptions() -> None:  # noqa: PLR0912
+def demonstrate_operational_exceptions() -> None:
     """Demonstrate operational exceptions with service interactions."""
     # 1. User management operations
 

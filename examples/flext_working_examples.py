@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import override
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from flext_core import FlextConfig, FlextResult
+from flext_core.models import FlextModels
 
 # =============================================================================
 # CONSTANTS
@@ -35,7 +35,7 @@ def _print_header() -> None:
     print("=" * 60)
 
 
-class SimpleUser(BaseModel):
+class SimpleUser(FlextModels.BaseConfig):
     """Simple user model for demonstrations."""
 
     name: str = Field(..., min_length=1, max_length=100)
@@ -63,7 +63,6 @@ class SimpleConfig(FlextConfig):
     debug: bool = False
     max_users: int = Field(default=1000, ge=1)
 
-    @override
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate configuration."""
         if self.max_users <= 0:

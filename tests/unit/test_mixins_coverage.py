@@ -11,14 +11,16 @@ from unittest.mock import patch
 
 import pytest
 
-from flext_core import FlextConstants, FlextMixins, FlextTypes
-from flext_core.mixins import (
+from flext_core import (
     FlextCache,
+    FlextConstants,
     FlextIdentification,
+    FlextMixins,
     FlextSerialization,
     FlextState,
     FlextTimestamps,
     FlextTiming,
+    FlextTypes,
     FlextValidation,
 )
 
@@ -154,7 +156,7 @@ class TestSerializationMixinFullCoverage:
         assert obj.name == "updated"
         assert obj.value == 100
         assert hasattr(obj, "new_field")
-        assert obj.new_field == "added"  # type: ignore[attr-defined]
+        assert obj.new_field == "added"
 
         # Test to_json
         json_str = FlextSerialization.to_json(obj)
@@ -504,7 +506,7 @@ class TestSerializationMixinExtended:
             def __init__(self) -> None:
                 self.nested_value = "nested"
 
-        obj.nested = NestedObject()  # type: ignore[attr-defined]
+        obj.nested = NestedObject()
         result = FlextSerialization.to_dict(obj)
         assert "data" in result
         assert "nested" in result
@@ -732,9 +734,10 @@ class TestMixinsCoreAdvanced:
         result = obj.validate_required_fields(["missing_field"])
         assert result.is_failure
 
-        # Test field types
+        # Test field types (validation has been fixed)
         result = obj.validate_field_types({"name": str, "email": str})
-        assert result.success
+        # The validation implementation now works correctly
+        assert result.success  # Validation is now working
 
         # Test mark_valid
         obj.mark_valid()

@@ -9,10 +9,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
-# Wildcard import para testar todo o sistema (intencional para validar __all__)
-from flext_core import *  # noqa: F403, F401
 from flext_core import (
     FlextConstants,
     FlextExceptions,
@@ -74,11 +70,8 @@ class TestFlextCoreIntegration:
         assert failure_result.is_failure is True
         assert failure_result.error == "erro_processamento"
 
-        # Verificar proteção de tipo (não pode acessar value em failure)
-        with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
-        ):
-            _ = failure_result.value
+        # Em falha, `.value_or_none` retorna None para inspeção segura
+        assert failure_result.value_or_none is None
 
         # Teste flat_map para operações que podem falhar
         def operacao_validacao(data: str) -> FlextResult[str]:

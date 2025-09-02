@@ -544,7 +544,7 @@ class FlextPluginExecutor(FlextMixins.Entity):  # Complete behavioral package
 ##### Recommended FlextMixins Integration
 ```python
 # RECOMMENDED: LDAP service with behavioral patterns
-class FlextLdapDirectoryService(FlextMixins.Service):  # Loggable + Validatable
+class FlextLDAPDirectoryService(FlextMixins.Service):  # Loggable + Validatable
     """LDAP directory service with behavioral pattern integration."""
     
     def __init__(self, server_config: dict):

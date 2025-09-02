@@ -41,7 +41,7 @@ The `FlextModels` module is a **production-ready, enterprise-grade domain modeli
 | **flext-core** | ✅ Implemented | Foundation | 100% - Core implementation |
 | **flext-api** | ✅ Extended | Production | 95% - FlextApiModels(FlextModels) |
 | **flext-web** | ✅ Extended | Production | 95% - FlextWebModels(FlextModels) |
-| **flext-ldap** | ✅ Extended | Production | 90% - FlextLdapModels(FlextModels) |
+| **flext-ldap** | ✅ Extended | Production | 90% - FlextLDAPModels(FlextModels) |
 | **flext-plugin** | ✅ Extended | Production | 90% - FlextPluginModels(FlextModels) |
 | **flext-meltano** | ❌ Not Used | Gap | 0% - Missing domain models |
 | **flext-oracle-wms** | ❌ Not Used | Gap | 0% - Missing domain models |
@@ -333,7 +333,7 @@ class FlextApiModels(FlextModels):
 
 #### ✅ Good Pattern - flext-ldap Models
 ```python
-class FlextLdapModels(FlextModels):
+class FlextLDAPModels(FlextModels):
     """LDAP domain models with proper inheritance."""
     
     class Domain:
