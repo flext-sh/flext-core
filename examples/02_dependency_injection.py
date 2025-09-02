@@ -36,7 +36,7 @@ core = FlextCore.get_instance()
 core.configure_logging(log_level="INFO", _json_output=True)
 
 # Create application logger with proper naming
-logger = core.FlextLogger("flext.examples.enhanced_di")
+logger = core.FlextLogger("flext.examples.enhanced_di")  # type: ignore[attr-defined]
 
 # =============================================================================
 # DOMAIN MODELS USING FLEXTCORE NATIVE FEATURES
@@ -113,7 +113,7 @@ class EnterpriseUserService:
 
     def __init__(self) -> None:
         """Initialize with FlextCore logger."""
-        self._logger = core.FlextLogger("flext.services.user")
+        self._logger = core.FlextLogger("flext.services.user")  # type: ignore[attr-defined]
         self._users: dict[str, User] = {}
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
@@ -150,7 +150,7 @@ class MockNotificationService:
 
     def __init__(self) -> None:
         """Initialize with FlextCore logger."""
-        self._logger = core.FlextLogger("flext.services.notification")
+        self._logger = core.FlextLogger("flext.services.notification")  # type: ignore[attr-defined]
 
     def send_welcome_email(self, user: User) -> FlextResult[None]:
         """Mock sending welcome email."""
@@ -178,7 +178,7 @@ class UserRegistrationService:
         """Initialize with injected dependencies."""
         self._user_service = user_service
         self._notification_service = notification_service
-        self._logger = core.FlextLogger("flext.services.registration")
+        self._logger = core.FlextLogger("flext.services.registration")  # type: ignore[attr-defined]
 
     def register_user(self, name: str, email: str, age: int) -> FlextResult[User]:
         """Register user using railway-oriented programming patterns."""
