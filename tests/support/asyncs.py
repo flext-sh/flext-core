@@ -88,12 +88,14 @@ class AsyncTestUtils:
         if not coroutines:
             return []
 
-        results = await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
         if return_exceptions:
+            results = await asyncio.gather(*coroutines, return_exceptions=True)
             # Filter out exceptions and return only successful results using type guard
-            return [r for r in results if _is_not_exception(r)]
-        # When return_exceptions=False, asyncio.gather returns list[T] directly
-        return results
+            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
+            return filtered_results
+
+        # When return_exceptions=False, asyncio.gather will raise on first exception
+        return await asyncio.gather(*coroutines, return_exceptions=False)
 
     @staticmethod
     async def run_concurrent(
@@ -123,12 +125,14 @@ class AsyncTestUtils:
         """Run a list of coroutines concurrently."""
         if not tasks:
             return []
-        results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
         if return_exceptions:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
             # Filter out exceptions and return only successful results using type guard
-            return [r for r in results if _is_not_exception(r)]
-        # When return_exceptions=False, asyncio.gather returns list[T] directly
-        return results
+            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
+            return filtered_results
+        # When return_exceptions=False, asyncio.gather will raise on first exception
+        return await asyncio.gather(*tasks, return_exceptions=False)
+        # Type assertion: when return_exceptions=False, results is guaranteed to be list[T]
 
     @staticmethod
     async def retry_async(

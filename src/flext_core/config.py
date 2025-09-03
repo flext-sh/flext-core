@@ -61,11 +61,13 @@ Integration with FlextCore:
     ...     config = config_result.value
     ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
     >>> # Business rule validation
-    >>> validation_result = FlextConfig.validate_business_rules({
-    ...     "database_url": "postgresql://localhost/prod",
-    ...     "secret_key": "secure-key-with-sufficient-length",
-    ...     "log_level": "INFO",
-    ... })
+    >>> validation_result = FlextConfig.validate_business_rules(
+    ...     {
+    ...         "database_url": "postgresql://localhost/prod",
+    ...         "secret_key": "secure-key-with-sufficient-length",
+    ...         "log_level": "INFO",
+    ...     }
+    ... )
 
 Environment Configuration Examples:
     >>> # Development configuration
@@ -1396,8 +1398,6 @@ class FlextConfig(FlextModels.BaseConfig):
             return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
 
 
-# Export only the classes and functions defined in this module
 __all__ = [
-    "FlextConfig",  # Main class
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextConfig",
 ]

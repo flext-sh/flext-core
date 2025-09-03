@@ -1727,18 +1727,8 @@ class FlextContainer:
         return cast("type[Exception]", getattr(FlextExceptions, name))
 
 
-# =============================================================================
-# GLOBAL CONTAINER MANAGER - Singleton instance
-# =============================================================================
-
 _global_manager = FlextContainer.GlobalManager()
 
-
-# =============================================================================
-# EXPORTS - Single consolidated class with backward compatibility
-# =============================================================================
-
 __all__: list[str] = [
-    "FlextContainer",  # Main container class - all functionality via class methods
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextContainer",
 ]

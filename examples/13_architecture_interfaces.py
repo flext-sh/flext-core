@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from flext_core import (
     FlextCore,
     FlextHandlers,
+    FlextLogger,
     FlextProtocols,
     FlextResult,
 )
@@ -40,7 +41,7 @@ core = FlextCore.get_instance()
 
 # Configure enterprise logging
 core.configure_logging(log_level="INFO", _json_output=True)
-logger = core.FlextLogger("flext.examples.architecture")
+logger = FlextLogger("flext.examples.architecture")
 
 # =============================================================================
 # DOMAIN MODELS USING FLEXTCORE NATIVE FEATURES
@@ -147,7 +148,7 @@ class UserService(FlextProtocols.Domain.Service):
 
     def __init__(self) -> None:
         """Initialize service with FlextCore logging."""
-        self._logger = core.FlextLogger("flext.services.user")
+        self._logger = FlextLogger("flext.services.user")
         self._users: dict[str, User] = {}
         self._is_started = False
 
@@ -211,7 +212,7 @@ class UserRepository(FlextProtocols.Domain.Repository[User]):
 
     def __init__(self) -> None:
         """Initialize repository."""
-        self._logger = core.FlextLogger("flext.repository.user")
+        self._logger = FlextLogger("flext.repository.user")
         self._storage: dict[str, User] = {}
 
     def get_by_id(self, entity_id: str) -> FlextResult[User]:
@@ -263,7 +264,7 @@ class CreateUserHandler(FlextHandlers.CQRS.CommandHandler[CreateUserCommand, Use
     def __init__(self, user_service: UserService) -> None:
         """Initialize with service dependency."""
         self._user_service = user_service
-        self._logger = core.FlextLogger("flext.handlers.create_user")
+        self._logger = FlextLogger("flext.handlers.create_user")
 
     def handle_command(self, command: CreateUserCommand) -> FlextResult[User]:
         """Handle create user command."""

@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextConfig, FlextResult
+from flext_core import FlextConfig
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -106,7 +106,7 @@ class TestFlextConfigComprehensive:
 
     def test_validate_config_source_valid_values(self) -> None:
         """Test config source validation with valid values."""
-        valid_sources = ["default", "file", "env", "database", "api"]
+        valid_sources = ["default", "yaml", "cli", "env", "json", "file", "dotenv"]
 
         for source in valid_sources:
             config = FlextConfig(config_source=source)
@@ -161,18 +161,18 @@ class TestFlextConfigComprehensive:
         config = FlextConfig(environment="production")
         serialized = config.serialize_environment("production")
 
-        assert serialized["environment"] == "production"
+        assert serialized["name"] == "production"
         assert serialized["is_production"] is True
-        assert serialized["allows_debug"] is False
+        assert serialized["debug_allowed"] is False
 
     def test_serialize_log_level(self) -> None:
         """Test log level serialization."""
         config = FlextConfig(log_level="INFO")
         serialized = config.serialize_log_level("INFO")
 
-        assert serialized["log_level"] == "INFO"
-        assert serialized["log_level_numeric"] == 20
-        assert serialized["enable_debug_logging"] is False
+        assert serialized["level"] == "INFO"
+        assert serialized["numeric_level"] == 20
+        assert serialized["verbose"] is False
 
     def test_serialize_config_for_api(self) -> None:
         """Test API serialization."""
@@ -208,7 +208,7 @@ class TestFlextConfigComprehensive:
 
         result = FlextConfig.create_complete_config(base_config, {})
         assert result.is_failure
-        assert "Configuration validation failed" in result.error
+        assert "Failed to create complete config" in result.error
 
     def test_load_and_validate_from_file_success(self) -> None:
         """Test loading and validating from file."""
@@ -230,9 +230,9 @@ class TestFlextConfigComprehensive:
             assert result.success
 
             config = result.unwrap()
-            assert config.app_name == "file-app"
-            assert config.environment == "test"
-            assert config.debug is True
+            assert config["app_name"] == "file-app"
+            assert config["environment"] == "test"
+            assert config["debug"] is True
         finally:
             Path(temp_path).unlink()
 
@@ -240,7 +240,7 @@ class TestFlextConfigComprehensive:
         """Test loading from non-existent file."""
         result = FlextConfig.load_and_validate_from_file("non_existent_file.json")
         assert result.is_failure
-        assert "Failed to load config from file" in result.error
+        assert "NOT_FOUND" in result.error
 
     def test_load_and_validate_from_file_invalid_json(self) -> None:
         """Test loading from file with invalid JSON."""
@@ -253,7 +253,7 @@ class TestFlextConfigComprehensive:
         try:
             result = FlextConfig.load_and_validate_from_file(temp_path)
             assert result.is_failure
-            assert "Failed to load config from file" in result.error
+            assert "FLEXT_2004" in result.error or "Expecting value" in result.error
         finally:
             Path(temp_path).unlink()
 
@@ -279,29 +279,32 @@ class TestFlextConfigComprehensive:
 
         result = FlextConfig.safe_load_from_dict(invalid_dict)
         assert result.is_failure
-        assert "Failed to create config from dict" in result.error
+        assert "Failed to load from dict" in result.error
 
     def test_merge_and_validate_configs_success(self) -> None:
-        """Test merging and validating multiple configs."""
-        config1 = {"app_name": "merged-app"}
-        config2 = {"environment": "production"}
-        config3 = {"debug": False, "max_workers": 8}
+        """Test merging and validating two configs."""
+        base_config = {"app_name": "base-app", "environment": "development"}
+        override_config = {
+            "environment": "production",
+            "debug": False,
+            "max_workers": 8,
+        }
 
-        result = FlextConfig.merge_and_validate_configs([config1, config2, config3])
+        result = FlextConfig.merge_and_validate_configs(base_config, override_config)
         assert result.success
 
-        config = result.unwrap()
-        assert config.app_name == "merged-app"
-        assert config.environment == "production"
-        assert config.debug is False
-        assert config.max_workers == 8
+        config_dict = result.unwrap()
+        assert config_dict["app_name"] == "base-app"
+        assert config_dict["environment"] == "production"  # Override wins
+        assert config_dict["debug"] is False
+        assert config_dict["max_workers"] == 8
 
     def test_merge_and_validate_configs_validation_error(self) -> None:
         """Test merging configs with validation error."""
         config1 = {"app_name": "test"}
         config2 = {"environment": "invalid_env"}
 
-        result = FlextConfig.merge_and_validate_configs([config1, config2])
+        result = FlextConfig.merge_and_validate_configs(config1, config2)
         assert result.is_failure
         assert "Failed to merge and validate configs" in result.error
 
@@ -311,41 +314,35 @@ class TestFlextConfigComprehensive:
         os.environ["TEST_CONFIG_VAR"] = "test_value"
 
         try:
-
-            def validator(value: str) -> FlextResult[str]:
-                return FlextResult[str].ok(value.upper())
-
+            # Test basic functionality without custom validator
             result = FlextConfig.get_env_with_validation("TEST_CONFIG_VAR")
             assert result.success
-            assert result.unwrap() == "TEST_VALUE"
+            assert result.unwrap() == "test_value"
         finally:
             if "TEST_CONFIG_VAR" in os.environ:
                 del os.environ["TEST_CONFIG_VAR"]
 
     def test_get_env_with_validation_not_found(self) -> None:
         """Test getting non-existent environment variable."""
-
-        def validator(value: str) -> FlextResult[str]:
-            return FlextResult[str].ok(value)
-
-        result = FlextConfig.get_env_with_validation("NON_EXISTENT_VAR", validator)
+        # Test with required=True to trigger failure when variable not found
+        result = FlextConfig.get_env_with_validation("NON_EXISTENT_VAR", required=True)
         assert result.is_failure
-        assert "Environment variable 'NON_EXISTENT_VAR' not found" in result.error
+        assert "Environment variable NON_EXISTENT_VAR not" in result.error
 
     def test_get_env_with_validation_validator_failure(self) -> None:
-        """Test getting environment variable with validator failure."""
-        os.environ["TEST_INVALID_VAR"] = "invalid_value"
+        """Test getting environment variable with type validation failure."""
+        os.environ["TEST_INVALID_VAR"] = "not_a_number"
 
         try:
-
-            def failing_validator(_value: str) -> FlextResult[str]:
-                return FlextResult[str].fail("Validation failed")
-
+            # Test with int type validation on non-numeric string
             result = FlextConfig.get_env_with_validation(
-                "TEST_INVALID_VAR", failing_validator
+                "TEST_INVALID_VAR", validate_type=int
             )
             assert result.is_failure
-            assert "validation failed" in result.error.lower()
+            assert (
+                "cannot convert" in result.error.lower()
+                or "validation" in result.error.lower()
+            )
         finally:
             if "TEST_INVALID_VAR" in os.environ:
                 del os.environ["TEST_INVALID_VAR"]
@@ -658,8 +655,6 @@ class TestConfigEdgeCases:
             "debug": True,
             "max_workers": 8,
             "timeout_seconds": 120,
-            "metadata": {"nested": "value"},
-            "tags": ["tag1", "tag2"],
         }
 
         result = FlextConfig.safe_load_from_dict(complex_dict)

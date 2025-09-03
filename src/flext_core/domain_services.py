@@ -84,10 +84,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# =============================================================================
-# FLEXT DOMAIN SERVICE - Public DDD Domain Service implementation
-# =============================================================================
-
 
 class FlextDomainService[TDomainResult](
     FlextModels.BaseConfig,
@@ -1272,8 +1268,6 @@ class FlextDomainService[TDomainResult](
             )
 
 
-# Export API
 __all__: list[str] = [
-    "FlextDomainService",  # Main domain service base class
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextDomainService",
 ]

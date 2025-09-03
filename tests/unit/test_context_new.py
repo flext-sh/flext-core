@@ -200,7 +200,7 @@ class TestFlextContextCore:
 
     def test_from_header_context_empty(self) -> None:
         """Test converting empty headers."""
-        headers = {}
+        headers: dict[str, str] = {}
         context = FlextContextCore.from_header_context(headers)
 
         assert context == {}
