@@ -1,8 +1,4 @@
-"""Comprehensive tests for delegation_system.py to achieve maximum test coverage.
-
-Tests cover all aspects of the FlextDelegation including protocols, delegated properties,
-mixin delegators, system validation, and configuration management.
-"""
+"""Comprehensive tests for delegation_system.py to achieve maximum test coverage."""
 
 from unittest.mock import MagicMock, patch
 

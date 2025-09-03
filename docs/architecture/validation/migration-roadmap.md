@@ -200,8 +200,8 @@ gantt
 
       def validate_user_form(
           self,
-          form_data: FlextTypes.Core.Dict
-      ) -> FlextResult[FlextTypes.Core.Dict]:
+          form_data: dict[str, object]
+      ) -> FlextResult[dict[str, object]]:
           # Comprehensive form validation with detailed error reporting
           return self.form_validator.validate(form_data)
   ```

@@ -26,70 +26,62 @@ logger = FlextLogger("flext.examples.validation")
 
 
 def flext_validate_string(
-    value: FlextTypes.Core.String,
-    field_name: FlextTypes.Core.String,
+    value: str,
+    field_name: str,
     min_length: int = 0,
     max_length: int = 1000,
-) -> FlextResult[FlextTypes.Core.String]:
+) -> FlextResult[str]:
     """Validate string with length constraints."""
     # Simple string length validation
     if len(value) < min_length:
-        return FlextResult[FlextTypes.Core.String].fail(
+        return FlextResult[str].fail(
             f"{field_name}: Must be at least {min_length} characters"
         )
 
     if len(value) > max_length:
-        return FlextResult[FlextTypes.Core.String].fail(
+        return FlextResult[str].fail(
             f"{field_name}: Must not exceed {max_length} characters"
         )
 
-    return FlextResult[FlextTypes.Core.String].ok(value)
+    return FlextResult[str].ok(value)
 
 
 def flext_validate_numeric(
-    value: FlextTypes.Core.Float,
-    field_name: FlextTypes.Core.String,
-    min_val: FlextTypes.Core.Float = 0.0,
-    max_val: FlextTypes.Core.Float = 1000.0,
-) -> FlextResult[FlextTypes.Core.Float]:
+    value: float,
+    field_name: str,
+    min_val: float = 0.0,
+    max_val: float = 1000.0,
+) -> FlextResult[float]:
     """Validate numeric value with range constraints."""
     if value < min_val or value > max_val:
-        return FlextResult[FlextTypes.Core.Float].fail(
+        return FlextResult[float].fail(
             f"{field_name} must be between {min_val} and {max_val}"
         )
-    return FlextResult[FlextTypes.Core.Float].ok(float(value))
+    return FlextResult[float].ok(float(value))
 
 
-def flext_validate_email(
-    email: FlextTypes.Core.String, _field_name: FlextTypes.Core.String
-) -> FlextResult[FlextTypes.Core.String]:
+def flext_validate_email(email: str, _field_name: str) -> FlextResult[str]:
     """Validate email address using centralized patterns."""
     email_clean = email.strip().lower()
 
     if not email_clean:
-        return FlextResult[FlextTypes.Core.String].fail("Email cannot be empty")
+        return FlextResult[str].fail("Email cannot be empty")
 
     if "@" not in email_clean:
-        return FlextResult[FlextTypes.Core.String].fail("Email must contain @ symbol")
+        return FlextResult[str].fail("Email must contain @ symbol")
 
     local, domain = email_clean.split("@", 1)
 
     if not local or not domain:
-        return FlextResult[FlextTypes.Core.String].fail(
-            "Email must have local and domain parts"
-        )
+        return FlextResult[str].fail("Email must have local and domain parts")
 
     if "." not in domain:
-        return FlextResult[FlextTypes.Core.String].fail(
-            "Domain must contain at least one dot"
-        )
+        return FlextResult[str].fail("Domain must contain at least one dot")
 
-    return FlextResult[FlextTypes.Core.String].ok(email_clean)
+    return FlextResult[str].ok(email_clean)
 
 
-def flext_validate_required(
-    value: object, field_name: FlextTypes.Core.String
-) -> FlextResult[object]:
+def flext_validate_required(value: object, field_name: str) -> FlextResult[object]:
     """Validate required field is not None or empty."""
     if value is None:
         return FlextResult[object].fail(f"{field_name} is required")

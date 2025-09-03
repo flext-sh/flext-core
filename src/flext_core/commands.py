@@ -1,84 +1,4 @@
-"""CQRS Command and Query Processing System for FLEXT ecosystem.
-
-Provides consolidated CQRS implementation with:
-- Type-safe command/query processing with FlextResult railway pattern
-- Handler registration and auto-discovery
-- Middleware pipeline for cross-cutting concerns
-- Pydantic v2 validation and serialization
-- Thread-safe execution with structured logging
-
-Usage:
-    Command processing::
-
-        class CreateUser(FlextCommands.Models.Command):
-            email: str
-            name: str
-
-
-        class UserHandler(FlextCommands.Handlers.CommandHandler[CreateUser, str]):
-            def handle(self, command: CreateUser) -> FlextResult[str]:
-                return FlextCommands.Results.success(f"user_{command.name}")
-
-
-        bus = FlextCommands.Factories.create_command_bus()
-        result = bus.execute(CreateUser(email="test@example.com", name="Test"))
-
-    Query processing::
-
-        class FindUsers(FlextCommands.Models.Query):
-            role: str | None = None
-
-
-        query = FindUsers(role="admin")
-        result = query_handler.execute(query)
-
-
-    FlextCommands.Handlers: Handler base classes for command/query processing
-        • AbstractHandler[TRequest, TResponse]: Abstract base handler
-            - handle(self, request: TRequest) -> FlextResult[TResponse]: Process request
-            - can_handle(self, request: object) -> bool: Check if handler supports request
-            - get_handler_info(self) -> dict[str, object]: Handler metadata
-        • CommandHandler[TCommand, TResult]: Command-specific handler
-            - handle_command(self, command: TCommand) -> FlextResult[TResult]: Process command
-            - validate_command(self, command: TCommand) -> FlextResult[None]: Pre-processing validation
-            - log_command_execution(self, command: TCommand, result: TResult) -> None: Execution logging
-        • QueryHandler[TQuery, TResult]: Query-specific handler
-            - handle_query(self, query: TQuery) -> FlextResult[TResult]: Process query
-            - apply_pagination(self, results: list[T], query: TQuery) -> list[T]: Paginate results
-            - apply_filters(self, results: list[T], query: TQuery) -> list[T]: Filter results
-
-    FlextCommands.Bus: Central command bus for routing and execution
-        • CommandBus: Main bus implementation
-            - execute(self, command: object) -> FlextResult[object]: Execute command
-            - register_handler(self, handler: object) -> FlextResult[None]: Register command handler
-            - add_middleware(self, middleware: object) -> None: Add middleware to pipeline
-            - get_registered_handlers(self) -> dict[str, object]: List registered handlers
-        • QueryBus: Query processing bus
-            - query(self, query: object) -> FlextResult[object]: Execute query
-            - register_query_handler(self, handler: object) -> FlextResult[None]: Register query handler
-        • EventBus: Domain event processing
-            - publish(self, event: object) -> FlextResult[None]: Publish domain event
-            - subscribe(self, handler: object, event_type: str) -> None: Subscribe to events
-
-    FlextCommands.Decorators: Function-based handler registration
-        • command_handler(command_type: type) -> Callable: Decorator for command handlers
-        • query_handler(query_type: type) -> Callable: Decorator for query handlers
-        • middleware(order: int = 0) -> Callable: Decorator for middleware registration
-        • validation_middleware() -> Callable: Pre-built validation middleware
-
-    FlextCommands.Results: Factory methods for consistent result creation
-        • success(data: T) -> FlextResult[T]: Create successful result
-        • failure(error: str, error_code: str = None) -> FlextResult[None]: Create failure result
-        • validation_error(message: str, field: str = None) -> FlextResult[None]: Validation error result
-        • not_found(resource: str) -> FlextResult[None]: Not found error result
-
-    FlextCommands.Factories: Instance creation with dependency injection
-        • create_command_bus(**kwargs) -> CommandBus: Create configured command bus
-        • create_query_bus(**kwargs) -> QueryBus: Create configured query bus
-        • create_handler(handler_type: str, **config) -> AbstractHandler: Create handler instance
-        • create_middleware(middleware_type: str, **config) -> object: Create middleware instance
-
-"""
+"""CQRS Command and Query Processing System for FLEXT ecosystem."""
 
 from __future__ import annotations
 
@@ -100,32 +20,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextCommands:
-    """CQRS Command and Query Processing System.
-
-    Consolidated class providing type-safe command/query processing with:
-    - FlextResult railway pattern for error handling
-    - Pydantic v2 validation and serialization
-    - Handler registration and middleware pipeline
-    - Auto-discovery with type introspection
-
-    Organization:
-        - Handlers: Processing logic implementations
-        - Bus: Central routing and execution
-        - Results: FlextResult factory methods
-        - Factories: Instance creation utilities
-
-    Usage:
-        Basic command processing::
-
-
-            class UserHandler(FlextCommands.Handlers.CommandHandler[CreateUser, str]):
-                def handle(self, command: CreateUser) -> FlextResult[str]:
-                    return FlextCommands.Results.success(f"Created: {command.name}")
-
-
-            bus = FlextCommands.Bus()
-            result = bus.execute(CreateUser(email="test@example.com", name="Test"))
-    """
+    """CQRS Command and Query Processing System."""
 
     # =========================================================================
     # MODELS - Pydantic base models for Commands and Queries
@@ -138,7 +33,7 @@ class FlextCommands:
         without forcing inheritance in tests that use Pydantic directly.
         """
 
-        class Command(FlextModels.BaseConfig):
+        class Command(FlextModels.Config):
             """Command model.
 
             Implements default metadata, immutability and payload helpers
@@ -146,11 +41,11 @@ class FlextCommands:
             """
 
             model_config = ConfigDict(
-                # Validation settings (inherited from BaseConfig)
+                # Validation settings (inherited from Config)
                 validate_assignment=True,
                 validate_default=True,
                 use_enum_values=True,
-                # JSON settings (inherited from BaseConfig)
+                # JSON settings (inherited from Config)
                 arbitrary_types_allowed=True,
                 ser_json_bytes="base64",
                 ser_json_timedelta="iso8601",
@@ -205,45 +100,53 @@ class FlextCommands:
                 FlextModels.Payload[dict[str, object]]
                 | FlextResult[FlextModels.Payload[dict[str, object]]]
             ):
-                from flext_core.models import FlextModels
-
-                data = {
-                    k: v
-                    for k, v in self.model_dump().items()
-                    if k
-                    not in {
-                        "id",
-                        "command_id",
-                        "created_at",
-                        "correlation_id",
-                        "user_id",
-                        "command_type",
+                """Convert command to payload using direct class instantiation."""
+                try:
+                    data = {
+                        k: v
+                        for k, v in self.model_dump().items()
+                        if k
+                        not in {
+                            "id",
+                            "command_id",
+                            "created_at",
+                            "correlation_id",
+                            "user_id",
+                            "command_type",
+                        }
                     }
-                }
-                result = FlextModels.create_payload(
-                    data=data,
-                    message_type=self.__class__.__name__,
-                    source_service="command_service",
-                )
-                return result.unwrap() if result.is_success else result
+
+                    # Create payload directly using the class
+                    return FlextModels.Payload[dict[str, object]](
+                        data=data,
+                        message_type=self.__class__.__name__,
+                        source_service="command_service",
+                        timestamp=datetime.now(UTC),
+                        correlation_id=self.correlation_id,
+                        message_id=FlextUtilities.Generators.generate_uuid(),
+                    )
+                except Exception as e:
+                    return FlextResult[FlextModels.Payload[dict[str, object]]].fail(
+                        f"Failed to create payload: {e}"
+                    )
 
             @classmethod
             def from_payload(
-                cls: type[FlextModels.BaseConfig],
+                cls: type[FlextModels.Config],
                 payload: FlextModels.Payload[dict[str, object]],
-            ) -> FlextResult[FlextModels.BaseConfig]:
+            ) -> FlextResult[FlextModels.Config]:
                 try:
                     data = payload.data if hasattr(payload, "data") else None
                     if not isinstance(data, dict):
-                        return FlextResult[FlextModels.BaseConfig].fail(
+                        return FlextResult[FlextModels.Config].fail(
                             "FlextModels data is not compatible"
                         )
                     model = cls.model_validate(data)
-                    return FlextResult[FlextModels.BaseConfig].ok(model)
+                    return FlextResult[FlextModels.Config].ok(model)
                 except Exception as e:
-                    return FlextResult[FlextModels.BaseConfig].fail(str(e))
+                    return FlextResult[FlextModels.Config].fail(str(e))
 
-        class Query(FlextModels.BaseConfig):
+        class Query(FlextModels.Config):
             """Query model.
 
             Implements default metadata, immutability and payload helpers
@@ -251,11 +154,11 @@ class FlextCommands:
             """
 
             model_config = ConfigDict(
-                # Validation settings (inherited from BaseConfig)
+                # Validation settings (inherited from Config)
                 validate_assignment=True,
                 validate_default=True,
                 use_enum_values=True,
-                # JSON settings (inherited from BaseConfig)
+                # JSON settings (inherited from Config)
                 arbitrary_types_allowed=True,
                 ser_json_bytes="base64",
                 ser_json_timedelta="iso8601",
@@ -272,37 +175,13 @@ class FlextCommands:
     # =========================================================================
 
     class Handlers:
-        """Base classes for command and query handlers.
-
-        Provides:
-        - CommandHandler[CommandT, ResultT]: Generic handler for write operations
-        - QueryHandler[QueryT, ResultT]: Generic handler for read operations
-
-        Features:
-        - Type safety with generic constraints
-        - Automatic validation pipeline
-        - Structured logging and timing
-        - FlextResult error handling
-        """
+        """Base classes for command and query handlers."""
 
         class CommandHandler[CommandT, ResultT](
             FlextHandlers.CQRS.CommandHandler[CommandT, ResultT],
             FlextMixins,
         ):
-            """Generic base class for command handlers.
-
-            Type Parameters:
-                CommandT: Command type this handler processes
-                ResultT: Result type returned by successful processing
-
-            Features:
-            - Automatic command validation before processing
-            - Built-in logging and timing via mixins
-            - Type-safe execute() pipeline
-            - Thread-safe stateless design
-
-            Implement handle(command) -> FlextResult[ResultT] in subclasses.
-            """
+            """Generic base class for command handlers."""
 
             def __init__(
                 self,
@@ -339,15 +218,7 @@ class FlextCommands:
                 return FlextLogger(self.__class__.__name__)
 
             def validate_command(self, command: object) -> FlextResult[None]:
-                """Validate command before handling.
-
-                Args:
-                    command: Command object to validate
-
-                Returns:
-                    FlextResult indicating validation success or failure
-
-                """
+                """Validate command before handling."""
                 # Delegate to command's validation if available
                 validate_method = getattr(command, "validate_command", None)
                 if callable(validate_method):
@@ -357,34 +228,13 @@ class FlextCommands:
                 return FlextResult[None].ok(None)
 
             def handle(self, command: CommandT) -> FlextResult[ResultT]:
-                """Handle the command and return result.
-
-                Args:
-                    command: Command to handle
-
-                Returns:
-                    FlextResult with execution result or error
-
-                Note:
-                    Subclasses must implement this method for actual processing.
-
-                """
+                """Handle the command and return result.sing."""
                 # Subclasses must implement this method
                 msg = "Subclasses must implement handle method"
                 raise NotImplementedError(msg)
 
             def can_handle(self, command_type: object) -> bool:
-                """Check if handler can process this command.
-
-                Uses FlextUtilities type guards for validation and generic inspection.
-
-                Args:
-                    command_type: Command type to check
-
-                Returns:
-                    True if handler can process the command, False otherwise
-
-                """
+                """Check if handler can process this command."""
                 self.logger.debug(
                     "Checking if handler can process command",
                     command_type_name=getattr(
@@ -417,15 +267,7 @@ class FlextCommands:
                 return True
 
             def execute(self, command: CommandT) -> FlextResult[ResultT]:
-                """Execute command with full validation and error handling.
-
-                Args:
-                    command: Command to execute
-
-                Returns:
-                    FlextResult with execution result or structured error
-
-                """
+                """Execute command with full validation and error handling."""
                 self.log_info(
                     self,
                     "Executing command",
@@ -512,21 +354,7 @@ class FlextCommands:
             FlextHandlers.CQRS.QueryHandler[QueryT, QueryResultT],
             FlextMixins,
         ):
-            """Generic base class for query handlers.
-
-            Type Parameters:
-                QueryT: Query type this handler processes
-                QueryResultT: Result type returned by successful query execution
-
-            Features:
-            - Read-only operations without side effects
-            - Automatic query validation before processing
-            - Built-in logging, timing, and caching via mixins
-            - Thread-safe stateless design
-            - Optimized for pagination and high-throughput scenarios
-
-            Implement handle(query) -> FlextResult[QueryResultT] in subclasses.
-            """
+            """Generic base class for query handlers."""
 
             def __init__(self, handler_name: str | None = None) -> None:
                 """Initialize query handler with mixins.
@@ -549,29 +377,13 @@ class FlextCommands:
                 return self._handler_name
 
             def can_handle(self, query: QueryT) -> bool:
-                """Check if handler can process this query.
-
-                Args:
-                    query: Query object to check
-
-                Returns:
-                    True if handler can process the query
-
-                """
+                """Check if handler can process this query."""
                 # Generic implementation - override in subclasses for specific logic
                 _ = query
                 return True
 
             def validate_query(self, query: QueryT) -> FlextResult[None]:
-                """Validate query using its own validation method.
-
-                Args:
-                    query: Query object to validate
-
-                Returns:
-                    FlextResult indicating validation success or failure
-
-                """
+                """Validate query using its own validation method."""
                 validate_method = getattr(query, "validate_query", None)
                 if callable(validate_method):
                     result = validate_method()
@@ -580,18 +392,7 @@ class FlextCommands:
                 return FlextResult[None].ok(None)
 
             def handle(self, query: QueryT) -> FlextResult[QueryResultT]:
-                """Handle query and return result.
-
-                Args:
-                    query: Query to handle
-
-                Returns:
-                    FlextResult with query result or error
-
-                Note:
-                    Subclasses must implement this method for actual processing.
-
-                """
+                """Handle query and return result."""
                 # Subclasses should implement this method
                 msg = "Subclasses must implement handle method"
                 raise NotImplementedError(msg)
@@ -613,20 +414,7 @@ class FlextCommands:
     class Bus(
         FlextMixins,
     ):
-        """Command bus for routing and executing commands.
-
-        Features:
-        - Handler registration and auto-discovery
-        - Middleware pipeline support
-        - Built-in logging, caching, timing via mixins
-        - Thread-safe concurrent execution
-        - Performance monitoring and structured error handling
-
-        Usage:
-            bus = FlextCommands.Bus()
-            bus.register_handler(MyCommandHandler())
-            result = bus.execute(MyCommand())
-        """
+        """Command bus for routing and executing commands."""
 
         def __init__(self) -> None:
             """Initialize command bus with mixin support and CQRS adapter."""
@@ -649,22 +437,8 @@ class FlextCommands:
             # Auto-discovery handlers (single-arg registration)
             self._auto_handlers: list[object] = []
 
-        # Logger property is now provided by FlextMixins.Loggable mixin
-        # Logging methods (log_operation, log_info, log_error) are provided by mixin
-
         def register_handler(self, *args: object) -> None:
-            """Register command handler with flexible signature support.
-
-            Supports both single handler and (command_type, handler) registration.
-
-            Args:
-                *args: Either (handler,) or (command_type, handler)
-
-            Raises:
-                TypeError: If invalid arguments provided
-                ValueError: If handler registration fails
-
-            """
+            """Register command handler with flexible signature support."""
             if len(args) == 1:
                 handler = args[0]
                 if handler is None:
@@ -726,15 +500,7 @@ class FlextCommands:
             raise TypeError(msg)
 
         def find_handler(self, command: object) -> object | None:
-            """Find handler capable of processing the given command.
-
-            Args:
-                command: Command object to find handler for
-
-            Returns:
-                Handler object if found, None otherwise
-
-            """
+            """Find handler capable of processing the given command."""
             # Search auto-registered handlers first (single-arg form)
             for handler in self._auto_handlers:
                 can_handle_method = getattr(handler, "can_handle", None)
@@ -743,15 +509,7 @@ class FlextCommands:
             return None
 
         def execute(self, command: object) -> FlextResult[object]:
-            """Execute command through registered handler with middleware.
-
-            Args:
-                command: Command object to execute
-
-            Returns:
-                FlextResult with execution result or structured error
-
-            """
+            """Execute command through registered handler with middleware."""
             self._execution_count = int(self._execution_count) + 1
             command_type = type(command)
 
@@ -832,16 +590,7 @@ class FlextCommands:
             command: object,
             handler: object,
         ) -> FlextResult[None]:
-            """Apply middleware pipeline to command processing.
-
-            Args:
-                command: Command being processed
-                handler: Handler that will process the command
-
-            Returns:
-                FlextResult indicating middleware processing success or failure
-
-            """
+            """Apply middleware pipeline to command processing."""
             for i, middleware in enumerate(self._middleware):
                 self.log_debug(
                     self,
@@ -871,16 +620,7 @@ class FlextCommands:
             handler: object,
             command: object,
         ) -> FlextResult[object]:
-            """Execute command through handler with error handling.
-
-            Args:
-                handler: Handler object to execute
-                command: Command to process
-
-            Returns:
-                FlextResult with handler execution result or error
-
-            """
+            """Execute command through handler with error handling."""
             self.log_debug(
                 self,
                 "Delegating to handler",
@@ -911,12 +651,7 @@ class FlextCommands:
             )
 
         def add_middleware(self, middleware: object) -> None:
-            """Add middleware to the processing pipeline.
-
-            Args:
-                middleware: Middleware object with process() method
-
-            """
+            """Add middleware to the processing pipeline."""
             self._middleware.append(middleware)
             self.log_info(
                 self,
@@ -926,24 +661,11 @@ class FlextCommands:
             )
 
         def get_all_handlers(self) -> list[object]:
-            """Get all registered handlers for inspection.
-
-            Returns:
-                List of all registered handler objects
-
-            """
+            """Get all registered handlers for inspection."""
             return list(self._handlers.values())
 
         def unregister_handler(self, command_type: str) -> bool:
-            """Unregister command handler by command type.
-
-            Args:
-                command_type: String identifier of command type
-
-            Returns:
-                True if handler was unregistered, False if not found
-
-            """
+            """Unregister command handler by command type."""
             for key in list(self._handlers.keys()):
                 key_name = getattr(key, "__name__", None)
                 if (key_name is not None and key_name == command_type) or str(
@@ -960,15 +682,7 @@ class FlextCommands:
             return False
 
         def send_command(self, command: object) -> FlextResult[object]:
-            """Send command for processing (alias for execute).
-
-            Args:
-                command: Command object to send
-
-            Returns:
-                FlextResult with execution result or error
-
-            """
+            """Send command for processing (alias for execute)."""
             return self.execute(command)
 
         def get_registered_handlers(self) -> dict[str, object]:
@@ -985,28 +699,13 @@ class FlextCommands:
     # =========================================================================
 
     class Decorators:
-        """Decorators for function-based command handlers.
-
-        Provides:
-        - @command_handler decorator for converting functions to handlers
-        - Automatic handler instance creation and registration
-        - Full type safety with generic constraints
-        - Integration with class-based handlers
-        """
+        """Decorators for function-based command handlers."""
 
         @staticmethod
         def command_handler(
             command_type: type[object],
         ) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
-            """Mark function as command handler with automatic registration.
-
-            Args:
-                command_type: Command type class to handle
-
-            Returns:
-                Decorator function for command handler registration
-
-            """
+            """Mark function as command handler with automatic registration."""
 
             def decorator(
                 func: Callable[[object], object],
@@ -1038,14 +737,7 @@ class FlextCommands:
     # =========================================================================
 
     class Types:
-        """Type aliases for command system components.
-
-        Provides convenient access to command-related types from FlextTypes.Commands:
-        - CommandId: String identifier for commands
-        - CommandType: String identifier for command types
-        - CommandMetadata: Dictionary for command metadata
-        - CommandParameters: Dictionary for command parameters
-        """
+        """Type aliases for command system components."""
 
         # Import types from FlextTypes.Commands
         CommandId = FlextTypes.Commands.CommandId
@@ -1063,14 +755,7 @@ class FlextCommands:
     # =========================================================================
 
     class Results:
-        """Factory methods for creating FlextResult instances.
-
-        Provides:
-        - success(data): Create successful FlextResult
-        - failure(error, error_code, error_data): Create failure FlextResult
-        - Consistent error codes from FlextConstants
-        - Structured error data for debugging
-        """
+        """Factory methods for creating FlextResult instances."""
 
         @staticmethod
         def success(data: object) -> FlextResult[object]:
@@ -1114,14 +799,7 @@ class FlextCommands:
     # =========================================================================
 
     class Factories:
-        """Factory methods for creating CQRS components.
-
-        Provides:
-        - create_command_bus(): Create command bus with default config
-        - create_simple_handler(): Convert functions to CommandHandler
-        - create_query_handler(): Convert functions to QueryHandler
-        - Type-safe component creation with proper initialization
-        """
+        """Factory methods for creating CQRS components."""
 
         @staticmethod
         def create_command_bus() -> FlextCommands.Bus:
@@ -1137,15 +815,7 @@ class FlextCommands:
         def create_simple_handler(
             handler_func: FlextTypes.Core.OperationCallable,
         ) -> FlextCommands.Handlers.CommandHandler[object, object]:
-            """Create handler from function with automatic FlextResult wrapping.
-
-            Args:
-                handler_func: Function that processes commands
-
-            Returns:
-                CommandHandler instance wrapping the function
-
-            """
+            """Create handler from function with automatic FlextResult wrapping."""
 
             class SimpleHandler(FlextCommands.Handlers.CommandHandler[object, object]):
                 def handle(self, command: object) -> FlextResult[object]:
@@ -1160,15 +830,7 @@ class FlextCommands:
         def create_query_handler(
             handler_func: FlextTypes.Core.OperationCallable,
         ) -> FlextCommands.Handlers.QueryHandler[object, object]:
-            """Create query handler from function.
-
-            Args:
-                handler_func: Function that processes queries
-
-            Returns:
-                QueryHandler instance wrapping the function
-
-            """
+            """Create query handler from function."""
 
             class SimpleQueryHandler(
                 FlextCommands.Handlers.QueryHandler[object, object]
@@ -1189,16 +851,7 @@ class FlextCommands:
     def configure_commands_system(
         cls, config: FlextTypes.Config.ConfigDict
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure commands system with StrEnum validation.
-
-        Args:
-            config: Configuration dict with environment, validation_level, log_level,
-                   handler/middleware/monitoring settings, concurrency limits
-
-        Returns:
-            FlextResult containing validated configuration with defaults applied
-
-        """
+        """Configure commands system with StrEnum validation."""
         try:
             # Create working copy of config
             validated_config = dict(config)
@@ -1265,13 +918,7 @@ class FlextCommands:
 
     @classmethod
     def get_commands_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current commands system configuration with runtime info.
-
-        Returns:
-            FlextResult with configuration dict including environment settings,
-            runtime metrics, and performance statistics.
-
-        """
+        """Get current commands system configuration with runtime info."""
         try:
             # Get current system configuration
             config: FlextTypes.Config.ConfigDict = {
@@ -1334,15 +981,7 @@ class FlextCommands:
     def create_environment_commands_config(
         cls, environment: FlextTypes.Config.Environment
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific commands configuration.
-
-        Args:
-            environment: Target environment (development, production, test, staging, local)
-
-        Returns:
-            FlextResult with optimized config dict for the specified environment
-
-        """
+        """Create environment-specific commands configuration."""
         try:
             # Validate environment parameter
             valid_environments = [
@@ -1361,80 +1000,70 @@ class FlextCommands:
 
             # Environment-specific configurations
             if environment == "production":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": True,  # Monitor production performance
-                        "max_concurrent_commands": 50,  # Controlled concurrency in production
-                        "command_timeout_seconds": 15,  # Strict timeout for production
-                        "enable_detailed_error_messages": False,  # Security in production
-                        "enable_handler_caching": True,  # Performance optimization
-                        "middleware_timeout_seconds": 5,  # Fast middleware processing
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": True,  # Monitor production performance
+                    "max_concurrent_commands": 50,  # Controlled concurrency in production
+                    "command_timeout_seconds": 15,  # Strict timeout for production
+                    "enable_detailed_error_messages": False,  # Security in production
+                    "enable_handler_caching": True,  # Performance optimization
+                    "middleware_timeout_seconds": 5,  # Fast middleware processing
+                })
             elif environment == "development":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": False,  # Not needed in dev
-                        "max_concurrent_commands": 200,  # Higher concurrency for dev testing
-                        "command_timeout_seconds": 60,  # More time for debugging
-                        "enable_detailed_error_messages": True,  # Full debugging info
-                        "enable_handler_caching": False,  # Fresh handler lookup each time
-                        "middleware_timeout_seconds": 30,  # More time for debugging
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": False,  # Not needed in dev
+                    "max_concurrent_commands": 200,  # Higher concurrency for dev testing
+                    "command_timeout_seconds": 60,  # More time for debugging
+                    "enable_detailed_error_messages": True,  # Full debugging info
+                    "enable_handler_caching": False,  # Fresh handler lookup each time
+                    "middleware_timeout_seconds": 30,  # More time for debugging
+                })
             elif environment == "test":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
-                        "enable_handler_discovery": True,  # Still need discovery for tests
-                        "enable_middleware_pipeline": False,  # Skip for test speed
-                        "enable_performance_monitoring": False,  # No monitoring in tests
-                        "max_concurrent_commands": 10,  # Limited for test isolation
-                        "command_timeout_seconds": 5,  # Fast timeout for tests
-                        "enable_detailed_error_messages": False,  # Clean test output
-                        "enable_handler_caching": False,  # Clean state between tests
-                        "middleware_timeout_seconds": 1,  # Very fast for tests
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,  # Minimal logging
+                    "enable_handler_discovery": True,  # Still need discovery for tests
+                    "enable_middleware_pipeline": False,  # Skip for test speed
+                    "enable_performance_monitoring": False,  # No monitoring in tests
+                    "max_concurrent_commands": 10,  # Limited for test isolation
+                    "command_timeout_seconds": 5,  # Fast timeout for tests
+                    "enable_detailed_error_messages": False,  # Clean test output
+                    "enable_handler_caching": False,  # Clean state between tests
+                    "middleware_timeout_seconds": 1,  # Very fast for tests
+                })
             elif environment == "staging":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": True,  # Monitor staging performance
-                        "max_concurrent_commands": 75,  # Moderate concurrency for staging
-                        "command_timeout_seconds": 20,  # Reasonable staging timeout
-                        "enable_detailed_error_messages": True,  # Debug staging issues
-                        "enable_handler_caching": True,  # Test caching behavior
-                        "middleware_timeout_seconds": 10,  # Balanced timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": True,  # Monitor staging performance
+                    "max_concurrent_commands": 75,  # Moderate concurrency for staging
+                    "command_timeout_seconds": 20,  # Reasonable staging timeout
+                    "enable_detailed_error_messages": True,  # Debug staging issues
+                    "enable_handler_caching": True,  # Test caching behavior
+                    "middleware_timeout_seconds": 10,  # Balanced timeout
+                })
             elif environment == "local":
-                config.update(
-                    {
-                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_handler_discovery": True,
-                        "enable_middleware_pipeline": True,
-                        "enable_performance_monitoring": False,  # Not needed locally
-                        "max_concurrent_commands": 500,  # High concurrency for local testing
-                        "command_timeout_seconds": 120,  # Generous local timeout
-                        "enable_detailed_error_messages": True,  # Full local debugging
-                        "enable_handler_caching": False,  # Fresh behavior for development
-                        "middleware_timeout_seconds": 60,  # Generous local timeout
-                    }
-                )
+                config.update({
+                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_handler_discovery": True,
+                    "enable_middleware_pipeline": True,
+                    "enable_performance_monitoring": False,  # Not needed locally
+                    "max_concurrent_commands": 500,  # High concurrency for local testing
+                    "command_timeout_seconds": 120,  # Generous local timeout
+                    "enable_detailed_error_messages": True,  # Full local debugging
+                    "enable_handler_caching": False,  # Fresh behavior for development
+                    "middleware_timeout_seconds": 60,  # Generous local timeout
+                })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1447,15 +1076,7 @@ class FlextCommands:
     def optimize_commands_performance(
         cls, config: FlextTypes.Config.ConfigDict
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize commands system performance based on configuration.
-
-        Args:
-            config: Base configuration dictionary containing performance preferences
-
-        Returns:
-            FlextResult containing optimized configuration with performance settings
-
-        """
+        """Optimize commands system performance based on configuration."""
         try:
             # Create optimized configuration
             optimized_config = dict(config)
@@ -1464,119 +1085,109 @@ class FlextCommands:
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update(
-                {
-                    "performance_level": performance_level,
-                    "optimization_enabled": True,
-                    "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-                }
-            )
+            optimized_config.update({
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            })
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update(
-                    {
-                        # Handler optimization
-                        "handler_cache_size": 1000,
-                        "enable_handler_pooling": True,
-                        "handler_pool_size": 100,
-                        "max_concurrent_handlers": 50,
-                        "handler_discovery_cache_ttl": 3600,  # 1 hour
-                        # Middleware optimization
-                        "enable_middleware_caching": True,
-                        "middleware_thread_count": 8,
-                        "middleware_queue_size": 500,
-                        "parallel_middleware_processing": True,
-                        # Command processing optimization
-                        "command_batch_size": 100,
-                        "enable_command_batching": True,
-                        "command_processing_threads": 16,
-                        "command_queue_size": 2000,
-                        # Memory optimization
-                        "memory_pool_size_mb": 200,
-                        "enable_object_pooling": True,
-                        "gc_optimization_enabled": True,
-                        "optimization_level": "aggressive",
-                    }
-                )
+                optimized_config.update({
+                    # Handler optimization
+                    "handler_cache_size": 1000,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 100,
+                    "max_concurrent_handlers": 50,
+                    "handler_discovery_cache_ttl": 3600,  # 1 hour
+                    # Middleware optimization
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 8,
+                    "middleware_queue_size": 500,
+                    "parallel_middleware_processing": True,
+                    # Command processing optimization
+                    "command_batch_size": 100,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 16,
+                    "command_queue_size": 2000,
+                    # Memory optimization
+                    "memory_pool_size_mb": 200,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "aggressive",
+                })
             elif performance_level == "medium":
-                optimized_config.update(
-                    {
-                        # Balanced handler settings
-                        "handler_cache_size": 500,
-                        "enable_handler_pooling": True,
-                        "handler_pool_size": 50,
-                        "max_concurrent_handlers": 25,
-                        "handler_discovery_cache_ttl": 1800,  # 30 minutes
-                        # Moderate middleware settings
-                        "enable_middleware_caching": True,
-                        "middleware_thread_count": 4,
-                        "middleware_queue_size": 250,
-                        "parallel_middleware_processing": True,
-                        # Standard command processing
-                        "command_batch_size": 50,
-                        "enable_command_batching": True,
-                        "command_processing_threads": 8,
-                        "command_queue_size": 1000,
-                        # Moderate memory settings
-                        "memory_pool_size_mb": 100,
-                        "enable_object_pooling": True,
-                        "gc_optimization_enabled": True,
-                        "optimization_level": "balanced",
-                    }
-                )
+                optimized_config.update({
+                    # Balanced handler settings
+                    "handler_cache_size": 500,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 50,
+                    "max_concurrent_handlers": 25,
+                    "handler_discovery_cache_ttl": 1800,  # 30 minutes
+                    # Moderate middleware settings
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 4,
+                    "middleware_queue_size": 250,
+                    "parallel_middleware_processing": True,
+                    # Standard command processing
+                    "command_batch_size": 50,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 8,
+                    "command_queue_size": 1000,
+                    # Moderate memory settings
+                    "memory_pool_size_mb": 100,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "balanced",
+                })
             elif performance_level == "low":
-                optimized_config.update(
-                    {
-                        # Conservative handler settings
-                        "handler_cache_size": 100,
-                        "enable_handler_pooling": False,
-                        "handler_pool_size": 10,
-                        "max_concurrent_handlers": 5,
-                        "handler_discovery_cache_ttl": 300,  # 5 minutes
-                        # Minimal middleware settings
-                        "enable_middleware_caching": False,
-                        "middleware_thread_count": 1,
-                        "middleware_queue_size": 50,
-                        "parallel_middleware_processing": False,
-                        # Single-threaded command processing
-                        "command_batch_size": 10,
-                        "enable_command_batching": False,
-                        "command_processing_threads": 1,
-                        "command_queue_size": 100,
-                        # Minimal memory footprint
-                        "memory_pool_size_mb": 50,
-                        "enable_object_pooling": False,
-                        "gc_optimization_enabled": False,
-                        "optimization_level": "conservative",
-                    }
-                )
+                optimized_config.update({
+                    # Conservative handler settings
+                    "handler_cache_size": 100,
+                    "enable_handler_pooling": False,
+                    "handler_pool_size": 10,
+                    "max_concurrent_handlers": 5,
+                    "handler_discovery_cache_ttl": 300,  # 5 minutes
+                    # Minimal middleware settings
+                    "enable_middleware_caching": False,
+                    "middleware_thread_count": 1,
+                    "middleware_queue_size": 50,
+                    "parallel_middleware_processing": False,
+                    # Single-threaded command processing
+                    "command_batch_size": 10,
+                    "enable_command_batching": False,
+                    "command_processing_threads": 1,
+                    "command_queue_size": 100,
+                    # Minimal memory footprint
+                    "memory_pool_size_mb": 50,
+                    "enable_object_pooling": False,
+                    "gc_optimization_enabled": False,
+                    "optimization_level": "conservative",
+                })
 
             # Additional performance metrics and targets
-            optimized_config.update(
-                {
-                    "expected_throughput_commands_per_second": 500
-                    if performance_level == "high"
-                    else 200
-                    if performance_level == "medium"
-                    else 50,
-                    "target_handler_latency_ms": 5
-                    if performance_level == "high"
-                    else 15
-                    if performance_level == "medium"
-                    else 50,
-                    "target_middleware_latency_ms": 2
-                    if performance_level == "high"
-                    else 8
-                    if performance_level == "medium"
-                    else 25,
-                    "memory_efficiency_target": 0.95
-                    if performance_level == "high"
-                    else 0.85
-                    if performance_level == "medium"
-                    else 0.70,
-                }
-            )
+            optimized_config.update({
+                "expected_throughput_commands_per_second": 500
+                if performance_level == "high"
+                else 200
+                if performance_level == "medium"
+                else 50,
+                "target_handler_latency_ms": 5
+                if performance_level == "high"
+                else 15
+                if performance_level == "medium"
+                else 50,
+                "target_middleware_latency_ms": 2
+                if performance_level == "high"
+                else 8
+                if performance_level == "medium"
+                else 25,
+                "memory_efficiency_target": 0.95
+                if performance_level == "high"
+                else 0.85
+                if performance_level == "medium"
+                else 0.70,
+            })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 

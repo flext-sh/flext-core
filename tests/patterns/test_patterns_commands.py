@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-# # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+# # from pydantic import BaseModel  # Using FlextModels.Config instead
 from flext_core import FlextCommands, FlextModels, FlextResult
 
 FlextCommandId = str
@@ -26,7 +26,7 @@ FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metada
 # =============================================================================
 
 
-class CreateUserCommand(FlextModels.BaseConfig):
+class CreateUserCommand(FlextModels.Config):
     """Test command for creating users."""
 
     username: str
@@ -50,7 +50,7 @@ class CreateUserCommand(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class UpdateUserCommand(FlextModels.BaseConfig):
+class UpdateUserCommand(FlextModels.Config):
     """Test command for updating users."""
 
     target_user_id: str
@@ -72,7 +72,7 @@ class UpdateUserCommand(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class FailingCommand(FlextModels.BaseConfig):
+class FailingCommand(FlextModels.Config):
     """Test command that always fails validation."""
 
     def get_payload(self) -> dict[str, object]:

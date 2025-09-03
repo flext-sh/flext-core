@@ -239,8 +239,6 @@ if config_result.success:
 # Configuration Validation
 validation_result = FlextUtilities.Configuration.validate_configuration_with_types(config)
 
-# Comprehensive Environment Settings
-env_result = FlextUtilities.Configuration.get_environment_configuration("staging")
 ```
 
 #### Configuration Features

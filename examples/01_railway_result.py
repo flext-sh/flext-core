@@ -86,8 +86,8 @@ class UserRegistrationRequest(FlextModels.Value):
         return FlextResult[None].ok(None)
 
 
-class RegistrationResult(FlextModels.BaseConfig):
-    """Registration result using FlextModels.BaseConfig for enterprise features.
+class RegistrationResult(FlextModels.Config):
+    """Registration result using FlextModels.Config for enterprise features.
 
     Follows SOLID principles with proper typing and validation.
     """
@@ -98,7 +98,7 @@ class RegistrationResult(FlextModels.BaseConfig):
     correlation_id: str
 
 
-class BatchResult(FlextModels.BaseConfig):
+class BatchResult(FlextModels.Config):
     """Batch processing result with enterprise metrics.
 
     Uses proper typing for consistent data handling.

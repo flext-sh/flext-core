@@ -157,7 +157,7 @@ config_result = FlextValidations.Core.TypeValidators.validate_dict({
 })
 
 if config_result.success:
-    config: FlextTypes.Core.Dict = config_result.value  # Type-safe access
+    config: dict[str, object] = config_result.value  # Type-safe access
     print(f"Configuration validated: {config}")
 
 # Chain type validation with other validators
@@ -180,8 +180,8 @@ class UserManagementService:
 
     def create_user_with_validation(
         self,
-        user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:
+        user_data: dict[str, object]
+    ) -> FlextResult[str]:
         """Create user with comprehensive validation."""
 
         # Domain business rule validation
@@ -205,7 +205,7 @@ class UserManagementService:
 
     def validate_user_business_rules(
         self,
-        user_data: FlextTypes.Core.Dict
+        user_data: dict[str, object]
     ) -> FlextResult[None]:
         """Validate comprehensive user business rules."""
 
@@ -242,8 +242,8 @@ class OrderValidationService:
 
     def validate_order_business_rules(
         self,
-        order_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        order_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate complex order business rules."""
 
         # Customer tier validation
@@ -291,10 +291,10 @@ class ApiService:
 
     async def process_api_request(
         self,
-        request_data: FlextTypes.Core.Dict,
+        request_data: dict[str, object],
         headers: dict[str, str],
         method: str
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Process API request with comprehensive validation."""
 
         # API request structure validation
@@ -376,8 +376,8 @@ class ConfigurationService:
 
     def validate_database_config(
         self,
-        db_config: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        db_config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate database configuration with security checks."""
 
         required_fields = ["host", "port", "database", "username"]
@@ -412,8 +412,8 @@ class DataValidationService:
 
     def validate_user_registration_data(
         self,
-        registration_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        registration_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user registration with comprehensive schema validation."""
 
         # Define validation schema
@@ -468,12 +468,12 @@ class DataValidationService:
 
     def validate_batch_data_with_performance(
         self,
-        data_batch: list[FlextTypes.Core.Dict],
-        validator: Callable[[FlextTypes.Core.Dict], FlextResult[FlextTypes.Core.Dict]]
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        data_batch: list[dict[str, object]],
+        validator: Callable[[dict[str, object]], FlextResult[dict[str, object]]]
+    ) -> FlextResult[list[dict[str, object]]]:
         """Validate batch of data with performance optimization."""
 
-        validated_items: list[FlextTypes.Core.Dict] = []
+        validated_items: list[dict[str, object]] = []
         errors: list[str] = []
 
         for i, item in enumerate(data_batch):
@@ -508,8 +508,8 @@ class ComplexValidationService:
 
     def validate_complex_business_entity(
         self,
-        entity_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        entity_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate complex business entity using composite validation."""
 
         # Create validation chain
@@ -534,8 +534,8 @@ class ComplexValidationService:
 
     def _validate_entity_structure(
         self,
-        data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate basic entity structure."""
         required_fields = ["id", "type", "version", "data"]
 
@@ -551,8 +551,8 @@ class ComplexValidationService:
 
     def _validate_business_rules(
         self,
-        data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate business rules based on entity type."""
         entity_type = data["type"]
         entity_data = data["data"]
@@ -568,8 +568,8 @@ class ComplexValidationService:
 
     def _validate_integration_constraints(
         self,
-        data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate integration constraints."""
         # Check external system constraints
         entity_id = data["id"]
@@ -582,8 +582,8 @@ class ComplexValidationService:
 
     def _validate_security_constraints(
         self,
-        data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate security constraints."""
         # PII detection
         entity_data = str(data.get("data", {}))
@@ -638,13 +638,13 @@ class PerformanceOptimizedValidationService:
 
     def validate_high_volume_data(
         self,
-        data_items: list[FlextTypes.Core.Dict]
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        data_items: list[dict[str, object]]
+    ) -> FlextResult[list[dict[str, object]]]:
         """Validate high-volume data with batch optimization."""
 
         # Batch processing for performance
         batch_size = 100
-        validated_batches: list[FlextTypes.Core.Dict] = []
+        validated_batches: list[dict[str, object]] = []
 
         for i in range(0, len(data_items), batch_size):
             batch = data_items[i:i + batch_size]
@@ -670,8 +670,8 @@ class PerformanceOptimizedValidationService:
 
     def _validate_data_item(
         self,
-        item: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        item: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate individual data item."""
         # Basic structure validation
         if "id" not in item or "data" not in item:
@@ -821,8 +821,8 @@ class ApiHandlerEnhanced:
 
     def validate_request_comprehensive(
         self,
-        request_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        request_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate API request with complete FlextValidations integration."""
 
         # Service-level validation
@@ -853,8 +853,8 @@ class FlextMeltanoValidationTypes(FlextValidations):
 
         @staticmethod
         def validate_singer_record(
-            record: FlextTypes.Core.Dict
-        ) -> FlextResult[FlextTypes.Core.Dict]:
+            record: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Validate Singer record with comprehensive checks."""
 
             # Schema validation for Singer record
@@ -874,8 +874,8 @@ class FlextMeltanoValidationTypes(FlextValidations):
 
         @staticmethod
         def validate_tap_config(
-            config: FlextTypes.Core.Dict
-        ) -> FlextResult[FlextTypes.Core.Dict]:
+            config: dict[str, object]
+        ) -> FlextResult[dict[str, object]]:
             """Validate tap configuration with business rules."""
 
             # Tap configuration validation
@@ -898,8 +898,8 @@ class MeltanoETLService:
 
     def process_singer_records_with_validation(
         self,
-        records: list[FlextTypes.Core.Dict]
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        records: list[dict[str, object]]
+    ) -> FlextResult[list[dict[str, object]]]:
         """Process Singer records with comprehensive validation."""
 
         validated_records = []
@@ -991,9 +991,9 @@ class FlextUserManagementValidationService:
 
     def create_user_with_comprehensive_validation(
         self,
-        request_data: FlextTypes.Core.Dict,
-        api_context: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:
+        request_data: dict[str, object],
+        api_context: dict[str, object]
+    ) -> FlextResult[str]:
         """Create user with complete validation pipeline."""
 
         # Phase 1: API request validation
@@ -1177,11 +1177,11 @@ class FlextUserManagementValidationService:
 
     def batch_validate_users_with_performance(
         self,
-        user_batch: list[FlextTypes.Core.Dict]
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        user_batch: list[dict[str, object]]
+    ) -> FlextResult[list[dict[str, object]]]:
         """Batch validate users with performance optimization."""
 
-        validated_users: list[FlextTypes.Core.Dict] = []
+        validated_users: list[dict[str, object]] = []
 
         for user_data in user_batch:
             # Use cached validation for performance
@@ -1250,8 +1250,8 @@ class UserService:
 
     def validate_user_comprehensive(
         self,
-        user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        user_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user with comprehensive error reporting."""
 
         # Schema validation
@@ -1309,7 +1309,7 @@ class UserService:
 class AIValidationGenerator:
     def generate_validation_schema_from_data(
         self,
-        sample_data: list[FlextTypes.Core.Dict]
+        sample_data: list[dict[str, object]]
     ) -> FlextResult[dict[str, Callable]]:
         """Generate validation schema from data patterns using AI analysis."""
         # AI analysis to detect validation patterns and constraints

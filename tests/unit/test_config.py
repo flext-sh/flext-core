@@ -1,8 +1,4 @@
-"""Comprehensive tests for FlextConfig to achieve maximum coverage.
-
-This test file aims to achieve close to 100% coverage for the config.py module
-by testing all methods, error paths, validation logic, and edge cases.
-"""
+"""Comprehensive tests for FlextConfig."""
 
 from __future__ import annotations
 

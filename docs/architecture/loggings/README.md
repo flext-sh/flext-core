@@ -242,88 +242,6 @@ logger = FlextLogger(
 
 ---
 
-## Advanced Configuration
-
-### 1. System-Wide Logger Configuration
-
-```python
-from flext_core import FlextLogger
-
-# Configure structured logging system globally
-FlextLogger.configure(
-    log_level="INFO",
-    json_output=True,           # Force JSON output (auto-detects if None)
-    include_source=True,        # Include filename, line number, function
-    structured_output=True      # Enable correlation, performance, sanitization
-)
-
-# Environment-specific configuration
-config = {
-    "environment": "production",
-    "log_level": "WARNING",
-    "enable_console_output": False,
-    "enable_json_logging": True,
-    "enable_correlation_tracking": True,
-    "enable_performance_logging": True,
-    "enable_sensitive_data_sanitization": True,
-    "max_log_message_size": 5000,
-    "async_logging_enabled": True
-}
-
-result = FlextLogger.configure_logging_system(config)
-if result.success:
-    print("Logging system configured successfully")
-else:
-    print(f"Configuration failed: {result.error}")
-```
-
-### 2. Environment-Specific Configurations
-
-```python
-# Production configuration
-prod_config = FlextLogger.create_environment_logging_config("production")
-if prod_config.success:
-    config = prod_config.value
-    # JSON output, WARNING level, no console, async enabled
-    print(f"Production config: {config}")
-
-# Development configuration
-dev_config = FlextLogger.create_environment_logging_config("development")
-if dev_config.success:
-    config = dev_config.value
-    # Console output, DEBUG level, colored output, sync logging
-    print(f"Development config: {config}")
-
-# Test configuration
-test_config = FlextLogger.create_environment_logging_config("test")
-if test_config.success:
-    config = test_config.value
-    # Minimal output, ERROR level, no correlation, sync logging
-    print(f"Test config: {config}")
-```
-
-### 3. Performance Optimization
-
-```python
-# Performance optimization configuration
-perf_config = {
-    "performance_level": "high",
-    "async_logging_enabled": True,
-    "buffer_size": 5000,
-    "flush_interval_ms": 1000,
-    "max_concurrent_operations": 500,
-    "enable_log_compression": True,
-    "batch_log_processing": True,
-    "disable_trace_logging": True
-}
-
-optimized = FlextLogger.optimize_logging_performance(perf_config)
-if optimized.success:
-    print("Logging performance optimized")
-```
-
----
-
 ## Security and Data Sanitization
 
 ### 1. Automatic Sensitive Data Redaction
@@ -672,22 +590,6 @@ for item in items:
     process_item(item)
 ```
 
-### 3. Production Performance Optimization
-
-```python
-# Configure for production performance
-production_config = {
-    "performance_level": "high",
-    "async_logging_enabled": True,      # Non-blocking logging
-    "buffer_size": 5000,                # Large buffer for batching
-    "flush_interval_ms": 1000,          # Frequent flushes
-    "disable_trace_logging": True,      # Skip trace level
-    "enable_log_compression": True,     # Compress log data
-    "max_log_message_size": 5000       # Limit message size
-}
-
-FlextLogger.optimize_logging_performance(production_config)
-```
 
 ---
 

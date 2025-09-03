@@ -145,7 +145,7 @@ class FlextProcessors:
         DATA = "data"
         UNKNOWN = "unknown"
 
-    class Entry(FlextModels.BaseConfig):
+    class Entry(FlextModels.Config):
         """Base entry value object for schema and data processing.
 
         Provides immutable, validated entry representations with standardized
@@ -469,22 +469,22 @@ class FlextProcessors:
         def __init__(
             self,
             input_processor: Callable[
-                [FlextTypes.Core.Object],
-                FlextTypes.Result.ResultType[FlextTypes.Core.Object],
+                [object],
+                FlextTypes.Result.ResultType[object],
             ]
             | None = None,
             output_processor: Callable[
-                [FlextTypes.Core.Object],
-                FlextTypes.Result.ResultType[FlextTypes.Core.Object],
+                [object],
+                FlextTypes.Result.ResultType[object],
             ]
             | None = None,
         ) -> None:
             """Initialize processing pipeline with handler patterns."""
 
             def default_processor(
-                x: FlextTypes.Core.Object,
-            ) -> FlextTypes.Result.ResultType[FlextTypes.Core.Object]:
-                return FlextResult[FlextTypes.Core.Object].ok(x)
+                x: object,
+            ) -> FlextTypes.Result.ResultType[object]:
+                return FlextResult[object].ok(x)
 
             self.input_processor = input_processor or default_processor
             self.output_processor = output_processor or default_processor
@@ -493,8 +493,8 @@ class FlextProcessors:
         def add_step(
             self,
             step: Callable[
-                [FlextTypes.Core.Object],
-                FlextTypes.Result.ResultType[FlextTypes.Core.Object],
+                [object],
+                FlextTypes.Result.ResultType[object],
             ],
         ) -> FlextProcessors.ProcessingPipeline:
             """Add processing step as handler."""
@@ -631,13 +631,13 @@ class FlextProcessors:
     def create_processing_pipeline(
         cls,
         input_processor: Callable[
-            [FlextTypes.Core.Object],
-            FlextTypes.Result.ResultType[FlextTypes.Core.Object],
+            [object],
+            FlextTypes.Result.ResultType[object],
         ]
         | None = None,
         output_processor: Callable[
-            [FlextTypes.Core.Object],
-            FlextTypes.Result.ResultType[FlextTypes.Core.Object],
+            [object],
+            FlextTypes.Result.ResultType[object],
         ]
         | None = None,
     ) -> FlextTypes.Result.ResultType[FlextProcessors.ProcessingPipeline]:

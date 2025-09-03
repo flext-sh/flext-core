@@ -5,7 +5,7 @@ Demonstrates 20+ FlextCore features in minimal code:
 • FlextModels/ValueObject (DDD) • FlextResult railway pattern
 • FlextContainer DI • FlextCommands/Handlers (CQRS)
 • FlextDecorators enterprise • FlextValidations predicates
-• FlextContext correlation • FlextLogger structured • FlextObservability metrics
+• FlextContext correlation • FlextLogger structured •  metrics
 • FlextGuards type safety • FlextMixins timestamps • FlextUtilities generators
 """
 
@@ -34,7 +34,7 @@ logger = FlextLogger(__name__)  # FlextLogger structured output
 container = FlextContainer.get_global()  # FlextContainer dependency injection
 
 
-class Email(FlextModels.BaseConfig):
+class Email(FlextModels.Config):
     """Email with FlextResult validation."""
 
     address: str
@@ -49,7 +49,7 @@ class Email(FlextModels.BaseConfig):
         return cls(address=address)
 
 
-class User(FlextModels.BaseConfig):
+class User(FlextModels.Config):
     """User entity with FlextUtilities integration."""
 
     id: str | None = None

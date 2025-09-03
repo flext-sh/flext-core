@@ -670,7 +670,7 @@ class FlextTestMocker:
 # =============================================================================
 
 
-class FlextTestModel(FlextModels.BaseConfig):
+class FlextTestModel(FlextModels.Config):
     """Test model for testing purposes.
 
     Provides a simple model with common field types for testing.
@@ -697,7 +697,7 @@ class FlextTestModel(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class FlextTestConfig(FlextModels.BaseConfig):
+class FlextTestConfig(FlextModels.Config):
     """Test configuration model."""
 
     debug: bool = False

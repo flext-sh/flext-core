@@ -1,8 +1,4 @@
-"""Targeted tests for 100% coverage on FlextExceptions module.
-
-This file contains precise tests targeting the specific remaining uncovered lines
-in exceptions.py focusing on exception creation, factory methods, and error handling.
-"""
+"""Targeted tests for 100% coverage on FlextExceptions module."""
 
 from __future__ import annotations
 

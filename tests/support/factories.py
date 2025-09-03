@@ -13,17 +13,20 @@ from typing import ClassVar, cast
 
 import factory
 from factory import (
-    Faker,
-    LazyAttribute,
     LazyFunction,
     Sequence,
 )
+from factory.declarations import LazyAttribute
+from factory.faker import Faker
 
 from flext_core import (
-    FlextConstants,  # New refactored API
-    FlextModels,  # New refactracted API
-    FlextResult,  # Installed package import
+    FlextConstants,
+    FlextModels,
+    FlextResult,
 )
+
+# Type aliases for better type safety
+AuditLog = dict[str, object]
 
 
 class RepositoryError(Exception):
@@ -31,7 +34,7 @@ class RepositoryError(Exception):
 
 
 # Base models for testing (these would typically come from domain models)
-class TestUser(FlextModels.BaseConfig):
+class TestUser(FlextModels.Config):
     """Test user model for factory testing."""
 
     id: str
@@ -43,7 +46,7 @@ class TestUser(FlextModels.BaseConfig):
     metadata: dict[str, object]
 
 
-class TestConfig(FlextModels.BaseConfig):
+class TestConfig(FlextModels.Config):
     """Test configuration model for factory testing."""
 
     database_url: str
@@ -54,7 +57,7 @@ class TestConfig(FlextModels.BaseConfig):
     features: list[str]
 
 
-class TestField(FlextModels.BaseConfig):
+class TestField(FlextModels.Config):
     """Test field model for factory testing."""
 
     field_id: str
@@ -70,7 +73,7 @@ class TestField(FlextModels.BaseConfig):
     pattern: str | None = None
 
 
-class BaseTestEntity(FlextModels.BaseConfig):
+class BaseTestEntity(FlextModels.Config):
     """Base test entity for domain testing."""
 
     id: str
@@ -81,7 +84,7 @@ class BaseTestEntity(FlextModels.BaseConfig):
     metadata: ClassVar[dict[str, object]] = {}
 
 
-class BaseTestValueObject(FlextModels.BaseConfig):
+class BaseTestValueObject(FlextModels.Config):
     """Base test value object for domain testing."""
 
     value: str
@@ -103,9 +106,9 @@ class UserFactory(factory.Factory[TestUser]):
     name = Faker("name")
     email = Faker("email")
     age = Faker("random_int", min=18, max=80)
-    is_active = True
+    is_active: bool = True
     created_at = LazyAttribute(lambda _: datetime.now(UTC))
-    metadata = LazyFunction(
+    metadata: LazyFunction[dict[str, str]] = LazyFunction(
         lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
 
@@ -182,7 +185,9 @@ class StringFieldFactory(factory.Factory[TestField]):
     field_name = Sequence(lambda n: f"string_field_{n}")
     field_type = FlextConstants.Enums.FieldType.STRING.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test string field: {obj.field_name}")
+    description = LazyAttribute(
+        lambda obj: f"Test string field: {getattr(obj, 'field_name', 'unknown')}"
+    )
     min_length = 1
     max_length = 100
     pattern = r"^[a-zA-Z0-9_]+$"
@@ -198,9 +203,11 @@ class IntegerFieldFactory(factory.Factory[TestField]):
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
     field_name: Sequence[str] = Sequence(lambda n: f"integer_field_{n}")
-    field_type = FlextConstants.Enums.FieldType.INTEGER.value
-    required = True
-    description = LazyAttribute(lambda obj: f"Test integer field: {obj.field_name}")
+    field_type: str = FlextConstants.Enums.FieldType.INTEGER.value
+    required: bool = True
+    description = LazyAttribute(
+        lambda obj: f"Test integer field: {getattr(obj, 'field_name', 'unknown')}"
+    )
     min_value = 0
     max_value = 1000
 
@@ -214,10 +221,12 @@ class BooleanFieldFactory(factory.Factory[TestField]):
         model = TestField
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
-    field_name: Sequence[str] = Sequence(lambda n: f"boolean_field_{n}")
+    field_name = Sequence(lambda n: f"boolean_field_{n}")
     field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test boolean field: {obj.field_name}")
+    description = LazyAttribute(
+        lambda obj: f"Test boolean field: {getattr(obj, 'field_name', 'unknown')}"
+    )
     default_value = False
 
 
@@ -230,10 +239,12 @@ class FloatFieldFactory(factory.Factory[TestField]):
         model = TestField
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
-    field_name: Sequence[str] = Sequence(lambda n: f"float_field_{n}")
+    field_name = Sequence(lambda n: f"float_field_{n}")
     field_type = FlextConstants.Enums.FieldType.FLOAT.value
     required = True
-    description = LazyAttribute(lambda obj: f"Test float field: {obj.field_name}")
+    description = LazyAttribute(
+        lambda obj: f"Test float field: {getattr(obj, 'field_name', 'unknown')}"
+    )
     min_value = 0.0
     max_value = 1000.0
 
@@ -428,17 +439,41 @@ def create_validation_test_cases() -> list[dict[str, object]]:
         },
         {
             "name": "invalid_email",
-            "data": cast("TestUser", UserFactory(email="invalid-email")),
+            "data": TestUser(
+                id="test-id",
+                name="Test User",
+                email="invalid-email",
+                age=25,
+                is_active=True,
+                created_at=datetime.now(UTC),
+                metadata={},
+            ),
             "expected_valid": False,
         },
         {
             "name": "negative_age",
-            "data": cast("TestUser", UserFactory(age=-5)),
+            "data": TestUser(
+                id="test-id",
+                name="Test User",
+                email="test@example.com",
+                age=-5,
+                is_active=True,
+                created_at=datetime.now(UTC),
+                metadata={},
+            ),
             "expected_valid": False,
         },
         {
             "name": "unicode_name",
-            "data": cast("TestUser", UserFactory(name="测试用户")),
+            "data": TestUser(
+                id="test-id",
+                name="测试用户",
+                email="test@example.com",
+                age=25,
+                is_active=True,
+                created_at=datetime.now(UTC),
+                metadata={},
+            ),
             "expected_valid": True,
         },
     ]
@@ -643,7 +678,7 @@ class RealAuditService:
     """Real audit service implementation for testing."""
 
     def __init__(self) -> None:
-        self.audit_logs: list[dict[str, str | int | bool | None]] = []
+        self.audit_logs: list[AuditLog] = []
 
     def log_user_created(self, user: dict[str, str | int | bool | None]) -> None:
         """Log user creation event."""
@@ -673,7 +708,7 @@ class RealAuditService:
 
         self.audit_logs.append(audit_entry)
 
-    def get_audit_logs(self) -> list[dict[str, str | int | bool | None]]:
+    def get_audit_logs(self) -> list[AuditLog]:
         """Get all audit logs."""
         return self.audit_logs.copy()
 

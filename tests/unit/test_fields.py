@@ -1,7 +1,4 @@
-"""Extended test coverage for fields.py module.
-
-Comprehensive tests to increase coverage of FlextFields system.
-"""
+"""Extended test coverage for fields.py module."""
 
 from __future__ import annotations
 

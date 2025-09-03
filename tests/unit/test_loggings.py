@@ -15,7 +15,6 @@ import sys
 import threading
 import time
 import uuid
-from collections import UserDict
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -26,13 +25,9 @@ import structlog
 from structlog.testing import LogCapture
 
 from flext_core import (
-    FlextConstants,
     FlextContext,
     FlextLogger,
-    FlextResult,
-    FlextTypes,
 )
-from tests.support import FlextMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -843,49 +838,6 @@ class TestLoggingConfiguration:
         assert bound_logger._name == logger._name
         assert bound_logger._service_name == logger._service_name
 
-    def test_logging_configuration_methods(self) -> None:
-        """Test the logging configuration class methods."""
-        # Test configure_logging_system
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "development",
-            "log_level": "DEBUG",
-            "enable_json_logging": False,
-        }
-
-        result = FlextLogger.configure_logging_system(config)
-        assert result.success
-
-        # Test get_logging_system_config
-        current_config = FlextLogger.get_logging_system_config()
-        assert current_config.success
-
-        # Test create_environment_logging_config
-        env_config = FlextLogger.create_environment_logging_config("production")
-        assert env_config.success
-
-        # Test optimize_logging_performance
-        perf_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {"performance_level": "high"}
-        optimized = FlextLogger.optimize_logging_performance(perf_config)
-        assert optimized.success
-
-    def test_invalid_configuration_handling(self) -> None:
-        """Test handling of invalid configuration values."""
-        # Test invalid environment
-        result = FlextLogger.configure_logging_system({"environment": "invalid_env"})
-        assert result.is_failure
-
-        # Test invalid log level
-        result = FlextLogger.configure_logging_system({"log_level": "INVALID_LEVEL"})
-        assert result.is_failure
-
-        # Test invalid environment for environment config
-        result = FlextLogger.create_environment_logging_config("invalid_env")
-        assert result.is_failure
-
 
 class TestAdvancedLoggingFeatures:
     """Test advanced logging features and edge cases for comprehensive coverage."""
@@ -941,58 +893,6 @@ class TestAdvancedLoggingFeatures:
         assert "performance" in entry
         performance_data = cast("dict[str, object]", entry["performance"])
         assert performance_data["duration_ms"] == 123.456
-
-    def test_configuration_validation_errors(self) -> None:
-        """Test comprehensive configuration validation error paths."""
-        # Test invalid environment
-        result = FlextLogger.configure_logging_system(
-            {"environment": "invalid_environment"}
-        )
-        assert result.is_failure
-        assert result.error is not None
-        assert "Invalid environment" in result.error
-
-        # Test invalid log level
-        result = FlextLogger.configure_logging_system({"log_level": "INVALID_LEVEL"})
-        assert result.is_failure
-        assert result.error is not None
-        assert "Invalid log_level" in result.error
-
-    def test_environment_logging_config_validation(self) -> None:
-        """Test environment-specific logging configuration validation."""
-        # Test valid environments (use actual valid environments from FlextLogger)
-        valid_envs: list[str] = [
-            "development",
-            "test",
-            "staging",
-            "production",
-            "local",
-        ]
-        for env in valid_envs:
-            result = FlextLogger.create_environment_logging_config(env)
-            assert result.success, f"Failed for environment: {env}"
-
-        # Test invalid environment with type ignore for testing purposes
-        result = FlextLogger.create_environment_logging_config("invalid")
-        assert result.is_failure
-        assert result.error is not None
-        assert "Invalid environment" in result.error
-
-    def test_performance_optimization_config_handling(self) -> None:
-        """Test performance optimization configuration handling."""
-        # Test valid performance config
-        perf_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {"performance_level": "high", "buffer_size": 1024, "enable_async": True}
-        result = FlextLogger.optimize_logging_performance(perf_config)
-        assert result.success
-
-        # Test empty performance config
-        empty_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {}
-        result = FlextLogger.optimize_logging_performance(empty_config)
-        assert result.success
 
     def test_system_information_gathering(self) -> None:
         """Test system information gathering functionality."""
@@ -1261,45 +1161,6 @@ class TestUncoveredLinesTargeted:
         assert sanitized["user_data"] == "normal"  # Not sensitive
         assert sanitized["normal_field"] == "normal_value"  # Not sensitive
 
-    def test_lines_1007_1015_environment_log_levels(self) -> None:
-        """Test lines 1007, 1015: environment-specific log level configuration."""
-        # Test production environment (line 1007)
-        config_prod: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "production"
-            # Don't specify log_level to trigger default logic
-        }
-        result = FlextLogger.configure_logging_system(config_prod)
-        assert result.success
-
-        # Test other environment that triggers else clause (line 1015)
-        config_other: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "staging"
-            # Don't specify log_level to trigger default logic
-        }
-        result = FlextLogger.configure_logging_system(config_other)
-        assert result.success
-
-    def test_lines_1047_1048_configuration_exception(self) -> None:
-        """Test lines 1047-1048: exception handling in configure_logging_system."""
-        # We need to trigger an exception during configuration
-        # This is tricky because the method is well-protected, but we can try
-
-        # Create a config that might cause internal issues (very large values)
-        problematic_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "development",
-            "max_log_message_size": -1,  # Negative value might cause issues
-        }
-
-        result = FlextLogger.configure_logging_system(problematic_config)
-        # Should either succeed or fail gracefully (lines 1047-1048)
-        assert isinstance(result, FlextResult)
-
     def test_lines_1084_1085_bind_exception(self) -> None:
         """Test lines 1084-1085: exception handling in bind method."""
         logger = FlextLogger("bind_exception_test")
@@ -1330,33 +1191,6 @@ class TestUncoveredLinesTargeted:
             # Exception caught as expected from our coverage testing
             logger.debug("Expected exception caught for coverage testing")
 
-    def test_lines_1168_1169_1215_1226_1227_console_renderer(self) -> None:
-        """Test lines 1168-1169, 1215, 1226-1227: console renderer edge cases."""
-        logger = FlextLogger("console_edge_test")
-
-        # Test console renderer creation with different scenarios
-        renderer = logger._create_enhanced_console_renderer()
-        assert renderer is not None
-
-        # Test configuration scenarios that might trigger console renderer paths
-        console_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "development",
-            "enable_console_output": True,
-            "enable_json_logging": False,
-        }
-        FlextLogger.configure_logging_system(console_config)
-
-        # Test various log levels that might trigger different console paths
-        logger._level = "DEBUG"  # Use valid log level
-        with capture_structured_logs() as output:
-            logger.debug("Console renderer debug test")
-            logger.info("Console renderer info test")
-            logger.warning("Console renderer warning test")
-
-        assert len(output.entries) >= 3
-
     def test_extreme_edge_cases_for_100_percent_coverage(self) -> None:
         """Test extreme edge cases to reach 100% coverage of remaining 10 lines."""
         logger = FlextLogger("extreme_test")
@@ -1377,44 +1211,6 @@ class TestUncoveredLinesTargeted:
         assert sanitized["SECRET_TOKEN"] == "[REDACTED]"
         assert sanitized["normal_data"] == "normal"
 
-        # Try to force exception in get_logging_system_config (lines 1084-1085)
-        # by manipulating internal state
-        original_configured = FlextLogger._configured
-        try:
-            # Set to False to potentially trigger different code path
-            FlextLogger._configured = False  # Force unconfigured state
-            result = FlextLogger.get_logging_system_config()
-            # Should either succeed or handle exception gracefully
-            assert isinstance(result, FlextResult)
-        except Exception:
-            # Expected exception for test coverage
-            # Exception caught as expected from our coverage testing
-            logger.debug("Expected exception caught for coverage testing")
-        finally:
-            FlextLogger._configured = original_configured
-
-        # Try to force exception in create_environment_logging_config (lines 1168-1169)
-        # by testing edge cases
-        try:
-            # Test all edge case environments
-            edge_environments = [
-                "development",
-                "production",
-                "test",
-                "staging",
-                "local",
-            ]
-            for env in edge_environments:
-                result = FlextLogger.create_environment_logging_config(env)
-                assert isinstance(result, FlextResult)
-        except Exception as e:
-            # Lines 1168-1169 should handle any exceptions - verify it's handled correctly
-            # Exception caught as expected for coverage testing
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-
         # Test console renderer with edge cases (lines 1215, 1226-1227)
         try:
             # Force different console renderer paths
@@ -1426,44 +1222,6 @@ class TestUncoveredLinesTargeted:
             # Expected exception for test coverage - handled for coverage validation
             # Expected test exception handled for coverage: {e}
             logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-
-    def test_advanced_integration_with_support_utilities(self) -> None:
-        """Test using advanced tests/support utilities for comprehensive validation."""
-        logger = FlextLogger("advanced_test")
-
-        # Test logging performance without context manager
-        start_time = time.time()
-        with capture_structured_logs() as output:
-            # Test high-volume logging with performance tracking
-            for i in range(50):
-                logger.info(f"Performance test {i}", index=i, batch="perf_test")
-        end_time = time.time()
-
-        # Validate performance
-        duration = end_time - start_time
-        assert duration < 1.0  # Should complete within 1 second
-        assert len(output.entries) == 50
-
-        # Use FlextMatchers to validate FlextResult patterns
-        config_result = FlextLogger.configure_logging_system(
-            {
-                "environment": "test",
-                "log_level": "INFO",
-            }
-        )
-
-        # Test using advanced matcher patterns
-        FlextMatchers.assert_result_success(config_result)
-        assert config_result.success
-
-        # Test with invalid configuration for failure testing
-        invalid_result = FlextLogger.configure_logging_system(
-            {"environment": "nonexistent_env"}
-        )
-        FlextMatchers.assert_result_failure(
-            invalid_result, expected_error="Invalid environment"
-        )
-        assert invalid_result.is_failure
 
     def test_100_percent_coverage_line_909_exception_paths(self) -> None:
         """Test to force coverage of line 909 with multiple sensitive keys."""
@@ -1487,191 +1245,6 @@ class TestUncoveredLinesTargeted:
         for key in ["password", "api_key", "token", "secret", "credential", "auth"]:
             assert sanitized[key] == "[REDACTED]", f"Key {key} should be redacted"
         assert sanitized["normal"] == "not_secret"
-
-    def test_100_percent_coverage_lines_1047_1048_force_exception(self) -> None:
-        """Test to force exception in configure_logging_system (lines 1047-1048)."""
-        # FlextLogger("coverage_1047_1048")  # Not needed for this test
-
-        # Create scenarios that might cause exceptions during validation
-        # We need to force a real exception in the configuration process
-
-        # Try with invalid configuration types that might break internal validation
-        class InvalidConfigType:
-            def __contains__(self, key: object) -> bool:
-                TestCoverageTargetedTests._raise_runtime_error("line 1047-1048")
-
-            def get(self, _key: str, _default: object = None) -> NoReturn:
-                TestCoverageTargetedTests._raise_runtime_error("line 1047-1048")
-
-            def keys(self) -> NoReturn:
-                TestCoverageTargetedTests._raise_runtime_error("line 1047-1048")
-
-        # Try to trigger exception by monkey-patching internal validation
-        import flext_core.loggings as logging_module
-
-        original_method = getattr(
-            logging_module.FlextLogger, "_validate_logging_config", None
-        )
-
-        try:
-            # Monkey patch to force exception
-            def force_exception(*_args: object, **_kwargs: object) -> NoReturn:
-                TestCoverageTargetedTests._raise_validation_error()
-
-            logging_module.FlextLogger._validate_logging_config = force_exception
-
-            # This should trigger lines 1047-1048
-            result = FlextLogger.configure_logging_system(
-                {"environment": "development"}
-            )
-
-            # Should fail gracefully with exception handled
-            assert result.is_failure
-            assert "Logging configuration error" in str(result.error)
-
-        except Exception as e:
-            # Even if monkey patching fails, we've attempted to trigger the path
-            # Exception caught as expected - validates error handling path
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-        finally:
-            # Restore original method
-            if original_method:
-                logging_module.FlextLogger._validate_logging_config = original_method
-
-    def test_100_percent_coverage_lines_1084_1085_get_config_exception(self) -> None:
-        """Test to force exception in get_logging_system_config (lines 1084-1085)."""
-        # Try to force exception by manipulating internal state more aggressively
-        import flext_core.loggings as logging_module
-
-        # Save original config
-        original_config = getattr(logging_module.FlextLogger, "_current_config", None)
-
-        try:
-            # Set config to something that will cause exception when accessed
-            class ExceptionConfig:
-                def __getitem__(self, key: str) -> NoReturn:
-                    TestCoverageTargetedTests._raise_key_error(key)
-
-                def get(self, _key: str, _default: object = None) -> NoReturn:
-                    TestCoverageTargetedTests._raise_runtime_error("line 1084-1085")
-
-                def keys(self) -> NoReturn:
-                    TestCoverageTargetedTests._raise_runtime_error(
-                        "line 1084-1085 keys"
-                    )
-
-            logging_module.FlextLogger._current_config = ExceptionConfig()
-
-            # This should trigger lines 1084-1085
-            result = FlextLogger.get_logging_system_config()
-
-            # Should handle exception gracefully
-            assert result.is_failure
-            assert "Failed to get logging config" in str(result.error)
-
-        except Exception as e:
-            # Even if setup fails, we attempted to trigger the exception path
-            # Log the exception for debugging but don't fail the test
-            # Test setup exception (expected for coverage): captured for debugging
-            # Exception caught successfully for coverage validation
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-        finally:
-            # Restore original config
-            if original_config:
-                logging_module.FlextLogger._current_config = original_config
-
-    def test_100_percent_coverage_lines_1168_1169_env_config_exception(self) -> None:
-        """Test to force exception in create_environment_logging_config."""
-        # Monkey patch to force exception in environment config creation
-        import flext_core.loggings as logging_module
-
-        # Try to create a scenario that causes exception during environment processing
-        original_constants = getattr(logging_module, "FlextConstants", None)
-
-        try:
-            # Create mock constants that will cause exception
-            class MockConstants:
-                class Config:
-                    class Environment:
-                        DEVELOPMENT = "development"
-                        PRODUCTION = "production"
-
-                        def __contains__(self, item: object) -> bool:
-                            TestCoverageTargetedTests._raise_validation_error()
-
-            logging_module.FlextConstants = MockConstants()
-
-            # This should trigger lines 1168-1169
-            result = FlextLogger.create_environment_logging_config("development")
-
-            # Should handle exception gracefully
-            assert result.is_failure
-            assert "Environment logging config failed" in str(result.error)
-
-        except Exception as e:
-            # Even if monkey patching fails, we've attempted to trigger the path
-            # Exception caught as expected - validates error handling path
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-        finally:
-            # Restore original constants
-            if original_constants:
-                logging_module.FlextConstants = original_constants
-
-    def test_100_percent_coverage_lines_1215_1226_1227_perf_exception(self) -> None:
-        """Test to force exception in optimize_logging_performance."""
-        # Test the specific performance_level == "low" path (line 1215)
-        # and force exception in performance optimization (lines 1226-1227)
-
-        # First, test the normal "low" performance path to hit line 1215
-        low_perf_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {"performance_level": "low", "custom_setting": "test"}
-
-        result = FlextLogger.optimize_logging_performance(low_perf_config)
-        assert result.success
-        config_data = result.value
-        # Line 1215 executed - verify "low" performance settings
-        assert not config_data["async_logging_enabled"]  # From line 1216
-        assert config_data["buffer_size"] == 100  # From line 1217
-        assert config_data["flush_interval_ms"] == 10000  # From line 1218
-
-        # Try to trigger exception in optimize_logging_performance
-        # by causing internal error - use invalid configuration that might cause issues
-        try:
-            # Create a configuration that might cause internal issues
-            class InvalidConfig(UserDict[str, object]):
-                def get(self, key: str, default: object = None) -> object:
-                    if key == "buffer_size":
-                        TestCoverageTargetedTests._raise_runtime_error(
-                            "lines 1226-1227"
-                        )
-                    return super().get(key, default)
-
-            invalid_config = InvalidConfig({"performance_level": "high"})
-
-            # This should trigger lines 1226-1227
-            result = FlextLogger.optimize_logging_performance(invalid_config)
-
-            # Should handle exception gracefully
-            assert result.is_failure
-            assert "Logging performance optimization failed" in str(result.error)
-
-        except Exception as e:
-            # Exception handling approach worked or failed - either way we tried
-            # Exception caught as expected from our test setup
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
 
     def test_100_percent_coverage_line_909_sanitize_processor(self) -> None:
         """Test to force line 909 in _sanitize_processor to be covered."""
@@ -1726,115 +1299,6 @@ class TestUncoveredLinesTargeted:
         assert processed_dict["username"] == "john"  # Should remain
         assert processed_dict["normal_field"] == "normal"  # Should remain
         assert processed_dict["message"] == "User login"  # Should remain
-
-    def test_100_percent_coverage_lines_1049_1050_ultimate(self) -> None:
-        """Ultimate test to force exception in configure_logging_system."""
-        import flext_core.loggings as logging_module
-
-        # Try more direct approach - force exception during FlextConstants access
-        original_constants = logging_module.FlextConstants
-
-        try:
-            # Create mock FlextConstants that will raise exception when accessed
-            class ExceptionConstants:
-                class Config:
-                    class ConfigEnvironment:
-                        def __iter__(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-                        @property
-                        def development(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-                    class LogLevel:
-                        def __iter__(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-                        @property
-                        def info(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-            logging_module.FlextConstants = ExceptionConstants()
-
-            # This should trigger the exception handling (lines 1049-1050)
-            result = FlextLogger.configure_logging_system(
-                {
-                    "environment": "development",
-                    "log_level": "INFO",
-                }
-            )
-
-            # Should return failure result due to exception
-            assert result.is_failure
-            assert "Logging configuration error" in str(result.error)
-
-        except Exception as e:
-            # Even if mocking fails, we attempted to trigger the exception path
-            # Validate it's from our mock setup
-            # Mock exception (expected for test coverage): captured for validation
-            # Exception caught successfully for coverage validation
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-        finally:
-            # Restore original constants
-            logging_module.FlextConstants = original_constants
-
-    def test_100_percent_coverage_lines_1086_1087_ultimate(self) -> None:
-        """Ultimate test to force exception in get_logging_system_config."""
-        import flext_core.loggings as logging_module
-
-        # Force exception during dictionary creation inside get_logging_system_config
-        original_constants = logging_module.FlextConstants
-
-        try:
-            # Mock FlextConstants to raise exception when accessing Config values
-            class ExceptionConstants:
-                class Config:
-                    class ConfigEnvironment:
-                        @property
-                        def development(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-                    class LogLevel:
-                        @property
-                        def info(self) -> NoReturn:
-                            TestCoverageTargetedTests._raise_runtime_error(
-                                "lines 1226-1227"
-                            )
-
-            logging_module.FlextConstants = ExceptionConstants()
-
-            # This should trigger the exception handling (lines 1086-1087)
-            result = FlextLogger.get_logging_system_config()
-
-            # Should return failure result due to exception
-            assert result.is_failure
-            assert "Failed to get logging config" in str(result.error)
-
-        except Exception as e:
-            # Even if mocking fails, we attempted to trigger the exception path
-            # Validate it's from our mock setup
-            # Mock exception (expected for test coverage): captured for validation
-            # Exception caught successfully for coverage validation
-            # Exception captured for test coverage validation
-            # Exception handled for test coverage
-            # Expected test exception handled for coverage: {e}
-            logging.getLogger(__name__).debug("Expected test exception handled: %s", e)
-        finally:
-            # Restore original constants
-            logging_module.FlextConstants = original_constants
 
 
 class TestCoverageTargetedTests:
@@ -1901,84 +1365,6 @@ class TestCoverageTargetedTests:
         assert len(output.entries) == 1
         entry = output.entries[0]
         assert entry["correlation_id"] == test_correlation
-
-    def test_performance_processor_functionality(self) -> None:
-        """Test performance processor functionality."""
-        logger = FlextLogger("perf_proc_test")
-
-        # Configure logging with performance tracking enabled
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "enable_performance_logging": True,
-            "enable_console_output": True,
-            "log_level": "DEBUG",
-        }
-        FlextLogger.configure_logging_system(config)
-
-        with capture_structured_logs() as output:
-            # Start and complete operation to trigger performance logging
-            op_id = logger.start_operation("performance_test")
-            time.sleep(0.01)  # Small delay
-            logger.complete_operation(op_id, success=True)
-
-        # Should have logged both start and completion with performance data
-        assert len(output.entries) >= 2
-
-    def test_configuration_system_comprehensive(self) -> None:
-        """Test comprehensive configuration system functionality."""
-        # Test with comprehensive config
-        comprehensive_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "staging",
-            "log_level": "WARNING",
-            "enable_json_logging": True,
-            "service_name": "config-test",
-            "performance_tracking": True,
-        }
-
-        result = FlextLogger.configure_logging_system(comprehensive_config)
-        assert result.success
-
-        # Test retrieving current config
-        current = FlextLogger.get_logging_system_config()
-        assert current.success
-
-    def test_environment_specific_configurations(self) -> None:
-        """Test environment-specific configuration creation."""
-        # Test all valid environments (using actual valid values)
-        environments: list[FlextTypes.Config.Environment] = [
-            "development",
-            "staging",
-            "production",
-            "test",
-            "local",
-        ]
-
-        for env in environments:
-            config_result = FlextLogger.create_environment_logging_config(env)
-            assert config_result.success, f"Failed to create config for {env}"
-
-            config = config_result.unwrap()
-            assert config["environment"] == env
-
-    def test_error_path_coverage(self) -> None:
-        """Test various error paths for better coverage."""
-        # Test invalid configuration
-        invalid_configs: list[
-            dict[
-                str, str | int | float | bool | list[object] | dict[str, object] | None
-            ]
-        ] = [
-            {"environment": "nonexistent"},
-            {"log_level": "INVALID"},
-            {"environment": None},
-        ]
-
-        for invalid_config in invalid_configs:
-            result = FlextLogger.configure_logging_system(invalid_config)
-            assert result.is_failure, f"Should fail for config: {invalid_config}"
 
     def test_edge_cases_for_remaining_coverage(self) -> None:
         """Test remaining edge cases to push coverage over 95%."""
@@ -2097,41 +1483,6 @@ class TestCoverageTargetedTests:
 
         assert len(output.entries) >= 1
 
-    def test_invalid_logging_config_handling(self) -> None:
-        """Test invalid logging configuration to cover line 909."""
-        # Test with completely invalid configuration
-        result = FlextLogger.configure_logging_system(
-            {"completely_invalid_key": "invalid_value"}
-        )
-        # Should handle gracefully even with unknown keys
-        assert isinstance(result, FlextResult)
-
-    def test_environment_config_branches(self) -> None:
-        """Test different environment config branches to cover lines 1006-1015."""
-        # Test each environment type to cover different configuration branches
-        # Check actual values instead of assuming
-        environments: list[FlextTypes.Config.Environment] = [
-            "development",
-            "test",
-            "staging",
-            "production",
-            "local",
-        ]
-
-        for env in environments:
-            result = FlextLogger.create_environment_logging_config(env)
-            assert result.success, f"Failed to create config for {env}"
-            config = result.unwrap()
-            assert "log_level" in config
-            # Different environments may have different log levels
-            assert config["log_level"] in {
-                "DEBUG",
-                "INFO",
-                "WARNING",
-                "ERROR",
-                "CRITICAL",
-            }
-
     def test_logger_binding_complex_data(self) -> None:
         """Test logger binding with complex data to cover lines 1047-1048, 1084-1085."""
         logger = FlextLogger("bind_test")
@@ -2248,45 +1599,6 @@ class TestCoverageTargetedTests:
         service_version = logger._service_version
         assert isinstance(service_name, str)
         assert isinstance(service_version, str)
-
-    def test_invalid_logging_system_config_comprehensive(self) -> None:
-        """Test invalid logging system configuration to cover line 909."""
-        # Test various invalid configurations
-        invalid_configs: list[
-            dict[
-                str, str | int | float | bool | list[object] | dict[str, object] | None
-            ]
-        ] = [
-            {"unknown_key": "unknown_value"},
-            {"log_level": None},
-            {"environment": None},
-            {},  # Empty config
-            {"log_level": "INVALID", "environment": "invalid"},
-        ]
-
-        for config in invalid_configs:
-            result = FlextLogger.configure_logging_system(config)
-            # Should return FlextResult (may succeed or fail depending on config)
-            assert isinstance(result, FlextResult)
-
-    def test_environment_config_specific_branches(self) -> None:
-        """Test specific environment config branches to cover lines 1007, 1015."""
-        # Test all valid environments to hit different branches
-        valid_environments = ["development", "test", "staging", "production", "local"]
-
-        for env in valid_environments:
-            result = FlextLogger.create_environment_logging_config(env)
-            assert result.success
-            config = result.unwrap()
-
-            # Verify the config contains expected keys
-            assert "log_level" in config
-            assert "environment" in config
-            assert config["environment"] == env
-
-            # Check log level is from valid LogLevel enum
-            valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
-            assert config["log_level"] in valid_levels
 
     def test_logger_bind_method_edge_cases(self) -> None:
         """Test bind method edge cases to cover lines 1047-1048, 1084-1085."""

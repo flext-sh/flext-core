@@ -114,23 +114,6 @@ class TestUtilitiesConfiguration100PercentCoverage:
         )
         assert validated["log_level"] == FlextConstants.Config.LogLevel.INFO.value
 
-    def test_get_environment_configuration_all_environments(self) -> None:
-        """Test lines 993-1048: get_environment_configuration method."""
-        # Test all environments
-        environments: list[FlextTypes.Config.Environment] = [
-            "development",
-            "production",
-            "test",
-        ]
-
-        for env in environments:
-            result = FlextUtilities.Configuration.get_environment_configuration(env)
-            assert result.success
-            config = result.unwrap()
-            assert isinstance(config, dict)
-            # The method returns available configuration details, not specific environment
-            assert "available_environments" in config or len(config) > 0
-
 
 class TestUtilitiesGenerators100PercentCoverage:
     """Test generator functions for uncovered lines."""

@@ -375,7 +375,7 @@ class TestUserRegistrationService:
 
         registration_service = UserRegistrationService(
             user_service,
-            FailingNotificationService(),  # type: ignore[arg-type]
+            FailingNotificationService(),
         )
 
         with contextlib.redirect_stdout(StringIO()) as output:

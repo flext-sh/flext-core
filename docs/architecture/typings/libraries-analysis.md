@@ -158,8 +158,8 @@ class FlextWebTypes(FlextTypes):
     """Web application types extending FlextTypes."""
 
     class Web:
-        type SessionId = FlextTypes.Domain.EntityId
-        type UserId = FlextTypes.Domain.EntityId
+        type SessionId = str
+        type UserId = str
         type RequestContext = FlextTypes.Config.ConfigDict
         type ResponseContext = FlextTypes.Config.ConfigDict
 
@@ -330,7 +330,7 @@ class FlextServiceCommunicationTypes(FlextTypes):
         type ServiceMetrics = dict[str, int | float | bool]
 
     class MessageBus:
-        type MessageId = FlextTypes.Domain.EntityId
+        type MessageId = str
         type MessageType = Literal["command", "query", "event"]
         type MessagePayload = FlextTypes.Config.ConfigDict
 ```
@@ -356,8 +356,8 @@ class FlextAuthenticationTypes(FlextTypes):
     """Shared authentication types."""
 
     class Auth:
-        type UserId = FlextTypes.Domain.EntityId
-        type SessionId = FlextTypes.Domain.EntityId
+        type UserId = str
+        type SessionId = str
         type TokenPayload = FlextTypes.Config.ConfigDict
         type AuthResult = FlextTypes.Result.Success[FlextTypes.Config.ConfigDict]
 ```

@@ -1,13 +1,4 @@
-"""FLEXT Mixins - Unified behavioral patterns without wrappers.
-
-Consolidated mixin system implementing FLEXT patterns with zero tolerance for:
-- Wrappers and redeclarations
-- Multiple files for single functionality
-- Helper functions outside classes
-- Unnecessary delegation layers
-
-All behavioral patterns are implemented directly in FlextMixins class.
-"""
+"""FLEXT Mixins - Unified behavioral patterns."""
 
 from __future__ import annotations
 
@@ -16,30 +7,19 @@ import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from flext_core.constants import FlextConstants
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+if TYPE_CHECKING:
+    from flext_core.loggings import FlextLogger
+
 
 class FlextMixins:
-    """Unified mixin system with direct implementation - NO WRAPPERS.
-
-    Consolidates ALL mixin functionality without delegation or redeclarations.
-    Following FLEXT zero tolerance policy for wrappers and unnecessary abstractions.
-
-    Behavioral Patterns:
-    - Timestamp tracking (creation/update)
-    - Logging integration (structured logging)
-    - Serialization (JSON/dict conversion)
-    - Validation (data validation)
-    - Identification (ID generation)
-    - State management (lifecycle)
-    - Caching (memoization)
-    - Timing (performance tracking)
-    - Error handling (exception patterns)
-    """
+    """Unified mixin system with direct implementation."""
 
     # ==========================================================================
     # TIMESTAMP FUNCTIONALITY - Direct implementation
@@ -133,7 +113,7 @@ class FlextMixins:
         """Log operation with context."""
         logger = FlextMixins.get_logger(obj)
         if hasattr(logger, "info"):
-            logger.info(f"Operation: {operation}", extra=kwargs)  # type: ignore[attr-defined]
+            logger.info(f"Operation: {operation}", extra=kwargs)
 
     @staticmethod
     def log_error(
@@ -144,7 +124,7 @@ class FlextMixins:
         """Log error with context."""
         logger = FlextMixins.get_logger(obj)
         if hasattr(logger, "error"):
-            logger.error(message, extra=kwargs)  # type: ignore[attr-defined]
+            logger.error(message, extra=kwargs)
 
     @staticmethod
     def log_info(
@@ -155,7 +135,7 @@ class FlextMixins:
         """Log info message."""
         logger = FlextMixins.get_logger(obj)
         if hasattr(logger, "info"):
-            logger.info(message, extra=kwargs)  # type: ignore[attr-defined]
+            logger.info(message, extra=kwargs)
 
     @staticmethod
     def log_debug(
@@ -166,7 +146,7 @@ class FlextMixins:
         """Log debug message."""
         logger = FlextMixins.get_logger(obj)
         if hasattr(logger, "debug"):
-            logger.debug(message, extra=kwargs)  # type: ignore[attr-defined]
+            logger.debug(message, extra=kwargs)
 
     # ==========================================================================
     # SERIALIZATION FUNCTIONALITY - Direct implementation
@@ -485,29 +465,25 @@ class FlextMixins:
                 )
 
             # Apply defaults
-            validated_config.update(
-                {
-                    "log_level": config.get(
-                        "log_level", FlextConstants.Config.LogLevel.DEBUG.value
-                    ),
-                    "enable_timestamp_tracking": config.get(
-                        "enable_timestamp_tracking", True
-                    ),
-                    "enable_logging_integration": config.get(
-                        "enable_logging_integration", True
-                    ),
-                    "enable_serialization": config.get("enable_serialization", True),
-                    "enable_validation": config.get("enable_validation", True),
-                    "enable_identification": config.get("enable_identification", True),
-                    "enable_state_management": config.get(
-                        "enable_state_management", True
-                    ),
-                    "enable_caching": config.get("enable_caching", False),
-                    "enable_thread_safety": config.get("enable_thread_safety", True),
-                    "enable_metrics": config.get("enable_metrics", True),
-                    "default_cache_size": config.get("default_cache_size", 1000),
-                }
-            )
+            validated_config.update({
+                "log_level": config.get(
+                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value
+                ),
+                "enable_timestamp_tracking": config.get(
+                    "enable_timestamp_tracking", True
+                ),
+                "enable_logging_integration": config.get(
+                    "enable_logging_integration", True
+                ),
+                "enable_serialization": config.get("enable_serialization", True),
+                "enable_validation": config.get("enable_validation", True),
+                "enable_identification": config.get("enable_identification", True),
+                "enable_state_management": config.get("enable_state_management", True),
+                "enable_caching": config.get("enable_caching", False),
+                "enable_thread_safety": config.get("enable_thread_safety", True),
+                "enable_metrics": config.get("enable_metrics", True),
+                "default_cache_size": config.get("default_cache_size", 1000),
+            })
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 

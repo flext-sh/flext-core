@@ -1,8 +1,4 @@
-"""Targeted tests for 100% coverage on FlextResult module.
-
-This file contains precise tests targeting the specific remaining uncovered lines
-in result.py: 244-245, 635, 646-647, 730-731, 746-752, 858, 869, 899-900
-"""
+"""Targeted tests for 100% coverage on FlextResult module."""
 
 from __future__ import annotations
 

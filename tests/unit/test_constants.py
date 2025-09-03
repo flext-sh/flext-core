@@ -1,8 +1,4 @@
-"""Targeted tests for 100% coverage on FlextConstants module.
-
-This file contains precise tests targeting the specific remaining uncovered lines
-in constants.py: 703-705 (LogLevel.__eq__ method with string comparison)
-"""
+"""Targeted tests for 100% coverage on FlextConstants module."""
 
 from __future__ import annotations
 

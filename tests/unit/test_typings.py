@@ -32,17 +32,17 @@ class TestTypeProtocols:
 
     def test_type_aliases_usage(self) -> None:
         """Test type aliases from types module."""
-        # Test FlextTypes.Core.Dict
-        test_dict: FlextTypes.Core.Dict = {"key": "value", "number": 42}
+        # Test dict[str, object]
+        test_dict: dict[str, object] = {"key": "value", "number": 42}
         assert isinstance(test_dict, dict)
         assert test_dict["key"] == "value"
 
-        # Test FlextTypes.Core.List
-        test_list: FlextTypes.Core.List = [
+        # Test list[object]
+        test_list: list[object] = [
             "item1",
             42,
             "item3",
-        ]  # FlextTypes.Core.List allows str|int|float|None only
+        ]  # list[object] allows str|int|float|None only
         assert isinstance(test_list, list)
         assert len(test_list) == 3
 
@@ -272,9 +272,9 @@ class TestTypeAliasComprehensive:
 
     def test_entity_type_aliases(self) -> None:
         """Test entity-related type aliases."""
-        # FlextTypes.Domain.EntityId usage
-        user_id: FlextTypes.Domain.EntityId = "user-123"
-        order_id: FlextTypes.Domain.EntityId = "order-456"
+        # str usage
+        user_id: str = "user-123"
+        order_id: str = "order-456"
 
         assert isinstance(user_id, str)
         assert isinstance(order_id, str)
@@ -284,14 +284,14 @@ class TestTypeAliasComprehensive:
     def test_cqrs_type_aliases(self) -> None:
         """Test CQRS-related type aliases."""
         # Test available identifiers
-        correlation_id: FlextTypes.Utilities.CorrelationId = "corr-456"
+        correlation_id: str = "corr-456"
 
         assert isinstance(correlation_id, str)
 
     def test_available_type_aliases(self) -> None:
         """Test available type aliases."""
-        entity_id: FlextTypes.Domain.EntityId = "entity-123"
-        correlation_id: FlextTypes.Utilities.CorrelationId = "corr-456"
+        entity_id: str = "entity-123"
+        correlation_id: str = "corr-456"
 
         assert isinstance(entity_id, str)
         assert isinstance(correlation_id, str)
@@ -299,7 +299,7 @@ class TestTypeAliasComprehensive:
     def test_data_type_aliases(self) -> None:
         """Test data-related type aliases."""
         # Test FlextTypes.Core.Data generic
-        test_data: FlextTypes.Core.Dict = {"key": "value"}
+        test_data: dict[str, object] = {"key": "value"}
         assert isinstance(test_data, dict)
 
     def test_function_type_aliases(self) -> None:
@@ -334,8 +334,8 @@ class TestTypeAliasComprehensive:
     def test_basic_type_aliases(self) -> None:
         """Test basic type aliases."""
         # Test basic data types that are available
-        any_dict: FlextTypes.Core.Dict = {"key": "value", "number": 42}
-        any_list: FlextTypes.Core.List = ["item1", 42, "item3"]
+        any_dict: dict[str, object] = {"key": "value", "number": 42}
+        any_list: list[object] = ["item1", 42, "item3"]
 
         assert isinstance(any_dict, dict)
         assert isinstance(any_list, list)
@@ -354,8 +354,8 @@ class TestTypesCoverageImprovements:
         assert hasattr(FlextTypes, "Service")
 
         # Test type definitions are accessible
-        test_dict: FlextTypes.Core.Dict = {"test": "value"}
-        test_list: FlextTypes.Core.List = ["item1", 42]
+        test_dict: dict[str, object] = {"test": "value"}
+        test_list: list[object] = ["item1", 42]
 
         assert isinstance(test_dict, dict)
         assert isinstance(test_list, list)

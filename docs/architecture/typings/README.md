@@ -139,13 +139,13 @@ graph TB
 from flext_core.typings import FlextTypes
 
 # Domain-based type access with clear separation
-user_id: FlextTypes.Domain.EntityId = "user_123"
+user_id: str = "user_123"
 config: FlextTypes.Config.ConfigDict = {"api_key": "secret", "timeout": 30}
 result: FlextTypes.Result.Success[str] = FlextResult.ok("data")
 headers: FlextTypes.Network.Headers = {"Content-Type": "application/json"}
 
 # Service layer types
-service: FlextTypes.Service.ServiceInstance = UserService()
+service: object = UserService()
 handler: FlextTypes.Handler.CommandHandler = ProcessUserCommand()
 
 # Advanced types for metaprogramming
@@ -213,15 +213,15 @@ def create_decorator(func: Callable[P, R]) -> Callable[P, FlextResult[R]]:
 ```python
 # Complete DDD type support
 class UserEntity:
-    id: FlextTypes.Domain.EntityId
+    id: str
     email: FlextTypes.Validation.Email
-    created_at: FlextTypes.Core.String  # ISO timestamp
+    created_at: str  # ISO timestamp
 
 class UserService:
     def create_user(
         self,
         user_data: FlextTypes.Config.ConfigDict
-    ) -> FlextTypes.Result.Success[FlextTypes.Domain.EntityId]:
+    ) -> FlextTypes.Result.Success[str]:
         """Create user with full type safety."""
 
         # Validate email
@@ -230,7 +230,7 @@ class UserService:
             return FlextResult.fail(email_result.error)
 
         # Create entity with type safety
-        entity_id: FlextTypes.Domain.EntityId = self.generate_id()
+        entity_id: str = self.generate_id()
         user = UserEntity(
             id=entity_id,
             email=email_result.value,
@@ -292,10 +292,10 @@ class CreateUserCommand:
     password: str
 
 class GetUserQuery:
-    user_id: FlextTypes.Domain.EntityId
+    user_id: str
 
 class UserCreatedEvent:
-    user_id: FlextTypes.Domain.EntityId
+    user_id: str
     username: str
     timestamp: str
 
@@ -304,7 +304,7 @@ class UserCommandHandler:
     def handle_create_user(
         self,
         command: CreateUserCommand
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:
+    ) -> FlextResult[str]:
         """Handle user creation with type safety."""
 
         # Validate command
@@ -353,10 +353,10 @@ class AsyncUserService:
     async def process_user_stream(
         self,
         user_stream: FlextTypes.Async.AsyncStream[dict[str, object]]
-    ) -> FlextTypes.Async.AsyncResult[list[FlextTypes.Domain.EntityId]]:
+    ) -> FlextTypes.Async.AsyncResult[list[str]]:
         """Process user stream with async type safety."""
 
-        processed_ids: list[FlextTypes.Domain.EntityId] = []
+        processed_ids: list[str] = []
 
         async for user_data in user_stream:
             # Type-safe async processing
@@ -369,7 +369,7 @@ class AsyncUserService:
     async def create_user_async(
         self,
         user_data: dict[str, object]
-    ) -> FlextTypes.Result.Success[FlextTypes.Domain.EntityId]:
+    ) -> FlextTypes.Result.Success[str]:
         """Async user creation with type safety."""
 
         # Async validation
@@ -728,7 +728,7 @@ class FlextUserManagementTypes(FlextTypes):
 
     class UserDomain:
         """User domain types."""
-        type UserId = FlextTypes.Domain.EntityId
+        type UserId = str
         type Username = str
         type EmailAddress = FlextTypes.Validation.Email
         type UserRole = Literal["admin", "user", "guest"]
@@ -874,10 +874,10 @@ class FlextCrossServiceTypes(FlextTypes):
     class MessageBus:
         """Message bus types."""
         type ServiceName = str
-        type MessageId = FlextTypes.Domain.EntityId
+        type MessageId = str
         type MessageType = Literal["command", "query", "event"]
         type MessagePayload = FlextTypes.Config.ConfigDict
-        type CorrelationId = FlextTypes.Domain.EntityId
+        type CorrelationId = str
 
     class ServiceMesh:
         """Service mesh types."""
@@ -894,7 +894,7 @@ class UserServiceConnector:
 
     def send_user_created_message(
         self,
-        user_id: FlextTypes.Domain.EntityId,
+        user_id: str,
         user_data: FlextTypes.Config.ConfigDict,
         correlation_id: FlextCrossServiceTypes.MessageBus.CorrelationId
     ) -> FlextResult[FlextCrossServiceTypes.MessageBus.MessageId]:
@@ -937,7 +937,7 @@ class NotificationServiceConnector:
             return FlextResult.fail("Missing user_data in message payload")
 
         # Type-safe data extraction
-        user_id: FlextTypes.Domain.EntityId = message_payload["user_id"]
+        user_id: str = message_payload["user_id"]
         user_data: FlextTypes.Config.ConfigDict = message_payload["user_data"]
 
         # Type-safe email extraction
@@ -956,7 +956,7 @@ class NotificationServiceConnector:
 
     def send_welcome_email(
         self,
-        user_id: FlextTypes.Domain.EntityId,
+        user_id: str,
         email: str,
         correlation_id: FlextCrossServiceTypes.MessageBus.CorrelationId
     ) -> FlextResult[None]:
@@ -998,8 +998,8 @@ class FlextAdvancedTypes(FlextTypes):
 
     class Workflow:
         """Workflow domain types."""
-        type WorkflowId = FlextTypes.Domain.EntityId
-        type StepId = FlextTypes.Domain.EntityId
+        type WorkflowId = str
+        type StepId = str
         type WorkflowDefinition = FlextTypes.Config.ConfigDict
         type StepDefinition = FlextTypes.Config.ConfigDict
         type ExecutionContext = FlextTypes.Config.ConfigDict
@@ -1017,7 +1017,7 @@ class AnalyticsService:
         self,
         event_name: FlextAdvancedTypes.Analytics.EventName,
         properties: FlextAdvancedTypes.Analytics.EventProperties,
-        user_id: FlextTypes.Domain.EntityId | None = None
+        user_id: str | None = None
     ) -> FlextResult[None]:
         """Track analytics event with complete type safety."""
 
@@ -1164,16 +1164,16 @@ class UserService:
 # Systematic, hierarchical type system with complete safety
 class UserServiceTyped:
     def __init__(self):
-        self.users: dict[FlextTypes.Domain.EntityId, FlextTypes.Config.ConfigDict] = {}
+        self.users: dict[str, FlextTypes.Config.ConfigDict] = {}
         self.config: FlextTypes.Service.ServiceDict = {}
 
     def create_user(
         self,
         data: FlextTypes.Config.ConfigDict
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:  # Complete type safety
+    ) -> FlextResult[str]:  # Complete type safety
 
         # Compile-time type checking and validation
-        user_id: FlextTypes.Domain.EntityId = self.generate_id()
+        user_id: str = self.generate_id()
 
         # Type-safe operations with hierarchical organization
         result_data = {

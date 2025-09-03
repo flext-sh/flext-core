@@ -73,7 +73,7 @@ graph TB
     subgraph "Integration Points"
         FlextResult[FlextResult<br/>Error Handling]
         FlextMixins[FlextMixins<br/>Serializable & Loggable]
-        FlextModels[FlextModels.BaseConfig<br/>Configuration]
+        FlextModels[FlextModels.Config<br/>Configuration]
         FlextUtilities[FlextUtilities<br/>ID Generation]
     end
 
@@ -406,7 +406,7 @@ class FlextLDAPDomain:
                 )
             )
 
-        def validate_user_creation(self, user_data: FlextTypes.Core.Dict) -> FlextResult[object]:
+        def validate_user_creation(self, user_data: dict[str, object]) -> FlextResult[object]:
             """Validate user creation with business rules."""
             try:
                 return self._perform_all_user_validations(user_data)

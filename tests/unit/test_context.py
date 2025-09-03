@@ -1,8 +1,4 @@
-"""Tests for FlextContext context management system.
-
-Tests context management functionality including correlation IDs,
-service identification, request metadata, and serialization.
-"""
+"""Tests for FlextContext context management system."""
 
 from __future__ import annotations
 

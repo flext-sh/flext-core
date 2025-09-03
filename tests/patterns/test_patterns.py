@@ -11,6 +11,8 @@ This test file showcases the full power of our testing infrastructure including:
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -31,10 +33,10 @@ from ..support.hypothesis import (
 )
 
 
-def mark_test_pattern(pattern: str) -> object:
+def mark_test_pattern(pattern: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: object) -> object:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         func._test_pattern = pattern
         return func
 

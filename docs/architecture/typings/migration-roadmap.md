@@ -190,8 +190,8 @@ gantt
       """Web application types extending FlextTypes."""
 
       class Web:
-          type SessionId = FlextTypes.Domain.EntityId
-          type UserId = FlextTypes.Domain.EntityId
+          type SessionId = str
+          type UserId = str
           type RequestContext = FlextTypes.Config.ConfigDict
 
       class Http:
@@ -305,7 +305,7 @@ gantt
 
       class MessageBus:
           type ServiceName = str
-          type MessageId = FlextTypes.Domain.EntityId
+          type MessageId = str
           type MessagePayload = FlextTypes.Config.ConfigDict
 
       class ServiceMesh:
@@ -377,7 +377,7 @@ class FlextTypesMigrationTools:
         """Analyze service for FlextTypes migration opportunities."""
         return {
             "manual_types": ["dict[str, object]", "list[object]"],
-            "flext_type_candidates": ["FlextTypes.Config.ConfigDict", "FlextTypes.Core.List"],
+            "flext_type_candidates": ["FlextTypes.Config.ConfigDict", "list[object]"],
             "migration_priority": "high"
         }
 

@@ -1,11 +1,4 @@
-"""Comprehensive test coverage for FlextHandlers enterprise system.
-
-This module provides complete test coverage for handlers.py following FLEXT patterns:
-- Single TestFlextHandlersCoverage class per module
-- Real tests without mocks, testing actual behavior
-- Coverage of all FlextHandlers methods and patterns
-- Enterprise pattern validation (CQRS, Chain of Responsibility, etc.)
-"""
+"""Comprehensive test coverage for FlextHandlers enterprise system."""
 
 from __future__ import annotations
 

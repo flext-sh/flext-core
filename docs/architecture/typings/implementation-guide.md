@@ -41,7 +41,7 @@ config: FlextTypes.Config.ConfigDict = {
 }
 
 result: FlextTypes.Result.Success[str] = FlextResult.ok("operation completed")
-user_id: FlextTypes.Domain.EntityId = "user_123"
+user_id: str = "user_123"
 headers: FlextTypes.Network.Headers = {"Content-Type": "application/json"}
 
 # Generic programming with type variables
@@ -64,7 +64,7 @@ class FlextUserServiceTypes(FlextTypes):
 
     class UserDomain:
         """User domain types."""
-        type UserId = FlextTypes.Domain.EntityId
+        type UserId = str
         type Username = str
         type UserEmail = FlextTypes.Validation.Email
         type UserRole = Literal["admin", "user", "guest"]
@@ -113,19 +113,19 @@ class UserService:
 from flext_core.typings import FlextTypes
 
 # Core Foundation Types - Most frequently used
-core_dict: FlextTypes.Core.Dict = {"key": "value"}
-core_string: FlextTypes.Core.String = "text"
-core_bool: FlextTypes.Core.Boolean = True
+core_dict: dict[str, object] = {"key": "value"}
+core_string: str = "text"
+core_bool: bool = True
 
 # Result Pattern Types - Railway-oriented programming
 success_result: FlextTypes.Result.Success[str] = FlextResult.ok("success")
 result_type: FlextTypes.Result.ResultType[int] = FlextResult.ok(42)
 
 # Domain Modeling Types - DDD patterns
-entity_id: FlextTypes.Domain.EntityId = "entity_123"
+entity_id: str = "entity_123"
 
 # Service Layer Types - Service patterns
-service_instance: FlextTypes.Service.ServiceInstance = MyService()
+service_instance: object = MyService()
 service_dict: FlextTypes.Service.ServiceDict = {"user_service": service_instance}
 
 # Configuration Types - Settings and config
@@ -156,7 +156,7 @@ class FlextApiServiceTypes(FlextTypes):
         """API domain-specific types."""
         type EndpointName = str
         type RoutePattern = str
-        type RequestId = FlextTypes.Domain.EntityId
+        type RequestId = str
         type ResponseCode = Literal[200, 201, 400, 401, 403, 404, 500]
 
     class ApiOperations:
@@ -468,10 +468,10 @@ class AsyncDataService:
     async def process_async_stream(
         self,
         data_stream: FlextTypes.Async.AsyncStream[FlextTypes.Config.ConfigDict]
-    ) -> FlextTypes.Async.AsyncResult[list[FlextTypes.Domain.EntityId]]:
+    ) -> FlextTypes.Async.AsyncResult[list[str]]:
         """Process async data stream with complete type safety."""
 
-        processed_ids: list[FlextTypes.Domain.EntityId] = []
+        processed_ids: list[str] = []
 
         try:
             async for data_item in data_stream:
@@ -488,7 +488,7 @@ class AsyncDataService:
     async def process_data_item_async(
         self,
         data_item: FlextTypes.Config.ConfigDict
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:
+    ) -> FlextResult[str]:
         """Process single data item asynchronously."""
 
         # Type-safe async validation
@@ -496,7 +496,7 @@ class AsyncDataService:
             return FlextResult.fail("Missing id in data item")
 
         # Type-safe async processing
-        entity_id: FlextTypes.Domain.EntityId = str(data_item["id"])
+        entity_id: str = str(data_item["id"])
 
         # Simulate async processing
         await asyncio.sleep(0.1)
@@ -530,7 +530,7 @@ class AsyncDatabaseConnection:
 async def process_with_async_context(
     data_items: list[FlextTypes.Config.ConfigDict],
     connection_string: FlextTypes.Network.ConnectionString
-) -> FlextResult[list[FlextTypes.Domain.EntityId]]:
+) -> FlextResult[list[str]]:
     """Process data with async context and complete type safety."""
 
     async with AsyncDatabaseConnection(connection_string) as connection_result:
@@ -565,10 +565,10 @@ class FlextIntegrationTypes(FlextTypes):
     class MessageBus:
         """Message bus communication types."""
         type ServiceName = str
-        type MessageId = FlextTypes.Domain.EntityId
+        type MessageId = str
         type MessageType = Literal["command", "query", "event", "response"]
         type MessagePayload = FlextTypes.Config.ConfigDict
-        type CorrelationId = FlextTypes.Domain.EntityId
+        type CorrelationId = str
         type MessageMetadata = FlextTypes.Config.ConfigDict
 
     class ServiceRegistry:
@@ -595,7 +595,7 @@ class UserManagementService:
         self,
         user_data: FlextTypes.Config.ConfigDict,
         correlation_id: FlextIntegrationTypes.MessageBus.CorrelationId
-    ) -> FlextResult[FlextTypes.Domain.EntityId]:
+    ) -> FlextResult[str]:
         """Create user and send notification with type safety."""
 
         # Type-safe user creation
@@ -676,7 +676,7 @@ class NotificationService:
                 return FlextResult.fail("Missing user_data in notification message")
 
             # Type-safe data extraction
-            user_id: FlextTypes.Domain.EntityId = str(message["user_id"])
+            user_id: str = str(message["user_id"])
             user_data: FlextTypes.Config.ConfigDict = message["user_data"]
 
             # Type-safe email extraction and validation
@@ -698,7 +698,7 @@ class NotificationService:
 
     def send_welcome_notification(
         self,
-        user_id: FlextTypes.Domain.EntityId,
+        user_id: str,
         email: str,
         correlation_id: FlextIntegrationTypes.MessageBus.CorrelationId
     ) -> FlextResult[None]:

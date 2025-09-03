@@ -66,8 +66,8 @@ class FlextUserValidationService:
 
     def validate_user_registration(
         self,
-        registration_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        registration_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user registration with comprehensive checks."""
 
         # API request validation
@@ -141,8 +141,8 @@ class ComposableValidationService:
 
     def validate_user_with_predicates(
         self,
-        user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        user_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user data using composed predicates."""
 
         # Email validation
@@ -218,8 +218,8 @@ class SchemaValidationService:
 
     def validate_user_with_schema(
         self,
-        user_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        user_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate user data using comprehensive schema."""
 
         user_schema = self.create_comprehensive_user_schema()
@@ -265,9 +265,9 @@ class PerformanceValidationService:
 
     def validate_large_dataset_with_batching(
         self,
-        dataset: list[FlextTypes.Core.Dict],
+        dataset: list[dict[str, object]],
         batch_size: int = 100
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Validate large dataset using batch processing."""
 
         validated_items = []
@@ -351,8 +351,8 @@ class BusinessRuleValidationService:
 
     def validate_order_business_rules(
         self,
-        order_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        order_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate complex order business rules."""
 
         # Customer tier validation
@@ -383,7 +383,7 @@ class BusinessRuleValidationService:
 
     def validate_user_permissions(
         self,
-        user_data: FlextTypes.Core.Dict,
+        user_data: dict[str, object],
         requested_permissions: list[str]
     ) -> FlextResult[list[str]]:
         """Validate user permissions with business rules."""
@@ -432,8 +432,8 @@ class CompositeValidationService:
 
     def validate_complex_entity(
         self,
-        entity_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        entity_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate complex entity using composite validation."""
 
         validation_pipeline = self.create_validation_pipeline([
@@ -473,8 +473,8 @@ class CustomDomainValidationService:
 
     def validate_with_custom_rules(
         self,
-        data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate data with custom business rules."""
 
         # Custom business rule predicates
