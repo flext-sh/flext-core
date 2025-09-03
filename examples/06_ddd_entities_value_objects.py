@@ -94,11 +94,13 @@ class Product(FlextModels.Entity):
         """Activate the product."""
         if not self.active:
             self.active = True
-            self.add_domain_event({
-                "event_type": "ProductActivated",
-                "product_id": self.id,
-                "product_name": self.name,
-            })
+            self.add_domain_event(
+                {
+                    "event_type": "ProductActivated",
+                    "product_id": self.id,
+                    "product_name": self.name,
+                }
+            )
 
     def update_price(self, new_price: Money) -> FlextResult[None]:
         """Update product price with validation."""
@@ -108,12 +110,14 @@ class Product(FlextModels.Entity):
         old_price = self.price
         self.price = new_price
 
-        self.add_domain_event({
-            "event_type": "PriceChanged",
-            "product_id": self.id,
-            "old_price": str(old_price),
-            "new_price": str(new_price),
-        })
+        self.add_domain_event(
+            {
+                "event_type": "PriceChanged",
+                "product_id": self.id,
+                "old_price": str(old_price),
+                "new_price": str(new_price),
+            }
+        )
 
         return FlextResult[None].ok(None)
 
@@ -137,12 +141,14 @@ class Customer(FlextModels.Entity):
         self.address = new_address
 
         if old_address != new_address:
-            self.add_domain_event({
-                "event_type": "AddressChanged",
-                "customer_id": self.id,
-                "old_address": str(old_address),
-                "new_address": str(new_address),
-            })
+            self.add_domain_event(
+                {
+                    "event_type": "AddressChanged",
+                    "customer_id": self.id,
+                    "old_address": str(old_address),
+                    "new_address": str(new_address),
+                }
+            )
 
 
 class CartItem(FlextModels.Value):
@@ -198,12 +204,14 @@ class ShoppingCart(FlextModels.Entity):
 
         self.items.append(cart_item)
 
-        self.add_domain_event({
-            "event_type": "ItemAdded",
-            "cart_id": self.id,
-            "product_id": product.id,
-            "quantity": quantity,
-        })
+        self.add_domain_event(
+            {
+                "event_type": "ItemAdded",
+                "cart_id": self.id,
+                "product_id": product.id,
+                "quantity": quantity,
+            }
+        )
 
         return FlextResult[None].ok(None)
 
@@ -228,11 +236,13 @@ class ShoppingCart(FlextModels.Entity):
 
         self.discount_percent = discount_percent
 
-        self.add_domain_event({
-            "event_type": "DiscountApplied",
-            "cart_id": self.id,
-            "discount_percent": float(discount_percent),
-        })
+        self.add_domain_event(
+            {
+                "event_type": "DiscountApplied",
+                "cart_id": self.id,
+                "discount_percent": float(discount_percent),
+            }
+        )
 
         return FlextResult[None].ok(None)
 

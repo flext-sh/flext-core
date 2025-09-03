@@ -51,16 +51,19 @@ class TestFlextFieldsCore:
         # Too short
         result = field.validate("ab")
         assert result.failure
+        assert result.error is not None
         assert "too short" in result.error.lower()
 
         # Too long
         result = field.validate("verylongstring")
         assert result.failure
+        assert result.error is not None
         assert "too long" in result.error.lower()
 
         # Pattern mismatch
         result = field.validate("Hello123")
         assert result.failure
+        assert result.error is not None
         assert "pattern" in result.error.lower()
 
     def test_integer_field_comprehensive(self) -> None:
@@ -81,11 +84,13 @@ class TestFlextFieldsCore:
         # Too small
         result = field.validate(-5)
         assert result.failure
+        assert result.error is not None
         assert "too small" in result.error.lower()
 
         # Too large
         result = field.validate(150)
         assert result.failure
+        assert result.error is not None
         assert "too large" in result.error.lower()
 
     def test_float_field_comprehensive(self) -> None:

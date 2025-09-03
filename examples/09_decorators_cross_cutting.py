@@ -426,15 +426,19 @@ def main() -> FlextResult[FlextTypes.Core.String]:
             demonstrate_user_creation_with_modern_decorators()
             demonstrate_decorator_categories()
             success_count += 2
-            operation_results.extend([
-                "✅ User Creation: Completed successfully",
-                "✅ Decorator Categories: Completed successfully",
-            ])
+            operation_results.extend(
+                [
+                    "✅ User Creation: Completed successfully",
+                    "✅ Decorator Categories: Completed successfully",
+                ]
+            )
         except Exception as e:
-            operation_results.extend([
-                f"❌ User Creation: Exception {e}",
-                f"❌ Decorator Categories: Exception {e}",
-            ])
+            operation_results.extend(
+                [
+                    f"❌ User Creation: Exception {e}",
+                    f"❌ Decorator Categories: Exception {e}",
+                ]
+            )
             logger.exception("Additional demonstrations failed")
 
         # Calculate success rate using FlextTypes

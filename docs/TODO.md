@@ -96,26 +96,26 @@
 
 1. **Advanced Patterns Guide**
 
-    - Complex workflow examples
-    - Performance optimization
-    - Scaling strategies
+   - Complex workflow examples
+   - Performance optimization
+   - Scaling strategies
 
 2. **Integration Guides**
 
-    - Singer SDK integration
-    - Database patterns
-    - External service integration
+   - Singer SDK integration
+   - Database patterns
+   - External service integration
 
 3. **Architecture Deep Dives**
 
-    - CQRS implementation details
-    - Event sourcing patterns
-    - Plugin system design
+   - CQRS implementation details
+   - Event sourcing patterns
+   - Plugin system design
 
 4. **Case Studies**
-    - Real-world usage examples
-    - Migration stories
-    - Performance improvements
+   - Real-world usage examples
+   - Migration stories
+   - Performance improvements
 
 ## Documentation Maintenance
 

@@ -27,7 +27,7 @@ import json
 import uuid
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import ClassVar, Generic, ParamSpec, TypeVar
+from typing import ClassVar, Generic
 from urllib.parse import urlparse
 
 from dateutil import parser
@@ -44,13 +44,9 @@ from pydantic import (
 # Import for centralized ConfigDict definitions
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
 
-# Generic type variables
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
-P = ParamSpec("P")
+# Import centralized type variables from typings module
+from flext_core.typings import FlextTypes, T
 
 
 class FlextModels:

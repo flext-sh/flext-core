@@ -17,8 +17,7 @@ from typing import Self
 
 from pydantic import ConfigDict, Field
 
-from flext_core import FlextConfig, FlextResult
-from flext_core.models import FlextModels
+from flext_core import FlextConfig, FlextModels, FlextResult
 
 # =============================================================================
 # TYPE ALIASES AND CONSTANTS

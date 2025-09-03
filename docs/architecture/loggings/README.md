@@ -9,6 +9,7 @@
 `FlextLogger` serves as the **comprehensive logging foundation** for all 32+ FLEXT ecosystem projects, providing structured JSON logging, automatic correlation ID generation, request context tracking, operation performance metrics, sensitive data sanitization, and thread-safe request context management. This enterprise-grade logging system ensures consistent, observable, and debuggable logging patterns across all FLEXT services.
 
 ### Key Statistics
+
 - **Module Size**: 1,281 lines with comprehensive structured logging implementation
 - **Integration Scope**: 394+ files across all FLEXT libraries use FlextLogger
 - **Architecture Pattern**: Singleton pattern with thread-local context management
@@ -38,24 +39,24 @@ graph TB
     A --> C[Context Management]
     A --> D[Performance Tracking]
     A --> E[Security Features]
-    
+
     B --> F[JSON Production Output]
     B --> G[Colored Console Development]
     B --> H[StructLog Integration]
-    
+
     C --> I[Thread-Local Storage]
     C --> J[Global Correlation IDs]
     C --> K[Service Context]
     C --> L[Request Context]
-    
+
     D --> M[Operation Start/Complete]
     D --> N[Duration Tracking]
     D --> O[Performance Metrics]
-    
+
     E --> P[Data Sanitization]
     E --> Q[Sensitive Key Redaction]
     E --> R[Stack Trace Control]
-    
+
     A --> S[FLEXT Ecosystem]
     S --> T[flext-api]
     S --> U[flext-auth]
@@ -71,6 +72,7 @@ graph TB
 ### 1. Basic Structured Logging
 
 #### Standard Log Levels with Context
+
 ```python
 from flext_core import FlextLogger
 
@@ -91,6 +93,7 @@ except Exception:
 ```
 
 #### Error Logging with Exception Details
+
 ```python
 # Error logging with Exception objects
 try:
@@ -98,13 +101,14 @@ try:
 except ValidationError as e:
     logger.error("User creation validation failed", error=e, user_data=invalid_data)
 
-# Error logging with string messages  
+# Error logging with string messages
 logger.error("Custom validation failed", error="Email format is invalid", field="email")
 ```
 
 ### 2. Correlation ID and Request Tracking
 
 #### Global Correlation ID Management
+
 ```python
 # Set global correlation ID for all loggers
 FlextLogger.set_global_correlation_id("req_abc123")
@@ -122,6 +126,7 @@ instance_id = logger.get_correlation_id()
 ```
 
 #### Request Context Tracking
+
 ```python
 # Set request-specific context (thread-local)
 logger.set_request_context(
@@ -139,6 +144,7 @@ logger.clear_request_context()
 ```
 
 #### Context Binding and Child Loggers
+
 ```python
 # Create bound logger with permanent context
 user_logger = logger.bind(user_id="123", operation="user_management")
@@ -155,42 +161,44 @@ logger.set_context(service="api", version="2.0", deployment="production")
 ### 3. Performance Tracking and Operation Monitoring
 
 #### Operation Lifecycle Tracking
+
 ```python
 # Start operation tracking
 operation_id = logger.start_operation(
-    "user_registration", 
-    user_id="123", 
+    "user_registration",
+    user_id="123",
     registration_type="premium"
 )
 
 # Perform operation
 try:
     user_service.register_user(user_data)
-    
+
     # Complete successful operation
     logger.complete_operation(
-        operation_id, 
-        success=True, 
+        operation_id,
+        success=True,
         created_user_id="user_456",
         validation_passed=True
     )
-    
+
 except Exception as e:
     # Complete failed operation
     logger.complete_operation(
-        operation_id, 
-        success=False, 
+        operation_id,
+        success=False,
         error_type=type(e).__name__,
         error_message=str(e)
     )
 ```
 
 #### Context Manager for Duration Tracking
+
 ```python
 # Track operation duration with automatic timing
 with logger.track_duration("database_query") as tracker:
     result = database.execute_complex_query(sql)
-    
+
     # Add additional context during operation
     tracker.add_context(
         rows_returned=len(result),
@@ -203,11 +211,12 @@ with logger.track_duration("database_query") as tracker:
 ### 4. Service and Environment Context
 
 #### Service Metadata Configuration
+
 ```python
 # Configure service context for all log entries
 logger.set_service_context(
     name="user-api",
-    version="2.1.0", 
+    version="2.1.0",
     environment="production"
 )
 
@@ -217,6 +226,7 @@ print(f"Service: {service_info['name']} v{service_info['version']}")
 ```
 
 #### Environment-Based Auto-Configuration
+
 ```python
 # Environment auto-detection from environment variables
 # ENVIRONMENT=production -> JSON logging, reduced verbosity
@@ -224,7 +234,7 @@ print(f"Service: {service_info['name']} v{service_info['version']}")
 # ENVIRONMENT=test -> Minimal logging, no correlation
 
 logger = FlextLogger(
-    __name__, 
+    __name__,
     level="INFO",  # Can be overridden by environment
     environment="production"  # Explicit environment setting
 )
@@ -250,7 +260,7 @@ FlextLogger.configure(
 # Environment-specific configuration
 config = {
     "environment": "production",
-    "log_level": "WARNING", 
+    "log_level": "WARNING",
     "enable_console_output": False,
     "enable_json_logging": True,
     "enable_correlation_tracking": True,
@@ -277,7 +287,7 @@ if prod_config.success:
     # JSON output, WARNING level, no console, async enabled
     print(f"Production config: {config}")
 
-# Development configuration  
+# Development configuration
 dev_config = FlextLogger.create_environment_logging_config("development")
 if dev_config.success:
     config = dev_config.value
@@ -320,10 +330,10 @@ if optimized.success:
 
 ```python
 # Sensitive data is automatically redacted
-logger.info("User login attempt", 
+logger.info("User login attempt",
     username="john_doe",
     password="secret123",        # [REDACTED]
-    api_key="sk_live_123456",   # [REDACTED] 
+    api_key="sk_live_123456",   # [REDACTED]
     session_id="sess_789",       # [REDACTED]
     email="john@example.com"     # Preserved
 )
@@ -332,7 +342,7 @@ logger.info("User login attempt",
 user_data = {
     "profile": {
         "name": "John Doe",
-        "email": "john@example.com", 
+        "email": "john@example.com",
         "auth": {
             "password": "secret",      # [REDACTED]
             "token": "jwt_token_123"   # [REDACTED]
@@ -375,12 +385,12 @@ from uuid import uuid4
 class APIService:
     def __init__(self):
         self.logger = FlextLogger(__name__)
-    
+
     def handle_request(self, request):
         # Generate correlation ID for request
         correlation_id = f"req_{uuid4().hex[:16]}"
         FlextLogger.set_global_correlation_id(correlation_id)
-        
+
         # Set request context
         self.logger.set_request_context(
             method=request.method,
@@ -388,20 +398,20 @@ class APIService:
             user_agent=request.headers.get("User-Agent"),
             client_ip=request.remote_addr
         )
-        
+
         # Track request processing
         op_id = self.logger.start_operation("api_request")
-        
+
         try:
             result = self.process_request(request)
             self.logger.complete_operation(op_id, success=True, status_code=200)
             return result
-            
+
         except Exception as e:
             self.logger.complete_operation(op_id, success=False, error=str(e))
             self.logger.error("Request processing failed", error=e)
             raise
-        
+
         finally:
             # Clear request context when request completes
             self.logger.clear_request_context()
@@ -414,29 +424,29 @@ class DatabaseService:
     def __init__(self):
         self.logger = FlextLogger(__name__)
         self.logger.set_context(component="database", driver="oracle")
-    
+
     def execute_query(self, sql, params=None):
         # Create operation-specific logger
         query_logger = self.logger.bind(
             query_type="select" if sql.lower().startswith("select") else "modify",
             param_count=len(params) if params else 0
         )
-        
+
         with query_logger.track_duration("database_query") as tracker:
             try:
                 result = self.db_connection.execute(sql, params)
-                
+
                 # Add result context
                 tracker.add_context(
                     rows_affected=result.rowcount if hasattr(result, 'rowcount') else 0,
                     execution_plan="index_scan" if "INDEX" in sql.upper() else "table_scan"
                 )
-                
+
                 query_logger.info("Query executed successfully")
                 return result
-                
+
             except Exception as e:
-                query_logger.error("Query execution failed", 
+                query_logger.error("Query execution failed",
                     error=e,
                     sql_preview=sql[:100] + "..." if len(sql) > 100 else sql
                 )
@@ -450,7 +460,7 @@ class TaskProcessor:
     def __init__(self):
         self.logger = FlextLogger(__name__)
         self.logger.set_context(component="task_processor")
-    
+
     def process_task(self, task_id, task_data):
         # Create task-specific logger with bound context
         task_logger = self.logger.bind(
@@ -458,24 +468,24 @@ class TaskProcessor:
             task_type=task_data.get("type"),
             priority=task_data.get("priority", "normal")
         )
-        
+
         # Set correlation ID from task if available
         if correlation_id := task_data.get("correlation_id"):
             task_logger.set_correlation_id(correlation_id)
-        
+
         op_id = task_logger.start_operation("task_processing")
-        
+
         try:
             # Process task with detailed logging
             task_logger.info("Task processing started")
-            
+
             result = self.execute_task_logic(task_data)
-            
+
             task_logger.complete_operation(op_id, success=True, result_size=len(str(result)))
             task_logger.info("Task completed successfully")
-            
+
             return result
-            
+
         except Exception as e:
             task_logger.complete_operation(op_id, success=False, error_type=type(e).__name__)
             task_logger.error("Task processing failed", error=e)
@@ -493,7 +503,7 @@ class MicroserviceClient:
             client_service=service_name,
             component="service_client"
         )
-    
+
     def call_service(self, endpoint, data):
         # Create service call logger
         call_logger = self.logger.bind(
@@ -501,11 +511,11 @@ class MicroserviceClient:
             endpoint=endpoint,
             request_size=len(str(data))
         )
-        
+
         # Propagate correlation ID in headers
         correlation_id = call_logger.get_correlation_id()
         headers = {"X-Correlation-ID": correlation_id}
-        
+
         with call_logger.track_duration("service_call") as tracker:
             try:
                 response = self.http_client.post(
@@ -513,19 +523,19 @@ class MicroserviceClient:
                     json=data,
                     headers=headers
                 )
-                
+
                 # Add response context
                 tracker.add_context(
                     status_code=response.status_code,
                     response_size=len(response.content),
                     response_time_ms=response.elapsed.total_seconds() * 1000
                 )
-                
+
                 call_logger.info("Service call completed")
                 return response.json()
-                
+
             except Exception as e:
-                call_logger.error("Service call failed", 
+                call_logger.error("Service call failed",
                     error=e,
                     target_endpoint=f"{self.service_name}/{endpoint}"
                 )
@@ -554,7 +564,7 @@ class MicroserviceClient:
 {
   "@timestamp": "2025-01-31T09:30:15.123Z",
   "level": "INFO",
-  "message": "Processing user request", 
+  "message": "Processing user request",
   "logger": "user_service",
   "correlation_id": "req_abc123",
   "service": {
@@ -565,7 +575,7 @@ class MicroserviceClient:
   },
   "system": {
     "hostname": "api-server-01",
-    "platform": "Linux", 
+    "platform": "Linux",
     "python_version": "3.13.0",
     "process_id": 12345,
     "thread_id": 67890
@@ -602,7 +612,7 @@ class MicroserviceClient:
     "stack_trace": [
       "  File \"/app/user_service.py\", line 45, in create_user",
       "    validate_email(user_data['email'])",
-      "  File \"/app/validators.py\", line 12, in validate_email", 
+      "  File \"/app/validators.py\", line 12, in validate_email",
       "    raise ValidationError('Email format is invalid')"
     ],
     "module": "user_service"
@@ -686,6 +696,7 @@ FlextLogger.optimize_logging_performance(production_config)
 ### 1. Common Integration Issues
 
 #### Incorrect Import Pattern
+
 ```python
 # ❌ Wrong - Using structlog directly (breaks FLEXT ecosystem consistency)
 import structlog
@@ -697,11 +708,12 @@ logger = FlextLogger(__name__)
 ```
 
 #### Missing Correlation ID Propagation
+
 ```python
 # ❌ Wrong - Correlation ID not propagated across services
 def service_call():
     response = requests.post("/api/users", json=data)
-    
+
 # ✅ Correct - Propagate correlation ID in headers
 def service_call():
     correlation_id = logger.get_correlation_id()
@@ -734,9 +746,9 @@ for action in user_actions:
 
 ```python
 # ✅ Good - Sanitization is automatic, but be explicit about sensitive data
-logger.info("User registration", 
+logger.info("User registration",
     username="john_doe",           # Safe to log
-    email="john@example.com",      # Safe to log  
+    email="john@example.com",      # Safe to log
     hashed_password="[EXPLICIT]",  # Explicitly redacted
     # password="secret"            # Would be auto-redacted
 )
@@ -750,7 +762,7 @@ logger.add_sensitive_key("internal_employee_id")
 try:
     authenticate_user(username, password)
 except AuthenticationError as e:
-    logger.error("Authentication failed", 
+    logger.error("Authentication failed",
         username=username,           # Safe - no sensitive data
         error_type=type(e).__name__, # Safe - error classification
         # password=password          # Never log credentials
@@ -764,22 +776,26 @@ except AuthenticationError as e:
 FlextLogger is extensively used across the FLEXT ecosystem with 394+ files showing integration:
 
 ### Core Services (100% Adoption)
+
 - **flext-api**: Complete integration with HTTP request correlation
-- **flext-auth**: Security-focused logging with audit trails  
+- **flext-auth**: Security-focused logging with audit trails
 - **flext-meltano**: ETL pipeline logging with data processing context
 - **flext-cli**: Command-line application logging
 
 ### Database Libraries (95% Adoption)
+
 - **flext-db-oracle**: Database operation logging with query performance
 - **flext-ldap**: Directory service operation logging
 - **Singer ecosystem**: Tap and target logging with stream context
 
 ### Enterprise Applications (85% Adoption)
+
 - **ALGAR systems**: Business process logging with compliance context
 - **GrupoNos applications**: Data pipeline and workflow logging
 - **Oracle WMS integrations**: Warehouse management system logging
 
 ### Infrastructure Services (80% Adoption)
+
 - **Go services**: Integration through structured JSON output
 - **flext-observability**: Metrics and monitoring integration
 - **flext-grpc**: RPC service call logging
@@ -798,7 +814,7 @@ FlextLogger is extensively used across the FLEXT ecosystem with 394+ files showi
 ### Recommended Actions
 
 1. **Standardize Imports**: Replace all `structlog.FlextLogger()` usage with flext-core imports
-2. **Implement Correlation Propagation**: Add correlation ID headers to all inter-service communications  
+2. **Implement Correlation Propagation**: Add correlation ID headers to all inter-service communications
 3. **Enhance Context Usage**: Implement consistent request and operation context across all services
 4. **Optimize Performance**: Apply production logging configurations to high-traffic services
 
@@ -814,4 +830,4 @@ FlextLogger is extensively used across the FLEXT ecosystem with 394+ files showi
 
 ---
 
-*This documentation reflects FlextLogger as the comprehensive structured logging foundation for the entire FLEXT ecosystem, providing enterprise-grade logging capabilities with correlation tracking, performance monitoring, and security sanitization across all 32+ projects.*
+_This documentation reflects FlextLogger as the comprehensive structured logging foundation for the entire FLEXT ecosystem, providing enterprise-grade logging capabilities with correlation tracking, performance monitoring, and security sanitization across all 32+ projects._

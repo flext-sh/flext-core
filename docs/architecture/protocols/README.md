@@ -2,7 +2,7 @@
 
 **Version**: 0.9.0  
 **Module**: `flext_core.protocols`  
-**Target Audience**: Software Architects, Senior Developers, Platform Engineers  
+**Target Audience**: Software Architects, Senior Developers, Platform Engineers
 
 ## Executive Summary
 
@@ -15,12 +15,14 @@ FlextProtocols represents a comprehensive enterprise protocol architecture that 
 ## 🎯 Strategic Value Proposition
 
 ### Business Impact
+
 - **Architectural Consistency**: Unified contract definitions across 33+ FLEXT services
 - **Type Safety**: Runtime and static type checking preventing integration failures
 - **Development Velocity**: Standardized interfaces reducing integration complexity
 - **Quality Assurance**: Contract-driven development with comprehensive validation
 
 ### Technical Excellence
+
 - **Clean Architecture**: Hierarchical layer organization following DDD principles
 - **Protocol Composition**: Python 3.13+ generics with mixin composition patterns
 - **Runtime Validation**: @runtime_checkable protocols for dynamic contract verification
@@ -42,41 +44,41 @@ graph TB
             F4[ErrorHandler - Exception Transform]
             F5[HasToDict - Serialization]
         end
-        
+
         subgraph "Layer 2: Domain"
             D1[Service - Domain Services]
             D2[Repository[T] - Data Access]
             D3[DomainEvent - Event Sourcing]
             D4[EventStore - Event Persistence]
         end
-        
+
         subgraph "Layer 3: Application"
             A1[Handler[TInput,TOutput] - Use Cases]
             A2[MessageHandler - CQRS]
             A3[ValidatingHandler - Input Validation]
             A4[UnitOfWork - Transactions]
         end
-        
+
         subgraph "Layer 4: Infrastructure"
             I1[Connection - External Systems]
             I2[LdapConnection - LDAP Specific]
             I3[Auth - Authentication]
             I4[LoggerProtocol - Structured Logging]
         end
-        
+
         subgraph "Layer 5: Extensions"
             E1[Plugin - Plugin System]
             E2[Middleware - Pipeline Processing]
             E3[Observability - Monitoring]
         end
     end
-    
+
     F1 --> D1
     F2 --> A3
     D1 --> A1
     A1 --> I1
     I1 --> E1
-    
+
     subgraph "Configuration System"
         CONFIG[FlextProtocolsConfig]
         CONFIG --> |configure_protocols_system| VALIDATION
@@ -94,36 +96,38 @@ graph TB
 ```python
 class FlextProtocols.Foundation:
     """Core building blocks for the FLEXT ecosystem."""
-    
+
     class Callable[T](Protocol):
         """Generic callable protocol with type safety."""
         def __call__(self, *args: object, **kwargs: object) -> T: ...
-    
+
     class Validator[T](Protocol):
         """Type-safe validation protocol."""
         def validate(self, data: T) -> object: ...
-    
+
     class Factory[T](Protocol):
         """Type-safe factory for object creation."""
         def create(self, **kwargs: object) -> object: ...
-    
+
     @runtime_checkable
     class HasToDict(Protocol):
         """Runtime-checkable serialization protocol."""
         def to_dict(self) -> dict[str, object]: ...
-    
+
     class ErrorHandler(Protocol):
         """Exception transformation protocol."""
         def handle_error(self, error: Exception) -> str: ...
 ```
 
 **Key Features**:
+
 - **Generic Type Safety**: Python 3.13+ generics with ParamSpec support
 - **Runtime Validation**: @runtime_checkable protocols for dynamic validation
 - **Composition Patterns**: Mixin-friendly protocol design
 - **Pydantic Integration**: Support for both v1 (dict) and v2 (model_dump) patterns
 
 **Usage Example**:
+
 ```python
 # Type-safe factory implementation
 class UserFactory(FlextProtocols.Foundation.Factory[User]):
@@ -146,64 +150,66 @@ def process_serializable_object(obj: object) -> dict[str, object]:
 ```python
 class FlextProtocols.Domain:
     """Business logic and domain service contracts."""
-    
+
     class Service(Protocol):
         """Domain service with lifecycle management."""
         def __call__(self, *args: object, **kwargs: object) -> object: ...
-        
+
         @abstractmethod
         def start(self) -> object: ...
-        
+
         @abstractmethod
         def stop(self) -> object: ...
-        
+
         @abstractmethod
         def health_check(self) -> object: ...
-    
+
     class Repository[T](Protocol):
         """Generic repository pattern."""
         @abstractmethod
         def get_by_id(self, entity_id: str) -> object: ...
-        
+
         @abstractmethod
         def save(self, entity: T) -> object: ...
-        
+
         @abstractmethod
         def delete(self, entity_id: str) -> object: ...
-    
+
     class DomainEvent(Protocol):
         """Event sourcing contract."""
         event_id: str
         event_type: str
         aggregate_id: str
-        
+
         def to_dict(self) -> dict[str, object]: ...
-        
+
         @classmethod
         def from_dict(cls, data: dict[str, object]) -> FlextProtocols.Domain.DomainEvent: ...
 ```
 
 **Key Features**:
+
 - **DDD Compliance**: Repository, Service, and Event patterns
 - **Lifecycle Management**: Service start/stop/health protocols
 - **Event Sourcing**: Structured domain event contracts
 - **Generic Constraints**: Type-safe repository operations
 
 **Usage Example**:
+
 ```python
 # Domain service implementation
 class UserDomainService(FlextProtocols.Domain.Service):
     def __init__(self, user_repo: FlextProtocols.Domain.Repository[User]):
         self.user_repo = user_repo
         self._running = False
-    
+
     def __call__(self, *args: object, **kwargs: object) -> object:
         return self.process_user_request(*args, **kwargs)
-    
+
     def start(self) -> object:
         self._running = True
         return FlextResult[None].ok(None)
-    
+
     def health_check(self) -> object:
         if self._running:
             return FlextResult[dict].ok({"status": "healthy", "service": "user-domain"})
@@ -226,44 +232,46 @@ class UserCreatedEvent(FlextProtocols.Domain.DomainEvent):
 ```python
 class FlextProtocols.Application:
     """Use cases, handlers, and application orchestration."""
-    
+
     class Handler[TInput, TOutput](Protocol):
         """Generic request/response handler."""
         def __call__(self, input_data: TInput) -> object: ...
         def validate(self, data: TInput) -> object: ...
-    
+
     class MessageHandler(Protocol):
         """CQRS message handler."""
         def handle(self, message: object) -> object: ...
         def can_handle(self, message_type: type) -> bool: ...
-    
+
     class ValidatingHandler(MessageHandler, Protocol):
         """Handler with built-in validation."""
         def validate(self, message: object) -> object: ...
-    
+
     class AuthorizingHandler(MessageHandler, Protocol):
         """Handler with authorization."""
         def authorize(self, message: object, context: dict[str, object]) -> object: ...
-    
+
     class UnitOfWork(Protocol):
         """Transaction management."""
         @abstractmethod
         def begin(self) -> object: ...
-        
+
         @abstractmethod
         def commit(self) -> object: ...
-        
+
         @abstractmethod
         def rollback(self) -> object: ...
 ```
 
 **Key Features**:
+
 - **CQRS Support**: Message handler patterns for command/query separation
 - **Validation Integration**: Built-in validation capabilities
 - **Authorization**: Role-based access control contracts
 - **Transaction Management**: Unit of Work pattern for consistency
 
 **Usage Example**:
+
 ```python
 # CQRS Command Handler
 class CreateUserCommand:
@@ -274,44 +282,44 @@ class CreateUserCommand:
 class CreateUserHandler(FlextProtocols.Application.ValidatingHandler):
     def __init__(self, user_service: FlextProtocols.Domain.Service):
         self.user_service = user_service
-    
+
     def handle(self, message: object) -> object:
         if not isinstance(message, CreateUserCommand):
             return FlextResult[dict].fail("Invalid message type")
-        
+
         # Validate input
         validation_result = self.validate(message)
         if not validation_result.success:
             return validation_result
-        
+
         # Create user
         return self.user_service.create_user(message.name, message.email)
-    
+
     def validate(self, message: object) -> object:
         if not isinstance(message, CreateUserCommand):
             return FlextResult[None].fail("Invalid message type")
-        
+
         if not message.email or "@" not in message.email:
             return FlextResult[None].fail("Invalid email address")
-        
+
         return FlextResult[None].ok(None)
-    
+
     def can_handle(self, message_type: type) -> bool:
         return message_type == CreateUserCommand
 
 # Usage with transaction management
 class UserCreationOrchestrator:
-    def __init__(self, 
+    def __init__(self,
                  handler: FlextProtocols.Application.ValidatingHandler,
                  uow: FlextProtocols.Application.UnitOfWork):
         self.handler = handler
         self.uow = uow
-    
+
     def create_user_with_transaction(self, command: CreateUserCommand) -> FlextResult[dict]:
         begin_result = self.uow.begin()
         if not begin_result.success:
             return begin_result
-        
+
         try:
             result = self.handler.handle(command)
             if result.success:
@@ -332,14 +340,14 @@ class UserCreationOrchestrator:
 ```python
 class FlextProtocols.Infrastructure:
     """External systems and cross-cutting concern contracts."""
-    
+
     class Connection(Protocol):
         """Generic external system connection."""
         def __call__(self, *args: object, **kwargs: object) -> object: ...
         def test_connection(self) -> object: ...
         def get_connection_string(self) -> str: ...
         def close_connection(self) -> object: ...
-    
+
     class LdapConnection(Connection, Protocol):
         """LDAP-specific connection contract."""
         def connect(self, uri: str, bind_dn: str, password: str) -> object: ...
@@ -348,13 +356,13 @@ class FlextProtocols.Infrastructure:
         def add(self, dn: str, attributes: dict[str, object]) -> object: ...
         def modify(self, dn: str, modifications: dict[str, object]) -> object: ...
         def delete(self, dn: str) -> object: ...
-    
+
     @runtime_checkable
     class Configurable(Protocol):
         """Configuration management contract."""
         def configure(self, config: dict[str, object]) -> object: ...
         def get_config(self) -> dict[str, object]: ...
-    
+
     @runtime_checkable
     class LoggerProtocol(Protocol):
         """Structured logging contract."""
@@ -366,12 +374,14 @@ class FlextProtocols.Infrastructure:
 ```
 
 **Key Features**:
+
 - **Connection Management**: Standardized external system connection contracts
 - **LDAP Specialization**: Comprehensive LDAP operation protocols
 - **Configuration Protocols**: Consistent configuration management
 - **Logging Standards**: Structured logging with context support
 
 **Usage Example**:
+
 ```python
 # LDAP service implementation
 class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
@@ -379,10 +389,10 @@ class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
         self.config = config
         self.connection = None
         self.connected = False
-    
+
     def __call__(self, *args: object, **kwargs: object) -> object:
         return self.execute_ldap_operation(*args, **kwargs)
-    
+
     def connect(self, uri: str, bind_dn: str, password: str) -> object:
         try:
             # LDAP connection logic
@@ -394,11 +404,11 @@ class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
             return bind_result
         except Exception as e:
             return FlextResult[None].fail(f"LDAP connection failed: {e}")
-    
+
     def search(self, base_dn: str, search_filter: str, scope: str = "subtree") -> object:
         if not self.connected:
             return FlextResult[list].fail("Not connected to LDAP server")
-        
+
         try:
             # LDAP search implementation
             results = self._perform_search(base_dn, search_filter, scope)
@@ -415,17 +425,17 @@ class ConfigurableUserService(
         self.logger = logger
         self.config = {}
         self._running = False
-    
+
     def configure(self, config: dict[str, object]) -> object:
         self.config.update(config)
         self.logger.info("Service configured", config_keys=list(config.keys()))
         return FlextResult[None].ok(None)
-    
+
     def start(self) -> object:
         self.logger.info("Starting user service")
         self._running = True
         return FlextResult[None].ok(None)
-    
+
     def health_check(self) -> object:
         status = {"running": self._running, "config_loaded": bool(self.config)}
         if self._running:
@@ -443,31 +453,31 @@ class ConfigurableUserService(
 ```python
 class FlextProtocols.Extensions:
     """Advanced patterns, plugins, and extensions."""
-    
+
     class Plugin(Protocol):
         """Plugin system contract."""
         def configure(self, config: dict[str, object]) -> object: ...
         def get_config(self) -> dict[str, object]: ...
-        
+
         @abstractmethod
         def initialize(self, context: FlextProtocols.Extensions.PluginContext) -> object: ...
-        
+
         @abstractmethod
         def shutdown(self) -> object: ...
-        
+
         @abstractmethod
         def get_info(self) -> dict[str, object]: ...
-    
+
     class PluginContext(Protocol):
         """Plugin execution context."""
         def get_service(self, service_name: str) -> object: ...
         def get_config(self) -> dict[str, object]: ...
         def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol: ...
-    
+
     class Middleware(Protocol):
         """Middleware pipeline component."""
         def process(self, request: object, next_handler: Callable[[object], object]) -> object: ...
-    
+
     @runtime_checkable
     class Observability(Protocol):
         """Observability and monitoring contract."""
@@ -477,12 +487,14 @@ class FlextProtocols.Extensions:
 ```
 
 **Key Features**:
+
 - **Plugin Architecture**: Standardized plugin lifecycle and context management
 - **Middleware Patterns**: Request/response pipeline processing
 - **Observability Integration**: Monitoring and metrics collection contracts
 - **Extensibility**: Framework for adding new functionality
 
 **Usage Example**:
+
 ```python
 # Plugin implementation
 class UserAnalyticsPlugin(FlextProtocols.Extensions.Plugin):
@@ -490,28 +502,28 @@ class UserAnalyticsPlugin(FlextProtocols.Extensions.Plugin):
         self.config = {}
         self.initialized = False
         self.context = None
-    
+
     def initialize(self, context: FlextProtocols.Extensions.PluginContext) -> object:
         self.context = context
         logger = context.get_logger()
-        
+
         try:
             # Initialize analytics service
             analytics_config = context.get_config().get("analytics", {})
             self.configure(analytics_config)
-            
+
             logger.info("User analytics plugin initialized")
             self.initialized = True
             return FlextResult[None].ok(None)
-            
+
         except Exception as e:
             logger.exception("Failed to initialize user analytics plugin")
             return FlextResult[None].fail(f"Initialization failed: {e}")
-    
+
     def configure(self, config: dict[str, object]) -> object:
         self.config.update(config)
         return FlextResult[None].ok(None)
-    
+
     def get_info(self) -> dict[str, object]:
         return {
             "name": "UserAnalyticsPlugin",
@@ -524,22 +536,22 @@ class UserAnalyticsPlugin(FlextProtocols.Extensions.Plugin):
 class LoggingMiddleware(FlextProtocols.Extensions.Middleware):
     def __init__(self, logger: FlextProtocols.Infrastructure.LoggerProtocol):
         self.logger = logger
-    
+
     def process(self, request: object, next_handler: Callable[[object], object]) -> object:
         request_id = getattr(request, 'id', 'unknown')
-        
+
         self.logger.info("Processing request", request_id=request_id)
         start_time = time.time()
-        
+
         try:
             result = next_handler(request)
-            
+
             duration_ms = (time.time() - start_time) * 1000
-            self.logger.info("Request processed successfully", 
-                           request_id=request_id, 
+            self.logger.info("Request processed successfully",
+                           request_id=request_id,
                            duration_ms=duration_ms)
             return result
-            
+
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
             self.logger.exception("Request processing failed",
@@ -552,7 +564,7 @@ class MetricsCollector(FlextProtocols.Extensions.Observability):
     def __init__(self):
         self.metrics = {}
         self.traces = {}
-    
+
     def record_metric(self, name: str, value: float, tags: dict[str, str] | None = None) -> object:
         metric_key = f"{name}:{tags}" if tags else name
         self.metrics[metric_key] = {
@@ -562,7 +574,7 @@ class MetricsCollector(FlextProtocols.Extensions.Observability):
             "timestamp": time.time()
         }
         return FlextResult[None].ok(None)
-    
+
     def start_trace(self, operation_name: str) -> object:
         trace_id = f"{operation_name}_{uuid.uuid4()}"
         self.traces[trace_id] = {
@@ -571,7 +583,7 @@ class MetricsCollector(FlextProtocols.Extensions.Observability):
             "status": "active"
         }
         return FlextResult[str].ok(trace_id)
-    
+
     def health_check(self) -> object:
         return FlextResult[dict].ok({
             "metrics_count": len(self.metrics),
@@ -615,12 +627,12 @@ if system_config.success:
 
 ### Performance Characteristics
 
-| **Configuration Level** | **Validation Overhead** | **Memory Usage** | **Cache Hit Ratio** | **Use Case** |
-|-------------------------|-------------------------|------------------|---------------------|--------------|
-| **Development** | <2ms per validation | 15MB | N/A (disabled) | Development/Debug |
-| **Balanced** | <1ms per validation | 8MB | N/A (disabled) | General purpose |
-| **High Performance** | <0.5ms per validation | 12MB | 85%+ | Production services |
-| **Extreme Performance** | <0.1ms per validation | 20MB | 95%+ | High-throughput systems |
+| **Configuration Level** | **Validation Overhead** | **Memory Usage** | **Cache Hit Ratio** | **Use Case**            |
+| ----------------------- | ----------------------- | ---------------- | ------------------- | ----------------------- |
+| **Development**         | <2ms per validation     | 15MB             | N/A (disabled)      | Development/Debug       |
+| **Balanced**            | <1ms per validation     | 8MB              | N/A (disabled)      | General purpose         |
+| **High Performance**    | <0.5ms per validation   | 12MB             | 85%+                | Production services     |
+| **Extreme Performance** | <0.1ms per validation   | 20MB             | 95%+                | High-throughput systems |
 
 ---
 
@@ -628,63 +640,66 @@ if system_config.success:
 
 ### Current Integration Status
 
-| **FLEXT Library** | **Protocol Usage** | **Integration Level** | **Patterns Used** |
-|-------------------|-------------------|---------------------|------------------|
-| **flext-core** | ✅ Complete | Native implementation | All layers |
-| **flext-web** | 🟡 Partial | Custom extensions | Foundation + Infrastructure |
-| **flext-meltano** | 🔴 Minimal | Plugin types only | Limited Foundation |
-| **flext-ldap** | 🔴 None | Custom protocols | None (opportunity) |
-| **flext-api** | 🔴 None | No protocol usage | None (critical gap) |
+| **FLEXT Library** | **Protocol Usage** | **Integration Level** | **Patterns Used**           |
+| ----------------- | ------------------ | --------------------- | --------------------------- |
+| **flext-core**    | ✅ Complete        | Native implementation | All layers                  |
+| **flext-web**     | 🟡 Partial         | Custom extensions     | Foundation + Infrastructure |
+| **flext-meltano** | 🔴 Minimal         | Plugin types only     | Limited Foundation          |
+| **flext-ldap**    | 🔴 None            | Custom protocols      | None (opportunity)          |
+| **flext-api**     | 🔴 None            | No protocol usage     | None (critical gap)         |
 
 ### Integration Opportunities
 
 #### 1. Service Layer Standardization
+
 ```python
 # Standardize all FLEXT services with Domain.Service protocol
 class FlextApiService(FlextProtocols.Domain.Service):
     """API service following FlextProtocols contracts."""
-    
+
     def start(self) -> object:
         return self._initialize_api_server()
-    
+
     def health_check(self) -> object:
         return self._check_api_health()
 
 class FlextMeltanoService(FlextProtocols.Domain.Service):
     """ETL service following FlextProtocols contracts."""
-    
+
     def start(self) -> object:
         return self._initialize_etl_pipeline()
 ```
 
 #### 2. Repository Pattern Implementation
+
 ```python
 # Standardize data access across all libraries
 class UserRepository(FlextProtocols.Domain.Repository[User]):
     """User repository with FlextProtocols contract."""
-    
+
     def get_by_id(self, entity_id: str) -> object:
         return self._fetch_user_from_db(entity_id)
 
 class LdapUserRepository(FlextProtocols.Domain.Repository[LdapUser]):
     """LDAP user repository with FlextProtocols contract."""
-    
+
     def get_by_id(self, entity_id: str) -> object:
         return self._fetch_user_from_ldap(entity_id)
 ```
 
 #### 3. Infrastructure Abstraction
+
 ```python
 # Unify all external connections
 class FlextDatabaseConnection(FlextProtocols.Infrastructure.Connection):
     """Database connection following FlextProtocols."""
-    
+
     def test_connection(self) -> object:
         return self._ping_database()
 
 class FlextApiConnection(FlextProtocols.Infrastructure.Connection):
     """External API connection following FlextProtocols."""
-    
+
     def test_connection(self) -> object:
         return self._health_check_api()
 ```
@@ -696,16 +711,19 @@ class FlextApiConnection(FlextProtocols.Infrastructure.Connection):
 ### High-Priority Integration Areas
 
 1. **Service Standardization** (All Libraries)
+
    - **Impact**: Critical - Unified service lifecycle management
    - **Benefit**: Consistent start/stop/health patterns across ecosystem
    - **Effort**: Medium - Requires refactoring existing service classes
 
 2. **Repository Pattern Implementation** (flext-db-oracle, flext-ldap)
+
    - **Impact**: High - Standardized data access patterns
    - **Benefit**: Interchangeable data sources, consistent APIs
    - **Effort**: Medium - New abstraction layer development
 
 3. **Handler Architecture** (flext-api, flext-meltano)
+
    - **Impact**: High - CQRS and validation standardization
    - **Benefit**: Consistent request/response handling
    - **Effort**: High - Major architectural changes

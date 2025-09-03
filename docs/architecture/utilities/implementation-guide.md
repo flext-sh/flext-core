@@ -8,7 +8,7 @@
 
 1. [Quick Start Guide](#quick-start-guide)
 2. [Generators Domain Implementation](#generators-domain-implementation)
-3. [TextProcessor Domain Implementation](#textprocessor-domain-implementation)  
+3. [TextProcessor Domain Implementation](#textprocessor-domain-implementation)
 4. [Performance Domain Implementation](#performance-domain-implementation)
 5. [Conversions Domain Implementation](#conversions-domain-implementation)
 6. [ProcessingUtils Domain Implementation](#processingutils-domain-implementation)
@@ -50,36 +50,36 @@ def process_api_request(request_data: dict) -> dict:
     # Generate tracking IDs
     request_id = FlextUtilities.Generators.generate_request_id()
     correlation_id = FlextUtilities.Generators.generate_correlation_id()
-    
+
     # Safe data extraction
     user_id = FlextUtilities.Conversions.safe_int(request_data.get("user_id"), 0)
     search_term = FlextUtilities.TextProcessor.clean_text(
         request_data.get("search", "")
     )
-    
+
     # Performance tracking
     start_time = time.time()
-    
+
     try:
         # Simulate business logic
         results = perform_search(user_id, search_term)
-        
+
         # Record success metrics
         duration = time.time() - start_time
         FlextUtilities.Performance.record_metric("api_search", duration, success=True)
-        
+
         return {
             "request_id": request_id,
             "correlation_id": correlation_id,
             "results": results,
             "status": "success"
         }
-        
+
     except Exception as e:
         # Record failure metrics
         duration = time.time() - start_time
         FlextUtilities.Performance.record_metric("api_search", duration, success=False, error=str(e))
-        
+
         return {
             "request_id": request_id,
             "correlation_id": correlation_id,
@@ -151,12 +151,12 @@ print(f"Audit Entry: {audit_entry}")
 class EnterpriseIDManager:
     def __init__(self, service_name: str):
         self.service_name = service_name
-        
+
     def generate_transaction_id(self) -> str:
         """Generate transaction ID with service context."""
         base_id = FlextUtilities.Generators.generate_entity_id()
         return f"{self.service_name}_{base_id}"
-    
+
     def create_request_context(self) -> dict:
         """Create complete request context with all tracking IDs."""
         return {
@@ -183,7 +183,7 @@ print(f"Request Context: {context}")
 # Safe string conversion with fallback handling
 def process_user_input(form_data: dict) -> dict:
     """Process form data with safe text handling."""
-    
+
     return {
         "username": FlextUtilities.TextProcessor.safe_string(
             form_data.get("username"), "anonymous"
@@ -239,7 +239,7 @@ for title in article_titles:
 
 # camelCase generation for API compatibility
 python_fields = [
-    "user_name", "created_at", "is_active", "last_login_time", 
+    "user_name", "created_at", "is_active", "last_login_time",
     "email_verified", "phone_number", "billing_address"
 ]
 
@@ -265,11 +265,11 @@ class DataMaskingService:
             "password": {"show_first": 0, "show_last": 0},
             "api_key": {"show_first": 8, "show_last": 4}
         }
-    
+
     def mask_sensitive_data(self, data: dict) -> dict:
         """Mask sensitive data according to predefined patterns."""
         masked_data = {}
-        
+
         for key, value in data.items():
             if key in self.masking_patterns:
                 pattern = self.masking_patterns[key]
@@ -281,7 +281,7 @@ class DataMaskingService:
                 masked_data[key] = masked_value
             else:
                 masked_data[key] = value
-                
+
         return masked_data
 
 # Usage example
@@ -313,20 +313,20 @@ for key, value in masked.items():
 # Advanced text cleaning for data processing
 def clean_and_normalize_text_data(raw_data: list[str]) -> list[str]:
     """Clean and normalize text data for processing."""
-    
+
     cleaned_data = []
-    
+
     for text in raw_data:
         # Convert to safe string
         safe_text = FlextUtilities.TextProcessor.safe_string(text, "")
-        
+
         # Clean control characters and normalize whitespace
         cleaned_text = FlextUtilities.TextProcessor.clean_text(safe_text)
-        
+
         # Skip empty results
         if cleaned_text:
             cleaned_data.append(cleaned_text)
-    
+
     return cleaned_data
 
 # Test with problematic text data
@@ -358,30 +358,30 @@ for i, text in enumerate(cleaned):
 class DatabaseService:
     def __init__(self):
         self.connection = self._get_connection()
-    
+
     @FlextUtilities.Performance.track_performance("db_query")
     def execute_query(self, sql: str, params: dict = None) -> list:
         """Execute database query with performance tracking."""
         # Simulate database query execution
         time.sleep(0.1)  # Simulate query time
-        
+
         if "invalid" in sql.lower():
             raise Exception("Invalid SQL query")
-        
+
         return [{"id": 1, "name": "test"}]
-    
+
     @FlextUtilities.Performance.track_performance("db_transaction")
     def execute_transaction(self, operations: list) -> bool:
         """Execute database transaction with performance tracking."""
         # Simulate transaction processing
         time.sleep(0.05 * len(operations))
-        
+
         # Simulate occasional transaction failures
         if len(operations) > 10:
             raise Exception("Transaction too large")
-        
+
         return True
-    
+
     def _get_connection(self):
         return "mock_connection"
 
@@ -435,7 +435,7 @@ print(f"  Average duration: {tx_metrics.get('avg_duration', 0):.3f}s")
 class APIEndpointMonitor:
     def __init__(self):
         self.active_requests = {}
-    
+
     def start_request(self, endpoint: str, request_id: str):
         """Start timing a request."""
         self.active_requests[request_id] = {
@@ -443,25 +443,25 @@ class APIEndpointMonitor:
             "start_time": time.perf_counter(),
             "request_id": request_id
         }
-    
+
     def end_request(self, request_id: str, success: bool = True, error: str = None):
         """End timing a request and record metrics."""
         if request_id not in self.active_requests:
             return
-        
+
         request_info = self.active_requests.pop(request_id)
         duration = time.perf_counter() - request_info["start_time"]
-        
+
         # Record performance metric
         FlextUtilities.Performance.record_metric(
-            f"api_{request_info['endpoint']}", 
+            f"api_{request_info['endpoint']}",
             duration,
             success=success,
             error=error
         )
-        
+
         print(f"Request {request_id} completed in {duration:.3f}s - {'✅' if success else '❌'}")
-    
+
     def get_endpoint_metrics(self, endpoint: str) -> dict:
         """Get metrics for specific endpoint."""
         return FlextUtilities.Performance.get_metrics(f"api_{endpoint}")
@@ -478,16 +478,16 @@ for i in range(10):
     endpoint = endpoints[i % len(endpoints)]
     request_id = FlextUtilities.Generators.generate_request_id()
     requests.append((endpoint, request_id))
-    
+
     monitor.start_request(endpoint, request_id)
-    
+
     # Simulate request processing time
     time.sleep(0.01 + (i % 3) * 0.02)
-    
+
     # Simulate occasional failures
     success = i % 7 != 0  # Fail every 7th request
     error = "Simulated error" if not success else None
-    
+
     monitor.end_request(request_id, success=success, error=error)
 
 # Get and display metrics for each endpoint
@@ -500,7 +500,7 @@ for endpoint in endpoints:
         print(f"  Successful: {metrics.get('success_count', 0)}")
         print(f"  Failed: {metrics.get('error_count', 0)}")
         print(f"  Average response time: {metrics.get('avg_duration', 0):.3f}s")
-        
+
         if metrics.get('error_count', 0) > 0:
             print(f"  Last error: {metrics.get('last_error', 'N/A')}")
 ```
@@ -512,14 +512,14 @@ for endpoint in endpoints:
 class PerformanceAnalyzer:
     def __init__(self):
         self.analysis_id = FlextUtilities.Generators.generate_entity_id()
-    
+
     def generate_performance_report(self) -> dict:
         """Generate comprehensive performance report."""
         all_metrics = FlextUtilities.Performance.get_metrics()
-        
+
         if not all_metrics:
             return {"message": "No performance data available"}
-        
+
         report = {
             "analysis_id": self.analysis_id,
             "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
@@ -527,34 +527,34 @@ class PerformanceAnalyzer:
             "operations": self._analyze_operations(all_metrics),
             "recommendations": self._generate_recommendations(all_metrics)
         }
-        
+
         return report
-    
+
     def _generate_summary(self, metrics: dict) -> dict:
         """Generate summary statistics."""
         total_operations = len(metrics)
         total_calls = sum(m.get('total_calls', 0) for m in metrics.values())
         total_errors = sum(m.get('error_count', 0) for m in metrics.values())
         avg_success_rate = (total_calls - total_errors) / total_calls if total_calls > 0 else 0
-        
+
         return {
             "total_operations": total_operations,
             "total_calls": total_calls,
             "total_errors": total_errors,
             "overall_success_rate": FlextUtilities.Formatters.format_percentage(avg_success_rate)
         }
-    
+
     def _analyze_operations(self, metrics: dict) -> list:
         """Analyze individual operations."""
         operations = []
-        
+
         for operation_name, operation_metrics in metrics.items():
             total_calls = operation_metrics.get('total_calls', 0)
             success_rate = (
-                (total_calls - operation_metrics.get('error_count', 0)) / total_calls 
+                (total_calls - operation_metrics.get('error_count', 0)) / total_calls
                 if total_calls > 0 else 0
             )
-            
+
             operations.append({
                 "name": operation_name,
                 "calls": total_calls,
@@ -562,20 +562,20 @@ class PerformanceAnalyzer:
                 "success_rate": FlextUtilities.Formatters.format_percentage(success_rate),
                 "error_count": operation_metrics.get('error_count', 0)
             })
-        
+
         # Sort by total calls (most active first)
         operations.sort(key=lambda x: x['calls'], reverse=True)
         return operations
-    
+
     def _generate_recommendations(self, metrics: dict) -> list:
         """Generate performance recommendations."""
         recommendations = []
-        
+
         for operation_name, operation_metrics in metrics.items():
             avg_duration = operation_metrics.get('avg_duration', 0)
             error_count = operation_metrics.get('error_count', 0)
             total_calls = operation_metrics.get('total_calls', 0)
-            
+
             # Slow operation recommendation
             if avg_duration > 1.0:
                 recommendations.append({
@@ -584,7 +584,7 @@ class PerformanceAnalyzer:
                     "issue": f"Slow average response time: {avg_duration:.3f}s",
                     "recommendation": "Consider optimizing this operation"
                 })
-            
+
             # High error rate recommendation
             error_rate = error_count / total_calls if total_calls > 0 else 0
             if error_rate > 0.1:  # 10% error rate
@@ -594,7 +594,7 @@ class PerformanceAnalyzer:
                     "issue": f"High error rate: {FlextUtilities.Formatters.format_percentage(error_rate)}",
                     "recommendation": "Investigate and fix error causes"
                 })
-        
+
         return recommendations
 
 # Usage example - Generate comprehensive performance report
@@ -645,11 +645,11 @@ class DataConverter:
             "failed_conversions": 0,
             "fallback_usage": 0
         }
-    
+
     def convert_form_data(self, form_data: dict) -> dict:
         """Convert web form data to appropriate types."""
         converted_data = {}
-        
+
         # Integer conversions with fallbacks
         converted_data["age"] = FlextUtilities.Conversions.safe_int(
             form_data.get("age"), 0
@@ -657,7 +657,7 @@ class DataConverter:
         converted_data["quantity"] = FlextUtilities.Conversions.safe_int(
             form_data.get("quantity"), 1
         )
-        
+
         # Float conversions for monetary values
         converted_data["price"] = FlextUtilities.Conversions.safe_float(
             form_data.get("price"), 0.0
@@ -665,7 +665,7 @@ class DataConverter:
         converted_data["discount"] = FlextUtilities.Conversions.safe_float(
             form_data.get("discount"), 0.0
         )
-        
+
         # Boolean conversions for flags
         converted_data["is_premium"] = FlextUtilities.Conversions.safe_bool(
             form_data.get("is_premium"), default=False
@@ -673,18 +673,18 @@ class DataConverter:
         converted_data["newsletter_subscription"] = FlextUtilities.Conversions.safe_bool(
             form_data.get("newsletter"), default=False
         )
-        
+
         # Track conversion statistics
         self._update_conversion_stats(form_data, converted_data)
-        
+
         return converted_data
-    
+
     def _update_conversion_stats(self, original: dict, converted: dict):
         """Update conversion statistics."""
         for key in converted.keys():
             original_value = original.get(key)
             converted_value = converted[key]
-            
+
             # Check if fallback was used (original was None or conversion failed)
             if original_value is None:
                 self.conversion_stats["fallback_usage"] += 1
@@ -697,11 +697,11 @@ class DataConverter:
                         float(original_value)
                     elif key in ["is_premium", "newsletter_subscription"]:
                         bool(original_value)
-                    
+
                     self.conversion_stats["successful_conversions"] += 1
                 except:
                     self.conversion_stats["failed_conversions"] += 1
-    
+
     def get_stats(self) -> dict:
         """Get conversion statistics."""
         return self.conversion_stats.copy()
@@ -713,7 +713,7 @@ test_cases = [
     # Valid data
     {
         "age": "25",
-        "quantity": "3", 
+        "quantity": "3",
         "price": "99.99",
         "discount": "0.15",
         "is_premium": "true",
@@ -750,10 +750,10 @@ print("=" * 50)
 for i, test_case in enumerate(test_cases):
     print(f"\nTest Case {i+1}:")
     print(f"Input: {test_case}")
-    
+
     converted = converter.convert_form_data(test_case)
     print(f"Converted: {converted}")
-    
+
     # Validate results
     print("Validation:")
     print(f"  Age is int: {isinstance(converted['age'], int)}")
@@ -780,12 +780,12 @@ class BusinessDataConverter:
             "price": {"min": 0.0, "max": 999999.99},
             "discount": {"min": 0.0, "max": 1.0}
         }
-    
+
     def convert_with_validation(self, data: dict) -> tuple[dict, list[str]]:
         """Convert data with business rule validation."""
         converted_data = {}
         validation_errors = []
-        
+
         # Age conversion and validation
         age = FlextUtilities.Conversions.safe_int(data.get("age"), -1)
         if age == -1:
@@ -794,7 +794,7 @@ class BusinessDataConverter:
             validation_errors.append(f"Age must be between {self.validation_rules['age']['min']} and {self.validation_rules['age']['max']}")
         else:
             converted_data["age"] = age
-        
+
         # Quantity conversion and validation
         quantity = FlextUtilities.Conversions.safe_int(data.get("quantity"), 0)
         if quantity < self.validation_rules["quantity"]["min"]:
@@ -803,7 +803,7 @@ class BusinessDataConverter:
             validation_errors.append(f"Quantity cannot exceed {self.validation_rules['quantity']['max']}")
         else:
             converted_data["quantity"] = quantity
-        
+
         # Price conversion and validation
         price = FlextUtilities.Conversions.safe_float(data.get("price"), -1.0)
         if price < 0:
@@ -812,14 +812,14 @@ class BusinessDataConverter:
             validation_errors.append(f"Price must be between {self.validation_rules['price']['min']} and {self.validation_rules['price']['max']}")
         else:
             converted_data["price"] = price
-        
+
         # Discount conversion and validation
         discount = FlextUtilities.Conversions.safe_float(data.get("discount"), 0.0)
         if not (self.validation_rules["discount"]["min"] <= discount <= self.validation_rules["discount"]["max"]):
             validation_errors.append(f"Discount must be between {self.validation_rules['discount']['min']} and {self.validation_rules['discount']['max']}")
         else:
             converted_data["discount"] = discount
-        
+
         # Boolean fields (no validation needed, safe defaults)
         converted_data["is_active"] = FlextUtilities.Conversions.safe_bool(
             data.get("is_active"), default=True
@@ -827,7 +827,7 @@ class BusinessDataConverter:
         converted_data["send_notifications"] = FlextUtilities.Conversions.safe_bool(
             data.get("send_notifications"), default=False
         )
-        
+
         return converted_data, validation_errors
 
 # Test with business validation
@@ -881,16 +881,16 @@ print("=" * 50)
 for scenario in test_scenarios:
     print(f"\nScenario: {scenario['name']}")
     print(f"Input: {scenario['data']}")
-    
+
     converted_data, errors = business_converter.convert_with_validation(scenario['data'])
-    
+
     if errors:
         print("❌ Validation failed:")
         for error in errors:
             print(f"  - {error}")
     else:
         print("✅ Validation passed")
-    
+
     print(f"Converted data: {converted_data}")
 ```
 
@@ -910,7 +910,7 @@ class JSONProcessor:
             "successful_serializations": 0,
             "failed_serializations": 0
         }
-    
+
     def process_json_data(self, json_strings: list[str]) -> dict:
         """Process multiple JSON strings with error collection."""
         results = {
@@ -918,13 +918,13 @@ class JSONProcessor:
             "failed": [],
             "parsed_objects": []
         }
-        
+
         for i, json_str in enumerate(json_strings):
             # Safe JSON parsing
             parsed_data = FlextUtilities.ProcessingUtils.safe_json_parse(
                 json_str, default={}
             )
-            
+
             if parsed_data:  # Successfully parsed
                 results["successful"].append(i)
                 results["parsed_objects"].append(parsed_data)
@@ -932,9 +932,9 @@ class JSONProcessor:
             else:  # Failed to parse
                 results["failed"].append(i)
                 self.processing_stats["failed_parses"] += 1
-        
+
         return results
-    
+
     def serialize_objects(self, objects: list) -> dict:
         """Serialize multiple objects to JSON with error handling."""
         results = {
@@ -942,13 +942,13 @@ class JSONProcessor:
             "failed": [],
             "json_strings": []
         }
-        
+
         for i, obj in enumerate(objects):
             # Safe JSON serialization
             json_str = FlextUtilities.ProcessingUtils.safe_json_stringify(
                 obj, default="{}"
             )
-            
+
             if json_str != "{}":  # Successfully serialized
                 results["successful"].append(i)
                 results["json_strings"].append(json_str)
@@ -956,9 +956,9 @@ class JSONProcessor:
             else:  # Failed to serialize
                 results["failed"].append(i)
                 self.processing_stats["failed_serializations"] += 1
-        
+
         return results
-    
+
     def get_processing_stats(self) -> dict:
         """Get JSON processing statistics."""
         return self.processing_stats.copy()
@@ -1053,7 +1053,7 @@ class Product:
         self.name = name
         self.price = price
         self.category = category
-    
+
     def model_dump(self) -> dict:
         """Mock Pydantic model_dump method"""
         return {
@@ -1070,16 +1070,16 @@ class ModelProcessor:
             "dict_extractions": 0,
             "fallback_extractions": 0
         }
-    
+
     def extract_data_from_objects(self, objects: list) -> list[dict]:
         """Extract data from various object types."""
         extracted_data = []
-        
+
         for obj in objects:
             # Use FlextUtilities to extract model data
             data = FlextUtilities.ProcessingUtils.extract_model_data(obj)
             extracted_data.append(data)
-            
+
             # Track extraction method used
             if hasattr(obj, "model_dump"):
                 self.extraction_stats["model_dump_extractions"] += 1
@@ -1089,9 +1089,9 @@ class ModelProcessor:
                 self.extraction_stats["dict_extractions"] += 1
             else:
                 self.extraction_stats["fallback_extractions"] += 1
-        
+
         return extracted_data
-    
+
     def parse_json_to_models(self, json_data: list[str], model_classes: list[type]) -> dict:
         """Parse JSON to model instances."""
         results = {
@@ -1099,22 +1099,22 @@ class ModelProcessor:
             "failed_conversions": [],
             "models": []
         }
-        
+
         for i, (json_str, model_class) in enumerate(zip(json_data, model_classes)):
             # Use FlextUtilities to parse JSON to model
             result = FlextUtilities.ProcessingUtils.parse_json_to_model(
                 json_str, model_class
             )
-            
+
             if result.success:
                 results["successful_conversions"].append(i)
                 results["models"].append(result.value)
             else:
                 results["failed_conversions"].append(i)
                 print(f"Conversion failed for index {i}: {result.error}")
-        
+
         return results
-    
+
     def get_extraction_stats(self) -> dict:
         """Get data extraction statistics."""
         return self.extraction_stats.copy()

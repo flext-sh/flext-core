@@ -74,36 +74,38 @@ class TestFlextResult100PercentCoverage:
     def test_line_869_hash_consistency(self) -> None:
         """Test line 869: hash method consistency and edge cases."""
         # Test hash consistency
-        result1 = FlextResult.ok("test")
-        result2 = FlextResult.ok("test")
+        result1: FlextResult[str] = FlextResult.ok("test")
+        result2: FlextResult[str] = FlextResult.ok("test")
         assert hash(result1) == hash(result2)
 
         # Test hash with different values
-        result3 = FlextResult.ok("different")
+        result3: FlextResult[str] = FlextResult.ok("different")
         assert hash(result1) != hash(result3)
 
         # Test hash with errors
-        error_result1 = FlextResult.fail("error")
-        error_result2 = FlextResult.fail("error")
+        error_result1: FlextResult[str] = FlextResult.fail("error")
+        error_result2: FlextResult[str] = FlextResult.fail("error")
         assert hash(error_result1) == hash(error_result2)
 
     def test_lines_899_900_repr_comprehensive(self) -> None:
         """Test lines 899-900: comprehensive __repr__ testing."""
         # Test successful result repr
-        success_result = FlextResult.ok("success_data")
+        success_result: FlextResult[str] = FlextResult.ok("success_data")
         repr_str = repr(success_result)
         assert "FlextResult" in repr_str
         assert "success_data" in repr_str
 
         # Test failure result repr
-        failure_result = FlextResult.fail("error_message")
+        failure_result: FlextResult[str] = FlextResult.fail("error_message")
         repr_str = repr(failure_result)
         assert "FlextResult" in repr_str
         assert "error_message" in repr_str
 
         # Test with complex data
-        complex_data = {"nested": {"list": [1, 2, 3]}}
-        complex_result = FlextResult.ok(complex_data)
+        complex_data: dict[str, dict[str, list[int]]] = {"nested": {"list": [1, 2, 3]}}
+        complex_result: FlextResult[dict[str, dict[str, list[int]]]] = FlextResult.ok(
+            complex_data
+        )
         repr_str = repr(complex_result)
         assert "FlextResult" in repr_str
 
@@ -112,7 +114,7 @@ class TestFlextResult100PercentCoverage:
 
         async def async_test() -> None:
             # Test async unwrap
-            result = FlextResult.ok("async_value")
+            result: FlextResult[str] = FlextResult.ok("async_value")
             if hasattr(result, "unwrap_async"):
                 value = await result.unwrap_async()
                 assert value == "async_value"
@@ -133,13 +135,13 @@ class TestFlextResult100PercentCoverage:
     def test_error_handling_edge_cases(self) -> None:
         """Test error handling paths that might trigger uncovered lines."""
         # Test with empty error message - gets normalized to default
-        result = FlextResult.fail("")
+        result: FlextResult[str] = FlextResult.fail("")
         assert result.is_failure
         assert result.error == "Unknown error occurred"  # Empty errors get normalized
 
         # Test with None error (should be handled gracefully)
         try:
-            result = FlextResult.fail(None)
+            result: FlextResult[str] = FlextResult.fail(None)
             assert result.is_failure
         except (TypeError, ValueError):
             # Might not accept None as error
@@ -148,7 +150,7 @@ class TestFlextResult100PercentCoverage:
     def test_chaining_operations_comprehensive(self) -> None:
         """Test chaining operations that might trigger edge cases."""
         # Test complex chaining that could lead to edge cases
-        result = (
+        result: FlextResult[str] = (
             FlextResult.ok(10)
             .map(lambda x: x * 2)
             .filter(lambda x: x > 15, "Too small")
@@ -159,7 +161,7 @@ class TestFlextResult100PercentCoverage:
         assert result.unwrap() == "20"
 
         # Test chaining that leads to failure
-        failed_result = (
+        failed_result: FlextResult[str] = (
             FlextResult.ok(5).filter(lambda x: x > 10, "Too small").map(lambda x: x * 2)
         )
 

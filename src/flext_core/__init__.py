@@ -66,7 +66,7 @@ from __future__ import annotations
 # FOUNDATION LAYER - Import first, no dependencies on other modules
 # =============================================================================
 
-from flext_core.__version__ import *
+from flext_core.version import *
 from flext_core.constants import *
 from flext_core.typings import *
 from flext_core.result import *
@@ -93,8 +93,8 @@ from flext_core.validations import *
 # INFRASTRUCTURE LAYER - Depends on Application + Domain + Foundation
 # =============================================================================
 
-from flext_core.config import *  # type: ignore[assignment]
-from flext_core.container import *  # type: ignore[assignment]
+from flext_core.config import *
+from flext_core.container import *
 from flext_core.context import *
 from flext_core.loggings import *
 from flext_core.observability import *
@@ -104,12 +104,12 @@ from flext_core.observability import *
 # =============================================================================
 
 from flext_core.decorators import *
-from flext_core.delegation_system import *
+from flext_core.delegation import *
 from flext_core.fields import *
 from flext_core.mixins import *
 from flext_core.processors import *
 from flext_core.services import *
-from flext_core.type_adapters import *
+from flext_core.adapters import *
 from flext_core.utilities import *
 
 # =============================================================================
@@ -117,13 +117,13 @@ from flext_core.utilities import *
 # =============================================================================
 
 # Core functionality - wildcard import only
-from flext_core.core import *  # type: ignore[assignment]
+from flext_core.core import *
 
 # =============================================================================
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules
 # =============================================================================
 
-import flext_core.__version__ as _version
+import flext_core.version as _version
 import flext_core.commands as _commands
 import flext_core.config as _config
 import flext_core.constants as _constants
@@ -131,7 +131,7 @@ import flext_core.container as _container
 import flext_core.context as _context
 import flext_core.core as _core
 import flext_core.decorators as _decorators
-import flext_core.delegation_system as _delegation_system
+import flext_core.delegation as _delegation
 import flext_core.domain_services as _domain_services
 import flext_core.exceptions as _exceptions
 import flext_core.fields as _fields
@@ -145,7 +145,7 @@ import flext_core.protocols as _protocols
 import flext_core.result as _result
 import flext_core.processors as _processors
 import flext_core.services as _services
-import flext_core.type_adapters as _type_adapters
+import flext_core.adapters as _adapters
 import flext_core.typings as _typings
 import flext_core.utilities as _utilities
 import flext_core.validations as _validations
@@ -161,7 +161,7 @@ for module in [
     _context,
     _core,
     _decorators,
-    _delegation_system,
+    _delegation,
     _domain_services,
     _exceptions,
     _fields,
@@ -175,7 +175,7 @@ for module in [
     _protocols,
     _result,
     _services,
-    _type_adapters,
+    _adapters,
     _typings,
     _utilities,
     _validations,

@@ -10,12 +10,12 @@ FlextCore serves as the **foundational orchestration hub** for all 32+ FLEXT eco
 
 ### Priority Matrix
 
-| Priority | Libraries | Impact | Effort | Strategic Value |
-|----------|-----------|---------|--------|-----------------|
-| **Critical** | flext-api, flext-auth, flext-web | High | Medium | Foundation |
-| **High** | flext-db-oracle, flext-ldap, flext-meltano | High | Low | Integration |
-| **Medium** | Singer ecosystem, flext-grpc | Medium | Low | Standardization |
-| **Low** | Enterprise apps, specialized tools | Low | High | Customization |
+| Priority     | Libraries                                  | Impact | Effort | Strategic Value |
+| ------------ | ------------------------------------------ | ------ | ------ | --------------- |
+| **Critical** | flext-api, flext-auth, flext-web           | High   | Medium | Foundation      |
+| **High**     | flext-db-oracle, flext-ldap, flext-meltano | High   | Low    | Integration     |
+| **Medium**   | Singer ecosystem, flext-grpc               | Medium | Low    | Standardization |
+| **Low**      | Enterprise apps, specialized tools         | Low    | High   | Customization   |
 
 ---
 
@@ -37,12 +37,12 @@ class FlextApiService:
         self.core = FlextCore.get_instance()
         self.app = create_flext_api()
         self._setup_core_integration()
-    
+
     def _setup_core_integration(self):
         """Integrate FlextCore with FastAPI application."""
         # Configure structured logging
         self.core.configure_logging(log_level="INFO", _json_output=True)
-        
+
         # Register API services
         api_services = {
             "health_checker": HealthCheckService,
@@ -50,22 +50,22 @@ class FlextApiService:
             "response_formatter": ResponseFormattingService,
             "metrics_collector": MetricsCollectionService
         }
-        
+
         container_result = self.core.setup_container_with_services(
-            api_services, 
+            api_services,
             validator=self.core.validate_service_name
         )
-        
+
         if container_result.failure:
             raise RuntimeError(f"API service registration failed: {container_result.error}")
-    
+
     def create_endpoint_handler(self, endpoint_name: str):
         """Create endpoint handler with FlextCore integration."""
         def handler_decorator(func):
             @self.core.track_performance(f"api_endpoint_{endpoint_name}")
             def wrapper(request):
                 correlation_id = self.core.generate_correlation_id()
-                
+
                 # Validate request using FlextCore
                 validation_result = (
                     self.core.validate_api_request(request.json())
@@ -81,17 +81,18 @@ class FlextApiService:
                         error=str(error)
                     ))
                 )
-                
+
                 if validation_result.success:
                     return {"status": "success", "data": validation_result.value}
                 else:
                     return {"status": "error", "message": validation_result.error}
-            
+
             return wrapper
         return handler_decorator
 ```
 
 **Benefits**:
+
 - Unified error handling across all API endpoints
 - Structured logging with correlation IDs
 - Performance monitoring out-of-the-box
@@ -118,14 +119,14 @@ class FlextWebApplication:
         self.core = FlextCore.get_instance()
         self.app = FlextWebApp()
         self._configure_web_services()
-    
+
     def _configure_web_services(self):
         """Configure web services with FlextCore."""
         # Configure for web environment
         web_config = self.core.create_environment_core_config("web")
         if web_config.success:
             self.core.configure_core_system(web_config.value)
-        
+
         # Register web-specific services
         web_services = {
             "template_engine": TemplateEngineService,
@@ -134,20 +135,20 @@ class FlextWebApplication:
             "csrf_protection": CSRFProtectionService,
             "authentication": AuthenticationService
         }
-        
+
         self.core.setup_container_with_services(web_services)
-    
+
     def create_controller(self, controller_name: str):
         """Create controller with FlextCore dependency injection."""
         class BaseController:
             def __init__(self):
                 self.core = FlextCore.get_instance()
                 self.logger = self.core.logger
-                
+
                 # Inject required services
                 self.template_engine = self.core.get_service("template_engine").unwrap()
                 self.session_manager = self.core.get_service("session_manager").unwrap()
-            
+
             def render_template(self, template_name: str, context: dict):
                 """Render template with error handling."""
                 return (
@@ -162,22 +163,23 @@ class FlextWebApplication:
                         error=str(error)
                     ))
                 )
-            
+
             def handle_request(self, request):
                 """Handle web request with comprehensive error handling."""
                 correlation_id = self.core.generate_correlation_id()
-                
+
                 return (
                     self.core.validate_api_request(request.form.to_dict())
                     .flat_map(self._process_request)
                     .tap(lambda result: self._log_request_success(correlation_id))
                     .map_error(lambda error: self._log_request_error(error, correlation_id))
                 )
-        
+
         return BaseController
 ```
 
 **Benefits**:
+
 - Consistent MVC architecture across all web applications
 - Built-in dependency injection for controllers
 - Railway-oriented request processing
@@ -205,7 +207,7 @@ class EnhancedAuthenticationService:
     def __init__(self):
         self.core = FlextCore.get_instance()
         self._setup_auth_domain()
-    
+
     def _setup_auth_domain(self):
         """Setup authentication domain with FlextCore patterns."""
         # Register authentication services
@@ -216,53 +218,53 @@ class EnhancedAuthenticationService:
             "user_repository": UserRepository,
             "role_manager": RoleManagerService
         }
-        
+
         self.core.setup_container_with_services(auth_services)
-    
+
     def authenticate_user(self, credentials: dict) -> FlextResult[dict]:
         """Authenticate user with comprehensive validation."""
         return (
             # Input validation
             self.core.validate_api_request(
-                credentials, 
+                credentials,
                 required_fields=["username", "password"]
             )
             .flat_map(lambda creds: self._validate_credentials_format(creds))
-            
+
             # User lookup and verification
             .flat_map(lambda creds: self._lookup_user(creds["username"]))
             .flat_map(lambda user: self._verify_password(user, credentials["password"]))
             .flat_map(lambda user: self._check_user_status(user))
-            
+
             # Token generation
             .flat_map(lambda user: self._generate_access_token(user))
             .flat_map(lambda token: self._create_session(token))
-            
+
             # Audit logging
             .tap(lambda session: self._log_authentication_success(session))
             .map_error(lambda error: self._log_authentication_failure(error))
         )
-    
+
     def _validate_credentials_format(self, credentials: dict) -> FlextResult[dict]:
         """Validate credential format."""
         username_result = self.core.validate_string(
-            credentials.get("username"), 
-            min_length=3, 
+            credentials.get("username"),
+            min_length=3,
             max_length=50
         )
-        
+
         password_result = self.core.validate_string(
-            credentials.get("password"), 
-            min_length=8, 
+            credentials.get("password"),
+            min_length=8,
             max_length=128
         )
-        
+
         # Combine validation results
         validation_results = [username_result, password_result]
         combined_result = self.core.sequence(validation_results)
-        
+
         return combined_result.map(lambda _: credentials)
-    
+
     def create_user_entity(self, user_data: dict) -> FlextResult[User]:
         """Create user entity using FlextCore domain modeling."""
         return (
@@ -282,6 +284,7 @@ class EnhancedAuthenticationService:
 ```
 
 **Benefits**:
+
 - Robust authentication with railway-oriented error handling
 - Domain-driven user entities with validation
 - Comprehensive audit logging
@@ -309,7 +312,7 @@ class FlextOracleDatabaseService:
     def __init__(self, connection_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_database_services(connection_config)
-    
+
     def _setup_database_services(self, config: dict):
         """Setup database services with FlextCore."""
         # Validate database configuration
@@ -317,10 +320,10 @@ class FlextOracleDatabaseService:
             config,
             required_keys=["host", "port", "database", "username", "password"]
         )
-        
+
         if config_validation.failure:
             raise RuntimeError(f"Invalid database config: {config_validation.error}")
-        
+
         # Register database services
         db_services = {
             "connection_pool": lambda: ConnectionPoolService(config),
@@ -328,29 +331,29 @@ class FlextOracleDatabaseService:
             "transaction_manager": TransactionManagerService,
             "schema_validator": SchemaValidatorService
         }
-        
+
         self.core.setup_container_with_services(db_services)
-    
+
     def execute_query(self, query: str, params: dict = None) -> FlextResult[list]:
         """Execute database query with comprehensive error handling."""
         correlation_id = self.core.generate_correlation_id()
-        
+
         return (
             # Query validation
             self.core.validate_string(query, min_length=1)
             .flat_map(lambda _: self._validate_query_safety(query))
             .flat_map(lambda _: self._validate_parameters(params or {}))
-            
+
             # Connection and execution
             .flat_map(lambda _: self._get_database_connection())
             .flat_map(lambda conn: self._execute_with_connection(conn, query, params))
-            
+
             # Result processing
             .map(lambda results: self._process_query_results(results))
             .tap(lambda results: self._log_query_success(query, len(results), correlation_id))
             .map_error(lambda error: self._log_query_error(query, error, correlation_id))
         )
-    
+
     def execute_transaction(self, operations: list) -> FlextResult[list]:
         """Execute multiple operations in a transaction."""
         return (
@@ -370,6 +373,7 @@ class FlextOracleDatabaseService:
 ```
 
 **Benefits**:
+
 - Railway-oriented database operations
 - Comprehensive query validation
 - Transaction management with rollback support
@@ -395,7 +399,7 @@ class FlextLDAPService:
     def __init__(self, ldap_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_ldap_services(ldap_config)
-    
+
     def _setup_ldap_services(self, config: dict):
         """Setup LDAP services with FlextCore."""
         # Validate LDAP configuration
@@ -403,10 +407,10 @@ class FlextLDAPService:
             config,
             required_keys=["server", "base_dn", "bind_dn", "bind_password"]
         )
-        
+
         if config_validation.failure:
             raise RuntimeError(f"Invalid LDAP config: {config_validation.error}")
-        
+
         # Register LDAP services
         ldap_services = {
             "connection_manager": lambda: LdapConnectionManager(config),
@@ -414,9 +418,9 @@ class FlextLDAPService:
             "user_service": LdapUserService,
             "group_service": LdapGroupService
         }
-        
+
         self.core.setup_container_with_services(ldap_services)
-    
+
     def search_users(self, search_filter: str, attributes: list = None) -> FlextResult[list]:
         """Search LDAP users with validation and error handling."""
         return (
@@ -424,11 +428,11 @@ class FlextLDAPService:
             self.core.validate_string(search_filter, min_length=1)
             .flat_map(lambda _: self._validate_ldap_filter(search_filter))
             .flat_map(lambda _: self._validate_attributes(attributes or []))
-            
+
             # LDAP search
             .flat_map(lambda _: self._perform_ldap_search(search_filter, attributes))
             .map(lambda results: self._process_search_results(results))
-            
+
             # Logging
             .tap(lambda results: self.core.log_info(
                 "LDAP search completed",
@@ -441,7 +445,7 @@ class FlextLDAPService:
                 error=str(error)
             ))
         )
-    
+
     def create_ldap_user_entity(self, ldap_data: dict) -> FlextResult[LdapUser]:
         """Create LDAP user entity using FlextCore domain modeling."""
         return (
@@ -466,6 +470,7 @@ class FlextLDAPService:
 ```
 
 **Benefits**:
+
 - Validated LDAP operations
 - Domain entities for LDAP objects
 - Connection management with retry logic
@@ -493,7 +498,7 @@ class FlextMeltanoService:
     def __init__(self, project_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_meltano_services(project_config)
-    
+
     def _setup_meltano_services(self, config: dict):
         """Setup Meltano services with FlextCore."""
         # Register Meltano services
@@ -503,35 +508,35 @@ class FlextMeltanoService:
             "pipeline_executor": MeltanoPipelineExecutor,
             "config_validator": MeltanoConfigValidator
         }
-        
+
         self.core.setup_container_with_services(meltano_services)
-        
+
         # Configure for data pipeline environment
         pipeline_config = self.core.create_environment_core_config("data_pipeline")
         if pipeline_config.success:
             self.core.configure_core_system(pipeline_config.value)
-    
+
     def run_pipeline(self, pipeline_name: str, config: dict = None) -> FlextResult[dict]:
         """Run Meltano pipeline with comprehensive monitoring."""
         correlation_id = self.core.generate_correlation_id()
-        
+
         return (
             # Pipeline validation
             self.core.validate_string(pipeline_name, min_length=1)
             .flat_map(lambda _: self._validate_pipeline_exists(pipeline_name))
             .flat_map(lambda _: self._validate_pipeline_config(config or {}))
-            
+
             # Pipeline execution
             .flat_map(lambda _: self._prepare_pipeline_environment(pipeline_name))
             .flat_map(lambda env: self._execute_pipeline(pipeline_name, env, config))
             .flat_map(lambda result: self._validate_pipeline_output(result))
-            
+
             # Result processing
             .map(lambda result: self._process_pipeline_result(result))
             .tap(lambda result: self._log_pipeline_success(pipeline_name, result, correlation_id))
             .map_error(lambda error: self._log_pipeline_error(pipeline_name, error, correlation_id))
         )
-    
+
     def create_singer_plugin(self, plugin_type: str, plugin_config: dict) -> FlextResult[SingerPlugin]:
         """Create Singer plugin entity using FlextCore domain modeling."""
         return (
@@ -558,6 +563,7 @@ class FlextMeltanoService:
 ```
 
 **Benefits**:
+
 - Reliable pipeline execution with error handling
 - Domain entities for Singer plugins
 - Comprehensive pipeline monitoring
@@ -580,11 +586,11 @@ from flext_core.core import FlextCore
 
 class FlextSingerPluginBase:
     """Base class for all Singer plugins with FlextCore integration."""
-    
+
     def __init__(self, plugin_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_singer_services(plugin_config)
-    
+
     def _setup_singer_services(self, config: dict):
         """Setup Singer services with FlextCore."""
         singer_services = {
@@ -593,23 +599,23 @@ class FlextSingerPluginBase:
             "record_processor": SingerRecordProcessor,
             "state_manager": SingerStateManager
         }
-        
+
         self.core.setup_container_with_services(singer_services)
-    
+
     def extract_records(self, config: dict, state: dict = None) -> FlextResult[list]:
         """Extract records with validation and monitoring."""
         return (
             # Configuration validation
             self.core.validate_config_with_types(config, required_keys=self.get_required_config())
             .flat_map(lambda _: self._validate_connection(config))
-            
+
             # State validation
             .flat_map(lambda _: self._validate_state(state or {}))
-            
+
             # Record extraction
             .flat_map(lambda _: self._perform_extraction(config, state))
             .map(lambda records: self._process_extracted_records(records))
-            
+
             # Monitoring
             .tap(lambda records: self.core.log_info(
                 "Records extracted successfully",
@@ -622,7 +628,7 @@ class FlextSingerPluginBase:
                 error=str(error)
             ))
         )
-    
+
     def validate_schema(self, schema: dict) -> FlextResult[dict]:
         """Validate Singer schema."""
         return (
@@ -640,10 +646,10 @@ class FlextSingerPluginBase:
 class FlextTapOracleWMS(FlextSingerPluginBase):
     def get_plugin_name(self) -> str:
         return "tap-oracle-wms"
-    
+
     def get_required_config(self) -> list[str]:
         return ["host", "port", "database", "username", "password"]
-    
+
     def _perform_extraction(self, config: dict, state: dict) -> FlextResult[list]:
         """Extract records from Oracle WMS."""
         return (
@@ -666,6 +672,7 @@ class FlextTargetOracle(FlextSingerPluginBase):
 ```
 
 **Benefits**:
+
 - Standardized Singer plugin architecture
 - Consistent error handling across all plugins
 - Comprehensive logging and monitoring
@@ -692,7 +699,7 @@ class ALGAREnterpriseApplication:
     def __init__(self):
         self.core = FlextCore.get_instance()
         self._setup_enterprise_services()
-    
+
     def _setup_enterprise_services(self):
         """Setup enterprise services with FlextCore."""
         # Configure for enterprise environment
@@ -706,7 +713,7 @@ class ALGAREnterpriseApplication:
             if perf_config.success:
                 merged = self.core.merge_configs(enterprise_config.value, perf_config.value)
                 self.core.configure_core_system(merged.value)
-        
+
         # Register enterprise services
         enterprise_services = {
             "workflow_engine": WorkflowEngineService,
@@ -715,26 +722,26 @@ class ALGAREnterpriseApplication:
             "audit_logger": AuditLoggerService,
             "integration_bus": IntegrationBusService
         }
-        
+
         self.core.setup_container_with_services(enterprise_services)
-    
+
     def process_enterprise_workflow(self, workflow_data: dict) -> FlextResult[dict]:
         """Process enterprise workflow with comprehensive validation."""
         correlation_id = self.core.generate_correlation_id()
-        
+
         return (
             # Input validation
             self.core.validate_api_request(
                 workflow_data,
                 required_fields=["workflow_type", "initiator", "payload"]
             )
-            
+
             # Workflow processing
             .flat_map(lambda data: self._validate_workflow_permissions(data))
             .flat_map(lambda data: self._initiate_workflow(data))
             .flat_map(lambda workflow: self._execute_workflow_steps(workflow))
             .flat_map(lambda result: self._finalize_workflow(result))
-            
+
             # Audit and logging
             .tap(lambda result: self._audit_workflow_completion(result, correlation_id))
             .map_error(lambda error: self._audit_workflow_failure(error, correlation_id))
@@ -742,6 +749,7 @@ class ALGAREnterpriseApplication:
 ```
 
 **Benefits**:
+
 - Enterprise-grade workflow processing
 - Comprehensive audit logging
 - Performance optimization for high-load scenarios
@@ -769,7 +777,7 @@ class FlextGrpcService:
     def __init__(self, service_config: dict):
         self.core = FlextCore.get_instance()
         self._setup_grpc_services(service_config)
-    
+
     def _setup_grpc_services(self, config: dict):
         """Setup gRPC services with FlextCore."""
         grpc_services = {
@@ -778,15 +786,15 @@ class FlextGrpcService:
             "interceptor_chain": GrpcInterceptorChain,
             "serialization_service": GrpcSerializationService
         }
-        
+
         self.core.setup_container_with_services(grpc_services)
-    
+
     def create_grpc_handler(self, method_name: str):
         """Create gRPC method handler with FlextCore integration."""
         def handler_decorator(func):
             def wrapper(request, context):
                 correlation_id = self.core.generate_correlation_id()
-                
+
                 # Process gRPC request with railway programming
                 result = (
                     self.core.ok(request)
@@ -798,19 +806,20 @@ class FlextGrpcService:
                     ))
                     .map_error(lambda error: self._handle_grpc_error(error, context))
                 )
-                
+
                 if result.success:
                     return result.value
                 else:
                     context.set_code(grpc.StatusCode.INTERNAL)
                     context.set_details(str(result.error))
                     return None
-            
+
             return wrapper
         return handler_decorator
 ```
 
 **Benefits**:
+
 - Railway-oriented gRPC request processing
 - Structured logging for gRPC methods
 - Error handling with proper gRPC status codes
@@ -835,7 +844,7 @@ class FlextQualityService:
     def __init__(self):
         self.core = FlextCore.get_instance()
         self._setup_quality_services()
-    
+
     def run_quality_checks(self, project_path: str) -> FlextResult[dict]:
         """Run comprehensive quality checks."""
         return (
@@ -849,6 +858,7 @@ class FlextQualityService:
 ```
 
 **Benefits**:
+
 - Consistent quality check patterns
 - Railway-oriented test execution
 - Comprehensive reporting
@@ -861,6 +871,7 @@ class FlextQualityService:
 ## Implementation Priority Roadmap
 
 ### Phase 1: Foundation (Months 1-2)
+
 **Critical Priority Libraries**
 
 1. **flext-api** - HTTP foundation with FlextCore orchestration
@@ -868,11 +879,13 @@ class FlextQualityService:
 3. **flext-web** - Web framework with dependency injection
 
 **Success Metrics**:
+
 - All API endpoints use FlextResult patterns
 - Authentication flows use railway programming
 - Web applications have consistent error handling
 
 ### Phase 2: Integration (Months 3-4)
+
 **High Priority Libraries**
 
 1. **flext-db-oracle** - Database operations with validation
@@ -880,11 +893,13 @@ class FlextQualityService:
 3. **flext-meltano** - Data pipeline orchestration
 
 **Success Metrics**:
+
 - Database operations are validated and monitored
 - LDAP operations use domain entities
 - Meltano pipelines have comprehensive error handling
 
 ### Phase 3: Standardization (Months 5-6)
+
 **Medium Priority Libraries**
 
 1. **Singer ecosystem** - Standardized plugin architecture
@@ -892,11 +907,13 @@ class FlextQualityService:
 3. **Infrastructure tools** - Quality and monitoring integration
 
 **Success Metrics**:
+
 - All Singer plugins use consistent patterns
 - gRPC services have proper error handling
 - Infrastructure tools integrate with FlextCore logging
 
 ### Phase 4: Customization (Months 7-12)
+
 **Low Priority and Enterprise Applications**
 
 1. **ALGAR enterprise suite** - Custom business workflow integration
@@ -904,6 +921,7 @@ class FlextQualityService:
 3. **Legacy system integration** - Migration support tools
 
 **Success Metrics**:
+
 - Enterprise workflows use FlextCore patterns
 - Legacy systems are successfully migrated
 - Custom applications maintain consistency
@@ -913,18 +931,21 @@ class FlextQualityService:
 ## Return on Investment Analysis
 
 ### Immediate Benefits (Phase 1-2)
+
 - **Reduced Development Time**: 40% reduction in boilerplate code
 - **Improved Error Handling**: 60% reduction in unhandled exceptions
 - **Enhanced Logging**: 100% consistent logging across all services
 - **Better Testing**: Railway patterns improve testability
 
 ### Medium-term Benefits (Phase 3-4)
+
 - **Reduced Maintenance Costs**: Consistent patterns reduce debugging time
 - **Improved Scalability**: Performance optimization built-in
 - **Enhanced Developer Experience**: Unified API across ecosystem
 - **Better System Reliability**: Comprehensive error handling and monitoring
 
 ### Long-term Benefits (Year 2+)
+
 - **Ecosystem Consistency**: All libraries follow same patterns
 - **Reduced Learning Curve**: New team members learn one pattern set
 - **Enhanced Productivity**: Developers can move between projects easily
@@ -935,21 +956,25 @@ class FlextQualityService:
 ## Risk Assessment
 
 ### Technical Risks
+
 - **Migration Complexity**: Some legacy code may be difficult to migrate
 - **Performance Impact**: FlextCore singleton may introduce bottlenecks
 - **Dependency Management**: Circular dependencies between libraries
 
 **Mitigation Strategies**:
+
 - Gradual migration with wrapper patterns
 - Performance testing and optimization
 - Clear dependency hierarchy and interfaces
 
 ### Business Risks
+
 - **Development Slowdown**: Initial migration may slow development
 - **Team Training**: Developers need to learn FlextCore patterns
 - **Integration Issues**: Some libraries may not integrate cleanly
 
 **Mitigation Strategies**:
+
 - Comprehensive training programs
 - Gradual rollout with pilot projects
 - Dedicated integration support team
@@ -959,12 +984,14 @@ class FlextQualityService:
 ## Success Metrics
 
 ### Technical Metrics
+
 - **Error Rate Reduction**: Target 80% reduction in production errors
 - **Code Coverage**: Target 90% test coverage across all libraries
 - **Performance**: No more than 5% performance overhead
 - **Consistency Score**: 95% adherence to FlextCore patterns
 
 ### Business Metrics
+
 - **Development Velocity**: 30% faster feature delivery
 - **Bug Resolution Time**: 50% faster bug fixes
 - **Developer Satisfaction**: 85% positive feedback on developer experience
@@ -977,6 +1004,7 @@ class FlextQualityService:
 FlextCore provides a comprehensive foundation for standardizing the entire FLEXT ecosystem. The phased implementation approach ensures manageable migration while delivering immediate value. The ROI analysis demonstrates clear benefits in terms of reduced development time, improved reliability, and enhanced maintainability.
 
 **Key Success Factors**:
+
 1. **Executive Support**: Strong leadership commitment to ecosystem standardization
 2. **Developer Buy-in**: Comprehensive training and support for development teams
 3. **Gradual Migration**: Phased approach reduces risk and ensures smooth transition

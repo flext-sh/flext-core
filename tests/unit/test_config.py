@@ -339,6 +339,7 @@ class TestFlextConfigComprehensive:
                 "TEST_INVALID_VAR", validate_type=int
             )
             assert result.is_failure
+            assert result.error is not None
             assert (
                 "cannot convert" in result.error.lower()
                 or "validation" in result.error.lower()

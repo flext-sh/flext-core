@@ -179,7 +179,7 @@ from typing import cast
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
 from flext_core.protocols import FlextProtocols
-from flext_core.result import FlextResult, FlextResultUtils
+from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
@@ -887,7 +887,7 @@ class FlextServices:
                 for efficient batch operation reporting.
 
             """
-            return FlextResultUtils.batch_process(items, handler)
+            return FlextResult.batch_process(items, handler)
 
     class ServiceOrchestrator:
         """Service orchestration and coordination patterns.

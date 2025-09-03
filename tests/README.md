@@ -68,9 +68,9 @@ tests/
 - **Execution**: Fast (<100ms per test)
 - **Coverage Target**: 75% minimum
 - **Examples**:
-    - `test_result.py`: FlextResult behavior
-    - `test_container.py`: DI container operations
-    - `test_config.py`: Configuration validation
+  - `test_result.py`: FlextResult behavior
+  - `test_container.py`: DI container operations
+  - `test_config.py`: Configuration validation
 
 ### Integration Tests (`tests/integration/`)
 
@@ -81,10 +81,10 @@ tests/
 - **Dependencies**: Real FLEXT Core components
 - **Execution**: Medium (100ms-1s)
 - **Focus Areas**:
-    - Service integration
-    - Container lifecycle
-    - Configuration loading
-    - Cross-module communication
+  - Service integration
+  - Container lifecycle
+  - Configuration loading
+  - Cross-module communication
 
 ### End-to-End Tests (`tests/e2e/`)
 
@@ -95,9 +95,9 @@ tests/
 - **Dependencies**: Complete system
 - **Execution**: Slower (>1s)
 - **Scenarios**:
-    - User registration flow
-    - Order processing pipeline
-    - Configuration and startup
+  - User registration flow
+  - Order processing pipeline
+  - Configuration and startup
 
 ## Running Tests
 

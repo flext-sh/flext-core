@@ -10,11 +10,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from flext_core import (
-    FlextMixins,
-    FlextSerialization,
-    FlextTimestamps,
-)
+from flext_core import FlextMixins
 
 
 class TestFinal20LinesTo100Percent:
@@ -45,7 +41,7 @@ class TestFinal20LinesTo100Percent:
         obj = TestObjWithGoodBasic()
 
         # This should trigger line 139 (continue after successful to_dict_basic)
-        result = FlextSerialization.to_dict(obj)
+        result = FlextMixins.to_dict(obj)
 
         assert "good_basic" in result
         assert result["good_basic"]["name"] == "test"
@@ -72,7 +68,7 @@ class TestFinal20LinesTo100Percent:
         obj = TestObjWithGoodList()
 
         # This should trigger lines 159-162 (success path)
-        result = FlextSerialization.to_dict(obj)
+        result = FlextMixins.to_dict(obj)
 
         assert "items" in result
         assert len(result["items"]) == 2
@@ -99,7 +95,7 @@ class TestFinal20LinesTo100Percent:
 
         # This should trigger lines 163-165 exception handling
         with pytest.raises(ValueError, match="Failed to serialize list item"):
-            FlextSerialization.to_dict(obj)
+            FlextMixins.to_dict(obj)
 
     def test_serialization_line_238_json_non_dict(self) -> None:
         """Test serialization line 238: JSON data that's not a dictionary."""
@@ -112,7 +108,7 @@ class TestFinal20LinesTo100Percent:
 
         # JSON that parses to a list, not dict - should trigger line 238
         json_array = '["item1", "item2"]'
-        result = FlextSerialization.load_from_json(obj, json_array)
+        result = FlextMixins.load_from_json(obj, json_array)
 
         assert result.is_failure
         assert "must be a dictionary" in result.error
@@ -120,7 +116,7 @@ class TestFinal20LinesTo100Percent:
     def test_serialization_line_257_mixin_to_dict_basic(self) -> None:
         """Test serialization line 257: mixin to_dict_basic method."""
 
-        class TestSerializableMixin(FlextSerialization.Serializable):
+        class TestSerializableMixin(FlextMixins.Serializable):
             def __init__(self) -> None:
                 super().__init__()
                 self.value = "test_basic"
@@ -153,7 +149,7 @@ class TestFinal20LinesTo100Percent:
         original_time = obj.updated_at
 
         # Call multiple times rapidly to potentially get same timestamp
-        FlextTimestamps.update_timestamp(obj)
+        FlextMixins.update_timestamp(obj)
         new_time = obj.updated_at
 
         # Should have some time difference (either natural or microsecond increment)
@@ -174,7 +170,7 @@ class TestFinal20LinesTo100Percent:
         obj = NoWriteDict()
 
         # This should trigger lines 54-55 exception handling
-        FlextTimestamps.update_timestamp(obj)
+        FlextMixins.update_timestamp(obj)
 
         # Should still have _updated_at set via line 55
         assert hasattr(obj, "_updated_at")

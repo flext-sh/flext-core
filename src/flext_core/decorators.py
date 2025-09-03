@@ -36,19 +36,9 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core.constants import FlextConstants
-from flext_core.mixins.core import FlextMixins
+from flext_core.mixins import FlextMixins
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, T
-
-
-class _Context:
-    """Context class that satisfies SupportsDynamicAttributes protocol."""
-
-    def __setattr__(self, name: str, value: object) -> None:
-        object.__setattr__(self, name, value)
-
-    def __getattribute__(self, name: str) -> object:
-        return object.__getattribute__(self, name)
 
 
 class FlextDecorators(FlextMixins.Entity):
@@ -66,6 +56,19 @@ class FlextDecorators(FlextMixins.Entity):
         - Performance tracking via mixin timing
         - State management through mixin state patterns
     """
+
+    @staticmethod
+    def _create_context() -> object:
+        """Create a context object for mixin functionality."""
+
+        class Context:
+            def __setattr__(self, name: str, value: object) -> None:
+                object.__setattr__(self, name, value)
+
+            def __getattribute__(self, name: str) -> object:
+                return object.__getattribute__(self, name)
+
+        return Context()
 
     class Reliability:
         """Reliability decorators using FlextMixins error handling patterns."""
@@ -85,7 +88,7 @@ class FlextDecorators(FlextMixins.Entity):
                 *args: P.args, **kwargs: P.kwargs
             ) -> FlextTypes.Result.Success[T]:
                 # Create temporary object for mixin functionality
-                temp_obj = _Context()
+                temp_obj = FlextDecorators._create_context()
                 FlextMixins.initialize_state(temp_obj)
 
                 # Direct execution with error handling
@@ -118,7 +121,7 @@ class FlextDecorators(FlextMixins.Entity):
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                     # Create object with mixin behaviors for tracking
-                    retry_obj = _Context()
+                    retry_obj = FlextDecorators._create_context()
                     FlextMixins.initialize_state(retry_obj)
                     FlextMixins.create_timestamp_fields(retry_obj)
 
@@ -173,7 +176,7 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    timeout_obj = _Context()
+                    timeout_obj = FlextDecorators._create_context()
                     FlextMixins.start_timing(timeout_obj)
 
                     def timeout_handler(_signum: int, _frame: object) -> None:
@@ -217,7 +220,7 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    val_obj = _Context()
+                    val_obj = FlextDecorators._create_context()
                     FlextMixins.initialize_validation(val_obj)
 
                     # Validate all positional arguments
@@ -249,28 +252,21 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    type_obj = _Context()
+                    type_obj = FlextDecorators._create_context()
                     FlextMixins.initialize_validation(type_obj)
 
-                    # Validate argument types using mixin patterns
+                    # Validate argument types
                     if arg_types:
-                        type_schema = {
-                            f"arg_{i}": expected_type
-                            for i, expected_type in enumerate(arg_types)
-                        }
-
-                        # Create object with arguments for validation
-                        for i, (arg, _expected_type) in enumerate(
+                        # Simple type validation
+                        for i, (arg, expected_type) in enumerate(
                             zip(args, arg_types, strict=False)
                         ):
-                            setattr(type_obj, f"arg_{i}", arg)
-
-                        validation_result = FlextMixins.validate_field_types(
-                            type_obj, type_schema
-                        )
-
-                        if not validation_result.success:
-                            raise TypeError(str(validation_result.error))
+                            if not isinstance(arg, expected_type):
+                                error_msg = (
+                                    f"Argument {i} expected {expected_type.__name__}, "
+                                    f"got {type(arg).__name__}"
+                                )
+                                raise TypeError(error_msg)
 
                     result = func(*args, **kwargs)
 
@@ -304,7 +300,7 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    perf_obj = _Context()
+                    perf_obj = FlextDecorators._create_context()
                     FlextMixins.start_timing(perf_obj)
 
                     try:
@@ -347,7 +343,7 @@ class FlextDecorators(FlextMixins.Entity):
             """Add caching using mixin cache patterns."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
-                cache_obj = _Context()
+                cache_obj = FlextDecorators._create_context()
                 FlextMixins.create_timestamp_fields(cache_obj)
 
                 @functools.wraps(func)
@@ -401,7 +397,7 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    log_obj = _Context()
+                    log_obj = FlextDecorators._create_context()
                     FlextMixins.ensure_id(log_obj)
                     FlextMixins.start_timing(log_obj)
 
@@ -465,7 +461,7 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    dep_obj = _Context()
+                    dep_obj = FlextDecorators._create_context()
                     FlextMixins.initialize_state(dep_obj)
                     FlextMixins.set_state(dep_obj, "deprecated")
 

@@ -32,8 +32,8 @@ from flext_core import (
     FlextContainer,
     FlextResult,
     FlextUtilities,
-    __version__,
 )
+from flext_core.version import __version__
 
 
 class FunctionalExternalService:

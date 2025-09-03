@@ -2,7 +2,7 @@
 
 **Version**: 0.9.0  
 **Module**: `flext_core.guards`  
-**Target Audience**: FLEXT Developers, DevOps Engineers, Solution Architects  
+**Target Audience**: FLEXT Developers, DevOps Engineers, Solution Architects
 
 ## Overview
 
@@ -28,10 +28,10 @@ if config_result.success:
 ```python
 def process_user_data(data: object) -> FlextResult[dict[str, str]]:
     """Process user data with type safety."""
-    
+
     if not FlextGuards.is_dict_of(data, str):
         return FlextResult[dict[str, str]].fail("Data must be dict[str, str]")
-    
+
     processed_data = {k.upper(): v.strip() for k, v in data.items()}
     return FlextResult[dict[str, str]].ok(processed_data)
 ```
@@ -61,7 +61,7 @@ print(f"Cache size: {calculate_fibonacci.__cache_size__()}")
 @FlextGuards.immutable
 class UserProfile:
     """Immutable user profile for data integrity."""
-    
+
     def __init__(self, user_id: str, name: str, email: str):
         self.user_id = user_id
         self.name = name
@@ -82,7 +82,7 @@ except AttributeError as e:
 ### ✅ Do's
 
 1. **Type Guard First**: Always validate types before processing data
-2. **Pure Functions**: Use @pure for expensive, deterministic functions  
+2. **Pure Functions**: Use @pure for expensive, deterministic functions
 3. **Immutable Data**: Use @immutable for data classes and value objects
 4. **Comprehensive Validation**: Validate all inputs using ValidationUtils
 
@@ -101,32 +101,32 @@ import pytest
 class TestFlextGuardsIntegration:
     def test_pure_function_memoization(self):
         call_count = 0
-        
+
         @FlextGuards.pure
         def test_function(n: int) -> int:
             nonlocal call_count
             call_count += 1
             return n * n
-        
+
         # First call
         result1 = test_function(5)
         assert result1 == 25
         assert call_count == 1
-        
+
         # Second call - cached
         result2 = test_function(5)
         assert result2 == 25
         assert call_count == 1  # No additional call
-    
+
     def test_immutable_class(self):
         @FlextGuards.immutable
         class TestClass:
             def __init__(self, value: str):
                 self.value = value
-        
+
         obj = TestClass("test")
         assert obj.value == "test"
-        
+
         with pytest.raises(AttributeError):
             obj.value = "modified"
 ```

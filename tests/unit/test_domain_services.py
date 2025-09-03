@@ -408,13 +408,11 @@ class TestDomainServicesFixed:
         service = TestUserService(user_id="123")
 
         # Test all expected parent classes
-        from flext_core.mixins.logging import FlextLogging
-        from flext_core.mixins.serialization import FlextSerialization
-        from flext_core.models import FlextModels
+        from flext_core import FlextMixins, FlextModels
 
         assert isinstance(service, FlextModels.BaseConfig)
-        assert isinstance(service, FlextSerialization.Serializable)
-        assert isinstance(service, FlextLogging.Loggable)
+        assert isinstance(service, FlextMixins.Serializable)
+        assert isinstance(service, FlextMixins.Loggable)
 
     def test_service_with_complex_types(self) -> None:
         """Test service with complex field types."""

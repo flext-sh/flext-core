@@ -17,8 +17,6 @@ from flext_core import (
     FlextResult,
 )
 
-# Note: FlextCore removido conforme solicitado - usando APIs individuais
-
 
 class TestCleanArchitecturePatterns:
     """Test Clean Architecture pattern implementation."""
