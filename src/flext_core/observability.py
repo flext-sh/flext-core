@@ -2629,55 +2629,34 @@ class FlextObservability:
             """
             return self._status == "healthy"
 
+    # =========================================================================
+    # GLOBAL MANAGER - Singleton pattern for global observability instance
+    # =========================================================================
 
-# =============================================================================
-# BACKWARD COMPATIBILITY ALIASES - Consolidated approach
-# =============================================================================
+    class GlobalManager:
+        """Singleton manager for global observability instance."""
 
-# Export nested classes for external access (backward compatibility)
-FlextConsole = FlextObservability.Console
-FlextSpan = FlextObservability.Span
-FlextTracer = FlextObservability.Tracer
-FlextMetrics = FlextObservability.Metrics
-FlextObservabilitySystem = FlextObservability  # Backward compatibility with old name
-FlextAlerts = FlextObservability.Alerts
-FlextCoreObservability = FlextObservability.Observability
-_SimpleHealth = FlextObservability.Alerts()  # Simple fallback
+        _instance: FlextObservability.Observability | None = None
 
+        @classmethod
+        def get_instance(cls) -> FlextObservability.Observability:
+            """Get or create global observability instance."""
+            if cls._instance is None:
+                cls._instance = FlextObservability.Observability()
+            return cls._instance
 
-# Global instance for compatibility - using singleton pattern
-class _GlobalObservabilityManager:
-    """Singleton manager for global observability instance."""
-
-    _instance: FlextObservability.Observability | None = None
-
-    @classmethod
-    def get_instance(cls) -> FlextObservability.Observability:
-        """Get or create global observability instance."""
-        if cls._instance is None:
+        @classmethod
+        def reset_instance(cls) -> None:
+            """Reset global observability instance."""
             cls._instance = FlextObservability.Observability()
-        return cls._instance
-
-    @classmethod
-    def reset_instance(cls) -> None:
-        """Reset global observability instance."""
-        cls._instance = FlextObservability.Observability()
 
 
-def get_global_observability(
-    log_level: str | None = None, *, force_recreate: bool = False
-) -> FlextObservability.Observability:
-    """Get global observability instance for compatibility."""
-    # log_level parameter is accepted but not used in this no-op implementation
-    _ = log_level  # Explicitly mark as unused but needed for API compatibility
-    if force_recreate:
-        _GlobalObservabilityManager.reset_instance()
-    return _GlobalObservabilityManager.get_instance()
+# =============================================================================
+# BACKWARD COMPATIBILITY FUNCTIONS
+# =============================================================================
 
 
-def reset_global_observability() -> None:
-    """Reset global observability instance for compatibility."""
-    _GlobalObservabilityManager.reset_instance()
+# Helper functions removed - use FlextObservability.GlobalManager directly
 
 
 __all__: list[str] = [

@@ -72,40 +72,19 @@ from collections.abc import (
 from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Literal,
     ParamSpec,
     TypeGuard,
     TypeVar,
 )
 
-from flext_core.result import FlextResult
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 # =============================================================================
-# CORE TYPE VARIABLES - Foundation for generic programming
+# CORE TYPE VARIABLES - Foundation for generic programming - MOVED TO FlextTypes
 # =============================================================================
-
-
-# Specialized type variables
-TEntity = TypeVar("TEntity")  # Entity types
-TValueObject = TypeVar("TValueObject")  # Value object types
-TAggregate = TypeVar("TAggregate")  # Aggregate root types
-TMessage = TypeVar("TMessage")  # Message types for handlers
-TRequest = TypeVar("TRequest")  # Request types
-TResponse = TypeVar("TResponse")  # Response types
-TCommand = TypeVar("TCommand")  # Command types for CQRS
-TQuery = TypeVar("TQuery")  # Query types for CQRS
-TResult = TypeVar("TResult")  # Result types for handlers
-TEntry = TypeVar("TEntry")  # Entry types for schema processing
-
-# Primary type variables for generic programming (Python 3.13+ syntax)
-T = TypeVar("T")  # Primary generic type for FLEXT ecosystem
-U = TypeVar("U")  # Secondary generic type for FLEXT ecosystem
-V = TypeVar("V")  # Tertiary generic type
-K = TypeVar("K")  # Key type for mappings
-R = TypeVar("R")  # Return type for functions
-E = TypeVar("E", bound=Exception)  # Exception type
-F = TypeVar("F")  # Function/field type variable
-P = ParamSpec("P")  # Parameter specification for callables
 
 # =============================================================================
 # FLEXT TYPE SYSTEM - Hierarchical organization following FLEXT patterns
@@ -170,6 +149,39 @@ class FlextTypes:
         Clean Architecture patterns, and FLEXT refactoring requirements.
 
     """
+
+    # =========================================================================
+    # TYPE VARIABLES - Generic programming foundation
+    # =========================================================================
+
+    class TypeVars:
+        """Generic type variables for ecosystem-wide use.
+
+        Centralized location for all TypeVar and ParamSpec definitions
+        following FLEXT patterns and Python 3.13+ syntax.
+        """
+
+        # Specialized type variables
+        TEntity = TypeVar("TEntity")  # Entity types
+        TValueObject = TypeVar("TValueObject")  # Value object types
+        TAggregate = TypeVar("TAggregate")  # Aggregate root types
+        TMessage = TypeVar("TMessage")  # Message types for handlers
+        TRequest = TypeVar("TRequest")  # Request types
+        TResponse = TypeVar("TResponse")  # Response types
+        TCommand = TypeVar("TCommand")  # Command types for CQRS
+        TQuery = TypeVar("TQuery")  # Query types for CQRS
+        TResult = TypeVar("TResult")  # Result types for handlers
+        TEntry = TypeVar("TEntry")  # Entry types for schema processing
+
+        # Primary type variables for generic programming (Python 3.13+ syntax)
+        T = TypeVar("T")  # Primary generic type for FLEXT ecosystem
+        U = TypeVar("U")  # Secondary generic type for FLEXT ecosystem
+        V = TypeVar("V")  # Tertiary generic type
+        K = TypeVar("K")  # Key type for mappings
+        R = TypeVar("R")  # Return type for functions
+        E = TypeVar("E", bound=Exception)  # Exception type
+        F = TypeVar("F")  # Function/field type variable
+        P = ParamSpec("P")  # Parameter specification for callables
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
@@ -1334,12 +1346,19 @@ class FlextTypes:
 
 
 # =============================================================================
-# PUBLIC TYPE ALIASES - For backward compatibility and ease of use
+# TYPE VARIABLES
 # =============================================================================
 
-# Generic callable type with type parameter - for decorator compatibility
-# Use FlextTypes.Core.FlextCallableType directly - no aliases
+# Generic type variables
 
+T = TypeVar("T")  # Generic type
+U = TypeVar("U")  # Generic type
+V = TypeVar("V")  # Generic type
+R = TypeVar("R")  # Generic result type
+E = TypeVar("E", bound=Exception)  # Exception type
+F = TypeVar("F")  # Generic function type
+K = TypeVar("K")  # Generic key type
+P = ParamSpec("P")  # Parameter specification
 
 # =============================================================================
 # EXPORTS - Hierarchical types only
@@ -1348,7 +1367,7 @@ class FlextTypes:
 __all__: list[str] = [
     "E",
     "F",
-    "FlextTypes",  # ONLY main class exported
+    "FlextTypes",
     "K",
     "P",
     "R",

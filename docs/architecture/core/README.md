@@ -9,6 +9,7 @@
 `FlextCore` serves as the **central orchestration hub** for all 32+ projects in the FLEXT ecosystem, providing a single point of entry for dependency injection, domain modeling, validation, logging, observability, and architectural patterns. This comprehensive facade implements enterprise-grade patterns through a thread-safe singleton interface, enabling consistent system management across all FLEXT components.
 
 ### Key Statistics
+
 - **Module Size**: 28,361 tokens (2,662 lines)
 - **Core Functionality**: 80+ methods across 15+ functional areas
 - **Integration Scope**: All 32+ FLEXT ecosystem projects
@@ -39,7 +40,7 @@ graph TB
     A --> E[Domain Modeling]
     A --> F[Validation Systems]
     A --> G[Railway Programming]
-    
+
     B --> H[FlextContainer]
     C --> I[FlextConfig]
     D --> J[FlextLogger]
@@ -49,7 +50,7 @@ graph TB
     F --> N[FlextValidations]
     F --> O[FlextGuards]
     G --> P[FlextResult]
-    
+
     A --> Q[FLEXT Ecosystem]
     Q --> R[flext-api]
     Q --> S[flext-auth]
@@ -93,7 +94,7 @@ services = {
     "metrics": MetricsCollector
 }
 container_result = core.setup_container_with_services(
-    services, 
+    services,
     validator=core.validate_service_name
 )
 ```
@@ -253,6 +254,7 @@ EmailValidator = core.create_validator_class(
 FlextCore provides direct access to all FLEXT subsystems through properties:
 
 ### Instance-based Components (Lazy-loaded)
+
 - `core.container` → FlextContainer (Dependency injection)
 - `core.config` → FlextConfig (Configuration management)
 - `core.context` → FlextContext (Request context)
@@ -260,6 +262,7 @@ FlextCore provides direct access to all FLEXT subsystems through properties:
 - `core.observability` → FlextObservability (Monitoring)
 
 ### Static Class Access
+
 - `core.commands` → FlextCommands (CQRS commands)
 - `core.decorators` → FlextDecorators (Cross-cutting concerns)
 - `core.domain_services` → FlextDomainService (Domain services)
@@ -279,6 +282,7 @@ FlextCore provides direct access to all FLEXT subsystems through properties:
 ## Utility Functions
 
 ### ID Generation
+
 ```python
 uuid_id = core.generate_uuid()  # UUID
 correlation_id = core.generate_correlation_id()  # Identifier
@@ -286,6 +290,7 @@ entity_id = core.generate_entity_id()  # Identifier
 ```
 
 ### Safe Operations
+
 ```python
 # Safe function calls with fallbacks
 result = core.safe_call(risky_function, default_value)
@@ -298,6 +303,7 @@ batches = core.batch_process(large_list, batch_size=100)
 ```
 
 ### Factory Methods
+
 ```python
 # Generic factory creation
 factory_result = core.create_factory("database", **db_config)
@@ -315,12 +321,14 @@ message_result = core.create_message(
 ## Thread Safety and Performance
 
 ### Concurrent Access
+
 - **Thread-safe singleton**: Multiple threads can safely access `get_instance()`
 - **Lazy loading**: Heavy subsystems initialized only when needed
 - **Resource optimization**: Configurable performance settings
 - **Memory management**: Efficient caching and cleanup
 
 ### Performance Features
+
 ```python
 # Performance monitoring
 @core.track_performance("critical_operation")
@@ -354,6 +362,7 @@ FlextCore serves as the foundation for all FLEXT libraries:
 6. **Go services**: Cross-language integration via Python bridge
 
 ### Cross-Service Communication
+
 ```python
 # Service discovery and communication
 api_service = core.get_service("api_gateway")
@@ -372,6 +381,7 @@ message = core.create_message(
 ## Configuration Examples
 
 ### Development Environment
+
 ```python
 core = FlextCore.get_instance()
 
@@ -383,6 +393,7 @@ if dev_config.success:
 ```
 
 ### Production Environment
+
 ```python
 # Production optimization
 prod_config = core.create_environment_core_config("production")
@@ -426,6 +437,7 @@ else:
 ## Best Practices
 
 ### 1. Singleton Usage
+
 ```python
 # ✅ Correct - Use get_instance()
 core = FlextCore.get_instance()
@@ -435,11 +447,12 @@ core = FlextCore.get_instance()
 ```
 
 ### 2. Service Registration
+
 ```python
 # ✅ Correct - With validation
 services = {"database": DatabaseService, "cache": CacheService}
 result = core.setup_container_with_services(
-    services, 
+    services,
     validator=core.validate_service_name
 )
 
@@ -449,6 +462,7 @@ core.register_factory("temp_service", lambda: TemporaryService())
 ```
 
 ### 3. Railway Programming
+
 ```python
 # ✅ Correct - Composable operations
 result = (
@@ -467,6 +481,7 @@ else:
 ```
 
 ### 4. Configuration Management
+
 ```python
 # ✅ Correct - Environment-aware configuration
 config = core.create_environment_core_config("production")
@@ -481,7 +496,7 @@ if config.success:
 ## See Also
 
 - **[FlextContainer](../container/README.md)**: Dependency injection implementation
-- **[FlextResult](../result/README.md)**: Railway-oriented programming patterns  
+- **[FlextResult](../result/README.md)**: Railway-oriented programming patterns
 - **[FlextConfig](../config/README.md)**: Configuration management system
 - **[FlextObservability](../observability/README.md)**: Monitoring and observability
 - **[FlextValidations](../validation/README.md)**: Comprehensive validation system
@@ -490,4 +505,4 @@ if config.success:
 
 ---
 
-*This documentation reflects FlextCore as the central orchestration hub for the entire FLEXT ecosystem, providing unified access to all architectural patterns and enterprise functionality through a thread-safe singleton interface.*
+_This documentation reflects FlextCore as the central orchestration hub for the entire FLEXT ecosystem, providing unified access to all architectural patterns and enterprise functionality through a thread-safe singleton interface._

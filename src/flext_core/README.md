@@ -38,7 +38,7 @@ The source code follows Clean Architecture principles with clear separation of c
 
 | Module             | Purpose                  | Key Components                   |
 | ------------------ | ------------------------ | -------------------------------- |
-| `config.py`        | Configuration management | `FlextConfig`, env loading     |
+| `config.py`        | Configuration management | `FlextConfig`, env loading       |
 | `config_base.py`   | Base configuration       | Configuration patterns           |
 | `config_models.py` | Config models            | Database, cache, service configs |
 | `loggings.py`      | Structured logging       | Logger factory, correlation IDs  |
@@ -162,7 +162,7 @@ with create_log_context(logger, request_id="123", user_id="456"):
 
 Modules follow Clean Architecture dependency rules:
 
-``` ascii
+```ascii
 Foundation ← Core Patterns ← Configuration ← Domain ← Application ← Cross-Cutting
 ```
 
@@ -227,7 +227,7 @@ __all__ = ["Component1", "Component2"]
 
 ## File Structure Summary
 
-``` ascii
+```ascii
 src/flext_core/
 ├── __init__.py              # Public API exports
 ├── __version__.py           # Version information
@@ -246,7 +246,7 @@ src/flext_core/
 ├── loggings.py              # Logging system
 │
 ├── # Domain Patterns
-├── models.py                # Domain models (entities, values, aggregates)  
+├── models.py                # Domain models (entities, values, aggregates)
 ├── domain_services.py       # Domain services
 │
 ├── # Application Patterns

@@ -10,22 +10,23 @@ FlextUtilities serves as the **foundational utility layer** for the entire FLEXT
 
 ### Core Architecture Overview
 
-| Domain | Purpose | Key Components |
-|--------|---------|----------------|
-| **Generators** | ID & Timestamp Generation | UUID generation, entity IDs, correlation IDs, ISO timestamps |
-| **TextProcessor** | Text Processing & Formatting | Safe string conversion, text sanitization, slugification, masking |
-| **Performance** | Performance Monitoring | Function timing, metrics collection, performance tracking decorators |
-| **Conversions** | Safe Type Conversion | Safe int/float/bool conversion with fallback handling |
-| **ProcessingUtils** | JSON & Model Processing | JSON parsing, model extraction, FlextResult integration |
-| **Configuration** | System Configuration | Environment-specific config, validation, FlextTypes.Config integration |
-| **TypeGuards** | Runtime Type Checking | Type validation, non-empty checks, attribute verification |
-| **Formatters** | Human-Readable Output | Byte formatting, percentage display, duration formatting |
-| **ResultUtils** | FlextResult Operations | Result chaining, batch processing, error collection |
-| **TimeUtils** | Time & Duration Utilities | Duration formatting, UTC timestamps, time operations |
+| Domain              | Purpose                      | Key Components                                                         |
+| ------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| **Generators**      | ID & Timestamp Generation    | UUID generation, entity IDs, correlation IDs, ISO timestamps           |
+| **TextProcessor**   | Text Processing & Formatting | Safe string conversion, text sanitization, slugification, masking      |
+| **Performance**     | Performance Monitoring       | Function timing, metrics collection, performance tracking decorators   |
+| **Conversions**     | Safe Type Conversion         | Safe int/float/bool conversion with fallback handling                  |
+| **ProcessingUtils** | JSON & Model Processing      | JSON parsing, model extraction, FlextResult integration                |
+| **Configuration**   | System Configuration         | Environment-specific config, validation, FlextTypes.Config integration |
+| **TypeGuards**      | Runtime Type Checking        | Type validation, non-empty checks, attribute verification              |
+| **Formatters**      | Human-Readable Output        | Byte formatting, percentage display, duration formatting               |
+| **ResultUtils**     | FlextResult Operations       | Result chaining, batch processing, error collection                    |
+| **TimeUtils**       | Time & Duration Utilities    | Duration formatting, UTC timestamps, time operations                   |
 
 ### Current Ecosystem Integration
 
 **Adoption Status**: **Universal (95%)** - Critical infrastructure component
+
 - **30+ libraries** depend on FlextUtilities for core operations
 - **1,200+ lines** of comprehensive utility functions
 - **10 specialized domains** covering all utility needs
@@ -54,6 +55,7 @@ iso_timestamp = FlextUtilities.Generators.generate_iso_timestamp()  # UTC ISO fo
 ```
 
 #### Generator Benefits
+
 - **Consistent Prefixing**: Semantic prefixes for different ID types
 - **Collision-Free**: UUID4-based generation ensures uniqueness
 - **Readable Format**: Shortened hex representations for logs and debugging
@@ -61,6 +63,7 @@ iso_timestamp = FlextUtilities.Generators.generate_iso_timestamp()  # UTC ISO fo
 - **Distributed Systems**: Correlation IDs enable request tracing
 
 #### Enterprise Use Cases
+
 1. **Request Tracing**: Correlation IDs across microservices
 2. **Entity Management**: Consistent entity identifier patterns
 3. **Session Management**: Web session tracking
@@ -85,13 +88,14 @@ camel = FlextUtilities.TextProcessor.generate_camel_case_alias("user_name")  # "
 
 # Sensitive Data Handling
 masked = FlextUtilities.TextProcessor.mask_sensitive(
-    "password123", 
-    show_first=2, 
+    "password123",
+    show_first=2,
     show_last=1
 )  # "pa*******3"
 ```
 
 #### TextProcessor Benefits
+
 - **Edge Case Handling**: Robust handling of None, empty strings, control characters
 - **Security Features**: Sensitive data masking with flexible visibility options
 - **API Compatibility**: camelCase generation for JSON API compatibility
@@ -99,6 +103,7 @@ masked = FlextUtilities.TextProcessor.mask_sensitive(
 - **Fallback Patterns**: Default values for all conversion operations
 
 #### Enterprise Applications
+
 1. **API Data Sanitization**: Clean user input before processing
 2. **Logging Security**: Mask sensitive information in logs
 3. **URL Generation**: SEO-friendly slugs from titles
@@ -126,6 +131,7 @@ all_metrics = FlextUtilities.Performance.get_metrics()
 ```
 
 #### Performance Features
+
 - **Decorator-Based Tracking**: Zero-code-change performance monitoring
 - **Success/Failure Tracking**: Operation outcome monitoring
 - **Average Calculation**: Automatic calculation of average execution times
@@ -133,6 +139,7 @@ all_metrics = FlextUtilities.Performance.get_metrics()
 - **Global Metrics**: System-wide performance visibility
 
 #### Metrics Structure
+
 ```python
 {
     "total_calls": 150,
@@ -145,6 +152,7 @@ all_metrics = FlextUtilities.Performance.get_metrics()
 ```
 
 #### Enterprise Benefits
+
 1. **Operation Monitoring**: Track critical business operation performance
 2. **SLA Compliance**: Monitor performance against service level agreements
 3. **Error Analysis**: Identify and track failure patterns
@@ -166,6 +174,7 @@ val = FlextUtilities.Conversions.safe_float(None, 0.0)  # 0.0
 ```
 
 #### Conversion Features
+
 - **Null Safety**: Proper handling of None values
 - **Error Recovery**: Graceful fallback to default values
 - **Type Intelligence**: Smart string-to-boolean conversion ("true", "1", "yes", "on")
@@ -173,6 +182,7 @@ val = FlextUtilities.Conversions.safe_float(None, 0.0)  # 0.0
 - **Consistent API**: Uniform interface across all conversion types
 
 #### Enterprise Applications
+
 1. **Configuration Loading**: Safe conversion of environment variables
 2. **API Parameter Processing**: Convert string parameters to appropriate types
 3. **Database Result Processing**: Safe conversion of query results
@@ -200,6 +210,7 @@ if result.success:
 ```
 
 #### ProcessingUtils Benefits
+
 - **Error Handling**: JSON parsing with graceful error recovery
 - **Model Compatibility**: Support for Pydantic v2 model_validate and dict constructors
 - **Type Safety**: Generic type support with proper type inference
@@ -207,6 +218,7 @@ if result.success:
 - **FlextResult Integration**: Consistent error handling patterns
 
 #### Model Processing Strategy
+
 1. **Pydantic v2 Detection**: Uses `model_validate` for validation when available
 2. **Dictionary Constructor**: Falls back to `**kwargs` constructor
 3. **Default Constructor**: Final fallback to parameter-less constructor
@@ -232,6 +244,7 @@ env_result = FlextUtilities.Configuration.get_environment_configuration("staging
 ```
 
 #### Configuration Features
+
 - **Environment Awareness**: Different settings for dev/test/staging/production
 - **Validation Integration**: Full validation using FlextConstants enums
 - **Type Safety**: Integration with FlextTypes.Config for type-safe configuration
@@ -239,6 +252,7 @@ env_result = FlextUtilities.Configuration.get_environment_configuration("staging
 - **Error Reporting**: Detailed validation error messages
 
 #### Configuration Schema
+
 ```python
 {
     "environment": "production",
@@ -255,21 +269,25 @@ env_result = FlextUtilities.Configuration.get_environment_configuration("staging
 ### 7. Additional Utility Domains
 
 #### TypeGuards Domain
+
 - **Runtime Type Checking**: `is_string_non_empty()`, `is_dict_non_empty()`
 - **Type Safety**: Proper type narrowing for static analysis
 - **Attribute Verification**: Safe attribute checking
 
-#### Formatters Domain  
+#### Formatters Domain
+
 - **Human-Readable Output**: Byte sizes ("1.5 MB"), percentages ("85.5%")
 - **Duration Formatting**: Time spans in appropriate units
 - **Precision Control**: Configurable decimal places
 
 #### ResultUtils Domain
+
 - **Result Chaining**: Combine multiple FlextResult operations
 - **Batch Processing**: Process arrays with success/error separation
 - **Error Collection**: Aggregate errors from batch operations
 
 #### TimeUtils Domain
+
 - **Duration Display**: Human-readable time formatting
 - **UTC Operations**: Timezone-safe timestamp operations
 - **Time Calculations**: Elapsed time and duration utilities
@@ -283,25 +301,33 @@ env_result = FlextUtilities.Configuration.get_environment_configuration("staging
 FlextUtilities provides deep integration with all FLEXT core components:
 
 #### 1. FlextResult Integration
+
 Every utility operation that can fail returns FlextResult[T] for:
+
 - **Type Safety**: Compile-time error handling guarantees
 - **Error Context**: Rich error information with codes and messages
 - **Railway Programming**: Composable error handling patterns
 
 #### 2. FlextConstants Integration
+
 Configuration and validation limits sourced from FlextConstants:
+
 - **Network Constants**: Port ranges, timeout values
 - **Error Codes**: Standardized error classification
 - **Validation Limits**: String lengths, numeric ranges
 
 #### 3. FlextTypes.Config Integration
+
 Configuration utilities fully integrated with FlextTypes:
+
 - **Environment Enums**: Type-safe environment specification
 - **Configuration Types**: Structured configuration with validation
 - **Type Aliases**: Consistent type definitions across ecosystem
 
 #### 4. FlextLogger Integration
+
 Comprehensive logging throughout all utility operations:
+
 - **Operation Logging**: All significant operations logged
 - **Error Logging**: Detailed error reporting
 - **Performance Logging**: Performance metrics integration
@@ -332,6 +358,7 @@ user_id = FlextUtilities.safe_int(user_input)
 ## Real-World Usage Patterns
 
 ### 1. Request Processing Pipeline
+
 ```python
 # Complete request processing with FlextUtilities
 class APIRequestProcessor:
@@ -339,25 +366,25 @@ class APIRequestProcessor:
         # Generate request tracking ID
         request_id = FlextUtilities.Generators.generate_request_id()
         correlation_id = FlextUtilities.Generators.generate_correlation_id()
-        
+
         # Safe data extraction and conversion
         user_id = FlextUtilities.Conversions.safe_int(request_data.get("user_id"), 0)
         page_size = FlextUtilities.Conversions.safe_int(request_data.get("page_size"), 20)
-        
+
         # Text processing and validation
         search_query = FlextUtilities.TextProcessor.clean_text(
             FlextUtilities.TextProcessor.safe_string(request_data.get("query"), "")
         )
-        
+
         # Performance tracking
         with FlextUtilities.Performance.track_performance("api_request"):
             result = self._execute_business_logic(user_id, search_query, page_size)
-            
+
             # Safe JSON serialization
             response_json = FlextUtilities.ProcessingUtils.safe_json_stringify(
                 result, default="{}"
             )
-            
+
             return {
                 "request_id": request_id,
                 "correlation_id": correlation_id,
@@ -366,24 +393,25 @@ class APIRequestProcessor:
 ```
 
 ### 2. ETL Data Processing
+
 ```python
 # ETL pipeline using FlextUtilities for data processing
 class ETLProcessor:
     def process_batch(self, records: list[dict]):
         batch_id = FlextUtilities.Generators.generate_entity_id()
-        
+
         # Batch processing with error collection
         processed_records, errors = FlextUtilities.ResultUtils.batch_process(
             records, self._process_single_record
         )
-        
+
         # Performance metrics
         FlextUtilities.Performance.record_metric(
-            "etl_batch_processing", 
+            "etl_batch_processing",
             time.time() - start_time,
             success=len(errors) == 0
         )
-        
+
         return {
             "batch_id": batch_id,
             "processed": len(processed_records),
@@ -392,7 +420,7 @@ class ETLProcessor:
                 len(processed_records) / len(records)
             )
         }
-        
+
     def _process_single_record(self, record: dict) -> FlextResult[dict]:
         # Safe type conversions
         processed = {
@@ -401,40 +429,41 @@ class ETLProcessor:
             "email": FlextUtilities.TextProcessor.safe_string(record.get("email")),
             "created_at": FlextUtilities.Generators.generate_iso_timestamp()
         }
-        
+
         return FlextResult.success(processed)
 ```
 
 ### 3. Configuration Management
+
 ```python
 # Application configuration using FlextUtilities
 class ApplicationConfig:
     def __init__(self, environment: str):
         # Create environment-specific configuration
         config_result = FlextUtilities.Configuration.create_default_config(environment)
-        
+
         if not config_result.success:
             raise ConfigurationError(f"Failed to create config: {config_result.error}")
-        
+
         self.config = config_result.value
-        
+
         # Validate configuration
         validation_result = FlextUtilities.Configuration.validate_configuration_with_types(
             self.config
         )
-        
+
         if not validation_result.success:
             raise ConfigurationError(f"Invalid config: {validation_result.error}")
-    
+
     def get_database_timeout(self) -> int:
         return FlextUtilities.Conversions.safe_int(
-            self.config.get("request_timeout"), 
+            self.config.get("request_timeout"),
             30000  # 30 second default
         )
-    
+
     def is_debug_enabled(self) -> bool:
         return FlextUtilities.Conversions.safe_bool(
-            self.config.get("debug"), 
+            self.config.get("debug"),
             default=False
         )
 ```
@@ -444,21 +473,25 @@ class ApplicationConfig:
 ## Performance Characteristics
 
 ### Memory Efficiency
+
 - **Stateless Design**: All utilities are stateless static methods
 - **Minimal Overhead**: No instance creation required for utility operations
 - **Performance Metrics**: In-memory storage with configurable limits
 
 ### Execution Performance
+
 - **Optimized Operations**: All utilities designed for high-frequency usage
 - **Caching Strategy**: Performance metrics cached for fast retrieval
 - **Batch Operations**: Optimized batch processing for high-volume scenarios
 
 ### Scalability Features
+
 - **Thread Safety**: All operations thread-safe for concurrent environments
 - **No Global State**: Utilities don't maintain problematic global state
 - **Resource Cleanup**: Automatic cleanup of temporary resources
 
 ### Benchmarks
+
 - **ID Generation**: >100,000 IDs/second
 - **Text Processing**: <1ms for typical string operations
 - **Type Conversion**: <0.1ms for standard conversions
@@ -469,21 +502,25 @@ class ApplicationConfig:
 ## Strategic Value Proposition
 
 ### 1. Code Standardization
+
 - **Consistent Patterns**: All FLEXT libraries use the same utility patterns
 - **Error Handling**: Uniform error handling through FlextResult integration
 - **Type Safety**: Comprehensive type safety across all utility operations
 
 ### 2. Developer Productivity
+
 - **Reduced Boilerplate**: Common operations provided as utilities
 - **Rich Functionality**: Comprehensive utility coverage reduces external dependencies
 - **Documentation**: Extensive documentation and examples for all utilities
 
 ### 3. Enterprise Features
+
 - **Performance Monitoring**: Built-in performance tracking for all operations
 - **Configuration Management**: Enterprise-grade configuration with validation
 - **Security Features**: Data masking and sanitization capabilities
 
 ### 4. Ecosystem Integration
+
 - **FLEXT Patterns**: Deep integration with all FLEXT architectural patterns
 - **Extensibility**: Library-specific utility extensions follow consistent patterns
 - **Migration Support**: Utilities support migration between different data formats
@@ -500,7 +537,7 @@ Libraries extend FlextUtilities through composition rather than inheritance:
 # flext-meltano/src/flext_meltano/utilities.py
 class FlextMeltanoUtilities:
     """Meltano-specific utilities extending FlextUtilities."""
-    
+
     # Use FlextUtilities for all standard operations
     @classmethod
     def create_meltano_config_dict(cls, project_id: str) -> dict:
@@ -508,7 +545,7 @@ class FlextMeltanoUtilities:
         safe_project_id = FlextUtilities.TextProcessor.safe_string(
             project_id, "flext-meltano-project"
         )
-        
+
         # Add Meltano-specific functionality
         return {
             "project_id": safe_project_id,
@@ -531,18 +568,21 @@ Each library adds domain-specific utilities while leveraging core FlextUtilities
 ## Migration Benefits and Impact
 
 ### Current State Analysis
+
 - **30+ libraries** currently using FlextUtilities
 - **1,200+ lines** of utility functions covering all common operations
 - **95% adoption** across FLEXT ecosystem
 - **Zero duplication** between libraries due to centralized utilities
 
 ### Ecosystem Benefits
+
 1. **Consistency**: All libraries use the same utility patterns
 2. **Maintainability**: Single source of truth for utility functions
 3. **Performance**: Optimized implementations shared across ecosystem
 4. **Testing**: Comprehensive testing ensures reliability across all libraries
 
 ### Developer Impact
+
 1. **Reduced Development Time**: Common operations already implemented
 2. **Lower Learning Curve**: Consistent API across all libraries
 3. **Better Error Handling**: FlextResult integration provides robust error handling
@@ -555,6 +595,7 @@ Each library adds domain-specific utilities while leveraging core FlextUtilities
 FlextUtilities represents the **foundational utility infrastructure** of the FLEXT ecosystem, providing comprehensive, enterprise-grade utility functions across 10 specialized domains. With universal adoption (95%) across 30+ libraries, it demonstrates the value of centralized utility infrastructure.
 
 **Key Success Factors**:
+
 1. **Comprehensive Coverage**: 10 domains covering all utility needs
 2. **Enterprise Features**: Performance monitoring, configuration management, security
 3. **Integration Excellence**: Deep integration with all FLEXT architectural patterns

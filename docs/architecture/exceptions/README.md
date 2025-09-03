@@ -9,6 +9,7 @@
 `FlextExceptions` serves as the **comprehensive exception foundation** for all 32+ FLEXT ecosystem projects, providing structured error handling, automatic metrics collection, distributed tracing support, and enterprise-grade monitoring capabilities. This hierarchical system ensures consistent error handling patterns across all libraries while providing detailed context for debugging and observability.
 
 ### Key Statistics
+
 - **Module Size**: 1,306 lines with comprehensive exception hierarchy
 - **Exception Types**: 15 specialized exception classes for different error scenarios
 - **Integration Scope**: 102+ files across all FLEXT libraries use FlextExceptions
@@ -26,7 +27,7 @@ FlextExceptions implements several critical architectural patterns:
 1. **Hierarchical Organization**: All exceptions inherit from common BaseError
 2. **Structured Error Codes**: Integration with FlextConstants for consistent error codes
 3. **Context Tracking**: Rich metadata preservation for debugging
-4. **Metrics Collection**: Automatic tracking of exception occurrences  
+4. **Metrics Collection**: Automatic tracking of exception occurrences
 5. **Distributed Tracing**: Correlation IDs for cross-service error tracking
 6. **Multiple Inheritance**: Proper inheritance from Python builtin exceptions
 
@@ -37,7 +38,7 @@ graph TB
     A[FlextExceptions] --> B[BaseError]
     A --> C[Metrics]
     A --> D[ErrorCodes]
-    
+
     B --> E[ValidationError]
     B --> F[ConfigurationError]
     B --> G[ConnectionError]
@@ -47,12 +48,12 @@ graph TB
     B --> K[TimeoutError]
     B --> L[NotFoundError]
     B --> M[CriticalError]
-    
+
     C --> N[Exception Tracking]
     C --> O[Metrics Collection]
-    
+
     D --> P[FlextConstants Integration]
-    
+
     A --> Q[FLEXT Ecosystem]
     Q --> R[flext-api]
     Q --> S[flext-auth]
@@ -68,6 +69,7 @@ graph TB
 ### 1. Exception Hierarchy
 
 #### Base Exception with Rich Context
+
 ```python
 from flext_core import FlextExceptions
 
@@ -89,6 +91,7 @@ except Exception as e:
 ```
 
 #### Automatic Type Selection
+
 ```python
 # Automatically selects ValidationError
 raise FlextExceptions(
@@ -98,7 +101,7 @@ raise FlextExceptions(
     context={"form_step": 1}
 )
 
-# Automatically selects OperationError  
+# Automatically selects OperationError
 raise FlextExceptions(
     "User creation failed",
     operation="create_user",
@@ -116,6 +119,7 @@ raise FlextExceptions(
 ### 2. Specialized Exception Types
 
 #### Data Validation Errors
+
 ```python
 # Field validation with detailed context
 raise FlextExceptions.ValidationError(
@@ -137,11 +141,12 @@ raise FlextExceptions.ValidationError(
 ```
 
 #### Configuration and System Errors
+
 ```python
 # Configuration errors with file context
 raise FlextExceptions.ConfigurationError(
     "Database connection string missing",
-    config_key="DATABASE_URL", 
+    config_key="DATABASE_URL",
     config_file="/app/.env",
     context={"environment": "production"}
 )
@@ -158,6 +163,7 @@ raise FlextExceptions.CriticalError(
 ```
 
 #### Network and Service Errors
+
 ```python
 # Network connection failures
 raise FlextExceptions.ConnectionError(
@@ -176,6 +182,7 @@ raise FlextExceptions.TimeoutError(
 ```
 
 #### Authentication and Authorization
+
 ```python
 # Authentication failures
 raise FlextExceptions.AuthenticationError(
@@ -193,6 +200,7 @@ raise FlextExceptions.PermissionError(
 ```
 
 #### Resource Management Errors
+
 ```python
 # Resource not found
 raise FlextExceptions.NotFoundError(
@@ -205,7 +213,7 @@ raise FlextExceptions.NotFoundError(
 # Resource conflicts
 raise FlextExceptions.AlreadyExistsError(
     "User with this email already exists",
-    resource_id="user@example.com", 
+    resource_id="user@example.com",
     resource_type="User",
     context={"attempted_action": "registration"}
 )
@@ -214,6 +222,7 @@ raise FlextExceptions.AlreadyExistsError(
 ### 3. Metrics and Monitoring
 
 #### Exception Metrics Collection
+
 ```python
 # Automatic metrics recording (happens automatically)
 try:
@@ -234,6 +243,7 @@ if validation_errors > 100:
 ```
 
 #### Distributed Tracing Integration
+
 ```python
 try:
     external_api_call()
@@ -253,6 +263,7 @@ except FlextExceptions.ConnectionError as e:
 ### 4. Error Code Management
 
 #### Structured Error Codes
+
 ```python
 # Access centralized error codes
 validation_code = FlextExceptions.ErrorCodes.VALIDATION_ERROR
@@ -272,11 +283,12 @@ except FlextExceptions.BaseError as e:
 ```
 
 #### Error Severity Mapping
+
 ```python
 # Map error codes to alert severity levels
 error_severity = {
     FlextExceptions.ErrorCodes.CRITICAL_ERROR: "high",
-    FlextExceptions.ErrorCodes.CONNECTION_ERROR: "medium", 
+    FlextExceptions.ErrorCodes.CONNECTION_ERROR: "medium",
     FlextExceptions.ErrorCodes.VALIDATION_ERROR: "low",
     FlextExceptions.ErrorCodes.NOT_FOUND: "low"
 }
@@ -300,7 +312,7 @@ if prod_config.success:
     print(f"Stack traces: {config['enable_stack_traces']}")  # False
     print(f"Max error details: {config['max_error_details']}")  # 500
 
-# Development configuration - full error details  
+# Development configuration - full error details
 dev_config = FlextExceptions.create_environment_specific_config("development")
 if dev_config.success:
     config = dev_config.value
@@ -311,7 +323,7 @@ if dev_config.success:
 # Custom error handling configuration
 custom_config = {
     "environment": "staging",
-    "log_level": "INFO", 
+    "log_level": "INFO",
     "validation_level": "STRICT",
     "enable_metrics": True,
     "enable_stack_traces": True,
@@ -333,13 +345,14 @@ if config_result.success:
 FlextExceptions is extensively used across the FLEXT ecosystem:
 
 #### API Services
+
 ```python
 # flext-api exception integration
 from flext_core import FlextExceptions
 
 class FlextApiExceptions(FlextExceptions):
     """API-specific exceptions inheriting from FlextExceptions."""
-    
+
     class HTTPError(FlextExceptions.BaseError):
         def __init__(self, message: str, *, status_code: int, **kwargs):
             self.status_code = status_code
@@ -349,11 +362,12 @@ class FlextApiExceptions(FlextExceptions):
 ```
 
 #### Authentication Services
+
 ```python
 # flext-auth exception specialization
 class FlextAuthExceptions(FlextExceptions):
     """Authentication-specific exception extensions."""
-    
+
     class TokenExpiredError(FlextExceptions.AuthenticationError):
         def __init__(self, message: str, *, token_type: str = None, **kwargs):
             self.token_type = token_type
@@ -363,11 +377,12 @@ class FlextAuthExceptions(FlextExceptions):
 ```
 
 #### Data Pipeline Services
+
 ```python
 # flext-meltano pipeline exceptions
 class FlextMeltanoExceptions(FlextExceptions):
     """Meltano pipeline exception specializations."""
-    
+
     class PipelineExecutionError(FlextExceptions.ProcessingError):
         def __init__(self, message: str, *, pipeline_name: str = None, **kwargs):
             self.pipeline_name = pipeline_name
@@ -383,7 +398,7 @@ class FlextMeltanoExceptions(FlextExceptions):
 def service_a_operation():
     raise FlextExceptions.ValidationError(
         "Invalid input data",
-        field="user_id", 
+        field="user_id",
         value="",
         correlation_id="req_12345"
     )
@@ -411,6 +426,7 @@ def service_b_operation():
 ## Exception Handling Best Practices
 
 ### 1. Contextual Exception Creation
+
 ```python
 # ✅ Good - Rich context for debugging
 raise FlextExceptions.ValidationError(
@@ -420,7 +436,7 @@ raise FlextExceptions.ValidationError(
     validation_details={"pattern": "email", "required": True},
     context={
         "user_id": user_id,
-        "registration_step": "email_validation", 
+        "registration_step": "email_validation",
         "form_data_keys": list(user_input.keys()),
         "user_agent": request.headers.get("User-Agent")
     }
@@ -431,6 +447,7 @@ raise FlextExceptions.ValidationError("Invalid email")
 ```
 
 ### 2. Correlation ID Preservation
+
 ```python
 # ✅ Good - Preserve correlation IDs across service boundaries
 def process_user_request(correlation_id: str):
@@ -446,24 +463,26 @@ def process_user_request(correlation_id: str):
 ```
 
 ### 3. Metrics-Driven Error Handling
+
 ```python
 # Monitor exception patterns for operational insights
 def monitor_error_rates():
     metrics = FlextExceptions.get_metrics()
-    
+
     # Alert on high validation error rates
     if metrics.get("ValidationError", 0) > 100:
         send_alert("High validation error rate - possible bad input data")
-    
-    # Alert on connection errors  
+
+    # Alert on connection errors
     if metrics.get("ConnectionError", 0) > 50:
         send_alert("Service connectivity issues detected")
-    
+
     # Reset metrics for next monitoring period
     FlextExceptions.clear_metrics()
 ```
 
 ### 4. Environment-Appropriate Error Details
+
 ```python
 # Configure error handling based on environment
 def configure_for_environment(env: str):
@@ -478,12 +497,12 @@ def configure_for_environment(env: str):
     else:
         # Full error details for development/testing
         config = {
-            "environment": env, 
+            "environment": env,
             "enable_stack_traces": True,
             "max_error_details": 2000,
             "log_level": "DEBUG"
         }
-    
+
     result = FlextExceptions.configure_error_handling(config)
     if result.failure:
         print(f"Failed to configure error handling: {result.error}")
@@ -494,6 +513,7 @@ def configure_for_environment(env: str):
 ## Advanced Features
 
 ### 1. Exception Factory Methods
+
 ```python
 # Automatic exception type selection based on context
 def create_appropriate_exception(error_info: dict):
@@ -525,6 +545,7 @@ def create_appropriate_exception(error_info: dict):
 ```
 
 ### 2. Exception Chaining and Wrapping
+
 ```python
 # Chain exceptions while preserving context
 def wrap_external_exception(func, *args, **kwargs):
@@ -546,13 +567,14 @@ def wrap_external_exception(func, *args, **kwargs):
 ```
 
 ### 3. Performance-Optimized Exception Handling
+
 ```python
 # Lazy context evaluation for performance
 class LazyExceptionContext:
     def __init__(self, context_func):
         self._context_func = context_func
         self._context = None
-    
+
     @property
     def context(self):
         if self._context is None:
@@ -567,9 +589,9 @@ def expensive_operation_with_lazy_context():
             "active_connections": count_active_connections(),
             "memory_usage": get_memory_usage()
         }
-    
+
     lazy_context = LazyExceptionContext(get_debug_context)
-    
+
     try:
         risky_operation()
     except Exception:
@@ -585,6 +607,7 @@ def expensive_operation_with_lazy_context():
 ## Error Observability and Monitoring
 
 ### 1. Structured Logging Integration
+
 ```python
 import logging
 from flext_core import FlextExceptions
@@ -615,23 +638,24 @@ def handle_exception_with_logging(func):
 ```
 
 ### 2. Metrics Export for Monitoring Systems
+
 ```python
 def export_exception_metrics_to_prometheus():
     """Export FlextException metrics to Prometheus format."""
     metrics = FlextExceptions.get_metrics()
-    
+
     prometheus_metrics = []
     for exception_type, count in metrics.items():
         prometheus_metrics.append(
             f'flext_exceptions_total{{type="{exception_type}"}} {count}'
         )
-    
+
     return '\n'.join(prometheus_metrics)
 
 def export_to_monitoring_system():
     """Export metrics to external monitoring system."""
     metrics = FlextExceptions.get_metrics()
-    
+
     for exception_type, count in metrics.items():
         send_metric_to_datadog(
             metric_name="flext.exceptions.count",
@@ -641,13 +665,14 @@ def export_to_monitoring_system():
 ```
 
 ### 3. Real-time Alert Generation
+
 ```python
 def setup_exception_monitoring():
     """Setup real-time exception monitoring and alerting."""
-    
+
     def check_exception_thresholds():
         metrics = FlextExceptions.get_metrics()
-        
+
         # Critical error threshold
         if metrics.get("CriticalError", 0) > 0:
             send_immediate_alert(
@@ -655,23 +680,23 @@ def setup_exception_monitoring():
                 message=f"Critical errors detected: {metrics['CriticalError']}",
                 details={"metrics": metrics}
             )
-        
+
         # Connection error threshold
         if metrics.get("ConnectionError", 0) > 10:
             send_alert(
-                severity="high", 
+                severity="high",
                 message="High connection error rate",
                 details={"count": metrics["ConnectionError"]}
             )
-        
+
         # Validation error pattern
         if metrics.get("ValidationError", 0) > 100:
             send_alert(
                 severity="medium",
-                message="Possible data quality issues - high validation errors", 
+                message="Possible data quality issues - high validation errors",
                 details={"count": metrics["ValidationError"]}
             )
-    
+
     # Schedule periodic monitoring
     schedule_periodic_task(check_exception_thresholds, interval=60)  # Every minute
 ```
@@ -681,6 +706,7 @@ def setup_exception_monitoring():
 ## Testing Exception Patterns
 
 ### 1. Exception Testing Best Practices
+
 ```python
 import pytest
 from flext_core import FlextExceptions
@@ -694,7 +720,7 @@ def test_validation_error_with_context():
             value="",
             context={"form_step": 1}
         )
-    
+
     exception = exc_info.value
     assert exception.field == "email"
     assert exception.value == ""
@@ -711,7 +737,7 @@ def test_automatic_type_selection():
             field="username",
             value=""
         )
-    
+
     # Should create ConfigurationError
     with pytest.raises(FlextExceptions.ConfigurationError):
         raise FlextExceptions(
@@ -723,20 +749,20 @@ def test_metrics_collection():
     """Test automatic metrics collection."""
     # Clear metrics
     FlextExceptions.clear_metrics()
-    
+
     # Raise some exceptions
     for _ in range(3):
         try:
             raise FlextExceptions.ValidationError("Test error")
         except FlextExceptions.ValidationError:
             pass
-    
+
     for _ in range(2):
         try:
             raise FlextExceptions.ConnectionError("Test error")
         except FlextExceptions.ConnectionError:
             pass
-    
+
     # Check metrics
     metrics = FlextExceptions.get_metrics()
     assert metrics["ValidationError"] == 3
@@ -756,4 +782,4 @@ def test_metrics_collection():
 
 ---
 
-*This documentation reflects FlextExceptions as the comprehensive exception foundation for the entire FLEXT ecosystem, providing structured error handling, automatic metrics collection, and distributed tracing support across all 32+ projects.*
+_This documentation reflects FlextExceptions as the comprehensive exception foundation for the entire FLEXT ecosystem, providing structured error handling, automatic metrics collection, and distributed tracing support across all 32+ projects._

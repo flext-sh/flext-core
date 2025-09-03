@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from typing import Literal, cast
+from urllib.parse import urlparse
 
 from pydantic import Field, SecretStr
 
@@ -315,58 +316,50 @@ class FlextPipelineService:
 # =============================================================================
 
 
-class FlextUnifiedUtilities:
-    """Unified utility functions across ecosystem."""
+# Use standard library urllib.parse for URL parsing instead of custom implementation
 
-    @staticmethod
-    def validate_oracle_connection(
-        connection_string: str,
-    ) -> FlextResult[dict[str, str]]:
-        """Parse and validate Oracle connection strings."""
-        if not connection_string.startswith("oracle://"):
+
+def validate_oracle_connection(connection_string: str) -> FlextResult[dict[str, str]]:
+    """Parse and validate Oracle connection strings using standard library."""
+    try:
+        parsed = urlparse(connection_string)
+        if parsed.scheme != "oracle":
             return FlextResult[dict[str, str]].fail(
-                "Invalid Oracle connection string format"
+                "Invalid Oracle connection string format - must use oracle:// scheme"
             )
 
-        try:
-            # Simple parsing for demonstration
-            parts = connection_string.replace("oracle://", "").split("/")
-            host_port = parts[0].split(":")
+        result: dict[str, str] = {
+            "host": parsed.hostname or "localhost",
+            "port": str(parsed.port or 1521),
+            "service_name": parsed.path.lstrip("/") or "ORCL",
+        }
 
-            parsed: dict[str, str] = {
-                "host": host_port[0],
-                "port": host_port[1] if len(host_port) > 1 else "1521",
-                "service_name": parts[1] if len(parts) > 1 else "ORCL",
-            }
+        return FlextResult[dict[str, str]].ok(result)
+    except Exception as e:
+        return FlextResult[dict[str, str]].fail(
+            f"Connection string parsing failed: {e}"
+        )
 
-            return FlextResult[dict[str, str]].ok(parsed)
-        except Exception as e:
-            return FlextResult[dict[str, str]].fail(
-                f"Connection string parsing failed: {e}"
-            )
 
-    @staticmethod
-    def format_metric_display(metric: dict[str, object]) -> str:
-        """Format metrics for display using unified patterns."""
-        lines = ["=== Pipeline Metrics ==="]
-        for key, value in metric.items():
-            formatted_key = key.replace("_", " ").title()
-            lines.append(f"{formatted_key}: {value}")
-        return "\n".join(lines)
+def format_metric_display(metric: dict[str, object]) -> str:
+    """Format metrics for display using unified patterns."""
+    lines = ["=== Pipeline Metrics ==="]
+    for key, value in metric.items():
+        formatted_key = key.replace("_", " ").title()
+        lines.append(f"{formatted_key}: {value}")
+    return "\n".join(lines)
 
-    @staticmethod
-    def safe_transform_data(
-        data: dict[str, object],
-        transformer: Callable[[dict[str, object]], dict[str, object]],
-    ) -> FlextResult[dict[str, object]]:
-        """Safe data transformation with unified error handling."""
-        try:
-            result = transformer(data)
-            return FlextResult[dict[str, object]].ok(result)
-        except Exception as e:
-            return FlextResult[dict[str, object]].fail(
-                f"Data transformation failed: {e}"
-            )
+
+def safe_transform_data(
+    data: dict[str, object],
+    transformer: Callable[[dict[str, object]], dict[str, object]],
+) -> FlextResult[dict[str, object]]:
+    """Safe data transformation with unified error handling."""
+    try:
+        result = transformer(data)
+        return FlextResult[dict[str, object]].ok(result)
+    except Exception as e:
+        return FlextResult[dict[str, object]].fail(f"Data transformation failed: {e}")
 
 
 # =============================================================================
@@ -412,7 +405,7 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
 def demonstrate_semantic_types() -> None:
     """Demonstrate Layer 1: Semantic Type System."""
     # Demonstrate type usage
-    connection_validation = FlextUnifiedUtilities.validate_oracle_connection(
+    connection_validation = validate_oracle_connection(
         DatabaseConnection,
     )
     if connection_validation.success:
@@ -437,7 +430,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
     """Demonstrate Layer 3: Unified Utilities."""
     # Get and display metrics
     stats = service.get_pipeline_stats()
-    FlextUnifiedUtilities.format_metric_display(stats)
+    format_metric_display(stats)
 
     # Demonstrate data transformation
     sample_data = {"records": 1000, "errors": 5, "success_rate": 0.995}
@@ -456,7 +449,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         )
         return enhanced
 
-    transform_result = FlextUnifiedUtilities.safe_transform_data(
+    transform_result = safe_transform_data(
         cast("dict[str, object]", sample_data),
         enhance_data,
     )

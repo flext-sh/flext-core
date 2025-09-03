@@ -560,20 +560,20 @@ class FeatureFlags(FlextConfig):
 
 1. **Environment variables not loading**:
 
-    - Check prefix matches (case-sensitive on Linux/Mac)
-    - Verify .env file location and encoding
-    - Use `export` command on Unix systems
+   - Check prefix matches (case-sensitive on Linux/Mac)
+   - Verify .env file location and encoding
+   - Use `export` command on Unix systems
 
 2. **Validation errors**:
 
-    - Enable debug logging to see actual values
-    - Check field constraints (min/max, patterns)
-    - Verify required fields have values
+   - Enable debug logging to see actual values
+   - Check field constraints (min/max, patterns)
+   - Verify required fields have values
 
 3. **Type conversion errors**:
-    - Ensure correct types in environment variables
-    - Use "true"/"false" for booleans (not 1/0)
-    - Lists should be comma-separated
+   - Ensure correct types in environment variables
+   - Use "true"/"false" for booleans (not 1/0)
+   - Lists should be comma-separated
 
 ### Debug Configuration Loading
 

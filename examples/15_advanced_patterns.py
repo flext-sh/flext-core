@@ -148,10 +148,12 @@ class OrderProcessor(FlextMixins.Entity):
             if "total_price" in item:
                 total_amount += Decimal(str(item["total_price"]))
 
-        return FlextResult[tuple[list[ItemData], Decimal]].ok((
-            processed_items,
-            total_amount,
-        ))
+        return FlextResult[tuple[list[ItemData], Decimal]].ok(
+            (
+                processed_items,
+                total_amount,
+            )
+        )
 
     def _validate_and_create_order(
         self, user_id: str, processed_items: list[ItemData], total_amount: Decimal

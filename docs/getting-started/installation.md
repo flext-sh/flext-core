@@ -600,14 +600,14 @@ After successful installation:
 ```json
 // .vscode/settings.json
 {
-    "python.linting.enabled": true,
-    "python.linting.ruffEnabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.formatting.provider": "black",
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "editor.formatOnSave": true,
-    "editor.rulers": [79, 120]
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.formatting.provider": "black",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "editor.formatOnSave": true,
+  "editor.rulers": [79, 120]
 }
 ```
 

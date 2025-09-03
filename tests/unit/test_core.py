@@ -10,7 +10,8 @@ from enum import StrEnum
 from pydantic import Field
 
 from flext_core import FlextResult
-from flext_core.core import FlextCore, flext_validate_service_name
+from flext_core.container import FlextContainer
+from flext_core.core import FlextCore
 from flext_core.models import FlextModels
 
 
@@ -26,31 +27,31 @@ class TestFlextValidateServiceName:
 
     def test_valid_service_name(self) -> None:
         """Test validation with valid service names."""
-        result = flext_validate_service_name("database_service")
+        result = FlextContainer.flext_validate_service_name("database_service")
         assert result.success
         assert result.unwrap() is None
 
     def test_invalid_empty_service_name(self) -> None:
         """Test validation with empty service name."""
-        result = flext_validate_service_name("")
+        result = FlextContainer.flext_validate_service_name("")
         assert result.failure
         assert "non-empty string" in result.error
 
     def test_invalid_none_service_name(self) -> None:
         """Test validation with None service name."""
-        result = flext_validate_service_name(None)
+        result = FlextContainer.flext_validate_service_name(None)
         assert result.failure
         assert "non-empty string" in result.error
 
     def test_invalid_non_string_service_name(self) -> None:
         """Test validation with non-string service name."""
-        result = flext_validate_service_name(123)
+        result = FlextContainer.flext_validate_service_name(123)
         assert result.failure
         assert "non-empty string" in result.error
 
     def test_invalid_whitespace_only_service_name(self) -> None:
         """Test validation with whitespace-only service name."""
-        result = flext_validate_service_name("   ")
+        result = FlextContainer.flext_validate_service_name("   ")
         assert result.failure
         assert "cannot be only whitespace" in result.error
 

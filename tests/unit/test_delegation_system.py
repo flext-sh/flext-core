@@ -1,6 +1,6 @@
 """Comprehensive tests for delegation_system.py to achieve maximum test coverage.
 
-Tests cover all aspects of the FlextDelegationSystem including protocols, delegated properties,
+Tests cover all aspects of the FlextDelegation including protocols, delegated properties,
 mixin delegators, system validation, and configuration management.
 """
 
@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flext_core.delegation_system import (
+from flext_core.delegation import (
     FlextDelegationSystem,
 )
 from flext_core.exceptions import FlextExceptions
@@ -485,8 +485,8 @@ class TestMixinDelegator:
         )
 
 
-class TestFlextDelegationSystemFactoryMethods:
-    """Test FlextDelegationSystem factory methods."""
+class TestFlextDelegationFactoryMethods:
+    """Test FlextDelegation factory methods."""
 
     def test_create_mixin_delegator(self) -> None:
         """Test factory method for creating mixin delegator."""
@@ -528,13 +528,13 @@ class TestFlextDelegationSystemFactoryMethods:
         assert MixinB in delegator.mixin_instances
 
 
-class TestFlextDelegationSystemValidation:
-    """Test FlextDelegationSystem validation functionality."""
+class TestFlextDelegationValidation:
+    """Test FlextDelegation validation functionality."""
 
     def test_validate_delegation_system_success(self) -> None:
         """Test successful system validation."""
         # Mock FlextMixins methods and patch the TestHost creation
-        with patch("flext_core.delegation_system.FlextMixins") as mock_mixins:
+        with patch("flext_core.delegation.FlextMixins") as mock_mixins:
 
             def mock_init_validation(obj: object) -> None:
                 # Add required attributes for validation using setattr
@@ -571,7 +571,7 @@ class TestFlextDelegationSystemValidation:
         mock_validate_methods.side_effect = ValueError("Validation failed")
 
         # Also need to mock FlextMixins for this test
-        with patch("flext_core.delegation_system.FlextMixins") as mock_mixins:
+        with patch("flext_core.delegation.FlextMixins") as mock_mixins:
             mock_mixins.create_timestamp_fields = MagicMock()
             mock_mixins.initialize_validation = MagicMock()
 
@@ -730,8 +730,8 @@ class TestFlextDelegationSystemValidation:
             FlextDelegationSystem._validate_delegation_info(host, test_results)
 
 
-class TestFlextDelegationSystemConfig:
-    """Test FlextDelegationSystem functionality."""
+class TestFlextDelegationConfig:
+    """Test FlextDelegation functionality."""
 
     def test_configure_delegation_system_success(self) -> None:
         """Test successful delegation system configuration."""
@@ -802,7 +802,7 @@ class TestFlextDelegationSystemConfig:
         assert "delegation_performance" in config
         assert "mixin_composition_performance" in config
         assert "health_status" in config
-        assert config["system_name"] == "FlextDelegationSystem"
+        assert config["system_name"] == "FlextDelegation"
 
     def test_get_delegation_system_config_exception(self) -> None:
         """Test getting delegation system configuration with exception."""
@@ -897,7 +897,7 @@ class TestFlextDelegationSystemConfig:
     def test_optimize_delegation_performance_exception(self) -> None:
         """Test performance optimization with exception."""
         with patch(
-            "flext_core.delegation_system.FlextDelegationSystem.optimize_delegation_performance"
+            "flext_core.delegation.FlextDelegationSystem.optimize_delegation_performance"
         ) as mock_method:
             mock_method.side_effect = Exception("Optimization error")
 
@@ -912,7 +912,7 @@ class TestFlextDelegationSystemConfig:
                 pass
 
 
-class TestFlextDelegationSystemIntegration:
+class TestFlextDelegationIntegration:
     """Integration tests for the complete delegation system."""
 
     def test_full_delegation_workflow(self) -> None:

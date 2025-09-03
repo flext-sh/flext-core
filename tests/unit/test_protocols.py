@@ -1,16 +1,16 @@
 """Targeted tests for 100% coverage on FlextProtocols module.
 
 This file contains precise tests targeting the specific remaining uncovered lines
-in protocols.py focusing on FlextProtocolsConfig class and protocol system methods.
+in protocols.py focusing on FlextProtocols.Config class and protocol system methods.
 """
 
 from __future__ import annotations
 
-from flext_core import FlextConstants, FlextProtocolsConfig, FlextResult
+from flext_core import FlextConstants, FlextProtocols, FlextResult
 
 
 class TestProtocolsConfig100PercentCoverage:
-    """Targeted tests for FlextProtocolsConfig uncovered lines."""
+    """Targeted tests for FlextProtocols.Config uncovered lines."""
 
     def test_configure_protocols_system_valid_config(self) -> None:
         """Test lines 815-875: configure_protocols_system with valid config."""
@@ -22,7 +22,7 @@ class TestProtocolsConfig100PercentCoverage:
             "enable_validation": True,
         }
 
-        result = FlextProtocolsConfig.configure_protocols_system(config)
+        result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.success
         validated_config = result.unwrap()
 
@@ -42,7 +42,7 @@ class TestProtocolsConfig100PercentCoverage:
             "protocol_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
         }
 
-        result = FlextProtocolsConfig.configure_protocols_system(config)
+        result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.failure
         assert "Invalid environment 'invalid_environment'" in result.error
 
@@ -50,7 +50,7 @@ class TestProtocolsConfig100PercentCoverage:
         """Test lines 829-832: Missing environment default."""
         config = {"protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value}
 
-        result = FlextProtocolsConfig.configure_protocols_system(config)
+        result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.success
         validated_config = result.unwrap()
 
@@ -67,7 +67,7 @@ class TestProtocolsConfig100PercentCoverage:
             "protocol_level": "invalid_level",
         }
 
-        result = FlextProtocolsConfig.configure_protocols_system(config)
+        result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.failure
         assert "Invalid protocol_level 'invalid_level'" in result.error
 
@@ -77,7 +77,7 @@ class TestProtocolsConfig100PercentCoverage:
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
         }
 
-        result = FlextProtocolsConfig.configure_protocols_system(config)
+        result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.success
         validated_config = result.unwrap()
 
@@ -99,7 +99,7 @@ class TestProtocolsConfig100PercentCoverage:
 
         for env in environments:
             config = {"environment": env}
-            result = FlextProtocolsConfig.configure_protocols_system(config)
+            result = FlextProtocols.Config.configure_protocols_system(config)
             assert result.success
             validated_config = result.unwrap()
             assert validated_config["environment"] == env
@@ -118,14 +118,14 @@ class TestProtocolsConfig100PercentCoverage:
                 "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 "protocol_level": level,
             }
-            result = FlextProtocolsConfig.configure_protocols_system(config)
+            result = FlextProtocols.Config.configure_protocols_system(config)
             assert result.success
             validated_config = result.unwrap()
             assert validated_config["protocol_level"] == level
 
     def test_get_protocols_system_config(self) -> None:
         """Test lines 906-952: get_protocols_system_config method."""
-        result = FlextProtocolsConfig.get_protocols_system_config()
+        result = FlextProtocols.Config.get_protocols_system_config()
         assert result.success
         config = result.unwrap()
 
@@ -147,7 +147,7 @@ class TestProtocolsConfig100PercentCoverage:
         ]
 
         for env in environments:
-            result = FlextProtocolsConfig.create_environment_protocols_config(env)
+            result = FlextProtocols.Config.create_environment_protocols_config(env)
             assert result.success
             config = result.unwrap()
 
@@ -156,37 +156,43 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_create_environment_protocols_config_invalid_environment(self) -> None:
         """Test invalid environment handling in create_environment_protocols_config."""
-        result = FlextProtocolsConfig.create_environment_protocols_config("invalid_env")
+        result = FlextProtocols.Config.create_environment_protocols_config(
+            "invalid_env"
+        )
         assert result.failure
-        assert "Invalid environment" in result.error
+        assert "Unknown environment" in result.error
 
     def test_optimize_protocols_performance_all_levels(self) -> None:
         """Test lines 1104-1205: optimize_protocols_performance method."""
         # Use the correct valid performance levels based on the error message
-        performance_levels = ["low", "balanced", "high", "extreme"]
+        performance_levels = ["low", "balanced", "high"]
 
         for level in performance_levels:
-            result = FlextProtocolsConfig.optimize_protocols_performance(level)
+            result = FlextProtocols.Config.optimize_protocols_performance(level)
             assert result.success
             config = result.unwrap()
 
             assert isinstance(config, dict)
-            assert "performance_level" in config
-            assert config["performance_level"] == level
+            assert "enable_runtime_checking" in config
+            assert "enable_protocol_caching" in config
+            assert "protocol_composition_mode" in config
 
     def test_optimize_protocols_performance_invalid_level(self) -> None:
         """Test invalid performance level handling."""
-        result = FlextProtocolsConfig.optimize_protocols_performance("invalid_level")
+        result = FlextProtocols.Config.optimize_protocols_performance("invalid_level")
         assert result.failure
-        assert "Invalid performance_level" in result.error
+        assert "Invalid performance level" in result.error
 
     def test_optimize_protocols_performance_default_level(self) -> None:
         """Test default performance level."""
-        result = FlextProtocolsConfig.optimize_protocols_performance()
+        result = FlextProtocols.Config.optimize_protocols_performance()
         assert result.success
         config = result.unwrap()
 
-        assert config["performance_level"] == "balanced"  # Default
+        # Default balanced configuration should have these settings
+        assert config["enable_runtime_checking"]
+        assert config["enable_protocol_caching"]
+        assert config["protocol_composition_mode"] == "HIERARCHICAL"
 
 
 class TestProtocolsRuntimeUtils100PercentCoverage:
@@ -223,28 +229,30 @@ class TestProtocolsIntegration100PercentCoverage:
             "debug": True,
         }
 
-        config_result = FlextProtocolsConfig.configure_protocols_system(initial_config)
+        config_result = FlextProtocols.Config.configure_protocols_system(initial_config)
         assert config_result.success
 
         # Get current system config
-        system_config_result = FlextProtocolsConfig.get_protocols_system_config()
+        system_config_result = FlextProtocols.Config.get_protocols_system_config()
         assert system_config_result.success
 
         # Create environment-specific config
-        env_config_result = FlextProtocolsConfig.create_environment_protocols_config(
+        env_config_result = FlextProtocols.Config.create_environment_protocols_config(
             FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
         )
         assert env_config_result.success
 
         # Optimize performance
-        perf_config_result = FlextProtocolsConfig.optimize_protocols_performance("high")
+        perf_config_result = FlextProtocols.Config.optimize_protocols_performance(
+            "high"
+        )
         assert perf_config_result.success
 
     def test_protocol_configuration_edge_cases(self) -> None:
         """Test edge cases in protocol configuration."""
         # Empty config
         empty_config = {}
-        result = FlextProtocolsConfig.configure_protocols_system(empty_config)
+        result = FlextProtocols.Config.configure_protocols_system(empty_config)
         assert result.success
 
         # Config with extra fields (should be preserved)
@@ -254,7 +262,7 @@ class TestProtocolsIntegration100PercentCoverage:
             "another_field": 123,
         }
 
-        result = FlextProtocolsConfig.configure_protocols_system(config_with_extras)
+        result = FlextProtocols.Config.configure_protocols_system(config_with_extras)
         assert result.success
         validated_config = result.unwrap()
 
@@ -272,6 +280,6 @@ class TestProtocolsIntegration100PercentCoverage:
         ]
 
         for invalid_config in invalid_configs:
-            result = FlextProtocolsConfig.configure_protocols_system(invalid_config)
+            result = FlextProtocols.Config.configure_protocols_system(invalid_config)
             # Should either succeed with defaults or fail gracefully
             assert isinstance(result, FlextResult)

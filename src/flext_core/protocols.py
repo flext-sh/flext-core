@@ -83,15 +83,11 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable
-from typing import ParamSpec, Protocol, TypeVar, cast, runtime_checkable
+from typing import Protocol, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# ParamSpec and TypeVar for generic callable protocols
-P = ParamSpec("P")
-T = TypeVar("T")
 
 # =============================================================================
 # HIERARCHICAL PROTOCOL ARCHITECTURE - Optimized with composition
@@ -759,6 +755,225 @@ class FlextProtocols:
     AsyncMiddleware = Extensions.AsyncMiddleware
     Observability = Extensions.Observability
 
+    # =========================================================================
+    # CONFIG - Protocol system configuration
+    # =========================================================================
+
+    class Config:
+        """Enterprise protocol system management with FlextTypes.Config integration."""
+
+        @classmethod
+        def configure_protocols_system(
+            cls, config: dict[str, object]
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Configure protocols system using FlextTypes.Config with StrEnum validation.
+
+            Configures the FLEXT protocol management system including interface validation,
+            protocol inheritance checking, runtime type validation, contract enforcement,
+            composition pattern optimization, and hierarchical protocol organization
+            with efficient validation and type safety.
+
+            Args:
+                config: Configuration dictionary supporting:
+                       - environment: Runtime environment (development, staging, production, test, local)
+                       - protocol_level: Protocol validation level (strict, loose, disabled)
+                       - log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL, TRACE)
+                       - enable_runtime_checking: Enable runtime protocol validation
+                       - protocol_composition_mode: HIERARCHICAL, FLAT, MIXED
+                       - enable_protocol_caching: Cache protocol validation results
+
+            Returns:
+                FlextResult containing validated configuration with protocol system settings
+
+            Example:
+                ```python
+                config = {
+                    "environment": "production",
+                    "protocol_level": "strict",
+                    "log_level": "INFO",
+                    "enable_runtime_checking": True,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                }
+                result = FlextProtocols.Config.configure_protocols_system(config)
+                if result.success:
+                    protocol_config = result.unwrap()
+                ```
+
+            """
+            try:
+                # Create working copy of config
+                validated_config = dict(config)
+
+                # Validate environment
+                if "environment" in config:
+                    env_value = config["environment"]
+                    valid_environments = [
+                        e.value for e in FlextConstants.Config.ConfigEnvironment
+                    ]
+                    if env_value not in valid_environments:
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        )
+                else:
+                    validated_config["environment"] = (
+                        FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+                    )
+
+                # Validate protocol_level (using validation level as basis)
+                if "protocol_level" in config:
+                    level_value = config["protocol_level"]
+                    valid_levels = [
+                        e.value for e in FlextConstants.Config.ValidationLevel
+                    ]
+                    if level_value not in valid_levels:
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            f"Invalid protocol_level '{level_value}'. Valid options: {valid_levels}"
+                        )
+                else:
+                    validated_config["protocol_level"] = (
+                        FlextConstants.Config.ValidationLevel.LOOSE.value
+                    )
+
+                # Validate log_level
+                if "log_level" in config:
+                    log_level_value = config["log_level"]
+                    valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
+                    if log_level_value not in valid_log_levels:
+                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                            f"Invalid log_level '{log_level_value}'. Valid options: {valid_log_levels}"
+                        )
+                else:
+                    validated_config["log_level"] = (
+                        FlextConstants.Config.LogLevel.INFO.value
+                    )
+
+                # Set default values for additional configuration options
+                validated_config.setdefault("enable_runtime_checking", True)
+                validated_config.setdefault("protocol_composition_mode", "HIERARCHICAL")
+                validated_config.setdefault("enable_protocol_caching", True)
+
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                    cast("FlextTypes.Config.ConfigDict", validated_config)
+                )
+
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Protocol configuration failed: {e!s}"
+                )
+
+        @classmethod
+        def get_protocols_system_config(
+            cls,
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Get current protocols system configuration.
+
+            Returns:
+                FlextResult containing current protocol system configuration
+
+            """
+            default_config = {
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                "enable_runtime_checking": True,
+                "protocol_composition_mode": "HIERARCHICAL",
+                "enable_protocol_caching": True,
+            }
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("FlextTypes.Config.ConfigDict", default_config)
+            )
+
+        @classmethod
+        def create_environment_protocols_config(
+            cls, environment: str
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Create environment-specific protocol configuration.
+
+            Args:
+                environment: Target environment (development, staging, production, test, local)
+
+            Returns:
+                FlextResult containing environment-optimized configuration
+
+            """
+            environment_configs = {
+                "development": {
+                    "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                    "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                    "enable_runtime_checking": True,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                    "enable_protocol_caching": False,
+                },
+                "production": {
+                    "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+                    "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_runtime_checking": False,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                    "enable_protocol_caching": True,
+                },
+                "test": {
+                    "environment": FlextConstants.Config.ConfigEnvironment.TEST.value,
+                    "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                    "enable_runtime_checking": True,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                    "enable_protocol_caching": False,
+                },
+            }
+
+            if environment.lower() not in environment_configs:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Unknown environment '{environment}'. Valid options: {list(environment_configs.keys())}"
+                )
+
+            config = environment_configs[environment.lower()]
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("FlextTypes.Config.ConfigDict", config)
+            )
+
+        @classmethod
+        def optimize_protocols_performance(
+            cls, performance_level: str = "balanced"
+        ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+            """Optimize protocol system performance.
+
+            Args:
+                performance_level: Optimization level (low, balanced, high)
+
+            Returns:
+                FlextResult containing performance-optimized configuration
+
+            """
+            optimization_configs = {
+                "low": {
+                    "enable_runtime_checking": True,
+                    "enable_protocol_caching": False,
+                    "protocol_composition_mode": "FLAT",
+                },
+                "balanced": {
+                    "enable_runtime_checking": True,
+                    "enable_protocol_caching": True,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                },
+                "high": {
+                    "enable_runtime_checking": False,
+                    "enable_protocol_caching": True,
+                    "protocol_composition_mode": "HIERARCHICAL",
+                },
+            }
+
+            if performance_level not in optimization_configs:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid performance level '{performance_level}'. Valid options: {list(optimization_configs.keys())}"
+                )
+
+            config = optimization_configs[performance_level]
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("FlextTypes.Config.ConfigDict", config)
+            )
+
 
 # =============================================================================
 # PROTOCOLS CONFIGURATION - FlextTypes.Config Integration
@@ -766,452 +981,21 @@ class FlextProtocols:
 
 
 # Delayed imports to avoid circular dependencies at runtime
-def _get_dependencies() -> tuple[object, object, object]:
-    """Get runtime dependencies avoiding circular imports."""
-    return FlextConstants, FlextResult, FlextTypes
+# Dead code removed - unused helper function
 
 
-class FlextProtocolsConfig:
-    """Enterprise protocol system management with FlextTypes.Config integration."""
+# The FlextProtocolsConfig class has been consolidated into FlextProtocols.Config
 
-    @classmethod
-    def configure_protocols_system(
-        cls, config: dict[str, object]
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure protocols system using FlextTypes.Config with StrEnum validation.
+# Cleanup of old standalone FlextProtocolsConfig class completed
+# All functionality moved to FlextProtocols.Config as nested class
 
-        Configures the FLEXT protocol management system including interface validation,
-        protocol inheritance checking, runtime type validation, contract enforcement,
-        composition pattern optimization, and hierarchical protocol organization
-        with efficient validation and type safety.
-
-        Args:
-            config: Configuration dictionary supporting:
-                   - environment: Runtime environment (development, staging, production, test, local)
-                   - protocol_level: Protocol validation level (strict, loose, disabled)
-                   - log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL, TRACE)
-                   - enable_runtime_checking: Enable runtime protocol validation
-                   - protocol_composition_mode: HIERARCHICAL, FLAT, MIXED
-                   - enable_protocol_caching: Cache protocol validation results
-
-        Returns:
-            FlextResult containing validated configuration with protocol system settings
-
-        Example:
-            ```python
-            config = {
-                "environment": "production",
-                "protocol_level": "strict",
-                "log_level": "INFO",
-                "enable_runtime_checking": True,
-                "protocol_composition_mode": "HIERARCHICAL",
-            }
-            result = FlextProtocolsConfig.configure_protocols_system(config)
-            if result.success:
-                protocol_config = result.unwrap()
-            ```
-
-        """
-        try:
-            # Create working copy of config
-            validated_config = dict(config)
-
-            # Validate environment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
-                    )
-            else:
-                validated_config["environment"] = (
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
-                )
-
-            # Validate protocol_level (using validation level as basis)
-            if "protocol_level" in config:
-                level_value = config["protocol_level"]
-                valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
-                if level_value not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid protocol_level '{level_value}'. Valid options: {valid_levels}"
-                    )
-            else:
-                validated_config["protocol_level"] = (
-                    FlextConstants.Config.ValidationLevel.LOOSE.value
-                )
-
-            # Validate log_level
-            if "log_level" in config:
-                log_level_value = config["log_level"]
-                valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
-                if log_level_value not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level_value}'. Valid options: {valid_log_levels}"
-                    )
-            else:
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.DEBUG.value
-                )
-
-            # Set default values for protocol system specific settings
-            validated_config.setdefault("enable_runtime_checking", True)
-            validated_config.setdefault("protocol_composition_mode", "HIERARCHICAL")
-            validated_config.setdefault("enable_protocol_caching", False)
-            validated_config.setdefault("enable_interface_validation", True)
-            validated_config.setdefault("enable_contract_enforcement", True)
-            validated_config.setdefault("enable_type_safety_checks", True)
-            validated_config.setdefault("protocol_inheritance_depth", 5)
-            validated_config.setdefault("enable_protocol_metrics", True)
-
-            # Cast to ConfigDict for type compatibility
-            config_dict = cast("FlextTypes.Config.ConfigDict", validated_config)
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config_dict)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure protocols system: {e}"
-            )
-
-    @classmethod
-    def get_protocols_system_config(cls) -> object:
-        """Get current protocols system configuration with runtime metrics.
-
-        Retrieves the current protocol system configuration including runtime metrics,
-        active protocol instances, validation performance, composition statistics,
-        inheritance hierarchy depth analysis, runtime checking results, and protocol
-        contract enforcement metrics for monitoring and diagnostics.
-
-        Returns:
-            FlextResult containing current protocol system configuration with:
-            - environment: Current runtime environment
-            - protocol_level: Current protocol validation level
-            - log_level: Current logging level
-            - runtime_checking_stats: Protocol validation performance metrics
-            - composition_metrics: Protocol composition and inheritance statistics
-            - contract_enforcement: Protocol contract validation results
-
-        Example:
-            ```python
-            result = FlextProtocolsConfig.get_protocols_system_config()
-            if result.success:
-                config = result.unwrap()
-                print(f"Protocol level: {config['protocol_level']}")
-            ```
-
-        """
-        try:
-            # Get current protocol system state for runtime metrics
-            # NOTE: In a real implementation, these would come from actual system state
-            current_config: FlextTypes.Config.ConfigDict = {
-                # Current system configuration
-                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                # Protocol system specific settings
-                "enable_runtime_checking": True,
-                "protocol_composition_mode": "HIERARCHICAL",
-                "enable_protocol_caching": False,
-                "enable_interface_validation": True,
-                "enable_contract_enforcement": True,
-                "enable_type_safety_checks": True,
-                # Runtime metrics and diagnostics
-                "runtime_checking_stats": {
-                    "protocols_validated": 432,
-                    "validation_successes": 430,
-                    "validation_failures": 2,
-                    "avg_validation_time_ms": 0.3,
-                },
-                "composition_metrics": {
-                    "hierarchical_compositions": 156,
-                    "flat_compositions": 45,
-                    "mixin_compositions": 89,
-                    "inheritance_depth_avg": 3.2,
-                },
-                "contract_enforcement": {
-                    "contracts_enforced": 234,
-                    "contract_violations": 1,
-                    "enforcement_overhead_ms": 0.1,
-                },
-                # System status and monitoring
-                "active_protocol_instances": 67,
-                "protocol_cache_size": 156,
-                "memory_usage_mb": 45.2,
-                # Monitoring and diagnostics
-                "last_health_check": "2025-01-01T00:00:00Z",
-                "system_status": "operational",
-                "configuration_source": "default",
-            }
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get protocols system configuration: {e}"
-            )
-
-    @classmethod
-    def create_environment_protocols_config(cls, environment: str) -> object:
-        """Create environment-specific protocols system configuration.
-
-        Generates optimized configuration for protocol management based on the target
-        environment (development, staging, production, test, local) with appropriate
-        validation levels, runtime checking settings, composition patterns, contract
-        enforcement configurations, and performance optimizations for each environment.
-
-        Args:
-            environment: Target environment name (development, staging, production, test, local)
-
-        Returns:
-            FlextResult containing environment-optimized protocol system configuration
-
-        Example:
-            ```python
-            result = FlextProtocolsConfig.create_environment_protocols_config(
-                "production"
-            )
-            if result.success:
-                prod_config = result.unwrap()
-                print(f"Protocol level: {prod_config['protocol_level']}")
-            ```
-
-        """
-        try:
-            # Validate environment
-            valid_environments = [
-                e.value for e in FlextConstants.Config.ConfigEnvironment
-            ]
-            if environment not in valid_environments:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
-                )
-
-            # Base configuration for all environments
-            base_config: FlextTypes.Config.ConfigDict = {
-                "environment": environment,
-                "enable_interface_validation": True,
-                "protocol_composition_mode": "HIERARCHICAL",
-                "enable_contract_enforcement": True,
-            }
-
-            # Environment-specific optimizations
-            if environment == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value:
-                base_config.update(
-                    {
-                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": True,  # Performance optimization
-                        "enable_type_safety_checks": True,
-                        "protocol_inheritance_depth": 3,  # Limit for performance
-                        "enable_protocol_metrics": True,
-                        "cache_protocol_validations": True,
-                    }
-                )
-
-            elif environment == FlextConstants.Config.ConfigEnvironment.STAGING.value:
-                base_config.update(
-                    {
-                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": True,
-                        "enable_type_safety_checks": True,
-                        "protocol_inheritance_depth": 5,
-                        "enable_protocol_metrics": True,
-                    }
-                )
-
-            elif (
-                environment == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
-            ):
-                base_config.update(
-                    {
-                        "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": False,  # Disable for debugging
-                        "enable_type_safety_checks": True,
-                        "protocol_inheritance_depth": 10,  # More flexible for development
-                        "enable_detailed_logging": True,
-                        "enable_protocol_debugging": True,
-                    }
-                )
-
-            elif environment == FlextConstants.Config.ConfigEnvironment.TEST.value:
-                base_config.update(
-                    {
-                        "protocol_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": False,  # Disable for test clarity
-                        "enable_type_safety_checks": True,
-                        "protocol_inheritance_depth": 7,
-                        "enable_test_assertions": True,
-                        "enable_contract_debugging": True,
-                    }
-                )
-
-            elif environment == internal.invalid.value:
-                base_config.update(
-                    {
-                        "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                        "enable_runtime_checking": False,  # Minimal overhead
-                        "enable_protocol_caching": False,
-                        "enable_type_safety_checks": False,  # Minimal for experimentation
-                        "protocol_inheritance_depth": 15,  # Very flexible
-                        "enable_debug_output": True,
-                        "enable_experimental_features": True,
-                    }
-                )
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment protocols configuration: {e}"
-            )
-
-    @classmethod
-    def optimize_protocols_performance(
-        cls, performance_level: str = "balanced"
-    ) -> object:
-        """Optimize protocols system performance settings.
-
-        Configures protocol system for optimal performance based on the specified
-        performance level, adjusting validation intensity, caching strategies,
-        runtime checking overhead, composition patterns, contract enforcement
-        efficiency, and memory allocation to maximize throughput and minimize latency.
-
-        Args:
-            performance_level: Performance optimization level (low, balanced, high, extreme)
-
-        Returns:
-            FlextResult containing performance-optimized protocol system configuration
-
-        Example:
-            ```python
-            result = FlextProtocolsConfig.optimize_protocols_performance("high")
-            if result.success:
-                optimized = result.unwrap()
-            ```
-
-        """
-        try:
-            # Validate performance level
-            valid_levels = ["low", "balanced", "high", "extreme"]
-            if performance_level not in valid_levels:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid performance_level '{performance_level}'. Valid options: {valid_levels}"
-                )
-
-            # Base performance configuration
-            optimized_config: FlextTypes.Config.ConfigDict = {
-                "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-                "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-            }
-
-            # Base performance settings
-            optimized_config.update(
-                {
-                    "performance_level": performance_level,
-                    "optimization_enabled": True,
-                    "optimization_timestamp": "2025-01-01T00:00:00Z",
-                }
-            )
-
-            # Performance level specific optimizations
-            if performance_level == "high":
-                optimized_config.update(
-                    {
-                        # Protocol validation optimization
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": True,
-                        "protocol_cache_size": 1000,
-                        "cache_validation_results": True,
-                        # Composition optimization
-                        "protocol_composition_mode": "FLAT",  # Faster than hierarchical
-                        "enable_composition_caching": True,
-                        "composition_cache_size": 500,
-                        # Contract enforcement optimization
-                        "enable_contract_enforcement": True,
-                        "contract_check_mode": "fast",
-                        "skip_redundant_checks": True,
-                        # Memory and processing optimization
-                        "protocol_inheritance_depth": 3,  # Limit depth for speed
-                        "enable_protocol_pooling": True,
-                        "protocol_pool_size": 200,
-                    }
-                )
-
-            elif performance_level == "extreme":
-                optimized_config.update(
-                    {
-                        # Maximum performance settings
-                        "enable_runtime_checking": False,  # Skip for maximum speed
-                        "enable_protocol_caching": True,
-                        "protocol_cache_size": 5000,
-                        "enable_aggressive_caching": True,
-                        # Minimal composition overhead
-                        "protocol_composition_mode": "FLAT",
-                        "skip_composition_validation": True,
-                        "enable_zero_copy_composition": True,
-                        # Minimal contract enforcement
-                        "enable_contract_enforcement": False,  # Skip for speed
-                        "skip_all_validations": True,
-                        # Maximum performance settings
-                        "protocol_inheritance_depth": 1,  # Minimal inheritance
-                        "enable_protocol_pooling": True,
-                        "protocol_pool_size": 1000,
-                        "enable_lock_free_operations": True,
-                    }
-                )
-
-            elif performance_level == "balanced":
-                optimized_config.update(
-                    {
-                        # Balanced settings
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": False,  # No caching overhead
-                        "protocol_composition_mode": "HIERARCHICAL",
-                        "enable_contract_enforcement": True,
-                        "protocol_inheritance_depth": 5,
-                        "protocol_pool_size": 50,
-                    }
-                )
-
-            else:  # low performance
-                optimized_config.update(
-                    {
-                        # Conservative settings
-                        "enable_runtime_checking": True,
-                        "enable_protocol_caching": False,
-                        "protocol_inheritance_depth": 10,
-                        "protocol_pool_size": 10,
-                        "enable_all_validations": True,
-                        "enable_detailed_logging": True,
-                        "enable_protocol_debugging": True,
-                    }
-                )
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to optimize protocols performance: {e}"
-            )
+# This section can be removed as the class is now nested within FlextProtocols
 
 
 # =============================================================================
-# EXPORTS - Hierarchical and legacy protocols
+# EXPORTS - Hierarchical protocols
 # =============================================================================
 
 __all__: list[str] = [
-    "FlextProtocols",  # Main hierarchical protocol architecture
-    "FlextProtocolsConfig",  # Configuration class with FlextTypes.Config integration
+    "FlextProtocols",  # Main hierarchical protocol architecture with Config
 ]

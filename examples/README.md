@@ -12,49 +12,49 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 
 **Foundation patterns every FLEXT application uses**
 
-| File                                         | Description                   | Key Concepts                                |
-| -------------------------------------------- | ----------------------------- | ------------------------------------------- |
-| `01_railway_result.py`                       | Railway-oriented programming  | Error handling, chaining, composition       |
-| `02_dependency_injection.py`                 | Dependency injection patterns | Service registration, resolution, lifecycle |
-| `03_cqrs_commands.py`                        | CQRS implementation           | Commands, queries, handlers                 |
-| `04_validation_modern.py`                    | Modern validation             | Type safety, decorators, FlextResult        |
+| File                         | Description                   | Key Concepts                                |
+| ---------------------------- | ----------------------------- | ------------------------------------------- |
+| `01_railway_result.py`       | Railway-oriented programming  | Error handling, chaining, composition       |
+| `02_dependency_injection.py` | Dependency injection patterns | Service registration, resolution, lifecycle |
+| `03_cqrs_commands.py`        | CQRS implementation           | Commands, queries, handlers                 |
+| `04_validation_modern.py`    | Modern validation             | Type safety, decorators, FlextResult        |
 
 ### Domain-Driven Design (05-08)
 
 **Building rich domain models**
 
-| File                                          | Description              | Key Concepts                            |
-| --------------------------------------------- | ------------------------ | --------------------------------------- |
-| `05_validation_advanced.py`                   | Validation patterns      | Business rules, constraints, validators |
-| `06_ddd_entities_value_objects.py`            | DDD building blocks      | Entities, value objects, aggregates     |
-| `07_mixins_multiple_inheritance.py`           | Behavior composition     | Mixins, traits, composition             |
-| `08_configuration.py`                         | Configuration management | Settings, environments, validation      |
+| File                                | Description              | Key Concepts                            |
+| ----------------------------------- | ------------------------ | --------------------------------------- |
+| `05_validation_advanced.py`         | Validation patterns      | Business rules, constraints, validators |
+| `06_ddd_entities_value_objects.py`  | DDD building blocks      | Entities, value objects, aggregates     |
+| `07_mixins_multiple_inheritance.py` | Behavior composition     | Mixins, traits, composition             |
+| `08_configuration.py`               | Configuration management | Settings, environments, validation      |
 
 ### Enterprise Features (09-14)
 
 **Production-ready patterns**
 
-| File                                           | Description               | Key Concepts                      |
-| ---------------------------------------------- | ------------------------- | --------------------------------- |
-| `09_decorators_cross_cutting.py`               | Cross-cutting concerns    | Logging, caching, retry, auth     |
-| `10_events_messaging.py`                       | Event-driven architecture | Events, messages, payloads        |
-| `11_handlers_pipeline.py`                      | Request handling          | Middleware, pipelines, processors |
-| `12_logging_structured.py`                     | Structured logging        | Correlation IDs, context, metrics |
-| `13_architecture_interfaces.py`                | Clean Architecture        | Ports, adapters, boundaries       |
-| `14_exceptions_handling.py`                    | Error management          | Exception hierarchy, recovery     |
+| File                             | Description               | Key Concepts                      |
+| -------------------------------- | ------------------------- | --------------------------------- |
+| `09_decorators_cross_cutting.py` | Cross-cutting concerns    | Logging, caching, retry, auth     |
+| `10_events_messaging.py`         | Event-driven architecture | Events, messages, payloads        |
+| `11_handlers_pipeline.py`        | Request handling          | Middleware, pipelines, processors |
+| `12_logging_structured.py`       | Structured logging        | Correlation IDs, context, metrics |
+| `13_architecture_interfaces.py`  | Clean Architecture        | Ports, adapters, boundaries       |
+| `14_exceptions_handling.py`      | Error management          | Exception hierarchy, recovery     |
 
 ### Advanced Integration (15-20)
 
 **Complex scenarios and integrations**
 
-| File                                            | Description           | Key Concepts                          |
-| ----------------------------------------------- | --------------------- | ------------------------------------- |
-| `15_advanced_patterns.py`                       | Advanced patterns     | Complex workflows, orchestration      |
-| `16_integration.py`                             | System integration    | External services, APIs               |
-| `17_end_to_end.py`                              | Complete applications | Full implementation examples          |
-| `18_semantic_modeling.py`                       | Semantic modeling     | Domain semantics, ubiquitous language |
-| `19_modern_showcase.py`                         | Modern architecture   | Microservices, event sourcing         |
-| `20_boilerplate_reduction.py`                   | Code generation       | Reducing boilerplate, metaprogramming |
+| File                          | Description           | Key Concepts                          |
+| ----------------------------- | --------------------- | ------------------------------------- |
+| `15_advanced_patterns.py`     | Advanced patterns     | Complex workflows, orchestration      |
+| `16_integration.py`           | System integration    | External services, APIs               |
+| `17_end_to_end.py`            | Complete applications | Full implementation examples          |
+| `18_semantic_modeling.py`     | Semantic modeling     | Domain semantics, ubiquitous language |
+| `19_modern_showcase.py`       | Modern architecture   | Microservices, event sourcing         |
+| `20_boilerplate_reduction.py` | Code generation       | Reducing boilerplate, metaprogramming |
 
 ### Supporting Modules
 
@@ -74,17 +74,17 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 
 1. **Railway Pattern** (`01_railway_result.py`)
 
-    - Learn error handling without exceptions
-    - Understand result chaining and composition
+   - Learn error handling without exceptions
+   - Understand result chaining and composition
 
 2. **Dependency Injection** (`02_dependency_injection.py`)
 
-    - Service registration and resolution
-    - Managing application dependencies
+   - Service registration and resolution
+   - Managing application dependencies
 
 3. **Configuration** (`08_configuration.py`)
-    - Environment-based settings
-    - Type-safe configuration
+   - Environment-based settings
+   - Type-safe configuration
 
 ### Intermediate Path
 
@@ -92,17 +92,17 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 
 1. **Domain Entities** (`06_ddd_entities_value_objects.py`)
 
-    - Creating rich domain models
-    - Business logic encapsulation
+   - Creating rich domain models
+   - Business logic encapsulation
 
 2. **Validation** (`05_validation_advanced.py`)
 
-    - Business rule validation
-    - Complex constraints
+   - Business rule validation
+   - Complex constraints
 
 3. **CQRS Pattern** (`03_cqrs_commands.py`)
-    - Separating reads and writes
-    - Command and query handlers
+   - Separating reads and writes
+   - Command and query handlers
 
 ### Advanced Path
 
@@ -110,17 +110,17 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 
 1. **Event-Driven** (`10_events_messaging.py`)
 
-    - Domain events and messaging
-    - Event sourcing foundations
+   - Domain events and messaging
+   - Event sourcing foundations
 
 2. **Clean Architecture** (`13_architecture_interfaces.py`)
 
-    - Architectural boundaries
-    - Dependency inversion
+   - Architectural boundaries
+   - Dependency inversion
 
 3. **Integration** (`16_integration.py`)
-    - External service integration
-    - Cross-system communication
+   - External service integration
+   - Cross-system communication
 
 ## Running Examples
 

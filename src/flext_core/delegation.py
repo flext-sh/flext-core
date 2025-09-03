@@ -188,8 +188,6 @@ from typing import ClassVar, NoReturn, Protocol, cast, runtime_checkable
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
-from flext_core.mixins.serialization import FlextSerialization
-from flext_core.mixins.validation import FlextValidation
 from flext_core.result import FlextResult
 
 
@@ -1338,10 +1336,7 @@ class FlextDelegationSystem:
         """
 
         # Test case 1: Basic delegation using FlextMixins static methods
-        class TestHost(
-            FlextValidation.Validatable,
-            FlextSerialization.Serializable,
-        ):
+        class TestHost:
             def __init__(self) -> None:
                 # Initialize with FlextMixins functionality
                 super().__init__()

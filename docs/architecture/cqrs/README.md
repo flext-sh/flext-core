@@ -25,24 +25,24 @@ The `FlextCommands` module is a **production-ready, enterprise-grade CQRS implem
 
 ### ✅ Implementation Quality Score: 95/100
 
-| Aspect | Score | Details |
-|--------|-------|---------|
-| **Architecture** | 95/100 | Clean Architecture, SOLID principles, DDD patterns |
-| **Code Quality** | 100/100 | Type-safe, documented, tested |
-| **Integration** | 90/100 | Deep FlextResult, FlextLogger, FlextContainer integration |
-| **Performance** | 85/100 | Thread-safe, O(n) handler lookup with caching potential |
-| **Usability** | 90/100 | Rich examples, factory patterns, decorator support |
+| Aspect           | Score   | Details                                                   |
+| ---------------- | ------- | --------------------------------------------------------- |
+| **Architecture** | 95/100  | Clean Architecture, SOLID principles, DDD patterns        |
+| **Code Quality** | 100/100 | Type-safe, documented, tested                             |
+| **Integration**  | 90/100  | Deep FlextResult, FlextLogger, FlextContainer integration |
+| **Performance**  | 85/100  | Thread-safe, O(n) handler lookup with caching potential   |
+| **Usability**    | 90/100  | Rich examples, factory patterns, decorator support        |
 
 ### 📈 Ecosystem Adoption: 15/100
 
-| Library | Usage | Status | Priority |
-|---------|-------|--------|----------|
-| **flext-core** | ✅ Implemented | Production | Foundation |
-| **flext-api** | ❌ Not Used | Critical Gap | 🔥 **HIGH** |
-| **flext-cli** | ❌ Not Used | Critical Gap | 🔥 **HIGH** |
-| **flext-web** | ❌ Not Used | Critical Gap | 🔥 **HIGH** |
-| **flext-meltano** | ❌ Not Used | Opportunity | 🟡 **MEDIUM** |
-| **flext-oracle-wms** | ❌ Not Used | Opportunity | 🟡 **MEDIUM** |
+| Library              | Usage          | Status       | Priority      |
+| -------------------- | -------------- | ------------ | ------------- |
+| **flext-core**       | ✅ Implemented | Production   | Foundation    |
+| **flext-api**        | ❌ Not Used    | Critical Gap | 🔥 **HIGH**   |
+| **flext-cli**        | ❌ Not Used    | Critical Gap | 🔥 **HIGH**   |
+| **flext-web**        | ❌ Not Used    | Critical Gap | 🔥 **HIGH**   |
+| **flext-meltano**    | ❌ Not Used    | Opportunity  | 🟡 **MEDIUM** |
+| **flext-oracle-wms** | ❌ Not Used    | Opportunity  | 🟡 **MEDIUM** |
 
 ## 🏗️ Architecture Overview
 
@@ -58,14 +58,14 @@ graph TB
         Results[Results<br/>Factory Methods]
         Factories[Factories<br/>Instance Creation]
     end
-    
+
     subgraph "Integration Points"
         FlextResult[FlextResult<br/>Railway Programming]
         FlextLogger[FlextLogger<br/>Structured Logging]
         FlextContainer[FlextContainer<br/>Dependency Injection]
         FlextValidations[FlextValidations<br/>Business Rules]
     end
-    
+
     Models --> FlextResult
     Handlers --> FlextLogger
     Bus --> FlextContainer
@@ -128,7 +128,7 @@ from flext_core import FlextCommands, FlextResult
 class CreateUserCommand(FlextCommands.Models.Command):
     email: str
     name: str
-    
+
     def validate_command(self) -> FlextResult[None]:
         return (
             self.require_email(self.email)

@@ -186,16 +186,16 @@ echo "Test Files: $(find tests -name 'test_*.py' | wc -l)"
 ```yaml
 # .pre-commit-config.yaml
 repos:
-    - repo: https://github.com/astral-sh/ruff-pre-commit
-      rev: v0.8.6
-      hooks:
-          - id: ruff
-          - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+      - id: ruff-format
 
-    - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v1.14.1
-      hooks:
-          - id: mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
 ```
 
 ### CI/CD Integration

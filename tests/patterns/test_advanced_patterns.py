@@ -405,8 +405,11 @@ class TestPerformanceAnalysis:
             linear_operation, input_sizes, "linear_operation"
         )
 
+        # Type cast for proper type checking
         assert result["operation"] == "linear_operation"
-        assert len(result["results"]) == len(input_sizes)
+        results = result["results"]
+        assert isinstance(results, list)
+        assert len(results) == len(input_sizes)
         assert "complexity_analysis" in result
 
     def test_stress_testing_load(self) -> None:
@@ -422,10 +425,17 @@ class TestPerformanceAnalysis:
             simple_operation, iterations=1000, operation_name="simple_ops"
         )
 
+        # Type cast for proper type checking
         assert result["iterations"] == 1000
-        assert result["successes"] > 0
-        assert result["failure_rate"] == 0.0  # Should not fail
-        assert result["operations_per_second"] > 0
+        successes = result["successes"]
+        assert isinstance(successes, (int, float))
+        assert successes > 0
+        failure_rate = result["failure_rate"]
+        assert isinstance(failure_rate, (int, float))
+        assert failure_rate == 0.0  # Should not fail
+        ops_per_second = result["operations_per_second"]
+        assert isinstance(ops_per_second, (int, float))
+        assert ops_per_second > 0
 
     def test_endurance_testing(self) -> None:
         """Demonstrate endurance testing."""
@@ -440,9 +450,16 @@ class TestPerformanceAnalysis:
             memory_operation, duration_seconds=2.0, operation_name="memory_ops"
         )
 
-        assert result["actual_duration_seconds"] >= 1.8  # Allow some variance
-        assert result["iterations"] > 0
-        assert result["operations_per_second"] > 0
+        # Type cast for proper type checking
+        actual_duration = result["actual_duration_seconds"]
+        assert isinstance(actual_duration, (int, float))
+        assert actual_duration >= 1.8  # Allow some variance
+        iterations = result["iterations"]
+        assert isinstance(iterations, (int, float))
+        assert iterations > 0
+        ops_per_second = result["operations_per_second"]
+        assert isinstance(ops_per_second, (int, float))
+        assert ops_per_second > 0
 
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
@@ -487,10 +504,19 @@ class TestAdvancedPatterns:
         )
 
         assert scenario.name == "user_registration"
-        assert "email" in scenario.given
-        assert "action" in scenario.when
-        assert "success" in scenario.then
-        assert "integration" in scenario.tags
+        # Type cast for proper type checking
+        given_dict = scenario.given
+        assert isinstance(given_dict, dict)
+        assert "email" in given_dict
+        when_dict = scenario.when
+        assert isinstance(when_dict, dict)
+        assert "action" in when_dict
+        then_dict = scenario.then
+        assert isinstance(then_dict, dict)
+        assert "success" in then_dict
+        tags_list = scenario.tags
+        assert isinstance(tags_list, list)
+        assert "integration" in tags_list
         assert scenario.priority == "high"
 
     def test_builder_pattern_advanced(self) -> None:

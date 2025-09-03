@@ -270,6 +270,15 @@ class EnterpriseConfig(BaseSettings):
 # =============================================================================
 
 
+def create_enterprise_config(config_data: dict[str, object]) -> EnterpriseConfig:
+    """Create EnterpriseConfig instance from dictionary data.
+
+    Helper function to properly handle model validation with type safety.
+    """
+    # Use model_validate for proper type handling with BaseSettings
+    return EnterpriseConfig.model_validate(config_data)
+
+
 def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
     """Load configuration from JSON file."""
     try:
@@ -510,8 +519,8 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             print(f"✅ Configuration loaded from: {config_file}")
             print(f"Loaded keys: {list(loaded_data.keys())}")
 
-            # Create configuration with loaded data - use model_validate for proper type handling
-            config = EnterpriseConfig.model_validate(loaded_data)
+            # Create configuration with loaded data using helper function
+            config = create_enterprise_config(loaded_data)
 
             validation = config.validate_all_components()
             if validation.success:
@@ -523,7 +532,9 @@ def demonstrate_file_configuration() -> FlextResult[None]:
                 print(json.dumps(masked, indent=2))
             else:
                 print(f"❌ File configuration invalid: {validation.error}")
-                return validation
+                return FlextResult[None].fail(
+                    validation.error or "Configuration validation failed"
+                )
 
             return FlextResult[None].ok(None)
 
@@ -601,7 +612,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = EnterpriseConfig.model_validate(final_config)
+        config = create_enterprise_config(final_config)
 
         validation = config.validate_all_components()
         if validation.success:
@@ -614,7 +625,9 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
                 print(f"  {key}: {value}")
         else:
             print(f"❌ Merged configuration invalid: {validation.error}")
-            return validation
+            return FlextResult[None].fail(
+                validation.error or "Configuration validation failed"
+            )
 
         return FlextResult[None].ok(None)
 
@@ -628,7 +641,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     print("🔍 Configuration Validation Scenarios")
     print("=" * 60)
 
-    scenarios = [
+    scenarios: list[tuple[str, dict[str, object]]] = [
         (
             "Invalid database port",
             {
@@ -652,7 +665,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = EnterpriseConfig.model_validate(config_data)
+            config = create_enterprise_config(config_data)
             validation = config.validate_all_components()
 
             if not validation.success:
@@ -666,19 +679,21 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     # Test valid configuration
     print("\nTesting: Valid configuration")
     try:
-        valid_config_data = {
+        valid_config_data: dict[str, object] = {
             "app_name": "Valid Test App",
             "environment": "development",
             "security": SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
         }
-        valid_config = EnterpriseConfig.model_validate(valid_config_data)
+        valid_config = create_enterprise_config(valid_config_data)
         validation = valid_config.validate_all_components()
 
         if validation.success:
             print("  ✅ Valid configuration accepted")
         else:
             print(f"  ❌ Valid configuration rejected: {validation.error}")
-            return validation
+            return FlextResult[None].fail(
+                validation.error or "Configuration validation failed"
+            )
 
     except Exception as e:
         print(f"  ❌ Valid configuration failed: {e}")

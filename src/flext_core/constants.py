@@ -2590,6 +2590,49 @@ class FlextConstants:
         # Session management
         DEFAULT_SESSION_TIMEOUT: Final[int] = 1800  # 30 minutes
         MAX_SESSIONS_PER_USER: Final[int] = 5
+        DEFAULT_SESSION_EXPIRY_MINUTES: Final[int] = 30
+        MAX_SESSION_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
+        SESSION_CLEANUP_INTERVAL_MINUTES: Final[int] = 60
+
+        # JWT Token settings
+        JWT_DEFAULT_EXPIRY_MINUTES: Final[int] = 60
+        JWT_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
+        JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
+        JWT_ALLOWED_ALGORITHMS: Final[list[str]] = ["HS256", "HS384", "HS512"]
+        JWT_ISSUER_CLAIM: Final[str] = "flext-auth"
+        JWT_AUDIENCE_CLAIM: Final[str] = "flext-ecosystem"
+
+        # Security settings
+        BCRYPT_ROUNDS: Final[int] = 12
+        MIN_BCRYPT_ROUNDS: Final[int] = 10
+        MAX_BCRYPT_ROUNDS: Final[int] = 15
+        MIN_BCRYPT_HASH_LENGTH: Final[int] = (
+            59  # Bcrypt hash is 60 chars, leaving margin
+        )
+
+        # Authentication limits
+        MAX_LOGIN_ATTEMPTS: Final[int] = 5
+        LOCKOUT_DURATION_MINUTES: Final[int] = 30
+        MIN_PASSWORD_SCORE: Final[int] = 3  # Out of 4 (upper, lower, digit, special)
+
+        # Token validation
+        MIN_TOKEN_LENGTH: Final[int] = 32
+        MIN_SECRET_KEY_LENGTH: Final[int] = 32
+
+        # Rate limiting
+        MAX_REQUESTS_PER_MINUTE: Final[int] = 60
+        MAX_REQUESTS_PER_HOUR: Final[int] = 1000
+
+        # Error codes
+        INVALID_CREDENTIALS: Final[str] = "AUTH_INVALID_CREDENTIALS"
+        ACCOUNT_LOCKED: Final[str] = "AUTH_ACCOUNT_LOCKED"
+        ACCOUNT_DISABLED: Final[str] = "AUTH_ACCOUNT_DISABLED"
+        USERNAME_TAKEN: Final[str] = "AUTH_USERNAME_TAKEN"
+        EMAIL_TAKEN: Final[str] = "AUTH_EMAIL_TAKEN"
+        WEAK_PASSWORD: Final[str] = "AUTH_WEAK_PASSWORD"
+        SESSION_NOT_FOUND: Final[str] = "AUTH_SESSION_NOT_FOUND"
+        TOKEN_EXPIRED: Final[str] = "AUTH_TOKEN_EXPIRED"
+        INVALID_TOKEN: Final[str] = "AUTH_INVALID_TOKEN"
 
     # =========================================================================
     # DATABASE CONSTANTS - Database connection and operations

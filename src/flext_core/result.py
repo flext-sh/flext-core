@@ -133,11 +133,9 @@ from typing import TypeGuard, TypeVar, cast, overload, override
 
 from flext_core.constants import FlextConstants
 
-# Essential type variables redefined to avoid circular import with typings.py.
-# Foundation layer modules cannot import from application/domain layers.
-T = TypeVar("T")
-U = TypeVar("U")
-
+# Local type variables to avoid circular imports
+T = TypeVar("T")  # Generic type variable
+U = TypeVar("U")  # Generic type variable for transformations
 
 # =============================================================================
 # FLEXT RESULT - Simple implementation
@@ -1175,82 +1173,6 @@ class FlextResult[T]:
             return FlextResult[T].fail(str(e))
 
 
-def ok_result[TResultLocal](data: TResultLocal) -> FlextResult[TResultLocal]:
-    """Typed helper that wraps FlextResult.ok.
-
-    Use this when passing literals or values whose element types are not
-    easily inferred by the analyzer from a classmethod call.
-    """
-    return FlextResult[TResultLocal].ok(data)
-
-
-def fail_result(
-    error: str,
-    error_code: str | None = None,
-    error_data: dict[str, object] | None = None,
-) -> FlextResult[object]:
-    """Typed helper that wraps FlextResult.fail.
-
-    Returns a FlextResult with an unconstrained generic parameter. Static
-    callers can annotate or cast the returned value when a concrete T is
-    required.
-    """
-    return FlextResult[object](
-        error=error, error_code=error_code, error_data=error_data
-    )
-
-
-# =============================================================================
-# FLEXT RESULT UTILITY PATTERNS
-# =============================================================================
-
-
-class FlextResultUtils:
-    """COMPATIBILITY FACADE: Use FlextResult class methods instead.
-
-    This class provides backward compatibility for existing code.
-    All methods delegate to FlextResult class methods.
-
-    DEPRECATED: Use FlextResult.[method_name] instead of FlextResultUtils.[method_name]
-    """
-
-    @staticmethod
-    def safe_unwrap_or_none[T](result: FlextResult[T]) -> T | None:
-        """DEPRECATED: Use FlextResult.safe_unwrap_or_none(result)."""
-        return FlextResult.safe_unwrap_or_none(result)
-
-    @staticmethod
-    def unwrap_or_raise[T](
-        result: FlextResult[T], exception_type: type[Exception] = RuntimeError
-    ) -> T:
-        """DEPRECATED: Use FlextResult.unwrap_or_raise(result, exception_type)."""
-        return FlextResult.unwrap_or_raise(result, exception_type)
-
-    @staticmethod
-    def collect_successes[T](results: list[FlextResult[T]]) -> list[T]:
-        """DEPRECATED: Use FlextResult.collect_successes(results)."""
-        return FlextResult.collect_successes(results)
-
-    @staticmethod
-    def collect_failures[T](results: list[FlextResult[T]]) -> list[str]:
-        """DEPRECATED: Use FlextResult.collect_failures(results)."""
-        return FlextResult.collect_failures(results)
-
-    @staticmethod
-    def success_rate[T](results: list[FlextResult[T]]) -> float:
-        """DEPRECATED: Use FlextResult.success_rate(results)."""
-        return FlextResult.success_rate(results)
-
-    @staticmethod
-    def batch_process[T, U](
-        items: list[T], processor: Callable[[T], FlextResult[U]]
-    ) -> tuple[list[U], list[str]]:
-        """DEPRECATED: Use FlextResult.batch_process(items, processor)."""
-        return FlextResult.batch_process(items, processor)
-
-
 __all__: list[str] = [
-    "FlextResult",  # Main result class
-    "fail_result",  # Convenience function for creating failure results
-    "ok_result",  # Convenience function for creating success results
+    "FlextResult",  # Main unified result class
 ]

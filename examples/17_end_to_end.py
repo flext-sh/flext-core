@@ -14,8 +14,7 @@ import sys
 
 from pydantic import Field
 
-from flext_core import FlextConfig, FlextResult
-from flext_core.models import FlextModels
+from flext_core import FlextConfig, FlextModels, FlextResult
 
 # =============================================================================
 # CONSTANTS

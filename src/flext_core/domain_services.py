@@ -77,8 +77,7 @@ from abc import ABC, abstractmethod
 from pydantic import ConfigDict
 
 from flext_core.constants import FlextConstants
-from flext_core.mixins.logging import FlextLogging
-from flext_core.mixins.serialization import FlextSerialization
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -87,8 +86,8 @@ from flext_core.utilities import FlextUtilities
 
 class FlextDomainService[TDomainResult](
     FlextModels.BaseConfig,
-    FlextSerialization.Serializable,
-    FlextLogging.Loggable,
+    FlextMixins.Serializable,
+    FlextMixins.Loggable,
     ABC,
 ):
     """Abstract base class for production-ready domain services implementing DDD patterns.

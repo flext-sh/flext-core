@@ -92,10 +92,7 @@ from pydantic import ConfigDict
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
-from flext_core.mixins.cache import FlextCache
-from flext_core.mixins.logging import FlextLogging
-from flext_core.mixins.timestamps import FlextTimestamps
-from flext_core.mixins.timing import FlextTiming
+from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -290,8 +287,7 @@ class FlextCommands:
 
         class CommandHandler[CommandT, ResultT](
             FlextHandlers.CQRS.CommandHandler[CommandT, ResultT],
-            FlextLogging.Loggable,
-            FlextTiming.Timeable,
+            FlextMixins,
         ):
             """Generic base class for command handlers.
 
@@ -321,9 +317,9 @@ class FlextCommands:
 
                 """
                 super().__init__()
-                # Initialize mixins
-                FlextLogging.Loggable.__init__(self)
-                FlextTiming.Timeable.__init__(self)
+                # Initialize mixins manually since we don't inherit from them
+                FlextMixins.initialize_validation(self)
+                FlextMixins.start_timing(self)
 
                 self._metrics_state: dict[str, object] | None = None
                 self._handler_name = handler_name or self.__class__.__name__
@@ -389,7 +385,7 @@ class FlextCommands:
                     True if handler can process the command, False otherwise
 
                 """
-                self.log_debug(
+                self.logger.debug(
                     "Checking if handler can process command",
                     command_type_name=getattr(
                         command_type, "__name__", str(command_type)
@@ -406,7 +402,7 @@ class FlextCommands:
                             # Use direct isinstance for validation
                             can_handle_result = isinstance(command_type, expected_type)
 
-                            self.log_debug(
+                            self.logger.debug(
                                 "Handler check result",
                                 can_handle=can_handle_result,
                                 expected_type=getattr(
@@ -417,7 +413,7 @@ class FlextCommands:
                             )
                             return bool(can_handle_result)
 
-                self.log_info("Could not determine handler type constraints")
+                self.log_info(self, "Could not determine handler type constraints")
                 return True
 
             def execute(self, command: CommandT) -> FlextResult[ResultT]:
@@ -431,6 +427,7 @@ class FlextCommands:
 
                 """
                 self.log_info(
+                    self,
                     "Executing command",
                     command_type=type(command).__name__,
                     command_id=getattr(command, "command_id", "unknown"),
@@ -441,7 +438,7 @@ class FlextCommands:
                     error_msg = (
                         f"{self._handler_name} cannot handle {type(command).__name__}"
                     )
-                    self.log_error(error_msg)
+                    self.log_error(self, error_msg)
                     return FlextResult[ResultT].fail(
                         error_msg,
                         error_code=FlextConstants.Errors.COMMAND_HANDLER_NOT_FOUND,
@@ -451,6 +448,7 @@ class FlextCommands:
                 validation_result = self.validate_command(command)
                 if validation_result.is_failure:
                     self.log_info(
+                        self,
                         "Command validation failed",
                         command_type=type(command).__name__,
                         error=validation_result.error,
@@ -461,11 +459,12 @@ class FlextCommands:
                     )
 
                 # Use mixin timing capabilities
-                self.start_timing()
+                self.start_timing(self)
 
                 try:
                     # Log operation using mixin method
                     self.log_operation(
+                        self,
                         "handle_command",
                         command_type=type(command).__name__,
                         command_id=getattr(
@@ -476,10 +475,11 @@ class FlextCommands:
                     result: FlextResult[ResultT] = self.handle(command)
 
                     # Stop timing and get elapsed time
-                    elapsed = self.stop_timing()
+                    elapsed = self.stop_timing(self)
                     execution_time_ms = round(elapsed * 1000, 2) if elapsed else 0
 
                     self.log_info(
+                        self,
                         "Command executed successfully",
                         command_type=type(command).__name__,
                         execution_time_ms=execution_time_ms,
@@ -490,10 +490,11 @@ class FlextCommands:
 
                 except (TypeError, ValueError, AttributeError, RuntimeError) as e:
                     # Get timing using mixin method
-                    elapsed = self.stop_timing()
+                    elapsed = self.stop_timing(self)
                     execution_time_ms = round(elapsed * 1000, 2) if elapsed else 0
 
                     self.log_error(
+                        self,
                         f"Command execution failed: {e}",
                         command_type=type(command).__name__,
                         execution_time_ms=execution_time_ms,
@@ -509,9 +510,7 @@ class FlextCommands:
 
         class QueryHandler[QueryT, QueryResultT](
             FlextHandlers.CQRS.QueryHandler[QueryT, QueryResultT],
-            FlextLogging.Loggable,
-            FlextTiming.Timeable,
-            FlextCache.Cacheable,
+            FlextMixins,
         ):
             """Generic base class for query handlers.
 
@@ -537,10 +536,10 @@ class FlextCommands:
 
                 """
                 super().__init__()
-                # Initialize mixins
-                FlextLogging.Loggable.__init__(self)
-                FlextTiming.Timeable.__init__(self)
-                FlextCache.Cacheable.__init__(self)
+                # Initialize mixins manually since we don't inherit from them
+                FlextMixins.initialize_validation(self)
+                FlextMixins.start_timing(self)
+                FlextMixins.clear_cache(self)
 
                 self._handler_name = handler_name or self.__class__.__name__
 
@@ -612,10 +611,7 @@ class FlextCommands:
     # =========================================================================
 
     class Bus(
-        FlextLogging.Loggable,
-        FlextCache.Cacheable,
-        FlextTimestamps.Timestampable,
-        FlextTiming.Timeable,
+        FlextMixins,
     ):
         """Command bus for routing and executing commands.
 
@@ -635,11 +631,12 @@ class FlextCommands:
         def __init__(self) -> None:
             """Initialize command bus with mixin support and CQRS adapter."""
             super().__init__()
-            # Initialize mixins
-            FlextLogging.Loggable.__init__(self)
-            FlextCache.Cacheable.__init__(self)
-            FlextTimestamps.Timestampable.__init__(self)
-            FlextTiming.Timeable.__init__(self)
+            # Initialize mixins manually since we don't inherit from them
+            FlextMixins.initialize_validation(self)
+            FlextMixins.clear_cache(self)
+            # Timestampable mixin initialization
+            self._created_at = datetime.now(UTC)
+            FlextMixins.start_timing(self)
 
             # Handlers registry: command type -> handler instance
             self._handlers: dict[str, object] = {}
@@ -647,12 +644,12 @@ class FlextCommands:
             self._middleware: list[object] = []
             # Execution counter
             self._execution_count: int = 0
-            # Underlying FlextHandlers CQRS bus for direct registrations
+            # Underlying FlextCommands CQRS bus for direct registrations
             self._fb_bus = FlextHandlers.CQRS.CommandBus()
             # Auto-discovery handlers (single-arg registration)
             self._auto_handlers: list[object] = []
 
-        # Logger property is now provided by FlextLogging.Loggable mixin
+        # Logger property is now provided by FlextMixins.Loggable mixin
         # Logging methods (log_operation, log_info, log_error) are provided by mixin
 
         def register_handler(self, *args: object) -> None:
@@ -682,6 +679,7 @@ class FlextCommands:
                 key = getattr(handler, "handler_id", handler.__class__.__name__)
                 if key in self._handlers:
                     self.log_info(
+                        self,
                         "Handler already registered",
                         command_type=str(key),
                         existing_handler=self._handlers[key].__class__.__name__,
@@ -691,6 +689,7 @@ class FlextCommands:
                 self._handlers[key] = handler
                 self._auto_handlers.append(handler)
                 self.log_info(
+                    self,
                     "Handler registered successfully",
                     command_type=str(key),
                     handler_type=handler.__class__.__name__,
@@ -715,6 +714,7 @@ class FlextCommands:
 
                 _ = self._fb_bus.register(cast("type", command_type_obj), handler)
                 self.log_info(
+                    self,
                     "Handler registered for command type",
                     command_type=key,
                     handler_type=handler.__class__.__name__,
@@ -758,9 +758,10 @@ class FlextCommands:
             # Check cache for query results if this is a query
             if hasattr(command, "query_id") or "Query" in command_type.__name__:
                 cache_key = f"{command_type.__name__}_{hash(str(command))}"
-                cached_result = self.get_cached_value(cache_key)
+                cached_result = self.get_cached_value(self, cache_key)
                 if cached_result is not None:
                     self.log_info(
+                        self,
                         "Returning cached query result",
                         command_type=command_type.__name__,
                         cache_key=cache_key,
@@ -768,6 +769,7 @@ class FlextCommands:
                     return cast("FlextResult[object]", cached_result)
 
             self.log_operation(
+                self,
                 "execute_command",
                 command_type=command_type.__name__,
                 command_id=getattr(
@@ -786,6 +788,7 @@ class FlextCommands:
                 # If still no handler, report
                 handler_names = [h.__class__.__name__ for h in self._auto_handlers]
                 self.log_error(
+                    self,
                     "No handler found",
                     command_type=command_type.__name__,
                     registered_handlers=handler_names,
@@ -804,17 +807,18 @@ class FlextCommands:
                 )
 
             # Execute the handler with timing
-            self.start_timing()
+            self.start_timing(self)
             result = self._execute_handler(handler, command)
-            elapsed = self.stop_timing()
+            elapsed = self.stop_timing(self)
 
             # Cache successful query results
             if result.is_success and (
                 hasattr(command, "query_id") or "Query" in command_type.__name__
             ):
                 cache_key = f"{command_type.__name__}_{hash(str(command))}"
-                self.set_cached_value(cache_key, result)
+                self.set_cached_value(self, cache_key, result)
                 self.log_debug(
+                    self,
                     "Cached query result",
                     command_type=command_type.__name__,
                     cache_key=cache_key,
@@ -840,6 +844,7 @@ class FlextCommands:
             """
             for i, middleware in enumerate(self._middleware):
                 self.log_debug(
+                    self,
                     "Applying middleware",
                     middleware_index=i,
                     middleware_type=type(middleware).__name__,
@@ -850,6 +855,7 @@ class FlextCommands:
                     result = process_method(command, handler)
                     if isinstance(result, FlextResult) and result.is_failure:
                         self.log_info(
+                            self,
                             "Middleware rejected command",
                             middleware_type=type(middleware).__name__,
                             error=result.error or "Unknown error",
@@ -876,6 +882,7 @@ class FlextCommands:
 
             """
             self.log_debug(
+                self,
                 "Delegating to handler",
                 handler_type=handler.__class__.__name__,
             )
@@ -912,6 +919,7 @@ class FlextCommands:
             """
             self._middleware.append(middleware)
             self.log_info(
+                self,
                 "Middleware added to pipeline",
                 middleware_type=type(middleware).__name__,
                 total_middleware=len(self._middleware),
@@ -943,6 +951,7 @@ class FlextCommands:
                 ) == command_type:
                     del self._handlers[key]
                     self.log_info(
+                        self,
                         "Handler unregistered",
                         command_type=command_type,
                         remaining_handlers=len(self._handlers),
