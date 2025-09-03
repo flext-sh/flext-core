@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from flext_core.mixins import (
+from flext_core import (
     FlextMixins,
     FlextSerialization,
     FlextTimestamps,

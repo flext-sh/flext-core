@@ -26,8 +26,9 @@ class TestFlextDelegationSystemProtocols:
                 self.delegator = FlextDelegationSystem.MixinDelegator(self)
 
         instance = ImplementsHasDelegator()
-        assert isinstance(instance, FlextDelegationSystem.HasDelegator)
+        # Test that the instance has the required attributes
         assert hasattr(instance, "delegator")
+        assert isinstance(instance.delegator, FlextDelegationSystem.MixinDelegator)
 
     def test_delegator_protocol(self) -> None:
         """Test DelegatorProtocol implementation."""
@@ -136,7 +137,8 @@ class TestDelegatedProperty:
         assert mixin.test_value == "new_value"
         # Should also set on host instance with private name
         assert hasattr(instance, "_test_value")
-        assert instance._test_value == "new_value"
+        # Use getattr to safely access the attribute
+        assert getattr(instance, "_test_value") == "new_value"
 
     def test_delegated_property_set_readonly(self) -> None:
         """Test DelegatedProperty with read-only mixin property."""
@@ -158,7 +160,8 @@ class TestDelegatedProperty:
 
         # Should set on host instance as fallback
         assert hasattr(instance, "_readonly_prop")
-        assert instance._readonly_prop == "new_value"
+        # Use getattr to safely access the attribute
+        assert getattr(instance, "_readonly_prop") == "new_value"
 
 
 class TestMixinDelegator:
@@ -184,7 +187,7 @@ class TestMixinDelegator:
         class TestMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors = []
+                self.validation_errors: list[str] = []
 
             def test_method(self) -> str:
                 return "test_result"
@@ -200,7 +203,9 @@ class TestMixinDelegator:
 
         # Should have delegated properties and methods
         assert hasattr(host, "test_method")
-        assert callable(host.test_method)
+        # Use getattr to safely access the method
+        test_method = getattr(host, "test_method")
+        assert callable(test_method)
 
     def test_register_mixin_success(self) -> None:
         """Test successful mixin registration."""
@@ -237,7 +242,8 @@ class TestMixinDelegator:
         delegator = FlextDelegationSystem.MixinDelegator(host, MixinWithPostInit)
 
         mixin_instance = delegator.mixin_instances[MixinWithPostInit]
-        assert mixin_instance.post_init_called is True
+        # Use getattr to safely access the attribute
+        assert getattr(mixin_instance, "post_init_called", False) is True
 
     def test_register_mixin_failure(self) -> None:
         """Test mixin registration failure handling."""
@@ -262,7 +268,7 @@ class TestMixinDelegator:
         class TestMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors = []
+                self.validation_errors: list[str] = []
 
             def public_method(self) -> str:
                 return "public"
@@ -282,7 +288,9 @@ class TestMixinDelegator:
 
         # Should delegate public methods
         assert hasattr(host, "public_method")
-        assert host.public_method() == "public"
+        # Use getattr to safely access the method
+        public_method = getattr(host, "public_method")
+        assert public_method() == "public"
 
         # Should not delegate private methods
         assert not hasattr(host, "_private_method")
@@ -324,7 +332,8 @@ class TestMixinDelegator:
         method = delegator._create_delegated_method("test_method", mixin)
         assert callable(method)
         assert method(5) == 10
-        assert method.__name__ == "test_method"
+        # Use getattr to safely access the __name__ attribute
+        assert getattr(method, "__name__", None) == "test_method"
 
     def test_create_delegated_method_with_exception(self) -> None:
         """Test delegated method with exception handling."""
@@ -382,6 +391,7 @@ class TestMixinDelegator:
 
         result = delegator._validate_delegation()
         assert result.success is False
+        assert result.error is not None
         assert "not valid" in result.error
 
     def test_validate_delegation_exception(self) -> None:
@@ -415,6 +425,7 @@ class TestMixinDelegator:
             mock_dir.side_effect = side_effect_dir
             result = delegator._validate_delegation()
             assert result.success is False
+            assert result.error is not None
             assert "Validation failed" in result.error
 
     def test_get_mixin_instance(self) -> None:
@@ -458,8 +469,13 @@ class TestMixinDelegator:
         assert "mixin_classes" in info
         assert "delegated_methods" in info
         assert info["host_class"] == "TestHost"
-        assert "TestMixin" in info["mixin_classes"]
-        assert "test_method" in info["delegated_methods"]
+        # Use isinstance to ensure proper type checking
+        mixin_classes = info["mixin_classes"]
+        delegated_methods = info["delegated_methods"]
+        assert isinstance(mixin_classes, (list, tuple, set))
+        assert isinstance(delegated_methods, (list, tuple, set))
+        assert "TestMixin" in mixin_classes
+        assert "test_method" in delegated_methods
 
     def test_delegated_properties_class_var(self) -> None:
         """Test _DELEGATED_PROPERTIES class variable."""
@@ -521,18 +537,18 @@ class TestFlextDelegationSystemValidation:
         with patch("flext_core.delegation_system.FlextMixins") as mock_mixins:
 
             def mock_init_validation(obj: object) -> None:
-                # Add required attributes for validation
-                obj.is_valid = (
-                    lambda: True
-                )  # Make it callable like the real implementation
-                obj.get_validation_errors = list  # Mock the underlying method
-                obj.has_validation_errors = lambda: False
-                obj.to_dict_basic = dict
+                # Add required attributes for validation using setattr
+                setattr(obj, "is_valid", lambda: True)
+                setattr(obj, "get_validation_errors", list)
+                setattr(obj, "has_validation_errors", lambda: False)
+                setattr(obj, "to_dict_basic", dict)
 
                 # Mock the validation_errors property by adding it to the class
                 # We need to create a simple property that returns empty list
                 if not hasattr(obj.__class__, "validation_errors"):
-                    obj.__class__.validation_errors = property(lambda self: [])
+                    setattr(
+                        obj.__class__, "validation_errors", property(lambda self: [])
+                    )
 
             mock_mixins.create_timestamp_fields = MagicMock()
             mock_mixins.initialize_validation = mock_init_validation
@@ -562,6 +578,7 @@ class TestFlextDelegationSystemValidation:
             result = FlextDelegationSystem.validate_delegation_system()
 
             assert result.success is False
+            assert result.error is not None
             assert "Validation failed" in result.error
 
     def test_validate_delegation_methods(self) -> None:
@@ -571,7 +588,7 @@ class TestFlextDelegationSystemValidation:
         class TestHost:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors = []
+                self.validation_errors: list[str] = []
                 self.has_validation_errors = lambda: False
                 self.to_dict_basic = dict
 
@@ -718,7 +735,7 @@ class TestFlextDelegationSystemConfig:
 
     def test_configure_delegation_system_success(self) -> None:
         """Test successful delegation system configuration."""
-        config = {
+        config: dict[str, object] = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",
@@ -734,7 +751,9 @@ class TestFlextDelegationSystemConfig:
 
     def test_configure_delegation_system_missing_keys(self) -> None:
         """Test delegation system configuration with missing keys."""
-        config = {"environment": "production"}  # Missing required keys
+        config: dict[str, object] = {
+            "environment": "production"
+        }  # Missing required keys
 
         result = FlextDelegationSystem.configure_delegation_system(config)
 
@@ -744,7 +763,7 @@ class TestFlextDelegationSystemConfig:
 
     def test_configure_delegation_system_with_optional_params(self) -> None:
         """Test delegation system configuration with optional parameters."""
-        config = {
+        config: dict[str, object] = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",
@@ -754,6 +773,7 @@ class TestFlextDelegationSystemConfig:
 
         result = FlextDelegationSystem.configure_delegation_system(config)
 
+        assert isinstance(result, dict)
         assert result.get("success") is True
         assert result.get("performance_level") == "high"
         assert result.get("delegation_mode") == "optimized"
@@ -761,8 +781,13 @@ class TestFlextDelegationSystemConfig:
     def test_configure_delegation_system_exception(self) -> None:
         """Test delegation system configuration exception handling."""
         # Test with None config to trigger exception in .get() calls
-        result = FlextDelegationSystem.configure_delegation_system(None)
+        from typing import cast
 
+        result = FlextDelegationSystem.configure_delegation_system(
+            cast("dict[str, object]", None)
+        )
+
+        assert isinstance(result, dict)
         assert result.get("success") is False
         assert "error" in result
         assert "Delegation system configuration failed" in result.get("error", "")
@@ -831,8 +856,10 @@ class TestFlextDelegationSystemConfig:
             def __str__(self) -> str:
                 return "bad_environment"
 
+        from typing import cast
+
         config = FlextDelegationSystem.create_environment_delegation_config(
-            BadEnvironment()
+            cast("str", BadEnvironment())
         )
 
         # Should handle gracefully and return error config
@@ -895,14 +922,16 @@ class TestFlextDelegationSystemIntegration:
         class ComprehensiveMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors = []
+                self.validation_errors: list[str] = []
                 self.data = {"key": "value"}
 
-            def validate(self, data: dict) -> bool:
+            def validate(self, data: dict[str, object]) -> bool:
                 return bool(data)
 
-            def get_data(self) -> dict:
-                return self.data
+            def get_data(self) -> dict[str, object]:
+                from typing import cast
+
+                return cast("dict[str, object]", self.data)
 
             def process(self, input_data: str) -> str:
                 return f"processed_{input_data}"
@@ -940,10 +969,15 @@ class TestFlextDelegationSystemIntegration:
 
         # Test delegation info
         info = business.delegator.get_delegation_info()
-        assert "ComprehensiveMixin" in info["mixin_classes"]
-        assert "validate" in info["delegated_methods"]
-        assert "get_data" in info["delegated_methods"]
-        assert "process" in info["delegated_methods"]
+        assert isinstance(info, dict)
+        mixin_classes = info["mixin_classes"]
+        delegated_methods = info["delegated_methods"]
+        assert isinstance(mixin_classes, (list, tuple, set))
+        assert isinstance(delegated_methods, (list, tuple, set))
+        assert "ComprehensiveMixin" in mixin_classes
+        assert "validate" in delegated_methods
+        assert "get_data" in delegated_methods
+        assert "process" in delegated_methods
 
         # Test validation
         validation_result = business.delegator._validate_delegation()
@@ -995,7 +1029,7 @@ class TestFlextDelegationSystemIntegration:
     def test_delegation_system_with_config(self) -> None:
         """Test delegation system with configuration management."""
         # Test configuration creation
-        config = {
+        config: dict[str, object] = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",
@@ -1003,16 +1037,19 @@ class TestFlextDelegationSystemIntegration:
         }
 
         system_config = FlextDelegationSystem.configure_delegation_system(config)
+        assert isinstance(system_config, dict)
         assert system_config["success"] is True
 
         # Test environment-specific config
         env_config = FlextDelegationSystem.create_environment_delegation_config(
             "production"
         )
+        assert isinstance(env_config, dict)
         assert env_config["environment"] == "production"
 
         # Test performance optimization
         perf_config = FlextDelegationSystem.optimize_delegation_performance("high")
+        assert isinstance(perf_config, dict)
         assert perf_config["optimization_level"] == "high"
 
         # Test system validation - now working correctly after fixes
@@ -1034,8 +1071,10 @@ class TestFlextDelegationSystemIntegration:
         FlextDelegationSystem.MixinDelegator(host, ErrorMixin)
 
         # Test that errors are properly wrapped and propagated
+        # Use getattr to safely access the method
+        failing_method = getattr(host, "failing_method")
         with pytest.raises(FlextExceptions.BaseError) as exc_info:
-            host.failing_method()
+            failing_method()
 
         assert "Delegated method failing_method failed" in str(exc_info.value)
         assert "Original error" in str(exc_info.value)

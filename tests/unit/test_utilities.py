@@ -7,8 +7,9 @@ in utilities.py focusing on Configuration class, generators, and processing util
 from __future__ import annotations
 
 import math
+from typing import Literal, cast
 
-from flext_core import FlextConstants, FlextUtilities
+from flext_core import FlextConstants, FlextTypes, FlextUtilities
 
 
 class TestUtilitiesConfiguration100PercentCoverage:
@@ -16,13 +17,13 @@ class TestUtilitiesConfiguration100PercentCoverage:
 
     def test_create_default_config_all_environments(self) -> None:
         """Test lines 814-856: create_default_config method."""
-        # Test all valid environments
-        environments = [
-            FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-            FlextConstants.Config.ConfigEnvironment.STAGING.value,
-            FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-            FlextConstants.Config.ConfigEnvironment.TEST.value,
-            FlextConstants.Config.ConfigEnvironment.LOCAL.value,
+        # Test all valid environments using proper literal types
+        environments: list[FlextTypes.Config.Environment] = [
+            "development",
+            "staging",
+            "production",
+            "test",
+            "local",
         ]
 
         for env in environments:
@@ -37,54 +38,72 @@ class TestUtilitiesConfiguration100PercentCoverage:
     def test_create_default_config_invalid_environment(self) -> None:
         """Test lines 819-822: Invalid environment validation."""
         # Test with invalid environment
-        result = FlextUtilities.Configuration.create_default_config("invalid_env")
+        result = FlextUtilities.Configuration.create_default_config(
+            cast(
+                "Literal['development', 'production', 'staging', 'test', 'local']",
+                "invalid_env",
+            )
+        )
         assert result.failure
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in str(result.error)
 
     def test_create_default_config_exception_handling(self) -> None:
         """Test lines 855-858: Exception handling in create_default_config."""
         # Test with empty string
-        result = FlextUtilities.Configuration.create_default_config("")
+        result = FlextUtilities.Configuration.create_default_config(
+            cast("Literal['development', 'production', 'staging', 'test', 'local']", "")
+        )
         assert result.failure
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in str(result.error)
 
     def test_validate_configuration_with_types_missing_environment(self) -> None:
         """Test lines 882-885: Missing environment validation."""
-        config = {"log_level": "INFO"}  # Missing environment
+        config = cast(
+            "FlextTypes.Config.ConfigDict", {"log_level": "INFO"}
+        )  # Missing environment
 
         result = FlextUtilities.Configuration.validate_configuration_with_types(config)
         assert result.failure
-        assert "Required field 'environment' missing" in result.error
+        assert "Required field 'environment' missing" in str(result.error)
 
     def test_validate_configuration_with_types_invalid_environment(self) -> None:
         """Test lines 887-895: Invalid environment validation."""
-        config = {"environment": "invalid_env", "log_level": "INFO"}
+        config = cast(
+            "FlextTypes.Config.ConfigDict",
+            {"environment": "invalid_env", "log_level": "INFO"},
+        )
 
         result = FlextUtilities.Configuration.validate_configuration_with_types(config)
         assert result.failure
-        assert "Invalid environment 'invalid_env'" in result.error
+        assert "Invalid environment 'invalid_env'" in str(result.error)
 
     def test_validate_configuration_with_types_log_level_validation(self) -> None:
         """Test lines 897-903: Log level validation."""
         # Test with invalid log level
-        config = {
-            "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-            "log_level": "INVALID_LEVEL",
-        }
+        config = cast(
+            "FlextTypes.Config.ConfigDict",
+            {
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "log_level": "INVALID_LEVEL",
+            },
+        )
 
         result = FlextUtilities.Configuration.validate_configuration_with_types(config)
         assert result.failure
-        assert "Invalid log_level" in result.error
+        assert "Invalid log_level" in str(result.error)
 
     def test_validate_configuration_with_types_success(self) -> None:
         """Test successful configuration validation."""
-        config = {
-            "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-            "log_level": FlextConstants.Config.LogLevel.INFO.value,
-            "debug": True,
-            "request_timeout": 30000,
-            "max_retries": 3,
-        }
+        config = cast(
+            "FlextTypes.Config.ConfigDict",
+            {
+                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                "debug": True,
+                "request_timeout": 30000,
+                "max_retries": 3,
+            },
+        )
 
         result = FlextUtilities.Configuration.validate_configuration_with_types(config)
         assert result.success
@@ -98,10 +117,10 @@ class TestUtilitiesConfiguration100PercentCoverage:
     def test_get_environment_configuration_all_environments(self) -> None:
         """Test lines 993-1048: get_environment_configuration method."""
         # Test all environments
-        environments = [
-            FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-            FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-            FlextConstants.Config.ConfigEnvironment.TEST.value,
+        environments: list[FlextTypes.Config.Environment] = [
+            "development",
+            "production",
+            "test",
         ]
 
         for env in environments:
@@ -181,25 +200,15 @@ class TestUtilitiesProcessingUtils100PercentCoverage:
 
     def test_safe_json_parse_edge_cases(self) -> None:
         """Test ProcessingUtils.safe_json_parse uncovered lines."""
-        # Test with invalid JSON - this might return a dict instead of FlextResult
+        # Test with invalid JSON - returns default empty dict
         result = FlextUtilities.ProcessingUtils.safe_json_parse("invalid json")
-        # Check if it's a dict (default return) or FlextResult
-        if isinstance(result, dict):
-            assert result == {}  # Default empty dict
-        else:
-            assert result.failure
-            assert "JSON parsing failed" in result.error
+        assert result == {}  # Default empty dict
 
         # Test with valid JSON
         valid_result = FlextUtilities.ProcessingUtils.safe_json_parse(
             '{"key": "value"}'
         )
-        if isinstance(valid_result, dict):
-            assert valid_result == {"key": "value"}
-        else:
-            assert valid_result.success
-            data = valid_result.unwrap()
-            assert data == {"key": "value"}
+        assert valid_result == {"key": "value"}
 
     def test_safe_json_stringify_edge_cases(self) -> None:
         """Test ProcessingUtils.safe_json_stringify uncovered lines."""
@@ -257,11 +266,11 @@ class TestUtilitiesConversions100PercentCoverage:
         assert result == 42  # custom default
 
         # Test safe_float with invalid input
-        result = FlextUtilities.Conversions.safe_float("not_a_float")
-        assert result == 0.0  # default
+        float_result = FlextUtilities.Conversions.safe_float("not_a_float")
+        assert float_result == 0.0  # default
 
-        result = FlextUtilities.Conversions.safe_float("not_a_float", math.pi)
-        assert result == math.pi  # custom default
+        float_result = FlextUtilities.Conversions.safe_float("not_a_float", math.pi)
+        assert float_result == math.pi  # custom default
 
         # Test safe_bool with various inputs
         assert FlextUtilities.Conversions.safe_bool("yes") is True

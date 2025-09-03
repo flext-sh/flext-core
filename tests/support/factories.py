@@ -7,6 +7,7 @@ relationships, sequences, and customization following SOLID principles.
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar, cast
 
@@ -20,9 +21,13 @@ from factory import (
 
 from flext_core import (
     FlextConstants,  # New refactored API
-    FlextModels,  # New refactored API
+    FlextModels,  # New refactracted API
     FlextResult,  # Installed package import
 )
+
+
+class RepositoryError(Exception):
+    """Custom exception for repository operations."""
 
 
 # Base models for testing (these would typically come from domain models)
@@ -94,14 +99,12 @@ class UserFactory(factory.Factory[TestUser]):
 
         model = TestUser
 
-    id: LazyAttribute[TestUser, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
-    name: Faker[TestUser, str] = Faker("name")
-    email: Faker[TestUser, str] = Faker("email")
-    age: Faker[TestUser, int] = Faker("random_int", min=18, max=80)
+    id = LazyAttribute(lambda _: str(uuid.uuid4()))
+    name = Faker("name")
+    email = Faker("email")
+    age = Faker("random_int", min=18, max=80)
     is_active = True
-    created_at: LazyAttribute[TestUser, datetime] = LazyAttribute(
-        lambda _: datetime.now(UTC)
-    )
+    created_at = LazyAttribute(lambda _: datetime.now(UTC))
     metadata = LazyFunction(
         lambda: {"department": "engineering", "level": "senior", "team": "backend"},
     )
@@ -118,7 +121,7 @@ class AdminUserFactory(UserFactory):
             kwargs["name"] = "Admin User"
         if "email" not in kwargs:
             kwargs["email"] = "admin@example.com"
-        return super()._adjust_kwargs(**kwargs)
+        return cast("dict[str, object]", super()._adjust_kwargs(**kwargs))
 
     metadata = LazyFunction(
         lambda: {"department": "admin", "level": "admin", "permissions": "all"},
@@ -175,13 +178,11 @@ class StringFieldFactory(factory.Factory[TestField]):
 
         model = TestField
 
-    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
-    field_name: Sequence[str] = Sequence(lambda n: f"string_field_{n}")
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_name = Sequence(lambda n: f"string_field_{n}")
     field_type = FlextConstants.Enums.FieldType.STRING.value
     required = True
-    description: LazyAttribute[TestField, str] = LazyAttribute(
-        lambda obj: f"Test string field: {obj.field_name}"
-    )
+    description = LazyAttribute(lambda obj: f"Test string field: {obj.field_name}")
     min_length = 1
     max_length = 100
     pattern = r"^[a-zA-Z0-9_]+$"
@@ -195,13 +196,11 @@ class IntegerFieldFactory(factory.Factory[TestField]):
 
         model = TestField
 
-    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
     field_name: Sequence[str] = Sequence(lambda n: f"integer_field_{n}")
     field_type = FlextConstants.Enums.FieldType.INTEGER.value
     required = True
-    description: LazyAttribute[TestField, str] = LazyAttribute(
-        lambda obj: f"Test integer field: {obj.field_name}"
-    )
+    description = LazyAttribute(lambda obj: f"Test integer field: {obj.field_name}")
     min_value = 0
     max_value = 1000
 
@@ -214,13 +213,11 @@ class BooleanFieldFactory(factory.Factory[TestField]):
 
         model = TestField
 
-    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
     field_name: Sequence[str] = Sequence(lambda n: f"boolean_field_{n}")
     field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
     required = True
-    description: LazyAttribute[TestField, str] = LazyAttribute(
-        lambda obj: f"Test boolean field: {obj.field_name}"
-    )
+    description = LazyAttribute(lambda obj: f"Test boolean field: {obj.field_name}")
     default_value = False
 
 
@@ -232,13 +229,11 @@ class FloatFieldFactory(factory.Factory[TestField]):
 
         model = TestField
 
-    field_id: LazyAttribute[TestField, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
+    field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
     field_name: Sequence[str] = Sequence(lambda n: f"float_field_{n}")
     field_type = FlextConstants.Enums.FieldType.FLOAT.value
     required = True
-    description: LazyAttribute[TestField, str] = LazyAttribute(
-        lambda obj: f"Test float field: {obj.field_name}"
-    )
+    description = LazyAttribute(lambda obj: f"Test float field: {obj.field_name}")
     min_value = 0.0
     max_value = 1000.0
 
@@ -251,16 +246,12 @@ class TestEntityFactory(factory.Factory[BaseTestEntity]):
 
         model = BaseTestEntity
 
-    id: LazyAttribute[BaseTestEntity, str] = LazyAttribute(lambda _: str(uuid.uuid4()))
-    name: Faker[BaseTestEntity, str] = Faker("company")
-    created_at: LazyAttribute[BaseTestEntity, datetime] = LazyAttribute(
-        lambda _: datetime.now(UTC)
-    )
-    updated_at: LazyAttribute[BaseTestEntity, datetime] = LazyAttribute(
-        lambda _: datetime.now(UTC)
-    )
+    id = LazyAttribute(lambda _: str(uuid.uuid4()))
+    name = Faker("company")
+    created_at = LazyAttribute(lambda _: datetime.now(UTC))
+    updated_at = LazyAttribute(lambda _: datetime.now(UTC))
     version = 1
-    metadata = LazyFunction(lambda: {"type": "test", "environment": "testing"})
+    # metadata é ClassVar, não é passado na inicialização
 
 
 class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
@@ -271,10 +262,10 @@ class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
 
         model = BaseTestValueObject
 
-    value: Faker[BaseTestValueObject, str] = Faker("word")
-    description: Faker[BaseTestValueObject, str] = Faker("sentence")
-    category: Faker[BaseTestValueObject, str] = Faker("word")
-    tags = LazyFunction(lambda: ["test", "domain", "value-object"])
+    value = Faker("word")
+    description = Faker("sentence")
+    category = Faker("word")
+    # tags é ClassVar, não é passado na inicialização
 
 
 # FlextResult factories
@@ -330,12 +321,12 @@ class SequenceGenerators:
     @staticmethod
     def entity_id_sequence() -> str:
         """Generate sequence of entity IDs."""
-        return str(FlextModels(root=f"test_entity_{uuid.uuid4()}"))
+        return f"test_entity_{uuid.uuid4()}"
 
     @staticmethod
-    def timestamp_sequence() -> FlextModels:
+    def timestamp_sequence() -> datetime:
         """Generate sequence of timestamps."""
-        return FlextModels(root=datetime.now(UTC))
+        return datetime.now(UTC)
 
     @staticmethod
     def email_sequence(domain: str = "example.com") -> str:
@@ -483,15 +474,21 @@ __all__ = [
     "BooleanFieldFactory",
     "ConfigFactory",
     "EdgeCaseGenerators",
+    "FailingUserRepository",
     "FlextResultFactory",
     "FloatFieldFactory",
+    "InMemoryUserRepository",
     "InactiveUserFactory",
     "IntegerFieldFactory",
     "ProductionConfigFactory",
+    "RealAuditService",
+    "RealEmailService",
+    "RepositoryError",
     "SequenceGenerators",
     "StringFieldFactory",
     "TestEntityFactory",
     "TestValueObjectFactory",
+    "User",
     "UserFactory",
     "create_test_hierarchy",
     "create_validation_test_cases",
@@ -499,3 +496,230 @@ __all__ = [
     "success_result",
     "validation_failure",
 ]
+"""Real implementations for testing - eliminating mocks.
+
+Provides real implementations of repositories, services, and other dependencies
+to replace mock objects in tests for true functional testing.
+"""
+
+
+@dataclass
+class User:
+    """Real user model for testing."""
+
+    id: str
+    username: str
+    email: str
+    age: int = 18
+    is_admin: bool = False
+    created_at: datetime | None = None
+
+
+class InMemoryUserRepository:
+    """Real in-memory user repository implementation."""
+
+    def __init__(self) -> None:
+        self._users: dict[str, User] = {}
+        self._users_by_username: dict[str, User] = {}
+
+    def create(self, user: User) -> bool:
+        """Create a user."""
+        if user.id in self._users or user.username in self._users_by_username:
+            return False
+
+        if user.created_at is None:
+            user.created_at = datetime.now(UTC)
+
+        self._users[user.id] = user
+        self._users_by_username[user.username] = user
+        return True
+
+    def find_by_username(
+        self, username: str
+    ) -> dict[str, str | int | bool | None] | None:
+        """Find user by username."""
+        user = self._users_by_username.get(username)
+        if user is None:
+            return None
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "age": user.age,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+        }
+
+    def find_by_id(self, user_id: str) -> dict[str, str | int | bool | None] | None:
+        """Find user by ID."""
+        user = self._users.get(user_id)
+        if user is None:
+            return None
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "age": user.age,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+        }
+
+    def update(self, user_id: str, updates: dict[str, str | int | bool | None]) -> bool:
+        """Update a user."""
+        if user_id not in self._users:
+            return False
+
+        user = self._users[user_id]
+        old_username = user.username
+
+        # Update user attributes
+        for key, value in updates.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
+
+        # Update username index if changed
+        if old_username != user.username:
+            del self._users_by_username[old_username]
+            self._users_by_username[user.username] = user
+
+        return True
+
+    def delete(self, user_id: str) -> bool:
+        """Delete a user."""
+        if user_id not in self._users:
+            return False
+
+        user = self._users[user_id]
+        del self._users[user_id]
+        del self._users_by_username[user.username]
+        return True
+
+    def count(self) -> int:
+        """Get user count."""
+        return len(self._users)
+
+    def clear(self) -> None:
+        """Clear all users."""
+        self._users.clear()
+        self._users_by_username.clear()
+
+
+class RealEmailService:
+    """Real email service implementation for testing."""
+
+    def __init__(self) -> None:
+        self.sent_emails: list[dict[str, str | int | bool | None]] = []
+        self.should_fail = False
+
+    def send_welcome_email(
+        self, user: dict[str, str | int | bool | None]
+    ) -> FlextResult[bool]:
+        """Send welcome email."""
+        if self.should_fail:
+            return FlextResult[bool].fail("Email service unavailable")
+
+        email_data = {
+            "to": user["email"],
+            "subject": "Welcome!",
+            "body": f"Welcome {user['username']}!",
+            "sent_at": datetime.now(UTC).isoformat(),
+        }
+
+        self.sent_emails.append(email_data)
+        return FlextResult[bool].ok(True)
+
+    def get_sent_emails(self) -> list[dict[str, str | int | bool | None]]:
+        """Get all sent emails."""
+        return self.sent_emails.copy()
+
+    def clear_sent_emails(self) -> None:
+        """Clear sent emails."""
+        self.sent_emails.clear()
+
+
+class RealAuditService:
+    """Real audit service implementation for testing."""
+
+    def __init__(self) -> None:
+        self.audit_logs: list[dict[str, str | int | bool | None]] = []
+
+    def log_user_created(self, user: dict[str, str | int | bool | None]) -> None:
+        """Log user creation event."""
+        audit_entry = {
+            "event": "USER_CREATED",
+            "user_id": user["id"],
+            "username": user["username"],
+            "timestamp": datetime.now(UTC).isoformat(),
+            "metadata": {
+                "email": user["email"],
+                "is_admin": user.get("is_admin", False),
+            },
+        }
+
+        self.audit_logs.append(audit_entry)
+
+    def log_user_updated(
+        self, user_id: str, changes: dict[str, str | int | bool | None]
+    ) -> None:
+        """Log user update event."""
+        audit_entry = {
+            "event": "USER_UPDATED",
+            "user_id": user_id,
+            "changes": changes,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+        self.audit_logs.append(audit_entry)
+
+    def get_audit_logs(self) -> list[dict[str, str | int | bool | None]]:
+        """Get all audit logs."""
+        return self.audit_logs.copy()
+
+    def clear_audit_logs(self) -> None:
+        """Clear audit logs."""
+        self.audit_logs.clear()
+
+
+class FailingUserRepository:
+    """Repository implementation that simulates database failures."""
+
+    def __init__(
+        self,
+        *,
+        fail_on_create: bool = True,
+        error_message: str = "Database connection failed",
+    ) -> None:
+        self._fail_on_create = fail_on_create
+        self._error_message = error_message
+        self._users: dict[str, User] = {}
+        self._users_by_username: dict[str, User] = {}
+
+    def find_by_username(
+        self, username: str
+    ) -> dict[str, str | int | bool | None] | None:
+        """Find user by username."""
+        user = self._users_by_username.get(username)
+        if user is None:
+            return None
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "age": user.age,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+        }
+
+    def create(self, user: User) -> bool:
+        """Create user - fails if configured to fail."""
+        if self._fail_on_create:
+            raise RepositoryError(self._error_message)
+
+        if user.id in self._users or user.username in self._users_by_username:
+            return False
+        self._users[user.id] = user
+        self._users_by_username[user.username] = user
+        return True

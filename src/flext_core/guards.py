@@ -1769,10 +1769,6 @@ class FlextGuards:
             return FlextResult[object].fail(f"Failed to create builder: {e!s}")
 
 
-# =============================================================================
-# EXPORTS - Clean public API
-# =============================================================================
-
 __all__: list[str] = [
-    "FlextGuards",  # Main class - all functionality via FlextGuards.*
+    "FlextGuards",
 ]

@@ -114,10 +114,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# =============================================================================
-# FlextContext - Hierarchical Context Management System
-# =============================================================================
-
 
 class FlextContext:
     """Hierarchical context management system following Clean Architecture principles.
@@ -1542,11 +1538,6 @@ class FlextContext:
             )
 
 
-# =============================================================================
-# Exports
-# =============================================================================
-
 __all__: list[str] = [
-    "FlextContext",  # ONLY main class exported
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextContext",
 ]

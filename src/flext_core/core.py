@@ -21,7 +21,6 @@ from typing import Annotated, cast, override
 
 from pydantic import Field
 
-# Removed FlextAggregates - not needed
 from flext_core.commands import FlextCommands
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -144,7 +143,7 @@ class FlextCore:
                 .flat_map(lambda data: core.validate_email(data.get("email")))
                 .flat_map(lambda email: core.create_entity(User, **user_data))
                 .tap(
-                    lambda user: core._FlextLogger(__name__).info(
+                    lambda user: core.FlextLogger(__name__).info(
                         "User created", user_id=user.id
                     )
                 )
@@ -626,10 +625,12 @@ class FlextCore:
     ) -> FlextTypes.Core.Object:
         """Create connection error."""
         # Extract known parameters to avoid type conflicts
-        host = kwargs.get("host")
-        port = kwargs.get("port")
+        service = kwargs.get("service")
+        endpoint = kwargs.get("endpoint")
         return self.exceptions.ConnectionError(
-            message, host=cast("str | None", host), port=cast("int | None", port)
+            message,
+            service=cast("str | None", service),
+            endpoint=cast("str | None", endpoint),
         )
 
     # Decorator Methods
@@ -781,8 +782,6 @@ class FlextCore:
         """Get configured logger instance."""
         return _FlextLogger(name)
 
-    FlextLogger = _FlextLogger
-
     @staticmethod
     def configure_logging(
         *,
@@ -793,7 +792,7 @@ class FlextCore:
 
         Sets up efficient logging configuration for the entire FLEXT ecosystem with
         support for structured JSON output, correlation tracking, and configurable log
-        levels. The configuration applies globally to all _FlextLogger instances.
+        levels. The configuration applies globally to all FlextLogger instances.
 
         Args:
             log_level (FlextTypes.Config.LogLevel, optional): Minimum log level for output.
@@ -850,13 +849,13 @@ class FlextCore:
 
         Note:
             This is a static method that configures global logging behavior.
-            Changes affect all existing and future _FlextLogger instances.
+            Changes affect all existing and future FlextLogger instances.
             For request-specific context, use create_log_context() instead.
 
         See Also:
-            - _FlextLogger(): Create logger instances
+            - FlextLogger(): Create logger instances
             - create_log_context(): Create context-aware loggers
-            - _FlextLogger: Core logging implementation
+            - FlextLogger: Core logging implementation
 
         """
         log_level_enum = FlextConstants.Config.LogLevel.INFO
@@ -865,7 +864,7 @@ class FlextCore:
         except (ValueError, AttributeError):
             log_level_enum = FlextConstants.Config.LogLevel.INFO
 
-        # Note: _FlextLogger doesn't have global level - individual loggers have levels
+        # Note: FlextLogger doesn't have global level - individual loggers have levels
 
         if _json_output is not None:
             _FlextLogger.configure(
@@ -1125,54 +1124,64 @@ class FlextCore:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_container_debugging": False,  # No debugging in production
-                    "enable_performance_monitoring": True,  # Performance monitoring in production
-                    "max_service_registrations": 500,  # Conservative limit for production
-                    "cache_configuration": True,  # Cache for performance
-                    "enable_error_reporting": True,  # Error reporting in production
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_container_debugging": False,  # No debugging in production
+                        "enable_performance_monitoring": True,  # Performance monitoring in production
+                        "max_service_registrations": 500,  # Conservative limit for production
+                        "cache_configuration": True,  # Cache for performance
+                        "enable_error_reporting": True,  # Error reporting in production
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_container_debugging": True,  # Full debugging for development
-                    "enable_performance_monitoring": False,  # No performance monitoring in dev
-                    "max_service_registrations": 2000,  # Higher limit for development
-                    "cache_configuration": False,  # No caching for development (fresh data)
-                    "enable_detailed_logging": True,  # Detailed logging for debugging
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_container_debugging": True,  # Full debugging for development
+                        "enable_performance_monitoring": False,  # No performance monitoring in dev
+                        "max_service_registrations": 2000,  # Higher limit for development
+                        "cache_configuration": False,  # No caching for development (fresh data)
+                        "enable_detailed_logging": True,  # Detailed logging for debugging
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_container_debugging": False,  # No debugging in tests
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "max_service_registrations": 100,  # Limited for tests
-                    "cache_configuration": False,  # No caching in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_container_debugging": False,  # No debugging in tests
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "max_service_registrations": 100,  # Limited for tests
+                        "cache_configuration": False,  # No caching in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_container_debugging": False,  # No debugging in staging
-                    "enable_performance_monitoring": True,  # Performance monitoring in staging
-                    "max_service_registrations": 750,  # Staging limit
-                    "cache_configuration": True,  # Cache for staging performance
-                    "enable_staging_features": True,  # Special staging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_container_debugging": False,  # No debugging in staging
+                        "enable_performance_monitoring": True,  # Performance monitoring in staging
+                        "max_service_registrations": 750,  # Staging limit
+                        "cache_configuration": True,  # Cache for staging performance
+                        "enable_staging_features": True,  # Special staging features
+                    }
+                )
             else:  # local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_container_debugging": True,  # Debugging for local development
-                    "enable_performance_monitoring": False,  # No performance monitoring locally
-                    "max_service_registrations": 1000,  # Standard limit for local
-                    "cache_configuration": False,  # No caching for local development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_container_debugging": True,  # Debugging for local development
+                        "enable_performance_monitoring": False,  # No performance monitoring locally
+                        "max_service_registrations": 1000,  # Standard limit for local
+                        "cache_configuration": False,  # No caching for local development
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1198,67 +1207,77 @@ class FlextCore:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 2000
-                    ),
-                    "container_cache_size": 1000,
-                    "enable_lazy_loading": True,
-                    "enable_service_pooling": True,
-                    "max_concurrent_operations": 200,
-                    "memory_optimization": "aggressive",
-                    "gc_optimization": True,
-                    "enable_async_processing": True,
-                    "buffer_size": 10000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations", 2000
+                        ),
+                        "container_cache_size": 1000,
+                        "enable_lazy_loading": True,
+                        "enable_service_pooling": True,
+                        "max_concurrent_operations": 200,
+                        "memory_optimization": "aggressive",
+                        "gc_optimization": True,
+                        "enable_async_processing": True,
+                        "buffer_size": 10000,
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 1000
-                    ),
-                    "container_cache_size": 500,
-                    "enable_lazy_loading": True,
-                    "enable_service_pooling": False,
-                    "max_concurrent_operations": 100,
-                    "memory_optimization": "balanced",
-                    "gc_optimization": False,
-                    "enable_async_processing": False,
-                    "buffer_size": 5000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations", 1000
+                        ),
+                        "container_cache_size": 500,
+                        "enable_lazy_loading": True,
+                        "enable_service_pooling": False,
+                        "max_concurrent_operations": 100,
+                        "memory_optimization": "balanced",
+                        "gc_optimization": False,
+                        "enable_async_processing": False,
+                        "buffer_size": 5000,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 500
-                    ),
-                    "container_cache_size": 100,
-                    "enable_lazy_loading": False,
-                    "enable_service_pooling": False,
-                    "max_concurrent_operations": 50,
-                    "memory_optimization": "conservative",
-                    "gc_optimization": False,
-                    "enable_async_processing": False,
-                    "buffer_size": 1000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations", 500
+                        ),
+                        "container_cache_size": 100,
+                        "enable_lazy_loading": False,
+                        "enable_service_pooling": False,
+                        "max_concurrent_operations": 50,
+                        "memory_optimization": "conservative",
+                        "gc_optimization": False,
+                        "enable_async_processing": False,
+                        "buffer_size": 1000,
+                    }
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 1000
-                    ),
-                    "container_cache_size": 500,
-                    "enable_lazy_loading": config.get("enable_lazy_loading", True),
-                    "max_concurrent_operations": config.get(
-                        "max_concurrent_operations", 100
-                    ),
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations", 1000
+                        ),
+                        "container_cache_size": 500,
+                        "enable_lazy_loading": config.get("enable_lazy_loading", True),
+                        "max_concurrent_operations": config.get(
+                            "max_concurrent_operations", 100
+                        ),
+                        "memory_optimization": "balanced",
+                    }
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -2338,7 +2357,7 @@ class FlextCore:
 
         class DynamicServiceProcessor:
             def __init__(self) -> None:
-                # Use class method to get logger (_FlextLogger may not be available)
+                # Use class method to get logger (FlextLogger may not be available)
                 self._logger = _FlextLogger(f"flext.services.{name.lower()}")
 
             def process(self, request: object) -> FlextResult[object]:
@@ -2559,6 +2578,5 @@ class FlextCore:
 
 # Export API
 __all__: list[str] = [
-    "FlextCore",  # ONLY main class exported
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextCore",
 ]

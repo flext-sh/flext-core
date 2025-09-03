@@ -27,10 +27,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# =============================================================================
-# FLEXT FIELDS HIERARCHICAL SYSTEM - Complete field management ecosystem
-# =============================================================================
-
 
 class FlextFields:
     """Hierarchical field system organizing all field functionality by domain.
@@ -2173,11 +2169,6 @@ class FlextFields:
         return self.Core.BooleanField
 
 
-# =============================================================================
-# COMPATIBILITY FUNCTIONS - Legacy support for test code
-# =============================================================================
-
-
 def flext_create_string_field(**kwargs: object) -> FlextResult[object]:
     """Create string field with validation - compatibility function."""
     try:
@@ -2258,7 +2249,6 @@ def flext_create_boolean_field(**kwargs: object) -> FlextResult[object]:
         return FlextResult[object].fail(f"Failed to create boolean field: {e}")
 
 
-# Compatibility wrapper for legacy field API
 class _FlextFieldCoreCompat(FlextFields.Core.BaseField[object]):
     """Compatibility wrapper for legacy FlextFieldCore API."""
 
@@ -2448,12 +2438,6 @@ class _FlextFieldTypeEnum:
 FlextFieldType = _FlextFieldTypeEnum()
 
 
-# =============================================================================
-# EXPORTS - Comprehensive field system
-# =============================================================================
-
 __all__: Final[list[str]] = [
-    "FlextFields",  # ONLY main class exported
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
-    # Import from flext_core.legacy if you need FlextFieldRegistry, flext_create_*_field, etc.
+    "FlextFields",
 ]

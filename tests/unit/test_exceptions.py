@@ -6,7 +6,10 @@ in exceptions.py focusing on exception creation, factory methods, and error hand
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core.exceptions import FlextExceptions
+from flext_core.typings import FlextTypes
 
 
 class TestExceptions100PercentCoverage:
@@ -113,7 +116,9 @@ class TestExceptions100PercentCoverage:
             "context_tracking": True,
         }
 
-        result = FlextExceptions.configure_error_handling(cast("FlextTypes.Config.ConfigDict", config))
+        result = FlextExceptions.configure_error_handling(
+            cast("FlextTypes.Config.ConfigDict", config)
+        )
         assert result.success
 
         # Test get_error_handling_config
@@ -124,7 +129,11 @@ class TestExceptions100PercentCoverage:
 
     def test_create_environment_specific_config_lines_1115_1187(self) -> None:
         """Test create_environment_specific_config lines 1115-1187."""
-        environments = ["development", "production", "test"]
+        environments: list[FlextTypes.Config.Environment] = [
+            "development",
+            "production",
+            "test",
+        ]
 
         for env in environments:
             result = FlextExceptions.create_environment_specific_config(env)
@@ -135,8 +144,12 @@ class TestExceptions100PercentCoverage:
 
     def test_invalid_environment_config(self) -> None:
         """Test invalid environment configuration."""
-        result = FlextExceptions.create_environment_specific_config("invalid_env")
+        # Use cast to test invalid environment handling
+        result = FlextExceptions.create_environment_specific_config(
+            cast("FlextTypes.Config.Environment", "invalid_env")
+        )
         assert result.failure
+        assert result.error is not None
         assert "Invalid environment" in result.error
 
     def test_exception_metrics_lines_854_855_899(self) -> None:
@@ -218,7 +231,9 @@ class TestExceptionsIntegration100PercentCoverage:
     def test_complete_exception_workflow(self) -> None:
         """Test complete exception creation and handling workflow."""
         # Configure error handling
-        config = {"enable_metrics": True, "log_level": "DEBUG"}
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {"enable_metrics": True, "log_level": "DEBUG"}
         config_result = FlextExceptions.configure_error_handling(config)
         assert config_result.success
 

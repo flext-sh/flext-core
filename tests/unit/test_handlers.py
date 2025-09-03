@@ -367,9 +367,11 @@ class TestHandlersConfigurationIntegration:
         )  # No perf tracking in tests
 
         # Test invalid environment
+        from typing import cast
+
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "invalid_env"
+                cast("str", "invalid_env")
             )
         )
         assert invalid_result.success is False

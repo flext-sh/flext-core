@@ -178,7 +178,7 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src"]
+mypy_path = ["src", "typings"]
 files = ["src"]
 
 # Plugins
@@ -203,12 +203,17 @@ warn_incomplete_stub = true
 [[tool.mypy.overrides]]
 module = "pytest_benchmark.*"
 ignore_missing_imports = true
-disable_error_code = ["import-untyped"]
+disable_error_code = ["import-untyped", "no-any-unimported"]
 
 [[tool.mypy.overrides]]
 module = "pytest_benchmark"
 ignore_missing_imports = true
-disable_error_code = ["import-untyped"]
+disable_error_code = ["import-untyped", "no-any-unimported"]
+
+[[tool.mypy.overrides]]
+module = "pytest_benchmark.fixture"
+ignore_missing_imports = true
+disable_error_code = ["import-untyped", "no-any-unimported", "attr-defined"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

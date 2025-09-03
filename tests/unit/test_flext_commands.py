@@ -12,19 +12,24 @@ Tests 100% coverage of FlextCommands functionality:
 from __future__ import annotations
 
 import asyncio
-from typing import ClassVar, cast
-from unittest.mock import Mock
+from typing import cast
 
 import pytest
 
 # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 from pytest_benchmark.fixture import BenchmarkFixture
-from pytest_mock import MockerFixture
 
 from flext_core import FlextCommands, FlextResult
 from flext_core.models import FlextModels
 from tests.support import FlextMatchers
+from tests.support.factories import (
+    FailingUserRepository,
+    InMemoryUserRepository,
+    RealAuditService,
+    RealEmailService,
+    User,
+)
 
 # =============================================================================
 # TEST DOMAIN MODELS - Using Pydantic for real validation
@@ -38,7 +43,7 @@ class CreateUserCommand(FlextModels.BaseConfig):
     email: str
     age: int = 18
     is_admin: bool = False
-    metadata: ClassVar[dict[str, object]] = {}
+    metadata: dict[str, object] = Field(default_factory=dict)
 
     def validate_command(self) -> FlextResult[None]:
         """Custom validation for the command."""
@@ -107,11 +112,16 @@ class CreateUserHandler(
 ):
     """Handler for user creation with real business logic."""
 
-    def __init__(self, user_repository: Mock | None = None) -> None:
+    def __init__(
+        self,
+        user_repository: InMemoryUserRepository | None = None,
+        email_service: RealEmailService | None = None,
+        audit_service: RealAuditService | None = None,
+    ) -> None:
         super().__init__()
-        self.user_repository = user_repository or Mock()
-        self.email_service = Mock()
-        self.audit_service = Mock()
+        self.user_repository = user_repository or InMemoryUserRepository()
+        self.email_service = email_service or RealEmailService()
+        self.audit_service = audit_service or RealAuditService()
 
     def handle(self, command: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle user creation with full business logic."""
@@ -136,20 +146,41 @@ class CreateUserHandler(
 
             # Create user
             user_id = f"user_{command.username}_{len(command.username)}"
-            self.user_repository.create(user_id, command.model_dump())
+            user = User(
+                id=user_id,
+                username=command.username,
+                email=command.email,
+                age=command.age,
+                is_admin=command.is_admin,
+            )
+
+            created = self.user_repository.create(user)
+            if not created:
+                return FlextResult[UserCreatedEvent].fail(
+                    "Failed to create user",
+                    error_code="CREATION_ERROR",
+                    error_data={"user_id": user_id},
+                )
+
+            # Get the created user data
+            user_data = self.user_repository.find_by_id(user_id)
+            if not user_data:
+                return FlextResult[UserCreatedEvent].fail(
+                    "User creation verification failed"
+                )
 
             # Send welcome email
-            self.email_service.send_welcome_email(command.email, command.username)
+            self.email_service.send_welcome_email(user_data)
 
             # Audit log
-            self.audit_service.log_user_creation(user_id, command.username)
+            self.audit_service.log_user_created(user_data)
 
             # Return success event
             event = UserCreatedEvent(
                 user_id=user_id,
                 username=command.username,
                 email=command.email,
-                created_at="2024-01-01T00:00:00Z",
+                created_at=user_data["created_at"] or "2024-01-01T00:00:00Z",
             )
 
             return FlextResult[UserCreatedEvent].ok(event)
@@ -220,12 +251,16 @@ class TestFlextCommandsComprehensive:
             email="alice@example.com",
             age=25,
             is_admin=False,
+            metadata={"source": "web"},
         )
 
         validation = valid_command.validate_command()
         # FlextMatchers expects FlextResult[object], so cast to match signature
         from typing import cast
-        assert FlextMatchers.is_successful_result(cast("FlextResult[object]", validation))
+
+        assert FlextMatchers.is_successful_result(
+            cast("FlextResult[object]", validation)
+        )
 
         # Verify all fields
         assert valid_command.username == "alice_smith"
@@ -280,14 +315,14 @@ class TestFlextCommandsComprehensive:
     # COMMAND HANDLER TESTING - Full business logic
     # =========================================================================
 
-    def test_create_user_handler_success_flow(self, mocker: MockerFixture) -> None:
-        """Test complete user creation handler success flow."""
-        # Setup mocks
-        mock_repo = Mock()
-        mock_repo.find_by_username.return_value = None  # User doesn't exist
-        mock_repo.create.return_value = True
+    def test_create_user_handler_success_flow(self) -> None:
+        """Test complete user creation handler success flow with real implementations."""
+        # Use real implementations
+        user_repo = InMemoryUserRepository()
+        email_service = RealEmailService()
+        audit_service = RealAuditService()
 
-        handler = CreateUserHandler(mock_repo)
+        handler = CreateUserHandler(user_repo, email_service, audit_service)
 
         # Test command
         command = CreateUserCommand(
@@ -306,44 +341,56 @@ class TestFlextCommandsComprehensive:
         assert event.email == "new@example.com"
         assert event.user_id == "user_new_user_8"
 
-        # Verify side effects
-        mock_repo.find_by_username.assert_called_once_with("new_user")
-        mock_repo.create.assert_called_once()
-        handler.email_service.send_welcome_email.assert_called_once_with(
-            "new@example.com", "new_user"
-        )
-        handler.audit_service.log_user_creation.assert_called_once()
+        # Verify real repository was used - user should exist
+        created_user = user_repo.find_by_username("new_user")
+        assert created_user is not None
+        assert created_user["username"] == "new_user"
+        assert created_user["email"] == "new@example.com"
+        assert created_user["age"] == 28
+
+        # Verify real email service was used
+        sent_emails = email_service.get_sent_emails()
+        assert len(sent_emails) == 1
+        assert sent_emails[0]["to"] == "new@example.com"
+        assert "Welcome" in sent_emails[0]["subject"]
+
+        # Verify real audit service was used
+        audit_logs = audit_service.get_audit_logs()
+        assert len(audit_logs) == 1
+        assert audit_logs[0]["event"] == "USER_CREATED"
+        assert audit_logs[0]["username"] == "new_user"
 
     def test_create_user_handler_user_exists_error(self) -> None:
         """Test handler when user already exists."""
-        # Setup mock to return existing user
-        mock_repo = Mock()
-        mock_repo.find_by_username.return_value = {
-            "id": "existing",
-            "username": "existing_user",
-        }
+        # Setup repository with existing user
+        repo = InMemoryUserRepository()
+        existing_user = User(
+            id="existing", username="existing_user", email="existing@example.com"
+        )
+        repo.create(existing_user)  # Pre-populate repository
 
-        handler = CreateUserHandler(mock_repo)
+        handler = CreateUserHandler(repo)
         command = CreateUserCommand(
-            username="existing_user", email="existing@example.com"
+            username="existing_user", email="different@example.com"
         )
 
         result = handler.handle(command)
 
         # Verify failure
         assert FlextMatchers.is_failed_result(result)
+        assert "already exists" in result.error.lower()
         assert result.error_code == "USER_EXISTS"
         assert "User already exists" in (result.error or "")
         assert result.error_data == {"username": "existing_user"}
 
     def test_create_user_handler_repository_exception(self) -> None:
         """Test handler with repository exception."""
-        # Setup mock to throw exception
-        mock_repo = Mock()
-        mock_repo.find_by_username.return_value = None
-        mock_repo.create.side_effect = Exception("Database connection failed")
+        # Setup failing repository
+        failing_repo = FailingUserRepository(
+            fail_on_create=True, error_message="Database connection failed"
+        )
 
-        handler = CreateUserHandler(mock_repo)
+        handler = CreateUserHandler(failing_repo)
         command = CreateUserCommand(username="test_user", email="test@example.com")
 
         result = handler.handle(command)

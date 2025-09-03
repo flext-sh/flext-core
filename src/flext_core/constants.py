@@ -15,10 +15,6 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import ClassVar, Final, override
 
-# =============================================================================
-# FLEXT HIERARCHICAL CONSTANTS SYSTEM - Organized by domain and functionality
-# =============================================================================
-
 
 class FlextConstants:
     """Hierarchical constants system organizing FLEXT constants by domain.
@@ -3165,5 +3161,4 @@ class FlextConstants:
 
 __all__: Final[list[str]] = [
     "FlextConstants",
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
 ]

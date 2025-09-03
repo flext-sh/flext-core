@@ -126,10 +126,6 @@ from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# =============================================================================
-# FlextExceptions - Hierarchical Exception Management System
-# =============================================================================
-
 
 class FlextExceptions:
     """Hierarchical exception container with structured error handling and monitoring.
@@ -1292,10 +1288,6 @@ class FlextExceptions:
     # =============================================================================
 
 
-# EXPORTS - Clean public API
-# =============================================================================
-
 __all__: list[str] = [
-    "FlextExceptions",  # Main hierarchical container - ONLY access point
-    # Legacy compatibility aliases moved to flext_core.legacy to avoid type conflicts
+    "FlextExceptions",
 ]

@@ -21,12 +21,16 @@ from tests.support import (
     AsyncTestUtils,
     BenchmarkUtils,
     ConfigFactory,
+    FailingUserRepository,
     FlextMatchers,
     FlextResultFactory,
     HTTPTestUtils,
+    InMemoryUserRepository,
     MemoryProfiler,
     PayloadDataFactory,
     PerformanceProfiler,
+    RealAuditService,
+    RealEmailService,
     ServiceDataFactory,
     SimpleConfigurationFactory,
     TestBuilders,
@@ -314,6 +318,62 @@ def setup_test_environment() -> None:
     # object global test setup can go here
     return
     # object global test teardown can go here
+
+
+# =============================================================================
+# FUNCTIONAL TESTING FIXTURES - Real implementations without mocks
+# =============================================================================
+
+
+@pytest.fixture
+def user_repository() -> InMemoryUserRepository:
+    """Provide clean in-memory user repository for functional testing."""
+    from tests.support.factories import InMemoryUserRepository
+
+    return InMemoryUserRepository()
+
+
+@pytest.fixture
+def email_service() -> RealEmailService:
+    """Provide real email service for functional testing."""
+    from tests.support.factories import RealEmailService
+
+    return RealEmailService()
+
+
+@pytest.fixture
+def audit_service() -> RealAuditService:
+    """Provide real audit service for functional testing."""
+    from tests.support.factories import RealAuditService
+
+    return RealAuditService()
+
+
+@pytest.fixture
+def failing_repository() -> FailingUserRepository:
+    """Provide failing repository for error scenario testing."""
+    from tests.support.factories import FailingUserRepository
+
+    return FailingUserRepository()
+
+
+@pytest.fixture
+def real_services(
+    user_repository: InMemoryUserRepository,
+    email_service: RealEmailService,
+    audit_service: RealAuditService,
+) -> dict[str, InMemoryUserRepository | RealEmailService | RealAuditService]:
+    """Provide complete set of real services for integration testing."""
+    return {
+        "user_repository": user_repository,
+        "email_service": email_service,
+        "audit_service": audit_service,
+    }
+
+
+# =============================================================================
+# PYTEST CONFIGURATION
+# =============================================================================
 
 
 # Mark configuration

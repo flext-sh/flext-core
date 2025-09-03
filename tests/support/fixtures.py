@@ -19,7 +19,6 @@ import asyncio
 import json
 import logging
 import tempfile
-import time
 import uuid
 from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
@@ -165,28 +164,45 @@ class FlextConfigFactory:
         return FlextConfig()
 
 
+# Test command classes
+class TestCommand(FlextCommands.Models.Command):
+    """Test command for fixtures."""
+
+
+class BatchCommand(FlextCommands.Models.Command):
+    """Batch command for fixtures."""
+
+
+class ValidationCommand(FlextCommands.Models.Command):
+    """Validation command for fixtures."""
+
+
+class ProcessingCommand(FlextCommands.Models.Command):
+    """Processing command for fixtures."""
+
+
 class CommandFactory:
     """Simple command factory."""
 
     @staticmethod
-    def create_test_command() -> FlextCommands.Models.Command:
+    def create_test_command() -> TestCommand:
         """Create test command."""
-        return FlextCommands.Models.Command(command_type="test")
+        return TestCommand()
 
     @staticmethod
-    def create_batch_command() -> FlextCommands.Models.Command:
+    def create_batch_command() -> BatchCommand:
         """Create batch command."""
-        return FlextCommands.Models.Command(command_type="batch")
+        return BatchCommand()
 
     @staticmethod
-    def create_validation_command() -> FlextCommands.Models.Command:
+    def create_validation_command() -> ValidationCommand:
         """Create validation command."""
-        return FlextCommands.Models.Command(command_type="validation")
+        return ValidationCommand()
 
     @staticmethod
-    def create_processing_command() -> FlextCommands.Models.Command:
+    def create_processing_command() -> ProcessingCommand:
         """Create processing command."""
-        return FlextCommands.Models.Command(command_type="processing")
+        return ProcessingCommand()
 
 
 # Core fixtures for basic testing
@@ -215,9 +231,9 @@ def test_value_object() -> BaseTestValueObject:
 
 
 @pytest.fixture
-def test_command() -> FlextCommands.Models.Command:
+def test_command() -> TestCommand:
     """Fixture providing test command."""
-    return FlextCommands.Models.Command(command_type="test_command")
+    return TestCommand()
 
 
 # Result fixtures
@@ -279,18 +295,8 @@ def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:
     # Configure benchmark settings
     benchmark.group = "flext_core"
 
-    # Configure timer if available
-    if hasattr(benchmark, "timer"):
-        benchmark.timer = time.perf_counter
-
-        # Configure GC settings if available
-    if hasattr(benchmark, "disable_gc"):
-        benchmark.disable_gc = True
-
-    # Configure minimum rounds if available
-    if hasattr(benchmark, "min_rounds"):
-        benchmark.min_rounds = 5
-
+    # Note: BenchmarkFixture attributes are read-only in pytest-benchmark
+    # Configuration should be done via pytest.ini or command line options
     return benchmark
 
 

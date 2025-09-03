@@ -93,7 +93,6 @@ from flext_core.validations import *
 # INFRASTRUCTURE LAYER - Depends on Application + Domain + Foundation
 # =============================================================================
 
-# Infrastructure layer - wildcard imports only
 from flext_core.config import *  # type: ignore[assignment]
 from flext_core.container import *  # type: ignore[assignment]
 from flext_core.context import *
@@ -124,16 +123,12 @@ from flext_core.core import *  # type: ignore[assignment]
 # CONSOLIDATED EXPORTS - Combine all __all__ from modules
 # =============================================================================
 
-# Combine all __all__ exports from imported modules
 import flext_core.__version__ as _version
-
-# Removed aggregate_root module
 import flext_core.commands as _commands
 import flext_core.config as _config
 import flext_core.constants as _constants
 import flext_core.container as _container
 import flext_core.context as _context
-
 import flext_core.core as _core
 import flext_core.decorators as _decorators
 import flext_core.delegation_system as _delegation_system
@@ -159,32 +154,32 @@ import flext_core.validations as _validations
 _temp_exports: list[str] = []
 
 for module in [
-    _version,
-    _constants,
-    _typings,
-    _result,
-    _exceptions,
-    _protocols,
-    _models,
-    _domain_services,
     _commands,
-    _validations,
-    _guards,
-    _handlers,
-    _container,
     _config,
-    _loggings,
-    _observability,
+    _constants,
+    _container,
     _context,
     _core,
-    _mixins,
     _decorators,
-    _utilities,
-    _fields,
-    _services,
     _delegation_system,
+    _domain_services,
+    _exceptions,
+    _fields,
+    _guards,
+    _handlers,
+    _loggings,
+    _mixins,
+    _models,
+    _observability,
     _processors,
+    _protocols,
+    _result,
+    _services,
     _type_adapters,
+    _typings,
+    _utilities,
+    _validations,
+    _version,
 ]:
     if hasattr(module, "__all__"):
         _temp_exports.extend(module.__all__)
@@ -200,4 +195,4 @@ _final_exports.sort()
 
 # Define __all__ as literal list for linter compatibility
 # This dynamic assignment is necessary for aggregating module exports
-__all__: list[str] = _final_exports  # pyright: ignore[reportUnsupportedDunderAll] # noqa: PLE0605
+__all__: list[str] = _final_exports  # noqa: PLE0605 # type: ignore[reportUnsupportedDunderAll]

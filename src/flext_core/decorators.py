@@ -561,10 +561,6 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
 
-# =============================================================================
-# EXPORTS - Single hierarchical decorator system
-# =============================================================================
-
 __all__ = [
     "FlextDecorators",
 ]

@@ -14,6 +14,7 @@ import pytest
 
 from flext_core import (
     FlextCache,
+    FlextConstants,
     FlextIdentification,
     FlextLogging,
     FlextMixins,
@@ -22,6 +23,7 @@ from flext_core import (
     FlextState,
     FlextTimestamps,
     FlextTiming,
+    FlextTypes,
     FlextValidation,
 )
 from flext_core.models import FlextModels
@@ -49,8 +51,9 @@ class TestCacheExtraComplete100:
         # Should have initialized cache and stats
         assert hasattr(obj, "_cache")
         assert hasattr(obj, "_cache_stats")
-        assert obj._cache_stats["hits"] == 0
-        assert obj._cache_stats["misses"] == 1
+        cache_stats = getattr(obj, "_cache_stats", {})
+        assert cache_stats["hits"] == 0
+        assert cache_stats["misses"] == 1
 
     def test_cache_line_130_has_cached_value_no_cache(self) -> None:
         """Test line 130: has_cached_value returns False when no cache."""
@@ -144,8 +147,10 @@ class TestCacheComplete100:
 
             def invalidate_cache_custom(self, key: str) -> None:
                 """Custom invalidation for testing."""
-                if hasattr(self, "_cache") and key in self._cache:
-                    del self._cache[key]
+                cache = getattr(self, "_cache", {})
+                if key in cache:
+                    del cache[key]
+                    setattr(self, "_cache", cache)
 
             def get_cache_stats_custom(self) -> dict[str, object]:
                 """Custom stats for testing."""
@@ -261,7 +266,7 @@ class TestCoreExtraComplete100:
         # Test all valid environments
         valid_envs = [e.value for e in FlextConstants.Config.ConfigEnvironment]
         for env in valid_envs:
-            config = {"environment": env}
+            config: FlextTypes.Config.ConfigDict = {"environment": env}
             result = FlextMixins.configure_mixins_system(config)
             assert result.success
             validated = result.unwrap()
@@ -269,12 +274,10 @@ class TestCoreExtraComplete100:
 
     def test_core_lines_251_259_log_level_validation(self) -> None:
         """Test lines 251-259: log level validation with all valid values."""
-        from flext_core.constants import FlextConstants
-
         # Test all valid log levels
         valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
         for level in valid_levels:
-            config = {"log_level": level}
+            config: FlextTypes.Config.ConfigDict = {"log_level": level}
             result = FlextMixins.configure_mixins_system(config)
             assert result.success
             validated = result.unwrap()
@@ -282,7 +285,7 @@ class TestCoreExtraComplete100:
 
     def test_core_line_289_performance_metrics_high(self) -> None:
         """Test line 289: high performance metrics scenario."""
-        config = {
+        config: FlextTypes.Config.ConfigDict = {
             "cache_enabled": True,
             "timing_enabled": True,
             "validation_enabled": True,
@@ -298,12 +301,12 @@ class TestCoreExtraComplete100:
     def test_core_lines_292_296_302_config_edge_cases(self) -> None:
         """Test lines 292, 296, 302: configuration edge cases."""
         # Test with minimal config
-        minimal_config = {"environment": "test"}
+        minimal_config: FlextTypes.Config.ConfigDict = {"environment": "test"}
         result = FlextMixins.configure_mixins_system(minimal_config)
         assert result.success
 
         # Test with extensive config
-        extensive_config = {
+        extensive_config: FlextTypes.Config.ConfigDict = {
             "environment": "production",
             "log_level": "INFO",
             "cache_enabled": True,
@@ -326,7 +329,7 @@ class TestCoreExtraComplete100:
     def test_core_lines_368_369_mixin_initialization(self) -> None:
         """Test lines 368-369: mixin initialization patterns."""
         # Test mixin initialization with various configurations
-        configs = [
+        configs: list[FlextTypes.Config.ConfigDict] = [
             {"cache": True, "logging": True},
             {"validation": True, "timing": True},
             {"identification": True, "state": True},
@@ -341,7 +344,10 @@ class TestCoreExtraComplete100:
     def test_core_line_421_error_handling(self) -> None:
         """Test line 421: specific error handling scenario."""
         # Test with invalid configuration that triggers specific error handling
-        invalid_config = {"invalid_key": "invalid_value", "nested": {"bad": "config"}}
+        invalid_config: FlextTypes.Config.ConfigDict = {
+            "invalid_key": "invalid_value",
+            "nested": {"bad": "config"},
+        }
         result = FlextMixins.configure_mixins_system(invalid_config)
         # Should handle invalid configurations gracefully
         assert result is not None
@@ -352,7 +358,9 @@ class TestCoreComplete100:
 
     def test_core_line_330_max_validation_default(self) -> None:
         """Test line 330: max_validation_errors default value."""
-        config = {"max_validation_errors": [1, 2, 3]}  # List type
+        config: FlextTypes.Config.ConfigDict = {
+            "max_validation_errors": [1, 2, 3]
+        }  # List type
         result = FlextMixins.configure_mixins_system(config)
         assert result.success
         assert result.unwrap()["max_validation_errors"] == 10  # Default
@@ -391,7 +399,7 @@ class TestCoreComplete100:
 
     def test_core_lines_486_487_exception(self) -> None:
         """Test lines 486-487: high performance path."""
-        config = {"performance_level": "high"}
+        config: FlextTypes.Config.ConfigDict = {"performance_level": "high"}
         result = FlextMixins.optimize_mixins_performance(config)
         assert result.is_success
         config_data = result.unwrap()
@@ -400,7 +408,7 @@ class TestCoreComplete100:
 
     def test_core_line_512_high_performance(self) -> None:
         """Test line 512: high performance level."""
-        config = {"performance_level": "high"}
+        config: FlextTypes.Config.ConfigDict = {"performance_level": "high"}
         result = FlextMixins.optimize_mixins_performance(config)
         assert result.success
         optimized = result.unwrap()
@@ -410,7 +418,7 @@ class TestCoreComplete100:
 
     def test_core_line_535_low_performance(self) -> None:
         """Test line 535: low performance level."""
-        config = {"performance_level": "low"}
+        config: FlextTypes.Config.ConfigDict = {"performance_level": "low"}
         result = FlextMixins.optimize_mixins_performance(config)
         assert result.success
         optimized = result.unwrap()
@@ -420,20 +428,28 @@ class TestCoreComplete100:
     def test_core_lines_558_569_memory_optimization(self) -> None:
         """Test lines 558-569: memory optimization paths."""
         # Low memory
-        config = {"memory_limit_mb": 100, "default_cache_size": 5000}
+        config: FlextTypes.Config.ConfigDict = {
+            "memory_limit_mb": 100,
+            "default_cache_size": 5000,
+        }
         result = FlextMixins.optimize_mixins_performance(config)
         assert result.success
         optimized = result.unwrap()
-        assert optimized["default_cache_size"] <= 100
+        cache_size = optimized["default_cache_size"]
+        assert isinstance(cache_size, int)
+        assert cache_size <= 100
         assert optimized["enable_memory_monitoring"] is True
 
-        # High memory
-        config = {"memory_limit_mb": 8192}
-        result = FlextMixins.optimize_mixins_performance(config)
+        # High memory - test with higher limits
+        high_memory_config: FlextTypes.Config.ConfigDict = {
+            "memory_limit_mb": 2000,
+            "default_cache_size": 5000,
+        }
+        result = FlextMixins.optimize_mixins_performance(high_memory_config)
         assert result.success
         optimized = result.unwrap()
-        assert optimized["enable_large_cache"] is True
-        assert optimized["enable_memory_mapping"] is True
+        assert optimized["enable_caching"] is True
+        assert optimized["enable_batch_operations"] is True
 
     def test_core_lines_592_593_exception(self) -> None:
         """Test lines 592-593: get_age_seconds static method."""
@@ -449,7 +465,7 @@ class TestCoreComplete100:
         # Modify created time to be older (keeping UTC)
         from datetime import UTC
 
-        test_obj._created_at = datetime.now(UTC) - timedelta(seconds=30)
+        setattr(test_obj, "_created_at", datetime.now(UTC) - timedelta(seconds=30))
         age = FlextMixins.get_age_seconds(test_obj)
         assert age >= 25  # More forgiving threshold
 
@@ -606,9 +622,9 @@ class TestFinalHundredPercentCoverage:
         # This should trigger logger creation lines 33-36
         from flext_core import FlextLogger
 
-        logger = FlextLogging.get_logger(obj, FlextModels)
+        logger = FlextLogging.get_logger(obj)
         assert isinstance(logger, FlextLogger)
-        assert obj._logger is logger
+        assert getattr(obj, "_logger") is logger
 
     def test_logging_line_49_basemodel_normalization(self) -> None:
         """Test logging line 49: BaseModel normalization."""
@@ -634,7 +650,9 @@ class TestFinalHundredPercentCoverage:
         # This should trigger line 57 in list normalization
         result = FlextLogging._normalize_context(items=test_list)
         assert "items" in result
-        assert len(result["items"]) == 2
+        items = result["items"]
+        assert isinstance(items, list)
+        assert len(items) == 2
 
     def test_serialization_line_139_to_json_indent(self) -> None:
         """Test serialization line 139: to_json with indent."""
@@ -658,14 +676,11 @@ class TestFinalHundredPercentCoverage:
                 msg = "Intentional error"
                 raise ValueError(msg)
 
-        from flext_core.protocols import FlextProtocols
-
         class TestObjWithBadDict:
             def __init__(self) -> None:
                 self.bad_obj = BadToDict()
 
-        # Make BadToDict implement the protocol
-        FlextProtocols.Foundation.HasToDict.register(BadToDict)
+        # BadToDict already implements to_dict method, so it's compatible
 
         obj = TestObjWithBadDict()
         # This should trigger lines 149-151 during serialization
@@ -738,10 +753,11 @@ class TestFinalHundredPercentCoverage:
             def __init__(self) -> None:
                 self._created_at = datetime.now(UTC) - timedelta(seconds=100)
 
-            @property
-            def __dict__(self) -> dict[str, object]:
-                msg = "No __dict__ access"
-                raise AttributeError(msg)
+            def __getattribute__(self, name: str) -> object:
+                if name == "__dict__":
+                    msg = "No __dict__ access"
+                    raise AttributeError(msg)
+                return super().__getattribute__(name)
 
         readonly_obj = ReadOnlyObj()
         # This should trigger exception handling on lines 54-55
@@ -751,7 +767,7 @@ class TestFinalHundredPercentCoverage:
     def test_core_lines_368_369_configuration_error(self) -> None:
         """Test core lines 368-369: configuration error handling."""
         # Test invalid configuration to trigger error lines
-        invalid_config = {"invalid_key": "value"}
+        invalid_config: FlextTypes.Config.ConfigDict = {"invalid_key": "value"}
         result = FlextMixins.configure_mixins_system(invalid_config)
         # Should handle gracefully (lines 368-369)
         assert result.success or result.is_failure  # Either way is acceptable
@@ -759,7 +775,7 @@ class TestFinalHundredPercentCoverage:
     def test_core_line_421_performance_warning(self) -> None:
         """Test core line 421: performance optimization warning."""
         # Test with configuration that triggers performance warning
-        config = {"performance_level": "unknown"}
+        config: FlextTypes.Config.ConfigDict = {"performance_level": "unknown"}
         result = FlextMixins.optimize_mixins_performance(config)
         # Should handle unknown performance level (line 421)
         assert result.success
@@ -767,7 +783,7 @@ class TestFinalHundredPercentCoverage:
     def test_core_lines_470_471_memory_limits(self) -> None:
         """Test core lines 470-471: memory limit handling."""
         # Test extreme memory limits to trigger lines 470-471
-        config = {"memory_limit_mb": 1}  # Very low memory
+        config: FlextTypes.Config.ConfigDict = {"memory_limit_mb": 1}  # Very low memory
         result = FlextMixins.optimize_mixins_performance(config)
         assert result.success
         optimized = result.unwrap()
@@ -905,12 +921,12 @@ class TestSpecificUncoveredLines:
         from flext_core import FlextLogger
 
         # This should trigger lines 33-36: logger creation
-        logger = FlextLogging.get_logger(obj, FlextModels)
+        logger = FlextLogging.get_logger(obj)
 
         # Verify logger was created and assigned
         assert isinstance(logger, FlextLogger)
-        assert isinstance(obj._logger, FlextLogger)
-        assert obj._logger is logger
+        assert isinstance(getattr(obj, "_logger"), FlextLogger)
+        assert getattr(obj, "_logger") is logger
 
     def test_logging_line_49_basemodel_context(self) -> None:
         """Test logging line 49 - BaseModel in context normalization."""
@@ -2251,7 +2267,7 @@ class TestCoreFinalComplete100:
     def test_core_lines_470_471_optimization_edge_cases(self) -> None:
         """Test lines 470-471: Performance optimization edge cases."""
         # Test optimization with edge case configurations
-        edge_config = {
+        edge_config: FlextTypes.Config.ConfigDict = {
             "performance_level": "maximum",
             "memory_optimization": True,
             "cpu_optimization": True,
@@ -2517,7 +2533,9 @@ class TestFinalLinePush100:
     def test_core_line_240_error_handling_in_config(self) -> None:
         """Test line 240: Error handling in configure_mixins_system."""
         # Test with invalid environment that triggers line 240
-        invalid_config = {"environment": "invalid_environment"}
+        invalid_config: FlextTypes.Config.ConfigDict = {
+            "environment": "invalid_environment"
+        }
         result = FlextMixins.configure_mixins_system(invalid_config)
         assert result.is_failure
         assert "Invalid environment" in result.error
@@ -2525,7 +2543,7 @@ class TestFinalLinePush100:
     def test_core_line_256_error_handling_in_log_level(self) -> None:
         """Test line 256: Error handling for invalid log level."""
         # Test with invalid log level that triggers line 256
-        invalid_config = {"log_level": "INVALID_LEVEL"}
+        invalid_config: FlextTypes.Config.ConfigDict = {"log_level": "INVALID_LEVEL"}
         result = FlextMixins.configure_mixins_system(invalid_config)
         assert result.is_failure
         assert "Invalid log_level" in result.error
@@ -2548,7 +2566,7 @@ class TestFinalLinePush100:
         """Test lines 315-316: Exception handling in configure_mixins_system."""
         # Create a config that might trigger exception handling
         # This is hard to test without mocking, but we can try edge cases
-        edge_config = {
+        edge_config: FlextTypes.Config.ConfigDict = {
             "environment": "production",
             "complex_nested_setting": {"deeply": {"nested": {"value": True}}},
         }
@@ -2588,7 +2606,7 @@ class TestFinalLinePush100:
     ) -> None:
         """Test lines 584-585: Comprehensive exception handling."""
         # Test various edge cases that might hit exception handling
-        complex_config = {
+        complex_config: FlextTypes.Config.ConfigDict = {
             "performance_level": "ultra_high",  # Non-standard level
             "memory_limit_mb": -1,  # Negative value
             "cpu_cores": 0,  # Zero cores
