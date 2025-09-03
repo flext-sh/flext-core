@@ -1,13 +1,4 @@
-"""Comprehensive tests for FlextCommands using all test infrastructure.
-
-Tests 100% coverage of FlextCommands functionality:
-- Complete command and handler lifecycle
-- Bus registration and execution
-- Decorators and middleware
-- Factory patterns
-- Error scenarios and edge cases
-- Performance testing with benchmarks
-"""
+"""Comprehensive tests for FlextCommands using all test infrastructure."""
 
 from __future__ import annotations
 
@@ -15,8 +6,6 @@ import asyncio
 from typing import cast
 
 import pytest
-
-# from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
 from pydantic import Field, ValidationError
 from pytest_benchmark.fixture import BenchmarkFixture
 
@@ -36,7 +25,7 @@ from tests.support.factories import (
 # =============================================================================
 
 
-class CreateUserCommand(FlextModels.BaseConfig):
+class CreateUserCommand(FlextModels.Config):
     """Real command for user creation."""
 
     username: str
@@ -60,7 +49,7 @@ class CreateUserCommand(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class UpdateUserCommand(FlextModels.BaseConfig):
+class UpdateUserCommand(FlextModels.Config):
     """Command for user updates."""
 
     user_id: str
@@ -85,7 +74,7 @@ class UpdateUserCommand(FlextModels.BaseConfig):
         return FlextResult[None].ok(None)
 
 
-class DeleteUserCommand(FlextModels.BaseConfig):
+class DeleteUserCommand(FlextModels.Config):
     """Command for user deletion."""
 
     user_id: str
@@ -93,7 +82,7 @@ class DeleteUserCommand(FlextModels.BaseConfig):
     reason: str = "User requested deletion"
 
 
-class UserCreatedEvent(FlextModels.BaseConfig):
+class UserCreatedEvent(FlextModels.Config):
     """Event emitted after user creation."""
 
     user_id: str

@@ -34,7 +34,7 @@ def _print_header() -> None:
     print("=" * 60)
 
 
-class SimpleUser(FlextModels.BaseConfig):
+class SimpleUser(FlextModels.Config):
     """Simple user model for demonstrations."""
 
     name: str = Field(..., min_length=1, max_length=100)

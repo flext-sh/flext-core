@@ -1,12 +1,4 @@
-"""Comprehensive tests for FlextResult using all test infrastructure.
-
-Tests 100% coverage of FlextResult functionality using:
-- test/support fixtures, builders, matchers
-- conftest.py fixtures
-- Real edge cases and error scenarios
-- Performance testing
-- Property-based testing
-"""
+"""Comprehensive tests for FlextResult using all test infrastructure."""
 
 from __future__ import annotations
 

@@ -48,7 +48,7 @@ Functions:
 Type Integration:
     dict[str, object]: Configuration dictionary type
     FlextTypes.Core.Value: Generic configuration value type
-    FlextTypes.Core.String: String configuration type
+    str: String configuration type
     FlextTypes.Core.Serializer: JSON serialization interface
 
 Integration with FlextCore:
@@ -61,13 +61,11 @@ Integration with FlextCore:
     ...     config = config_result.value
     ...     core.logger.info(f"Configuration loaded: {config.model_dump()}")
     >>> # Business rule validation
-    >>> validation_result = FlextConfig.validate_business_rules(
-    ...     {
-    ...         "database_url": "postgresql://localhost/prod",
-    ...         "secret_key": "secure-key-with-sufficient-length",
-    ...         "log_level": "INFO",
-    ...     }
-    ... )
+    >>> validation_result = FlextConfig.validate_business_rules({
+    ...     "database_url": "postgresql://localhost/prod",
+    ...     "secret_key": "secure-key-with-sufficient-length",
+    ...     "log_level": "INFO",
+    ... })
 
 Environment Configuration Examples:
     >>> # Development configuration
@@ -142,7 +140,7 @@ import json
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, Final, cast
+from typing import ClassVar, Final, Self, TypedDict, Unpack, cast
 
 from pydantic import (
     BaseModel,
@@ -152,6 +150,7 @@ from pydantic import (
     field_serializer,
     field_validator,
     model_serializer,
+    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -160,20 +159,21 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
-# Configuration constants
-HIGH_TIMEOUT_THRESHOLD: Final[int] = 120
 
-
-class FlextConfig(FlextModels.BaseConfig):
-    """Main FLEXT configuration class using pure Pydantic BaseModel patterns.
+class FlextConfig(FlextModels.Config):
+    """Main FLEXT configuration class using advanced Pydantic BaseModel patterns.
 
     Core configuration model for the FLEXT ecosystem providing type-safe
     configuration with automatic validation, serialization, and environment
-    variable integration.
+    variable integration. Now uses the advanced FlextModels.Config base class
+    with enterprise-grade features.
 
     Attributes:
         SystemDefaults: Nested class containing centralized system defaults.
         Settings: BaseSettings subclass for environment-aware configuration.
+        DatabaseConfig: Database configuration using FlextModels.DatabaseConfig.
+        SecurityConfig: Security configuration using FlextModels.SecurityConfig.
+        LoggingConfig: Logging configuration using FlextModels.LoggingConfig.
 
     Methods:
         validate_business_rules: Validate business-specific configuration rules.
@@ -185,6 +185,53 @@ class FlextConfig(FlextModels.BaseConfig):
     # =========================================================================
     # NESTED CLASSES - Core configuration components consolidated
     # =========================================================================
+
+    # Specialized configuration classes using FlextModels
+    DatabaseConfig: type[FlextModels.DatabaseConfig] = FlextModels.DatabaseConfig
+    SecurityConfig: type[FlextModels.SecurityConfig] = FlextModels.SecurityConfig
+    LoggingConfig: type[FlextModels.LoggingConfig] = FlextModels.LoggingConfig
+
+    # TypedDict classes for type-safe kwargs (consolidated within FlextConfig)
+    class DatabaseConfigKwargs(TypedDict, total=False):
+        """Type-safe kwargs for database configuration using centralized constants."""
+
+        port: int  # Default: FlextConstants.Config.DEFAULT_DB_PORT
+        pool_size: int  # Default: FlextConstants.Config.MIN_POOL_SIZE
+        max_overflow: int  # Default: 20
+        pool_timeout: int  # Default: FlextConstants.Config.DEFAULT_TIMEOUT
+        pool_recycle: int  # Default: FlextConstants.Config.REDIS_TTL
+        ssl_mode: str  # Default: "prefer"
+        ssl_cert: str | None
+        ssl_key: str | None
+        ssl_ca: str | None
+        connect_timeout: int  # Default: FlextConstants.Config.CONNECTION_TIMEOUT
+        query_timeout: int  # Default: FlextConstants.Config.READ_TIMEOUT
+        enable_prepared_statements: bool
+
+    class SecurityConfigKwargs(TypedDict, total=False):
+        """Type-safe kwargs for security configuration."""
+
+        session_timeout: int
+        jwt_expiry: int
+        refresh_token_expiry: int
+        min_password_length: int
+        require_uppercase: bool
+        require_lowercase: bool
+        require_numbers: bool
+        require_special_chars: bool
+        rate_limit_requests: int
+        rate_limit_window: int
+        enable_cors: bool
+
+    class LoggingConfigKwargs(TypedDict, total=False):
+        """Type-safe kwargs for logging configuration."""
+
+        log_format: str
+        max_file_size: int
+        backup_count: int
+        rotation_when: str
+        enable_performance_logging: bool
+        slow_query_threshold: float
 
     class SystemDefaults:
         """Centralized system defaults for the FLEXT ecosystem.
@@ -745,30 +792,30 @@ class FlextConfig(FlextModels.BaseConfig):
             raise ValueError(msg)
         return v
 
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules specific to FLEXT configuration.
-
-        Validates critical business constraints including:
-        - Debug mode not allowed in production environment
-        - Critical fields (database_url, key) cannot be None when present
-        - Extra field validation for configuration integrity
-
-        Returns:
-            FlextResult[None]: Success if all business rules pass, failure with error message otherwise.
-
-        """
+    @model_validator(mode="after")
+    def validate_production_constraints(self) -> Self:
+        """Validate production environment constraints."""
         # Debug not allowed in production
         if self.debug and self.environment == FlextConstants.Config.ENVIRONMENTS[2]:
-            return FlextResult[None].fail(
-                "Debug mode should not be enabled in production",
-            )
+            msg = "Debug mode should not be enabled in production"
+            raise ValueError(msg)
+        return self
 
+    @model_validator(mode="after")
+    def validate_resource_constraints(self) -> Self:
+        """Validate resource configuration constraints."""
         # High timeout with too few workers
-        if self.timeout_seconds >= HIGH_TIMEOUT_THRESHOLD and self.max_workers <= 1:
-            return FlextResult[None].fail(
-                "High timeout with low worker count may cause resource issues",
-            )
+        if (
+            self.timeout_seconds >= FlextConstants.Defaults.HIGH_TIMEOUT_THRESHOLD
+            and self.max_workers <= 1
+        ):
+            msg = "High timeout with low worker count may cause resource issues"
+            raise ValueError(msg)
+        return self
 
+    @model_validator(mode="after")
+    def validate_critical_extra_fields(self) -> Self:
+        """Validate critical fields in extra data."""
         # Validate critical fields are not None when they exist as extra fields
         # Use model_extra for Pydantic 2 compatibility
         extra_data = self.model_extra if hasattr(self, "model_extra") else {}
@@ -786,10 +833,13 @@ class FlextConfig(FlextModels.BaseConfig):
         }
         if critical_none_fields:
             fields_str = ", ".join(sorted(critical_none_fields))
-            return FlextResult[None].fail(
-                f"Config validation failed for {fields_str}",
-            )
+            msg = f"Config validation failed for {fields_str}"
+            raise ValueError(msg)
 
+        return self
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Legacy method for backward compatibility - validation is now handled by Pydantic."""
         return FlextResult[None].ok(None)
 
     @field_serializer("environment", when_used="json")
@@ -1301,7 +1351,7 @@ class FlextConfig(FlextModels.BaseConfig):
 
     @staticmethod
     def safe_get_env_var(
-        var_name: FlextTypes.Core.String,
+        var_name: str,
         default: str | None = None,
     ) -> FlextResult[str]:
         """Safely get environment variable with optional default value.
@@ -1396,6 +1446,74 @@ class FlextConfig(FlextModels.BaseConfig):
             return FlextResult[dict[str, object]].ok(merged)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(f"Config merge failed: {e}")
+
+    # =========================================================================
+    # SPECIALIZED CONFIGURATION CREATION METHODS
+    # =========================================================================
+
+    @classmethod
+    def create_database_config(
+        cls,
+        host: str,
+        database: str,
+        username: str,
+        password: str,
+        **kwargs: Unpack[FlextConfig.DatabaseConfigKwargs],
+    ) -> FlextResult[FlextModels.DatabaseConfig]:
+        """Create database configuration with validation."""
+        try:
+            config = FlextModels.DatabaseConfig(
+                host=host,
+                database=database,
+                username=username,
+                password=password,
+                **kwargs,
+            )
+            return FlextResult[FlextModels.DatabaseConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextModels.DatabaseConfig].fail(
+                f"Database config creation failed: {e}"
+            )
+
+    @classmethod
+    def create_security_config(
+        cls,
+        secret_key: str,
+        jwt_secret: str,
+        encryption_key: str,
+        **kwargs: Unpack[FlextConfig.SecurityConfigKwargs],
+    ) -> FlextResult[FlextModels.SecurityConfig]:
+        """Create security configuration with validation."""
+        try:
+            config = FlextModels.SecurityConfig(
+                secret_key=secret_key,
+                jwt_secret=jwt_secret,
+                encryption_key=encryption_key,
+                **kwargs,
+            )
+            return FlextResult[FlextModels.SecurityConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextModels.SecurityConfig].fail(
+                f"Security config creation failed: {e}"
+            )
+
+    @classmethod
+    def create_logging_config(
+        cls,
+        log_level: str = FlextConstants.Config.LogLevel.INFO.value,
+        log_file: str | None = None,
+        **kwargs: Unpack[FlextConfig.LoggingConfigKwargs],
+    ) -> FlextResult[FlextModels.LoggingConfig]:
+        """Create logging configuration with validation."""
+        try:
+            config = FlextModels.LoggingConfig(
+                log_level=log_level, log_file=log_file, **kwargs
+            )
+            return FlextResult[FlextModels.LoggingConfig].ok(config)
+        except Exception as e:
+            return FlextResult[FlextModels.LoggingConfig].fail(
+                f"Logging config creation failed: {e}"
+            )
 
 
 __all__ = [

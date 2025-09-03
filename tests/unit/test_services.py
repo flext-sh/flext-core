@@ -1,8 +1,4 @@
-"""Comprehensive tests for FLEXT services module - targeting 100% coverage.
-
-This test file focuses on testing all service classes and their methods
-to achieve maximum coverage for services.py module.
-"""
+"""Comprehensive tests for FLEXT services module - targeting 100% coverage."""
 
 from __future__ import annotations
 
@@ -583,12 +579,10 @@ class ConcreteServiceProcessor(
         if not request:
             return FlextResult[dict[str, object]].fail("Empty request")
 
-        return FlextResult[dict[str, object]].ok(
-            {
-                "processed": request,
-                "length": len(request),
-            }
-        )
+        return FlextResult[dict[str, object]].ok({
+            "processed": request,
+            "length": len(request),
+        })
 
     def build(self, domain: dict[str, object], *, correlation_id: str) -> str:
         """Build final string result."""
@@ -759,14 +753,12 @@ class TestServiceIntegration:
     def test_full_service_workflow(self) -> None:
         """Test complete service workflow integration."""
         # Configure services
-        config_result = FlextServices.configure_services_system(
-            {
-                "environment": "test",
-                "enable_service_registry": True,
-                "enable_service_orchestration": True,
-                "enable_service_metrics": True,
-            }
-        )
+        config_result = FlextServices.configure_services_system({
+            "environment": "test",
+            "enable_service_registry": True,
+            "enable_service_orchestration": True,
+            "enable_service_metrics": True,
+        })
         assert config_result.success
 
         # Create components
@@ -891,9 +883,9 @@ class TestServiceExceptionPaths:
                 raise MockConfigError(msg)
 
             mock_constants.Config.ConfigEnvironment = property(lambda _: raise_error())
-            result = FlextServices.configure_services_system(
-                {"environment": "development"}
-            )
+            result = FlextServices.configure_services_system({
+                "environment": "development"
+            })
             # Should return failure result
             assert result.is_failure
             assert result.error is not None

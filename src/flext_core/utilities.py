@@ -2,78 +2,6 @@
 
 Provides FlextUtilities class with ID generation, text processing, validation, performance
 monitoring, and JSON handling organized in nested classes with FlextResult integration.
-
-Usage:
-    # ID generation
-    uuid = FlextUtilities.Generators.generate_uuid()
-    entity_id = FlextUtilities.Generators.generate_entity_id("user")
-
-    # Text processing
-    safe_text = FlextUtilities.TextProcessor.truncate(text, 50)
-    slug = FlextUtilities.TextProcessor.slugify("Hello World")
-
-    # Validation with FlextResult
-    email_result = FlextUtilities.Validators.validate_email("test@example.com")
-    if email_result.success:
-        email = email_result.unwrap()
-
-    # JSON handling
-    data_result = FlextUtilities.JSON.safe_loads('{"key": "value"}')
-
-Features:
-    - Hierarchical organization with nested utility classes
-    - FlextResult integration for error handling
-    - ID generation, text processing, validation
-    - Performance monitoring and JSON utilities
-        JSON.unflatten_dict(flat_dict) -> dict         # Unflatten dictionary
-
-        # Decorators - Utility Decorators and Function Wrappers:
-        Decorators.retry(max_attempts=3) -> Callable    # Retry decorator with exponential backoff
-        Decorators.timeout(seconds=30) -> Callable      # Timeout decorator
-        Decorators.cache_result(ttl=300) -> Callable    # Simple result caching decorator
-        Decorators.log_calls(logger=None) -> Callable   # Log function calls decorator
-        Decorators.validate_args(*validators) -> Callable # Argument validation decorator
-
-        # Configuration Methods:
-        configure_utilities_system(config) -> FlextResult[ConfigDict] # Configure utility system
-        get_utilities_system_config() -> FlextResult[ConfigDict] # Get current config
-        create_environment_utilities_config(environment) -> FlextResult[ConfigDict] # Environment config
-        optimize_utilities_performance(performance_level) -> FlextResult[ConfigDict] # Performance optimization
-
-Usage Examples:
-    ID Generation:
-        uuid = FlextUtilities.Generators.generate_uuid()
-        entity_id = FlextUtilities.Generators.generate_entity_id("user")
-        correlation_id = FlextUtilities.Generators.generate_correlation_id()
-
-    Text Processing:
-        truncated = FlextUtilities.TextProcessor.truncate("Long text here", 50)
-        slug = FlextUtilities.TextProcessor.slugify("My Article Title")
-        safe_filename = FlextUtilities.TextProcessor.sanitize_filename("file<name>.txt")
-
-    Validation with FlextResult:
-        email_result = FlextUtilities.Validators.validate_email("user@example.com")
-        if email_result.success:
-            validated_email = email_result.value
-
-    Performance monitoring:
-        @FlextUtilities.Performance.time_function
-        def my_function():
-            # Function implementation
-            pass
-
-    Configuration:
-        config = {
-            "environment": "production",
-            "enable_caching": True,
-            "default_timeout": 30,
-        }
-        FlextUtilities.configure_utilities_system(config)
-
-Integration:
-    FlextUtilities integrates with FlextResult for error handling, FlextTypes.Config
-    for configuration, FlextConstants for limits and defaults, providing efficient
-    utility functions with consistent patterns across the entire FLEXT ecosystem.
 """
 
 from __future__ import annotations
@@ -85,9 +13,9 @@ import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TypeGuard, cast
+from typing import ClassVar, TypeGuard, cast
 
-from pydantic import ConfigDict, ValidationError
+from pydantic import ValidationError
 
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
@@ -96,9 +24,6 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, R, T
 
 logger = FlextLogger(__name__)
-
-# Performance metrics storage.
-PERFORMANCE_METRICS: dict[str, dict[str, object]] = {}
 
 
 class FlextUtilities:
@@ -109,37 +34,6 @@ class FlextUtilities:
     for ID generation, text processing, validation, performance monitoring,
     JSON handling, and more.
 
-    Architecture:
-        The utilities are organized into nested classes following single
-        responsibility principle:
-        - Generators: ID and timestamp generation utilities
-        - TextProcessor: Text manipulation and formatting
-        - Validators: Data validation with FlextResult patterns
-        - Performance: Timing and performance monitoring
-        - JSON: JSON processing and serialization
-        - Decorators: Function decorators and wrappers
-
-    Examples:
-        ID generation utilities::
-
-            uuid = FlextUtilities.Generators.generate_uuid()
-            entity_id = FlextUtilities.Generators.generate_entity_id()
-            correlation_id = FlextUtilities.Generators.generate_correlation_id()
-
-        Text processing utilities::
-
-            truncated = FlextUtilities.TextProcessor.truncate(text, 100)
-            cleaned = FlextUtilities.TextProcessor.safe_string(value)
-
-        Validation utilities::
-
-            email_result = FlextUtilities.Validators.validate_email(email)
-            if email_result.success:
-                process_valid_email(email)
-
-    Note:
-        All utilities follow FLEXT patterns including FlextResult for error
-        handling, FlextConstants for configuration, and structured logging.
 
     """
 
@@ -149,6 +43,9 @@ class FlextUtilities:
 
     MIN_PORT: int = FlextConstants.Network.MIN_PORT
     MAX_PORT: int = FlextConstants.Network.MAX_PORT
+
+    # Performance metrics storage
+    PERFORMANCE_METRICS: ClassVar[dict[str, dict[str, object]]] = {}
 
     # ==========================================================================
     # NESTED CLASSES FOR ORGANIZATION
@@ -160,14 +57,6 @@ class FlextUtilities:
         Provides various ID generation methods with semantic prefixes for
         different use cases. All IDs use UUID4 for uniqueness with shortened
         hex representations for readability.
-
-        Examples:
-            Generate different types of IDs::
-
-                uuid = Generators.generate_uuid()  # Full UUID4
-                entity_id = Generators.generate_entity_id()  # entity_xxxx
-                correlation_id = Generators.generate_correlation_id()  # corr_xxxx
-                session_id = Generators.generate_session_id()  # sess_xxxx
 
         """
 
@@ -212,13 +101,6 @@ class FlextUtilities:
         Provides safe text processing functions with proper error handling
         and consistent formatting. Handles edge cases and provides fallbacks
         for robust text manipulation.
-
-        Examples:
-            Text processing operations::
-
-                truncated = TextProcessor.truncate(long_text, 50, "...")
-                safe_str = TextProcessor.safe_string(any_object, "default")
-
         """
 
         @staticmethod
@@ -307,16 +189,7 @@ class FlextUtilities:
 
         @staticmethod
         def sanitize_filename(name: str) -> str:
-            """Sanitize a filename for safe filesystem usage.
-
-            Rules applied:
-            - Strip leading/trailing whitespace
-            - Remove path separators and reserved characters
-            - Collapse consecutive whitespace
-            - Trim leading/trailing dots
-            - Fallback to "untitled" when result is empty or only dots
-            - Limit to 255 characters
-            """
+            """Sanitize a filename for safe filesystem usage."""
             # Basic cleanup
             cleaned = FlextUtilities.TextProcessor.clean_text(name)
             cleaned = cleaned.strip()
@@ -344,43 +217,14 @@ class FlextUtilities:
 
         @staticmethod
         def generate_camel_case_alias(field_name: str) -> str:
-            """Generate camelCase alias from snake_case field name.
-
-            Used for Pydantic field aliasing to convert Python snake_case field names
-            to camelCase for JSON serialization and API compatibility.
-
-            Args:
-                field_name: Snake_case field name to convert
-
-            Returns:
-                camelCase version of the field name
-            Examples:
-                >>> TextProcessor.generate_camel_case_alias("user_name")
-                "userName"
-                >>> TextProcessor.generate_camel_case_alias("is_active")
-                "isActive"
-                >>> TextProcessor.generate_camel_case_alias("created_at")
-                "createdAt"
-
-            """
+            """Generate camelCase alias from snake_case field name."""
             if not field_name:
                 return ""
             components = field_name.split("_")
             return components[0] + "".join(word.capitalize() for word in components[1:])
 
     class TimeUtils:
-        """Time and duration utilities with formatting and conversion.
-
-        Provides utilities for time formatting, duration calculations, and
-        timestamp operations with proper timezone handling.
-
-        Examples:
-            Time operations::
-
-                formatted = TimeUtils.format_duration(123.45)  # "2.1m"
-                utc_now = TimeUtils.get_timestamp_utc()
-
-        """
+        """Time and duration utilities with formatting and conversion."""
 
         @staticmethod
         def format_duration(seconds: float) -> str:
@@ -403,16 +247,6 @@ class FlextUtilities:
 
         Provides decorators and utilities for tracking function performance,
         recording metrics, and monitoring operation success rates.
-
-        Examples:
-            Performance tracking::
-
-                @Performance.track_performance("user_creation")
-                def create_user(data):
-                    return process_user_data(data)
-
-
-                metrics = Performance.get_metrics("user_creation")
 
         """
 
@@ -453,8 +287,8 @@ class FlextUtilities:
             error: str | None = None,
         ) -> None:
             """Record performance metric."""
-            if operation not in PERFORMANCE_METRICS:
-                PERFORMANCE_METRICS[operation] = {
+            if operation not in FlextUtilities.PERFORMANCE_METRICS:
+                FlextUtilities.PERFORMANCE_METRICS[operation] = {
                     "total_calls": 0,
                     "total_duration": 0.0,
                     "avg_duration": 0.0,
@@ -462,7 +296,7 @@ class FlextUtilities:
                     "error_count": 0,
                 }
 
-            metrics = PERFORMANCE_METRICS[operation]
+            metrics = FlextUtilities.PERFORMANCE_METRICS[operation]
             total_calls = cast("int", metrics["total_calls"]) + 1
             total_duration = cast("float", metrics["total_duration"]) + duration
 
@@ -481,21 +315,14 @@ class FlextUtilities:
         def get_metrics(operation: str | None = None) -> dict[str, object]:
             """Get performance metrics."""
             if operation:
-                return PERFORMANCE_METRICS.get(operation, {})
-            return dict(PERFORMANCE_METRICS)
+                return FlextUtilities.PERFORMANCE_METRICS.get(operation, {})
+            return dict(FlextUtilities.PERFORMANCE_METRICS)
 
     class Conversions:
         """Safe type conversion utilities with fallback handling.
 
         Provides robust type conversion functions that handle edge cases
         and provide sensible defaults when conversion fails.
-
-        Examples:
-            Safe conversions::
-
-                num = Conversions.safe_int("123", 0)  # 123
-                flag = Conversions.safe_bool("true")  # True
-                val = Conversions.safe_float(None, 0.0)  # 0.0
 
         """
 
@@ -547,15 +374,6 @@ class FlextUtilities:
         Provides type guard functions for runtime type checking and
         validation with proper type narrowing support.
 
-        Examples:
-            Type validation::
-
-                if TypeGuards.is_string_non_empty(value):
-                    process_string(value)  # value is now str
-
-                if TypeGuards.is_dict_non_empty(data):
-                    process_dict(data)  # data is now dict
-
         """
 
         @staticmethod
@@ -595,12 +413,6 @@ class FlextUtilities:
         Provides formatting functions for common data types including
         byte sizes, percentages, and other human-readable formats.
 
-        Examples:
-            Data formatting::
-
-                size = Formatters.format_bytes(1024)  # "1.0 KB"
-                percent = Formatters.format_percentage(0.85)  # "85.0%"
-
         """
 
         @staticmethod
@@ -626,12 +438,6 @@ class FlextUtilities:
         Provides safe processing functions for JSON parsing, model extraction,
         and data validation with FlextResult error handling.
 
-        Examples:
-            Data processing::
-
-                data = ProcessingUtils.safe_json_parse(json_str, {})
-                json_str = ProcessingUtils.safe_json_stringify(obj)
-                result = ProcessingUtils.parse_json_to_model(json_str, MyModel)
 
         """
 
@@ -673,25 +479,7 @@ class FlextUtilities:
         def parse_json_to_model[TModel](
             json_text: str, model_class: type[TModel]
         ) -> FlextResult[TModel]:
-            """Parse JSON and validate using appropriate model instantiation strategy.
-
-            This method provides type-safe JSON parsing with automatic detection of:
-            - Pydantic v2 models (using model_validate)
-            - Dictionary-constructible classes (using **kwargs)
-            - Default constructible classes (using no args)
-
-            Args:
-                json_text: JSON string to parse and validate
-                model_class: Target model class for instantiation
-
-            Returns:
-                FlextResult containing validated model instance or error details
-
-            Note:
-                Uses Python 3.13+ generic syntax with strategic casting to handle
-                dynamic method invocation while preserving type safety.
-
-            """
+            """Parse JSON and validate using appropriate model instantiation strategy."""
             try:
                 parsed_data: object = json.loads(json_text)
 
@@ -744,12 +532,6 @@ class FlextUtilities:
         Provides utilities for working with FlextResult types including
         result chaining, batch processing, and error collection.
 
-        Examples:
-            Result operations::
-
-                combined = ResultUtils.chain_results(result1, result2)
-                successes, errors = ResultUtils.batch_process(items, processor)
-
         """
 
         @staticmethod
@@ -789,28 +571,13 @@ class FlextUtilities:
         environment detection, configuration validation, and system configuration
         generation using FlextTypes.Config hierarchical structure.
 
-        Examples:
-            Configuration utilities::
-
-                config = Configuration.create_default_config("production")
-                result = Configuration.validate_config(config_dict)
-                env_config = Configuration.get_environment_configuration("staging")
-
         """
 
         @staticmethod
         def create_default_config(
             environment: FlextTypes.Config.Environment = "development",
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Create default configuration for specified environment using FlextTypes.Config.
-
-            Args:
-                environment: Target environment using FlextTypes.Config.Environment.
-
-            Returns:
-                FlextResult containing default configuration dictionary.
-
-            """
+            """Create default configuration for specified environment using FlextTypes.Config."""
             try:
                 # Validate environment is a valid StrEnum value
                 valid_environments = [
@@ -861,15 +628,7 @@ class FlextUtilities:
         def validate_configuration_with_types(
             config: FlextTypes.Config.ConfigDict,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Validate configuration using FlextTypes.Config with efficient StrEnum validation.
-
-            Args:
-                config: Configuration dictionary to validate.
-
-            Returns:
-                FlextResult containing validated configuration or validation errors.
-
-            """
+            """Validate configuration using FlextTypes.Config with efficient StrEnum validation."""
             # Configuration validation constants
             min_timeout_ms = 100
             max_timeout_ms = 300000
@@ -977,151 +736,22 @@ class FlextUtilities:
                     f"Configuration validation failed: {e}"
                 )
 
-        @staticmethod
-        def get_environment_configuration(
-            environment: FlextTypes.Config.Environment,
-        ) -> FlextResult[dict[str, object]]:
-            """Get efficient environment-specific configuration using FlextTypes.Config.
-
-            Args:
-                environment: Target environment for configuration.
-
-            Returns:
-                FlextResult containing environment-specific configuration details.
-
-            """
-            try:
-                # Create base configuration
-                config_result = FlextUtilities.Configuration.create_default_config(
-                    environment
-                )
-                if config_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
-                        config_result.error or "Failed to create base configuration"
-                    )
-
-                base_config: ConfigDict = cast("ConfigDict", config_result.value)
-
-                # Create efficient environment configuration
-                env_config: dict[str, object] = {
-                    "base_configuration": base_config,
-                    "environment_metadata": {
-                        "name": environment,
-                        "is_production": environment
-                        == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-                        "is_development": environment
-                        == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                        "is_testing": environment
-                        == FlextConstants.Config.ConfigEnvironment.TEST.value,
-                    },
-                    "available_environments": [
-                        e.value for e in FlextConstants.Config.ConfigEnvironment
-                    ],
-                    "available_log_levels": [
-                        level.value for level in FlextConstants.Config.LogLevel
-                    ],
-                    "available_validation_levels": [
-                        v.value for v in FlextConstants.Config.ValidationLevel
-                    ],
-                    "available_config_sources": [
-                        s.value for s in FlextConstants.Config.ConfigSource
-                    ],
-                    "performance_settings": {
-                        "request_timeout_ms": base_config.get("request_timeout", 30000),
-                        "max_retries": base_config.get("max_retries", 3),
-                        "caching_enabled": base_config.get("enable_caching", True),
-                        "monitoring_enabled": base_config.get(
-                            "performance_monitoring", True
-                        ),
-                    },
-                    "security_settings": {
-                        "debug_mode": base_config.get("debug", False),
-                        "strict_validation": base_config.get("validation_level")
-                        == "strict",
-                        "log_level": base_config.get("log_level", "INFO"),
-                    },
-                }
-
-                return FlextResult[dict[str, object]].ok(env_config)
-
-            except Exception as e:
-                return FlextResult[dict[str, object]].fail(
-                    f"Environment configuration generation failed: {e}"
-                )
-
     # ==========================================================================
     # MAIN CLASS METHODS - Delegate to nested classes
     # ==========================================================================
 
-    @classmethod
-    def generate_uuid(cls) -> str:
-        """Generate UUID (delegates to Generators)."""
-        return cls.Generators.generate_uuid()
-
-    @classmethod
-    def generate_id(cls) -> str:
-        """Generate ID (delegates to Generators)."""
-        return cls.Generators.generate_id()
-
-    @classmethod
-    def generate_entity_id(cls) -> str:
-        """Generate entity ID (delegates to Generators)."""
-        return cls.Generators.generate_entity_id()
-
-    @classmethod
-    def generate_correlation_id(cls) -> str:
-        """Generate correlation ID (delegates to Generators)."""
-        return cls.Generators.generate_correlation_id()
-
-    @classmethod
-    def truncate(cls, text: str, max_length: int = 100, suffix: str = "...") -> str:
-        """Truncate text (delegates to TextProcessor)."""
-        return cls.TextProcessor.truncate(text, max_length, suffix)
-
-    @classmethod
-    def format_duration(cls, seconds: float) -> str:
-        """Format duration (delegates to TimeUtils)."""
-        return cls.TimeUtils.format_duration(seconds)
-
-    @classmethod
-    def track_performance(
-        cls, operation_name: str
-    ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-        """Track performance (delegates to Performance)."""
-        return cls.Performance.track_performance(operation_name)
-
-    @classmethod
-    def safe_json_parse(
-        cls, json_str: str, default: dict[str, object] | None = None
-    ) -> dict[str, object]:
-        """Parse JSON safely (delegates to ProcessingUtils)."""
-        return cls.ProcessingUtils.safe_json_parse(json_str, default)
-
-    @classmethod
-    def safe_json_stringify(cls, obj: object, default: str = "{}") -> str:
-        """Stringify object to JSON safely (delegates to ProcessingUtils)."""
-        return cls.ProcessingUtils.safe_json_stringify(obj, default)
-
-    @classmethod
-    def parse_json_to_model(
-        cls, json_text: str, model_class: type[T]
-    ) -> FlextResult[T]:
-        """Parse JSON to model (delegates to ProcessingUtils)."""
-        return cls.ProcessingUtils.parse_json_to_model(json_text, model_class)
-
-    @classmethod
-    def safe_int(cls, value: object, default: int = 0) -> int:
-        """Convert to int safely (delegates to Conversions)."""
-        return cls.Conversions.safe_int(value, default)
-
-    @classmethod
-    def batch_process[TInput, TOutput](
-        cls,
-        items: list[TInput],
-        processor: Callable[[TInput], FlextResult[TOutput]],
-    ) -> tuple[list[TOutput], list[str]]:
-        """Process batch (delegates to ResultUtils)."""
-        return cls.ResultUtils.batch_process(items, processor)
+    generate_uuid = Generators.generate_uuid
+    generate_id = Generators.generate_id
+    generate_entity_id = Generators.generate_entity_id
+    generate_correlation_id = Generators.generate_correlation_id
+    truncate = TextProcessor.truncate
+    format_duration = TimeUtils.format_duration
+    track_performance = Performance.track_performance
+    safe_json_parse = ProcessingUtils.safe_json_parse
+    safe_json_stringify = ProcessingUtils.safe_json_stringify
+    parse_json_to_model = ProcessingUtils.parse_json_to_model
+    safe_int = Conversions.safe_int
+    batch_process = ResultUtils.batch_process
 
     # Additional methods needed by legacy compatibility layer
     @classmethod

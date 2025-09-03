@@ -1,8 +1,4 @@
-"""Extended comprehensive tests for FlextCore to boost coverage from 51% to higher.
-
-Focuses on testing uncovered methods and edge cases to maximize code coverage
-while providing real functionality validation.
-"""
+"""Extended comprehensive tests for FlextCore."""
 
 import math
 from enum import StrEnum
@@ -185,7 +181,9 @@ class TestFlextCoreEntityCreation:
                 """Validate business rules for the user."""
                 return FlextResult[None].ok(None)
 
-        result = core.create_entity(TestUser, name="John Doe", email="john@example.com")
+        result = core.create_entity(
+            TestUser, id="user-123", name="John Doe", email="john@example.com"
+        )
         assert result.success
         user = result.unwrap()
         assert user.name == "John Doe"

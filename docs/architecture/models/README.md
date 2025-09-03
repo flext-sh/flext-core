@@ -51,7 +51,7 @@ The `FlextModels` module is a **production-ready, enterprise-grade domain modeli
 ```mermaid
 graph TB
     subgraph "FlextModels Architecture"
-        BaseConfig[BaseConfig<br/>Pydantic Configuration]
+        Config[Config<br/>Pydantic Configuration]
 
         Entity[Entity<br/>Mutable with Identity]
         Value[Value<br/>Immutable Value Objects]
@@ -78,13 +78,13 @@ graph TB
         FlextConstants[FlextConstants<br/>Domain Constants]
     end
 
-    BaseConfig --> Entity
-    BaseConfig --> Value
+    Config --> Entity
+    Config --> Value
     Entity --> AggregateRoot
 
-    BaseConfig --> Payload
-    BaseConfig --> Event
-    BaseConfig --> Message
+    Config --> Payload
+    Config --> Event
+    Config --> Message
 
     Entity --> DDD
     Value --> DDD
@@ -92,9 +92,9 @@ graph TB
     Payload --> MessageDriven
 
     Entity --> FlextResult
-    BaseConfig --> Pydantic
+    Config --> Pydantic
     Entity --> FlextTypes
-    BaseConfig --> FlextConstants
+    Config --> FlextConstants
 ```
 
 ## 🔍 Implementation Analysis

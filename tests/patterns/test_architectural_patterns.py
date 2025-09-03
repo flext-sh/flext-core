@@ -54,7 +54,7 @@ class TestCleanArchitecturePatterns:
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(FlextModels.BaseConfig):
+        class CreateUserCommand(FlextModels.Config):
             """Application command."""
 
             name: str
@@ -259,7 +259,7 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(FlextModels.BaseConfig):
+        class UpdateUserCommand(FlextModels.Config):
             """Command to update user information."""
 
             user_id: str
@@ -293,7 +293,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(FlextModels.BaseConfig):
+        class GetUserQuery(FlextModels.Config):
             """Query to get user information."""
 
             user_id: str
@@ -358,19 +358,15 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "email",
-                            "provider": "smtp",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "email",
+                        "provider": "smtp",
+                    })
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok(
-                        {
-                            "type": "sms",
-                            "provider": "twilio",
-                        }
-                    )
+                    return FlextResult[dict[str, str]].ok({
+                        "type": "sms",
+                        "provider": "twilio",
+                    })
                 return FlextResult[dict[str, str]].fail(
                     f"Unknown service type: {service_type}"
                 )
@@ -515,14 +511,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(FlextModels.BaseConfig):
+        class UserCreatedEvent(FlextModels.Config):
             """Domain event for user creation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(FlextModels.BaseConfig):
+        class UserUpdatedEvent(FlextModels.Config):
             """Domain event for user updates."""
 
             user_id: str
@@ -536,7 +532,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
-                self.processed_events: list[FlextModels.BaseConfig] = []
+                self.processed_events: list[FlextModels.Config] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""

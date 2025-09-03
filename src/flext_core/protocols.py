@@ -718,42 +718,7 @@ class FlextProtocols:
     # COMPATIBILITY LAYER - Optimized aliases for hierarchical access
     # =========================================================================
 
-    # Direct access to hierarchical protocols
-    Callable = Foundation.Callable
-    Validator = Foundation.Validator
-    ErrorHandler = Foundation.ErrorHandler
-    Factory = Foundation.Factory
-    AsyncFactory = Foundation.AsyncFactory
-    HasToDictBasic = Foundation.HasToDictBasic
-    HasToDict = Foundation.HasToDict
-    SupportsDynamicAttributes = Foundation.SupportsDynamicAttributes
-
-    # Domain layer access
-    Service = Domain.Service
-    Repository = Domain.Repository
-    DomainEvent = Domain.DomainEvent
-    EventStore = Domain.EventStore
-
-    # Application layer access
-    Handler = Application.Handler
-    MessageHandler = Application.MessageHandler
-    ValidatingHandler = Application.ValidatingHandler
-    AuthorizingHandler = Application.AuthorizingHandler
-    EventProcessor = Application.EventProcessor
-    UnitOfWork = Application.UnitOfWork
-
-    # Infrastructure layer access
-    Connection = Infrastructure.Connection
-    Auth = Infrastructure.Auth
-    Configurable = Infrastructure.Configurable
-    LoggerProtocol = Infrastructure.LoggerProtocol
-
-    # Extensions layer access
-    Plugin = Extensions.Plugin
-    PluginContext = Extensions.PluginContext
-    Middleware = Extensions.Middleware
-    AsyncMiddleware = Extensions.AsyncMiddleware
-    Observability = Extensions.Observability
+    # NOTE: Aliases removed - use direct hierarchical access like FlextProtocols.Foundation.Callable
 
     # =========================================================================
     # CONFIG - Protocol system configuration

@@ -40,7 +40,7 @@ FlextTypeAdapters presents **significant standardization opportunities** across 
 ```python
 # Current FlextModels Pattern
 class FlextModels:
-    class BaseConfig(BaseModel):
+    class Config(BaseModel):
         # Manual configuration
         model_config = ConfigDict(
             str_strip_whitespace=True,
@@ -51,7 +51,7 @@ class FlextModels:
 
 # Enhanced with FlextTypeAdapters
 class FlextModels:
-    class BaseConfig(BaseModel):
+    class Config(BaseModel):
         # Enhanced with FlextTypeAdapters integration
         @classmethod
         def create_adapter(cls):

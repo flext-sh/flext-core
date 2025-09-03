@@ -139,16 +139,16 @@ def _print_order(order: Order) -> None:
 
 
 def _demo_command_pattern(
-    customer_id: FlextTypes.Core.String,
-    order_items: list[dict[FlextTypes.Core.String, FlextTypes.Core.String]],
+    customer_id: str,
+    order_items: list[dict[str, str]],
 ) -> None:
     class CreateOrderCommand:
         """Command pattern for order creation with FlextTypes annotations."""
 
         def __init__(
             self,
-            customer_id: FlextTypes.Core.String,
-            items: list[dict[FlextTypes.Core.String, FlextTypes.Core.String]],
+            customer_id: str,
+            items: list[dict[str, str]],
         ) -> None:
             self.customer_id = customer_id
             self.items = items
@@ -172,7 +172,7 @@ def _demo_repository_pattern(order: Order) -> object:
         """Repository pattern implementation with FlextTypes."""
 
         def __init__(self) -> None:
-            self.orders: dict[FlextTypes.Core.String, Order] = {}
+            self.orders: dict[str, Order] = {}
 
         def save(self, order: Order) -> FlextResult[Order]:
             """Save order with FlextResult error handling."""
@@ -180,7 +180,7 @@ def _demo_repository_pattern(order: Order) -> object:
             self.orders[order_id] = order
             return FlextResult[Order].ok(order)
 
-        def get_by_id(self, order_id: FlextTypes.Core.String) -> FlextResult[Order]:
+        def get_by_id(self, order_id: str) -> FlextResult[Order]:
             """Retrieve order by ID with FlextResult."""
             if order_id in self.orders:
                 return FlextResult[Order].ok(self.orders[order_id])

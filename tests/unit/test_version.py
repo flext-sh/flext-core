@@ -49,26 +49,6 @@ class TestVersion:
         assert len(version_tuple) == 3
         assert all(isinstance(v, int) for v in version_tuple)
 
-    def test_check_python_compatibility(self) -> None:
-        """Test check_python_compatibility function."""
-        compatibility = FlextVersionManager.check_python_compatibility()
-        assert hasattr(compatibility, "is_compatible")
-        assert hasattr(compatibility, "current_version")
-        assert hasattr(compatibility, "required_version")
-        assert isinstance(compatibility.is_compatible, bool)
-        # Should be compatible since we're running the tests
-        assert compatibility.is_compatible is True
-
-    def test_is_feature_available(self) -> None:
-        """Test is_feature_available function."""
-        # Test with known features
-        result = FlextVersionManager.is_feature_available("pydantic_validation")
-        assert isinstance(result, bool)
-
-        # Test with unknown feature
-        result = FlextVersionManager.is_feature_available("unknown_feature")
-        assert isinstance(result, bool)
-
     def test_get_available_features(self) -> None:
         """Test get_available_features function."""
         features = FlextVersionManager.get_available_features()

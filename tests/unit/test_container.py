@@ -1,9 +1,4 @@
-"""Comprehensive test suite for FlextContainer with 100% coverage.
-
-Modern test implementation using Python 3.13+, Pydantic, hypothesis testing, and complete
-tests/support integration. Achieves near 100% coverage with type-safe testing patterns
-and comprehensive validation.
-"""
+"""Comprehensive test suite for FlextContainer with 100% coverage."""
 
 from __future__ import annotations
 
@@ -19,7 +14,6 @@ import pytest
 from hypothesis import assume, given, strategies as st
 from pydantic import Field
 
-# from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
 from flext_core import FlextContainer, FlextResult, FlextTypes
 from flext_core.models import FlextModels
 from tests.support import (
@@ -57,7 +51,7 @@ class ConfigurationSummary(TypedDict, total=False):
 class ContainerTestModels:
     """Pydantic models for comprehensive container testing."""
 
-    class ServiceConfig(FlextModels.BaseConfig):
+    class ServiceConfig(FlextModels.Config):
         """Service configuration model."""
 
         name: str = Field(..., min_length=1, max_length=100)
@@ -73,7 +67,7 @@ class ContainerTestModels:
             validate_assignment = True
             str_strip_whitespace = True
 
-    class DatabaseConfig(FlextModels.BaseConfig):
+    class DatabaseConfig(FlextModels.Config):
         """Database configuration model."""
 
         url: str = Field(..., pattern=r"^[a-zA-Z][a-zA-Z0-9+.-]*://.*")
@@ -82,7 +76,7 @@ class ContainerTestModels:
         echo: bool = Field(default=False)
         ssl_required: bool = Field(default=True)
 
-    class ComplexService(FlextModels.BaseConfig):
+    class ComplexService(FlextModels.Config):
         """Complex service with dependencies."""
 
         id: str = Field(default_factory=lambda: str(uuid.uuid4()))

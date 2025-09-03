@@ -1,8 +1,4 @@
-"""Testes para FlextCore - classe única seguindo padrões FLEXT.
-
-Testa métodos FlextCore que retornam FlextResult[T] usando dados reais,
-sem mocks, seguindo exatamente os padrões railway-oriented do FLEXT.
-"""
+"""Testes para FlextCore."""
 
 from flext_core import FlextCore, FlextResult
 

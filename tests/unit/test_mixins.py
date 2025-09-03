@@ -611,9 +611,9 @@ class TestFinalHundredPercentCoverage:
 
     def test_logging_line_49_basemodel_normalization(self) -> None:
         """Test logging line 49: BaseModel normalization."""
-        # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+        # from pydantic import BaseModel  # Using FlextModels.Config instead
 
-        class TestModel(FlextModels.BaseConfig):
+        class TestModel(FlextModels.Config):
             value: str = "test"
 
         test_model = TestModel()
@@ -624,9 +624,9 @@ class TestFinalHundredPercentCoverage:
 
     def test_logging_line_57_list_normalization(self) -> None:
         """Test logging line 57: List normalization path."""
-        # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+        # from pydantic import BaseModel  # Using FlextModels.Config instead
 
-        class TestItem(FlextModels.BaseConfig):
+        class TestItem(FlextModels.Config):
             name: str = "item"
 
         test_list = [TestItem(), TestItem()]
@@ -912,9 +912,9 @@ class TestSpecificUncoveredLines:
 
     def test_logging_line_49_basemodel_context(self) -> None:
         """Test logging line 49 - BaseModel in context normalization."""
-        # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+        # from pydantic import BaseModel  # Using FlextModels.Config instead
 
-        class PreciseTestModel(FlextModels.BaseConfig):
+        class PreciseTestModel(FlextModels.Config):
             value: str
             number: int
 
@@ -930,9 +930,9 @@ class TestSpecificUncoveredLines:
 
     def test_logging_line_57_list_basemodel_normalization(self) -> None:
         """Test logging line 57 - list with BaseModel items."""
-        # from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
+        # from pydantic import BaseModel  # Using FlextModels.Config instead
 
-        class ListItemModel(FlextModels.BaseConfig):
+        class ListItemModel(FlextModels.Config):
             name: str
             id: int
 

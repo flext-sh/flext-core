@@ -724,7 +724,7 @@ class FlextApiModels(FlextModels):
 
     # API-specific model definitions
     @dataclass
-    class APIResponse(BaseConfig):
+    class APIResponse(Config):
         """Standard API response format."""
         success: bool
         message: str
@@ -733,7 +733,7 @@ class FlextApiModels(FlextModels):
         timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @dataclass
-    class APIRequest(BaseConfig):
+    class APIRequest(Config):
         """Standard API request format."""
         action: str
         parameters: Dict[str, object] = field(default_factory=dict)
@@ -741,7 +741,7 @@ class FlextApiModels(FlextModels):
         timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @dataclass
-    class UserModel(BaseConfig):
+    class UserModel(Config):
         """User model for API operations."""
         id: str
         name: str
@@ -751,7 +751,7 @@ class FlextApiModels(FlextModels):
         updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @dataclass
-    class PaginationResponse(BaseConfig):
+    class PaginationResponse(Config):
         """Paginated response format."""
         items: List[Dict[str, object]]
         page: int = 1

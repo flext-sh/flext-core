@@ -1,12 +1,4 @@
-"""Comprehensive tests for flext-core real functionality using available infrastructure.
-
-Tests core functionality with real use cases:
-- FlextResult with all edge cases and scenarios
-- FlextCommands with real business logic
-- FlextConfig with environment scenarios
-- Integration between components
-- Performance testing where available
-"""
+"""Comprehensive tests for flext-core real functionality using available infrastructure."""
 
 from __future__ import annotations
 
@@ -17,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-# from pydantic import BaseModel  # Using FlextModels.BaseConfig instead
 from flext_core import (
     FlextCommands,
     FlextConfig,
@@ -31,7 +22,7 @@ from flext_core.models import FlextModels
 # =============================================================================
 
 
-class User(FlextModels.BaseConfig):
+class User(FlextModels.Config):
     """User domain model."""
 
     id: str
@@ -41,7 +32,7 @@ class User(FlextModels.BaseConfig):
     age: int = 18
 
 
-class CreateUserCommand(FlextModels.BaseConfig):
+class CreateUserCommand(FlextModels.Config):
     """Command to create a user."""
 
     username: str

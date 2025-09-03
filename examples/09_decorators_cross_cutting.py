@@ -68,7 +68,7 @@ logger = FlextLogger("flext.examples.decorators")
 # Constants using FlextConstants hierarchical access
 MAX_AGE: int = 150
 MIN_AGE: int = 0
-SUCCESS_THRESHOLD: FlextTypes.Core.Float = 0.4
+SUCCESS_THRESHOLD: float = 0.4
 MIN_USER_CREATION_ARGS: int = 3
 
 # =============================================================================
@@ -101,7 +101,7 @@ class ValidationProtocol(FlextProtocols.Foundation.Validator[int]):
 # =============================================================================
 
 
-def demonstrate_cache_decorator() -> FlextResult[FlextTypes.Core.String]:
+def demonstrate_cache_decorator() -> FlextResult[str]:
     """Demonstrate modern cache decorator with maximum FLEXT integration.
 
     Returns:
@@ -119,7 +119,7 @@ def demonstrate_cache_decorator() -> FlextResult[FlextTypes.Core.String]:
             return FlextResult[int].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
         # Simulate expensive work using centralized delay
-        delay_ms: FlextTypes.Core.Float = 100.0
+        delay_ms: float = 100.0
         time.sleep(delay_ms / 1000.0)
 
         result: int = x * x * x
@@ -135,7 +135,7 @@ def demonstrate_cache_decorator() -> FlextResult[FlextTypes.Core.String]:
         first_duration = time.time() - start_time
 
         if first_result.is_failure:
-            return FlextResult[FlextTypes.Core.String].fail(
+            return FlextResult[str].fail(
                 f"First calculation failed: {first_result.error}"
             )
 
@@ -145,28 +145,28 @@ def demonstrate_cache_decorator() -> FlextResult[FlextTypes.Core.String]:
         second_duration = time.time() - start_time
 
         if second_result.is_failure:
-            return FlextResult[FlextTypes.Core.String].fail(
+            return FlextResult[str].fail(
                 f"Second calculation failed: {second_result.error}"
             )
 
         # Verify cache effectiveness using FlextUtilities
         cache_effective = second_duration < (first_duration * 0.1)
 
-        status_msg: FlextTypes.Core.String = (
+        status_msg: str = (
             f"Cache demo completed: first={first_duration:.4f}s, "
             f"second={second_duration:.4f}s, effective={cache_effective}"
         )
 
         logger.info(status_msg)
-        return FlextResult[FlextTypes.Core.String].ok(status_msg)
+        return FlextResult[str].ok(status_msg)
 
     except Exception as e:
         error_msg = f"Cache demo failed: {e}"
         logger.exception(error_msg)
-        return FlextResult[FlextTypes.Core.String].fail(error_msg)
+        return FlextResult[str].fail(error_msg)
 
 
-def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
+def demonstrate_complete_decorator() -> FlextResult[str]:
     """Demonstrate complete decorator composition with maximum FLEXT integration.
 
     Returns:
@@ -186,7 +186,7 @@ def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
                 )
 
             # Simulate processing with centralized timing
-            processing_delay: FlextTypes.Core.Float = 0.05
+            processing_delay: float = 0.05
             time.sleep(processing_delay)
 
             # Business logic with simulated success/failure for demo
@@ -229,27 +229,23 @@ def demonstrate_complete_decorator() -> FlextResult[FlextTypes.Core.String]:
 
         if operation_result.is_success:
             result_data = operation_result.unwrap()
-            success_msg: FlextTypes.Core.String = (
+            success_msg: str = (
                 f"Operation completed: {result_data.get('status', 'unknown')}"
             )
             logger.info(success_msg)
-            return FlextResult[FlextTypes.Core.String].ok(success_msg)
+            return FlextResult[str].ok(success_msg)
 
-        failure_msg: FlextTypes.Core.String = (
-            f"Operation failed: {operation_result.error}"
-        )
+        failure_msg: str = f"Operation failed: {operation_result.error}"
         logger.warning(failure_msg)
-        return FlextResult[FlextTypes.Core.String].ok(
-            f"Handled failure: {operation_result.error}"
-        )
+        return FlextResult[str].ok(f"Handled failure: {operation_result.error}")
 
     except Exception as e:
         error_msg = f"Decorator demo failed: {e}"
         logger.exception(error_msg)
-        return FlextResult[FlextTypes.Core.String].fail(error_msg)
+        return FlextResult[str].fail(error_msg)
 
 
-def demonstrate_safe_result_decorator() -> FlextResult[FlextTypes.Core.String]:
+def demonstrate_safe_result_decorator() -> FlextResult[str]:
     """Demonstrate safe result decorator with maximum FLEXT integration.
 
     Returns:
@@ -258,7 +254,7 @@ def demonstrate_safe_result_decorator() -> FlextResult[FlextTypes.Core.String]:
     """
 
     @FlextDecorators.Reliability.safe_result
-    def risky_operation(data: FlextTypes.Core.String) -> FlextTypes.Core.String:
+    def risky_operation(data: str) -> str:
         """Risky operation using FlextTypes that might fail."""
         # Use centralized error patterns
         if data == "fail":
@@ -278,16 +274,14 @@ def demonstrate_safe_result_decorator() -> FlextResult[FlextTypes.Core.String]:
         failure_result = risky_operation("fail")
         logger.info(f"Failure case result: {failure_result}")
 
-        status_msg: FlextTypes.Core.String = (
-            "Safe result decorator demo completed successfully"
-        )
+        status_msg: str = "Safe result decorator demo completed successfully"
         logger.info(status_msg)
-        return FlextResult[FlextTypes.Core.String].ok(status_msg)
+        return FlextResult[str].ok(status_msg)
 
     except Exception as e:
         error_msg = f"Safe result decorator demo failed: {e}"
         logger.exception(error_msg)
-        return FlextResult[FlextTypes.Core.String].fail(error_msg)
+        return FlextResult[str].fail(error_msg)
 
 
 def demonstrate_user_creation_with_modern_decorators() -> None:
@@ -381,7 +375,7 @@ def demonstrate_decorator_categories() -> None:
 # =============================================================================
 
 
-def main() -> FlextResult[FlextTypes.Core.String]:
+def main() -> FlextResult[str]:
     """🎯 Example 09: Modern Enterprise Decorators with maximum FLEXT integration.
 
     Demonstrates all decorator patterns using centralized FlextResult handling
@@ -395,7 +389,7 @@ def main() -> FlextResult[FlextTypes.Core.String]:
 
     success_count: int = 0
     total_operations: int = 5
-    operation_results: list[FlextTypes.Core.String] = []
+    operation_results: list[str] = []
 
     try:
         # Execute all decorator demonstrations with FlextResult handling
@@ -426,23 +420,19 @@ def main() -> FlextResult[FlextTypes.Core.String]:
             demonstrate_user_creation_with_modern_decorators()
             demonstrate_decorator_categories()
             success_count += 2
-            operation_results.extend(
-                [
-                    "✅ User Creation: Completed successfully",
-                    "✅ Decorator Categories: Completed successfully",
-                ]
-            )
+            operation_results.extend([
+                "✅ User Creation: Completed successfully",
+                "✅ Decorator Categories: Completed successfully",
+            ])
         except Exception as e:
-            operation_results.extend(
-                [
-                    f"❌ User Creation: Exception {e}",
-                    f"❌ Decorator Categories: Exception {e}",
-                ]
-            )
+            operation_results.extend([
+                f"❌ User Creation: Exception {e}",
+                f"❌ Decorator Categories: Exception {e}",
+            ])
             logger.exception("Additional demonstrations failed")
 
         # Calculate success rate using FlextTypes
-        success_rate: FlextTypes.Core.Float = (success_count / total_operations) * 100.0
+        success_rate: float = (success_count / total_operations) * 100.0
 
         # Generate comprehensive summary using centralized patterns
         summary_lines = [
@@ -454,25 +444,25 @@ def main() -> FlextResult[FlextTypes.Core.String]:
         ]
         summary_lines.extend([f"  {result}" for result in operation_results])
 
-        final_summary: FlextTypes.Core.String = "\n".join(summary_lines)
+        final_summary: str = "\n".join(summary_lines)
 
         if success_count >= (total_operations * 0.8):  # 80% success threshold
             logger.info(
                 f"Example 09 completed successfully with "
                 f"{success_rate:.1f}% success rate"
             )
-            return FlextResult[FlextTypes.Core.String].ok(final_summary)
+            return FlextResult[str].ok(final_summary)
         logger.warning(
             f"Example 09 completed with suboptimal {success_rate:.1f}% success rate"
         )
-        return FlextResult[FlextTypes.Core.String].fail(
+        return FlextResult[str].fail(
             f"Suboptimal execution: {success_rate:.1f}% success rate\n{final_summary}"
         )
 
     except Exception as e:
         error_summary = f"Example 09 failed with critical exception: {e}"
         logger.exception(error_summary)
-        return FlextResult[FlextTypes.Core.String].fail(error_summary)
+        return FlextResult[str].fail(error_summary)
 
 
 if __name__ == "__main__":

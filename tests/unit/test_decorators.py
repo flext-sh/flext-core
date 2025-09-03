@@ -1,7 +1,4 @@
-"""Extended test coverage for decorators.py module.
-
-Comprehensive tests to increase coverage of FlextDecorators components.
-"""
+"""Extended test coverage for decorators.py module."""
 
 from __future__ import annotations
 

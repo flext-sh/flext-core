@@ -1,11 +1,4 @@
-"""Comprehensive test coverage for FlextResult railway-oriented programming.
-
-This module provides complete test coverage for result.py following FLEXT patterns:
-- Single TestFlextResultComprehensiveCoverage class per module
-- Real tests without mocks, testing actual behavior
-- Coverage of all FlextResult methods and edge cases
-- Railway-oriented programming patterns validation
-"""
+"""Comprehensive test coverage for FlextResult railway-oriented programming."""
 
 from __future__ import annotations
 

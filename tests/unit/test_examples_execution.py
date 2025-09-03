@@ -1,8 +1,4 @@
-"""Comprehensive tests for examples execution and functionality.
-
-Tests that all examples in the examples/ directory can be imported
-and executed successfully, verifying their core functionality works.
-"""
+"""Comprehensive tests for examples execution and functionality."""
 
 import subprocess
 import sys

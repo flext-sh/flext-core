@@ -68,9 +68,9 @@ class FlextApiValidationService:
 
     def validate_api_request_comprehensive(
         self,
-        request_data: FlextTypes.Core.Dict,
+        request_data: dict[str, object],
         headers: dict[str, str]
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate API request with complete hierarchical validation."""
 
         # Service-level validation
@@ -96,8 +96,8 @@ class FlextApiValidationService:
 
     def validate_with_performance_optimization(
         self,
-        request_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        request_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate with performance caching for high-throughput scenarios."""
 
         cache_key = f"api_validation_{hash(str(request_data))}"
@@ -171,8 +171,8 @@ class FlextMeltanoValidationService:
 
     def validate_singer_records_batch(
         self,
-        records: list[FlextTypes.Core.Dict]
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        records: list[dict[str, object]]
+    ) -> FlextResult[list[dict[str, object]]]:
         """Validate Singer records with batch processing and caching."""
 
         validated_records = []
@@ -200,8 +200,8 @@ class FlextMeltanoValidationService:
 
     def validate_tap_configuration(
         self,
-        tap_config: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        tap_config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate tap configuration with business rules."""
 
         # Tap configuration schema
@@ -227,8 +227,8 @@ class FlextMeltanoValidationService:
 
     def _validate_tap_business_rules(
         self,
-        tap_config: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        tap_config: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate tap-specific business rules."""
 
         tap_name = tap_config["name"]
@@ -303,9 +303,9 @@ class FlextWebValidationService:
 
     def validate_web_request(
         self,
-        request_data: FlextTypes.Core.Dict,
-        session_data: FlextTypes.Core.Dict
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        request_data: dict[str, object],
+        session_data: dict[str, object]
+    ) -> FlextResult[dict[str, object]]:
         """Validate web request with session and security checks."""
 
         # Web request validation
@@ -488,9 +488,9 @@ class FlextETLDataValidation:
 
     @staticmethod
     def validate_record_batch(
-        records: list[FlextTypes.Core.Dict],
+        records: list[dict[str, object]],
         schema_validator: FlextValidations.Advanced.SchemaValidator
-    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+    ) -> FlextResult[list[dict[str, object]]]:
         """Validate ETL record batch with performance optimization."""
 
         performance_validator = FlextValidations.Advanced.PerformanceValidator()
@@ -518,10 +518,10 @@ class FlextConfigurationValidation:
 
     @staticmethod
     def validate_service_config(
-        config: FlextTypes.Core.Dict,
+        config: dict[str, object],
         required_fields: list[str],
         optional_fields: list[str] = None
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+    ) -> FlextResult[dict[str, object]]:
         """Validate service configuration with standard patterns."""
 
         config_validator = FlextValidations.Service.ConfigValidator()

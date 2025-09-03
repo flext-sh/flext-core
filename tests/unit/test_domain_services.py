@@ -1,7 +1,4 @@
-"""Fixed comprehensive tests for FlextDomainService to achieve 100% coverage.
-
-Tests all methods, configurations, error handling, and integration patterns with correct assertions.
-"""
+"""Fixed comprehensive tests for FlextDomainService to achieve 100% coverage."""
 
 import pytest
 from pydantic import Field
@@ -19,12 +16,10 @@ class TestUserService(FlextDomainService[dict[str, str]]):
 
     def execute(self) -> FlextResult[dict[str, str]]:
         """Execute user operation."""
-        return FlextResult[dict[str, str]].ok(
-            {
-                "user_id": self.user_id,
-                "email": self.email,
-            }
-        )
+        return FlextResult[dict[str, str]].ok({
+            "user_id": self.user_id,
+            "email": self.email,
+        })
 
 
 class TestComplexService(FlextDomainService[str]):
@@ -361,10 +356,14 @@ class TestDomainServicesFixed:
         """Test service logging through mixins."""
         service = TestUserService(user_id="123", email="test@example.com")
 
-        # Test logging methods from mixins
-        assert hasattr(service, "get_logger")
-        logger = service.get_logger()
-        assert logger is not None
+        # Test logging methods that are actually available
+        assert hasattr(service, "log_info")
+        assert hasattr(service, "log_debug")
+        assert hasattr(service, "log_error")
+
+        # Test that logging methods can be called without error
+        service.log_info("Test info message")
+        service.log_debug("Test debug message")
 
     def test_complex_service_execution_success(self) -> None:
         """Test complex service execution with all validations."""
@@ -410,7 +409,7 @@ class TestDomainServicesFixed:
         # Test all expected parent classes
         from flext_core import FlextMixins, FlextModels
 
-        assert isinstance(service, FlextModels.BaseConfig)
+        assert isinstance(service, FlextModels.Config)
         assert isinstance(service, FlextMixins.Serializable)
         assert isinstance(service, FlextMixins.Loggable)
 
@@ -471,7 +470,7 @@ class TestDomainServiceStaticMethods:
         assert "NoneType" in result.error or "Configuration" in result.error
 
         # Test with non-dict - should fail
-        result = FlextDomainService.configure_domain_services_system("invalid")  # type: ignore[arg-type]
+        result = FlextDomainService.configure_domain_services_system("invalid")
         assert result.success is False
 
     def test_get_domain_services_system_config(self) -> None:

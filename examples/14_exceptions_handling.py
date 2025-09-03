@@ -62,28 +62,28 @@ class User:
 
     def __init__(
         self,
-        user_id: FlextTypes.Domain.EntityId,
-        name: FlextTypes.Core.String,
-        email: FlextTypes.Core.String,
+        user_id: str,
+        name: str,
+        email: str,
         age: int | None = None,
     ) -> None:
         """Initialize user with proper FlextTypes annotations.
 
         Args:
-            user_id: Unique identifier using FlextTypes.Domain.EntityId
-            name: User display name using FlextTypes.Core.String
-            email: User email using FlextTypes.Core.String
+            user_id: Unique identifier using str
+            name: User display name using str
+            email: User email using str
             age: Optional user age using int
 
         """
-        self.user_id: FlextTypes.Domain.EntityId = user_id
-        self.name: FlextTypes.Core.String = name
-        self.email: FlextTypes.Core.String = email
+        self.user_id: str = user_id
+        self.name: str = name
+        self.email: str = email
         self.age: int | None = age
-        self.is_active: FlextTypes.Core.Boolean = True
+        self.is_active: bool = True
 
-    def __repr__(self) -> FlextTypes.Core.String:
-        """Return string representation using FlextTypes.Core.String."""
+    def __repr__(self) -> str:
+        """Return string representation using str."""
         return f"User(id={self.user_id}, name='{self.name}', email='{self.email}')"
 
 
@@ -96,27 +96,27 @@ class DatabaseConnection:
 
     def __init__(
         self,
-        host: FlextTypes.Core.String,
+        host: str,
         port: int,
-        database: FlextTypes.Core.String,
+        database: str,
     ) -> None:
         """Initialize database connection with FlextTypes annotations.
 
         Args:
-            host: Database host using FlextTypes.Core.String
+            host: Database host using str
             port: Database port using int
-            database: Database name using FlextTypes.Core.String
+            database: Database name using str
 
         """
-        self.host: FlextTypes.Core.String = host
+        self.host: str = host
         self.port: int = port
-        self.database: FlextTypes.Core.String = database
-        self.connected: FlextTypes.Core.Boolean = False
+        self.database: str = database
+        self.connected: bool = False
 
     def connect(self) -> FlextResult[None]:
         """Connect to database using FlextResult pattern."""
         if self.host == "unreachable-host":
-            error_msg: FlextTypes.Core.String = "Database connection failed"
+            error_msg: str = "Database connection failed"
             return FlextResult[None].fail(
                 error_msg,
                 error_code=FlextConstants.Errors.CONNECTION_ERROR,
@@ -125,25 +125,23 @@ class DatabaseConnection:
         self.connected = True
         return FlextResult[None].ok(None)
 
-    def authenticate(
-        self, username: FlextTypes.Core.String, password: FlextTypes.Core.String
-    ) -> FlextResult[None]:
+    def authenticate(self, username: str, password: str) -> FlextResult[None]:
         """Authenticate with database using FlextResult pattern."""
         if not self.connected:
-            error_msg: FlextTypes.Core.String = "Cannot authenticate without connection"
+            error_msg: str = "Cannot authenticate without connection"
             return FlextResult[None].fail(
                 error_msg,
                 error_code=FlextConstants.Errors.OPERATION_ERROR,
             )
 
         # Demo credentials - in production use environment variables or secure vault
-        demo_username: FlextTypes.Core.String = "REDACTED_LDAP_BIND_PASSWORD"
+        demo_username: str = "REDACTED_LDAP_BIND_PASSWORD"
         # Password from environment or demo fallback
-        demo_password: FlextTypes.Core.String = os.getenv(
+        demo_password: str = os.getenv(
             "FLEXT_DEMO_DB_PASSWORD", "demo_secret_not_for_production"
         )
         if username != demo_username or password != demo_password:
-            msg: FlextTypes.Core.String = "Invalid database credentials"
+            msg: str = "Invalid database credentials"
             return FlextResult[None].fail(
                 msg,
                 error_code=FlextConstants.Errors.AUTHENTICATION_ERROR,
@@ -165,23 +163,21 @@ class UserValidationService:
     """
 
     @staticmethod
-    def _ensure_string_type(
-        value: FlextTypes.Core.Object, field: FlextTypes.Core.String
-    ) -> FlextResult[FlextTypes.Core.String]:
+    def _ensure_string_type(value: object, field: str) -> FlextResult[str]:
         """Ensure value is string using FlextResult pattern."""
         if not isinstance(value, str):
-            msg: FlextTypes.Core.String = f"{field} is not a string after validation"
-            return FlextResult[FlextTypes.Core.String].fail(
+            msg: str = f"{field} is not a string after validation"
+            return FlextResult[str].fail(
                 msg,
                 error_code=FlextConstants.Errors.TYPE_ERROR,
             )
-        return FlextResult[FlextTypes.Core.String].ok(value)
+        return FlextResult[str].ok(value)
 
     @staticmethod
-    def _validate_name_required(data: FlextTypes.Core.Dict) -> FlextResult[None]:
+    def _validate_name_required(data: dict[str, object]) -> FlextResult[None]:
         """Validate name field using FlextResult pattern."""
         if "name" not in data:
-            msg: FlextTypes.Core.String = "Name is required"
+            msg: str = "Name is required"
             return FlextResult[None].fail(
                 msg,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -190,22 +186,22 @@ class UserValidationService:
 
     @staticmethod
     def _validate_name_format(
-        name: FlextTypes.Core.Object,
-    ) -> FlextResult[FlextTypes.Core.String]:
+        name: object,
+    ) -> FlextResult[str]:
         """Validate name format using FlextResult pattern."""
         if not isinstance(name, str) or len(name.strip()) == 0:
-            msg: FlextTypes.Core.String = "Name must be a non-empty string"
-            return FlextResult[FlextTypes.Core.String].fail(
+            msg: str = "Name must be a non-empty string"
+            return FlextResult[str].fail(
                 msg,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
-        return FlextResult[FlextTypes.Core.String].ok(name)
+        return FlextResult[str].ok(name)
 
     @staticmethod
-    def _validate_email_required(data: FlextTypes.Core.Dict) -> FlextResult[None]:
+    def _validate_email_required(data: dict[str, object]) -> FlextResult[None]:
         """Validate email field using FlextResult pattern."""
         if "email" not in data:
-            msg: FlextTypes.Core.String = "Email is required"
+            msg: str = "Email is required"
             return FlextResult[None].fail(
                 msg,
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
@@ -264,9 +260,7 @@ class UserValidationService:
             error_msg = result.error or "Validation failed"
             raise ValueError(error_msg)
 
-    def _raise_name_format_error(
-        self, result: FlextResult[FlextTypes.Core.String]
-    ) -> None:
+    def _raise_name_format_error(self, result: FlextResult[str]) -> None:
         """Raise name format validation error."""
         error_msg = result.error or "Name format validation failed"
         raise ValueError(error_msg)

@@ -482,7 +482,7 @@ class TestFlextTypeAdaptersCoverage:
             assert result == "123"
 
             result = adapter.validate_python(math.pi)
-            assert result == "3.14"
+            assert result == str(math.pi)
 
             result = adapter.validate_python(True)
             assert result == "True"

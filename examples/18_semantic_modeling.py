@@ -36,10 +36,10 @@ class DatabaseConfig(FlextConfig):
     Uses FlextTypes.Core.* for maximum FLEXT integration and type safety.
     """
 
-    host: FlextTypes.Core.String = "localhost"
+    host: str = "localhost"
     port: int = 5432  # PostgreSQL default for generic example
-    database_name: FlextTypes.Core.String = "example_db"
-    username: FlextTypes.Core.String
+    database_name: str = "example_db"
+    username: str
     password: SecretStr
     max_connections: int = 10
 

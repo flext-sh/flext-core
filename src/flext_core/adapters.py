@@ -4,12 +4,6 @@ Provides efficient type adaptation capabilities including type conversion,
 validation pipeline, schema generation, and JSON/dict serialization. Built on
 Pydantic v2 TypeAdapter with FlextResult integration.
 
-Usage:
-    adapter = FlextTypeAdapters()
-    result = adapter.adapt_type({"name": "John", "age": 30}, Person)
-    schema_result = adapter.generate_schema(Person)
-    json_result = adapter.serialize_to_json(person, Person)
-
 """
 
 from __future__ import annotations
@@ -34,14 +28,6 @@ class FlextTypeAdapters:
     serialization, schema generation, and batch processing. Built on Pydantic v2 TypeAdapter
     with FlextResult integration.
 
-    Features: Type conversion, JSON serialization, schema generation, batch processing,
-    custom adapters registry, migration tools, and FlextResult error handling.
-
-    Usage:
-        string_adapter = FlextTypeAdapters.Foundation.create_string_adapter()
-        result = FlextTypeAdapters.Foundation.validate_with_adapter(adapter, value)
-        json_result = FlextTypeAdapters.Application.serialize_to_json(adapter, data)
-
     """
 
     class Config:
@@ -51,50 +37,6 @@ class FlextTypeAdapters:
         ecosystem, implementing production-ready configuration patterns for type adaptation,
         validation, serialization, and batch processing systems with full integration with
         FlextTypes.Config hierarchical architecture.
-
-        **ARCHITECTURAL ROLE**: Serves as the central configuration management system for all
-        type adapter operations in the FLEXT ecosystem, providing standardized configuration
-        patterns that ensure consistency, performance, and maintainability across all type
-        adaptation functionality.
-
-        Configuration Management Features:
-            - **System Configuration**: Centralized configuration for type adapter system initialization
-            - **Environment Adaptation**: Environment-specific configurations for development, staging, production
-            - **Performance Optimization**: Configurable performance tuning for different deployment scenarios
-            - **Runtime Configuration**: Dynamic configuration retrieval with thread-safe access
-            - **Validation Integration**: Configuration validation using FlextConstants.Config StrEnum classes
-            - **Error Handling**: Comprehensive error handling with FlextResult[T] patterns
-
-        Configuration Domains:
-            - **Foundation Configuration**: Basic adapter creation and validation settings
-            - **Domain Configuration**: Business-specific validation rules and constraints
-            - **Application Configuration**: Serialization, schema generation, and API integration settings
-            - **Infrastructure Configuration**: Registry, plugin architecture, and service discovery settings
-            - **Batch Processing**: High-performance batch operation configurations
-            - **Migration Configuration**: Legacy compatibility and migration tool settings
-
-        Performance Optimization Levels:
-            - **Low**: Minimal resource usage, basic functionality, development environments
-            - **Balanced**: Optimal balance of performance and resource usage for production
-            - **High**: Maximum performance with increased resource allocation for high-load scenarios
-            - **Extreme**: Ultra-high performance with maximum resource utilization for critical systems
-
-        Thread Safety:
-            All configuration operations are thread-safe and support concurrent access
-            without configuration state conflicts or data corruption.
-
-        Integration Features:
-            - **FlextTypes.Config**: Full integration with hierarchical configuration type system
-            - **FlextConstants.Config**: StrEnum-based configuration validation and standardization
-            - **FlextResult[T]**: Type-safe error handling for all configuration operations
-            - **Environment Variables**: Support for environment-based configuration overrides
-            - **Performance Monitoring**: Configuration impact tracking and optimization guidance
-
-        See Also:
-            - FlextTypes.Config: Hierarchical configuration type system
-            - FlextConstants.Config: Configuration validation and standardization
-            - FlextTypeAdapters: Main type adapter implementation
-            - FlextResult: Type-safe error handling system
 
         """
 
@@ -106,107 +48,6 @@ class FlextTypeAdapters:
             ecosystem, providing centralized configuration management for type adaptation,
             validation, serialization, and performance optimization with full validation
             using FlextConstants.Config StrEnum classes.
-
-            **ARCHITECTURAL IMPORTANCE**: This method serves as the primary configuration
-            entry point for the entire type adapters system, ensuring consistent configuration
-            patterns across all type adaptation functionality while providing efficient
-            validation and error handling.
-
-            Configuration Structure:
-                The config dictionary supports the following key categories:
-
-                Environment Configuration::
-                    {
-                        "environment": ConfigEnvironment.PRODUCTION,  # development, staging, production
-                        "config_source": ConfigSource.ENVIRONMENT,  # file, environment, runtime
-                        "validation_level": ValidationLevel.STRICT,  # basic, standard, strict, enterprise
-                    }
-
-                Type Adapter System Settings::
-                    {
-                        "adapter_registry_enabled": True,
-                        "batch_processing_enabled": True,
-                        "schema_generation_cache": True,
-                        "validation_strict_mode": True,
-                        "serialization_optimization": True,
-                        "error_recovery_enabled": True,
-                    }
-
-                Performance Optimization Configuration::
-                    {
-                        "performance_level": "balanced",  # low, balanced, high, extreme
-                        "cache_size": 1000,
-                        "batch_size": 100,
-                        "timeout_seconds": 30,
-                        "concurrent_operations": 10,
-                        "memory_optimization": True,
-                    }
-
-                Infrastructure Integration::
-                    {
-                        "plugin_architecture_enabled": True,
-                        "service_discovery_enabled": True,
-                        "health_check_enabled": True,
-                        "metrics_collection_enabled": True,
-                        "distributed_cache_enabled": False,
-                        "auto_scaling_enabled": False,
-                    }
-
-            Args:
-                config: Dictionary containing configuration parameters with StrEnum validation
-
-            Returns:
-                Configured type adapters system instance
-
-            Raises:
-                FlextException: When configuration validation fails with detailed error information
-
-            Performance Characteristics:
-                - **Time Complexity**: O(1) for basic configuration, O(n) for plugin system setup
-                - **Space Complexity**: O(1) for configuration storage, O(n) for registry initialization
-                - **Thread Safety**: Full thread-safe configuration with concurrent access support
-
-            Configuration Validation:
-                All configuration parameters are validated using FlextConstants.Config StrEnum
-                classes to ensure type safety and prevent configuration errors at runtime.
-
-            Error Handling:
-                Configuration failures provide detailed error messages with recovery guidance
-                and configuration validation reports for effective troubleshooting.
-
-            Usage Examples:
-                Basic system configuration::
-
-                    config = {
-                        "environment": "production",
-                        "validation_level": "strict",
-                        "performance_level": "high",
-                        "batch_processing_enabled": True,
-                    }
-
-                    system = FlextTypeAdapters.Config.configure_type_adapters_system(
-                        config
-                    )
-
-                Development environment configuration::
-
-                    dev_config = {
-                        "environment": "development",
-                        "validation_level": "standard",
-                        "performance_level": "low",
-                        "plugin_architecture_enabled": False,
-                    }
-
-                    dev_system = (
-                        FlextTypeAdapters.Config.configure_type_adapters_system(
-                            dev_config
-                        )
-                    )
-
-            See Also:
-                - get_type_adapters_system_config(): Retrieve current system configuration
-                - create_environment_type_adapters_config(): Environment-specific configuration
-                - optimize_type_adapters_performance(): Performance optimization settings
 
             """
             with contextlib.suppress(Exception):
@@ -244,92 +85,6 @@ class FlextTypeAdapters:
             ecosystem, providing comprehensive configuration information including environment
             settings, performance optimization levels, feature flags, and system status with
             full integration with FlextTypes.Config hierarchical architecture.
-
-            **ARCHITECTURAL ROLE**: Serves as the primary configuration retrieval method for
-            system monitoring, debugging, and runtime configuration management, ensuring
-            consistent access to configuration information across all type adapter operations.
-
-            Configuration Information Retrieved:
-                - **Environment Settings**: Current environment (development, staging, production)
-                - **Performance Configuration**: Active performance optimization level and settings
-                - **Feature Flags**: Status of optional features and capabilities
-                - **System Metrics**: Performance statistics and resource utilization information
-                - **Integration Status**: External service and dependency connection status
-                - **Error Handling**: Current error handling configuration and recovery settings
-
-            Returns:
-                Dictionary containing comprehensive system configuration information
-
-            Configuration Structure:
-                The returned configuration dictionary includes:
-
-                Environment Information::
-                    {
-                        "environment": "production",
-                        "config_source": "environment",
-                        "validation_level": "strict",
-                        "config_version": "1.0.0",
-                        "last_updated": "2024-01-15T10:30:00Z",
-                    }
-
-                Performance Configuration::
-                    {
-                        "performance_level": "high",
-                        "cache_size": 1000,
-                        "batch_size": 100,
-                        "timeout_seconds": 30,
-                        "concurrent_operations": 10,
-                        "memory_optimization": True,
-                    }
-
-                Feature Status::
-                    {
-                        "adapter_registry_enabled": True,
-                        "batch_processing_enabled": True,
-                        "schema_generation_cache": True,
-                        "validation_strict_mode": True,
-                        "serialization_optimization": True,
-                        "error_recovery_enabled": True,
-                    }
-
-                System Health::
-                    {
-                        "system_status": "healthy",
-                        "uptime_seconds": 86400,
-                        "total_operations": 50000,
-                        "error_rate_percentage": 0.1,
-                        "memory_usage_mb": 256,
-                        "cpu_usage_percentage": 15,
-                    }
-
-            Performance Characteristics:
-                - **Time Complexity**: O(1) for configuration retrieval
-                - **Space Complexity**: O(1) for configuration data
-                - **Thread Safety**: Full thread-safe configuration access
-
-            Thread Safety:
-                All configuration retrieval operations are thread-safe and provide
-                consistent configuration snapshots without data corruption or race conditions.
-
-            Usage Examples:
-                Basic configuration retrieval::
-
-                    config = FlextTypeAdapters.Config.get_type_adapters_system_config()
-                    print(f"Environment: {config['environment']}")
-                    print(f"Performance Level: {config['performance_level']}")
-
-                Health monitoring::
-
-                    config = FlextTypeAdapters.Config.get_type_adapters_system_config()
-                    if config["system_status"] == "healthy":
-                        print("System is operating normally")
-                    else:
-                        print(f"System issues detected: {config['issues']}")
-
-            See Also:
-                - configure_type_adapters_system(): System configuration management
-                - create_environment_type_adapters_config(): Environment-specific configuration
-                - optimize_type_adapters_performance(): Performance tuning operations
 
             """
             # Return default configuration structure
@@ -373,103 +128,6 @@ class FlextTypeAdapters:
             deployment environments (development, staging, production), implementing
             environment-appropriate performance optimization, validation levels, and feature
             configurations with comprehensive FlextTypes.Config integration.
-
-            **ARCHITECTURAL IMPORTANCE**: This method ensures that type adapters operate
-            with environment-appropriate settings, providing optimal performance and resource
-            utilization while maintaining the necessary validation and error handling levels
-            for each deployment scenario.
-
-            Environment Configurations:
-                **Development Environment**:
-                    - Relaxed validation for faster development cycles
-                    - Enhanced debugging and error reporting
-                    - Minimal performance optimization for resource conservation
-                    - Extended timeouts for debugging sessions
-                    - Comprehensive logging for development insights
-
-                **Staging Environment**:
-                    - Production-like configuration for testing
-                    - Balanced performance optimization
-                    - Enhanced monitoring and metrics collection
-                    - Realistic timeout and concurrency settings
-                    - Detailed error tracking for issue identification
-
-                **Production Environment**:
-                    - Maximum performance optimization
-                    - Strict validation for data integrity
-                    - Optimized resource utilization
-                    - Minimal logging overhead
-                    - Enhanced error handling and recovery
-
-            Args:
-                environment: Target environment name ("development", "staging", "production")
-
-            Returns:
-                Dictionary containing environment-optimized configuration parameters
-
-            Configuration Optimization:
-                Each environment receives configuration optimization for:
-
-                Performance Parameters::
-                    - Cache sizes optimized for environment resource constraints
-                    - Batch processing sizes for optimal throughput
-                    - Concurrent operation limits for system stability
-                    - Memory optimization settings for resource efficiency
-
-                Validation Settings::
-                    - Validation strictness appropriate for environment requirements
-                    - Error handling levels matching operational needs
-                    - Schema generation caching for performance optimization
-                    - Type safety enforcement based on environment criticality
-
-                Feature Configuration::
-                    - Plugin architecture enablement based on environment needs
-                    - Service discovery integration for distributed deployments
-                    - Health monitoring configuration for operational visibility
-                    - Metrics collection settings for performance tracking
-
-            Performance Characteristics:
-                - **Time Complexity**: O(1) for configuration generation
-                - **Space Complexity**: O(1) for configuration data
-                - **Resource Optimization**: Environment-specific resource allocation
-
-            Environment-Specific Optimizations:
-                **Development**: Maximum debugging capabilities, minimal resource usage
-                **Staging**: Production simulation with enhanced monitoring
-                **Production**: Maximum performance with strict validation and error handling
-
-            Usage Examples:
-                Development configuration::
-
-                    dev_config = FlextTypeAdapters.Config.create_environment_type_adapters_config(
-                        "development"
-                    )
-                    system = FlextTypeAdapters.Config.configure_type_adapters_system(
-                        dev_config
-                    )
-
-                Production configuration::
-
-                    prod_config = FlextTypeAdapters.Config.create_environment_type_adapters_config(
-                        "production"
-                    )
-                    system = FlextTypeAdapters.Config.configure_type_adapters_system(
-                        prod_config
-                    )
-
-                Staging configuration::
-
-                    stage_config = FlextTypeAdapters.Config.create_environment_type_adapters_config(
-                        "staging"
-                    )
-                    system = FlextTypeAdapters.Config.configure_type_adapters_system(
-                        stage_config
-                    )
-
-            See Also:
-                - configure_type_adapters_system(): Apply environment configuration
-                - optimize_type_adapters_performance(): Fine-tune performance settings
-                - get_type_adapters_system_config(): Retrieve current configuration
 
             """
             base_config = {
@@ -544,107 +202,6 @@ class FlextTypeAdapters:
             levels to maximize throughput, minimize latency, and optimize resource utilization
             with full integration with FlextTypes.Config performance management.
 
-            **ARCHITECTURAL SIGNIFICANCE**: This method serves as the central performance
-            optimization system for all type adapter operations, implementing enterprise-grade
-            performance tuning that scales from development environments to high-load
-            production systems with automatic resource management and optimization.
-
-            Optimization Levels:
-                **Low Optimization** (Development/Testing):
-                    - Minimal resource allocation for development environments
-                    - Basic caching and minimal batch processing
-                    - Conservative concurrency for debugging and testing
-                    - Enhanced error reporting and debugging capabilities
-
-                **Balanced Optimization** (Standard Production):
-                    - Optimal balance of performance and resource usage
-                    - Moderate caching and batch processing for general workloads
-                    - Standard concurrency levels for typical production usage
-                    - Balanced error handling and monitoring
-
-                **High Optimization** (High-Load Production):
-                    - Maximum performance for high-throughput scenarios
-                    - Extensive caching and large batch processing
-                    - High concurrency for maximum parallel processing
-                    - Optimized error handling for performance
-
-                **Extreme Optimization** (Critical Systems):
-                    - Ultra-high performance for mission-critical applications
-                    - Maximum caching and ultra-large batch processing
-                    - Extreme concurrency for maximum system utilization
-                    - Minimal overhead error handling and monitoring
-
-            Args:
-                optimization_level: Performance level ("low", "balanced", "high", "extreme")
-
-            Returns:
-                Optimized system configuration with performance tuning applied
-
-            Performance Optimizations Applied:
-                **Memory Management**:
-                    - Adaptive cache sizing based on optimization level
-                    - Memory pool allocation for high-performance scenarios
-                    - Garbage collection tuning for minimal performance impact
-                    - Object reuse patterns for reduced allocation overhead
-
-                **Processing Optimization**:
-                    - Batch size optimization for maximum throughput
-                    - Concurrent processing tuning for optimal parallelism
-                    - Pipeline optimization for reduced latency
-                    - CPU utilization balancing for system stability
-
-                **I/O Optimization**:
-                    - Network timeout optimization for responsiveness
-                    - Buffer size tuning for optimal data transfer
-                    - Connection pooling for reduced connection overhead
-                    - Async operation optimization for maximum concurrency
-
-                **Caching Strategy**:
-                    - Multi-level caching for optimal data access
-                    - Cache hit ratio optimization for performance
-                    - Cache invalidation strategies for data consistency
-                    - Distributed caching for scaled deployments
-
-            Performance Characteristics:
-                - **Throughput**: Up to 10x improvement with extreme optimization
-                - **Latency**: 50-90% reduction depending on optimization level
-                - **Resource Efficiency**: Optimized memory and CPU utilization
-                - **Scalability**: Linear performance scaling with optimization level
-
-            Resource Impact Analysis:
-                **Low**: Minimal resource usage, suitable for resource-constrained environments
-                **Balanced**: Moderate resource usage with optimal performance/resource ratio
-                **High**: Increased resource usage for maximum performance gains
-                **Extreme**: Significant resource allocation for ultra-high performance
-
-            Usage Examples:
-                High-performance production optimization::
-
-                    optimized_system = (
-                        FlextTypeAdapters.Config.optimize_type_adapters_performance(
-                            "high"
-                        )
-                    )
-                    print(f"Cache size: {optimized_system['cache_size']}")
-                    print(f"Batch size: {optimized_system['batch_size']}")
-
-                Development environment optimization::
-
-                    dev_optimized_system = (
-                        FlextTypeAdapters.Config.optimize_type_adapters_performance(
-                            "low"
-                        )
-                    )
-
-            Error Handling:
-                Invalid optimization levels are handled gracefully with fallback to
-                "balanced" configuration and detailed error reporting for troubleshooting.
-
-            See Also:
-                - configure_type_adapters_system(): Apply optimization configuration
-                - create_environment_type_adapters_config(): Environment-specific optimization
-                - get_type_adapters_system_config(): Monitor optimization results
-
             """
             optimization_configs = {
                 "low": {
@@ -709,118 +266,16 @@ class FlextTypeAdapters:
         handling through FlextResult[T] integration. It serves as the building block for
         more specialized type adaptation functionality.
 
-        **ARCHITECTURAL ROLE**: Provides the foundational type adaptation infrastructure
-        that all other type adaptation functionality builds upon, implementing basic
-        adapter creation patterns and validation workflows with efficient error
-        handling and type safety.
-
-        Core Foundation Features:
-            - **Basic Type Adapters**: Creation of fundamental type adapters (string, int, float, bool)
-            - **Validation Integration**: Unified validation interface with FlextResult error handling
-            - **Error Management**: Comprehensive error handling with structured error reporting
-            - **Type Safety**: Runtime type validation with compile-time type checking
-            - **Performance Optimization**: Efficient adapter creation and validation patterns
-
-        Adapter Creation Capabilities:
-            - **Primitive Types**: Adapters for string, integer, float, and boolean types
-            - **Generic Adapters**: Creation of adapters for arbitrary types
-            - **Configuration Integration**: Integration with FlextConstants for validation limits
-            - **Error Code Integration**: Structured error reporting with FlextConstants error codes
-            - **Boilerplate Elimination**: Standardized patterns reducing repetitive code
-
-        Validation Features:
-            - **FlextResult Integration**: Type-safe error handling throughout validation
-            - **Exception Translation**: Conversion of validation exceptions to FlextResult errors
-            - **Error Categorization**: Structured error classification with error codes
-            - **Performance Optimization**: Efficient validation with minimal overhead
-            - **Consistency**: Uniform validation patterns across all adapter types
-
-        Usage Examples:
-            Basic adapter creation::
-
-                # Create primitive type adapters
-                string_adapter = FlextTypeAdapters.Foundation.create_string_adapter()
-                int_adapter = FlextTypeAdapters.Foundation.create_integer_adapter()
-                float_adapter = FlextTypeAdapters.Foundation.create_float_adapter()
-                bool_adapter = FlextTypeAdapters.Foundation.create_boolean_adapter()
-
-            Generic adapter creation::
-
-                # Create adapter for custom type
-                from dataclasses import dataclass
-
-
-                @dataclass
-                class CustomType:
-                    value: str
-                    count: int
-
-
-                custom_adapter = FlextTypeAdapters.Foundation.create_basic_adapter(
-                    CustomType
-                )
-
-            Validation with error handling::
-
-                # Validate value with efficient error handling
-                validation_result = FlextTypeAdapters.Foundation.validate_with_adapter(
-                    string_adapter, "example_value"
-                )
-
-                if validation_result.success:
-                    validated_value = validation_result.value
-                    print(f"Validation successful: {validated_value}")
-                else:
-                    print(f"Validation failed: {validation_result.error}")
-                    print(f"Error code: {validation_result.error_code}")
-
-        Integration Features:
-            - **Pydantic TypeAdapter**: Native integration with Pydantic v2 TypeAdapter
-            - **FlextResult**: Type-safe error handling with efficient error information
-            - **FlextConstants**: Integration with centralized error codes and validation limits
-            - **Type Safety**: Full type checking support for all adapter operations
-
-        Performance Considerations:
-            - **Adapter Reuse**: Created adapters can be safely reused across multiple validations
-            - **Minimal Overhead**: Efficient validation with minimal performance impact
-            - **Memory Efficiency**: Optimized memory usage for adapter instances
-            - **Fast Failure**: Quick validation failure for obviously invalid inputs
-
-        See Also:
-            - FlextResult: Type-safe error handling system
-            - FlextConstants: Centralized error codes and validation limits
-            - Pydantic TypeAdapter: Underlying type adaptation engine
-
         """
 
         @staticmethod
         def create_basic_adapter(target_type: type[object]) -> TypeAdapter[object]:
-            """Create basic TypeAdapter with FLEXT configuration.
-
-            Args:
-                target_type: The type to create an adapter for
-
-            Returns:
-                Configured TypeAdapter instance following FLEXT patterns
-
-            Note:
-                Uses FlextConstants for configuration and FlextTypes for type safety.
-                No local TypeVar usage per FLEXT refactoring requirements.
-
-            """
+            """Create basic TypeAdapter with FLEXT configuration."""
             return TypeAdapter(target_type)
 
         @staticmethod
         def create_string_adapter() -> object:
-            """Create TypeAdapter for string types using FlextTypes.
-
-            Returns:
-                String adapter with coercion following FLEXT patterns
-
-            Note:
-                Uses centralized string type instead of local definitions.
-
-            """
+            """Create TypeAdapter for string types using FlextTypes."""
 
             # Use composition instead of inheritance since TypeAdapter is final
             class _CoercingStringAdapter:
@@ -834,62 +289,24 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_integer_adapter() -> TypeAdapter[int]:
-            """Create TypeAdapter for integer types using FlextTypes.
-
-            Returns:
-                TypeAdapter for integer following FLEXT patterns
-
-            Note:
-                Uses centralized integer type instead of local definitions.
-
-            """
+            """Create TypeAdapter for integer types using FlextTypes."""
             return TypeAdapter(int)
 
         @staticmethod
         def create_float_adapter() -> TypeAdapter[float]:
-            """Create TypeAdapter for float types using FlextTypes.
-
-            Returns:
-                TypeAdapter for float following FLEXT patterns
-
-            Note:
-                Uses centralized float type instead of local definitions.
-
-            """
+            """Create TypeAdapter for float types using FlextTypes."""
             return TypeAdapter(float)
 
         @staticmethod
         def create_boolean_adapter() -> TypeAdapter[bool]:
-            """Create TypeAdapter for boolean types using FlextTypes.
-
-            Returns:
-                TypeAdapter for boolean following FLEXT patterns
-
-            Note:
-                Uses centralized boolean type instead of local definitions.
-
-            """
+            """Create TypeAdapter for boolean types using FlextTypes."""
             return TypeAdapter(bool)
 
         @staticmethod
         def validate_with_adapter(
             arg1: object, arg2: object, adapter: TypeAdapter[object] | None = None
         ) -> FlextResult[object]:
-            """Validate value using TypeAdapter with FlextResult error handling.
-
-            Args:
-                arg1: First argument (value to validate)
-                arg2: Second argument (target type)
-                adapter: TypeAdapter instance to use for validation
-
-            Returns:
-                FlextResult containing validated value or error
-
-            Note:
-                Provides consistent error handling across all adapter usage.
-                Explicitly rejects None values for non-optional types.
-
-            """
+            """Validate value using TypeAdapter with FlextResult error handling."""
             try:
                 value = arg1
                 target_type = arg2
@@ -911,169 +328,16 @@ class FlextTypeAdapters:
         value objects, and business rules while maintaining type safety and error handling
         through FlextResult[T] patterns.
 
-        **ARCHITECTURAL ROLE**: Implements domain-specific validation logic that enforces
-        business rules and constraints for enterprise data types, providing validation
-        patterns that align with domain-driven design principles while ensuring data
-        integrity and business rule compliance.
-
-        Domain Validation Capabilities:
-            - **Entity ID Validation**: Business-specific identifier validation with format constraints
-            - **Percentage Validation**: Range validation for percentage values with business limits
-            - **Version Validation**: Version number validation with business versioning rules
-            - **Network Validation**: Host/port validation with network topology constraints
-            - **Business Rules**: Complex business rule enforcement with domain-specific logic
-            - **Cross-Field Validation**: Multi-field validation patterns for related data
-
-        Validation Features:
-            - **Range Checking**: Numeric range validation with configurable business limits
-            - **Format Validation**: String format validation for domain-specific patterns
-            - **Constraint Enforcement**: Business constraint validation with detailed error reporting
-            - **Type Coercion**: Safe type conversion with validation and error handling
-            - **Error Categorization**: Domain-specific error classification with business context
-            - **Performance Optimization**: Efficient validation with minimal business logic overhead
-
-        Business Rule Patterns:
-            - **Entity Identifier Rules**: Validation of entity IDs with business format requirements
-            - **Percentage Constraints**: Percentage validation with business-specific ranges
-            - **Version Control**: Version number validation following business versioning policies
-            - **Network Topology**: Host/port validation with network security constraints
-            - **Data Integrity**: Cross-field validation ensuring business data consistency
-            - **Compliance Validation**: Validation patterns ensuring regulatory compliance
-
-        Usage Examples:
-            Entity ID validation::
-
-                # Validate entity ID with business rules
-                entity_result = FlextTypeAdapters.Domain.validate_entity_id(
-                    "user_12345"
-                )
-
-                if entity_result.success:
-                    entity_id = entity_result.value
-                    print(f"Valid entity ID: {entity_id}")
-                else:
-                    print(f"Invalid entity ID: {entity_result.error}")
-                    # Error code available for specific handling
-                    if (
-                        entity_result.error_code
-                        == FlextConstants.Errors.VALIDATION_ERROR
-                    ):
-                        # Handle validation error specifically
-                        pass
-
-            Percentage validation with business limits::
-
-                # Validate percentage within business constraints
-                percentage_result = FlextTypeAdapters.Domain.validate_percentage(85.5)
-
-                if percentage_result.success:
-                    percentage = percentage_result.value
-                    print(f"Valid percentage: {percentage}%")
-                else:
-                    print(f"Percentage validation failed: {percentage_result.error}")
-
-            Version validation for business versioning::
-
-                # Validate version number following business rules
-                version_result = FlextTypeAdapters.Domain.validate_version(2)
-
-                if version_result.success:
-                    version = version_result.value
-                    print(f"Valid version: v{version}")
-                else:
-                    print(f"Version validation failed: {version_result.error}")
-
-            Network topology validation::
-
-                # Validate host/port combination for business network requirements
-                host_port_result = FlextTypeAdapters.Domain.validate_host_port(
-                    "internal.invalid.com", 5432
-                )
-
-                if host_port_result.success:
-                    host, port = host_port_result.value
-                    print(f"Valid connection: {host}:{port}")
-                else:
-                    print(f"Network validation failed: {host_port_result.error}")
-
-            Batch domain validation::
-
-                # Validate multiple entity IDs
-                entity_ids = [
-                    "user_12345",
-                    "order_67890",
-                    "invalid_id",
-                    "product_11111",
-                ]
-
-                valid_ids = []
-                validation_errors = []
-
-                for entity_id in entity_ids:
-                    result = FlextTypeAdapters.Domain.validate_entity_id(entity_id)
-                    if result.success:
-                        valid_ids.append(result.value)
-                    else:
-                        validation_errors.append(f"{entity_id}: {result.error}")
-
-                print(f"Valid IDs: {len(valid_ids)}, Errors: {len(validation_errors)}")
-
-        Business Rule Integration:
-            - **FlextConstants Integration**: Uses centralized validation limits and constraints
-            - **Error Code Standards**: Consistent error categorization with business context
-            - **Domain Boundaries**: Validation patterns aligned with business domain boundaries
-            - **Compliance Requirements**: Validation patterns ensuring regulatory compliance
-            - **Performance Optimization**: Efficient validation minimizing business logic overhead
-
-        Validation Patterns:
-            - **Single Field Validation**: Individual field validation with business constraints
-            - **Multi-Field Validation**: Cross-field validation for business rule consistency
-            - **Conditional Validation**: Context-dependent validation based on business state
-            - **Range Validation**: Numeric range checking with business-specific limits
-            - **Format Validation**: String pattern validation for business identifier formats
-            - **Custom Business Rules**: Extensible framework for domain-specific validation logic
-
-        Error Handling:
-            - **Structured Errors**: Business-specific error messages with actionable information
-            - **Error Categorization**: Classification of validation errors by business impact
-            - **Recovery Guidance**: Error messages with suggestions for resolution
-            - **Audit Integration**: Validation error logging for business audit requirements
-            - **Performance Monitoring**: Validation performance tracking for business optimization
-
-        See Also:
-            - FlextConstants: Centralized validation limits and business constraints
-            - FlextResult: Type-safe error handling with business context
-            - Foundation: Basic type adaptation infrastructure
-
         """
 
         @staticmethod
         def create_entity_id_adapter() -> TypeAdapter[str]:
-            """Create TypeAdapter for entity IDs with validation.
-
-            Returns:
-                TypeAdapter for entity ID following FLEXT patterns
-
-            Note:
-                Includes business rules for entity ID format validation.
-
-            """
+            """Create TypeAdapter for entity IDs with validation."""
             return TypeAdapter(str)
 
         @staticmethod
         def validate_entity_id(value: object) -> FlextResult[str]:
-            """Validate entity ID with business rules.
-
-            Args:
-                value: Value to validate as entity ID
-
-            Returns:
-                FlextResult containing validated entity ID or error
-
-            Note:
-                Applies FLEXT business rules for entity ID validation.
-
-            """
+            """Validate entity ID with business rules."""
             if not value or (isinstance(value, str) and len(value.strip()) == 0):
                 return FlextResult[str].fail(
                     FlextConstants.Messages.INVALID_INPUT,
@@ -1668,14 +932,17 @@ class FlextTypeAdapters:
                 valid += 1
 
         # Return simple object with attributes expected in tests
-        return type(
-            "BatchValidationResult",
-            (),
-            {
-                "total_items": total,
-                "valid_items": valid,
-            },
-        )()
+        return cast(
+            "object",
+            type(
+                "BatchValidationResult",
+                (),
+                {
+                    "total_items": total,
+                    "valid_items": valid,
+                },
+            )(),
+        )
 
     def generate_schema(
         self, target_type: type[object]
@@ -1908,7 +1175,7 @@ class FlextTypeAdapters:
         def validate_example_user() -> FlextResult[object]:
             from flext_core.models import FlextModels
 
-            class User(FlextModels.BaseConfig):
+            class User(FlextModels.Config):
                 name: str
                 age: int
 

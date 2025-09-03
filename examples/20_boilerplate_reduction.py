@@ -7,7 +7,6 @@ Demonstrates massive boilerplate reduction across FLEXT projects using:
 - FlextHandlers for request processing
 - FlextDecorators for cross-cutting concerns
 - FlextValidations for data validation
-- FlextObservability for metrics
 - Complete railway-oriented programming
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -406,7 +405,6 @@ def main() -> int:
     print("   ✅ FlextServices: Service patterns with zero boilerplate")
     print("   ✅ FlextDecorators: Enterprise features via simple decorators")
     print("   ✅ FlextValidations: Composable validation with predicates")
-    print("   ✅ FlextObservability: Automatic monitoring and tracing")
     print("   ✅ FlextHandlers: CQRS and orchestration patterns")
     print("   ✅ FlextResult: Complete railway-oriented programming")
     print("   ✅ FlextTypes: Type safety across the entire stack")
