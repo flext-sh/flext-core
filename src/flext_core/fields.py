@@ -67,7 +67,9 @@ class FlextFields:
             """Strategy for string length validation using flext-core constraints."""
 
             def __init__(
-                self, min_length: int | None = None, max_length: int | None = None,
+                self,
+                min_length: int | None = None,
+                max_length: int | None = None,
             ) -> None:
                 self.min_length = min_length
                 self.max_length = max_length
@@ -209,13 +211,17 @@ class FlextFields:
                 pattern: str | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
                 # Create validation strategies using Strategy Pattern
                 strategies = [
                     FlextFields.ValidationStrategies.TypeValidationStrategy(str),
                     FlextFields.ValidationStrategies.LengthValidationStrategy(
-                        min_length, max_length,
+                        min_length,
+                        max_length,
                     ),
                 ]
                 if pattern:
@@ -252,7 +258,10 @@ class FlextFields:
                 max_value: int | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
                 self.min_value = min_value
                 self.max_value = max_value
@@ -306,7 +315,10 @@ class FlextFields:
                 precision: int | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
                 self.min_value = min_value
                 self.max_value = max_value
@@ -364,7 +376,10 @@ class FlextFields:
                 description: str = "",
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
 
             @override
@@ -452,7 +467,10 @@ class FlextFields:
                 description: str = "",
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
 
             @override
@@ -505,7 +523,10 @@ class FlextFields:
                 max_date: datetime | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description,
+                    name,
+                    required=required,
+                    default=default,
+                    description=description,
                 )
                 self.date_format = date_format
                 self.min_date = min_date
@@ -538,7 +559,8 @@ class FlextFields:
                             # Fallback to strptime for custom formats,
                             # then make timezone-aware
                             dt_value = datetime.strptime(
-                                value, self.date_format,
+                                value,
+                                self.date_format,
                             ).replace(tzinfo=UTC)
                     except ValueError:
                         return FlextResult[datetime].fail(
@@ -652,7 +674,8 @@ class FlextFields:
             def __init__(self) -> None:
                 self._fields: dict[str, FlextFields.Core.BaseField[object]] = {}
                 self._field_types: dict[
-                    str, type[FlextFields.Core.BaseField[object]],
+                    str,
+                    type[FlextFields.Core.BaseField[object]],
                 ] = {}
 
             def register_field(
@@ -673,7 +696,8 @@ class FlextFields:
                 return FlextResult[None].ok(None)
 
             def get_field(
-                self, name: str,
+                self,
+                name: str,
             ) -> FlextResult[FlextFields.Core.BaseField[object]]:
                 """Get registered field by name."""
                 if not name or not name.strip():
@@ -709,7 +733,8 @@ class FlextFields:
                 return FlextResult[None].ok(None)
 
             def get_field_type(
-                self, type_name: str,
+                self,
+                type_name: str,
             ) -> FlextResult[type[FlextFields.Core.BaseField[object]]]:
                 """Get registered field type by name."""
                 field_type = self._field_types.get(type_name)
@@ -922,7 +947,10 @@ class FlextFields:
             try:
                 # Create field with specific parameter handling for each type
                 field = FlextFields.Factory._create_field_with_params(
-                    field_class, name, field_type, config,
+                    field_class,
+                    name,
+                    field_type,
+                    config,
                 )
                 return FlextResult[object].ok(field)
             except Exception as e:
@@ -1412,7 +1440,8 @@ class FlextFields:
 
                 # Checagem de tipo
                 if not isinstance(field_type_obj, str) or not isinstance(
-                    field_name_obj, str,
+                    field_name_obj,
+                    str,
                 ):
                     errors.append("Field 'type' and 'name' must be strings")
                     continue
@@ -1426,7 +1455,9 @@ class FlextFields:
                 }
 
                 result = FlextFields.Factory.create_field(
-                    field_type, field_name, **config,
+                    field_type,
+                    field_name,
+                    **config,
                 )
                 if result.success:
                     fields.append(
@@ -1456,7 +1487,9 @@ class FlextFields:
                 self.config: dict[str, object] = {}
 
             def with_required(
-                self, *, required: bool,
+                self,
+                *,
+                required: bool,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set field as required or optional.
 
@@ -1471,7 +1504,8 @@ class FlextFields:
                 return self
 
             def with_default(
-                self, default_value: object,
+                self,
+                default_value: object,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set default value for field.
 
@@ -1486,7 +1520,8 @@ class FlextFields:
                 return self
 
             def with_description(
-                self, description: str,
+                self,
+                description: str,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set field description.
 
@@ -1565,7 +1600,9 @@ class FlextFields:
 
                 """
                 return FlextFields.Factory.create_field(
-                    self.field_type, self.name, **self.config,
+                    self.field_type,
+                    self.name,
+                    **self.config,
                 )
 
     # ==========================================================================
@@ -1615,7 +1652,8 @@ class FlextFields:
                     "pattern": getattr(field, "pattern", None),
                 }
             elif isinstance(
-                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
+                field,
+                (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
             ):
                 analysis["numeric_constraints"] = {
                     "min_value": getattr(field, "min_value", None),
@@ -1658,13 +1696,15 @@ class FlextFields:
                     },
                 )
             elif isinstance(
-                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
+                field,
+                (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
             ):
                 capabilities.update(
                     {
                         "supports_range_validation": True,
                         "supports_precision": isinstance(
-                            field, FlextFields.Core.FloatField,
+                            field,
+                            FlextFields.Core.FloatField,
                         ),
                     },
                 )
@@ -1743,7 +1783,8 @@ class FlextFields:
 
     @classmethod
     def configure_fields_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure fields system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1787,7 +1828,8 @@ class FlextFields:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
+                    "log_level",
+                    FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
@@ -1796,12 +1838,14 @@ class FlextFields:
                 "enable_field_validation": config.get("enable_field_validation", True),
                 "enable_type_checking": config.get("enable_type_checking", True),
                 "enable_constraint_validation": config.get(
-                    "enable_constraint_validation", True,
+                    "enable_constraint_validation",
+                    True,
                 ),
                 "max_field_cache_size": config.get("max_field_cache_size", 500),
                 "enable_field_metadata": config.get("enable_field_metadata", True),
                 "enable_schema_validation": config.get(
-                    "enable_schema_validation", True,
+                    "enable_schema_validation",
+                    True,
                 ),
             }
 
@@ -1873,7 +1917,8 @@ class FlextFields:
 
     @classmethod
     def create_environment_fields_config(
-        cls, environment: FlextTypes.Config.Environment,
+        cls,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific fields system configuration."""
         try:
@@ -1960,7 +2005,8 @@ class FlextFields:
 
     @classmethod
     def optimize_fields_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize fields system performance based on configuration."""
         try:
@@ -1978,7 +2024,8 @@ class FlextFields:
                 optimized_config.update(
                     {
                         "max_field_cache_size": config.get(
-                            "max_field_cache_size", 2000,
+                            "max_field_cache_size",
+                            2000,
                         ),
                         "enable_field_caching": True,
                         "cache_validation_results": True,
@@ -1994,7 +2041,8 @@ class FlextFields:
                 optimized_config.update(
                     {
                         "max_field_cache_size": config.get(
-                            "max_field_cache_size", 1000,
+                            "max_field_cache_size",
+                            1000,
                         ),
                         "enable_field_caching": True,
                         "cache_validation_results": False,
@@ -2026,7 +2074,8 @@ class FlextFields:
                     {
                         "max_field_cache_size": config.get("max_field_cache_size", 500),
                         "enable_field_caching": config.get(
-                            "enable_field_caching", True,
+                            "enable_field_caching",
+                            True,
                         ),
                         "memory_optimization": "balanced",
                     },

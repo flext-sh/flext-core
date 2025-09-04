@@ -249,7 +249,8 @@ class TestFlextHandlersCoverage:
         """Test HandlerChain Chain of Responsibility pattern."""
         # HandlerChain may not exist, create a simple test
         if not hasattr(FlextHandlers, "Patterns") or not hasattr(
-            FlextHandlers.Patterns, "HandlerChain",
+            FlextHandlers.Patterns,
+            "HandlerChain",
         ):
             return
 
@@ -308,7 +309,8 @@ class TestFlextHandlersCoverage:
         """Test Pipeline linear processing pattern."""
         # Pipeline may not exist in real API, skip this test
         if not hasattr(FlextHandlers, "Patterns") or not hasattr(
-            FlextHandlers.Patterns, "Pipeline",
+            FlextHandlers.Patterns,
+            "Pipeline",
         ):
             return
 
@@ -344,7 +346,8 @@ class TestFlextHandlersCoverage:
         """Test Middleware request/response transformation."""
         # Middleware may not exist in real API, skip this test
         if not hasattr(FlextHandlers, "Patterns") or not hasattr(
-            FlextHandlers.Patterns, "Middleware",
+            FlextHandlers.Patterns,
+            "Middleware",
         ):
             return
 
@@ -369,7 +372,8 @@ class TestFlextHandlersCoverage:
         """Test HandlerRegistry management system."""
         # HandlerRegistry may not exist in real API, skip this test
         if not hasattr(FlextHandlers, "Management") or not hasattr(
-            FlextHandlers.Management, "HandlerRegistry",
+            FlextHandlers.Management,
+            "HandlerRegistry",
         ):
             return
 

@@ -794,7 +794,8 @@ class TestCommandPatternIntegration:
             raise AssertionError(f"Expected {handler1}, got {found_handler}")
 
         update_command = UpdateUserCommand(
-            target_user_id="123", updates={"name": "updated"},
+            target_user_id="123",
+            updates={"name": "updated"},
         )
         found_handler = bus.find_handler(update_command)
         if found_handler != handler2:

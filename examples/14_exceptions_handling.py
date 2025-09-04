@@ -23,7 +23,7 @@ from flext_core import (
     FlextTypes,
 )
 
-from shared_example_strategies import ExamplePatternFactory
+from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-untyped]
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Using FlextConstants centralized approach
@@ -733,8 +733,8 @@ def demonstrate_base_exceptions() -> FlextResult[None]:
 
             # Test metrics collection
             metrics = FlextExceptions.get_metrics()
-            if not isinstance(metrics, dict):
-                return FlextResult[None].fail("Metrics should be a dictionary")
+            if not metrics:  # Test if metrics are collected
+                return FlextResult[None].fail("No metrics collected")
 
             return FlextResult[None].ok(None)
 
@@ -742,11 +742,11 @@ def demonstrate_base_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Base exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Base Exception Functionality", base_exceptions_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 def demonstrate_validation_exceptions() -> FlextResult[None]:
@@ -772,7 +772,7 @@ def demonstrate_validation_exceptions() -> FlextResult[None]:
         return (
             service.validate_user_data(valid_data)
             .flat_map(lambda _: FlextResult[UserValidationService].ok(service))
-            .map_error(lambda e: f"Valid user validation failed: {e}")
+            .tap_error(lambda e: print(f"Valid user validation failed: {e}"))
         )
 
     def _test_invalid_user_data(
@@ -780,7 +780,7 @@ def demonstrate_validation_exceptions() -> FlextResult[None]:
     ) -> FlextResult[UserValidationService]:
         """Test invalid data should fail gracefully."""
         invalid_data = {"name": "", "email": "invalid-email", "age": "thirty"}
-        result = service.validate_user_data(invalid_data)
+        result = service.validate_user_data(dict(invalid_data))
         return (
             FlextResult[UserValidationService].fail(
                 "Invalid user data should have failed validation",
@@ -804,11 +804,11 @@ def demonstrate_validation_exceptions() -> FlextResult[None]:
         )
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Validation Exceptions", validation_exceptions_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 def demonstrate_operational_exceptions() -> FlextResult[None]:
@@ -841,7 +841,7 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         return (
             service.create_user(user_data)
             .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
-            .map_error(lambda e: f"User creation failed: {e}")
+            .tap_error(lambda e: print(f"User creation failed: {e}"))
         )
 
     def _get_user_operation(
@@ -851,7 +851,7 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         return (
             service.get_user(user_id)
             .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
-            .map_error(lambda e: f"User retrieval failed: {e}")
+            .tap_error(lambda e: print(f"User retrieval failed: {e}"))
         )
 
     def _delete_user_operation(
@@ -861,15 +861,15 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         return (
             service.delete_user(user_id, "REDACTED_LDAP_BIND_PASSWORD")
             .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
-            .map_error(lambda e: f"User deletion failed: {e}")
+            .tap_error(lambda e: print(f"User deletion failed: {e}"))
         )
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Operational Exceptions", operational_exceptions_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 def demonstrate_configuration_exceptions() -> FlextResult[None]:
@@ -887,7 +887,7 @@ def demonstrate_configuration_exceptions() -> FlextResult[None]:
                 "optional_setting": "value",
             }
 
-            result = config_service.load_configuration(valid_config)
+            result = config_service.load_configuration(dict(valid_config))
             if not result.success:
                 return FlextResult[None].fail(
                     f"Valid configuration failed: {result.error}",
@@ -900,7 +900,7 @@ def demonstrate_configuration_exceptions() -> FlextResult[None]:
                 "log_level": "INVALID",
             }
 
-            result = config_service.load_configuration(invalid_config)
+            result = config_service.load_configuration(dict(invalid_config))
             if result.success:
                 return FlextResult[None].fail(
                     "Invalid configuration should have failed",
@@ -912,11 +912,11 @@ def demonstrate_configuration_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Configuration exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Configuration Exceptions", configuration_exceptions_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 # Removed helper functions that are now consolidated in demonstrate_connection_exceptions()
@@ -947,11 +947,11 @@ def demonstrate_connection_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Connection exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Connection Exceptions", connection_exceptions_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 def _complex_operation() -> FlextResult[str]:
@@ -1089,11 +1089,11 @@ def demonstrate_exception_patterns() -> FlextResult[None]:
             return FlextResult[None].fail(f"Exception patterns demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo = ExamplePatternFactory.create_demo_runner(
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
         "Exception Patterns", exception_patterns_demo,
     )
 
-    return demo.execute()
+    return demo.execute()  # type: ignore[no-any-return]
 
 
 def main() -> None:
@@ -1141,7 +1141,8 @@ def main() -> None:
 
         # Execute using Composite Demo Suite (eliminates 26-line duplication)
         result = ExamplePatternFactory.create_composite_demo_suite(
-            "Enterprise Exception Patterns", demos,
+            "Enterprise Exception Patterns",
+            [(name, lambda f=func: f().map(lambda _: None)) for name, func in demos],
         )
 
         if result.is_success:

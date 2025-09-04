@@ -221,7 +221,8 @@ class TestFlextValidationRealFunctionality:
         # Test invalid performance level - current implementation accepts any value
 
         invalid_config = cast(
-            "FlextTypes.Config.ConfigDict", {"performance_level": "invalid_level"},
+            "FlextTypes.Config.ConfigDict",
+            {"performance_level": "invalid_level"},
         )
         result = FlextValidations.optimize_validation_performance(invalid_config)
         # Current implementation doesn't validate performance_level strictly
@@ -229,7 +230,8 @@ class TestFlextValidationRealFunctionality:
 
         # Test invalid thread count - current implementation doesn't validate thread count
         invalid_thread_config = cast(
-            "FlextTypes.Config.ConfigDict", {"max_validation_threads": 0},
+            "FlextTypes.Config.ConfigDict",
+            {"max_validation_threads": 0},
         )
         result = FlextValidations.optimize_validation_performance(invalid_thread_config)
         # Current implementation doesn't validate max_validation_threads

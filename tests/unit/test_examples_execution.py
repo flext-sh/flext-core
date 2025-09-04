@@ -1,12 +1,14 @@
 """Comprehensive tests for examples execution and functionality."""
 
+import ast
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from flext_core import FlextResult
+from flext_core import FlextContainer, FlextExceptions, FlextResult
 
 
 class TestExamplesExecution:
@@ -95,10 +97,6 @@ class TestExamplesExecution:
 
     def test_example_imports(self, example_files: list[Path]) -> None:
         """Test that all examples can be imported without errors."""
-        import importlib.util
-        import sys
-        from pathlib import Path
-
         # Add src to path
         src_path = Path(__file__).parent.parent.parent / "src"
         sys.path.insert(0, str(src_path))
@@ -108,7 +106,8 @@ class TestExamplesExecution:
         for example_file in example_files:
             try:
                 spec = importlib.util.spec_from_file_location(
-                    example_file.stem, example_file,
+                    example_file.stem,
+                    example_file,
                 )
                 if spec and spec.loader:
                     # Just test that spec can be created, actual import might run main()
@@ -151,8 +150,6 @@ class TestExamplesFunctionality:
 
     def test_container_dependency_injection(self) -> None:
         """Test container dependency injection works as demonstrated."""
-        from flext_core import FlextContainer
-
         container = FlextContainer()
 
         # Test service registration
@@ -167,7 +164,6 @@ class TestExamplesFunctionality:
 
     def test_validation_patterns(self) -> None:
         """Test validation patterns work as demonstrated."""
-        from flext_core import FlextResult
 
         def validate_email(email: str) -> FlextResult[str]:
             """Simple email validation."""
@@ -188,8 +184,6 @@ class TestExamplesFunctionality:
 
     def test_exception_handling_patterns(self) -> None:
         """Test exception handling patterns work as demonstrated."""
-        from flext_core import FlextExceptions
-
         # Test basic exception creation with pytest.raises
         validation_message = "Test validation error"
         with pytest.raises(FlextExceptions.ValidationError) as exc_info:
@@ -220,8 +214,6 @@ class TestExamplesCodeQuality:
 
     def test_examples_have_docstrings(self, examples_dir: Path) -> None:
         """Test that all examples have proper module docstrings."""
-        import ast
-
         missing_docstrings = []
 
         for example_file in examples_dir.glob("*.py"):
@@ -250,8 +242,6 @@ class TestExamplesCodeQuality:
 
     def test_examples_have_main_functions(self, examples_dir: Path) -> None:
         """Test that examples have main functions or if __name__ == '__main__' blocks."""
-        import ast
-
         missing_main = []
 
         for example_file in examples_dir.glob("*.py"):

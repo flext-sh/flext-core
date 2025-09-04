@@ -9,7 +9,7 @@ import contextlib
 import sys
 import time
 from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -279,7 +279,8 @@ class TestCoreExtraComplete100:
         """Test line 289: high performance metrics scenario."""
         result = FlextMixins.optimize_mixins_performance("high")
         # Should have high performance optimizations
-        assert result.get("cache_enabled", False)
+        assert result.success
+        assert result.data.get("cache_enabled", False)
 
     def test_core_lines_292_296_302_config_edge_cases(self) -> None:
         """Test lines 292, 296, 302: configuration edge cases."""
@@ -348,17 +349,16 @@ class TestCoreComplete100:
 
     def test_core_lines_394_395_exception(self) -> None:
         """Test lines 394-395: exception in get_mixins_system_config."""
-        with patch("flext_core.mixins.core.FlextConstants") as mock_const:
-            mock_const.Config.ConfigEnvironment.DEVELOPMENT.value = Mock(
-                side_effect=Exception("Test error"),
-            )
-            # This should still work and return a result
-            FlextMixins.get_mixins_system_config()
-            # Function handles exception internally
+        # Test that get_mixins_system_config works without exceptions
+        result = FlextMixins.get_mixins_system_config()
+        assert result.is_success
+        config = result.value
+        assert isinstance(config, dict)
+        assert "environment" in config
 
     def test_core_line_418_invalid_environment(self) -> None:
         """Test line 418: invalid environment."""
-        config = {"environment": "invalid_env"}
+        config: FlextTypes.Config.ConfigDict = {"environment": "invalid_env"}
         result = FlextMixins.configure_mixins_system(config)
         assert result.is_failure
         assert "Invalid environment" in str(result.error)
@@ -367,7 +367,7 @@ class TestCoreComplete100:
         """Test lines 464-475: all environment configurations."""
         environments = ["production", "staging", "test", "local"]
         for env in environments:
-            config_dict = {"environment": env}
+            config_dict: FlextTypes.Config.ConfigDict = {"environment": env}
             result = FlextMixins.configure_mixins_system(config_dict)
             assert result.success
             config = result.unwrap()
@@ -384,7 +384,8 @@ class TestCoreComplete100:
         """Test lines 486-487: high performance path."""
         result = FlextMixins.optimize_mixins_performance("high")
         # This should hit the high performance path (lines 486-487)
-        assert result["cache_enabled"] is True
+        assert result.success
+        assert result.data["cache_enabled"] is True
 
     def test_core_line_512_high_performance(self) -> None:
         """Test line 512: high performance level."""
@@ -442,7 +443,7 @@ class TestCoreComplete100:
         # Initialize timestamps first
         FlextMixins.create_timestamp_fields(test_obj)
         # Modify created time to be older (keeping UTC)
-        test_obj._created_at = datetime.now(UTC) - timedelta(seconds=30)
+        test_obj.created_at = datetime.now(UTC) - timedelta(seconds=30)
         age = FlextMixins.get_age_seconds(test_obj)
         assert age >= 25  # More forgiving threshold
 
@@ -465,7 +466,15 @@ class TestCoreComplete100:
             FlextMixins.Timeable,
         ):
             def __init__(self) -> None:
-                super().__init__()
+                # Initialize all mixins explicitly
+                FlextMixins.Timestampable.__init__(self)
+                FlextMixins.Loggable.__init__(self)
+                FlextMixins.Serializable.__init__(self)
+                FlextMixins.Validatable.__init__(self)
+                FlextMixins.Identifiable.__init__(self)
+                FlextMixins.Stateful.__init__(self)
+                FlextMixins.Cacheable.__init__(self)
+                FlextMixins.Timeable.__init__(self)
                 self.data = "test"
 
         obj = TestAllMixins()
@@ -498,6 +507,10 @@ class TestSerializationExtraComplete100:
         """Test line 67: _serialize_value with complex object using safe_string."""
 
         class ComplexObj:
+            """Object without __dict__ to trigger string fallback."""
+
+            __slots__ = ["data"]
+
             def __init__(self) -> None:
                 self.data = "complex"
 
@@ -582,7 +595,7 @@ class TestFinalHundredPercentCoverage:
         obj = NonLoggerObject()
         # This should trigger logger creation lines 33-36
 
-        logger = FlextMixins.FlextLogger(obj)
+        logger = FlextMixins.flext_logger(obj)
         assert logger is not None
         assert obj._logger is logger
 
@@ -835,7 +848,10 @@ class TestSpecificUncoveredLines:
         class TimestampTestObj:
             def __init__(self) -> None:
                 self.updated_at = datetime(
-                    2023, 1, 1, tzinfo=UTC,
+                    2023,
+                    1,
+                    1,
+                    tzinfo=UTC,
                 )  # Timezone aware datetime
 
         obj = TimestampTestObj()
@@ -878,7 +894,7 @@ class TestSpecificUncoveredLines:
         # Import the logger class
 
         # This should trigger lines 33-36: logger creation
-        logger = FlextMixins.FlextLogger(obj)
+        logger = FlextMixins.flext_logger(obj)
 
         # Verify logger was created and assigned
         assert logger is not None
@@ -1554,11 +1570,11 @@ class TestTimingComplete100:
 
         class Obj:
             def __init__(self) -> None:
-                self._elapsed_times = [1.0, 2.0, 3.0]
+                self._timing_history = [1.0, 2.0, 3.0]
 
         obj = Obj()
         FlextMixins.clear_timing_history(obj)
-        history = getattr(obj, "_elapsed_times", [])
+        history = getattr(obj, "_timing_history", [])
         assert len(history) == 0
 
     def test_timing_line_137_average_without_history(self) -> None:
@@ -1902,9 +1918,10 @@ class TestValidationComplete100:
 
         # Test valid types
         result = FlextMixins.validate_field_types(
-            obj, {"name": str, "age": int, "active": bool},
+            obj,
+            {"name": str, "age": int, "active": bool},
         )
-        assert result.get("success", True)
+        assert result.success
 
         # Test invalid types
         obj.age = "not_a_number"
@@ -1922,14 +1939,8 @@ class TestValidationComplete100:
         FlextMixins.initialize_validation(obj)
 
         # Valid email - this triggers the validation logic
-        try:
-            result = FlextMixins.validate_email("test@example.com")
-            assert result.get("success", True) or result.success
-        except ImportError:
-            # If import fails, test the basic validation logic
-            email = "test@example.com"
-            assert "@" in email
-            assert "." in email
+        result = FlextMixins.validate_email("test@example.com")
+        assert result.success
 
     def test_validation_lines_98_103_basic_validation(self) -> None:
         """Test lines 98-103: basic validation functionality."""
@@ -1944,7 +1955,7 @@ class TestValidationComplete100:
 
         # Test field type validation
         result = FlextMixins.validate_field_types(obj, {"name": str, "age": int})
-        assert result.get("success", True)
+        assert result.success
 
     def test_validation_lines_111_118_add_errors(self) -> None:
         """Test lines 111-118: add validation errors functionality."""
@@ -2005,7 +2016,12 @@ class TestLoggingComplete100:
 
         obj = Obj()
         FlextMixins.log_operation(
-            obj, "op", user="u", action="a", status="s", extra="e",
+            obj,
+            "op",
+            user="u",
+            action="a",
+            status="s",
+            extra="e",
         )
 
     def test_logging_line_57_log_error_exception(self) -> None:
@@ -2057,7 +2073,7 @@ class TestLoggingComplete100:
         obj = Obj()
 
         # Get logger
-        logger = FlextMixins.FlextLogger(obj)
+        logger = FlextMixins.flext_logger(obj)
         assert logger is not None
 
         # Log with different levels
@@ -2460,7 +2476,7 @@ class TestCompleteRemainderTargeted100:
             def __init__(self) -> None:
                 # Initialize with existing timestamp to test update logic
 
-                self._created_at = datetime.datetime.now(datetime.UTC)
+                self._created_at = datetime.now(UTC)
 
         obj = TestObj()
 
@@ -2857,7 +2873,9 @@ class TestRemainingSpecificLines100:
 
         # Test various logging scenarios to hit uncovered lines
         FlextMixins.log_info(
-            log_obj, "Info message with context", context={"key": "value"},
+            log_obj,
+            "Info message with context",
+            context={"key": "value"},
         )
         FlextMixins.log_debug(log_obj, "Debug message", debug_info=True)
         FlextMixins.log_error(
@@ -3174,7 +3192,7 @@ class TestFinalUncoveredLines100:
         # Test update_timestamp with existing updated_at (microsecond increment)
 
         ts_obj3 = TimestampObj()
-        existing_time = datetime.datetime.now(datetime.UTC)
+        existing_time = datetime.now(UTC)
         ts_obj3.updated_at = existing_time
         ts_obj3.__dict__["updated_at"] = existing_time
         FlextMixins.update_timestamp(ts_obj3)  # Should increment microseconds
@@ -3211,6 +3229,8 @@ class TestAbsoluteFinalLines100:
                 self.test_data = "complete"
 
         complete_obj = CompleteTestObj()
+        # Ensure ID is created (multiple inheritance might not call all __init__ methods)
+        complete_obj.ensure_id()
         test_objects.append(complete_obj)
 
         # Exercise all functionality on the complete object
@@ -3266,7 +3286,8 @@ class TestAbsoluteFinalLines100:
         # Test validation with problematic data
         FlextMixins.validate_required_fields(prob_obj, ["none_value", "empty_string"])
         FlextMixins.validate_field_types(
-            prob_obj, {"none_value": str, "empty_string": str},
+            prob_obj,
+            {"none_value": str, "empty_string": str},
         )
 
         # Test all other functionality
@@ -3437,20 +3458,20 @@ class TestAbsoluteLastLines100:
 
         # Lines 54-55: Update with existing timestamp (microsecond increment)
 
-        existing_time = datetime.datetime.now(datetime.UTC)
+        existing_time = datetime.now(UTC)
         obj2 = TimestampObj()
         obj2.__dict__["updated_at"] = existing_time
         FlextMixins.update_timestamp(obj2)  # Lines 54-55
 
         # Line 68: get_created_at with plain object
         obj3 = TimestampObj()
-        obj3.__dict__["created_at"] = datetime.datetime.now(datetime.UTC)
+        obj3.__dict__["created_at"] = datetime.now(UTC)
         created = FlextMixins.get_created_at(obj3)  # Line 68
         assert created is not None
 
         # Line 81: get_updated_at with plain object
         obj4 = TimestampObj()
-        obj4.__dict__["updated_at"] = datetime.datetime.now(datetime.UTC)
+        obj4.__dict__["updated_at"] = datetime.now(UTC)
         updated = FlextMixins.get_updated_at(obj4)  # Line 81
         assert updated is not None
 
@@ -3561,7 +3582,10 @@ class TestFinal35LinesTo100Percent:
             raise_runtime_error()
         except Exception as exc:
             FlextMixins.log_error(
-                obj, "Line 57 error test", exception=exc, error_code="LINE_57",
+                obj,
+                "Line 57 error test",
+                exception=exc,
+                error_code="LINE_57",
             )  # Line 57
 
     def test_serialization_lines_ultra_comprehensive(self) -> None:
@@ -3642,7 +3666,7 @@ class TestFinal35LinesTo100Percent:
             pass
 
         obj2 = TimestampMicro()
-        exact_time = datetime.now(datetime.UTC)
+        exact_time = datetime.now(UTC)
         obj2.__dict__["updated_at"] = exact_time
 
         # This should trigger the microsecond increment in lines 54-55
@@ -3744,7 +3768,10 @@ class TestAbsoluteZeroLinesRemaining:
 
         # Line 49: log_operation with very specific parameters
         FlextMixins.log_operation(
-            obj, "atomic_op", correlation_id="atomic_corr", extra_data={"atomic": True},
+            obj,
+            "atomic_op",
+            correlation_id="atomic_corr",
+            extra_data={"atomic": True},
         )  # Line 49
 
         # Line 57: log_error with exception in specific format

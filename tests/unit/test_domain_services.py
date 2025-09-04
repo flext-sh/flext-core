@@ -3,8 +3,7 @@
 import pytest
 from pydantic import Field
 
-from flext_core.domain_services import FlextDomainService
-from flext_core.result import FlextResult
+from flext_core import FlextDomainService, FlextMixins, FlextModels, FlextResult
 
 
 # Test Domain Service Implementations
@@ -232,7 +231,10 @@ class TestDomainServicesFixed:
             return f"{name}: {value}"
 
         result = service.execute_operation(
-            "format_string", test_operation, name="test", value=20,
+            "format_string",
+            test_operation,
+            name="test",
+            value=20,
         )
         assert result.success is True
         assert result.unwrap() == "test: 20"
@@ -409,7 +411,6 @@ class TestDomainServicesFixed:
         service = TestUserService(user_id="123")
 
         # Test all expected parent classes
-        from flext_core import FlextMixins, FlextModels
 
         assert isinstance(service, FlextModels.Config)
         assert isinstance(service, FlextMixins.Serializable)
@@ -426,7 +427,8 @@ class TestDomainServicesFixed:
                 return FlextResult[dict[str, object]].ok(self.data)
 
         service = ComplexTypeService(
-            data={"key": "value", "nested": {"count": 42}}, numbers=[1, 2, 3, 4, 5],
+            data={"key": "value", "nested": {"count": 42}},
+            numbers=[1, 2, 3, 4, 5],
         )
 
         result = service.execute()
@@ -453,7 +455,8 @@ class TestDomainServiceStaticMethods:
     def test_configure_domain_services_system(self) -> None:
         """Test configure_domain_services_system method."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "test",
             "enable_performance_monitoring": True,
@@ -512,7 +515,8 @@ class TestDomainServiceStaticMethods:
     def test_optimize_domain_services_performance(self) -> None:
         """Test optimize_domain_services_performance method."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "production",
             "enable_caching": True,

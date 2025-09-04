@@ -186,7 +186,11 @@ class TestFlextCore:
 
         data = {"user_id": "123", "action": "create"}
         result = core.create_payload(
-            data, "command", "api_service", "database_service", "corr_123",
+            data,
+            "command",
+            "api_service",
+            "database_service",
+            "corr_123",
         )
 
         assert result.success
@@ -198,7 +202,9 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         result = core.create_message(
-            "UserCreated", user_id="123", email="test@example.com",
+            "UserCreated",
+            user_id="123",
+            email="test@example.com",
         )
 
         assert result.success
@@ -211,7 +217,12 @@ class TestFlextCore:
 
         data = {"email": "user@example.com", "name": "John"}
         result = core.create_domain_event(
-            "UserRegistered", "user_123", "User", data, "registration_service", 1,
+            "UserRegistered",
+            "user_123",
+            "User",
+            data,
+            "registration_service",
+            1,
         )
 
         assert result.success
@@ -335,3 +346,79 @@ class TestFlextCore:
         assert result.success
         config = result.unwrap()
         assert isinstance(config, dict)
+
+    def test_database_config_property_none_by_default(self) -> None:
+        """Testa propriedade database_config quando não há configuração especializada."""
+        core = FlextCore.get_instance()
+        
+        # Por padrão, deve retornar None pois não há configuração database especializada
+        assert core.database_config is None
+
+    def test_security_config_property_none_by_default(self) -> None:
+        """Testa propriedade security_config quando não há configuração especializada."""
+        core = FlextCore.get_instance()
+        
+        # Por padrão, deve retornar None pois não há configuração security especializada
+        assert core.security_config is None
+
+    def test_logging_config_property_none_by_default(self) -> None:
+        """Testa propriedade logging_config quando não há configuração especializada."""
+        core = FlextCore.get_instance()
+        
+        # Por padrão, deve retornar None pois não há configuração logging especializada
+        assert core.logging_config is None
+
+    def test_logger_property_initialization(self) -> None:
+        """Testa propriedade logger é inicializada corretamente."""
+        core = FlextCore.get_instance()
+        
+        # Deve retornar uma instância de _FlextLogger
+        logger = core.logger
+        assert logger is not None
+        # Segunda chamada deve retornar o mesmo objeto (singleton)
+        logger2 = core.logger
+        assert logger is logger2
+
+    def test_configure_aggregates_system_success(self) -> None:
+        """Testa configuração do sistema de agregados com sucesso."""
+        core = FlextCore.get_instance()
+        
+        config = {
+            "enable_aggregates": True,
+            "max_aggregates": 100
+        }
+        
+        result = core.configure_aggregates_system(config)
+        
+        # Deve retornar FlextResult com sucesso
+        assert isinstance(result, FlextResult)
+        if result.success:
+            config_result = result.unwrap()
+            assert isinstance(config_result, dict)
+            assert "enable_aggregates" in config_result
+
+    def test_get_aggregates_config_default(self) -> None:
+        """Testa obtenção de configuração de agregados (default vazio)."""
+        core = FlextCore.get_instance()
+        
+        result = core.get_aggregates_config()
+        
+        # Deve retornar FlextResult com config (mesmo que vazio)
+        assert isinstance(result, FlextResult)
+        if result.success:
+            config = result.unwrap()
+            assert isinstance(config, dict)
+
+    def test_optimize_aggregates_system_low_level(self) -> None:
+        """Testa otimização do sistema de agregados no nível baixo."""
+        core = FlextCore.get_instance()
+        
+        result = core.optimize_aggregates_system("low")
+        
+        assert isinstance(result, FlextResult)
+        if result.success:
+            config = result.unwrap()
+            assert isinstance(config, dict)
+            assert config["level"] == "low"
+            assert config["cache_size"] == 1000
+            assert config["batch_size"] == 10

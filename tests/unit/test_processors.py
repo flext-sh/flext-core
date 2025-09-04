@@ -9,7 +9,7 @@ import threading
 import time
 from collections import UserDict
 from collections.abc import Callable
-from typing import Never, Protocol
+from typing import Never, Protocol, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -113,7 +113,8 @@ class TestFlextProcessorsEntry:
         assert len(entry_set) == 1
 
     def test_entry_inequality_different_types(
-        self, valid_entry_data: dict[str, object],
+        self,
+        valid_entry_data: dict[str, object],
     ) -> None:
         """Test entry inequality with different object types."""
         entry = FlextProcessors.Entry.model_validate(valid_entry_data)
@@ -142,7 +143,8 @@ class TestFlextProcessorsBaseProcessor:
         assert processor.validator is None
 
     def test_base_processor_validation_without_validator(
-        self, sample_entry: FlextProcessors.Entry,
+        self,
+        sample_entry: FlextProcessors.Entry,
     ) -> None:
         """Test entry validation without configured validator."""
         processor = FlextProcessors.BaseProcessor()
@@ -152,7 +154,8 @@ class TestFlextProcessorsBaseProcessor:
         assert result.unwrap() is None
 
     def test_extract_info_from_entry_success(
-        self, sample_entry: FlextProcessors.Entry,
+        self,
+        sample_entry: FlextProcessors.Entry,
     ) -> None:
         """Test successful information extraction from entry."""
         processor = FlextProcessors.BaseProcessor()
@@ -349,7 +352,8 @@ class TestFlextProcessorsConfigProcessor:
         return ConfigObject()
 
     def test_config_processor_initialization(
-        self, config_processor: FlextProcessors.ConfigProcessor,
+        self,
+        config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test config processor initialization."""
         assert isinstance(config_processor.config_cache, dict)
@@ -362,7 +366,9 @@ class TestFlextProcessorsConfigProcessor:
     ) -> None:
         """Test successful configuration attribute validation."""
         result = config_processor.validate_configuration_attribute(
-            sample_config_object, "debug", lambda x: isinstance(x, bool),
+            sample_config_object,
+            "debug",
+            lambda x: isinstance(x, bool),
         )
 
         assert result.success
@@ -375,7 +381,9 @@ class TestFlextProcessorsConfigProcessor:
     ) -> None:
         """Test configuration attribute validation with missing attribute."""
         result = config_processor.validate_configuration_attribute(
-            sample_config_object, "missing_attr", lambda _: True,
+            sample_config_object,
+            "missing_attr",
+            lambda _: True,
         )
 
         assert result.is_failure
@@ -398,7 +406,8 @@ class TestFlextProcessorsConfigProcessor:
         assert result.unwrap() is False
 
     def test_get_config_value_success(
-        self, config_processor: FlextProcessors.ConfigProcessor,
+        self,
+        config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test successful config value retrieval."""
         config: dict[str, object] = {
@@ -411,7 +420,8 @@ class TestFlextProcessorsConfigProcessor:
         assert result.unwrap() == "postgresql://localhost/test"
 
     def test_get_config_value_missing_key(
-        self, config_processor: FlextProcessors.ConfigProcessor,
+        self,
+        config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test config value retrieval with missing key."""
         config: dict[str, object] = {"debug": True}
@@ -422,7 +432,8 @@ class TestFlextProcessorsConfigProcessor:
         assert "not found" in result.error
 
     def test_validate_configuration_attribute_exception_handling(
-        self, config_processor: FlextProcessors.ConfigProcessor,
+        self,
+        config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test configuration attribute validation exception handling."""
 
@@ -439,7 +450,9 @@ class TestFlextProcessorsConfigProcessor:
 
         # Test with validator that raises exception
         result = config_processor.validate_configuration_attribute(
-            obj, "test_attr", BadValidator(),
+            obj,
+            "test_attr",
+            BadValidator(),
         )
 
         assert result.is_failure
@@ -447,7 +460,8 @@ class TestFlextProcessorsConfigProcessor:
         assert "validation failed" in result.error.lower()
 
     def test_get_config_value_exception_handling(
-        self, config_processor: FlextProcessors.ConfigProcessor,
+        self,
+        config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test config value retrieval exception handling."""
 
@@ -467,7 +481,6 @@ class TestFlextProcessorsConfigProcessor:
 
         bad_dict = BadDict()
         # Cast to expected type for type checker
-        from typing import cast
 
         bad_dict_typed = cast("dict[str, object]", bad_dict)
         result = config_processor.get_config_value(bad_dict_typed, "error_key")
@@ -594,7 +607,8 @@ class TestFlextProcessorsSorter:
         ]
 
     def test_sort_entries_default_key(
-        self, sample_entries: list[FlextProcessors.Entry],
+        self,
+        sample_entries: list[FlextProcessors.Entry],
     ) -> None:
         """Test entry sorting with default key function (identifier)."""
         result = FlextProcessors.Sorter.sort_entries(sample_entries)
@@ -605,7 +619,8 @@ class TestFlextProcessorsSorter:
         assert identifiers == ["alice", "bob", "charlie"]
 
     def test_sort_entries_custom_key(
-        self, sample_entries: list[FlextProcessors.Entry],
+        self,
+        sample_entries: list[FlextProcessors.Entry],
     ) -> None:
         """Test entry sorting with custom key function."""
 
@@ -620,7 +635,8 @@ class TestFlextProcessorsSorter:
         assert last_names == ["Doe", "Jones", "Smith"]
 
     def test_sort_entries_reverse(
-        self, sample_entries: list[FlextProcessors.Entry],
+        self,
+        sample_entries: list[FlextProcessors.Entry],
     ) -> None:
         """Test entry sorting in reverse order."""
         result = FlextProcessors.Sorter.sort_entries(sample_entries, reverse=True)
@@ -852,7 +868,8 @@ class TestFlextProcessorsSystemMethods:
         ]
 
     def test_processors_system_initialization(
-        self, processors_system: FlextProcessors,
+        self,
+        processors_system: FlextProcessors,
     ) -> None:
         """Test processors system initialization."""
         # FlextProcessors no longer exposes 'processors' attribute directly
@@ -860,11 +877,13 @@ class TestFlextProcessorsSystemMethods:
         assert processors_system.service_registry is not None
         assert processors_system.config_processor is not None
         assert isinstance(
-            processors_system.config_processor, FlextProcessors.ConfigProcessor,
+            processors_system.config_processor,
+            FlextProcessors.ConfigProcessor,
         )
 
     def test_register_processor_success(
-        self, processors_system: FlextProcessors,
+        self,
+        processors_system: FlextProcessors,
     ) -> None:
         """Test successful processor registration."""
         processor = FlextProcessors.BaseProcessor()
@@ -934,7 +953,8 @@ class TestFlextProcessorsSystemMethods:
         assert "not found" in result.error
 
     def test_register_processor_exception_handling(
-        self, processors_system: FlextProcessors,
+        self,
+        processors_system: FlextProcessors,
     ) -> None:
         """Test processor registration exception handling."""
         processor = FlextProcessors.BaseProcessor()
@@ -944,7 +964,8 @@ class TestFlextProcessorsSystemMethods:
         assert result.success
 
     def test_process_entries_exception_handling(
-        self, processors_system: FlextProcessors,
+        self,
+        processors_system: FlextProcessors,
     ) -> None:
         """Test process entries exception handling."""
         # Create entries that should process normally
@@ -966,8 +987,6 @@ class TestFlextProcessorsConfigurationMethods:
 
     def test_configure_processors_system_success(self) -> None:
         """Test successful processors system configuration."""
-        from flext_core import FlextTypes
-
         config: FlextTypes.Config.ConfigDict = {
             "enable_regex_caching": False,
             "max_processing_errors": 50,
@@ -1254,7 +1273,8 @@ class TestFlextProcessorsThreadSafety:
             # Register a processor
             processor = FlextProcessors.RegexProcessor(rf"thread{thread_id}_.*")
             reg_result = processors_system.register_processor(
-                f"processor_{thread_id}", processor,
+                f"processor_{thread_id}",
+                processor,
             )
 
             if reg_result.success:
@@ -1376,7 +1396,8 @@ class TestFlextProcessorsIntegration:
             return FlextResult[object].ok(x)
 
         pipeline_result = FlextProcessors.create_processing_pipeline(
-            input_processor=extract_entry_info, output_processor=format_info,
+            input_processor=extract_entry_info,
+            output_processor=format_info,
         )
         assert pipeline_result.success
         pipeline = pipeline_result.unwrap()
@@ -1675,7 +1696,8 @@ class TestFlextProcessorsAdditionalCoverage:
         # Create processor that fails during process_data
         class FailingProcessor(FlextProcessors.BaseProcessor):
             def process_data(
-                self, entry: FlextProcessors.Entry,
+                self,
+                entry: FlextProcessors.Entry,
             ) -> FlextResult[dict[str, object]]:
                 _ = entry  # Explicitly mark as unused
                 return FlextResult[dict[str, object]].fail("Processing failed")
@@ -1751,7 +1773,8 @@ class TestFlextProcessorsAdditionalCoverage:
                 return FlextResult[None].ok(None)
 
             def transform_data(
-                self, entry: FlextProcessors.Entry,
+                self,
+                entry: FlextProcessors.Entry,
             ) -> FlextResult[FlextProcessors.Entry]:
                 # Create a new entry with modified content
                 return FlextProcessors.create_entry(
@@ -1992,7 +2015,8 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test factory method exception handling (lines 632-633, 647-648)."""
         # Test create_entry exception handling
         with patch.object(
-            FlextProcessors.Entry, "model_validate",
+            FlextProcessors.Entry,
+            "model_validate",
         ) as mock_model_validate:
             mock_model_validate.side_effect = Exception("Entry creation error")
 
@@ -2047,7 +2071,8 @@ class TestFlextProcessorsAdditionalCoverage:
         # Create an entry that will cause base processing to fail
         # We'll need to mock the parent's process_data method
         with patch.object(
-            FlextProcessors.BaseProcessor, "process_data",
+            FlextProcessors.BaseProcessor,
+            "process_data",
         ) as mock_process:
             mock_process.return_value = FlextResult[dict[str, object]].fail(
                 "Base processing failed",

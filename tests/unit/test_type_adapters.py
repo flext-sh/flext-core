@@ -217,7 +217,9 @@ class TestSerializers:
         adapter = TypeAdapter(TestModel)
 
         result = FlextTypeAdapters.Serializers.deserialize_from_json(
-            json_str, TestModel, adapter,
+            json_str,
+            TestModel,
+            adapter,
         )
 
         assert result.success
@@ -237,7 +239,9 @@ class TestSerializers:
         adapter = TypeAdapter(TestModel)
 
         result = FlextTypeAdapters.Serializers.deserialize_from_dict(
-            data_dict, TestModel, adapter,
+            data_dict,
+            TestModel,
+            adapter,
         )
 
         assert result.success
@@ -249,7 +253,9 @@ class TestSerializers:
     def test_deserialize_invalid_json(self) -> None:
         """Test deserializing invalid JSON."""
         result = FlextTypeAdapters.Serializers.deserialize_from_json(
-            "not-json", dict, TypeAdapter(dict),
+            "not-json",
+            dict,
+            TypeAdapter(dict),
         )
 
         assert result.is_failure
@@ -316,7 +322,9 @@ class TestBatchOperations:
         adapter = TypeAdapter(TestModel)
 
         result = FlextTypeAdapters.BatchOperations.validate_batch(
-            items, TestModel, adapter,
+            items,
+            TestModel,
+            adapter,
         )
 
         assert result.success
@@ -341,7 +349,9 @@ class TestBatchOperations:
         adapter = TypeAdapter(TestModel)
 
         result = FlextTypeAdapters.BatchOperations.validate_batch(
-            items, TestModel, adapter,
+            items,
+            TestModel,
+            adapter,
         )
 
         # The implementation might handle this differently

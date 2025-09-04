@@ -167,7 +167,7 @@ def demonstrate_complete_decorator() -> FlextResult[str]:
     result = business_operation(test_data)
     return result.map(
         lambda r: f"Operation completed: {r.get('status', 'unknown')}",
-    ).or_else(lambda e: FlextResult[str].ok(f"Handled failure: {e}"))
+    ).or_else(FlextResult[str].ok("Handled failure: unknown"))
 
 
 def demonstrate_safe_result_decorator() -> FlextResult[str]:

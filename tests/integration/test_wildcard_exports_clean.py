@@ -352,7 +352,8 @@ class TestFlextCoreIntegrationScenarios:
         container.register_factory("timeout", lambda: FlextConstants.Defaults.TIMEOUT)
 
         container.register_factory(
-            "error_mapping", lambda: FlextConstants.Errors.MESSAGES,
+            "error_mapping",
+            lambda: FlextConstants.Errors.MESSAGES,
         )
 
         # Resolve and verify

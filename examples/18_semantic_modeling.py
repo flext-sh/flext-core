@@ -298,7 +298,7 @@ class FlextPipelineService:
             return (
                 pipeline.activate()
                 .map(lambda _: f"Pipeline {pipeline_id} activated successfully")
-                .map_error(lambda err: f"Activation failed: {err}")
+                .tap_error(lambda err: print(f"Activation failed: {err}"))
             )
 
         # Railway Pattern execution: get -> activate -> format

@@ -99,11 +99,14 @@ class AsyncTestUtils:
 
     @staticmethod
     async def run_concurrent(
-        coroutines: list[Awaitable[T]], *, return_exceptions: bool = False,
+        coroutines: list[Awaitable[T]],
+        *,
+        return_exceptions: bool = False,
     ) -> list[T]:
         """Run coroutines from a list concurrently."""
         return await AsyncTestUtils.run_concurrently(
-            *coroutines, return_exceptions=return_exceptions,
+            *coroutines,
+            return_exceptions=return_exceptions,
         )
 
     @staticmethod
@@ -246,7 +249,8 @@ class AsyncMockUtils:
 
     @staticmethod
     def create_async_mock(
-        return_value: object = None, side_effect: Exception | None = None,
+        return_value: object = None,
+        side_effect: Exception | None = None,
     ) -> AsyncMockProtocol:
         """Create async mock function."""
 
@@ -317,7 +321,9 @@ class AsyncFixtureUtils:
                 return {"url": url, "status": 200}
 
             async def post(
-                self, url: str, data: dict[str, object],
+                self,
+                url: str,
+                data: dict[str, object],
             ) -> dict[str, object]:
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
@@ -383,7 +389,9 @@ class AsyncConcurrencyTesting:
 
             # Wait for both to complete
             result1, result2 = await asyncio.gather(
-                task1, task2, return_exceptions=True,
+                task1,
+                task2,
+                return_exceptions=True,
             )
 
             results.append(

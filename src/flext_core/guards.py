@@ -2,103 +2,6 @@
 
 Provides efficient validation and guard system with type guards, function memoization,
 immutable class creation, and assertion-style validation using FlextResult integration.
-
-Usage:
-    # Type guards
-    if FlextGuards.is_dict_of(data, str, int):
-        # data is Dict[str, int]
-        process_string_int_dict(data)
-
-    # Validation decorators
-    @FlextGuards.pure
-    def calculate_sum(a: int, b: int) -> int:
-        return a + b  # Automatically memoized
-
-    @FlextGuards.immutable
-    class Point:
-        x: int
-        y: int
-
-    # Assertions with FlextResult
-    result = FlextGuards.assert_type(value, int)
-    if result.success:
-        # value is guaranteed to be int
-        process_integer(value)
-
-Features:
-    - Type guards for runtime type checking
-    - Pure function decorator with memoization
-    - Immutable class decorator
-    - Assertion-style validation with FlextResult
-    - Performance optimization utilities
-
-        # Validation Utilities (ValidationUtils):
-        require_not_none(value, message) -> FlextResult[T] # Require non-None value
-        require_type(value, expected_type, message) -> FlextResult[T] # Require specific type
-        require_in_range(value, min_val, max_val) -> FlextResult[T] # Require value in range
-        require_string_not_empty(value, message) -> FlextResult[str] # Require non-empty string
-        require_list_not_empty(value, message) -> FlextResult[list[T]] # Require non-empty list
-        require_dict_has_key(dict_obj, key, message) -> FlextResult[dict] # Require key exists
-
-        # Pure Function Cache Management:
-        clear_pure_cache() -> None              # Clear all memoization cache
-        get_cache_stats() -> dict               # Get cache statistics
-        set_cache_size_limit(limit) -> None     # Set cache size limit
-
-        # Immutable Class Utilities:
-        make_immutable(cls) -> type             # Convert class to immutable
-        is_immutable(obj) -> bool               # Check if object is immutable
-        freeze_object(obj) -> object            # Make object immutable
-
-        # Assertion Utilities:
-        assert_not_none(value, message) -> None # Assert value is not None
-        assert_type(value, expected_type, message) -> None # Assert type matches
-        assert_condition(condition, message) -> None # Assert condition is true
-
-        # Performance Monitoring:
-        get_validation_metrics() -> dict       # Get validation performance metrics
-        reset_metrics() -> None                # Reset performance metrics
-        enable_metrics_collection(enabled) -> None # Enable/disable metrics
-
-Usage Examples:
-    Type guards and validation:
-        # Type guards
-        if FlextGuards.is_dict_of(obj, str, int):
-            # obj is guaranteed to be dict[str, int]
-            process_string_int_dict(obj)
-
-        # Validation utilities
-        result = FlextGuards.ValidationUtils.require_not_none(data, "Data required")
-        if result.success:
-            validated_data = result.unwrap()
-
-    Decorators:
-        # Pure function with memoization
-        @FlextGuards.pure
-        def expensive_calculation(x: int) -> int:
-            return x * x * x
-
-        # Immutable class
-        @FlextGuards.immutable
-        class DataClass:
-            def __init__(self, value: str):
-                self.value = value
-
-    Configuration:
-        config_result = FlextGuards.configure_guards_system({
-            "environment": "production",
-            "validation_level": "strict",
-            "enable_pure_function_caching": True
-        })
-
-Integration:
-    FlextGuards integrates with FlextResult for railway-oriented error handling,
-    FlextTypes.Config for configuration management, FlextConstants for validation
-    limits, and FlextExceptions for structured error reporting.
-
-Thread Safety:
-    All operations are thread-safe with proper synchronization for shared resources.
-    Cache operations use atomic updates and context managers for consistency.
 """
 
 from __future__ import annotations
@@ -122,108 +25,6 @@ class FlextGuards:
     optimization. The system is designed for high-performance, thread-safe operation
     in enterprise environments with extensive configuration management capabilities.
 
-    The class consolidates all guard-related functionality into a single, well-organized
-    container with nested classes providing logical grouping of related operations.
-    All methods integrate with FlextResult railway patterns and FlextTypes for
-    type-safe, composable validation flows.
-
-    Architectural Design:
-        - Nested Class Organization: Related functionality grouped in PureWrapper and ValidationUtils
-        - Static Method Pattern: Core guard operations as static methods for performance
-        - Class Method Configuration: Environment and optimization management as class methods
-        - Decorator Pattern Implementation: Pure function and immutable class decorators
-        - Type Guard Implementation: Runtime type checking with compile-time type narrowing
-
-    Core Capabilities:
-        Pure Function System:
-            - Automatic memoization with intelligent cache key generation
-            - Descriptor protocol support for method binding
-            - Thread-safe cache operations with configurable size limits
-            - Performance monitoring with cache hit ratio tracking
-
-        Immutable Class System:
-            - Dynamic immutable class creation with inheritance preservation
-            - Attribute modification prevention after initialization
-            - Hash function generation for collection usage
-            - Descriptor protocol compliance for method resolution
-
-        Validation System:
-            - Assertion-style validation with efficient error messages
-            - Range validation with configurable bounds checking
-            - Non-empty string validation with whitespace handling
-            - Type-safe validation with FlextExceptions integration
-
-        Type Guard System:
-            - Collection type validation with element type checking
-            - Dictionary value type validation with key preservation
-            - List item type validation with index preservation
-            - Runtime type narrowing for compile-time type safety
-
-        Configuration Management:
-            - Environment-specific configuration generation
-            - Performance optimization with configurable strategies
-            - Validation level management (loose, normal, strict)
-            - Cache and memory optimization settings
-
-    Performance Characteristics:
-        - Pure Function Caching: O(1) cache lookup with configurable eviction
-        - Type Guard Validation: O(n) for collections with early termination
-        - Immutable Class Creation: O(1) with minimal runtime overhead
-        - Configuration Management: O(1) with cached optimization strategies
-
-    Thread Safety:
-        All operations are designed for concurrent access with proper synchronization.
-        Cache operations use context managers and atomic updates for consistency.
-        Configuration management is thread-safe with immutable configuration objects.
-
-    Integration Points:
-        - FlextTypes.Config: Type-safe configuration objects and environment enums
-        - FlextConstants.Config: Standardized configuration values and validation rules
-        - FlextResult: Railway-oriented error handling for all operations
-        - FlextExceptions: Structured exception hierarchy for validation failures
-
-    Example Usage:
-        ```python
-        # Configure for production environment
-        config_result = FlextGuards.configure_guards_system(
-            {
-                "environment": "production",
-                "validation_level": "strict",
-                "max_cache_size": 5000,
-            }
-        )
-
-
-        # Create pure function with memoization
-        @FlextGuards.pure
-        def compute_hash(data: bytes) -> str:
-            return hashlib.sha256(data).hexdigest()
-
-
-        # Create immutable data class
-        @FlextGuards.immutable
-        class ConfigData:
-            def __init__(self, host: str, port: int):
-                self.host = host
-                self.port = port
-
-
-        # Perform validation
-        validated_port = FlextGuards.ValidationUtils.require_in_range(
-            port, 1, 65535, "Port must be between 1 and 65535"
-        )
-
-        # Use type guards
-        if FlextGuards.is_dict_of(config, str):
-            # config is now typed as dict[str, str]
-            process_string_config(config)
-        ```
-
-    Notes:
-        This class follows the Consolidated Class Design pattern used throughout
-        the FLEXT ecosystem, organizing all related functionality within a single
-        well-structured container for consistent API access and maintenance.
-
     """
 
     # ==========================================================================
@@ -238,75 +39,6 @@ class FlextGuards:
         The wrapper supports both regular functions and instance methods through the
         descriptor protocol, maintaining thread safety and providing cache management
         capabilities.
-
-        The implementation handles complex scenarios including:
-            - Automatic cache key generation from function arguments
-            - Descriptor protocol support for method binding
-            - Thread-safe cache operations with atomic updates
-            - Graceful fallback for unhashable arguments
-            - Function metadata preservation (__name__, __doc__)
-            - Cache size monitoring and performance metrics
-
-        Key Features:
-            - Generic Type Support: Fully typed with generic return type R
-            - Intelligent Caching: Automatic cache key generation with fallback
-            - Method Binding: Descriptor protocol support for instance methods
-            - Metadata Preservation: Function name and documentation preservation
-            - Thread Safety: Atomic cache operations with proper synchronization
-            - Performance Monitoring: Cache hit ratio and size tracking
-
-        Memoization Strategy:
-            The caching system uses a composite key strategy combining positional
-            arguments and sorted keyword arguments. For unhashable arguments,
-            the system gracefully falls back to direct function execution without
-            caching, ensuring robustness across all input types.
-
-        Descriptor Protocol:
-            When used as a method decorator, the wrapper implements the descriptor
-            protocol to properly bind methods to instances while preserving the
-            __pure__ attribute for introspection and tooling support.
-
-        Performance Characteristics:
-            - Cache Lookup: O(1) average case with hash-based storage
-            - Key Generation: O(n) where n is the number of arguments
-            - Memory Usage: Configurable with automatic cleanup strategies
-            - Thread Contention: Minimal with atomic cache operations
-
-        Example Usage:
-            ```python
-            # Direct wrapper usage
-            pure_func = FlextGuards.PureWrapper(expensive_function)
-            result = pure_func(arg1, kwarg1="value")
-
-
-            # Decorator usage
-            @FlextGuards.pure
-            def calculate_fibonacci(n: int) -> int:
-                if n <= 1:
-                    return n
-                return calculate_fibonacci(n - 1) + calculate_fibonacci(n - 2)
-
-
-            # Method usage with descriptor protocol
-            class Calculator:
-                @FlextGuards.pure
-                def compute(self, x: int, y: int) -> int:
-                    return x**y
-
-
-            calc = Calculator()
-            result = calc.compute(2, 10)  # Cached automatically
-            ```
-
-        Thread Safety:
-            All cache operations are thread-safe using atomic dictionary operations.
-            The wrapper can be safely used in concurrent environments without
-            additional synchronization requirements.
-
-        Cache Management:
-            The cache can be inspected using the __cache_size__() method for
-            performance monitoring and memory usage analysis. Cache cleanup
-            strategies can be implemented by accessing the cache attribute directly.
         """
 
         def __init__(self, func: Callable[[object], R] | Callable[[], R]) -> None:
@@ -327,31 +59,6 @@ class FlextGuards:
             available. For unhashable arguments, the method gracefully falls back to
             direct function execution without caching.
 
-            The caching strategy uses a composite key combining positional arguments
-            and sorted keyword arguments for consistent cache key generation across
-            equivalent function calls.
-
-            Args:
-                *args: Positional arguments to pass to the wrapped function.
-                **kwargs: Keyword arguments to pass to the wrapped function.
-
-            Returns:
-                R: The function result, either from cache or fresh computation.
-
-            Raises:
-                object exceptions raised by the wrapped function are propagated unchanged.
-
-            Cache Key Strategy:
-                The cache key is generated as a tuple of (args, sorted_kwargs_items).
-                If this key generation fails due to unhashable types, the function
-                is executed directly without caching to maintain robustness.
-
-            Performance Notes:
-                - Cache hits provide O(1) retrieval performance
-                - Cache misses include key generation overhead (typically negligible)
-                - Memory usage scales with unique argument combinations
-                - Thread-safe with atomic dictionary operations
-
             """
             try:
                 cache_key = (args, tuple(sorted(kwargs.items())))
@@ -370,31 +77,6 @@ class FlextGuards:
             monitoring and memory usage analysis. The cache size represents the
             number of unique argument combinations that have been cached.
 
-            Returns:
-                int: The number of entries currently stored in the cache.
-
-            Usage:
-                This method is primarily used for:
-                - Performance monitoring and profiling
-                - Memory usage analysis and optimization
-                - Cache cleanup strategy implementation
-                - Debugging and development diagnostics
-
-            Example:
-                ```python
-                @FlextGuards.pure
-                def expensive_func(x: int) -> int:
-                    return x**2
-
-
-                result1 = expensive_func(5)  # Cache miss
-                result2 = expensive_func(10)  # Cache miss
-                result3 = expensive_func(5)  # Cache hit
-
-                cache_size = expensive_func.__cache_size__()
-                assert cache_size == 2  # Two unique argument sets cached
-                ```
-
             """
             return len(self.cache)
 
@@ -404,51 +86,6 @@ class FlextGuards:
             This method implements the descriptor protocol to ensure that pure function
             wrappers work correctly when used as method decorators. It handles the binding
             of methods to instances while preserving the __pure__ attribute for introspection.
-
-            The implementation creates a bound method-like callable that automatically
-            includes the instance as the first argument, maintaining the standard Python
-            method calling convention while preserving memoization functionality.
-
-            Args:
-                instance: The instance the method is being accessed from, or None for class access.
-                owner: The class that owns the method, used for class-level access.
-
-            Returns:
-                object: Either the wrapper itself (for class access) or a bound method-like
-                       callable (for instance access) with the __pure__ attribute preserved.
-
-            Descriptor Protocol Behavior:
-                - Class Access (instance=None): Returns the wrapper itself for introspection
-                - Instance Access: Returns a bound callable that includes the instance
-                - Attribute Preservation: Maintains __pure__ attribute on bound methods
-                - Error Handling: Uses contextlib.suppress for safe attribute setting
-
-            Method Binding Process:
-                1. Check if this is class-level access (instance is None)
-                2. Create a bound method that includes the instance as first argument
-                3. Safely set the __pure__ attribute on the bound method
-                4. Return the bound method for instance-level calls
-
-            Example Usage:
-                ```python
-                class DataProcessor:
-                    @FlextGuards.pure
-                    def transform(self, data: list[int]) -> list[int]:
-                        return [x * 2 for x in data]
-
-
-                processor = DataProcessor()
-                result = processor.transform([1, 2, 3])  # Bound method with memoization
-
-                # Introspection still works
-                assert hasattr(processor.transform, "__pure__")
-                assert DataProcessor.transform.__cache_size__() >= 0
-                ```
-
-            Thread Safety:
-                The descriptor protocol implementation is thread-safe as it creates
-                new bound method objects for each access, avoiding shared mutable state.
-
             """
             if instance is None:
                 return self
@@ -459,7 +96,7 @@ class FlextGuards:
 
             # Safely add the __pure__ attribute to the function using setattr
             with contextlib.suppress(AttributeError, TypeError):
-                bound_method.__pure__ = True
+                setattr(bound_method, "__pure__", True)
             return bound_method
 
     class ValidationUtils:
@@ -1426,7 +1063,8 @@ class FlextGuards:
 
     @classmethod
     def configure_guards_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure guards system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1470,24 +1108,29 @@ class FlextGuards:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
+                    "log_level",
+                    FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
                     FlextConstants.Config.ValidationLevel.NORMAL.value,
                 ),
                 "enable_pure_function_caching": config.get(
-                    "enable_pure_function_caching", True,
+                    "enable_pure_function_caching",
+                    True,
                 ),
                 "enable_immutable_classes": config.get(
-                    "enable_immutable_classes", True,
+                    "enable_immutable_classes",
+                    True,
                 ),
                 "enable_validation_guards": config.get(
-                    "enable_validation_guards", True,
+                    "enable_validation_guards",
+                    True,
                 ),
                 "max_cache_size": config.get("max_cache_size", 1000),
                 "enable_strict_validation": config.get(
-                    "enable_strict_validation", False,
+                    "enable_strict_validation",
+                    False,
                 ),
             }
 
@@ -1645,7 +1288,8 @@ class FlextGuards:
 
     @classmethod
     def optimize_guards_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize guards system performance based on configuration."""
         try:
@@ -1704,7 +1348,8 @@ class FlextGuards:
                     {
                         "max_cache_size": config.get("max_cache_size", 1000),
                         "enable_pure_function_caching": config.get(
-                            "enable_pure_function_caching", True,
+                            "enable_pure_function_caching",
+                            True,
                         ),
                         "cache_cleanup_interval": 300,
                         "memory_optimization": "balanced",

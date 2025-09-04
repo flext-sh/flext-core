@@ -25,6 +25,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
+import httpx
 import pytest
 import pytest_asyncio
 from pytest_benchmark.fixture import BenchmarkFixture
@@ -118,7 +119,9 @@ class SequenceFactory:
 
     @staticmethod
     def create_sequence(
-        length: int = 10, prefix: str = "", count: int | None = None,
+        length: int = 10,
+        prefix: str = "",
+        count: int | None = None,
     ) -> list[str]:
         """Create sequence with optional prefix."""
         actual_length = count if count is not None else length
@@ -221,13 +224,13 @@ def flext_container() -> FlextContainer:
 @pytest.fixture
 def test_entity() -> BaseTestEntity:
     """Fixture providing test domain entity."""
-    return TestEntityFactory.create()
+    return cast("BaseTestEntity", TestEntityFactory.create())
 
 
 @pytest.fixture
 def test_value_object() -> BaseTestValueObject:
     """Fixture providing test value object."""
-    return TestValueObjectFactory.create()
+    return cast("BaseTestValueObject", TestValueObjectFactory.create())
 
 
 @pytest.fixture
@@ -309,7 +312,7 @@ def performance_data() -> dict[str, object]:
 @pytest.fixture
 def large_dataset() -> list[BaseTestEntity]:
     """Fixture providing large dataset for performance testing."""
-    return TestEntityFactory.create_batch(size=1000)
+    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=1000))
 
 
 @pytest.fixture
@@ -437,7 +440,7 @@ def timeline_events() -> list[dict[str, object]]:
 @pytest.fixture
 def entity_batch() -> list[BaseTestEntity]:
     """Fixture providing batch of entities."""
-    return TestEntityFactory.create_batch(size=50)
+    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=50))
 
 
 # Factory registry fixture
@@ -553,12 +556,7 @@ class SessionTestService:
 @pytest.fixture
 def http_client() -> object:
     """Fixture providing HTTP client for testing."""
-    try:
-        import httpx
-
-        return httpx.AsyncClient()
-    except ImportError:
-        pytest.skip("httpx not available")
+    return httpx.AsyncClient()
 
 
 @pytest.fixture

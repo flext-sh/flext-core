@@ -165,7 +165,9 @@ class FlextContainer:
 
             @classmethod
             def create(
-                cls, service_name: str, factory: object,
+                cls,
+                service_name: str,
+                factory: object,
             ) -> FlextContainer.Commands.RegisterFactory:
                 """Create command with default values."""
                 return cls(
@@ -214,7 +216,8 @@ class FlextContainer:
 
             @classmethod
             def create(
-                cls, service_name: str,
+                cls,
+                service_name: str,
             ) -> FlextContainer.Commands.UnregisterService:
                 """Create command with default values."""
                 return cls(
@@ -267,7 +270,9 @@ class FlextContainer:
 
             @classmethod
             def create(
-                cls, service_name: str, expected_type: str | None = None,
+                cls,
+                service_name: str,
+                expected_type: str | None = None,
             ) -> FlextContainer.Queries.GetService:
                 """Create query with default values."""
                 return cls(
@@ -682,7 +687,8 @@ class FlextContainer:
     # =========================================================================
 
     def configure_container(
-        self, config: FlextTypes.Config.ConfigDict,
+        self,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[None]:
         """Configure container with FlextTypes.Config and StrEnum validation."""
         try:
@@ -761,7 +767,8 @@ class FlextContainer:
             )
 
     def create_environment_scoped_container(
-        self, environment: FlextTypes.Config.Environment,
+        self,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextContainer]:
         """Create a new container scoped to a specific environment using FlextTypes.Config."""
         try:
@@ -778,7 +785,8 @@ class FlextContainer:
             env_config: FlextTypes.Config.ConfigDict = {
                 "environment": environment,
                 "log_level": self._config.get(
-                    "log_level", FlextConstants.Config.LogLevel.INFO.value,
+                    "log_level",
+                    FlextConstants.Config.LogLevel.INFO.value,
                 ),
                 "validation_level": (
                     FlextConstants.Config.ValidationLevel.STRICT.value
@@ -818,7 +826,8 @@ class FlextContainer:
                     "service_names": self.get_service_names(),
                     "max_services_limit": self._config.get("max_services", 1000),
                     "factory_cache_enabled": self._config.get(
-                        "enable_factory_cache", True,
+                        "enable_factory_cache",
+                        True,
                     ),
                 },
                 "environment_info": {
@@ -1084,7 +1093,8 @@ class FlextContainer:
 
     @classmethod
     def configure_global(
-        cls, container: FlextContainer | None = None,
+        cls,
+        container: FlextContainer | None = None,
     ) -> FlextContainer:
         """Configure global container (class method)."""
         if container is None:
@@ -1141,10 +1151,8 @@ class FlextContainer:
     @staticmethod
     def flext_validate_service_name(name: str) -> FlextResult[None]:
         """Validate service name string."""
-        if not name:
+        if not isinstance(name, str) or not name or not name.strip():
             return FlextResult[None].fail("Service name must be a non-empty string")
-        if not name.strip():
-            return FlextResult[None].fail("Service name cannot be only whitespace")
         return FlextResult[None].ok(None)
 
     @staticmethod

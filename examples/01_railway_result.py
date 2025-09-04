@@ -126,7 +126,8 @@ class UserRegistrationService:
         self._utilities = FlextUtilities()
 
     def process_registration(
-        self, request: UserRegistrationRequest,
+        self,
+        request: UserRegistrationRequest,
     ) -> FlextResult[RegistrationResult]:
         """Process user registration with proper validation and error handling.
 
@@ -172,7 +173,8 @@ class UserRegistrationService:
         return FlextResult[RegistrationResult].ok(result)
 
     def process_batch(
-        self, requests: list[UserRegistrationRequest],
+        self,
+        requests: list[UserRegistrationRequest],
     ) -> FlextResult[BatchResult]:
         """Process batch of registration requests.
 
@@ -215,7 +217,8 @@ class UserRegistrationService:
         return FlextResult[BatchResult].ok(batch_result)
 
     def process_json_registration(
-        self, json_data: str,
+        self,
+        json_data: str,
     ) -> FlextResult[RegistrationResult]:
         """Process JSON registration data.
 
@@ -261,7 +264,9 @@ def demonstrate_railway_patterns() -> None:
     # 1. Single registration processing
     print("\n1. Single Registration Processing:")
     request = UserRegistrationRequest(
-        name="Alice Johnson", email="alice@company.com", age=28,
+        name="Alice Johnson",
+        email="alice@company.com",
+        age=28,
     )
 
     result = service.process_registration(request)

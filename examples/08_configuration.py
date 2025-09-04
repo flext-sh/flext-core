@@ -32,10 +32,12 @@ from flext_core import FlextConfig, FlextResult
 
 # Example security keys for demonstration purposes only - NOT FOR PRODUCTION
 _DEMO_SECRET_KEY_1 = os.getenv(
-    "FLEXT_DEMO_SECRET_KEY_1", "ValidSecretKey123WithComplexity456",
+    "FLEXT_DEMO_SECRET_KEY_1",
+    "ValidSecretKey123WithComplexity456",
 )
 _DEMO_SECRET_KEY_2 = os.getenv(
-    "FLEXT_DEMO_SECRET_KEY_2", "ValidSecretKey123WithComplexityAndLength",
+    "FLEXT_DEMO_SECRET_KEY_2",
+    "ValidSecretKey123WithComplexityAndLength",
 )
 _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
@@ -131,19 +133,31 @@ class SecurityConfig(FlextConfig):
     """Security configuration with comprehensive validation."""
 
     secret_key: str = Field(
-        default=_DEMO_SECRET_KEY_1, min_length=32, description="Application secret key",
+        default=_DEMO_SECRET_KEY_1,
+        min_length=32,
+        description="Application secret key",
     )
     token_expiry_hours: int = Field(
-        default=24, ge=1, le=8760, description="Token expiry in hours",
+        default=24,
+        ge=1,
+        le=8760,
+        description="Token expiry in hours",
     )
     max_login_attempts: int = Field(
-        default=5, ge=1, le=20, description="Max login attempts",
+        default=5,
+        ge=1,
+        le=20,
+        description="Max login attempts",
     )
     session_timeout_minutes: int = Field(
-        default=30, ge=5, le=1440, description="Session timeout",
+        default=30,
+        ge=5,
+        le=1440,
+        description="Session timeout",
     )
     enable_2fa: bool = Field(
-        default=False, description="Enable two-factor authentication",
+        default=False,
+        description="Enable two-factor authentication",
     )
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
@@ -195,7 +209,8 @@ class EnterpriseConfig(BaseSettings):
     app_name: str = Field(default="Enterprise Application")
     version: str = Field(default="1.0.0")
     environment: str = Field(
-        default="development", pattern="^(development|staging|production)$",
+        default="development",
+        pattern="^(development|staging|production)$",
     )
     debug: bool = Field(default=False)
 
@@ -305,7 +320,8 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
 
 
 def save_config_to_file(
-    config_data: dict[str, object], file_path: str | Path,
+    config_data: dict[str, object],
+    file_path: str | Path,
 ) -> FlextResult[None]:
     """Save configuration to JSON file."""
     try:
@@ -322,7 +338,8 @@ def save_config_to_file(
 
 
 def merge_configurations(
-    base: dict[str, object], override: dict[str, object],
+    base: dict[str, object],
+    override: dict[str, object],
 ) -> dict[str, object]:
     """Deep merge two configuration dictionaries."""
     result = base.copy()
@@ -502,7 +519,10 @@ def demonstrate_file_configuration() -> FlextResult[None]:
 
         # Save to temporary file
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False,
+            encoding="utf-8",
+            mode="w",
+            suffix=".json",
+            delete=False,
         ) as f:
             json.dump(config_data, f, indent=2)
             config_file = f.name
@@ -646,7 +666,8 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
             "Invalid database port",
             {
                 "database": DatabaseConfig(
-                    host="localhost", port=22,
+                    host="localhost",
+                    port=22,
                 ),  # SSH port not allowed
             },
         ),

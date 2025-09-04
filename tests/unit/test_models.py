@@ -22,8 +22,7 @@ import pytest
 from pydantic import Field, ValidationError
 
 from flext_core import FlextModels, FlextResult, FlextTypes
-from tests.support.matchers import FlextMatchers
-from tests.support.performance import BenchmarkProtocol
+from flext_tests import BenchmarkProtocol, FlextMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -202,7 +201,8 @@ class TestFlextModelRealFunctionality:
     def test_model_serialization_with_aliases(self) -> None:
         """Test FlextModels serialization functionality."""
         config = ConfigurationModel(
-            database_url="postgresql://localhost:5432/test", api_timeout=45,
+            database_url="postgresql://localhost:5432/test",
+            api_timeout=45,
         )
 
         # model_dump should provide serialized data
@@ -257,7 +257,9 @@ class TestFlextRootModelRealFunctionality:
     def test_root_model_creation(self) -> None:
         """Test FlextRootModel creation and inheritance from FlextModels."""
         root_data = DataRootModel(
-            application_name="TestApp", version="1.0.0", environment="production",
+            application_name="TestApp",
+            version="1.0.0",
+            environment="production",
         )
 
         assert root_data.application_name == "TestApp"
@@ -379,7 +381,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_creation_with_identity(self) -> None:
         """Test FlextModels creation with automatic ID generation."""
         user = UserEntity(
-            id="user_123", name="John Doe", email="john@example.com", age=30,
+            id="user_123",
+            name="John Doe",
+            email="john@example.com",
+            age=30,
         )
 
         assert str(user.id) == "user_123"
@@ -396,7 +401,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_basic_properties(self) -> None:
         """Test FlextModels basic properties and methods."""
         user = UserEntity(
-            id="user_456", name="Jane Doe", email="jane@example.com", age=25,
+            id="user_456",
+            name="Jane Doe",
+            email="jane@example.com",
+            age=25,
         )
 
         # Basic properties should work
@@ -409,13 +417,22 @@ class TestFlextEntityRealFunctionality:
     def test_entity_identity_based_equality(self) -> None:
         """Test FlextModels identity-based equality."""
         user1 = UserEntity(
-            id="user_123", name="John Doe", email="john@example.com", age=30,
+            id="user_123",
+            name="John Doe",
+            email="john@example.com",
+            age=30,
         )
         user2 = UserEntity(
-            id="user_123", name="Jane Doe", email="jane@example.com", age=25,
+            id="user_123",
+            name="Jane Doe",
+            email="jane@example.com",
+            age=25,
         )  # Same ID, different data
         user3 = UserEntity(
-            id="user_456", name="John Doe", email="john@example.com", age=30,
+            id="user_456",
+            name="John Doe",
+            email="john@example.com",
+            age=30,
         )  # Different ID, same data
 
         # Same ID should be equal regardless of other attributes
@@ -429,7 +446,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_version_management(self) -> None:
         """Test FlextModels version management and optimistic locking."""
         user = UserEntity(
-            id="user_789", name="Bob Smith", email="bob@example.com", age=40,
+            id="user_789",
+            name="Bob Smith",
+            email="bob@example.com",
+            age=40,
         )
 
         assert user.version == 1
@@ -444,7 +464,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_with_version_method(self) -> None:
         """Test FlextModels with_version method."""
         user = UserEntity(
-            id="user_101", name="Alice Johnson", email="alice@example.com", age=28,
+            id="user_101",
+            name="Alice Johnson",
+            email="alice@example.com",
+            age=28,
         )
 
         # Test version management - new API doesn't have with_version
@@ -457,7 +480,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_domain_events(self) -> None:
         """Test FlextModels domain events functionality."""
         user = UserEntity(
-            id="user_202", name="Charlie Brown", email="charlie@example.com", age=22,
+            id="user_202",
+            name="Charlie Brown",
+            email="charlie@example.com",
+            age=22,
         )
 
         # Initially no events
@@ -501,7 +527,10 @@ class TestFlextEntityRealFunctionality:
         """Test FlextModels business rules validation."""
         # Valid user should pass
         valid_user = UserEntity(
-            id="user_404", name="Valid User", email="valid@example.com", age=30,
+            id="user_404",
+            name="Valid User",
+            email="valid@example.com",
+            age=30,
         )
         result = valid_user.validate_business_rules()
         assert result.is_success
@@ -522,7 +551,10 @@ class TestFlextEntityRealFunctionality:
     def test_entity_string_representations(self) -> None:
         """Test FlextModels string representations."""
         user = UserEntity(
-            id="user_606", name="Frank Castle", email="frank@example.com", age=45,
+            id="user_606",
+            name="Frank Castle",
+            email="frank@example.com",
+            age=45,
         )
 
         # Test __str__
@@ -840,7 +872,8 @@ class TestModelsWithFlextMatchers:
         # Test business logic operations
         activation_result = user.activate()
         FlextMatchers.assert_result_failure(
-            activation_result, expected_error="already active",
+            activation_result,
+            expected_error="already active",
         )
 
         # Deactivate first
@@ -851,7 +884,10 @@ class TestModelsWithFlextMatchers:
     def test_json_structure_validation(self) -> None:
         """Test JSON structure validation with FlextMatchers."""
         user = UserEntity(
-            id="json_test_123", name="JSON Test User", email="json@example.com", age=30,
+            id="json_test_123",
+            name="JSON Test User",
+            email="json@example.com",
+            age=30,
         )
 
         # Serialize and test structure
@@ -881,7 +917,10 @@ class TestModelsWithFlextMatchers:
         """Test type guard validation with FlextMatchers."""
         email = EmailValue(address="typeguard@example.com", domain="example.com")
         user = UserEntity(
-            id="type_test_123", name="Type Test User", email="type@example.com", age=27,
+            id="type_test_123",
+            name="Type Test User",
+            email="type@example.com",
+            age=27,
         )
 
         # Test type guards
@@ -1169,7 +1208,10 @@ class TestFlextModelsEntityClearDomainEvents:
     def test_clear_domain_events_returns_copy_and_clears_list(self) -> None:
         """Test lines 274-276: events = self.domain_events.copy(), self.domain_events.clear(), return events."""
         user = UserEntity(
-            id="clear_events_test", name="Test User", email="test@example.com", age=30,
+            id="clear_events_test",
+            name="Test User",
+            email="test@example.com",
+            age=30,
         )
 
         # Add some events

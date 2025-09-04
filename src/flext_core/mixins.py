@@ -9,6 +9,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 
 from flext_core.constants import FlextConstants
+from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
@@ -28,11 +29,9 @@ class FlextMixins:
     ) -> None:
         """Create timestamp fields directly on object."""
         now = datetime.now(UTC)
-        obj.created_at = now
-        obj.updated_at = now
-        obj._timestamp_initialized = True
         obj._created_at = now
         obj._updated_at = now
+        obj._timestamp_initialized = True
 
     @staticmethod
     def update_timestamp(
@@ -40,42 +39,49 @@ class FlextMixins:
     ) -> None:
         """Update timestamp field directly."""
         now = datetime.now(UTC)
-        obj.updated_at = now
         obj._updated_at = now
+        obj._timestamp_initialized = True
 
     @staticmethod
     def get_created_at(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> datetime | None:
         """Get created timestamp, initialize if not present."""
-        created_at = getattr(obj, "created_at", None)
+        created_at = getattr(obj, "_created_at", None)
         if created_at is None:
             now = datetime.now(UTC)
-            obj.created_at = now
+            obj._created_at = now
             return now
-        return created_at
+        # Type guard to ensure we return datetime | None
+        return created_at if isinstance(created_at, datetime | type(None)) else None
 
     @staticmethod
     def get_updated_at(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> datetime | None:
         """Get updated timestamp, initialize if not present."""
-        updated_at = getattr(obj, "updated_at", None)
+        updated_at = getattr(obj, "_updated_at", None)
         if updated_at is None:
             now = datetime.now(UTC)
-            obj.updated_at = now
+            obj._updated_at = now
             return now
-        return updated_at
+        # Type guard to ensure we return datetime | None
+        return updated_at if isinstance(updated_at, datetime | type(None)) else None
 
     @staticmethod
     def get_age_seconds(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> float:
         """Get object age in seconds."""
-        created_at = getattr(obj, "created_at", None)
+        created_at = getattr(obj, "_created_at", None)
         if not created_at:
             return 0.0
         return float((datetime.now(UTC) - created_at).total_seconds())
+
+    @property
+    def age_seconds(self) -> float:
+        """Get object age in seconds (property)."""
+        return FlextMixins.get_age_seconds(self)
 
     # ==========================================================================
     # IDENTIFICATION FUNCTIONALITY - Direct implementation
@@ -92,10 +98,16 @@ class FlextMixins:
 
     @staticmethod
     def set_id(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, entity_id: str,
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        entity_id: str,
     ) -> None:
         """Set object ID directly."""
         obj.id = entity_id
+
+    @staticmethod
+    def get_id(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> str | None:
+        """Get object ID."""
+        return getattr(obj, "id", None)
 
     @staticmethod
     def has_id(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> bool:
@@ -103,11 +115,57 @@ class FlextMixins:
         return hasattr(obj, "id") and obj.id is not None
 
     @staticmethod
-    def object_hash(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> str:
+    def _serialize_value(value: object) -> object:
+        """Serialize a value for JSON conversion."""
+        visited: set[int] = set()
+        return FlextMixins._serialize_value_with_visited(value, visited)
+
+    @staticmethod
+    def _serialize_value_with_visited(value: object, visited: set[int]) -> object:
+        """Serialize a value for JSON conversion with circular reference detection."""
+        if isinstance(value, (str, int, float, bool, type(None))):
+            return value
+        if isinstance(value, (list, tuple)):
+            return [
+                FlextMixins._serialize_value_with_visited(item, visited)
+                for item in value
+            ]
+        if isinstance(value, dict):
+            return {
+                str(k): FlextMixins._serialize_value_with_visited(v, visited)
+                for k, v in value.items()
+            }
+
+        # Check for circular reference
+        obj_id = id(value)
+        if obj_id in visited:
+            return f"<circular reference to {type(value).__name__}>"
+
+        # Try to call to_dict() if available, with proper error handling
+        if hasattr(value, "to_dict") and callable(getattr(value, "to_dict")):
+            try:
+                return value.to_dict()  # type: ignore[attr-defined]
+            except Exception as e:
+                error_msg = f"Failed to serialize: {e}"
+                raise ValueError(error_msg) from e
+
+        if hasattr(value, "__dict__"):
+            visited.add(obj_id)
+            try:
+                return FlextMixins._serialize_value_with_visited(
+                    value.__dict__, visited
+                )
+            finally:
+                visited.remove(obj_id)
+
+        return str(value)
+
+    @staticmethod
+    def object_hash(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> int:
         """Generate hash for object."""
         if hasattr(obj, "id") and obj.id is not None:
-            return f"hash_{obj.id}"
-        return f"hash_{id(obj)}"
+            return hash(obj.id)
+        return hash(id(obj))
 
     # ==========================================================================
     # LOGGING FUNCTIONALITY - Direct implementation
@@ -118,6 +176,21 @@ class FlextMixins:
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> FlextLogger:
         """Get logger for object."""
+        # Check if object already has a proper logger
+        existing_logger = getattr(obj, "_logger", None)
+        if isinstance(existing_logger, FlextLogger):
+            return existing_logger
+
+        # Create new logger and assign it to the object
+        logger = FlextLogger(obj.__class__.__name__)
+        obj._logger = logger
+        return logger
+
+    @staticmethod
+    def get_logger(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> FlextLogger:
+        """Get logger for object (alias for flext_logger)."""
         return FlextLogger(obj.__class__.__name__)
 
     @staticmethod
@@ -173,26 +246,62 @@ class FlextMixins:
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> dict[str, object]:
         """Convert object to dictionary."""
-        result: dict[str, object] = {}
-        for key, value in obj.__dict__.items():
-            if isinstance(value, datetime):
-                result[key] = value.isoformat()
-            elif isinstance(value, (str, int, float, bool, type(None))):
-                result[key] = value
-            else:
-                result[key] = str(value)
-        return result
+        # Use a set to track visited objects and prevent infinite recursion
+        visited: set[int] = set()
+        return FlextMixins._to_dict_with_visited(obj, visited)
+
+    @staticmethod
+    def _to_dict_with_visited(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        visited: set[int],
+    ) -> dict[str, object]:
+        """Convert object to dictionary with circular reference detection."""
+        obj_id = id(obj)
+        if obj_id in visited:
+            return {
+                "__circular_reference__": f"<circular reference to {type(obj).__name__}>"
+            }
+
+        visited.add(obj_id)
+        try:
+            result: dict[str, object] = {}
+            for key, value in obj.__dict__.items():
+                if isinstance(value, datetime):
+                    result[key] = value.isoformat()
+                else:
+                    result[key] = FlextMixins._serialize_value_with_visited(
+                        value, visited
+                    )
+            return result
+        finally:
+            visited.remove(obj_id)
 
     @staticmethod
     def to_dict_basic(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> dict[str, object]:
         """Convert object to basic dictionary."""
-        return {
+        result: dict[str, object] = {
             k: v
             for k, v in obj.__dict__.items()
             if isinstance(v, (str, int, float, bool, type(None)))
         }
+
+        # Add timestamp fields if they exist
+        if (
+            hasattr(obj, "_created_at")
+            and obj._created_at is not None
+            and isinstance(obj._created_at, datetime)
+        ):
+            result["created_at"] = obj._created_at.isoformat()
+        if (
+            hasattr(obj, "_updated_at")
+            and obj._updated_at is not None
+            and isinstance(obj._updated_at, datetime)
+        ):
+            result["updated_at"] = obj._updated_at.isoformat()
+
+        return result
 
     @staticmethod
     def to_json(
@@ -213,7 +322,8 @@ class FlextMixins:
 
     @staticmethod
     def load_from_json(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, json_str: str,
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        json_str: str,
     ) -> None:
         """Load object from JSON string."""
         data = json.loads(json_str)
@@ -230,6 +340,7 @@ class FlextMixins:
         """Initialize validation state."""
         obj._validation_errors = []
         obj._is_valid = True
+        obj._validation_initialized = True
 
     @staticmethod
     def validate_required_fields(
@@ -276,6 +387,57 @@ class FlextMixins:
         return getattr(obj, "_validation_errors", [])
 
     @staticmethod
+    def validate_field(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        field_name: str,
+        value: object,
+    ) -> bool:
+        """Validate a single field."""
+        try:
+            # Check if the object has the specified field
+            if not hasattr(obj, field_name):
+                return False
+            if value is None:
+                return False
+            return not (isinstance(value, str) and not value.strip())
+        except Exception:
+            return False
+
+    @staticmethod
+    def validate_fields(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        field_values: dict[str, object],
+    ) -> FlextResult[bool]:
+        """Validate multiple fields."""
+        errors = []
+        for field_name, value in field_values.items():
+            if not FlextMixins.validate_field(obj, field_name, value):
+                errors.append(f"Field '{field_name}' is invalid")
+
+        if errors:
+            return FlextResult[bool].fail("; ".join(errors))
+        return FlextResult[bool].ok(data=True)
+
+    @staticmethod
+    def validate_field_types(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        field_types: dict[str, type],
+    ) -> FlextResult[bool]:
+        """Validate field types."""
+        errors = []
+        for field_name, expected_type in field_types.items():
+            if hasattr(obj, field_name):
+                value = getattr(obj, field_name)
+                if not isinstance(value, expected_type):
+                    errors.append(
+                        f"Field '{field_name}' should be {expected_type.__name__}"
+                    )
+
+        if errors:
+            return FlextResult[bool].fail("; ".join(errors))
+        return FlextResult[bool].ok(data=True)
+
+    @staticmethod
     def is_valid(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> bool:
         """Check if object is valid."""
         return getattr(obj, "_is_valid", True)
@@ -296,13 +458,78 @@ class FlextMixins:
             if "@" not in email:
                 return FlextResult[bool].fail("Invalid email: missing @ symbol")
 
-            domain_part = email.split("@")[-1]
+            domain_part = email.rsplit("@", maxsplit=1)[-1]
             if "." not in domain_part:
                 return FlextResult[bool].fail("Invalid email: invalid domain")
 
             return FlextResult[bool].ok(data=True)
         except Exception as e:
             return FlextResult[bool].fail(f"Email validation error: {e}")
+
+    @staticmethod
+    def validate_url(url: str) -> FlextResult[bool]:
+        """Validate URL address."""
+        try:
+            if not url or not isinstance(url, str):
+                return FlextResult[bool].fail("Invalid URL: empty or not string")
+
+            url = url.strip()
+            if not url:
+                return FlextResult[bool].fail("Invalid URL: empty string")
+
+            # Basic URL validation
+            if not (url.startswith(("http://", "https://"))):
+                return FlextResult[bool].fail(
+                    "Invalid URL: must start with http:// or https://"
+                )
+
+            # Check for valid characters
+            if " " in url:
+                return FlextResult[bool].fail("Invalid URL: contains spaces")
+
+            return FlextResult[bool].ok(data=True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"URL validation error: {e}")
+
+    @staticmethod
+    def validate_phone(phone: str) -> FlextResult[bool]:
+        """Validate phone number."""
+        try:
+            if not phone or not isinstance(phone, str):
+                return FlextResult[bool].fail("Invalid phone: empty or not string")
+
+            # Clean phone number - remove spaces, parentheses, dashes
+            cleaned_phone = (
+                phone.replace(" ", "")
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+            )
+
+            if not cleaned_phone:
+                return FlextResult[bool].fail("Invalid phone: empty after cleaning")
+
+            # Check if it starts with + (international format)
+            if cleaned_phone.startswith("+"):
+                # International format: + followed by digits
+                digits = cleaned_phone[1:]
+                if (
+                    not digits.isdigit()
+                    or len(digits) < FlextConstants.Validation.MIN_PHONE_DIGITS
+                ):
+                    return FlextResult[bool].fail(
+                        "Invalid phone: invalid international format"
+                    )
+            # Local format: only digits
+            elif (
+                not cleaned_phone.isdigit()
+                or len(cleaned_phone) < FlextConstants.Validation.MIN_PHONE_DIGITS
+            ):
+                return FlextResult[bool].fail("Invalid phone: invalid local format")
+
+            return FlextResult[bool].ok(data=True)
+        except Exception as e:
+            return FlextResult[bool].fail(f"Phone validation error: {e}")
 
     # ==========================================================================
     # STATE FUNCTIONALITY - Direct implementation
@@ -324,13 +551,24 @@ class FlextMixins:
 
     @staticmethod
     def set_state(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, state: str,
-    ) -> None:
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        state: str,
+    ) -> FlextResult[None]:
         """Set current state."""
-        obj._current_state = state
-        history = getattr(obj, "_state_history", [])
-        history.append(state)
-        obj._state_history = history
+        try:
+            # Basic state validation
+            if not state or not isinstance(state, str):
+                return FlextResult[None].fail(
+                    "Invalid state: must be a non-empty string"
+                )
+
+            obj._current_state = state
+            history = getattr(obj, "_state_history", [])
+            history.append(state)
+            obj._state_history = history
+            return FlextResult[None].ok(None)
+        except Exception as e:
+            return FlextResult[None].fail(f"Failed to set state: {e!s}")
 
     @staticmethod
     def get_state_history(
@@ -339,17 +577,71 @@ class FlextMixins:
         """Get state history."""
         return getattr(obj, "_state_history", [])
 
+    @staticmethod
+    def set_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+        value: object,
+    ) -> None:
+        """Set attribute on object."""
+        setattr(obj, key, value)
+
+    @staticmethod
+    def get_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+    ) -> object:
+        """Get attribute from object."""
+        return getattr(obj, key, None)
+
+    @staticmethod
+    def update_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        updates: dict[str, object],
+    ) -> None:
+        """Update multiple state attributes."""
+        for key, value in updates.items():
+            setattr(obj, key, value)
+
+    @staticmethod
+    def validate_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> bool:
+        """Validate current state."""
+        current_state = getattr(obj, "_current_state", None)
+        return current_state is not None and current_state != "unknown"
+
     # ==========================================================================
     # CACHE FUNCTIONALITY - Direct implementation
     # ==========================================================================
 
     @staticmethod
     def get_cached_value(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, key: str,
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
     ) -> object:
         """Get cached value."""
-        cache = getattr(obj, "_cache", {})
-        return cache.get(key)
+        # Initialize cache if not present
+        if not hasattr(obj, "_cache"):
+            obj._cache = {}
+        if not hasattr(obj, "_cache_stats"):
+            obj._cache_stats = {"hits": 0, "misses": 0}
+
+        cache = getattr(obj, "_cache")
+        if key in cache:
+            cache_stats = getattr(obj, "_cache_stats")
+            if isinstance(cache_stats, dict) and "hits" in cache_stats:
+                cache_stats["hits"] += 1
+            cached_item = cache.get(key)
+            # If cached item is a tuple (value, timestamp), extract the value
+            cache_tuple_size = 2
+            if isinstance(cached_item, tuple) and len(cached_item) == cache_tuple_size:
+                return cached_item[0]
+            return cached_item
+        cache_stats = getattr(obj, "_cache_stats")
+        if isinstance(cache_stats, dict) and "misses" in cache_stats:
+            cache_stats["misses"] += 1
+        return None
 
     @staticmethod
     def set_cached_value(
@@ -360,8 +652,12 @@ class FlextMixins:
         """Set cached value."""
         if not hasattr(obj, "_cache"):
             obj._cache = {}
-        cache = obj._cache
-        cache[key] = value
+        cache = getattr(obj, "_cache")
+        if isinstance(cache, dict):
+            cache[key] = value
+        else:
+            # Fallback: create new cache
+            obj._cache = {key: value}
 
     @staticmethod
     def clear_cache(obj: FlextProtocols.Foundation.SupportsDynamicAttributes) -> None:
@@ -370,7 +666,8 @@ class FlextMixins:
 
     @staticmethod
     def has_cached_value(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, key: str,
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
     ) -> bool:
         """Check if value is cached."""
         cache = getattr(obj, "_cache", {})
@@ -378,11 +675,16 @@ class FlextMixins:
 
     @staticmethod
     def get_cache_key(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes, *args: object,
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        *args: object,
     ) -> str:
         """Generate cache key."""
-        obj_id = FlextMixins.ensure_id(obj)
-        return f"{obj_id}:{':'.join(str(arg) for arg in args)}"
+        class_name = obj.__class__.__name__
+        obj_id = FlextMixins.get_id(obj) or FlextMixins.ensure_id(obj)
+        key_parts = [f"{class_name}:{obj_id}"]
+        if args:
+            key_parts.extend(str(arg) for arg in args)
+        return ":".join(key_parts) if len(key_parts) > 1 else key_parts[0]
 
     # ==========================================================================
     # TIMING FUNCTIONALITY - Direct implementation
@@ -447,7 +749,8 @@ class FlextMixins:
         error_msg = f"{context}: {error!s}" if context else str(error)
         cls.log_error(obj, error_msg, error_type=type(error).__name__)
         return FlextResult[None].fail(
-            error_msg, error_code=type(error).__name__.upper(),
+            error_msg,
+            error_code=type(error).__name__.upper(),
         )
 
     @classmethod
@@ -467,7 +770,8 @@ class FlextMixins:
             error_msg = f"Operation {operation_name} failed: {e!s}"
             cls.log_error(obj, error_msg, error_type=type(e).__name__)
             return FlextResult[object].fail(
-                error_msg, error_code=type(e).__name__.upper(),
+                error_msg,
+                error_code=type(e).__name__.upper(),
             )
 
     # ==========================================================================
@@ -476,7 +780,8 @@ class FlextMixins:
 
     @classmethod
     def configure_mixins_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure mixins system with validation."""
         try:
@@ -493,37 +798,79 @@ class FlextMixins:
                         f"Invalid environment '{env_value}'. Valid: {valid_environments}",
                     )
                 validated_config["environment"] = env_value
+
+                # Environment-specific configurations
+                if env_value == "staging":
+                    validated_config["cache_ttl_seconds"] = config.get(
+                        "cache_ttl_seconds", 3600
+                    )
+                    validated_config["enable_staging_validation"] = config.get(
+                        "enable_staging_validation", True
+                    )
+                elif env_value == "local":
+                    validated_config["enable_local_debugging"] = config.get(
+                        "enable_local_debugging", True
+                    )
             else:
                 validated_config["environment"] = (
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
                 )
 
             # Apply defaults
-            validated_config.update({
-                "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
-                ),
-                "enable_timestamp_tracking": config.get(
-                    "enable_timestamp_tracking", True,
-                ),
-                "enable_logging_integration": config.get(
-                    "enable_logging_integration", True,
-                ),
-                "enable_serialization": config.get("enable_serialization", True),
-                "enable_validation": config.get("enable_validation", True),
-                "enable_identification": config.get("enable_identification", True),
-                "enable_state_management": config.get("enable_state_management", True),
-                "enable_caching": config.get("enable_caching", False),
-                "enable_thread_safety": config.get("enable_thread_safety", True),
-                "enable_metrics": config.get("enable_metrics", True),
-                "default_cache_size": config.get("default_cache_size", 1000),
-            })
+            validated_config.update(
+                {
+                    "log_level": config.get(
+                        "log_level",
+                        FlextConstants.Config.LogLevel.DEBUG.value,
+                    ),
+                    "enable_timestamp_tracking": config.get(
+                        "enable_timestamp_tracking",
+                        True,
+                    ),
+                    "enable_logging_integration": config.get(
+                        "enable_logging_integration",
+                        True,
+                    ),
+                    "enable_serialization": config.get("enable_serialization", True),
+                    "enable_validation": config.get("enable_validation", True),
+                    "enable_identification": config.get("enable_identification", True),
+                    "enable_state_management": config.get(
+                        "enable_state_management", True
+                    ),
+                    "enable_caching": config.get("enable_caching", False),
+                    "enable_thread_safety": config.get("enable_thread_safety", True),
+                    "enable_metrics": config.get("enable_metrics", True),
+                    "default_cache_size": config.get("default_cache_size", 1000),
+                    "max_validation_errors": (
+                        config.get("max_validation_errors", 10)
+                        if isinstance(config.get("max_validation_errors"), int)
+                        else 10
+                    ),
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
                 f"Configuration failed: {e!s}",
+            )
+
+    @classmethod
+    def get_mixins_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Get current mixins system configuration."""
+        try:
+            # Return basic system configuration
+            config: FlextTypes.Config.ConfigDict = {
+                "environment": "development",
+                "debug_mode": False,
+                "logging_enabled": True,
+                "timestamp_format": "iso",
+            }
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Failed to get system config: {e!s}", error_code="SYSTEM_CONFIG_ERROR"
             )
 
     # ==========================================================================
@@ -539,6 +886,45 @@ class FlextMixins:
         def touch(self) -> None:
             """Update timestamp."""
             FlextMixins.update_timestamp(self)
+
+        def update_timestamp(self) -> None:
+            """Update timestamp (alias for touch)."""
+            FlextMixins.update_timestamp(self)
+
+        @property
+        def age_seconds(self) -> float:
+            """Get age in seconds."""
+            return FlextMixins.get_age_seconds(self)
+
+        @property
+        def created_at(self) -> datetime:
+            """Get creation timestamp."""
+            result = FlextMixins.get_created_at(self)
+            if result is None:
+                # Initialize timestamp if not present
+                FlextMixins.create_timestamp_fields(self)
+                result = FlextMixins.get_created_at(self)
+            return result if result is not None else datetime.now(UTC)
+
+        @created_at.setter
+        def created_at(self, value: datetime) -> None:
+            """Set creation timestamp."""
+            setattr(self, "_created_at", value)
+
+        @property
+        def updated_at(self) -> datetime:
+            """Get update timestamp."""
+            result = FlextMixins.get_updated_at(self)
+            if result is None:
+                # Initialize timestamp if not present
+                FlextMixins.create_timestamp_fields(self)
+                result = FlextMixins.get_updated_at(self)
+            return result if result is not None else datetime.now(UTC)
+
+        @updated_at.setter
+        def updated_at(self, value: datetime) -> None:
+            """Set update timestamp."""
+            setattr(self, "_updated_at", value)
 
     class Identifiable:
         """Identifiable mixin class."""
@@ -558,6 +944,10 @@ class FlextMixins:
             """Get the ID for this object."""
             return getattr(self, "id", None)
 
+        def has_id(self) -> bool:
+            """Check if this object has an ID."""
+            return FlextMixins.has_id(self)
+
     class Loggable:
         """Loggable mixin class."""
 
@@ -573,6 +963,10 @@ class FlextMixins:
             """Log debug message."""
             FlextMixins.log_debug(self, message, **kwargs)
 
+        def log_operation(self, operation: str, **kwargs: object) -> None:
+            """Log operation message."""
+            FlextMixins.log_operation(self, operation, **kwargs)
+
     class Serializable:
         """Serializable mixin class."""
 
@@ -584,6 +978,14 @@ class FlextMixins:
             """Convert to JSON."""
             return FlextMixins.to_json(self, indent)
 
+        def load_from_dict(self, data: dict[str, object]) -> None:
+            """Load from dictionary."""
+            FlextMixins.load_from_dict(self, data)
+
+        def load_from_json(self, json_str: str) -> None:
+            """Load from JSON string."""
+            FlextMixins.load_from_json(self, json_str)
+
     class Validatable:
         """Validatable mixin class."""
 
@@ -594,6 +996,32 @@ class FlextMixins:
             """Check if valid."""
             return FlextMixins.is_valid(self)
 
+        def get_validation_errors(self) -> list[str]:
+            """Get validation errors."""
+            return FlextMixins.get_validation_errors(self)
+
+        def add_validation_error(self, error: str) -> None:
+            """Add validation error."""
+            FlextMixins.add_validation_error(self, error)
+
+        def clear_validation_errors(self) -> None:
+            """Clear validation errors."""
+            FlextMixins.clear_validation_errors(self)
+
+        def mark_valid(self) -> None:
+            """Mark as valid."""
+            FlextMixins.mark_valid(self)
+
+        def validate_required_fields(self, fields: list[str]) -> bool:
+            """Validate required fields."""
+            result = FlextMixins.validate_required_fields(self, fields)
+            return result.success if hasattr(result, "success") else bool(result)
+
+        def validate_field_types(self, field_specs: dict[str, type]) -> bool:
+            """Validate field types."""
+            result = FlextMixins.validate_field_types(self, field_specs)
+            return result.unwrap() if hasattr(result, "unwrap") else bool(result)
+
     class Stateful:
         """Stateful mixin class."""
 
@@ -602,11 +1030,29 @@ class FlextMixins:
 
         def set_state(self, state: str) -> None:
             """Set state."""
-            FlextMixins.set_state(self, state)
+            result = FlextMixins.set_state(self, state)
+            if result.failure:
+                error_msg = result.error or "Validation failed"
+                raise FlextExceptions.ValidationError(error_msg)
 
         def get_state(self) -> str:
             """Get state."""
             return FlextMixins.get_state(self)
+
+        @property
+        def state(self) -> str:
+            """Get current state."""
+            return self.get_state()
+
+        @state.setter
+        def state(self, value: str) -> None:
+            """Set current state."""
+            self.set_state(value)
+
+        @property
+        def state_history(self) -> list[str]:
+            """Get state history."""
+            return FlextMixins.get_state_history(self)
 
     class Cacheable:
         """Cacheable mixin class."""
@@ -646,6 +1092,18 @@ class FlextMixins:
             """Stop timing."""
             return FlextMixins.stop_timing(self)
 
+        def get_last_elapsed_time(self) -> float:
+            """Get last elapsed time."""
+            return FlextMixins.get_last_elapsed_time(self)
+
+        def clear_timing_history(self) -> None:
+            """Clear timing history."""
+            FlextMixins.clear_timing_history(self)
+
+        def get_average_elapsed_time(self) -> float:
+            """Get average elapsed time."""
+            return FlextMixins.get_average_elapsed_time(self)
+
     # Composite mixin classes
     class Service(Loggable, Validatable):
         """Service composite mixin."""
@@ -669,48 +1127,60 @@ class FlextMixins:
             super().__init__()
 
     # Configuration methods required by core.py
-    @classmethod
-    def get_mixins_system_config(cls) -> dict[str, object]:
-        """Get mixins system configuration."""
-        return {
-            "mixin_types": ["Loggable", "Serializable", "Validatable", "Cacheable"],
-            "auto_initialization": True,
-            "validation_enabled": True,
-            "logging_enabled": True,
-        }
 
     @classmethod
     def optimize_mixins_performance(
-        cls, config: dict[str, object],
+        cls,
+        config: dict[str, object] | str,
     ) -> FlextResult[dict[str, object]]:
         """Optimize mixins performance based on configuration using FlextResult pattern."""
+        # Handle string performance level
+        if isinstance(config, str):
+            if config == "high":
+                config = {
+                    "memory_limit_mb": 1024,
+                    "default_cache_size": 2000,
+                    "cache_enabled": True,
+                }
+            elif config == "low":
+                config = {
+                    "memory_limit_mb": 64,
+                    "default_cache_size": 100,
+                    "cache_enabled": False,
+                }
+            else:
+                config = {
+                    "memory_limit_mb": 512,
+                    "default_cache_size": 1000,
+                    "cache_enabled": True,
+                }
+
         # Get memory limit to determine optimization level
         memory_limit_mb = config.get("memory_limit_mb", 512)
         default_cache_size = config.get("default_cache_size", 1000)
 
-        # Optimize based on memory constraints
-        low_memory_threshold_mb = 100  # Memory limit considered low
-        if (
-            isinstance(memory_limit_mb, (int, float))
-            and memory_limit_mb <= low_memory_threshold_mb
-        ):
-            # Low memory optimization
+        # Optimize based on performance level first, then memory constraints
+        performance_level = config.get("performance_level")
+        if performance_level == "low":
+            # Low performance optimization
             optimized_cache_size = min(
                 default_cache_size if isinstance(default_cache_size, int) else 1000,
-                low_memory_threshold_mb,
+                100,  # Low memory threshold
             )
             optimized_config = {
-                "cache_enabled": True,
+                "cache_enabled": False,
                 "lazy_logging": True,
                 "batch_validation": True,
                 "default_cache_size": optimized_cache_size,
                 "enable_memory_monitoring": True,
-                "enable_caching": True,
-                "enable_detailed_monitoring": False,
-                "enable_batch_operations": False,  # Limited for low memory
+                "enable_caching": False,
+                "enable_detailed_monitoring": True,
+                "enable_batch_operations": False,  # Limited for low performance
+                "enable_object_pooling": False,  # Limited for low performance
+                "enable_async_operations": False,  # Limited for low performance
             }
-        else:
-            # High memory optimization
+        elif performance_level == "high":
+            # High performance optimization
             optimized_config = {
                 "cache_enabled": True,
                 "lazy_logging": False,
@@ -721,8 +1191,46 @@ class FlextMixins:
                 "enable_memory_monitoring": False,
                 "enable_caching": True,
                 "enable_detailed_monitoring": True,
-                "enable_batch_operations": True,  # Enabled for high memory
+                "enable_batch_operations": True,  # Enabled for high performance
+                "enable_object_pooling": True,  # Enabled for high performance
+                "enable_async_operations": True,  # Enabled for high performance
             }
+        else:
+            # Optimize based on memory constraints
+            low_memory_threshold_mb = 100  # Memory limit considered low
+            if (
+                isinstance(memory_limit_mb, (int, float))
+                and memory_limit_mb <= low_memory_threshold_mb
+            ):
+                # Low memory optimization
+                optimized_cache_size = min(
+                    default_cache_size if isinstance(default_cache_size, int) else 1000,
+                    low_memory_threshold_mb,
+                )
+                optimized_config = {
+                    "cache_enabled": True,
+                    "lazy_logging": True,
+                    "batch_validation": True,
+                    "default_cache_size": optimized_cache_size,
+                    "enable_memory_monitoring": True,
+                    "enable_caching": True,
+                    "enable_detailed_monitoring": False,
+                    "enable_batch_operations": False,  # Limited for low memory
+                }
+            else:
+                # High memory optimization
+                optimized_config = {
+                    "cache_enabled": True,
+                    "lazy_logging": False,
+                    "batch_validation": False,
+                    "default_cache_size": default_cache_size
+                    if isinstance(default_cache_size, int)
+                    else 1000,
+                    "enable_memory_monitoring": False,
+                    "enable_caching": True,
+                    "enable_detailed_monitoring": True,
+                    "enable_batch_operations": True,  # Enabled for high memory
+                }
 
         # Convert dict[str, int] to dict[str, object] for type compatibility
         optimized_config_obj: dict[str, object] = dict(optimized_config)
@@ -757,14 +1265,14 @@ class FlextMixins:
                 normalized[key] = normalized_list
             elif hasattr(value, "model_dump"):  # Single BaseModel
                 # Type narrowing for PyRight
-                model_dump_method = value.model_dump
+                model_dump_method = getattr(value, "model_dump")
                 if callable(model_dump_method):
                     normalized[key] = model_dump_method()
                 else:
                     normalized[key] = value
             elif hasattr(value, "dict"):  # Legacy Pydantic v1
                 # Type narrowing for PyRight
-                dict_method = value.dict
+                dict_method = getattr(value, "dict")
                 if callable(dict_method):
                     normalized[key] = dict_method()
                 else:
@@ -774,23 +1282,102 @@ class FlextMixins:
 
         return normalized
 
-    @classmethod
-    def validate_field_types(
-        cls, obj: object, field_mapping: dict[str, type],
-    ) -> dict[str, object]:
-        """Validate field types."""
-        result: dict[str, object] = {"success": True, "errors": []}
+    # ==========================================================================
+    # OBJECT COMPARISON FUNCTIONALITY - Direct implementation
+    # ==========================================================================
 
-        for field_name, expected_type in field_mapping.items():
-            if hasattr(obj, field_name):
-                value = getattr(obj, field_name)
-                if value is not None and not isinstance(value, expected_type):
-                    result["success"] = False
-                    result["errors"].append(
-                        f"Field '{field_name}' expected {expected_type.__name__}, got {type(value).__name__}",
-                    )
+    @staticmethod
+    def objects_equal(
+        obj1: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        obj2: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> bool:
+        """Compare two objects for equality."""
+        if obj1 is obj2:
+            return True
+        if not isinstance(obj1, type(obj2)):
+            return False
+        if hasattr(obj1, "__dict__") and hasattr(obj2, "__dict__"):
+            return obj1.__dict__ == obj2.__dict__
+        return obj1 == obj2
 
-        return result
+    @staticmethod
+    def compare_objects(
+        obj1: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        obj2: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> int:
+        """Compare two objects (-1, 0, 1)."""
+        if obj1 is obj2:
+            return 0
+        if not isinstance(obj1, type(obj2)):
+            return -1 if str(type(obj1)) < str(type(obj2)) else 1
+        if hasattr(obj1, "id") and hasattr(obj2, "id") and obj1.id != obj2.id:
+            return -1 if str(obj1.id) < str(obj2.id) else 1
+        return 0
+
+    @staticmethod
+    def generate_correlation_id() -> str:
+        """Generate a correlation ID."""
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def generate_entity_id() -> str:
+        """Generate an entity ID."""
+        return str(uuid.uuid4())
+
+    @staticmethod
+    def has_attribute(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        key: str,
+    ) -> bool:
+        """Check if object has attribute."""
+        return hasattr(obj, key)
+
+    @staticmethod
+    def clear_state(
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+    ) -> None:
+        """Clear state attributes."""
+        obj._current_state = "unknown"
+        obj._state_history = []
+
+        # Clear dynamic attributes (non-method, non-private attributes)
+        attrs_to_remove = [
+            attr_name
+            for attr_name in dir(obj)
+            if not attr_name.startswith("_") and not callable(getattr(obj, attr_name))
+        ]
+
+        for attr_name in attrs_to_remove:
+            delattr(obj, attr_name)
+
+    @staticmethod
+    def create_environment_mixins_config(
+        environment: str,
+    ) -> FlextResult[dict[str, object]]:
+        """Create environment-specific mixins configuration."""
+        valid_environments = ["development", "staging", "production", "local"]
+        if environment not in valid_environments:
+            return FlextResult[dict[str, object]].fail(
+                f"Invalid environment: {environment}"
+            )
+
+        config: dict[str, object] = {
+            "environment": environment,
+            "log_level": "DEBUG" if environment == "development" else "INFO",
+            "enable_timestamp_tracking": True,
+            "enable_logging_integration": True,
+            "enable_serialization": True,
+            "enable_validation": True,
+            "enable_identification": True,
+            "enable_state_management": True,
+            "enable_caching": environment != "local",
+            "enable_thread_safety": True,
+            "enable_metrics": True,
+            "default_cache_size": 1000,
+            "max_validation_errors": 10,
+        }
+
+        return FlextResult[dict[str, object]].ok(config)
 
 
 __all__: list[str] = [

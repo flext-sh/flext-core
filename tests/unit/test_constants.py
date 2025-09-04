@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from flext_core.constants import FlextConstants
 
 
@@ -104,7 +106,6 @@ class TestConstantsLogLevel100PercentCoverage:
         assert log_level != "INFO\n"
 
         # Test comparison with other enum types (line 705 path)
-        from enum import Enum
 
         class OtherEnum(Enum):
             INFO = "INFO"

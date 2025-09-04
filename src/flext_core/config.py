@@ -414,10 +414,12 @@ class FlextConfig(FlextModels.Config):
     # Core identification
     app_name: str = Field(default="flext-app", description="Application name")
     name: str = Field(
-        default=FlextConstants.Core.NAME.lower(), description="Configuration name",
+        default=FlextConstants.Core.NAME.lower(),
+        description="Configuration name",
     )
     version: str = Field(
-        default=FlextConstants.Core.VERSION, description="Configuration version",
+        default=FlextConstants.Core.VERSION,
+        description="Configuration version",
     )
     description: str = Field(
         default="FLEXT configuration",
@@ -455,10 +457,12 @@ class FlextConfig(FlextModels.Config):
         description="Default timeout in seconds",
     )
     retries: int = Field(
-        default=FlextConstants.Defaults.MAX_RETRIES, description="Default retry count",
+        default=FlextConstants.Defaults.MAX_RETRIES,
+        description="Default retry count",
     )
     page_size: int = Field(
-        default=FlextConstants.Defaults.PAGE_SIZE, description="Default page size",
+        default=FlextConstants.Defaults.PAGE_SIZE,
+        description="Default page size",
     )
 
     # Feature flags
@@ -524,7 +528,11 @@ class FlextConfig(FlextModels.Config):
         return v.upper()
 
     @field_validator(
-        "timeout", "retries", "page_size", "max_workers", "timeout_seconds",
+        "timeout",
+        "retries",
+        "page_size",
+        "max_workers",
+        "timeout_seconds",
     )
     @classmethod
     def validate_positive_integers(cls, v: int) -> int:
@@ -601,7 +609,8 @@ class FlextConfig(FlextModels.Config):
         return {
             "level": value,
             "numeric_level": level_hierarchy.get(
-                value, FlextConstants.Config.LogLevel.get_numeric_levels()["INFO"],
+                value,
+                FlextConstants.Config.LogLevel.get_numeric_levels()["INFO"],
             ),
             "verbose": value == FlextConstants.Observability.LOG_LEVELS[1],
             "production_safe": value
@@ -750,7 +759,8 @@ class FlextConfig(FlextModels.Config):
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[dict[str, object]].fail(
-                    validation_result.error or FlextConstants.Messages.VALIDATION_FAILED,
+                    validation_result.error
+                    or FlextConstants.Messages.VALIDATION_FAILED,
                 )
 
             return FlextResult[dict[str, object]].ok(instance.model_dump())
@@ -770,7 +780,8 @@ class FlextConfig(FlextModels.Config):
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[FlextConfig].fail(
-                    validation_result.error or FlextConstants.Messages.VALIDATION_FAILED,
+                    validation_result.error
+                    or FlextConstants.Messages.VALIDATION_FAILED,
                 )
 
             return FlextResult[FlextConfig].ok(instance)
@@ -799,7 +810,8 @@ class FlextConfig(FlextModels.Config):
             validation_result = instance.validate_business_rules()
             if validation_result.is_failure:
                 return FlextResult[dict[str, object]].fail(
-                    validation_result.error or FlextConstants.Messages.VALIDATION_FAILED,
+                    validation_result.error
+                    or FlextConstants.Messages.VALIDATION_FAILED,
                 )
 
             return FlextResult[dict[str, object]].ok(instance.model_dump())
@@ -818,7 +830,9 @@ class FlextConfig(FlextModels.Config):
 
     @classmethod
     def get_env_with_validation(
-        cls, env_var: str, **params: Unpack[EnvValidationParams],
+        cls,
+        env_var: str,
+        **params: Unpack[EnvValidationParams],
     ) -> FlextResult[str]:
         """Get environment variable with type validation using Python 3.13 TypedDict."""
         # Create a default instance to use the instance method
@@ -826,7 +840,9 @@ class FlextConfig(FlextModels.Config):
         return default_instance._get_env_with_validation(env_var, **params)
 
     def _get_env_with_validation(
-        self, env_var: str, **params: Unpack[EnvValidationParams],
+        self,
+        env_var: str,
+        **params: Unpack[EnvValidationParams],
     ) -> FlextResult[str]:
         """Instance method for environment variable validation with type checking."""
         # Apply defaults using TypedDict pattern
@@ -1160,7 +1176,9 @@ class FlextConfig(FlextModels.Config):
         """Create logging configuration with validation."""
         try:
             config = FlextModels.LoggingConfig(
-                log_level=log_level, log_file=log_file, **kwargs,
+                log_level=log_level,
+                log_file=log_file,
+                **kwargs,
             )
             return FlextResult[FlextModels.LoggingConfig].ok(config)
         except Exception as e:

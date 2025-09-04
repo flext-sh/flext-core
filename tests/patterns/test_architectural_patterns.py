@@ -71,7 +71,8 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == CreateUserCommand or issubclass(
-                    message_type, CreateUserCommand,
+                    message_type,
+                    CreateUserCommand,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -178,7 +179,9 @@ class TestCleanArchitecturePatterns:
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_business_rules"):
                     validate_method = getattr(
-                        self.order_id, "validate_business_rules", None,
+                        self.order_id,
+                        "validate_business_rules",
+                        None,
                     )
                     order_id_validation = (
                         validate_method()
@@ -193,7 +196,9 @@ class TestCleanArchitecturePatterns:
 
                 if hasattr(self.total, "validate_business_rules"):
                     validate_method = getattr(
-                        self.total, "validate_business_rules", None,
+                        self.total,
+                        "validate_business_rules",
+                        None,
                     )
                     total_validation = (
                         validate_method()
@@ -276,7 +281,8 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == UpdateUserCommand or issubclass(
-                    message_type, UpdateUserCommand,
+                    message_type,
+                    UpdateUserCommand,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -309,7 +315,8 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == GetUserQuery or issubclass(
-                    message_type, GetUserQuery,
+                    message_type,
+                    GetUserQuery,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:

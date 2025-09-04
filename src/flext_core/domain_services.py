@@ -114,7 +114,8 @@ class FlextDomainService[TDomainResult](
                     or f"{FlextConstants.Messages.VALIDATION_FAILED}: Configuration validation failed"
                 )
                 return FlextResult[object].fail(
-                    error_message, error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_message,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Validate operation is callable and execute
@@ -170,7 +171,8 @@ class FlextDomainService[TDomainResult](
 
     @classmethod
     def configure_domain_services_system(
-        cls, config: FlextTypes.Config.ConfigDict | None,
+        cls,
+        config: FlextTypes.Config.ConfigDict | None,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure domain services system using FlextTypes.Config with StrEnum validation.
 
@@ -304,7 +306,8 @@ class FlextDomainService[TDomainResult](
 
     @classmethod
     def create_environment_domain_services_config(
-        cls, environment: str,
+        cls,
+        environment: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific domain services configuration.
 
@@ -408,7 +411,8 @@ class FlextDomainService[TDomainResult](
 
     @classmethod
     def optimize_domain_services_performance(
-        cls, config: FlextTypes.Config.ConfigDict | None,
+        cls,
+        config: FlextTypes.Config.ConfigDict | None,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize domain services system performance based on configuration.
 

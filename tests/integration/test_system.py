@@ -187,7 +187,10 @@ class TestCompleteFlextSystemIntegration:
 
         # Criação de campo string básico
         string_field = FlextFields.Core.StringField(
-            "username", min_length=3, max_length=20, required=True,
+            "username",
+            min_length=3,
+            max_length=20,
+            required=True,
         )
 
         # Validação de campo - caso de sucesso
@@ -203,7 +206,10 @@ class TestCompleteFlextSystemIntegration:
 
         # Criação usando factory pattern
         email_field_result = FlextFields.Factory.create_field(
-            "email", "user_email", required=True, description="Email do usuário",
+            "email",
+            "user_email",
+            required=True,
+            description="Email do usuário",
         )
         assert email_field_result.success is True
         email_field = cast("FlextFields.Core.EmailField", email_field_result.value)
@@ -224,7 +230,8 @@ class TestCompleteFlextSystemIntegration:
 
         # Registrar campo
         register_result = registry.register_field(
-            "user_name", cast("FlextFields.Core.BaseField[object]", string_field),
+            "user_name",
+            cast("FlextFields.Core.BaseField[object]", string_field),
         )
         assert register_result.success is True
 
@@ -246,7 +253,10 @@ class TestCompleteFlextSystemIntegration:
 
         # Criação de múltiplos campos
         integer_field = FlextFields.Core.IntegerField(
-            "age", min_value=0, max_value=120, required=True,
+            "age",
+            min_value=0,
+            max_value=120,
+            required=True,
         )
 
         # Validação múltipla usando o sistema
@@ -257,7 +267,8 @@ class TestCompleteFlextSystemIntegration:
         values = {"username": "maria123", "age": 25}
 
         validation_result = FlextFields.Validation.validate_multiple_fields(
-            fields, values,
+            fields,
+            values,
         )
         assert validation_result.success is True
         validated_data = validation_result.value
@@ -271,7 +282,8 @@ class TestCompleteFlextSystemIntegration:
         }
 
         invalid_validation = FlextFields.Validation.validate_multiple_fields(
-            fields, invalid_values,
+            fields,
+            invalid_values,
         )
         assert invalid_validation.success is False
         assert invalid_validation.error is not None

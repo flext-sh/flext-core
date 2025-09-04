@@ -83,7 +83,8 @@ class FlextTypes:
             | None
             | list[str | int | float | bool | None | list[object] | dict[str, object]]
             | dict[
-                str, str | int | float | bool | None | list[object] | dict[str, object],
+                str,
+                str | int | float | bool | None | list[object] | dict[str, object],
             ]
         )
         type JsonObject = dict[str, JsonValue]
@@ -125,7 +126,8 @@ class FlextTypes:
         type ServiceDict = dict[str, object]  # Services registry mapping
         type FactoryDict = dict[str, Callable[[], object]]  # Factory registry
         type ServiceListDict = dict[
-            str, Literal["instance", "factory"],
+            str,
+            Literal["instance", "factory"],
         ]  # Service type mapping
 
     # =========================================================================
@@ -203,7 +205,8 @@ class FlextTypes:
             dict[str, str | int | float | bool | list[object] | dict[str, object]]
         ]
         type CommandsConfigDict = dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ]
 
         # Command lifecycle types
@@ -263,7 +266,11 @@ class FlextTypes:
 
         # Environment type
         type Environment = Literal[
-            "development", "production", "staging", "test", "local",
+            "development",
+            "production",
+            "staging",
+            "test",
+            "local",
         ]
 
         # Logging levels

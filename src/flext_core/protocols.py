@@ -376,7 +376,8 @@ class FlextProtocols:
 
             @classmethod
             def from_dict(
-                cls, data: dict[str, object],
+                cls,
+                data: dict[str, object],
             ) -> FlextProtocols.Domain.DomainEvent:
                 """Create event from dictionary."""
                 ...
@@ -517,7 +518,10 @@ class FlextProtocols:
                 ...
 
             def search(
-                self, base_dn: str, search_filter: str, scope: str = "subtree",
+                self,
+                base_dn: str,
+                search_filter: str,
+                scope: str = "subtree",
             ) -> object:
                 """Perform LDAP search operation."""
                 ...
@@ -630,7 +634,8 @@ class FlextProtocols:
 
             @abstractmethod
             def initialize(
-                self, context: FlextProtocols.Extensions.PluginContext,
+                self,
+                context: FlextProtocols.Extensions.PluginContext,
             ) -> object:
                 """Initialize plugin with context."""
                 ...
@@ -729,7 +734,8 @@ class FlextProtocols:
 
         @classmethod
         def configure_protocols_system(
-            cls, config: dict[str, object],
+            cls,
+            config: dict[str, object],
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Configure protocols system using FlextTypes.Config with StrEnum validation.
 
@@ -850,7 +856,8 @@ class FlextProtocols:
 
         @classmethod
         def create_environment_protocols_config(
-            cls, environment: str,
+            cls,
+            environment: str,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Create environment-specific protocol configuration.
 
@@ -900,7 +907,8 @@ class FlextProtocols:
 
         @classmethod
         def optimize_protocols_performance(
-            cls, performance_level: str = "balanced",
+            cls,
+            performance_level: str = "balanced",
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Optimize protocol system performance.
 

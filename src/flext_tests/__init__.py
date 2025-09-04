@@ -3,51 +3,6 @@
 This module provides the test support foundation for the FLEXT ecosystem with test utilities,
 fixtures, builders, matchers, performance testing, and domain-specific test helpers following
 modern testing patterns and SOLID principles.
-
-Architecture:
-    Foundation Layer: Utilities, matchers, builders
-    Domain Layer: Domain factories, test models, test entities
-    Application Layer: Fixtures, hypothesis testing, async utilities
-    Infrastructure Layer: HTTP testing, performance testing
-    Support Layer: Legacy factories, advanced patterns
-
-Core Components:
-    AsyncTestUtils: Async testing utilities with context managers and mocking
-    TestBuilders: Builder patterns for test data creation and validation
-    ConfigurationFactory: Test configuration objects with environment overrides
-    FlextMatchers: Custom pytest matchers for FlextResult and domain objects
-    HTTPTestUtils: HTTP/API testing utilities with scenario builders
-    HypothesisStrategies: Property-based testing strategies for domain objects
-    PerformanceProfiler: Performance testing and benchmarking utilities
-    TestFactories: Factory patterns for creating test fixtures and data
-    TestUtilities: General testing helpers and validation utilities
-
-Examples:
-    Test data builders:
-    >>> user = TestBuilders.user().with_email("test@example.com").build()
-    >>> result = TestBuilders.success_result(user).build()
-
-    Custom matchers:
-    >>> assert result | should | be_successful
-    >>> assert result | should | contain_value(user)
-
-    Performance testing:
-    >>> with PerformanceProfiler() as profiler:
-    ...     expensive_operation()
-    >>> assert profiler.duration < 1.0
-
-    HTTP testing:
-    >>> async with APITestClient() as client:
-    ...     response = await client.post("/api/users", json=user_data)
-    ...     assert response.status_code == 201
-
-Notes:
-    - All test utilities should follow SOLID principles and be composable
-    - Use factories for creating consistent test data across test suites
-    - Leverage hypothesis for property-based testing of domain logic
-    - HTTP utilities require pytest-httpx for full functionality
-    - Performance utilities integrate with pytest benchmarking plugins
-
 """
 
 from __future__ import annotations

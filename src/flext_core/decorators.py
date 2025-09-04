@@ -38,6 +38,7 @@ from typing import cast
 from flext_core.constants import FlextConstants
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
+from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, T
 
@@ -59,17 +60,22 @@ class FlextDecorators(FlextMixins.Entity):
     """
 
     @staticmethod
-    def _create_context() -> object:
+    def _create_context() -> FlextProtocols.Foundation.SupportsDynamicAttributes:
         """Create a context object for mixin functionality."""
 
         class Context:
+            def __init__(self) -> None:
+                self.__dict__: dict[str, object] = {}
+
             def __setattr__(self, name: str, value: object) -> None:
                 object.__setattr__(self, name, value)
 
             def __getattribute__(self, name: str) -> object:
                 return object.__getattribute__(self, name)
 
-        return Context()
+        # Return Context instance that satisfies the protocol
+        context_instance: FlextProtocols.Foundation.SupportsDynamicAttributes = Context()
+        return context_instance
 
     class Reliability:
         """Reliability decorators using FlextMixins error handling patterns."""
@@ -85,7 +91,8 @@ class FlextDecorators(FlextMixins.Entity):
 
             @functools.wraps(func)
             def wrapper(
-                *args: P.args, **kwargs: P.kwargs,
+                *args: P.args,
+                **kwargs: P.kwargs,
             ) -> FlextTypes.Result.Success[T]:
                 # Direct execution without wrapper complexity
                 try:
@@ -386,7 +393,9 @@ class FlextDecorators(FlextMixins.Entity):
                         log_data["kwargs"] = str(kwargs)
 
                     FlextMixins.log_info(
-                        log_obj, "Function execution started", **log_data,
+                        log_obj,
+                        "Function execution started",
+                        **log_data,
                     )
 
                     try:
@@ -400,7 +409,9 @@ class FlextDecorators(FlextMixins.Entity):
                             log_data["result_type"] = type(result).__name__
 
                         FlextMixins.log_info(
-                            log_obj, "Function execution completed", **log_data,
+                            log_obj,
+                            "Function execution completed",
+                            **log_data,
                         )
 
                         return result
@@ -413,7 +424,9 @@ class FlextDecorators(FlextMixins.Entity):
                         log_data["error_message"] = str(e)
 
                         FlextMixins.log_error(
-                            log_obj, "Function execution failed", **log_data,
+                            log_obj,
+                            "Function execution failed",
+                            **log_data,
                         )
                         raise
 

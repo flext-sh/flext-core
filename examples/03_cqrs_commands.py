@@ -105,10 +105,12 @@ class UserCommandHandler(
     def _save_user(self, user: User) -> None:
         """FlextContainer + FlextLogger integration."""
         db = cast(
-            "dict[str, User]", container.get("user_db").value,
+            "dict[str, User]",
+            container.get("user_db").value,
         )  # FlextContainer DI
         events = cast(
-            "list[dict[str, object]]", container.get("events").value,
+            "list[dict[str, object]]",
+            container.get("events").value,
         )  # FlextContainer DI
 
         if user.id:
