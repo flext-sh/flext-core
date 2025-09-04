@@ -78,41 +78,41 @@ class FlextModels:
             pattern=r"^\d+\.\d+\.\d+$",
         )
         config_environment: str = Field(
-            default="development", description="Configuration environment"
+            default="development", description="Configuration environment",
         )
         config_source: str = Field(
-            default="default", description="Configuration source"
+            default="default", description="Configuration source",
         )
         config_priority: int = Field(
-            default=5, ge=1, le=10, description="Configuration priority"
+            default=5, ge=1, le=10, description="Configuration priority",
         )
 
         # Performance and monitoring
         validation_count: int = Field(
-            default=0, ge=0, description="Number of validations performed"
+            default=0, ge=0, description="Number of validations performed",
         )
         last_validated: datetime | None = Field(
-            default=None, description="Last validation timestamp"
+            default=None, description="Last validation timestamp",
         )
         validation_cache_hits: int = Field(
-            default=0, ge=0, description="Validation cache hit count"
+            default=0, ge=0, description="Validation cache hit count",
         )
 
         # Security and secrets management
         enable_secret_masking: bool = Field(
-            default=True, description="Enable secret field masking in logs"
+            default=True, description="Enable secret field masking in logs",
         )
         secret_fields: list[str] = Field(
-            default_factory=list, description="Fields to mask as secrets"
+            default_factory=list, description="Fields to mask as secrets",
         )
 
         # Environment-specific settings
         debug_mode: bool = Field(default=False, description="Enable debug mode")
         enable_metrics: bool = Field(
-            default=True, description="Enable performance metrics"
+            default=True, description="Enable performance metrics",
         )
         enable_audit_logging: bool = Field(
-            default=True, description="Enable audit logging"
+            default=True, description="Enable audit logging",
         )
 
         @field_validator("config_environment")
@@ -194,7 +194,7 @@ class FlextModels:
 
         def is_development(self) -> bool:
             """Check if configuration is for development environment."""
-            return self.config_environment in ["development", "local"]
+            return self.config_environment in {"development", "local"}
 
         def is_test(self) -> bool:
             """Check if configuration is for test environment."""
@@ -315,16 +315,16 @@ class FlextModels:
 
         # Connection pooling
         pool_size: int = Field(
-            default=10, ge=1, le=100, description="Connection pool size"
+            default=10, ge=1, le=100, description="Connection pool size",
         )
         max_overflow: int = Field(
-            default=20, ge=0, le=100, description="Maximum pool overflow"
+            default=20, ge=0, le=100, description="Maximum pool overflow",
         )
         pool_timeout: int = Field(
-            default=30, ge=1, le=300, description="Pool timeout in seconds"
+            default=30, ge=1, le=300, description="Pool timeout in seconds",
         )
         pool_recycle: int = Field(
-            default=3600, ge=300, le=86400, description="Pool recycle time in seconds"
+            default=3600, ge=300, le=86400, description="Pool recycle time in seconds",
         )
 
         # Security settings
@@ -335,13 +335,13 @@ class FlextModels:
 
         # Performance settings
         connect_timeout: int = Field(
-            default=10, ge=1, le=60, description="Connection timeout in seconds"
+            default=10, ge=1, le=60, description="Connection timeout in seconds",
         )
         query_timeout: int = Field(
-            default=30, ge=1, le=300, description="Query timeout in seconds"
+            default=30, ge=1, le=300, description="Query timeout in seconds",
         )
         enable_prepared_statements: bool = Field(
-            default=True, description="Enable prepared statements"
+            default=True, description="Enable prepared statements",
         )
 
         @field_validator("host")
@@ -409,12 +409,12 @@ class FlextModels:
                 # Database-specific validation
                 if self.pool_size > self.max_overflow:
                     return FlextResult[None].fail(
-                        "Pool size cannot be greater than max overflow"
+                        "Pool size cannot be greater than max overflow",
                     )
 
-                if self.is_production() and self.ssl_mode in ["disable", "allow"]:
+                if self.is_production() and self.ssl_mode in {"disable", "allow"}:
                     return FlextResult[None].fail(
-                        "Production databases must use secure SSL modes"
+                        "Production databases must use secure SSL modes",
                     )
 
                 if (
@@ -422,7 +422,7 @@ class FlextModels:
                     and self.pool_size < FlextConstants.Config.MIN_POOL_SIZE
                 ):
                     return FlextResult[None].fail(
-                        f"Production databases should have pool size >= {FlextConstants.Config.MIN_POOL_SIZE}"
+                        f"Production databases should have pool size >= {FlextConstants.Config.MIN_POOL_SIZE}",
                     )
 
                 return FlextResult[None].ok(None)
@@ -450,10 +450,10 @@ class FlextModels:
 
         # Authentication settings
         session_timeout: int = Field(
-            default=3600, ge=300, le=86400, description="Session timeout in seconds"
+            default=3600, ge=300, le=86400, description="Session timeout in seconds",
         )
         jwt_expiry: int = Field(
-            default=3600, ge=300, le=86400, description="JWT expiry in seconds"
+            default=3600, ge=300, le=86400, description="JWT expiry in seconds",
         )
         refresh_token_expiry: int = Field(
             default=604800,
@@ -464,31 +464,31 @@ class FlextModels:
 
         # Password policy
         min_password_length: int = Field(
-            default=8, ge=6, le=128, description="Minimum password length"
+            default=8, ge=6, le=128, description="Minimum password length",
         )
         require_uppercase: bool = Field(
-            default=True, description="Require uppercase letters"
+            default=True, description="Require uppercase letters",
         )
         require_lowercase: bool = Field(
-            default=True, description="Require lowercase letters"
+            default=True, description="Require lowercase letters",
         )
         require_numbers: bool = Field(default=True, description="Require numbers")
         require_special_chars: bool = Field(
-            default=True, description="Require special characters"
+            default=True, description="Require special characters",
         )
 
         # Rate limiting
         rate_limit_requests: int = Field(
-            default=100, ge=1, le=10000, description="Rate limit requests per window"
+            default=100, ge=1, le=10000, description="Rate limit requests per window",
         )
         rate_limit_window: int = Field(
-            default=3600, ge=60, le=86400, description="Rate limit window in seconds"
+            default=3600, ge=60, le=86400, description="Rate limit window in seconds",
         )
 
         # Security headers
         enable_cors: bool = Field(default=True, description="Enable CORS")
         cors_origins: list[str] = Field(
-            default_factory=list, description="Allowed CORS origins"
+            default_factory=list, description="Allowed CORS origins",
         )
         enable_csrf: bool = Field(default=True, description="Enable CSRF protection")
 
@@ -546,22 +546,22 @@ class FlextModels:
                         < FlextConstants.Config.PRODUCTION_SECRET_LENGTH
                     ):
                         return FlextResult[None].fail(
-                            f"Production secret key must be at least {FlextConstants.Config.PRODUCTION_SECRET_LENGTH} characters"
+                            f"Production secret key must be at least {FlextConstants.Config.PRODUCTION_SECRET_LENGTH} characters",
                         )
 
                     if not self.enable_csrf:
                         return FlextResult[None].fail(
-                            "CSRF protection must be enabled in production"
+                            "CSRF protection must be enabled in production",
                         )
 
                     if not self.cors_origins:
                         return FlextResult[None].fail(
-                            "CORS origins must be specified in production"
+                            "CORS origins must be specified in production",
                         )
 
                 if self.session_timeout > self.jwt_expiry:
                     return FlextResult[None].fail(
-                        "Session timeout cannot be greater than JWT expiry"
+                        "Session timeout cannot be greater than JWT expiry",
                     )
 
                 return FlextResult[None].ok(None)
@@ -588,13 +588,13 @@ class FlextModels:
             description="Max file size in bytes",
         )
         backup_count: int = Field(
-            default=5, ge=1, le=100, description="Number of backup files"
+            default=5, ge=1, le=100, description="Number of backup files",
         )
         rotation_when: str = Field(default="midnight", description="Rotation schedule")
 
         # Performance monitoring
         enable_performance_logging: bool = Field(
-            default=True, description="Enable performance logging"
+            default=True, description="Enable performance logging",
         )
         slow_query_threshold: float = Field(
             default=1.0,
@@ -603,20 +603,20 @@ class FlextModels:
             description="Slow query threshold in seconds",
         )
         enable_metrics: bool = Field(
-            default=True, description="Enable metrics collection"
+            default=True, description="Enable metrics collection",
         )
 
         # Error tracking
         enable_error_tracking: bool = Field(
-            default=True, description="Enable error tracking"
+            default=True, description="Enable error tracking",
         )
         error_sample_rate: float = Field(
-            default=1.0, ge=0.0, le=1.0, description="Error sampling rate"
+            default=1.0, ge=0.0, le=1.0, description="Error sampling rate",
         )
 
         # Audit logging
         enable_audit_logging: bool = Field(
-            default=True, description="Enable audit logging"
+            default=True, description="Enable audit logging",
         )
         audit_events: list[str] = Field(
             default_factory=lambda: ["login", "logout", "create", "update", "delete"],
@@ -678,14 +678,14 @@ class FlextModels:
 
                 # Logging-specific validation
                 if self.is_production():
-                    if self.log_level in ["DEBUG", "TRACE"]:
+                    if self.log_level in {"DEBUG", "TRACE"}:
                         return FlextResult[None].fail(
-                            "Production should not use DEBUG or TRACE log levels"
+                            "Production should not use DEBUG or TRACE log levels",
                         )
 
                     if not self.log_file:
                         return FlextResult[None].fail(
-                            "Production must specify a log file"
+                            "Production must specify a log file",
                         )
 
                 if (
@@ -693,7 +693,7 @@ class FlextModels:
                     and self.is_production()
                 ):
                     return FlextResult[None].fail(
-                        f"Production error sampling rate should be <= {FlextConstants.Config.MIN_ROTATION_SIZE}"
+                        f"Production error sampling rate should be <= {FlextConstants.Config.MIN_ROTATION_SIZE}",
                     )
 
                 return FlextResult[None].ok(None)
@@ -714,17 +714,17 @@ class FlextModels:
         # Core identity fields
         id: str = Field(..., description="Unique entity identifier")
         version: int = Field(
-            default=1, description="Entity version for optimistic locking"
+            default=1, description="Entity version for optimistic locking",
         )
 
         # Metadata fields
         created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
         created_by: str | None = Field(
-            default=None, description="User who created entity"
+            default=None, description="User who created entity",
         )
         updated_by: str | None = Field(
-            default=None, description="User who last updated entity"
+            default=None, description="User who last updated entity",
         )
 
         # Domain events (not persisted)
@@ -772,6 +772,8 @@ class FlextModels:
 
         # Inherit Config settings and add frozen for immutability
         model_config = ConfigDict(
+            # Immutability settings - Value objects must be frozen
+            frozen=True,
             # Validation settings
             validate_assignment=True,
             validate_default=True,
@@ -788,8 +790,6 @@ class FlextModels:
             str_strip_whitespace=True,
             str_to_upper=False,
             str_to_lower=False,
-            # Value object specific - immutable
-            frozen=True,
         )
 
         def __eq__(self, other: object) -> bool:
@@ -800,7 +800,31 @@ class FlextModels:
 
         def __hash__(self) -> int:
             """Hash based on all field values."""
-            return hash(tuple(sorted(self.model_dump().items())))
+
+            def _make_hashable(obj: object) -> object:
+                """Convert non-hashable types to hashable equivalents."""
+                if isinstance(obj, dict):
+                    return tuple(
+                        sorted(
+                            (_make_hashable(k), _make_hashable(v))
+                            for k, v in obj.items()
+                        ),
+                    )
+                if isinstance(obj, list):
+                    return tuple(_make_hashable(item) for item in obj)
+                if isinstance(obj, set):
+                    return tuple(
+                        sorted(
+                            (_make_hashable(item) for item in obj), key=lambda x: str(x),
+                        ),
+                    )
+                return obj
+
+            model_data = self.model_dump()
+            hashable_items = tuple(
+                sorted((k, _make_hashable(v)) for k, v in model_data.items()),
+            )
+            return hash(hashable_items)
 
         @abstractmethod
         def validate_business_rules(self) -> FlextResult[None]:
@@ -815,14 +839,14 @@ class FlextModels:
 
         # Aggregate metadata
         aggregate_type: ClassVar[str] = Field(
-            default="", description="Type of aggregate"
+            default="", description="Type of aggregate",
         )
         aggregate_version: int = Field(
-            default=1, description="Aggregate schema version"
+            default=1, description="Aggregate schema version",
         )
 
         def apply_domain_event(
-            self, event: FlextTypes.Core.JsonObject
+            self, event: FlextTypes.Core.JsonObject,
         ) -> FlextResult[None]:
             """Apply domain event to aggregate state."""
             try:
@@ -858,16 +882,16 @@ class FlextModels:
         # Message metadata
         message_id: str = Field(default_factory=lambda: f"msg_{uuid.uuid4().hex[:12]}")
         correlation_id: str = Field(
-            default_factory=lambda: f"corr_{uuid.uuid4().hex[:8]}"
+            default_factory=lambda: f"corr_{uuid.uuid4().hex[:8]}",
         )
         causation_id: str | None = Field(
-            default=None, description="ID of causing message"
+            default=None, description="ID of causing message",
         )
 
         # Message timing
         timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
         expires_at: datetime | None = Field(
-            default=None, description="Message expiration time"
+            default=None, description="Message expiration time",
         )
 
         # Message routing
@@ -881,10 +905,10 @@ class FlextModels:
         # Message metadata
         headers: FlextTypes.Core.JsonObject = Field(default_factory=dict)
         priority: int = Field(
-            default=5, ge=1, le=10, description="Message priority (1-10)"
+            default=5, ge=1, le=10, description="Message priority (1-10)",
         )
         retry_count: int = Field(
-            default=0, ge=0, description="Number of processing attempts"
+            default=0, ge=0, description="Number of processing attempts",
         )
 
         @computed_field
@@ -1039,7 +1063,7 @@ class FlextModels:
         aggregate_id: str = Field(..., description="ID of aggregate that raised event")
         aggregate_type: str = Field(..., description="Type of aggregate")
         sequence_number: int = Field(
-            default=1, ge=1, description="Event sequence in aggregate"
+            default=1, ge=1, description="Event sequence in aggregate",
         )
 
         @field_validator("aggregate_id")
@@ -1102,7 +1126,7 @@ class FlextModels:
         """Entity identifier with validation."""
 
         root: str = Field(
-            min_length=1, max_length=255, description="Non-empty entity identifier"
+            min_length=1, max_length=255, description="Non-empty entity identifier",
         )
 
         @field_validator("root")
@@ -1136,7 +1160,7 @@ class FlextModels:
         """Email address with validation."""
 
         root: str = Field(
-            pattern=r"^[^@]+@[^@]+\.[^@]+$", description="Valid email address"
+            pattern=r"^[^@]+@[^@]+\.[^@]+$", description="Valid email address",
         )
 
         @field_validator("root")
@@ -1164,7 +1188,7 @@ class FlextModels:
         """Hostname or IP address with validation."""
 
         root: str = Field(
-            min_length=1, max_length=255, description="Valid hostname or IP"
+            min_length=1, max_length=255, description="Valid hostname or IP",
         )
 
         @field_validator("root")
@@ -1192,7 +1216,7 @@ class FlextModels:
                 raise ValueError(msg)
 
             def _raise_url_error(
-                error_msg: str, cause: Exception | None = None
+                error_msg: str, cause: Exception | None = None,
             ) -> None:
                 """Abstract raise for URL validation errors."""
                 if cause:
@@ -1216,7 +1240,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_json(
-            cls, v: FlextTypes.Core.JsonObject
+            cls, v: FlextTypes.Core.JsonObject,
         ) -> FlextTypes.Core.JsonObject:
             """Ensure valid JSON serializable data."""
             try:

@@ -770,7 +770,7 @@ class FlextPluginHandlers(FlextHandlers):
             plugin_info["activated_at"] = datetime.now().isoformat()
             plugin_info["last_activity"] = datetime.now().isoformat()
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             return FlextResult[bool].fail(f"Plugin activation error: {e}")

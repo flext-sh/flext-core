@@ -4,11 +4,6 @@ Primary entry point providing unified access to dependency injection, domain mod
 validation, handlers, observability, and architectural patterns through a thread-safe
 singleton interface with railway-oriented programming.
 
-Usage:
-    core = FlextCore.get_instance()
-    core.configure_logging(log_level="INFO")
-    core.register_service("database", DatabaseService())
-    result = core.ok(data).flat_map(validate).flat_map(process)
 
 """
 
@@ -17,7 +12,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Annotated, Unpack, cast, override
+from typing import Annotated, Unpack, cast, override
 
 from pydantic import Field
 
@@ -29,9 +24,7 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.decorators import FlextDecorators
 from flext_core.delegation import FlextDelegationSystem
-
-if TYPE_CHECKING:
-    from flext_core.domain_services import FlextDomainService
+from flext_core.domain_services import FlextDomainService
 from flext_core.exceptions import FlextExceptions
 from flext_core.fields import FlextFields
 from flext_core.guards import FlextGuards
@@ -231,13 +224,9 @@ class FlextCore:
         self._handler_registry: FlextHandlers.Management.HandlerRegistry | None = None
 
         # Static class facades as direct attributes (only for classes without properties)
-        # Removed aggregates - functionality moved to models
         self.commands = FlextCommands
         self.decorators = FlextDecorators
         self.delegation = FlextDelegationSystem
-        # Import FlextDomainService dynamically to avoid circular imports
-        from flext_core.domain_services import FlextDomainService
-
         self.domain_services = FlextDomainService
         self.exceptions = FlextExceptions
         self.fields = FlextFields
@@ -360,7 +349,7 @@ class FlextCore:
     # Domain & Aggregate Methods - RESTORED
     # Direct implementation using models module
     def configure_aggregates_system(
-        self, cfg: FlextTypes.Aggregates.AggregatesConfigDict
+        self, cfg: FlextTypes.Aggregates.AggregatesConfigDict,
     ) -> FlextTypes.Aggregates.AggregatesConfig:
         """Configure the aggregates system with the provided configuration."""
         try:
@@ -371,7 +360,7 @@ class FlextCore:
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(cfg)
         except Exception as e:
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
-                f"Configuration failed: {e}"
+                f"Configuration failed: {e}",
             )
 
     def get_aggregates_config(self) -> FlextTypes.Aggregates.SystemConfig:
@@ -381,11 +370,11 @@ class FlextCore:
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(config)
         except Exception as e:
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
-                f"Get config failed: {e}"
+                f"Get config failed: {e}",
             )
 
     def optimize_aggregates_system(
-        self, lvl: FlextTypes.Aggregates.PerformanceLevel
+        self, lvl: FlextTypes.Aggregates.PerformanceLevel,
     ) -> FlextTypes.Aggregates.PerformanceConfig:
         """Optimize aggregates performance with the specified level."""
         try:
@@ -409,15 +398,15 @@ class FlextCore:
                 "optimization_enabled": True,
             }
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].ok(
-                performance_config
+                performance_config,
             )
         except Exception as e:
             return FlextResult[FlextTypes.Aggregates.AggregatesConfigDict].fail(
-                f"Optimization failed: {e}"
+                f"Optimization failed: {e}",
             )
 
     def configure_commands_system(
-        self, cfg: FlextTypes.Commands.CommandsConfigDict
+        self, cfg: FlextTypes.Commands.CommandsConfigDict,
     ) -> FlextTypes.Commands.CommandsConfig:
         return self.commands.configure_commands_system(cfg)
 
@@ -425,10 +414,10 @@ class FlextCore:
         return self.commands.get_commands_system_config()
 
     def optimize_commands_performance(
-        self, level: str
+        self, level: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": level}
         return self.commands.optimize_commands_performance(config)
 
@@ -458,7 +447,7 @@ class FlextCore:
             return db_config_result
         except Exception as e:
             return FlextResult[FlextModels.DatabaseConfig].fail(
-                f"Database configuration failed: {e}"
+                f"Database configuration failed: {e}",
             )
 
     def configure_security(
@@ -484,7 +473,7 @@ class FlextCore:
             return security_config_result
         except Exception as e:
             return FlextResult[FlextModels.SecurityConfig].fail(
-                f"Security configuration failed: {e}"
+                f"Security configuration failed: {e}",
             )
 
     def configure_logging_config(
@@ -496,7 +485,7 @@ class FlextCore:
         """Configure logging settings using specialized config."""
         try:
             logging_config_result = self.config.create_logging_config(
-                log_level=log_level, log_file=log_file, **kwargs
+                log_level=log_level, log_file=log_file, **kwargs,
             )
             if logging_config_result.is_success:
                 # Store in specialized configs
@@ -506,11 +495,11 @@ class FlextCore:
             return logging_config_result
         except Exception as e:
             return FlextResult[FlextModels.LoggingConfig].fail(
-                f"Logging configuration failed: {e}"
+                f"Logging configuration failed: {e}",
             )
 
     def configure_context_system(
-        self, config: FlextTypes.Config.ConfigDict
+        self, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         return self.context.configure_context_system(config)
 
@@ -529,7 +518,7 @@ class FlextCore:
         return FlextResult[str].fail(f"Field '{field_name}': {validation_result.error}")
 
     def validate_numeric_field(
-        self, value: object, field_name: str
+        self, value: object, field_name: str,
     ) -> FlextResult[int | float]:
         # Use the actual API: validate_numeric_field returns FlextResult[None]
         validation_result = self.validation.validate_numeric_field(value)
@@ -539,14 +528,14 @@ class FlextCore:
                 return FlextResult[int | float].ok(value)
             # This shouldn't happen if validation passed, but handle it safely
             return FlextResult[int | float].fail(
-                f"Field '{field_name}': Invalid numeric type"
+                f"Field '{field_name}': Invalid numeric type",
             )
         return FlextResult[int | float].fail(
-            f"Field '{field_name}': {validation_result.error}"
+            f"Field '{field_name}': {validation_result.error}",
         )
 
     def validate_user_data(
-        self, user_data: FlextTypes.Core.JsonObject
+        self, user_data: FlextTypes.Core.JsonObject,
     ) -> FlextResult[dict[str, object]]:
         user_data_dict: dict[str, object] = (
             dict(user_data) if hasattr(user_data, "keys") else {}
@@ -554,7 +543,7 @@ class FlextCore:
         return self.validation.validate_user_data(user_data_dict)
 
     def validate_api_request(
-        self, request_data: FlextTypes.Core.JsonObject
+        self, request_data: FlextTypes.Core.JsonObject,
     ) -> FlextResult[dict[str, object]]:
         request_data_dict: dict[str, object] = cast(
             "dict[str, object]",
@@ -575,11 +564,11 @@ class FlextCore:
             if validation_result.success:
                 return FlextResult[FlextModels.Entity].ok(entity)
             return FlextResult[FlextModels.Entity].fail(
-                f"Business rule validation failed: {validation_result.error}"
+                f"Business rule validation failed: {validation_result.error}",
             )
         except Exception as e:
             return FlextResult[FlextModels.Entity].fail(
-                f"Entity creation failed: {e!s}"
+                f"Entity creation failed: {e!s}",
             )
 
     def create_value_object(
@@ -594,11 +583,11 @@ class FlextCore:
             if validation_result.success:
                 return FlextResult[FlextModels.Value].ok(value_obj)
             return FlextResult[FlextModels.Value].fail(
-                f"Business rule validation failed: {validation_result.error}"
+                f"Business rule validation failed: {validation_result.error}",
             )
         except Exception as e:
             return FlextResult[FlextModels.Value].fail(
-                f"Value object creation failed: {e!s}"
+                f"Value object creation failed: {e!s}",
             )
 
     def create_domain_event(
@@ -623,7 +612,7 @@ class FlextCore:
             return FlextResult[FlextModels.Event].ok(event)
         except Exception as e:
             return FlextResult[FlextModels.Event].fail(
-                f"Domain event creation failed: {e!s}"
+                f"Domain event creation failed: {e!s}",
             )
 
     def create_payload(
@@ -646,11 +635,11 @@ class FlextCore:
                 payload_kwargs["correlation_id"] = correlation_id
             payload = FlextModels.Payload[FlextTypes.Core.JsonObject](**payload_kwargs)  # type: ignore[arg-type]
             return FlextResult[FlextModels.Payload[FlextTypes.Core.JsonObject]].ok(
-                payload
+                payload,
             )
         except Exception as e:
             return FlextResult[FlextModels.Payload[FlextTypes.Core.JsonObject]].fail(
-                f"Payload creation failed: {e!s}"
+                f"Payload creation failed: {e!s}",
             )
 
     # Utility Methods
@@ -730,14 +719,14 @@ class FlextCore:
 
     # Decorator Methods
     def configure_decorators_system(
-        self, config: dict[str, object]
+        self, config: dict[str, object],
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Configure decorators system."""
         # Convert to ConfigDict format expected by decorators
         config_dict: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             k: v
             for k, v in config.items()
@@ -752,7 +741,7 @@ class FlextCore:
     ]:
         """Get decorators system configuration."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "development",
             "validation_level": "normal",
@@ -774,14 +763,14 @@ class FlextCore:
         ].ok(config)
 
     def optimize_decorators_performance(
-        self, performance_level: str
+        self, performance_level: str,
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Optimize decorators performance."""
         # Create optimized configuration based on performance level
         optimized_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "performance_level": performance_level,
             "optimization_enabled": True,
@@ -804,14 +793,14 @@ class FlextCore:
         return self.fields.create_boolean_field(default=default)
 
     def configure_fields_system(
-        self, config: dict[str, object]
+        self, config: dict[str, object],
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Configure fields system."""
         # Convert to ConfigDict format expected by fields
         config_dict: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             k: v
             for k, v in config.items()
@@ -873,7 +862,7 @@ class FlextCore:
         return self._container.register(str(key), service)
 
     def get_service(
-        self, key: FlextTypes.Container.ServiceKey
+        self, key: FlextTypes.Container.ServiceKey,
     ) -> FlextTypes.Container.ServiceRetrieval:
         r = self._container.get(str(key))
         return (
@@ -894,7 +883,7 @@ class FlextCore:
     # =========================================================================
 
     @staticmethod
-    def get_logger(name: str) -> _FlextLogger:
+    def flext_logger(name: str) -> _FlextLogger:
         """Get configured logger instance."""
         return _FlextLogger(name)
 
@@ -1011,7 +1000,7 @@ class FlextCore:
     # =========================================================================
 
     def get_environment_config(
-        self, environment: FlextTypes.Config.Environment = "development"
+        self, environment: FlextTypes.Config.Environment = "development",
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Get environment-specific configuration using FlextTypes.Config."""
         try:
@@ -1024,7 +1013,7 @@ class FlextCore:
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config_dict)
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Environment config failed: {e}"
+                f"Environment config failed: {e}",
             )
 
     def create_config_provider(
@@ -1044,7 +1033,7 @@ class FlextCore:
             return FlextResult[FlextTypes.Config.ConfigDict].ok(provider_config)
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Config provider creation failed: {e}"
+                f"Config provider creation failed: {e}",
             )
 
     def validate_config_with_types(
@@ -1082,7 +1071,7 @@ class FlextCore:
 
     @classmethod
     def configure_core_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure core system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1094,7 +1083,7 @@ class FlextCore:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
 
             # Validate log level
@@ -1105,7 +1094,7 @@ class FlextCore:
                 ]
                 if log_value not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
                     )
 
             # Validate validation level
@@ -1116,7 +1105,7 @@ class FlextCore:
                 ]
                 if val_value not in valid_validation_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}"
+                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}",
                     )
 
             # Validate config source
@@ -1125,7 +1114,7 @@ class FlextCore:
                 valid_sources = [s.value for s in FlextConstants.Config.ConfigSource]
                 if source_value not in valid_sources:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid config_source '{source_value}'. Valid options: {valid_sources}"
+                        f"Invalid config_source '{source_value}'. Valid options: {valid_sources}",
                     )
 
             # Build validated configuration with defaults
@@ -1135,22 +1124,22 @@ class FlextCore:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value
+                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
                     FlextConstants.Config.ValidationLevel.NORMAL.value,
                 ),
                 "config_source": config.get(
-                    "config_source", FlextConstants.Config.ConfigSource.DEFAULT.value
+                    "config_source", FlextConstants.Config.ConfigSource.DEFAULT.value,
                 ),
                 "enable_observability": False,  # observability removed
                 "enable_logging": config.get("enable_logging", True),
                 "enable_container_debugging": config.get(
-                    "enable_container_debugging", False
+                    "enable_container_debugging", False,
                 ),
                 "max_service_registrations": config.get(
-                    "max_service_registrations", 1000
+                    "max_service_registrations", 1000,
                 ),
             }
 
@@ -1158,7 +1147,7 @@ class FlextCore:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Core system configuration failed: {e}"
+                f"Core system configuration failed: {e}",
             )
 
     @classmethod
@@ -1206,12 +1195,12 @@ class FlextCore:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get core system configuration: {e}"
+                f"Failed to get core system configuration: {e}",
             )
 
     @classmethod
     def create_environment_core_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls, environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific core system configuration."""
         try:
@@ -1221,7 +1210,7 @@ class FlextCore:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Base configuration
@@ -1285,12 +1274,12 @@ class FlextCore:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment core config: {e}"
+                f"Failed to create environment core config: {e}",
             )
 
     @classmethod
     def optimize_core_performance(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize core system performance based on configuration."""
         try:
@@ -1307,7 +1296,7 @@ class FlextCore:
             if performance_level == "high":
                 optimized_config.update({
                     "max_service_registrations": config.get(
-                        "max_service_registrations", 2000
+                        "max_service_registrations", 2000,
                     ),
                     "container_cache_size": 1000,
                     "enable_lazy_loading": True,
@@ -1321,7 +1310,7 @@ class FlextCore:
             elif performance_level == "medium":
                 optimized_config.update({
                     "max_service_registrations": config.get(
-                        "max_service_registrations", 1000
+                        "max_service_registrations", 1000,
                     ),
                     "container_cache_size": 500,
                     "enable_lazy_loading": True,
@@ -1335,7 +1324,7 @@ class FlextCore:
             elif performance_level == "low":
                 optimized_config.update({
                     "max_service_registrations": config.get(
-                        "max_service_registrations", 500
+                        "max_service_registrations", 500,
                     ),
                     "container_cache_size": 100,
                     "enable_lazy_loading": False,
@@ -1350,12 +1339,12 @@ class FlextCore:
                 # Default/custom performance level
                 optimized_config.update({
                     "max_service_registrations": config.get(
-                        "max_service_registrations", 1000
+                        "max_service_registrations", 1000,
                     ),
                     "container_cache_size": 500,
                     "enable_lazy_loading": config.get("enable_lazy_loading", True),
                     "max_concurrent_operations": config.get(
-                        "max_concurrent_operations", 100
+                        "max_concurrent_operations", 100,
                     ),
                     "memory_optimization": "balanced",
                 })
@@ -1371,7 +1360,7 @@ class FlextCore:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Core performance optimization failed: {e}"
+                f"Core performance optimization failed: {e}",
             )
 
     # =========================================================================
@@ -1521,7 +1510,7 @@ class FlextCore:
     @staticmethod
     @staticmethod
     def validate_string(
-        value: object, min_length: int = 0, max_length: int | None = None
+        value: object, min_length: int = 0, max_length: int | None = None,
     ) -> FlextResult[str]:
         """Validate string value with length constraints."""
         if not isinstance(value, str):
@@ -1529,19 +1518,19 @@ class FlextCore:
 
         if len(value) < min_length:
             return FlextResult[str].fail(
-                f"String must be at least {min_length} characters"
+                f"String must be at least {min_length} characters",
             )
 
         if max_length is not None and len(value) > max_length:
             return FlextResult[str].fail(
-                f"String must not exceed {max_length} characters"
+                f"String must not exceed {max_length} characters",
             )
 
         return FlextResult[str].ok(value)
 
     @staticmethod
     def validate_numeric(
-        value: object, min_value: float | None = None, max_value: float | None = None
+        value: object, min_value: float | None = None, max_value: float | None = None,
     ) -> FlextResult[float]:
         """Validate numeric value with range constraints."""
         if not isinstance(value, (int, float)):
@@ -1562,18 +1551,17 @@ class FlextCore:
         if not isinstance(value, str):
             return FlextResult[str].fail("Service name must be a string")
         # Import here to avoid circular dependency
-        from flext_core.container import FlextContainer
 
         validation_result = FlextContainer.flext_validate_service_name(value)
         if validation_result.is_success:
             return FlextResult[str].ok(value)
         return FlextResult[str].fail(
-            validation_result.error or "Invalid service name format"
+            validation_result.error or "Invalid service name format",
         )
 
     @staticmethod
     def require_not_none(
-        value: T | None, message: str = "Value cannot be None"
+        value: T | None, message: str = "Value cannot be None",
     ) -> FlextResult[T]:
         """Guard that ensures value is not None."""
         try:
@@ -1584,7 +1572,7 @@ class FlextCore:
 
     @staticmethod
     def require_non_empty(
-        value: str, message: str = "Value cannot be empty"
+        value: str, message: str = "Value cannot be empty",
     ) -> FlextResult[str]:
         """Guard that ensures string is not empty."""
         try:
@@ -1595,7 +1583,7 @@ class FlextCore:
 
     @staticmethod
     def require_positive(
-        value: float, message: str = "Value must be positive"
+        value: float, message: str = "Value must be positive",
     ) -> FlextResult[float]:
         """Guard that ensures number is positive."""
         try:
@@ -1644,12 +1632,12 @@ class FlextCore:
             min_configs_for_merge = 2
             if len(configs) < min_configs_for_merge:
                 return FlextResult[dict[str, object]].fail(
-                    "At least 2 configs required for merging"
+                    "At least 2 configs required for merging",
                 )
             result = FlextConfig.merge_configs(configs[0], configs[1])
             if result.is_failure:
                 return FlextResult[dict[str, object]].fail(
-                    result.error or "Config merge failed"
+                    result.error or "Config merge failed",
                 )
             return result  # Already correct type
         except Exception as e:
@@ -1672,7 +1660,7 @@ class FlextCore:
     @staticmethod
     @staticmethod
     def create_aggregate_root(
-        aggregate_class: type[T], **data: object
+        aggregate_class: type[T], **data: object,
     ) -> FlextResult[T]:
         """Create aggregate root with validation."""
         try:
@@ -1683,7 +1671,7 @@ class FlextCore:
                     instance = model_validate(data)
                     if not isinstance(instance, aggregate_class):
                         return FlextResult[T].fail(
-                            "Model validation returned incorrect type"
+                            "Model validation returned incorrect type",
                         )
                 else:
                     instance = aggregate_class(**data)
@@ -1717,8 +1705,6 @@ class FlextCore:
     @property
     def domain_service_base(self) -> type[FlextDomainService[object]]:
         """Access domain service base class."""
-        from flext_core.domain_services import FlextDomainService
-
         return FlextDomainService[object]
 
     # =========================================================================
@@ -1771,7 +1757,7 @@ class FlextCore:
 
     @staticmethod
     def create_message(
-        message_type: str, **kwargs: object
+        message_type: str, **kwargs: object,
     ) -> FlextResult[FlextModels.Message]:
         """Create cross-service message."""
         try:
@@ -1798,7 +1784,7 @@ class FlextCore:
 
             if message_result.is_failure:
                 return FlextResult[FlextModels.Message].fail(
-                    message_result.error or "Message creation failed"
+                    message_result.error or "Message creation failed",
                 )
             # Return the payload as message
             payload = message_result.unwrap()
@@ -1813,12 +1799,12 @@ class FlextCore:
             return FlextResult[FlextModels.Message].ok(message)
         except Exception as e:
             return FlextResult[FlextModels.Message].fail(
-                f"Message creation failed: {e}"
+                f"Message creation failed: {e}",
             )
 
     @staticmethod
     def create_event(
-        event_type: str, data: dict[str, object], **kwargs: object
+        event_type: str, data: dict[str, object], **kwargs: object,
     ) -> FlextResult[FlextModels.Event]:
         """Create cross-service event."""
         try:
@@ -1839,12 +1825,12 @@ class FlextCore:
                 event_result = FlextResult[FlextModels.Event].ok(event)
             except Exception as e:
                 event_result = FlextResult[FlextModels.Event].fail(
-                    f"Domain event creation failed: {e!s}"
+                    f"Domain event creation failed: {e!s}",
                 )
 
             if event_result.is_failure:
                 return FlextResult[FlextModels.Event].fail(
-                    event_result.error or "Event creation failed"
+                    event_result.error or "Event creation failed",
                 )
             return event_result
         except Exception as e:
@@ -1858,7 +1844,7 @@ class FlextCore:
         for field in required_fields:
             if field not in payload:
                 return FlextResult[dict[str, object]].fail(
-                    f"Missing required field: {field}"
+                    f"Missing required field: {field}",
                 )
         return FlextResult[dict[str, object]].ok(payload)
 
@@ -1932,7 +1918,7 @@ class FlextCore:
         return result.error
 
     def create_validation_decorator(
-        self, validator: FlextTypes.Core.OperationCallable
+        self, validator: FlextTypes.Core.OperationCallable,
     ) -> object:
         """Create custom validation decorator."""
         # Cast validator to proper type for validate_input compatibility
@@ -2008,14 +1994,14 @@ class FlextCore:
         """Create entity ID."""
         if value is None:
             return FlextResult[FlextModels.EntityId].fail(
-                "Entity ID value cannot be None"
+                "Entity ID value cannot be None",
             )
         try:
             entity_id = FlextModels.EntityId(root=value)
             return FlextResult[FlextModels.EntityId].ok(entity_id)
         except Exception as e:
             return FlextResult[FlextModels.EntityId].fail(
-                f"Entity ID creation failed: {e}"
+                f"Entity ID creation failed: {e}",
             )
 
     @staticmethod
@@ -2026,7 +2012,7 @@ class FlextCore:
             return FlextResult[FlextModels.Version].ok(version)
         except Exception as e:
             return FlextResult[FlextModels.Version].fail(
-                f"Version creation failed: {e}"
+                f"Version creation failed: {e}",
             )
 
     @staticmethod
@@ -2037,7 +2023,7 @@ class FlextCore:
             return FlextResult[FlextModels.EmailAddress].ok(email)
         except Exception as e:
             return FlextResult[FlextModels.EmailAddress].fail(
-                f"Email creation failed: {e}"
+                f"Email creation failed: {e}",
             )
 
     @staticmethod
@@ -2050,7 +2036,7 @@ class FlextCore:
             return FlextResult[FlextModels.EntityId].ok(service_name)
         except Exception as e:
             return FlextResult[FlextModels.EntityId].fail(
-                f"Service name creation failed: {e}"
+                f"Service name creation failed: {e}",
             )
 
     @staticmethod
@@ -2064,13 +2050,13 @@ class FlextCore:
         try:
             # Convert all values to proper JSON types
             typed_data = cast(
-                "FlextTypes.Core.JsonObject", {str(k): v for k, v in data.items()}
+                "FlextTypes.Core.JsonObject", {str(k): v for k, v in data.items()},
             )
             metadata = FlextModels.JsonData(root=typed_data)
             return FlextResult[FlextModels.JsonData].ok(metadata)
         except Exception as e:
             return FlextResult[FlextModels.JsonData].fail(
-                f"Metadata creation failed: {e}"
+                f"Metadata creation failed: {e}",
             )
 
     # =========================================================================
@@ -2150,7 +2136,7 @@ class FlextCore:
                     register_method(plugin)
                 return FlextResult[None].ok(None)
             return FlextResult[None].fail(
-                "Plugin registry does not support registration"
+                "Plugin registry does not support registration",
             )
         except Exception as e:
             return FlextResult[None].fail(f"Plugin registration failed: {e}")
@@ -2164,13 +2150,13 @@ class FlextCore:
         """Validate object type."""
         if not isinstance(obj, expected_type):
             return FlextResult[object].fail(
-                f"Expected {expected_type.__name__}, got {type(obj).__name__}"
+                f"Expected {expected_type.__name__}, got {type(obj).__name__}",
             )
         return FlextResult[object].ok(obj)
 
     @staticmethod
     def validate_dict_structure(
-        obj: object, value_type: type
+        obj: object, value_type: type,
     ) -> FlextResult[dict[str, object]]:
         """Validate dictionary structure."""
         if not isinstance(obj, dict):
@@ -2178,14 +2164,14 @@ class FlextCore:
 
         if not FlextGuards.is_dict_of(cast("dict[object, object]", obj), value_type):
             return FlextResult[dict[str, object]].fail(
-                f"Dictionary values must be of type {value_type.__name__}"
+                f"Dictionary values must be of type {value_type.__name__}",
             )
 
         return FlextResult[dict[str, object]].ok(cast("dict[str, object]", obj))
 
     @staticmethod
     def create_validated_model(
-        model_class: type, **data: object
+        model_class: type, **data: object,
     ) -> FlextResult[object]:
         """Create validated model."""
         try:
@@ -2227,16 +2213,16 @@ class FlextCore:
                         return None  # This line should never be reached
                     duration = (datetime.now(UTC) - start_time).total_seconds()
                     # Log performance metrics
-                    logger = self.get_logger(__name__)
+                    logger = self.flext_logger(__name__)
                     logger.info(
-                        f"Operation {operation_name} completed in {duration:.3f}s"
+                        f"Operation {operation_name} completed in {duration:.3f}s",
                     )
                     return result
                 except Exception:
                     duration = (datetime.now(UTC) - start_time).total_seconds()
-                    logger = self.get_logger(__name__)
+                    logger = self.flext_logger(__name__)
                     logger.exception(
-                        f"Operation {operation_name} failed after {duration:.3f}s"
+                        f"Operation {operation_name} failed after {duration:.3f}s",
                     )
                     raise
 
@@ -2249,7 +2235,7 @@ class FlextCore:
     # =========================================================================
 
     def create_factory(
-        self, factory_type: str, **config: object
+        self, factory_type: str, **config: object,
     ) -> FlextResult[object]:
         """Create factory instance."""
         try:
@@ -2335,13 +2321,13 @@ class FlextCore:
         try:
             if not hasattr(self, method_name):
                 return FlextResult[dict[str, object]].fail(
-                    f"Method not found: {method_name}"
+                    f"Method not found: {method_name}",
                 )
 
             method = getattr(self, method_name)
             if not callable(method):
                 return FlextResult[dict[str, object]].fail(
-                    f"Attribute is not callable: {method_name}"
+                    f"Attribute is not callable: {method_name}",
                 )
 
             info: dict[str, object] = {
@@ -2354,7 +2340,7 @@ class FlextCore:
             return FlextResult[dict[str, object]].ok(info)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Failed to get method info: {e}"
+                f"Failed to get method info: {e}",
             )
 
     # =========================================================================
@@ -2458,7 +2444,7 @@ class FlextCore:
                         decorated_func = decorator(final_process_func)
                         # Type cast to ensure correct signature is maintained
                         final_process_func = cast(
-                            "Callable[[object], FlextResult[object]]", decorated_func
+                            "Callable[[object], FlextResult[object]]", decorated_func,
                         )
 
         class DynamicServiceProcessor:
@@ -2556,7 +2542,7 @@ class FlextCore:
 
         # Create dynamic class
         return cast(
-            "type[FlextModels.Value]", type(name, (FlextModels.Value,), class_attrs)
+            "type[FlextModels.Value]", type(name, (FlextModels.Value,), class_attrs),
         )
 
     # Service Setup Methods - Compact Delegations
@@ -2588,7 +2574,7 @@ class FlextCore:
                     r = c.register_factory(sn, factory)
                 if r.is_failure:
                     return FlextResult[FlextContainer].fail(
-                        f"Failed to register {sn}: {r.error}"
+                        f"Failed to register {sn}: {r.error}",
                     )
             return FlextResult[FlextContainer].ok(c)
         except Exception as e:
@@ -2617,7 +2603,7 @@ class FlextCore:
         success_msg: str,
         logger_name: str | None = None,
     ) -> FlextResult[object]:
-        logger = self.get_logger(logger_name or __name__)
+        logger = self.flext_logger(logger_name or __name__)
         if result.is_success:
             logger.info(f"✅ {success_msg}", result_type=type(result.value).__name__)
         else:

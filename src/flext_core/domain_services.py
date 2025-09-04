@@ -114,7 +114,7 @@ class FlextDomainService[TDomainResult](
                     or f"{FlextConstants.Messages.VALIDATION_FAILED}: Configuration validation failed"
                 )
                 return FlextResult[object].fail(
-                    error_message, error_code=FlextConstants.Errors.VALIDATION_ERROR
+                    error_message, error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
             # Validate operation is callable and execute
@@ -170,7 +170,7 @@ class FlextDomainService[TDomainResult](
 
     @classmethod
     def configure_domain_services_system(
-        cls, config: FlextTypes.Config.ConfigDict | None
+        cls, config: FlextTypes.Config.ConfigDict | None,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure domain services system using FlextTypes.Config with StrEnum validation.
 
@@ -182,7 +182,7 @@ class FlextDomainService[TDomainResult](
             # Validate config is not None
             if config is None:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    "Configuration cannot be None"
+                    "Configuration cannot be None",
                 )
 
             # Validate config is a dictionary (runtime check for type safety)
@@ -191,7 +191,7 @@ class FlextDomainService[TDomainResult](
                 validated_config = dict(config)
             except (TypeError, ValueError, RuntimeError):
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    "Configuration must be a dictionary"
+                    "Configuration must be a dictionary",
                 )
 
             # Validate environment
@@ -202,7 +202,7 @@ class FlextDomainService[TDomainResult](
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
             else:
                 validated_config["environment"] = (
@@ -215,7 +215,7 @@ class FlextDomainService[TDomainResult](
                 valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
                 if service_value not in valid_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid service_level '{service_value}'. Valid options: {valid_levels}"
+                        f"Invalid service_level '{service_value}'. Valid options: {valid_levels}",
                     )
             else:
                 validated_config["service_level"] = (
@@ -228,7 +228,7 @@ class FlextDomainService[TDomainResult](
                 valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
                 if log_value not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
                     )
             else:
                 validated_config["log_level"] = (
@@ -249,7 +249,7 @@ class FlextDomainService[TDomainResult](
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure domain services system: {e}"
+                f"Failed to configure domain services system: {e}",
             )
 
     @classmethod
@@ -299,12 +299,12 @@ class FlextDomainService[TDomainResult](
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get domain services system configuration: {e}"
+                f"Failed to get domain services system configuration: {e}",
             )
 
     @classmethod
     def create_environment_domain_services_config(
-        cls, environment: str
+        cls, environment: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific domain services configuration.
 
@@ -321,7 +321,7 @@ class FlextDomainService[TDomainResult](
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Base configuration for all environments
@@ -334,71 +334,81 @@ class FlextDomainService[TDomainResult](
 
             # Environment-specific configurations
             if environment == "production":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": True,  # Critical in production
-                    "max_service_operations": 100,  # Higher concurrency
-                    "service_execution_timeout_seconds": 30,  # Stricter timeout
-                    "enable_service_caching": True,  # Performance optimization
-                    "service_retry_attempts": 5,  # More retries for reliability
-                    "enable_detailed_error_reporting": False,  # Security consideration
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": True,  # Critical in production
+                        "max_service_operations": 100,  # Higher concurrency
+                        "service_execution_timeout_seconds": 30,  # Stricter timeout
+                        "enable_service_caching": True,  # Performance optimization
+                        "service_retry_attempts": 5,  # More retries for reliability
+                        "enable_detailed_error_reporting": False,  # Security consideration
+                    },
+                )
             elif environment == "staging":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_performance_monitoring": True,  # Monitor staging performance
-                    "max_service_operations": 75,  # Moderate concurrency
-                    "service_execution_timeout_seconds": 45,  # Balanced timeout
-                    "enable_service_caching": True,  # Test caching behavior
-                    "service_retry_attempts": 3,  # Standard retry policy
-                    "enable_detailed_error_reporting": True,  # Full error details for debugging
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "enable_performance_monitoring": True,  # Monitor staging performance
+                        "max_service_operations": 75,  # Moderate concurrency
+                        "service_execution_timeout_seconds": 45,  # Balanced timeout
+                        "enable_service_caching": True,  # Test caching behavior
+                        "service_retry_attempts": 3,  # Standard retry policy
+                        "enable_detailed_error_reporting": True,  # Full error details for debugging
+                    },
+                )
             elif environment == "development":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": True,  # Monitor development performance
-                    "max_service_operations": 25,  # Lower concurrency for debugging
-                    "service_execution_timeout_seconds": 120,  # Generous timeout for debugging
-                    "enable_service_caching": False,  # Disable caching for development
-                    "service_retry_attempts": 1,  # Minimal retries for fast failure
-                    "enable_detailed_error_reporting": True,  # Full error details for debugging
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": True,  # Monitor development performance
+                        "max_service_operations": 25,  # Lower concurrency for debugging
+                        "service_execution_timeout_seconds": 120,  # Generous timeout for debugging
+                        "enable_service_caching": False,  # Disable caching for development
+                        "service_retry_attempts": 1,  # Minimal retries for fast failure
+                        "enable_detailed_error_reporting": True,  # Full error details for debugging
+                    },
+                )
             elif environment == "test":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "max_service_operations": 10,  # Limited concurrency for testing
-                    "service_execution_timeout_seconds": 60,  # Standard timeout
-                    "enable_service_caching": False,  # No caching in tests
-                    "service_retry_attempts": 0,  # No retries in tests for deterministic behavior
-                    "enable_detailed_error_reporting": True,  # Full error details for test diagnostics
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "max_service_operations": 10,  # Limited concurrency for testing
+                        "service_execution_timeout_seconds": 60,  # Standard timeout
+                        "enable_service_caching": False,  # No caching in tests
+                        "service_retry_attempts": 0,  # No retries in tests for deterministic behavior
+                        "enable_detailed_error_reporting": True,  # Full error details for test diagnostics
+                    },
+                )
             elif environment == "local":
-                base_config.update({
-                    "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_performance_monitoring": False,  # No monitoring for local development
-                    "max_service_operations": 5,  # Very limited concurrency
-                    "service_execution_timeout_seconds": 300,  # Very generous timeout
-                    "enable_service_caching": False,  # No caching for local development
-                    "service_retry_attempts": 0,  # No retries for immediate feedback
-                    "enable_detailed_error_reporting": True,  # Full error details
-                })
+                base_config.update(
+                    {
+                        "service_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "enable_performance_monitoring": False,  # No monitoring for local development
+                        "max_service_operations": 5,  # Very limited concurrency
+                        "service_execution_timeout_seconds": 300,  # Very generous timeout
+                        "enable_service_caching": False,  # No caching for local development
+                        "service_retry_attempts": 0,  # No retries for immediate feedback
+                        "enable_detailed_error_reporting": True,  # Full error details
+                    },
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(base_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment domain services configuration: {e}"
+                f"Failed to create environment domain services configuration: {e}",
             )
 
     @classmethod
     def optimize_domain_services_performance(
-        cls, config: FlextTypes.Config.ConfigDict | None
+        cls, config: FlextTypes.Config.ConfigDict | None,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize domain services system performance based on configuration.
 
@@ -412,7 +422,7 @@ class FlextDomainService[TDomainResult](
             # Validate config is not None
             if config is None:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    "Configuration cannot be None"
+                    "Configuration cannot be None",
                 )
 
             # Create optimized configuration
@@ -422,115 +432,125 @@ class FlextDomainService[TDomainResult](
             performance_level = config.get("performance_level", "medium")
 
             # Base performance settings
-            optimized_config.update({
-                "performance_level": performance_level,
-                "optimization_enabled": True,
-                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "optimization_enabled": True,
+                    "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+                },
+            )
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    # Service execution optimization
-                    "service_cache_size": 500,
-                    "enable_service_pooling": True,
-                    "service_pool_size": 100,
-                    "max_concurrent_services": 50,
-                    "service_discovery_cache_ttl": 3600,  # 1 hour
-                    # Business rule optimization
-                    "enable_business_rule_caching": True,
-                    "business_rule_cache_size": 1000,
-                    "business_rule_validation_threads": 8,
-                    "parallel_business_rule_validation": True,
-                    # Cross-entity operation optimization
-                    "cross_entity_batch_size": 100,
-                    "enable_cross_entity_batching": True,
-                    "cross_entity_processing_threads": 16,
-                    "cross_entity_queue_size": 2000,
-                    # Memory and performance optimization
-                    "memory_pool_size_mb": 200,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "aggressive",
-                })
+                optimized_config.update(
+                    {
+                        # Service execution optimization
+                        "service_cache_size": 500,
+                        "enable_service_pooling": True,
+                        "service_pool_size": 100,
+                        "max_concurrent_services": 50,
+                        "service_discovery_cache_ttl": 3600,  # 1 hour
+                        # Business rule optimization
+                        "enable_business_rule_caching": True,
+                        "business_rule_cache_size": 1000,
+                        "business_rule_validation_threads": 8,
+                        "parallel_business_rule_validation": True,
+                        # Cross-entity operation optimization
+                        "cross_entity_batch_size": 100,
+                        "enable_cross_entity_batching": True,
+                        "cross_entity_processing_threads": 16,
+                        "cross_entity_queue_size": 2000,
+                        # Memory and performance optimization
+                        "memory_pool_size_mb": 200,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "aggressive",
+                    },
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    # Balanced service settings
-                    "service_cache_size": 250,
-                    "enable_service_pooling": True,
-                    "service_pool_size": 50,
-                    "max_concurrent_services": 25,
-                    "service_discovery_cache_ttl": 1800,  # 30 minutes
-                    # Moderate business rule optimization
-                    "enable_business_rule_caching": True,
-                    "business_rule_cache_size": 500,
-                    "business_rule_validation_threads": 4,
-                    "parallel_business_rule_validation": True,
-                    # Standard cross-entity processing
-                    "cross_entity_batch_size": 50,
-                    "enable_cross_entity_batching": True,
-                    "cross_entity_processing_threads": 8,
-                    "cross_entity_queue_size": 1000,
-                    # Moderate memory settings
-                    "memory_pool_size_mb": 100,
-                    "enable_object_pooling": True,
-                    "gc_optimization_enabled": True,
-                    "optimization_level": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        # Balanced service settings
+                        "service_cache_size": 250,
+                        "enable_service_pooling": True,
+                        "service_pool_size": 50,
+                        "max_concurrent_services": 25,
+                        "service_discovery_cache_ttl": 1800,  # 30 minutes
+                        # Moderate business rule optimization
+                        "enable_business_rule_caching": True,
+                        "business_rule_cache_size": 500,
+                        "business_rule_validation_threads": 4,
+                        "parallel_business_rule_validation": True,
+                        # Standard cross-entity processing
+                        "cross_entity_batch_size": 50,
+                        "enable_cross_entity_batching": True,
+                        "cross_entity_processing_threads": 8,
+                        "cross_entity_queue_size": 1000,
+                        # Moderate memory settings
+                        "memory_pool_size_mb": 100,
+                        "enable_object_pooling": True,
+                        "gc_optimization_enabled": True,
+                        "optimization_level": "balanced",
+                    },
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    # Conservative service settings
-                    "service_cache_size": 50,
-                    "enable_service_pooling": False,
-                    "service_pool_size": 10,
-                    "max_concurrent_services": 5,
-                    "service_discovery_cache_ttl": 600,  # 10 minutes
-                    # Minimal business rule optimization
-                    "enable_business_rule_caching": False,
-                    "business_rule_cache_size": 100,
-                    "business_rule_validation_threads": 1,
-                    "parallel_business_rule_validation": False,
-                    # Sequential cross-entity processing
-                    "cross_entity_batch_size": 10,
-                    "enable_cross_entity_batching": False,
-                    "cross_entity_processing_threads": 1,
-                    "cross_entity_queue_size": 100,
-                    # Minimal memory usage
-                    "memory_pool_size_mb": 25,
-                    "enable_object_pooling": False,
-                    "gc_optimization_enabled": False,
-                    "optimization_level": "conservative",
-                })
+                optimized_config.update(
+                    {
+                        # Conservative service settings
+                        "service_cache_size": 50,
+                        "enable_service_pooling": False,
+                        "service_pool_size": 10,
+                        "max_concurrent_services": 5,
+                        "service_discovery_cache_ttl": 600,  # 10 minutes
+                        # Minimal business rule optimization
+                        "enable_business_rule_caching": False,
+                        "business_rule_cache_size": 100,
+                        "business_rule_validation_threads": 1,
+                        "parallel_business_rule_validation": False,
+                        # Sequential cross-entity processing
+                        "cross_entity_batch_size": 10,
+                        "enable_cross_entity_batching": False,
+                        "cross_entity_processing_threads": 1,
+                        "cross_entity_queue_size": 100,
+                        # Minimal memory usage
+                        "memory_pool_size_mb": 25,
+                        "enable_object_pooling": False,
+                        "gc_optimization_enabled": False,
+                        "optimization_level": "conservative",
+                    },
+                )
 
             # Additional performance metrics and targets
-            optimized_config.update({
-                "expected_throughput_services_per_second": 200
-                if performance_level == "high"
-                else 100
-                if performance_level == "medium"
-                else 25,
-                "target_service_latency_ms": 10
-                if performance_level == "high"
-                else 25
-                if performance_level == "medium"
-                else 100,
-                "target_business_rule_validation_ms": 5
-                if performance_level == "high"
-                else 15
-                if performance_level == "medium"
-                else 50,
-                "memory_efficiency_target": 0.90
-                if performance_level == "high"
-                else 0.80
-                if performance_level == "medium"
-                else 0.60,
-            })
+            optimized_config.update(
+                {
+                    "expected_throughput_services_per_second": 200
+                    if performance_level == "high"
+                    else 100
+                    if performance_level == "medium"
+                    else 25,
+                    "target_service_latency_ms": 10
+                    if performance_level == "high"
+                    else 25
+                    if performance_level == "medium"
+                    else 100,
+                    "target_business_rule_validation_ms": 5
+                    if performance_level == "high"
+                    else 15
+                    if performance_level == "medium"
+                    else 50,
+                    "memory_efficiency_target": 0.90
+                    if performance_level == "high"
+                    else 0.80
+                    if performance_level == "medium"
+                    else 0.60,
+                },
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to optimize domain services performance: {e}"
+                f"Failed to optimize domain services performance: {e}",
             )
 
 

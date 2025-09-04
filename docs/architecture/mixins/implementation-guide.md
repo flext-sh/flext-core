@@ -42,7 +42,7 @@ class DataProcessor:
 
     def process_data(self, data):
         # Use mixin behaviors
-        logger = FlextMixins.get_logger(self)
+        logger = FlextMixins.FlextLogger(self)
         FlextMixins.log_operation(self, "data_processing", data_size=len(data))
 
         # Validation and serialization

@@ -419,7 +419,7 @@ class FlextExceptions:
         ) -> None:
             self.attribute_name = attribute_name
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["attribute_name"] = attribute_name
 
@@ -442,11 +442,11 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, operation: str | None = None, **kwargs: object
+            self, message: str, *, operation: str | None = None, **kwargs: object,
         ) -> None:
             self.operation = operation
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["operation"] = operation
             super().__init__(
@@ -506,14 +506,14 @@ class FlextExceptions:
             self.value = value
             self.validation_details = validation_details
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context.update(
                 {
                     "field": field,
                     "value": value,
                     "validation_details": validation_details,
-                }
+                },
             )
             super().__init__(
                 message,
@@ -567,7 +567,7 @@ class FlextExceptions:
             self.config_key = config_key
             self.config_file = config_file
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context.update({"config_key": config_key, "config_file": config_file})
             super().__init__(
@@ -596,7 +596,7 @@ class FlextExceptions:
             self.service = service
             self.endpoint = endpoint
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context.update({"service": service, "endpoint": endpoint})
             super().__init__(
@@ -625,7 +625,7 @@ class FlextExceptions:
             self.business_rule = business_rule
             self.operation = operation
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context.update({"business_rule": business_rule, "operation": operation})
             super().__init__(
@@ -651,7 +651,7 @@ class FlextExceptions:
         ) -> None:
             self.timeout_seconds = timeout_seconds
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["timeout_seconds"] = timeout_seconds
             super().__init__(
@@ -679,7 +679,7 @@ class FlextExceptions:
             self.resource_id = resource_id
             self.resource_type = resource_type
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context.update({"resource_id": resource_id, "resource_type": resource_type})
             super().__init__(
@@ -707,7 +707,7 @@ class FlextExceptions:
             self.resource_id = resource_id
             self.resource_type = resource_type
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["resource_id"] = resource_id
             context["resource_type"] = resource_type
@@ -734,7 +734,7 @@ class FlextExceptions:
         ) -> None:
             self.required_permission = required_permission
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["required_permission"] = required_permission
             super().__init__(
@@ -752,11 +752,11 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, auth_method: str | None = None, **kwargs: object
+            self, message: str, *, auth_method: str | None = None, **kwargs: object,
         ) -> None:
             self.auth_method = auth_method
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
             context["auth_method"] = auth_method
             super().__init__(
@@ -784,7 +784,7 @@ class FlextExceptions:
             self.expected_type = expected_type
             self.actual_type = actual_type
             context = dict(
-                cast("Mapping[str, object]", kwargs.get("context", {})) or {}
+                cast("Mapping[str, object]", kwargs.get("context", {})) or {},
             )
 
             # Convert type names to actual types for better functionality
@@ -821,7 +821,7 @@ class FlextExceptions:
                 {
                     "expected_type": expected_type_obj,
                     "actual_type": actual_type_obj,
-                }
+                },
             )
             super().__init__(
                 message,
@@ -1071,7 +1071,7 @@ class FlextExceptions:
             )
         # Default to general error
         return cls._Error(
-            message, code=error_code, context=context, correlation_id=correlation_id
+            message, code=error_code, context=context, correlation_id=correlation_id,
         )
 
     # =============================================================================
@@ -1094,7 +1094,7 @@ class FlextExceptions:
 
     @classmethod
     def configure_error_handling(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure error handling system using FlextTypes.Config.
 
@@ -1119,7 +1119,7 @@ class FlextExceptions:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
                 validated_config["environment"] = env_value
             else:
@@ -1133,7 +1133,7 @@ class FlextExceptions:
                 valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
                 if log_level not in valid_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}"
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}",
                     )
                 validated_config["log_level"] = log_level
             # Default based on environment
@@ -1152,7 +1152,7 @@ class FlextExceptions:
                 valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
                 if val_level not in valid_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}"
+                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}",
                     )
                 validated_config["validation_level"] = val_level
             # Default based on environment
@@ -1168,20 +1168,20 @@ class FlextExceptions:
             # Add error handling specific configuration
             validated_config["enable_metrics"] = config.get("enable_metrics", True)
             validated_config["enable_stack_traces"] = config.get(
-                "enable_stack_traces", validated_config["environment"] != "production"
+                "enable_stack_traces", validated_config["environment"] != "production",
             )
             validated_config["max_error_details"] = config.get(
-                "max_error_details", 1000
+                "max_error_details", 1000,
             )
             validated_config["error_correlation_enabled"] = config.get(
-                "error_correlation_enabled", True
+                "error_correlation_enabled", True,
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Configuration error: {e}"
+                f"Configuration error: {e}",
             )
 
     @classmethod
@@ -1210,12 +1210,12 @@ class FlextExceptions:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get config: {e}"
+                f"Failed to get config: {e}",
             )
 
     @classmethod
     def create_environment_specific_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls, environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific error handling configuration.
 
@@ -1233,7 +1233,7 @@ class FlextExceptions:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Create environment-specific configuration
@@ -1282,7 +1282,7 @@ class FlextExceptions:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Environment config failed: {e}"
+                f"Environment config failed: {e}",
             )
 
     # =============================================================================

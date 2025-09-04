@@ -376,7 +376,7 @@ class FlextProtocols:
 
             @classmethod
             def from_dict(
-                cls, data: dict[str, object]
+                cls, data: dict[str, object],
             ) -> FlextProtocols.Domain.DomainEvent:
                 """Create event from dictionary."""
                 ...
@@ -517,7 +517,7 @@ class FlextProtocols:
                 ...
 
             def search(
-                self, base_dn: str, search_filter: str, scope: str = "subtree"
+                self, base_dn: str, search_filter: str, scope: str = "subtree",
             ) -> object:
                 """Perform LDAP search operation."""
                 ...
@@ -630,7 +630,7 @@ class FlextProtocols:
 
             @abstractmethod
             def initialize(
-                self, context: FlextProtocols.Extensions.PluginContext
+                self, context: FlextProtocols.Extensions.PluginContext,
             ) -> object:
                 """Initialize plugin with context."""
                 ...
@@ -656,7 +656,7 @@ class FlextProtocols:
                 """Get configuration for plugin."""
                 ...
 
-            def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+            def flext_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
                 """Get logger instance for plugin."""
                 ...
 
@@ -729,7 +729,7 @@ class FlextProtocols:
 
         @classmethod
         def configure_protocols_system(
-            cls, config: dict[str, object]
+            cls, config: dict[str, object],
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Configure protocols system using FlextTypes.Config with StrEnum validation.
 
@@ -777,7 +777,7 @@ class FlextProtocols:
                     ]
                     if env_value not in valid_environments:
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                            f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                         )
                 else:
                     validated_config["environment"] = (
@@ -792,7 +792,7 @@ class FlextProtocols:
                     ]
                     if level_value not in valid_levels:
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid protocol_level '{level_value}'. Valid options: {valid_levels}"
+                            f"Invalid protocol_level '{level_value}'. Valid options: {valid_levels}",
                         )
                 else:
                     validated_config["protocol_level"] = (
@@ -805,7 +805,7 @@ class FlextProtocols:
                     valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
                     if log_level_value not in valid_log_levels:
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid log_level '{log_level_value}'. Valid options: {valid_log_levels}"
+                            f"Invalid log_level '{log_level_value}'. Valid options: {valid_log_levels}",
                         )
                 else:
                     validated_config["log_level"] = (
@@ -818,12 +818,12 @@ class FlextProtocols:
                 validated_config.setdefault("enable_protocol_caching", True)
 
                 return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                    cast("FlextTypes.Config.ConfigDict", validated_config)
+                    cast("FlextTypes.Config.ConfigDict", validated_config),
                 )
 
             except Exception as e:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Protocol configuration failed: {e!s}"
+                    f"Protocol configuration failed: {e!s}",
                 )
 
         @classmethod
@@ -845,12 +845,12 @@ class FlextProtocols:
                 "enable_protocol_caching": True,
             }
             return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", default_config)
+                cast("FlextTypes.Config.ConfigDict", default_config),
             )
 
         @classmethod
         def create_environment_protocols_config(
-            cls, environment: str
+            cls, environment: str,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Create environment-specific protocol configuration.
 
@@ -890,17 +890,17 @@ class FlextProtocols:
 
             if environment.lower() not in environment_configs:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Unknown environment '{environment}'. Valid options: {list(environment_configs.keys())}"
+                    f"Unknown environment '{environment}'. Valid options: {list(environment_configs.keys())}",
                 )
 
             config = environment_configs[environment.lower()]
             return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", config)
+                cast("FlextTypes.Config.ConfigDict", config),
             )
 
         @classmethod
         def optimize_protocols_performance(
-            cls, performance_level: str = "balanced"
+            cls, performance_level: str = "balanced",
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Optimize protocol system performance.
 
@@ -931,12 +931,12 @@ class FlextProtocols:
 
             if performance_level not in optimization_configs:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid performance level '{performance_level}'. Valid options: {list(optimization_configs.keys())}"
+                    f"Invalid performance level '{performance_level}'. Valid options: {list(optimization_configs.keys())}",
                 )
 
             config = optimization_configs[performance_level]
             return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", config)
+                cast("FlextTypes.Config.ConfigDict", config),
             )
 
 

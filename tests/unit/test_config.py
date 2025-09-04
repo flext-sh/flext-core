@@ -216,7 +216,7 @@ class TestFlextConfigComprehensive:
         }
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(config_data, f)
             temp_path = f.name
@@ -241,7 +241,7 @@ class TestFlextConfigComprehensive:
     def test_load_and_validate_from_file_invalid_json(self) -> None:
         """Test loading from file with invalid JSON."""
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             f.write("invalid json content")
             temp_path = f.name
@@ -332,7 +332,7 @@ class TestFlextConfigComprehensive:
         try:
             # Test with int type validation on non-numeric string
             result = FlextConfig.get_env_with_validation(
-                "TEST_INVALID_VAR", validate_type=int
+                "TEST_INVALID_VAR", validate_type=int,
             )
             assert result.is_failure
             assert result.error is not None
@@ -403,7 +403,7 @@ class TestFlextConfigFunctionality:
         test_data = {"key": "value", "number": 42}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(test_data, f)
             temp_path = f.name
@@ -427,7 +427,7 @@ class TestFlextConfigFunctionality:
     def test_load_json_file_invalid_json(self) -> None:
         """Test loading invalid JSON file."""
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             f.write("invalid json")
             temp_path = f.name
@@ -523,7 +523,7 @@ class TestFlextConfigFunctionality:
         test_data = {"safe": True, "data": 123}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(test_data, f)
             temp_path = f.name
@@ -543,7 +543,7 @@ class TestFlextConfigFunctionality:
         test_data = {"path_test": True}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(test_data, f)
             temp_path = Path(f.name)
@@ -628,7 +628,7 @@ class TestConfigEdgeCases:
         large_config = {f"key_{i}": f"value_{i}" for i in range(1000)}
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(large_config, f)
             temp_path = f.name

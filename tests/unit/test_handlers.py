@@ -312,7 +312,7 @@ class TestHandlersConfigurationIntegration:
         # Test production environment
         prod_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "production"
+                "production",
             )
         )
         assert prod_result.success is True
@@ -336,7 +336,7 @@ class TestHandlersConfigurationIntegration:
         # Test development environment
         dev_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "development"
+                "development",
             )
         )
         assert dev_result.success is True
@@ -355,7 +355,7 @@ class TestHandlersConfigurationIntegration:
         # Test test environment
         test_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "test"
+                "test",
             )
         )
         assert test_result.success is True
@@ -371,7 +371,7 @@ class TestHandlersConfigurationIntegration:
 
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                cast("str", "invalid_env")
+                cast("str", "invalid_env"),
             )
         )
         assert invalid_result.success is False
@@ -387,7 +387,7 @@ class TestHandlersConfigurationIntegration:
         }
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            high_perf_config
+            high_perf_config,
         )
         assert result.success is True
 
@@ -413,7 +413,7 @@ class TestHandlersConfigurationIntegration:
         }
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            medium_perf_config
+            medium_perf_config,
         )
         assert result.success is True
 
@@ -431,7 +431,7 @@ class TestHandlersConfigurationIntegration:
         }
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            low_perf_config
+            low_perf_config,
         )
         assert result.success is True
 
@@ -518,7 +518,7 @@ class TestHandlersConfigurationEdgeCases:
         # Test each valid environment
         for env_enum in FlextConstants.Config.ConfigEnvironment:
             result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                env_enum.value
+                env_enum.value,
             )
             assert result.success is True
 
@@ -541,7 +541,7 @@ class TestHandlersConfigurationEdgeCases:
         minimal_config: FlextTypes.Config.ConfigDict = {}
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            minimal_config
+            minimal_config,
         )
         assert result.success is True
 
@@ -555,7 +555,7 @@ class TestHandlersConfigurationEdgeCases:
         }
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            zero_config
+            zero_config,
         )
         # Implementation should handle this gracefully
         assert result.success is True
@@ -566,7 +566,7 @@ class TestHandlersConfigurationEdgeCases:
         }
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
-            high_config
+            high_config,
         )
         assert result.success is True
 

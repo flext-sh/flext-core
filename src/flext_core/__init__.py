@@ -1,4 +1,8 @@
-"""FLEXT Core - Data integration foundation library."""
+"""FLEXT Core - Data integration foundation library.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -65,7 +69,7 @@ from flext_core.core import FlextCore
 
 
 # Direct access to key functions without class instantiation
-def get_logger(name: str = __name__) -> FlextLogger:
+def flext_logger(name: str = __name__) -> FlextLogger:
     """Get a structured logger instance."""
     return FlextLogger(name)
 
@@ -91,7 +95,7 @@ __all__ = [
     "FlextContainer",
     "FlextConfig",
     "FlextLogger",
-# "FlextObservability", # Removed
+    # "FlextObservability", # Removed
     # Domain classes
     "FlextDomainService",
     "FlextModels",
@@ -120,7 +124,7 @@ __all__ = [
     # Version info
     "__version__",
     # Convenience functions
-    "get_logger",
+    "FlextLogger",
     "get_flext_container",
     "get_flext_core",
 ]

@@ -172,13 +172,13 @@ class TestFlextCoreIntegrationScenarios:
             {
                 "operation_id": operation_id,
                 "status": "started",
-            }
+            },
         )
         assert result.success is True
 
         # 3. Process the result through transformations
         processed_result = result.map(
-            lambda data: {**data, "timestamp": "2024-01-01T00:00:00Z"}
+            lambda data: {**data, "timestamp": "2024-01-01T00:00:00Z"},
         )
 
         assert processed_result.success is True
@@ -187,7 +187,7 @@ class TestFlextCoreIntegrationScenarios:
         # 4. Verify final state using constants
         final_status = FlextConstants.Status.COMPLETED
         final_result = processed_result.map(
-            lambda data: {**data, "status": final_status}
+            lambda data: {**data, "status": final_status},
         )
 
         assert final_result.success is True

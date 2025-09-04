@@ -7,14 +7,11 @@ This example demonstrates Domain-Driven Design patterns using FlextCore:
 - Domain event handling
 - Factory patterns for object creation
 
-Key concepts:
-- Entities have identity and lifecycle
-- Value objects are immutable and equality-based
-- Domain events for side effects
-- Clean separation of concerns
-
-Author: FlextCore Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 from decimal import Decimal
 
@@ -40,14 +37,14 @@ class Money(FlextModels.Value):
             return FlextResult[None].fail("Amount cannot be negative")
         return FlextResult[None].ok(None)
 
-    def add(self, other: "Money") -> "Money":
+    def add(self, other: Money) -> Money:
         """Add two money amounts."""
         if self.currency != other.currency:
             msg = "Cannot add different currencies"
             raise ValueError(msg)
         return Money(amount=self.amount + other.amount, currency=self.currency)
 
-    def multiply(self, factor: Decimal) -> "Money":
+    def multiply(self, factor: Decimal) -> Money:
         """Multiply money by a factor."""
         return Money(amount=self.amount * factor, currency=self.currency)
 
@@ -68,7 +65,7 @@ class Address(FlextModels.Value):
         """Validate address business rules."""
         if len(self.country) != COUNTRY_CODE_LENGTH:
             return FlextResult[None].fail(
-                f"Country code must be {COUNTRY_CODE_LENGTH} characters"
+                f"Country code must be {COUNTRY_CODE_LENGTH} characters",
             )
         return FlextResult[None].ok(None)
 
@@ -99,7 +96,7 @@ class Product(FlextModels.Entity):
                     "event_type": "ProductActivated",
                     "product_id": self.id,
                     "product_name": self.name,
-                }
+                },
             )
 
     def update_price(self, new_price: Money) -> FlextResult[None]:
@@ -116,7 +113,7 @@ class Product(FlextModels.Entity):
                 "product_id": self.id,
                 "old_price": str(old_price),
                 "new_price": str(new_price),
-            }
+            },
         )
 
         return FlextResult[None].ok(None)
@@ -147,7 +144,7 @@ class Customer(FlextModels.Entity):
                     "customer_id": self.id,
                     "old_address": str(old_address),
                     "new_address": str(new_address),
-                }
+                },
             )
 
 
@@ -176,7 +173,7 @@ class ShoppingCart(FlextModels.Entity):
     customer_id: str = Field(..., description="Customer identifier")
     items: list[CartItem] = Field(default_factory=list, description="Cart items")
     discount_percent: Decimal = Field(
-        default=Decimal(0), description="Discount percentage"
+        default=Decimal(0), description="Discount percentage",
     )
 
     def validate_business_rules(self) -> FlextResult[None]:
@@ -210,7 +207,7 @@ class ShoppingCart(FlextModels.Entity):
                 "cart_id": self.id,
                 "product_id": product.id,
                 "quantity": quantity,
-            }
+            },
         )
 
         return FlextResult[None].ok(None)
@@ -241,7 +238,7 @@ class ShoppingCart(FlextModels.Entity):
                 "event_type": "DiscountApplied",
                 "cart_id": self.id,
                 "discount_percent": float(discount_percent),
-            }
+            },
         )
 
         return FlextResult[None].ok(None)
@@ -255,7 +252,7 @@ class DomainObjectFactory:
         """Create a new product."""
         try:
             product = Product(
-                id=f"product_{name.lower().replace(' ', '_')}", name=name, price=price
+                id=f"product_{name.lower().replace(' ', '_')}", name=name, price=price,
             )
             return FlextResult[Product].ok(product)
         except Exception as e:
@@ -263,7 +260,7 @@ class DomainObjectFactory:
 
     @staticmethod
     def create_customer(
-        name: str, email: str, address: Address
+        name: str, email: str, address: Address,
     ) -> FlextResult[Customer]:
         """Create a new customer."""
         try:
@@ -302,7 +299,7 @@ def demonstrate_value_objects() -> None:
 
     # Address value object
     address = Address(
-        street="123 Main St", city="New York", postal_code="10001", country="US"
+        street="123 Main St", city="New York", postal_code="10001", country="US",
     )
     print(f"Address: {address}")
 
@@ -331,11 +328,11 @@ def demonstrate_entities() -> None:
 
     # Create customer
     customer_address = Address(
-        street="456 Oak Ave", city="Boston", postal_code="02101", country="US"
+        street="456 Oak Ave", city="Boston", postal_code="02101", country="US",
     )
 
     customer_result = DomainObjectFactory.create_customer(
-        "John Doe", "john@example.com", customer_address
+        "John Doe", "john@example.com", customer_address,
     )
 
     if customer_result.success:
@@ -357,7 +354,7 @@ def demonstrate_aggregates() -> None:
         # Create product
         laptop_price = Money(amount=Decimal("999.99"), currency="USD")
         laptop_result = DomainObjectFactory.create_product(
-            "Gaming Laptop", laptop_price
+            "Gaming Laptop", laptop_price,
         )
 
         if laptop_result.success:

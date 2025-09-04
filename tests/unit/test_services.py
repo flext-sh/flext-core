@@ -61,7 +61,7 @@ class TestFlextServicesConfiguration:
         # Mock the constants to trigger an exception
         with patch("flext_core.services.FlextConstants") as mock_constants:
             mock_constants.Config.ConfigEnvironment.DEVELOPMENT.value = property(
-                lambda _: (_ for _ in ()).throw(Exception("Mock error"))
+                lambda _: (_ for _ in ()).throw(Exception("Mock error")),
             )
             with contextlib.suppress(Exception):
                 # If exception propagates, that's also acceptable behavior
@@ -155,7 +155,7 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_high(self) -> None:
         """Test performance optimization for high performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "high", "cpu_cores": 8}  # Set higher CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -175,7 +175,7 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_medium(self) -> None:
         """Test performance optimization for medium performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "medium"}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -192,7 +192,7 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_low(self) -> None:
         """Test performance optimization for low performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "low", "cpu_cores": 1}  # Set low CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -212,7 +212,7 @@ class TestFlextServicesConfiguration:
         """Test performance optimization with memory constraints."""
         # Test low memory scenario
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"memory_limit_mb": 256}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -241,7 +241,7 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_cpu_optimization(self) -> None:
         """Test CPU-based optimization."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {"cpu_cores": 8}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -254,7 +254,7 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_type_conversion(self) -> None:
         """Test type conversion in optimization."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "memory_limit_mb": "1024",  # String value
             "cpu_cores": "4",  # String value
@@ -270,7 +270,7 @@ class TestFlextServicesConfiguration:
         """Test error handling in performance optimization."""
         with patch("builtins.int", side_effect=ValueError("Invalid conversion")):
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str, str | int | float | bool | list[object] | dict[str, object],
             ] = {"memory_limit_mb": "invalid"}
             result = FlextServices.optimize_services_performance(config)
             # Should handle gracefully and use defaults
@@ -570,7 +570,7 @@ class TestServiceValidation:
 
 
 class ConcreteServiceProcessor(
-    FlextServices.ServiceProcessor[str, dict[str, object], str]
+    FlextServices.ServiceProcessor[str, dict[str, object], str],
 ):
     """Concrete implementation of ServiceProcessor for testing."""
 
@@ -579,10 +579,12 @@ class ConcreteServiceProcessor(
         if not request:
             return FlextResult[dict[str, object]].fail("Empty request")
 
-        return FlextResult[dict[str, object]].ok({
-            "processed": request,
-            "length": len(request),
-        })
+        return FlextResult[dict[str, object]].ok(
+            {
+                "processed": request,
+                "length": len(request),
+            },
+        )
 
     def build(self, domain: dict[str, object], *, correlation_id: str) -> str:
         """Build final string result."""
@@ -753,12 +755,14 @@ class TestServiceIntegration:
     def test_full_service_workflow(self) -> None:
         """Test complete service workflow integration."""
         # Configure services
-        config_result = FlextServices.configure_services_system({
-            "environment": "test",
-            "enable_service_registry": True,
-            "enable_service_orchestration": True,
-            "enable_service_metrics": True,
-        })
+        config_result = FlextServices.configure_services_system(
+            {
+                "environment": "test",
+                "enable_service_registry": True,
+                "enable_service_orchestration": True,
+                "enable_service_metrics": True,
+            },
+        )
         assert config_result.success
 
         # Create components
@@ -883,9 +887,9 @@ class TestServiceExceptionPaths:
                 raise MockConfigError(msg)
 
             mock_constants.Config.ConfigEnvironment = property(lambda _: raise_error())
-            result = FlextServices.configure_services_system({
-                "environment": "development"
-            })
+            result = FlextServices.configure_services_system(
+                {"environment": "development"},
+            )
             # Should return failure result
             assert result.is_failure
             assert result.error is not None
@@ -929,7 +933,7 @@ class TestServiceExceptionPaths:
         # Create a config that will cause an exception deep in the method
         with patch("builtins.min", side_effect=Exception("Mock optimization error")):
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str, str | int | float | bool | list[object] | dict[str, object],
             ] = {"performance_level": "high", "cpu_cores": 8}
             result = FlextServices.optimize_services_performance(config)
             # Should return failure result

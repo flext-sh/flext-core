@@ -125,7 +125,7 @@ class UltraModernDatabaseService(FlextMixins.Entity):
         self.context = FlextContext()
 
     def process(
-        self, query: str, user_id: str = "anonymous"
+        self, query: str, user_id: str = "anonymous",
     ) -> FlextResult[Sequence[Mapping[str, object]]]:
         """Complete enterprise pipeline in railway pattern."""
         return self._validate_query(query).map(lambda _: self._create_results(user_id))
@@ -137,7 +137,7 @@ class UltraModernDatabaseService(FlextMixins.Entity):
         return FlextResult[str].ok(query)
 
     def _create_results(
-        self, user_id: str = "anonymous"
+        self, user_id: str = "anonymous",
     ) -> Sequence[Mapping[str, object]]:
         """Create enhanced results with metadata."""
         return [
@@ -165,7 +165,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
         self.context = FlextContext()
 
     def orchestrate_business_process(
-        self, data: Mapping[str, object]
+        self, data: Mapping[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Complete business process orchestration."""
         return (
@@ -173,7 +173,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
         )
 
     def _validate_data(
-        self, data: Mapping[str, object]
+        self, data: Mapping[str, object],
     ) -> FlextResult[Mapping[str, object]]:
         """Validate business data."""
         if not data.get("action"):
@@ -249,7 +249,7 @@ def demonstrate_ultra_modern_approach() -> int:
     print("\n" + "=" * 80)
     print(
         "🚀 ULTRA-MODERN FLEXT APPROACH - 29 lines vs 78 traditional "
-        "with ALL enterprise features!"
+        "with ALL enterprise features!",
     )
     print("=" * 80)
 
@@ -316,7 +316,7 @@ def demonstrate_enterprise_orchestration() -> int:
             print(f"📋 Response: {response}")
             print(
                 "   🔥 Includes: validation, auth, logging, monitoring, "
-                "caching, retry logic!"
+                "caching, retry logic!",
             )
             return 0
         print(f"❌ Enterprise orchestration failed: {result.error}")
@@ -375,7 +375,7 @@ def main() -> int:
     """Main demonstration - showcasing MASSIVE boilerplate reduction with FLEXT Core."""
     print("🎯 MAXIMUM BOILERPLATE REDUCTION DEMONSTRATION")
     print(
-        "Showcasing 63% code reduction with 300% more functionality using FLEXT Core!"
+        "Showcasing 63% code reduction with 300% more functionality using FLEXT Core!",
     )
 
     demonstrations = [

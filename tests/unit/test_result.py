@@ -100,7 +100,7 @@ class TestFlextResult100PercentCoverage:
         # Test with complex data
         complex_data: dict[str, dict[str, list[int]]] = {"nested": {"list": [1, 2, 3]}}
         complex_result: FlextResult[dict[str, dict[str, list[int]]]] = FlextResult.ok(
-            complex_data
+            complex_data,
         )
         repr_str = repr(complex_result)
         assert "FlextResult" in repr_str

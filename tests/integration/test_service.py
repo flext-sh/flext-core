@@ -1,4 +1,3 @@
-# ruff: noqa: ARG001, ARG002
 """Service integration testing patterns for FLEXT Core.
 
 Demonstrates enterprise-grade integration testing patterns with proper mocking,
@@ -52,7 +51,7 @@ class FunctionalExternalService:
         return FlextResult[str].ok("processed")
 
     def set_failure_mode(
-        self, *, should_fail: bool, message: str = "Service unavailable"
+        self, *, should_fail: bool, message: str = "Service unavailable",
     ) -> None:
         """Configure service to fail for testing error scenarios."""
         self.should_fail = should_fail
@@ -69,19 +68,19 @@ class FunctionalUserService:
         self.should_fail = False
 
     def get_user(
-        self, user_id: str
+        self, user_id: str,
     ) -> FlextResult[dict[str, str | int | bool | list[str]]]:
         """Get user by ID - functional implementation."""
         self.call_count += 1
 
         if self.should_fail:
             return FlextResult[dict[str, str | int | bool | list[str]]].fail(
-                "User service unavailable"
+                "User service unavailable",
             )
 
         if user_id in self.users:
             return FlextResult[dict[str, str | int | bool | list[str]]].ok(
-                self.users[user_id]
+                self.users[user_id],
             )
 
         # Default user data for testing
@@ -94,7 +93,7 @@ class FunctionalUserService:
         return FlextResult[dict[str, str | int | bool | list[str]]].ok(default_user)
 
     def set_user_data(
-        self, user_id: str, user_data: dict[str, str | int | bool | list[str]]
+        self, user_id: str, user_data: dict[str, str | int | bool | list[str]],
     ) -> None:
         """Set user data for testing."""
         self.users[user_id] = user_data
@@ -161,7 +160,7 @@ class FunctionalLifecycleService:
         return FlextResult[str].ok("shutdown")
 
     def set_failure_modes(
-        self, *, fail_init: bool = False, fail_shutdown: bool = False
+        self, *, fail_init: bool = False, fail_shutdown: bool = False,
     ) -> None:
         """Configure service to fail for testing error scenarios."""
         self.should_fail_init = fail_init
@@ -313,10 +312,10 @@ class TestServiceIntegrationPatterns:
                 return FlextResult[str].fail("Service unavailable")
 
             retrieved_user_service = cast(
-                "FunctionalUserService", user_service_result.value
+                "FunctionalUserService", user_service_result.value,
             )
             retrieved_notification_service = cast(
-                "FunctionalNotificationService", notification_service_result.value
+                "FunctionalNotificationService", notification_service_result.value,
             )
 
             # Get user data first
@@ -385,7 +384,7 @@ class TestServiceIntegrationPatterns:
         assert config_fetch_result.success is True
 
         service = cast(
-            "FunctionalLifecycleService", service_result.value
+            "FunctionalLifecycleService", service_result.value,
         )  # This is our FunctionalLifecycleService
         config = cast("dict[str, object]", config_fetch_result.value)
 

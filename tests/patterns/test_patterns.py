@@ -11,8 +11,8 @@ This test file showcases the full power of our testing infrastructure including:
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Container, Sized
+from typing import cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -31,13 +31,16 @@ from ..support.hypothesis import (
     PerformanceStrategies,
     PropertyTestHelpers,
 )
+from ..support.performance import BenchmarkProtocol
 
 
-def mark_test_pattern(pattern: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def mark_test_pattern(
+    pattern: str,
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        func._test_pattern = pattern
+    def decorator(func: Callable[..., object]) -> Callable[..., object]:
+        func._test_pattern = pattern  # type: ignore[attr-defined]
         return func
 
     return decorator
@@ -157,13 +160,13 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self, cases: list[dict[str, object]]
+        self, cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         self._success_cases.extend(cases)
         return self
 
     def add_failure_cases(
-        self, cases: list[dict[str, object]]
+        self, cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
@@ -201,11 +204,11 @@ class TestAssertionBuilder:
         return self
 
     def has_length(self, length: int) -> TestAssertionBuilder:
-        assert len(self._data) == length
+        assert len(cast("Sized", self._data)) == length
         return self
 
     def contains(self, item: object) -> TestAssertionBuilder:
-        assert item in self._data
+        assert item in cast("Container[object]", self._data)
         return self
 
     def satisfies(self, predicate: object, message: str = "") -> TestAssertionBuilder:
@@ -299,16 +302,17 @@ class TestFixtureBuilder:
 
 
 def arrange_act_assert(
-    _arrange_func: object, _act_func: object, _assert_func: object
-) -> object:
+    _arrange_func: Callable[..., object],
+    _act_func: Callable[[object], object],
+    _assert_func: Callable[[object, object], None],
+) -> Callable[[Callable[..., object]], Callable[..., object]]:
     """Decorator for AAA pattern testing."""
 
-    def decorator(_test_func: object) -> object:
+    def decorator(_test_func: Callable[..., object]) -> Callable[..., object]:
         def wrapper() -> object:
-            data = _arrange_func() if callable(_arrange_func) else {}
-            result = _act_func(data) if callable(_act_func) else None
-            if callable(_assert_func):
-                _assert_func(result, data)
+            data = _arrange_func()
+            result = _act_func(data)
+            _assert_func(result, data)
             return result
 
         return wrapper
@@ -402,11 +406,11 @@ class TestPerformanceAnalysis:
         # Measure across different input sizes
         input_sizes = [100, 200, 400, 800]
         result = analyzer.measure_complexity(
-            linear_operation, input_sizes, "linear_operation"
+            linear_operation, input_sizes, "linear_operation",
         )
 
         assert result["operation"] == "linear_operation"
-        assert len(result["results"]) == len(input_sizes)
+        assert len(cast("Sized", result["results"])) == len(input_sizes)
         assert "complexity_analysis" in result
 
     def test_stress_testing_load(self) -> None:
@@ -419,13 +423,13 @@ class TestPerformanceAnalysis:
 
         # Run load test
         result = stress_runner.run_load_test(
-            simple_operation, iterations=1000, operation_name="simple_ops"
+            simple_operation, iterations=1000, operation_name="simple_ops",
         )
 
         assert result["iterations"] == 1000
-        assert result["successes"] > 0
+        assert cast("int", result["successes"]) > 0
         assert result["failure_rate"] == 0.0  # Should not fail
-        assert result["operations_per_second"] > 0
+        assert cast("float", result["operations_per_second"]) > 0
 
     def test_endurance_testing(self) -> None:
         """Demonstrate endurance testing."""
@@ -437,12 +441,14 @@ class TestPerformanceAnalysis:
 
         # Run for 2 seconds
         result = stress_runner.run_endurance_test(
-            memory_operation, duration_seconds=2.0, operation_name="memory_ops"
+            memory_operation, duration_seconds=2.0, operation_name="memory_ops",
         )
 
-        assert result["actual_duration_seconds"] >= 1.8  # Allow some variance
-        assert result["iterations"] > 0
-        assert result["operations_per_second"] > 0
+        assert (
+            cast("float", result["actual_duration_seconds"]) >= 1.8
+        )  # Allow some variance
+        assert cast("int", result["iterations"]) > 0
+        assert cast("float", result["operations_per_second"]) > 0
 
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
@@ -460,7 +466,7 @@ class TestPerformanceAnalysis:
             assert sorted_list[0] > sorted_list[-1]
 
         profiler.assert_memory_efficient(
-            max_memory_mb=20.0, operation_name="list_operations"
+            max_memory_mb=20.0, operation_name="list_operations",
         )
 
 
@@ -487,10 +493,10 @@ class TestAdvancedPatterns:
         )
 
         assert scenario.name == "user_registration"
-        assert "email" in scenario.given
-        assert "action" in scenario.when
-        assert "success" in scenario.then
-        assert "integration" in scenario.tags
+        assert "email" in cast("dict[str, object]", scenario.given)
+        assert "action" in cast("dict[str, object]", scenario.when)
+        assert "success" in cast("dict[str, object]", scenario.then)
+        assert "integration" in cast("list[str]", scenario.tags)
         assert scenario.priority == "high"
 
     def test_builder_pattern_advanced(self) -> None:
@@ -522,14 +528,14 @@ class TestAdvancedPatterns:
             [
                 {"email": "test@example.com", "input": "valid_email_1"},
                 {"email": "user@domain.org", "input": "valid_email_2"},
-            ]
+            ],
         )
 
         param_builder.add_failure_cases(
             [
                 {"email": "invalid-email", "input": "invalid_email_1"},
                 {"email": "@domain.com", "input": "invalid_email_2"},
-            ]
+            ],
         )
 
         params = param_builder.build_pytest_params()
@@ -547,7 +553,7 @@ class TestAdvancedPatterns:
 
         # Build complex assertions
         TestAssertionBuilder(test_data).is_not_none().has_length(3).contains(
-            "banana"
+            "banana",
         ).satisfies(
             lambda x: all(isinstance(item, str) for item in x),
             "all items should be strings",
@@ -561,11 +567,11 @@ class TestAdvancedPatterns:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: dict[str, object]) -> int:
-            return sum(data["numbers"])
+            return sum(cast("list[int]", data["numbers"]))
 
         def assert_result(result: int, original_data: dict[str, object]) -> None:
             assert result == 15
-            assert len(original_data["numbers"]) == 5
+            assert len(cast("list[int]", original_data["numbers"])) == 5
 
         @arrange_act_assert(arrange_data, act_on_data, assert_result)
         def test_sum_calculation() -> None:
@@ -622,12 +628,12 @@ class TestComprehensiveIntegration:
 
         assert suite["suite_name"] == "comprehensive_operation_tests"
         assert suite["scenario_count"] == 2
-        assert "integration" in suite["tags"]
-        assert suite["setup_data"]["environment"] == "test"
+        assert "integration" in cast("list[str]", suite["tags"])
+        assert cast("dict[str, object]", suite["setup_data"])["environment"] == "test"
 
     @pytest.mark.asyncio
     async def test_async_with_all_patterns(
-        self, async_test_utils: AsyncTestUtils
+        self, async_test_utils: AsyncTestUtils,
     ) -> None:
         """Demonstrate async testing with all patterns."""
         # Build test data
@@ -646,17 +652,19 @@ class TestComprehensiveIntegration:
 
         # Execute with timeout
         result = await async_test_utils.run_with_timeout(
-            async_operation(), timeout_seconds=5.0
+            async_operation(), timeout_seconds=5.0,
         )
 
         # Use assertion builder for verification
         TestAssertionBuilder(result).is_not_none().satisfies(
-            lambda x: "result" in x, "should have result field"
+            lambda x: "result" in x, "should have result field",
         ).satisfies(
-            lambda x: x["result"] == "success", "should be successful"
+            lambda x: x["result"] == "success", "should be successful",
         ).assert_all()
 
-    def test_performance_with_property_testing(self, benchmark: object) -> None:
+    def test_performance_with_property_testing(
+        self, benchmark: BenchmarkProtocol,
+    ) -> None:
         """Combine performance testing with property-based testing."""
 
         def process_user_profiles(profiles: list[dict[str, object]]) -> list[str]:
@@ -664,7 +672,7 @@ class TestComprehensiveIntegration:
             return [
                 f"{profile['name']} <{profile['email']}>"
                 for profile in profiles
-                if PropertyTestHelpers.assume_valid_email(profile["email"])
+                if PropertyTestHelpers.assume_valid_email(cast("str", profile["email"]))
             ]
 
         # Generate test data using our strategies
@@ -710,7 +718,7 @@ class TestComprehensiveIntegration:
             return process_user_profiles(test_profiles)
 
         results = BenchmarkUtils.benchmark_with_warmup(
-            benchmark, benchmark_operation, warmup_rounds=3
+            benchmark, benchmark_operation, warmup_rounds=3,
         )
 
         # Verify results
@@ -772,9 +780,9 @@ class TestRealWorldScenarios:
 
             # Comprehensive assertions
             TestAssertionBuilder(result).is_not_none().satisfies(
-                lambda x: x["status"] == "success", "should be successful"
+                lambda x: x["status"] == "success", "should be successful",
             ).satisfies(
-                lambda x: "correlation_id" in x, "should have correlation ID"
+                lambda x: "correlation_id" in x, "should have correlation ID",
             ).satisfies(
                 lambda x: x["method"] in {"GET", "POST", "PUT", "DELETE", "PATCH"},
                 "should have valid HTTP method",
@@ -782,7 +790,7 @@ class TestRealWorldScenarios:
 
     @given(CompositeStrategies.configuration_data())
     def test_configuration_validation_comprehensive(
-        self, config: dict[str, object]
+        self, config: dict[str, object],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure
@@ -808,5 +816,5 @@ class TestRealWorldScenarios:
             .build()
         )
 
-        assert scenario.given["config"] == config
-        assert "configuration" in scenario.tags
+        assert cast("dict[str, object]", scenario.given)["config"] == config
+        assert "configuration" in cast("list[str]", scenario.tags)

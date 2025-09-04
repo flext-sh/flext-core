@@ -214,7 +214,7 @@ class FlextServices:
 
     @classmethod
     def configure_services_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure services system using FlextTypes.Config with StrEnum validation.
 
@@ -237,7 +237,7 @@ class FlextServices:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
                 validated_config["environment"] = env_value
             else:
@@ -253,7 +253,7 @@ class FlextServices:
                 ]
                 if log_level not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}"
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}",
                     )
                 validated_config["log_level"] = log_level
             else:
@@ -263,36 +263,36 @@ class FlextServices:
 
             # Services-specific configuration
             validated_config["enable_service_registry"] = config.get(
-                "enable_service_registry", True
+                "enable_service_registry", True,
             )
             validated_config["enable_service_orchestration"] = config.get(
-                "enable_service_orchestration", True
+                "enable_service_orchestration", True,
             )
             validated_config["enable_service_metrics"] = config.get(
-                "enable_service_metrics", True
+                "enable_service_metrics", True,
             )
             validated_config["enable_service_validation"] = config.get(
-                "enable_service_validation", True
+                "enable_service_validation", True,
             )
             validated_config["max_concurrent_services"] = config.get(
-                "max_concurrent_services", 100
+                "max_concurrent_services", 100,
             )
             validated_config["service_timeout_seconds"] = config.get(
-                "service_timeout_seconds", 30
+                "service_timeout_seconds", 30,
             )
             validated_config["enable_batch_processing"] = config.get(
-                "enable_batch_processing", True
+                "enable_batch_processing", True,
             )
             validated_config["batch_size"] = config.get("batch_size", 50)
             validated_config["enable_service_caching"] = config.get(
-                "enable_service_caching", False
+                "enable_service_caching", False,
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure services system: {e!s}"
+                f"Failed to configure services system: {e!s}",
             )
 
     @classmethod
@@ -342,12 +342,12 @@ class FlextServices:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get services system configuration: {e!s}"
+                f"Failed to get services system configuration: {e!s}",
             )
 
     @classmethod
     def create_environment_services_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls, environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific services system configuration.
 
@@ -365,7 +365,7 @@ class FlextServices:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Base configuration
@@ -379,71 +379,81 @@ class FlextServices:
 
             # Environment-specific optimizations
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "max_concurrent_services": 1000,  # High concurrency for production
-                    "service_timeout_seconds": 60,  # Longer timeout for production
-                    "enable_batch_processing": True,  # Batch processing for efficiency
-                    "batch_size": 200,  # Large batch size for production
-                    "enable_service_caching": True,  # Enable caching in production
-                    "cache_ttl_seconds": 300,  # 5 minute cache TTL
-                    "enable_circuit_breaker": True,  # Circuit breaker pattern
-                    "enable_retry_mechanism": True,  # Retry failed operations
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "max_concurrent_services": 1000,  # High concurrency for production
+                        "service_timeout_seconds": 60,  # Longer timeout for production
+                        "enable_batch_processing": True,  # Batch processing for efficiency
+                        "batch_size": 200,  # Large batch size for production
+                        "enable_service_caching": True,  # Enable caching in production
+                        "cache_ttl_seconds": 300,  # 5 minute cache TTL
+                        "enable_circuit_breaker": True,  # Circuit breaker pattern
+                        "enable_retry_mechanism": True,  # Retry failed operations
+                    },
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "max_concurrent_services": 50,  # Moderate concurrency for development
-                    "service_timeout_seconds": 15,  # Shorter timeout for quick feedback
-                    "enable_batch_processing": True,  # Test batch processing
-                    "batch_size": 10,  # Small batch size for development
-                    "enable_service_caching": False,  # No caching for development
-                    "enable_debug_logging": True,  # Detailed debug logging
-                    "enable_service_profiling": True,  # Performance profiling
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "max_concurrent_services": 50,  # Moderate concurrency for development
+                        "service_timeout_seconds": 15,  # Shorter timeout for quick feedback
+                        "enable_batch_processing": True,  # Test batch processing
+                        "batch_size": 10,  # Small batch size for development
+                        "enable_service_caching": False,  # No caching for development
+                        "enable_debug_logging": True,  # Detailed debug logging
+                        "enable_service_profiling": True,  # Performance profiling
+                    },
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "max_concurrent_services": 20,  # Low concurrency for tests
-                    "service_timeout_seconds": 10,  # Quick timeout for tests
-                    "enable_batch_processing": False,  # No batch processing in tests
-                    "batch_size": 5,  # Very small batch size
-                    "enable_service_caching": False,  # No caching in tests
-                    "enable_test_mode": True,  # Special test mode
-                    "enable_mock_services": True,  # Enable mock services
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "max_concurrent_services": 20,  # Low concurrency for tests
+                        "service_timeout_seconds": 10,  # Quick timeout for tests
+                        "enable_batch_processing": False,  # No batch processing in tests
+                        "batch_size": 5,  # Very small batch size
+                        "enable_service_caching": False,  # No caching in tests
+                        "enable_test_mode": True,  # Special test mode
+                        "enable_mock_services": True,  # Enable mock services
+                    },
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "max_concurrent_services": 200,  # Medium concurrency for staging
-                    "service_timeout_seconds": 45,  # Medium timeout
-                    "enable_batch_processing": True,  # Test batch processing
-                    "batch_size": 100,  # Medium batch size
-                    "enable_service_caching": True,  # Test caching behavior
-                    "cache_ttl_seconds": 120,  # 2 minute cache TTL
-                    "enable_staging_validation": True,  # Staging-specific validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "max_concurrent_services": 200,  # Medium concurrency for staging
+                        "service_timeout_seconds": 45,  # Medium timeout
+                        "enable_batch_processing": True,  # Test batch processing
+                        "batch_size": 100,  # Medium batch size
+                        "enable_service_caching": True,  # Test caching behavior
+                        "cache_ttl_seconds": 120,  # 2 minute cache TTL
+                        "enable_staging_validation": True,  # Staging-specific validation
+                    },
+                )
             else:  # local environment
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "max_concurrent_services": 25,  # Low concurrency for local
-                    "service_timeout_seconds": 10,  # Quick timeout for local development
-                    "enable_batch_processing": False,  # No batch processing locally
-                    "batch_size": 1,  # Single item processing
-                    "enable_service_caching": False,  # No caching locally
-                    "enable_local_debugging": True,  # Local debugging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "max_concurrent_services": 25,  # Low concurrency for local
+                        "service_timeout_seconds": 10,  # Quick timeout for local development
+                        "enable_batch_processing": False,  # No batch processing locally
+                        "batch_size": 1,  # Single item processing
+                        "enable_service_caching": False,  # No caching locally
+                        "enable_local_debugging": True,  # Local debugging features
+                    },
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment services configuration: {e!s}"
+                f"Failed to create environment services configuration: {e!s}",
             )
 
     @classmethod
     def optimize_services_performance(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize services system performance based on configuration.
 
@@ -462,44 +472,50 @@ class FlextServices:
             performance_level = config.get("performance_level", "medium")
 
             if performance_level == "high":
-                optimized_config.update({
-                    "async_service_processing": True,
-                    "max_concurrent_services": 2000,  # Very high concurrency
-                    "service_timeout_seconds": 120,  # Extended timeout
-                    "enable_connection_pooling": True,  # Connection pooling
-                    "pool_size": 100,  # Large connection pool
-                    "enable_batch_processing": True,  # Batch processing
-                    "batch_size": 500,  # Large batch size
-                    "enable_parallel_processing": True,  # Parallel execution
-                    "worker_threads": 16,  # Many worker threads
-                    "enable_service_caching": True,  # Aggressive caching
-                    "cache_size_mb": 512,  # Large cache
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": True,
+                        "max_concurrent_services": 2000,  # Very high concurrency
+                        "service_timeout_seconds": 120,  # Extended timeout
+                        "enable_connection_pooling": True,  # Connection pooling
+                        "pool_size": 100,  # Large connection pool
+                        "enable_batch_processing": True,  # Batch processing
+                        "batch_size": 500,  # Large batch size
+                        "enable_parallel_processing": True,  # Parallel execution
+                        "worker_threads": 16,  # Many worker threads
+                        "enable_service_caching": True,  # Aggressive caching
+                        "cache_size_mb": 512,  # Large cache
+                    },
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "async_service_processing": True,
-                    "max_concurrent_services": 500,  # Medium concurrency
-                    "service_timeout_seconds": 60,  # Standard timeout
-                    "enable_connection_pooling": True,  # Connection pooling
-                    "pool_size": 25,  # Medium connection pool
-                    "enable_batch_processing": True,  # Batch processing
-                    "batch_size": 100,  # Medium batch size
-                    "worker_threads": 8,  # Moderate worker threads
-                    "enable_service_caching": True,  # Standard caching
-                    "cache_size_mb": 128,  # Medium cache
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": True,
+                        "max_concurrent_services": 500,  # Medium concurrency
+                        "service_timeout_seconds": 60,  # Standard timeout
+                        "enable_connection_pooling": True,  # Connection pooling
+                        "pool_size": 25,  # Medium connection pool
+                        "enable_batch_processing": True,  # Batch processing
+                        "batch_size": 100,  # Medium batch size
+                        "worker_threads": 8,  # Moderate worker threads
+                        "enable_service_caching": True,  # Standard caching
+                        "cache_size_mb": 128,  # Medium cache
+                    },
+                )
             else:  # low performance level
-                optimized_config.update({
-                    "async_service_processing": False,  # Synchronous processing
-                    "max_concurrent_services": 50,  # Low concurrency
-                    "service_timeout_seconds": 30,  # Short timeout
-                    "enable_connection_pooling": False,  # No connection pooling
-                    "enable_batch_processing": False,  # No batch processing
-                    "batch_size": 1,  # Single item processing
-                    "worker_threads": 2,  # Minimal worker threads
-                    "enable_service_caching": False,  # No caching
-                    "enable_detailed_monitoring": True,  # More detailed monitoring
-                })
+                optimized_config.update(
+                    {
+                        "async_service_processing": False,  # Synchronous processing
+                        "max_concurrent_services": 50,  # Low concurrency
+                        "service_timeout_seconds": 30,  # Short timeout
+                        "enable_connection_pooling": False,  # No connection pooling
+                        "enable_batch_processing": False,  # No batch processing
+                        "batch_size": 1,  # Single item processing
+                        "worker_threads": 2,  # Minimal worker threads
+                        "enable_service_caching": False,  # No caching
+                        "enable_detailed_monitoring": True,  # More detailed monitoring
+                    },
+                )
 
             # Memory optimization settings - safe type conversion
             memory_limit_value = config.get("memory_limit_mb", 1024)
@@ -539,19 +555,21 @@ class FlextServices:
             optimized_config["max_parallel_operations"] = cpu_cores * 4
 
             # Add performance metrics
-            optimized_config.update({
-                "performance_level": performance_level,
-                "memory_limit_mb": memory_limit_mb,
-                "cpu_cores": cpu_cores,
-                "optimization_applied": True,
-                "optimization_timestamp": "runtime",
-            })
+            optimized_config.update(
+                {
+                    "performance_level": performance_level,
+                    "memory_limit_mb": memory_limit_mb,
+                    "cpu_cores": cpu_cores,
+                    "optimization_applied": True,
+                    "optimization_timestamp": "runtime",
+                },
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to optimize services performance: {e!s}"
+                f"Failed to optimize services performance: {e!s}",
             )
 
     # ==========================================================================
@@ -828,12 +846,12 @@ class FlextServices:
                 processing_result = self.process(req)
                 if processing_result.is_failure:
                     return FlextResult[TResult].fail(
-                        processing_result.error or "Processing failed"
+                        processing_result.error or "Processing failed",
                     )
 
                 correlation_id = self._correlation_generator.generate_correlation_id()
                 final_result = self.build(
-                    processing_result.value, correlation_id=correlation_id
+                    processing_result.value, correlation_id=correlation_id,
                 )
                 return FlextResult[TResult].ok(final_result)
 
@@ -875,7 +893,7 @@ class FlextServices:
             handler_result = handler(model_result.value)
             if handler_result.is_success:
                 self.log_info(
-                    "Operation successful", **{correlation_label: correlation_id}
+                    "Operation successful", **{correlation_label: correlation_id},
                 )
             else:
                 error_details = handler_result.error or "Unknown error"
@@ -944,7 +962,7 @@ class FlextServices:
             """
             if service_name in self._service_registry:
                 return FlextResult[None].fail(
-                    f"Service {service_name} already registered"
+                    f"Service {service_name} already registered",
                 )
 
             self._service_registry[service_name] = service_instance
@@ -966,10 +984,12 @@ class FlextServices:
             # Implementation would handle service coordination based on workflow_definition
             # This is a placeholder for the actual orchestration logic
             workflow_id = getattr(workflow_definition, "id", "default_workflow")
-            return FlextResult[dict[str, object]].ok({
-                "status": "success",
-                "results": {"workflow_id": workflow_id},
-            })
+            return FlextResult[dict[str, object]].ok(
+                {
+                    "status": "success",
+                    "results": {"workflow_id": workflow_id},
+                },
+            )
 
     class ServiceRegistry:
         """Service discovery and registration management.
@@ -1030,7 +1050,7 @@ class FlextServices:
             """
             if service_name not in self._registered_services:
                 return FlextResult[dict[str, object]].fail(
-                    f"Service {service_name} not found"
+                    f"Service {service_name} not found",
                 )
 
             service_data = self._registered_services[service_name]
@@ -1040,7 +1060,7 @@ class FlextServices:
                 typed_service_info = cast("dict[str, object]", service_info)
                 return FlextResult[dict[str, object]].ok(typed_service_info)
             return FlextResult[dict[str, object]].fail(
-                f"Invalid service info type for {service_name}"
+                f"Invalid service info type for {service_name}",
             )
 
     class ServiceMetrics:
@@ -1159,10 +1179,10 @@ class FlextServices:
                 ):
                     return FlextResult[TOutput].ok(output_data)
                 error_msg = getattr(
-                    validation_result, "error", "Contract validation failed"
+                    validation_result, "error", "Contract validation failed",
                 )
                 return FlextResult[TOutput].fail(
-                    f"Output contract violation: {error_msg}"
+                    f"Output contract violation: {error_msg}",
                 )
             except Exception as e:
                 return FlextResult[TOutput].fail(f"Output contract violation: {e!s}")

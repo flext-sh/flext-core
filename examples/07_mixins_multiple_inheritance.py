@@ -5,13 +5,8 @@ This example demonstrates FlextMixins composition patterns for behavioral functi
 Shows how to use FlextMixins instead of multiple inheritance for clean separation
 of concerns.
 
-Key concepts:
-- FlextMixins composition over inheritance
-- Centralized behavioral functionality
-- Type-safe operations with FlextResult
-- Clean method delegation patterns
-
-Author: FlextCore Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -47,7 +42,7 @@ class EnhancedUserService:
         self._mixins = FlextMixins()
 
         # Get logger for this instance
-        self._logger = FlextMixins.get_logger(self)
+        self._logger = FlextMixins.flext_logger(self)
 
     def create_user(self, username: str, email: str, age: int) -> FlextResult[User]:
         """Create a user with validation and logging."""
@@ -97,7 +92,7 @@ class CacheableService:
     def __init__(self) -> None:
         """Initialize cacheable service."""
         self._cache: dict[str, object] = {}
-        self._logger = FlextMixins.get_logger(self)
+        self._logger = FlextMixins.flext_logger(self)
 
     def get_cached_data(self, key: str) -> FlextResult[object]:
         """Get data from cache."""
@@ -132,7 +127,7 @@ class ValidationService:
 
     def __init__(self) -> None:
         """Initialize validation service."""
-        self._logger = FlextMixins.get_logger(self)
+        self._logger = FlextMixins.flext_logger(self)
 
     def validate_email(self, email: str) -> FlextResult[bool]:
         """Validate email format."""
@@ -165,24 +160,24 @@ class ComposedUserManager:
         self._user_service = EnhancedUserService()
         self._cache_service = CacheableService()
         self._validation_service = ValidationService()
-        self._logger = FlextMixins.get_logger(self)
+        self._logger = FlextMixins.flext_logger(self)
 
     def create_and_cache_user(
-        self, username: str, email: str, age: int
+        self, username: str, email: str, age: int,
     ) -> FlextResult[User]:
         """Create user with validation and caching."""
         # Step 1: Validate email
         email_validation = self._validation_service.validate_email(email)
         if email_validation.is_failure:
             return FlextResult[User].fail(
-                f"Email validation failed: {email_validation.error}"
+                f"Email validation failed: {email_validation.error}",
             )
 
         # Step 2: Validate age
         age_validation = self._validation_service.validate_age(age)
         if age_validation.is_failure:
             return FlextResult[User].fail(
-                f"Age validation failed: {age_validation.error}"
+                f"Age validation failed: {age_validation.error}",
             )
 
         # Step 3: Check cache

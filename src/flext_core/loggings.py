@@ -21,6 +21,7 @@ import structlog
 from structlog.typing import EventDict, Processor
 
 from flext_core.constants import FlextConstants
+from flext_core.context import FlextContext
 from flext_core.typings import FlextTypes
 
 # =============================================================================
@@ -104,10 +105,7 @@ class FlextLogger:
         self._start_time = time.time()
 
         # Instance-level correlation ID (can override global)
-        # Use local import to avoid circular dependency
         try:
-            from flext_core.context import FlextContext
-
             context_id = FlextContext.Correlation.get_correlation_id()
         except ImportError:
             context_id = None
@@ -254,7 +252,7 @@ class FlextLogger:
                     "type": error.__class__.__name__,
                     "message": str(error),
                     "stack_trace": traceback.format_exception(
-                        type(error), error, error.__traceback__
+                        type(error), error, error.__traceback__,
                     ),
                     "module": getattr(error, "__module__", "unknown"),
                 }
@@ -340,7 +338,7 @@ class FlextLogger:
         return bound_logger
 
     def set_context(
-        self, context_dict: dict[str, object] | None = None, **context: object
+        self, context_dict: dict[str, object] | None = None, **context: object,
     ) -> None:
         """Set permanent context data for this logger instance."""
         if not hasattr(self, "_permanent_context"):
@@ -383,7 +381,7 @@ class FlextLogger:
         return operation_id
 
     def complete_operation(
-        self, operation_id: str, *, success: bool = True, **context: object
+        self, operation_id: str, *, success: bool = True, **context: object,
     ) -> None:
         """Complete operation tracking with performance metrics."""
         if not hasattr(self._local, "operations"):
@@ -425,7 +423,7 @@ class FlextLogger:
         formatted_message = message % args if args else message
         entry = self._build_log_entry("TRACE", formatted_message, context)
         self._structlog_logger.debug(
-            formatted_message, **entry
+            formatted_message, **entry,
         )  # Use debug since structlog doesn't have trace
 
     def debug(self, message: str, *args: object, **context: object) -> None:
@@ -539,7 +537,7 @@ class FlextLogger:
 
         # Add timestamp processor with ISO 8601 format
         processors.append(
-            structlog.processors.TimeStamper(fmt="iso", utc=True, key="@timestamp")
+            structlog.processors.TimeStamper(fmt="iso", utc=True, key="@timestamp"),
         )
 
         # Add source information if requested
@@ -550,8 +548,8 @@ class FlextLogger:
                         structlog.processors.CallsiteParameter.FILENAME,
                         structlog.processors.CallsiteParameter.LINENO,
                         structlog.processors.CallsiteParameter.FUNC_NAME,
-                    ]
-                )
+                    ],
+                ),
             )
 
         # Add structured processors
@@ -568,7 +566,7 @@ class FlextLogger:
                 structlog.processors.JSONRenderer(
                     sort_keys=True,
                     ensure_ascii=False,
-                )
+                ),
             )
         else:
             processors.append(FlextLogger._create_enhanced_console_renderer())

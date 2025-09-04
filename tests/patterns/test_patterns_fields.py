@@ -33,7 +33,7 @@ class TestFlextFieldsFactory:
     def test_create_integer_field_with_constraints(self) -> None:
         """Test integer field creation with value constraints."""
         result = FlextFields.Factory.create_field(
-            "integer", "test_field", min_value=0, max_value=100
+            "integer", "test_field", min_value=0, max_value=100,
         )
         assert result.success, f"Field creation failed: {result.error}"
 
@@ -44,7 +44,7 @@ class TestFlextFieldsFactory:
     def test_create_integer_field_with_description(self) -> None:
         """Test integer field creation with description."""
         result = FlextFields.Factory.create_field(
-            "integer", "test_field", description="Custom integer field", min_value=10
+            "integer", "test_field", description="Custom integer field", min_value=10,
         )
         assert result.success, f"Field creation failed: {result.error}"
 
@@ -74,7 +74,7 @@ class TestFlextFieldsFactory:
     def test_integer_field_get_field_schema(self) -> None:
         """Test integer field schema retrieval."""
         field_result = FlextFields.Factory.create_field(
-            "integer", "test_field", min_value=0, max_value=100
+            "integer", "test_field", min_value=0, max_value=100,
         )
         assert field_result.success, f"Field creation failed: {field_result.error}"
 
@@ -98,7 +98,7 @@ class TestFlextFieldsFactory:
     def test_create_boolean_field_with_description(self) -> None:
         """Test boolean field creation with description."""
         result = FlextFields.Factory.create_field(
-            "boolean", "test_field", description="Custom boolean field"
+            "boolean", "test_field", description="Custom boolean field",
         )
         assert result.success, f"Field creation failed: {result.error}"
 

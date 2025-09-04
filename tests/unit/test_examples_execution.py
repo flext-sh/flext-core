@@ -108,7 +108,7 @@ class TestExamplesExecution:
         for example_file in example_files:
             try:
                 spec = importlib.util.spec_from_file_location(
-                    example_file.stem, example_file
+                    example_file.stem, example_file,
                 )
                 if spec and spec.loader:
                     # Just test that spec can be created, actual import might run main()

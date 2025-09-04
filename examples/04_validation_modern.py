@@ -3,14 +3,10 @@
 
 This example demonstrates the modernized validation system in FLEXT Core,
 showing how validate_call decorators eliminate legacy code while providing
-automatic type checking and runtime validation.
+automatic type checking and runtime validation
 
-Key Benefits:
-- Automatic input validation with clear error messages
-- Reduced boilerplate code
-- Type safety at runtime
-- Integration with existing FlextResult patterns
-- No legacy validation code - all modern Pydantic patterns
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -35,12 +31,12 @@ def flext_validate_string(
     # Simple string length validation
     if len(value) < min_length:
         return FlextResult[str].fail(
-            f"{field_name}: Must be at least {min_length} characters"
+            f"{field_name}: Must be at least {min_length} characters",
         )
 
     if len(value) > max_length:
         return FlextResult[str].fail(
-            f"{field_name}: Must not exceed {max_length} characters"
+            f"{field_name}: Must not exceed {max_length} characters",
         )
 
     return FlextResult[str].ok(value)
@@ -55,7 +51,7 @@ def flext_validate_numeric(
     """Validate numeric value with range constraints."""
     if value < min_val or value > max_val:
         return FlextResult[float].fail(
-            f"{field_name} must be between {min_val} and {max_val}"
+            f"{field_name} must be between {min_val} and {max_val}",
         )
     return FlextResult[float].ok(float(value))
 
@@ -141,7 +137,7 @@ def demonstrate_modern_validation() -> None:
     none_required_result = flext_validate_required(None, "required_field")
     if none_required_result.is_failure:
         logger.info(
-            f"Required field validation correctly failed: {none_required_result.error}"
+            f"Required field validation correctly failed: {none_required_result.error}",
         )
     else:
         logger.warning("Required field validation unexpectedly passed for None value")

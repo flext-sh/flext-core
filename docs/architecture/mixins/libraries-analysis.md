@@ -35,7 +35,7 @@ This analysis reveals that `FlextMixins` has high adoption across the FLEXT ecos
 class FlextMeltanoAdapter:
     def __init__(self):
         # Manual logging setup
-        self.logger = logging.getLogger(__name__)  # Should use FlextMixins.get_logger()
+        self.logger = logging.getLogger(__name__)  # Should use FlextMixins.FlextLogger()
 
         # No systematic ID or timestamp management
         self.created_at = datetime.utcnow()  # Manual timestamp
@@ -785,7 +785,7 @@ class OptimizationPatterns:
 
 #### Unified Behavioral Standards
 
-- **Consistent Logging**: All services use FlextMixins.get_logger() with structured context
+- **Consistent Logging**: All services use FlextMixins.FlextLogger() with structured context
 - **Standardized Validation**: Unified validation patterns across all service boundaries
 - **Performance Monitoring**: Consistent timing and performance tracking
 - **Error Handling**: Systematic error handling with FlextResult integration

@@ -469,7 +469,7 @@ class UserCommandHandler:
             if field in ["name", "email", "department", "role"]:  # Allowed fields
                 user_data[field] = value
 
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(data=True)
 
 # Setup CQRS command bus with handler registration
 command_bus = FlextHandlers.CQRS.CommandBus()
@@ -1150,7 +1150,7 @@ class EnterpriseAPIProcessor:
         return FlextResult[str].ok(user_id)
 
     def _handle_update_user_command(self, data: dict) -> FlextResult[bool]:
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(data=True)
 
     # Mock query handlers
     def _handle_get_user_query(self, data: dict) -> FlextResult[dict]:

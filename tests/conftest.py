@@ -328,32 +328,24 @@ def setup_test_environment() -> None:
 @pytest.fixture
 def user_repository() -> InMemoryUserRepository:
     """Provide clean in-memory user repository for functional testing."""
-    from tests.support.factories import InMemoryUserRepository
-
     return InMemoryUserRepository()
 
 
 @pytest.fixture
 def email_service() -> RealEmailService:
     """Provide real email service for functional testing."""
-    from tests.support.factories import RealEmailService
-
     return RealEmailService()
 
 
 @pytest.fixture
 def audit_service() -> RealAuditService:
     """Provide real audit service for functional testing."""
-    from tests.support.factories import RealAuditService
-
     return RealAuditService()
 
 
 @pytest.fixture
 def failing_repository() -> FailingUserRepository:
     """Provide failing repository for error scenario testing."""
-    from tests.support.factories import FailingUserRepository
-
     return FailingUserRepository()
 
 

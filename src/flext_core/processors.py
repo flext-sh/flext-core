@@ -189,24 +189,24 @@ class FlextProcessors:
             # Validate entry_type is not empty
             if not entry.entry_type or not entry.entry_type.strip():
                 return FlextResult[None].fail(
-                    "Entry type is required and cannot be empty"
+                    "Entry type is required and cannot be empty",
                 )
 
             # Validate clean_content is not empty
             if not entry.clean_content or not entry.clean_content.strip():
                 return FlextResult[None].fail(
-                    "Clean content is required and cannot be empty"
+                    "Clean content is required and cannot be empty",
                 )
 
             # Validate identifier is not empty and within reasonable length
             if not entry.identifier or not entry.identifier.strip():
                 return FlextResult[None].fail(
-                    "Identifier is required and cannot be empty"
+                    "Identifier is required and cannot be empty",
                 )
 
             if len(entry.identifier) > FlextConstants.Validation.MAX_NAME_LENGTH:
                 return FlextResult[None].fail(
-                    f"Identifier must be {FlextConstants.Validation.MAX_NAME_LENGTH} characters or less"
+                    f"Identifier must be {FlextConstants.Validation.MAX_NAME_LENGTH} characters or less",
                 )
 
             return FlextResult[None].ok(None)
@@ -221,13 +221,13 @@ class FlextProcessors:
 
     class BaseProcessor(
         FlextServices.ServiceProcessor[
-            "FlextProcessors.Entry", "FlextProcessors.Entry", dict[str, object]
-        ]
+            "FlextProcessors.Entry", "FlextProcessors.Entry", dict[str, object],
+        ],
     ):
         """Base processor using FLEXT service architecture for entry processing."""
 
         def __init__(
-            self, validator: FlextProcessors.EntryValidator | None = None
+            self, validator: FlextProcessors.EntryValidator | None = None,
         ) -> None:
             """Initialize processor with optional validator using service patterns."""
             super().__init__()
@@ -240,13 +240,13 @@ class FlextProcessors:
             return self.validator.validate_entry(entry)
 
         def transform_data(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Transform entry data - default implementation returns entry unchanged."""
             return FlextResult[FlextProcessors.Entry].ok(entry)
 
         def process_data(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Process entry and extract information following service patterns."""
             try:
@@ -259,7 +259,7 @@ class FlextProcessors:
                 return FlextResult[dict[str, object]].ok(dict(info))
             except Exception as e:
                 return FlextResult[dict[str, object]].fail(
-                    f"Failed to process entry: {e}"
+                    f"Failed to process entry: {e}",
                 )
 
         def validate_entry(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
@@ -267,27 +267,27 @@ class FlextProcessors:
             return self.validate_input(entry)
 
         def extract_info_from_entry(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Legacy method for backward compatibility."""
             return self.process_data(entry)
 
         def process(
-            self, request: FlextProcessors.Entry
+            self, request: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Process request into domain object (required by ServiceProcessor)."""
             # Validate input first
             validation_result = self.validate_input(request)
             if validation_result.is_failure:
                 return FlextResult[FlextProcessors.Entry].fail(
-                    validation_result.error or "Validation failed"
+                    validation_result.error or "Validation failed",
                 )
 
             # Transform the data
             return self.transform_data(request)
 
         def build(
-            self, domain: FlextProcessors.Entry, *, correlation_id: str = ""
+            self, domain: FlextProcessors.Entry, *, correlation_id: str = "",
         ) -> dict[str, object]:
             """Build final result from domain object (required by ServiceProcessor)."""
             # Use process_data to build the final result
@@ -305,13 +305,13 @@ class FlextProcessors:
         """Default concrete processor implementation."""
 
         def __init__(
-            self, validator: FlextProcessors.EntryValidator | None = None
+            self, validator: FlextProcessors.EntryValidator | None = None,
         ) -> None:
             """Initialize default processor."""
             super().__init__(validator)
 
         def process_data(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Default processing implementation."""
             return super().process_data(entry)
@@ -353,7 +353,7 @@ class FlextProcessors:
                 return FlextResult[bool].fail(f"Content validation failed: {e}")
 
         def process_data(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Process entry with regex-specific logic."""
             # First do the base processing
@@ -366,7 +366,7 @@ class FlextProcessors:
 
             # Extract identifier using regex
             identifier_result = self.extract_identifier_from_content(
-                entry.clean_content
+                entry.clean_content,
             )
             if identifier_result.is_success:
                 info["extracted_identifier"] = identifier_result.unwrap()
@@ -394,7 +394,7 @@ class FlextProcessors:
             try:
                 if not hasattr(obj, attribute_name):
                     return FlextResult[bool].fail(
-                        f"Attribute '{attribute_name}' not found"
+                        f"Attribute '{attribute_name}' not found",
                     )
 
                 value = getattr(obj, attribute_name)
@@ -404,13 +404,13 @@ class FlextProcessors:
                 return FlextResult[bool].fail(f"Attribute validation failed: {e}")
 
         def get_config_value(
-            self, config: dict[str, object], key: str
+            self, config: dict[str, object], key: str,
         ) -> FlextResult[object]:
             """Get configuration value with validation."""
             try:
                 if key not in config:
                     return FlextResult[object].fail(
-                        f"Configuration key '{key}' not found"
+                        f"Configuration key '{key}' not found",
                     )
                 return FlextResult[object].ok(config[key])
             except Exception as e:
@@ -437,21 +437,21 @@ class FlextProcessors:
                 validation_result = self.validator.validate_entry(request)
                 if validation_result.is_failure:
                     return FlextResult[object].fail(
-                        validation_result.error or "Validation failed"
+                        validation_result.error or "Validation failed",
                     )
                 return FlextResult[object].ok(request)
 
             return FlextResult[object].fail("Invalid request type for entry validation")
 
         def process_entry(
-            self, entry: FlextProcessors.Entry
+            self, entry: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Process entry using handler validation patterns."""
             # Use handler's validation process
             result = self.handle(entry)
             if result.is_failure:
                 return FlextResult[FlextProcessors.Entry].fail(
-                    result.error or "Validation failed"
+                    result.error or "Validation failed",
                 )
 
             # Return validated entry
@@ -460,7 +460,7 @@ class FlextProcessors:
                 return FlextResult[FlextProcessors.Entry].ok(validated_entry)
 
             return FlextResult[FlextProcessors.Entry].fail(
-                "Handler returned invalid type"
+                "Handler returned invalid type",
             )
 
     class ProcessingPipeline:
@@ -558,7 +558,7 @@ class FlextProcessors:
                 return FlextResult[list[FlextProcessors.Entry]].ok(sorted_entries)
             except Exception as e:
                 return FlextResult[list[FlextProcessors.Entry]].fail(
-                    f"Sorting failed: {e}"
+                    f"Sorting failed: {e}",
                 )
 
     class FileWriter(Protocol):
@@ -601,7 +601,7 @@ class FlextProcessors:
             ]
             if missing_fields:
                 return FlextResult[FlextProcessors.Entry].fail(
-                    f"Missing required fields: {missing_fields}"
+                    f"Missing required fields: {missing_fields}",
                 )
 
             entry = cls.Entry.model_validate(entry_data)
@@ -609,7 +609,7 @@ class FlextProcessors:
 
         except Exception as e:
             return FlextResult[FlextProcessors.Entry].fail(
-                f"Entry creation failed: {e}"
+                f"Entry creation failed: {e}",
             )
 
     @classmethod
@@ -624,7 +624,7 @@ class FlextProcessors:
             return FlextResult[FlextProcessors.RegexProcessor].ok(processor)
         except Exception as e:
             return FlextResult[FlextProcessors.RegexProcessor].fail(
-                f"Regex processor creation failed: {e}"
+                f"Regex processor creation failed: {e}",
             )
 
     @classmethod
@@ -647,7 +647,7 @@ class FlextProcessors:
             return FlextResult[FlextProcessors.ProcessingPipeline].ok(pipeline)
         except Exception as e:
             return FlextResult[FlextProcessors.ProcessingPipeline].fail(
-                f"Pipeline creation failed: {e}"
+                f"Pipeline creation failed: {e}",
             )
 
     @classmethod
@@ -657,28 +657,28 @@ class FlextProcessors:
             # Basic validation - can be extended
             if not isinstance(config, dict):
                 return FlextResult[dict[str, object]].fail(
-                    "Configuration must be a dictionary"
+                    "Configuration must be a dictionary",
                 )
 
             # Type narrowing: we know config is dict at this point
             typed_config = cast(
-                "dict[str, object]", config
+                "dict[str, object]", config,
             )  # Cast to proper type after isinstance check
 
             # Validate configuration structure
             for key, value in typed_config.items():
                 # Validate value type (allow None)
                 if value is not None and not isinstance(
-                    value, (str, int, float, bool, list, dict)
+                    value, (str, int, float, bool, list, dict),
                 ):
                     return FlextResult[dict[str, object]].fail(
-                        f"Configuration value for '{key}' must be a basic type"
+                        f"Configuration value for '{key}' must be a basic type",
                     )
 
             return FlextResult[dict[str, object]].ok(typed_config)
         except Exception as e:
             return FlextResult[dict[str, object]].fail(
-                f"Configuration validation failed: {e}"
+                f"Configuration validation failed: {e}",
             )
 
     # =============================================================================
@@ -691,7 +691,7 @@ class FlextProcessors:
         self.config_processor = self.ConfigProcessor()
 
     def register_processor(
-        self, name: str, processor: FlextProcessors.BaseProcessor
+        self, name: str, processor: FlextProcessors.BaseProcessor,
     ) -> FlextResult[None]:
         """Register a named processor using service registry patterns."""
         try:
@@ -704,7 +704,7 @@ class FlextProcessors:
             registration_result = self.service_registry.register(service_info)
             if registration_result.is_failure:
                 return FlextResult[None].fail(
-                    f"Service registration failed: {registration_result.error}"
+                    f"Service registration failed: {registration_result.error}",
                 )
             return FlextResult[None].ok(None)
         except Exception as e:
@@ -716,7 +716,7 @@ class FlextProcessors:
             discovery_result = self.service_registry.discover(name)
             if discovery_result.is_failure:
                 return FlextResult[FlextProcessors.BaseProcessor].fail(
-                    f"Processor '{name}' not found: {discovery_result.error}"
+                    f"Processor '{name}' not found: {discovery_result.error}",
                 )
 
             service_info = discovery_result.unwrap()
@@ -725,11 +725,11 @@ class FlextProcessors:
                 if isinstance(processor, FlextProcessors.BaseProcessor):
                     return FlextResult[FlextProcessors.BaseProcessor].ok(processor)
             return FlextResult[FlextProcessors.BaseProcessor].fail(
-                f"Service '{name}' is not a valid processor"
+                f"Service '{name}' is not a valid processor",
             )
         except Exception as e:
             return FlextResult[FlextProcessors.BaseProcessor].fail(
-                f"Processor retrieval failed: {e}"
+                f"Processor retrieval failed: {e}",
             )
 
     def process_entries(
@@ -743,7 +743,7 @@ class FlextProcessors:
                 processor_result = self.get_processor(processor_name)
                 if processor_result.is_failure:
                     return FlextResult[list[FlextProcessors.Entry]].fail(
-                        processor_result.error or "Processor not found"
+                        processor_result.error or "Processor not found",
                     )
                 processor = processor_result.unwrap()
             else:
@@ -758,7 +758,7 @@ class FlextProcessors:
             return FlextResult[list[FlextProcessors.Entry]].ok(processed_entries)
         except Exception as e:
             return FlextResult[list[FlextProcessors.Entry]].fail(
-                f"Entries processing failed: {e}"
+                f"Entries processing failed: {e}",
             )
 
     # =============================================================================
@@ -767,7 +767,7 @@ class FlextProcessors:
 
     @classmethod
     def configure_processors_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure processors system with validation."""
         try:
@@ -784,7 +784,7 @@ class FlextProcessors:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure processors system: {e}"
+                f"Failed to configure processors system: {e}",
             )
 
     @classmethod
@@ -831,7 +831,7 @@ class FlextProcessors:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get processors system config: {e}"
+                f"Failed to get processors system config: {e}",
             )
 
 

@@ -71,7 +71,7 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == CreateUserCommand or issubclass(
-                    message_type, CreateUserCommand
+                    message_type, CreateUserCommand,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -178,7 +178,7 @@ class TestCleanArchitecturePatterns:
                 # Validate value objects with type checking for serialization
                 if hasattr(self.order_id, "validate_business_rules"):
                     validate_method = getattr(
-                        self.order_id, "validate_business_rules", None
+                        self.order_id, "validate_business_rules", None,
                     )
                     order_id_validation = (
                         validate_method()
@@ -193,7 +193,7 @@ class TestCleanArchitecturePatterns:
 
                 if hasattr(self.total, "validate_business_rules"):
                     validate_method = getattr(
-                        self.total, "validate_business_rules", None
+                        self.total, "validate_business_rules", None,
                     )
                     total_validation = (
                         validate_method()
@@ -219,11 +219,11 @@ class TestCleanArchitecturePatterns:
 
                 # Create new instance with updated status (immutable pattern)
                 result = FlextResult[Order].ok(
-                    self.model_copy(update={"status": "confirmed"})
+                    self.model_copy(update={"status": "confirmed"}),
                 )
                 if result.is_failure:
                     return FlextResult[None].fail(
-                        f"Failed to confirm order: {result.error}"
+                        f"Failed to confirm order: {result.error}",
                     )
 
                 return FlextResult[None].ok(None)
@@ -276,7 +276,7 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == UpdateUserCommand or issubclass(
-                    message_type, UpdateUserCommand
+                    message_type, UpdateUserCommand,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -309,7 +309,7 @@ class TestCleanArchitecturePatterns:
             def can_handle(self, message_type: type) -> bool:
                 """Check if handler can handle the message type."""
                 return message_type == GetUserQuery or issubclass(
-                    message_type, GetUserQuery
+                    message_type, GetUserQuery,
                 )
 
             def handle(self, request: object) -> FlextResult[object]:
@@ -358,17 +358,21 @@ class TestEnterprisePatterns:
             def create_service(service_type: str) -> FlextResult[dict[str, str]]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok({
-                        "type": "email",
-                        "provider": "smtp",
-                    })
+                    return FlextResult[dict[str, str]].ok(
+                        {
+                            "type": "email",
+                            "provider": "smtp",
+                        },
+                    )
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok({
-                        "type": "sms",
-                        "provider": "twilio",
-                    })
+                    return FlextResult[dict[str, str]].ok(
+                        {
+                            "type": "sms",
+                            "provider": "twilio",
+                        },
+                    )
                 return FlextResult[dict[str, str]].fail(
-                    f"Unknown service type: {service_type}"
+                    f"Unknown service type: {service_type}",
                 )
 
         # Test factory usage
@@ -415,7 +419,7 @@ class TestEnterprisePatterns:
                 """Build the configuration."""
                 if not self._config:
                     return FlextResult[dict[str, object]].fail(
-                        "Configuration cannot be empty"
+                        "Configuration cannot be empty",
                     )
 
                 return FlextResult[dict[str, object]].ok(self._config.copy())

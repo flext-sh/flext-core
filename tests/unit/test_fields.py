@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import cast
 
 import pytest
 from hypothesis import given, strategies as st
@@ -66,7 +67,7 @@ class TestFlextFieldsCore:
     def test_integer_field_comprehensive(self) -> None:
         """Test IntegerField comprehensively."""
         field = FlextFields.Core.IntegerField(
-            "int_field", min_value=0, max_value=100, default=50
+            "int_field", min_value=0, max_value=100, default=50,
         )
 
         # Valid integer
@@ -93,7 +94,7 @@ class TestFlextFieldsCore:
     def test_float_field_comprehensive(self) -> None:
         """Test FloatField comprehensively."""
         field = FlextFields.Core.FloatField(
-            "float_field", min_value=0.0, max_value=100.0, precision=2, default=50.5
+            "float_field", min_value=0.0, max_value=100.0, precision=2, default=50.5,
         )
 
         # Valid float
@@ -170,7 +171,7 @@ class TestFlextFieldsCore:
         # Invalid UUID
         result = field.validate("not-a-uuid")
         assert result.failure
-        assert "Invalid UUID format" in result.error
+        assert "Invalid UUID format" in (result.error or "")
 
         # Not required field with None
         field = FlextFields.Core.UuidField("uuid_field", required=False)
@@ -204,7 +205,7 @@ class TestFlextFieldsCore:
         early_date = datetime(2019, 1, 1, tzinfo=UTC)
         result = field.validate(early_date)
         assert result.failure
-        assert "too early" in result.error.lower()
+        assert "too early" in (result.error or "").lower()
 
     def test_field_metadata(self) -> None:
         """Test field metadata extraction."""
@@ -242,11 +243,15 @@ class TestFlextFieldsValidation:
         """Test validate_field static method."""
         field = FlextFields.Core.StringField("test", min_length=3)
 
-        result = FlextFields.Validation.validate_field(field, "hello")
+        result = FlextFields.Validation.validate_field(
+            cast("FlextFields.Core.BaseField[object]", field), "hello",
+        )
         assert result.success
         assert result.value == "hello"
 
-        result = FlextFields.Validation.validate_field(field, "hi")
+        result = FlextFields.Validation.validate_field(
+            cast("FlextFields.Core.BaseField[object]", field), "hi",
+        )
         assert result.failure
 
     def test_validate_multiple_fields(self) -> None:
@@ -273,8 +278,8 @@ class TestFlextFieldsValidation:
 
         result = FlextFields.Validation.validate_multiple_fields(fields, invalid_values)
         assert result.failure
-        assert "name:" in result.error
-        assert "age:" in result.error
+        assert "name:" in (result.error or "")
+        assert "age:" in (result.error or "")
 
 
 class TestFlextFieldsRegistry:
@@ -286,7 +291,9 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test_field")
 
         # Register field
-        result = registry.register_field("test", field)
+        result = registry.register_field(
+            "test", cast("FlextFields.Core.BaseField[object]", field),
+        )
         assert result.success
 
         # Get field
@@ -304,10 +311,14 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test_field")
 
         # Empty name
-        result = registry.register_field("", field)
+        result = registry.register_field(
+            "", cast("FlextFields.Core.BaseField[object]", field),
+        )
         assert result.failure
 
-        result = registry.register_field("   ", field)
+        result = registry.register_field(
+            "   ", cast("FlextFields.Core.BaseField[object]", field),
+        )
         assert result.failure
 
         # Get with empty name
@@ -319,7 +330,12 @@ class TestFlextFieldsRegistry:
         registry = FlextFields.Registry.FieldRegistry()
 
         # Register field type
-        result = registry.register_field_type("custom", FlextFields.Core.StringField)
+        result = registry.register_field_type(
+            "custom",
+            cast(
+                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+            ),
+        )
         assert result.success
 
         # Get field type
@@ -336,9 +352,18 @@ class TestFlextFieldsRegistry:
         registry = FlextFields.Registry.FieldRegistry()
         field = FlextFields.Core.StringField("test")
 
-        registry.register_field("field1", field)
-        registry.register_field("field2", field)
-        registry.register_field_type("type1", FlextFields.Core.StringField)
+        registry.register_field(
+            "field1", cast("FlextFields.Core.BaseField[object]", field),
+        )
+        registry.register_field(
+            "field2", cast("FlextFields.Core.BaseField[object]", field),
+        )
+        registry.register_field_type(
+            "type1",
+            cast(
+                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+            ),
+        )
 
         fields = registry.list_fields()
         assert "field1" in fields
@@ -352,7 +377,9 @@ class TestFlextFieldsRegistry:
         registry = FlextFields.Registry.FieldRegistry()
         field = FlextFields.Core.StringField("test", description="Test field")
 
-        registry.register_field("test", field)
+        registry.register_field(
+            "test", cast("FlextFields.Core.BaseField[object]", field),
+        )
 
         result = registry.get_field_metadata("test")
         assert result.success
@@ -364,8 +391,15 @@ class TestFlextFieldsRegistry:
         registry = FlextFields.Registry.FieldRegistry()
         field = FlextFields.Core.StringField("test")
 
-        registry.register_field("test", field)
-        registry.register_field_type("custom", FlextFields.Core.StringField)
+        registry.register_field(
+            "test", cast("FlextFields.Core.BaseField[object]", field),
+        )
+        registry.register_field_type(
+            "custom",
+            cast(
+                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+            ),
+        )
 
         assert len(registry.list_fields()) > 0
         assert len(registry.list_field_types()) > 0
@@ -389,14 +423,14 @@ class TestFlextFieldsSchema:
                     "type": "string",
                     "required": True,
                     "constraints": {"min_length": 3},
-                }
+                },
             ],
             "metadata": {"version": "1.0"},
         }
 
         result = processor.process_field_schema(schema)
         assert result.success
-        assert len(result.value["fields"]) == 1
+        assert len(cast("list[object]", result.value["fields"])) == 1
 
     def test_field_processor_validation(self) -> None:
         """Test FieldProcessor validation."""
@@ -405,8 +439,8 @@ class TestFlextFieldsSchema:
         # Missing required keys
         invalid_schema = {
             "fields": [
-                {"name": "test"}  # Missing "type"
-            ]
+                {"name": "test"},  # Missing "type"
+            ],
         }
 
         result = processor.process_field_schema(invalid_schema)
@@ -453,7 +487,7 @@ class TestFlextFieldsFactory:
             description="Configured field",
         )
         assert result.success
-        field = result.value
+        field = cast("FlextFields.Core.BaseField[object]", result.value)
         assert field.name == "configured_field"
         assert field.required is False
 
@@ -461,7 +495,7 @@ class TestFlextFieldsFactory:
         """Test creating unknown field type."""
         result = FlextFields.Factory.create_field("unknown", "test")
         assert result.failure
-        assert "Unknown field type" in result.error
+        assert "Unknown field type" in (result.error or "")
 
     def test_create_fields_from_schema(self) -> None:
         """Test creating fields from schema."""
@@ -480,7 +514,7 @@ class TestFlextFieldsFactory:
                     "required": False,
                     "default": 0,
                 },
-            ]
+            ],
         }
 
         result = FlextFields.Factory.create_fields_from_schema(schema)
@@ -664,7 +698,7 @@ class TestFlextFieldsLegacyCompatibility:
     def test_create_string_field_legacy(self) -> None:
         """Test legacy string field creation."""
         result = FlextFields.create_string_field(
-            name="test_field", required=True, min_length=3, description="Test field"
+            name="test_field", required=True, min_length=3, description="Test field",
         )
         assert result.success
         field = result.value
@@ -673,7 +707,7 @@ class TestFlextFieldsLegacyCompatibility:
     def test_create_integer_field_legacy(self) -> None:
         """Test legacy integer field creation."""
         result = FlextFields.create_integer_field(
-            name="int_field", min_value=0, default=10
+            name="int_field", min_value=0, default=10,
         )
         assert result.success
 

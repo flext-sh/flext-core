@@ -59,7 +59,7 @@ class TestFlextGuards:
         """Test validation utilities."""
         # Test require_not_none - success case
         result = FlextGuards.ValidationUtils.require_not_none(
-            "test", "should not be none"
+            "test", "should not be none",
         )
         assert result == "test"
 
@@ -69,13 +69,13 @@ class TestFlextGuards:
 
         # Test require_non_empty - success case
         result_non_empty = FlextGuards.ValidationUtils.require_non_empty(
-            "test", "should not be empty"
+            "test", "should not be empty",
         )
         assert result_non_empty == "test"
 
         # Test require_non_empty - failure case
         with pytest.raises(
-            FlextExceptions.ValidationError, match="should not be empty"
+            FlextExceptions.ValidationError, match="should not be empty",
         ):
             FlextGuards.ValidationUtils.require_non_empty("", "should not be empty")
 
@@ -179,10 +179,10 @@ class TestFlextGuards:
         """Test integration with exception-based validation pattern."""
         # Test successful validation chain
         validated_value = FlextGuards.ValidationUtils.require_not_none(
-            "test", "should not be none"
+            "test", "should not be none",
         )
         final_result = FlextGuards.ValidationUtils.require_non_empty(
-            validated_value, "should not be empty"
+            validated_value, "should not be empty",
         )
 
         assert final_result == "test"

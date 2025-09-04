@@ -29,8 +29,113 @@ class FlextFields:
     Core (basic field types), Validation (constraint checking), Registry
     (field management), Schema (processing and metadata), Factory (creation patterns).
 
-
+    Using Strategy Pattern to reduce complexity by extracting validation logic into
+    composable strategy classes following existing flext-core architectural patterns.
     """
+
+    # ==========================================================================
+    # VALIDATION STRATEGIES - Strategy Pattern for field validation
+    # ==========================================================================
+
+    class ValidationStrategies:
+        """Strategy Pattern implementations for field validation using existing patterns."""
+
+        class BaseValidationStrategy[T]:
+            """Base validation strategy following flext-core patterns."""
+
+            @abstractmethod
+            def validate(self, value: object, field_name: str) -> FlextResult[T]:
+                """Validate value according to strategy rules."""
+
+        class TypeValidationStrategy[T](BaseValidationStrategy[T]):
+            """Strategy for type validation using flext-core type system."""
+
+            def __init__(self, expected_type: type[T]) -> None:
+                self.expected_type = expected_type
+
+            def validate(self, value: object, field_name: str = "") -> FlextResult[T]:
+                """Validate type matches expected type."""
+                _ = field_name  # Unused parameter acknowledgment
+                if not isinstance(value, self.expected_type):
+                    return FlextResult[T].fail(
+                        FlextConstants.Messages.TYPE_MISMATCH,
+                        error_code=FlextConstants.Errors.TYPE_ERROR,
+                    )
+                return FlextResult[T].ok(value)
+
+        class LengthValidationStrategy(BaseValidationStrategy[str]):
+            """Strategy for string length validation using flext-core constraints."""
+
+            def __init__(
+                self, min_length: int | None = None, max_length: int | None = None,
+            ) -> None:
+                self.min_length = min_length
+                self.max_length = max_length
+
+            def validate(self, value: object, field_name: str = "") -> FlextResult[str]:
+                """Validate string length constraints."""
+                _ = field_name  # Unused parameter acknowledgment
+                if not isinstance(value, str):
+                    return FlextResult[str].fail(
+                        f"Value must be string for length validation: {type(value)}",
+                    )
+
+                if self.min_length is not None and len(value) < self.min_length:
+                    return FlextResult[str].fail(
+                        f"String too short: {len(value)} < {self.min_length}",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+
+                if self.max_length is not None and len(value) > self.max_length:
+                    return FlextResult[str].fail(
+                        f"String too long: {len(value)} > {self.max_length}",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+
+                return FlextResult[str].ok(value)
+
+        class PatternValidationStrategy(BaseValidationStrategy[str]):
+            """Strategy for pattern validation using flext-core regex patterns."""
+
+            def __init__(self, pattern: str | None = None) -> None:
+                self.pattern = re.compile(pattern) if pattern else None
+
+            def validate(self, value: object, field_name: str = "") -> FlextResult[str]:
+                """Validate string matches pattern."""
+                _ = field_name  # Unused parameter acknowledgment
+                if not isinstance(value, str):
+                    return FlextResult[str].fail(
+                        f"Value must be string for pattern validation: {type(value)}",
+                    )
+
+                if self.pattern and not self.pattern.match(value):
+                    return FlextResult[str].fail(
+                        f"String does not match pattern: {value}",
+                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    )
+
+                return FlextResult[str].ok(value)
+
+        class CompositeValidationStrategy[T](BaseValidationStrategy[T]):
+            """Composite strategy that chains multiple validation strategies using Railway Pattern."""
+
+            def __init__(
+                self,
+                strategies: list[
+                    FlextFields.ValidationStrategies.BaseValidationStrategy[T]
+                ],
+            ) -> None:
+                self.strategies = strategies
+
+            def validate(self, value: object, field_name: str) -> FlextResult[T]:
+                """Apply all validation strategies in Railway Pattern sequence."""
+                current_value = value
+                for strategy in self.strategies:
+                    result = strategy.validate(current_value, field_name)
+                    if result.is_failure:
+                        return result
+                    current_value = result.unwrap()
+                return FlextResult[T].ok(cast("T", current_value))
 
     # ==========================================================================
     # CORE FIELD TYPES - Foundation field implementations
@@ -90,7 +195,7 @@ class FlextFields:
                 }
 
         class StringField(BaseField[str]):
-            """String field with length and pattern validation."""
+            """String field with length and pattern validation using Strategy Pattern."""
 
             def __init__(
                 self,
@@ -104,43 +209,34 @@ class FlextFields:
                 pattern: str | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
-                self.min_length = min_length
-                self.max_length = max_length
-                self.pattern = re.compile(pattern) if pattern else None
+                # Create validation strategies using Strategy Pattern
+                strategies = [
+                    FlextFields.ValidationStrategies.TypeValidationStrategy(str),
+                    FlextFields.ValidationStrategies.LengthValidationStrategy(
+                        min_length, max_length,
+                    ),
+                ]
+                if pattern:
+                    strategies.append(
+                        FlextFields.ValidationStrategies.PatternValidationStrategy(
+                            pattern,
+                        ),
+                    )
+                self.validation_strategy = (
+                    FlextFields.ValidationStrategies.CompositeValidationStrategy(
+                        strategies,
+                    )
+                )
 
             @override
             def validate(self, value: object) -> FlextResult[str]:
-                """Validate string value with length and pattern constraints."""
+                """Validate using Strategy Pattern - REDUCED COMPLEXITY."""
                 if value is None and not self.required:
                     return FlextResult[str].ok(self.default or "")
 
-                if not isinstance(value, str):
-                    return FlextResult[str].fail(
-                        FlextConstants.Messages.TYPE_MISMATCH,
-                        error_code=FlextConstants.Errors.TYPE_ERROR,
-                    )
-
-                if self.min_length is not None and len(value) < self.min_length:
-                    return FlextResult[str].fail(
-                        f"String too short: {len(value)} < {self.min_length}",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-
-                if self.max_length is not None and len(value) > self.max_length:
-                    return FlextResult[str].fail(
-                        f"String too long: {len(value)} > {self.max_length}",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-
-                if self.pattern and not self.pattern.match(value):
-                    return FlextResult[str].fail(
-                        f"String does not match pattern: {self.pattern.pattern}",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-
-                return FlextResult[str].ok(value)
+                return self.validation_strategy.validate(value, self.name)
 
         class IntegerField(BaseField[int]):
             """Integer field with range validation."""
@@ -156,7 +252,7 @@ class FlextFields:
                 max_value: int | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
                 self.min_value = min_value
                 self.max_value = max_value
@@ -210,7 +306,7 @@ class FlextFields:
                 precision: int | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
                 self.min_value = min_value
                 self.max_value = max_value
@@ -268,7 +364,7 @@ class FlextFields:
                 description: str = "",
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
 
             @override
@@ -356,7 +452,7 @@ class FlextFields:
                 description: str = "",
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
 
             @override
@@ -375,7 +471,7 @@ class FlextFields:
                     if self.default:
                         return FlextResult[str].ok(self.default)
                     return FlextResult[str].ok(
-                        FlextUtilities.Generators.generate_uuid()
+                        FlextUtilities.Generators.generate_uuid(),
                     )
 
                 if not isinstance(value, str):
@@ -409,7 +505,7 @@ class FlextFields:
                 max_date: datetime | None = None,
             ) -> None:
                 super().__init__(
-                    name, required=required, default=default, description=description
+                    name, required=required, default=default, description=description,
                 )
                 self.date_format = date_format
                 self.min_date = min_date
@@ -442,7 +538,7 @@ class FlextFields:
                             # Fallback to strptime for custom formats,
                             # then make timezone-aware
                             dt_value = datetime.strptime(
-                                value, self.date_format
+                                value, self.date_format,
                             ).replace(tzinfo=UTC)
                     except ValueError:
                         return FlextResult[datetime].fail(
@@ -556,7 +652,7 @@ class FlextFields:
             def __init__(self) -> None:
                 self._fields: dict[str, FlextFields.Core.BaseField[object]] = {}
                 self._field_types: dict[
-                    str, type[FlextFields.Core.BaseField[object]]
+                    str, type[FlextFields.Core.BaseField[object]],
                 ] = {}
 
             def register_field(
@@ -577,7 +673,7 @@ class FlextFields:
                 return FlextResult[None].ok(None)
 
             def get_field(
-                self, name: str
+                self, name: str,
             ) -> FlextResult[FlextFields.Core.BaseField[object]]:
                 """Get registered field by name."""
                 if not name or not name.strip():
@@ -613,7 +709,7 @@ class FlextFields:
                 return FlextResult[None].ok(None)
 
             def get_field_type(
-                self, type_name: str
+                self, type_name: str,
             ) -> FlextResult[type[FlextFields.Core.BaseField[object]]]:
                 """Get registered field type by name."""
                 field_type = self._field_types.get(type_name)
@@ -624,7 +720,7 @@ class FlextFields:
                     )
 
                 return FlextResult[type[FlextFields.Core.BaseField[object]]].ok(
-                    field_type
+                    field_type,
                 )
 
             def list_fields(self) -> list[str]:
@@ -640,7 +736,7 @@ class FlextFields:
                 field_result = self.get_field(name)
                 if not field_result.success:
                     return FlextResult[dict[str, object]].fail(
-                        field_result.error or "Unknown error"
+                        field_result.error or "Unknown error",
                     )
 
                 metadata = field_result.value.get_metadata()
@@ -826,7 +922,7 @@ class FlextFields:
             try:
                 # Create field with specific parameter handling for each type
                 field = FlextFields.Factory._create_field_with_params(
-                    field_class, name, field_type, config
+                    field_class, name, field_type, config,
                 )
                 return FlextResult[object].ok(field)
             except Exception as e:
@@ -1316,7 +1412,7 @@ class FlextFields:
 
                 # Checagem de tipo
                 if not isinstance(field_type_obj, str) or not isinstance(
-                    field_name_obj, str
+                    field_name_obj, str,
                 ):
                     errors.append("Field 'type' and 'name' must be strings")
                     continue
@@ -1330,11 +1426,11 @@ class FlextFields:
                 }
 
                 result = FlextFields.Factory.create_field(
-                    field_type, field_name, **config
+                    field_type, field_name, **config,
                 )
                 if result.success:
                     fields.append(
-                        cast("FlextFields.Core.BaseField[object]", result.value)
+                        cast("FlextFields.Core.BaseField[object]", result.value),
                     )
                 else:
                     errors.append(f"{field_name}: {result.error}")
@@ -1360,7 +1456,7 @@ class FlextFields:
                 self.config: dict[str, object] = {}
 
             def with_required(
-                self, *, required: bool
+                self, *, required: bool,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set field as required or optional.
 
@@ -1375,7 +1471,7 @@ class FlextFields:
                 return self
 
             def with_default(
-                self, default_value: object
+                self, default_value: object,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set default value for field.
 
@@ -1390,7 +1486,7 @@ class FlextFields:
                 return self
 
             def with_description(
-                self, description: str
+                self, description: str,
             ) -> FlextFields.Factory.FieldBuilder:
                 """Set field description.
 
@@ -1469,7 +1565,7 @@ class FlextFields:
 
                 """
                 return FlextFields.Factory.create_field(
-                    self.field_type, self.name, **self.config
+                    self.field_type, self.name, **self.config,
                 )
 
     # ==========================================================================
@@ -1514,12 +1610,12 @@ class FlextFields:
             # Add type-specific analysis
             if isinstance(field, FlextFields.Core.StringField):
                 analysis["string_constraints"] = {
-                    "min_length": field.min_length,
-                    "max_length": field.max_length,
-                    "pattern": field.pattern.pattern if field.pattern else None,
+                    "min_length": getattr(field, "min_length", None),
+                    "max_length": getattr(field, "max_length", None),
+                    "pattern": getattr(field, "pattern", None),
                 }
             elif isinstance(
-                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)
+                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
             ):
                 analysis["numeric_constraints"] = {
                     "min_value": getattr(field, "min_value", None),
@@ -1554,28 +1650,35 @@ class FlextFields:
 
             # Type-specific capabilities
             if isinstance(field, FlextFields.Core.StringField):
-                capabilities.update({
-                    "supports_length_validation": True,
-                    "supports_pattern_validation": field.pattern is not None,
-                })
+                capabilities.update(
+                    {
+                        "supports_length_validation": True,
+                        "supports_pattern_validation": getattr(field, "pattern", None)
+                        is not None,
+                    },
+                )
             elif isinstance(
-                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)
+                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField),
             ):
-                capabilities.update({
-                    "supports_range_validation": True,
-                    "supports_precision": isinstance(
-                        field, FlextFields.Core.FloatField
-                    ),
-                })
+                capabilities.update(
+                    {
+                        "supports_range_validation": True,
+                        "supports_precision": isinstance(
+                            field, FlextFields.Core.FloatField,
+                        ),
+                    },
+                )
             elif isinstance(field, FlextFields.Core.EmailField):
                 capabilities["validates_email_format"] = True
             elif isinstance(field, FlextFields.Core.UuidField):
                 capabilities["validates_uuid_format"] = True
             elif isinstance(field, FlextFields.Core.DateTimeField):
-                capabilities.update({
-                    "supports_date_format": True,
-                    "supports_date_range": True,
-                })
+                capabilities.update(
+                    {
+                        "supports_date_format": True,
+                        "supports_date_range": True,
+                    },
+                )
 
             return capabilities
 
@@ -1640,7 +1743,7 @@ class FlextFields:
 
     @classmethod
     def configure_fields_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure fields system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1652,7 +1755,7 @@ class FlextFields:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
 
             # Validate log level
@@ -1663,7 +1766,7 @@ class FlextFields:
                 ]
                 if log_value not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
                     )
 
             # Validate validation level
@@ -1674,7 +1777,7 @@ class FlextFields:
                 ]
                 if val_value not in valid_validation_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}"
+                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}",
                     )
 
             # Build validated configuration with defaults
@@ -1684,7 +1787,7 @@ class FlextFields:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value
+                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
@@ -1693,12 +1796,12 @@ class FlextFields:
                 "enable_field_validation": config.get("enable_field_validation", True),
                 "enable_type_checking": config.get("enable_type_checking", True),
                 "enable_constraint_validation": config.get(
-                    "enable_constraint_validation", True
+                    "enable_constraint_validation", True,
                 ),
                 "max_field_cache_size": config.get("max_field_cache_size", 500),
                 "enable_field_metadata": config.get("enable_field_metadata", True),
                 "enable_schema_validation": config.get(
-                    "enable_schema_validation", True
+                    "enable_schema_validation", True,
                 ),
             }
 
@@ -1706,7 +1809,7 @@ class FlextFields:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Fields system configuration failed: {e}"
+                f"Fields system configuration failed: {e}",
             )
 
     @classmethod
@@ -1765,12 +1868,12 @@ class FlextFields:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get fields system configuration: {e}"
+                f"Failed to get fields system configuration: {e}",
             )
 
     @classmethod
     def create_environment_fields_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls, environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific fields system configuration."""
         try:
@@ -1780,7 +1883,7 @@ class FlextFields:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Base configuration
@@ -1790,66 +1893,74 @@ class FlextFields:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_field_validation": True,  # Strict validation in production
-                    "enable_type_checking": True,  # Type checking for safety
-                    "enable_constraint_validation": True,  # All constraints in production
-                    "max_field_cache_size": 1000,  # Larger cache for production
-                    "enable_field_metadata": False,  # Minimal metadata for performance
-                    "enable_schema_validation": True,  # Schema validation for safety
-                    "cache_validation_results": True,  # Cache for performance
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_field_validation": True,  # Strict validation in production
+                        "enable_type_checking": True,  # Type checking for safety
+                        "enable_constraint_validation": True,  # All constraints in production
+                        "max_field_cache_size": 1000,  # Larger cache for production
+                        "enable_field_metadata": False,  # Minimal metadata for performance
+                        "enable_schema_validation": True,  # Schema validation for safety
+                        "cache_validation_results": True,  # Cache for performance
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                    },
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_field_validation": True,  # Validation for development
-                    "enable_type_checking": True,  # Type checking for catching issues
-                    "enable_constraint_validation": True,  # Full constraints for development
-                    "max_field_cache_size": 200,  # Smaller cache for development
-                    "enable_field_metadata": True,  # Full metadata for debugging
-                    "enable_schema_validation": True,  # Schema validation for development
-                    "cache_validation_results": False,  # No caching for fresh results
-                    "enable_detailed_error_messages": True,  # Detailed errors for debugging
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_field_validation": True,  # Validation for development
+                        "enable_type_checking": True,  # Type checking for catching issues
+                        "enable_constraint_validation": True,  # Full constraints for development
+                        "max_field_cache_size": 200,  # Smaller cache for development
+                        "enable_field_metadata": True,  # Full metadata for debugging
+                        "enable_schema_validation": True,  # Schema validation for development
+                        "cache_validation_results": False,  # No caching for fresh results
+                        "enable_detailed_error_messages": True,  # Detailed errors for debugging
+                    },
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_field_validation": True,  # Strict validation for tests
-                    "enable_type_checking": True,  # Type checking for test accuracy
-                    "enable_constraint_validation": True,  # Full constraints for tests
-                    "max_field_cache_size": 50,  # Minimal cache for tests
-                    "enable_field_metadata": True,  # Metadata for test inspection
-                    "enable_schema_validation": True,  # Schema validation for tests
-                    "cache_validation_results": False,  # No caching in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_field_validation": True,  # Strict validation for tests
+                        "enable_type_checking": True,  # Type checking for test accuracy
+                        "enable_constraint_validation": True,  # Full constraints for tests
+                        "max_field_cache_size": 50,  # Minimal cache for tests
+                        "enable_field_metadata": True,  # Metadata for test inspection
+                        "enable_schema_validation": True,  # Schema validation for tests
+                        "cache_validation_results": False,  # No caching in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    },
+                )
             else:  # staging, local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_field_validation": True,  # Standard validation
-                    "enable_type_checking": True,  # Standard type checking
-                    "enable_constraint_validation": True,  # Standard constraints
-                    "max_field_cache_size": 500,  # Standard cache size
-                    "enable_field_metadata": True,  # Standard metadata
-                    "enable_schema_validation": True,  # Standard schema validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_field_validation": True,  # Standard validation
+                        "enable_type_checking": True,  # Standard type checking
+                        "enable_constraint_validation": True,  # Standard constraints
+                        "max_field_cache_size": 500,  # Standard cache size
+                        "enable_field_metadata": True,  # Standard metadata
+                        "enable_schema_validation": True,  # Standard schema validation
+                    },
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment fields config: {e}"
+                f"Failed to create environment fields config: {e}",
             )
 
     @classmethod
     def optimize_fields_performance(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize fields system performance based on configuration."""
         try:
@@ -1864,61 +1975,77 @@ class FlextFields:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 2000),
-                    "enable_field_caching": True,
-                    "cache_validation_results": True,
-                    "enable_lazy_validation": True,
-                    "batch_validation_size": 100,
-                    "enable_concurrent_validation": True,
-                    "memory_optimization": "aggressive",
-                    "enable_field_pooling": True,
-                    "precompile_constraints": True,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get(
+                            "max_field_cache_size", 2000,
+                        ),
+                        "enable_field_caching": True,
+                        "cache_validation_results": True,
+                        "enable_lazy_validation": True,
+                        "batch_validation_size": 100,
+                        "enable_concurrent_validation": True,
+                        "memory_optimization": "aggressive",
+                        "enable_field_pooling": True,
+                        "precompile_constraints": True,
+                    },
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 1000),
-                    "enable_field_caching": True,
-                    "cache_validation_results": False,
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 50,
-                    "enable_concurrent_validation": False,
-                    "memory_optimization": "balanced",
-                    "enable_field_pooling": False,
-                    "precompile_constraints": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get(
+                            "max_field_cache_size", 1000,
+                        ),
+                        "enable_field_caching": True,
+                        "cache_validation_results": False,
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 50,
+                        "enable_concurrent_validation": False,
+                        "memory_optimization": "balanced",
+                        "enable_field_pooling": False,
+                        "precompile_constraints": False,
+                    },
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 200),
-                    "enable_field_caching": False,
-                    "cache_validation_results": False,
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 10,
-                    "enable_concurrent_validation": False,
-                    "memory_optimization": "conservative",
-                    "enable_field_pooling": False,
-                    "precompile_constraints": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get("max_field_cache_size", 200),
+                        "enable_field_caching": False,
+                        "cache_validation_results": False,
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 10,
+                        "enable_concurrent_validation": False,
+                        "memory_optimization": "conservative",
+                        "enable_field_pooling": False,
+                        "precompile_constraints": False,
+                    },
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_field_cache_size": config.get("max_field_cache_size", 500),
-                    "enable_field_caching": config.get("enable_field_caching", True),
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_field_cache_size": config.get("max_field_cache_size", 500),
+                        "enable_field_caching": config.get(
+                            "enable_field_caching", True,
+                        ),
+                        "memory_optimization": "balanced",
+                    },
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                },
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Fields performance optimization failed: {e}"
+                f"Fields performance optimization failed: {e}",
             )
 
     # =============================================================================

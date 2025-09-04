@@ -186,7 +186,7 @@ class TestFlextCore:
 
         data = {"user_id": "123", "action": "create"}
         result = core.create_payload(
-            data, "command", "api_service", "database_service", "corr_123"
+            data, "command", "api_service", "database_service", "corr_123",
         )
 
         assert result.success
@@ -198,7 +198,7 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         result = core.create_message(
-            "UserCreated", user_id="123", email="test@example.com"
+            "UserCreated", user_id="123", email="test@example.com",
         )
 
         assert result.success
@@ -211,7 +211,7 @@ class TestFlextCore:
 
         data = {"email": "user@example.com", "name": "John"}
         result = core.create_domain_event(
-            "UserRegistered", "user_123", "User", data, "registration_service", 1
+            "UserRegistered", "user_123", "User", data, "registration_service", 1,
         )
 
         assert result.success

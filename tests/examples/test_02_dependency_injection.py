@@ -263,7 +263,7 @@ class TestNotificationService:
         return NotificationService()
 
     def test_send_welcome_success(
-        self, notification_service: NotificationService
+        self, notification_service: NotificationService,
     ) -> None:
         """Test successful welcome notification."""
         user = User(
@@ -284,7 +284,7 @@ class TestNotificationService:
         assert "test@example.com" in output.getvalue()
 
     def test_send_welcome_invalid_email(
-        self, notification_service: NotificationService
+        self, notification_service: NotificationService,
     ) -> None:
         """Test welcome notification with invalid email."""
         user = User(
@@ -315,19 +315,19 @@ class TestUserRegistrationService:
 
     @pytest.fixture
     def registration_service(
-        self, services: tuple[UserService, NotificationService]
+        self, services: tuple[UserService, NotificationService],
     ) -> UserRegistrationService:
         """Create UserRegistrationService with dependencies."""
         user_service, notification_service = services
         return UserRegistrationService(user_service, notification_service)
 
     def test_register_user_success(
-        self, registration_service: UserRegistrationService
+        self, registration_service: UserRegistrationService,
     ) -> None:
         """Test successful user registration."""
         with contextlib.redirect_stdout(StringIO()) as output:
             result = registration_service.register_user(
-                "Test User", "test@example.com", 25
+                "Test User", "test@example.com", 25,
             )
 
         assert result.success
@@ -337,7 +337,7 @@ class TestUserRegistrationService:
         assert "Welcome email sent" in output.getvalue()
 
     def test_register_user_validation_failure(
-        self, registration_service: UserRegistrationService
+        self, registration_service: UserRegistrationService,
     ) -> None:
         """Test registration with validation failure."""
         result = registration_service.register_user("A", "test@example.com", 25)
@@ -346,24 +346,24 @@ class TestUserRegistrationService:
         assert "Name must be at least 2 characters" in str(result.error)
 
     def test_register_user_duplicate(
-        self, registration_service: UserRegistrationService
+        self, registration_service: UserRegistrationService,
     ) -> None:
         """Test duplicate user registration."""
         # Register first user
         result1 = registration_service.register_user(
-            "Test User", "test@example.com", 25
+            "Test User", "test@example.com", 25,
         )
         assert result1.success
 
         # Try to register duplicate
         result2 = registration_service.register_user(
-            "Another User", "test@example.com", 30
+            "Another User", "test@example.com", 30,
         )
         assert result2.is_failure
         assert "already exists" in str(result2.error)
 
     def test_register_user_notification_failure(
-        self, services: tuple[UserService, NotificationService]
+        self, services: tuple[UserService, NotificationService],
     ) -> None:
         """Test registration continues despite notification failure."""
         user_service, _ = services
@@ -380,7 +380,7 @@ class TestUserRegistrationService:
 
         with contextlib.redirect_stdout(StringIO()) as output:
             result = registration_service.register_user(
-                "Test User", "test@example.com", 25
+                "Test User", "test@example.com", 25,
             )
 
         # Registration should succeed despite notification failure
@@ -516,7 +516,7 @@ class TestMainFunction:
         assert "Dependency injection demo completed" not in output_str
 
     def test_main_service_retrieval_failure(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test main function with service retrieval failure."""
 
@@ -558,7 +558,7 @@ class TestIntegration:
         registration_result = container.get("registration_service")
         assert registration_result.success
         registration_service = cast(
-            "UserRegistrationService", registration_result.unwrap()
+            "UserRegistrationService", registration_result.unwrap(),
         )
 
         # Register multiple users
@@ -595,7 +595,7 @@ class TestIntegration:
         registration_result = container.get("registration_service")
         assert registration_result.success
         registration_service = cast(
-            "UserRegistrationService", registration_result.unwrap()
+            "UserRegistrationService", registration_result.unwrap(),
         )
 
         # Test various validation errors
@@ -643,7 +643,7 @@ class TestRailwayPatternIntegration:
     def test_railway_pattern_error_propagation(self) -> None:
         """Test that errors properly propagate through railway pattern."""
         registration_service = UserRegistrationService(
-            UserService(), NotificationService()
+            UserService(), NotificationService(),
         )
 
         # Test with invalid request
@@ -656,12 +656,12 @@ class TestRailwayPatternIntegration:
     def test_railway_pattern_success_propagation(self) -> None:
         """Test that success properly propagates through railway pattern."""
         registration_service = UserRegistrationService(
-            UserService(), NotificationService()
+            UserService(), NotificationService(),
         )
 
         # Test with valid request
         result = registration_service.register_user(
-            "Success Test", "success@example.com", 30
+            "Success Test", "success@example.com", 30,
         )
         assert result.is_success
 

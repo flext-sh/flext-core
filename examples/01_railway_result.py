@@ -2,13 +2,10 @@
 """01 - Railway-Oriented Programming with FLEXT patterns.
 
 Demonstrates FlextResult[T] railway patterns using maximum FLEXT integration.
-Follows FLEXT_REFACTORING_PROMPT.md strictly for proper ABI compliance.
+Follows FLEXT_REFACTORING_PROMPT.md strictly for proper ABI compliance
 
-Architecture Overview:
-    Uses maximum FlextModels, FlextConstants, FlextUtilities for centralized patterns.
-    All business logic returns FlextResult[T] for type-safe error handling.
-    Implements proper SOLID principles with protocol-based design.
-    Consolidated into single service class following FLEXT patterns.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -129,7 +126,7 @@ class UserRegistrationService:
         self._utilities = FlextUtilities()
 
     def process_registration(
-        self, request: UserRegistrationRequest
+        self, request: UserRegistrationRequest,
     ) -> FlextResult[RegistrationResult]:
         """Process user registration with proper validation and error handling.
 
@@ -144,14 +141,14 @@ class UserRegistrationService:
         validation_result = request.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult[RegistrationResult].fail(
-                validation_result.error or FlextConstants.Errors.VALIDATION_ERROR
+                validation_result.error or FlextConstants.Errors.VALIDATION_ERROR,
             )
 
         # Generate correlation ID
-        correlation_id = self._utilities.generate_correlation_id()
+        correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
         # Create user entity with proper ID generation
-        entity_id = self._utilities.generate_entity_id()
+        entity_id = FlextUtilities.Generators.generate_entity_id()
         try:
             user = User(
                 id=entity_id,
@@ -175,7 +172,7 @@ class UserRegistrationService:
         return FlextResult[RegistrationResult].ok(result)
 
     def process_batch(
-        self, requests: list[UserRegistrationRequest]
+        self, requests: list[UserRegistrationRequest],
     ) -> FlextResult[BatchResult]:
         """Process batch of registration requests.
 
@@ -218,7 +215,7 @@ class UserRegistrationService:
         return FlextResult[BatchResult].ok(batch_result)
 
     def process_json_registration(
-        self, json_data: str
+        self, json_data: str,
     ) -> FlextResult[RegistrationResult]:
         """Process JSON registration data.
 
@@ -264,7 +261,7 @@ def demonstrate_railway_patterns() -> None:
     # 1. Single registration processing
     print("\n1. Single Registration Processing:")
     request = UserRegistrationRequest(
-        name="Alice Johnson", email="alice@company.com", age=28
+        name="Alice Johnson", email="alice@company.com", age=28,
     )
 
     result = service.process_registration(request)

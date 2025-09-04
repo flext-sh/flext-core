@@ -16,10 +16,12 @@ class TestUserService(FlextDomainService[dict[str, str]]):
 
     def execute(self) -> FlextResult[dict[str, str]]:
         """Execute user operation."""
-        return FlextResult[dict[str, str]].ok({
-            "user_id": self.user_id,
-            "email": self.email,
-        })
+        return FlextResult[dict[str, str]].ok(
+            {
+                "user_id": self.user_id,
+                "email": self.email,
+            },
+        )
 
 
 class TestComplexService(FlextDomainService[str]):
@@ -109,7 +111,7 @@ class TestDomainServicesFixed:
         service = TestUserService(user_id="123")
 
         with pytest.raises(Exception):  # Pydantic ValidationError or similar
-            setattr(service, "user_id", "456")
+            service.user_id = "456"
 
     def test_execute_method_abstract(self) -> None:
         """Test that execute method is abstract."""
@@ -230,7 +232,7 @@ class TestDomainServicesFixed:
             return f"{name}: {value}"
 
         result = service.execute_operation(
-            "format_string", test_operation, name="test", value=20
+            "format_string", test_operation, name="test", value=20,
         )
         assert result.success is True
         assert result.unwrap() == "test: 20"
@@ -424,7 +426,7 @@ class TestDomainServicesFixed:
                 return FlextResult[dict[str, object]].ok(self.data)
 
         service = ComplexTypeService(
-            data={"key": "value", "nested": {"count": 42}}, numbers=[1, 2, 3, 4, 5]
+            data={"key": "value", "nested": {"count": 42}}, numbers=[1, 2, 3, 4, 5],
         )
 
         result = service.execute()
@@ -442,7 +444,7 @@ class TestDomainServicesFixed:
         # Use setattr to bypass type checking for this test
         service = TestUserService(user_id="123")
         with pytest.raises(Exception):  # Pydantic validation error
-            setattr(service, "extra_field", "not_allowed")
+            service.extra_field = "not_allowed"
 
 
 class TestDomainServiceStaticMethods:
@@ -451,7 +453,7 @@ class TestDomainServiceStaticMethods:
     def test_configure_domain_services_system(self) -> None:
         """Test configure_domain_services_system method."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "test",
             "enable_performance_monitoring": True,
@@ -487,7 +489,7 @@ class TestDomainServiceStaticMethods:
         """Test create_environment_domain_services_config method."""
         # Test development environment
         result = FlextDomainService.create_environment_domain_services_config(
-            "development"
+            "development",
         )
         assert result.success is True
         config = result.unwrap()
@@ -495,7 +497,7 @@ class TestDomainServiceStaticMethods:
 
         # Test production environment
         result = FlextDomainService.create_environment_domain_services_config(
-            "production"
+            "production",
         )
         assert result.success is True
         config = result.unwrap()
@@ -510,7 +512,7 @@ class TestDomainServiceStaticMethods:
     def test_optimize_domain_services_performance(self) -> None:
         """Test optimize_domain_services_performance method."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "production",
             "enable_caching": True,

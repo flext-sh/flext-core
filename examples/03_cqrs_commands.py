@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """03 - CQRS Commands: Maximum FlextCore Ecosystem Showcase.
 
-Demonstrates 20+ FlextCore features in minimal code:
-• FlextModels/ValueObject (DDD) • FlextResult railway pattern
-• FlextContainer DI • FlextCommands/Handlers (CQRS)
-• FlextDecorators enterprise • FlextValidations predicates
-• FlextContext correlation • FlextLogger structured •  metrics
-• FlextGuards type safety • FlextMixins timestamps • FlextUtilities generators
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -86,7 +82,7 @@ class CreateUserCommand(FlextCommands.Models.Command):
 
 
 class UserCommandHandler(
-    FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]
+    FlextCommands.Handlers.CommandHandler[CreateUserCommand, User],
 ):
     """FlextCommands + FlextResult + FlextContainer + FlextUtilities + FlextLogger."""
 
@@ -101,7 +97,7 @@ class UserCommandHandler(
                     name=command.name,
                     email=e,
                     age=command.age,
-                )
+                ),
             )
             .tap(self._save_user)  # FlextResult tap
         )
@@ -109,10 +105,10 @@ class UserCommandHandler(
     def _save_user(self, user: User) -> None:
         """FlextContainer + FlextLogger integration."""
         db = cast(
-            "dict[str, User]", container.get("user_db").value
+            "dict[str, User]", container.get("user_db").value,
         )  # FlextContainer DI
         events = cast(
-            "list[dict[str, object]]", container.get("events").value
+            "list[dict[str, object]]", container.get("events").value,
         )  # FlextContainer DI
 
         if user.id:

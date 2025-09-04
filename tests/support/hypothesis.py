@@ -127,7 +127,7 @@ class FlextStrategies:
                     exchange=st.integers(min_value=200, max_value=999).map(str),
                     number=st.integers(min_value=1000, max_value=9999).map(str),
                 ),
-            ]
+            ],
         )
 
     @staticmethod
@@ -163,7 +163,7 @@ class FlextStrategies:
                             max_size=50,
                         ),
                     ),
-                ]
+                ],
             ),
         )
 
@@ -367,7 +367,7 @@ class EdgeCaseStrategies:
                     EdgeCaseStrategies._repeat_spaces,
                     n=st.integers(min_value=1, max_value=100),
                 ),
-            ]
+            ],
         )
 
     @staticmethod
@@ -379,18 +379,18 @@ class EdgeCaseStrategies:
                 st.just(1),
                 st.just(-1),
                 st.integers(
-                    min_value=-(2**31), max_value=-(2**31) + 10
+                    min_value=-(2**31), max_value=-(2**31) + 10,
                 ),  # Near min int32
                 st.integers(
-                    min_value=2**31 - 10, max_value=2**31 - 1
+                    min_value=2**31 - 10, max_value=2**31 - 1,
                 ),  # Near max int32
                 st.integers(
-                    min_value=-(2**63), max_value=-(2**63) + 10
+                    min_value=-(2**63), max_value=-(2**63) + 10,
                 ),  # Near min int64
                 st.integers(
-                    min_value=2**63 - 10, max_value=2**63 - 1
+                    min_value=2**63 - 10, max_value=2**63 - 1,
                 ),  # Near max int64
-            ]
+            ],
         )
 
     @staticmethod
@@ -406,7 +406,7 @@ class EdgeCaseStrategies:
                 st.floats(min_value=-1e-10, max_value=0.0),  # Very small negative
                 st.floats(min_value=1e10, max_value=1e15),  # Very large positive
                 st.floats(min_value=-1e15, max_value=-1e10),  # Very large negative
-            ]
+            ],
         )
 
     @staticmethod
@@ -418,11 +418,11 @@ class EdgeCaseStrategies:
                 st.text(alphabet="áéíóúñü", min_size=1, max_size=20),  # Accented chars
                 st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),  # Greek letters
                 st.text(
-                    alphabet="中文测试", min_size=1, max_size=10
+                    alphabet="中文测试", min_size=1, max_size=10,
                 ),  # Chinese characters
                 st.builds(EdgeCaseStrategies._zero_width_spaces),  # Zero-width spaces
                 st.builds(EdgeCaseStrategies._null_character_string),  # Null characters
-            ]
+            ],
         )
 
     @staticmethod
@@ -432,7 +432,7 @@ class EdgeCaseStrategies:
             [
                 st.just({}),  # Empty dict
                 st.dictionaries(
-                    st.just("key1"), st.none(), min_size=2, max_size=2
+                    st.just("key1"), st.none(), min_size=2, max_size=2,
                 ),  # None values
                 st.dictionaries(
                     st.sampled_from([f"key_{i}" for i in range(5)]),
@@ -444,7 +444,7 @@ class EdgeCaseStrategies:
                     st.one_of([st.none(), st.booleans(), st.integers(), st.text()]),
                     max_size=5,
                 ),
-            ]
+            ],
         )
 
 
@@ -534,7 +534,7 @@ class PropertyTestHelpers:
 
     @staticmethod
     def _build_test_scenario(
-        data: object, id_val: str, scenario_name: str
+        data: object, id_val: str, scenario_name: str,
     ) -> dict[str, object]:
         """Build test scenario dictionary with metadata."""
         return {
@@ -585,7 +585,7 @@ class CompositeStrategies:
                         st.text(min_size=1, max_size=20),
                         st.one_of([st.text(), st.integers(), st.booleans()]),
                         max_size=5,
-                    )
+                    ),
                 ),
             }
 
@@ -599,7 +599,7 @@ class CompositeStrategies:
         def _api_request(draw: st.DrawFn) -> dict[str, object]:
             return {
                 "method": draw(
-                    st.sampled_from(["GET", "POST", "PUT", "DELETE", "PATCH"])
+                    st.sampled_from(["GET", "POST", "PUT", "DELETE", "PATCH"]),
                 ),
                 "url": draw(FlextStrategies.urls()),
                 "headers": draw(
@@ -611,11 +611,11 @@ class CompositeStrategies:
                                 "Accept",
                                 "User-Agent",
                                 "X-Correlation-ID",
-                            ]
+                            ],
                         ),
                         st.text(min_size=1, max_size=100),
                         max_size=5,
-                    )
+                    ),
                 ),
                 "body": draw(
                     st.one_of(
@@ -623,8 +623,8 @@ class CompositeStrategies:
                             st.none(),
                             st.dictionaries(st.text(), st.text(), max_size=10),
                             st.text(max_size=1000),
-                        ]
-                    )
+                        ],
+                    ),
                 ),
                 "correlation_id": draw(FlextStrategies.correlation_ids()),
             }
@@ -647,7 +647,7 @@ class CompositeStrategies:
                     st.builds(
                         CompositeStrategies._build_database_url,
                         host=st.text(
-                            alphabet=string.ascii_lowercase, min_size=5, max_size=20
+                            alphabet=string.ascii_lowercase, min_size=5, max_size=20,
                         ),
                         port=st.integers(min_value=1000, max_value=65535),
                         db=st.text(
@@ -655,7 +655,7 @@ class CompositeStrategies:
                             min_size=3,
                             max_size=20,
                         ),
-                    )
+                    ),
                 ),
                 "debug": draw(st.booleans()),
                 "timeout_seconds": draw(st.integers(min_value=1, max_value=300)),
@@ -668,10 +668,10 @@ class CompositeStrategies:
                             max_size=30,
                         ),
                         max_size=10,
-                    )
+                    ),
                 ),
                 "environment": draw(
-                    st.sampled_from(["development", "staging", "production"])
+                    st.sampled_from(["development", "staging", "production"]),
                 ),
             }
 

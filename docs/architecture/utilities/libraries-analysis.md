@@ -112,7 +112,7 @@ class FlextMeltanoUtilities:
     """
 
     @classmethod
-    def create_meltano_temp_directory(cls, prefix: str = "flext_meltano_") -> Path:
+    def create_temp_directory(cls, prefix: str = "flext_meltano_") -> Path:
         # Use FlextUtilities for basic operations, add Meltano-specific structure
         temp_dir = Path(tempfile.mkdtemp(prefix=prefix))
 

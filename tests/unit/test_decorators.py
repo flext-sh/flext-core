@@ -87,7 +87,7 @@ class TestFlextDecoratorsValidation:
         """Test basic input validation decorator."""
 
         @FlextDecorators.Validation.validate_input(
-            validator=lambda x: isinstance(x, str), error_message="Must be string"
+            validator=lambda x: isinstance(x, str), error_message="Must be string",
         )
         def process_string(text: str) -> str:
             return text.upper()
@@ -126,7 +126,7 @@ class TestFlextDecoratorsValidation:
         """Test type validation with multiple arguments."""
 
         @FlextDecorators.Validation.validate_types(
-            arg_types=[int, str], return_type=str
+            arg_types=[int, str], return_type=str,
         )
         def format_message(count: int, message: str) -> str:
             return f"{message}_{count}"
@@ -216,7 +216,7 @@ class TestFlextDecoratorsObservability:
         """Test log execution decorator with function parameters."""
 
         @FlextDecorators.Observability.log_execution(
-            include_args=True, include_result=True
+            include_args=True, include_result=True,
         )
         def logged_operation(name: str, count: int) -> str:
             return f"{name}_executed_{count}_times"
@@ -254,7 +254,7 @@ class TestFlextDecoratorsLifecycle:
         """Test deprecated decorator with version info."""
 
         @FlextDecorators.Lifecycle.deprecated(
-            version="2.0", reason="Replaced by new API", removal_version="3.0"
+            version="2.0", reason="Replaced by new API", removal_version="3.0",
         )
         def old_api_function() -> dict[str, str]:
             return {"status": "deprecated"}
@@ -281,7 +281,7 @@ class TestFlextDecoratorsIntegration:
     def test_create_enterprise_decorator_with_validation(self) -> None:
         """Test enterprise decorator with validation."""
         decorator = FlextDecorators.Integration.create_enterprise_decorator(
-            with_validation=True, validator=lambda x: isinstance(x, str)
+            with_validation=True, validator=lambda x: isinstance(x, str),
         )
 
         @decorator
@@ -311,7 +311,7 @@ class TestDecoratorsIntegration:
 
         @FlextDecorators.Lifecycle.deprecated(reason="Use new version")
         @FlextDecorators.Validation.validate_input(
-            validator=lambda x: isinstance(x, str), error_message="Must be string"
+            validator=lambda x: isinstance(x, str), error_message="Must be string",
         )
         def deprecated_validated_function(text: str) -> str:
             return text.lower()

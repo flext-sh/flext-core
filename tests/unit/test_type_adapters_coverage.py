@@ -122,7 +122,7 @@ class TestFlextTypeAdaptersCoverage:
         """Test Foundation.validate_with_adapter with validation failure."""
         adapter = FlextTypeAdapters.Foundation.create_integer_adapter()
         result = FlextTypeAdapters.Foundation.validate_with_adapter(
-            adapter, "invalid_int"
+            adapter, "invalid_int",
         )
 
         assert isinstance(result, FlextResult)
@@ -263,7 +263,7 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test with incompatible data that cannot be serialized to TestUser
         result = FlextTypeAdapters.Application.serialize_to_json(
-            "invalid_string", adapter
+            "invalid_string", adapter,
         )
 
         # Accept that the method might succeed with JSON serialization
@@ -296,7 +296,7 @@ class TestFlextTypeAdaptersCoverage:
 
         adapter = TypeAdapter(TestUser)
         result = FlextTypeAdapters.Application.deserialize_from_json(
-            json_data, TestUser, adapter
+            json_data, TestUser, adapter,
         )
         assert isinstance(result, FlextResult)
         assert result.success is True
@@ -310,13 +310,13 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test invalid JSON
         result = FlextTypeAdapters.Application.deserialize_from_json(
-            "invalid json", TestUser, adapter
+            "invalid json", TestUser, adapter,
         )
         assert result.failure is True
 
         # Test missing required fields
         result = FlextTypeAdapters.Application.deserialize_from_json(
-            '{"name": "Bob"}', TestUser, adapter
+            '{"name": "Bob"}', TestUser, adapter,
         )
         assert result.failure is True
 
@@ -326,7 +326,7 @@ class TestFlextTypeAdaptersCoverage:
 
         adapter = TypeAdapter(TestUser)
         result = FlextTypeAdapters.Application.deserialize_from_dict(
-            data, TestUser, adapter
+            data, TestUser, adapter,
         )
         assert isinstance(result, FlextResult)
         assert result.success is True
@@ -340,13 +340,13 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test with None
         result = FlextTypeAdapters.Application.deserialize_from_dict(
-            None, TestUser, adapter
+            None, TestUser, adapter,
         )
         assert result.failure is True
 
         # Test missing required fields
         result = FlextTypeAdapters.Application.deserialize_from_dict(
-            {"name": "Alice"}, TestUser, adapter
+            {"name": "Alice"}, TestUser, adapter,
         )
         assert result.failure is True
 
@@ -379,7 +379,7 @@ class TestFlextTypeAdaptersCoverage:
                 {"name": "User2", "age": 25, "email": "user2@example.com"},
             ]
             result = FlextTypeAdapters.Application.batch_adapt_types(
-                data_list, TestUser
+                data_list, TestUser,
             )
             assert isinstance(result, FlextResult)
 
@@ -391,7 +391,7 @@ class TestFlextTypeAdaptersCoverage:
                 [
                     str,
                     int,
-                ]
+                ],
             )
             assert pipeline is not None
 
@@ -438,7 +438,7 @@ class TestFlextTypeAdaptersCoverage:
             old_data = {"old_field": "value"}
             new_format = TestUser
             result = FlextTypeAdapters.Application.migrate_data_format(
-                old_data, new_format
+                old_data, new_format,
             )
             assert isinstance(result, FlextResult)
 

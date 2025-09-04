@@ -117,7 +117,7 @@ graph TB
 | ----------------------------- | ------------------------ | ---------------------------------------------------------------------- | --------------- |
 | **Timestamp Management**      | Creation/update tracking | `create_timestamp_fields()`, `update_timestamp()`, `get_age_seconds()` | Utility + Mixin |
 | **Identification Management** | Entity ID management     | `ensure_id()`, `set_id()`, `has_id()`                                  | Utility + Mixin |
-| **Logging Integration**       | Structured logging       | `get_logger()`, `log_operation()`, `log_error()`                       | Utility + Mixin |
+| **Logging Integration**       | Structured logging       | `FlextLogger()`, `log_operation()`, `log_error()`                       | Utility + Mixin |
 | **Serialization**             | JSON/dict conversion     | `to_dict()`, `to_json()`, `load_from_dict()`                           | Utility + Mixin |
 | **Validation**                | Data validation          | `validate_required_fields()`, `add_validation_error()`                 | Utility + Mixin |
 | **State Management**          | Lifecycle tracking       | `initialize_state()`, `set_state()`, `get_state_history()`             | Utility Only    |
@@ -399,7 +399,7 @@ class FlextCore:
 class FlextMeltanoAdapter:
     def __init__(self):
         # Missing systematic mixin adoption
-        self.logger = logging.getLogger(__name__)  # Could use FlextMixins.get_logger()
+        self.logger = logging.getLogger(__name__)  # Could use FlextMixins.FlextLogger()
 
     def get_project_info(self):
         # Manual logging instead of FlextMixins

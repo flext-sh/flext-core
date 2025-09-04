@@ -802,7 +802,7 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
         """Initialize plugin with context."""
         try:
             self.context = context
-            logger = context.get_logger()
+            logger = context.FlextLogger()
 
             # Get plugin-specific config
             plugin_config = context.get_config().get("analytics", {})
@@ -824,7 +824,7 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
     def shutdown(self) -> object:
         """Shutdown plugin and cleanup resources."""
         if self.context:
-            logger = self.context.get_logger()
+            logger = self.context.FlextLogger()
             logger.info("Analytics plugin shutting down",
                        events_collected=len(self.analytics_data))
 
@@ -858,7 +858,7 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
         self.analytics_data.append(event)
 
         if self.context:
-            logger = self.context.get_logger()
+            logger = self.context.FlextLogger()
             logger.debug("Event tracked", event_type=event_type, event_id=event["id"])
 
         return FlextResult[None].ok(None)
@@ -883,7 +883,7 @@ class SimplePluginContext(FlextProtocols.Extensions.PluginContext):
         """Get configuration for plugin."""
         return self.config.copy()
 
-    def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+    def FlextLogger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
         """Get logger instance for plugin."""
         return self.logger
 
