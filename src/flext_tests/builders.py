@@ -80,7 +80,9 @@ class TestBuilders:
             self._factories: dict[str, Callable[[], object]] = {}
 
         def with_service(
-            self, name: str, service: object,
+            self,
+            name: str,
+            service: object,
         ) -> TestBuilders.ContainerBuilder:
             """Add a service to the container."""
             self._services[name] = service
@@ -223,7 +225,9 @@ class TestBuilders:
         ):  # Return object instead of specific field type to avoid import issues
             """Build the field object."""
             result = FlextFields.Factory.create_field(
-                self._field_type, self._field_name, **self._config,
+                self._field_type,
+                self._field_name,
+                **self._config,
             )
             if result.is_failure:
                 msg = f"Failed to create {self._field_type} field: {result.error}"
@@ -258,7 +262,9 @@ class TestBuilders:
             return self
 
         def with_custom_setting(
-            self, key: str, value: object,
+            self,
+            key: str,
+            value: object,
         ) -> TestBuilders.ConfigBuilder:
             """Add custom configuration setting."""
             # Convert value to JsonValue format
@@ -301,7 +307,8 @@ class TestBuilders:
             return self
 
         def returns_result_success(
-            self, data: object = None,
+            self,
+            data: object = None,
         ) -> TestBuilders.MockBuilder:
             """Return successful FlextResult."""
             result = FlextResult[object].ok(data)
@@ -344,7 +351,8 @@ class TestBuilders:
             self._mode = "w"
 
         def with_json_content(
-            self, data: dict[str, object],
+            self,
+            data: dict[str, object],
         ) -> TestBuilders.FileBuilder:
             """Set JSON content."""
             import json
@@ -360,7 +368,8 @@ class TestBuilders:
             return self
 
         def with_config_content(
-            self, config: dict[str, object],
+            self,
+            config: dict[str, object],
         ) -> TestBuilders.FileBuilder:
             """Set configuration file content."""
             return self.with_json_content(config).with_suffix(".config.json")

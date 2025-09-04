@@ -155,7 +155,8 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_high(self) -> None:
         """Test performance optimization for high performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "high", "cpu_cores": 8}  # Set higher CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -175,7 +176,8 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_medium(self) -> None:
         """Test performance optimization for medium performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "medium"}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -192,7 +194,8 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_low(self) -> None:
         """Test performance optimization for low performance level."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": "low", "cpu_cores": 1}  # Set low CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -212,7 +215,8 @@ class TestFlextServicesConfiguration:
         """Test performance optimization with memory constraints."""
         # Test low memory scenario
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"memory_limit_mb": 256}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -241,7 +245,8 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_cpu_optimization(self) -> None:
         """Test CPU-based optimization."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"cpu_cores": 8}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -254,7 +259,8 @@ class TestFlextServicesConfiguration:
     def test_optimize_services_performance_type_conversion(self) -> None:
         """Test type conversion in optimization."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "memory_limit_mb": "1024",  # String value
             "cpu_cores": "4",  # String value
@@ -270,7 +276,8 @@ class TestFlextServicesConfiguration:
         """Test error handling in performance optimization."""
         with patch("builtins.int", side_effect=ValueError("Invalid conversion")):
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object],
+                str,
+                str | int | float | bool | list[object] | dict[str, object],
             ] = {"memory_limit_mb": "invalid"}
             result = FlextServices.optimize_services_performance(config)
             # Should handle gracefully and use defaults
@@ -933,7 +940,8 @@ class TestServiceExceptionPaths:
         # Create a config that will cause an exception deep in the method
         with patch("builtins.min", side_effect=Exception("Mock optimization error")):
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object],
+                str,
+                str | int | float | bool | list[object] | dict[str, object],
             ] = {"performance_level": "high", "cpu_cores": 8}
             result = FlextServices.optimize_services_performance(config)
             # Should return failure result

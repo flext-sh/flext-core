@@ -47,23 +47,28 @@ class FlextContext:
             """Correlation variables for distributed tracing/request tracking."""
 
             CORRELATION_ID: Final[ContextVar[str | None]] = ContextVar(
-                "correlation_id", default=None,
+                "correlation_id",
+                default=None,
             )
             PARENT_CORRELATION_ID: Final[ContextVar[str | None]] = ContextVar(
-                "parent_correlation_id", default=None,
+                "parent_correlation_id",
+                default=None,
             )
 
         class Service:
             """Service context variables for service identification and versioning."""
 
             SERVICE_NAME: Final[ContextVar[str | None]] = ContextVar(
-                "service_name", default=None,
+                "service_name",
+                default=None,
             )
             SERVICE_VERSION: Final[ContextVar[str | None]] = ContextVar(
-                "service_version", default=None,
+                "service_version",
+                default=None,
             )
             ENVIRONMENT: Final[ContextVar[str | None]] = ContextVar(
-                "environment", default=None,
+                "environment",
+                default=None,
             )
 
         class Request:
@@ -71,20 +76,24 @@ class FlextContext:
 
             USER_ID: Final[ContextVar[str | None]] = ContextVar("user_id", default=None)
             REQUEST_ID: Final[ContextVar[str | None]] = ContextVar(
-                "request_id", default=None,
+                "request_id",
+                default=None,
             )
             REQUEST_TIMESTAMP: Final[ContextVar[datetime | None]] = ContextVar(
-                "request_timestamp", default=None,
+                "request_timestamp",
+                default=None,
             )
 
         class Performance:
             """Performance context variables for operation timing and monitoring."""
 
             OPERATION_NAME: Final[ContextVar[str | None]] = ContextVar(
-                "operation_name", default=None,
+                "operation_name",
+                default=None,
             )
             OPERATION_START_TIME: Final[ContextVar[datetime | None]] = ContextVar(
-                "operation_start_time", default=None,
+                "operation_start_time",
+                default=None,
             )
             OPERATION_METADATA: Final[ContextVar[dict[str, object] | None]] = (
                 ContextVar("operation_metadata", default=None)
@@ -617,7 +626,8 @@ class FlextContext:
 
     @classmethod
     def configure_context_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure context system using FlextTypes.Config with StrEnum validation.
 
@@ -752,7 +762,8 @@ class FlextContext:
 
     @classmethod
     def create_environment_context_config(
-        cls, environment: str,
+        cls,
+        environment: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific context system configuration.
 
@@ -856,7 +867,8 @@ class FlextContext:
 
     @classmethod
     def optimize_context_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize context system performance based on configuration.
 

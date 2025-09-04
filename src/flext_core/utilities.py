@@ -264,13 +264,18 @@ class FlextUtilities:
                         result = func(*args, **kwargs)
                         duration = time.perf_counter() - start_time
                         FlextUtilities.Performance.record_metric(
-                            operation_name, duration, success=True,
+                            operation_name,
+                            duration,
+                            success=True,
                         )
                         return result
                     except Exception as e:
                         duration = time.perf_counter() - start_time
                         FlextUtilities.Performance.record_metric(
-                            operation_name, duration, success=False, error=str(e),
+                            operation_name,
+                            duration,
+                            success=False,
+                            error=str(e),
                         )
                         raise
 
@@ -554,7 +559,8 @@ class FlextUtilities:
 
         @staticmethod
         def safe_json_parse(
-            json_str: str, default: dict[str, object] | None = None,
+            json_str: str,
+            default: dict[str, object] | None = None,
         ) -> dict[str, object]:
             """Safely parse JSON string."""
             try:
@@ -588,7 +594,8 @@ class FlextUtilities:
 
         @staticmethod
         def parse_json_to_model[TModel](
-            json_text: str, model_class: type[TModel],
+            json_text: str,
+            model_class: type[TModel],
         ) -> FlextResult[TModel]:
             """Parse JSON and validate using appropriate model instantiation strategy."""
             try:
@@ -766,7 +773,8 @@ class FlextUtilities:
 
                 # Log level validation
                 log_level = config.get(
-                    "log_level", FlextConstants.Config.LogLevel.INFO.value,
+                    "log_level",
+                    FlextConstants.Config.LogLevel.INFO.value,
                 )
                 valid_log_levels = {
                     level.value for level in FlextConstants.Config.LogLevel
@@ -867,7 +875,9 @@ class FlextUtilities:
     # Additional methods needed by legacy compatibility layer
     @classmethod
     def safe_int_conversion(
-        cls, value: object, default: int | None = None,
+        cls,
+        value: object,
+        default: int | None = None,
     ) -> int | None:
         """Convert value to int safely with optional default."""
         if value is None:
@@ -912,7 +922,10 @@ class FlextUtilities:
     ) -> None:
         """Record performance metric (delegates to Performance)."""
         return cls.Performance.record_metric(
-            operation, duration, success=success, error=error,
+            operation,
+            duration,
+            success=success,
+            error=error,
         )
 
     # Additional delegator methods needed by flext-cli

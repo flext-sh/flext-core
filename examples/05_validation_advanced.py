@@ -492,27 +492,33 @@ def demonstrate_business_rules() -> None:
 
 if __name__ == "__main__":
     # Use Strategy Pattern to eliminate code duplication in examples
-    from shared_example_strategies import ExamplePatternFactory
+    from shared_example_strategies import ExamplePatternFactory  # type: ignore[import-untyped]
 
     print("FlextCore Advanced Validation System")
     print("====================================")
 
     # Create demonstration strategies using Factory Pattern
+    def _wrap_native_validators() -> FlextResult[object]:
+        demonstrate_native_validators()
+        return FlextResult.ok("Native validators demo completed")
+
+    def _wrap_enterprise_forms() -> FlextResult[object]:
+        demonstrate_enterprise_forms()
+        return FlextResult.ok("Enterprise forms demo completed")
+
+    def _wrap_business_rules() -> FlextResult[object]:
+        demonstrate_business_rules()
+        return FlextResult.ok("Business rules demo completed")
+
     demos = [
         ExamplePatternFactory.create_demo_runner(
-            "Native Validators Demo",
-            lambda: demonstrate_native_validators()
-            or FlextResult.ok("Native validators demo completed"),
+            "Native Validators Demo", _wrap_native_validators,
         ),
         ExamplePatternFactory.create_demo_runner(
-            "Enterprise Forms Demo",
-            lambda: demonstrate_enterprise_forms()
-            or FlextResult.ok("Enterprise forms demo completed"),
+            "Enterprise Forms Demo", _wrap_enterprise_forms,
         ),
         ExamplePatternFactory.create_demo_runner(
-            "Business Rules Demo",
-            lambda: demonstrate_business_rules()
-            or FlextResult.ok("Business rules demo completed"),
+            "Business Rules Demo", _wrap_business_rules,
         ),
     ]
 

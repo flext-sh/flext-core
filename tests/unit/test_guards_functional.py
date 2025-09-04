@@ -90,12 +90,14 @@ class TestFlextGuardsValidationUtils:
     def test_require_not_none_failure(self) -> None:
         """Test require_not_none with None values."""
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value cannot be None",
+            FlextExceptions.ValidationError,
+            match="Value cannot be None",
         ):
             FlextGuards.ValidationUtils.require_not_none(None)
 
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Custom error message",
+            FlextExceptions.ValidationError,
+            match="Custom error message",
         ):
             FlextGuards.ValidationUtils.require_not_none(None, "Custom error message")
 
@@ -115,19 +117,22 @@ class TestFlextGuardsValidationUtils:
         """Test require_positive with invalid values."""
         # Test with zero
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value must be positive",
+            FlextExceptions.ValidationError,
+            match="Value must be positive",
         ):
             FlextGuards.ValidationUtils.require_positive(0)
 
         # Test with negative number
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value must be positive",
+            FlextExceptions.ValidationError,
+            match="Value must be positive",
         ):
             FlextGuards.ValidationUtils.require_positive(-5)
 
         # Test with float (not integer)
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value must be positive",
+            FlextExceptions.ValidationError,
+            match="Value must be positive",
         ):
             FlextGuards.ValidationUtils.require_positive(5.5)
 
@@ -156,22 +161,28 @@ class TestFlextGuardsValidationUtils:
         """Test require_in_range with invalid values."""
         # Test value below range
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value must be between 1 and 10",
+            FlextExceptions.ValidationError,
+            match="Value must be between 1 and 10",
         ):
             FlextGuards.ValidationUtils.require_in_range(0, 1, 10)
 
         # Test value above range
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value must be between 1 and 10",
+            FlextExceptions.ValidationError,
+            match="Value must be between 1 and 10",
         ):
             FlextGuards.ValidationUtils.require_in_range(11, 1, 10)
 
         # Test with string
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Custom range message",
+            FlextExceptions.ValidationError,
+            match="Custom range message",
         ):
             FlextGuards.ValidationUtils.require_in_range(
-                "5", 1, 10, "Custom range message",
+                "5",
+                1,
+                10,
+                "Custom range message",
             )
 
     def test_require_non_empty_success(self) -> None:
@@ -192,25 +203,29 @@ class TestFlextGuardsValidationUtils:
         """Test require_non_empty with invalid values."""
         # Test empty string
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value cannot be empty",
+            FlextExceptions.ValidationError,
+            match="Value cannot be empty",
         ):
             FlextGuards.ValidationUtils.require_non_empty("")
 
         # Test whitespace-only string
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value cannot be empty",
+            FlextExceptions.ValidationError,
+            match="Value cannot be empty",
         ):
             FlextGuards.ValidationUtils.require_non_empty("   ")
 
         # Test tab and newline only
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Value cannot be empty",
+            FlextExceptions.ValidationError,
+            match="Value cannot be empty",
         ):
             FlextGuards.ValidationUtils.require_non_empty("\t\n")
 
         # Test non-string type
         with pytest.raises(
-            FlextExceptions.ValidationError, match="Custom empty message",
+            FlextExceptions.ValidationError,
+            match="Custom empty message",
         ):
             FlextGuards.ValidationUtils.require_non_empty(42, "Custom empty message")
 
@@ -274,12 +289,14 @@ class TestFlextGuardsImmutableDecorator:
 
         # Attempt to modify should raise AttributeError
         with pytest.raises(
-            AttributeError, match="Cannot modify immutable object attribute 'x'",
+            AttributeError,
+            match="Cannot modify immutable object attribute 'x'",
         ):
             point.x = 5
 
         with pytest.raises(
-            AttributeError, match="Cannot modify immutable object attribute 'y'",
+            AttributeError,
+            match="Cannot modify immutable object attribute 'y'",
         ):
             point.y = 10
 
@@ -319,7 +336,8 @@ class TestFlextGuardsConfiguration:
     def test_configure_guards_system_valid(self) -> None:
         """Test configure_guards_system with valid configuration."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "production",
             "validation_level": "strict",
@@ -337,7 +355,8 @@ class TestFlextGuardsConfiguration:
     def test_configure_guards_system_invalid_environment(self) -> None:
         """Test configure_guards_system with invalid environment."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "invalid_env",
         }
@@ -394,7 +413,8 @@ class TestFlextGuardsConfiguration:
     def test_optimize_guards_performance(self) -> None:
         """Test optimize_guards_performance functionality."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "performance_level": "high",
             "max_cache_size": 1000,
@@ -435,7 +455,8 @@ class TestFlextGuardsFactoryAndBuilder:
                 self.port = port
 
         builder_result = FlextGuards.make_builder(
-            "ConfigClass", {"host": str, "port": int},
+            "ConfigClass",
+            {"host": str, "port": int},
         )
         assert builder_result.success
         builder_obj = builder_result.unwrap()

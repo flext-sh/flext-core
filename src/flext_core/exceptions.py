@@ -442,7 +442,11 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, operation: str | None = None, **kwargs: object,
+            self,
+            message: str,
+            *,
+            operation: str | None = None,
+            **kwargs: object,
         ) -> None:
             self.operation = operation
             context = dict(
@@ -752,7 +756,11 @@ class FlextExceptions:
         """
 
         def __init__(
-            self, message: str, *, auth_method: str | None = None, **kwargs: object,
+            self,
+            message: str,
+            *,
+            auth_method: str | None = None,
+            **kwargs: object,
         ) -> None:
             self.auth_method = auth_method
             context = dict(
@@ -1071,7 +1079,10 @@ class FlextExceptions:
             )
         # Default to general error
         return cls._Error(
-            message, code=error_code, context=context, correlation_id=correlation_id,
+            message,
+            code=error_code,
+            context=context,
+            correlation_id=correlation_id,
         )
 
     # =============================================================================
@@ -1094,7 +1105,8 @@ class FlextExceptions:
 
     @classmethod
     def configure_error_handling(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure error handling system using FlextTypes.Config.
 
@@ -1168,13 +1180,16 @@ class FlextExceptions:
             # Add error handling specific configuration
             validated_config["enable_metrics"] = config.get("enable_metrics", True)
             validated_config["enable_stack_traces"] = config.get(
-                "enable_stack_traces", validated_config["environment"] != "production",
+                "enable_stack_traces",
+                validated_config["environment"] != "production",
             )
             validated_config["max_error_details"] = config.get(
-                "max_error_details", 1000,
+                "max_error_details",
+                1000,
             )
             validated_config["error_correlation_enabled"] = config.get(
-                "error_correlation_enabled", True,
+                "error_correlation_enabled",
+                True,
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
@@ -1215,7 +1230,8 @@ class FlextExceptions:
 
     @classmethod
     def create_environment_specific_config(
-        cls, environment: FlextTypes.Config.Environment,
+        cls,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific error handling configuration.
 

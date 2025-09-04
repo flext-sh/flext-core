@@ -109,10 +109,12 @@ else:
 ### Step 1: Service Base Class
 
 ```python
-from abc import ABC, abstractmethod
-from typing import object, Callable, Dict, Optional
+import psutil
 import threading
+
+from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import object, Callable, Dict, Optional
 
 class ObservableService(ABC):
     """Base class for FLEXT services with comprehensive observability."""
@@ -179,19 +181,15 @@ class ObservableService(ABC):
 
         def memory_health_check() -> FlextResult[dict]:
             """Memory usage health check."""
-            try:
-                import psutil
-                memory = psutil.virtual_memory()
+            memory = psutil.virtual_memory()
 
-                if memory.percent > 90:
-                    return FlextResult.fail(f"High memory usage: {memory.percent}%")
+            if memory.percent > 90:
+                return FlextResult.fail(f"High memory usage: {memory.percent}%")
 
-                return FlextResult.ok({
-                    "memory_percent": memory.percent,
-                    "memory_available_gb": round(memory.available / (1024**3), 2)
-                })
-            except ImportError:
-                return FlextResult.ok({"status": "psutil_not_available"})
+            return FlextResult.ok({
+                "memory_percent": memory.percent,
+                "memory_available_gb": round(memory.available / (1024**3), 2)
+            })
 
         # Register health checks
         self.health.register_health_check("service", service_health_check)

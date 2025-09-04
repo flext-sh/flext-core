@@ -10,6 +10,7 @@ following the user's requirement for real tests without mocks.
 from __future__ import annotations
 
 import time
+from typing import cast
 
 import pytest
 
@@ -367,7 +368,6 @@ class TestHandlersConfigurationIntegration:
         )  # No perf tracking in tests
 
         # Test invalid environment
-        from typing import cast
 
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(

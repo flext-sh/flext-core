@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from flext_core import FlextMixins
+from flext_core import FlextMixins, FlextProtocols
 
 
 class TestFinal20LinesTo100Percent:
@@ -22,7 +22,6 @@ class TestFinal20LinesTo100Percent:
 
     def test_serialization_line_139_to_dict_basic_success(self) -> None:
         """Test serialization line 139: successful to_dict_basic continue statement."""
-        from flext_core.protocols import FlextProtocols
 
         class GoodToDictBasic:
             def __init__(self) -> None:
@@ -49,7 +48,6 @@ class TestFinal20LinesTo100Percent:
 
     def test_serialization_lines_159_162_list_basic_success(self) -> None:
         """Test serialization lines 159-162: successful list item to_dict_basic."""
-        from flext_core.protocols import FlextProtocols
 
         class GoodListItemBasic:
             def __init__(self, name: str) -> None:
@@ -77,7 +75,6 @@ class TestFinal20LinesTo100Percent:
 
     def test_serialization_lines_163_165_list_basic_exception(self) -> None:
         """Test serialization lines 163-165: list item to_dict_basic exception."""
-        from flext_core.protocols import FlextProtocols
 
         class BadListItemBasic:
             def to_dict_basic(self) -> dict[str, object]:

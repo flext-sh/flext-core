@@ -331,7 +331,7 @@ def clean_ldap_dn(dn_value):
         # Manual control character removal
         cleaned = re.sub(r'[\x00-\x1F\x7F]', '', cleaned)
         return cleaned
-    except:
+    except Exception:
         return ""
 
 # After FlextUtilities (standardized)
@@ -475,7 +475,7 @@ def process_form_data(form_data):
     # Repeated error handling patterns
     try:
         price = float(form_data.get("price"))
-    except:
+    except (ValueError, TypeError):
         price = 0.0
 ```
 

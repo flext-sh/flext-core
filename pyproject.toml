@@ -91,7 +91,7 @@ typings = [
 security = ["bandit>=1.8.0", "pip-audit>=2.7.3"]
 
 [tool.poetry]
-packages = [{ include = "flext_core", from = "src" }]
+packages = [{ include = "flext_core", from = "src" }, { include = "flext_tests", from = "src" }]
 
 [tool.poetry.group.typings.dependencies]
 types-pygments = ">=2.19.0.20250715"
@@ -122,7 +122,7 @@ exclude = [
     "reports",
     "venv",
 ]
-known_first_party = ["flext_core"]
+known_first_party = ["flext_core", "flext_tests"]
 pep621_dev_dependency_groups = ["dev", "security", "test", "typings"]
 
 [tool.mypy]
@@ -269,7 +269,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 extend = "../ruff-shared.toml"
-lint.isort.known-first-party = ["flext_core"]
+lint.isort.known-first-party = ["flext_core", "flext_tests"]
 
 [tool.vulture]
 extend = "../.vulture-shared.toml"

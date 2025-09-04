@@ -1,6 +1,7 @@
 """Extended comprehensive tests for FlextCore."""
 
 import math
+import threading
 from enum import StrEnum
 
 from pydantic import Field
@@ -182,7 +183,10 @@ class TestFlextCoreEntityCreation:
                 return FlextResult[None].ok(None)
 
         result = core.create_entity(
-            TestUser, id="user-123", name="John Doe", email="john@example.com",
+            TestUser,
+            id="user-123",
+            name="John Doe",
+            email="john@example.com",
         )
         assert result.success
         user = result.unwrap()
@@ -409,7 +413,10 @@ class TestFlextCoreErrorCreation:
         core = FlextCore.get_instance()
 
         error = core.create_connection_error(
-            "Failed to connect to database", host="localhost", port=5432, retry_count=3,
+            "Failed to connect to database",
+            host="localhost",
+            port=5432,
+            retry_count=3,
         )
 
         assert "Failed to connect to database" in str(error)
@@ -655,7 +662,7 @@ class TestFlextCoreAdvancedFeatures:
         assert core.config is not None
         assert core.context is not None
         assert core.logger is not None
-        assert core.observability is not None
+        # observability was removed from FlextCore
 
     def test_multiple_service_registration(self) -> None:
         """Test registering multiple services."""
@@ -674,8 +681,6 @@ class TestFlextCoreAdvancedFeatures:
 
     def test_concurrent_service_access(self) -> None:
         """Test concurrent service access (basic thread safety)."""
-        import threading
-
         core = FlextCore.get_instance()
         results = []
 
@@ -756,3 +761,182 @@ class TestFlextCoreAdvancedFeatures:
         # Test batch_process with edge cases
         assert core.batch_process([], 1) == []
         assert len(core.batch_process([1], 10)) == 1
+
+
+class TestFlextCoreConfigurationProperties:
+    """Test FlextCore configuration properties for database, security, and logging."""
+
+    def test_database_config_none_when_empty(self) -> None:
+        """Test database_config returns None when no config is set."""
+        core = FlextCore.get_instance()
+        
+        # Clear any existing database config
+        core._specialized_configs.pop("database_config", None)
+        
+        config = core.database_config
+        assert config is None
+
+    def test_database_config_returns_valid_config(self) -> None:
+        """Test database_config returns valid config when set."""
+        core = FlextCore.get_instance()
+        
+        # Create a valid database config
+        db_config = FlextModels.DatabaseConfig(
+            host="localhost",
+            port=5432,
+            database="test_db",
+            username="test_user",
+            password="test_pass",
+        )
+        
+        # Store in specialized configs
+        core._specialized_configs["database_config"] = db_config
+        
+        # Test property
+        result = core.database_config
+        assert result is not None
+        assert isinstance(result, FlextModels.DatabaseConfig)
+        assert result.host == "localhost"
+        assert result.port == 5432
+
+    def test_database_config_none_for_wrong_type(self) -> None:
+        """Test database_config returns None when wrong type is stored."""
+        core = FlextCore.get_instance()
+        
+        # Store wrong type
+        core._specialized_configs["database_config"] = "not a config object"
+        
+        config = core.database_config
+        assert config is None
+
+    def test_security_config_none_when_empty(self) -> None:
+        """Test security_config returns None when no config is set."""
+        core = FlextCore.get_instance()
+        
+        # Clear any existing security config
+        core._specialized_configs.pop("security_config", None)
+        
+        config = core.security_config
+        assert config is None
+
+    def test_security_config_returns_valid_config(self) -> None:
+        """Test security_config returns valid config when set."""
+        core = FlextCore.get_instance()
+        
+        # Create a valid security config
+        security_config = FlextModels.SecurityConfig(
+            secret_key="Test_Secret_Key_12345678901234567890",
+            jwt_secret="JWT_Secret_Key_12345678901234567890",
+            encryption_key="Encryption_Key_12345678901234567890",
+        )
+        
+        # Store in specialized configs
+        core._specialized_configs["security_config"] = security_config
+        
+        # Test property
+        result = core.security_config
+        assert result is not None
+        assert isinstance(result, FlextModels.SecurityConfig)
+        assert result.secret_key == "Test_Secret_Key_12345678901234567890"
+        assert result.session_timeout == 3600  # default
+
+    def test_security_config_none_for_wrong_type(self) -> None:
+        """Test security_config returns None when wrong type is stored."""
+        core = FlextCore.get_instance()
+        
+        # Store wrong type
+        core._specialized_configs["security_config"] = {"not": "a config object"}
+        
+        config = core.security_config
+        assert config is None
+
+    def test_logging_config_none_when_empty(self) -> None:
+        """Test logging_config returns None when no config is set."""
+        core = FlextCore.get_instance()
+        
+        # Clear any existing logging config
+        core._specialized_configs.pop("logging_config", None)
+        
+        config = core.logging_config
+        assert config is None
+
+    def test_logging_config_returns_valid_config(self) -> None:
+        """Test logging_config returns valid config when set."""
+        core = FlextCore.get_instance()
+        
+        # Create a valid logging config
+        logging_config = FlextModels.LoggingConfig(
+            log_level="DEBUG",
+            log_format="text",
+            log_file="/tmp/test.log",
+        )
+        
+        # Store in specialized configs
+        core._specialized_configs["logging_config"] = logging_config
+        
+        # Test property
+        result = core.logging_config
+        assert result is not None
+        assert isinstance(result, FlextModels.LoggingConfig)
+        assert result.log_level == "DEBUG"
+        assert result.log_format == "text"
+        assert result.log_file == "/tmp/test.log"
+
+    def test_logging_config_none_for_wrong_type(self) -> None:
+        """Test logging_config returns None when wrong type is stored."""
+        core = FlextCore.get_instance()
+        
+        # Store wrong type
+        core._specialized_configs["logging_config"] = [1, 2, 3]
+        
+        config = core.logging_config
+        assert config is None
+
+    def test_all_config_properties_independent(self) -> None:
+        """Test that all config properties work independently."""
+        core = FlextCore.get_instance()
+        
+        # Create different configs
+        db_config = FlextModels.DatabaseConfig(
+            host="db.example.com",
+            port=3306,
+            database="prod_db",
+            username="prod_user",
+            password="prod_pass",
+        )
+        
+        security_config = FlextModels.SecurityConfig(
+            secret_key="Prod_Secret_Key_123456789012345678901234567890",
+            jwt_secret="Prod_JWT_Secret_123456789012345678901234567890",
+            encryption_key="Prod_Encryption_Key_123456789012345678901234567890",
+        )
+        
+        logging_config = FlextModels.LoggingConfig(
+            log_level="WARNING",
+            log_format="json",
+            max_file_size=20971520,  # 20MB
+        )
+        
+        # Store all configs
+        core._specialized_configs["database_config"] = db_config
+        core._specialized_configs["security_config"] = security_config
+        core._specialized_configs["logging_config"] = logging_config
+        
+        # Test all properties work independently
+        db_result = core.database_config
+        security_result = core.security_config
+        logging_result = core.logging_config
+        
+        assert db_result is not None
+        assert db_result.host == "db.example.com"
+        
+        assert security_result is not None
+        assert security_result.secret_key == "Prod_Secret_Key_123456789012345678901234567890"
+        
+        assert logging_result is not None
+        assert logging_result.log_level == "WARNING"
+        
+        # Test they don't interfere with each other
+        assert db_result is not security_result
+        assert security_result is not logging_result
+        assert logging_result is not db_result

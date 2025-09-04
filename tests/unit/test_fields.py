@@ -9,8 +9,7 @@ from typing import cast
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import FlextFields
-from flext_core.constants import FlextConstants
+from flext_core import FlextConstants, FlextFields
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -67,7 +66,10 @@ class TestFlextFieldsCore:
     def test_integer_field_comprehensive(self) -> None:
         """Test IntegerField comprehensively."""
         field = FlextFields.Core.IntegerField(
-            "int_field", min_value=0, max_value=100, default=50,
+            "int_field",
+            min_value=0,
+            max_value=100,
+            default=50,
         )
 
         # Valid integer
@@ -94,7 +96,11 @@ class TestFlextFieldsCore:
     def test_float_field_comprehensive(self) -> None:
         """Test FloatField comprehensively."""
         field = FlextFields.Core.FloatField(
-            "float_field", min_value=0.0, max_value=100.0, precision=2, default=50.5,
+            "float_field",
+            min_value=0.0,
+            max_value=100.0,
+            precision=2,
+            default=50.5,
         )
 
         # Valid float
@@ -244,13 +250,15 @@ class TestFlextFieldsValidation:
         field = FlextFields.Core.StringField("test", min_length=3)
 
         result = FlextFields.Validation.validate_field(
-            cast("FlextFields.Core.BaseField[object]", field), "hello",
+            cast("FlextFields.Core.BaseField[object]", field),
+            "hello",
         )
         assert result.success
         assert result.value == "hello"
 
         result = FlextFields.Validation.validate_field(
-            cast("FlextFields.Core.BaseField[object]", field), "hi",
+            cast("FlextFields.Core.BaseField[object]", field),
+            "hi",
         )
         assert result.failure
 
@@ -292,7 +300,8 @@ class TestFlextFieldsRegistry:
 
         # Register field
         result = registry.register_field(
-            "test", cast("FlextFields.Core.BaseField[object]", field),
+            "test",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         assert result.success
 
@@ -312,12 +321,14 @@ class TestFlextFieldsRegistry:
 
         # Empty name
         result = registry.register_field(
-            "", cast("FlextFields.Core.BaseField[object]", field),
+            "",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         assert result.failure
 
         result = registry.register_field(
-            "   ", cast("FlextFields.Core.BaseField[object]", field),
+            "   ",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         assert result.failure
 
@@ -333,7 +344,8 @@ class TestFlextFieldsRegistry:
         result = registry.register_field_type(
             "custom",
             cast(
-                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+                "type[FlextFields.Core.BaseField[object]]",
+                FlextFields.Core.StringField,
             ),
         )
         assert result.success
@@ -353,15 +365,18 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test")
 
         registry.register_field(
-            "field1", cast("FlextFields.Core.BaseField[object]", field),
+            "field1",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         registry.register_field(
-            "field2", cast("FlextFields.Core.BaseField[object]", field),
+            "field2",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         registry.register_field_type(
             "type1",
             cast(
-                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+                "type[FlextFields.Core.BaseField[object]]",
+                FlextFields.Core.StringField,
             ),
         )
 
@@ -378,7 +393,8 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test", description="Test field")
 
         registry.register_field(
-            "test", cast("FlextFields.Core.BaseField[object]", field),
+            "test",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
 
         result = registry.get_field_metadata("test")
@@ -392,12 +408,14 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test")
 
         registry.register_field(
-            "test", cast("FlextFields.Core.BaseField[object]", field),
+            "test",
+            cast("FlextFields.Core.BaseField[object]", field),
         )
         registry.register_field_type(
             "custom",
             cast(
-                "type[FlextFields.Core.BaseField[object]]", FlextFields.Core.StringField,
+                "type[FlextFields.Core.BaseField[object]]",
+                FlextFields.Core.StringField,
             ),
         )
 
@@ -698,7 +716,10 @@ class TestFlextFieldsLegacyCompatibility:
     def test_create_string_field_legacy(self) -> None:
         """Test legacy string field creation."""
         result = FlextFields.create_string_field(
-            name="test_field", required=True, min_length=3, description="Test field",
+            name="test_field",
+            required=True,
+            min_length=3,
+            description="Test field",
         )
         assert result.success
         field = result.value
@@ -707,7 +728,9 @@ class TestFlextFieldsLegacyCompatibility:
     def test_create_integer_field_legacy(self) -> None:
         """Test legacy integer field creation."""
         result = FlextFields.create_integer_field(
-            name="int_field", min_value=0, default=10,
+            name="int_field",
+            min_value=0,
+            default=10,
         )
         assert result.success
 

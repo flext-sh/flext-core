@@ -203,7 +203,8 @@ class FlextTypeAdapters:
 
         @classmethod
         def create_environment_type_adapters_config(
-            cls, environment: str,
+            cls,
+            environment: str,
         ) -> dict[str, object]:
             """Create environment-specific configuration using Strategy Pattern."""
             base = cls._EnvironmentConfigStrategy.get_base_config(environment)
@@ -216,7 +217,8 @@ class FlextTypeAdapters:
             }
 
             strategy_func = env_strategies.get(
-                environment, cls._EnvironmentConfigStrategy.get_default_config,
+                environment,
+                cls._EnvironmentConfigStrategy.get_default_config,
             )
             return {**base, **strategy_func()}
 
@@ -355,7 +357,9 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_with_adapter(
-            arg1: object, arg2: object, adapter: TypeAdapter[object] | None = None,
+            arg1: object,
+            arg2: object,
+            adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[object]:
             """Validate value using TypeAdapter with FlextResult error handling."""
             try:
@@ -368,7 +372,8 @@ class FlextTypeAdapters:
             except Exception as e:
                 error_msg = f"Validation failed: {e!s}"
                 return FlextResult[object].fail(
-                    error_msg, error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                    error_msg,
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
     class Domain:
@@ -625,7 +630,8 @@ class FlextTypeAdapters:
 
         @staticmethod
         def serialize_to_dict(
-            arg1: object, arg2: object,
+            arg1: object,
+            arg2: object,
         ) -> FlextResult[dict[str, object]]:
             """Serialize value to Python dictionary using TypeAdapter."""
             try:
@@ -651,7 +657,9 @@ class FlextTypeAdapters:
 
         @staticmethod
         def deserialize_from_json(
-            json_str: str, model_type: type[object], adapter: TypeAdapter[object],
+            json_str: str,
+            model_type: type[object],
+            adapter: TypeAdapter[object],
         ) -> FlextResult[object]:
             """Deserialize value from JSON string using TypeAdapter."""
             try:
@@ -694,7 +702,8 @@ class FlextTypeAdapters:
 
         @staticmethod
         def generate_schema(
-            model_type: type[object], adapter: TypeAdapter[object],
+            model_type: type[object],
+            adapter: TypeAdapter[object],
         ) -> FlextResult[dict[str, object]]:
             """Generate JSON schema for TypeAdapter."""
             try:
@@ -720,7 +729,8 @@ class FlextTypeAdapters:
                 for model_type in types:
                     adapter = TypeAdapter(model_type)
                     schema_result = FlextTypeAdapters.Application.generate_schema(
-                        model_type, adapter,
+                        model_type,
+                        adapter,
                     )
                     if schema_result.is_failure:
                         return FlextResult[list[dict[str, object]]].fail(
@@ -740,7 +750,9 @@ class FlextTypeAdapters:
     # ------------------------------------------------------------------
 
     def adapt_type(
-        self, data: object, target_type: type[object],
+        self,
+        data: object,
+        target_type: type[object],
     ) -> FlextResult[object]:
         try:
             adapter = TypeAdapter(target_type)
@@ -753,7 +765,9 @@ class FlextTypeAdapters:
             )
 
     def adapt_batch(
-        self, items: list[object], target_type: type[object],
+        self,
+        items: list[object],
+        target_type: type[object],
     ) -> FlextResult[list[object]]:
         try:
             adapter = TypeAdapter(target_type)
@@ -796,7 +810,8 @@ class FlextTypeAdapters:
         )
 
     def generate_schema(
-        self, target_type: type[object],
+        self,
+        target_type: type[object],
     ) -> FlextResult[dict[str, object]]:
         try:
             adapter = TypeAdapter(target_type)
@@ -808,7 +823,8 @@ class FlextTypeAdapters:
             )
 
     def get_type_info(
-        self, target_type: type[object],
+        self,
+        target_type: type[object],
     ) -> FlextResult[dict[str, object]]:
         try:
             info: dict[str, object] = {
@@ -822,25 +838,33 @@ class FlextTypeAdapters:
             )
 
     def serialize_to_json(
-        self, value: object, target_type: type[object],
+        self,
+        value: object,
+        target_type: type[object],
     ) -> FlextResult[str]:
         adapter = TypeAdapter(target_type)
         return self.Application.serialize_to_json(adapter, value)
 
     def deserialize_from_json(
-        self, json_str: str, target_type: type[object],
+        self,
+        json_str: str,
+        target_type: type[object],
     ) -> FlextResult[object]:
         adapter = TypeAdapter(target_type)
         return self.Application.deserialize_from_json(json_str, target_type, adapter)
 
     def serialize_to_dict(
-        self, value: object, target_type: type[object],
+        self,
+        value: object,
+        target_type: type[object],
     ) -> FlextResult[dict[str, object]]:
         adapter = TypeAdapter(target_type)
         return self.Application.serialize_to_dict(adapter, value)
 
     def deserialize_from_dict(
-        self, data: dict[str, object], target_type: type[object],
+        self,
+        data: dict[str, object],
+        target_type: type[object],
     ) -> FlextResult[object]:
         adapter = TypeAdapter(target_type)
         return self.Application.deserialize_from_dict(data, target_type, adapter)
@@ -864,7 +888,8 @@ class FlextTypeAdapters:
                 else (adapter or TypeAdapter(model_or_adapter))
             )
             return FlextTypeAdapters.Application.serialize_to_json(
-                cast("TypeAdapter[object]", adp), value,
+                cast("TypeAdapter[object]", adp),
+                value,
             )
 
         @staticmethod
@@ -879,7 +904,8 @@ class FlextTypeAdapters:
                 else (adapter or TypeAdapter(model_or_adapter))
             )
             return FlextTypeAdapters.Application.serialize_to_dict(
-                cast("TypeAdapter[object]", adp), value,
+                cast("TypeAdapter[object]", adp),
+                value,
             )
 
         @staticmethod
@@ -899,7 +925,9 @@ class FlextTypeAdapters:
             else:
                 model_type = model_or_adapter
             return FlextTypeAdapters.Application.deserialize_from_json(
-                json_str, model_type, adp,
+                json_str,
+                model_type,
+                adp,
             )
 
         @staticmethod
@@ -919,7 +947,9 @@ class FlextTypeAdapters:
             else:
                 model_type = model_or_adapter
             return FlextTypeAdapters.Application.deserialize_from_dict(
-                data, model_type, adp,
+                data,
+                model_type,
+                adp,
             )
 
     class SchemaGenerators:
@@ -927,10 +957,12 @@ class FlextTypeAdapters:
 
         @staticmethod
         def generate_schema(
-            model: type[object], adapter: TypeAdapter[object] | None = None,
+            model: type[object],
+            adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[dict[str, object]]:
             return FlextTypeAdapters.Application.generate_schema(
-                model, adapter or TypeAdapter(model),
+                model,
+                adapter or TypeAdapter(model),
             )
 
         @staticmethod
@@ -971,7 +1003,9 @@ class FlextTypeAdapters:
 
         @classmethod
         def register_adapter(
-            cls, key: str, adapter: TypeAdapter[object],
+            cls,
+            key: str,
+            adapter: TypeAdapter[object],
         ) -> FlextResult[None]:
             cls._registry[key] = adapter
             return FlextResult[None].ok(None)
@@ -1065,7 +1099,8 @@ class FlextTypeAdapters:
 
         @staticmethod
         def register_adapter(
-            name: str, adapter: TypeAdapter[object],
+            name: str,
+            adapter: TypeAdapter[object],
         ) -> FlextResult[None]:
             """Register TypeAdapter in global registry."""
             # This would use a global registry to store adapters
@@ -1094,7 +1129,9 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_batch(
-            items: list[object], model_type: type[object], adapter: TypeAdapter[object],
+            items: list[object],
+            model_type: type[object],
+            adapter: TypeAdapter[object],
         ) -> FlextResult[list[object]]:
             """Validate batch of items using TypeAdapter."""
             validated: list[object] = []
@@ -1102,7 +1139,8 @@ class FlextTypeAdapters:
                 try:
                     value = adapter.validate_python(item)
                     if isinstance(model_type, type) and not isinstance(
-                        value, model_type,
+                        value,
+                        model_type,
                     ):
                         return FlextResult[list[object]].fail(
                             "Batch validation failed: type mismatch",
@@ -1153,7 +1191,9 @@ class FlextTypeAdapters:
                 def _raise_age_error(self, message: str) -> None:
                     # Raise age validation error using FlextExceptions
                     raise FlextExceptions.ValidationError(
-                        message, field="age", validation_type="range",
+                        message,
+                        field="age",
+                        validation_type="range",
                     )
 
             try:
@@ -1202,7 +1242,9 @@ class FlextTypeAdapters:
 
                 def _raise_host_error(self, message: str) -> None:
                     raise FlextExceptions.ValidationError(
-                        message, field="host", validation_type="string",
+                        message,
+                        field="host",
+                        validation_type="string",
                     )
 
                 def _validate_port(self) -> None:
@@ -1217,7 +1259,9 @@ class FlextTypeAdapters:
                 def _raise_port_error(self, message: str) -> None:
                     # Raise port validation error using FlextExceptions
                     raise FlextExceptions.ValidationError(
-                        message, field="port", validation_type="range",
+                        message,
+                        field="port",
+                        validation_type="range",
                     )
 
             try:

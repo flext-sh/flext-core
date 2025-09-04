@@ -200,7 +200,8 @@ class TestFlextResultValidation:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         # Em falha, `.value` raises TypeError
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result",
+            TypeError,
+            match="Attempted to access value on failed result",
         ):
             _ = result.value
         if result.error != "Validation failed":

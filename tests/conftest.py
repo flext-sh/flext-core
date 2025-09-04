@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextContainer
-from tests.support import (
+from flext_tests import (
     APITestClient,
     AsyncTestUtils,
     BenchmarkUtils,

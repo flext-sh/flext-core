@@ -214,7 +214,8 @@ class FlextServices:
 
     @classmethod
     def configure_services_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure services system using FlextTypes.Config with StrEnum validation.
 
@@ -263,29 +264,37 @@ class FlextServices:
 
             # Services-specific configuration
             validated_config["enable_service_registry"] = config.get(
-                "enable_service_registry", True,
+                "enable_service_registry",
+                True,
             )
             validated_config["enable_service_orchestration"] = config.get(
-                "enable_service_orchestration", True,
+                "enable_service_orchestration",
+                True,
             )
             validated_config["enable_service_metrics"] = config.get(
-                "enable_service_metrics", True,
+                "enable_service_metrics",
+                True,
             )
             validated_config["enable_service_validation"] = config.get(
-                "enable_service_validation", True,
+                "enable_service_validation",
+                True,
             )
             validated_config["max_concurrent_services"] = config.get(
-                "max_concurrent_services", 100,
+                "max_concurrent_services",
+                100,
             )
             validated_config["service_timeout_seconds"] = config.get(
-                "service_timeout_seconds", 30,
+                "service_timeout_seconds",
+                30,
             )
             validated_config["enable_batch_processing"] = config.get(
-                "enable_batch_processing", True,
+                "enable_batch_processing",
+                True,
             )
             validated_config["batch_size"] = config.get("batch_size", 50)
             validated_config["enable_service_caching"] = config.get(
-                "enable_service_caching", False,
+                "enable_service_caching",
+                False,
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
@@ -347,7 +356,8 @@ class FlextServices:
 
     @classmethod
     def create_environment_services_config(
-        cls, environment: FlextTypes.Config.Environment,
+        cls,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific services system configuration.
 
@@ -453,7 +463,8 @@ class FlextServices:
 
     @classmethod
     def optimize_services_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize services system performance based on configuration.
 
@@ -759,8 +770,6 @@ class FlextServices:
         def configure_logging(self, config: FlextModels.LoggingConfig) -> None:
             """Configure logging settings for this service."""
             self._logging_config = config
-            self._performance_tracker = FlextUtilities()
-            self._correlation_generator = FlextUtilities()
 
         def get_service_name(self) -> str:
             """Get service name with proper type safety.
@@ -841,7 +850,7 @@ class FlextServices:
 
             """
 
-            @self._performance_tracker.track_performance(category)
+            @FlextUtilities.Performance.track_performance(category)
             def _execute_pipeline(req: TRequest) -> FlextResult[TResult]:
                 processing_result = self.process(req)
                 if processing_result.is_failure:
@@ -849,9 +858,10 @@ class FlextServices:
                         processing_result.error or "Processing failed",
                     )
 
-                correlation_id = self._correlation_generator.generate_correlation_id()
+                correlation_id = FlextUtilities.Generators.generate_correlation_id()
                 final_result = self.build(
-                    processing_result.value, correlation_id=correlation_id,
+                    processing_result.value,
+                    correlation_id=correlation_id,
                 )
                 return FlextResult[TResult].ok(final_result)
 
@@ -881,7 +891,7 @@ class FlextServices:
                 logging, and error handling through FlextResult patterns.
 
             """
-            correlation_id = self._correlation_generator.generate_correlation_id()
+            correlation_id = FlextUtilities.Generators.generate_correlation_id()
             self.log_info("Processing JSON", **{correlation_label: correlation_id})
 
             model_result = FlextUtilities.parse_json_to_model(json_text, model_cls)
@@ -893,7 +903,8 @@ class FlextServices:
             handler_result = handler(model_result.value)
             if handler_result.is_success:
                 self.log_info(
-                    "Operation successful", **{correlation_label: correlation_id},
+                    "Operation successful",
+                    **{correlation_label: correlation_id},
                 )
             else:
                 error_details = handler_result.error or "Unknown error"
@@ -1179,7 +1190,9 @@ class FlextServices:
                 ):
                     return FlextResult[TOutput].ok(output_data)
                 error_msg = getattr(
-                    validation_result, "error", "Contract validation failed",
+                    validation_result,
+                    "error",
+                    "Contract validation failed",
                 )
                 return FlextResult[TOutput].fail(
                     f"Output contract violation: {error_msg}",

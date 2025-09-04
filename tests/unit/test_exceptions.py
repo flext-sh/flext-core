@@ -26,7 +26,9 @@ class TestExceptions100PercentCoverage:
         exceptions = FlextExceptions()
 
         error = exceptions(
-            "Operation failed", operation="user_creation", error_code="OP_001",
+            "Operation failed",
+            operation="user_creation",
+            error_code="OP_001",
         )
         assert isinstance(error, FlextExceptions._OperationError)
         assert error.message == "Operation failed"
@@ -192,31 +194,39 @@ class TestExceptions100PercentCoverage:
         """Test specialized exception creation lines 1233-1288."""
         # Test ValidationError
         val_error = FlextExceptions.ValidationError(
-            "Invalid input", field="email", value="bad@email", error_code="VAL_003",
+            "Invalid input",
+            field="email",
+            value="bad@email",
+            error_code="VAL_003",
         )
         assert val_error.message == "Invalid input"
 
         # Test ConfigurationError
         config_error = FlextExceptions.ConfigurationError(
-            "Missing config", config_key="database_url", error_code="CFG_003",
+            "Missing config",
+            config_key="database_url",
+            error_code="CFG_003",
         )
         assert config_error.message == "Missing config"
 
         # Test ConnectionError
         conn_error = FlextExceptions.ConnectionError(
-            "Connection failed", error_code="CONN_001",
+            "Connection failed",
+            error_code="CONN_001",
         )
         assert conn_error.message == "Connection failed"
 
         # Test ProcessingError
         proc_error = FlextExceptions.ProcessingError(
-            "Processing failed", error_code="PROC_001",
+            "Processing failed",
+            error_code="PROC_001",
         )
         assert proc_error.message == "Processing failed"
 
         # Test TimeoutError
         timeout_error = FlextExceptions.TimeoutError(
-            "Operation timeout", error_code="TIMEOUT_001",
+            "Operation timeout",
+            error_code="TIMEOUT_001",
         )
         assert timeout_error.message == "Operation timeout"
 
@@ -228,7 +238,8 @@ class TestExceptionsIntegration100PercentCoverage:
         """Test complete exception creation and handling workflow."""
         # Configure error handling
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"enable_metrics": True, "log_level": "DEBUG"}
         config_result = FlextExceptions.configure_error_handling(config)
         assert config_result.success
@@ -288,7 +299,9 @@ class TestExceptionsIntegration100PercentCoverage:
         correlation_id = "test-corr-123"
 
         error = FlextExceptions.create(
-            "Test with context", context=context, correlation_id=correlation_id,
+            "Test with context",
+            context=context,
+            correlation_id=correlation_id,
         )
 
         # Context may have additional fields like 'code', so check inclusion

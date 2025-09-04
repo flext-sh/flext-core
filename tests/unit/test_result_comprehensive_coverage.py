@@ -148,7 +148,8 @@ class TestFlextResultComprehensiveCoverage:
         """Test expect() raises RuntimeError with custom message for failures."""
         result = FlextResult.fail("validation error")
         with pytest.raises(
-            RuntimeError, match="Expected valid result: validation error",
+            RuntimeError,
+            match="Expected valid result: validation error",
         ):
             result.expect("Expected valid result")
 
@@ -473,7 +474,8 @@ class TestFlextResultComprehensiveCoverage:
     def test_filter_failure_propagates(self) -> None:
         """Test filter() propagates failures without checking predicate."""
         result = FlextResult.fail("original error").filter(
-            lambda x: x > 5, "Value too small",
+            lambda x: x > 5,
+            "Value too small",
         )
         assert result.failure is True
         assert result.error == "original error"
@@ -481,7 +483,8 @@ class TestFlextResultComprehensiveCoverage:
     def test_filter_predicate_exception_handling(self) -> None:
         """Test filter() handles exceptions in predicate function."""
         result = FlextResult.ok("text").filter(
-            lambda x: x > 5, "Failed",
+            lambda x: x > 5,
+            "Failed",
         )  # Will raise TypeError
         assert result.failure is True
         # Should contain the exception message
@@ -826,7 +829,9 @@ class TestFlextResultComprehensiveCoverage:
     def test_create_failure_alias(self) -> None:
         """Test create_failure() class method is alias for fail()."""
         result = FlextResult.create_failure(
-            "error", error_code="ERR001", error_data={"field": "test"},
+            "error",
+            error_code="ERR001",
+            error_data={"field": "test"},
         )
         assert result.failure is True
         assert result.error == "error"
@@ -852,7 +857,8 @@ class TestFlextResultComprehensiveCoverage:
         """Test value property raises TypeError when accessed on failure."""
         result = FlextResult.fail("error")
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result",
+            TypeError,
+            match="Attempted to access value on failed result",
         ):
             _ = result.value
 

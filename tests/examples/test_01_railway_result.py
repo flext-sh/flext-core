@@ -37,7 +37,9 @@ class TestUserRegistrationRequest:
     def test_valid_request_creation(self) -> None:
         """Test creating valid UserRegistrationRequest."""
         request = UserRegistrationRequest(
-            name="John Doe", email="john@example.com", age=30,
+            name="John Doe",
+            email="john@example.com",
+            age=30,
         )
         assert request.name == "John Doe"
         assert request.email == "john@example.com"
@@ -46,7 +48,9 @@ class TestUserRegistrationRequest:
     def test_request_validation_success(self) -> None:
         """Test successful validation of valid request."""
         request = UserRegistrationRequest(
-            name="Jane Smith", email="jane@example.com", age=25,
+            name="Jane Smith",
+            email="jane@example.com",
+            age=25,
         )
         result = request.validate_business_rules()
         assert result.is_success
@@ -62,7 +66,9 @@ class TestUserRegistrationRequest:
     def test_request_validation_invalid_email(self) -> None:
         """Test validation failure with invalid email."""
         request = UserRegistrationRequest(
-            name="Test User", email="invalid-email", age=30,
+            name="Test User",
+            email="invalid-email",
+            age=30,
         )
         result = request.validate_business_rules()
         assert result.is_failure
@@ -75,7 +81,10 @@ class TestUser:
     def test_user_creation(self) -> None:
         """Test creating User entity."""
         user = User(
-            id="user_123", name="Alice Johnson", email="alice@example.com", age=28,
+            id="user_123",
+            name="Alice Johnson",
+            email="alice@example.com",
+            age=28,
         )
         assert user.id == "user_123"
         assert user.name == "Alice Johnson"
@@ -166,7 +175,9 @@ class TestUserRegistrationService:
     def test_process_registration_success(self) -> None:
         """Test successful registration processing."""
         request = UserRegistrationRequest(
-            name="Test User", email="test@example.com", age=30,
+            name="Test User",
+            email="test@example.com",
+            age=30,
         )
         result = self.service.process_registration(request)
 
@@ -207,11 +218,15 @@ class TestUserRegistrationService:
         """Test batch processing with mixed success/failure results."""
         requests = [
             UserRegistrationRequest(
-                name="Valid User", email="valid@example.com", age=30,
+                name="Valid User",
+                email="valid@example.com",
+                age=30,
             ),
             UserRegistrationRequest(name="", email="invalid", age=-5),  # Invalid
             UserRegistrationRequest(
-                name="Another Valid", email="another@example.com", age=25,
+                name="Another Valid",
+                email="another@example.com",
+                age=25,
             ),
         ]
         result = self.service.process_batch(requests)
@@ -272,7 +287,9 @@ class TestUserRegistrationService:
     def test_service_uses_flext_utilities(self) -> None:
         """Test that service properly uses FlextUtilities for ID generation."""
         request = UserRegistrationRequest(
-            name="Test User", email="test@example.com", age=30,
+            name="Test User",
+            email="test@example.com",
+            age=30,
         )
         result1 = self.service.process_registration(request)
         result2 = self.service.process_registration(request)
@@ -288,7 +305,9 @@ class TestUserRegistrationService:
         """Test that service consistently returns FlextResult for all operations."""
         # Test all service methods return FlextResult
         request = UserRegistrationRequest(
-            name="Test User", email="test@example.com", age=30,
+            name="Test User",
+            email="test@example.com",
+            age=30,
         )
 
         # Single registration
@@ -314,7 +333,9 @@ class TestRailwayPatternIntegration:
 
         # Create a valid request
         request = UserRegistrationRequest(
-            name="Chain Test", email="chain@example.com", age=28,
+            name="Chain Test",
+            email="chain@example.com",
+            age=28,
         )
 
         # Process registration
@@ -361,7 +382,9 @@ class TestRailwayPatternIntegration:
 
         # Test with valid request
         valid_request = UserRegistrationRequest(
-            name="Success Test", email="success@example.com", age=30,
+            name="Success Test",
+            email="success@example.com",
+            age=30,
         )
 
         result = service.process_registration(valid_request)

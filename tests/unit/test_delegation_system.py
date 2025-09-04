@@ -1,5 +1,6 @@
 """Comprehensive tests for delegation_system.py to achieve maximum test coverage."""
 
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -53,7 +54,8 @@ class TestFlextDelegationSystemProtocols:
         # Get the delegated method
         delegated_method = delegator._create_delegated_method("test_method", mixin)
         assert isinstance(
-            delegated_method, FlextDelegationSystem.DelegatedMethodProtocol,
+            delegated_method,
+            FlextDelegationSystem.DelegatedMethodProtocol,
         )
         assert callable(delegated_method)
 
@@ -106,7 +108,9 @@ class TestDelegatedProperty:
 
         mixin = TestMixin()
         prop = FlextDelegationSystem.DelegatedProperty(
-            "missing_prop", mixin, "default_value",
+            "missing_prop",
+            mixin,
+            "default_value",
         )
 
         instance = object()
@@ -349,7 +353,8 @@ class TestMixinDelegator:
 
         method = delegator._create_delegated_method("failing_method", mixin)
         with pytest.raises(
-            FlextExceptions.BaseError, match="Delegated method failing_method failed",
+            FlextExceptions.BaseError,
+            match="Delegated method failing_method failed",
         ):
             method()
 
@@ -559,7 +564,8 @@ class TestFlextDelegationValidation:
 
     @patch.object(FlextDelegationSystem, "_validate_delegation_methods")
     def test_validate_delegation_system_failure(
-        self, mock_validate_methods: MagicMock,
+        self,
+        mock_validate_methods: MagicMock,
     ) -> None:
         """Test system validation failure."""
         mock_validate_methods.side_effect = ValueError("Validation failed")
@@ -605,7 +611,8 @@ class TestFlextDelegationValidation:
         test_results: list[str] = []
 
         with pytest.raises(
-            FlextExceptions.BaseError, match="is_valid property not delegated",
+            FlextExceptions.BaseError,
+            match="is_valid property not delegated",
         ):
             FlextDelegationSystem._validate_delegation_methods(host, test_results)
 
@@ -641,7 +648,8 @@ class TestFlextDelegationValidation:
         test_results: list[str] = []
 
         with pytest.raises(
-            FlextExceptions.TypeError, match="is_valid should return bool",
+            FlextExceptions.TypeError,
+            match="is_valid should return bool",
         ):
             FlextDelegationSystem._validate_method_functionality(host, test_results)
 
@@ -667,7 +675,8 @@ class TestFlextDelegationValidation:
         host = TestHost()  # No delegator attribute
 
         with pytest.raises(
-            FlextExceptions.BaseError, match="Host missing delegator attribute",
+            FlextExceptions.BaseError,
+            match="Host missing delegator attribute",
         ):
             FlextDelegationSystem._get_host_delegator(host)
 
@@ -681,7 +690,8 @@ class TestFlextDelegationValidation:
         host = TestHost()
 
         with pytest.raises(
-            FlextExceptions.BaseError, match="Host delegator attribute is None",
+            FlextExceptions.BaseError,
+            match="Host delegator attribute is None",
         ):
             FlextDelegationSystem._get_host_delegator(host)
 
@@ -775,7 +785,6 @@ class TestFlextDelegationConfig:
     def test_configure_delegation_system_exception(self) -> None:
         """Test delegation system configuration exception handling."""
         # Test with None config to trigger exception in .get() calls
-        from typing import cast
 
         result = FlextDelegationSystem.configure_delegation_system(
             cast("dict[str, object]", None),
@@ -850,8 +859,6 @@ class TestFlextDelegationConfig:
             def __str__(self) -> str:
                 return "bad_environment"
 
-        from typing import cast
-
         config = FlextDelegationSystem.create_environment_delegation_config(
             cast("str", BadEnvironment()),
         )
@@ -923,8 +930,6 @@ class TestFlextDelegationIntegration:
                 return bool(data)
 
             def get_data(self) -> dict[str, object]:
-                from typing import cast
-
                 return cast("dict[str, object]", self.data)
 
             def process(self, input_data: str) -> str:
@@ -934,7 +939,8 @@ class TestFlextDelegationIntegration:
         class BusinessLogic:
             def __init__(self) -> None:
                 self.delegator = FlextDelegationSystem.create_mixin_delegator(
-                    self, ComprehensiveMixin,
+                    self,
+                    ComprehensiveMixin,
                 )
 
         # Test the complete workflow
@@ -999,7 +1005,10 @@ class TestFlextDelegationIntegration:
         class MultiMixinHost:
             def __init__(self) -> None:
                 self.delegator = FlextDelegationSystem.create_mixin_delegator(
-                    self, ValidationMixin, SerializationMixin, CachingMixin,
+                    self,
+                    ValidationMixin,
+                    SerializationMixin,
+                    CachingMixin,
                 )
 
         host = MultiMixinHost()
@@ -1097,7 +1106,8 @@ class TestFlextDelegationIntegration:
         # Test property delegation through descriptor
         mixin_instance = delegator.mixin_instances[ComplexMixin]
         prop_descriptor = FlextDelegationSystem.DelegatedProperty(
-            "computed_property", mixin_instance,
+            "computed_property",
+            mixin_instance,
         )
 
         # Test getter

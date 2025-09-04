@@ -242,7 +242,9 @@ class FlextCommands:
                 self.logger.debug(
                     "Checking if handler can process command",
                     command_type_name=getattr(
-                        command_type, "__name__", str(command_type),
+                        command_type,
+                        "__name__",
+                        str(command_type),
                     ),
                 )
 
@@ -314,7 +316,9 @@ class FlextCommands:
                         "handle_command",
                         command_type=type(command).__name__,
                         command_id=getattr(
-                            command, "command_id", getattr(command, "id", "unknown"),
+                            command,
+                            "command_id",
+                            getattr(command, "id", "unknown"),
                         ),
                     )
 
@@ -533,7 +537,9 @@ class FlextCommands:
                 "execute_command",
                 command_type=command_type.__name__,
                 command_id=getattr(
-                    command, "command_id", getattr(command, "id", "unknown"),
+                    command,
+                    "command_id",
+                    getattr(command, "id", "unknown"),
                 ),
                 execution_count=self._execution_count,
             )
@@ -851,7 +857,8 @@ class FlextCommands:
 
     @classmethod
     def configure_commands_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure commands system with StrEnum validation."""
         try:
@@ -1056,7 +1063,8 @@ class FlextCommands:
 
         @classmethod
         def create_environment_config(
-            cls, environment: FlextTypes.Config.Environment,
+            cls,
+            environment: FlextTypes.Config.Environment,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
             """Create environment configuration using composition and strategy patterns."""
             try:
@@ -1073,7 +1081,8 @@ class FlextCommands:
                 strategies = cls._get_environment_strategies()
                 base_config = cls._get_base_config(environment)
                 environment_overrides = strategies.get(
-                    environment, strategies["production"],
+                    environment,
+                    strategies["production"],
                 )
 
                 # Compose final configuration
@@ -1087,14 +1096,16 @@ class FlextCommands:
 
     @classmethod
     def create_environment_commands_config(
-        cls, environment: FlextTypes.Config.Environment,
+        cls,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific commands configuration using Factory Pattern."""
         return cls._EnvironmentConfigFactory.create_environment_config(environment)
 
     @classmethod
     def optimize_commands_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize commands system performance based on configuration."""
         try:

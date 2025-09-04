@@ -51,7 +51,9 @@ class TestUtilitiesConfiguration100PercentCoverage:
         """Test lines 855-858: Exception handling in create_default_config."""
         # Test with empty string
         result = FlextUtilities.Configuration.create_default_config(
-            cast("Literal['development', 'production', 'staging', 'test', 'local']", ""),
+            cast(
+                "Literal['development', 'production', 'staging', 'test', 'local']", ""
+            ),
         )
         assert result.failure
         assert "Invalid environment" in str(result.error)
@@ -59,7 +61,8 @@ class TestUtilitiesConfiguration100PercentCoverage:
     def test_validate_configuration_with_types_missing_environment(self) -> None:
         """Test lines 882-885: Missing environment validation."""
         config = cast(
-            "FlextTypes.Config.ConfigDict", {"log_level": "INFO"},
+            "FlextTypes.Config.ConfigDict",
+            {"log_level": "INFO"},
         )  # Missing environment
 
         result = FlextUtilities.Configuration.validate_configuration_with_types(config)

@@ -199,7 +199,8 @@ def setup_container() -> FlextResult[FlextContainer]:
 
         user_service = cast("UserServiceProtocol", user_service_result.unwrap())
         notification_service = cast(
-            "NotificationServiceProtocol", notification_service_result.unwrap(),
+            "NotificationServiceProtocol",
+            notification_service_result.unwrap(),
         )
         return UserRegistrationService(user_service, notification_service)
 
@@ -255,7 +256,9 @@ def main() -> None:
     # Test duplicate prevention
     print("\n=== Testing Duplicate Prevention ===")
     duplicate_result = registration_service.register_user(
-        "Alice Duplicate", "alice@example.com", 26,
+        "Alice Duplicate",
+        "alice@example.com",
+        26,
     )
     if duplicate_result.is_failure:
         print(f"✅ Duplicate prevented: {duplicate_result.error}")

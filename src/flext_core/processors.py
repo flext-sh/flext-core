@@ -221,13 +221,16 @@ class FlextProcessors:
 
     class BaseProcessor(
         FlextServices.ServiceProcessor[
-            "FlextProcessors.Entry", "FlextProcessors.Entry", dict[str, object],
+            "FlextProcessors.Entry",
+            "FlextProcessors.Entry",
+            dict[str, object],
         ],
     ):
         """Base processor using FLEXT service architecture for entry processing."""
 
         def __init__(
-            self, validator: FlextProcessors.EntryValidator | None = None,
+            self,
+            validator: FlextProcessors.EntryValidator | None = None,
         ) -> None:
             """Initialize processor with optional validator using service patterns."""
             super().__init__()
@@ -240,13 +243,15 @@ class FlextProcessors:
             return self.validator.validate_entry(entry)
 
         def transform_data(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Transform entry data - default implementation returns entry unchanged."""
             return FlextResult[FlextProcessors.Entry].ok(entry)
 
         def process_data(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Process entry and extract information following service patterns."""
             try:
@@ -267,13 +272,15 @@ class FlextProcessors:
             return self.validate_input(entry)
 
         def extract_info_from_entry(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Legacy method for backward compatibility."""
             return self.process_data(entry)
 
         def process(
-            self, request: FlextProcessors.Entry,
+            self,
+            request: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Process request into domain object (required by ServiceProcessor)."""
             # Validate input first
@@ -287,7 +294,10 @@ class FlextProcessors:
             return self.transform_data(request)
 
         def build(
-            self, domain: FlextProcessors.Entry, *, correlation_id: str = "",
+            self,
+            domain: FlextProcessors.Entry,
+            *,
+            correlation_id: str = "",
         ) -> dict[str, object]:
             """Build final result from domain object (required by ServiceProcessor)."""
             # Use process_data to build the final result
@@ -305,13 +315,15 @@ class FlextProcessors:
         """Default concrete processor implementation."""
 
         def __init__(
-            self, validator: FlextProcessors.EntryValidator | None = None,
+            self,
+            validator: FlextProcessors.EntryValidator | None = None,
         ) -> None:
             """Initialize default processor."""
             super().__init__(validator)
 
         def process_data(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Default processing implementation."""
             return super().process_data(entry)
@@ -353,7 +365,8 @@ class FlextProcessors:
                 return FlextResult[bool].fail(f"Content validation failed: {e}")
 
         def process_data(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[dict[str, object]]:
             """Process entry with regex-specific logic."""
             # First do the base processing
@@ -404,7 +417,9 @@ class FlextProcessors:
                 return FlextResult[bool].fail(f"Attribute validation failed: {e}")
 
         def get_config_value(
-            self, config: dict[str, object], key: str,
+            self,
+            config: dict[str, object],
+            key: str,
         ) -> FlextResult[object]:
             """Get configuration value with validation."""
             try:
@@ -444,7 +459,8 @@ class FlextProcessors:
             return FlextResult[object].fail("Invalid request type for entry validation")
 
         def process_entry(
-            self, entry: FlextProcessors.Entry,
+            self,
+            entry: FlextProcessors.Entry,
         ) -> FlextResult[FlextProcessors.Entry]:
             """Process entry using handler validation patterns."""
             # Use handler's validation process
@@ -662,14 +678,16 @@ class FlextProcessors:
 
             # Type narrowing: we know config is dict at this point
             typed_config = cast(
-                "dict[str, object]", config,
+                "dict[str, object]",
+                config,
             )  # Cast to proper type after isinstance check
 
             # Validate configuration structure
             for key, value in typed_config.items():
                 # Validate value type (allow None)
                 if value is not None and not isinstance(
-                    value, (str, int, float, bool, list, dict),
+                    value,
+                    (str, int, float, bool, list, dict),
                 ):
                     return FlextResult[dict[str, object]].fail(
                         f"Configuration value for '{key}' must be a basic type",
@@ -691,7 +709,9 @@ class FlextProcessors:
         self.config_processor = self.ConfigProcessor()
 
     def register_processor(
-        self, name: str, processor: FlextProcessors.BaseProcessor,
+        self,
+        name: str,
+        processor: FlextProcessors.BaseProcessor,
     ) -> FlextResult[None]:
         """Register a named processor using service registry patterns."""
         try:
@@ -767,7 +787,8 @@ class FlextProcessors:
 
     @classmethod
     def configure_processors_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure processors system with validation."""
         try:

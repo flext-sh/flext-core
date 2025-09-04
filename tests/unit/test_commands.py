@@ -185,7 +185,8 @@ class TestQueryHandling:
             FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict[str, object]]],
         ):
             def handle(
-                self, query: ExtendedQuery,
+                self,
+                query: ExtendedQuery,
             ) -> FlextResult[list[dict[str, object]]]:
                 # Simulate search results
                 results = [
@@ -311,7 +312,8 @@ class TestAsyncCommandPatterns:
             FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]],
         ):
             async def handle_async(
-                self, query: ExtendedQuery,
+                self,
+                query: ExtendedQuery,
             ) -> FlextResult[list[str]]:
                 await asyncio.sleep(0.01)  # Simulate async work
                 results = [f"Async result {i}" for i in range(query.limit)]

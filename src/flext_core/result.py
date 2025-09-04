@@ -743,7 +743,8 @@ class FlextResult[T]:
                     except (TypeError, AttributeError):
                         # Skip logging to avoid circular dependency
                         # Unable to hash object attributes, using fallback
-                        pass
+                        # For complex objects, use a combination of type and memory ID
+                        return hash((True, type(self._data).__name__, id(self._data)))
 
                 # For complex objects, use a combination of type and memory ID
                 return hash((True, type(self._data).__name__, id(self._data)))
@@ -1046,7 +1047,9 @@ class FlextResult[T]:
 
     @classmethod
     def unwrap_or_raise[TUtil](
-        cls, result: FlextResult[TUtil], exception_type: type[Exception] = RuntimeError,
+        cls,
+        result: FlextResult[TUtil],
+        exception_type: type[Exception] = RuntimeError,
     ) -> TUtil:
         """Unwrap FlextResult or raise exception with error message.
 
@@ -1120,7 +1123,9 @@ class FlextResult[T]:
 
     @classmethod
     def batch_process[TItem, TUtil](
-        cls, items: list[TItem], processor: Callable[[TItem], FlextResult[TUtil]],
+        cls,
+        items: list[TItem],
+        processor: Callable[[TItem], FlextResult[TUtil]],
     ) -> tuple[list[TUtil], list[str]]:
         """Process a batch of items and separate successes from failures.
 
@@ -1254,7 +1259,9 @@ class FlextResult[T]:
 
     @classmethod
     def traverse[TItem, TResult](
-        cls, items: list[TItem], func: Callable[[TItem], FlextResult[TResult]],
+        cls,
+        items: list[TItem],
+        func: Callable[[TItem], FlextResult[TResult]],
     ) -> FlextResult[list[TResult]]:
         """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN.
 
@@ -1274,7 +1281,9 @@ class FlextResult[T]:
         return FlextResult[list[TResult]].ok(results)
 
     def kleisli_compose[U, V](
-        self, f: Callable[[T], FlextResult[U]], g: Callable[[U], FlextResult[V]],
+        self,
+        f: Callable[[T], FlextResult[U]],
+        g: Callable[[U], FlextResult[V]],
     ) -> Callable[[T], FlextResult[V]]:
         """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN.
 
@@ -1319,7 +1328,9 @@ class FlextResult[T]:
         Mathematical: (T1 -> T2 -> T3 -> R) -> M[T1] -> M[T2] -> M[T3] -> M[R]
         """
         return cls.applicative_lift2(
-            lambda t1_t2, t3: func(t1_t2[0], t1_t2[1], t3), result1 @ result2, result3,
+            lambda t1_t2, t3: func(t1_t2[0], t1_t2[1], t3),
+            result1 @ result2,
+            result3,
         )
 
 

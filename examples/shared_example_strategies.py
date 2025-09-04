@@ -13,6 +13,7 @@ from __future__ import annotations
 from functools import reduce
 
 from typing import NamedTuple, Protocol, TypeVar
+from collections.abc import Callable
 
 from flext_core import FlextLogger, FlextResult
 
@@ -43,8 +44,8 @@ class ExamplePatternFactory:
     @staticmethod
     def create_demo_runner[T](
         name: str,
-        demo_func: callable[[], FlextResult[T]],
-        cleanup_func: callable[[], FlextResult[None]] | None = None,
+        demo_func: Callable[[], FlextResult[T]],
+        cleanup_func: Callable[[], FlextResult[None]] | None = None,
     ) -> DemoStrategy[T]:
         """Create a demo runner strategy using Factory Pattern."""
 
@@ -90,7 +91,7 @@ class ExamplePatternFactory:
     def create_validation_demo(
         name: str,
         data: dict[str, object],
-        validation_rules: list[callable[[dict[str, object]], FlextResult[None]]],
+        validation_rules: list[Callable[[dict[str, object]], FlextResult[None]]],
     ) -> DemoStrategy[dict[str, object]]:
         """Create validation demonstration using Railway Pattern - ELIMINATED LOOP RETURNS."""
 
@@ -102,12 +103,12 @@ class ExamplePatternFactory:
 
             def _apply_validation(
                 acc_result: FlextResult[dict[str, object]],
-                rule: callable[[dict[str, object]], FlextResult[None]],
+                rule: Callable[[dict[str, object]], FlextResult[None]],
             ) -> FlextResult[dict[str, object]]:
                 """Apply single validation rule in railway chain."""
                 return acc_result.flat_map(
                     lambda data_dict: rule(data_dict).map(lambda _: data_dict),
-                ).map_error(lambda e: f"Validation failed: {e}")
+                ).tap_error(lambda e: logger.error(f"Validation failed: {e}"))
 
             # Functional approach: Chain all validations without loop returns
             initial_result = FlextResult[dict[str, object]].ok(data)
@@ -135,7 +136,7 @@ class ExamplePatternFactory:
                 _safe_create_config_instance(config_class, config_data)
                 .flat_map(_validate_config_if_needed)
                 .map(lambda config: _log_success_and_return(config, name))
-                .map_error(lambda e: f"Configuration creation failed: {e}")
+                .tap_error(lambda e: logger.error(f"Configuration creation failed: {e}"))
             )
 
         # Railway Helper Functions
@@ -154,10 +155,12 @@ class ExamplePatternFactory:
             if not hasattr(config_instance, "validate_business_rules"):
                 return FlextResult[object].ok(config_instance)
 
+            # Check if config_instance has validate_business_rules method
+            validation_result = getattr(config_instance, "validate_business_rules", lambda: FlextResult[None].ok(None))()
             return (
-                config_instance.validate_business_rules()
+                validation_result
                 .flat_map(lambda _: FlextResult[object].ok(config_instance))
-                .map_error(lambda e: f"Config validation failed: {e}")
+                .tap_error(lambda e: logger.error(f"Config validation failed: {e}"))
             )
 
         def _log_success_and_return(config_instance: object, name: str) -> object:
@@ -168,17 +171,17 @@ class ExamplePatternFactory:
         return ExamplePatternFactory.create_demo_runner(name, config_demo)
 
     @staticmethod
-    def execute_demo_pipeline(demos: list[DemoStrategy]) -> FlextResult[list[object]]:
+    def execute_demo_pipeline(demos: list[DemoStrategy[object]]) -> FlextResult[list[object]]:
         """Execute multiple demonstrations in pipeline using Railway Pattern - ELIMINATED LOOP RETURNS."""
         logger.info(f"🔄 Starting demo pipeline with {len(demos)} demonstrations")
 
         # Railway Pattern: Use functional approach with fold/reduce
         class PipelineState(NamedTuple):
             results: list[object]
-            executed_demos: list[DemoStrategy]
+            executed_demos: list[DemoStrategy[object]]
 
         def _execute_single_demo(
-            acc_state: FlextResult[PipelineState], demo: DemoStrategy,
+            acc_state: FlextResult[PipelineState], demo: DemoStrategy[object],
         ) -> FlextResult[PipelineState]:
             """Execute single demo with error propagation using Railway Pattern."""
             return acc_state.flat_map(
@@ -189,15 +192,14 @@ class ExamplePatternFactory:
                         executed_demos=[*state.executed_demos, demo],
                     ),
                 )
-                .map_error(lambda e: _cleanup_on_failure(state.executed_demos, e)),
+                .tap_error(lambda e: _cleanup_on_failure(state.executed_demos, e))
             )
 
-        def _cleanup_on_failure(executed_demos: list[DemoStrategy], error: str) -> str:
+        def _cleanup_on_failure(executed_demos: list[DemoStrategy[object]], error: str) -> None:
             """Cleanup executed demos on failure."""
             logger.error(f"❌ Pipeline failed: {error}")
             for cleanup_demo in executed_demos:
                 cleanup_demo.cleanup()
-            return f"Demo pipeline failed: {error}"
 
         def _perform_final_cleanup(final_state: PipelineState) -> list[object]:
             """Perform cleanup on all demos and return results."""
@@ -221,7 +223,7 @@ class ExamplePatternFactory:
 
     @staticmethod
     def create_composite_demo_suite(
-        suite_name: str, demos: list[tuple[str, callable[[], FlextResult[object]]]],
+        suite_name: str, demos: list[tuple[str, Callable[[], FlextResult[object]]]],
     ) -> FlextResult[str]:
         """Create composite demo suite to eliminate duplication - ANTI-DUPLICATION PATTERN.
 

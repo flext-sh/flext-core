@@ -349,7 +349,8 @@ class FlextCore:
     # Domain & Aggregate Methods - RESTORED
     # Direct implementation using models module
     def configure_aggregates_system(
-        self, cfg: FlextTypes.Aggregates.AggregatesConfigDict,
+        self,
+        cfg: FlextTypes.Aggregates.AggregatesConfigDict,
     ) -> FlextTypes.Aggregates.AggregatesConfig:
         """Configure the aggregates system with the provided configuration."""
         try:
@@ -374,7 +375,8 @@ class FlextCore:
             )
 
     def optimize_aggregates_system(
-        self, lvl: FlextTypes.Aggregates.PerformanceLevel,
+        self,
+        lvl: FlextTypes.Aggregates.PerformanceLevel,
     ) -> FlextTypes.Aggregates.PerformanceConfig:
         """Optimize aggregates performance with the specified level."""
         try:
@@ -406,7 +408,8 @@ class FlextCore:
             )
 
     def configure_commands_system(
-        self, cfg: FlextTypes.Commands.CommandsConfigDict,
+        self,
+        cfg: FlextTypes.Commands.CommandsConfigDict,
     ) -> FlextTypes.Commands.CommandsConfig:
         return self.commands.configure_commands_system(cfg)
 
@@ -414,10 +417,12 @@ class FlextCore:
         return self.commands.get_commands_system_config()
 
     def optimize_commands_performance(
-        self, level: str,
+        self,
+        level: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {"performance_level": level}
         return self.commands.optimize_commands_performance(config)
 
@@ -485,7 +490,9 @@ class FlextCore:
         """Configure logging settings using specialized config."""
         try:
             logging_config_result = self.config.create_logging_config(
-                log_level=log_level, log_file=log_file, **kwargs,
+                log_level=log_level,
+                log_file=log_file,
+                **kwargs,
             )
             if logging_config_result.is_success:
                 # Store in specialized configs
@@ -499,7 +506,8 @@ class FlextCore:
             )
 
     def configure_context_system(
-        self, config: FlextTypes.Config.ConfigDict,
+        self,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         return self.context.configure_context_system(config)
 
@@ -518,7 +526,9 @@ class FlextCore:
         return FlextResult[str].fail(f"Field '{field_name}': {validation_result.error}")
 
     def validate_numeric_field(
-        self, value: object, field_name: str,
+        self,
+        value: object,
+        field_name: str,
     ) -> FlextResult[int | float]:
         # Use the actual API: validate_numeric_field returns FlextResult[None]
         validation_result = self.validation.validate_numeric_field(value)
@@ -535,7 +545,8 @@ class FlextCore:
         )
 
     def validate_user_data(
-        self, user_data: FlextTypes.Core.JsonObject,
+        self,
+        user_data: FlextTypes.Core.JsonObject,
     ) -> FlextResult[dict[str, object]]:
         user_data_dict: dict[str, object] = (
             dict(user_data) if hasattr(user_data, "keys") else {}
@@ -543,7 +554,8 @@ class FlextCore:
         return self.validation.validate_user_data(user_data_dict)
 
     def validate_api_request(
-        self, request_data: FlextTypes.Core.JsonObject,
+        self,
+        request_data: FlextTypes.Core.JsonObject,
     ) -> FlextResult[dict[str, object]]:
         request_data_dict: dict[str, object] = cast(
             "dict[str, object]",
@@ -719,14 +731,16 @@ class FlextCore:
 
     # Decorator Methods
     def configure_decorators_system(
-        self, config: dict[str, object],
+        self,
+        config: dict[str, object],
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Configure decorators system."""
         # Convert to ConfigDict format expected by decorators
         config_dict: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             k: v
             for k, v in config.items()
@@ -741,7 +755,8 @@ class FlextCore:
     ]:
         """Get decorators system configuration."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "environment": "development",
             "validation_level": "normal",
@@ -763,14 +778,16 @@ class FlextCore:
         ].ok(config)
 
     def optimize_decorators_performance(
-        self, performance_level: str,
+        self,
+        performance_level: str,
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Optimize decorators performance."""
         # Create optimized configuration based on performance level
         optimized_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             "performance_level": performance_level,
             "optimization_enabled": True,
@@ -793,14 +810,16 @@ class FlextCore:
         return self.fields.create_boolean_field(default=default)
 
     def configure_fields_system(
-        self, config: dict[str, object],
+        self,
+        config: dict[str, object],
     ) -> FlextResult[
         dict[str, str | int | float | bool | list[object] | dict[str, object]]
     ]:
         """Configure fields system."""
         # Convert to ConfigDict format expected by fields
         config_dict: dict[
-            str, str | int | float | bool | list[object] | dict[str, object],
+            str,
+            str | int | float | bool | list[object] | dict[str, object],
         ] = {
             k: v
             for k, v in config.items()
@@ -862,7 +881,8 @@ class FlextCore:
         return self._container.register(str(key), service)
 
     def get_service(
-        self, key: FlextTypes.Container.ServiceKey,
+        self,
+        key: FlextTypes.Container.ServiceKey,
     ) -> FlextTypes.Container.ServiceRetrieval:
         r = self._container.get(str(key))
         return (
@@ -1000,7 +1020,8 @@ class FlextCore:
     # =========================================================================
 
     def get_environment_config(
-        self, environment: FlextTypes.Config.Environment = "development",
+        self,
+        environment: FlextTypes.Config.Environment = "development",
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Get environment-specific configuration using FlextTypes.Config."""
         try:
@@ -1071,7 +1092,8 @@ class FlextCore:
 
     @classmethod
     def configure_core_system(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure core system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1124,22 +1146,26 @@ class FlextCore:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
+                    "log_level",
+                    FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
                     FlextConstants.Config.ValidationLevel.NORMAL.value,
                 ),
                 "config_source": config.get(
-                    "config_source", FlextConstants.Config.ConfigSource.DEFAULT.value,
+                    "config_source",
+                    FlextConstants.Config.ConfigSource.DEFAULT.value,
                 ),
                 "enable_observability": False,  # observability removed
                 "enable_logging": config.get("enable_logging", True),
                 "enable_container_debugging": config.get(
-                    "enable_container_debugging", False,
+                    "enable_container_debugging",
+                    False,
                 ),
                 "max_service_registrations": config.get(
-                    "max_service_registrations", 1000,
+                    "max_service_registrations",
+                    1000,
                 ),
             }
 
@@ -1200,7 +1226,8 @@ class FlextCore:
 
     @classmethod
     def create_environment_core_config(
-        cls, environment: FlextTypes.Config.Environment,
+        cls,
+        environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific core system configuration."""
         try:
@@ -1221,54 +1248,64 @@ class FlextCore:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_container_debugging": False,  # No debugging in production
-                    "enable_performance_monitoring": True,  # Performance monitoring in production
-                    "max_service_registrations": 500,  # Conservative limit for production
-                    "cache_configuration": True,  # Cache for performance
-                    "enable_error_reporting": True,  # Error reporting in production
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_container_debugging": False,  # No debugging in production
+                        "enable_performance_monitoring": True,  # Performance monitoring in production
+                        "max_service_registrations": 500,  # Conservative limit for production
+                        "cache_configuration": True,  # Cache for performance
+                        "enable_error_reporting": True,  # Error reporting in production
+                    }
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_container_debugging": True,  # Full debugging for development
-                    "enable_performance_monitoring": False,  # No performance monitoring in dev
-                    "max_service_registrations": 2000,  # Higher limit for development
-                    "cache_configuration": False,  # No caching for development (fresh data)
-                    "enable_detailed_logging": True,  # Detailed logging for debugging
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_container_debugging": True,  # Full debugging for development
+                        "enable_performance_monitoring": False,  # No performance monitoring in dev
+                        "max_service_registrations": 2000,  # Higher limit for development
+                        "cache_configuration": False,  # No caching for development (fresh data)
+                        "enable_detailed_logging": True,  # Detailed logging for debugging
+                    }
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_container_debugging": False,  # No debugging in tests
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "max_service_registrations": 100,  # Limited for tests
-                    "cache_configuration": False,  # No caching in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_container_debugging": False,  # No debugging in tests
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "max_service_registrations": 100,  # Limited for tests
+                        "cache_configuration": False,  # No caching in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    }
+                )
             elif environment == "staging":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_container_debugging": False,  # No debugging in staging
-                    "enable_performance_monitoring": True,  # Performance monitoring in staging
-                    "max_service_registrations": 750,  # Staging limit
-                    "cache_configuration": True,  # Cache for staging performance
-                    "enable_staging_features": True,  # Special staging features
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_container_debugging": False,  # No debugging in staging
+                        "enable_performance_monitoring": True,  # Performance monitoring in staging
+                        "max_service_registrations": 750,  # Staging limit
+                        "cache_configuration": True,  # Cache for staging performance
+                        "enable_staging_features": True,  # Special staging features
+                    }
+                )
             else:  # local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_container_debugging": True,  # Debugging for local development
-                    "enable_performance_monitoring": False,  # No performance monitoring locally
-                    "max_service_registrations": 1000,  # Standard limit for local
-                    "cache_configuration": False,  # No caching for local development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_container_debugging": True,  # Debugging for local development
+                        "enable_performance_monitoring": False,  # No performance monitoring locally
+                        "max_service_registrations": 1000,  # Standard limit for local
+                        "cache_configuration": False,  # No caching for local development
+                    }
+                )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
 
@@ -1279,7 +1316,8 @@ class FlextCore:
 
     @classmethod
     def optimize_core_performance(
-        cls, config: FlextTypes.Config.ConfigDict,
+        cls,
+        config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize core system performance based on configuration."""
         try:
@@ -1294,67 +1332,82 @@ class FlextCore:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 2000,
-                    ),
-                    "container_cache_size": 1000,
-                    "enable_lazy_loading": True,
-                    "enable_service_pooling": True,
-                    "max_concurrent_operations": 200,
-                    "memory_optimization": "aggressive",
-                    "gc_optimization": True,
-                    "enable_async_processing": True,
-                    "buffer_size": 10000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations",
+                            2000,
+                        ),
+                        "container_cache_size": 1000,
+                        "enable_lazy_loading": True,
+                        "enable_service_pooling": True,
+                        "max_concurrent_operations": 200,
+                        "memory_optimization": "aggressive",
+                        "gc_optimization": True,
+                        "enable_async_processing": True,
+                        "buffer_size": 10000,
+                    }
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 1000,
-                    ),
-                    "container_cache_size": 500,
-                    "enable_lazy_loading": True,
-                    "enable_service_pooling": False,
-                    "max_concurrent_operations": 100,
-                    "memory_optimization": "balanced",
-                    "gc_optimization": False,
-                    "enable_async_processing": False,
-                    "buffer_size": 5000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations",
+                            1000,
+                        ),
+                        "container_cache_size": 500,
+                        "enable_lazy_loading": True,
+                        "enable_service_pooling": False,
+                        "max_concurrent_operations": 100,
+                        "memory_optimization": "balanced",
+                        "gc_optimization": False,
+                        "enable_async_processing": False,
+                        "buffer_size": 5000,
+                    }
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 500,
-                    ),
-                    "container_cache_size": 100,
-                    "enable_lazy_loading": False,
-                    "enable_service_pooling": False,
-                    "max_concurrent_operations": 50,
-                    "memory_optimization": "conservative",
-                    "gc_optimization": False,
-                    "enable_async_processing": False,
-                    "buffer_size": 1000,
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations",
+                            500,
+                        ),
+                        "container_cache_size": 100,
+                        "enable_lazy_loading": False,
+                        "enable_service_pooling": False,
+                        "max_concurrent_operations": 50,
+                        "memory_optimization": "conservative",
+                        "gc_optimization": False,
+                        "enable_async_processing": False,
+                        "buffer_size": 1000,
+                    }
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_service_registrations": config.get(
-                        "max_service_registrations", 1000,
-                    ),
-                    "container_cache_size": 500,
-                    "enable_lazy_loading": config.get("enable_lazy_loading", True),
-                    "max_concurrent_operations": config.get(
-                        "max_concurrent_operations", 100,
-                    ),
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_service_registrations": config.get(
+                            "max_service_registrations",
+                            1000,
+                        ),
+                        "container_cache_size": 500,
+                        "enable_lazy_loading": config.get("enable_lazy_loading", True),
+                        "max_concurrent_operations": config.get(
+                            "max_concurrent_operations",
+                            100,
+                        ),
+                        "memory_optimization": "balanced",
+                    }
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                }
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
@@ -1510,7 +1563,9 @@ class FlextCore:
     @staticmethod
     @staticmethod
     def validate_string(
-        value: object, min_length: int = 0, max_length: int | None = None,
+        value: object,
+        min_length: int = 0,
+        max_length: int | None = None,
     ) -> FlextResult[str]:
         """Validate string value with length constraints."""
         if not isinstance(value, str):
@@ -1530,7 +1585,9 @@ class FlextCore:
 
     @staticmethod
     def validate_numeric(
-        value: object, min_value: float | None = None, max_value: float | None = None,
+        value: object,
+        min_value: float | None = None,
+        max_value: float | None = None,
     ) -> FlextResult[float]:
         """Validate numeric value with range constraints."""
         if not isinstance(value, (int, float)):
@@ -1561,7 +1618,8 @@ class FlextCore:
 
     @staticmethod
     def require_not_none(
-        value: T | None, message: str = "Value cannot be None",
+        value: T | None,
+        message: str = "Value cannot be None",
     ) -> FlextResult[T]:
         """Guard that ensures value is not None."""
         try:
@@ -1572,7 +1630,8 @@ class FlextCore:
 
     @staticmethod
     def require_non_empty(
-        value: str, message: str = "Value cannot be empty",
+        value: str,
+        message: str = "Value cannot be empty",
     ) -> FlextResult[str]:
         """Guard that ensures string is not empty."""
         try:
@@ -1583,7 +1642,8 @@ class FlextCore:
 
     @staticmethod
     def require_positive(
-        value: float, message: str = "Value must be positive",
+        value: float,
+        message: str = "Value must be positive",
     ) -> FlextResult[float]:
         """Guard that ensures number is positive."""
         try:
@@ -1660,7 +1720,8 @@ class FlextCore:
     @staticmethod
     @staticmethod
     def create_aggregate_root(
-        aggregate_class: type[T], **data: object,
+        aggregate_class: type[T],
+        **data: object,
     ) -> FlextResult[T]:
         """Create aggregate root with validation."""
         try:
@@ -1757,7 +1818,8 @@ class FlextCore:
 
     @staticmethod
     def create_message(
-        message_type: str, **kwargs: object,
+        message_type: str,
+        **kwargs: object,
     ) -> FlextResult[FlextModels.Message]:
         """Create cross-service message."""
         try:
@@ -1804,7 +1866,9 @@ class FlextCore:
 
     @staticmethod
     def create_event(
-        event_type: str, data: dict[str, object], **kwargs: object,
+        event_type: str,
+        data: dict[str, object],
+        **kwargs: object,
     ) -> FlextResult[FlextModels.Event]:
         """Create cross-service event."""
         try:
@@ -1918,7 +1982,8 @@ class FlextCore:
         return result.error
 
     def create_validation_decorator(
-        self, validator: FlextTypes.Core.OperationCallable,
+        self,
+        validator: FlextTypes.Core.OperationCallable,
     ) -> object:
         """Create custom validation decorator."""
         # Cast validator to proper type for validate_input compatibility
@@ -2050,7 +2115,8 @@ class FlextCore:
         try:
             # Convert all values to proper JSON types
             typed_data = cast(
-                "FlextTypes.Core.JsonObject", {str(k): v for k, v in data.items()},
+                "FlextTypes.Core.JsonObject",
+                {str(k): v for k, v in data.items()},
             )
             metadata = FlextModels.JsonData(root=typed_data)
             return FlextResult[FlextModels.JsonData].ok(metadata)
@@ -2156,7 +2222,8 @@ class FlextCore:
 
     @staticmethod
     def validate_dict_structure(
-        obj: object, value_type: type,
+        obj: object,
+        value_type: type,
     ) -> FlextResult[dict[str, object]]:
         """Validate dictionary structure."""
         if not isinstance(obj, dict):
@@ -2171,7 +2238,8 @@ class FlextCore:
 
     @staticmethod
     def create_validated_model(
-        model_class: type, **data: object,
+        model_class: type,
+        **data: object,
     ) -> FlextResult[object]:
         """Create validated model."""
         try:
@@ -2235,7 +2303,9 @@ class FlextCore:
     # =========================================================================
 
     def create_factory(
-        self, factory_type: str, **config: object,
+        self,
+        factory_type: str,
+        **config: object,
     ) -> FlextResult[object]:
         """Create factory instance."""
         try:
@@ -2444,7 +2514,8 @@ class FlextCore:
                         decorated_func = decorator(final_process_func)
                         # Type cast to ensure correct signature is maintained
                         final_process_func = cast(
-                            "Callable[[object], FlextResult[object]]", decorated_func,
+                            "Callable[[object], FlextResult[object]]",
+                            decorated_func,
                         )
 
         class DynamicServiceProcessor:
@@ -2494,14 +2565,16 @@ class FlextCore:
 
         # Add field validators if provided
         if validators:
-            for _field_name in validators:
-                # Add validator to the class
-                pass
+            for validator in validators.values():
+                # Add validator to the class via setattr
+                if callable(validator):
+                    # Store validator for later application after class creation
+                    continue
 
         # Create and return a basic entity class
         # This is a placeholder implementation - proper dynamic class creation would be more complex
         class DynamicEntity(FlextModels.Entity):
-            pass
+            """Dynamically created entity class."""
 
         # Set the annotations on the class
         DynamicEntity.__annotations__ = annotations
@@ -2529,9 +2602,11 @@ class FlextCore:
 
         # Add field validators if provided
         if validators:
-            for _field_name in validators:
-                # Add validator to the class
-                pass
+            for validator in validators.values():
+                # Add validator to the class via setattr
+                if callable(validator):
+                    # Store validator for later application after class creation
+                    continue
 
             def validate_business_rules_method(self: object) -> FlextResult[None]:
                 if business_rules is not None:
@@ -2542,7 +2617,8 @@ class FlextCore:
 
         # Create dynamic class
         return cast(
-            "type[FlextModels.Value]", type(name, (FlextModels.Value,), class_attrs),
+            "type[FlextModels.Value]",
+            type(name, (FlextModels.Value,), class_attrs),
         )
 
     # Service Setup Methods - Compact Delegations

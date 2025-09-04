@@ -11,27 +11,26 @@ This test file showcases the full power of our testing infrastructure including:
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Container, Sized
+from collections.abc import Callable, Container, Iterator, Sized
+from contextlib import contextmanager
 from typing import TypeVar, cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
 
-from ..support import (
+from flext_tests import (
     AsyncTestUtils,
+    BenchmarkProtocol,
     BenchmarkUtils,
     ComplexityAnalyzer,
-    PerformanceProfiler,
-    StressTestRunner,
-)
-from ..support.hypothesis import (
     CompositeStrategies,
     EdgeCaseStrategies,
     FlextStrategies,
+    PerformanceProfiler,
     PerformanceStrategies,
     PropertyTestHelpers,
+    StressTestRunner,
 )
-from ..support.performance import BenchmarkProtocol
 
 
 def mark_test_pattern(
@@ -160,13 +159,15 @@ class ParameterizedTestBuilder:
         return self
 
     def add_success_cases(
-        self, cases: list[dict[str, object]],
+        self,
+        cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         self._success_cases.extend(cases)
         return self
 
     def add_failure_cases(
-        self, cases: list[dict[str, object]],
+        self,
+        cases: list[dict[str, object]],
     ) -> ParameterizedTestBuilder:
         self._failure_cases.extend(cases)
         return self
@@ -285,9 +286,6 @@ class TestFixtureBuilder:
         return self
 
     def setup_context(self) -> object:
-        from collections.abc import Iterator
-        from contextlib import contextmanager
-
         @contextmanager
         def _ctx() -> Iterator[dict[str, object]]:
             for f in self._setups:
@@ -411,7 +409,9 @@ class TestPerformanceAnalysis:
         # Measure across different input sizes
         input_sizes = [100, 200, 400, 800]
         result = analyzer.measure_complexity(
-            linear_operation, input_sizes, "linear_operation",
+            linear_operation,
+            input_sizes,
+            "linear_operation",
         )
 
         # Type cast for proper type checking
@@ -431,7 +431,9 @@ class TestPerformanceAnalysis:
 
         # Run load test
         result = stress_runner.run_load_test(
-            simple_operation, iterations=1000, operation_name="simple_ops",
+            simple_operation,
+            iterations=1000,
+            operation_name="simple_ops",
         )
 
         # Type cast for proper type checking
@@ -456,7 +458,9 @@ class TestPerformanceAnalysis:
 
         # Run for 2 seconds
         result = stress_runner.run_endurance_test(
-            memory_operation, duration_seconds=2.0, operation_name="memory_ops",
+            memory_operation,
+            duration_seconds=2.0,
+            operation_name="memory_ops",
         )
 
         # Type cast for proper type checking
@@ -486,7 +490,8 @@ class TestPerformanceAnalysis:
             assert sorted_list[0] > sorted_list[-1]
 
         profiler.assert_memory_efficient(
-            max_memory_mb=20.0, operation_name="list_operations",
+            max_memory_mb=20.0,
+            operation_name="list_operations",
         )
 
 
@@ -666,7 +671,8 @@ class TestComprehensiveIntegration:
 
     @pytest.mark.asyncio
     async def test_async_with_all_patterns(
-        self, async_test_utils: AsyncTestUtils,
+        self,
+        async_test_utils: AsyncTestUtils,
     ) -> None:
         """Demonstrate async testing with all patterns."""
         # Build test data
@@ -685,18 +691,22 @@ class TestComprehensiveIntegration:
 
         # Execute with timeout
         result = await async_test_utils.run_with_timeout(
-            async_operation(), timeout_seconds=5.0,
+            async_operation(),
+            timeout_seconds=5.0,
         )
 
         # Use assertion builder for verification
         TestAssertionBuilder(result).is_not_none().satisfies(
-            lambda x: "result" in x, "should have result field",
+            lambda x: "result" in x,
+            "should have result field",
         ).satisfies(
-            lambda x: x["result"] == "success", "should be successful",
+            lambda x: x["result"] == "success",
+            "should be successful",
         ).assert_all()
 
     def test_performance_with_property_testing(
-        self, benchmark: BenchmarkProtocol,
+        self,
+        benchmark: BenchmarkProtocol,
     ) -> None:
         """Combine performance testing with property-based testing."""
 
@@ -751,7 +761,9 @@ class TestComprehensiveIntegration:
             return process_user_profiles(test_profiles)
 
         results = BenchmarkUtils.benchmark_with_warmup(
-            benchmark, benchmark_operation, warmup_rounds=3,
+            benchmark,
+            benchmark_operation,
+            warmup_rounds=3,
         )
 
         # Verify results
@@ -813,9 +825,11 @@ class TestRealWorldScenarios:
 
             # Comprehensive assertions
             TestAssertionBuilder(result).is_not_none().satisfies(
-                lambda x: x["status"] == "success", "should be successful",
+                lambda x: x["status"] == "success",
+                "should be successful",
             ).satisfies(
-                lambda x: "correlation_id" in x, "should have correlation ID",
+                lambda x: "correlation_id" in x,
+                "should have correlation ID",
             ).satisfies(
                 lambda x: x["method"] in {"GET", "POST", "PUT", "DELETE", "PATCH"},
                 "should have valid HTTP method",
@@ -823,7 +837,8 @@ class TestRealWorldScenarios:
 
     @given(CompositeStrategies.configuration_data())
     def test_configuration_validation_comprehensive(
-        self, config: dict[str, object],
+        self,
+        config: dict[str, object],
     ) -> None:
         """Comprehensive configuration validation testing."""
         # Validate configuration structure

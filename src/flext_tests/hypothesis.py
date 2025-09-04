@@ -379,16 +379,20 @@ class EdgeCaseStrategies:
                 st.just(1),
                 st.just(-1),
                 st.integers(
-                    min_value=-(2**31), max_value=-(2**31) + 10,
+                    min_value=-(2**31),
+                    max_value=-(2**31) + 10,
                 ),  # Near min int32
                 st.integers(
-                    min_value=2**31 - 10, max_value=2**31 - 1,
+                    min_value=2**31 - 10,
+                    max_value=2**31 - 1,
                 ),  # Near max int32
                 st.integers(
-                    min_value=-(2**63), max_value=-(2**63) + 10,
+                    min_value=-(2**63),
+                    max_value=-(2**63) + 10,
                 ),  # Near min int64
                 st.integers(
-                    min_value=2**63 - 10, max_value=2**63 - 1,
+                    min_value=2**63 - 10,
+                    max_value=2**63 - 1,
                 ),  # Near max int64
             ],
         )
@@ -418,7 +422,9 @@ class EdgeCaseStrategies:
                 st.text(alphabet="áéíóúñü", min_size=1, max_size=20),  # Accented chars
                 st.text(alphabet="αβγδεζηθ", min_size=1, max_size=15),  # Greek letters
                 st.text(
-                    alphabet="中文测试", min_size=1, max_size=10,
+                    alphabet="中文测试",
+                    min_size=1,
+                    max_size=10,
                 ),  # Chinese characters
                 st.builds(EdgeCaseStrategies._zero_width_spaces),  # Zero-width spaces
                 st.builds(EdgeCaseStrategies._null_character_string),  # Null characters
@@ -432,7 +438,10 @@ class EdgeCaseStrategies:
             [
                 st.just({}),  # Empty dict
                 st.dictionaries(
-                    st.just("key1"), st.none(), min_size=2, max_size=2,
+                    st.just("key1"),
+                    st.none(),
+                    min_size=2,
+                    max_size=2,
                 ),  # None values
                 st.dictionaries(
                     st.sampled_from([f"key_{i}" for i in range(5)]),
@@ -534,7 +543,9 @@ class PropertyTestHelpers:
 
     @staticmethod
     def _build_test_scenario(
-        data: object, id_val: str, scenario_name: str,
+        data: object,
+        id_val: str,
+        scenario_name: str,
     ) -> dict[str, object]:
         """Build test scenario dictionary with metadata."""
         return {
@@ -647,7 +658,9 @@ class CompositeStrategies:
                     st.builds(
                         CompositeStrategies._build_database_url,
                         host=st.text(
-                            alphabet=string.ascii_lowercase, min_size=5, max_size=20,
+                            alphabet=string.ascii_lowercase,
+                            min_size=5,
+                            max_size=20,
                         ),
                         port=st.integers(min_value=1000, max_value=65535),
                         db=st.text(

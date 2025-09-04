@@ -11,9 +11,9 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from flext_core import FlextCommands, FlextResult
 from flext_core.models import FlextModels
-from tests.support import FlextMatchers
-from tests.support.factories import (
+from flext_tests import (
     FailingUserRepository,
+    FlextMatchers,
     InMemoryUserRepository,
     RealAuditService,
     RealEmailService,
@@ -38,11 +38,13 @@ class CreateUserCommand(FlextModels.Config):
         """Custom validation for the command."""
         if len(self.username) < 3:
             return FlextResult[None].fail(
-                "Username too short", error_code="VALIDATION_USERNAME",
+                "Username too short",
+                error_code="VALIDATION_USERNAME",
             )
         if "@" not in self.email:
             return FlextResult[None].fail(
-                "Invalid email format", error_code="VALIDATION_EMAIL",
+                "Invalid email format",
+                error_code="VALIDATION_EMAIL",
             )
         if self.age < 13:
             return FlextResult[None].fail("User too young", error_code="VALIDATION_AGE")
@@ -61,15 +63,18 @@ class UpdateUserCommand(FlextModels.Config):
         """Validate update command."""
         if not self.user_id.strip():
             return FlextResult[None].fail(
-                "User ID required", error_code="VALIDATION_USER_ID",
+                "User ID required",
+                error_code="VALIDATION_USER_ID",
             )
         if self.username is not None and len(self.username) < 3:
             return FlextResult[None].fail(
-                "Username too short", error_code="VALIDATION_USERNAME",
+                "Username too short",
+                error_code="VALIDATION_USERNAME",
             )
         if self.email is not None and "@" not in self.email:
             return FlextResult[None].fail(
-                "Invalid email format", error_code="VALIDATION_EMAIL",
+                "Invalid email format",
+                error_code="VALIDATION_EMAIL",
             )
         return FlextResult[None].ok(None)
 
@@ -192,7 +197,8 @@ class UpdateUserHandler(
         validation = command.validate_command()
         if validation.is_failure:
             return FlextResult[dict[str, object]].fail(
-                validation.error or "Validation failed", validation.error_code,
+                validation.error or "Validation failed",
+                validation.error_code,
             )
 
         # Mock update operation
@@ -245,7 +251,6 @@ class TestFlextCommandsComprehensive:
 
         validation = valid_command.validate_command()
         # FlextMatchers expects FlextResult[object], so cast to match signature
-        from typing import cast
 
         assert FlextMatchers.is_successful_result(
             cast("FlextResult[object]", validation),
@@ -268,7 +273,8 @@ class TestFlextCommandsComprehensive:
 
         # Invalid email
         invalid_email_cmd = CreateUserCommand(
-            username="valid_user", email="invalid_email",
+            username="valid_user",
+            email="invalid_email",
         )
         validation = invalid_email_cmd.validate_command()
         assert validation.is_failure
@@ -276,7 +282,9 @@ class TestFlextCommandsComprehensive:
 
         # Age too young
         young_user_cmd = CreateUserCommand(
-            username="young_user", email="young@example.com", age=10,
+            username="young_user",
+            email="young@example.com",
+            age=10,
         )
         validation = young_user_cmd.validate_command()
         assert validation.is_failure
@@ -354,13 +362,16 @@ class TestFlextCommandsComprehensive:
         # Setup repository with existing user
         repo = InMemoryUserRepository()
         existing_user = User(
-            id="existing", username="existing_user", email="existing@example.com",
+            id="existing",
+            username="existing_user",
+            email="existing@example.com",
         )
         repo.create(existing_user)  # Pre-populate repository
 
         handler = CreateUserHandler(repo)
         command = CreateUserCommand(
-            username="existing_user", email="different@example.com",
+            username="existing_user",
+            email="different@example.com",
         )
 
         result = handler.handle(command)
@@ -377,7 +388,8 @@ class TestFlextCommandsComprehensive:
         """Test handler with repository exception."""
         # Setup failing repository
         failing_repo = FailingUserRepository(
-            fail_on_create=True, error_message="Database connection failed",
+            fail_on_create=True,
+            error_message="Database connection failed",
         )
 
         handler = CreateUserHandler(failing_repo)
@@ -424,7 +436,8 @@ class TestFlextCommandsComprehensive:
         )  # Either outcome is valid for testing
 
     def test_command_bus_with_multiple_handlers(
-        self, benchmark: BenchmarkFixture,
+        self,
+        benchmark: BenchmarkFixture,
     ) -> None:
         """Test command bus with multiple handlers and performance."""
         bus = FlextCommands.Bus()
@@ -485,7 +498,8 @@ class TestFlextCommandsComprehensive:
 
         # Test handler created by factory
         test_command = CreateUserCommand(
-            username="factory_test", email="factory@example.com",
+            username="factory_test",
+            email="factory@example.com",
         )
         result = handler.handle(test_command)
         assert result.success
@@ -504,7 +518,8 @@ class TestFlextCommandsComprehensive:
 
         # Test decorated handler
         valid_command = CreateUserCommand(
-            username="decorated_user", email="decorated@example.com",
+            username="decorated_user",
+            email="decorated@example.com",
         )
         result = decorated_create_handler(valid_command)
         assert result.success
@@ -512,7 +527,8 @@ class TestFlextCommandsComprehensive:
 
         # Test with invalid command
         invalid_command = CreateUserCommand(
-            username="ab", email="invalid",
+            username="ab",
+            email="invalid",
         )  # Too short + invalid email
         result = decorated_create_handler(invalid_command)
         assert result.is_failure
@@ -556,7 +572,8 @@ class TestFlextCommandsComprehensive:
 
         # Execute command
         command = CreateUserCommand(
-            username="middleware_test", email="middleware@example.com",
+            username="middleware_test",
+            email="middleware@example.com",
         )
         result = bus.execute(command)
 

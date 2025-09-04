@@ -3,6 +3,7 @@
 Provides factory_boy-based factories for creating test objects with proper
 relationships, sequences, and customization following SOLID principles.
 """
+# mypy: disable-error-code="var-annotated,valid-type"
 
 from __future__ import annotations
 
@@ -12,11 +13,7 @@ from datetime import UTC, datetime
 from typing import ClassVar, cast
 
 import factory
-from factory import (
-    LazyFunction,
-    Sequence,
-)
-from factory.declarations import LazyAttribute
+from factory.declarations import LazyAttribute, LazyFunction, Sequence
 from factory.faker import Faker
 
 from flext_core import (
@@ -25,8 +22,8 @@ from flext_core import (
     FlextResult,
 )
 
-# Type aliases for better type safety
-AuditLog = dict[str, object]
+AuditLogValue = str | int | bool | None | dict[str, str | int | bool | None] | list[str]
+AuditLog = dict[str, AuditLogValue]
 
 
 class RepositoryError(Exception):
@@ -108,8 +105,8 @@ class UserFactory(factory.Factory[TestUser]):
     age = Faker("random_int", min=18, max=80)
     is_active: bool = True
     created_at = LazyAttribute(lambda _: datetime.now(UTC))
-    metadata: LazyFunction[dict[str, str]] = LazyFunction(
-        lambda: {"department": "engineering", "level": "senior", "team": "backend"},
+    metadata = LazyFunction(
+        lambda: {"department": "engineering", "level": "senior", "team": "backend"}
     )
 
 
@@ -152,11 +149,11 @@ class ConfigFactory(factory.Factory[TestConfig]):
 
         model = TestConfig
 
-    database_url = "postgresql://test:test@localhost/test_db"
-    log_level = "DEBUG"
-    debug = True
-    timeout = 30
-    max_connections = 100
+    database_url: str = "postgresql://test:test@localhost/test_db"
+    log_level: str = "DEBUG"
+    debug: bool = True
+    timeout: int = 30
+    max_connections: int = 100
     features = LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring"])
 
 
@@ -183,8 +180,8 @@ class StringFieldFactory(factory.Factory[TestField]):
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
     field_name = Sequence(lambda n: f"string_field_{n}")
-    field_type = FlextConstants.Enums.FieldType.STRING.value
-    required = True
+    field_type: str = FlextConstants.Enums.FieldType.STRING.value
+    required: bool = True
     description = LazyAttribute(
         lambda obj: f"Test string field: {getattr(obj, 'field_name', 'unknown')}",
     )
@@ -202,7 +199,7 @@ class IntegerFieldFactory(factory.Factory[TestField]):
         model = TestField
 
     field_id = LazyAttribute(lambda _: str(uuid.uuid4()))
-    field_name: Sequence[str] = Sequence(lambda n: f"integer_field_{n}")
+    field_name = Sequence(lambda n: f"integer_field_{n}")
     field_type: str = FlextConstants.Enums.FieldType.INTEGER.value
     required: bool = True
     description = LazyAttribute(
@@ -290,7 +287,8 @@ class FlextResultFactory:
 
     @staticmethod
     def failure(
-        error: str = "test_error", error_code: str = "TEST_ERROR",
+        error: str = "test_error",
+        error_code: str = "TEST_ERROR",
     ) -> FlextResult[object]:
         """Create failed FlextResult."""
         return FlextResult[object].fail(error, error_code=error_code)
@@ -314,7 +312,8 @@ class FlextResultFactory:
 
     @staticmethod
     def create_failure(
-        error: str = "test_error", error_code: str = "TEST_ERROR",
+        error: str = "test_error",
+        error_code: str = "TEST_ERROR",
     ) -> FlextResult[object]:
         """Create failed FlextResult (alias for failure method)."""
         return FlextResultFactory.failure(error, error_code)
@@ -486,7 +485,8 @@ def success_result(data: object = "test_data") -> FlextResult[object]:
 
 
 def failure_result(
-    error: str = "Test error", error_code: str = "TEST_ERROR",
+    error: str = "Test error",
+    error_code: str = "TEST_ERROR",
 ) -> FlextResult[object]:
     """Create failed FlextResult."""
     return FlextResult[object].fail(error, error_code=error_code)
@@ -521,7 +521,10 @@ __all__ = [
     "RepositoryError",
     "SequenceGenerators",
     "StringFieldFactory",
+    "TestConfig",
     "TestEntityFactory",
+    "TestField",
+    "TestUser",
     "TestValueObjectFactory",
     "User",
     "UserFactory",
@@ -570,7 +573,8 @@ class InMemoryUserRepository:
         return True
 
     def find_by_username(
-        self, username: str,
+        self,
+        username: str,
     ) -> dict[str, str | int | bool | None] | None:
         """Find user by username."""
         user = self._users_by_username.get(username)
@@ -649,7 +653,8 @@ class RealEmailService:
         self.should_fail = False
 
     def send_welcome_email(
-        self, user: dict[str, str | int | bool | None],
+        self,
+        user: dict[str, str | int | bool | None],
     ) -> FlextResult[bool]:
         """Send welcome email."""
         if self.should_fail:
@@ -682,7 +687,7 @@ class RealAuditService:
 
     def log_user_created(self, user: dict[str, str | int | bool | None]) -> None:
         """Log user creation event."""
-        audit_entry = {
+        audit_entry: AuditLog = {
             "event": "USER_CREATED",
             "user_id": user["id"],
             "username": user["username"],
@@ -696,10 +701,12 @@ class RealAuditService:
         self.audit_logs.append(audit_entry)
 
     def log_user_updated(
-        self, user_id: str, changes: dict[str, str | int | bool | None],
+        self,
+        user_id: str,
+        changes: dict[str, str | int | bool | None],
     ) -> None:
         """Log user update event."""
-        audit_entry = {
+        audit_entry: AuditLog = {
             "event": "USER_UPDATED",
             "user_id": user_id,
             "changes": changes,
@@ -732,7 +739,8 @@ class FailingUserRepository:
         self._users_by_username: dict[str, User] = {}
 
     def find_by_username(
-        self, username: str,
+        self,
+        username: str,
     ) -> dict[str, str | int | bool | None] | None:
         """Find user by username."""
         user = self._users_by_username.get(username)

@@ -7,6 +7,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 # =============================================================================
+# TYPE VARIABLES - Common typing imports for convenience
+# =============================================================================
+
+from typing import TypeVar
+
+# Common type variables for generic programming
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+E = TypeVar("E")
+F = TypeVar("F")
+P = TypeVar("P")
+R = TypeVar("R")
+
+# =============================================================================
 # FOUNDATION LAYER - Import classes directly to avoid conflicts
 # =============================================================================
 
@@ -127,4 +142,12 @@ __all__ = [
     "FlextLogger",
     "get_flext_container",
     "get_flext_core",
+    # Type variables
+    "T",
+    "U",
+    "V",
+    "E",
+    "F",
+    "P",
+    "R",
 ]
