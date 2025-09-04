@@ -182,7 +182,7 @@ class TestFlextCoreEntityCreation:
                 return FlextResult[None].ok(None)
 
         result = core.create_entity(
-            TestUser, id="user-123", name="John Doe", email="john@example.com"
+            TestUser, id="user-123", name="John Doe", email="john@example.com",
         )
         assert result.success
         user = result.unwrap()
@@ -409,7 +409,7 @@ class TestFlextCoreErrorCreation:
         core = FlextCore.get_instance()
 
         error = core.create_connection_error(
-            "Failed to connect to database", host="localhost", port=5432, retry_count=3
+            "Failed to connect to database", host="localhost", port=5432, retry_count=3,
         )
 
         assert "Failed to connect to database" in str(error)

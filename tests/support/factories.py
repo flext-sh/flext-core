@@ -169,7 +169,7 @@ class ProductionConfigFactory(ConfigFactory):
     timeout = 60
     max_connections = 500
     features = LazyFunction(
-        lambda: ["auth", "cache", "metrics", "monitoring", "alerts"]
+        lambda: ["auth", "cache", "metrics", "monitoring", "alerts"],
     )
 
 
@@ -186,7 +186,7 @@ class StringFieldFactory(factory.Factory[TestField]):
     field_type = FlextConstants.Enums.FieldType.STRING.value
     required = True
     description = LazyAttribute(
-        lambda obj: f"Test string field: {getattr(obj, 'field_name', 'unknown')}"
+        lambda obj: f"Test string field: {getattr(obj, 'field_name', 'unknown')}",
     )
     min_length = 1
     max_length = 100
@@ -206,7 +206,7 @@ class IntegerFieldFactory(factory.Factory[TestField]):
     field_type: str = FlextConstants.Enums.FieldType.INTEGER.value
     required: bool = True
     description = LazyAttribute(
-        lambda obj: f"Test integer field: {getattr(obj, 'field_name', 'unknown')}"
+        lambda obj: f"Test integer field: {getattr(obj, 'field_name', 'unknown')}",
     )
     min_value = 0
     max_value = 1000
@@ -225,7 +225,7 @@ class BooleanFieldFactory(factory.Factory[TestField]):
     field_type = FlextConstants.Enums.FieldType.BOOLEAN.value
     required = True
     description = LazyAttribute(
-        lambda obj: f"Test boolean field: {getattr(obj, 'field_name', 'unknown')}"
+        lambda obj: f"Test boolean field: {getattr(obj, 'field_name', 'unknown')}",
     )
     default_value = False
 
@@ -243,7 +243,7 @@ class FloatFieldFactory(factory.Factory[TestField]):
     field_type = FlextConstants.Enums.FieldType.FLOAT.value
     required = True
     description = LazyAttribute(
-        lambda obj: f"Test float field: {getattr(obj, 'field_name', 'unknown')}"
+        lambda obj: f"Test float field: {getattr(obj, 'field_name', 'unknown')}",
     )
     min_value = 0.0
     max_value = 1000.0
@@ -290,7 +290,7 @@ class FlextResultFactory:
 
     @staticmethod
     def failure(
-        error: str = "test_error", error_code: str = "TEST_ERROR"
+        error: str = "test_error", error_code: str = "TEST_ERROR",
     ) -> FlextResult[object]:
         """Create failed FlextResult."""
         return FlextResult[object].fail(error, error_code=error_code)
@@ -314,7 +314,7 @@ class FlextResultFactory:
 
     @staticmethod
     def create_failure(
-        error: str = "test_error", error_code: str = "TEST_ERROR"
+        error: str = "test_error", error_code: str = "TEST_ERROR",
     ) -> FlextResult[object]:
         """Create failed FlextResult (alias for failure method)."""
         return FlextResultFactory.failure(error, error_code)
@@ -486,7 +486,7 @@ def success_result(data: object = "test_data") -> FlextResult[object]:
 
 
 def failure_result(
-    error: str = "Test error", error_code: str = "TEST_ERROR"
+    error: str = "Test error", error_code: str = "TEST_ERROR",
 ) -> FlextResult[object]:
     """Create failed FlextResult."""
     return FlextResult[object].fail(error, error_code=error_code)
@@ -570,7 +570,7 @@ class InMemoryUserRepository:
         return True
 
     def find_by_username(
-        self, username: str
+        self, username: str,
     ) -> dict[str, str | int | bool | None] | None:
         """Find user by username."""
         user = self._users_by_username.get(username)
@@ -649,7 +649,7 @@ class RealEmailService:
         self.should_fail = False
 
     def send_welcome_email(
-        self, user: dict[str, str | int | bool | None]
+        self, user: dict[str, str | int | bool | None],
     ) -> FlextResult[bool]:
         """Send welcome email."""
         if self.should_fail:
@@ -663,7 +663,7 @@ class RealEmailService:
         }
 
         self.sent_emails.append(email_data)
-        return FlextResult[bool].ok(True)
+        return FlextResult[bool].ok(data=True)
 
     def get_sent_emails(self) -> list[dict[str, str | int | bool | None]]:
         """Get all sent emails."""
@@ -696,7 +696,7 @@ class RealAuditService:
         self.audit_logs.append(audit_entry)
 
     def log_user_updated(
-        self, user_id: str, changes: dict[str, str | int | bool | None]
+        self, user_id: str, changes: dict[str, str | int | bool | None],
     ) -> None:
         """Log user update event."""
         audit_entry = {
@@ -732,7 +732,7 @@ class FailingUserRepository:
         self._users_by_username: dict[str, User] = {}
 
     def find_by_username(
-        self, username: str
+        self, username: str,
     ) -> dict[str, str | int | bool | None] | None:
         """Find user by username."""
         user = self._users_by_username.get(username)

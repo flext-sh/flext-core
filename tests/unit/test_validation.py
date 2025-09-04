@@ -52,7 +52,7 @@ class TestFlextValidationRealFunctionality:
         """Test validation system with invalid FlextTypes.Config values."""
         # Test invalid environment
         invalid_env_config: FlextTypes.Config.ConfigDict = {
-            "environment": "invalid_environment"
+            "environment": "invalid_environment",
         }
         result = FlextValidations.configure_validation_system(invalid_env_config)
         assert result.success is False
@@ -61,7 +61,7 @@ class TestFlextValidationRealFunctionality:
 
         # Test invalid validation level
         invalid_val_config: FlextTypes.Config.ConfigDict = {
-            "validation_level": "invalid_validation"
+            "validation_level": "invalid_validation",
         }
         result = FlextValidations.configure_validation_system(invalid_val_config)
         assert result.success is False
@@ -70,7 +70,7 @@ class TestFlextValidationRealFunctionality:
 
         # Test invalid log level
         invalid_log_config: FlextTypes.Config.ConfigDict = {
-            "log_level": "INVALID_LEVEL"
+            "log_level": "INVALID_LEVEL",
         }
         result = FlextValidations.configure_validation_system(invalid_log_config)
         assert result.success is False
@@ -122,7 +122,7 @@ class TestFlextValidationRealFunctionality:
         """Test creation of environment-specific validation configurations."""
         # Test production configuration
         prod_result = FlextValidations.create_environment_validation_config(
-            "production"
+            "production",
         )
         assert prod_result.success is True
 
@@ -139,7 +139,7 @@ class TestFlextValidationRealFunctionality:
 
         # Test development configuration
         dev_result = FlextValidations.create_environment_validation_config(
-            "development"
+            "development",
         )
         assert dev_result.success is True
 
@@ -168,7 +168,7 @@ class TestFlextValidationRealFunctionality:
     def test_invalid_environment_validation_config_real(self) -> None:
         """Test environment-specific validation config with invalid environment."""
         invalid_result = FlextValidations.create_environment_validation_config(
-            cast("FlextTypes.Config.Environment", "invalid_env")
+            cast("FlextTypes.Config.Environment", "invalid_env"),
         )
         assert invalid_result.success is False
         assert invalid_result.error
@@ -221,7 +221,7 @@ class TestFlextValidationRealFunctionality:
         # Test invalid performance level - current implementation accepts any value
 
         invalid_config = cast(
-            "FlextTypes.Config.ConfigDict", {"performance_level": "invalid_level"}
+            "FlextTypes.Config.ConfigDict", {"performance_level": "invalid_level"},
         )
         result = FlextValidations.optimize_validation_performance(invalid_config)
         # Current implementation doesn't validate performance_level strictly
@@ -229,7 +229,7 @@ class TestFlextValidationRealFunctionality:
 
         # Test invalid thread count - current implementation doesn't validate thread count
         invalid_thread_config = cast(
-            "FlextTypes.Config.ConfigDict", {"max_validation_threads": 0}
+            "FlextTypes.Config.ConfigDict", {"max_validation_threads": 0},
         )
         result = FlextValidations.optimize_validation_performance(invalid_thread_config)
         # Current implementation doesn't validate max_validation_threads
@@ -305,7 +305,7 @@ class TestFlextValidationStrEnumIntegration:
         # Test each valid environment
         for env_enum in FlextConstants.Config.ConfigEnvironment:
             result = FlextValidations.create_environment_validation_config(
-                env_enum.value
+                env_enum.value,
             )
             assert result.success is True
 
@@ -364,7 +364,7 @@ class TestValidationPerformanceReal:
         for _ in range(25):  # 25 * 4 environments = 100 operations
             for env in environments:
                 result = FlextValidations.create_environment_validation_config(
-                    cast("FlextTypes.Config.Environment", env)
+                    cast("FlextTypes.Config.Environment", env),
                 )
                 assert result.success is True
 

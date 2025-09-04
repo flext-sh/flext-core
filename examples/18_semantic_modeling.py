@@ -3,6 +3,9 @@
 
 Demonstrates harmonized pattern system with consistent naming,
 type safety, and business rule validation across projects.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -10,7 +13,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from typing import Literal, cast
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse
 
 from pydantic import Field, SecretStr
 
@@ -109,7 +112,7 @@ class FlextDataPipeline(FlextModels.Entity):
         source_result = self.source_config.validate_business_rules()
         if not source_result.is_success:
             return FlextResult[None].fail(
-                f"Invalid source config: {source_result.error}"
+                f"Invalid source config: {source_result.error}",
             )
 
         owner_result = self.owner.validate_business_rules()
@@ -200,9 +203,10 @@ class FlextPipelineService:
         database_config: dict[str, object],
         owner_profile: dict[str, object],
     ) -> FlextResult[FlextDataPipeline]:
-        """Create pipeline using unified factory pattern."""
+        """Create pipeline using Railway Pattern for unified factory pattern."""
 
         def _build_config() -> FlextResult[DatabaseConfig]:
+            """Build database configuration using Railway Pattern."""
             try:
                 port_value = database_config.get("port", 5432)
                 port_int = port_value if isinstance(port_value, int) else 5432
@@ -210,18 +214,19 @@ class FlextPipelineService:
                     host=str(database_config.get("host", "localhost")),
                     port=port_int,
                     database_name=str(
-                        database_config.get("database_name", "example_db")
+                        database_config.get("database_name", "example_db"),
                     ),
                     username=str(database_config.get("username", "user")),
                     password=SecretStr(
-                        str(database_config.get("password", "password"))
+                        str(database_config.get("password", "password")),
                     ),
                 )
                 return FlextResult[DatabaseConfig].ok(instance)
             except Exception as e:
-                return FlextResult[DatabaseConfig].fail(str(e))
+                return FlextResult[DatabaseConfig].fail(f"Invalid Oracle config: {e}")
 
         def _build_owner() -> FlextResult[FlextUserProfile]:
+            """Build owner profile using Railway Pattern."""
             try:
                 instance = FlextUserProfile(
                     email=str(owner_profile.get("email", "admin@example.com")),
@@ -231,65 +236,73 @@ class FlextPipelineService:
                         owner_profile.get("role", "admin"),
                     ),
                     preferences=cast(
-                        "dict[str, object]",
-                        owner_profile.get("preferences", {}),
+                        "dict[str, object]", owner_profile.get("preferences", {}),
                     ),
                 )
                 return FlextResult[FlextUserProfile].ok(instance)
             except Exception as e:
-                return FlextResult[FlextUserProfile].fail(str(e))
+                return FlextResult[FlextUserProfile].fail(f"Invalid owner profile: {e}")
 
-        def _build_pipeline(
-            cfg: DatabaseConfig,
-            owner: FlextUserProfile,
+        def _build_pipeline_from_components(
+            config: DatabaseConfig,
+        ) -> FlextResult[tuple[DatabaseConfig, FlextUserProfile]]:
+            """Build owner and combine with config using Railway Pattern."""
+            return _build_owner().map(lambda owner: (config, owner))
+
+        def _create_pipeline_instance(
+            components: tuple[DatabaseConfig, FlextUserProfile],
         ) -> FlextResult[FlextDataPipeline]:
+            """Create pipeline instance using Railway Pattern."""
+            config, owner = components
             try:
                 instance = FlextDataPipeline(
                     id=f"pipeline_{len(self._pipelines) + 1}",
                     name=name,
-                    source_config=cfg,
+                    source_config=config,
                     owner=owner,
                 )
                 return FlextResult[FlextDataPipeline].ok(instance)
             except Exception as e:
-                return FlextResult[FlextDataPipeline].fail(str(e))
+                return FlextResult[FlextDataPipeline].fail(
+                    f"Pipeline creation failed: {e}",
+                )
 
-        config_result = _build_config()
-        if config_result.is_failure or config_result.value is None:
-            return FlextResult[FlextDataPipeline].fail(
-                f"Invalid Oracle config: {config_result.error or 'None'}",
-            )
+        def _store_pipeline(
+            pipeline: FlextDataPipeline,
+        ) -> FlextResult[FlextDataPipeline]:
+            """Store pipeline using Railway Pattern."""
+            self._pipelines[str(pipeline.id)] = pipeline
+            return FlextResult[FlextDataPipeline].ok(pipeline)
 
-        owner_result = _build_owner()
-        if owner_result.is_failure or owner_result.value is None:
-            return FlextResult[FlextDataPipeline].fail(
-                f"Invalid owner profile: {owner_result.error or 'None'}",
-            )
-
-        pipeline_result = _build_pipeline(config_result.value, owner_result.value)
-        if pipeline_result.is_failure or pipeline_result.value is None:
-            return FlextResult[FlextDataPipeline].fail(
-                f"Pipeline creation failed: {pipeline_result.error or 'None'}",
-            )
-
-        pipeline = pipeline_result.value
-        self._pipelines[str(pipeline.id)] = pipeline
-        return FlextResult[FlextDataPipeline].ok(pipeline)
+        # Railway Pattern execution - single chain of operations
+        return (
+            _build_config()
+            .flat_map(_build_pipeline_from_components)
+            .flat_map(_create_pipeline_instance)
+            .flat_map(_store_pipeline)
+        )
 
     def activate_pipeline(self, pipeline_id: str) -> FlextResult[str]:
-        """Activate pipeline with unified error handling."""
-        if pipeline_id not in self._pipelines:
-            return FlextResult[str].fail(f"Pipeline {pipeline_id} not found")
+        """Activate pipeline using Railway Pattern - ELIMINATED MULTIPLE RETURNS."""
 
-        pipeline = self._pipelines[pipeline_id]
-        activation_result = pipeline.activate()
+        def _get_pipeline(pid: str) -> FlextResult[FlextDataPipeline]:
+            """Get pipeline by ID with error handling."""
+            if pid not in self._pipelines:
+                return FlextResult[FlextDataPipeline].fail(f"Pipeline {pid} not found")
+            return FlextResult[FlextDataPipeline].ok(self._pipelines[pid])
 
-        if activation_result.is_failure:
-            return FlextResult[str].fail(
-                f"Activation failed: {activation_result.error}"
+        def _activate_and_format_success(
+            pipeline: FlextDataPipeline,
+        ) -> FlextResult[str]:
+            """Activate pipeline and format success message."""
+            return (
+                pipeline.activate()
+                .map(lambda _: f"Pipeline {pipeline_id} activated successfully")
+                .map_error(lambda err: f"Activation failed: {err}")
             )
 
-        return FlextResult[str].ok(f"Pipeline {pipeline_id} activated successfully")
+        # Railway Pattern execution: get -> activate -> format
+        return _get_pipeline(pipeline_id).flat_map(_activate_and_format_success)
 
     def get_pipeline_stats(self) -> dict[str, object]:
         """Get pipeline statistics using unified types."""
@@ -320,25 +333,38 @@ class FlextPipelineService:
 
 
 def validate_oracle_connection(connection_string: str) -> FlextResult[dict[str, str]]:
-    """Parse and validate Oracle connection strings using standard library."""
-    try:
-        parsed = urlparse(connection_string)
-        if parsed.scheme != "oracle":
-            return FlextResult[dict[str, str]].fail(
-                "Invalid Oracle connection string format - must use oracle:// scheme"
-            )
+    """Parse and validate Oracle connection strings using Railway Pattern - ELIMINATED MULTIPLE RETURNS."""
 
-        result: dict[str, str] = {
+    def _safe_parse_url(url: str) -> FlextResult[ParseResult]:
+        """Safely parse URL with error handling."""
+        try:
+            parsed = urlparse(url)
+            return FlextResult[ParseResult].ok(parsed)
+        except Exception as e:
+            return FlextResult[ParseResult].fail(f"URL parsing failed: {e}")
+
+    def _validate_scheme(parsed: ParseResult) -> FlextResult[ParseResult]:
+        """Validate Oracle scheme using Railway Pattern."""
+        if parsed.scheme != "oracle":
+            return FlextResult[ParseResult].fail(
+                "Invalid Oracle connection string format - must use oracle:// scheme",
+            )
+        return FlextResult[ParseResult].ok(parsed)
+
+    def _extract_connection_dict(parsed: ParseResult) -> dict[str, str]:
+        """Extract connection parameters to dict."""
+        return {
             "host": parsed.hostname or "localhost",
             "port": str(parsed.port or 1521),
             "service_name": parsed.path.lstrip("/") or "ORCL",
         }
 
-        return FlextResult[dict[str, str]].ok(result)
-    except Exception as e:
-        return FlextResult[dict[str, str]].fail(
-            f"Connection string parsing failed: {e}"
-        )
+    # Railway Pattern execution: parse -> validate -> extract
+    return (
+        _safe_parse_url(connection_string)
+        .flat_map(_validate_scheme)
+        .map(_extract_connection_dict)
+    )
 
 
 def format_metric_display(metric: dict[str, object]) -> str:

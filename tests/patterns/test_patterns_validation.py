@@ -142,7 +142,7 @@ class TestFlextValidations:
         """Test UUID validation using string validation."""
         # Test valid UUID format as string
         result = FlextValidations.validate_non_empty_string_func(
-            "550e8400-e29b-41d4-a716-446655440000"
+            "550e8400-e29b-41d4-a716-446655440000",
         )
         assert result is True
 
@@ -152,7 +152,7 @@ class TestFlextValidations:
 
         # Test with type validation
         string_result = FlextValidations.Core.TypeValidators.validate_string(
-            "550e8400-e29b-41d4-a716-446655440000"
+            "550e8400-e29b-41d4-a716-446655440000",
         )
         assert string_result.success is True
 
@@ -168,7 +168,7 @@ class TestFlextValidations:
 
         # Test with type validation
         string_result = FlextValidations.Core.TypeValidators.validate_string(
-            "https://example.com"
+            "https://example.com",
         )
         assert string_result.success is True
 
@@ -200,7 +200,7 @@ class TestFlextResultValidation:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         # Em falha, `.value` raises TypeError
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
+            TypeError, match="Attempted to access value on failed result",
         ):
             _ = result.value
         if result.error != "Validation failed":
@@ -279,7 +279,7 @@ class TestValidationIntegration:
             roles = data_dict.get("roles")
             if roles is not None:
                 roles_validation = FlextValidations.Core.TypeValidators.validate_list(
-                    roles
+                    roles,
                 )
                 if not roles_validation.success:
                     return FlextResult[dict[str, object]].fail("Roles must be a list")
@@ -375,7 +375,7 @@ class TestValidationIntegration:
             """Second validation step."""
             if len(value) < 3:
                 return FlextResult[str].fail(
-                    "Step 2: Value must be at least 3 characters"
+                    "Step 2: Value must be at least 3 characters",
                 )
             return FlextResult[str].ok(value)
 

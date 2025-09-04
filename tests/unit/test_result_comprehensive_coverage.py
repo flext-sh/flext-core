@@ -67,7 +67,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_map_transformation_exception_handling(self) -> None:
         """Test map() handles transformation exceptions."""
         result: FlextResult[object] = FlextResult.ok("text").map(
-            int
+            int,
         )  # Will raise ValueError
         assert result.failure is True
         assert "Transformation error:" in result.error
@@ -148,7 +148,7 @@ class TestFlextResultComprehensiveCoverage:
         """Test expect() raises RuntimeError with custom message for failures."""
         result = FlextResult.fail("validation error")
         with pytest.raises(
-            RuntimeError, match="Expected valid result: validation error"
+            RuntimeError, match="Expected valid result: validation error",
         ):
             result.expect("Expected valid result")
 
@@ -387,7 +387,7 @@ class TestFlextResultComprehensiveCoverage:
         """Test recover_with() applies recovery function returning FlextResult."""
         failure_result: FlextResult[object] = FlextResult.fail("original error")
         result = failure_result.recover_with(
-            lambda err: FlextResult.ok(f"recovered from: {err}")
+            lambda err: FlextResult.ok(f"recovered from: {err}"),
         )
         assert result.success is True
         assert result.value == "recovered from: original error"
@@ -409,7 +409,7 @@ class TestFlextResultComprehensiveCoverage:
         side_effects: list[str] = []
 
         result = FlextResult.ok("data").tap(
-            lambda x: side_effects.append(f"processed: {x}")
+            lambda x: side_effects.append(f"processed: {x}"),
         )
 
         assert result.success is True
@@ -439,7 +439,7 @@ class TestFlextResultComprehensiveCoverage:
         side_effects: list[str] = []
 
         result = FlextResult.fail("error").tap_error(
-            lambda err: side_effects.append(f"error: {err}")
+            lambda err: side_effects.append(f"error: {err}"),
         )
 
         assert result.failure is True
@@ -451,7 +451,7 @@ class TestFlextResultComprehensiveCoverage:
         side_effects: list[str] = []
 
         result = FlextResult.ok("data").tap_error(
-            lambda err: side_effects.append(str(err))
+            lambda err: side_effects.append(str(err)),
         )
 
         assert result.success is True
@@ -473,7 +473,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_filter_failure_propagates(self) -> None:
         """Test filter() propagates failures without checking predicate."""
         result = FlextResult.fail("original error").filter(
-            lambda x: x > 5, "Value too small"
+            lambda x: x > 5, "Value too small",
         )
         assert result.failure is True
         assert result.error == "original error"
@@ -481,7 +481,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_filter_predicate_exception_handling(self) -> None:
         """Test filter() handles exceptions in predicate function."""
         result = FlextResult.ok("text").filter(
-            lambda x: x > 5, "Failed"
+            lambda x: x > 5, "Failed",
         )  # Will raise TypeError
         assert result.failure is True
         # Should contain the exception message
@@ -826,7 +826,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_create_failure_alias(self) -> None:
         """Test create_failure() class method is alias for fail()."""
         result = FlextResult.create_failure(
-            "error", error_code="ERR001", error_data={"field": "test"}
+            "error", error_code="ERR001", error_data={"field": "test"},
         )
         assert result.failure is True
         assert result.error == "error"
@@ -852,7 +852,7 @@ class TestFlextResultComprehensiveCoverage:
         """Test value property raises TypeError when accessed on failure."""
         result = FlextResult.fail("error")
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
+            TypeError, match="Attempted to access value on failed result",
         ):
             _ = result.value
 

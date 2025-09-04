@@ -287,10 +287,10 @@ class TestFlextCoreIntegrationScenarios:
             {
                 "operation_id": operation_id,
                 "status": "started",
-            }
+            },
         )
         validation_result = FlextValidations.validate_non_empty_string_func(
-            operation_id
+            operation_id,
         )
 
         assert validation_result is True
@@ -298,7 +298,7 @@ class TestFlextCoreIntegrationScenarios:
 
         # 3. Process the result through transformations
         processed_result = result.map(
-            lambda data: {**data, "timestamp": FlextUtilities.generate_timestamp()}
+            lambda data: {**data, "timestamp": FlextUtilities.generate_timestamp()},
         )
 
         assert processed_result.success is True
@@ -318,7 +318,7 @@ class TestFlextCoreIntegrationScenarios:
         # 5. Verify final state using constants
         final_status = FlextConstants.Status.COMPLETED
         final_result = processed_result.map(
-            lambda data: {**data, "status": final_status}
+            lambda data: {**data, "status": final_status},
         )
 
         assert final_result.success is True
@@ -329,7 +329,7 @@ class TestFlextCoreIntegrationScenarios:
         # Test validation error propagation
         invalid_data = ""
         validation_result = FlextValidations.validate_non_empty_string_func(
-            invalid_data
+            invalid_data,
         )
 
         assert validation_result is False
@@ -352,7 +352,7 @@ class TestFlextCoreIntegrationScenarios:
         container.register_factory("timeout", lambda: FlextConstants.Defaults.TIMEOUT)
 
         container.register_factory(
-            "error_mapping", lambda: FlextConstants.Errors.MESSAGES
+            "error_mapping", lambda: FlextConstants.Errors.MESSAGES,
         )
 
         # Resolve and verify

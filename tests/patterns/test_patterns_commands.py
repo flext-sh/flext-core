@@ -1,4 +1,3 @@
-# ruff: noqa: ARG001, ARG002
 """Comprehensive tests for FLEXT command pattern."""
 
 from __future__ import annotations
@@ -663,7 +662,7 @@ class TestCommandPatternIntegration:
         update_data = cast("dict[str, object]", update_result.value)
         if update_data["target_user_id"] != user_id:
             raise AssertionError(
-                f"Expected {user_id}, got {update_data['target_user_id']}"
+                f"Expected {user_id}, got {update_data['target_user_id']}",
             )
 
     def test_multiple_command_types(self) -> None:
@@ -795,7 +794,7 @@ class TestCommandPatternIntegration:
             raise AssertionError(f"Expected {handler1}, got {found_handler}")
 
         update_command = UpdateUserCommand(
-            target_user_id="123", updates={"name": "updated"}
+            target_user_id="123", updates={"name": "updated"},
         )
         found_handler = bus.find_handler(update_command)
         if found_handler != handler2:

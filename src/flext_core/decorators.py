@@ -36,6 +36,7 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core.constants import FlextConstants
+from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, T
@@ -77,31 +78,21 @@ class FlextDecorators(FlextMixins.Entity):
         def safe_result(
             func: Callable[P, T],
         ) -> Callable[P, FlextTypes.Result.Success[T]]:
-            """Convert function to return FlextResult using mixin error handling.
+            """Convert function to return FlextResult - SIMPLIFIED VERSION.
 
-            Delegates to FlextMixins.safe_operation for consistent error handling
-            across the ecosystem, eliminating duplicate error handling code.
+            Uses direct composition instead of complex mixin wrappers.
             """
 
             @functools.wraps(func)
             def wrapper(
-                *args: P.args, **kwargs: P.kwargs
+                *args: P.args, **kwargs: P.kwargs,
             ) -> FlextTypes.Result.Success[T]:
-                # Create temporary object for mixin functionality
-                temp_obj = FlextDecorators._create_context()
-                FlextMixins.initialize_state(temp_obj)
-
-                # Direct execution with error handling
+                # Direct execution without wrapper complexity
                 try:
-                    actual_result = func(*args, **kwargs)
-                    return FlextResult[T].ok(actual_result)
+                    result = func(*args, **kwargs)
+                    return FlextResult[T].ok(result)
                 except Exception as e:
-                    FlextMixins.log_error(
-                        temp_obj,
-                        f"{func.__name__} failed: {e!s}",
-                        function=func.__name__,
-                        exception=type(e).__name__,
-                    )
+                    FlextLogger(__name__).error(f"{func.__name__} failed: {e!s}")
                     return FlextResult[T].fail(
                         f"{func.__name__} failed: {e!s}",
                         error_code=FlextConstants.Errors.OPERATION_ERROR,
@@ -120,46 +111,29 @@ class FlextDecorators(FlextMixins.Entity):
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
                 def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-                    # Create object with mixin behaviors for tracking
-                    retry_obj = FlextDecorators._create_context()
-                    FlextMixins.initialize_state(retry_obj)
-                    FlextMixins.create_timestamp_fields(retry_obj)
-
+                    # Direct retry logic without wrapper complexity
                     last_exception: Exception | None = None
 
                     for attempt in range(max_attempts):
-                        FlextMixins.set_state(retry_obj, f"attempt_{attempt + 1}")
-
                         try:
-                            FlextMixins.start_timing(retry_obj)
-                            result = func(*args, **kwargs)
-                            FlextMixins.stop_timing(retry_obj)
-                            return result
+                            return func(*args, **kwargs)
                         except exceptions as e:
                             last_exception = e
-                            FlextMixins.log_error(
-                                retry_obj,
-                                f"Retry {attempt + 1}/{max_attempts} failed",
-                                function=func.__name__,
-                                attempt=attempt + 1,
-                                exception=str(e),
+                            FlextLogger(__name__).warning(
+                                f"Retry {attempt + 1}/{max_attempts} failed: {e}",
                             )
 
                             if attempt < max_attempts - 1:
                                 delay = backoff_factor * (2**attempt)
                                 time.sleep(delay)
 
-                    # All retries exhausted
+                    # All retries exhausted - simplified error handling
                     error_msg = f"All {max_attempts} retries failed for {func.__name__}"
                     if last_exception:
                         error_msg += f": {last_exception!s}"
 
-                    FlextMixins.log_error(
-                        retry_obj,
-                        error_msg,
-                        function=func.__name__,
-                        max_attempts=max_attempts,
-                    )
+                    # Note: Simplified logging to avoid circular import
+                    FlextLogger(__name__).error(error_msg)
                     raise RuntimeError(error_msg) from last_exception
 
                 return wrapper
@@ -259,7 +233,7 @@ class FlextDecorators(FlextMixins.Entity):
                     if arg_types:
                         # Simple type validation
                         for i, (arg, expected_type) in enumerate(
-                            zip(args, arg_types, strict=False)
+                            zip(args, arg_types, strict=False),
                         ):
                             if not isinstance(arg, expected_type):
                                 error_msg = (
@@ -412,7 +386,7 @@ class FlextDecorators(FlextMixins.Entity):
                         log_data["kwargs"] = str(kwargs)
 
                     FlextMixins.log_info(
-                        log_obj, "Function execution started", **log_data
+                        log_obj, "Function execution started", **log_data,
                     )
 
                     try:
@@ -426,7 +400,7 @@ class FlextDecorators(FlextMixins.Entity):
                             log_data["result_type"] = type(result).__name__
 
                         FlextMixins.log_info(
-                            log_obj, "Function execution completed", **log_data
+                            log_obj, "Function execution completed", **log_data,
                         )
 
                         return result
@@ -439,7 +413,7 @@ class FlextDecorators(FlextMixins.Entity):
                         log_data["error_message"] = str(e)
 
                         FlextMixins.log_error(
-                            log_obj, "Function execution failed", **log_data
+                            log_obj, "Function execution failed", **log_data,
                         )
                         raise
 
@@ -473,7 +447,7 @@ class FlextDecorators(FlextMixins.Entity):
                         message_parts.append(f": {reason}")
                     if removal_version:
                         message_parts.append(
-                            f". Will be removed in version {removal_version}"
+                            f". Will be removed in version {removal_version}",
                         )
 
                     deprecation_message = "".join(message_parts)
@@ -524,32 +498,32 @@ class FlextDecorators(FlextMixins.Entity):
                 # Apply decorators in order
                 if with_logging:
                     enhanced_func = FlextDecorators.Observability.log_execution()(
-                        enhanced_func
+                        enhanced_func,
                     )
 
                 if with_monitoring:
                     enhanced_func = FlextDecorators.Performance.monitor(
-                        threshold=monitor_threshold
+                        threshold=monitor_threshold,
                     )(enhanced_func)
 
                 if with_caching:
                     enhanced_func = FlextDecorators.Performance.cache(
-                        max_size=cache_size
+                        max_size=cache_size,
                     )(enhanced_func)
 
                 if with_timeout:
                     enhanced_func = FlextDecorators.Reliability.timeout(
-                        seconds=timeout_seconds
+                        seconds=timeout_seconds,
                     )(enhanced_func)
 
                 if with_retry:
                     enhanced_func = FlextDecorators.Reliability.retry(
-                        max_attempts=max_retries
+                        max_attempts=max_retries,
                     )(enhanced_func)
 
                 if with_validation and validator:
                     enhanced_func = FlextDecorators.Validation.validate_input(
-                        validator=validator
+                        validator=validator,
                     )(enhanced_func)
 
                 return enhanced_func

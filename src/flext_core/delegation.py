@@ -828,7 +828,7 @@ class FlextDelegationSystem:
                 for prop_name in self._DELEGATED_PROPERTIES:
                     if hasattr(mixin_instance, prop_name):
                         delegated_prop = self._create_delegated_property(
-                            prop_name, mixin_instance
+                            prop_name, mixin_instance,
                         )
                         setattr(self.host_instance, prop_name, delegated_prop)
 
@@ -848,18 +848,18 @@ class FlextDelegationSystem:
                 for method_name in method_names:
                     if not hasattr(self.host_instance, method_name):
                         delegated_method = self._create_delegated_method(
-                            method_name, mixin_instance
+                            method_name, mixin_instance,
                         )
                         setattr(self.host_instance, method_name, delegated_method)
 
         def _create_delegated_property(
-            self, prop_name: str, mixin_instance: object
+            self, prop_name: str, mixin_instance: object,
         ) -> FlextDelegationSystem.DelegatedProperty:
             """Create a delegated property descriptor."""
             return FlextDelegationSystem.DelegatedProperty(prop_name, mixin_instance)
 
         def _create_delegated_method(
-            self, method_name: str, mixin_instance: object
+            self, method_name: str, mixin_instance: object,
         ) -> FlextDelegationSystem.DelegatedMethodProtocol:
             """Create a delegated method that forwards calls to mixin."""
 
@@ -880,7 +880,7 @@ class FlextDelegationSystem:
             # Preserve method metadata
             delegated_method.__name__ = method_name
             delegated_method.__doc__ = getattr(
-                getattr(mixin_instance, method_name), "__doc__", None
+                getattr(mixin_instance, method_name), "__doc__", None,
             )
 
             return delegated_method
@@ -896,7 +896,7 @@ class FlextDelegationSystem:
                         is_valid_value = getattr(mixin_instance, "is_valid", False)
                         if not cast("bool", is_valid_value):
                             validation_results.append(
-                                f"Mixin {mixin_class.__name__} is not valid"
+                                f"Mixin {mixin_class.__name__} is not valid",
                             )
 
                     # Check that host has delegated methods
@@ -913,7 +913,7 @@ class FlextDelegationSystem:
 
                 except Exception as e:
                     validation_results.append(
-                        f"Validation failed for {mixin_class.__name__}: {e}"
+                        f"Validation failed for {mixin_class.__name__}: {e}",
                     )
 
             if validation_results:
@@ -1338,10 +1338,20 @@ class FlextDelegationSystem:
         # Test case 1: Basic delegation using FlextMixins static methods
         class TestHost:
             def __init__(self) -> None:
-                # Initialize with FlextMixins functionality
+                # Initialize with FlextMixins functionality using composition
                 super().__init__()
+
+                # Use static methods to add functionality without inheritance conflicts
+                FlextMixins.initialize_validation(self)
+                FlextMixins.create_timestamp_fields(self)
                 FlextMixins.create_timestamp_fields(self)
                 FlextMixins.initialize_validation(self)
+
+                # Add required properties for validation
+                self.validation_errors = FlextMixins.get_validation_errors(self)
+                self.has_validation_errors = lambda: len(self.validation_errors) > 0
+                self.to_dict_basic = lambda: {"test": True}
+
                 # Test delegation can work with FlextMixins static methods
                 self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
@@ -1377,7 +1387,7 @@ class FlextDelegationSystem:
                 f"Delegation system validation failed: {'; '.join(test_results)}"
             )
             return FlextResult[dict[str, str | list[str] | dict[str, object]]].fail(
-                error_msg
+                error_msg,
             )
 
     @staticmethod
@@ -1434,7 +1444,7 @@ class FlextDelegationSystem:
 
     @staticmethod
     def _validate_delegation_info(
-        host: object, test_results: list[str]
+        host: object, test_results: list[str],
     ) -> dict[str, object]:
         """Validate delegation info and return it."""
 
@@ -1492,7 +1502,7 @@ class FlextDelegationSystem:
             performance_level = config.get("performance_level", "balanced")
             delegation_mode = config.get("delegation_mode", "efficient")
             method_forwarding_strategy = config.get(
-                "method_forwarding_strategy", "automatic"
+                "method_forwarding_strategy", "automatic",
             )
 
             # Create efficient system configuration with validation
@@ -1504,39 +1514,39 @@ class FlextDelegationSystem:
                 "delegation_mode": delegation_mode,
                 "method_forwarding_strategy": method_forwarding_strategy,
                 "property_delegation_level": config.get(
-                    "property_delegation_level", "transparent"
+                    "property_delegation_level", "transparent",
                 ),
                 "error_handling_mode": config.get("error_handling_mode", "detailed"),
                 # Mixin composition configuration
                 "mixin_composition_strategy": config.get(
-                    "mixin_composition_strategy", "intelligent"
+                    "mixin_composition_strategy", "intelligent",
                 ),
                 "composition_validation_level": config.get(
-                    "composition_validation_level", "strict"
+                    "composition_validation_level", "strict",
                 ),
                 "inheritance_conflict_resolution": config.get(
-                    "inheritance_conflict_resolution", "explicit"
+                    "inheritance_conflict_resolution", "explicit",
                 ),
                 "mixin_loading_strategy": config.get("mixin_loading_strategy", "lazy"),
                 # Performance and resource configuration
                 "delegation_cache_size": config.get("delegation_cache_size", 10000),
                 "method_forwarding_timeout": config.get(
-                    "method_forwarding_timeout", 30.0
+                    "method_forwarding_timeout", 30.0,
                 ),
                 "memory_optimization": config.get("memory_optimization", "balanced"),
                 "concurrent_delegation": config.get("concurrent_delegation", True),
                 # Validation and testing configuration
                 "delegation_validation_mode": config.get(
-                    "delegation_validation_mode", "efficient"
+                    "delegation_validation_mode", "efficient",
                 ),
                 "test_framework_integration": config.get(
-                    "test_framework_integration", True
+                    "test_framework_integration", True,
                 ),
                 "validation_reporting_level": config.get(
-                    "validation_reporting_level", "detailed"
+                    "validation_reporting_level", "detailed",
                 ),
                 "error_collection_strategy": config.get(
-                    "error_collection_strategy", "aggregated"
+                    "error_collection_strategy", "aggregated",
                 ),
                 # System metadata and monitoring
                 "configuration_timestamp": "2025-01-XX",

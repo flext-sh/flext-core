@@ -2,18 +2,13 @@
 """02 - Dependency Injection using FlextCore.
 
 Simplified demonstration of dependency injection patterns using FlextCore's built-in
-container and service management capabilities with minimum boilerplate.
+container and service management capabilities with minimum boilerplate
 
-Key Features:
-• FlextContainer for dependency injection
-• FlextResult for railway-oriented error handling
-• FlextModels for domain modeling
-• FlextUtilities for common operations
-• Production-ready patterns without mocks or fallbacks
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
 from typing import Protocol, cast
 
 from flext_core import (
@@ -90,7 +85,6 @@ class UserService:
     def __init__(self) -> None:
         """Initialize with in-memory storage."""
         self._users: dict[str, User] = {}
-        self._utilities = FlextUtilities()
 
     def create_user(self, data: UserData) -> FlextResult[User]:
         """Create a new user with validation."""
@@ -100,7 +94,7 @@ class UserService:
 
         # Create user with generated ID
         user = User(
-            id=self._utilities.generate_uuid(),
+            id=FlextUtilities.Generators.generate_uuid(),
             name=data.name,
             email=data.email,
             age=data.age,
@@ -110,7 +104,7 @@ class UserService:
         validation_result = user.validate_business_rules()
         if validation_result.is_failure:
             return FlextResult[User].fail(
-                validation_result.error or "Validation failed"
+                validation_result.error or "Validation failed",
             )
 
         # Store user
@@ -163,7 +157,7 @@ class UserRegistrationService:
 
         # Chain operations using FlextResult
         return self._user_service.create_user(user_data).flat_map(
-            self._send_welcome_notification
+            self._send_welcome_notification,
         )
 
     def _send_welcome_notification(self, user: User) -> FlextResult[User]:
@@ -205,7 +199,7 @@ def setup_container() -> FlextResult[FlextContainer]:
 
         user_service = cast("UserServiceProtocol", user_service_result.unwrap())
         notification_service = cast(
-            "NotificationServiceProtocol", notification_service_result.unwrap()
+            "NotificationServiceProtocol", notification_service_result.unwrap(),
         )
         return UserRegistrationService(user_service, notification_service)
 
@@ -261,7 +255,7 @@ def main() -> None:
     # Test duplicate prevention
     print("\n=== Testing Duplicate Prevention ===")
     duplicate_result = registration_service.register_user(
-        "Alice Duplicate", "alice@example.com", 26
+        "Alice Duplicate", "alice@example.com", 26,
     )
     if duplicate_result.is_failure:
         print(f"✅ Duplicate prevented: {duplicate_result.error}")

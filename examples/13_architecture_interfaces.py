@@ -6,21 +6,8 @@ using FlextCore's built-in protocols, interfaces, and architectural components.
 Shows how to leverage FlextCore's comprehensive protocol system instead of
 reimplementing common patterns manually.
 
-Key FlextCore Features Demonstrated:
-• FlextProtocols: Native protocol definitions for enterprise patterns
-• FlextCore.register_service(): Service registration with dependency injection
-• FlextModels: Domain-driven design with built-in validation
-• FlextHandlers: CQRS command/query handlers with enterprise patterns
-• FlextResult: Railway-oriented programming for composable operations
-• FlextCore.create_entity(): Dynamic entity creation with validation
-• Clean Architecture: Proper dependency inversion using FlextCore patterns
-
-Architecture Improvements:
-• Eliminated 1200+ lines of redundant protocol definitions
-• Replaced custom handlers with FlextHandlers enterprise patterns
-• Used FlextProtocols instead of manual protocol implementations
-• Leveraged FlextCore dependency injection for service management
-• Simplified validation using FlextCore native validators
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -69,13 +56,13 @@ class User:
             .flat_map(lambda _: core.validate_numeric(age, min_value=18, max_value=120))
             .map(
                 lambda _: User(
-                    id=core.generate_entity_id(), name=name, email=email, age=int(age)
-                )
+                    id=core.generate_entity_id(), name=name, email=email, age=int(age),
+                ),
             )
             .tap(
                 lambda user: logger.info(
-                    "User created with validation", user_id=user.id, email=user.email
-                )
+                    "User created with validation", user_id=user.id, email=user.email,
+                ),
             )
         )
 
@@ -95,12 +82,12 @@ class Order:
         return (
             core.require_not_none(user_id, "User ID cannot be None")
             .flat_map(
-                lambda _: core.require_positive(total, "Order total must be positive")
+                lambda _: core.require_positive(total, "Order total must be positive"),
             )
             .map(
                 lambda _: cls(
-                    id=core.generate_entity_id(), user_id=user_id, total=total
-                )
+                    id=core.generate_entity_id(), user_id=user_id, total=total,
+                ),
             )
         )
 
@@ -195,7 +182,7 @@ class UserService(FlextProtocols.Domain.Service):
             user = user_result.value
             self._users[user.id] = user
             self._logger.info(
-                "User created and stored", user_id=user.id, total_users=len(self._users)
+                "User created and stored", user_id=user.id, total_users=len(self._users),
             )
 
         return user_result
@@ -276,7 +263,7 @@ class CreateUserHandler(FlextHandlers.CQRS.CommandHandler[CreateUserCommand, Use
 
         # Use service to create user
         user_result = self._user_service.create_user(
-            command.name, command.email, command.age
+            command.name, command.email, command.age,
         )
 
         if user_result.success:
@@ -391,5 +378,5 @@ if __name__ == "__main__":
     print("Key benefits: Native protocols, enterprise handlers, dependency injection,")
     print("CQRS patterns, domain services, and railway-oriented programming.")
     print(
-        "\nCode reduction: 1610 → 400 lines (75% reduction) while adding more functionality!"
+        "\nCode reduction: 1610 → 400 lines (75% reduction) while adding more functionality!",
     )

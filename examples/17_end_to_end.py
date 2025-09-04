@@ -152,7 +152,7 @@ class UserService:
         return len(self.users)
 
     def get_users_by_age_range(
-        self, min_age: int, max_age: int
+        self, min_age: int, max_age: int,
     ) -> FlextResult[list[SimpleUser]]:
         """Get users within age range."""
         if min_age > max_age:
@@ -223,7 +223,7 @@ def demonstrate_error_handling() -> FlextResult[None]:
         # Step 2: Validate business rules (example)
         if user.age < MINIMUM_AGE_REQUIREMENT:
             return FlextResult[str].fail(
-                f"User must be at least {MINIMUM_AGE_REQUIREMENT} years old"
+                f"User must be at least {MINIMUM_AGE_REQUIREMENT} years old",
             )
 
         # Step 3: Format result

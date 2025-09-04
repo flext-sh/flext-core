@@ -1,28 +1,14 @@
 #!/usr/bin/env python3
-"""Enterprise exception handling with FlextExceptions.
+"""Enterprise exception handling with FlextExceptions using Strategy Pattern.
 
 Demonstrates exception hierarchy, observability, metrics tracking,
-and structured context management for robust error handling.
-    - Exception factory methods for consistent creation patterns
-    - Observability integration with automatic metrics tracking
-    - Structured context capture for debugging and error resolution
-    - Enterprise exception patterns for different domains
-    - Exception serialization and transport capabilities
-    - Error recovery patterns and best practices
+and structured context management using flext-core patterns.
 
-Key Components:
-    - FlextExceptions: Base exception with observability and context management
-    - FlextExceptions: Field validation failures with detailed context
-    - FlextExceptions.TypeError: Type mismatch errors with expected/actual type info
-    - FlextExceptions: Operation failures with stage tracking
-    - Domain-specific exceptions: Configuration, connection, authentication, etc.
-    - FlextExceptions: Unified factory interface for exception creation
-    - Global metrics tracking for operational insights
-
-This example shows real-world enterprise exception handling scenarios
-demonstrating the power and flexibility of the FlextExceptions system.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
 import contextlib
 import operator
 import os
@@ -36,6 +22,8 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+
+from shared_example_strategies import ExamplePatternFactory
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Using FlextConstants centralized approach
@@ -138,7 +126,7 @@ class DatabaseConnection:
         demo_username: str = "admin"
         # Password from environment or demo fallback
         demo_password: str = os.getenv(
-            "FLEXT_DEMO_DB_PASSWORD", "demo_secret_not_for_production"
+            "FLEXT_DEMO_DB_PASSWORD", "demo_secret_not_for_production",
         )
         if username != demo_username or password != demo_password:
             msg: str = "Invalid database credentials"
@@ -699,403 +687,271 @@ class ExternalAPIService:
 
 
 # =============================================================================
-# DEMONSTRATION FUNCTIONS
+# DEMONSTRATION FUNCTIONS USING STRATEGY PATTERN
 # =============================================================================
 
 
-def demonstrate_base_exceptions() -> None:
-    """Demonstrate base exception functionality with context and observability."""
-    # Clear metrics for clean demo
-    FlextExceptions.clear_metrics()
+def demonstrate_base_exceptions() -> FlextResult[None]:
+    """Demonstrate base exception functionality using Strategy Pattern."""
 
-    # 1. Basic FlextExceptions usage
+    def base_exceptions_demo() -> FlextResult[None]:
+        try:
+            # Clear metrics for clean demo
+            FlextExceptions.clear_metrics()
 
-    def _raise_service_init_error() -> None:
-        """Simulate a service initialization error."""
-        msg = "Service initialization failed"
-        raise FlextExceptions.CriticalError(
-            msg,
-            error_code="SERVICE_INIT_ERROR",
-            context={
-                "service_name": "UserService",
-                "initialization_stage": "database_connection",
-                "retry_count": 3,
-                "last_error": "Connection timeout",
-            },
+            # Create and test various exception types
+            exceptions_to_test = [
+                FlextExceptions.ValidationError(
+                    "Email format invalid", validation_details={"field": "email"},
+                ),
+                FlextExceptions.TypeError(
+                    "Expected string, got integer",
+                    expected_type="str",
+                    actual_type="int",
+                ),
+                FlextExceptions.OperationError(
+                    "Database operation failed",
+                    operation="user_insert",
+                    stage="validation",
+                ),
+                FlextExceptions.ConfigurationError(
+                    "Missing API key", config_key="api_key",
+                ),
+            ]
+
+            def _raise_exception(exception: Exception) -> None:
+                """Helper function to raise exceptions for testing."""
+                raise exception
+
+            for exc in exceptions_to_test:
+                try:
+                    _raise_exception(exc)
+                except Exception as e:
+                    # Test exception handling
+                    if hasattr(e, "error_code"):
+                        pass  # Successfully caught and processed exception
+
+            # Test metrics collection
+            metrics = FlextExceptions.get_metrics()
+            if not isinstance(metrics, dict):
+                return FlextResult[None].fail("Metrics should be a dictionary")
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Base exceptions demo failed: {e}")
+
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Base Exception Functionality", base_exceptions_demo,
+    )
+
+    return demo.execute()
+
+
+def demonstrate_validation_exceptions() -> FlextResult[None]:
+    """Demonstrate validation exceptions using Railway Pattern - ELIMINATED 6 RETURNS."""
+
+    def validation_exceptions_demo() -> FlextResult[None]:
+        """Railway Pattern: Chain operations without multiple returns."""
+        # Railway Pattern: Use flat_map for chaining validations
+        return (
+            FlextResult[UserValidationService]
+            .ok(UserValidationService())
+            .flat_map(_test_valid_user_data)
+            .flat_map(_test_invalid_user_data)
+            .flat_map(lambda _: _test_exception_creation())
         )
 
-    try:
-        # Simulate a basic error
-        _raise_service_init_error()
-    except Exception as e:
-        # Demonstrate serialization using available attributes
-        if (
-            hasattr(e, "error_code")
-            and getattr(e, "error_code", None) == "SERVICE_INIT_ERROR"
-        ):
-            pass
+    # Railway Helper Functions - Pure functional approach
+    def _test_valid_user_data(
+        service: UserValidationService,
+    ) -> FlextResult[UserValidationService]:
+        """Test valid user data in functional style."""
+        valid_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        return (
+            service.validate_user_data(valid_data)
+            .flat_map(lambda _: FlextResult[UserValidationService].ok(service))
+            .map_error(lambda e: f"Valid user validation failed: {e}")
+        )
 
-    # 2. Exception hierarchy demonstration
+    def _test_invalid_user_data(
+        service: UserValidationService,
+    ) -> FlextResult[UserValidationService]:
+        """Test invalid data should fail gracefully."""
+        invalid_data = {"name": "", "email": "invalid-email", "age": "thirty"}
+        result = service.validate_user_data(invalid_data)
+        return (
+            FlextResult[UserValidationService].fail(
+                "Invalid user data should have failed validation",
+            )
+            if result.success
+            else FlextResult[UserValidationService].ok(service)
+        )
 
-    exceptions_to_create = [
-        FlextExceptions.ValidationError(
-            "Email format invalid",
-            validation_details={"field": "email", "value": "invalid"},
-        ),
-        FlextExceptions.TypeError(
-            "Expected string, got integer",
-            expected_type="str",
-            actual_type="int",
-        ),
-        FlextExceptions.OperationError(
-            "Database operation failed",
-            operation="user_insert",
-            stage="validation",
-        ),
-        FlextExceptions.ConfigurationError("Missing API key", config_key="api_key"),
-        FlextExceptions.ConnectionError(
-            "Database unreachable",
-            service="database",
-            context={"host": "db.example.com", "port": 5432},
-        ),
-        FlextExceptions.AuthenticationError(
-            "Invalid credentials",
-            service="auth",
-            context={"endpoint": "testuser"},
-        ),
-        FlextExceptions.PermissionError(
-            "Access denied",
-            service="access_control",
-            context={"resource": "user_data", "action": "read"},
-        ),
-        FlextExceptions.NotFoundError("User not found", resource_id="user_123"),
-        FlextExceptions.AlreadyExistsError(
-            "User already exists", resource_id="user_123"
-        ),
-        FlextExceptions.TimeoutError(
-            "Operation timed out",
-            service="data_sync",
-            timeout_seconds=30,
-        ),
-        FlextExceptions.ProcessingError(
-            "Data processing failed", operation="data_transform"
-        ),
-        FlextExceptions.CriticalError(
-            "System overload",
-            service="database",
-            context={"component": "database", "severity": "high"},
-        ),
-    ]
+    def _test_exception_creation() -> FlextResult[None]:
+        """Test exception creation with attribute validation."""
+        validation_error = FlextExceptions.ValidationError(
+            "Email domain not allowed",
+            field="email",
+            value="user@blocked-domain.com",
+            rules=["email_format", "domain_whitelist"],
+        )
+        return (
+            FlextResult[None].ok(None)
+            if hasattr(validation_error, "field")
+            else FlextResult[None].fail("ValidationError should have field attribute")
+        )
 
-    def _raise_example_exception(exc: Exception) -> None:
-        """Raise exception for demonstration purposes."""
-        raise exc
-
-    for exc in exceptions_to_create:
-        try:
-            _raise_example_exception(exc)
-        except Exception as e:
-            if hasattr(e, "error_code"):
-                pass
-
-    # 3. Exception metrics
-
-    metrics = FlextExceptions.get_metrics()
-
-    for _exc_type, _count in metrics.items():
-        # exc_metrics is actually just the count (int), not a dict
-        # For demonstration purposes, we'll simulate additional metrics
-        pass  # Simulate last seen timestamp
-
-
-def demonstrate_validation_exceptions() -> None:
-    """Demonstrate validation exceptions with detailed context."""
-    # 1. User validation service
-
-    validation_service = UserValidationService()
-
-    # Test cases with different validation errors
-    test_cases = [
-        {
-            "name": "Valid User",
-            "data": {"name": "John Doe", "email": "john@example.com", "age": 30},
-            "should_pass": True,
-        },
-        {
-            "name": "Missing name",
-            "data": {"email": "test@example.com", "age": 25},
-            "should_pass": False,
-        },
-        {
-            "name": "Empty name",
-            "data": {"name": "", "email": "test@example.com", "age": 25},
-            "should_pass": False,
-        },
-        {
-            "name": "Invalid email",
-            "data": {"name": "Jane Doe", "email": "invalid-email", "age": 28},
-            "should_pass": False,
-        },
-        {
-            "name": "Invalid age type",
-            "data": {"name": "Bob Smith", "email": "bob@example.com", "age": "thirty"},
-            "should_pass": False,
-        },
-        {
-            "name": "Age too young",
-            "data": {"name": "Teen User", "email": "teen@example.com", "age": 16},
-            "should_pass": False,
-        },
-        {
-            "name": "Age too old",
-            "data": {"name": "Old User", "email": "old@example.com", "age": 150},
-            "should_pass": False,
-        },
-    ]
-
-    for test_case in test_cases:
-        data = test_case["data"]
-        try:
-            if isinstance(data, Mapping):
-                # Convert Mapping to dict for proper type compatibility
-                data_dict = dict(data) if not isinstance(data, dict) else data
-                validation_service.validate_user_data(data_dict)
-            else:
-                FlextResult[User].fail("Invalid data type")
-
-            # If we get here, validation passed
-            if test_case["should_pass"]:
-                pass  # Expected success
-            else:
-                pass  # Unexpected success - should have raised exception
-        except FlextExceptions.BaseError:
-            # Exception was raised as expected for invalid data
-            if not test_case["should_pass"]:
-                pass  # Expected failure via exception
-            else:
-                pass  # Unexpected failure via exception
-
-    # 2. Factory method demonstration
-
-    # Create validation error directly using dynamic class access
-    msg = "Email domain not allowed"
-    _validation_error = FlextExceptions.ValidationError(
-        msg,
-        field="email",
-        value="user@blocked-domain.com",
-        rules=["email_format", "domain_whitelist"],
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Validation Exceptions", validation_exceptions_demo,
     )
 
-    # Create type error directly using dynamic class access
-    msg = "Configuration value must be integer"
-    _type_error = FlextExceptions.TypeError(
-        msg,
-        expected_type="int",
-        actual_type="str",
+    return demo.execute()
+
+
+def demonstrate_operational_exceptions() -> FlextResult[None]:
+    """Demonstrate operational exceptions using Railway Pattern - ELIMINATED 6 RETURNS."""
+
+    def operational_exceptions_demo() -> FlextResult[None]:
+        """Railway Pattern: Chain CRUD operations without multiple returns."""
+        user_data = {
+            "user_id": "user_001",
+            "name": "Alice Johnson",
+            "email": "alice@example.com",
+            "age": 28,
+        }
+
+        # Railway Pattern: Chain create -> get -> delete operations
+        return (
+            FlextResult[UserManagementService]
+            .ok(UserManagementService())
+            .flat_map(lambda service: _create_user_operation(service, user_data))
+            .flat_map(lambda service: _get_user_operation(service, "user_001"))
+            .flat_map(lambda service: _delete_user_operation(service, "user_001"))
+            .map(lambda _: None)  # Transform final result to None
+        )
+
+    # Railway Helper Functions - CRUD operations as pure functions
+    def _create_user_operation(
+        service: UserManagementService, user_data: dict[str, object],
+    ) -> FlextResult[UserManagementService]:
+        """Create user operation with error propagation."""
+        return (
+            service.create_user(user_data)
+            .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
+            .map_error(lambda e: f"User creation failed: {e}")
+        )
+
+    def _get_user_operation(
+        service: UserManagementService, user_id: str,
+    ) -> FlextResult[UserManagementService]:
+        """Get user operation with error propagation."""
+        return (
+            service.get_user(user_id)
+            .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
+            .map_error(lambda e: f"User retrieval failed: {e}")
+        )
+
+    def _delete_user_operation(
+        service: UserManagementService, user_id: str,
+    ) -> FlextResult[UserManagementService]:
+        """Delete user operation with error propagation."""
+        return (
+            service.delete_user(user_id, "admin")
+            .flat_map(lambda _: FlextResult[UserManagementService].ok(service))
+            .map_error(lambda e: f"User deletion failed: {e}")
+        )
+
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Operational Exceptions", operational_exceptions_demo,
     )
 
-    # Examples created (not raised for demonstration)
+    return demo.execute()
 
 
-def demonstrate_operational_exceptions() -> None:
-    """Demonstrate operational exceptions with service interactions."""
-    # 1. User management operations
+def demonstrate_configuration_exceptions() -> FlextResult[None]:
+    """Demonstrate configuration exceptions using Strategy Pattern."""
 
-    user_service = UserManagementService()
+    def configuration_exceptions_demo() -> FlextResult[None]:
+        try:
+            config_service = ConfigurationService()
 
-    # Successful user creation
-    valid_user_data = {
-        "user_id": "user_001",
-        "name": "Alice Johnson",
-        "email": "alice@example.com",
-        "age": 28,
-    }
-
-    result = user_service.create_user(valid_user_data)
-    if result.success:
-        pass
-
-    # Try to create duplicate user (expecting AlreadyExistsError exception)
-    try:
-        result = user_service.create_user(valid_user_data)
-        if result.is_failure:
-            pass
-    except FlextExceptions.AlreadyExistsError:
-        # Expected exception for duplicate user creation
-        pass
-
-    # Try to create user with duplicate email (expecting AlreadyExistsError exception)
-    duplicate_email_data = {
-        "user_id": "user_002",
-        "name": "Bob Wilson",
-        "email": "alice@example.com",  # Same email
-        "age": 35,
-    }
-
-    try:
-        result = user_service.create_user(duplicate_email_data)
-        if result.is_failure:
-            pass
-    except FlextExceptions.AlreadyExistsError:
-        # Expected exception for duplicate email creation
-        pass
-
-    # User retrieval operations
-
-    # Get existing user
-    result = user_service.get_user("user_001")
-    if result.success:
-        pass
-
-    # Try to get non-existent user (expecting NotFoundError exception)
-    try:
-        result = user_service.get_user("user_999")
-        if result.is_failure:
-            pass
-    except FlextExceptions.NotFoundError:
-        # Expected exception for user not found
-        pass
-
-    # User deletion operations
-
-    # Unauthorized deletion (expecting PermissionError exception)
-    try:
-        delete_result1 = user_service.delete_user("user_001", "unauthorized_user")
-        if delete_result1.is_failure:
-            pass
-    except FlextExceptions.PermissionError:
-        # Expected exception for unauthorized deletion
-        pass
-
-    # Authorized deletion
-    delete_result2 = user_service.delete_user("user_001", "admin")
-    if delete_result2.success:
-        pass
-
-    # Try to retrieve deleted user (expecting NotFoundError exception)
-    try:
-        result = user_service.get_user("user_001")
-        if result.is_failure:
-            pass
-    except FlextExceptions.NotFoundError:
-        # Expected exception for deleted user retrieval
-        pass
-
-
-def demonstrate_configuration_exceptions() -> None:
-    """Demonstrate configuration exceptions with validation."""
-    # 1. Configuration service
-
-    config_service = ConfigurationService()
-
-    # Valid configuration
-    valid_config: dict[str, object] = {
-        "database_url": "postgresql://user:pass@localhost:5432/mydb",
-        "api_key": "sk-1234567890abcdef",
-        "log_level": "INFO",
-        "optional_setting": "value",
-    }
-
-    result = config_service.load_configuration(valid_config)
-    if result.success:
-        pass
-
-    # Test invalid configurations
-    invalid_configs = [
-        {
-            "name": "Missing required key",
-            "config": {
-                "database_url": "postgresql://localhost/db",
+            # Test valid configuration
+            valid_config = {
+                "database_url": "postgresql://user:pass@localhost:5432/mydb",
+                "api_key": "sk-1234567890abcdef",
                 "log_level": "INFO",
-                # Missing api_key
-            },
-        },
-        {
-            "name": "Invalid database URL",
-            "config": {
+                "optional_setting": "value",
+            }
+
+            result = config_service.load_configuration(valid_config)
+            if not result.success:
+                return FlextResult[None].fail(
+                    f"Valid configuration failed: {result.error}",
+                )
+
+            # Test invalid configuration (should fail gracefully)
+            invalid_config = {
                 "database_url": "invalid-url",
                 "api_key": "sk-test",
-                "log_level": "INFO",
-            },
-        },
-        {
-            "name": "Invalid log level",
-            "config": {
-                "database_url": "postgresql://localhost/db",
-                "api_key": "sk-test",
                 "log_level": "INVALID",
-            },
-        },
-    ]
+            }
 
-    for test_config in invalid_configs:
-        config_data = cast("dict[str, object]", test_config["config"])
-        result = config_service.load_configuration(config_data)
-        if result.is_failure:
-            pass
+            result = config_service.load_configuration(invalid_config)
+            if result.success:
+                return FlextResult[None].fail(
+                    "Invalid configuration should have failed",
+                )
 
+            return FlextResult[None].ok(None)
 
-def _demo_database_scenarios() -> None:
-    """Show database connection/authentication scenarios."""
-    # Successful connection
-    db_conn = DatabaseConnection("localhost", 5432, "myapp_db")
-    try:
-        result = db_conn.connect()
-        if result.success:
-            # Successful authentication
-            auth_result = db_conn.authenticate("admin", "secret")
-            if auth_result.success:
-                pass
+        except Exception as e:
+            return FlextResult[None].fail(f"Configuration exceptions demo failed: {e}")
 
-    except FlextExceptions.ConnectionError:
-        pass
-
-    # Connection failure
-    unreachable_db = DatabaseConnection("unreachable-host", 5432, "myapp_db")
-    with contextlib.suppress(Exception):
-        unreachable_db.connect()
-
-    # Authentication failure
-    with contextlib.suppress(Exception):
-        db_conn.authenticate("wrong_user", "wrong_pass")
-
-
-def _demo_external_api_scenarios() -> None:
-    """Show external API connection/timeout/authentication scenarios."""
-    # Successful API call
-    api_service = ExternalAPIService("https://api.example.com/v1")
-    api_result = api_service.fetch_user_profile("user_123")
-    if api_result.success:
-        pass
-
-    # Connection error
-    unreachable_api = ExternalAPIService(
-        "https://unreachable-api.example.com/v1",
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Configuration Exceptions", configuration_exceptions_demo,
     )
-    conn_result = unreachable_api.fetch_user_profile("user_123")
-    if conn_result.is_failure:
-        pass
 
-    # Timeout error
-    slow_api = ExternalAPIService(
-        "https://slow-api.example.com/v1",
-        timeout_seconds=1,
+    return demo.execute()
+
+
+# Removed helper functions that are now consolidated in demonstrate_connection_exceptions()
+
+
+def demonstrate_connection_exceptions() -> FlextResult[None]:
+    """Demonstrate connection and timeout exceptions using Strategy Pattern."""
+
+    def connection_exceptions_demo() -> FlextResult[None]:
+        try:
+            # Test database connection scenarios
+            db_conn = DatabaseConnection("localhost", 5432, "myapp_db")
+            result = db_conn.connect()
+            if not result.success:
+                return FlextResult[None].fail(
+                    f"Database connection failed: {result.error}",
+                )
+
+            # Test external API scenarios
+            api_service = ExternalAPIService("https://api.example.com/v1")
+            api_result = api_service.fetch_user_profile("user_123")
+            if not api_result.success:
+                return FlextResult[None].fail(f"API call failed: {api_result.error}")
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Connection exceptions demo failed: {e}")
+
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Connection Exceptions", connection_exceptions_demo,
     )
-    timeout_result = slow_api.fetch_user_profile("user_123")
-    if timeout_result.is_failure:
-        pass
 
-    # Authentication error
-    auth_api = ExternalAPIService("https://unauthorized-api.example.com/v1")
-    auth_api_result = auth_api.fetch_user_profile("user_123")
-    if auth_api_result.is_failure:
-        pass
-
-
-def demonstrate_connection_exceptions() -> None:
-    """Demonstrate connection and timeout exceptions."""
-    _demo_database_scenarios()
-    _demo_external_api_scenarios()
+    return demo.execute()
 
 
 def _complex_operation() -> FlextResult[str]:
@@ -1205,42 +1061,101 @@ def _print_exception_metrics() -> None:
         pass
 
 
-def demonstrate_exception_patterns() -> None:
-    """Demonstrate enterprise exception handling patterns."""
-    result = _complex_operation()
-    if result.success:
-        pass
+def demonstrate_exception_patterns() -> FlextResult[None]:
+    """Demonstrate enterprise exception handling patterns using Strategy Pattern."""
 
-    retry_result = _operation_with_retry()
-    if retry_result.success:
-        pass
+    def exception_patterns_demo() -> FlextResult[None]:
+        try:
+            # Test complex operation
+            result = _complex_operation()
+            if not result.success:
+                return FlextResult[None].fail(
+                    f"Complex operation failed: {result.error}",
+                )
 
-    _print_exception_metrics()
+            # Test retry operation
+            retry_result = _operation_with_retry()
+            if not retry_result.success:
+                return FlextResult[None].fail(
+                    f"Retry operation failed: {retry_result.error}",
+                )
+
+            # Test metrics collection
+            _print_exception_metrics()
+
+            return FlextResult[None].ok(None)
+
+        except Exception as e:
+            return FlextResult[None].fail(f"Exception patterns demo failed: {e}")
+
+    # Use ExamplePatternFactory to reduce complexity
+    demo = ExamplePatternFactory.create_demo_runner(
+        "Exception Patterns", exception_patterns_demo,
+    )
+
+    return demo.execute()
 
 
 def main() -> None:
-    """Execute all FlextExceptions demonstrations."""
-    demonstration_functions = [
-        ("Base Exceptions", demonstrate_base_exceptions),
-        ("Validation Exceptions", demonstrate_validation_exceptions),
-        ("Operational Exceptions", demonstrate_operational_exceptions),
-        ("Configuration Exceptions", demonstrate_configuration_exceptions),
-        ("Connection Exceptions", demonstrate_connection_exceptions),
-        ("Exception Patterns", demonstrate_exception_patterns),
-    ]
+    """Execute all FlextExceptions demonstrations using Strategy Pattern pipeline."""
+    try:
+        # Use Composite Pattern to eliminate duplication (same 26 lines as handlers)
+        demos = [
+            (
+                "Base Exceptions",
+                lambda: demonstrate_base_exceptions().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+            (
+                "Validation Exceptions",
+                lambda: demonstrate_validation_exceptions().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+            (
+                "Operational Exceptions",
+                lambda: demonstrate_operational_exceptions().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+            (
+                "Configuration Exceptions",
+                lambda: demonstrate_configuration_exceptions().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+            (
+                "Connection Exceptions",
+                lambda: demonstrate_connection_exceptions().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+            (
+                "Exception Patterns",
+                lambda: demonstrate_exception_patterns().flat_map(
+                    lambda _: FlextResult[None].ok(None),
+                ),
+            ),
+        ]
 
-    # Run each demonstration and continue even if individual demos raise exceptions
-    for _, demo_func in demonstration_functions:
+        # Execute using Composite Demo Suite (eliminates 26-line duplication)
+        result = ExamplePatternFactory.create_composite_demo_suite(
+            "Enterprise Exception Patterns", demos,
+        )
+
+        if result.is_success:
+            print(result.value)
+        else:
+            print(f"❌ Exception demo suite failed: {result.error}")
+
+        # Final metrics summary using flext-core utilities
         with contextlib.suppress(Exception):
-            # Demonstrations are expected to raise exceptions for educational purposes
-            # Continue to next demonstration
-            demo_func()
+            final_metrics = FlextExceptions.get_metrics()
+            _ = sum(count for count in final_metrics.values())
 
-    # Final metrics summary
-    with contextlib.suppress(Exception):
-        # Even metrics can fail in demonstration - that's okay
-        final_metrics = FlextExceptions.get_metrics()
-        _ = sum(count for count in final_metrics.values())  # counts are already int
+    except Exception as e:
+        print(f"❌ Main execution failed: {e}")
 
 
 if __name__ == "__main__":

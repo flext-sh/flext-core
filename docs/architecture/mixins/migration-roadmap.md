@@ -504,7 +504,7 @@ class BehavioralPatternMigrationTools:
                 "Plan mixin pattern selection"
             ],
             "implementation": [
-                "Replace custom logging with FlextMixins.get_logger()",
+                "Replace custom logging with FlextMixins.FlextLogger()",
                 "Replace manual validation with FlextMixins validation patterns",
                 "Replace custom serialization with FlextMixins.to_dict()",
                 "Add state management with FlextMixins.initialize_state()",

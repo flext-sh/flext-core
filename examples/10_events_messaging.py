@@ -4,15 +4,11 @@
 This example demonstrates the correct usage of FlextModels for messaging
 and event handling patterns using the current API.
 
-Key concepts demonstrated:
-- Creating payloads with required fields
-- Using headers for metadata
-- Accessing payload data
-- Message routing patterns
-- Type-safe payload handling
-
-Author: FlextCore Team
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
+
+from __future__ import annotations
 
 import time
 from datetime import UTC, datetime, timedelta
@@ -26,7 +22,7 @@ def demonstrate_basic_payload_creation() -> None:
 
     # Simple string payload
     greeting_payload = FlextModels.Payload[str](
-        data="Hello, World!", source_service="demo_service", message_type="greeting"
+        data="Hello, World!", source_service="demo_service", message_type="greeting",
     )
     print(f"Greeting: {greeting_payload.data}")
     print(f"From: {greeting_payload.source_service}")

@@ -106,7 +106,7 @@ class TestFlextLoggerInitialization:
         assert logger._service_name == "flext-api"
 
     def test_service_name_from_environment(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test service name extraction from environment variable."""
         monkeypatch.setenv("SERVICE_NAME", "order-service")
@@ -320,7 +320,7 @@ class TestOperationTracking:
 
         with capture_structured_logs() as output:
             logger.start_operation(
-                "user_authentication", user_id="123", method="oauth2"
+                "user_authentication", user_id="123", method="oauth2",
             )
 
         # Validate operation start was logged
@@ -338,7 +338,7 @@ class TestOperationTracking:
             time.sleep(0.1)
 
             logger.complete_operation(
-                operation_id, success=True, records_processed=1500, cache_hits=45
+                operation_id, success=True, records_processed=1500, cache_hits=45,
             )
 
         # Validate both operation start and completion were logged
@@ -352,7 +352,7 @@ class TestOperationTracking:
             operation_id = logger.start_operation("failing_operation")
 
             logger.complete_operation(
-                operation_id, success=False, error_code="PROC_001", retry_count=3
+                operation_id, success=False, error_code="PROC_001", retry_count=3,
             )
 
         # Validate both operation start and failure were logged
@@ -535,7 +535,7 @@ class TestRequestContextManagement:
         logger = FlextLogger("context_test")
 
         logger.set_request_context(
-            request_id="req_123", user_id="user_456", endpoint="/api/orders"
+            request_id="req_123", user_id="user_456", endpoint="/api/orders",
         )
 
         with capture_structured_logs() as output:
@@ -659,7 +659,7 @@ class TestConvenienceFunctions:
     def test_get_logger_with_version(self) -> None:
         """Test FlextLogger with version parameter."""
         logger = FlextLogger(
-            "versioned_test", service_name="test-service", service_version="1.2.3"
+            "versioned_test", service_name="test-service", service_version="1.2.3",
         )
 
         assert logger._service_version == "1.2.3"
@@ -762,7 +762,7 @@ class TestRealWorldScenarios:
         logger = FlextLogger("error_service", service_name="payment-processor")
 
         logger.set_request_context(
-            request_id="req_payment_fail", operation="process_payment"
+            request_id="req_payment_fail", operation="process_payment",
         )
 
         # Simulate a payment processing error
@@ -977,7 +977,7 @@ class TestAdvancedLoggingFeatures:
         assert logger._level == "DEBUG"  # Should convert to uppercase
 
     def test_service_name_extraction_from_environment(
-        self, monkeypatch: pytest.MonkeyPatch
+        self, monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test service name extraction from different sources."""
         # Test extraction from environment variable
@@ -1054,7 +1054,7 @@ class TestPerformanceAndStressScenarios:
         for i in range(3):  # 3 concurrent threads
             thread_id = f"thread_{i}"
             thread = threading.Thread(
-                target=log_worker, args=(thread_id, message_count)
+                target=log_worker, args=(thread_id, message_count),
             )
             threads.append(thread)
             thread.start()
@@ -1113,7 +1113,7 @@ class TestPerformanceAndStressScenarios:
                         _trigger_error(i)
                     except ValueError as e:
                         logger.exception(
-                            f"Handled error in iteration {i}", error=e, iteration=i
+                            f"Handled error in iteration {i}", error=e, iteration=i,
                         )
                         errors_handled += 1
                 else:
@@ -1250,7 +1250,7 @@ class TestUncoveredLinesTargeted:
         """Test to force line 909 in _sanitize_processor to be covered."""
         # Configure logging with structured output to ensure processors run
         FlextLogger.configure(
-            json_output=False, structured_output=True, include_source=True
+            json_output=False, structured_output=True, include_source=True,
         )
 
         logger = FlextLogger("sanitize_processor_test")

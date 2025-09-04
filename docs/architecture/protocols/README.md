@@ -472,7 +472,7 @@ class FlextProtocols.Extensions:
         """Plugin execution context."""
         def get_service(self, service_name: str) -> object: ...
         def get_config(self) -> dict[str, object]: ...
-        def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol: ...
+        def FlextLogger(self) -> FlextProtocols.Infrastructure.LoggerProtocol: ...
 
     class Middleware(Protocol):
         """Middleware pipeline component."""
@@ -505,7 +505,7 @@ class UserAnalyticsPlugin(FlextProtocols.Extensions.Plugin):
 
     def initialize(self, context: FlextProtocols.Extensions.PluginContext) -> object:
         self.context = context
-        logger = context.get_logger()
+        logger = context.FlextLogger()
 
         try:
             # Initialize analytics service

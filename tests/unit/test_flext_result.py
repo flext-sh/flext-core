@@ -48,7 +48,7 @@ class FlextMatchers:
 
     @staticmethod
     def result_contains_data(
-        result: FlextResult[object], expected_data: object
+        result: FlextResult[object], expected_data: object,
     ) -> bool:
         """Check if result contains expected data."""
         return result.is_success and result.value == expected_data
@@ -65,7 +65,7 @@ class FlextMatchers:
 
     @staticmethod
     def result_has_error_message(
-        result: FlextResult[object], expected_message: str
+        result: FlextResult[object], expected_message: str,
     ) -> bool:
         """Check if result has expected error message."""
         return result.is_failure and expected_message in (result.error or "")
@@ -136,13 +136,13 @@ class TestFlextResultComprehensive:
         assert simple_fail.error_code is None
         # Accessing .value on failed result should raise TypeError
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
+            TypeError, match="Attempted to access value on failed result",
         ):
             _ = simple_fail.value
 
         # Failure with error code
         coded_fail = FlextResult[str].fail(
-            "Validation error", error_code="VALIDATION_001"
+            "Validation error", error_code="VALIDATION_001",
         )
         assert coded_fail.is_failure
         assert coded_fail.error == "Validation error"
@@ -184,7 +184,7 @@ class TestFlextResultComprehensive:
     # =========================================================================
 
     def test_result_with_large_data_structures(
-        self, benchmark: BenchmarkFixture
+        self, benchmark: BenchmarkFixture,
     ) -> None:
         """Test FlextResult with large data structures and performance."""
         # Create large data structure
@@ -267,7 +267,7 @@ class TestFlextResultComprehensive:
 
         # Test with failure result
         failure = FlextResult[dict[str, str]].fail(
-            "Access denied", error_code="AUTH_001"
+            "Access denied", error_code="AUTH_001",
         )
         assert TestUtilities.is_valid_result(failure)  # Valid result, but failed
         assert not TestUtilities.result_has_data(failure)
@@ -312,7 +312,7 @@ class TestFlextResultComprehensive:
         failure_result = FlextResult[list[int]].fail("Test error")
         # Failed results raise TypeError when accessing .value (no data reference)
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
+            TypeError, match="Attempted to access value on failed result",
         ):
             _ = failure_result.value
 
@@ -383,7 +383,7 @@ class TestFlextResultComprehensive:
             "JSON serialization error",
             error_code="JSON_001",
             error_data={
-                "invalid_type": str(type(object()))
+                "invalid_type": str(type(object())),
             },  # Convert to string for JSON
         )
 

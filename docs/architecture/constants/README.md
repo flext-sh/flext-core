@@ -319,7 +319,7 @@ def validate_authorization(user_permissions: list[str], required_permission: str
             error_code=FlextConstants.Errors.AUTHORIZATION_DENIED
         )
 
-    return FlextResult.ok(True)
+    return FlextResult.ok(data=True)
 ```
 
 #### 4. Validation Domain - Rules and Constraints
@@ -422,7 +422,7 @@ def validate_password_strength(password: str) -> FlextResult[bool]:
             error_code=FlextConstants.Errors.VALIDATION_ERROR
         )
 
-    return FlextResult.ok(True)
+    return FlextResult.ok(data=True)
 
 # Batch processing validation
 def validate_batch_operation(items: list) -> FlextResult[list]:

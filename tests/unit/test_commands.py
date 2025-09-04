@@ -182,10 +182,10 @@ class TestQueryHandling:
         """Test query handler execution."""
 
         class SearchHandler(
-            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict[str, object]]]
+            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[dict[str, object]]],
         ):
             def handle(
-                self, query: ExtendedQuery
+                self, query: ExtendedQuery,
             ) -> FlextResult[list[dict[str, object]]]:
                 # Simulate search results
                 results = [
@@ -308,10 +308,10 @@ class TestAsyncCommandPatterns:
         """Test async query handler."""
 
         class AsyncQueryHandler(
-            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]]
+            FlextCommands.Handlers.QueryHandler[ExtendedQuery, list[str]],
         ):
             async def handle_async(
-                self, query: ExtendedQuery
+                self, query: ExtendedQuery,
             ) -> FlextResult[list[str]]:
                 await asyncio.sleep(0.01)  # Simulate async work
                 results = [f"Async result {i}" for i in range(query.limit)]
@@ -377,7 +377,7 @@ class TestCommandMiddleware:
                     validation = command.validate_command()
                     if validation.is_failure:
                         return FlextResult[object].fail(
-                            f"Validation failed: {validation.error}"
+                            f"Validation failed: {validation.error}",
                         )
 
                 # Proceed if valid

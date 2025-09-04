@@ -59,7 +59,7 @@ class FunctionalExternalService:
         return FlextResult[str].ok(processed_data)
 
     def set_failure_mode(
-        self, *, should_fail: bool, message: str = "Service unavailable"
+        self, *, should_fail: bool, message: str = "Service unavailable",
     ) -> None:
         """Configure service to fail for testing error scenarios."""
         self.should_fail = should_fail

@@ -202,8 +202,8 @@ class UserRegistrationProcessor(
         # Simulate user existence check
         # In real implementation: query database or external service
         if email == "admin@system.com":
-            return FlextResult[bool].ok(True)
-        return FlextResult[bool].ok(False)
+            return FlextResult[bool].ok(data=True)
+        return FlextResult[bool].ok(data=False)
 
     def _validate_email_domain(self, email: str) -> FlextResult[None]:
         """Validate email domain against business rules."""

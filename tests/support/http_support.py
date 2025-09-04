@@ -279,7 +279,7 @@ class HTTPScenarioBuilder:
                 "url": url,
                 "method": method,
                 "status_code": status_code,
-            }
+            },
         )
 
         return self
@@ -306,7 +306,7 @@ class HTTPScenarioBuilder:
                 "url": url,
                 "method": method,
                 "status_code": status_code,
-            }
+            },
         )
 
         return self
@@ -342,7 +342,7 @@ class HTTPScenarioBuilder:
                 "url": url,
                 "method": method,
                 "failure_count": failure_count,
-            }
+            },
         )
 
         return self
@@ -383,7 +383,7 @@ class HTTPScenarioBuilder:
                 "url": url,
                 "method": method,
                 "failure_threshold": failure_threshold,
-            }
+            },
         )
 
         return self

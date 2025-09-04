@@ -6,6 +6,9 @@ zero-configuration patterns, and type safety compliance.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ from __future__ import annotations
 import sys
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self
+from typing import Self, NotRequired, TypedDict, Unpack
 
 from pydantic import ConfigDict, Field
 
@@ -96,7 +99,7 @@ class Money(FlextModels.Value):
 
     @classmethod
     def create(
-        cls, amount: Decimal | float | str, currency: str = "USD"
+        cls, amount: Decimal | float | str, currency: str = "USD",
     ) -> FlextResult[Self]:
         """Create money with validation."""
         try:
@@ -110,7 +113,7 @@ class Money(FlextModels.Value):
         """Add two money values."""
         if self.currency != other.currency:
             return FlextResult[Money].fail(
-                f"Currency mismatch: {self.currency} vs {other.currency}"
+                f"Currency mismatch: {self.currency} vs {other.currency}",
             )
         return Money.create(self.amount + other.amount, self.currency)
 
@@ -181,7 +184,7 @@ class ECommerceConfig(FlextConfig):
         """Validate configuration business rules."""
         if self.min_order_value >= self.max_order_value:
             return FlextResult[None].fail(
-                "min_order_value must be less than max_order_value"
+                "min_order_value must be less than max_order_value",
             )
         if self.max_order_items <= 0:
             return FlextResult[None].fail("max_order_items must be positive")
@@ -269,16 +272,26 @@ class Product(FlextModels.Entity):
 
         return FlextResult[None].ok(None)
 
+    # Python 3.13 TypedDict for parameter reduction - ELIMINATES BOILERPLATE
+    class CreateProductParams(TypedDict):
+        """TypedDict for Product.create parameters."""
+
+        name: str
+        price: Decimal | float | str
+        stock_quantity: NotRequired[int]
+        currency: NotRequired[str]
+        product_id: NotRequired[str | None]
+
     @classmethod
-    def create(
-        cls,
-        name: str,
-        price: Decimal | float | str,
-        stock_quantity: int = 0,
-        currency: str = "USD",
-        product_id: str | None = None,
-    ) -> FlextResult[Product]:
-        """Create product with validation."""
+    def create(cls, **params: Unpack[CreateProductParams]) -> FlextResult[Product]:
+        """Create product with validation using Python 3.13 TypedDict."""
+        # Extract parameters with defaults
+        name = params["name"]
+        price = params["price"]
+        stock_quantity = params.get("stock_quantity", 0)
+        currency = params.get("currency", "USD")
+        product_id = params.get("product_id")
+
         try:
             # Validate price
             price_result = Money.create(price, currency)
@@ -342,7 +355,7 @@ class OrderItem(FlextModels.Value):
         price_result = product.price.multiply(quantity)
         if not price_result.success:
             return FlextResult[OrderItem].fail(
-                f"Price calculation failed: {price_result.error}"
+                f"Price calculation failed: {price_result.error}",
             )
 
         item = cls(
@@ -415,14 +428,14 @@ class Order(FlextModels.AggregateRoot):
             validation_result = cls._validate_order_constraints(items_data, config)
             if not validation_result.success:
                 return FlextResult[Order].fail(
-                    validation_result.error or "Validation failed"
+                    validation_result.error or "Validation failed",
                 )
 
             # Create order items
             items_result = cls._create_order_items(items_data)
             if not items_result.success:
                 return FlextResult[Order].fail(
-                    items_result.error or "Failed to create items"
+                    items_result.error or "Failed to create items",
                 )
 
             items = items_result.value
@@ -435,12 +448,12 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _validate_order_constraints(
-        cls, items_data: list[dict[str, object]], config: ECommerceConfig
+        cls, items_data: list[dict[str, object]], config: ECommerceConfig,
     ) -> FlextResult[None]:
         """Validate order constraints."""
         if len(items_data) > config.max_order_items:
             return FlextResult[None].fail(
-                f"Too many items: {len(items_data)} > {config.max_order_items}"
+                f"Too many items: {len(items_data)} > {config.max_order_items}",
             )
 
         if not items_data:
@@ -450,7 +463,7 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _create_order_items(
-        cls, items_data: list[dict[str, object]]
+        cls, items_data: list[dict[str, object]],
     ) -> FlextResult[list[OrderItem]]:
         """Create order items from data."""
         items: list[OrderItem] = []
@@ -467,7 +480,7 @@ class Order(FlextModels.AggregateRoot):
             item_result = OrderItem.create(product, quantity)
             if not item_result.success:
                 return FlextResult[list[OrderItem]].fail(
-                    f"Invalid item: {item_result.error}"
+                    f"Invalid item: {item_result.error}",
                 )
 
             items.append(item_result.value)
@@ -491,7 +504,7 @@ class Order(FlextModels.AggregateRoot):
         total_result = cls._calculate_and_validate_total(items, config)
         if not total_result.success:
             return FlextResult[Order].fail(
-                total_result.error or "Total validation failed"
+                total_result.error or "Total validation failed",
             )
 
         total_money = total_result.value
@@ -508,7 +521,7 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _calculate_and_validate_total(
-        cls, items: list[OrderItem], config: ECommerceConfig
+        cls, items: list[OrderItem], config: ECommerceConfig,
     ) -> FlextResult[Money]:
         """Calculate and validate order total."""
         if not items:
@@ -522,7 +535,7 @@ class Order(FlextModels.AggregateRoot):
         total_money_result = Money.create(total, currency)
         if not total_money_result.success:
             return FlextResult[Money].fail(
-                f"Total calculation failed: {total_money_result.error}"
+                f"Total calculation failed: {total_money_result.error}",
             )
 
         # Validate total amount
@@ -538,7 +551,7 @@ class Order(FlextModels.AggregateRoot):
         """Confirm order and update stock."""
         if self.status != OrderStatus.PENDING:
             return FlextResult[None].fail(
-                f"Cannot confirm order in {self.status} status"
+                f"Cannot confirm order in {self.status} status",
             )
 
         # Update stock for all items
@@ -546,7 +559,7 @@ class Order(FlextModels.AggregateRoot):
             stock_result = item.product.update_stock(-item.quantity)
             if not stock_result.success:
                 return FlextResult[None].fail(
-                    f"Stock update failed: {stock_result.error}"
+                    f"Stock update failed: {stock_result.error}",
                 )
 
         self.status = OrderStatus.CONFIRMED
@@ -566,7 +579,7 @@ class PaymentService:
         self.config = config
 
     def process_payment(
-        self, order: Order, payment_method: str = "credit_card"
+        self, order: Order, payment_method: str = "credit_card",
     ) -> FlextResult[str]:
         """Process payment for order."""
         try:
@@ -590,7 +603,7 @@ class OrderService:
     """Order management service."""
 
     def __init__(
-        self, config: ECommerceConfig, payment_service: PaymentService
+        self, config: ECommerceConfig, payment_service: PaymentService,
     ) -> None:
         """Initialize order service."""
         self.config = config
@@ -607,7 +620,7 @@ class OrderService:
             order_result = Order.create(user, items_data, self.config)
             if not order_result.success:
                 return FlextResult[Order].fail(
-                    f"Order creation failed: {order_result.error}"
+                    f"Order creation failed: {order_result.error}",
                 )
 
             order = order_result.value
@@ -616,14 +629,14 @@ class OrderService:
             confirm_result = order.confirm()
             if not confirm_result.success:
                 return FlextResult[Order].fail(
-                    f"Order confirmation failed: {confirm_result.error}"
+                    f"Order confirmation failed: {confirm_result.error}",
                 )
 
             # Process payment
             payment_result = self.payment_service.process_payment(order)
             if not payment_result.success:
                 return FlextResult[Order].fail(
-                    f"Payment failed: {payment_result.error}"
+                    f"Payment failed: {payment_result.error}",
                 )
 
             order.status = OrderStatus.PROCESSING
@@ -682,14 +695,14 @@ def demonstrate_product_creation() -> FlextResult[list[Product]]:
         else:
             print(f"❌ Product creation failed: {product_result.error}")
             return FlextResult[list[Product]].fail(
-                f"Product creation failed: {product_result.error}"
+                f"Product creation failed: {product_result.error}",
             )
 
     return FlextResult[list[Product]].ok(products)
 
 
 def demonstrate_order_processing(
-    user: User, products: list[Product]
+    user: User, products: list[Product],
 ) -> FlextResult[Order]:
     """Demonstrate complete order processing."""
     print("Processing order...")

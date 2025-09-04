@@ -154,7 +154,7 @@ class TestTypeAliases:
             "email": "john@example.com",
         }
         user_payload = FlextModels.Payload(
-            source_service="user_service", message_type="user.data", data=user_data
+            source_service="user_service", message_type="user.data", data=user_data,
         )
 
         event_data: dict[str, object] = {

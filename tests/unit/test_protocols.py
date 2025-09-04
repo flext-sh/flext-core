@@ -74,7 +74,7 @@ class TestProtocolsConfig100PercentCoverage:
     def test_configure_protocols_system_missing_protocol_level(self) -> None:
         """Test lines 842-845: Missing protocol_level default."""
         config = {
-            "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+            "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
         }
 
         result = FlextProtocols.Config.configure_protocols_system(config)
@@ -157,7 +157,7 @@ class TestProtocolsConfig100PercentCoverage:
     def test_create_environment_protocols_config_invalid_environment(self) -> None:
         """Test invalid environment handling in create_environment_protocols_config."""
         result = FlextProtocols.Config.create_environment_protocols_config(
-            "invalid_env"
+            "invalid_env",
         )
         assert result.failure
         assert "Unknown environment" in result.error
@@ -238,13 +238,13 @@ class TestProtocolsIntegration100PercentCoverage:
 
         # Create environment-specific config
         env_config_result = FlextProtocols.Config.create_environment_protocols_config(
-            FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+            FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
         )
         assert env_config_result.success
 
         # Optimize performance
         perf_config_result = FlextProtocols.Config.optimize_protocols_performance(
-            "high"
+            "high",
         )
         assert perf_config_result.success
 

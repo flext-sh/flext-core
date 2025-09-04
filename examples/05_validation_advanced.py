@@ -4,18 +4,15 @@
 Demonstrates enterprise-grade validation patterns using FlextCore's built-in
 validation utilities, guards, and enterprise patterns. Shows how to leverage
 FlextUtilities.Validators, FlextGuards, and FlextValidations for robust,
-type-safe validation workflows with minimal code duplication.
+type-safe validation workflows with minimal code duplication
 
-Key FlextCore Features Demonstrated:
-• FlextUtilities.Validators: Built-in email, URL, JSON, UUID validators
-• FlextGuards.ValidationUtils: Enterprise validation with FlextResult integration
-• FlextValidations: Advanced validation patterns and composition
-• FlextTypes and FlextConstants: Centralized type safety and validation limits
-• Clean Architecture: Dependency inversion and protocol-based validation
-• Integration Patterns: Composing validators for complex business rules
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+import uuid
+import re
 
 import json
 from typing import Protocol, TypeVar
@@ -80,7 +77,7 @@ class EnterpriseValidation:
         # Manual length validation since validate_string_field doesn't support min/max
         if len(name) < MIN_NAME_LENGTH or len(name) > MAX_NAME_LENGTH:
             return FlextResult[str].fail(
-                f"Name must be between {MIN_NAME_LENGTH} and {MAX_NAME_LENGTH} characters"
+                f"Name must be between {MIN_NAME_LENGTH} and {MAX_NAME_LENGTH} characters",
             )
 
         # Check for numbers in name (business rule)
@@ -123,7 +120,6 @@ class EnterpriseValidation:
     def validate_uuid(uuid_str: str) -> FlextResult[str]:
         """Validate UUID using native FlextValidations validator."""
         # Simple UUID validation (since is_uuid doesn't exist)
-        import uuid
 
         try:
             uuid.UUID(uuid_str)
@@ -145,7 +141,6 @@ class EnterpriseValidation:
     def validate_phone(phone: str) -> FlextResult[str]:
         """Validate phone number using native FlextValidations validator."""
         # Simple phone validation (since is_phone doesn't exist)
-        import re
 
         phone_pattern = r"^\+?[\d\s\-\(\)]+$"
         if (
@@ -154,7 +149,7 @@ class EnterpriseValidation:
                 phone.replace(" ", "")
                 .replace("-", "")
                 .replace("(", "")
-                .replace(")", "")
+                .replace(")", ""),
             )
             >= MIN_PHONE_DIGITS
         ):
@@ -216,7 +211,7 @@ class EnterpriseFormValidator:
         # Aggregate validation errors using FlextCore patterns
         errors = _aggregate_validation_errors([name_result, email_result, age_result])
         return FlextResult[dict[str, object]].fail(
-            f"User registration validation failed: {errors}"
+            f"User registration validation failed: {errors}",
         )
 
     @staticmethod
@@ -235,7 +230,7 @@ class EnterpriseFormValidator:
             name_result = FlextResult[str].fail("Product name is required")
         elif len(name) < MIN_PRODUCT_NAME or len(name) > MAX_PRODUCT_NAME:
             name_result = FlextResult[str].fail(
-                f"Product name must be between {MIN_PRODUCT_NAME} and {MAX_PRODUCT_NAME} characters"
+                f"Product name must be between {MIN_PRODUCT_NAME} and {MAX_PRODUCT_NAME} characters",
             )
         else:
             name_result = FlextResult[str].ok(name)
@@ -243,13 +238,13 @@ class EnterpriseFormValidator:
         # Simple price validation instead of using non-existent method
         if price < MIN_PRICE or price > MAX_PRICE:
             price_result = FlextResult[float].fail(
-                f"Price must be between {MIN_PRICE} and {MAX_PRICE}"
+                f"Price must be between {MIN_PRICE} and {MAX_PRICE}",
             )
         else:
             price_result = FlextResult[float].ok(price)
         if price_result.is_failure:
             price_result = FlextResult[float].fail(
-                "Price must be between $0.01 and $99,999.99"
+                "Price must be between $0.01 and $99,999.99",
             )
         else:
             price_result = FlextResult[float].ok(price)
@@ -278,10 +273,10 @@ class EnterpriseFormValidator:
                 name_result,
                 price_result,
                 category_result,
-            ]
+            ],
         )
         return FlextResult[dict[str, object]].fail(
-            f"Product validation failed: {errors}"
+            f"Product validation failed: {errors}",
         )
 
 
@@ -291,7 +286,7 @@ def _validate_product_name_length(name: str) -> FlextResult[str]:
     if len(name) >= min_length:
         return FlextResult[str].ok(name)
     return FlextResult[str].fail(
-        f"Product name must be at least {min_length} characters"
+        f"Product name must be at least {min_length} characters",
     )
 
 
@@ -355,14 +350,14 @@ class BusinessRuleValidator:
         # Business rules using simple range validation
         if total_amount < MIN_ORDER_AMOUNT or total_amount > MAX_ORDER_AMOUNT:
             amount_check = FlextResult[float].fail(
-                f"Order total must be between ${MIN_ORDER_AMOUNT} and ${MAX_ORDER_AMOUNT}"
+                f"Order total must be between ${MIN_ORDER_AMOUNT} and ${MAX_ORDER_AMOUNT}",
             )
         else:
             amount_check = FlextResult[float].ok(total_amount)
 
         if item_count < MIN_ORDER_ITEMS or item_count > MAX_ORDER_ITEMS:
             item_check = FlextResult[int].fail(
-                f"Order must have between {MIN_ORDER_ITEMS} and {MAX_ORDER_ITEMS} items"
+                f"Order must have between {MIN_ORDER_ITEMS} and {MAX_ORDER_ITEMS} items",
             )
         else:
             item_check = FlextResult[int].ok(item_count)
@@ -372,7 +367,7 @@ class BusinessRuleValidator:
 
         errors = _aggregate_validation_errors([amount_check, item_check])
         return FlextResult[bool].fail(
-            f"Order business rule validation failed: {errors}"
+            f"Order business rule validation failed: {errors}",
         )
 
 
@@ -427,7 +422,7 @@ def demonstrate_enterprise_forms() -> None:
     if result.success:
         user_data = result.value
         print(
-            f"✅ Valid user registration: {user_data.get('name')} (ID: {user_data.get('id')})"
+            f"✅ Valid user registration: {user_data.get('name')} (ID: {user_data.get('id')})",
         )
     else:
         print(f"❌ User validation failed: {result.error}")
@@ -454,7 +449,7 @@ def demonstrate_enterprise_forms() -> None:
     if result.success:
         product_data_result = result.value
         print(
-            f"✅ Valid product: {product_data_result.get('name')} (ID: {product_data_result.get('id')})"
+            f"✅ Valid product: {product_data_result.get('name')} (ID: {product_data_result.get('id')})",
         )
     else:
         print(f"❌ Product validation failed: {result.error}")
@@ -491,19 +486,42 @@ def demonstrate_business_rules() -> None:
         result = BusinessRuleValidator.validate_order_business_rules(order)
         status = "✅ Valid" if result.success else f"❌ {result.error}"
         print(
-            f"Order {i + 1} (${order['total']}, {order['item_count']} items): {status}"
+            f"Order {i + 1} (${order['total']}, {order['item_count']} items): {status}",
         )
 
 
 if __name__ == "__main__":
+    # Use Strategy Pattern to eliminate code duplication in examples
+    from shared_example_strategies import ExamplePatternFactory
+
     print("FlextCore Advanced Validation System")
     print("====================================")
 
-    # Demonstrate FlextCore native validation features
-    demonstrate_native_validators()
-    demonstrate_enterprise_forms()
-    demonstrate_business_rules()
+    # Create demonstration strategies using Factory Pattern
+    demos = [
+        ExamplePatternFactory.create_demo_runner(
+            "Native Validators Demo",
+            lambda: demonstrate_native_validators()
+            or FlextResult.ok("Native validators demo completed"),
+        ),
+        ExamplePatternFactory.create_demo_runner(
+            "Enterprise Forms Demo",
+            lambda: demonstrate_enterprise_forms()
+            or FlextResult.ok("Enterprise forms demo completed"),
+        ),
+        ExamplePatternFactory.create_demo_runner(
+            "Business Rules Demo",
+            lambda: demonstrate_business_rules()
+            or FlextResult.ok("Business rules demo completed"),
+        ),
+    ]
 
-    print("\n✅ All FlextCore validation patterns demonstrated successfully!")
-    print("Key benefits: Reduced code duplication, enterprise-grade validation,")
-    print("type safety, and integrated error handling with FlextResult patterns.")
+    # Execute demonstration pipeline using Template Method Pattern
+    result = ExamplePatternFactory.execute_demo_pipeline(demos)
+
+    if result.is_success:
+        print("\n✅ All FlextCore validation patterns demonstrated successfully!")
+        print("Key benefits: Reduced code duplication, enterprise-grade validation,")
+        print("type safety, and integrated error handling with FlextResult patterns.")
+    else:
+        print(f"❌ Demonstration failed: {result.error}")

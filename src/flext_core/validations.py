@@ -44,7 +44,7 @@ class FlextValidations:
             """Composable predicates for validation with boolean logic operations."""
 
             def __init__(
-                self, func: Callable[[object], bool], name: str = "predicate"
+                self, func: Callable[[object], bool], name: str = "predicate",
             ) -> None:
                 """Initialize predicate with function and optional name."""
                 self.func = func
@@ -66,7 +66,7 @@ class FlextValidations:
                     )
 
             def __and__(
-                self, other: FlextValidations.Core.Predicates
+                self, other: FlextValidations.Core.Predicates,
             ) -> FlextValidations.Core.Predicates:
                 """Combine predicates with AND logic."""
 
@@ -74,11 +74,11 @@ class FlextValidations:
                     return self.func(value) and other.func(value)
 
                 return FlextValidations.Core.Predicates(
-                    combined_func, name=f"({self.name} AND {other.name})"
+                    combined_func, name=f"({self.name} AND {other.name})",
                 )
 
             def __or__(
-                self, other: FlextValidations.Core.Predicates
+                self, other: FlextValidations.Core.Predicates,
             ) -> FlextValidations.Core.Predicates:
                 """Combine predicates with OR logic."""
 
@@ -86,7 +86,7 @@ class FlextValidations:
                     return self.func(value) or other.func(value)
 
                 return FlextValidations.Core.Predicates(
-                    combined_func, name=f"({self.name} OR {other.name})"
+                    combined_func, name=f"({self.name} OR {other.name})",
                 )
 
             def __invert__(self) -> FlextValidations.Core.Predicates:
@@ -96,7 +96,7 @@ class FlextValidations:
                     return not self.func(value)
 
                 return FlextValidations.Core.Predicates(
-                    negated_func, name=f"NOT({self.name})"
+                    negated_func, name=f"NOT({self.name})",
                 )
 
             @staticmethod
@@ -110,7 +110,7 @@ class FlextValidations:
 
             @staticmethod
             def create_string_length_predicate(
-                min_length: int | None = None, max_length: int | None = None
+                min_length: int | None = None, max_length: int | None = None,
             ) -> FlextValidations.Core.Predicates:
                 """Create string length validation predicate."""
 
@@ -133,7 +133,7 @@ class FlextValidations:
 
             @staticmethod
             def create_numeric_range_predicate(
-                min_value: float | None = None, max_value: float | None = None
+                min_value: float | None = None, max_value: float | None = None,
             ) -> FlextValidations.Core.Predicates:
                 """Create numeric range validation predicate."""
 
@@ -191,7 +191,7 @@ class FlextValidations:
                 """Validate value is dictionary using FlextTypes."""
                 if isinstance(value, dict):
                     return FlextResult[dict[str, object]].ok(
-                        cast("dict[str, object]", value)
+                        cast("dict[str, object]", value),
                     )
                 return FlextResult[dict[str, object]].fail(
                     FlextConstants.Messages.TYPE_MISMATCH,
@@ -256,7 +256,7 @@ class FlextValidations:
             """User entity validation with business rules."""
 
             def validate_business_rules(
-                self, user_data: dict[str, object]
+                self, user_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Validate user business rules."""
                 # Validate required fields
@@ -310,7 +310,7 @@ class FlextValidations:
             """Generic entity validation patterns."""
 
             def validate_entity_constraints(
-                self, entity_data: dict[str, object]
+                self, entity_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Validate common entity constraints."""
                 # Validate entity has ID
@@ -373,7 +373,7 @@ class FlextValidations:
                 self._timeout = FlextConstants.Defaults.TIMEOUT
 
             def validate_request(
-                self, request_data: dict[str, object]
+                self, request_data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Validate API request structure and constraints."""
                 # Validate request is not empty
@@ -445,7 +445,7 @@ class FlextValidations:
 
                     # Validate config value types according to ConfigDict
                     if value is not None and not isinstance(
-                        value, (str, int, float, bool)
+                        value, (str, int, float, bool),
                     ):
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
                             f"Invalid configuration value type for key '{key}'",
@@ -453,7 +453,7 @@ class FlextValidations:
                         )
 
                 return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                    cast("FlextTypes.Config.ConfigDict", config)
+                    cast("FlextTypes.Config.ConfigDict", config),
                 )
 
             @staticmethod
@@ -554,7 +554,7 @@ class FlextValidations:
 
             @staticmethod
             def validate_pattern(
-                value: str, pattern: str, pattern_name: str = "pattern"
+                value: str, pattern: str, pattern_name: str = "pattern",
             ) -> FlextResult[str]:
                 """Validate string matches regex pattern with error handling."""
                 try:
@@ -575,7 +575,7 @@ class FlextValidations:
                 """Validate email format using centralized FlextConstants pattern."""
                 email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
                 return FlextValidations.Rules.StringRules.validate_pattern(
-                    value, email_pattern, "email"
+                    value, email_pattern, "email",
                 )
 
         class NumericRules:
@@ -675,7 +675,7 @@ class FlextValidations:
 
             @staticmethod
             def validate_dict_keys(
-                value: object, required_keys: list[str]
+                value: object, required_keys: list[str],
             ) -> FlextResult[dict[str, object]]:
                 """Validate dictionary contains required keys."""
                 if not isinstance(value, dict):
@@ -693,7 +693,7 @@ class FlextValidations:
                     )
 
                 return FlextResult[dict[str, object]].ok(
-                    cast("dict[str, object]", value)
+                    cast("dict[str, object]", value),
                 )
 
     # =========================================================================
@@ -712,13 +712,13 @@ class FlextValidations:
             """Schema-based validation using protocol composition."""
 
             def __init__(
-                self, schema: dict[str, Callable[[object], FlextResult[object]]]
+                self, schema: dict[str, Callable[[object], FlextResult[object]]],
             ) -> None:
                 """Initialize schema validator with validation rules."""
                 self.schema = schema
 
             def validate(
-                self, data: dict[str, object]
+                self, data: dict[str, object],
             ) -> FlextResult[dict[str, object]]:
                 """Validate data against schema with efficient error reporting."""
                 # data is already typed as dict[str, object]
@@ -749,7 +749,7 @@ class FlextValidations:
             """Composite validator for complex validation chains."""
 
             def __init__(
-                self, validators: list[Callable[[object], FlextResult[object]]]
+                self, validators: list[Callable[[object], FlextResult[object]]],
             ) -> None:
                 """Initialize composite validator with validation chain."""
                 self.validators = validators
@@ -851,14 +851,14 @@ class FlextValidations:
 
     @classmethod
     def create_composite_validator(
-        cls, validators: list[Callable[[object], FlextResult[object]]]
+        cls, validators: list[Callable[[object], FlextResult[object]]],
     ) -> Advanced.CompositeValidator:
         """Create composite validator from component validators."""
         return cls.Advanced.CompositeValidator(validators)
 
     @classmethod
     def create_schema_validator(
-        cls, schema: dict[str, Callable[[object], FlextResult[object]]]
+        cls, schema: dict[str, Callable[[object], FlextResult[object]]],
     ) -> Advanced.SchemaValidator:
         """Create schema validator with validation rules."""
         return cls.Advanced.SchemaValidator(schema)
@@ -890,7 +890,7 @@ class FlextValidations:
 
     @classmethod
     def validate_user_data(
-        cls, user_data: dict[str, object]
+        cls, user_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Validate user data using domain validator."""
         validator = cls.create_user_validator()
@@ -898,7 +898,7 @@ class FlextValidations:
 
     @classmethod
     def validate_api_request(
-        cls, request_data: dict[str, object]
+        cls, request_data: dict[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Validate API request using service validator."""
         validator = cls.create_api_request_validator()
@@ -920,7 +920,7 @@ class FlextValidations:
 
     @classmethod
     def configure_validation_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure validation system using FlextTypes.Config.
 
@@ -946,7 +946,7 @@ class FlextValidations:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
                 validated_config["environment"] = env_value
             else:
@@ -960,7 +960,7 @@ class FlextValidations:
                 valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
                 if val_level not in valid_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}"
+                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}",
                     )
                 validated_config["validation_level"] = val_level
             # Default based on environment
@@ -983,7 +983,7 @@ class FlextValidations:
                 valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
                 if log_level not in valid_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}"
+                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}",
                     )
                 validated_config["log_level"] = log_level
             # Default based on environment
@@ -1006,21 +1006,21 @@ class FlextValidations:
                 100 if validated_config["validation_level"] == "strict" else 1000,
             )
             validated_config["enable_performance_tracking"] = config.get(
-                "enable_performance_tracking", True
+                "enable_performance_tracking", True,
             )
             validated_config["cache_validation_results"] = config.get(
                 "cache_validation_results",
                 validated_config["environment"] == "production",
             )
             validated_config["fail_fast_validation"] = config.get(
-                "fail_fast_validation", validated_config["validation_level"] == "strict"
+                "fail_fast_validation", validated_config["validation_level"] == "strict",
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Validation configuration error: {e}"
+                f"Validation configuration error: {e}",
             )
 
     @classmethod
@@ -1065,12 +1065,12 @@ class FlextValidations:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get validation config: {e}"
+                f"Failed to get validation config: {e}",
             )
 
     @classmethod
     def create_environment_validation_config(
-        cls, environment: FlextTypes.Config.Environment
+        cls, environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Create environment-specific validation configuration."""
         try:
@@ -1080,7 +1080,7 @@ class FlextValidations:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Create environment-specific validation configuration
@@ -1133,12 +1133,12 @@ class FlextValidations:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Environment validation config failed: {e}"
+                f"Environment validation config failed: {e}",
             )
 
     @classmethod
     def optimize_validation_performance(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize validation configuration for performance.
 
@@ -1191,7 +1191,7 @@ class FlextValidations:
 
             # Add performance monitoring settings
             optimized_config["performance_metrics_enabled"] = optimized_config.get(
-                "enable_performance_tracking", True
+                "enable_performance_tracking", True,
             )
             optimized_config["validation_batch_size"] = (
                 1000 if environment == "production" else 500
@@ -1204,7 +1204,7 @@ class FlextValidations:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Performance optimization failed: {e}"
+                f"Performance optimization failed: {e}",
             )
 
     # =============================================================================

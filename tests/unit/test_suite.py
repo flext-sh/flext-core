@@ -73,7 +73,7 @@ class UserService:
         self.next_id += 1
 
         user = User(
-            id=user_id, username=command.username, email=command.email, age=command.age
+            id=user_id, username=command.username, email=command.email, age=command.age,
         )
 
         self.users[user_id] = user
@@ -141,7 +141,7 @@ class TestComprehensiveRealFunctionality:
         assert simple_fail.error == "Operation failed"
         # Accessing .value on failed result should raise TypeError
         with pytest.raises(
-            TypeError, match="Attempted to access value on failed result"
+            TypeError, match="Attempted to access value on failed result",
         ):
             _ = simple_fail.value
         # assert not simple_fail.success  # Redundant check, removed to avoid MyPy confusion
@@ -171,14 +171,14 @@ class TestComprehensiveRealFunctionality:
 
         # Complex nested structures
         nested: dict[str, object] = {
-            "level1": {"level2": {"data": [1, 2, 3], "metadata": {"source": "test"}}}
+            "level1": {"level2": {"data": [1, 2, 3], "metadata": {"source": "test"}}},
         }
         nested_result = FlextResult[dict[str, object]].ok(nested)
         assert nested_result.success
 
         # Boolean results
-        true_result = FlextResult[bool].ok(True)
-        false_result = FlextResult[bool].ok(False)
+        true_result = FlextResult[bool].ok(data=True)
+        false_result = FlextResult[bool].ok(data=False)
         assert true_result.success
         assert false_result.success
         assert true_result.value is True
@@ -234,7 +234,7 @@ class TestComprehensiveRealFunctionality:
 
         # Create command handler
         class CreateUserHandler(
-            FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]
+            FlextCommands.Handlers.CommandHandler[CreateUserCommand, User],
         ):
             def __init__(self, user_service: UserService) -> None:
                 super().__init__()
@@ -249,7 +249,7 @@ class TestComprehensiveRealFunctionality:
 
         # Test successful command
         valid_command = CreateUserCommand(
-            username="alice", email="alice@example.com", age=25
+            username="alice", email="alice@example.com", age=25,
         )
 
         result = handler.handle(valid_command)
@@ -288,7 +288,7 @@ class TestComprehensiveRealFunctionality:
 
         # Create and register handler
         class BusCreateUserHandler(
-            FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]
+            FlextCommands.Handlers.CommandHandler[CreateUserCommand, User],
         ):
             def __init__(self, service: UserService) -> None:
                 super().__init__()
@@ -302,7 +302,7 @@ class TestComprehensiveRealFunctionality:
 
         # Execute command through bus
         command = CreateUserCommand(
-            username="bus_user", email="bus@example.com", age=30
+            username="bus_user", email="bus@example.com", age=30,
         )
 
         result = bus.execute(command)
@@ -478,7 +478,7 @@ class TestComprehensiveRealFunctionality:
 
         # Create user
         command = CreateUserCommand(
-            username="json_user", email="json@example.com", age=28
+            username="json_user", email="json@example.com", age=28,
         )
 
         result = service.create_user(command)
@@ -523,7 +523,7 @@ class TestComprehensiveRealFunctionality:
         # Test with temporary file
         service = UserService()
         command = CreateUserCommand(
-            username="file_user", email="file@example.com", age=35
+            username="file_user", email="file@example.com", age=35,
         )
 
         create_result = service.create_user(command)
@@ -532,7 +532,7 @@ class TestComprehensiveRealFunctionality:
         original_user = create_result.value
 
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             temp_path = Path(f.name)
 

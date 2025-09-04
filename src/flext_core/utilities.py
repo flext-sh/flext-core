@@ -264,13 +264,13 @@ class FlextUtilities:
                         result = func(*args, **kwargs)
                         duration = time.perf_counter() - start_time
                         FlextUtilities.Performance.record_metric(
-                            operation_name, duration, success=True
+                            operation_name, duration, success=True,
                         )
                         return result
                     except Exception as e:
                         duration = time.perf_counter() - start_time
                         FlextUtilities.Performance.record_metric(
-                            operation_name, duration, success=False, error=str(e)
+                            operation_name, duration, success=False, error=str(e),
                         )
                         raise
 
@@ -317,6 +317,117 @@ class FlextUtilities:
             if operation:
                 return FlextUtilities.PERFORMANCE_METRICS.get(operation, {})
             return dict(FlextUtilities.PERFORMANCE_METRICS)
+
+        @staticmethod
+        def create_performance_config(
+            performance_level: str = "medium",
+        ) -> FlextTypes.Config.ConfigDict:
+            """Create performance configuration based on level.
+
+            Args:
+                performance_level: Performance level (high, medium, low)
+
+            Returns:
+                Configuration dictionary with performance-tuned settings
+
+            """
+            base_config: FlextTypes.Config.ConfigDict = {
+                "performance_level": performance_level,
+                "optimization_enabled": True,
+                "optimization_timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
+            }
+
+            # Performance level specific optimizations
+            if performance_level == "high":
+                return {
+                    **base_config,
+                    # Handler optimization
+                    "handler_cache_size": 1000,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 100,
+                    "max_concurrent_handlers": 50,
+                    "handler_discovery_cache_ttl": 3600,  # 1 hour
+                    # Middleware optimization
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 8,
+                    "middleware_queue_size": 500,
+                    "parallel_middleware_processing": True,
+                    # Command processing optimization
+                    "command_batch_size": 100,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 16,
+                    "command_queue_size": 2000,
+                    # Memory optimization
+                    "memory_pool_size_mb": 200,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "aggressive",
+                    # Performance metrics and targets
+                    "expected_throughput_commands_per_second": 500,
+                    "target_handler_latency_ms": 5,
+                    "target_middleware_latency_ms": 2,
+                    "memory_efficiency_target": 0.95,
+                }
+            if performance_level == "medium":
+                return {
+                    **base_config,
+                    # Balanced handler settings
+                    "handler_cache_size": 500,
+                    "enable_handler_pooling": True,
+                    "handler_pool_size": 50,
+                    "max_concurrent_handlers": 25,
+                    "handler_discovery_cache_ttl": 1800,  # 30 minutes
+                    # Moderate middleware settings
+                    "enable_middleware_caching": True,
+                    "middleware_thread_count": 4,
+                    "middleware_queue_size": 250,
+                    "parallel_middleware_processing": True,
+                    # Standard command processing
+                    "command_batch_size": 50,
+                    "enable_command_batching": True,
+                    "command_processing_threads": 8,
+                    "command_queue_size": 1000,
+                    # Moderate memory settings
+                    "memory_pool_size_mb": 100,
+                    "enable_object_pooling": True,
+                    "gc_optimization_enabled": True,
+                    "optimization_level": "balanced",
+                    # Performance metrics and targets
+                    "expected_throughput_commands_per_second": 200,
+                    "target_handler_latency_ms": 15,
+                    "target_middleware_latency_ms": 8,
+                    "memory_efficiency_target": 0.85,
+                }
+            # low performance level
+            return {
+                **base_config,
+                # Conservative handler settings
+                "handler_cache_size": 100,
+                "enable_handler_pooling": False,
+                "handler_pool_size": 10,
+                "max_concurrent_handlers": 5,
+                "handler_discovery_cache_ttl": 300,  # 5 minutes
+                # Minimal middleware settings
+                "enable_middleware_caching": False,
+                "middleware_thread_count": 1,
+                "middleware_queue_size": 50,
+                "parallel_middleware_processing": False,
+                # Single-threaded command processing
+                "command_batch_size": 10,
+                "enable_command_batching": False,
+                "command_processing_threads": 1,
+                "command_queue_size": 100,
+                # Minimal memory footprint
+                "memory_pool_size_mb": 50,
+                "enable_object_pooling": False,
+                "gc_optimization_enabled": False,
+                "optimization_level": "conservative",
+                # Performance metrics and targets
+                "expected_throughput_commands_per_second": 50,
+                "target_handler_latency_ms": 50,
+                "target_middleware_latency_ms": 25,
+                "memory_efficiency_target": 0.70,
+            }
 
     class Conversions:
         """Safe type conversion utilities with fallback handling.
@@ -443,7 +554,7 @@ class FlextUtilities:
 
         @staticmethod
         def safe_json_parse(
-            json_str: str, default: dict[str, object] | None = None
+            json_str: str, default: dict[str, object] | None = None,
         ) -> dict[str, object]:
             """Safely parse JSON string."""
             try:
@@ -477,7 +588,7 @@ class FlextUtilities:
 
         @staticmethod
         def parse_json_to_model[TModel](
-            json_text: str, model_class: type[TModel]
+            json_text: str, model_class: type[TModel],
         ) -> FlextResult[TModel]:
             """Parse JSON and validate using appropriate model instantiation strategy."""
             try:
@@ -489,7 +600,7 @@ class FlextUtilities:
                     cls: type[object],
                 ) -> TypeGuard[type[FlextProtocols.Foundation.HasModelValidate]]:
                     return hasattr(cls, "model_validate") and callable(
-                        getattr(cls, "model_validate", None)
+                        getattr(cls, "model_validate", None),
                     )
 
                 if _supports_model_validate(model_class):
@@ -541,7 +652,7 @@ class FlextUtilities:
             for result in results:
                 if result.is_failure:
                     return FlextResult[list[T]].fail(
-                        result.error or "Chain operation failed"
+                        result.error or "Chain operation failed",
                     )
                 values.append(result.value)
             return FlextResult[list[T]].ok(values)
@@ -585,7 +696,7 @@ class FlextUtilities:
                 ]
                 if environment not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment: {environment}. Must be one of: {valid_environments}"
+                        f"Invalid environment: {environment}. Must be one of: {valid_environments}",
                     )
 
                 # Create environment-specific configuration
@@ -621,7 +732,7 @@ class FlextUtilities:
 
             except Exception as e:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Default config creation failed: {e}"
+                    f"Default config creation failed: {e}",
                 )
 
         @staticmethod
@@ -640,7 +751,7 @@ class FlextUtilities:
                 # Environment validation
                 if "environment" not in config:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        "Required field 'environment' missing"
+                        "Required field 'environment' missing",
                     )
 
                 env_value = config["environment"]
@@ -649,20 +760,20 @@ class FlextUtilities:
                 }
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {sorted(valid_environments)}"
+                        f"Invalid environment '{env_value}'. Valid options: {sorted(valid_environments)}",
                     )
                 validated["environment"] = env_value
 
                 # Log level validation
                 log_level = config.get(
-                    "log_level", FlextConstants.Config.LogLevel.INFO.value
+                    "log_level", FlextConstants.Config.LogLevel.INFO.value,
                 )
                 valid_log_levels = {
                     level.value for level in FlextConstants.Config.LogLevel
                 }
                 if log_level not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {sorted(valid_log_levels)}"
+                        f"Invalid log_level '{log_level}'. Valid options: {sorted(valid_log_levels)}",
                     )
                 validated["log_level"] = log_level
 
@@ -676,7 +787,7 @@ class FlextUtilities:
                 }
                 if validation_level not in valid_validation_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{validation_level}'. Valid options: {sorted(valid_validation_levels)}"
+                        f"Invalid validation_level '{validation_level}'. Valid options: {sorted(valid_validation_levels)}",
                     )
                 validated["validation_level"] = validation_level
 
@@ -690,7 +801,7 @@ class FlextUtilities:
                 }
                 if config_source not in valid_config_sources:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid config_source '{config_source}'. Valid options: {sorted(valid_config_sources)}"
+                        f"Invalid config_source '{config_source}'. Valid options: {sorted(valid_config_sources)}",
                     )
                 validated["config_source"] = config_source
 
@@ -700,7 +811,7 @@ class FlextUtilities:
                         value = config[bool_field]
                         if not isinstance(value, bool):
                             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                                f"Field '{bool_field}' must be a boolean"
+                                f"Field '{bool_field}' must be a boolean",
                             )
                         validated[bool_field] = value
 
@@ -713,7 +824,7 @@ class FlextUtilities:
                         or timeout > max_timeout_ms
                     ):
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            "request_timeout must be a number between 100 and 300000 milliseconds"
+                            "request_timeout must be a number between 100 and 300000 milliseconds",
                         )
                     validated["request_timeout"] = timeout
 
@@ -725,7 +836,7 @@ class FlextUtilities:
                         or retries > max_retries
                     ):
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            "max_retries must be an integer between 0 and 10"
+                            "max_retries must be an integer between 0 and 10",
                         )
                     validated["max_retries"] = retries
 
@@ -733,7 +844,7 @@ class FlextUtilities:
 
             except Exception as e:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Configuration validation failed: {e}"
+                    f"Configuration validation failed: {e}",
                 )
 
     # ==========================================================================
@@ -756,7 +867,7 @@ class FlextUtilities:
     # Additional methods needed by legacy compatibility layer
     @classmethod
     def safe_int_conversion(
-        cls, value: object, default: int | None = None
+        cls, value: object, default: int | None = None,
     ) -> int | None:
         """Convert value to int safely with optional default."""
         if value is None:
@@ -801,7 +912,7 @@ class FlextUtilities:
     ) -> None:
         """Record performance metric (delegates to Performance)."""
         return cls.Performance.record_metric(
-            operation, duration, success=success, error=error
+            operation, duration, success=success, error=error,
         )
 
     # Additional delegator methods needed by flext-cli

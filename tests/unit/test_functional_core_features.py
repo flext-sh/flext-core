@@ -32,11 +32,13 @@ class TestFlextCoreIntegration:
                 """Business method that triggers domain events."""
                 if self.status == "inactive":
                     self.status = "active"
-                    self.add_domain_event({
-                        "event_type": "UserActivated",
-                        "user_id": self.id,
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    })
+                    self.add_domain_event(
+                        {
+                            "event_type": "UserActivated",
+                            "user_id": self.id,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                        },
+                    )
 
         # Create entity with business validation
         result = core.create_entity(
@@ -258,7 +260,7 @@ class TestBusinessRuleValidation:
             def validate_business_rules(self) -> FlextResult[None]:
                 if self.total_amount <= 0:
                     return FlextResult[None].fail("Order amount must be positive")
-                if self.currency not in ["USD", "EUR", "GBP"]:
+                if self.currency not in {"USD", "EUR", "GBP"}:
                     return FlextResult[None].fail("Unsupported currency")
                 return FlextResult[None].ok(None)
 

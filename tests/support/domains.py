@@ -1,4 +1,3 @@
-# ruff: noqa: ANN401
 """Domain factories for test data generation.
 
 Simple factory pattern without factory-boy complications.
@@ -163,9 +162,9 @@ class RealisticData:
                     "name": f"Product {random.randint(1, 100)}",
                     "quantity": random.randint(1, 5),
                     "price": Decimal(str(random.uniform(10.0, 100.0))).quantize(
-                        Decimal("0.01")
+                        Decimal("0.01"),
                     ),
-                }
+                },
             ],
             "total": Decimal("50.00"),
             "status": "pending",

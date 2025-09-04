@@ -32,10 +32,10 @@ from flext_core import FlextConfig, FlextResult
 
 # Example security keys for demonstration purposes only - NOT FOR PRODUCTION
 _DEMO_SECRET_KEY_1 = os.getenv(
-    "FLEXT_DEMO_SECRET_KEY_1", "ValidSecretKey123WithComplexity456"
+    "FLEXT_DEMO_SECRET_KEY_1", "ValidSecretKey123WithComplexity456",
 )
 _DEMO_SECRET_KEY_2 = os.getenv(
-    "FLEXT_DEMO_SECRET_KEY_2", "ValidSecretKey123WithComplexityAndLength"
+    "FLEXT_DEMO_SECRET_KEY_2", "ValidSecretKey123WithComplexityAndLength",
 )
 _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
@@ -65,7 +65,7 @@ class DatabaseConfig(FlextConfig):
         ssh_port = 22
         if self.port == ssh_port:
             return FlextResult[None].fail(
-                "SSH port not allowed for database connections"
+                "SSH port not allowed for database connections",
             )
 
         return FlextResult[None].ok(None)
@@ -106,7 +106,7 @@ class CacheConfig(FlextConfig):
 
         if self.provider == "memcached" and self.db != 0:
             return FlextResult[None].fail(
-                "Memcached does not support database selection"
+                "Memcached does not support database selection",
             )
 
         return FlextResult[None].ok(None)
@@ -131,19 +131,19 @@ class SecurityConfig(FlextConfig):
     """Security configuration with comprehensive validation."""
 
     secret_key: str = Field(
-        default=_DEMO_SECRET_KEY_1, min_length=32, description="Application secret key"
+        default=_DEMO_SECRET_KEY_1, min_length=32, description="Application secret key",
     )
     token_expiry_hours: int = Field(
-        default=24, ge=1, le=8760, description="Token expiry in hours"
+        default=24, ge=1, le=8760, description="Token expiry in hours",
     )
     max_login_attempts: int = Field(
-        default=5, ge=1, le=20, description="Max login attempts"
+        default=5, ge=1, le=20, description="Max login attempts",
     )
     session_timeout_minutes: int = Field(
-        default=30, ge=5, le=1440, description="Session timeout"
+        default=30, ge=5, le=1440, description="Session timeout",
     )
     enable_2fa: bool = Field(
-        default=False, description="Enable two-factor authentication"
+        default=False, description="Enable two-factor authentication",
     )
     cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
@@ -174,7 +174,7 @@ class SecurityConfig(FlextConfig):
         max_2fa_login_attempts = 10
         if self.enable_2fa and self.max_login_attempts > max_2fa_login_attempts:
             return FlextResult[None].fail(
-                "Reduce max login attempts when 2FA is enabled"
+                "Reduce max login attempts when 2FA is enabled",
             )
 
         if not self.cors_origins:
@@ -195,7 +195,7 @@ class EnterpriseConfig(BaseSettings):
     app_name: str = Field(default="Enterprise Application")
     version: str = Field(default="1.0.0")
     environment: str = Field(
-        default="development", pattern="^(development|staging|production)$"
+        default="development", pattern="^(development|staging|production)$",
     )
     debug: bool = Field(default=False)
 
@@ -215,7 +215,7 @@ class EnterpriseConfig(BaseSettings):
             "new_ui": False,
             "advanced_analytics": False,
             "beta_features": False,
-        }
+        },
     )
 
     model_config = SettingsConfigDict(
@@ -243,7 +243,7 @@ class EnterpriseConfig(BaseSettings):
         if self.environment == "production":
             if self.debug:
                 return FlextResult[None].fail(
-                    "Debug mode must be disabled in production"
+                    "Debug mode must be disabled in production",
                 )
             if not self.security.secret_key:
                 return FlextResult[None].fail("Secret key required in production")
@@ -285,7 +285,7 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
         path = Path(file_path)
         if not path.exists():
             return FlextResult[dict[str, object]].fail(
-                f"Configuration file not found: {path}"
+                f"Configuration file not found: {path}",
             )
 
         with path.open("r", encoding="utf-8") as f:
@@ -293,7 +293,7 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
 
         if not isinstance(data, dict):
             return FlextResult[dict[str, object]].fail(
-                "Configuration must be a JSON object"
+                "Configuration must be a JSON object",
             )
 
         return FlextResult[dict[str, object]].ok(dict(data))
@@ -305,7 +305,7 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
 
 
 def save_config_to_file(
-    config_data: dict[str, object], file_path: str | Path
+    config_data: dict[str, object], file_path: str | Path,
 ) -> FlextResult[None]:
     """Save configuration to JSON file."""
     try:
@@ -322,7 +322,7 @@ def save_config_to_file(
 
 
 def merge_configurations(
-    base: dict[str, object], override: dict[str, object]
+    base: dict[str, object], override: dict[str, object],
 ) -> dict[str, object]:
     """Deep merge two configuration dictionaries."""
     result = base.copy()
@@ -502,7 +502,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
 
         # Save to temporary file
         with tempfile.NamedTemporaryFile(
-            encoding="utf-8", mode="w", suffix=".json", delete=False
+            encoding="utf-8", mode="w", suffix=".json", delete=False,
         ) as f:
             json.dump(config_data, f, indent=2)
             config_file = f.name
@@ -512,7 +512,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             loaded_result = load_config_from_file(config_file)
             if not loaded_result.success:
                 return FlextResult[None].fail(
-                    loaded_result.error or "Failed to load configuration"
+                    loaded_result.error or "Failed to load configuration",
                 )
 
             loaded_data = loaded_result.value
@@ -533,7 +533,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             else:
                 print(f"❌ File configuration invalid: {validation.error}")
                 return FlextResult[None].fail(
-                    validation.error or "Configuration validation failed"
+                    validation.error or "Configuration validation failed",
                 )
 
             return FlextResult[None].ok(None)
@@ -626,7 +626,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         else:
             print(f"❌ Merged configuration invalid: {validation.error}")
             return FlextResult[None].fail(
-                validation.error or "Configuration validation failed"
+                validation.error or "Configuration validation failed",
             )
 
         return FlextResult[None].ok(None)
@@ -646,8 +646,8 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
             "Invalid database port",
             {
                 "database": DatabaseConfig(
-                    host="localhost", port=22
-                )  # SSH port not allowed
+                    host="localhost", port=22,
+                ),  # SSH port not allowed
             },
         ),
         (
@@ -657,7 +657,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
                     secret_key=_DEMO_SECRET_KEY_1,
                     enable_2fa=True,
                     max_login_attempts=15,  # Too high for 2FA
-                )
+                ),
             },
         ),
     ]
@@ -692,7 +692,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
         else:
             print(f"  ❌ Valid configuration rejected: {validation.error}")
             return FlextResult[None].fail(
-                validation.error or "Configuration validation failed"
+                validation.error or "Configuration validation failed",
             )
 
     except Exception as e:

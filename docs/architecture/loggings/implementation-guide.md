@@ -1282,7 +1282,7 @@ class TestFlextLoggerIntegration:
         logger.set_context(service="test", version="1.0")
 
         # Capture log output
-        with patch('structlog.get_logger') as mock_structlog:
+        with patch('structlog.FlextLogger') as mock_structlog:
             mock_bound_logger = MagicMock()
             mock_structlog.return_value = mock_bound_logger
 
@@ -1319,7 +1319,7 @@ class TestFlextLoggerIntegration:
         """Test operation performance tracking."""
         logger = FlextLogger("test_service")
 
-        with patch('structlog.get_logger') as mock_structlog:
+        with patch('structlog.FlextLogger') as mock_structlog:
             mock_bound_logger = MagicMock()
             mock_structlog.return_value = mock_bound_logger
 
@@ -1419,7 +1419,7 @@ class TestFlextLoggerIntegration:
         """Test error logging with Exception objects."""
         logger = FlextLogger("test_service")
 
-        with patch('structlog.get_logger') as mock_structlog:
+        with patch('structlog.FlextLogger') as mock_structlog:
             mock_bound_logger = MagicMock()
             mock_structlog.return_value = mock_bound_logger
 
@@ -1440,7 +1440,7 @@ class TestFlextLoggerIntegration:
         """Test error logging with string messages."""
         logger = FlextLogger("test_service")
 
-        with patch('structlog.get_logger') as mock_structlog:
+        with patch('structlog.FlextLogger') as mock_structlog:
             mock_bound_logger = MagicMock()
             mock_structlog.return_value = mock_bound_logger
 

@@ -261,7 +261,7 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
         """Initialize tap with Meltano context."""
         try:
             self.context = context
-            logger = context.get_logger()
+            logger = context.FlextLogger()
 
             # Get tap-specific configuration
             tap_config = context.get_config().get(self.tap_name, {})
@@ -289,7 +289,7 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
             self.connection.close_connection()
 
         if self.context:
-            logger = self.context.get_logger()
+            logger = self.context.FlextLogger()
             logger.info("Meltano tap shutting down", tap_name=self.tap_name)
 
         self.initialized = False
@@ -324,7 +324,7 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
             extracted_data = self._perform_extraction()
 
             if self.context:
-                logger = self.context.get_logger()
+                logger = self.context.FlextLogger()
                 logger.info("Data extraction completed",
                            records_extracted=len(extracted_data),
                            tap_name=self.tap_name)
@@ -382,7 +382,7 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
         """Initialize target with Meltano context."""
         try:
             self.context = context
-            logger = context.get_logger()
+            logger = context.FlextLogger()
 
             # Get target-specific configuration
             target_config = context.get_config().get(self.target_name, {})
@@ -410,7 +410,7 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
             self.connection.close_connection()
 
         if self.context:
-            logger = self.context.get_logger()
+            logger = self.context.FlextLogger()
             logger.info("Meltano target shutting down", target_name=self.target_name)
 
         self.initialized = False
@@ -445,7 +445,7 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
             load_result = self._perform_load(data)
 
             if self.context:
-                logger = self.context.get_logger()
+                logger = self.context.FlextLogger()
                 logger.info("Data load completed",
                            records_loaded=len(data),
                            target_name=self.target_name)
@@ -610,7 +610,7 @@ class SimpleMeltanoPluginContext(FlextProtocols.Extensions.PluginContext):
         """Get plugin configuration."""
         return self.config.copy()
 
-    def get_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
+    def FlextLogger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
         """Get logger for plugin."""
         return self.logger
 

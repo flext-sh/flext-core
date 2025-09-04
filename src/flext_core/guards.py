@@ -185,11 +185,13 @@ class FlextGuards:
     Example Usage:
         ```python
         # Configure for production environment
-        config_result = FlextGuards.configure_guards_system({
-            "environment": "production",
-            "validation_level": "strict",
-            "max_cache_size": 5000,
-        })
+        config_result = FlextGuards.configure_guards_system(
+            {
+                "environment": "production",
+                "validation_level": "strict",
+                "max_cache_size": 5000,
+            }
+        )
 
 
         # Create pure function with memoization
@@ -457,7 +459,7 @@ class FlextGuards:
 
             # Safely add the __pure__ attribute to the function using setattr
             with contextlib.suppress(AttributeError, TypeError):
-                setattr(bound_method, "__pure__", True)
+                bound_method.__pure__ = True
             return bound_method
 
     class ValidationUtils:
@@ -1424,7 +1426,7 @@ class FlextGuards:
 
     @classmethod
     def configure_guards_system(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure guards system using FlextTypes.Config with StrEnum validation."""
         try:
@@ -1436,7 +1438,7 @@ class FlextGuards:
                 ]
                 if env_value not in valid_environments:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}"
+                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
                     )
 
             # Validate log level
@@ -1447,7 +1449,7 @@ class FlextGuards:
                 ]
                 if log_value not in valid_log_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}"
+                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
                     )
 
             # Validate validation level
@@ -1458,7 +1460,7 @@ class FlextGuards:
                 ]
                 if val_value not in valid_validation_levels:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}"
+                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}",
                     )
 
             # Build validated configuration with defaults
@@ -1468,24 +1470,24 @@ class FlextGuards:
                     FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 ),
                 "log_level": config.get(
-                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value
+                    "log_level", FlextConstants.Config.LogLevel.DEBUG.value,
                 ),
                 "validation_level": config.get(
                     "validation_level",
                     FlextConstants.Config.ValidationLevel.NORMAL.value,
                 ),
                 "enable_pure_function_caching": config.get(
-                    "enable_pure_function_caching", True
+                    "enable_pure_function_caching", True,
                 ),
                 "enable_immutable_classes": config.get(
-                    "enable_immutable_classes", True
+                    "enable_immutable_classes", True,
                 ),
                 "enable_validation_guards": config.get(
-                    "enable_validation_guards", True
+                    "enable_validation_guards", True,
                 ),
                 "max_cache_size": config.get("max_cache_size", 1000),
                 "enable_strict_validation": config.get(
-                    "enable_strict_validation", False
+                    "enable_strict_validation", False,
                 ),
             }
 
@@ -1493,7 +1495,7 @@ class FlextGuards:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Guards system configuration failed: {e}"
+                f"Guards system configuration failed: {e}",
             )
 
     @classmethod
@@ -1535,7 +1537,7 @@ class FlextGuards:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get guards system configuration: {e}"
+                f"Failed to get guards system configuration: {e}",
             )
 
     @classmethod
@@ -1555,7 +1557,7 @@ class FlextGuards:
             ]
             if environment not in valid_environments:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                 )
 
             # Base configuration
@@ -1565,51 +1567,59 @@ class FlextGuards:
 
             # Environment-specific settings
             if environment == "production":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_pure_function_caching": True,  # Caching for performance
-                    "enable_immutable_classes": True,  # Immutability for safety
-                    "enable_validation_guards": True,  # Strict validation in production
-                    "max_cache_size": 2000,  # Larger cache for production
-                    "enable_strict_validation": True,  # Strict validation in production
-                    "enable_performance_monitoring": True,  # Performance monitoring
-                    "enable_debug_logging": False,  # No debug logging in production
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.WARNING.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_pure_function_caching": True,  # Caching for performance
+                        "enable_immutable_classes": True,  # Immutability for safety
+                        "enable_validation_guards": True,  # Strict validation in production
+                        "max_cache_size": 2000,  # Larger cache for production
+                        "enable_strict_validation": True,  # Strict validation in production
+                        "enable_performance_monitoring": True,  # Performance monitoring
+                        "enable_debug_logging": False,  # No debug logging in production
+                    },
+                )
             elif environment == "development":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_pure_function_caching": False,  # No caching for fresh results
-                    "enable_immutable_classes": True,  # Immutability for consistency
-                    "enable_validation_guards": True,  # Validation for catching issues
-                    "max_cache_size": 100,  # Small cache for development
-                    "enable_strict_validation": False,  # Flexible validation in development
-                    "enable_performance_monitoring": False,  # No performance monitoring
-                    "enable_debug_logging": True,  # Full debug logging for development
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                        "enable_pure_function_caching": False,  # No caching for fresh results
+                        "enable_immutable_classes": True,  # Immutability for consistency
+                        "enable_validation_guards": True,  # Validation for catching issues
+                        "max_cache_size": 100,  # Small cache for development
+                        "enable_strict_validation": False,  # Flexible validation in development
+                        "enable_performance_monitoring": False,  # No performance monitoring
+                        "enable_debug_logging": True,  # Full debug logging for development
+                    },
+                )
             elif environment == "test":
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_pure_function_caching": False,  # No caching in tests
-                    "enable_immutable_classes": True,  # Immutability for test consistency
-                    "enable_validation_guards": True,  # Validation for test accuracy
-                    "max_cache_size": 50,  # Minimal cache for tests
-                    "enable_strict_validation": True,  # Strict validation for tests
-                    "enable_performance_monitoring": False,  # No performance monitoring in tests
-                    "enable_test_utilities": True,  # Special test utilities
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.ERROR.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
+                        "enable_pure_function_caching": False,  # No caching in tests
+                        "enable_immutable_classes": True,  # Immutability for test consistency
+                        "enable_validation_guards": True,  # Validation for test accuracy
+                        "max_cache_size": 50,  # Minimal cache for tests
+                        "enable_strict_validation": True,  # Strict validation for tests
+                        "enable_performance_monitoring": False,  # No performance monitoring in tests
+                        "enable_test_utilities": True,  # Special test utilities
+                    },
+                )
             else:  # staging, local, etc.
-                config.update({
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_pure_function_caching": True,  # Caching for performance
-                    "enable_immutable_classes": True,  # Immutability for safety
-                    "enable_validation_guards": True,  # Standard validation
-                    "max_cache_size": 1000,  # Standard cache size
-                    "enable_strict_validation": False,  # Balanced validation
-                })
+                config.update(
+                    {
+                        "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                        "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
+                        "enable_pure_function_caching": True,  # Caching for performance
+                        "enable_immutable_classes": True,  # Immutability for safety
+                        "enable_validation_guards": True,  # Standard validation
+                        "max_cache_size": 1000,  # Standard cache size
+                        "enable_strict_validation": False,  # Balanced validation
+                    },
+                )
 
             # Apply custom overrides if provided
             if validation_level is not None:
@@ -1630,12 +1640,12 @@ class FlextGuards:
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to create environment guards config: {e}"
+                f"Failed to create environment guards config: {e}",
             )
 
     @classmethod
     def optimize_guards_performance(
-        cls, config: FlextTypes.Config.ConfigDict
+        cls, config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Optimize guards system performance based on configuration."""
         try:
@@ -1650,61 +1660,71 @@ class FlextGuards:
 
             # Performance level specific optimizations
             if performance_level == "high":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 5000),
-                    "enable_pure_function_caching": True,
-                    "cache_cleanup_interval": 600,  # 10 minutes
-                    "enable_lazy_validation": True,
-                    "batch_validation_size": 100,
-                    "enable_concurrent_guards": True,
-                    "memory_optimization": "aggressive",
-                    "enable_cache_prewarming": True,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 5000),
+                        "enable_pure_function_caching": True,
+                        "cache_cleanup_interval": 600,  # 10 minutes
+                        "enable_lazy_validation": True,
+                        "batch_validation_size": 100,
+                        "enable_concurrent_guards": True,
+                        "memory_optimization": "aggressive",
+                        "enable_cache_prewarming": True,
+                    },
+                )
             elif performance_level == "medium":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 2000),
-                    "enable_pure_function_caching": True,
-                    "cache_cleanup_interval": 300,  # 5 minutes
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 50,
-                    "enable_concurrent_guards": False,
-                    "memory_optimization": "balanced",
-                    "enable_cache_prewarming": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 2000),
+                        "enable_pure_function_caching": True,
+                        "cache_cleanup_interval": 300,  # 5 minutes
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 50,
+                        "enable_concurrent_guards": False,
+                        "memory_optimization": "balanced",
+                        "enable_cache_prewarming": False,
+                    },
+                )
             elif performance_level == "low":
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 500),
-                    "enable_pure_function_caching": False,
-                    "cache_cleanup_interval": 60,  # 1 minute
-                    "enable_lazy_validation": False,
-                    "batch_validation_size": 10,
-                    "enable_concurrent_guards": False,
-                    "memory_optimization": "conservative",
-                    "enable_cache_prewarming": False,
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 500),
+                        "enable_pure_function_caching": False,
+                        "cache_cleanup_interval": 60,  # 1 minute
+                        "enable_lazy_validation": False,
+                        "batch_validation_size": 10,
+                        "enable_concurrent_guards": False,
+                        "memory_optimization": "conservative",
+                        "enable_cache_prewarming": False,
+                    },
+                )
             else:
                 # Default/custom performance level
-                optimized_config.update({
-                    "max_cache_size": config.get("max_cache_size", 1000),
-                    "enable_pure_function_caching": config.get(
-                        "enable_pure_function_caching", True
-                    ),
-                    "cache_cleanup_interval": 300,
-                    "memory_optimization": "balanced",
-                })
+                optimized_config.update(
+                    {
+                        "max_cache_size": config.get("max_cache_size", 1000),
+                        "enable_pure_function_caching": config.get(
+                            "enable_pure_function_caching", True,
+                        ),
+                        "cache_cleanup_interval": 300,
+                        "memory_optimization": "balanced",
+                    },
+                )
 
             # Merge with original config
-            optimized_config.update({
-                key: value
-                for key, value in config.items()
-                if key not in optimized_config
-            })
+            optimized_config.update(
+                {
+                    key: value
+                    for key, value in config.items()
+                    if key not in optimized_config
+                },
+            )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
 
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Guards performance optimization failed: {e}"
+                f"Guards performance optimization failed: {e}",
             )
 
     # Factory and builder methods removed - use direct class construction

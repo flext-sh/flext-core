@@ -1390,7 +1390,7 @@ class EnterpriseUserCommandHandler(EnterpriseCommandHandler):
             if save_result.is_failure:
                 return FlextResult[bool].fail(save_result.error)
 
-            return FlextResult[bool].ok(True)
+            return FlextResult[bool].ok(data=True)
 
         except Exception as e:
             return FlextResult[bool].fail(f"Update command error: {e}")

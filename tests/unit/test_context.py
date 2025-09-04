@@ -56,7 +56,7 @@ class TestCorrelationIdManagement:
         test_id = "specific-correlation-789"
 
         with FlextContext.Correlation.new_correlation(
-            correlation_id=test_id
+            correlation_id=test_id,
         ) as context_id:
             assert context_id == test_id
             assert FlextContext.Correlation.get_correlation_id() == test_id
@@ -73,7 +73,7 @@ class TestCorrelationIdManagement:
         parent_id = "explicit-parent-123"
 
         with FlextContext.Correlation.new_correlation(
-            parent_id=parent_id
+            parent_id=parent_id,
         ) as context_id:
             assert context_id is not None
             assert FlextContext.Correlation.get_parent_correlation_id() == parent_id

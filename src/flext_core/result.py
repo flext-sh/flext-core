@@ -719,7 +719,7 @@ class FlextResult[T]:
                 self_data == other_data
                 and self._error == other_result._error
                 and self._error_code == other_result._error_code
-                and self._error_data == other_result._error_data
+                and self._error_data == other_result._error_data,
             )
         except Exception:
             return False
@@ -1046,7 +1046,7 @@ class FlextResult[T]:
 
     @classmethod
     def unwrap_or_raise[TUtil](
-        cls, result: FlextResult[TUtil], exception_type: type[Exception] = RuntimeError
+        cls, result: FlextResult[TUtil], exception_type: type[Exception] = RuntimeError,
     ) -> TUtil:
         """Unwrap FlextResult or raise exception with error message.
 
@@ -1120,7 +1120,7 @@ class FlextResult[T]:
 
     @classmethod
     def batch_process[TItem, TUtil](
-        cls, items: list[TItem], processor: Callable[[TItem], FlextResult[TUtil]]
+        cls, items: list[TItem], processor: Callable[[TItem], FlextResult[TUtil]],
     ) -> tuple[list[TUtil], list[str]]:
         """Process a batch of items and separate successes from failures.
 
@@ -1171,6 +1171,156 @@ class FlextResult[T]:
             return FlextResult[T].ok(func())
         except Exception as e:
             return FlextResult[T].fail(str(e))
+
+    # === MONADIC COMPOSITION ADVANCED OPERATORS (Python 3.13) ===
+
+    def __rshift__(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+        """Right shift operator (>>) for monadic bind - ADVANCED COMPOSITION.
+
+        Enables functional composition: result >> process_data >> validate >> save
+        Equivalent to flat_map but with mathematical notation for category theory.
+        """
+        return self.flat_map(func)
+
+    def __lshift__(self, func: Callable[[T], U]) -> FlextResult[U]:
+        """Left shift operator (<<) for functor map - ADVANCED COMPOSITION.
+
+        Enables functional composition: result << transform_data << format_output
+        Equivalent to map but with mathematical notation for category theory.
+        """
+        return self.map(func)
+
+    def __matmul__(self, other: FlextResult[U]) -> FlextResult[tuple[T, U]]:
+        """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION.
+
+        Enables parallel composition: result1 @ result2 @ result3
+        Combines multiple independent results into tuple, fails if any fails.
+        """
+        if self.is_failure:
+            return FlextResult[tuple[T, U]].fail(self.error or "Left operand failed")
+        if other.is_failure:
+            return FlextResult[tuple[T, U]].fail(other.error or "Right operand failed")
+
+        # Both successful - combine values
+        return FlextResult[tuple[T, U]].ok((self.unwrap(), other.unwrap()))
+
+    def __truediv__[U](self, other: FlextResult[U]) -> FlextResult[T | U]:
+        """Division operator (/) for alternative fallback - ADVANCED COMPOSITION.
+
+        Enables fallback composition: primary_result / backup_result / default_result
+        Returns first successful result, equivalent to or_else but with operator syntax.
+        """
+        if self.is_success:
+            return FlextResult[T | U].ok(self.unwrap())
+        if other.is_success:
+            return FlextResult[T | U].ok(other.unwrap())
+        return FlextResult[T | U].fail(
+            other.error or self.error or "All operations failed",
+        )
+
+    def __mod__(self, predicate: Callable[[T], bool]) -> FlextResult[T]:
+        """Modulo operator (%) for conditional filtering - ADVANCED COMPOSITION.
+
+        Enables validation composition: result % is_positive % is_even % is_valid
+        Equivalent to filter but returns self on success for chaining.
+        """
+        if self.is_failure:
+            return self
+
+        try:
+            if predicate(self.unwrap()):
+                return self
+            return FlextResult[T].fail("Predicate validation failed")
+        except Exception as e:
+            return FlextResult[T].fail(f"Predicate evaluation failed: {e}")
+
+    def __and__(self, other: FlextResult[U]) -> FlextResult[tuple[T, U]]:
+        """AND operator (&) for sequential composition - ADVANCED COMPOSITION.
+
+        Enables sequential validation: result1 & result2 & result3
+        All must succeed for combined result to succeed.
+        """
+        return self @ other  # Delegate to matmul for consistency
+
+    def __xor__(self, recovery_func: Callable[[str], T]) -> FlextResult[T]:
+        """XOR operator (^) for error recovery - ADVANCED COMPOSITION.
+
+        Enables recovery composition: result ^ recover_from_error ^ default_value
+        Equivalent to recover but with operator syntax for chaining.
+        """
+        return self.recover(recovery_func)
+
+    # === ADVANCED MONADIC COMBINATORS (Category Theory) ===
+
+    @classmethod
+    def traverse[TItem, TResult](
+        cls, items: list[TItem], func: Callable[[TItem], FlextResult[TResult]],
+    ) -> FlextResult[list[TResult]]:
+        """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN.
+
+        Transforms list[T] -> (T -> FlextResult[U]) -> FlextResult[list[U]]
+        Stops at first failure, equivalent to sequence . map but more efficient.
+        """
+        results: list[TResult] = []
+
+        for item in items:
+            result = func(item)
+            if result.is_failure:
+                return FlextResult[list[TResult]].fail(
+                    result.error or f"Traverse failed at item {item}",
+                )
+            results.append(result.unwrap())
+
+        return FlextResult[list[TResult]].ok(results)
+
+    def kleisli_compose[U, V](
+        self, f: Callable[[T], FlextResult[U]], g: Callable[[U], FlextResult[V]],
+    ) -> Callable[[T], FlextResult[V]]:
+        """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN.
+
+        Composes two monadic functions into single function.
+        Mathematical: (T -> M[U]) -> (U -> M[V]) -> (T -> M[V])
+        """
+
+        def composed(value: T) -> FlextResult[V]:
+            return FlextResult[T].ok(value).flat_map(f).flat_map(g)
+
+        return composed
+
+    @classmethod
+    def applicative_lift2[T1, T2, TResult](
+        cls,
+        func: Callable[[T1, T2], TResult],
+        result1: FlextResult[T1],
+        result2: FlextResult[T2],
+    ) -> FlextResult[TResult]:
+        """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN.
+
+        Mathematical: (T1 -> T2 -> R) -> M[T1] -> M[T2] -> M[R]
+        Parallel execution of independent computations.
+        """
+        if result1.is_failure:
+            return FlextResult[TResult].fail(result1.error or "First argument failed")
+        if result2.is_failure:
+            return FlextResult[TResult].fail(result2.error or "Second argument failed")
+
+        return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
+
+    @classmethod
+    def applicative_lift3[T1, T2, T3, TResult](
+        cls,
+        func: Callable[[T1, T2, T3], TResult],
+        result1: FlextResult[T1],
+        result2: FlextResult[T2],
+        result3: FlextResult[T3],
+    ) -> FlextResult[TResult]:
+        """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN.
+
+        Mathematical: (T1 -> T2 -> T3 -> R) -> M[T1] -> M[T2] -> M[T3] -> M[R]
+        """
+        return cls.applicative_lift2(
+            lambda t1_t2, t3: func(t1_t2[0], t1_t2[1], t3), result1 @ result2, result3,
+        )
 
 
 __all__: list[str] = [

@@ -1,4 +1,4 @@
-# ruff: noqa: ANN401, PLC0415
+# ruff: noqa: PLC0415
 """Unified fixtures for flext-core tests using massive pytest ecosystem.
 
 Comprehensive fixture library using:
@@ -118,7 +118,7 @@ class SequenceFactory:
 
     @staticmethod
     def create_sequence(
-        length: int = 10, prefix: str = "", count: int | None = None
+        length: int = 10, prefix: str = "", count: int | None = None,
     ) -> list[str]:
         """Create sequence with optional prefix."""
         actual_length = count if count is not None else length
@@ -478,7 +478,7 @@ def mock_external_service(mocker: MockerFixture) -> object:
         "testing",
         "staging",
         "production",
-    ]
+    ],
 )
 def environment(request: pytest.FixtureRequest) -> str:
     """Parametrized fixture providing different environments."""
@@ -491,7 +491,7 @@ def environment(request: pytest.FixtureRequest) -> str:
         {"debug": False, "log_level": "INFO"},
         {"debug": False, "log_level": "WARNING"},
         {"debug": False, "log_level": "ERROR"},
-    ]
+    ],
 )
 def config_variants(request: pytest.FixtureRequest) -> dict[str, object]:
     """Parametrized fixture providing config variants."""

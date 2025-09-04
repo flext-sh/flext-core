@@ -184,7 +184,7 @@ class TestFlextValidationsComprehensive:
 
         # Create composite validator (only takes validators list)
         composite_validator = FlextValidations.create_composite_validator(
-            [email_validator]
+            [email_validator],
         )
 
         assert composite_validator is not None
@@ -387,9 +387,9 @@ class TestFlextValidationsComprehensive:
                                     "items": {"type": "string"},
                                 },
                             },
-                        }
+                        },
                     },
-                }
+                },
             },
         }
 
@@ -403,8 +403,8 @@ class TestFlextValidationsComprehensive:
                 "profile": {
                     "name": "John Doe",
                     "contacts": ["john@example.com", "+1-555-0123"],
-                }
-            }
+                },
+            },
         }
 
         result = schema_validator.validate(complex_data)
@@ -595,7 +595,7 @@ class TestFlextValidationsComprehensive:
 
         # Test complex nested validation
         deeply_nested_data = {
-            "level1": {"level2": {"level3": {"level4": {"value": "deep"}}}}
+            "level1": {"level2": {"level3": {"level4": {"value": "deep"}}}},
         }
         result = FlextValidations.validate_user_data(deeply_nested_data)
         assert isinstance(result, FlextResult)

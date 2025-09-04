@@ -128,7 +128,7 @@ class FlextHandlers:
             type ErrorMap = dict[str, int]  # Error type counters
             type SizeList = list[int]  # Size measurements
             type PerformanceMap = dict[
-                str, dict[str, int | float]
+                str, dict[str, int | float],
             ]  # Nested performance data
 
             # Handler function types
@@ -239,7 +239,7 @@ class FlextHandlers:
             """
 
             def __init__(
-                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None
+                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
                 """Initialize handler with name and metrics infrastructure."""
                 self._handler_name: Final[FlextHandlers.Types.HandlerTypes.Name] = (
@@ -282,7 +282,7 @@ class FlextHandlers:
                 return self._state
 
             def configure(
-                self, config: FlextTypes.Config.ConfigDict
+                self, config: FlextTypes.Config.ConfigDict,
             ) -> FlextResult[None]:
                 """Configure handler with FlextTypes.Config integration.
 
@@ -302,7 +302,7 @@ class FlextHandlers:
                         ]
                         if log_level not in valid_levels:
                             return FlextResult[None].fail(
-                                f"Invalid log_level: {log_level}"
+                                f"Invalid log_level: {log_level}",
                             )
 
                     # Validate environment
@@ -322,7 +322,7 @@ class FlextHandlers:
                         ]
                         if val_level not in valid_levels:
                             return FlextResult[None].fail(
-                                f"Invalid validation_level: {val_level}"
+                                f"Invalid validation_level: {val_level}",
                             )
 
                     # Update configuration
@@ -410,11 +410,11 @@ class FlextHandlers:
 
                         # Calculate average processing time
                         requests_count = cast(
-                            "float", self._metrics["requests_processed"]
+                            "float", self._metrics["requests_processed"],
                         )
                         if requests_count > 0:
                             total_time = cast(
-                                "float", self._metrics["total_processing_time"]
+                                "float", self._metrics["total_processing_time"],
                             )
                             self._metrics["average_processing_time"] = (
                                 total_time / requests_count
@@ -491,7 +491,7 @@ class FlextHandlers:
                         "handler_state": self._state,
                         "state": self._state,  # Include both forms for compatibility
                         "log_level": self._config.get(
-                            "log_level", FlextConstants.Config.LogLevel.INFO.value
+                            "log_level", FlextConstants.Config.LogLevel.INFO.value,
                         ),
                         "environment": self._config.get(
                             "environment",
@@ -504,19 +504,19 @@ class FlextHandlers:
                         "timeout": self._config.get("timeout", 30000),
                         "max_retries": self._config.get("max_retries", 3),
                         "requests_processed": cast(
-                            "int", self._metrics["requests_processed"]
+                            "int", self._metrics["requests_processed"],
                         ),
                         "success_rate": (
                             (
                                 cast("int", self._metrics["successful_requests"])
                                 / max(
-                                    cast("int", self._metrics["requests_processed"]), 1
+                                    cast("int", self._metrics["requests_processed"]), 1,
                                 )
                             )
                             * 100
                         ),
                         "average_response_time_ms": cast(
-                            "float", self._metrics["average_processing_time"]
+                            "float", self._metrics["average_processing_time"],
                         ),
                         "supported_handler_types": [
                             "BASIC",
@@ -534,13 +534,13 @@ class FlextHandlers:
                         ],
                         "metrics": {
                             "requests_processed": cast(
-                                "int", self._metrics["requests_processed"]
+                                "int", self._metrics["requests_processed"],
                             ),
                             "successful_requests": cast(
-                                "int", self._metrics["successful_requests"]
+                                "int", self._metrics["successful_requests"],
                             ),
                             "average_processing_time": cast(
-                                "float", self._metrics["average_processing_time"]
+                                "float", self._metrics["average_processing_time"],
                             ),
                         },
                     }
@@ -549,12 +549,12 @@ class FlextHandlers:
 
                 except Exception as e:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Failed to get handler config: {e}"
+                        f"Failed to get handler config: {e}",
                     )
 
             @classmethod
             def create_environment_handler_config(
-                cls, environment: FlextTypes.Config.Environment
+                cls, environment: FlextTypes.Config.Environment,
             ) -> FlextResult[FlextTypes.Config.ConfigDict]:
                 """Create environment-specific handler configuration.
 
@@ -572,7 +572,7 @@ class FlextHandlers:
                     ]
                     if environment not in valid_environments:
                         return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid environment '{environment}'. Valid options: {valid_environments}"
+                            f"Invalid environment '{environment}'. Valid options: {valid_environments}",
                         )
 
                     # Create environment-specific configuration
@@ -627,12 +627,12 @@ class FlextHandlers:
 
                 except Exception as e:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Environment handler config failed: {e}"
+                        f"Environment handler config failed: {e}",
                     )
 
             @classmethod
             def optimize_handler_performance(
-                cls, config: FlextTypes.Config.ConfigDict
+                cls, config: FlextTypes.Config.ConfigDict,
             ) -> FlextResult[FlextTypes.Config.ConfigDict]:
                 """Optimize handler performance based on configuration.
 
@@ -652,23 +652,23 @@ class FlextHandlers:
                         "performance_level": performance_level,  # Include performance level in result
                         "concurrent_handlers": config.get("concurrent_handlers", 10),
                         "max_concurrent_requests": config.get(
-                            "max_concurrent_requests", 100
+                            "max_concurrent_requests", 100,
                         ),  # Add max concurrent requests
                         "request_queue_size": config.get(
-                            "request_queue_size", 1000
+                            "request_queue_size", 1000,
                         ),  # Add request queue size
                         "processing_timeout": config.get(
-                            "processing_timeout", 30000
+                            "processing_timeout", 30000,
                         ),  # Add processing timeout
                         "request_batch_size": config.get("request_batch_size", 100),
                         "response_caching_enabled": config.get(
-                            "response_caching_enabled", False
+                            "response_caching_enabled", False,
                         ),
                         "metrics_collection_interval": config.get(
-                            "metrics_collection_interval", 5000
+                            "metrics_collection_interval", 5000,
                         ),
                         "enable_request_pooling": config.get(
-                            "enable_request_pooling", False
+                            "enable_request_pooling", False,
                         ),
                         "thread_pool_size": config.get("thread_pool_size", 4),
                         "memory_limit_mb": config.get("memory_limit_mb", 512),
@@ -676,35 +676,39 @@ class FlextHandlers:
                     }
 
                     if performance_level == "high":
-                        optimized_config.update({
-                            "concurrent_handlers": 50,
-                            "request_batch_size": 500,
-                            "response_caching_enabled": True,
-                            "metrics_collection_interval": 1000,
-                            "enable_request_pooling": True,
-                            "thread_pool_size": 16,
-                            "memory_limit_mb": 2048,
-                            "enable_compression": True,
-                        })
+                        optimized_config.update(
+                            {
+                                "concurrent_handlers": 50,
+                                "request_batch_size": 500,
+                                "response_caching_enabled": True,
+                                "metrics_collection_interval": 1000,
+                                "enable_request_pooling": True,
+                                "thread_pool_size": 16,
+                                "memory_limit_mb": 2048,
+                                "enable_compression": True,
+                            },
+                        )
                     elif performance_level == "low":
-                        optimized_config.update({
-                            "concurrent_handlers": 2,
-                            "request_batch_size": 10,
-                            "response_caching_enabled": False,
-                            "metrics_collection_interval": 10000,
-                            "enable_request_pooling": False,
-                            "thread_pool_size": 1,
-                            "memory_limit_mb": 128,
-                            "enable_compression": False,
-                        })
+                        optimized_config.update(
+                            {
+                                "concurrent_handlers": 2,
+                                "request_batch_size": 10,
+                                "response_caching_enabled": False,
+                                "metrics_collection_interval": 10000,
+                                "enable_request_pooling": False,
+                                "thread_pool_size": 1,
+                                "memory_limit_mb": 128,
+                                "enable_compression": False,
+                            },
+                        )
 
                     return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                        optimized_config
+                        optimized_config,
                     )
 
                 except Exception as e:
                     return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Handler performance optimization failed: {e}"
+                        f"Handler performance optimization failed: {e}",
                     )
 
         class ValidatingHandler(BasicHandler):
@@ -774,7 +778,7 @@ class FlextHandlers:
                                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                                 )
                         elif hasattr(validation_result, "is_failure") and getattr(
-                            validation_result, "is_failure", False
+                            validation_result, "is_failure", False,
                         ):
                             return cast("FlextResult[None]", validation_result)
                     except Exception as e:
@@ -786,7 +790,7 @@ class FlextHandlers:
                 return FlextResult[None].ok(None)
 
             def add_validator(
-                self, validator: FlextProtocols.Foundation.Validator[object]
+                self, validator: FlextProtocols.Foundation.Validator[object],
             ) -> None:
                 """Add validator to the validation chain.
 
@@ -854,7 +858,7 @@ class FlextHandlers:
             """Handler with enhanced metrics including request/response sizes and error types."""
 
             def __init__(
-                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None
+                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
                 """Initialize with enhanced metrics infrastructure.
 
@@ -918,12 +922,12 @@ class FlextHandlers:
                 # Calculate averages
                 if self._request_sizes:
                     enhanced_metrics["average_request_size"] = sum(
-                        self._request_sizes
+                        self._request_sizes,
                     ) / len(self._request_sizes)
 
                 if self._response_sizes:
                     enhanced_metrics["average_response_size"] = sum(
-                        self._response_sizes
+                        self._response_sizes,
                     ) / len(self._response_sizes)
 
                 return {**base_metrics, **enhanced_metrics}
@@ -932,7 +936,7 @@ class FlextHandlers:
             """Specialized handler for domain events following CQRS patterns."""
 
             def __init__(
-                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None
+                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
                 """Initialize event handler.
 
@@ -1058,7 +1062,7 @@ class FlextHandlers:
                 self._failed_commands: FlextHandlers.Types.HandlerTypes.Counter = 0
 
             def register(
-                self, command_type: type, handler: object
+                self, command_type: type, handler: object,
             ) -> FlextResult[None]:
                 """Register command handler for specific command type.
 
@@ -1101,7 +1105,7 @@ class FlextHandlers:
                 try:
                     # Handler is known to have handle_command method from registration
                     handler_with_method = cast(
-                        "FlextHandlers.CQRS.CommandHandler[object, object]", handler
+                        "FlextHandlers.CQRS.CommandHandler[object, object]", handler,
                     )
                     result = handler_with_method.handle_command(command)
 
@@ -1142,7 +1146,7 @@ class FlextHandlers:
             def __init__(self) -> None:
                 """Initialize query bus with metrics infrastructure."""
                 self._handlers: dict[
-                    type, FlextProtocols.Application.MessageHandler
+                    type, FlextProtocols.Application.MessageHandler,
                 ] = {}
                 self._queries_processed: FlextHandlers.Types.HandlerTypes.Counter = 0
                 self._successful_queries: FlextHandlers.Types.HandlerTypes.Counter = 0
@@ -1242,7 +1246,7 @@ class FlextHandlers:
             """Chain of Responsibility pattern with performance monitoring."""
 
             def __init__(
-                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None
+                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
                 """Initialize handler chain.
 
@@ -1259,7 +1263,7 @@ class FlextHandlers:
                 self._handler_performance: FlextHandlers.Types.HandlerTypes.PerformanceMap = {}
 
             def add_handler(
-                self, handler: FlextHandlers.Protocols.ChainableHandler
+                self, handler: FlextHandlers.Protocols.ChainableHandler,
             ) -> FlextResult[None]:
                 """Add handler to the processing chain.
 
@@ -1302,7 +1306,7 @@ class FlextHandlers:
 
                         try:
                             result = cast(
-                                "FlextResult[object]", handler.handle(request)
+                                "FlextResult[object]", handler.handle(request),
                             )
                             processing_time = time.time() - start_time
 
@@ -1359,7 +1363,7 @@ class FlextHandlers:
             """Pipeline pattern for sequential data transformation."""
 
             def __init__(
-                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None
+                self, name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
                 """Initialize processing pipeline.
 
@@ -1378,7 +1382,7 @@ class FlextHandlers:
                 self._stage_performance: FlextHandlers.Types.HandlerTypes.PerformanceMap = {}
 
             def add_stage(
-                self, stage: FlextHandlers.Types.HandlerTypes.ProcessorFunction
+                self, stage: FlextHandlers.Types.HandlerTypes.ProcessorFunction,
             ) -> FlextResult[None]:
                 """Add processing stage to pipeline.
 
@@ -1502,7 +1506,7 @@ class FlextHandlers:
                 self._successful_lookups: FlextHandlers.Types.HandlerTypes.Counter = 0
 
             def register(
-                self, name: FlextHandlers.Types.HandlerTypes.Name, handler: object
+                self, name: FlextHandlers.Types.HandlerTypes.Name, handler: object,
             ) -> FlextResult[object]:
                 """Register handler in the registry.
 
@@ -1532,7 +1536,7 @@ class FlextHandlers:
                     return FlextResult[object].ok(handler)
 
             def get_handler(
-                self, name: FlextHandlers.Types.HandlerTypes.Name
+                self, name: FlextHandlers.Types.HandlerTypes.Name,
             ) -> FlextResult[object]:
                 """Get handler by name from registry.
 
@@ -1569,7 +1573,7 @@ class FlextHandlers:
                     return dict(self._handlers)
 
             def unregister(
-                self, name: FlextHandlers.Types.HandlerTypes.Name
+                self, name: FlextHandlers.Types.HandlerTypes.Name,
             ) -> FlextResult[None]:
                 """Unregister handler from registry.
 
