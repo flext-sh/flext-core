@@ -1,7 +1,7 @@
 """Fixed comprehensive tests for FlextDomainService to achieve 100% coverage."""
 
 import pytest
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from flext_core import FlextDomainService, FlextMixins, FlextModels, FlextResult
 
@@ -109,8 +109,10 @@ class TestDomainServicesFixed:
         """Test that service is immutable (frozen)."""
         service = TestUserService(user_id="123")
 
-        with pytest.raises(Exception):  # Pydantic ValidationError or similar
-            service.user_id = "456"
+        # Test that assignment to frozen field raises ValidationError
+        with pytest.raises(ValidationError):
+            # Use setattr to bypass type checking for this test
+            setattr(service, "user_id", "456")
 
     def test_execute_method_abstract(self) -> None:
         """Test that execute method is abstract."""
@@ -166,7 +168,7 @@ class TestDomainServicesFixed:
         result = service.validate_business_rules()
         assert result.success is False
         assert result.error is not None
-        assert "Name is required" in result.error
+        assert "Name is required" in (result.error or "")
 
     def test_validate_business_rules_multiple_conditions(self) -> None:
         """Test business rules with multiple conditions."""
@@ -175,14 +177,14 @@ class TestDomainServicesFixed:
         result = service.validate_business_rules()
         assert result.success is False
         assert result.error is not None
-        assert "must be non-negative" in result.error
+        assert "must be non-negative" in (result.error or "")
 
         # Test disabled with value
         service = TestComplexService(name="test", value=10, enabled=False)
         result = service.validate_business_rules()
         assert result.success is False
         assert result.error is not None
-        assert "Cannot have value when disabled" in result.error
+        assert "Cannot have value when disabled" in (result.error or "")
 
     def test_validate_config_default(self) -> None:
         """Test default configuration validation."""
@@ -203,14 +205,14 @@ class TestDomainServicesFixed:
         result = service.validate_config()
         assert result.success is False
         assert result.error is not None
-        assert "too long" in result.error
+        assert "too long" in (result.error or "")
 
         # Test value too large
         service = TestComplexService(name="test", value=2000, enabled=True)
         result = service.validate_config()
         assert result.success is False
         assert result.error is not None
-        assert "too large" in result.error
+        assert "too large" in (result.error or "")
 
     def test_execute_operation_success(self) -> None:
         """Test execute_operation with successful operation."""
@@ -250,7 +252,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("test", test_operation)
         assert result.success is False
         assert result.error is not None
-        assert "too long" in result.error
+        assert "too long" in (result.error or "")
 
     def test_execute_operation_runtime_error(self) -> None:
         """Test execute_operation with runtime error."""
@@ -263,7 +265,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("failing_op", failing_operation)
         assert result.success is False
         assert result.error is not None
-        assert "Operation failed" in result.error
+        assert "Operation failed" in (result.error or "")
 
     def test_execute_operation_value_error(self) -> None:
         """Test execute_operation with value error."""
@@ -276,7 +278,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("value_error_op", value_error_operation)
         assert result.success is False
         assert result.error is not None
-        assert "Invalid value" in result.error
+        assert "Invalid value" in (result.error or "")
 
     def test_execute_operation_type_error(self) -> None:
         """Test execute_operation with type error."""
@@ -289,7 +291,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("type_error_op", type_error_operation)
         assert result.success is False
         assert result.error is not None
-        assert "Wrong type" in result.error
+        assert "Wrong type" in (result.error or "")
 
     def test_execute_operation_unexpected_error(self) -> None:
         """Test execute_operation with unexpected error."""
@@ -302,7 +304,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("unexpected_op", unexpected_error_operation)
         assert result.success is False
         assert result.error is not None
-        assert "Unexpected error" in result.error
+        assert "Unexpected error" in (result.error or "")
 
     def test_execute_operation_non_callable(self) -> None:
         """Test execute_operation with non-callable operation."""
@@ -311,7 +313,7 @@ class TestDomainServicesFixed:
         result = service.execute_operation("invalid", "not_callable")
         assert result.success is False
         assert result.error is not None
-        assert "not callable" in result.error
+        assert "not callable" in (result.error or "")
 
     def test_get_service_info_basic(self) -> None:
         """Test get_service_info basic functionality."""
@@ -385,7 +387,7 @@ class TestDomainServicesFixed:
 
         assert result.success is False
         assert result.error is not None
-        assert "Name is required" in result.error
+        assert "Name is required" in (result.error or "")
 
     def test_complex_service_execution_config_failure(self) -> None:
         """Test complex service execution with config validation failure."""
@@ -394,7 +396,7 @@ class TestDomainServicesFixed:
 
         assert result.success is False
         assert result.error is not None
-        assert "too large" in result.error
+        assert "too large" in (result.error or "")
 
     def test_service_model_config(self) -> None:
         """Test service model configuration."""
@@ -443,10 +445,12 @@ class TestDomainServicesFixed:
 
     def test_service_extra_forbid(self) -> None:
         """Test that extra fields are forbidden."""
-        # Use setattr to bypass type checking for this test
-        service = TestUserService(user_id="123")
-        with pytest.raises(Exception):  # Pydantic validation error
-            service.extra_field = "not_allowed"
+        # Test that creating a service with extra fields raises ValidationError
+        with pytest.raises(ValidationError):
+            # Create service normally, then try to add extra field via model_validate
+            TestUserService.model_validate(
+                {"user_id": "123", "extra_field": "not_allowed"}
+            )
 
 
 class TestDomainServiceStaticMethods:
@@ -472,10 +476,14 @@ class TestDomainServiceStaticMethods:
         result = FlextDomainService.configure_domain_services_system(None)
         assert result.success is False
         assert result.error is not None
-        assert "NoneType" in result.error or "Configuration" in result.error
+        assert "NoneType" in (result.error or "") or "Configuration" in (
+            result.error or ""
+        )
 
-        # Test with non-dict - should fail
-        result = FlextDomainService.configure_domain_services_system("invalid")
+        # Test with invalid config structure - should fail
+        result = FlextDomainService.configure_domain_services_system(
+            {"environment": "invalid_env"}
+        )
         assert result.success is False
 
     def test_get_domain_services_system_config(self) -> None:
@@ -536,4 +544,6 @@ class TestDomainServiceStaticMethods:
         result = FlextDomainService.optimize_domain_services_performance(None)
         assert result.success is False
         assert result.error is not None
-        assert "NoneType" in result.error or "Configuration" in result.error
+        assert "NoneType" in (result.error or "") or "Configuration" in (
+            result.error or ""
+        )

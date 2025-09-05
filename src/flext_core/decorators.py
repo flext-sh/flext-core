@@ -74,7 +74,9 @@ class FlextDecorators(FlextMixins.Entity):
                 return object.__getattribute__(self, name)
 
         # Return Context instance that satisfies the protocol
-        context_instance: FlextProtocols.Foundation.SupportsDynamicAttributes = Context()
+        context_instance: FlextProtocols.Foundation.SupportsDynamicAttributes = (
+            Context()
+        )
         return context_instance
 
     class Reliability:

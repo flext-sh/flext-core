@@ -383,6 +383,7 @@ class FlextCore:
             # Create performance configuration
             performance_config: FlextTypes.Aggregates.AggregatesConfigDict = {
                 "level": str(lvl),
+                "optimization_level": str(lvl),
                 "cache_size": 1000
                 if lvl == "low"
                 else 5000
@@ -571,7 +572,7 @@ class FlextCore:
     ) -> FlextResult[FlextModels.Entity]:
         """Create an entity instance with validation."""
         try:
-            entity = entity_class(**kwargs)  # type: ignore[arg-type]
+            entity = entity_class.model_validate(kwargs)
             validation_result = entity.validate_business_rules()
             if validation_result.success:
                 return FlextResult[FlextModels.Entity].ok(entity)
@@ -590,7 +591,7 @@ class FlextCore:
     ) -> FlextResult[FlextModels.Value]:
         """Create a value object instance with validation."""
         try:
-            value_obj = vo_class(**kwargs)  # type: ignore[arg-type]
+            value_obj = vo_class.model_validate(kwargs)
             validation_result = value_obj.validate_business_rules()
             if validation_result.success:
                 return FlextResult[FlextModels.Value].ok(value_obj)
@@ -637,7 +638,7 @@ class FlextCore:
     ) -> FlextResult[FlextModels.Payload[FlextTypes.Core.JsonObject]]:
         """Create a payload instance."""
         try:
-            payload_kwargs = {
+            payload_kwargs: dict[str, object] = {
                 "data": data,
                 "message_type": message_type,
                 "source_service": source_service,
@@ -645,7 +646,9 @@ class FlextCore:
             }
             if correlation_id is not None:
                 payload_kwargs["correlation_id"] = correlation_id
-            payload = FlextModels.Payload[FlextTypes.Core.JsonObject](**payload_kwargs)  # type: ignore[arg-type]
+            payload = FlextModels.Payload[FlextTypes.Core.JsonObject].model_validate(
+                payload_kwargs
+            )
             return FlextResult[FlextModels.Payload[FlextTypes.Core.JsonObject]].ok(
                 payload,
             )
@@ -2478,16 +2481,16 @@ class FlextCore:
     # ENTERPRISE BUILDERS & FACTORIES (BOILERPLATE REDUCTION)
     # =========================================================================
 
-    def create_validator_class[T](
+    def create_validator_class(
         self,
         name: str,
-        validation_func: Callable[[T], FlextResult[T]],
+        validation_func: Callable[[object], FlextResult[object]],
     ) -> type[FlextValidations.Domain.BaseValidator]:
         """Create validator class dynamically to reduce boilerplate."""
         # Import already at module level
 
         class DynamicValidator(FlextValidations.Domain.BaseValidator):
-            def validate(self, value: T) -> FlextResult[T]:
+            def validate(self, value: object) -> FlextResult[object]:
                 return validation_func(value)
 
         DynamicValidator.__name__ = name
@@ -2689,13 +2692,13 @@ class FlextCore:
             )
         return result
 
-    def get_service_with_fallback[T](
+    def get_service_with_fallback(
         self,
         service_name: str,
-        default_factory: Callable[[], T],
-    ) -> T:
+        default_factory: Callable[[], object],
+    ) -> object:
         r = self.get_service(service_name)
-        return cast("T", r.value) if r.is_success else default_factory()
+        return r.value if r.is_success else default_factory()
 
     def create_standard_validators(
         self,

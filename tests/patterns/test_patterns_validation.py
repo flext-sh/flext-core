@@ -330,8 +330,8 @@ class TestValidationIntegration:
         result = validate_func(invalid_data)
         assert result.is_failure
         assert result.error is not None
-        if "name" not in result.error.lower():
-            raise AssertionError(f"Expected {'name'} in {result.error.lower()}")
+        if "name" not in (result.error or "").lower():
+            raise AssertionError(f"Expected {'name'} in {(result.error or '').lower()}")
 
     def _test_bad_email_scenario(
         self,
@@ -342,8 +342,10 @@ class TestValidationIntegration:
         result = validate_func(invalid_email_data)
         assert result.is_failure
         assert result.error is not None
-        if "email" not in result.error.lower():
-            raise AssertionError(f"Expected {'email'} in {result.error.lower()}")
+        if "email" not in (result.error or "").lower():
+            raise AssertionError(
+                f"Expected {'email'} in {(result.error or '').lower()}"
+            )
 
     def _test_bad_roles_scenario(
         self,
@@ -354,8 +356,8 @@ class TestValidationIntegration:
         result = validate_func(invalid_roles_data)
         assert result.is_failure
         assert result.error is not None
-        if "list" not in result.error.lower():
-            raise AssertionError(f"Expected {'list'} in {result.error.lower()}")
+        if "list" not in (result.error or "").lower():
+            raise AssertionError(f"Expected {'list'} in {(result.error or '').lower()}")
 
     def test_validation_chaining(self) -> None:
         """Test chaining multiple validations."""

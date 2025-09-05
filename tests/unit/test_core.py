@@ -1,8 +1,10 @@
 """Extended comprehensive tests for FlextCore."""
 
 import math
+import tempfile
 import threading
 from enum import StrEnum
+from typing import cast
 
 from pydantic import Field
 
@@ -10,6 +12,7 @@ from flext_core import FlextResult
 from flext_core.container import FlextContainer
 from flext_core.core import FlextCore
 from flext_core.models import FlextModels
+from flext_core.typings import FlextTypes
 
 
 class TestStatus(StrEnum):
@@ -32,25 +35,29 @@ class TestFlextValidateServiceName:
         """Test validation with empty service name."""
         result = FlextContainer.flext_validate_service_name("")
         assert result.failure
-        assert "non-empty string" in result.error
+        err = result.error or ""
+        assert "non-empty string" in err
 
     def test_invalid_none_service_name(self) -> None:
         """Test validation with None service name."""
         result = FlextContainer.flext_validate_service_name(None)
         assert result.failure
-        assert "non-empty string" in result.error
+        err2 = result.error or ""
+        assert "non-empty string" in err2
 
     def test_invalid_non_string_service_name(self) -> None:
         """Test validation with non-string service name."""
         result = FlextContainer.flext_validate_service_name(123)
         assert result.failure
-        assert "non-empty string" in result.error
+        err3 = result.error or ""
+        assert "non-empty string" in err3
 
     def test_invalid_whitespace_only_service_name(self) -> None:
         """Test validation with whitespace-only service name."""
         result = FlextContainer.flext_validate_service_name("   ")
         assert result.failure
-        assert "cannot be only whitespace" in result.error
+        err4 = result.error or ""
+        assert "cannot be only whitespace" in err4
 
 
 class TestFlextCoreExtendedValidation:
@@ -70,7 +77,8 @@ class TestFlextCoreExtendedValidation:
 
         result = core.validate_email("invalid-email")
         assert result.failure
-        assert "email pattern" in result.error
+        err5 = result.error or ""
+        assert "email pattern" in err5
 
     def test_validate_email_empty(self) -> None:
         """Test email validation with empty string."""
@@ -93,7 +101,8 @@ class TestFlextCoreExtendedValidation:
 
         result = core.validate_string_field(None, "username")
         assert result.failure
-        assert "is not a valid string" in result.error
+        err6 = result.error or ""
+        assert "is not a valid string" in err6
 
     def test_validate_string_field_invalid_number(self) -> None:
         """Test string field validation with numeric input."""
@@ -101,7 +110,8 @@ class TestFlextCoreExtendedValidation:
 
         result = core.validate_string_field(123, "username")
         assert result.failure
-        assert "is not a valid string" in result.error
+        err7 = result.error or ""
+        assert "is not a valid string" in err7
 
     def test_validate_numeric_field_valid_int(self) -> None:
         """Test numeric field validation with valid integer."""
@@ -125,13 +135,18 @@ class TestFlextCoreExtendedValidation:
 
         result = core.validate_numeric_field("not-a-number", "age")
         assert result.failure
-        assert "not numeric" in result.error
+        err8 = result.error or ""
+        assert "not numeric" in err8
 
     def test_validate_user_data_valid(self) -> None:
         """Test user data validation with valid data."""
         core = FlextCore.get_instance()
 
-        user_data = {"name": "John Doe", "email": "john@example.com", "age": 30}
+        user_data: FlextTypes.Core.JsonObject = {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+        }
         result = core.validate_user_data(user_data)
         assert result.success
 
@@ -140,14 +155,14 @@ class TestFlextCoreExtendedValidation:
         core = FlextCore.get_instance()
 
         user_data = {"name": "John Doe"}  # Missing email and age
-        result = core.validate_user_data(user_data)
+        result = core.validate_user_data(cast("FlextTypes.Core.JsonObject", user_data))
         assert result.failure
 
     def test_validate_api_request_valid(self) -> None:
         """Test API request validation with valid request."""
         core = FlextCore.get_instance()
 
-        request = {
+        request: FlextTypes.Core.JsonObject = {
             "action": "get_users",
             "version": "1.0",
             "method": "GET",
@@ -162,7 +177,7 @@ class TestFlextCoreExtendedValidation:
         core = FlextCore.get_instance()
 
         request = {"path": "/api/users"}  # Missing method
-        result = core.validate_api_request(request)
+        result = core.validate_api_request(cast("FlextTypes.Core.JsonObject", request))
         assert result.failure
 
 
@@ -190,8 +205,9 @@ class TestFlextCoreEntityCreation:
         )
         assert result.success
         user = result.unwrap()
-        assert user.name == "John Doe"
-        assert user.email == "john@example.com"
+        test_user = cast("TestUser", user)
+        assert test_user.name == "John Doe"
+        assert test_user.email == "john@example.com"
 
     def test_create_entity_validation_error(self) -> None:
         """Test entity creation with validation error."""
@@ -223,7 +239,8 @@ class TestFlextCoreEntityCreation:
         result = core.create_value_object(TestEmail, address="test@example.com")
         assert result.success
         email = result.unwrap()
-        assert email.address == "test@example.com"
+        test_email = cast("TestEmail", email)
+        assert test_email.address == "test@example.com"
 
     def test_create_domain_event_success(self) -> None:
         """Test successful domain event creation."""
@@ -231,7 +248,9 @@ class TestFlextCoreEntityCreation:
 
         class TestEvent(FlextModels.Event):
             event_type: str = Field(..., description="Event type")
-            data: dict = Field(default_factory=dict, description="Event data")
+            data: FlextTypes.Core.JsonObject = Field(
+                default_factory=dict, description="Event data"
+            )
 
         result = core.create_domain_event(
             event_type="UserCreated",
@@ -353,7 +372,7 @@ class TestFlextCoreUtilities:
         """Test batch processing with empty list."""
         core = FlextCore.get_instance()
 
-        items = []
+        items: list[int] = []
         batches = core.batch_process(items, batch_size=2)
 
         assert len(batches) == 0
@@ -547,6 +566,7 @@ class TestFlextCoreServiceManagement:
         get_result = core.get_service("test_service")
         assert get_result.success
         retrieved_service = get_result.unwrap()
+        assert isinstance(retrieved_service, TestService)
         assert retrieved_service.name == "test_service"
 
     def test_get_service_not_found(self) -> None:
@@ -555,7 +575,8 @@ class TestFlextCoreServiceManagement:
 
         result = core.get_service("nonexistent_service")
         assert result.failure
-        assert "not found" in result.error or "not registered" in result.error
+        err9 = result.error or ""
+        assert "not found" in err9 or "not registered" in err9
 
     def test_register_service_invalid_name(self) -> None:
         """Test service registration with invalid name."""
@@ -614,6 +635,70 @@ class TestFlextCoreSystemConfiguration:
         result = core.load_config_from_file("nonexistent_config.json")
         assert result.failure
 
+    def test_configure_core_system_valid_config(self) -> None:
+        """Test configure_core_system with valid configuration."""
+        valid_config: FlextTypes.Config.ConfigDict = {
+            "environment": "development",
+            "log_level": "INFO",
+            "performance_level": "medium",
+        }
+
+        result = FlextCore.configure_core_system(valid_config)
+        assert result.success
+        config = result.unwrap()
+        assert config["environment"] == "development"
+        assert config["log_level"] == "INFO"
+
+    def test_configure_core_system_invalid_environment(self) -> None:
+        """Test configure_core_system with invalid environment."""
+        invalid_config: FlextTypes.Config.ConfigDict = {
+            "environment": "invalid_env",
+            "log_level": "INFO",
+        }
+
+        result = FlextCore.configure_core_system(invalid_config)
+        assert result.failure
+        err10 = result.error or ""
+        assert "Invalid environment" in err10
+
+    def test_configure_core_system_invalid_log_level(self) -> None:
+        """Test configure_core_system with invalid log level."""
+        invalid_config: FlextTypes.Config.ConfigDict = {
+            "environment": "development",
+            "log_level": "INVALID_LEVEL",
+        }
+
+        result = FlextCore.configure_core_system(invalid_config)
+        assert result.failure
+        err11 = result.error or ""
+        assert "Invalid log_level" in err11
+
+    def test_configure_core_system_empty_config(self) -> None:
+        """Test configure_core_system with empty configuration."""
+        empty_config: FlextTypes.Config.ConfigDict = {}
+
+        result = FlextCore.configure_core_system(empty_config)
+        assert result.success  # Should work with empty config
+        config = result.unwrap()
+        assert isinstance(config, dict)  # Returns default config, not empty
+
+    def test_create_environment_core_config_valid(self) -> None:
+        """Test create_environment_core_config with valid environment."""
+        result = FlextCore.create_environment_core_config("development")
+        assert result.success
+        config = result.unwrap()
+        assert config["environment"] == "development"
+        assert "config_source" in config
+
+    def test_create_environment_core_config_invalid(self) -> None:
+        """Test create_environment_core_config with invalid environment."""
+        result = FlextCore.create_environment_core_config(
+            cast("FlextTypes.Config.Environment", "invalid_environment")
+        )
+        assert result.failure
+        err12 = result.error or ""
+        assert "Invalid environment" in err12
+
 
 class TestFlextCoreFieldOperations:
     """Extended tests for FlextCore field operations."""
@@ -671,13 +756,13 @@ class TestFlextCoreAdvancedFeatures:
         services = {f"service_{i}": f"value_{i}" for i in range(5)}
 
         for name, service in services.items():
-            result = core.register_service(name, service)
-            assert result.success
+            reg_result = core.register_service(name, service)
+            assert reg_result.success
 
         # Verify all services can be retrieved
         for name in services:
-            result = core.get_service(name)
-            assert result.success
+            get_result = core.get_service(name)
+            assert get_result.success
 
     def test_concurrent_service_access(self) -> None:
         """Test concurrent service access (basic thread safety)."""
@@ -705,7 +790,7 @@ class TestFlextCoreAdvancedFeatures:
         core = FlextCore.get_instance()
 
         # Test with various edge case inputs
-        edge_cases = [None, "", 0, [], {}, False]
+        edge_cases: list[object] = [None, "", 0, [], {}, False]
 
         for case in edge_cases:
             email_result = (
@@ -769,17 +854,17 @@ class TestFlextCoreConfigurationProperties:
     def test_database_config_none_when_empty(self) -> None:
         """Test database_config returns None when no config is set."""
         core = FlextCore.get_instance()
-        
+
         # Clear any existing database config
         core._specialized_configs.pop("database_config", None)
-        
+
         config = core.database_config
         assert config is None
 
     def test_database_config_returns_valid_config(self) -> None:
         """Test database_config returns valid config when set."""
         core = FlextCore.get_instance()
-        
+
         # Create a valid database config
         db_config = FlextModels.DatabaseConfig(
             host="localhost",
@@ -788,10 +873,10 @@ class TestFlextCoreConfigurationProperties:
             username="test_user",
             password="test_pass",
         )
-        
+
         # Store in specialized configs
         core._specialized_configs["database_config"] = db_config
-        
+
         # Test property
         result = core.database_config
         assert result is not None
@@ -802,37 +887,37 @@ class TestFlextCoreConfigurationProperties:
     def test_database_config_none_for_wrong_type(self) -> None:
         """Test database_config returns None when wrong type is stored."""
         core = FlextCore.get_instance()
-        
+
         # Store wrong type
         core._specialized_configs["database_config"] = "not a config object"
-        
+
         config = core.database_config
         assert config is None
 
     def test_security_config_none_when_empty(self) -> None:
         """Test security_config returns None when no config is set."""
         core = FlextCore.get_instance()
-        
+
         # Clear any existing security config
         core._specialized_configs.pop("security_config", None)
-        
+
         config = core.security_config
         assert config is None
 
     def test_security_config_returns_valid_config(self) -> None:
         """Test security_config returns valid config when set."""
         core = FlextCore.get_instance()
-        
+
         # Create a valid security config
         security_config = FlextModels.SecurityConfig(
             secret_key="Test_Secret_Key_12345678901234567890",
             jwt_secret="JWT_Secret_Key_12345678901234567890",
             encryption_key="Encryption_Key_12345678901234567890",
         )
-        
+
         # Store in specialized configs
         core._specialized_configs["security_config"] = security_config
-        
+
         # Test property
         result = core.security_config
         assert result is not None
@@ -843,59 +928,63 @@ class TestFlextCoreConfigurationProperties:
     def test_security_config_none_for_wrong_type(self) -> None:
         """Test security_config returns None when wrong type is stored."""
         core = FlextCore.get_instance()
-        
+
         # Store wrong type
         core._specialized_configs["security_config"] = {"not": "a config object"}
-        
+
         config = core.security_config
         assert config is None
 
     def test_logging_config_none_when_empty(self) -> None:
         """Test logging_config returns None when no config is set."""
         core = FlextCore.get_instance()
-        
+
         # Clear any existing logging config
         core._specialized_configs.pop("logging_config", None)
-        
+
         config = core.logging_config
         assert config is None
 
     def test_logging_config_returns_valid_config(self) -> None:
         """Test logging_config returns valid config when set."""
         core = FlextCore.get_instance()
-        
-        # Create a valid logging config
+
+        # Create a valid logging config with secure temp file
+        with tempfile.NamedTemporaryFile(
+            prefix="flext_test_", suffix=".log", delete=False
+        ) as tmp_file:
+            temp_log_file = tmp_file.name
         logging_config = FlextModels.LoggingConfig(
             log_level="DEBUG",
             log_format="text",
-            log_file="/tmp/test.log",
+            log_file=temp_log_file,
         )
-        
+
         # Store in specialized configs
         core._specialized_configs["logging_config"] = logging_config
-        
+
         # Test property
         result = core.logging_config
         assert result is not None
         assert isinstance(result, FlextModels.LoggingConfig)
         assert result.log_level == "DEBUG"
         assert result.log_format == "text"
-        assert result.log_file == "/tmp/test.log"
+        assert result.log_file == temp_log_file
 
     def test_logging_config_none_for_wrong_type(self) -> None:
         """Test logging_config returns None when wrong type is stored."""
         core = FlextCore.get_instance()
-        
+
         # Store wrong type
         core._specialized_configs["logging_config"] = [1, 2, 3]
-        
+
         config = core.logging_config
         assert config is None
 
     def test_all_config_properties_independent(self) -> None:
         """Test that all config properties work independently."""
         core = FlextCore.get_instance()
-        
+
         # Create different configs
         db_config = FlextModels.DatabaseConfig(
             host="db.example.com",
@@ -904,39 +993,40 @@ class TestFlextCoreConfigurationProperties:
             username="prod_user",
             password="prod_pass",
         )
-        
+
         security_config = FlextModels.SecurityConfig(
             secret_key="Prod_Secret_Key_123456789012345678901234567890",
             jwt_secret="Prod_JWT_Secret_123456789012345678901234567890",
             encryption_key="Prod_Encryption_Key_123456789012345678901234567890",
         )
-        
+
         logging_config = FlextModels.LoggingConfig(
             log_level="WARNING",
             log_format="json",
             max_file_size=20971520,  # 20MB
         )
-        
+
         # Store all configs
         core._specialized_configs["database_config"] = db_config
         core._specialized_configs["security_config"] = security_config
         core._specialized_configs["logging_config"] = logging_config
-        
+
         # Test all properties work independently
         db_result = core.database_config
         security_result = core.security_config
         logging_result = core.logging_config
-        
+
         assert db_result is not None
         assert db_result.host == "db.example.com"
-        
+
         assert security_result is not None
-        assert security_result.secret_key == "Prod_Secret_Key_123456789012345678901234567890"
-        
+        assert (
+            security_result.secret_key
+            == "Prod_Secret_Key_123456789012345678901234567890"
+        )
+
         assert logging_result is not None
         assert logging_result.log_level == "WARNING"
-        
+
         # Test they don't interfere with each other
-        assert db_result is not security_result
-        assert security_result is not logging_result
-        assert logging_result is not db_result
+        assert len({type(db_result), type(security_result), type(logging_result)}) == 3

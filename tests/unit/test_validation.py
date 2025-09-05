@@ -57,7 +57,7 @@ class TestFlextValidationRealFunctionality:
         result = FlextValidations.configure_validation_system(invalid_env_config)
         assert result.success is False
         assert result.error
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in (result.error or "")
 
         # Test invalid validation level
         invalid_val_config: FlextTypes.Config.ConfigDict = {
@@ -66,7 +66,7 @@ class TestFlextValidationRealFunctionality:
         result = FlextValidations.configure_validation_system(invalid_val_config)
         assert result.success is False
         assert result.error
-        assert "Invalid validation_level" in result.error
+        assert "Invalid validation_level" in (result.error or "")
 
         # Test invalid log level
         invalid_log_config: FlextTypes.Config.ConfigDict = {
@@ -75,7 +75,7 @@ class TestFlextValidationRealFunctionality:
         result = FlextValidations.configure_validation_system(invalid_log_config)
         assert result.success is False
         assert result.error
-        assert "Invalid log_level" in result.error
+        assert "Invalid log_level" in (result.error or "")
 
     def test_validation_system_default_configuration_real(self) -> None:
         """Test validation system with minimal configuration using defaults."""

@@ -163,7 +163,10 @@ class ComposedUserManager:
         self._logger = FlextMixins.flext_logger(self)
 
     def create_and_cache_user(
-        self, username: str, email: str, age: int,
+        self,
+        username: str,
+        email: str,
+        age: int,
     ) -> FlextResult[User]:
         """Create user with validation and caching."""
         # Step 1: Validate email

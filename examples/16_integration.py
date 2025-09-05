@@ -46,7 +46,10 @@ class Order:
     """Simple order class for demonstration."""
 
     def __init__(
-        self, order_id: str, customer_id: str, items: list[dict[str, object]],
+        self,
+        order_id: str,
+        customer_id: str,
+        items: list[dict[str, object]],
     ) -> None:
         self.id = order_id
         self.customer_id = customer_id
@@ -133,7 +136,9 @@ def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
         order_items_with_price.append(item_copy)
 
     order = Order(
-        order_id="order_456", customer_id=customer_id, items=order_items_with_price,
+        order_id="order_456",
+        customer_id=customer_id,
+        items=order_items_with_price,
     )
     return FlextResult[Order].ok(order)
 
@@ -255,7 +260,8 @@ def _demo_complete_flow(customer: User, order: Order, logger: FlextLogger) -> No
         repository_any = FlextContainer.get_global().get("order_repository").value
         # Hint to type checker
         repo: _OrderRepositoryProtocol = cast(
-            "_OrderRepositoryProtocol", repository_any,
+            "_OrderRepositoryProtocol",
+            repository_any,
         )
         repo.save(order2)
         total1_result = order.calculate_total()

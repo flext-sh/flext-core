@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Container, Iterator, Sized
-from contextlib import contextmanager
-from typing import TypeVar, cast
+from contextlib import AbstractContextManager, contextmanager
+from typing import Protocol, TypeVar, cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -33,14 +33,24 @@ from flext_tests import (
 )
 
 
+class TestFunction(Protocol):
+    """Protocol for test functions with pattern attribute."""
+
+    _test_pattern: str
+
+    def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[Callable[..., object]], TestFunction]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        func._test_pattern = pattern  # type: ignore[attr-defined]
-        return func
+    def decorator(func: Callable[..., object]) -> TestFunction:
+        # Cast to TestFunction to add the attribute
+        test_func = cast("TestFunction", func)
+        test_func._test_pattern = pattern
+        return test_func
 
     return decorator
 
@@ -285,7 +295,7 @@ class TestFixtureBuilder:
         self._fixtures[key] = value
         return self
 
-    def setup_context(self) -> object:
+    def setup_context(self) -> AbstractContextManager[dict[str, object]]:
         @contextmanager
         def _ctx() -> Iterator[dict[str, object]]:
             for f in self._setups:
@@ -597,15 +607,21 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object, **_kwargs: object) -> dict[str, object]:
+        def arrange_data(*_args: object, **_kwargs: object) -> object:
             return {"numbers": [1, 2, 3, 4, 5]}
 
-        def act_on_data(data: dict[str, object]) -> int:
+        def act_on_data(data: object) -> object:
+            if not isinstance(data, dict):
+                msg = "Expected dict"
+                raise TypeError(msg)
             numbers = data["numbers"]
             assert isinstance(numbers, list)
             return sum(numbers)
 
-        def assert_result(result: int, original_data: dict[str, object]) -> None:
+        def assert_result(result: object, original_data: object) -> None:
+            if not isinstance(result, int) or not isinstance(original_data, dict):
+                msg = "Invalid types"
+                raise TypeError(msg)
             assert result == 15
             numbers = original_data["numbers"]
             assert isinstance(numbers, list)
@@ -658,7 +674,7 @@ class TestComprehensiveIntegration:
         # Build complete test suite
         suite = (
             TestSuiteBuilder("comprehensive_operation_tests")
-            .add_scenarios(scenarios)
+            .add_scenarios(cast("list[object]", scenarios))
             .with_setup_data(environment="test", timeout=30)
             .with_tag("integration")
             .build()
@@ -799,7 +815,7 @@ class TestRealWorldScenarios:
 
         with fixture_builder.setup_context():
             # Use a fixed test request instead of Hypothesis example
-            test_request = {
+            test_request: dict[str, object] = {
                 "method": "POST",
                 "url": "https://api.example.com/users",
                 "correlation_id": "corr_12345678",

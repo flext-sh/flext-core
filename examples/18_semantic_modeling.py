@@ -236,7 +236,8 @@ class FlextPipelineService:
                         owner_profile.get("role", "admin"),
                     ),
                     preferences=cast(
-                        "dict[str, object]", owner_profile.get("preferences", {}),
+                        "dict[str, object]",
+                        owner_profile.get("preferences", {}),
                     ),
                 )
                 return FlextResult[FlextUserProfile].ok(instance)

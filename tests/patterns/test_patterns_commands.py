@@ -257,9 +257,9 @@ class TestFlextCommand:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "username is required" not in result.error.lower():
+        if "username is required" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'username is required'} in {result.error.lower()}",
+                f"Expected {'username is required'} in {(result.error or '').lower()}",
             )
 
     def test_validate_command_failure_no_email(self) -> None:
@@ -271,9 +271,9 @@ class TestFlextCommand:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "email is required" not in result.error.lower():
+        if "email is required" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'email is required'} in {result.error.lower()}",
+                f"Expected {'email is required'} in {(result.error or '').lower()}",
             )
 
     def test_validate_command_failure_invalid_email(self) -> None:
@@ -285,9 +285,9 @@ class TestFlextCommand:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "invalid email" not in result.error.lower():
+        if "invalid email" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'invalid email'} in {result.error.lower()}",
+                f"Expected {'invalid email'} in {(result.error or '').lower()}",
             )
 
     def test_get_command_metadata(self) -> None:
@@ -404,9 +404,9 @@ class TestFlextCommandHandler:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "username is required" not in result.error.lower():
+        if "username is required" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'username is required'} in {result.error.lower()}",
+                f"Expected {'username is required'} in {(result.error or '').lower()}",
             )
 
     def test_process_command_cannot_handle(self) -> None:
@@ -427,9 +427,9 @@ class TestFlextCommandHandler:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "cannot handle" not in result.error.lower():
+        if "cannot handle" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'cannot handle'} in {result.error.lower()}",
+                f"Expected {'cannot handle'} in {(result.error or '').lower()}",
             )
 
     def test_process_command_handling_failure(self) -> None:
@@ -511,9 +511,9 @@ class TestFlextCommandBus:
             raise AssertionError(f"Expected True, got {result.is_failure}")
         assert result.error is not None
         assert result.error
-        if "no handler found" not in result.error.lower():
+        if "no handler found" not in (result.error or "").lower():
             raise AssertionError(
-                f"Expected {'no handler found'} in {result.error.lower()}",
+                f"Expected {'no handler found'} in {(result.error or '').lower()}",
             )
 
     def test_execute_command_validation_failure(self) -> None:

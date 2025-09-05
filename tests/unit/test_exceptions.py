@@ -148,7 +148,7 @@ class TestExceptions100PercentCoverage:
         )
         assert result.failure
         assert result.error is not None
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in (result.error or "")
 
     def test_exception_metrics_lines_854_855_899(self) -> None:
         """Test exception metrics collection."""

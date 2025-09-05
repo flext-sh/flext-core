@@ -11,13 +11,13 @@ import re
 from collections.abc import Callable, Sequence
 from typing import Protocol, TypeGuard, TypeVar
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
 from .performance import BenchmarkProtocol
 
 T = TypeVar("T")
 
-JsonDict = FlextTypes.Core.JsonObject
+JsonDict = dict[str, object]
 
 
 class ContainerProtocol(Protocol):

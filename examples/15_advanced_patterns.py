@@ -104,7 +104,9 @@ class OrderProcessor(FlextMixins.Entity):
         self.container.register("config", config)
 
     def create_order(
-        self, user_id: str, items_data: list[ItemData],
+        self,
+        user_id: str,
+        items_data: list[ItemData],
     ) -> FlextResult[OrderData]:
         """Create and validate order with comprehensive business rules."""
         return (
@@ -112,13 +114,16 @@ class OrderProcessor(FlextMixins.Entity):
             .flat_map(lambda _: self._process_all_items(items_data))
             .flat_map(
                 lambda items_and_total: self._validate_and_create_order(
-                    user_id, items_and_total[0], items_and_total[1],
+                    user_id,
+                    items_and_total[0],
+                    items_and_total[1],
                 ),
             )
         )
 
     def _validate_items_count(
-        self, items_data: list[ItemData],
+        self,
+        items_data: list[ItemData],
     ) -> FlextResult[list[ItemData]]:
         """Validate order items count."""
         if len(items_data) > self._config.max_order_items:
@@ -130,7 +135,8 @@ class OrderProcessor(FlextMixins.Entity):
         return FlextResult[list[ItemData]].ok(items_data)
 
     def _process_all_items(
-        self, items_data: list[ItemData],
+        self,
+        items_data: list[ItemData],
     ) -> FlextResult[tuple[list[ItemData], Decimal]]:
         """Process all items and calculate total."""
         processed_items: list[ItemData] = []
@@ -156,7 +162,10 @@ class OrderProcessor(FlextMixins.Entity):
         )
 
     def _validate_and_create_order(
-        self, user_id: str, processed_items: list[ItemData], total_amount: Decimal,
+        self,
+        user_id: str,
+        processed_items: list[ItemData],
+        total_amount: Decimal,
     ) -> FlextResult[OrderData]:
         """Validate amount and create final order."""
         amount_validation = self._validate_order_amount(total_amount)
@@ -191,11 +200,14 @@ class OrderProcessor(FlextMixins.Entity):
     def _process_order_item(self, item_data: ItemData) -> FlextResult[ItemData]:
         """Process and validate individual order item using railway pattern."""
         return self._validate_required_fields(
-            item_data, ["product_id", "quantity", "unit_price"],
+            item_data,
+            ["product_id", "quantity", "unit_price"],
         ).flat_map(lambda _: self._parse_and_validate_item_values(item_data))
 
     def _validate_required_fields(
-        self, item_data: ItemData, fields: list[str],
+        self,
+        item_data: ItemData,
+        fields: list[str],
     ) -> FlextResult[ItemData]:
         """Validate required fields exist."""
         for field in fields:
@@ -204,7 +216,8 @@ class OrderProcessor(FlextMixins.Entity):
         return FlextResult[ItemData].ok(item_data)
 
     def _parse_and_validate_item_values(
-        self, item_data: ItemData,
+        self,
+        item_data: ItemData,
     ) -> FlextResult[ItemData]:
         """Parse and validate item values."""
         try:

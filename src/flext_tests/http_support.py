@@ -15,10 +15,10 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult
 
-JsonDict = FlextTypes.Core.JsonObject
-JsonValue = FlextTypes.Core.JsonValue
+JsonDict = dict[str, object]
+JsonValue = object
 
 
 class HTTPTestUtils:

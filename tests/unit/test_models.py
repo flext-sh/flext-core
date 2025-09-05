@@ -299,7 +299,7 @@ class TestFlextValueRealFunctionality:
         # Should be frozen (immutable) - test that it's read-only
         with pytest.raises(ValidationError):
             # Try to modify a frozen property - this should raise ValidationError
-            email.address = "changed@example.com"
+            email.address = "changed@example.com"  # type: ignore[misc]
 
     def test_value_object_equality_by_value(self) -> None:
         """Test FlextModels equality comparison by value."""
@@ -330,7 +330,7 @@ class TestFlextValueRealFunctionality:
         result = invalid_email.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
-        assert "@ symbol" in result.error
+        assert "@ symbol" in (result.error or "")
 
     def test_value_object_flext_validation(self) -> None:
         """Test FlextModels validate_flext method."""
@@ -520,7 +520,8 @@ class TestFlextEntityRealFunctionality:
         assert user.is_active is False
 
         # Should have both activation and deactivation events
-        events_count = len(user.domain_events)
+        domain_events: list[FlextTypes.Core.JsonObject] = user.domain_events
+        events_count: int = len(domain_events)
         assert events_count == 2  # Both activation and deactivation events
 
     def test_entity_business_rules_validation(self) -> None:
@@ -546,7 +547,7 @@ class TestFlextEntityRealFunctionality:
         result = user_empty_name.validate_business_rules()
         assert result.is_failure
         assert result.error is not None
-        assert "cannot be empty" in result.error
+        assert "cannot be empty" in (result.error or "")
 
     def test_entity_string_representations(self) -> None:
         """Test FlextModels string representations."""
@@ -694,7 +695,7 @@ class TestHelperFunctionsRealFunctionality:
         result = create_version(0)
         assert result.is_failure
         assert result.error is not None
-        assert "must be >= 1" in result.error
+        assert "must be >= 1" in (result.error or "")
 
         result = create_version(-5)
         assert result.is_failure
@@ -1157,7 +1158,9 @@ class TestFlextModelsRootModelValidation:
             source_service="test_service",
             expires_at=future_time,
         )
-        assert not payload.is_expired
+        # Explicitly check the boolean value
+        is_expired_result: bool = payload.is_expired  # type: ignore[assignment]
+        assert not is_expired_result
 
         # Test expired payload
         past_time = datetime.now(UTC) - timedelta(hours=1)
@@ -1167,7 +1170,9 @@ class TestFlextModelsRootModelValidation:
             source_service="test_service",
             expires_at=past_time,
         )
-        assert expired_payload.is_expired
+        # Explicitly check the boolean value
+        is_expired_result2: bool = expired_payload.is_expired  # type: ignore[assignment]
+        assert is_expired_result2
 
         # Test payload without expiration
         no_expiry_payload = FlextModels.Payload(
@@ -1191,7 +1196,7 @@ class TestFlextModelsRootModelValidation:
         # Create a dict with function that can't be serialized
         invalid_data: dict[str, object] = {"func": test_function}
         with pytest.raises(ValidationError):
-            FlextModels.JsonData(invalid_data)
+            FlextModels.JsonData(invalid_data)  # type: ignore[arg-type]
 
     def test_metadata_validation_string_values(self) -> None:
         """Test Metadata validation ensures string values (line 907)."""

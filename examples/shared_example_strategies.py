@@ -123,7 +123,9 @@ class ExamplePatternFactory:
 
     @staticmethod
     def create_configuration_demo(
-        name: str, config_class: type, config_data: dict[str, object],
+        name: str,
+        config_class: type,
+        config_data: dict[str, object],
     ) -> DemoStrategy[object]:
         """Create configuration demonstration using Railway Pattern - ELIMINATED TRY/CATCH RETURNS."""
 
@@ -136,12 +138,15 @@ class ExamplePatternFactory:
                 _safe_create_config_instance(config_class, config_data)
                 .flat_map(_validate_config_if_needed)
                 .map(lambda config: _log_success_and_return(config, name))
-                .tap_error(lambda e: logger.error(f"Configuration creation failed: {e}"))
+                .tap_error(
+                    lambda e: logger.error(f"Configuration creation failed: {e}")
+                )
             )
 
         # Railway Helper Functions
         def _safe_create_config_instance(
-            config_class: type, config_data: dict[str, object],
+            config_class: type,
+            config_data: dict[str, object],
         ) -> FlextResult[object]:
             """Safely create config instance with error handling."""
             try:
@@ -156,12 +161,14 @@ class ExamplePatternFactory:
                 return FlextResult[object].ok(config_instance)
 
             # Check if config_instance has validate_business_rules method
-            validation_result = getattr(config_instance, "validate_business_rules", lambda: FlextResult[None].ok(None))()
-            return (
-                validation_result
-                .flat_map(lambda _: FlextResult[object].ok(config_instance))
-                .tap_error(lambda e: logger.error(f"Config validation failed: {e}"))
-            )
+            validation_result = getattr(
+                config_instance,
+                "validate_business_rules",
+                lambda: FlextResult[None].ok(None),
+            )()
+            return validation_result.flat_map(
+                lambda _: FlextResult[object].ok(config_instance)
+            ).tap_error(lambda e: logger.error(f"Config validation failed: {e}"))
 
         def _log_success_and_return(config_instance: object, name: str) -> object:
             """Log success and return config instance."""
@@ -171,7 +178,9 @@ class ExamplePatternFactory:
         return ExamplePatternFactory.create_demo_runner(name, config_demo)
 
     @staticmethod
-    def execute_demo_pipeline(demos: list[DemoStrategy[object]]) -> FlextResult[list[object]]:
+    def execute_demo_pipeline(
+        demos: list[DemoStrategy[object]],
+    ) -> FlextResult[list[object]]:
         """Execute multiple demonstrations in pipeline using Railway Pattern - ELIMINATED LOOP RETURNS."""
         logger.info(f"🔄 Starting demo pipeline with {len(demos)} demonstrations")
 
@@ -181,7 +190,8 @@ class ExamplePatternFactory:
             executed_demos: list[DemoStrategy[object]]
 
         def _execute_single_demo(
-            acc_state: FlextResult[PipelineState], demo: DemoStrategy[object],
+            acc_state: FlextResult[PipelineState],
+            demo: DemoStrategy[object],
         ) -> FlextResult[PipelineState]:
             """Execute single demo with error propagation using Railway Pattern."""
             return acc_state.flat_map(
@@ -195,7 +205,9 @@ class ExamplePatternFactory:
                 .tap_error(lambda e: _cleanup_on_failure(state.executed_demos, e))
             )
 
-        def _cleanup_on_failure(executed_demos: list[DemoStrategy[object]], error: str) -> None:
+        def _cleanup_on_failure(
+            executed_demos: list[DemoStrategy[object]], error: str
+        ) -> None:
             """Cleanup executed demos on failure."""
             logger.error(f"❌ Pipeline failed: {error}")
             for cleanup_demo in executed_demos:
@@ -223,7 +235,8 @@ class ExamplePatternFactory:
 
     @staticmethod
     def create_composite_demo_suite(
-        suite_name: str, demos: list[tuple[str, Callable[[], FlextResult[object]]]],
+        suite_name: str,
+        demos: list[tuple[str, Callable[[], FlextResult[object]]]],
     ) -> FlextResult[str]:
         """Create composite demo suite to eliminate duplication - ANTI-DUPLICATION PATTERN.
 
@@ -269,7 +282,50 @@ class ExamplePatternFactory:
         return FlextResult[str].fail(f"Suboptimal execution: {summary}")
 
 
+def main() -> None:
+    """Demonstrate shared example strategies and patterns.
+
+    This function showcases the capabilities of the ExamplePatternFactory
+    and demonstrates the various strategy patterns available.
+    """
+    logger.info("🎯 Demonstrating Shared Example Strategies")
+
+    # Demonstrate simple demo runner
+    simple_demo = ExamplePatternFactory.create_demo_runner(
+        "Simple Demo", lambda: FlextResult[str].ok("Demo executed successfully")
+    )
+
+    result = simple_demo.execute()
+    if result.is_success:
+        logger.info(f"Demo result: {result.unwrap()}")
+
+    # Demonstrate validation demo
+    sample_data = {"name": "test", "value": 42}
+    validation_rules = [
+        lambda data: FlextResult[None].ok(None)
+        if "name" in data
+        else FlextResult[None].fail("Missing name"),
+        lambda data: FlextResult[None].ok(None)
+        if isinstance(data.get("value"), int)
+        else FlextResult[None].fail("Invalid value type"),
+    ]
+
+    validation_demo = ExamplePatternFactory.create_validation_demo(
+        "Data Validation", sample_data, validation_rules
+    )
+
+    validation_result = validation_demo.execute()
+    if validation_result.is_success:
+        logger.info("Validation demo completed successfully")
+
+    logger.info("✅ All strategy demonstrations completed")
+
+
 __all__ = [
     "DemoStrategy",
     "ExamplePatternFactory",
 ]
+
+
+if __name__ == "__main__":
+    main()

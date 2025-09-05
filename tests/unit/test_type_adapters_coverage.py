@@ -82,7 +82,7 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test string to float conversion
         result = adapter.validate_python("2.71")
-        assert result == 2.71
+        assert result == math.e
 
     def test_foundation_create_boolean_adapter(self) -> None:
         """Test Foundation.create_boolean_adapter creation."""
@@ -128,7 +128,7 @@ class TestFlextTypeAdaptersCoverage:
 
         assert isinstance(result, FlextResult)
         assert result.failure is True
-        assert "validation failed" in result.error.lower()
+        assert "validation failed" in (result.error or "").lower()
 
     def test_domain_create_entity_id_adapter(self) -> None:
         """Test Domain.create_entity_id_adapter creation."""
@@ -515,5 +515,6 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Domain.validate_percentage(-5.0)
         if result.failure:
             assert (
-                "percentage" in result.error.lower() or "range" in result.error.lower()
+                "percentage" in (result.error or "").lower()
+                or "range" in (result.error or "").lower()
             )

@@ -10,7 +10,7 @@ from flext_core import FlextFields
 IntegerFieldInstance = FlextFields.Core.IntegerField
 StringFieldInstance = FlextFields.Core.StringField
 BooleanFieldInstance = FlextFields.Core.BooleanField
-FieldInstance = FlextFields.Core.BaseField[object]
+FieldInstance = FlextFields.Core.BaseField
 
 # Constants
 EXPECTED_BULK_SIZE = 2
@@ -179,7 +179,7 @@ class TestFlextFieldRegistry:
         field_result = FlextFields.Factory.create_field("string", "test_field")
         assert field_result.success, f"Field creation failed: {field_result.error}"
 
-        field = cast("FieldInstance", field_result.value)
+        field = cast("FieldInstance[object]", field_result.value)
         reg_result = registry.register_field("test_id", field)
         assert reg_result.success, f"Registration failed: {reg_result.error}"
 
@@ -193,7 +193,7 @@ class TestFlextFieldRegistry:
         field_result = FlextFields.Factory.create_field("string", "test_field")
         assert field_result.success, f"Field creation failed: {field_result.error}"
 
-        field = cast("FieldInstance", field_result.value)
+        field = cast("FieldInstance[object]", field_result.value)
         reg_result = registry.register_field("test_id", field)
         assert reg_result.success, f"Registration failed: {reg_result.error}"
 
@@ -217,8 +217,8 @@ class TestFlextFieldRegistry:
         assert field1_result.success
         assert field2_result.success
         field1, field2 = (
-            cast("FieldInstance", field1_result.value),
-            cast("FieldInstance", field2_result.value),
+            cast("FieldInstance[object]", field1_result.value),
+            cast("FieldInstance[object]", field2_result.value),
         )
 
         reg1_result = registry.register_field("field1", field1)
@@ -240,8 +240,8 @@ class TestFlextFieldRegistry:
         assert field1_result.success
         assert field2_result.success
         field1, field2 = (
-            cast("FieldInstance", field1_result.value),
-            cast("FieldInstance", field2_result.value),
+            cast("FieldInstance[object]", field1_result.value),
+            cast("FieldInstance[object]", field2_result.value),
         )
 
         reg1_result = registry.register_field("field1", field1)
@@ -260,7 +260,7 @@ class TestFlextFieldRegistry:
         field_result = FlextFields.Factory.create_field("string", "test_field")
         assert field_result.success, f"Field creation failed: {field_result.error}"
 
-        field = cast("FieldInstance", field_result.value)
+        field = cast("FieldInstance[object]", field_result.value)
         reg_result = registry.register_field("test_id", field)
         assert reg_result.success, f"Registration failed: {reg_result.error}"
 
@@ -277,7 +277,7 @@ class TestFlextFieldRegistry:
         field_result = FlextFields.Factory.create_field("string", "test_field")
         assert field_result.success, f"Field creation failed: {field_result.error}"
 
-        field = cast("FieldInstance", field_result.value)
+        field = cast("FieldInstance[object]", field_result.value)
         reg_result = registry.register_field("test_id", field)
         assert reg_result.success, f"Registration failed: {reg_result.error}"
 

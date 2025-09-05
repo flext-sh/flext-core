@@ -39,7 +39,7 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        func._test_pattern = pattern  # type: ignore[attr-defined]
+        func._test_pattern = pattern
         return func
 
     return decorator

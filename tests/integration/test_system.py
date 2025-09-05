@@ -245,7 +245,7 @@ class TestCompleteFlextSystemIntegration:
         not_found_result = registry.get_field("campo_inexistente")
         assert not_found_result.success is False
         assert not_found_result.error is not None
-        assert "not found" in not_found_result.error.lower()
+        assert "not found" in (not_found_result.error or "").lower()
 
         # =========================================================================
         # FASE 8: Validação múltipla e processamento de schema

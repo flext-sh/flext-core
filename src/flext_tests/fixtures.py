@@ -23,13 +23,28 @@ import uuid
 from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import httpx
 import pytest
 import pytest_asyncio
-from pytest_benchmark.fixture import BenchmarkFixture
 from pytest_mock import MockerFixture
+
+if TYPE_CHECKING:
+
+    class BenchmarkFixture(Protocol):  # pragma: no cover - typing only
+        """Benchmark fixture."""
+
+        group: str
+
+        def __call__(
+            self, func: object, /, *args: object, **kwargs: object
+        ) -> object: ...
+
+        def pedantic(
+            self, func: object, /, *args: object, **kwargs: object
+        ) -> object: ...
+
 
 from flext_core import (
     FlextCommands,
@@ -224,13 +239,13 @@ def flext_container() -> FlextContainer:
 @pytest.fixture
 def test_entity() -> BaseTestEntity:
     """Fixture providing test domain entity."""
-    return cast("BaseTestEntity", TestEntityFactory.create())
+    return TestEntityFactory.create()
 
 
 @pytest.fixture
 def test_value_object() -> BaseTestValueObject:
     """Fixture providing test value object."""
-    return cast("BaseTestValueObject", TestValueObjectFactory.create())
+    return TestValueObjectFactory.create()
 
 
 @pytest.fixture
@@ -312,7 +327,7 @@ def performance_data() -> dict[str, object]:
 @pytest.fixture
 def large_dataset() -> list[BaseTestEntity]:
     """Fixture providing large dataset for performance testing."""
-    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=1000))
+    return TestEntityFactory.create_batch(size=1000)
 
 
 @pytest.fixture
@@ -440,7 +455,7 @@ def timeline_events() -> list[dict[str, object]]:
 @pytest.fixture
 def entity_batch() -> list[BaseTestEntity]:
     """Fixture providing batch of entities."""
-    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=50))
+    return TestEntityFactory.create_batch(size=50)
 
 
 # Factory registry fixture

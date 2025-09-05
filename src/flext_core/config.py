@@ -1105,9 +1105,12 @@ class FlextConfig(FlextModels.Config):
         try:
             merged = {**base_config, **override_config}
 
-            # Validate for None values which are invalid
+            # Allow None values for optional fields like last_validated
+            # Only reject None for required fields that shouldn't be None
+            required_non_null_fields = {"app_name", "environment", "config_source"}
+
             for key, value in merged.items():
-                if value is None:
+                if value is None and key in required_non_null_fields:
                     return FlextResult[dict[str, object]].fail(
                         f"{FlextConstants.Messages.VALIDATION_FAILED} for {key}: {FlextConstants.Messages.NULL_DATA}",
                     )

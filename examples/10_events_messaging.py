@@ -22,7 +22,9 @@ def demonstrate_basic_payload_creation() -> None:
 
     # Simple string payload
     greeting_payload = FlextModels.Payload[str](
-        data="Hello, World!", source_service="demo_service", message_type="greeting",
+        data="Hello, World!",
+        source_service="demo_service",
+        message_type="greeting",
     )
     print(f"Greeting: {greeting_payload.data}")
     print(f"From: {greeting_payload.source_service}")

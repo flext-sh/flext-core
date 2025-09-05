@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import cast
+from typing import TypeVar, cast
 from unittest.mock import Mock
 
 import pytest
@@ -17,18 +17,21 @@ from flext_tests import (
     TestBuilders,
 )
 
+# Type variable for generic test utilities
+T = TypeVar("T")
+
 
 # Test Utilities and Matchers
 class TestUtilities:
     """Test utilities for FlextResult validation."""
 
     @staticmethod
-    def is_valid_result(result: FlextResult[object]) -> bool:
+    def is_valid_result(result: FlextResult[T]) -> bool:
         """Check if result is valid (either success or failure)."""
         return result.is_success or result.is_failure
 
     @staticmethod
-    def result_has_data(result: FlextResult[object]) -> bool:
+    def result_has_data(result: FlextResult[T]) -> bool:
         """Check if result has data."""
         return result.is_success and result.value is not None
 
@@ -37,36 +40,36 @@ class FlextMatchers:
     """Custom matchers for FlextResult testing."""
 
     @staticmethod
-    def is_successful_result(result: FlextResult[object]) -> bool:
+    def is_successful_result(result: FlextResult[T]) -> bool:
         """Check if result is successful."""
         return result.is_success
 
     @staticmethod
-    def is_failed_result(result: FlextResult[object]) -> bool:
+    def is_failed_result(result: FlextResult[T]) -> bool:
         """Check if result failed."""
         return result.is_failure
 
     @staticmethod
     def result_contains_data(
-        result: FlextResult[object],
-        expected_data: object,
+        result: FlextResult[T],
+        expected_data: T,
     ) -> bool:
         """Check if result contains expected data."""
         return result.is_success and result.value == expected_data
 
     @staticmethod
-    def result_has_value_type(result: FlextResult[object], expected_type: type) -> bool:
+    def result_has_value_type(result: FlextResult[T], expected_type: type) -> bool:
         """Check if result value has expected type."""
         return result.is_success and isinstance(result.value, expected_type)
 
     @staticmethod
-    def result_has_error_code(result: FlextResult[object], expected_code: str) -> bool:
+    def result_has_error_code(result: FlextResult[T], expected_code: str) -> bool:
         """Check if result has expected error code."""
         return result.is_failure and result.error_code == expected_code
 
     @staticmethod
     def result_has_error_message(
-        result: FlextResult[object],
+        result: FlextResult[T],
         expected_message: str,
     ) -> bool:
         """Check if result has expected error message."""
@@ -202,7 +205,7 @@ class TestFlextResultComprehensive:
         result = benchmark(create_large_result)
 
         assert result.success
-        assert len(cast("dict[str, str]", result.value)) == 10000
+        assert len(result.value) == 10000
         assert FlextMatchers.is_successful_result(result)
 
     def test_result_serialization_edge_cases(self) -> None:
@@ -216,7 +219,7 @@ class TestFlextResultComprehensive:
         assert result_with_mock.value.name == "test_mock"
 
         # Test with nested complex data
-        complex_data = {
+        complex_data: dict[str, object] = {
             "nested": {"level": 2, "data": [1, 2, 3]},
             "timestamp": "2024-01-01T00:00:00Z",
             "metadata": {"source": "test", "version": 1.0},
@@ -224,8 +227,8 @@ class TestFlextResultComprehensive:
 
         complex_result = FlextResult[dict[str, object]].ok(complex_data)
         assert complex_result.success
-        nested = cast("dict[str, object]", complex_result.value)
-        assert nested["nested"]["level"] == 2
+        nested = complex_result.value
+        assert cast("dict[str, object]", nested["nested"])["level"] == 2
 
     def test_result_chaining_patterns(self) -> None:
         """Test FlextResult chaining and composition patterns."""
@@ -255,7 +258,7 @@ class TestFlextResultComprehensive:
         if empty_result.success and empty_result.value is not None:
             processed = process_data(empty_result.value)
             assert processed.is_failure
-            assert "Empty data" in processed.error or ""
+            assert "Empty data" in (processed.error or "")
 
     # =========================================================================
     # INTEGRATION WITH TEST UTILITIES
@@ -308,10 +311,10 @@ class TestFlextResultComprehensive:
         result = FlextResult[list[int]].ok(large_data)
 
         # Reference should be maintained
-        assert len(cast("list[int]", result.value)) == 1000
+        assert len(result.value) == 1000
 
         # Modifying original data should affect result (shared reference is expected behavior)
-        original_length = len(cast("list[int]", result.value))
+        original_length = len(result.value)
         assert original_length == 1000
 
         # Test memory cleanup on failure - failed results don't have accessible values
@@ -371,13 +374,15 @@ class TestFlextResultComprehensive:
         )
 
         assert failure_result.is_failure
-        assert "File not found" in failure_result.error or ""
+        assert "File not found" in (failure_result.error or "")
         assert failure_result.error_code == "FILE_NOT_FOUND"
 
     def test_result_json_serialization_comprehensive(self) -> None:
         """Test FlextResult JSON serialization edge cases."""
         # Test success result with JSON-serializable data
-        json_data = {"users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]}
+        json_data: dict[str, object] = {
+            "users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+        }
         result = FlextResult[dict[str, object]].ok(json_data)
 
         # Should be able to serialize the data

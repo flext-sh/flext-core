@@ -148,8 +148,10 @@ class FlextModels:
         @field_validator("config_source")
         @classmethod
         def validate_source(cls, v: str) -> str:
-            """Validate configuration source."""
-            valid_sources = ["default", "file", "environment", "cli", "api"]
+            """Validate configuration source using FlextConstants.Config.ConfigSource."""
+            valid_sources = [
+                source.value for source in FlextConstants.Config.ConfigSource
+            ]
             if v not in valid_sources:
                 msg = f"Invalid source '{v}'. Valid options: {valid_sources}"
                 raise ValueError(msg)

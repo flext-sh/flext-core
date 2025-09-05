@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Never
+from typing import Never, cast
 from unittest.mock import Mock, patch
 
 import pytest
 
-from flext_core import FlextProtocols, FlextResult, FlextServices
+from flext_core import FlextProtocols, FlextResult, FlextServices, FlextTypes
 
 
 class MockConfigError(Exception):
@@ -147,10 +147,12 @@ class TestFlextServicesConfiguration:
 
     def test_create_environment_services_config_invalid(self) -> None:
         """Test creating configuration with invalid environment."""
-        result = FlextServices.create_environment_services_config("invalid_env")
+        result = FlextServices.create_environment_services_config(
+            cast("FlextTypes.Config.Environment", "invalid_env")
+        )
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in (result.error or "")
 
     def test_optimize_services_performance_high(self) -> None:
         """Test performance optimization for high performance level."""
@@ -404,7 +406,7 @@ class TestServiceRegistry:
         result = registry.discover("non_existent_service")
         assert result.is_failure
         assert result.error is not None
-        assert "not found" in result.error
+        assert "not found" in (result.error or "")
 
     def test_register_service_no_name(self) -> None:
         """Test registering service without name."""
@@ -432,7 +434,7 @@ class TestServiceRegistry:
         result = registry.discover("invalid_service")
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid service info type" in result.error
+        assert "Invalid service info type" in (result.error or "")
 
 
 class TestServiceMetrics:
@@ -482,7 +484,7 @@ class TestServiceMetrics:
             result = metrics.track_service_call("service", "operation", 123.0)
             assert result.is_failure
             assert result.error is not None
-            assert "Metrics recording failed" in result.error
+            assert "Metrics recording failed" in (result.error or "")
 
 
 class TestServiceValidation:
@@ -517,7 +519,7 @@ class TestServiceValidation:
         result = validation.validate_input("test_data", mock_schema)
         assert result.is_failure
         assert result.error is not None
-        assert "Input validation failed" in result.error
+        assert "Input validation failed" in (result.error or "")
 
     def test_validate_input_exception(self) -> None:
         """Test input validation with exception."""
@@ -530,9 +532,9 @@ class TestServiceValidation:
         result = validation.validate_input("test_data", mock_schema)
         assert result.is_failure
         assert result.error is not None
-        assert "Input validation failed" in result.error
+        assert "Input validation failed" in (result.error or "")
         assert result.error is not None
-        assert "Schema error" in result.error
+        assert "Schema error" in (result.error or "")
 
     def test_validate_output_success(self) -> None:
         """Test successful output validation."""
@@ -558,7 +560,7 @@ class TestServiceValidation:
         result = validation.validate_output({"data": "test"}, mock_contract)
         assert result.is_failure
         assert result.error is not None
-        assert "Output contract violation" in result.error
+        assert "Output contract violation" in (result.error or "")
 
     def test_validate_output_exception(self) -> None:
         """Test output validation with exception."""
@@ -571,9 +573,9 @@ class TestServiceValidation:
         result = validation.validate_output({"data": "test"}, mock_contract)
         assert result.is_failure
         assert result.error is not None
-        assert "Output contract violation" in result.error
+        assert "Output contract violation" in (result.error or "")
         assert result.error is not None
-        assert "Contract error" in result.error
+        assert "Contract error" in (result.error or "")
 
 
 class ConcreteServiceProcessor(
@@ -606,7 +608,7 @@ class TestServiceProcessor:
     def test_abstract_processor_cannot_instantiate(self) -> None:
         """Test that ServiceProcessor cannot be instantiated directly."""
         with pytest.raises(TypeError):
-            FlextServices.ServiceProcessor()
+            getattr(FlextServices, "ServiceProcessor")()
 
     def test_concrete_processor_initialization(self) -> None:
         """Test concrete processor initialization."""
@@ -650,7 +652,7 @@ class TestServiceProcessor:
         result = processor.process("")  # Empty request should fail
         assert result.is_failure
         assert result.error is not None
-        assert "Empty request" in result.error
+        assert "Empty request" in (result.error or "")
 
     def test_build_result(self) -> None:
         """Test building final result."""
@@ -675,7 +677,7 @@ class TestServiceProcessor:
         result = processor.run_with_metrics("test_category", "")  # Empty input
         assert result.is_failure
         assert result.error is not None
-        assert "Empty request" in result.error
+        assert "Empty request" in (result.error or "")
 
     def test_process_json_success(self) -> None:
         """Test JSON processing success."""
@@ -698,15 +700,14 @@ class TestServiceProcessor:
         processor = ConcreteServiceProcessor()
 
         def handler(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            return FlextResult[dict[str, str]].ok(data)
+            return FlextResult[dict[str, object]].ok(data)
 
         result = processor.process_json("invalid json", dict, handler)
         assert result.is_failure
         assert result.error is not None
-        assert (
-            "parsing/validation failed" in result.error
-            or "Invalid JSON" in result.error
-        )
+        assert "parsing/validation failed" in (
+            result.error or ""
+        ) or "Invalid JSON" in (result.error or "")
 
     def test_process_json_handler_failure(self) -> None:
         """Test JSON processing with handler failure."""
@@ -719,7 +720,7 @@ class TestServiceProcessor:
         result = processor.process_json(json_text, dict, failing_handler)
         assert result.is_failure
         assert result.error is not None
-        assert "Handler error" in result.error
+        assert "Handler error" in (result.error or "")
 
     def test_run_batch_success(self) -> None:
         """Test batch processing with successes."""
@@ -855,8 +856,9 @@ class TestServiceEdgeCases:
         validation = FlextServices.ServiceValidation()
 
         # Schema returns object without is_success attribute
-        def bad_schema(_data: str) -> object:
-            return object()  # No is_success attribute
+        def bad_schema(_data: str) -> FlextResult[str]:  # type: ignore[return-value]
+            # Return an object lacking required attributes to trigger failure path
+            return cast("FlextResult[str]", object())
 
         result = validation.validate_input("data", bad_schema)
         assert result.is_failure
@@ -900,7 +902,7 @@ class TestServiceExceptionPaths:
             # Should return failure result
             assert result.is_failure
             assert result.error is not None
-            assert "Failed to configure services system" in result.error
+            assert "Failed to configure services system" in (result.error or "")
 
     def test_get_services_system_config_exception_path(self) -> None:
         """Test exception handling in get_services_system_config."""
@@ -916,8 +918,8 @@ class TestServiceExceptionPaths:
             # Should return failure result
             assert result.is_failure
             assert result.error is not None
-            assert "Failed to get services system configuration" in result.error
-            assert "Mock config error during result creation" in result.error
+            assert "Failed to get services system configuration" in (result.error or "")
+            assert "Mock config error during result creation" in (result.error or "")
 
     def test_create_environment_services_config_exception_path(self) -> None:
         """Test exception handling in create_environment_services_config."""
@@ -933,7 +935,9 @@ class TestServiceExceptionPaths:
             # Should return failure result
             assert result.is_failure
             assert result.error is not None
-            assert "Failed to create environment services configuration" in result.error
+            assert "Failed to create environment services configuration" in (
+                result.error or ""
+            )
 
     def test_optimize_services_performance_exception_path(self) -> None:
         """Test exception handling in optimize_services_performance."""
@@ -947,4 +951,4 @@ class TestServiceExceptionPaths:
             # Should return failure result
             assert result.is_failure
             assert result.error is not None
-            assert "Failed to optimize services performance" in result.error
+            assert "Failed to optimize services performance" in (result.error or "")

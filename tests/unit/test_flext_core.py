@@ -106,10 +106,9 @@ class TestFlextCore:
 
         assert result.failure
         # Erro real contém "pattern" do Pydantic
-        assert (
-            "pattern" in result.error.lower()
-            or "string_pattern_mismatch" in result.error
-        )
+        assert "pattern" in (
+            result.error or ""
+        ).lower() or "string_pattern_mismatch" in (result.error or "")
 
     def test_configure_core_system_empty_config(self) -> None:
         """Testa configuração com dict vazio."""
@@ -350,28 +349,40 @@ class TestFlextCore:
     def test_database_config_property_none_by_default(self) -> None:
         """Testa propriedade database_config quando não há configuração especializada."""
         core = FlextCore.get_instance()
-        
+
+        # Se já existe uma configuração (de outros testes), limpar primeiro
+        if "database_config" in core._specialized_configs:
+            del core._specialized_configs["database_config"]
+
         # Por padrão, deve retornar None pois não há configuração database especializada
         assert core.database_config is None
 
     def test_security_config_property_none_by_default(self) -> None:
         """Testa propriedade security_config quando não há configuração especializada."""
         core = FlextCore.get_instance()
-        
+
+        # Se já existe uma configuração (de outros testes), limpar primeiro
+        if "security_config" in core._specialized_configs:
+            del core._specialized_configs["security_config"]
+
         # Por padrão, deve retornar None pois não há configuração security especializada
         assert core.security_config is None
 
     def test_logging_config_property_none_by_default(self) -> None:
         """Testa propriedade logging_config quando não há configuração especializada."""
         core = FlextCore.get_instance()
-        
+
+        # Se já existe uma configuração (de outros testes), limpar primeiro
+        if "logging_config" in core._specialized_configs:
+            del core._specialized_configs["logging_config"]
+
         # Por padrão, deve retornar None pois não há configuração logging especializada
         assert core.logging_config is None
 
     def test_logger_property_initialization(self) -> None:
         """Testa propriedade logger é inicializada corretamente."""
         core = FlextCore.get_instance()
-        
+
         # Deve retornar uma instância de _FlextLogger
         logger = core.logger
         assert logger is not None
@@ -382,14 +393,11 @@ class TestFlextCore:
     def test_configure_aggregates_system_success(self) -> None:
         """Testa configuração do sistema de agregados com sucesso."""
         core = FlextCore.get_instance()
-        
-        config = {
-            "enable_aggregates": True,
-            "max_aggregates": 100
-        }
-        
+
+        config = {"enable_aggregates": True, "max_aggregates": 100}
+
         result = core.configure_aggregates_system(config)
-        
+
         # Deve retornar FlextResult com sucesso
         assert isinstance(result, FlextResult)
         if result.success:
@@ -400,9 +408,9 @@ class TestFlextCore:
     def test_get_aggregates_config_default(self) -> None:
         """Testa obtenção de configuração de agregados (default vazio)."""
         core = FlextCore.get_instance()
-        
+
         result = core.get_aggregates_config()
-        
+
         # Deve retornar FlextResult com config (mesmo que vazio)
         assert isinstance(result, FlextResult)
         if result.success:
@@ -412,9 +420,9 @@ class TestFlextCore:
     def test_optimize_aggregates_system_low_level(self) -> None:
         """Testa otimização do sistema de agregados no nível baixo."""
         core = FlextCore.get_instance()
-        
+
         result = core.optimize_aggregates_system("low")
-        
+
         assert isinstance(result, FlextResult)
         if result.success:
             config = result.unwrap()

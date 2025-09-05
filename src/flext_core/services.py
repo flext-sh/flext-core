@@ -174,7 +174,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import cast
+from typing import Generic, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
@@ -183,6 +183,17 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type variables for service generics
+TRequest = TypeVar("TRequest")
+TDomain = TypeVar("TDomain")
+TResult = TypeVar("TResult")
+TJsonRequest = TypeVar("TJsonRequest")
+TJsonResult = TypeVar("TJsonResult")
+TBatchRequest = TypeVar("TBatchRequest")
+TBatchResult = TypeVar("TBatchResult")
+TInput = TypeVar("TInput")
+TOutput = TypeVar("TOutput")
 
 
 class FlextServices:
@@ -587,7 +598,9 @@ class FlextServices:
     # NESTED SERVICE CLASSES
     # ==========================================================================
 
-    class ServiceProcessor[TRequest, TDomain, TResult](FlextMixins.Service, ABC):
+    class ServiceProcessor(
+        FlextMixins.Service, ABC, Generic[TRequest, TDomain, TResult]
+    ):
         """Template method pattern service processor providing standardized processing pipelines with boilerplate elimination.
 
         This abstract base class implements the Template Method pattern for service processing,
@@ -743,6 +756,9 @@ class FlextServices:
             self._database_config: FlextModels.DatabaseConfig | None = None
             self._security_config: FlextModels.SecurityConfig | None = None
             self._logging_config: FlextModels.LoggingConfig | None = None
+            # Performance tracking and correlation utilities
+            self._performance_tracker = FlextUtilities.Performance()
+            self._correlation_generator = FlextUtilities.Generators()
 
         @property
         def database_config(self) -> FlextModels.DatabaseConfig | None:
@@ -867,7 +883,7 @@ class FlextServices:
 
             return _execute_pipeline(request)
 
-        def process_json[TJsonRequest, TJsonResult](
+        def process_json(
             self,
             json_text: str,
             model_cls: type[TJsonRequest],
@@ -915,7 +931,7 @@ class FlextServices:
 
             return handler_result
 
-        def run_batch[TBatchRequest, TBatchResult](
+        def run_batch(
             self,
             items: list[TBatchRequest],
             handler: Callable[[TBatchRequest], FlextResult[TBatchResult]],
@@ -1140,7 +1156,7 @@ class FlextServices:
             """Initialize service validation with pattern matching."""
             self._validation_registry: dict[str, object] = {}
 
-        def validate_input[TInput](
+        def validate_input(
             self,
             input_data: TInput,
             validation_schema: Callable[[TInput], FlextResult[TInput]],
@@ -1167,7 +1183,7 @@ class FlextServices:
             except Exception as e:
                 return FlextResult[TInput].fail(f"Input validation failed: {e!s}")
 
-        def validate_output[TOutput](
+        def validate_output(
             self,
             output_data: TOutput,
             contract_schema: Callable[[TOutput], FlextResult[TOutput]],

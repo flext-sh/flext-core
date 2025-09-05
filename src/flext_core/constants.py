@@ -110,7 +110,9 @@ class FlextConstants:
         MIN_COUNTRY_LENGTH: Final[int] = 2
         CURRENCY_CODE_LENGTH: Final[int] = 3
         MIN_PHONE_LENGTH: Final[int] = 10
-        MIN_PHONE_DIGITS: Final[int] = 7  # Minimum valid phone number digits (local calls)
+        MIN_PHONE_DIGITS: Final[int] = (
+            7  # Minimum valid phone number digits (local calls)
+        )
         MAX_PHONE_LENGTH: Final[int] = 15
         MIN_PRODUCT_NAME_LENGTH: Final[int] = 3
         MAX_PRODUCT_PRICE: Final[int] = 100000

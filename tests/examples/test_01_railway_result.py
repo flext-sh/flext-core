@@ -103,14 +103,14 @@ class TestUser:
         user = User(id="user_789", name="A", email="a@example.com", age=30)
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "at least 2 characters" in result.error
+        assert "at least 2 characters" in (result.error or "")
 
     def test_user_validation_invalid_age(self) -> None:
         """Test user validation with invalid age."""
         user = User(id="user_999", name="Test User", email="test@example.com", age=150)
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "between 0 and 120" in result.error
+        assert "between 0 and 120" in (result.error or "")
 
 
 class TestRegistrationResult:
@@ -263,7 +263,7 @@ class TestUserRegistrationService:
         result = self.service.process_json_registration(json_data)
 
         assert result.is_failure
-        assert "Invalid JSON data" in result.error
+        assert "Invalid JSON data" in (result.error or "")
 
     def test_process_json_registration_empty_json(self) -> None:
         """Test JSON registration processing with empty JSON."""
@@ -271,7 +271,7 @@ class TestUserRegistrationService:
         result = self.service.process_json_registration(json_data)
 
         assert result.is_failure
-        assert "Invalid JSON data" in result.error
+        assert "Invalid JSON data" in (result.error or "")
 
     def test_process_json_registration_malformed_data(self) -> None:
         """Test JSON registration processing with malformed data."""

@@ -11,14 +11,12 @@ from collections.abc import (
     Callable,
 )
 from typing import (
-    TYPE_CHECKING,
     Literal,
     ParamSpec,
     TypeVar,
 )
 
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+from flext_core.result import FlextResult
 
 # =============================================================================
 # FLEXT TYPE SYSTEM - Hierarchical organization following FLEXT patterns
@@ -74,6 +72,10 @@ class FlextTypes:
     class Core:
         """Core fundamental types used throughout the FLEXT ecosystem."""
 
+        # Basic collection types
+        type Dict = dict[str, object]
+        type List = list[object]
+
         # JSON types
         type JsonValue = (
             str
@@ -97,6 +99,26 @@ class FlextTypes:
 
         # Serialization
         type Serializer = Callable[[object], dict[str, object]]
+
+    # =========================================================================
+    # DOMAIN TYPES - Domain-Driven Design patterns
+    # =========================================================================
+
+    class Domain:
+        """Domain types for DDD patterns and business logic."""
+
+        # Entity types
+        type EntityId = str
+        type Entity = object
+
+        # Value object types
+        type ValueObject = object
+
+        # Aggregate types
+        type AggregateRoot = object
+
+        # Domain event types
+        type DomainEvent = dict[str, object]
 
     # =========================================================================
     # RESULT PATTERN TYPES - Railway-oriented programming
@@ -224,10 +246,10 @@ class FlextTypes:
 
         # Primary configuration dictionary type
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
-        # Primary config result
-        type AggregatesConfig = FlextResult[AggregatesConfigDict]
         # Primary aggregate config type
         type AggregatesConfigDict = dict[str, ConfigValue]
+        # Primary config result
+        type AggregatesConfig = FlextResult[AggregatesConfigDict]
 
         # System config result
         type SystemConfig = FlextResult[AggregatesConfigDict]

@@ -8,12 +8,16 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Callable
-from typing import cast
+from typing import Generic, TypeVar, cast
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Type variables for guards system
+R = TypeVar("R")  # Return type variable
+T = TypeVar("T")  # Generic type variable
 
 
 class FlextGuards:
@@ -31,7 +35,7 @@ class FlextGuards:
     # NESTED CLASSES FOR ORGANIZATION
     # ==========================================================================
 
-    class PureWrapper[R]:
+    class PureWrapper(Generic[R]):
         """Advanced wrapper class for pure function enforcement with intelligent memoization.
 
         This nested class implements a sophisticated pure function wrapper that enforces
@@ -883,7 +887,7 @@ class FlextGuards:
         )
 
     @staticmethod
-    def pure[R](
+    def pure(
         func: Callable[[object], R] | Callable[[], R],
     ) -> Callable[[object], R] | Callable[[], R]:
         r"""Transform function into pure function with automatic memoization caching.

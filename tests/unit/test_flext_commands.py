@@ -379,7 +379,7 @@ class TestFlextCommandsComprehensive:
         # Verify failure
         assert FlextMatchers.is_failed_result(result)
         assert result.error is not None
-        assert "already exists" in result.error.lower()
+        assert "already exists" in (result.error or "").lower()
         assert result.error_code == "USER_EXISTS"
         assert "User already exists" in (result.error or "")
         assert result.error_data == {"username": "existing_user"}

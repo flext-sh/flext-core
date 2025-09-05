@@ -108,7 +108,7 @@ class TestFinal20LinesTo100Percent:
         result = FlextMixins.load_from_json(obj, json_array)
 
         assert result.is_failure
-        assert "must be a dictionary" in result.error
+        assert "must be a dictionary" in (result.error or "")
 
     def test_serialization_line_257_mixin_to_dict_basic(self) -> None:
         """Test serialization line 257: mixin to_dict_basic method."""
