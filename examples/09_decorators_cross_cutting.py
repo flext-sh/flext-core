@@ -198,14 +198,18 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
     @FlextDecorators.Performance.cache(max_size=32)
     @FlextDecorators.Performance.monitor()
     def create_user_with_validation(
-        name: str, email: str, age: int,
+        name: str,
+        email: str,
+        age: int,
     ) -> FlextResult[dict[str, object]]:
         """Create user using flext-core validation patterns."""
         return LocalDomainFactory.create_user(name, email, age)
 
     # Execute tests using Railway Pattern
     success_test = create_user_with_validation(
-        "Alice Modern", "alice.modern@example.com", 25,
+        "Alice Modern",
+        "alice.modern@example.com",
+        25,
     )
     if success_test.is_success:
         logger.info("User creation test passed")

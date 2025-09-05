@@ -63,7 +63,9 @@ class TestFlextHandlersCoverage:
     def test_abstract_handler_basic_functionality(self) -> None:
         """Test AbstractHandler basic functionality."""
 
-        class TestHandler(FlextHandlers.Implementation.AbstractHandler[dict, str]):
+        class TestHandler(
+            FlextHandlers.Implementation.AbstractHandler[dict[str, object], str]
+        ):
             def __init__(self) -> None:
                 super().__init__()
                 self._handler_name = "test_handler"
@@ -72,7 +74,7 @@ class TestFlextHandlersCoverage:
             def handler_name(self) -> str:
                 return self._handler_name
 
-            def handle(self, request: dict) -> FlextResult[str]:
+            def handle(self, request: dict[str, object]) -> FlextResult[str]:
                 if isinstance(request, dict) and "data" in request:
                     return FlextResult.ok(f"processed: {request['data']}")
                 return FlextResult.fail("Invalid request")
@@ -203,7 +205,9 @@ class TestFlextHandlersCoverage:
         bus = FlextHandlers.CQRS.CommandBus()
 
         # Create a simple command handler
-        def create_user_handler(command: dict) -> FlextResult[dict]:
+        def create_user_handler(
+            command: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if "name" in command:
                 return FlextResult.ok({"user_id": "123", "name": command["name"]})
             return FlextResult.fail("Name required")
@@ -223,7 +227,9 @@ class TestFlextHandlersCoverage:
         bus = FlextHandlers.CQRS.QueryBus()
 
         # Create a simple query handler
-        def get_user_handler(query: dict) -> FlextResult[dict]:
+        def get_user_handler(
+            query: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if "user_id" in query:
                 return FlextResult.ok({"id": query["user_id"], "name": "John"})
             return FlextResult.fail("User ID required")
@@ -258,12 +264,16 @@ class TestFlextHandlersCoverage:
 
         # Create simple handlers for the chain
         class ValidationHandler(
-            FlextHandlers.Implementation.AbstractHandler[dict, dict],
+            FlextHandlers.Implementation.AbstractHandler[
+                dict[str, object], dict[str, object]
+            ],
         ):
             def handler_name(self) -> str:
                 return "validator"
 
-            def handle(self, request: dict) -> FlextResult[dict]:
+            def handle(
+                self, request: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 if "data" in request:
                     request["validated"] = True
                     return FlextResult.ok(request)
@@ -273,12 +283,16 @@ class TestFlextHandlersCoverage:
                 return message_type is dict
 
         class ProcessingHandler(
-            FlextHandlers.Implementation.AbstractHandler[dict, dict],
+            FlextHandlers.Implementation.AbstractHandler[
+                dict[str, object], dict[str, object]
+            ],
         ):
             def handler_name(self) -> str:
                 return "processor"
 
-            def handle(self, request: dict) -> FlextResult[dict]:
+            def handle(
+                self, request: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 if request.get("validated"):
                     request["processed"] = True
                     return FlextResult.ok(request)
@@ -317,13 +331,15 @@ class TestFlextHandlersCoverage:
         pipeline = FlextHandlers.Patterns.Pipeline("data_pipeline")
 
         # Create pipeline stages
-        def validation_stage(data: dict) -> FlextResult[dict]:
+        def validation_stage(data: dict[str, object]) -> FlextResult[dict[str, object]]:
             if "input" in data:
                 data["validated"] = True
                 return FlextResult.ok(data)
             return FlextResult.fail("Validation stage failed")
 
-        def transformation_stage(data: dict) -> FlextResult[dict]:
+        def transformation_stage(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if data.get("validated"):
                 data["transformed"] = data["input"].upper()
                 return FlextResult.ok(data)
@@ -461,12 +477,16 @@ class TestFlextHandlersCoverage:
         """Test comprehensive error handling and recovery patterns."""
 
         class ErrorProneHandler(
-            FlextHandlers.Implementation.AbstractHandler[dict, dict],
+            FlextHandlers.Implementation.AbstractHandler[
+                dict[str, object], dict[str, object]
+            ],
         ):
             def handler_name(self) -> str:
                 return "error_prone"
 
-            def handle(self, request: dict) -> FlextResult[dict]:
+            def handle(
+                self, request: dict[str, object]
+            ) -> FlextResult[dict[str, object]]:
                 if request.get("should_fail"):
                     return FlextResult.fail("Simulated failure")
                 return FlextResult.ok({"processed": True})

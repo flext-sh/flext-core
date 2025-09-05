@@ -366,7 +366,7 @@ class FlextUtilities:
                     "memory_pool_size_mb": 200,
                     "enable_object_pooling": True,
                     "gc_optimization_enabled": True,
-                    "optimization_level": "aggressive",
+                    "optimization_level": "high",
                     # Performance metrics and targets
                     "expected_throughput_commands_per_second": 500,
                     "target_handler_latency_ms": 5,

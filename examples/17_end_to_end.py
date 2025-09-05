@@ -152,7 +152,9 @@ class UserService:
         return len(self.users)
 
     def get_users_by_age_range(
-        self, min_age: int, max_age: int,
+        self,
+        min_age: int,
+        max_age: int,
     ) -> FlextResult[list[SimpleUser]]:
         """Get users within age range."""
         if min_age > max_age:

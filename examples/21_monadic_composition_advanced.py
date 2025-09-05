@@ -56,7 +56,11 @@ class Order:
     """Order entity for composition demonstration."""
 
     def __init__(
-        self, order_id: str, user_id: str, amount: Decimal, items: list[str],
+        self,
+        order_id: str,
+        user_id: str,
+        amount: Decimal,
+        items: list[str],
     ) -> None:
         """Initialize Order with details."""
         self.order_id = order_id

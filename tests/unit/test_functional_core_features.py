@@ -110,7 +110,7 @@ class TestFlextCoreIntegration:
             def __init__(self) -> None:
                 self.connected = True
 
-            def query(self, sql: str, *args: object) -> list[dict]:
+            def query(self, sql: str, *args: object) -> list[dict[str, object]]:
                 return [{"id": 1, "name": "test"}] if self.connected else []
 
         class NotificationService:
@@ -170,14 +170,14 @@ class TestFlextCoreIntegration:
     def test_result_railway_operations(self) -> None:
         """Test FlextResult railway-oriented programming patterns."""
 
-        def validate_user_data(data: dict) -> FlextResult[dict]:
+        def validate_user_data(data: dict[str, object]) -> FlextResult[dict]:
             if not data.get("email"):
-                return FlextResult[dict].fail("Email required")
+                return FlextResult[dict[str, object]].fail("Email required")
             if "@" not in data["email"]:
-                return FlextResult[dict].fail("Invalid email format")
-            return FlextResult[dict].ok(data)
+                return FlextResult[dict[str, object]].fail("Invalid email format")
+            return FlextResult[dict[str, object]].ok(data)
 
-        def save_user(data: dict) -> FlextResult[str]:
+        def save_user(data: dict[str, object]) -> FlextResult[str]:
             # Simulate save operation
             if data.get("email") == "existing@example.com":
                 return FlextResult[str].fail("Email already exists")
@@ -208,7 +208,7 @@ class TestFlextCoreIntegration:
         )
 
         assert result.failure
-        assert "Email required" in result.error
+        assert "Email required" in (result.error or "")
 
     def test_performance_monitoring_integration(self) -> None:
         """Test performance monitoring and metrics collection."""
@@ -326,12 +326,12 @@ class TestErrorHandlingPatterns:
         # Test error in first step
         result = step1("").flat_map(step2).flat_map(step3)
         assert result.failure
-        assert "Step1: Empty data" in result.error
+        assert "Step1: Empty data" in (result.error or "")
 
         # Test error in middle step
         result = step1("error_data").flat_map(step2).flat_map(step3)
         assert result.failure
-        assert "Step2: Error detected" in result.error
+        assert "Step2: Error detected" in (result.error or "")
 
     def test_error_transformation(self) -> None:
         """Test error transformation and enrichment."""
@@ -347,4 +347,4 @@ class TestErrorHandlingPatterns:
         result = result.recover_with(lambda e: FlextResult[str].fail(f"Context: {e}"))
 
         assert result.failure
-        assert "Context: Enhanced: Original error" in result.error
+        assert "Context: Enhanced: Original error" in (result.error or "")

@@ -10,6 +10,7 @@ import pytest
 from hypothesis import given, strategies as st
 
 from flext_core import FlextConstants, FlextFields
+from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -264,13 +265,26 @@ class TestFlextFieldsValidation:
 
     def test_validate_multiple_fields(self) -> None:
         """Test validate_multiple_fields static method."""
-        fields = [
-            FlextFields.Core.StringField("name", min_length=2),
-            FlextFields.Core.IntegerField("age", min_value=0),
-            FlextFields.Core.EmailField("email"),
+        fields: list[FlextFields.Core.BaseField[object]] = [
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.StringField("name", min_length=2),
+            ),
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.IntegerField("age", min_value=0),
+            ),
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.EmailField("email"),
+            ),
         ]
 
-        values = {"name": "John", "age": 25, "email": "john@example.com"}
+        values: dict[str, object] = {
+            "name": "John",
+            "age": 25,
+            "email": "john@example.com",
+        }
 
         result = FlextFields.Validation.validate_multiple_fields(fields, values)
         assert result.success
@@ -299,20 +313,20 @@ class TestFlextFieldsRegistry:
         field = FlextFields.Core.StringField("test_field")
 
         # Register field
-        result = registry.register_field(
+        reg_result = registry.register_field(
             "test",
             cast("FlextFields.Core.BaseField[object]", field),
         )
-        assert result.success
+        assert reg_result.success
 
         # Get field
-        result = registry.get_field("test")
-        assert result.success
-        assert result.value.name == "test_field"
+        get_result = registry.get_field("test")
+        assert get_result.success
+        assert get_result.value.name == "test_field"
 
         # Get non-existent field
-        result = registry.get_field("missing")
-        assert result.failure
+        missing_result = registry.get_field("missing")
+        assert missing_result.failure
 
     def test_field_registry_validation(self) -> None:
         """Test FieldRegistry validation."""
@@ -333,8 +347,8 @@ class TestFlextFieldsRegistry:
         assert result.failure
 
         # Get with empty name
-        result = registry.get_field("")
-        assert result.failure
+        result_get_empty = registry.get_field("")
+        assert result_get_empty.failure
 
     def test_field_type_registration(self) -> None:
         """Test field type registration."""
@@ -351,13 +365,13 @@ class TestFlextFieldsRegistry:
         assert result.success
 
         # Get field type
-        result = registry.get_field_type("custom")
-        assert result.success
-        assert result.value == FlextFields.Core.StringField
+        type_result = registry.get_field_type("custom")
+        assert type_result.success
+        assert type_result.value == FlextFields.Core.StringField
 
         # Get non-existent type
-        result = registry.get_field_type("missing")
-        assert result.failure
+        missing_type_result = registry.get_field_type("missing")
+        assert missing_type_result.failure
 
     def test_registry_listing(self) -> None:
         """Test registry listing methods."""
@@ -446,7 +460,7 @@ class TestFlextFieldsSchema:
             "metadata": {"version": "1.0"},
         }
 
-        result = processor.process_field_schema(schema)
+        result = processor.process_field_schema(cast("dict[str, object]", schema))
         assert result.success
         assert len(cast("list[object]", result.value["fields"])) == 1
 
@@ -461,7 +475,9 @@ class TestFlextFieldsSchema:
             ],
         }
 
-        result = processor.process_field_schema(invalid_schema)
+        result = processor.process_field_schema(
+            cast("dict[str, object]", invalid_schema)
+        )
         assert result.success  # Should still succeed but with empty fields
 
     def test_process_multiple_schemas(self) -> None:
@@ -472,7 +488,9 @@ class TestFlextFieldsSchema:
             {"fields": [{"name": "field2", "type": "integer"}], "metadata": {}},
         ]
 
-        result = processor.process_multiple_fields_schema(schemas)
+        result = processor.process_multiple_fields_schema(
+            cast("list[dict[str, object]]", schemas)
+        )
         assert result.success
         assert len(result.value) == 2
 
@@ -535,7 +553,9 @@ class TestFlextFieldsFactory:
             ],
         }
 
-        result = FlextFields.Factory.create_fields_from_schema(schema)
+        result = FlextFields.Factory.create_fields_from_schema(
+            cast("dict[str, object]", schema)
+        )
         assert result.success
         assert len(result.value) == 2
         assert result.value[0].name == "username"
@@ -549,7 +569,9 @@ class TestFlextFieldsFactory:
 
         # Invalid fields structure
         schema = {"fields": "not_a_list"}
-        result = FlextFields.Factory.create_fields_from_schema(schema)
+        result = FlextFields.Factory.create_fields_from_schema(
+            cast("dict[str, object]", schema)
+        )
         assert result.failure
 
     def test_field_builder(self) -> None:
@@ -566,7 +588,7 @@ class TestFlextFieldsFactory:
         )
 
         assert result.success
-        field = result.value
+        field = cast("FlextFields.Core.BaseField[object]", result.value)
         assert field.name == "test_field"
         assert field.required is False
 
@@ -592,34 +614,54 @@ class TestFlextFieldsMetadata:
             description="Test field",
         )
 
-        result = FlextFields.Metadata.analyze_field(field)
+        result = FlextFields.Metadata.analyze_field(
+            cast("FlextFields.Core.BaseField[object]", field)
+        )
         assert result.success
 
         analysis = result.value
         assert analysis["field_class"] == "StringField"
         assert "string_constraints" in analysis
-        assert analysis["string_constraints"]["min_length"] == 3
-        assert analysis["string_constraints"]["max_length"] == 20
+        a_dict = analysis
+        sc = cast("dict[str, object]", a_dict["string_constraints"])
+        assert cast("int", sc["min_length"]) == 3
+        assert cast("int", sc["max_length"]) == 20
 
     def test_analyze_numeric_field(self) -> None:
         """Test analysis of numeric field."""
         field = FlextFields.Core.IntegerField("int_field", min_value=0, max_value=100)
 
-        result = FlextFields.Metadata.analyze_field(field)
+        result = FlextFields.Metadata.analyze_field(
+            cast("FlextFields.Core.BaseField[object]", field)
+        )
         assert result.success
 
         analysis = result.value
         assert "numeric_constraints" in analysis
-        assert analysis["numeric_constraints"]["min_value"] == 0
-        assert analysis["numeric_constraints"]["max_value"] == 100
+        a2 = analysis
+        nc = cast("dict[str, object]", a2["numeric_constraints"])
+        assert cast("int", nc["min_value"]) == 0
+        assert cast("int", nc["max_value"]) == 100
 
     def test_get_field_summary(self) -> None:
         """Test field summary generation."""
         fields = [
-            FlextFields.Core.StringField("name", required=True),
-            FlextFields.Core.IntegerField("age", required=True, default=0),
-            FlextFields.Core.BooleanField("active", required=False, default=True),
-            FlextFields.Core.EmailField("email", required=True),
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.StringField("name", required=True),
+            ),
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.IntegerField("age", required=True, default=0),
+            ),
+            cast(
+                "FlextFields.Core.BaseField[object]",
+                FlextFields.Core.BooleanField("active", required=False, default=True),
+            ),
+            cast(
+                "FlextFields.Core.BaseField[object] ",
+                FlextFields.Core.EmailField("email", required=True),
+            ),
         ]
 
         result = FlextFields.Metadata.get_field_summary(fields)
@@ -630,8 +672,9 @@ class TestFlextFieldsMetadata:
         assert summary["required_fields"] == 3
         assert summary["optional_fields"] == 1
         assert summary["fields_with_defaults"] == 2
-        assert "string" in summary["field_types"]
-        assert "integer" in summary["field_types"]
+        field_types = cast("list[str]", summary["field_types"])
+        assert "string" in field_types
+        assert "integer" in field_types
 
 
 class TestFlextFieldsConfiguration:
@@ -639,7 +682,7 @@ class TestFlextFieldsConfiguration:
 
     def test_configure_fields_system(self) -> None:
         """Test fields system configuration."""
-        config = {
+        config: FlextTypes.Config.ConfigDict = {
             "environment": "development",
             "log_level": "DEBUG",
             "validation_level": "strict",
@@ -655,11 +698,12 @@ class TestFlextFieldsConfiguration:
 
     def test_configure_invalid_environment(self) -> None:
         """Test configuration with invalid environment."""
-        config = {"environment": "invalid_env"}
+        config: FlextTypes.Config.ConfigDict = {"environment": "invalid_env"}
 
         result = FlextFields.configure_fields_system(config)
         assert result.failure
-        assert "Invalid environment" in result.error
+        err = result.error or ""
+        assert "Invalid environment" in err
 
     def test_get_fields_system_config(self) -> None:
         """Test getting current fields system configuration."""
@@ -670,7 +714,8 @@ class TestFlextFieldsConfiguration:
         assert "environment" in config
         assert "available_field_types" in config
         assert "supported_constraints" in config
-        assert len(config["available_field_types"]) >= 7
+        available = cast("list[object]", config["available_field_types"])
+        assert len(available) >= 7
 
     def test_create_environment_fields_config(self) -> None:
         """Test creating environment-specific configuration."""
@@ -687,12 +732,14 @@ class TestFlextFieldsConfiguration:
         assert config["log_level"] == "DEBUG"
 
         # Invalid environment
-        result = FlextFields.create_environment_fields_config("invalid")
+        result = FlextFields.create_environment_fields_config(
+            cast("FlextTypes.Config.Environment", "invalid")
+        )
         assert result.failure
 
     def test_optimize_fields_performance(self) -> None:
         """Test fields performance optimization."""
-        config = {"performance_level": "high"}
+        config: FlextTypes.Config.ConfigDict = {"performance_level": "high"}
 
         result = FlextFields.optimize_fields_performance(config)
         assert result.success
@@ -703,7 +750,7 @@ class TestFlextFieldsConfiguration:
         assert optimized["cache_validation_results"] is True
 
         # Low performance
-        config = {"performance_level": "low"}
+        config = cast("FlextTypes.Config.ConfigDict", {"performance_level": "low"})
         result = FlextFields.optimize_fields_performance(config)
         assert result.success
         optimized = result.value
@@ -722,7 +769,7 @@ class TestFlextFieldsLegacyCompatibility:
             description="Test field",
         )
         assert result.success
-        field = result.value
+        field = cast("FlextFields.Core.BaseField[str]", result.value)
         assert field.name == "test_field"
 
     def test_create_integer_field_legacy(self) -> None:
@@ -758,12 +805,13 @@ class TestFlextFieldsEdgeCases:
         # Non-string input
         result = string_field.validate(123)
         assert result.failure
-        assert FlextConstants.Messages.TYPE_MISMATCH in result.error
+        err2 = result.error or ""
+        assert FlextConstants.Messages.TYPE_MISMATCH in err2
 
         # Test integer field with boolean
         int_field = FlextFields.Core.IntegerField("test")
-        result = int_field.validate(True)
-        assert result.failure
+        int_result = int_field.validate(True)
+        assert int_result.failure
 
     @given(st.text(min_size=1, max_size=50))
     def test_string_field_with_random_input(self, text: str) -> None:

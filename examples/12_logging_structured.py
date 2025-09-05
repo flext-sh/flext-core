@@ -31,7 +31,8 @@ from flext_core import (
 # Simple context manager using existing FlextLogger functionality
 @contextlib.contextmanager
 def create_log_context(
-    logger: FlextLogger, **context: object,
+    logger: FlextLogger,
+    **context: object,
 ) -> Generator[FlextLogger]:
     """Create a log context using existing FlextLogger with_context method.
 
@@ -201,7 +202,9 @@ def demonstrate_context_management() -> None:
 
     # Temporarily add request context
     with create_log_context(
-        base_logger, request_id="req_789", user_id="user_456",
+        base_logger,
+        request_id="req_789",
+        user_id="user_456",
     ) as ctx_logger:
         ctx_logger.info("Processing user request", action="get_profile")
         ctx_logger.info("Database query executed", table="users", duration_ms=45)
@@ -213,10 +216,13 @@ def demonstrate_context_management() -> None:
             source="external_api",
         ) as nested_logger:
             nested_logger.info(
-                "Enriching profile data", api_endpoint="/api/v1/profiles",
+                "Enriching profile data",
+                api_endpoint="/api/v1/profiles",
             )
             nested_logger.warning(
-                "API response delayed", expected_ms=100, actual_ms=250,
+                "API response delayed",
+                expected_ms=100,
+                actual_ms=250,
             )
 
     # Context should be restored
@@ -393,7 +399,8 @@ def _log_store_observability() -> None:
     FlextLoggerFactory.set_global_level("INFO")
     observability_logger = FlextLogger("myapp.observability", "INFO")
     with create_log_context(
-        observability_logger, session_id="obs_session_123",
+        observability_logger,
+        session_id="obs_session_123",
     ) as session_logger:
         session_logger.info("Session started", user_agent="Mozilla/5.0")
         session_logger.info("Page viewed", page="/dashboard", load_time_ms=245)
@@ -476,13 +483,17 @@ def _process_user_request(
                 source_ip="192.168.1.100",
             )
             with create_log_context(
-                auth_logger, **correlation_context, service="auth",
+                auth_logger,
+                **correlation_context,
+                service="auth",
             ) as auth_ctx_logger:
                 auth_ctx_logger.info("Authentication started", auth_method="jwt")
                 time.sleep(0.01)
                 auth_ctx_logger.info("Authentication successful", token_valid=True)
             with create_log_context(
-                user_logger, **correlation_context, service="user",
+                user_logger,
+                **correlation_context,
+                service="user",
             ) as user_ctx_logger:
                 user_ctx_logger.info("User service processing started")
                 with create_log_context(

@@ -1360,6 +1360,9 @@ class FlextDelegationSystem:
                 self.has_validation_errors = lambda: len(self.validation_errors) > 0
                 self.to_dict_basic = lambda: {"test": True}
 
+                # Add is_valid method based on internal _is_valid state
+                self.is_valid = lambda: getattr(self, "_is_valid", True)
+
                 # Test delegation can work with FlextMixins static methods
                 self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
@@ -1389,6 +1392,7 @@ class FlextDelegationSystem:
             RuntimeError,
             FlextExceptions.Error,
             FlextExceptions.TypeError,
+            FlextExceptions.BaseError,
         ) as e:
             test_results.append(f"✗ Test failed: {e}")
             error_msg: str = (

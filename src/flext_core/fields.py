@@ -216,6 +216,11 @@ class FlextFields:
                     default=default,
                     description=description,
                 )
+                # Store validation parameters as public properties
+                self.min_length = min_length
+                self.max_length = max_length
+                self.pattern = pattern
+
                 # Create validation strategies using Strategy Pattern
                 strategies = [
                     FlextFields.ValidationStrategies.TypeValidationStrategy(str),

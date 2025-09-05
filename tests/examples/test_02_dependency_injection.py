@@ -95,7 +95,9 @@ class TestDomainModels:
 
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "Name must be at least 2 characters" in str(result.error)
+        assert "Name must be at least 2 characters" in (
+            str(result.error) if result.error else ""
+        )
 
     def test_user_validation_invalid_email_no_at(self) -> None:
         """Test user validation with email missing @."""
@@ -108,7 +110,7 @@ class TestDomainModels:
 
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "Invalid email format" in str(result.error)
+        assert "Invalid email format" in (str(result.error) if result.error else "")
 
     def test_user_validation_invalid_email_no_domain(self) -> None:
         """Test user validation with email missing domain."""
@@ -121,7 +123,7 @@ class TestDomainModels:
 
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "Invalid email format" in str(result.error)
+        assert "Invalid email format" in (str(result.error) if result.error else "")
 
     def test_user_validation_negative_age(self) -> None:
         """Test user validation with negative age."""
@@ -134,7 +136,9 @@ class TestDomainModels:
 
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "Age must be between 0 and 150" in str(result.error)
+        assert "Age must be between 0 and 150" in (
+            str(result.error) if result.error else ""
+        )
 
     def test_user_validation_excessive_age(self) -> None:
         """Test user validation with excessive age."""
@@ -147,7 +151,9 @@ class TestDomainModels:
 
         result = user.validate_business_rules()
         assert result.is_failure
-        assert "Age must be between 0 and 150" in str(result.error)
+        assert "Age must be between 0 and 150" in (
+            str(result.error) if result.error else ""
+        )
 
     def test_user_validation_boundary_age_zero(self) -> None:
         """Test user validation with age 0."""
@@ -626,7 +632,7 @@ class TestIntegration:
         for name, email, age, expected_error in test_cases:
             result = registration_service.register_user(name, email, age)
             assert result.is_failure
-            assert expected_error in str(result.error)
+            assert expected_error in (str(result.error) if result.error else "")
 
 
 # =============================================================================
@@ -670,7 +676,7 @@ class TestRailwayPatternIntegration:
         assert result.is_failure
 
         # Error should be from validation
-        assert "at least 2 characters" in str(result.error)
+        assert "at least 2 characters" in (str(result.error) if result.error else "")
 
     def test_railway_pattern_success_propagation(self) -> None:
         """Test that success properly propagates through railway pattern."""

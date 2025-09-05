@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 import traceback
 from dataclasses import dataclass
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 from flext_core import (
     FlextHandlers,
@@ -21,7 +21,12 @@ from flext_core import (
     FlextResult,
 )
 
-from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-untyped]
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
+
+if not TYPE_CHECKING:
+    # Runtime import from sibling module; ignore for mypy when analyzing without this path
+    from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-not-found]
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints
@@ -671,11 +676,12 @@ def demonstrate_command_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "CQRS Command Handlers", command_handler_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "CQRS Command Handlers",
+        command_handler_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_query_handlers() -> FlextResult[None]:
@@ -685,11 +691,17 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         # Setup test users
         test_users = {
             "user_1": User(
-                "user_1", "Alice Johnson", "alice@example.com", is_active=True,
+                "user_1",
+                "Alice Johnson",
+                "alice@example.com",
+                is_active=True,
             ),
             "user_2": User("user_2", "Bob Wilson", "bob@example.com", is_active=True),
             "user_3": User(
-                "user_3", "Carol Brown", "carol@example.com", is_active=False,
+                "user_3",
+                "Carol Brown",
+                "carol@example.com",
+                is_active=False,
             ),
         }
 
@@ -713,11 +725,12 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "CQRS Query Handlers", query_handler_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "CQRS Query Handlers",
+        query_handler_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_event_handlers() -> FlextResult[None]:
@@ -764,11 +777,12 @@ def demonstrate_event_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Domain Event Handlers", event_handler_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Domain Event Handlers",
+        event_handler_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_handler_registry() -> FlextResult[None]:
@@ -809,9 +823,11 @@ def demonstrate_handler_registry() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner("Handler Registry", registry_demo)  # type: ignore[no-any-unimported]
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Handler Registry", registry_demo
+    )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 # Removed large helper functions that are now consolidated in demonstrate_handler_chain()
@@ -864,9 +880,11 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner("Handler Chain", chain_demo)  # type: ignore[no-any-unimported]
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Handler Chain", chain_demo
+    )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_function_handlers() -> FlextResult[None]:
@@ -897,11 +915,12 @@ def demonstrate_function_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Function Handlers", function_handler_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Function Handlers",
+        function_handler_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def main() -> None:

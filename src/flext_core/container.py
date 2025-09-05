@@ -1149,10 +1149,14 @@ class FlextContainer:
 
     # Define validate_service_name locally to avoid circular import
     @staticmethod
-    def flext_validate_service_name(name: str) -> FlextResult[None]:
+    def flext_validate_service_name(name: object) -> FlextResult[None]:
         """Validate service name string."""
-        if not isinstance(name, str) or not name or not name.strip():
+        if not isinstance(name, str):
             return FlextResult[None].fail("Service name must be a non-empty string")
+        if not name:
+            return FlextResult[None].fail("Service name must be a non-empty string")
+        if not name.strip():
+            return FlextResult[None].fail("Service name cannot be only whitespace")
         return FlextResult[None].ok(None)
 
     @staticmethod

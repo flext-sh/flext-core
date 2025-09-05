@@ -275,7 +275,7 @@ class TestServiceIntegrationPatterns:
         # Assert - Error propagation
         assert result.is_failure is True
         assert result.error is not None
-        assert error_message in result.error
+        assert error_message in (result.error or "")
         # Functional validation - check actual service was called
         assert mock_external_service.call_count == 1
         assert "test_data" in mock_external_service.processed_items

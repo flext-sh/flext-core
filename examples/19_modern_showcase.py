@@ -99,7 +99,9 @@ class Money(FlextModels.Value):
 
     @classmethod
     def create(
-        cls, amount: Decimal | float | str, currency: str = "USD",
+        cls,
+        amount: Decimal | float | str,
+        currency: str = "USD",
     ) -> FlextResult[Self]:
         """Create money with validation."""
         try:
@@ -448,7 +450,9 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _validate_order_constraints(
-        cls, items_data: list[dict[str, object]], config: ECommerceConfig,
+        cls,
+        items_data: list[dict[str, object]],
+        config: ECommerceConfig,
     ) -> FlextResult[None]:
         """Validate order constraints."""
         if len(items_data) > config.max_order_items:
@@ -463,7 +467,8 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _create_order_items(
-        cls, items_data: list[dict[str, object]],
+        cls,
+        items_data: list[dict[str, object]],
     ) -> FlextResult[list[OrderItem]]:
         """Create order items from data."""
         items: list[OrderItem] = []
@@ -521,7 +526,9 @@ class Order(FlextModels.AggregateRoot):
 
     @classmethod
     def _calculate_and_validate_total(
-        cls, items: list[OrderItem], config: ECommerceConfig,
+        cls,
+        items: list[OrderItem],
+        config: ECommerceConfig,
     ) -> FlextResult[Money]:
         """Calculate and validate order total."""
         if not items:
@@ -579,7 +586,9 @@ class PaymentService:
         self.config = config
 
     def process_payment(
-        self, order: Order, payment_method: str = "credit_card",
+        self,
+        order: Order,
+        payment_method: str = "credit_card",
     ) -> FlextResult[str]:
         """Process payment for order."""
         try:
@@ -603,7 +612,9 @@ class OrderService:
     """Order management service."""
 
     def __init__(
-        self, config: ECommerceConfig, payment_service: PaymentService,
+        self,
+        config: ECommerceConfig,
+        payment_service: PaymentService,
     ) -> None:
         """Initialize order service."""
         self.config = config
@@ -702,7 +713,8 @@ def demonstrate_product_creation() -> FlextResult[list[Product]]:
 
 
 def demonstrate_order_processing(
-    user: User, products: list[Product],
+    user: User,
+    products: list[Product],
 ) -> FlextResult[Order]:
     """Demonstrate complete order processing."""
     print("Processing order...")

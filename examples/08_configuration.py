@@ -290,8 +290,9 @@ def create_enterprise_config(config_data: dict[str, object]) -> EnterpriseConfig
 
     Helper function to properly handle model validation with type safety.
     """
-    # Use model_validate for proper type handling with BaseSettings
-    return EnterpriseConfig.model_validate(config_data)
+    # Construct directly for proper typing support with mypy and pydantic
+    # Pydantic will validate nested models on initialization
+    return EnterpriseConfig(**config_data)
 
 
 def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object]]:

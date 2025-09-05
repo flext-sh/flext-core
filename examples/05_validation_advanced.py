@@ -15,7 +15,7 @@ import uuid
 import re
 
 import json
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, TYPE_CHECKING
 
 from flext_core import (
     FlextResult,
@@ -23,6 +23,12 @@ from flext_core import (
 )
 
 T = TypeVar("T")
+
+# For static type checkers, use a package-relative import that mypy can resolve
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from .shared_example_strategies import (
+        ExamplePatternFactory as _ExamplePatternFactory,
+    )
 
 
 class HasError(Protocol):
@@ -492,7 +498,9 @@ def demonstrate_business_rules() -> None:
 
 if __name__ == "__main__":
     # Use Strategy Pattern to eliminate code duplication in examples
-    from shared_example_strategies import ExamplePatternFactory  # type: ignore[import-untyped]
+    # Runtime import from sibling module (works when running this file directly)
+    # Add type ignore so mypy doesn't flag it when analyzing without this path on sys.path
+    from shared_example_strategies import ExamplePatternFactory  # type: ignore[import-not-found]
 
     print("FlextCore Advanced Validation System")
     print("====================================")
@@ -512,13 +520,16 @@ if __name__ == "__main__":
 
     demos = [
         ExamplePatternFactory.create_demo_runner(
-            "Native Validators Demo", _wrap_native_validators,
+            "Native Validators Demo",
+            _wrap_native_validators,
         ),
         ExamplePatternFactory.create_demo_runner(
-            "Enterprise Forms Demo", _wrap_enterprise_forms,
+            "Enterprise Forms Demo",
+            _wrap_enterprise_forms,
         ),
         ExamplePatternFactory.create_demo_runner(
-            "Business Rules Demo", _wrap_business_rules,
+            "Business Rules Demo",
+            _wrap_business_rules,
         ),
     ]
 

@@ -125,7 +125,9 @@ class UltraModernDatabaseService(FlextMixins.Entity):
         self.context = FlextContext()
 
     def process(
-        self, query: str, user_id: str = "anonymous",
+        self,
+        query: str,
+        user_id: str = "anonymous",
     ) -> FlextResult[Sequence[Mapping[str, object]]]:
         """Complete enterprise pipeline in railway pattern."""
         return self._validate_query(query).map(lambda _: self._create_results(user_id))
@@ -137,7 +139,8 @@ class UltraModernDatabaseService(FlextMixins.Entity):
         return FlextResult[str].ok(query)
 
     def _create_results(
-        self, user_id: str = "anonymous",
+        self,
+        user_id: str = "anonymous",
     ) -> Sequence[Mapping[str, object]]:
         """Create enhanced results with metadata."""
         return [
@@ -165,7 +168,8 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
         self.context = FlextContext()
 
     def orchestrate_business_process(
-        self, data: Mapping[str, object],
+        self,
+        data: Mapping[str, object],
     ) -> FlextResult[dict[str, object]]:
         """Complete business process orchestration."""
         return (
@@ -173,7 +177,8 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
         )
 
     def _validate_data(
-        self, data: Mapping[str, object],
+        self,
+        data: Mapping[str, object],
     ) -> FlextResult[Mapping[str, object]]:
         """Validate business data."""
         if not data.get("action"):

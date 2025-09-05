@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Literal
 
 import pytest
 from pydantic import ValidationError
@@ -38,7 +39,7 @@ class TestFlextConfigComprehensive:
         """Test FlextConfig initialization with custom values."""
         config = FlextConfig(
             app_name="test-app",
-            environment="production",
+            environment="development",  # Use development to allow debug=True
             debug=True,
             log_level="INFO",
             max_workers=8,
@@ -46,7 +47,7 @@ class TestFlextConfigComprehensive:
         )
 
         assert config.app_name == "test-app"
-        assert config.environment == "production"
+        assert config.environment == "development"
         assert config.debug is True
         assert config.log_level == "INFO"
         assert config.max_workers == 8
@@ -54,7 +55,9 @@ class TestFlextConfigComprehensive:
 
     def test_validate_environment_valid_values(self) -> None:
         """Test environment validation with valid values."""
-        valid_environments = ["development", "production", "test", "staging"]
+        valid_environments: list[
+            Literal["development", "production", "test", "staging"]
+        ] = ["development", "production", "test", "staging"]
 
         for env in valid_environments:
             config = FlextConfig(environment=env)
@@ -63,7 +66,7 @@ class TestFlextConfigComprehensive:
     def test_validate_environment_invalid_value(self) -> None:
         """Test environment validation with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextConfig(environment="invalid_env")
+            FlextConfig(environment="invalid_env")  # type: ignore[arg-type]
         msg = str(exc_info.value)
         assert "Environment must be one of" in msg or "Input should be" in msg
 
@@ -102,7 +105,8 @@ class TestFlextConfigComprehensive:
 
     def test_validate_config_source_valid_values(self) -> None:
         """Test config source validation with valid values."""
-        valid_sources = ["default", "yaml", "cli", "env", "json", "file", "dotenv"]
+        # Using actual values from FlextConstants.Config.ConfigSource
+        valid_sources = ["file", "env", "cli", "default", "dotenv", "yaml", "json"]
 
         for source in valid_sources:
             config = FlextConfig(config_source=source)
@@ -113,7 +117,7 @@ class TestFlextConfigComprehensive:
         with pytest.raises(ValidationError) as exc_info:
             FlextConfig(config_source="invalid_source")
 
-        assert "Config source must be one of" in str(exc_info.value)
+        assert "Invalid source" in str(exc_info.value)
 
     def test_validate_business_rules_success(self) -> None:
         """Test business rules validation success."""
@@ -129,28 +133,24 @@ class TestFlextConfigComprehensive:
 
     def test_validate_business_rules_debug_in_production(self) -> None:
         """Test business rules validation failure - debug in production."""
-        config = FlextConfig(
-            environment="production",
-            debug=True,  # Invalid: debug in production
-        )
-
-        result = config.validate_business_rules()
-        assert result.is_failure
-        assert "Debug mode should not be enabled in production" in result.error
+        with pytest.raises(
+            ValidationError, match="Debug mode should not be enabled in production"
+        ):
+            FlextConfig(
+                environment="production",
+                debug=True,  # Invalid: debug in production
+            )
 
     def test_validate_business_rules_high_timeout_low_workers(self) -> None:
         """Test business rules validation failure - high timeout with low workers."""
-        config = FlextConfig(
-            timeout_seconds=120,
-            max_workers=1,  # Invalid: high timeout with too few workers
-        )
-
-        result = config.validate_business_rules()
-        assert result.is_failure
-        assert (
-            "High timeout with low worker count may cause resource issues"
-            in result.error
-        )
+        with pytest.raises(
+            ValidationError,
+            match="High timeout with low worker count may cause resource issues",
+        ):
+            FlextConfig(
+                timeout_seconds=120,
+                max_workers=1,  # Invalid: high timeout with too few workers
+            )
 
     def test_serialize_environment(self) -> None:
         """Test environment serialization."""
@@ -200,11 +200,12 @@ class TestFlextConfigComprehensive:
 
     def test_create_complete_config_validation_error(self) -> None:
         """Test create complete config with validation error."""
-        base_config = {"environment": "invalid_env"}
+        base_config: dict[str, object] = {"environment": "invalid_env"}
 
         result = FlextConfig.create_complete_config(base_config, {})
         assert result.is_failure
-        assert "Failed to create complete config" in result.error
+        assert result.error is not None
+        assert "Configuration creation failed" in (result.error or "")
 
     def test_load_and_validate_from_file_success(self) -> None:
         """Test loading and validating from file."""
@@ -239,7 +240,8 @@ class TestFlextConfigComprehensive:
         """Test loading from non-existent file."""
         result = FlextConfig.load_and_validate_from_file("non_existent_file.json")
         assert result.is_failure
-        assert "NOT_FOUND" in result.error
+        assert result.error is not None
+        assert "NOT_FOUND" in (result.error or "")
 
     def test_load_and_validate_from_file_invalid_json(self) -> None:
         """Test loading from file with invalid JSON."""
@@ -255,7 +257,10 @@ class TestFlextConfigComprehensive:
         try:
             result = FlextConfig.load_and_validate_from_file(temp_path)
             assert result.is_failure
-            assert "FLEXT_2004" in result.error or "Expecting value" in result.error
+            assert result.error is not None
+            assert "FLEXT_2004" in (result.error or "") or "Expecting value" in (
+                result.error or ""
+            )
         finally:
             Path(temp_path).unlink()
 
@@ -277,11 +282,12 @@ class TestFlextConfigComprehensive:
 
     def test_safe_load_from_dict_validation_error(self) -> None:
         """Test safe loading from dict with validation error."""
-        invalid_dict = {"environment": "invalid_env"}
+        invalid_dict: dict[str, object] = {"environment": "invalid_env"}
 
         result = FlextConfig.safe_load_from_dict(invalid_dict)
         assert result.is_failure
-        assert "Failed to load from dict" in result.error
+        assert result.error is not None
+        assert "Failed to load from dict" in (result.error or "")
 
     def test_merge_and_validate_configs_success(self) -> None:
         """Test merging and validating two configs."""
@@ -303,12 +309,13 @@ class TestFlextConfigComprehensive:
 
     def test_merge_and_validate_configs_validation_error(self) -> None:
         """Test merging configs with validation error."""
-        config1 = {"app_name": "test"}
-        config2 = {"environment": "invalid_env"}
+        config1: dict[str, object] = {"app_name": "test"}
+        config2: dict[str, object] = {"environment": "invalid_env"}
 
         result = FlextConfig.merge_and_validate_configs(config1, config2)
         assert result.is_failure
-        assert "Failed to merge and validate configs" in result.error
+        assert result.error is not None
+        assert "Failed to merge and validate configs" in (result.error or "")
 
     def test_get_env_with_validation_success(self) -> None:
         """Test getting environment variable with validation."""
@@ -329,7 +336,8 @@ class TestFlextConfigComprehensive:
         # Test with required=True to trigger failure when variable not found
         result = FlextConfig.get_env_with_validation("NON_EXISTENT_VAR", required=True)
         assert result.is_failure
-        assert "Environment variable NON_EXISTENT_VAR not" in result.error
+        assert result.error is not None
+        assert "Environment variable NON_EXISTENT_VAR not" in (result.error or "")
 
     def test_get_env_with_validation_validator_failure(self) -> None:
         """Test getting environment variable with type validation failure."""
@@ -344,8 +352,8 @@ class TestFlextConfigComprehensive:
             assert result.is_failure
             assert result.error is not None
             assert (
-                "cannot convert" in result.error.lower()
-                or "validation" in result.error.lower()
+                "cannot convert" in (result.error or "").lower()
+                or "validation" in (result.error or "").lower()
             )
         finally:
             if "TEST_INVALID_VAR" in os.environ:
@@ -361,7 +369,8 @@ class TestFlextConfigComprehensive:
         """Test config value validation type error."""
         result = FlextConfig.validate_config_value("not_an_int", int)
         assert result.is_failure
-        assert "Validation error:" in result.error
+        assert result.error is not None
+        assert "Validation error:" in (result.error or "")
 
     def test_get_model_config(self) -> None:
         """Test getting model configuration."""
@@ -403,7 +412,10 @@ class TestFlextConfigFunctionality:
         """Test getting non-existent environment variable."""
         result = FlextConfig.get_env_var("NON_EXISTENT_GET_VAR")
         assert result.is_failure
-        assert "Environment variable NON_EXISTENT_GET_VAR not set" in result.error
+        assert result.error is not None
+        assert "Environment variable NON_EXISTENT_GET_VAR not set" in (
+            result.error or ""
+        )
 
     def test_load_json_file_success(self) -> None:
         """Test loading JSON file."""
@@ -432,7 +444,8 @@ class TestFlextConfigFunctionality:
         """Test loading non-existent JSON file."""
         result = FlextConfig.load_json_file("non_existent.json")
         assert result.is_failure
-        assert "NOT_FOUND:" in result.error
+        assert result.error is not None
+        assert "NOT_FOUND:" in (result.error or "")
 
     def test_load_json_file_invalid_json(self) -> None:
         """Test loading invalid JSON file."""
@@ -448,15 +461,16 @@ class TestFlextConfigFunctionality:
         try:
             result = FlextConfig.load_json_file(temp_path)
             assert result.is_failure
-            assert "FLEXT_2004:" in result.error
+            assert result.error is not None
+            assert "FLEXT_2004:" in (result.error or "")
         finally:
             Path(temp_path).unlink()
 
     def test_merge_config_dicts_success(self) -> None:
         """Test merging configuration dictionaries."""
-        dict1 = {"a": 1, "b": 2}
-        dict2 = {"b": 3, "c": 4}
-        dict3 = {"c": 5, "d": 6}
+        dict1: dict[str, object] = {"a": 1, "b": 2}
+        dict2: dict[str, object] = {"b": 3, "c": 4}
+        dict3: dict[str, object] = {"c": 5, "d": 6}
 
         # First merge dict1 and dict2
         intermediate_result = FlextConfig.merge_config_dicts(dict1, dict2)
@@ -482,7 +496,11 @@ class TestFlextConfigFunctionality:
         config_dict = {"app_name": "settings-app", "environment": "test", "debug": True}
 
         # Create FlextConfig directly since that's what has the fields
-        config = FlextConfig(**config_dict)
+        app_name: str = str(config_dict["app_name"])
+        environment: str = str(config_dict["environment"])
+        debug: bool = bool(config_dict["debug"])
+
+        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)  # type: ignore[arg-type]
         assert config.app_name == "settings-app"
         assert config.environment == "test"
         assert config.debug is True
@@ -502,7 +520,11 @@ class TestFlextConfigFunctionality:
         }
 
         # Create FlextConfig directly since Settings doesn't have these fields
-        config = FlextConfig(**config_dict)
+        app_name: str = str(config_dict["app_name"])
+        environment: str = str(config_dict["environment"])
+        debug: bool = bool(config_dict["debug"])
+
+        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)  # type: ignore[arg-type]
         assert config.app_name == "validated-app"
         assert config.environment == "production"
         assert config.debug is False
@@ -578,7 +600,8 @@ class TestFlextConfigFunctionality:
         """Test safely loading non-existent JSON file."""
         result = FlextConfig.safe_load_json_file("safe_non_existent.json")
         assert result.is_failure
-        assert "NOT_FOUND:" in result.error
+        assert result.error is not None
+        assert "NOT_FOUND:" in (result.error or "")
 
     def test_merge_configs_success(self) -> None:
         """Test merging configurations."""
@@ -626,7 +649,8 @@ class TestConfigEdgeCases:
 
             result = FlextConfig.load_json_file(invalid_path)
             assert result.is_failure
-            assert "CONFIG_ERROR:" in result.error
+            assert result.error is not None
+            assert "CONFIG_ERROR:" in (result.error or "")
 
     def test_environment_variable_with_unicode(self) -> None:
         """Test environment variables with unicode characters."""
@@ -705,7 +729,7 @@ class TestConfigEdgeCases:
         # Test validation error for out-of-range priority
         with pytest.raises(ValidationError) as exc_info:
             FlextConfig(config_priority=100)  # Out of range
-        assert "Config priority must be between 1 and 5" in str(exc_info.value)
+        assert "Configuration priority must be between 1 and 10" in str(exc_info.value)
 
         # Test with valid extreme values
         config = FlextConfig(

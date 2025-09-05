@@ -14,7 +14,8 @@ import operator
 import os
 import time
 from collections.abc import Mapping
-from typing import cast
+from typing import cast, TYPE_CHECKING
+from collections.abc import Callable
 
 from flext_core import (
     FlextConstants,
@@ -23,7 +24,12 @@ from flext_core import (
     FlextTypes,
 )
 
-from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-untyped]
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
+
+if not TYPE_CHECKING:
+    # Runtime import from sibling module; ignore for mypy when analyzing without this path
+    from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-not-found]
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Using FlextConstants centralized approach
@@ -126,7 +132,8 @@ class DatabaseConnection:
         demo_username: str = "REDACTED_LDAP_BIND_PASSWORD"
         # Password from environment or demo fallback
         demo_password: str = os.getenv(
-            "FLEXT_DEMO_DB_PASSWORD", "demo_secret_not_for_production",
+            "FLEXT_DEMO_DB_PASSWORD",
+            "demo_secret_not_for_production",
         )
         if username != demo_username or password != demo_password:
             msg: str = "Invalid database credentials"
@@ -702,7 +709,8 @@ def demonstrate_base_exceptions() -> FlextResult[None]:
             # Create and test various exception types
             exceptions_to_test = [
                 FlextExceptions.ValidationError(
-                    "Email format invalid", validation_details={"field": "email"},
+                    "Email format invalid",
+                    validation_details={"field": "email"},
                 ),
                 FlextExceptions.TypeError(
                     "Expected string, got integer",
@@ -715,7 +723,8 @@ def demonstrate_base_exceptions() -> FlextResult[None]:
                     stage="validation",
                 ),
                 FlextExceptions.ConfigurationError(
-                    "Missing API key", config_key="api_key",
+                    "Missing API key",
+                    config_key="api_key",
                 ),
             ]
 
@@ -742,11 +751,12 @@ def demonstrate_base_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Base exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Base Exception Functionality", base_exceptions_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Base Exception Functionality",
+        base_exceptions_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_validation_exceptions() -> FlextResult[None]:
@@ -804,11 +814,12 @@ def demonstrate_validation_exceptions() -> FlextResult[None]:
         )
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Validation Exceptions", validation_exceptions_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Validation Exceptions",
+        validation_exceptions_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_operational_exceptions() -> FlextResult[None]:
@@ -835,7 +846,8 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
 
     # Railway Helper Functions - CRUD operations as pure functions
     def _create_user_operation(
-        service: UserManagementService, user_data: dict[str, object],
+        service: UserManagementService,
+        user_data: dict[str, object],
     ) -> FlextResult[UserManagementService]:
         """Create user operation with error propagation."""
         return (
@@ -845,7 +857,8 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         )
 
     def _get_user_operation(
-        service: UserManagementService, user_id: str,
+        service: UserManagementService,
+        user_id: str,
     ) -> FlextResult[UserManagementService]:
         """Get user operation with error propagation."""
         return (
@@ -855,7 +868,8 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         )
 
     def _delete_user_operation(
-        service: UserManagementService, user_id: str,
+        service: UserManagementService,
+        user_id: str,
     ) -> FlextResult[UserManagementService]:
         """Delete user operation with error propagation."""
         return (
@@ -865,11 +879,12 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
         )
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Operational Exceptions", operational_exceptions_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Operational Exceptions",
+        operational_exceptions_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def demonstrate_configuration_exceptions() -> FlextResult[None]:
@@ -912,11 +927,12 @@ def demonstrate_configuration_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Configuration exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Configuration Exceptions", configuration_exceptions_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Configuration Exceptions",
+        configuration_exceptions_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 # Removed helper functions that are now consolidated in demonstrate_connection_exceptions()
@@ -947,11 +963,12 @@ def demonstrate_connection_exceptions() -> FlextResult[None]:
             return FlextResult[None].fail(f"Connection exceptions demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Connection Exceptions", connection_exceptions_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Connection Exceptions",
+        connection_exceptions_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def _complex_operation() -> FlextResult[str]:
@@ -1089,11 +1106,12 @@ def demonstrate_exception_patterns() -> FlextResult[None]:
             return FlextResult[None].fail(f"Exception patterns demo failed: {e}")
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(  # type: ignore[no-any-unimported]
-        "Exception Patterns", exception_patterns_demo,
+    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
+        "Exception Patterns",
+        exception_patterns_demo,
     )
 
-    return demo.execute()  # type: ignore[no-any-return]
+    return demo.execute()
 
 
 def main() -> None:
@@ -1140,9 +1158,18 @@ def main() -> None:
         ]
 
         # Execute using Composite Demo Suite (eliminates 26-line duplication)
+        def _wrap(
+            func: Callable[[], FlextResult[None]],
+        ) -> Callable[[], FlextResult[object]]:
+            return lambda: func().map(lambda _: object())
+
+        suite_demos: list[tuple[str, Callable[[], FlextResult[object]]]] = [
+            (name, _wrap(func)) for name, func in demos
+        ]
+
         result = ExamplePatternFactory.create_composite_demo_suite(
             "Enterprise Exception Patterns",
-            [(name, lambda f=func: f().map(lambda _: None)) for name, func in demos],
+            suite_demos,
         )
 
         if result.is_success:

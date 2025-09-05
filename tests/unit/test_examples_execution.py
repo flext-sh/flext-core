@@ -180,7 +180,7 @@ class TestExamplesFunctionality:
         invalid_result = validate_email("invalid-email")
         assert invalid_result.is_failure
         assert invalid_result.error is not None
-        assert "must contain @" in invalid_result.error
+        assert "must contain @" in (invalid_result.error or "")
 
     def test_exception_handling_patterns(self) -> None:
         """Test exception handling patterns work as demonstrated."""

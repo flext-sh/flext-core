@@ -136,6 +136,13 @@ from flext_core.constants import FlextConstants
 # Local type variables to avoid circular imports
 T = TypeVar("T")  # Generic type variable
 U = TypeVar("U")  # Generic type variable for transformations
+TUtil = TypeVar("TUtil")  # Utility type variable
+TItem = TypeVar("TItem")  # Item type variable
+TResult = TypeVar("TResult")  # Result type variable
+V = TypeVar("V")  # Additional type variable
+T1 = TypeVar("T1")  # First type variable for multi-arg functions
+T2 = TypeVar("T2")  # Second type variable for multi-arg functions
+T3 = TypeVar("T3")  # Third type variable for multi-arg functions
 
 # =============================================================================
 # FLEXT RESULT - Simple implementation
@@ -760,11 +767,11 @@ class FlextResult[T]:
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
     # Methods for a railway pattern
-    def then[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+    def then(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map."""
         return self.flat_map(func)
 
-    def bind[U](self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
+    def bind(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map (monadic bind)."""
         return self.flat_map(func)
 
@@ -899,7 +906,7 @@ class FlextResult[T]:
         except (TypeError, ValueError, AttributeError) as e:
             return FlextResult[T].fail(str(e))
 
-    def zip_with[U](
+    def zip_with(
         self,
         other: FlextResult[U],
         func: Callable[[T, U], object],
@@ -1030,7 +1037,7 @@ class FlextResult[T]:
     # =========================================================================
 
     @classmethod
-    def safe_unwrap_or_none[TUtil](cls, result: FlextResult[TUtil]) -> TUtil | None:
+    def safe_unwrap_or_none(cls, result: FlextResult[T]) -> T | None:
         """Safely unwrap FlextResult or return None on failure.
 
         Common pattern: result.value if result.success else None
@@ -1046,7 +1053,7 @@ class FlextResult[T]:
         return result.value if result.success else None
 
     @classmethod
-    def unwrap_or_raise[TUtil](
+    def unwrap_or_raise(
         cls,
         result: FlextResult[TUtil],
         exception_type: type[Exception] = RuntimeError,
@@ -1072,7 +1079,7 @@ class FlextResult[T]:
         raise exception_type(result.error or "Operation failed")
 
     @classmethod
-    def collect_successes[TUtil](cls, results: list[FlextResult[TUtil]]) -> list[TUtil]:
+    def collect_successes(cls, results: list[FlextResult[TUtil]]) -> list[TUtil]:
         """Collect all successful values from a list of FlextResults.
 
         Common pattern: [r.value for r in results if r.success]
@@ -1088,7 +1095,7 @@ class FlextResult[T]:
         return [r.value for r in results if r.success]
 
     @classmethod
-    def collect_failures[TUtil](cls, results: list[FlextResult[TUtil]]) -> list[str]:
+    def collect_failures(cls, results: list[FlextResult[TUtil]]) -> list[str]:
         """Collect all error messages from failed FlextResults.
 
         Common pattern: [r.error for r in results if r.is_failure and r.error]
@@ -1104,7 +1111,7 @@ class FlextResult[T]:
         return [r.error for r in results if r.is_failure and r.error]
 
     @classmethod
-    def success_rate[TUtil](cls, results: list[FlextResult[TUtil]]) -> float:
+    def success_rate(cls, results: list[FlextResult[TUtil]]) -> float:
         """Calculate success rate from a list of FlextResults.
 
         Returns percentage (0.0 to 100.0) of successful results.
@@ -1122,7 +1129,7 @@ class FlextResult[T]:
         return (successes / len(results)) * 100.0
 
     @classmethod
-    def batch_process[TItem, TUtil](
+    def batch_process(
         cls,
         items: list[TItem],
         processor: Callable[[TItem], FlextResult[TUtil]],
@@ -1209,7 +1216,7 @@ class FlextResult[T]:
         # Both successful - combine values
         return FlextResult[tuple[T, U]].ok((self.unwrap(), other.unwrap()))
 
-    def __truediv__[U](self, other: FlextResult[U]) -> FlextResult[T | U]:
+    def __truediv__(self, other: FlextResult[U]) -> FlextResult[T | U]:
         """Division operator (/) for alternative fallback - ADVANCED COMPOSITION.
 
         Enables fallback composition: primary_result / backup_result / default_result
@@ -1258,7 +1265,7 @@ class FlextResult[T]:
     # === ADVANCED MONADIC COMBINATORS (Category Theory) ===
 
     @classmethod
-    def traverse[TItem, TResult](
+    def traverse(
         cls,
         items: list[TItem],
         func: Callable[[TItem], FlextResult[TResult]],
@@ -1280,7 +1287,7 @@ class FlextResult[T]:
 
         return FlextResult[list[TResult]].ok(results)
 
-    def kleisli_compose[U, V](
+    def kleisli_compose(
         self,
         f: Callable[[T], FlextResult[U]],
         g: Callable[[U], FlextResult[V]],
@@ -1297,7 +1304,7 @@ class FlextResult[T]:
         return composed
 
     @classmethod
-    def applicative_lift2[T1, T2, TResult](
+    def applicative_lift2(
         cls,
         func: Callable[[T1, T2], TResult],
         result1: FlextResult[T1],
@@ -1316,7 +1323,7 @@ class FlextResult[T]:
         return FlextResult[TResult].ok(func(result1.unwrap(), result2.unwrap()))
 
     @classmethod
-    def applicative_lift3[T1, T2, T3, TResult](
+    def applicative_lift3(
         cls,
         func: Callable[[T1, T2, T3], TResult],
         result1: FlextResult[T1],

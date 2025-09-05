@@ -1006,7 +1006,9 @@ class TestFlextContainerAdvancedCoverage:
         FlextMatchers.assert_result_success(unregister_validation)
 
         # Test validation failures
-        empty_register_cmd = FlextContainer.Commands.RegisterService("", None)
+        empty_register_cmd = FlextContainer.Commands.RegisterService(
+            service_name="", service_instance=None
+        )
         empty_validation = empty_register_cmd.validate_command()
         FlextMatchers.assert_result_failure(empty_validation)
 

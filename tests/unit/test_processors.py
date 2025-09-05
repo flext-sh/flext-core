@@ -5,6 +5,7 @@ testing all nested classes, methods, and functionality paths with real execution
 
 """
 
+import re
 import threading
 import time
 from collections import UserDict
@@ -204,14 +205,16 @@ class TestFlextProcessorsBaseProcessor:
         processor = FlextProcessors.BaseProcessor()
         bad_entry = BadEntry()
         # Cast to Entry protocol for type checker
-        bad_entry_typed: FlextProcessors.Entry = bad_entry
+        bad_entry_typed: FlextProcessors.Entry = cast(
+            "FlextProcessors.Entry", bad_entry
+        )
         result = processor.extract_info_from_entry(bad_entry_typed)
 
         # Should fail due to exception
         assert result.is_failure
         # FlextResult.error can be None, so check safely
         assert result.error is not None
-        assert "Failed to process entry" in result.error
+        assert "Failed to process entry" in (result.error or "")
 
 
 class TestFlextProcessorsRegexProcessor:
@@ -251,7 +254,7 @@ class TestFlextProcessorsRegexProcessor:
 
         assert result.is_failure
         assert result.error is not None
-        assert "No identifier found" in result.error
+        assert "No identifier found" in (result.error or "")
 
     def test_validate_content_format_success(self) -> None:
         """Test successful content format validation."""
@@ -285,7 +288,7 @@ class TestFlextProcessorsRegexProcessor:
                         msg = "Pattern search error"
                         raise RuntimeError(msg)
 
-                self.pattern = BadPattern()
+                self.pattern = cast("re.Pattern[str]", BadPattern())
 
             def extract_identifier_from_content(self, content: str) -> FlextResult[str]:
                 """Extract identifier method that will fail."""
@@ -298,13 +301,14 @@ class TestFlextProcessorsRegexProcessor:
                     # return FlextResult[str].fail("No match found")  # pragma: no cover
                 except Exception as e:
                     return FlextResult[str].fail(f"Regex extraction failed: {e}")
+                return FlextResult[str].fail("Unexpected state")
 
         bad_processor = BadProcessor()
         result = bad_processor.extract_identifier_from_content("test")
 
         assert result.is_failure
         assert result.error is not None
-        assert "Regex extraction failed" in result.error
+        assert "Regex extraction failed" in (result.error or "")
 
     def test_validate_content_format_exception_handling(self) -> None:
         """Test exception handling in validate_content_format."""
@@ -321,14 +325,14 @@ class TestFlextProcessorsRegexProcessor:
                         msg = "Pattern validation error"
                         raise RuntimeError(msg)
 
-                self.pattern = BadPattern()
+                self.pattern = cast("re.Pattern[str]", BadPattern())
 
         bad_processor = BadProcessor()
         result = bad_processor.validate_content_format("test")
 
         assert result.is_failure
         assert result.error is not None
-        assert "Content validation failed" in result.error
+        assert "Content validation failed" in (result.error or "")
 
 
 class TestFlextProcessorsConfigProcessor:
@@ -388,7 +392,7 @@ class TestFlextProcessorsConfigProcessor:
 
         assert result.is_failure
         assert result.error is not None
-        assert "not found" in result.error
+        assert "not found" in (result.error or "")
 
     def test_validate_configuration_attribute_validation_fails(
         self,
@@ -457,7 +461,7 @@ class TestFlextProcessorsConfigProcessor:
 
         assert result.is_failure
         assert result.error is not None
-        assert "validation failed" in result.error.lower()
+        assert "validation failed" in (result.error or "").lower()
 
     def test_get_config_value_exception_handling(
         self,
@@ -487,7 +491,7 @@ class TestFlextProcessorsConfigProcessor:
 
         assert result.is_failure
         assert result.error is not None
-        assert "failed" in result.error.lower()
+        assert "failed" in (result.error or "").lower()
 
 
 class TestFlextProcessorsProcessingPipeline:
@@ -576,7 +580,7 @@ class TestFlextProcessorsProcessingPipeline:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Pipeline processing failed" in result.error
+        assert "Pipeline processing failed" in (result.error or "")
 
 
 class TestFlextProcessorsSorter:
@@ -696,7 +700,7 @@ class TestFlextProcessorsFactoryMethods:
 
         assert result.is_failure
         assert result.error is not None
-        assert "Missing required fields" in result.error
+        assert "Missing required fields" in (result.error or "")
 
     def test_create_entry_defaults_unknown_type(self) -> None:
         """Test entry creation defaults to unknown type."""
@@ -802,7 +806,7 @@ class TestFlextProcessorsFactoryMethods:
 
         assert result.is_failure
         assert result.error is not None
-        assert "must be a dictionary" in result.error
+        assert "must be a dictionary" in (result.error or "")
 
     def test_validate_configuration_invalid_key_type(self) -> None:
         """Test configuration validation with non-string keys (now accepted)."""
@@ -813,8 +817,9 @@ class TestFlextProcessorsFactoryMethods:
         # Now accepts non-string keys since dict[str, object] allows this
         assert result.success
         validated_config = result.unwrap()
+        validated_config_obj = cast("dict[object, object]", validated_config)
         # Access the numeric key directly since validation preserves original types
-        assert validated_config[42] == "numeric_key"
+        assert validated_config_obj[42] == "numeric_key"
 
     def test_validate_configuration_invalid_value_type(self) -> None:
         """Test configuration validation with invalid value type."""
@@ -828,7 +833,7 @@ class TestFlextProcessorsFactoryMethods:
 
         assert result.is_failure
         assert result.error is not None
-        assert "must be a basic type" in result.error
+        assert "must be a basic type" in (result.error or "")
 
     def test_validate_configuration_allows_none_values(self) -> None:
         """Test configuration validation allows None values."""
@@ -1424,7 +1429,9 @@ class TestFlextProcessorsIntegration:
         validated_config = validation_result.unwrap()
 
         # Configure system with validated config - cast to expected type
-        config_dict: FlextTypes.Config.ConfigDict = validated_config
+        config_dict: FlextTypes.Config.ConfigDict = cast(
+            "FlextTypes.Config.ConfigDict", validated_config
+        )
         system_config_result = FlextProcessors.configure_processors_system(config_dict)
         assert system_config_result.success
         system_config = system_config_result.unwrap()
@@ -1952,13 +1959,13 @@ class TestFlextProcessorsAdditionalCoverage:
         result = processor_with_validator.handle(entry)
         assert result.is_failure
         assert result.error is not None
-        assert "Validation error" in result.error
+        assert "Validation error" in (result.error or "")
 
         # Test invalid request type (line 466)
         result = processor_with_validator.handle(123)  # Invalid type
         assert result.is_failure
         assert result.error is not None
-        assert "Invalid request type" in result.error
+        assert "Invalid request type" in (result.error or "")
 
         # Test process_entry method with failing validation (lines 473-484)
         entry_result = processor_with_validator.process_entry(entry)
@@ -2009,7 +2016,7 @@ class TestFlextProcessorsAdditionalCoverage:
             result = FlextProcessors.Sorter.sort_entries(entries)
             assert result.is_failure
             assert result.error is not None
-            assert "Sorting failed: Sorting error" in result.error
+            assert "Sorting failed: Sorting error" in (result.error or "")
 
     def test_factory_methods_exception_handling(self) -> None:
         """Test factory method exception handling (lines 632-633, 647-648)."""
@@ -2029,7 +2036,7 @@ class TestFlextProcessorsAdditionalCoverage:
             )
             assert result.is_failure
             assert result.error is not None
-            assert "Entry creation failed:" in result.error
+            assert "Entry creation failed:" in (result.error or "")
 
         # Test create_regex_processor exception handling
         with patch.object(FlextProcessors, "RegexProcessor") as mock_processor_class:
@@ -2049,7 +2056,9 @@ class TestFlextProcessorsAdditionalCoverage:
             result = FlextProcessors.create_processing_pipeline()
             assert result.is_failure
             assert result.error is not None
-            assert "Pipeline creation failed: Pipeline creation error" in result.error
+            assert "Pipeline creation failed: Pipeline creation error" in (
+                result.error or ""
+            )
 
     def test_configuration_validation_exception_handling(self) -> None:
         """Test configuration validation with exception (lines 701-702)."""
@@ -2061,7 +2070,7 @@ class TestFlextProcessorsAdditionalCoverage:
             result = FlextProcessors.validate_configuration({"key": "value"})
             assert result.is_failure
             assert result.error is not None
-            assert "Configuration validation failed: Cast error" in result.error
+            assert "Configuration validation failed: Cast error" in (result.error or "")
 
     def test_regex_processor_base_failure(self) -> None:
         """Test RegexProcessor when base processing fails (line 384)."""
@@ -2088,7 +2097,7 @@ class TestFlextProcessorsAdditionalCoverage:
             result = processor.process_data(entry)
             assert result.is_failure
             assert result.error is not None
-            assert "Base processing failed" in result.error
+            assert "Base processing failed" in (result.error or "")
 
     def test_validating_processor_process_entry_edge_cases(self) -> None:
         """Test ValidatingProcessor process_entry edge cases (lines 464, 482)."""
@@ -2111,7 +2120,7 @@ class TestFlextProcessorsAdditionalCoverage:
         result = processor_with_validator.process_entry(entry)
         assert result.is_failure
         assert result.error is not None
-        assert "Validation failed" in result.error
+        assert "Validation failed" in (result.error or "")
 
         # Test process_entry where handle returns non-Entry object (line 482)
         processor = FlextProcessors.ValidatingProcessor()

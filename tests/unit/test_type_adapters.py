@@ -259,7 +259,7 @@ class TestSerializers:
         )
 
         assert result.is_failure
-        assert "JSON" in result.error
+        assert "JSON" in (result.error or "")
 
 
 class TestSchemaGenerators:

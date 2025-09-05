@@ -157,7 +157,7 @@ strict_optional = true
 # Import handling
 ignore_missing_imports = false
 follow_imports = "normal"
-follow_imports_for_stubs = false
+follow_imports_for_stubs = true
 
 # Error reporting
 show_error_codes = true
@@ -169,7 +169,7 @@ color_output = true
 error_summary = true
 
 # Disable specific error codes for decorator patterns
-disable_error_code = ["misc", "method-assign"]  # Allow decorator patterns and dynamic method assignment
+# disable_error_code = ["misc", "method-assign"]  # Allow decorator patterns and dynamic method assignment
 
 # Python version and execution
 python_version = "3.13"
@@ -214,6 +214,10 @@ disable_error_code = ["import-untyped", "no-any-unimported"]
 module = "pytest_benchmark.fixture"
 ignore_missing_imports = true
 disable_error_code = ["import-untyped", "no-any-unimported", "attr-defined"]
+
+[[tool.mypy.overrides]]
+module = "tests.patterns.test_advanced_patterns"
+disable_error_code = ["misc"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

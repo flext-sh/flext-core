@@ -47,7 +47,7 @@ class TestProtocolsConfig100PercentCoverage:
 
         result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.failure
-        assert "Invalid environment 'invalid_environment'" in result.error
+        assert "Invalid environment 'invalid_environment'" in (result.error or "")
 
     def test_configure_protocols_system_missing_environment(self) -> None:
         """Test lines 829-832: Missing environment default."""
@@ -72,7 +72,7 @@ class TestProtocolsConfig100PercentCoverage:
 
         result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.failure
-        assert "Invalid protocol_level 'invalid_level'" in result.error
+        assert "Invalid protocol_level 'invalid_level'" in (result.error or "")
 
     def test_configure_protocols_system_missing_protocol_level(self) -> None:
         """Test lines 842-845: Missing protocol_level default."""
@@ -163,7 +163,7 @@ class TestProtocolsConfig100PercentCoverage:
             "invalid_env",
         )
         assert result.failure
-        assert "Unknown environment" in result.error
+        assert "Unknown environment" in (result.error or "")
 
     def test_optimize_protocols_performance_all_levels(self) -> None:
         """Test lines 1104-1205: optimize_protocols_performance method."""
@@ -184,7 +184,7 @@ class TestProtocolsConfig100PercentCoverage:
         """Test invalid performance level handling."""
         result = FlextProtocols.Config.optimize_protocols_performance("invalid_level")
         assert result.failure
-        assert "Invalid performance level" in result.error
+        assert "Invalid performance level" in (result.error or "")
 
     def test_optimize_protocols_performance_default_level(self) -> None:
         """Test default performance level."""

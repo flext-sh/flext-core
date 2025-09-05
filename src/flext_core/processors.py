@@ -486,12 +486,12 @@ class FlextProcessors:
             self,
             input_processor: Callable[
                 [object],
-                FlextTypes.Result.ResultType[object],
+                FlextResult[object],
             ]
             | None = None,
             output_processor: Callable[
                 [object],
-                FlextTypes.Result.ResultType[object],
+                FlextResult[object],
             ]
             | None = None,
         ) -> None:
@@ -499,7 +499,7 @@ class FlextProcessors:
 
             def default_processor(
                 x: object,
-            ) -> FlextTypes.Result.ResultType[object]:
+            ) -> FlextResult[object]:
                 return FlextResult[object].ok(x)
 
             self.input_processor = input_processor or default_processor
@@ -510,7 +510,7 @@ class FlextProcessors:
             self,
             step: Callable[
                 [object],
-                FlextTypes.Result.ResultType[object],
+                FlextResult[object],
             ],
         ) -> FlextProcessors.ProcessingPipeline:
             """Add processing step as handler."""
@@ -648,15 +648,15 @@ class FlextProcessors:
         cls,
         input_processor: Callable[
             [object],
-            FlextTypes.Result.ResultType[object],
+            FlextResult[object],
         ]
         | None = None,
         output_processor: Callable[
             [object],
-            FlextTypes.Result.ResultType[object],
+            FlextResult[object],
         ]
         | None = None,
-    ) -> FlextTypes.Result.ResultType[FlextProcessors.ProcessingPipeline]:
+    ) -> FlextResult[FlextProcessors.ProcessingPipeline]:
         """Create processing pipeline with optional processors."""
         try:
             pipeline = cls.ProcessingPipeline(input_processor, output_processor)

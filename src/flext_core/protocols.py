@@ -83,11 +83,22 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Awaitable, Callable
-from typing import Protocol, cast, runtime_checkable
+from typing import Generic, Protocol, TypeVar, cast, runtime_checkable
 
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
+
+# Type variables for generic protocols
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+
+# Type variables for generic protocols with correct variance
+T_co = TypeVar("T_co", covariant=True)  # For output types
+T_contra = TypeVar("T_contra", contravariant=True)  # For input types
+TInput_contra = TypeVar("TInput_contra", contravariant=True)
+TOutput_co = TypeVar("TOutput_co", covariant=True)
 
 # =============================================================================
 # HIERARCHICAL PROTOCOL ARCHITECTURE - Optimized with composition
@@ -140,22 +151,22 @@ class FlextProtocols:
     class Foundation:
         """Foundation layer protocols - core building blocks for the ecosystem."""
 
-        class Callable[T](Protocol):
+        class Callable(Protocol, Generic[T_co]):
             """Generic callable protocol with parameter and return type safety."""
 
-            def __call__(self, *args: object, **kwargs: object) -> T:
+            def __call__(self, *args: object, **kwargs: object) -> T_co:
                 """Execute the callable with given arguments."""
                 ...
 
         @runtime_checkable
-        class DecoratedCallable[T](Protocol):
+        class DecoratedCallable(Protocol, Generic[T_co]):
             """Callable protocol with function attributes for decorators.
 
             This protocol represents a function that has been decorated and
             includes all standard function attributes.
             """
 
-            def __call__(self, *args: object, **kwargs: object) -> T:
+            def __call__(self, *args: object, **kwargs: object) -> T_co:
                 """Execute the callable with given arguments."""
                 ...
 
@@ -198,10 +209,10 @@ class FlextProtocols:
                 """Hash support for objects that implement rich comparison."""
                 ...
 
-        class Validator[T](Protocol):
+        class Validator(Protocol, Generic[T_contra]):
             """Generic validator protocol for type-safe validation."""
 
-            def validate(self, data: T) -> object:
+            def validate(self, data: T_contra) -> object:
                 """Validate input data and return success/failure status."""
                 ...
 
@@ -212,17 +223,17 @@ class FlextProtocols:
                 """Transform an exception into an error message string."""
                 ...
 
-        class Factory[T](Protocol):
+        class Factory(Protocol, Generic[T_co]):
             """Type-safe factory protocol for object creation."""
 
-            def create(self, **kwargs: object) -> object:
+            def create(self, **kwargs: object) -> T_co:
                 """Create instance of type T."""
                 ...
 
-        class AsyncFactory[T](Protocol):
+        class AsyncFactory(Protocol, Generic[T_co]):
             """Async factory protocol for asynchronous object creation."""
 
-            async def create_async(self, **kwargs: object) -> object:
+            async def create_async(self, **kwargs: object) -> T_co:
                 """Create instance asynchronously."""
                 ...
 
@@ -338,7 +349,7 @@ class FlextProtocols:
                 """Perform health check."""
                 ...
 
-        class Repository[T](Protocol):
+        class Repository(Protocol, Generic[T_contra]):
             """Repository protocol for data access patterns."""
 
             @abstractmethod
@@ -347,7 +358,7 @@ class FlextProtocols:
                 ...
 
             @abstractmethod
-            def save(self, entity: T) -> object:
+            def save(self, entity: T_contra) -> object:
                 """Save entity."""
                 ...
 
@@ -407,14 +418,14 @@ class FlextProtocols:
     class Application:
         """Application layer protocols - use cases, handlers, and orchestration."""
 
-        class Handler[TInput, TOutput](Protocol):
+        class Handler(Protocol, Generic[TInput_contra, TOutput_co]):
             """Application handler with validation and processing."""
 
-            def __call__(self, input_data: TInput) -> object:
+            def __call__(self, input_data: TInput_contra) -> object:
                 """Process input data and return transformed output."""
                 ...
 
-            def validate(self, data: TInput) -> object:
+            def validate(self, data: TInput_contra) -> object:
                 """Validate input before processing (Foundation.Validator composition)."""
                 ...
 
@@ -712,10 +723,10 @@ class FlextProtocols:
     # DECORATOR PROTOCOLS - Special function patterns
     # =============================================================================
 
-    class DecoratedFunction[T](Protocol):
+    class DecoratedFunction(Protocol, Generic[T_co]):
         """Decorated function protocol returning FlextResult for railway-oriented programming."""
 
-        def __call__(self, *args: object, **kwargs: object) -> object:
+        def __call__(self, *args: object, **kwargs: object) -> T_co:
             """Execute the decorated function returning FlextResult."""
             ...
 

@@ -10,7 +10,6 @@ following the user's requirement for real tests without mocks.
 from __future__ import annotations
 
 import time
-from typing import cast
 
 import pytest
 
@@ -61,7 +60,7 @@ class TestFlextHandlersRealFunctionality:
         result = handler.configure(invalid_config)
         assert result.success is False
         assert result.error is not None
-        assert "Invalid log_level" in result.error
+        assert "Invalid log_level" in (result.error or "")
 
     def test_handler_environment_validation_real(self) -> None:
         """Test environment validation using StrEnum values."""
@@ -80,7 +79,7 @@ class TestFlextHandlersRealFunctionality:
         result = handler.configure(invalid_config)
         assert result.success is False
         assert result.error is not None
-        assert "Invalid environment" in result.error
+        assert "Invalid environment" in (result.error or "")
 
     def test_handler_log_level_validation_real(self) -> None:
         """Test log level validation using StrEnum values."""
@@ -371,7 +370,7 @@ class TestHandlersConfigurationIntegration:
 
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                cast("str", "invalid_env"),
+                "invalid_env",
             )
         )
         assert invalid_result.success is False
