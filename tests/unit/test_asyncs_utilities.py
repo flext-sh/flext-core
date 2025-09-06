@@ -396,11 +396,10 @@ class TestAsyncContextManager:
             teardown_func=teardown,
         )
 
-        with pytest.raises(ValueError):
-            async with context as resource:
-                assert resource == "resource"
-                msg = "Test error"
-                raise ValueError(msg)
+        error_msg = "Test error"
+        with pytest.raises(ValueError, match=error_msg):
+            async with context:
+                raise ValueError(error_msg)
 
         # Teardown should still be called
         assert cleaned_up

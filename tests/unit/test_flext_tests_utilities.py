@@ -273,7 +273,7 @@ class TestFlextTestMocker:
 
     def test_protocol_compliance(self) -> None:
         """Test that mocker implements ITestMocker protocol."""
-        mocker = FlextTestMocker()
+        _ = FlextTestMocker()  # Create instance to verify it can be instantiated
         # Skip protocol compliance test due to incompatible method signatures
         # assert isinstance(mocker, ITestMocker)
 

@@ -1,10 +1,7 @@
-"""FLEXT Fields - Comprehensive field definition and validation system.
+"""Field definitions and metadata for domain models.
 
-Type-safe field validation, metadata management, and schema processing system using
-hierarchical nested classes for domain organization, registry-based field management,
-and FlextResult integration.
-
-
+Provides field types, validators, and metadata for Pydantic models
+with enterprise constraints and business rules.
 """
 
 from __future__ import annotations

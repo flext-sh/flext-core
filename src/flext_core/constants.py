@@ -1,11 +1,4 @@
-"""FLEXT Constants - Hierarchical constants system with domain organization.
-
-Provides FlextConstants class as single source of truth for all FLEXT ecosystem
-constants, organized by domain with type-safe Final annotations.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-"""
+"""Constants and enumerations for the FLEXT ecosystem."""
 
 from __future__ import annotations
 
@@ -14,13 +7,7 @@ from typing import ClassVar, Final, override
 
 
 class FlextConstants:
-    """Hierarchical constants system organizing FLEXT constants by domain.
-
-    Provides structured organization of constants grouped by domain:
-    Core, Network, Validation, Errors, Messages, Status, Performance,
-    Configuration, Infrastructure, and more.
-
-    """
+    """Hierarchical constants system for the FLEXT ecosystem."""
 
     # Class-level metadata for ecosystem compatibility
     ERROR_CODES: ClassVar[dict[str, str]] = {}  # Built at module level
@@ -31,7 +18,7 @@ class FlextConstants:
     # =========================================================================
 
     class Core:
-        """Core fundamental constants: system identity, versioning, architecture."""
+        """Core system constants."""
 
         # System identity constants
         NAME: Final[str] = "FLEXT"
@@ -60,7 +47,7 @@ class FlextConstants:
     # =========================================================================
 
     class Network:
-        """Network and connectivity constants: ports, protocols, timeouts."""
+        """Network and connectivity constants."""
 
         # Port range boundaries
         MIN_PORT: Final[int] = 1
@@ -89,7 +76,7 @@ class FlextConstants:
     # =========================================================================
 
     class Validation:
-        """Validation constants: length limits, range boundaries, format requirements."""
+        """Validation constants and limits."""
 
         # String length constraints
         MIN_SERVICE_NAME_LENGTH: Final[int] = 2
@@ -137,7 +124,7 @@ class FlextConstants:
     # =========================================================================
 
     class Errors:
-        """Error codes and categorization for the FLEXT ecosystem."""
+        """Error codes and categorization."""
 
         # Error category ranges for structured error handling
         BUSINESS_ERROR_RANGE: Final[tuple[int, int]] = (1000, 1999)
@@ -256,7 +243,7 @@ class FlextConstants:
     # =========================================================================
 
     class Messages:
-        """User-facing and system messages for the FLEXT ecosystem."""
+        """User-facing and system messages."""
 
         # Operation status messages
         SUCCESS: Final[str] = "Operation completed successfully"
@@ -305,7 +292,7 @@ class FlextConstants:
     # =========================================================================
 
     class Status:
-        """Status values for operations and entities in the FLEXT ecosystem."""
+        """Status values for operations and entities."""
 
         # Entity status values (lowercase for consistency)
         ACTIVE: Final[str] = "active"
@@ -326,12 +313,7 @@ class FlextConstants:
     # =========================================================================
 
     class Patterns:
-        """Regular expression patterns for validation across the FLEXT ecosystem.
-
-        This class contains efficient regex patterns used throughout the system
-        for data validation, format checking, and input sanitization following
-        security best practices and standard validation patterns.
-        """
+        """Regular expression patterns for validation."""
 
         # Identifier patterns
         UUID_PATTERN: Final[str] = (
@@ -396,12 +378,7 @@ class FlextConstants:
     # =========================================================================
 
     class Defaults:
-        """Default values for various system components in the FLEXT ecosystem.
-
-        This class provides sensible default values used throughout the system
-        for configuration, timeouts, pagination, and other operational parameters.
-        Values are consolidated to eliminate duplication across components.
-        """
+        """Default values for system components."""
 
         # Network and timeout defaults (consolidated from multiple sources)
         TIMEOUT: Final[int] = 30
@@ -438,17 +415,7 @@ class FlextConstants:
     # =========================================================================
 
     class Limits:
-        """System limits and boundaries for the FLEXT ecosystem.
-
-        This class defines hard limits and constraints used throughout the system
-        for resource protection, security boundaries, and operational constraints
-        following security best practices and system stability requirements.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only system limit definitions
-            - Security Focus: Limits prevent resource exhaustion attacks
-            - Fail-Safe Defaults: Conservative limits for security and stability
-        """
+        """System limits and boundaries."""
 
         # String and data size limits
         MAX_STRING_LENGTH: Final[int] = 1000
@@ -472,12 +439,7 @@ class FlextConstants:
     # =========================================================================
 
     class Performance:
-        """Performance-related constants for the FLEXT ecosystem.
-
-        This class contains performance tuning parameters, thresholds, and
-        monitoring intervals used throughout the system for optimal performance
-        and resource utilization following performance engineering best practices.
-        """
+        """Performance tuning and monitoring constants."""
 
         # Batch processing configuration
         DEFAULT_BATCH_SIZE: Final[int] = 1000
@@ -535,12 +497,7 @@ class FlextConstants:
     # =========================================================================
 
     class Config:
-        """Configuration system constants for the FLEXT ecosystem.
-
-        This class contains configuration management constants including provider
-        priorities, file locations, environment types, and validation settings
-        consolidated from various configuration patterns throughout the system.
-        """
+        """Configuration system constants."""
 
         # Configuration provider priority order (lower number = higher priority)
         CLI_PRIORITY: Final[int] = 1
@@ -734,17 +691,7 @@ class FlextConstants:
     # =========================================================================
 
     class Urls:
-        """URL and endpoint constants for the FLEXT ecosystem.
-
-        This class centralizes all URL patterns, API endpoints, and service URLs
-        found throughout the workspace to eliminate hardcoded URLs and provide
-        single source of truth for all network endpoints.
-
-        Architecture Principles Applied:
-            - Single Source of Truth: All URLs centralized here
-            - DRY Principle: Eliminates URL duplication across workspace
-            - Configuration Management: Supports different environments
-        """
+        """URL and endpoint constants."""
 
         # Base service URLs - Default development configuration
         FLEXCORE_BASE_URL: Final[str] = "http://localhost:8080"
@@ -796,11 +743,7 @@ class FlextConstants:
         )
 
     class Endpoints:
-        """API endpoint patterns for the FLEXT ecosystem.
-
-        This class centralizes all API endpoint paths used throughout the workspace
-        to provide consistent API routing and eliminate hardcoded endpoint paths.
-        """
+        """API endpoint patterns."""
 
         # Core API versioning
         API_V1_BASE: Final[str] = "/api/v1"
@@ -866,13 +809,7 @@ class FlextConstants:
     # =========================================================================
 
     class Web:
-        """Web interface and HTTP application constants for the FLEXT web ecosystem.
-
-        This class provides efficient web-related constants used by the flext-web
-        module and other web-facing components. Includes HTTP configuration, port
-        management, application limits, status codes, and security settings for
-        consistent web application behavior across the FLEXT platform.
-        """
+        """Web interface and HTTP constants."""
 
         # Port configurations
         DEFAULT_HTTP_PORT: Final[int] = 80
@@ -989,15 +926,7 @@ class FlextConstants:
         SERIALIZATION_FORMAT_BINARY: Final[str] = "binary"
 
     class Quality:
-        """Code quality and static analysis constants for the FLEXT ecosystem.
-
-        This class provides efficient code quality constants used by the
-        flext-quality module and static analysis tools for maintaining high
-        code standards across the FLEXT ecosystem. Includes complexity metrics,
-        coverage thresholds, PEP8 compliance rules, and quality gates.
-
-
-        """
+        """Code quality and static analysis constants."""
 
         # Quality thresholds
         MIN_COVERAGE_THRESHOLD: Final[float] = 80.0
@@ -1015,15 +944,7 @@ class FlextConstants:
         MAX_NESTING_DEPTH: Final[int] = 4
 
     class Oracle:
-        """Oracle database integration constants for the FLEXT Oracle ecosystem.
-
-        This class provides efficient Oracle-specific constants used by the
-        flext-db-oracle module and other Oracle integration components. Includes
-        connection configuration, query optimization, data type limits, performance
-        tuning, and security settings for optimal Oracle database operations.
-
-
-        """
+        """Oracle database integration constants."""
 
         # Oracle-specific ports and connection settings
         DEFAULT_ORACLE_PORT: Final[int] = 1521
@@ -1087,14 +1008,7 @@ class FlextConstants:
         MAX_ENTRY_SIZE: Final[int] = 1048576  # 1MB
 
     class GRPC:
-        """gRPC service constants for high-performance remote procedure calls.
-
-        This class provides efficient constants for gRPC services within the
-        FLEXT ecosystem, supporting service configuration, connection management,
-        streaming operations, memory management, and performance optimization
-        for scalable and efficient gRPC communication.
-
-        """
+        """gRPC service constants."""
 
         # gRPC default port and connection settings
         DEFAULT_GRPC_PORT: Final[int] = 50051

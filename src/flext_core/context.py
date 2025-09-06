@@ -1,8 +1,7 @@
-"""Enterprise context management with distributed tracing and cross-service correlation.
+"""Request context and correlation tracking.
 
-Thread-safe context management implementing correlation ID tracking, service identification,
-and performance monitoring using contextvars for distributed tracing and observability.
-
+Provides context management, correlation ID tracking, and request
+lifecycle management for distributed system observability.
 """
 
 from __future__ import annotations

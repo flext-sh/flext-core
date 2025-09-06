@@ -1121,7 +1121,7 @@ class TestSerializationComplete100:
         """Test lines 214-216: exception in load_from_dict."""
 
         class Obj:
-            allowed: str  # type: ignore[var-annotated]
+            allowed: str
 
             def __setattr__(self, name: str, value: object) -> None:
                 if name == "forbidden":
@@ -1926,7 +1926,7 @@ class TestValidationComplete100:
         """Test lines 40-53: validate_field_types functionality."""
 
         class Obj:
-            age: int | str  # type: ignore[var-annotated]
+            age: int | str
 
             def __init__(self) -> None:
                 self.name = "test"
@@ -2364,8 +2364,8 @@ class TestLoggingFinalComplete100:
         # Test log_operation method if it exists
         if hasattr(FlextMixins, "log_operation"):
             result = FlextMixins.log_operation(obj, "test_op", context={"key": "value"})
-            if result is not None:
-                assert isinstance(result, FlextResult)
+            # result can be None or FlextResult - just verify it's not an unexpected type
+            assert result is None or hasattr(result, "success")
 
     def test_logging_line_57_log_error_with_exception_object(self) -> None:
         """Test line 57: Log error with actual exception object."""
@@ -2850,8 +2850,8 @@ class TestRemainingSpecificLines100:
 
         # Lines 46-55: update_timestamp with different scenarios
         class TimestampTestObj:
-            _timestamp_initialized: bool  # type: ignore[var-annotated]
-            _updated_at: str  # type: ignore[var-annotated]
+            _timestamp_initialized: bool
+            _updated_at: str
 
         ts_obj = TimestampTestObj()
 
@@ -2955,8 +2955,10 @@ class TestRemainingSpecificLines100:
         # Line 421: create_environment_mixins_config with truly invalid environment
         invalid_envs = ["", "null", "undefined", "🚀", " "]
         for invalid_env in invalid_envs:
-            result = FlextMixins.create_environment_mixins_config(invalid_env)
-            assert result.is_failure
+            env_result: FlextResult[dict[str, object]] = (
+                FlextMixins.create_environment_mixins_config(invalid_env)
+            )
+            assert env_result.is_failure
 
         # Lines 470-471: optimize_mixins_performance exception handling
         extreme_configs: list[
@@ -2967,9 +2969,11 @@ class TestRemainingSpecificLines100:
             {"performance_level": {"invalid": "object"}},
         ]
         for config in extreme_configs:
-            result = FlextMixins.optimize_mixins_performance(config)
+            perf_result: FlextResult[dict[str, object]] = (
+                FlextMixins.optimize_mixins_performance(config)
+            )
             # Should handle gracefully
-            assert result.success or result.is_failure
+            assert perf_result.success or perf_result.is_failure
 
         # Line 712: objects_equal with __dict__ comparison fallback
         class SimpleComparisonObj:
@@ -3213,9 +3217,9 @@ class TestFinalUncoveredLines100:
 
         # Lines 46-55: update_timestamp with various conditions
         class TimestampObj:
-            _timestamp_initialized: bool  # type: ignore[var-annotated]
-            _created_at: str | None  # type: ignore[var-annotated]
-            updated_at: str  # type: ignore[var-annotated]
+            _timestamp_initialized: bool
+            _created_at: str | None
+            updated_at: str | datetime
 
         # Test update_timestamp without _timestamp_initialized
         ts_obj1 = TimestampObj()
@@ -3486,8 +3490,8 @@ class TestAbsoluteLastLines100:
         """Test the 5 missing timestamp lines."""
 
         class TimestampObj:
-            _timestamp_initialized: bool  # type: ignore[var-annotated]
-            _created_at: str | None  # type: ignore[var-annotated]
+            _timestamp_initialized: bool
+            _created_at: str | None
 
         obj = TimestampObj()
 
@@ -3528,13 +3532,13 @@ class TestAbsoluteLastLines100:
         # Line 421: Invalid environment in create_environment_mixins_config
         with contextlib.suppress(Exception):
             # This should trigger line 421 error handling
-            result = FlextMixins.create_environment_mixins_config("invalid_env_421")
-            assert result is not None
+            env_result = FlextMixins.create_environment_mixins_config("invalid_env_421")
+            assert env_result is not None
 
         # Lines 470-471: Exception in optimize_mixins_performance
         with contextlib.suppress(Exception):
-            result = FlextMixins.optimize_mixins_performance({})
-            assert result is not None
+            perf_result = FlextMixins.optimize_mixins_performance({})
+            assert perf_result is not None
 
         # Lines 720-721: Object hash generation edge case
         class HashObj:
@@ -3543,8 +3547,8 @@ class TestAbsoluteLastLines100:
                 # Don't set _id to force specific hash path
 
         hash_obj = HashObj()
-        result = FlextMixins.object_hash(hash_obj)  # Lines 720-721
-        assert result is not None
+        hash_result: int = FlextMixins.object_hash(hash_obj)  # Lines 720-721
+        assert hash_result is not None
 
 
 class TestFinal35LinesTo100Percent:

@@ -1,4 +1,8 @@
-"""FLEXT Mixins - Unified behavioral patterns."""
+"""Reusable behavior mixins for composition over inheritance.
+
+Provides FlextMixins with cross-cutting concerns like timestamping,
+auditing, serialization, and event tracking.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,7 @@ import time
 import uuid
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
+from typing import TypeVar
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -16,9 +21,17 @@ from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
+# Type variables for generic mixin patterns
+T = TypeVar("T")
+TMixin = TypeVar("TMixin", bound="FlextMixins.BaseMixin")
+
 
 class FlextMixins:
-    """Unified mixin system with direct implementation."""
+    """Consolidated mixins for cross-cutting concerns and reusable behaviors.
+
+    Provides enterprise patterns as mixins for composition over inheritance,
+    including timestamps, auditing, serialization, events, and more.
+    """
 
     # ==========================================================================
     # TIMESTAMP FUNCTIONALITY - Direct implementation
@@ -440,15 +453,27 @@ class FlextMixins:
     ) -> bool:
         """Validate a single field."""
         try:
-            # Validate the value itself, not whether object has the field
+            # Store the validation attempt in the object's validation history
+            if not hasattr(obj, "_validation_history"):
+                obj._validation_history = {}
+
+            # Validate the value itself
             if value is None:
+                obj._validation_history[field_name] = "None value"
                 return False
             # String values must not be empty or whitespace-only
             if isinstance(value, str):
-                return bool(value.strip())
+                is_valid = bool(value.strip())
+                obj._validation_history[field_name] = (
+                    "valid" if is_valid else "empty string"
+                )
+                return is_valid
             # All other non-None values are valid
+            obj._validation_history[field_name] = "valid"
             return True
-        except Exception:
+        except Exception as e:
+            if hasattr(obj, "_validation_history"):
+                obj._validation_history[field_name] = f"error: {e}"
             return False
 
     @staticmethod

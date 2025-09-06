@@ -1,9 +1,7 @@
-"""FLEXT Handlers - Enterprise handler system for request processing and architectural patterns.
+"""Handler system for request processing.
 
-Comprehensive handler infrastructure implementing enterprise patterns including Chain of
-Responsibility, CQRS, command buses, validation handlers, authorization handlers, and
-metrics collection.
-
+Provides FlextHandlers implementing Chain of Responsibility, CQRS,
+command buses, and validation handlers with metrics collection.
 """
 
 from __future__ import annotations

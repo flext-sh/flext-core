@@ -1,8 +1,7 @@
-"""Dependency injection container with type-safe service management.
+"""Dependency injection container for service management.
 
-Provides FlextContainer for managing service dependencies with type-safe registration,
-factory patterns, and global singleton access using FlextResult error handling.
-
+This module provides FlextContainer, a type-safe DI container with factory
+patterns and global singleton access using FlextResult error handling.
 """
 
 from __future__ import annotations
@@ -26,9 +25,8 @@ from flext_core.utilities import FlextUtilities
 class FlextContainer:
     """Dependency injection container with type-safe service management.
 
-    Manages service dependencies through registration, factory patterns, and type-safe retrieval.
-    Supports both instance and global singleton patterns with FlextResult error handling.
-
+    Manages service lifecycles through registration, factory patterns, and
+    type-safe retrieval. Supports singleton and instance patterns.
     """
 
     # Class-level global manager instance
@@ -39,28 +37,22 @@ class FlextContainer:
     # =========================================================================
 
     class ServiceKey[T](UserString, FlextProtocols.Foundation.Validator[str]):
-        """Typed service key for type-safe service resolution.
-
-        A specialized string that acts as a plain string at runtime but provides type safety
-        at type-check time. This enables type-safe service registration and retrieval in the
-        FLEXT dependency injection container while maintaining runtime string support.
-
-        """
+        """Typed service key for type-safe service resolution."""
 
         __slots__ = ()
 
         @property
         def name(self) -> str:
-            """Return the service key name (string value)."""
+            """Get service key name."""
             return str(self)
 
         @classmethod
         def __class_getitem__(cls, _item: object) -> type[FlextContainer.ServiceKey[T]]:
-            """Support generic subscription without affecting runtime behavior."""
+            """Support generic subscription."""
             return cls
 
         def validate(self, data: str) -> object:
-            """Validate service key name using FlextProtocols.Foundation.Validator interface."""
+            """Validate service key name."""
             if not data or not data.strip():
                 return FlextResult[str].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
@@ -69,14 +61,14 @@ class FlextContainer:
             return FlextResult[str].ok(data.strip())
 
     class Commands:
-        """Command objects for container operations following CQRS pattern."""
+        """Container operation commands."""
 
         class RegisterService:
             """Command to register a service instance."""
 
             # Python 3.13 Advanced: TypedDict for command parameters
             class RegisterServiceParams(TypedDict):
-                """TypedDict for RegisterService command - ELIMINATES BOILERPLATE."""
+                """RegisterService command parameters."""
 
                 service_name: NotRequired[str]
                 service_instance: NotRequired[object]

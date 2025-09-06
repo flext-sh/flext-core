@@ -1,8 +1,7 @@
-"""Version management and compatibility checking for FLEXT Core.
+"""Version management and compatibility tracking.
 
-This module provides efficient version management functionality for the FLEXT ecosystem,
-including semantic versioning, compatibility checking, feature availability tracking,
-and programmatic version utilities following enterprise standards.
+Provides version information, compatibility checks, and semantic
+versioning support for the FLEXT ecosystem.
 """
 
 from typing import ClassVar, NamedTuple

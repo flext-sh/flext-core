@@ -1,10 +1,7 @@
-"""FLEXT Core - Central orchestration hub for the complete FLEXT ecosystem.
+"""Core orchestration for FLEXT foundation library.
 
-Primary entry point providing unified access to dependency injection, domain modeling,
-validation, handlers, observability, and architectural patterns through a thread-safe
-singleton interface with railway-oriented programming.
-
-
+Provides FlextCore as the main orchestrator combining all components
+with singleton pattern and business operation methods.
 """
 
 from __future__ import annotations
@@ -42,115 +39,29 @@ from flext_core.validations import FlextValidations
 
 
 class FlextCore:
-    r"""Enterprise-grade efficient facade providing unified access to the complete FLEXT ecosystem.
+    """Central orchestration facade for the FLEXT ecosystem.
 
-    This class serves as the central orchestration hub for all FLEXT Core functionality,
-    implementing enterprise patterns for system management, dependency injection, logging,
-    validation, domain modeling, CQRS, observability, and architectural patterns through
-    a single, thread-safe interface with singleton lifecycle management.
+    Thread-safe singleton providing unified access to all FLEXT components including
+    dependency injection, logging, validation, domain modeling, CQRS patterns, and
+    performance monitoring through a single efficient interface.
 
-    The FlextCore facade provides efficient access to:
-        - **Container Management**: Global dependency injection with factory patterns
-        - **Logging Infrastructure**: Structured logging with correlation tracking
-        - **Railway Programming**: FlextResult[T] patterns for composable error handling
-        - **Domain Modeling**: DDD patterns with Entity, Value Object, Aggregate Root
-        - **CQRS Implementation**: Command/Query separation with handler registration
-        - **Validation Systems**: Hierarchical validation with predicate composition
-        - **Decorator Patterns**: Cross-cutting concerns for reliability and observability
-        - **Performance Monitoring**: Metrics collection and performance tracking
-        - **Configuration Management**: Environment-aware configuration with validation
-        - **Plugin Architecture**: Extensible plugin system with lifecycle management
-        - **Utility Functions**: ID generation, type guards, and helper utilities
+    Key Features:
+        - Container management with dependency injection
+        - Railway-oriented programming with FlextResult
+        - Domain-driven design patterns
+        - CQRS implementation with handlers
+        - Structured logging and observability
+        - Environment-aware configuration
 
-    Thread Safety:
-        All operations are thread-safe with proper synchronization for concurrent access.
-        The singleton pattern ensures consistent state across the application lifecycle.
+    Example:
+        core = FlextCore.get_instance()
+        core.configure_logging(log_level="INFO")
 
-    Lazy Initialization:
-        Components are initialized on-demand to optimize memory usage and startup time.
-        Heavy subsystems (handlers, fields, plugins) are created only when accessed.
-
-    Architecture Benefits:
-        - **Single Point of Entry**: Unified interface for all FLEXT functionality
-        - **Dependency Inversion**: Loose coupling through container-based injection
-        - **Railway Patterns**: Composable error handling without exceptions
-        - **Type Safety**: Full generic type support with runtime validation
-        - **Enterprise Scale**: Designed for high-throughput production environments
-        - **Extensibility**: Plugin architecture for custom functionality
-
-    Usage Examples:
-        System initialization and configuration::
-
-            core = FlextCore.get_instance()
-
-            # Configure logging with structured output
-            core.configure_logging(log_level="INFO", _json_output=True)
-
-            # Setup services with validation
-            services = {
-                "database": DatabaseService,
-                "cache": lambda: RedisCache(host="localhost"),
-                "metrics": MetricsCollector,
-            }
-            container_result = core.setup_container_with_services(
-                services, core.validate_service_name
-            )
-
-        Railway-oriented domain operations::
-
-            # Composable validation and entity creation
-            user_result = (
-                core.validate_required(user_data, "user_data")
-                .flat_map(lambda data: core.validate_email(data.get("email")))
-                .flat_map(lambda email: core.create_entity(User, **user_data))
-                .tap(
-                    lambda user: core.FlextLogger(__name__).info(
-                        "User created", user_id=user.id
-                    )
-                )
-                .map_error(lambda err: f"User creation failed: {err}")
-            )
-
-        Environment-aware configuration::
-
-            # Production environment setup
-            config_result = core.create_environment_core_config("production")
-            if config_result.success:
-                optimized = core.optimize_core_performance(config_result.value)
-                core.configure_core_system(optimized.value)
-
-        Dynamic class generation for boilerplate reduction::
-
-            # Create validated domain classes
-            UserEntity = core.create_entity_with_validators(
-                "User",
-                {
-                    "name": (str, {"min_length": 2, "max_length": 100}),
-                    "email": (str, {"pattern": r"^[^@]+@[^@]+\.[^@]+$"}),
-                    "age": (int, {"ge": 18, "le": 120}),
-                },
-                {
-                    "name": core.create_standard_validators()["name"],
-                    "email": core.create_standard_validators()["email"],
-                    "age": core.create_standard_validators()["age"],
-                },
-            )
-
-        Performance monitoring and observability::
-
-            # Create performance-tracked service
-            @core.track_performance("user_service_operation")
-            def process_user_request(request):
-                return core.get_service("user_processor").flat_map(
-                    lambda processor: processor.process(request)
-                )
-
-    Integration with FLEXT Ecosystem:
-        The FlextCore class integrates seamlessly with all FLEXT ecosystem components:
-
-        - **flext-api**: HTTP API services with FlextResult responses
-        - **flext-auth**: Authentication services with FlextModels users
-        - **flext-db-oracle**: Database operations with FlextResult patterns
+        user_result = (
+            core.validate_required(data, "user_data")
+            .flat_map(lambda d: core.create_entity(User, **d))
+            .map_error(lambda e: f"Failed: {e}")
+        )
         - **flext-ldap**: LDAP integration with FlextContainer services
         - **flext-web**: Web applications with FlextContainer dependency injection
         - **Singer ecosystem**: Data pipeline operations with validation

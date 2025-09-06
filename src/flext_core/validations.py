@@ -1,7 +1,7 @@
-r"""Enterprise validation framework with hierarchical predicates and railway-oriented error handling.
+"""Validation framework with predicate-based rules.
 
-Provides efficient validation system with domain-organized validation patterns, composable
-validation chains, and business rule enforcement using FlextResult for type-safe error handling.
+Provides FlextValidations for data validation using composable predicates
+and FlextResult error handling.
 """
 
 from __future__ import annotations
