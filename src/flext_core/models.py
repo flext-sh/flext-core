@@ -1,7 +1,7 @@
-"""Consolidated model system using Pydantic with RootModel validation.
+"""Domain models using Pydantic with validation.
 
-Provides FlextModels class with nested entity types, value objects, and factory methods
-for creating type-safe domain models with efficient validation.
+Provides FlextModels with entity types, value objects, and factory methods
+for creating type-safe domain models.
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ class FlextModels:
         @field_validator("config_source")
         @classmethod
         def validate_source(cls, v: str) -> str:
-            """Validate configuration source using FlextConstants.Config.ConfigSource."""
+            """Validate source."""
             valid_sources = [
                 source.value for source in FlextConstants.Config.ConfigSource
             ]
@@ -160,7 +160,7 @@ class FlextModels:
         @field_validator("config_priority")
         @classmethod
         def validate_priority(cls, v: int) -> int:
-            """Validate configuration priority."""
+            """Validate priority."""
             if (
                 v < FlextConstants.Config.MIN_PRIORITY
                 or v > FlextConstants.Config.MAX_PRIORITY
@@ -171,7 +171,7 @@ class FlextModels:
 
         @model_validator(mode="after")
         def validate_production_priority(self) -> Self:
-            """Validate production environment priority constraints."""
+            """Validate production priority."""
             if (
                 self.config_environment == "production"
                 and self.config_priority > FlextConstants.Config.PRODUCTION_MAX_PRIORITY
@@ -181,7 +181,7 @@ class FlextModels:
             return self
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate business-specific configuration rules (validation tracking only)."""
+            """Validate business rules."""
             try:
                 # Update validation tracking only - field validation is handled by Pydantic
                 self.validation_count += 1
@@ -191,7 +191,7 @@ class FlextModels:
                 return FlextResult[None].fail(f"Business rule validation failed: {e}")
 
         def get_config_info(self) -> dict[str, object]:
-            """Get configuration information for debugging and monitoring."""
+            """Get configuration information."""
             return {
                 "version": self.config_version,
                 "environment": self.config_environment,
@@ -205,27 +205,27 @@ class FlextModels:
             }
 
         def is_production(self) -> bool:
-            """Check if configuration is for production environment."""
+            """Check if production environment."""
             return self.config_environment == "production"
 
         def is_development(self) -> bool:
-            """Check if configuration is for development environment."""
+            """Check if development environment."""
             return self.config_environment in {"development", "local"}
 
         def is_test(self) -> bool:
-            """Check if configuration is for test environment."""
+            """Check if test environment."""
             return self.config_environment == "test"
 
         def is_staging(self) -> bool:
-            """Check if configuration is for staging environment."""
+            """Check if staging environment."""
             return self.config_environment == "staging"
 
         def is_local(self) -> bool:
-            """Check if configuration is for local environment."""
+            """Check if local environment."""
             return self.config_environment == "local"
 
         def get_environment_config(self) -> dict[str, object]:
-            """Get environment-specific configuration settings."""
+            """Get environment-specific settings."""
             base_config = {
                 "debug_mode": self.debug_mode,
                 "enable_metrics": self.enable_metrics,
@@ -266,7 +266,7 @@ class FlextModels:
             }
 
         def mask_secrets(self, data: dict[str, object]) -> dict[str, object]:
-            """Mask secret fields in configuration data."""
+            """Mask secret fields."""
             if not self.enable_secret_masking:
                 return data
 
@@ -278,7 +278,7 @@ class FlextModels:
             return masked_data
 
         def get_config_summary(self) -> dict[str, object]:
-            """Get configuration summary for monitoring and debugging."""
+            """Get configuration summary."""
             return {
                 "version": self.config_version,
                 "environment": self.config_environment,
@@ -295,26 +295,22 @@ class FlextModels:
             }
 
         def increment_validation_count(self) -> None:
-            """Increment validation count and update timestamp."""
+            """Increment validation count."""
             self.validation_count += 1
             self.last_validated = datetime.now(UTC)
 
         def increment_cache_hits(self) -> None:
-            """Increment validation cache hit count."""
+            """Increment cache hits."""
             self.validation_cache_hits += 1
 
         def reset_performance_counters(self) -> None:
-            """Reset performance tracking counters."""
+            """Reset performance counters."""
             self.validation_count = 0
             self.validation_cache_hits = 0
             self.last_validated = None
 
     class DatabaseConfig(Config):
-        """Database configuration with connection pooling and security validation.
-
-        Provides comprehensive database configuration with connection pooling,
-        security validation, and environment-specific optimizations.
-        """
+        """Database configuration with pooling."""
 
         # Connection settings
         host: str = Field(..., description="Database host")
@@ -434,7 +430,7 @@ class FlextModels:
             return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}{ssl_params}"
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate database-specific business rules."""
+            """Validate business rules."""
             try:
                 # Call parent validation
                 parent_result = super().validate_business_rules()
@@ -465,12 +461,7 @@ class FlextModels:
                 return FlextResult[None].fail(f"Database validation failed: {e}")
 
     class SecurityConfig(Config):
-        """Security configuration with encryption and authentication settings.
-
-        Provides comprehensive security configuration including encryption,
-        authentication, authorization, and audit logging.
-
-        """
+        """Security configuration."""
 
         # Encryption settings
         secret_key: str = Field(..., description="Application secret key")
@@ -568,7 +559,7 @@ class FlextModels:
         @field_validator("jwt_secret")
         @classmethod
         def validate_jwt_secret(cls, v: str) -> str:
-            """Validate JWT secret strength."""
+            """Validate JWT secret."""
             min_length = FlextConstants.Config.MIN_SECRET_LENGTH
             if len(v) < min_length:
                 msg = f"JWT secret must be at least {min_length} characters"
@@ -578,7 +569,7 @@ class FlextModels:
         @field_validator("encryption_key")
         @classmethod
         def validate_encryption_key(cls, v: str) -> str:
-            """Validate encryption key strength."""
+            """Validate encryption key."""
             min_length = FlextConstants.Config.MIN_SECRET_LENGTH
             if len(v) < min_length:
                 msg = f"Encryption key must be at least {min_length} characters"
@@ -586,7 +577,7 @@ class FlextModels:
             return v
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate security-specific business rules."""
+            """Validate business rules."""
             try:
                 # Call parent validation
                 parent_result = super().validate_business_rules()
@@ -623,11 +614,7 @@ class FlextModels:
                 return FlextResult[None].fail(f"Security validation failed: {e}")
 
     class LoggingConfig(Config):
-        """Logging configuration with structured logging and performance monitoring.
-
-        Provides comprehensive logging configuration including structured logging,
-        performance monitoring, and log rotation.
-        """
+        """Logging configuration."""
 
         # Basic logging settings
         log_level: str = Field(default="INFO", description="Log level")
@@ -733,7 +720,7 @@ class FlextModels:
             return v
 
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate logging-specific business rules."""
+            """Validate business rules."""
             try:
                 # Call parent validation
                 parent_result = super().validate_business_rules()
@@ -769,11 +756,7 @@ class FlextModels:
     # =============================================================================
 
     class Entity(Config, ABC):
-        """Mutable entities with identity, versioning and domain events.
-
-        Entities have identity that persists across state changes and support
-        domain events, versioning, and lifecycle management.
-        """
+        """Mutable entities with identity."""
 
         # Core identity fields
         id: str = Field(..., description="Unique entity identifier")
@@ -802,40 +785,36 @@ class FlextModels:
         )
 
         def __eq__(self, other: object) -> bool:
-            """Entities are equal if they have same type and ID."""
+            """Check equality by ID."""
             if not isinstance(other, self.__class__):
                 return False
             return self.id == other.id
 
         def __hash__(self) -> int:
-            """Hash based on entity type and ID."""
+            """Hash by type and ID."""
             return hash((self.__class__, self.id))
 
         @abstractmethod
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate entity-specific business rules."""
+            """Validate business rules."""
 
         def add_domain_event(self, event: FlextTypes.Core.JsonObject) -> None:
-            """Add domain event to entity."""
+            """Add domain event."""
             self.domain_events.append(event)
 
         def clear_domain_events(self) -> list[FlextTypes.Core.JsonObject]:
-            """Clear and return all domain events."""
+            """Clear domain events."""
             events = self.domain_events.copy()
             self.domain_events.clear()
             return events
 
         def increment_version(self) -> None:
-            """Increment entity version and update timestamp."""
+            """Increment version."""
             self.version += 1
             self.updated_at = datetime.now(UTC)
 
     class Value(Config, ABC):
-        """Immutable value objects with structural equality.
-
-        Value objects are compared by value rather than identity and are
-        immutable once created. They encapsulate business logic and validation.
-        """
+        """Immutable value objects."""
 
         # Inherit Config settings and add frozen for immutability
         model_config = ConfigDict(
@@ -869,7 +848,7 @@ class FlextModels:
             """Hash based on all field values."""
 
             def _make_hashable(obj: object) -> object:
-                """Convert non-hashable types to hashable equivalents."""
+                """Convert to hashable."""
                 if isinstance(obj, dict):
                     return tuple(
                         sorted(
@@ -896,14 +875,10 @@ class FlextModels:
 
         @abstractmethod
         def validate_business_rules(self) -> FlextResult[None]:
-            """Validate value object business rules."""
+            """Validate business rules."""
 
     class AggregateRoot(Entity):
-        """Aggregate root managing consistency boundary and domain events.
-
-        Aggregate roots are the entry point for commands and coordinate
-        changes across multiple entities within a consistency boundary.
-        """
+        """Aggregate root for domain events."""
 
         # Aggregate metadata
         aggregate_type: ClassVar[str] = Field(
@@ -919,7 +894,7 @@ class FlextModels:
             self,
             event: FlextTypes.Core.JsonObject,
         ) -> FlextResult[None]:
-            """Apply domain event to aggregate state."""
+            """Apply domain event."""
             try:
                 # Add event to uncommitted events
                 self.add_domain_event(event)
@@ -941,14 +916,7 @@ class FlextModels:
     # =============================================================================
 
     class Payload(Config, Generic[T]):
-        """Generic type-safe payload container for structured data transport and messaging.
-
-        This class provides a standardized message format for inter-service communication
-        within the FLEXT ecosystem. It includes efficient metadata for message
-        routing, correlation tracking, expiration handling, and retry management.
-        The generic type parameter ensures type safety for payload data.
-
-        """
+        """Type-safe payload container."""
 
         # Message metadata
         message_id: str = Field(default_factory=lambda: f"msg_{uuid.uuid4().hex[:12]}")
@@ -991,150 +959,21 @@ class FlextModels:
 
         @computed_field
         def is_expired(self) -> bool:
-            """Check if message has expired."""
+            """Check if expired."""
             if self.expires_at is None:
                 return False
             return datetime.now(UTC) > self.expires_at
 
         @computed_field
         def age_seconds(self) -> float:
-            """Get message age in seconds."""
+            """Get age in seconds."""
             return (datetime.now(UTC) - self.timestamp).total_seconds()
 
     class Message(Payload[FlextTypes.Core.JsonObject]):
-        """Structured message container with JSON payload for general-purpose communication.
-
-        This class specializes the generic Payload for JSON-based message transport,
-        providing a standardized format for general-purpose inter-service communication.
-        It inherits all payload functionality while constraining the data typ
-
-        """
+        """Message container with JSON payload."""
 
     class Event(Payload[FlextTypes.Core.JsonObject]):
-        """Domain event message with structured payload for event sourcing and CQRS patterns.
-
-        This class extends the generic Payload to provide specialized functionality
-        for domain events in event-driven architectures. It includes additional
-        metadata for aggregate identification, event versioning, and sequence tracking
-        to support event sourcing, CQRS, and distributed event processing patterns.
-
-        Key Features:
-            - **Aggregate Correlation**: Links events to their originating aggregate
-            - **Event Versioning**: Schema evolution support for event structures
-            - **Sequence Tracking**: Maintains event ordering within aggregates
-            - **Domain Semantics**: Rich metadata for business event processing
-            - **Event Sourcing**: Full support for event store patterns
-            - **CQRS Integration**: Seamless integration with command/query separation
-
-        Event Sourcing Support:
-            Events serve as the source of truth for aggregate state:
-
-            - Each event represents a state change in the domain
-            - Events are immutable once created and stored
-            - Aggregate state can be rebuilt by replaying events
-            - Event sequence ensures consistent state reconstruction
-            - Version tracking supports schema evolution
-
-        Aggregate Boundary:
-            Events maintain clear aggregate boundaries:
-
-            - **Aggregate ID**: Identifies the specific aggregate instance
-            - **Aggregate Type**: Identifies the aggregate class/category
-            - **Sequence Number**: Orders events within the aggregate
-            - **Event Version**: Supports event schema evolution
-
-        Event Ordering:
-            Sequence numbers ensure proper event ordering:
-
-            - Starts at 1 for each aggregate instance
-            - Increments for each new event in the aggregate
-            - Enables detection of missing or out-of-order events
-            - Supports concurrent event processing validation
-
-        Schema Evolution:
-            Event versioning supports backward compatibility:
-
-            - Events can evolve their structure over time
-            - Version field tracks schema changes
-            - Old events remain processable by newer code
-            - Event upcasting supported through version detection
-
-        Threading Considerations:
-            - Events are immutable after creation
-            - Thread-safe for read operations
-            - Sequence number assignment requires coordination
-            - Aggregate-level synchronization for event ordering
-
-        Performance Characteristics:
-            - Efficient event creation with minimal overhead
-            - Optimized for append-only event stores
-            - Fast aggregate ID indexing support
-            - Minimal memory footprint for metadata
-
-        Example Usage::
-
-            # User registration event
-            user_registered = FlextModels.Event(
-                data={
-                    "user_id": "user_123",
-                    "email": "john@example.com",
-                    "registration_date": "2025-01-15T10:30:00Z",
-                },
-                message_type="UserRegistered",
-                source_service="registration_service",
-                aggregate_id="user_123",
-                aggregate_type="User",
-                sequence_number=1,  # First event for this user
-                event_version=1,
-            )
-
-            # Order item added event
-            item_added = FlextModels.Event(
-                data={"item_id": "item_456", "quantity": 2, "unit_price": "29.99"},
-                message_type="OrderItemAdded",
-                source_service="order_service",
-                aggregate_id="order_789",
-                aggregate_type="Order",
-                sequence_number=3,  # Third event for this order
-                event_version=2,  # Updated event schema
-            )
-
-        Event Store Integration:
-            Events are designed for event store compatibility:
-
-            - Aggregate ID for partitioning and indexing
-            - Sequence number for ordering guarantees
-            - Version for schema evolution support
-            - Timestamp for temporal queries
-            - All metadata required for event sourcing
-
-        CQRS Patterns:
-            Events serve as the bridge between command and query sides:
-
-            - Commands generate events through aggregates
-            - Query models subscribe to events for updates
-            - Event handlers maintain read model consistency
-            - Event metadata enables distributed processing
-
-        Common Event Types:
-            - **Entity Lifecycle**: Created, Updated, Deleted events
-            - **State Transitions**: Status changes and workflow events
-            - **Business Actions**: User actions and business process events
-            - **Integration Events**: Cross-service communication events
-
-        Validation:
-            The Event class validates aggregate-specific constraints:
-
-            - Aggregate ID cannot be empty or whitespace
-            - Sequence number must be positive
-            - Event version must be positive
-            - All inherited payload validations apply
-
-        Note:
-            This class is specifically designed for domain events in event-driven
-            architectures. For general messaging, use the Message class instead.
-
-        """
+        """Domain event message."""
 
         # Event-specific fields
         event_version: int = Field(default=1, description="Event schema version")
@@ -1149,40 +988,7 @@ class FlextModels:
         @field_validator("aggregate_id")
         @classmethod
         def validate_aggregate_id(cls, v: str) -> str:
-            """Validate aggregate ID is not empty and properly formatted.
-
-            Ensures that the aggregate ID meets the requirements for event sourcing
-            and aggregate identification. The ID must be non-empty, non-whitespace,
-            and properly trimmed.
-
-            Args:
-                v: The aggregate ID string to validate.
-
-            Returns:
-                The validated and trimmed aggregate ID.
-
-            Raises:
-                ValueError: If the aggregate ID is empty, None, or only whitespace.
-
-            Validation Rules:
-                - Must not be None or empty string
-                - Must not be only whitespace characters
-                - Leading and trailing whitespace is automatically trimmed
-                - Must remain non-empty after trimming
-
-            Examples::
-
-                # Valid aggregate IDs
-                "user_123"     -> "user_123"
-                "  order_456  " -> "order_456"  # Trimmed
-                "product-789"  -> "product-789"
-
-                # Invalid aggregate IDs (raise ValueError)
-                ""             # Empty string
-                "   "          # Only whitespace
-                None           # None value
-
-            """
+            """Validate aggregate ID."""
             if not v or not v.strip():
                 msg = "Aggregate ID cannot be empty"
                 raise ValueError(msg)
@@ -1190,12 +996,7 @@ class FlextModels:
 
         @property
         def event_type(self) -> str:
-            """Alias for message_type to maintain backward compatibility.
-
-            Returns:
-                The event type (message_type).
-
-            """
+            """Alias for message_type."""
             return self.message_type
 
     # =============================================================================
@@ -1214,7 +1015,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_not_empty(cls, v: str) -> str:
-            """Ensure ID is not empty or whitespace."""
+            """Validate not empty."""
             if not v or not v.strip():
                 msg = "Entity ID cannot be empty"
                 raise ValueError(msg)
@@ -1233,7 +1034,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def ensure_utc(cls, v: datetime) -> datetime:
-            """Ensure timestamp is in UTC."""
+            """Ensure UTC."""
             if v.tzinfo is None:
                 return v.replace(tzinfo=UTC)
             return v.astimezone(UTC)
@@ -1249,7 +1050,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_email(cls, v: str) -> str:
-            """Additional email validation."""
+            """Validate email."""
             v = v.strip().lower()
             email_parts = v.split("@")
             expected_email_parts = 2  # local@domain
@@ -1279,7 +1080,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_host(cls, v: str) -> str:
-            """Basic hostname validation."""
+            """Validate hostname."""
             v = v.strip().lower()
             if not v or " " in v:
                 msg = "Invalid hostname format"
@@ -1294,7 +1095,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_url(cls, v: str) -> str:
-            """Validate URL format."""
+            """Validate URL."""
             v = v.strip()
             if not v:
                 msg = "URL cannot be empty"
@@ -1304,7 +1105,7 @@ class FlextModels:
                 error_msg: str,
                 cause: Exception | None = None,
             ) -> None:
-                """Abstract raise for URL validation errors."""
+                """Raise URL error."""
                 if cause:
                     raise ValueError(error_msg) from cause
                 raise ValueError(error_msg)
@@ -1329,7 +1130,7 @@ class FlextModels:
             cls,
             v: FlextTypes.Core.JsonObject,
         ) -> FlextTypes.Core.JsonObject:
-            """Ensure valid JSON serializable data."""
+            """Validate JSON serializable."""
             try:
                 # Test JSON serialization
                 json.dumps(v)
@@ -1346,7 +1147,7 @@ class FlextModels:
         @field_validator("root")
         @classmethod
         def validate_string_values(cls, v: dict[str, str]) -> dict[str, str]:
-            """Ensure all values are strings."""
+            """Validate string values."""
             # Type validation is already handled by Pydantic typing
             return v
 

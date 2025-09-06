@@ -1,7 +1,7 @@
-"""CQRS Command and Query Processing System for FLEXT ecosystem.
+"""CQRS command and query processing system.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Provides FlextCommands for implementing Command Query Responsibility
+Segregation patterns with type-safe handlers.
 """
 
 from __future__ import annotations

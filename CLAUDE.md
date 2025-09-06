@@ -18,16 +18,16 @@ make check                 # Quick validation (lint + type-check only)
 
 # Individual quality checks
 make lint                  # Ruff linting with comprehensive rules
-make type-check            # MyPy strict mode checking
-make test                  # Full test suite (75% coverage required)
-make security              # Bandit + pip-audit scanning
-make format                # Auto-format code (79 char line limit)
+make type-check            # MyPy strict mode checking (zero tolerance in src/)
+make test                  # Full test suite (75% coverage minimum required)
+make security              # Bandit + pip-audit security scanning
+make format                # Auto-format code (79 char line limit - PEP8 strict)
 make fix                   # Auto-fix linting issues
 
 # Testing commands
-make test-unit             # Unit tests only
+make test-unit             # Unit tests only (fast feedback)
 make test-integration      # Integration tests only
-make test-fast             # Tests without coverage (quick feedback)
+make test-fast             # Tests without coverage (quick iteration)
 make coverage-html         # Generate HTML coverage report
 
 # Development utilities
@@ -62,8 +62,8 @@ make v                     # Alias for validate
 
 ```bash
 # Run specific test file
-poetry run pytest tests/unit/core/test_result.py -v
-poetry run pytest tests/unit/core/test_container.py::TestFlextContainer::test_basic_registration -v
+PYTHONPATH=src poetry run pytest tests/unit/test_result.py -v
+PYTHONPATH=src poetry run pytest tests/unit/test_container.py::TestFlextContainer::test_basic_registration -v
 
 # Test with markers
 poetry run pytest -m unit              # Unit tests only
@@ -73,19 +73,23 @@ poetry run pytest -m core              # Core framework tests
 poetry run pytest -m ddd               # Domain-driven design tests
 
 # Advanced test execution
-poetry run pytest tests/unit/core/test_result.py::TestFlextResult::test_map -xvs --tb=long
+poetry run pytest tests/unit/test_result.py::TestFlextResult::test_map -xvs --tb=long
 poetry run pytest -m "unit and not slow" --tb=short -q
 poetry run pytest tests/unit/ --cov=src/flext_core --cov-report=term-missing
-poetry run pytest --lf --ff -x  # Last failed tests with fail-fast
+poetry run pytest --lf --ff -x  # Run last failed tests first with fail-fast
 poetry run pytest -n auto tests/unit/  # Parallel execution
 poetry run pytest tests/unit/ -k "test_result" -v  # Tests matching pattern
+
+# Coverage analysis
+PYTHONPATH=src pytest tests/ --cov=src --cov-report=term-missing
+PYTHONPATH=src pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=term-missing
 ```
 
 ## High-Level Architecture
 
 ### Core Pattern: FlextResult Railway
 
-The foundation of error handling across the entire ecosystem - eliminates exceptions in business logic:
+The foundation of error handling across the entire ecosystem - eliminates exceptions in business logic through railway-oriented programming:
 
 ```python
 from flext_core import FlextResult
@@ -93,121 +97,133 @@ from flext_core import FlextResult
 def validate_user(data: dict) -> FlextResult[User]:
     """All operations return FlextResult for composability."""
     if not data.get("email"):
-        return FlextResult[None].fail("Email required")
+        return FlextResult[None].fail("Email required", error_code="VALIDATION_ERROR")
     return FlextResult[None].ok(User(**data))
 
-# Railway-oriented composition
+# Railway-oriented composition - the key pattern
 result = (
     validate_user(data)
-    .flat_map(lambda u: save_user(u))      # Chain operations
-    .map(lambda u: format_response(u))      # Transform success
-    .map_error(lambda e: log_error(e))      # Handle errors
+    .flat_map(lambda u: save_user(u))      # Chain operations (monadic bind)
+    .map(lambda u: format_response(u))      # Transform success value
+    .map_error(lambda e: log_error(e))      # Handle errors in pipeline
+    .filter(lambda u: u.is_active, "User not active")  # Conditional filtering
 )
 
+# Safe value extraction
 if result.success:
-    return result.unwrap()  # Extract value
+    user = result.unwrap()  # Extract value after success check
+else:
+    logger.error(f"Operation failed: {result.error}")
+    
+# Alternative patterns
+value = result.unwrap_or(default_user)  # With default
+value = result.expect("User validation must succeed")  # With custom error
 ```
 
 ### Core Pattern: Dependency Injection
 
-Global container pattern used across all FLEXT services:
+Global container pattern used across all FLEXT services with type-safe service management:
 
 ```python
-from flext_core import get_flext_container
+from flext_core import FlextContainer
 
-# Global singleton container
-container = get_flext_container()
+# Get global singleton container
+container = FlextContainer.get_global()
 
-# Register services (returns FlextResult)
-container.register("db", DatabaseService())
+# Register services (returns FlextResult for error handling)
+container.register("database", DatabaseService())
 container.register_factory("logger", lambda: create_logger())
+container.register_singleton("cache", CacheService())
 
-# Retrieve with type safety
-db_result = container.get("db")
+# Type-safe retrieval with FlextResult
+db_result = container.get("database")
 if db_result.success:
     db = db_result.unwrap()
+    # Use the service
 ```
 
 ### Module Organization
 
-The library follows Clean Architecture with layered imports to avoid circular dependencies:
+The library follows Clean Architecture with strict layering to prevent circular dependencies:
 
 ```
 src/flext_core/
-├── Foundation Layer (Core Patterns)
-│   ├── result.py           # FlextResult[T] railway pattern with map/flat_map
-│   ├── container.py        # Dependency injection container with FlextResult
-│   ├── exceptions.py       # Exception hierarchy with error codes and metrics
-│   ├── constants.py        # FlextConstants, enums, error codes, performance metrics
-│   └── typings.py          # Type definitions and aliases (T, U, V, etc.)
+├── Foundation Layer (Core Patterns - No Dependencies)
+│   ├── result.py           # FlextResult[T] railway pattern (monadic operations)
+│   ├── container.py        # Dependency injection with type-safe ServiceKey[T]
+│   ├── exceptions.py       # Exception hierarchy with error codes
+│   ├── constants.py        # FlextConstants, enums, error messages
+│   └── typings.py          # Type variables (T, U, V) and type aliases
 │
-├── Domain Layer (DDD Patterns)
-│   ├── aggregate_root.py   # FlextAggregateRoot with domain events
+├── Domain Layer (Business Logic - Depends on Foundation)
+│   ├── models.py           # FlextModels.Entity/Value/AggregateRoot (DDD patterns)
 │   ├── domain_services.py  # Domain service patterns and operations
-│   ├── models.py           # Pydantic models and JSON schemas
-│   └── root_models.py      # RootModel patterns for validation
+│   └── validations.py      # FlextValidations with predicate-based rules
 │
-├── Application Layer (CQRS/Handlers)
-│   ├── commands.py         # FlextCommands pattern and CQRS foundation
-│   ├── handlers.py         # Handler implementations and registry
-│   ├── validation.py       # Validation framework with predicates
-│   ├── payload.py          # Message/event patterns for integration
-│   └── guards.py           # Type guards and validation decorators
+├── Application Layer (Use Cases - Depends on Domain)
+│   ├── commands.py         # FlextCommands CQRS pattern implementation
+│   ├── handlers.py         # FlextHandlers registry and execution
+│   └── guards.py           # FlextGuards type guards and validation decorators
 │
-├── Infrastructure Layer (Cross-cutting)
-│   ├── config.py           # Configuration management with Pydantic Settings
-│   ├── loggings.py         # Structured logging with structlog integration
-│   ├── observability.py    # Metrics, tracing, monitoring abstractions
-│   ├── protocols.py        # Interface definitions and contracts
+├── Infrastructure Layer (External Concerns - Depends on Application)
+│   ├── config.py           # FlextConfig with Pydantic Settings
+│   ├── loggings.py         # Structured logging with structlog
+│   ├── protocols.py        # FlextProtocols interface definitions
 │   └── context.py          # Request/operation context management
 │
-└── Support Modules (Utilities & Extensions)
-    ├── mixins.py           # Reusable behavior patterns (timestamps, logging, etc.)
-    ├── decorators.py       # Enterprise decorator patterns (validation, caching, etc.)
-    ├── utilities.py        # Helper functions, generators, type guards
-    ├── fields.py           # Field validation and metadata
-    ├── services.py         # Service layer abstractions
-    ├── delegation_system.py # Mixin delegation patterns
-    ├── schema_processing.py # Schema validation and processing
-    ├── type_adapters.py    # Type adaptation utilities
-    └── legacy.py           # Backward compatibility layer
+└── Support Modules (Cross-cutting Utilities)
+    ├── mixins.py           # Reusable behaviors (timestamps, serialization)
+    ├── decorators.py       # @safe_result, @validate, @cache decorators
+    ├── utilities.py        # FlextUtilities helper functions
+    └── core.py             # FlextCore main orchestrator class
 ```
 
-### Domain Modeling Pattern
+### Domain Modeling (DDD Patterns)
 
-DDD patterns that all ecosystem projects inherit:
+All ecosystem projects inherit these domain-driven design patterns:
 
 ```python
-from flext_core import FlextEntity, FlextValueObject, FlextAggregateRoot
+from flext_core import FlextModels, FlextResult
 
-class Email(FlextValueObject):
-    """Value objects are immutable and compared by value."""
+# Value Object - Immutable, compared by value
+class Email(FlextModels.Value):
     address: str
-
+    
     def validate(self) -> FlextResult[None]:
         if "@" not in self.address:
             return FlextResult[None].fail("Invalid email")
         return FlextResult[None].ok(None)
 
-class User(FlextEntity):
-    """Entities have identity and lifecycle."""
+# Entity - Has identity and lifecycle
+class User(FlextModels.Entity):
     name: str
-    email: Email  # Value object
-
+    email: Email  # Composition with value object
+    
     def activate(self) -> FlextResult[None]:
-        """Business logic returns FlextResult."""
+        """Business operations return FlextResult."""
         if self.is_active:
             return FlextResult[None].fail("Already active")
         self.is_active = True
-        # Domain events automatically tracked
+        self.add_domain_event("UserActivated", {"user_id": self.id})
+        return FlextResult[None].ok(None)
+
+# Aggregate Root - Consistency boundary
+class Account(FlextModels.AggregateRoot):
+    owner: User
+    balance: Decimal
+    
+    def withdraw(self, amount: Decimal) -> FlextResult[None]:
+        """Enforces business invariants."""
+        if amount > self.balance:
+            return FlextResult[None].fail("Insufficient funds")
+        self.balance -= amount
+        self.add_domain_event("MoneyWithdrawn", {"amount": str(amount)})
         return FlextResult[None].ok(None)
 ```
 
-## Development Patterns
+## Key Development Patterns
 
-### Mandatory Development Patterns
-
-#### 1. Error Handling Pattern (MANDATORY)
+### Error Handling Pattern (MANDATORY)
 
 Never raise exceptions in business logic - always return FlextResult:
 
@@ -218,202 +234,143 @@ def business_operation(data: dict) -> FlextResult[ProcessedData]:
     """MANDATORY: All business operations must return FlextResult."""
     if not data:
         return FlextResult[None].fail("Data required", error_code="VALIDATION_ERROR")
-
+    
     # Railway-oriented composition (PREFERRED)
     return (
         validate_data(data)
         .flat_map(lambda d: process_data(d))      # Chain operations
         .map(lambda d: enrich_data(d))            # Transform success
-        .map_error(lambda e: f"Processing failed: {e}")  # Handle errors
+        .recover_with(lambda e: fetch_fallback())  # Error recovery
     )
-
-# Consumption pattern
-result = business_operation(data)
-if result.success:
-    processed = result.unwrap()  # Safe unwrap after success check
-else:
-    logger.error(f"Operation failed: {result.error}")
 ```
 
-#### 2. Dependency Injection Pattern (MANDATORY)
+### Import Strategy (CRITICAL)
 
-Always use the global container for service registration:
+Always import from root module, never from internals:
 
 ```python
-from flext_core import get_flext_container
+# ✅ CORRECT - Import from root
+from flext_core import FlextResult, FlextContainer, FlextModels
 
-# Registration (typically in application startup)
-container = get_flext_container()
-container.register("database", DatabaseService())
-container.register_factory("logger", lambda: create_logger())
-
-# Consumption (in business logic)
-def service_operation() -> FlextResult[Data]:
-    db_result = container.get("database")
-    if db_result.failure:
-        return FlextResult[None].fail("Database service unavailable")
-    
-    db = db_result.unwrap()
-    return db.fetch_data()
+# ❌ WRONG - Never import from internal modules
+from flext_core.result import FlextResult  # FORBIDDEN
+from flext_core.models import FlextModels  # FORBIDDEN
 ```
 
-### Shared Domain Pattern
+### Testing with Shared Infrastructure
 
-Examples and tests use a shared domain to avoid duplication:
+Tests use consolidated support infrastructure:
 
 ```python
-# ALWAYS import from shared_domain in examples/tests
-from shared_domain import (
-    SharedDomainFactory,    # Factory for test entities
-    User,                   # Shared User entity
-    Order,                  # Shared Order aggregate
-    Email,                  # Shared Email value object
+# Import from flext_tests support module
+from flext_tests import (
+    UserFactory,           # Test data factories
+    FlextResultFactory,    # Result creation helpers
+    FlextMatchers,         # Custom pytest matchers
+    TestBuilders,          # Builder pattern for test data
 )
 
-# NEVER create local domain models in examples
-# This ensures consistency across all demonstrations
+# Use provided fixtures from conftest.py
+def test_with_container(clean_container):
+    """Use clean_container fixture for isolated DI testing."""
+    clean_container.register("service", MyService())
+    # Test continues...
 ```
 
-### Quality Requirements
+## Quality Standards
 
-- **MyPy Strict Mode**: Zero tolerance for type errors in src/
-- **Runtime Type Checking**: All public APIs validate types
-- **Generic Types**: Use TypeVar for proper generic constraints
-- **No Any Types**: Explicitly type all parameters and returns
-- **Coverage minimum**: 75% (enforced in Makefile)
-- **Test markers**: Use appropriate markers (unit, integration, slow)
-- **Fixtures**: Use provided fixtures from conftest.py
-- **Shared domain**: Import test entities from shared_test_domain.py
+### Code Quality Requirements
 
-### Code Style Requirements
+- **MyPy Strict Mode**: Zero tolerance for type errors in `src/` directory
+- **Line Length**: 79 characters maximum (PEP8 strict enforcement)
+- **Coverage Minimum**: 75% test coverage (enforced by Makefile)
+- **Type Hints**: Required for ALL function signatures and class attributes
+- **Naming Convention**: `FlextXxx` prefix for all public exports
+- **Docstrings**: Required for all public APIs (Google style)
 
-- **Line length**: 79 characters maximum (PEP8 strict)
-- **Naming**: FlextXxx prefix for all public exports
-- **Imports**: Absolute imports from flext_core
-- **Docstrings**: Required for all public APIs
-- **Type hints**: Mandatory for all functions and methods
-- **Error handling**: FlextResult return types for all business operations
+### Pre-Commit Checks
 
-## Ecosystem Integration
+Before committing, these must pass:
+1. `make lint` - No linting errors (ruff)
+2. `make type-check` - No type errors (mypy strict)
+3. `make test` - All tests pass with 75%+ coverage
+4. `make security` - No security vulnerabilities
 
-### Foundation Library Role
+## Common Troubleshooting
 
-FLEXT Core is the architectural foundation for 32+ projects in the FLEXT data integration ecosystem:
-
-```
-flext-core (this library)
-    ↓
-├── Infrastructure Libraries (6 projects)
-│   ├── flext-db-oracle      # Uses FlextResult for DB operations
-│   ├── flext-ldap           # Uses FlextContainer for services
-│   ├── flext-grpc           # Uses FlextPayload for messages
-│   └── flext-meltano        # Uses all core patterns
-│
-├── Application Services (5 projects)
-│   ├── flext-api            # FastAPI with FlextResult responses
-│   ├── flext-auth           # Auth with FlextEntity users
-│   └── flext-web            # Web UI with FlextContainer DI
-│
-├── Singer Ecosystem (15 projects)
-│   ├── Taps (5)             # Extract with FlextResult
-│   ├── Targets (5)          # Load with FlextResult
-│   └── DBT (4)              # Transform with validation
-│
-└── Go Services (via Python bridge)
-    ├── FlexCore             # Runtime engine
-    └── FLEXT Service        # Control panel
-```
-
-### Breaking Changes Impact
-
-Changes to flext-core affect ALL 32 dependent projects. Before making breaking changes:
-
-1. Check ecosystem compatibility
-2. Document migration path
-3. Update dependent projects
-4. Follow semantic versioning
-
-## Common Issues and Solutions
-
-### Import Errors (FREQUENT)
+### Import Resolution Issues
 
 ```bash
-# FIRST: Always verify actual exports
-Read src/flext_core/__init__.py
+# Verify actual exports (ALWAYS do this first)
+grep "^from.*import\|^import" src/flext_core/__init__.py
 
-# SECOND: Check if class exists where expected
+# Check if class exists and where
 grep -r "class ClassName" src/
 
-# THIRD: Test import directly
+# Test import directly with PYTHONPATH
 PYTHONPATH=src python -c "from flext_core import ClassName"
 ```
 
-### API Signature Changes (FREQUENT)
+### Type Checking Errors
 
 ```bash
-# When examples fail, check current API:
-Read src/flext_core/result.py  # Check actual method signatures
-Read examples/shared_domain.py # Check current domain patterns
-
-# Fix imports systematically:
-# .shared_domain → shared_domain (relative to absolute)
-# FlextProcessingUtils → direct JSON parsing implementation
-```
-
-### Type Checking Issues
-
-```bash
-# Check errors with specific codes:
+# Get detailed type errors with context
 mypy src/ --show-error-codes --show-error-context
-pyright src/ --outputformat text
 
-# Focus on src/ first (zero tolerance), then tests (pragmatic)
+# Check specific file
+PYTHONPATH=src mypy src/flext_core/result.py --strict
+
+# Use pyright for additional checking
+PYTHONPATH=src pyright src/ --outputformat text
 ```
 
-## Development Workflow
-
-### Verification-First Development (CRITICAL)
-
-**ALWAYS verify before asserting anything:**
+### Test Failures
 
 ```bash
-# Before claiming something works:
-Read file.py                    # Verify actual content
-PYTHONPATH=src python file.py   # Test actual execution
+# Run single test with verbose output
+PYTHONPATH=src pytest tests/unit/test_result.py::TestFlextResult::test_map -xvs
 
-# Before assuming imports exist:
-Read src/flext_core/__init__.py  # Check actual exports
-python -c "from flext_core import Class"  # Verify import works
+# Debug with Python debugger
+PYTHONPATH=src python -m pdb -m pytest tests/unit/test_result.py
+
+# Check test coverage for specific module
+PYTHONPATH=src pytest tests/ --cov=src/flext_core/result --cov-report=term-missing
 ```
 
-**NEVER assume based on:**
-- File names or "logical" patterns
-- Previous session memory
-- What "should" work
+## Ecosystem Impact
 
-### Disciplined Development Approach
+FLEXT Core is the foundation for 32+ projects. Changes here affect:
+
+- **Infrastructure Libraries** (6): flext-db-oracle, flext-ldap, flext-grpc, etc.
+- **Application Services** (5): flext-api, flext-auth, flext-web, etc.
+- **Singer Ecosystem** (15): Taps, Targets, DBT transformations
+- **Go Services** (2): FlexCore runtime, FLEXT Service control panel
+
+### Breaking Change Protocol
+
+1. Check impact: `grep -r "from flext_core" ../` in dependent projects
+2. Document migration path in CHANGELOG.md
+3. Use deprecation warnings for 2 version cycles
+4. Follow semantic versioning strictly
+
+## Verification-First Development
+
+**CRITICAL**: Always verify before making claims:
 
 ```bash
-# 1. VERIFY FIRST (most important lesson)
-Read file.py                    # Understand current state
-PYTHONPATH=src python file.py   # Test current functionality
+# Before claiming something works
+mcp__filesystem__read_text_file path=/path/to/file.py  # Read actual content
+PYTHONPATH=src python file.py                          # Test execution
 
-# 2. MAKE TARGETED CHANGES
-# - One thing at a time
-# - Test after each change
-# - Mark todos as completed immediately
-
-# 3. QUALITY GATES (only after verification)
-make format          # Format code
-make validate        # Run all quality gates
-
-# 4. COMMIT WITH EVIDENCE
-git add .
-git commit -m "Fix: specific issue with evidence of resolution"
+# Before assuming imports exist
+mcp__filesystem__read_text_file path=src/flext_core/__init__.py  # Check exports
+python -c "from flext_core import Class"                         # Verify import
 ```
+
+**NEVER** assume based on file names or logical patterns. **ALWAYS** verify with tools.
 
 ---
 
 **FLEXT-CORE AUTHORITY**: These guidelines are specific to flext-core development.
 **ECOSYSTEM STANDARDS**: See [../CLAUDE.md](../CLAUDE.md) for workspace-wide patterns.
-**EVIDENCE-BASED**: All patterns here are proven through implementation and testing.
+**EVIDENCE-BASED**: All patterns documented here are verified through implementation.

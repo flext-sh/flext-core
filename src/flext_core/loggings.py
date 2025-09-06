@@ -1,7 +1,7 @@
-"""Structured logging with correlation IDs, performance tracking, and security sanitization.
+"""Structured logging with correlation IDs and metrics.
 
-Provides FlextLogger with structured logging, JSON output, correlation ID
-tracking, performance metrics, and sensitive data sanitization using structlog.
+Provides FlextLogger with structured logging, correlation ID tracking,
+performance metrics, and sensitive data sanitization.
 """
 
 from __future__ import annotations

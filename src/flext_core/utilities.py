@@ -1,7 +1,7 @@
-"""Comprehensive utility functions with hierarchical organization and type safety.
+"""Utility functions and helpers.
 
-Provides FlextUtilities class with ID generation, text processing, validation, performance
-monitoring, and JSON handling organized in nested classes with FlextResult integration.
+Provides FlextUtilities with helper functions, conversion utilities,
+validation helpers, and cross-cutting tools.
 """
 
 from __future__ import annotations

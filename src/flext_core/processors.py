@@ -1,97 +1,21 @@
-r"""Schema and entry processing system with validation and transformation.
+"""Schema and entry processing system with validation and transformation.
 
-Provides FlextProcessors with efficient data processing capabilities including entry
-validation, regex-based pattern matching, configuration management, and pipeline processing.
+Provides unified data processing capabilities including entry validation, regex pattern
+matching, configuration management, and pipeline processing with FlextResult error handling.
 
-Usage:
+Key Components:
+    - Entry: Immutable value object for structured data
+    - BaseProcessor: Core processing with validation
+    - RegexProcessor: Pattern matching and extraction
+    - ConfigProcessor: Configuration validation
+    - ValidatingProcessor: Handler-based validation
+    - ProcessingPipeline: Composable processing steps
+
+Example:
     processors = FlextProcessors()
-
-    # Create and process entries
     entry_result = processors.create_entry({"id": "user123", "name": "John"}, "USER")
     if entry_result.success:
-        entry = entry_result.unwrap()
-
-    # Regex processing
-    regex_proc = processors.create_regex_processor(r"user_(\d+)")
-
-    # Pipeline processing
-    pipeline = processors.create_processing_pipeline()
-    results = pipeline.process(entries)
-
-Features:
-    - Entry validation with type safety
-    - Regex-based pattern matching and extraction
-    - Configurable processing pipelines
-    - Service registry integration
-    - FlextResult error handling
-        validate_entry(entry) -> FlextResult[None] # Validate entry structure and content
-        is_identifier_whitelisted(identifier) -> bool # Check whitelist membership
-
-    BaseProcessor Methods:
-        __init__(validator=None)       # Initialize with optional validator
-        validate_input(entry) -> FlextResult[None] # Validate entry using configured validator
-        transform_data(entry) -> FlextResult[Entry] # Transform entry (default: unchanged)
-        process_data(entry) -> FlextResult[dict] # Extract information from entry
-        process(request) -> FlextResult[Entry] # Process request into domain object
-        build(domain, correlation_id="") -> dict # Build final result from domain
-
-    RegexProcessor Methods:
-        __init__(pattern, validator=None) # Initialize with regex pattern
-        extract_identifier_from_content(content) -> FlextResult[str]
-        validate_content_format(content) -> FlextResult[bool]
-        process_data(entry) -> FlextResult[dict] # Process with regex-specific logic
-
-    ConfigProcessor Methods:
-        __init__()                     # Initialize with config cache
-        validate_configuration_attribute(obj, attr_name, validator) -> FlextResult[bool]
-        get_config_value(config, key) -> FlextResult[object]
-
-    ValidatingProcessor Methods:
-        __init__(name="entry_validator", validator=None) # Initialize with FlextHandlers
-        handle(request) -> FlextResult[object] # Handle using FlextHandlers patterns
-        process_entry(entry) -> FlextResult[Entry] # Process entry with validation
-
-    ProcessingPipeline Methods:
-        __init__(input_processor=None, output_processor=None) # Initialize pipeline
-        add_step(step) -> ProcessingPipeline # Add processing step as handler
-        process(data) -> FlextResult[object] # Process through handler pipeline
-
-    Sorter Methods:
-        sort_entries(entries, key_func=None, reverse=False) -> FlextResult[list[Entry]]
-
-Usage Examples:
-    Basic entry processing:
-        processor = FlextProcessors()
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": "user",
-            "clean_content": "john_doe",
-            "original_content": "John Doe",
-            "identifier": "user_john_doe"
-        })
-        if entry_result.success:
-            entry = entry_result.unwrap()
-            validation_result = processor.process_entries([entry])
-
-    Regex processing:
-        regex_result = FlextProcessors.create_regex_processor(r"user_(\w+)")
-        if regex_result.success:
-            regex_processor = regex_result.unwrap()
-            identifier_result = regex_processor.extract_identifier_from_content("user_john")
-
-    Processing pipeline:
-        pipeline_result = FlextProcessors.create_processing_pipeline(
-            input_processor=lambda x: FlextResult.ok(x.upper()),
-            output_processor=lambda x: FlextResult.ok(f"processed_{x}")
-        )
-        if pipeline_result.success:
-            pipeline = pipeline_result.unwrap()
-            result = pipeline.process("test_data")
-
-Integration:
-    FlextProcessors integrates with FlextResult for railway-oriented programming,
-    FlextServices.ServiceRegistry for processor registration and discovery,
-    FlextHandlers for processing patterns, and FlextValidations
-    for efficient data validation across the FLEXT ecosystem.
+        results = processors.process_entries([entry_result.unwrap()])
 
 """
 

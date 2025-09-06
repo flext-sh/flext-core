@@ -1,7 +1,7 @@
-"""Validation, type guards and data integrity enforcement system.
+"""Type guards and data integrity enforcement.
 
-Provides efficient validation and guard system with type guards, function memoization,
-immutable class creation, and assertion-style validation using FlextResult integration.
+Provides FlextGuards with type guards, validation decorators, and
+assert-style validation using FlextResult integration.
 """
 
 from __future__ import annotations

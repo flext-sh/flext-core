@@ -1,7 +1,7 @@
 """FLEXT Core - Data integration foundation library.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Foundation library providing railway-oriented programming, dependency
+injection, and domain-driven design patterns for the FLEXT ecosystem.
 """
 
 from __future__ import annotations

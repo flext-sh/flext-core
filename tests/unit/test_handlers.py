@@ -10,6 +10,7 @@ following the user's requirement for real tests without mocks.
 from __future__ import annotations
 
 import time
+from typing import Literal, cast
 
 import pytest
 
@@ -369,10 +370,8 @@ class TestHandlersConfigurationIntegration:
         # Test invalid environment
 
         # Test with properly typed invalid environment using cast
-        from typing import Literal, cast
-
         # Define Environment type locally to avoid import issues
-        Environment = Literal["development", "production", "staging", "test", "local"]
+        type Environment = Literal["development", "production", "staging", "test", "local"]
 
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(

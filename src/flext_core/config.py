@@ -1,12 +1,7 @@
-"""Enterprise configuration management with type-safe validation and environment integration.
+"""Configuration management with type-safe validation.
 
-This module provides comprehensive configuration management for the FLEXT ecosystem using
-Pydantic v2 BaseModel patterns with FlextResult error handling, environment variable
-integration, JSON serialization/deserialization, and business rule validation for
-enterprise-grade configuration reliability.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Provides FlextConfig using Pydantic BaseSettings with environment variable
+integration and FlextResult error handling.
 """
 
 from __future__ import annotations

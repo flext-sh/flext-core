@@ -1,9 +1,4 @@
-"""Type definitions and aliases for the FLEXT core library.
-
-Provides efficient type definitions, generic patterns, and type utilities for the
-FLEXT ecosystem with hierarchical organization and Python 3.13+ syntax.
-
-"""
+"""Type definitions and aliases for the FLEXT core library."""
 
 from __future__ import annotations
 
@@ -24,24 +19,14 @@ from flext_core.result import FlextResult
 
 
 class FlextTypes:
-    """Hierarchical type system organizing FLEXT types by domain and usage.
-
-    This is the single consolidated class for all FLEXT Core type definitions,
-    following the Flext[Area][Module] pattern where this represents FlextTypes.
-    All other FLEXT libraries should reference types from this class hierarchy.
-
-    """
+    """Hierarchical type system for FLEXT types."""
 
     # =========================================================================
     # TYPE VARIABLES - Generic programming foundation
     # =========================================================================
 
     class TypeVars:
-        """Generic type variables for ecosystem-wide use.
-
-        Centralized location for all TypeVar and ParamSpec definitions
-        following FLEXT patterns and Python 3.13+ syntax.
-        """
+        """Generic type variables for ecosystem-wide use."""
 
         # Specialized type variables
         TEntity = TypeVar("TEntity")  # Entity types
@@ -70,7 +55,7 @@ class FlextTypes:
     # =========================================================================
 
     class Core:
-        """Core fundamental types used throughout the FLEXT ecosystem."""
+        """Core fundamental types."""
 
         # Basic collection types
         type Dict = dict[str, object]
@@ -105,7 +90,7 @@ class FlextTypes:
     # =========================================================================
 
     class Domain:
-        """Domain types for DDD patterns and business logic."""
+        """Domain types for DDD patterns."""
 
         # Entity types
         type EntityId = str
@@ -125,7 +110,7 @@ class FlextTypes:
     # =========================================================================
 
     class Result:
-        """Result pattern types optimized for processors.py and decorators.py implementation."""
+        """Result pattern types."""
 
         # =====================================================================
         # HEAVILY USED RESULT TYPES - Core result patterns (15 total usages)
@@ -142,7 +127,7 @@ class FlextTypes:
     # =========================================================================
 
     class Service:
-        """Service layer types optimized for container.py and commands.py implementation."""
+        """Service layer types."""
 
         # Container registry types
         type ServiceDict = dict[str, object]  # Services registry mapping
@@ -187,11 +172,7 @@ class FlextTypes:
     # =========================================================================
 
     class Handler:
-        """Handler types for CQRS and message processing.
-
-        This class provides type definitions for command query responsibility
-        segregation patterns and message processing handlers.
-        """
+        """Handler types for CQRS and message processing."""
 
         # Command and query types
         type Command = object  # Commands are specific to domain
@@ -216,11 +197,7 @@ class FlextTypes:
     # =========================================================================
 
     class Commands:
-        """Commands-specific types based on actual FlextCommands implementation.
-
-        These types match the actual method signatures found in commands.py
-        for better type coherence between definitions and implementations.
-        """
+        """Commands-specific types."""
 
         # Configuration types - matching configure_commands_system
         type CommandsConfig = FlextResult[
@@ -242,7 +219,7 @@ class FlextTypes:
     # =========================================================================
 
     class Aggregates:
-        """Aggregates-specific types for FlextModels implementation."""
+        """Aggregate root types."""
 
         # Primary configuration dictionary type
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
@@ -263,7 +240,7 @@ class FlextTypes:
     # =========================================================================
 
     class Container:
-        """Container types optimized for core.py implementation."""
+        """Dependency injection types."""
 
         # Primary service key type (3 usages) - Enhanced service identifier
         type ServiceKey = str  # Service key identifier
@@ -280,7 +257,7 @@ class FlextTypes:
     # =========================================================================
 
     class Config:
-        """Configuration and settings types."""
+        """Configuration types."""
 
         # Primary configuration types
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
@@ -306,7 +283,7 @@ class FlextTypes:
     # =========================================================================
 
     class Models:
-        """Models system types optimized for models.py implementation."""
+        """Model system types."""
 
         # =====================================================================
         # HEAVILY USED MODELS TYPES - Core model patterns (21 total usages)

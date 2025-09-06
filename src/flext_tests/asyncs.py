@@ -417,12 +417,8 @@ class AsyncContextManager:
     async def timeout_context(duration: float) -> AsyncGenerator[None]:
         """Timeout context built on asyncio.timeout to raise asyncio.TimeoutError."""
         # Python 3.13+: asyncio.timeout is available for context-based timeouts
-        try:
-            async with asyncio.timeout(duration):
-                yield
-        except Exception:
-            # Propagate asyncio.TimeoutError as-is
-            raise
+        async with asyncio.timeout(duration):
+            yield
 
     @staticmethod
     def create_delayed_async_mock(

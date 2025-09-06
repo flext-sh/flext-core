@@ -1,29 +1,7 @@
-"""Enterprise decorator system using mixin architecture.
+"""Decorator patterns for cross-cutting concerns.
 
-Provides FlextDecorators with efficient decorator patterns leveraging FlextMixins
-for reliability, validation, performance monitoring, and observability.
-
-Usage:
-    # Safe execution with error handling
-    @FlextDecorators.Reliability.safe_result
-    def process_data(data: dict) -> int:
-        return len(data["items"])
-
-    # Performance monitoring
-    @FlextDecorators.Performance.monitor()
-    def database_query() -> list[dict]:
-        return [{"id": 1, "name": "test"}]
-
-    # Input validation
-    @FlextDecorators.Validation.validate_input
-    def create_user(name: str, email: str) -> User:
-        return User(name=name, email=email)
-
-Features:
-    - Reliability decorators for safe execution
-    - Validation decorators for input/output validation
-    - Performance monitoring and caching
-    - Observability and logging integration
+Provides FlextDecorators with validation, caching, retry logic,
+rate limiting, authentication, and performance monitoring.
 """
 
 from __future__ import annotations

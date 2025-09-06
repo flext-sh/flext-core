@@ -1,182 +1,7 @@
-"""Mixin composition and method delegation patterns.
+"""Delegation system for mixin behavior composition.
 
-Provides sophisticated delegation system enabling complex mixin composition without
-multiple inheritance limitations using composition-over-inheritance principles.
-
-Usage:
-    # Mixin delegation
-    class Service:
-        def __init__(self):
-            self._delegator = FlextDelegationSystem.create_mixin_delegator(
-                self,
-                [LoggingMixin, TimestampMixin, ValidationMixin]
-            )
-
-    # Method delegation
-    class ApiClient:
-        def __init__(self):
-            self._http_delegator = FlextDelegationSystem.create_method_delegator(
-                self,
-                http_client,
-                ["get", "post", "put", "delete"]
-            )
-
-    # Validation
-    validation_result = FlextDelegationSystem.validate_delegation_system(service)
-    if validation_result.success:
-        report = validation_result.unwrap()
-
-Features:
-    - Mixin composition without multiple inheritance limitations
-    - Automatic method forwarding and property delegation
-    - Runtime behavior addition/removal
-    - Type safety and protocol enforcement
-    - Comprehensive validation framework
-
-        # Protocol Interfaces:
-        HasDelegator                    # Protocol for objects with delegation
-        DelegatorProtocol               # Protocol for delegator implementations
-        DelegatedProperty               # Property descriptor for transparent delegation
-
-    MixinDelegator Methods:
-        add_mixin(mixin) -> FlextResult[None]       # Add mixin to delegation
-        remove_mixin(mixin) -> FlextResult[None]    # Remove mixin from delegation
-        get_delegated_methods() -> list[str]        # List all delegated methods
-        call_delegated_method(method_name, *args, **kwargs) -> FlextResult[object] # Call delegated method
-
-    MethodDelegator Methods:
-        delegate_method(method_name, target_method) -> FlextResult[None] # Delegate specific method
-        undelegate_method(method_name) -> FlextResult[None] # Remove method delegation
-        is_method_delegated(method_name) -> bool    # Check if method is delegated
-
-    PropertyDelegator Methods:
-        delegate_property(prop_name, target_prop) -> FlextResult[None] # Delegate property access
-        undelegate_property(prop_name) -> FlextResult[None] # Remove property delegation
-        create_delegated_property(prop_name, getter, setter=None) -> DelegatedProperty # Create property descriptor
-
-    ValidationSystem Methods:
-        validate_host_compatibility(host, mixins) -> FlextResult[bool] # Validate host compatibility
-        test_method_delegation(host, method) -> FlextResult[bool] # Test individual method delegation
-        generate_validation_report(host) -> ValidationReport # Generate efficient report
-        check_circular_delegation(host) -> FlextResult[bool] # Check for circular dependencies
-
-Usage Examples:
-    Basic mixin delegation:
-        class BusinessLogic:
-            def __init__(self):
-                self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
-                    self, [FlextMixins.Loggable, FlextMixins.Serializable]
-                )
-
-            def process_data(self, data):
-                # Can now use delegated methods like log_info(), to_json()
-                self.log_info("Processing data")
-                result = {"processed": data}
-                return self.to_json(result)
-
-    Method delegation:
-        class Calculator:
-            def __init__(self, math_engine):
-                self.delegator = FlextDelegationSystem.create_method_delegator(
-                    self, math_engine, ["add", "subtract", "multiply", "divide"]
-                )
-
-            # Now has add(), subtract(), multiply(), divide() methods
-
-    Property delegation:
-        class ConfigWrapper:
-            def __init__(self, config_obj):
-                self.delegator = FlextDelegationSystem.create_property_delegator(
-                    self, config_obj, ["database_url", "api_key", "timeout"]
-                )
-
-            # Now has database_url, api_key, timeout properties
-
-    Validation:
-        validation_result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(business_logic)
-        if validation_result.success:
-            report = validation_result.unwrap()
-            print(f"Delegation validation: {report.status}")
-
-Integration:
-    FlextDelegationSystem integrates with FlextMixins for behavior composition,
-    FlextResult for error handling, FlextProtocols for type safety, and FlextExceptions
-    for structured error reporting in delegation operations.
-                    FlextMixins.Validatable,
-                    FlextMixins.Serializable,
-                    FlextMixins.Timestamped,
-                )
-
-            def process_data(self, data: dict) -> bool:
-                # Use delegated validation methods
-                if not self.is_valid():  # Delegated from Validatable
-                    return False
-
-                # Use delegated serialization
-                serialized = self.to_dict()  # Delegated from Serializable
-
-                # Use delegated timestamps
-                self.update_timestamp()  # Delegated from Timestamped
-
-                return True
-
-    Advanced delegation with custom properties::
-
-        class DataProcessor:
-            def __init__(self):
-                self.delegator = FlextDelegationSystem.MixinDelegator(
-                    self, ValidationMixin, CachingMixin, MetricsMixin
-                )
-
-                # Access delegation information
-                info = self.delegator.get_delegation_info()
-                logger.info(f"Delegated methods: {info['delegated_methods']}")
-
-            def validate_and_process(self, data: dict):
-                # Chain delegated operations
-                if self.validate_data(data):  # From ValidationMixin
-                    cached_result = self.get_cached(data)  # From CachingMixin
-                    if cached_result is None:
-                        result = self.expensive_operation(data)
-                        self.cache_result(data, result)  # From CachingMixin
-                        self.record_metric("cache_miss")  # From MetricsMixin
-                    else:
-                        self.record_metric("cache_hit")  # From MetricsMixin
-                        result = cached_result
-                    return result
-                return None
-
-    Validation and testing::
-
-        # Comprehensive system validation
-        validation_result = (
-            FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
-        )
-
-        if validation_result.success:
-            report = validation_result.value
-            print(f"Validation status: {report['status']}")
-            for test in report["test_results"]:
-                print(f"  {test}")
-        else:
-            print(f"Validation failed: {validation_result.error}")
-
-Integration Points:
-    - **FlextMixins**: Seamless integration with FLEXT mixin system
-    - **FlextExceptions**: Comprehensive error handling and reporting
-    - **FlextLogger**: Structured logging with delegation context
-    - **FlextResult[T]**: Type-safe result handling for validation operations
-    - **Protocol System**: Type-safe contracts for delegation interfaces
-
-Design Patterns:
-    - **Delegation Pattern**: Core delegation of method calls to composed objects
-    - **Descriptor Pattern**: Property delegation through descriptor protocol
-    - **Composition Pattern**: Building complex behavior through object composition
-    - **Protocol Pattern**: Type-safe interfaces defining delegation contracts
-    - **Factory Pattern**: Convenient creation of delegation configurations
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Provides delegation patterns for composing behaviors from mixins
+without inheritance conflicts using descriptor protocol.
 """
 
 from __future__ import annotations
@@ -192,86 +17,29 @@ from flext_core.result import FlextResult
 
 
 class FlextDelegationSystem:
-    """Comprehensive delegation system providing sophisticated mixin composition and method forwarding.
+    """Delegation system for mixin composition and method forwarding.
 
-    This class serves as the central coordination hub for all delegation functionality in the
-    FLEXT ecosystem, implementing advanced composition patterns that enable complex behavior
-    aggregation without the pitfalls of multiple inheritance. The system provides type-safe
-    delegation, automatic method forwarding, and efficient validation capabilities.
+    Provides type-safe delegation patterns enabling behavior aggregation through
+    composition without multiple inheritance pitfalls. Implements automatic method
+    forwarding, property delegation via descriptors, and validation capabilities.
 
-    **ARCHITECTURAL CONSOLIDATION**: Following FLEXT architectural patterns, this class
-    consolidates all delegation functionality that was previously scattered across multiple
-    classes into a single, well-organized system with nested classes for logical separation.
+    Components:
+        - HasDelegator: Protocol for delegation-capable objects
+        - DelegatorProtocol: Contract for delegator implementations
+        - DelegatedProperty: Descriptor for transparent property access
+        - MixinDelegator: Core engine for mixin composition
+        - Validation: Testing and validation framework
 
-    **CONSOLIDATED COMPONENTS**:
-        - **HasDelegator Protocol**: Interface for objects with delegation capabilities
-        - **DelegatorProtocol**: Contract for delegator implementations
-        - **DelegatedProperty**: Property descriptor for transparent property delegation
-        - **MixinDelegator**: Core engine for mixin composition and method delegation
-        - **Validation System**: Comprehensive testing and validation framework
+    Example:
+        class DataProcessor:
+            def __init__(self):
+                self.delegator = FlextDelegationSystem.create_mixin_delegator(
+                    self, ValidationMixin, SerializationMixin
+                )
 
-    Core Features:
-        - **Automatic Method Delegation**: Methods are automatically forwarded from mixins to host
-        - **Property Delegation**: Properties use descriptor protocol for transparent access
-        - **Type Safety**: Protocol-based contracts ensure proper delegation interfaces
-        - **Error Handling**: Comprehensive error management with detailed logging
-        - **Runtime Registration**: Dynamic mixin registration and configuration
-        - **Validation Framework**: Built-in testing and validation capabilities
-        - **Integration Support**: Seamless integration with FLEXT ecosystem components
-
-    Delegation Patterns:
-        The system implements several sophisticated delegation patterns:
-
-        1. **Method Delegation**: Automatic forwarding of method calls to appropriate mixins
-        2. **Property Delegation**: Transparent property access through descriptor protocol
-        3. **Composition Delegation**: Building complex behavior through object composition
-        4. **Protocol Delegation**: Type-safe delegation through interface contracts
-        5. **Error Delegation**: Proper error propagation with context preservation
-
-    Usage Examples:
-        Basic delegation setup::
-
-            # Create host class that will receive delegated functionality
-            class DataProcessor:
-                def __init__(self):
-                    self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
-                        self, ValidationMixin, SerializationMixin, CachingMixin
-                    )
-
-                def process(self, data):
-                    # Use delegated methods seamlessly
-                    if self.validate(data):  # From ValidationMixin
-                        serialized = self.serialize(data)  # From SerializationMixin
-                        return self.cache_result(serialized)  # From CachingMixin
-
-        Advanced delegation with validation::
-
-            processor = DataProcessor()
-
-            # Validate delegation is working correctly
-            delegator = processor.delegator
-            validation_result = delegator._validate_delegation()
-
-            if validation_result.success:
-                info = delegator.get_delegation_info()
-                print(f"Host: {info['host_class']}")
-                print(f"Mixins: {info['mixin_classes']}")
-                print(f"Methods: {info['delegated_methods']}")
-            else:
-                print(f"Delegation validation failed: {validation_result.error}")
-
-        System-wide validation::
-
-            # Comprehensive system validation
-            system_validation = (
-                FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
-            )
-
-            if system_validation.success:
-                report = system_validation.value
-                print(f"System Status: {report['status']}")
-                for test_result in report["test_results"]:
-                    print(f"  {test_result}")
+            def process(self, data):
+                if self.validate(data):  # From ValidationMixin
+                    return self.serialize(data)  # From SerializationMixin
 
     Nested Classes:
         - **HasDelegator**: Protocol defining delegation capability interface

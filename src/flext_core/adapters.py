@@ -1,11 +1,7 @@
-"""FLEXT Type Adapters - Type conversion, validation and serialization system.
+"""Adapter patterns for external system integration.
 
-Provides efficient type adaptation capabilities including type conversion,
-validation pipeline, schema generation, and JSON/dict serialization. Built on
-Pydantic v2 TypeAdapter with FlextResult integration.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Provides FlextAdapters with port/adapter patterns for databases,
+APIs, message queues, and third-party services.
 """
 
 from __future__ import annotations
