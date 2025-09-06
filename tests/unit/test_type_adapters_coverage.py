@@ -10,6 +10,7 @@ This module provides complete test coverage for type_adapters.py following FLEXT
 from __future__ import annotations
 
 import math
+from typing import cast
 
 from pydantic import BaseModel, TypeAdapter
 
@@ -300,7 +301,7 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Application.deserialize_from_json(
             json_data,
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert isinstance(result, FlextResult)
         assert result.success is True
@@ -316,7 +317,7 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Application.deserialize_from_json(
             "invalid json",
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert result.failure is True
 
@@ -324,7 +325,7 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Application.deserialize_from_json(
             '{"name": "Bob"}',
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert result.failure is True
 
@@ -336,7 +337,7 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Application.deserialize_from_dict(
             data,
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert isinstance(result, FlextResult)
         assert result.success is True
@@ -350,9 +351,9 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test with None
         result = FlextTypeAdapters.Application.deserialize_from_dict(
-            None,
+            cast("dict[str, object]", None),
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert result.failure is True
 
@@ -360,27 +361,34 @@ class TestFlextTypeAdaptersCoverage:
         result = FlextTypeAdapters.Application.deserialize_from_dict(
             {"name": "Alice"},
             TestUser,
-            adapter,
+            cast("TypeAdapter[object]", adapter),
         )
         assert result.failure is True
 
     def test_application_generate_schema_success(self) -> None:
         """Test Application.generate_schema for types."""
         adapter = TypeAdapter(TestUser)
-        result = FlextTypeAdapters.Application.generate_schema(TestUser, adapter)
+        result = FlextTypeAdapters.Application.generate_schema(
+            cast("type[object]", TestUser),
+            cast("TypeAdapter[object]", adapter),
+        )
         assert isinstance(result, FlextResult)
         assert result.success is True
-        assert isinstance(result.value, dict)
-        assert "properties" in result.value
-        assert "name" in result.value["properties"]
-        assert "age" in result.value["properties"]
+        schema = result.value
+        assert "properties" in schema
+        props = cast("dict[str, object]", schema["properties"])
+        assert "name" in props
+        assert "age" in props
 
     def test_application_generate_schema_failure(self) -> None:
         """Test Application.generate_schema with invalid types."""
         adapter = TypeAdapter(TestUser)
 
         # Test with None type - the method might handle this gracefully
-        result = FlextTypeAdapters.Application.generate_schema(None, adapter)
+        result = FlextTypeAdapters.Application.generate_schema(
+            cast("type[object]", None),
+            cast("TypeAdapter[object]", adapter),
+        )
         # Accept that it returns a FlextResult (covers the code path)
         assert isinstance(result, FlextResult)
 
@@ -427,8 +435,10 @@ class TestFlextTypeAdaptersCoverage:
         dict_result = FlextTypeAdapters.Application.serialize_to_dict(order, adapter)
         assert isinstance(dict_result, FlextResult)
         if dict_result.success:
-            assert dict_result.value["id"] == "order_123"
-            assert dict_result.value["user"]["name"] == "John"
+            d = dict_result.value
+            assert d["id"] == "order_123"
+            u = cast("dict[str, object]", d["user"])
+            assert u["name"] == "John"
 
     def test_error_handling_and_recovery_patterns(self) -> None:
         """Test comprehensive error handling patterns."""
@@ -512,9 +522,9 @@ class TestFlextTypeAdaptersCoverage:
             assert len(result.error) > 0
 
         # Test percentage validation error details
-        result = FlextTypeAdapters.Domain.validate_percentage(-5.0)
-        if result.failure:
+        pct_result = FlextTypeAdapters.Domain.validate_percentage(-5.0)
+        if pct_result.failure:
             assert (
-                "percentage" in (result.error or "").lower()
-                or "range" in (result.error or "").lower()
+                "percentage" in (pct_result.error or "").lower()
+                or "range" in (pct_result.error or "").lower()
             )

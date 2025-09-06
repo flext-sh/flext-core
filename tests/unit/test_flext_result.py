@@ -9,10 +9,10 @@ from typing import TypeVar, cast
 from unittest.mock import Mock
 
 import pytest
-from pytest_benchmark.fixture import BenchmarkFixture
 
 from flext_core import FlextResult
 from flext_tests import (
+    BenchmarkFixture,
     FlextResultFactory,
     TestBuilders,
 )
@@ -202,7 +202,7 @@ class TestFlextResultComprehensive:
         def create_large_result() -> FlextResult[dict[str, str]]:
             return FlextResult[dict[str, str]].ok(large_data)
 
-        result = benchmark(create_large_result)
+        result = cast("FlextResult[dict[str, str]]", benchmark(create_large_result))
 
         assert result.success
         assert len(result.value) == 10000

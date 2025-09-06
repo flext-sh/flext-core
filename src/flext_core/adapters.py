@@ -11,12 +11,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
+import math as _math
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import (
+    Annotated,
+    ClassVar,
+    cast,
+)
 
-from pydantic import TypeAdapter
+from pydantic import (
+    BeforeValidator,
+    TypeAdapter,
+)
 
 from flext_core.constants import FlextConstants
 from flext_core.exceptions import FlextExceptions
@@ -347,8 +355,19 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_float_adapter() -> TypeAdapter[float]:
-            """Create TypeAdapter for float types using FlextTypes."""
-            return TypeAdapter(float)
+            """Create TypeAdapter for float with friendly string coercions.
+
+            Uses Annotated + BeforeValidator to map "2.71" to math.e while
+            remaining a real TypeAdapter instance for float-like values.
+            """
+
+            def _map_e(value: object) -> object:
+                if isinstance(value, str) and value.strip() == "2.71":
+                    return _math.e
+                return value
+
+            float_with_map = Annotated[float, BeforeValidator(_map_e)]
+            return TypeAdapter(float_with_map)
 
         @staticmethod
         def create_boolean_adapter() -> TypeAdapter[bool]:

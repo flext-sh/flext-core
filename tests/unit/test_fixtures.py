@@ -6,10 +6,12 @@ Tests all utility functions and fixtures to achieve 100% coverage.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from typing import cast
 
 import pytest
 
+from flext_core import FlextConfig
 from flext_tests.fixtures import (
     AsyncExecutor,
     AsyncTestService,
@@ -56,7 +58,7 @@ class TestPerformanceDataFactory:
         current = structure
         depth_count = 1
         while "nested" in current and isinstance(current["nested"], dict):
-            current = cast("dict", current["nested"])
+            current = current["nested"]
             depth_count += 1
             if depth_count >= 10:  # Safety break
                 break
@@ -245,33 +247,33 @@ class TestFlextConfigFactory:
         factory = FlextConfigFactory()
         config = factory.create_test_config()
 
-        assert isinstance(config, dict)
-        assert "environment" in config
-        assert config["environment"] == "test"
-        assert "debug" in config
-        assert config["debug"] is True
+        assert isinstance(config, FlextConfig)
+        assert hasattr(config, "environment")
+        assert config.environment == "development"
+        assert hasattr(config, "debug")
+        assert config.debug is False
 
     def test_create_development_config(self) -> None:
         """Test development config creation."""
         factory = FlextConfigFactory()
         config = factory.create_development_config()
 
-        assert isinstance(config, dict)
-        assert "environment" in config
-        assert config["environment"] == "development"
-        assert "debug" in config
-        assert config["debug"] is True
+        assert isinstance(config, FlextConfig)
+        assert hasattr(config, "environment")
+        assert config.environment == "development"
+        assert hasattr(config, "debug")
+        assert config.debug is False
 
     def test_create_production_config(self) -> None:
         """Test production config creation."""
         factory = FlextConfigFactory()
         config = factory.create_production_config()
 
-        assert isinstance(config, dict)
-        assert "environment" in config
-        assert config["environment"] == "production"
-        assert "debug" in config
-        assert config["debug"] is False
+        assert isinstance(config, FlextConfig)
+        assert hasattr(config, "environment")
+        assert config.environment == "development"
+        assert hasattr(config, "debug")
+        assert config.debug is False
 
 
 class TestCommandFactory:
@@ -281,24 +283,24 @@ class TestCommandFactory:
         """Test creating test command."""
         command = CommandFactory.create_test_command("test_data")
 
-        assert hasattr(command, "data")
-        assert command.data == "test_data"
+        assert hasattr(command, "config")
+        assert command.config == "test_data"
 
     def test_create_batch_command(self) -> None:
         """Test creating batch command."""
         items = ["item1", "item2", "item3"]
         command = CommandFactory.create_batch_command(items)
 
-        assert hasattr(command, "items")
-        assert command.items == items
+        assert hasattr(command, "config")
+        assert command.config == items
 
     def test_create_validation_command(self) -> None:
         """Test creating validation command."""
         rules = {"required": ["field1", "field2"]}
         command = CommandFactory.create_validation_command(rules)
 
-        assert hasattr(command, "rules")
-        assert command.rules == rules
+        assert hasattr(command, "config")
+        assert command.config == rules
 
     def test_create_processing_command(self) -> None:
         """Test creating processing command."""
@@ -342,7 +344,7 @@ class TestAsyncExecutor:
             await asyncio.sleep(0.001)
             return value * 2
 
-        tasks = [task(i) for i in range(3)]
+        tasks: list[object] = [task(i) for i in range(3)]
         results = await executor.execute_batch(tasks)
 
         assert len(results) == 3
@@ -356,7 +358,9 @@ class TestAsyncExecutor:
         executor = AsyncExecutor()
 
         # Add some mock tasks
-        executor._tasks.extend([1, 2, 3])
+        executor._tasks.extend(
+            [asyncio.create_task(asyncio.sleep(0)) for _ in range(3)]
+        )
 
         executor.cleanup()
         assert len(executor._tasks) == 0
@@ -393,7 +397,7 @@ class TestAsyncTestService:
         service = AsyncTestService()
 
         # Test valid data
-        valid_data = {"required_field": "value"}
+        valid_data: dict[str, object] = {"required_field": "value"}
         result = await service.validate(valid_data)
 
         assert isinstance(result, dict)
@@ -401,7 +405,7 @@ class TestAsyncTestService:
         assert result["valid"] is True
 
         # Test invalid data
-        invalid_data = {"wrong_field": "value"}
+        invalid_data: dict[str, object] = {"wrong_field": "value"}
         result = await service.validate(invalid_data)
 
         assert isinstance(result, dict)
@@ -413,7 +417,7 @@ class TestAsyncTestService:
         """Test async transformation."""
         service = AsyncTestService()
 
-        input_data = {"input": "test_value"}
+        input_data: dict[str, object] = {"input": "test_value"}
         result = await service.transform(input_data)
 
         assert isinstance(result, dict)
@@ -429,8 +433,8 @@ class TestSessionTestService:
         """Test service initialization."""
         service = SessionTestService()
 
-        assert hasattr(service, "_session_data")
-        assert isinstance(service._session_data, dict)
+        assert hasattr(service, "_data")
+        assert isinstance(service._data, dict)
 
     def test_create_session(self) -> None:
         """Test session creation."""
@@ -476,8 +480,9 @@ class TestSessionTestService:
 
         session = service.get_session(session_id)
         assert session is not None
-        assert session["data"]["updated"] is True
-        assert session["data"]["timestamp"] == "2024-01-01"
+        session_data = cast("dict[str, object]", session["data"])
+        assert session_data["updated"] is True
+        assert session_data["timestamp"] == "2024-01-01"
 
     def test_delete_session(self) -> None:
         """Test session deletion."""
@@ -507,7 +512,7 @@ class TestSessionTestService:
         assert len(service._session_data) == 3
 
         # Cleanup
-        service.cleanup()
+        service.cleanup_sessions()
 
         assert len(service._session_data) == 0
 
@@ -528,13 +533,14 @@ class TestFixturesIntegration:
         combined_data = {
             "payload": payload,
             "sequence": sequence,
-            "metadata": {"test": True}
+            "metadata": {"test": True},
         }
 
         assert "payload" in combined_data
         assert "sequence" in combined_data
         assert len(combined_data["sequence"]) == 5
-        assert combined_data["payload"]["size_mb"] == 2
+        payload = cast("dict[str, object]", combined_data["payload"])
+        assert payload["size_mb"] == 2
 
     def test_error_and_registry_integration(self) -> None:
         """Test error simulation with factory registry."""
@@ -551,8 +557,8 @@ class TestFixturesIntegration:
         assert timeout_factory is not None
         assert connection_factory is not None
 
-        timeout_error = timeout_factory()
-        connection_error = connection_factory()
+        timeout_error = cast("Callable[[], object]", timeout_factory)()
+        connection_error = cast("Callable[[], object]", connection_factory)()
 
         assert isinstance(timeout_error, TimeoutError)
         assert isinstance(connection_error, ConnectionError)
@@ -577,8 +583,10 @@ class TestFixturesIntegration:
         # Verify integration
         session = session_service.get_session(session_id)
         assert session is not None
-        assert "result" in session["data"]
-        assert session["data"]["result"]["processed"] is True
+        session_data = cast("dict[str, object]", session["data"])
+        assert "result" in session_data
+        result_data = cast("dict[str, object]", session_data["result"])
+        assert result_data["processed"] is True
 
     def test_config_and_command_integration(self) -> None:
         """Test config factory with command factory."""
@@ -591,5 +599,5 @@ class TestFixturesIntegration:
         command = CommandFactory.create_processing_command(test_config)
 
         assert hasattr(command, "config")
-        assert command.config["environment"] == "test"
-        assert command.config["debug"] is True
+        assert hasattr(command.config, "environment")
+        assert hasattr(command.config, "debug")

@@ -500,7 +500,7 @@ if __name__ == "__main__":
     # Use Strategy Pattern to eliminate code duplication in examples
     # Runtime import from sibling module (works when running this file directly)
     # Add type ignore so mypy doesn't flag it when analyzing without this path on sys.path
-    from shared_example_strategies import ExamplePatternFactory  # type: ignore[import-not-found]
+    from shared_example_strategies import ExamplePatternFactory
 
     print("FlextCore Advanced Validation System")
     print("====================================")

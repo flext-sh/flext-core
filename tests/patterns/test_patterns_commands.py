@@ -108,9 +108,9 @@ class CreateUserCommandHandler(
         """Get command type this handler processes."""
         return "create_user"
 
-    def can_handle(self, command: object) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if can handle command."""
-        return isinstance(command, CreateUserCommand)
+        return command_type == CreateUserCommand or str(command_type) == "create_user"
 
     def handle(
         self,
@@ -148,9 +148,9 @@ class UpdateUserCommandHandler(
         """Get command type this handler processes."""
         return "update_user"
 
-    def can_handle(self, command: object) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if can handle command."""
-        return isinstance(command, UpdateUserCommand)
+        return command_type == UpdateUserCommand or str(command_type) == "update_user"
 
     def handle(
         self,
@@ -184,9 +184,9 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         """Get command type this handler processes."""
         return "failing"
 
-    def can_handle(self, command: object) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if can handle command."""
-        return isinstance(command, FailingCommand)
+        return command_type == FailingCommand or str(command_type) == "failing"
 
     def handle(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
@@ -321,23 +321,18 @@ class TestFlextCommandHandler:
     def test_can_handle_correct_command_type(self) -> None:
         """Test can_handle with correct command type."""
         handler: CreateUserCommandHandler = CreateUserCommandHandler()
-        command = CreateUserCommand(username="test", email="test@example.com")
 
-        if not (handler.can_handle(command)):
-            raise AssertionError(f"Expected True, got {handler.can_handle(command)}")
+        if not (handler.can_handle(CreateUserCommand)):
+            raise AssertionError(f"Expected True, got {handler.can_handle(CreateUserCommand)}")
 
     def test_can_handle_wrong_command_type(self) -> None:
         """Test can_handle with wrong command type."""
         handler: FlextCommandHandler[CreateUserCommand, dict[str, object]] = (
             CreateUserCommandHandler()
         )
-        command: UpdateUserCommand = UpdateUserCommand(
-            target_user_id="123",
-            updates={"name": "new_name"},
-        )
 
-        if handler.can_handle(cast("CreateUserCommand", command)):
-            raise AssertionError(f"Expected False, got {handler.can_handle(command)}")
+        if handler.can_handle(UpdateUserCommand):
+            raise AssertionError(f"Expected False, got {handler.can_handle(UpdateUserCommand)}")
 
     def test_can_handle_non_command_object(self) -> None:
         """Test can_handle with non-command object."""

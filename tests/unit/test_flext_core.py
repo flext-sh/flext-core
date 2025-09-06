@@ -1,6 +1,6 @@
 """Testes para FlextCore."""
 
-from flext_core import FlextCore, FlextResult
+from flext_core import FlextCore, FlextResult, FlextTypes
 
 
 class TestFlextCore:
@@ -43,7 +43,13 @@ class TestFlextCore:
         """Testa configuração do core system com config válido."""
         core = FlextCore.get_instance()
 
-        config = {"logging_level": "INFO", "debug": False, "environment": "test"}
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
+            "logging_level": "INFO",
+            "debug": False,
+            "environment": "test",
+        }
 
         result = core.configure_core_system(config)
 
@@ -56,7 +62,9 @@ class TestFlextCore:
         """Testa configuração do context system."""
         core = FlextCore.get_instance()
 
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "request_timeout": 30,
             "max_context_size": 1000,
             "enable_tracing": True,
@@ -126,7 +134,9 @@ class TestFlextCore:
         """Testa configuração com dados inválidos."""
         core = FlextCore.get_instance()
 
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "request_timeout": "invalid",  # Deveria ser int
             "max_context_size": -1,  # Deveria ser positivo
         }
@@ -181,9 +191,9 @@ class TestFlextCore:
 
     def test_create_payload_success(self) -> None:
         """Testa criação de payload."""
-        core = FlextCore.get_instance()
+        core: FlextCore = FlextCore.get_instance()
 
-        data = {"user_id": "123", "action": "create"}
+        data: FlextTypes.Core.JsonObject = {"user_id": "123", "action": "create"}
         result = core.create_payload(
             data,
             "command",
@@ -214,7 +224,7 @@ class TestFlextCore:
         """Testa criação de evento de domínio."""
         core = FlextCore.get_instance()
 
-        data = {"email": "user@example.com", "name": "John"}
+        data: FlextTypes.Core.JsonObject = {"email": "user@example.com", "name": "John"}
         result = core.create_domain_event(
             "UserRegistered",
             "user_123",
@@ -269,7 +279,11 @@ class TestFlextCore:
         """Testa configuração do sistema de decorators."""
         core = FlextCore.get_instance()
 
-        config = {"cache_enabled": True, "metrics_enabled": False, "timeout": 30}
+        config: dict[str, object] = {
+            "cache_enabled": True,
+            "metrics_enabled": False,
+            "timeout": 30,
+        }
         result = core.configure_decorators_system(config)
 
         assert result.success
@@ -280,7 +294,7 @@ class TestFlextCore:
         """Testa configuração do sistema de fields."""
         core = FlextCore.get_instance()
 
-        config = {"validation_strict": True, "auto_convert": False}
+        config: dict[str, object] = {"validation_strict": True, "auto_convert": False}
         result = core.configure_fields_system(config)
 
         assert result.success
@@ -394,7 +408,12 @@ class TestFlextCore:
         """Testa configuração do sistema de agregados com sucesso."""
         core = FlextCore.get_instance()
 
-        config = {"enable_aggregates": True, "max_aggregates": 100}
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
+            "enable_aggregates": True,
+            "max_aggregates": 100,
+        }
 
         result = core.configure_aggregates_system(config)
 

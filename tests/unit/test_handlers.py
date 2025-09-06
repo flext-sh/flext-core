@@ -368,9 +368,15 @@ class TestHandlersConfigurationIntegration:
 
         # Test invalid environment
 
+        # Test with properly typed invalid environment using cast
+        from typing import Literal, cast
+
+        # Define Environment type locally to avoid import issues
+        Environment = Literal["development", "production", "staging", "test", "local"]
+
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(
-                "invalid_env",
+                cast("Environment", "invalid_env"),
             )
         )
         assert invalid_result.success is False

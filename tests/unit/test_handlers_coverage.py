@@ -267,14 +267,14 @@ class TestFlextHandlersCoverage:
             FlextHandlers.Implementation.AbstractHandler[
                 dict[str, object], dict[str, object]
             ],
+            FlextHandlers.Protocols.ChainableHandler,
         ):
+            @property
             def handler_name(self) -> str:
                 return "validator"
 
-            def handle(
-                self, request: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                if "data" in request:
+            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+                if isinstance(request, dict) and "data" in request:
                     request["validated"] = True
                     return FlextResult.ok(request)
                 return FlextResult.fail("Validation failed")
@@ -286,14 +286,14 @@ class TestFlextHandlersCoverage:
             FlextHandlers.Implementation.AbstractHandler[
                 dict[str, object], dict[str, object]
             ],
+            FlextHandlers.Protocols.ChainableHandler,
         ):
+            @property
             def handler_name(self) -> str:
                 return "processor"
 
-            def handle(
-                self, request: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                if request.get("validated"):
+            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+                if isinstance(request, dict) and request.get("validated"):
                     request["processed"] = True
                     return FlextResult.ok(request)
                 return FlextResult.fail("Processing failed")
@@ -331,17 +331,21 @@ class TestFlextHandlersCoverage:
         pipeline = FlextHandlers.Patterns.Pipeline("data_pipeline")
 
         # Create pipeline stages
-        def validation_stage(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            if "input" in data:
+        def validation_stage(data: object) -> FlextResult[object]:
+            if isinstance(data, dict) and "input" in data:
                 data["validated"] = True
                 return FlextResult.ok(data)
             return FlextResult.fail("Validation stage failed")
 
         def transformation_stage(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            if data.get("validated"):
-                data["transformed"] = data["input"].upper()
+            data: object,
+        ) -> FlextResult[object]:
+            if isinstance(data, dict) and data.get("validated"):
+                input_value = data.get("input", "")
+                if isinstance(input_value, str):
+                    data["transformed"] = input_value.upper()
+                else:
+                    data["transformed"] = str(input_value).upper()
                 return FlextResult.ok(data)
             return FlextResult.fail("Transformation stage failed")
 
@@ -407,6 +411,7 @@ class TestFlextHandlersCoverage:
         assert isinstance(get_result, FlextResult)
         if get_result.success:
             retrieved_handler = get_result.value
+            assert hasattr(retrieved_handler, "handler_name")
             assert retrieved_handler.handler_name == "test_handler"
 
         # Test listing handlers with real method
@@ -434,7 +439,9 @@ class TestFlextHandlersCoverage:
         assert initial_state == FlextHandlers.Constants.Handler.States.IDLE
 
         # Test configuration
-        config = {"timeout": 30, "max_retries": 3, "enable_metrics": True}
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {"timeout": 30, "max_retries": 3, "enable_metrics": True}
         config_result = handler.configure(config)
         assert isinstance(config_result, FlextResult)
 
@@ -481,13 +488,12 @@ class TestFlextHandlersCoverage:
                 dict[str, object], dict[str, object]
             ],
         ):
+            @property
             def handler_name(self) -> str:
                 return "error_prone"
 
-            def handle(
-                self, request: dict[str, object]
-            ) -> FlextResult[dict[str, object]]:
-                if request.get("should_fail"):
+            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+                if isinstance(request, dict) and request.get("should_fail"):
                     return FlextResult.fail("Simulated failure")
                 return FlextResult.ok({"processed": True})
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Container, Iterator, Sized
-from contextlib import contextmanager
+from contextlib import AbstractContextManager as ContextManager, contextmanager
 from typing import cast
 
 import pytest
@@ -39,7 +39,8 @@ def mark_test_pattern(
     """Mark test with a specific pattern for demonstration purposes."""
 
     def decorator(func: Callable[..., object]) -> Callable[..., object]:
-        func._test_pattern = pattern
+        # Use hasattr/setattr for dynamic attribute setting to avoid PyRight error
+        setattr(func, "_test_pattern", pattern)
         return func
 
     return decorator
@@ -283,7 +284,7 @@ class TestFixtureBuilder:
         self._fixtures[key] = value
         return self
 
-    def setup_context(self) -> object:
+    def setup_context(self) -> Callable[[], ContextManager[dict[str, object]]]:
         @contextmanager
         def _ctx() -> Iterator[dict[str, object]]:
             for f in self._setups:
@@ -296,7 +297,7 @@ class TestFixtureBuilder:
                     if callable(f):
                         f()
 
-        return _ctx()
+        return _ctx
 
 
 def arrange_act_assert(
@@ -578,7 +579,7 @@ class TestAdvancedPatterns:
             assert result == 15
             assert len(cast("list[int]", original_data["numbers"])) == 5
 
-        @arrange_act_assert(arrange_data, act_on_data, assert_result)
+        @arrange_act_assert(arrange_data, cast("Callable[[object], object]", act_on_data), cast("Callable[[object, object], None]", assert_result))
         def test_sum_calculation() -> None:
             pass  # Logic is in the decorator
 
@@ -764,7 +765,7 @@ class TestRealWorldScenarios:
         fixture_builder.add_fixture("api_base_url", "https://api.test.com")
         fixture_builder.add_fixture("timeout", 30)
 
-        with fixture_builder.setup_context():
+        with fixture_builder.setup_context()():
             # Use a fixed test request instead of Hypothesis example
             test_request = {
                 "method": "POST",

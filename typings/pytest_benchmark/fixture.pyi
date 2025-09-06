@@ -9,11 +9,9 @@ class BenchmarkFixture:
     extra_info: dict[str, object]
 
     def __call__(
-        self, func: Callable[..., T], /, *args: object, **kwargs: object
+        self, func: Callable[[], T], /, *args: object, **kwargs: object
     ) -> T: ...
     def pedantic(
-        self, func: Callable[..., T], /, *args: object, **kwargs: object
+        self, func: Callable[[], T], /, *args: object, **kwargs: object
     ) -> T: ...
-    def timer(
-        self, func: Callable[..., T], /, *args: object, **kwargs: object
-    ) -> T: ...
+    def timer(self, func: Callable[[], T], /, *args: object, **kwargs: object) -> T: ...

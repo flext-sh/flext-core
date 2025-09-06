@@ -124,7 +124,9 @@ class TestFlextCoreSystemConfiguration:
         """Test aggregate system configuration with valid config."""
         core = FlextCore.get_instance()
 
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "environment": "development",
             "aggregate_performance": "medium",
             "event_sourcing_enabled": True,
@@ -140,7 +142,12 @@ class TestFlextCoreSystemConfiguration:
         core = FlextCore.get_instance()
 
         # Use None to trigger validation error
-        result = core.configure_aggregates_system(cast("dict[str, object]", None))
+        result = core.configure_aggregates_system(
+            cast(
+                "dict[str, str | int | float | bool | list[object] | dict[str, object]]",
+                None,
+            )
+        )
         # Should return FlextResult, may succeed with defaults or fail
         assert hasattr(result, "is_success")
 
@@ -181,7 +188,9 @@ class TestFlextCoreCommands:
         """Test command system configuration with valid parameters."""
         core = FlextCore.get_instance()
 
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "command_bus_enabled": True,
             "async_commands": True,
             "retry_policy": "exponential",
@@ -219,7 +228,9 @@ class TestFlextCoreSystemOperations:
         """Test core system configuration with valid parameters."""
         FlextCore.get_instance()
 
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "environment": "development",
             "log_level": "INFO",
             "performance_level": "medium",
@@ -234,7 +245,9 @@ class TestFlextCoreSystemOperations:
 
     def test_configure_core_system_with_defaults(self) -> None:
         """Test core system configuration provides defaults for missing values."""
-        config = {
+        config: dict[
+            str, str | int | float | bool | list[object] | dict[str, object]
+        ] = {
             "log_level": "INFO",
         }
 
@@ -279,7 +292,7 @@ class TestFlextCoreSystemOperations:
     def test_optimize_core_performance_high(self) -> None:
         """Test core performance optimization for high level."""
         core = FlextCore.get_instance()
-        result = core.optimize_core_performance("high")
+        result = core.optimize_core_performance({"performance_level": "high"})
 
         # Method currently has implementation issues, test that it returns FlextResult
         assert hasattr(result, "is_success")
@@ -292,7 +305,7 @@ class TestFlextCoreSystemOperations:
     def test_optimize_core_performance_low(self) -> None:
         """Test core performance optimization for low level."""
         core = FlextCore.get_instance()
-        result = core.optimize_core_performance("low")
+        result = core.optimize_core_performance({"performance_level": "low"})
 
         # Method currently has implementation issues, test that it returns FlextResult
         assert hasattr(result, "is_success")
@@ -450,7 +463,7 @@ class TestFlextCoreIntegration:
         FlextMatchers.assert_result_success(result)
 
         # Test performance optimization (implementation currently has issues)
-        perf_result = core.optimize_core_performance("high")
+        perf_result = core.optimize_core_performance({"performance_level": "high"})
         assert hasattr(perf_result, "is_success")
         # If optimization succeeds in future, config would be available
         if perf_result.is_success:

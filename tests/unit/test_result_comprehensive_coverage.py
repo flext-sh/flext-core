@@ -396,9 +396,9 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_recover_with_function_exception_handling(self) -> None:
         """Test recover_with() handles exceptions in recovery function."""
-        failure_result = FlextResult.fail("error")
+        failure_result: FlextResult[object] = FlextResult.fail("error")
 
-        def failing_recovery(_: str) -> FlextResult[str]:
+        def failing_recovery(_: str) -> FlextResult[object]:
             msg = "recovery failed"
             raise ValueError(msg)
 
@@ -442,7 +442,7 @@ class TestFlextResultComprehensiveCoverage:
         """Test tap_error() executes side effect on failed results."""
         side_effects: list[str] = []
 
-        result = FlextResult.fail("error").tap_error(
+        result: FlextResult[object] = FlextResult.fail("error").tap_error(
             lambda err: side_effects.append(f"error: {err}"),
         )
 
@@ -476,7 +476,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_filter_failure_propagates(self) -> None:
         """Test filter() propagates failures without checking predicate."""
-        result = FlextResult.fail("original error").filter(
+        result: FlextResult[object] = FlextResult.fail("original error").filter(
             lambda x: x > 5,
             "Value too small",
         )
@@ -487,7 +487,9 @@ class TestFlextResultComprehensiveCoverage:
         """Test filter() handles exceptions in predicate function."""
 
         def bad_predicate(x: object) -> bool:
-            return operator.gt(x, 5)
+            if isinstance(x, (int, float)):
+                return bool(operator.gt(x, 5))
+            return False
 
         result = FlextResult.ok("text").filter(
             bad_predicate,
@@ -507,7 +509,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_zip_with_first_failure(self) -> None:
         """Test zip_with() fails when first result is failure."""
-        result1 = FlextResult.fail("first error")
+        result1: FlextResult[object] = FlextResult.fail("first error")
         result2 = FlextResult.ok(20)
 
         result = result1.zip_with(result2, operator.add)
@@ -553,7 +555,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_to_either_failure(self) -> None:
         """Test to_either() tuple conversion for failed results."""
-        result = FlextResult.fail("error")
+        result: FlextResult[object] = FlextResult.fail("error")
         data, error = result.to_either()
         assert data is None
         assert error == "error"
@@ -566,7 +568,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_to_exception_failure_returns_runtime_error(self) -> None:
         """Test to_exception() returns RuntimeError for failed results."""
-        result = FlextResult.fail("error message")
+        result: FlextResult[object] = FlextResult.fail("error message")
         exception = result.to_exception()
         assert isinstance(exception, RuntimeError)
         assert str(exception) == "error message"
@@ -595,7 +597,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_chain_results_all_success(self) -> None:
         """Test chain_results() static method with all successful results."""
         results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
-        chained = FlextResult.chain_results(*results)
+        chained = FlextResult.chain_results(*cast("list[FlextResult[object]]", results))
 
         assert chained.success is True
         assert chained.value == [1, 2, 3]
@@ -603,7 +605,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_chain_results_with_failure(self) -> None:
         """Test chain_results() static method fails on first failure."""
         results = [FlextResult.ok(1), FlextResult.fail("error"), FlextResult.ok(3)]
-        chained = FlextResult.chain_results(*results)
+        chained = FlextResult.chain_results(*cast("list[FlextResult[object]]", results))
 
         assert chained.failure is True
         assert chained.error == "error"
@@ -618,7 +620,7 @@ class TestFlextResultComprehensiveCoverage:
     def test_combine_all_success(self) -> None:
         """Test combine() static method with all successful results."""
         results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
-        combined = FlextResult.combine(*results)
+        combined = FlextResult.combine(*cast("list[FlextResult[object]]", results))
 
         assert combined.success is True
         assert combined.value == [1, 2, 3]
@@ -626,15 +628,19 @@ class TestFlextResultComprehensiveCoverage:
     def test_combine_with_failure(self) -> None:
         """Test combine() static method fails on any failure."""
         results = [FlextResult.ok(1), FlextResult.fail("error"), FlextResult.ok(3)]
-        combined = FlextResult.combine(*results)
+        combined = FlextResult.combine(*cast("list[FlextResult[object]]", results))
 
         assert combined.failure is True
         assert combined.error == "error"
 
     def test_combine_filters_none_values(self) -> None:
         """Test combine() filters out None values from successful results."""
-        results = [FlextResult.ok(1), FlextResult(data=None), FlextResult.ok(3)]
-        combined = FlextResult.combine(*results)
+        results: list[object] = [
+            FlextResult.ok(1),
+            FlextResult(data=None),
+            FlextResult.ok(3),
+        ]
+        combined = FlextResult.combine(*cast("list[FlextResult[object]]", results))
 
         assert combined.success is True
         assert combined.value == [1, 3]
@@ -642,12 +648,17 @@ class TestFlextResultComprehensiveCoverage:
     def test_all_success_all_succeed(self) -> None:
         """Test all_success() static method returns True when all results succeed."""
         results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
-        assert FlextResult.all_success(*results) is True
+        assert (
+            FlextResult.all_success(*cast("list[FlextResult[object]]", results)) is True
+        )
 
     def test_all_success_some_fail(self) -> None:
         """Test all_success() static method returns False when any result fails."""
         results = [FlextResult.ok(1), FlextResult.fail("error"), FlextResult.ok(3)]
-        assert FlextResult.all_success(*results) is False
+        assert (
+            FlextResult.all_success(*cast("list[FlextResult[object]]", results))
+            is False
+        )
 
     def test_any_success_some_succeed(self) -> None:
         """Test any_success() static method returns True when any result succeeds."""
@@ -656,7 +667,9 @@ class TestFlextResultComprehensiveCoverage:
             FlextResult.ok(2),
             FlextResult.fail("error2"),
         ]
-        assert FlextResult.any_success(*results) is True
+        assert (
+            FlextResult.any_success(*cast("list[FlextResult[object]]", results)) is True
+        )
 
     def test_any_success_all_fail(self) -> None:
         """Test any_success() static method returns False when all results fail."""
@@ -665,7 +678,10 @@ class TestFlextResultComprehensiveCoverage:
             FlextResult.fail("error2"),
             FlextResult.fail("error3"),
         ]
-        assert FlextResult.any_success(*results) is False
+        assert (
+            FlextResult.any_success(*cast("list[FlextResult[object]]", results))
+            is False
+        )
 
     def test_first_success_finds_first(self) -> None:
         """Test first_success() class method returns first successful result."""
@@ -681,7 +697,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_first_success_all_fail(self) -> None:
         """Test first_success() class method fails when all results fail."""
-        results = [
+        results: list[FlextResult[object]] = [
             FlextResult.fail("error1"),
             FlextResult.fail("error2"),
             FlextResult.fail("error3"),
@@ -861,7 +877,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_value_property_access_failure(self) -> None:
         """Test value property raises TypeError when accessed on failure."""
-        result = FlextResult.fail("error")
+        result: FlextResult[object] = FlextResult.fail("error")
         with pytest.raises(
             TypeError,
             match="Attempted to access value on failed result",

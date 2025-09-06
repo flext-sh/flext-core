@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import cast
+from typing import TypeVar, cast
 
 from pydantic import ConfigDict
 
@@ -21,6 +21,10 @@ from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
+
+# Type variables for command system
+T = TypeVar("T")
+U = TypeVar("U")
 
 
 class FlextCommands:
@@ -255,8 +259,15 @@ class FlextCommands:
                         args = getattr(base, "__args__", None)
                         if args is not None and len(args) >= 1:
                             expected_type = base.__args__[0]
-                            # Use direct isinstance for validation
-                            can_handle_result = isinstance(command_type, expected_type)
+                            # Support being called with instance or type
+                            if isinstance(command_type, type):
+                                can_handle_result = issubclass(
+                                    command_type, expected_type
+                                )
+                            else:
+                                can_handle_result = isinstance(
+                                    command_type, expected_type
+                                )
 
                             self.logger.debug(
                                 "Handler check result",
@@ -281,8 +292,8 @@ class FlextCommands:
                     command_id=getattr(command, "command_id", "unknown"),
                 )
 
-                # Validate command can be handled
-                if not self.can_handle(command):
+                # Validate command can be handled (pass type, not instance)
+                if not self.can_handle(type(command)):
                     error_msg = (
                         f"{self._handler_name} cannot handle {type(command).__name__}"
                     )
@@ -510,7 +521,7 @@ class FlextCommands:
             # Search auto-registered handlers first (single-arg form)
             for handler in self._auto_handlers:
                 can_handle_method = getattr(handler, "can_handle", None)
-                if callable(can_handle_method) and can_handle_method(command):
+                if callable(can_handle_method) and can_handle_method(type(command)):
                     return handler
             return None
 
@@ -711,26 +722,29 @@ class FlextCommands:
 
         @staticmethod
         def command_handler(
-            command_type: type[object],
-        ) -> Callable[[Callable[[object], object]], Callable[[object], object]]:
+            command_type: type[T],
+        ) -> Callable[[Callable[[T], U]], Callable[[T], U]]:
             """Mark function as command handler with automatic registration."""
 
             def decorator(
-                func: Callable[[object], object],
-            ) -> Callable[[object], object]:
+                func: Callable[[T], U],
+            ) -> Callable[[T], U]:
                 # Create handler class from function
                 class FunctionHandler(
-                    FlextCommands.Handlers.CommandHandler[object, object],
+                    FlextCommands.Handlers.CommandHandler[T, U],
                 ):
-                    def handle(self, command: object) -> FlextResult[object]:
+                    def handle(self, command: T) -> FlextResult[U]:
                         result = func(command)
                         if isinstance(result, FlextResult):
-                            return cast("FlextResult[object]", result)
-                        return FlextResult[object].ok(result)
+                            return cast("FlextResult[U]", result)
+                        return FlextResult[U].ok(result)
 
                 # Create wrapper function with metadata
-                def wrapper(*args: object, **kwargs: object) -> object:
-                    return func(*args, **kwargs)
+                def wrapper(command: T) -> U:
+                    return func(command)
+
+                # Preserve the original function's return type
+                wrapper.__annotations__ = func.__annotations__
 
                 # Store metadata in wrapper's __dict__ for type safety
                 wrapper.__dict__["command_type"] = command_type

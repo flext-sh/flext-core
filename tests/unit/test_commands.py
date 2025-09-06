@@ -61,15 +61,15 @@ class TestCommandBusExtended:
             def handle(self, command: ExtendedTestCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Handler1: {command.name}")
 
-            def can_handle(self, command: object) -> bool:
-                return isinstance(command, ExtendedTestCommand) and command.value < 50
+            def can_handle(self, command_type: object) -> bool:
+                return command_type == ExtendedTestCommand
 
         class Handler2(FlextCommands.Handlers.CommandHandler[ExtendedTestCommand, str]):
             def handle(self, command: ExtendedTestCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Handler2: {command.name}")
 
-            def can_handle(self, command: object) -> bool:
-                return isinstance(command, ExtendedTestCommand) and command.value >= 50
+            def can_handle(self, command_type: object) -> bool:
+                return command_type == ExtendedTestCommand
 
         handler1 = Handler1()
         handler2 = Handler2()

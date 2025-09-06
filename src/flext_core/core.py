@@ -2484,13 +2484,13 @@ class FlextCore:
     def create_validator_class(
         self,
         name: str,
-        validation_func: Callable[[object], FlextResult[object]],
+        validation_func: Callable[[T], FlextResult[T]],
     ) -> type[FlextValidations.Domain.BaseValidator]:
         """Create validator class dynamically to reduce boilerplate."""
         # Import already at module level
 
         class DynamicValidator(FlextValidations.Domain.BaseValidator):
-            def validate(self, value: object) -> FlextResult[object]:
+            def validate(self, value: T) -> FlextResult[T]:
                 return validation_func(value)
 
         DynamicValidator.__name__ = name
@@ -2695,10 +2695,10 @@ class FlextCore:
     def get_service_with_fallback(
         self,
         service_name: str,
-        default_factory: Callable[[], object],
-    ) -> object:
+        default_factory: Callable[[], T],
+    ) -> T:
         r = self.get_service(service_name)
-        return r.value if r.is_success else default_factory()
+        return cast("T", r.value) if r.is_success else default_factory()
 
     def create_standard_validators(
         self,
