@@ -12,6 +12,7 @@ from .asyncs import *
 from .builders import *
 from .domains import *
 from .factories import *
+from .fixtures import *
 from .http_support import *
 from .hypothesis import *
 from .matchers import *
@@ -27,6 +28,7 @@ from . import asyncs as _asyncs
 from . import builders as _builders
 from . import domains as _domains
 from . import factories as _factories
+from . import fixtures as _fixtures
 from . import http_support as _http
 from . import hypothesis as _hypothesis
 from . import matchers as _matchers
@@ -42,6 +44,7 @@ _modules_to_check = [
     _builders,
     _domains,
     _factories,
+    _fixtures,
     _http,
     _hypothesis,
     _matchers,

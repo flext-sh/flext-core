@@ -4,7 +4,7 @@ import math
 import tempfile
 import threading
 from enum import StrEnum
-from typing import cast
+from typing import Literal, cast
 
 from pydantic import Field
 
@@ -537,6 +537,110 @@ class TestFlextCoreLogging:
 
         # Should not raise any exceptions
         core.log_warning("Test warning message")
+
+
+class TestFlextCoreSystemConfigAndPerformance:
+    """Additional coverage for core system configuration and performance paths."""
+
+    def test_create_config_provider_and_validate_config(self) -> None:
+        core = FlextCore.get_instance()
+
+        provider = core.create_config_provider("file_provider", "json")
+        assert provider.success
+        cfg = provider.unwrap()
+        assert cfg["provider_type"] == "file_provider"
+        assert cfg["format"] == "json"
+
+        # Valid config validation
+        valid = core.validate_config_with_types(
+            {"environment": "development", "log_level": "INFO"},
+        )
+        assert valid.success
+
+        # Missing required key
+        missing = core.validate_config_with_types({"environment": "development"})
+        assert missing.failure
+        assert "Missing required config key" in (missing.error or "")
+
+        # Invalid values
+        invalid_env = core.validate_config_with_types(
+            {"environment": "bad", "log_level": "INFO"},
+        )
+        assert invalid_env.failure
+        assert "Invalid environment" in (invalid_env.error or "")
+
+        invalid_log = core.validate_config_with_types(
+            {"environment": "development", "log_level": "BAD"},
+        )
+        assert invalid_log.failure
+        assert "Invalid log level" in (invalid_log.error or "")
+
+    def test_configure_core_system_valid_and_invalid(self) -> None:
+        core = FlextCore.get_instance()
+
+        good = core.configure_core_system(
+            {"environment": "production", "log_level": "INFO"}
+        )
+        assert good.success
+        out = good.unwrap()
+        assert out["environment"] == "production"
+        assert out["log_level"] == "INFO"
+
+        bad_env = core.configure_core_system({"environment": "nope"})
+        assert bad_env.failure
+        assert "Invalid environment" in (bad_env.error or "")
+
+        bad_log = core.configure_core_system({"log_level": "NOPE"})
+        assert bad_log.failure
+        assert "Invalid log_level" in (bad_log.error or "")
+
+    def test_get_core_system_config_fields(self) -> None:
+        core = FlextCore.get_instance()
+        result = core.get_core_system_config()
+        assert result.success
+        cfg = result.unwrap()
+        # Check some expected keys
+        for key in (
+            "environment",
+            "log_level",
+            "validation_level",
+            "config_source",
+            "available_subsystems",
+        ):
+            assert key in cfg
+
+    def test_create_environment_core_config_variants(self) -> None:
+        core = FlextCore.get_instance()
+        prod = core.create_environment_core_config("production")
+        assert prod.success
+        assert prod.unwrap()["environment"] == "production"
+
+        dev = core.create_environment_core_config("development")
+        assert dev.success
+        assert dev.unwrap()["environment"] == "development"
+
+        test_cfg = core.create_environment_core_config("test")
+        assert test_cfg.success
+        assert test_cfg.unwrap()["environment"] == "test"
+
+        invalid = core.create_environment_core_config(
+            cast(
+                "Literal['development', 'production', 'staging', 'test', 'local']",
+                "bad",
+            )
+        )
+        assert invalid.failure
+        assert "Invalid environment" in (invalid.error or "")
+
+    def test_optimize_core_performance_levels(self) -> None:
+        core = FlextCore.get_instance()
+        for level in ("high", "medium", "low"):
+            res = core.optimize_core_performance({"performance_level": level})
+            assert res.success
+            cfg = res.unwrap()
+            assert cfg["performance_level"] == level
+            # basic expected keys
+            assert "optimization_enabled" in cfg
 
     def test_log_warning_with_context(self) -> None:
         """Test warning logging with context."""

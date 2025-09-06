@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+from typing import cast
 
 import pytest
 from pydantic import TypeAdapter
@@ -219,7 +220,7 @@ class TestSerializers:
         result = FlextTypeAdapters.Serializers.deserialize_from_json(
             json_str,
             TestModel,
-            adapter,
+            cast("TypeAdapter[object] | None", adapter),
         )
 
         assert result.success
@@ -241,7 +242,7 @@ class TestSerializers:
         result = FlextTypeAdapters.Serializers.deserialize_from_dict(
             data_dict,
             TestModel,
-            adapter,
+            cast("TypeAdapter[object] | None", adapter),
         )
 
         assert result.success
@@ -275,14 +276,17 @@ class TestSchemaGenerators:
 
         adapter = TypeAdapter(TestModel)
 
-        result = FlextTypeAdapters.SchemaGenerators.generate_schema(TestModel, adapter)
+        result = FlextTypeAdapters.SchemaGenerators.generate_schema(
+            TestModel, cast("TypeAdapter[object] | None", adapter)
+        )
 
         assert result.success
         schema = result.unwrap()
         assert isinstance(schema, dict)
         assert "properties" in schema
-        assert "name" in schema["properties"]
-        assert "age" in schema["properties"]
+        schema_props = cast("dict[str, object]", schema["properties"])
+        assert "name" in schema_props
+        assert "age" in schema_props
 
     def test_generate_multiple_schemas(self) -> None:
         """Test generating multiple schemas."""
@@ -295,7 +299,9 @@ class TestSchemaGenerators:
 
         types = [Model1, Model2]
 
-        result = FlextTypeAdapters.SchemaGenerators.generate_multiple_schemas(types)
+        result = FlextTypeAdapters.SchemaGenerators.generate_multiple_schemas(
+            cast("list[type[object]]", types)
+        )
 
         assert result.success
         schemas = result.unwrap()
@@ -313,7 +319,7 @@ class TestBatchOperations:
             name: str
             value: int
 
-        items = [
+        items: list[object] = [
             {"name": "Item1", "value": 10},
             {"name": "Item2", "value": 20},
             {"name": "Item3", "value": 30},
@@ -324,7 +330,7 @@ class TestBatchOperations:
         result = FlextTypeAdapters.BatchOperations.validate_batch(
             items,
             TestModel,
-            adapter,
+            cast("TypeAdapter[object] | None", adapter),
         )
 
         assert result.success
@@ -351,7 +357,7 @@ class TestBatchOperations:
         result = FlextTypeAdapters.BatchOperations.validate_batch(
             items,
             TestModel,
-            adapter,
+            cast("TypeAdapter[object] | None", adapter),
         )
 
         # The implementation might handle this differently
@@ -392,7 +398,9 @@ class TestAdapterRegistry:
         """Test registering custom adapter."""
         adapter = TypeAdapter(str)
 
-        result = FlextTypeAdapters.AdapterRegistry.register_adapter("test_key", adapter)
+        result = FlextTypeAdapters.AdapterRegistry.register_adapter(
+            "test_key", cast("TypeAdapter[object]", adapter)
+        )
 
         assert result.success
 

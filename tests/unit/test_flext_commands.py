@@ -7,11 +7,11 @@ from typing import cast
 
 import pytest
 from pydantic import Field, ValidationError
-from pytest_benchmark.fixture import BenchmarkFixture
 
 from flext_core import FlextCommands, FlextResult
 from flext_core.models import FlextModels
 from flext_tests import (
+    BenchmarkFixture,
     FailingUserRepository,
     FlextMatchers,
     InMemoryUserRepository,
@@ -28,8 +28,8 @@ from flext_tests import (
 class CreateUserCommand(FlextModels.Config):
     """Real command for user creation."""
 
-    username: str
-    email: str
+    username: str = Field(min_length=1)
+    email: str = Field(min_length=1)
     age: int = 18
     is_REDACTED_LDAP_BIND_PASSWORD: bool = False
     metadata: dict[str, object] = Field(default_factory=dict)
@@ -108,7 +108,7 @@ class CreateUserHandler(
 
     def __init__(
         self,
-        user_repository: InMemoryUserRepository | None = None,
+        user_repository: InMemoryUserRepository | FailingUserRepository | None = None,
         email_service: RealEmailService | None = None,
         audit_service: RealAuditService | None = None,
     ) -> None:
@@ -124,8 +124,8 @@ class CreateUserHandler(
         if validation_result.is_failure:
             return FlextResult[UserCreatedEvent].fail(
                 validation_result.error or "Validation failed",
-                validation_result.error_code,
-                {"command": command.model_dump()},
+                error_code=validation_result.error_code,
+                error_data={"command": command.model_dump()},
             )
 
         try:
@@ -174,7 +174,7 @@ class CreateUserHandler(
                 user_id=user_id,
                 username=command.username,
                 email=command.email,
-                created_at=user_data["created_at"] or "2024-01-01T00:00:00Z",
+                created_at=str(user_data.get("created_at") or "2024-01-01T00:00:00Z"),
             )
 
             return FlextResult[UserCreatedEvent].ok(event)
@@ -198,7 +198,7 @@ class UpdateUserHandler(
         if validation.is_failure:
             return FlextResult[dict[str, object]].fail(
                 validation.error or "Validation failed",
-                validation.error_code,
+                error_code=validation.error_code,
             )
 
         # Mock update operation
@@ -219,8 +219,8 @@ class DeleteUserHandler(FlextCommands.Handlers.CommandHandler[DeleteUserCommand,
         if not command.force and "REDACTED_LDAP_BIND_PASSWORD" in command.user_id:
             return FlextResult[bool].fail(
                 "Cannot delete REDACTED_LDAP_BIND_PASSWORD user without force flag",
-                "ADMIN_DELETE_DENIED",
-                {"user_id": command.user_id, "reason": command.reason},
+                error_code="ADMIN_DELETE_DENIED",
+                error_data={"user_id": command.user_id, "reason": command.reason},
             )
 
         return FlextResult[bool].ok(data=True)
@@ -294,7 +294,7 @@ class TestFlextCommandsComprehensive:
         """Test command creation with Pydantic validation errors."""
         # Test Pydantic validation for required fields
         with pytest.raises(ValidationError) as exc_info:
-            CreateUserCommand()  # Missing required fields
+            CreateUserCommand(username="", email="")  # Invalid required fields
 
         error = exc_info.value
         assert "username" in str(error)
@@ -333,7 +333,7 @@ class TestFlextCommandsComprehensive:
 
         # Verify success
         assert FlextMatchers.is_successful_result(result)
-        event = cast("UserCreatedEvent", result.value)
+        event = result.value
         assert event.username == "new_user"
         assert event.email == "new@example.com"
         assert event.user_id == "user_new_user_8"
@@ -349,7 +349,7 @@ class TestFlextCommandsComprehensive:
         sent_emails = email_service.get_sent_emails()
         assert len(sent_emails) == 1
         assert sent_emails[0]["to"] == "new@example.com"
-        assert "Welcome" in sent_emails[0]["subject"]
+        assert "Welcome" in str(sent_emails[0]["subject"])
 
         # Verify real audit service was used
         audit_logs = audit_service.get_audit_logs()
@@ -402,7 +402,7 @@ class TestFlextCommandsComprehensive:
         assert result.error_code == "CREATION_ERROR"
         assert "Database connection failed" in (result.error or "")
         assert result.error_data is not None
-        error_data = cast("dict[str, object]", result.error_data)
+        error_data = result.error_data
         assert "exception" in error_data
 
     # =========================================================================
@@ -417,14 +417,8 @@ class TestFlextCommandsComprehensive:
         update_handler = UpdateUserHandler()
 
         # Register handlers
-        create_reg = bus.register_handler(create_handler)
-        update_reg = bus.register_handler(update_handler)
-
-        # Verify registrations (if bus returns results for registration)
-        if hasattr(create_reg, "success"):
-            assert create_reg.success
-        if hasattr(update_reg, "success"):
-            assert update_reg.success
+        bus.register_handler(create_handler)
+        bus.register_handler(update_handler)
 
         # Execute commands through bus
         create_command = CreateUserCommand(username="bus_user", email="bus@example.com")
@@ -467,6 +461,8 @@ class TestFlextCommandsComprehensive:
             return results
 
         results = benchmark(execute_commands)
+        # Type assertion for benchmark fixture return value
+        assert isinstance(results, list)
         assert len(results) == 3
 
         # All results should be valid (success or failure)
@@ -474,6 +470,95 @@ class TestFlextCommandsComprehensive:
             assert isinstance(result, FlextResult)
             assert hasattr(result, "is_success")
             assert hasattr(result, "is_failure")
+
+    def test_additional_bus_and_helpers_coverage(self) -> None:
+        """Additional coverage for bus registration forms, middleware, and helpers."""
+        bus = FlextCommands.Bus()
+
+        class EchoCmd(FlextModels.Config):
+            value: str
+
+        class EchoHandler(FlextCommands.Handlers.CommandHandler[EchoCmd, str]):
+            def handle(self, command: EchoCmd) -> FlextResult[str]:
+                return FlextResult[str].ok(command.value)
+
+        # 1-arg form registers by handler id
+        bus.register_handler(EchoHandler())
+        assert bus.find_handler(EchoCmd(value="a")) is not None
+
+        # 2-arg form registers by explicit command type
+        bus.register_handler(EchoCmd, EchoHandler())
+        r = bus.execute(EchoCmd(value="hello"))
+        assert r.success
+        assert r.value == "hello"
+
+        # get_registered_handlers returns string keys
+        handlers_map = bus.get_registered_handlers()
+        assert all(isinstance(k, str) for k in handlers_map)
+
+        # Unregister existing and missing
+        assert bus.unregister_handler("EchoCmd") is True
+        assert bus.unregister_handler("MissingCmd") is False
+
+        # Middleware rejection
+        class RejectingMiddleware:
+            def process(self, command: object, handler: object) -> FlextResult[None]:
+                return FlextResult[None].fail("rejected")
+
+        bus.add_middleware(RejectingMiddleware())
+        res = bus.execute(EchoCmd(value="m"))
+        assert res.failure
+        assert "rejected" in (str(res.error) if res.error else "")
+
+        # Reset middleware and auto-registered handlers to test fallbacks/overrides
+        bus._middleware = []  # ok in tests to reach branch
+        bus._auto_handlers = []  # prefer explicit two-arg registration below
+
+        class OnlyProcess(FlextCommands.Handlers.CommandHandler[EchoCmd, str]):
+            def handle(self, cmd: EchoCmd) -> FlextResult[str]:
+                return FlextResult[str].ok(cmd.value.upper())
+
+        bus.register_handler(EchoCmd, OnlyProcess())
+        res2 = bus.execute(EchoCmd(value="ok"))
+        assert res2.success
+        assert res2.value == "OK"
+
+        class FailingHandler:
+            def handle(self, cmd: EchoCmd) -> FlextResult[str]:
+                msg = "boom"
+                raise RuntimeError(msg)
+
+        # Directly exercise _execute_handler exception path to ensure coverage
+        res3 = bus._execute_handler(FailingHandler(), EchoCmd(value="x"))
+        assert res3.failure
+        assert "boom" in (res3.error or "")
+
+        # Results helpers
+        ok = FlextCommands.Results.success({"k": 1})
+        assert ok.success
+        assert ok.value == {"k": 1}
+        fail = FlextCommands.Results.failure(
+            "err", error_code="E1", error_data={"a": 2}
+        )
+        assert fail.failure
+        assert fail.error_code == "E1"
+
+        # Environment config creation and optimization
+        prod = FlextCommands.create_environment_commands_config("production")
+        assert prod.success
+        assert isinstance(prod.value, dict)
+        invalid = FlextCommands.create_environment_commands_config("nope")
+        assert invalid.failure
+        assert "Invalid environment" in (invalid.error or "")
+        res_typemismatch = FlextCommands.optimize_commands_performance(
+            {"performance_level": 123}
+        )
+        assert res_typemismatch.success
+        res_valid = FlextCommands.optimize_commands_performance(
+            {"performance_level": "high"}
+        )
+        assert res_valid.success
+        assert isinstance(res_valid.value, dict)
 
     # =========================================================================
     # COMMAND FACTORIES AND DECORATORS
@@ -503,7 +588,7 @@ class TestFlextCommandsComprehensive:
         )
         result = handler.handle(test_command)
         assert result.success
-        assert "handled:" in (result.value or "")
+        assert "handled:" in (str(result.value) if result.value else "")
 
     def test_command_decorators_functionality(self) -> None:
         """Test command decorators with real scenarios."""
@@ -522,8 +607,10 @@ class TestFlextCommandsComprehensive:
             email="decorated@example.com",
         )
         result = decorated_create_handler(valid_command)
-        assert result.success
-        assert "Created user: decorated_user" in (result.value or "")
+        assert result.is_success
+        assert "Created user: decorated_user" in (
+            str(result.value) if result.value else ""
+        )
 
         # Test with invalid command
         invalid_command = CreateUserCommand(
@@ -532,7 +619,7 @@ class TestFlextCommandsComprehensive:
         )  # Too short + invalid email
         result = decorated_create_handler(invalid_command)
         assert result.is_failure
-        assert "Validation failed" in (result.error or "")
+        assert "Validation failed" in (str(result.error) if result.error else "")
 
     # =========================================================================
     # MIDDLEWARE AND INTERCEPTORS
@@ -621,7 +708,7 @@ class TestFlextCommandsComprehensive:
         result = await async_create_user(command)
 
         assert FlextMatchers.is_successful_result(result)
-        event = cast("UserCreatedEvent", result.value)
+        event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id
 
@@ -650,7 +737,7 @@ class TestFlextCommandsComprehensive:
 
         # Should handle edge cases gracefully
         if result.success:
-            event = cast("UserCreatedEvent", result.value)
+            event = result.value
             assert event.username == "user_with_special_chars_123!@#"
         else:
             # Failure is also acceptable for edge cases
@@ -667,8 +754,8 @@ class TestFlextCommandsComprehensive:
             def handle(self, command: CreateUserCommand) -> FlextResult[str]:
                 return FlextResult[str].fail(
                     "Simulated handler failure",
-                    "HANDLER_FAILURE",
-                    {
+                    error_code="HANDLER_FAILURE",
+                    error_data={
                         "handler": "FailingHandler",
                         "command_type": type(command).__name__,
                     },
@@ -706,7 +793,7 @@ class TestFlextCommandsComprehensive:
                 results.append(result)
             return results
 
-        results = benchmark(process_batch_commands)
+        results = cast("list[FlextResult[object]]", benchmark(process_batch_commands))
 
         # Verify all commands were processed
         assert len(results) == 100

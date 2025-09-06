@@ -299,7 +299,7 @@ class TestFlextValueRealFunctionality:
         # Should be frozen (immutable) - test that it's read-only
         with pytest.raises(ValidationError):
             # Try to modify a frozen property - this should raise ValidationError
-            email.address = "changed@example.com"  # type: ignore[misc]
+            email.address = "changed@example.com"
 
     def test_value_object_equality_by_value(self) -> None:
         """Test FlextModels equality comparison by value."""
@@ -1159,7 +1159,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        is_expired_result: bool = payload.is_expired  # type: ignore[assignment]
+        is_expired_result: bool = payload.is_expired
         assert not is_expired_result
 
         # Test expired payload
@@ -1171,7 +1171,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        is_expired_result2: bool = expired_payload.is_expired  # type: ignore[assignment]
+        is_expired_result2: bool = expired_payload.is_expired
         assert is_expired_result2
 
         # Test payload without expiration
@@ -1180,7 +1180,7 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired
+        assert not no_expiry_payload.is_expired()
 
     def test_json_data_validation_serializable(self) -> None:
         """Test JsonData validation for JSON serializable data (lines 889-895)."""
@@ -1196,7 +1196,7 @@ class TestFlextModelsRootModelValidation:
         # Create a dict with function that can't be serialized
         invalid_data: dict[str, object] = {"func": test_function}
         with pytest.raises(ValidationError):
-            FlextModels.JsonData(invalid_data)  # type: ignore[arg-type]
+            FlextModels.JsonData(invalid_data)
 
     def test_metadata_validation_string_values(self) -> None:
         """Test Metadata validation ensures string values (line 907)."""

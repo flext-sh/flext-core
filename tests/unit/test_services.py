@@ -856,7 +856,7 @@ class TestServiceEdgeCases:
         validation = FlextServices.ServiceValidation()
 
         # Schema returns object without is_success attribute
-        def bad_schema(_data: str) -> FlextResult[str]:  # type: ignore[return-value]
+        def bad_schema(_data: str) -> FlextResult[str]:
             # Return an object lacking required attributes to trigger failure path
             return cast("FlextResult[str]", object())
 

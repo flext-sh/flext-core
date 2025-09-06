@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextContainer
+from flext_core import FlextContainer, FlextCore
 from flext_tests import (
     APITestClient,
     AsyncTestUtils,
@@ -256,6 +256,23 @@ def service_factory() -> type[ServiceDataFactory]:
 def payload_factory() -> type[PayloadDataFactory]:
     """Payload factory fixture."""
     return PayloadDataFactory
+
+
+# -----------------------------------------------------------------------------
+# Test isolation for FlextCore singleton state
+# -----------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _isolate_flext_core_state() -> None:
+    """Clear FlextCore specialized configs before each test.
+
+    Prevents cross-test leakage of database/security/logging configs that could
+    make property-default tests flaky or order-dependent.
+    """
+    core = FlextCore.get_instance()
+    core._specialized_configs.pop("database_config", None)
+    core._specialized_configs.pop("security_config", None)
+    core._specialized_configs.pop("logging_config", None)
 
 
 # Performance Testing Fixtures

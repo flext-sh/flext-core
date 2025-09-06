@@ -26,7 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
 
 if not TYPE_CHECKING:
     # Runtime import from sibling module; ignore for mypy when analyzing without this path
-    from shared_example_strategies import DemoStrategy, ExamplePatternFactory  # type: ignore[import-not-found]
+    from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints

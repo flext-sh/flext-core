@@ -484,69 +484,50 @@ class FlextProcessors:
 
         def __init__(
             self,
-            input_processor: Callable[
-                [object],
-                FlextResult[object],
-            ]
-            | None = None,
-            output_processor: Callable[
-                [object],
-                FlextResult[object],
-            ]
-            | None = None,
+            input_processor: Callable[[object], FlextResult[object]] | None = None,
+            output_processor: Callable[[object], FlextResult[object]] | None = None,
         ) -> None:
-            """Initialize processing pipeline with handler patterns."""
+            """Initialize processing pipeline with minimal overhead.
 
-            def default_processor(
-                x: object,
-            ) -> FlextResult[object]:
+            Keeps the same public API while avoiding dynamic handler wrappers
+            for each step to reduce per-call overhead in hot paths.
+            """
+
+            def default_processor(x: object) -> FlextResult[object]:
                 return FlextResult[object].ok(x)
 
             self.input_processor = input_processor or default_processor
             self.output_processor = output_processor or default_processor
-            self.handlers: list[FlextHandlers.Implementation.BasicHandler] = []
+            # Store steps as plain callables for performance
+            self._steps: list[Callable[[object], FlextResult[object]]] = []
 
         def add_step(
             self,
-            step: Callable[
-                [object],
-                FlextResult[object],
-            ],
+            step: Callable[[object], FlextResult[object]],
         ) -> FlextProcessors.ProcessingPipeline:
-            """Add processing step as handler."""
+            """Add a processing step.
 
-            # Create a handler wrapper for the step function
-            class StepHandler(FlextHandlers.Implementation.BasicHandler):
-                def __init__(
-                    self,
-                    step_func: Callable[[object], FlextResult[object]],
-                    step_name: str,
-                ) -> None:
-                    super().__init__(step_name)
-                    self.step_func = step_func
-
-                def handle(self, request: object) -> FlextResult[object]:
-                    return self.step_func(request)
-
-            step_handler = StepHandler(step, f"step_{len(self.handlers) + 1}")
-            self.handlers.append(step_handler)
+            Steps are stored directly and invoked without intermediate wrappers
+            to minimize function call overhead while preserving behavior.
+            """
+            self._steps.append(step)
             return self
 
         def process(self, data: object) -> FlextResult[object]:
-            """Process data through the handler pipeline."""
+            """Process data through the pipeline with minimal overhead."""
             try:
                 # Input processing
                 current_result = self.input_processor(data)
                 if current_result.is_failure:
                     return current_result
 
-                # Process through handlers
+                # Process steps directly
                 current_data = current_result.unwrap()
-                for handler in self.handlers:
-                    handler_result = handler.handle(current_data)
-                    if handler_result.is_failure:
-                        return handler_result
-                    current_data = handler_result.unwrap()
+                for step in self._steps:
+                    step_result = step(current_data)
+                    if step_result.is_failure:
+                        return step_result
+                    current_data = step_result.unwrap()
 
                 # Output processing
                 return self.output_processor(current_data)

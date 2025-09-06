@@ -66,7 +66,7 @@ class TestFlextConfigComprehensive:
     def test_validate_environment_invalid_value(self) -> None:
         """Test environment validation with invalid value."""
         with pytest.raises(ValidationError) as exc_info:
-            FlextConfig(environment="invalid_env")  # type: ignore[arg-type]
+            FlextConfig(environment="invalid_env")
         msg = str(exc_info.value)
         assert "Environment must be one of" in msg or "Input should be" in msg
 
@@ -500,7 +500,7 @@ class TestFlextConfigFunctionality:
         environment: str = str(config_dict["environment"])
         debug: bool = bool(config_dict["debug"])
 
-        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)  # type: ignore[arg-type]
+        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)
         assert config.app_name == "settings-app"
         assert config.environment == "test"
         assert config.debug is True
@@ -524,7 +524,7 @@ class TestFlextConfigFunctionality:
         environment: str = str(config_dict["environment"])
         debug: bool = bool(config_dict["debug"])
 
-        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)  # type: ignore[arg-type]
+        config = FlextConfig(app_name=app_name, environment=environment, debug=debug)
         assert config.app_name == "validated-app"
         assert config.environment == "production"
         assert config.debug is False

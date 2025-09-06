@@ -40,7 +40,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_invalid_environment(self) -> None:
         """Test lines 825-828: Invalid environment validation."""
-        config = {
+        config: dict[str, object] = {
             "environment": "invalid_environment",
             "protocol_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
         }
@@ -51,7 +51,9 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_missing_environment(self) -> None:
         """Test lines 829-832: Missing environment default."""
-        config = {"protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value}
+        config: dict[str, object] = {
+            "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value
+        }
 
         result = FlextProtocols.Config.configure_protocols_system(config)
         assert result.success
@@ -65,7 +67,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_invalid_protocol_level(self) -> None:
         """Test lines 839-841: Invalid protocol_level validation."""
-        config = {
+        config: dict[str, object] = {
             "environment": FlextConstants.Config.ConfigEnvironment.TEST.value,
             "protocol_level": "invalid_level",
         }
@@ -76,7 +78,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_missing_protocol_level(self) -> None:
         """Test lines 842-845: Missing protocol_level default."""
-        config = {
+        config: dict[str, object] = {
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
         }
 
@@ -101,7 +103,7 @@ class TestProtocolsConfig100PercentCoverage:
         ]
 
         for env in environments:
-            config = {"environment": env}
+            config: dict[str, object] = {"environment": env}
             result = FlextProtocols.Config.configure_protocols_system(config)
             assert result.success
             validated_config = result.unwrap()
@@ -117,7 +119,7 @@ class TestProtocolsConfig100PercentCoverage:
         ]
 
         for level in levels:
-            config = {
+            config: dict[str, object] = {
                 "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 "protocol_level": level,
             }
@@ -243,7 +245,7 @@ class TestProtocolsIntegration100PercentCoverage:
     def test_protocol_configuration_edge_cases(self) -> None:
         """Test edge cases in protocol configuration."""
         # Empty config
-        empty_config = {}
+        empty_config: dict[str, object] = {}
         result = FlextProtocols.Config.configure_protocols_system(empty_config)
         assert result.success
 

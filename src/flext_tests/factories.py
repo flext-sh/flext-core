@@ -3,7 +3,7 @@
 Provides factory_boy-based factories for creating test objects with proper
 relationships, sequences, and customization following SOLID principles.
 """
-# mypy: disable-error-code="var-annotated,valid-type"
+# mypy: disable-error-code="var-annotated,valid-type,no-untyped-call,name-defined,misc,no-any-return"
 
 from __future__ import annotations
 
@@ -724,7 +724,7 @@ class RealAuditService:
         self.audit_logs.clear()
 
 
-class FailingUserRepository:
+class FailingUserRepository(InMemoryUserRepository):
     """Repository implementation that simulates database failures."""
 
     def __init__(

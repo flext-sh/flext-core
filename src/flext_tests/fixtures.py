@@ -23,28 +23,13 @@ import uuid
 from collections.abc import AsyncGenerator, Generator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import Protocol, cast
 
 import httpx
 import pytest
 import pytest_asyncio
+from pydantic import Field
 from pytest_mock import MockerFixture
-
-if TYPE_CHECKING:
-
-    class BenchmarkFixture(Protocol):  # pragma: no cover - typing only
-        """Benchmark fixture."""
-
-        group: str
-
-        def __call__(
-            self, func: object, /, *args: object, **kwargs: object
-        ) -> object: ...
-
-        def pedantic(
-            self, func: object, /, *args: object, **kwargs: object
-        ) -> object: ...
-
 
 from flext_core import (
     FlextCommands,
@@ -63,6 +48,16 @@ from .factories import (
 
 # Configure logging for test fixtures
 logger = logging.getLogger(__name__)
+
+
+class BenchmarkFixture(Protocol):  # pragma: no cover - typing only
+    """Benchmark fixture."""
+
+    group: str
+
+    def __call__(self, func: object, /, *args: object, **kwargs: object) -> object: ...
+
+    def pedantic(self, func: object, /, *args: object, **kwargs: object) -> object: ...
 
 
 # Simple placeholder factories for missing ones
@@ -181,46 +176,66 @@ class FlextConfigFactory:
         """Create test configuration."""
         return FlextConfig()
 
+    @staticmethod
+    def create_development_config() -> FlextConfig:
+        """Create development configuration."""
+        return FlextConfig()
+
+    @staticmethod
+    def create_production_config() -> FlextConfig:
+        """Create production configuration."""
+        return FlextConfig()
+
 
 # Test command classes
+
+
 class TestCommand(FlextCommands.Models.Command):
     """Test command for fixtures."""
+
+    config: object = Field(default_factory=dict)
 
 
 class BatchCommand(FlextCommands.Models.Command):
     """Batch command for fixtures."""
 
+    config: object = Field(default_factory=dict)
+
 
 class ValidationCommand(FlextCommands.Models.Command):
     """Validation command for fixtures."""
 
+    config: object = Field(default_factory=dict)
+
 
 class ProcessingCommand(FlextCommands.Models.Command):
     """Processing command for fixtures."""
+
+    config: object = Field(default_factory=dict)
 
 
 class CommandFactory:
     """Simple command factory."""
 
     @staticmethod
-    def create_test_command() -> TestCommand:
+    def create_test_command(config: object | None = None) -> TestCommand:
         """Create test command."""
-        return TestCommand()
+        return TestCommand(config=config or {})
 
     @staticmethod
-    def create_batch_command() -> BatchCommand:
+    def create_batch_command(config: object | None = None) -> BatchCommand:
         """Create batch command."""
-        return BatchCommand()
+        return BatchCommand(config=config or {})
 
     @staticmethod
-    def create_validation_command() -> ValidationCommand:
+    def create_validation_command(config: object | None = None) -> ValidationCommand:
         """Create validation command."""
-        return ValidationCommand()
+        return ValidationCommand(config=config or {})
 
     @staticmethod
-    def create_processing_command() -> ProcessingCommand:
+    def create_processing_command(config: object | None = None) -> ProcessingCommand:
         """Create processing command."""
-        return ProcessingCommand()
+        return ProcessingCommand(config=config or {})
 
 
 # Core fixtures for basic testing
@@ -239,13 +254,13 @@ def flext_container() -> FlextContainer:
 @pytest.fixture
 def test_entity() -> BaseTestEntity:
     """Fixture providing test domain entity."""
-    return TestEntityFactory.create()
+    return cast("BaseTestEntity", TestEntityFactory.create())
 
 
 @pytest.fixture
 def test_value_object() -> BaseTestValueObject:
     """Fixture providing test value object."""
-    return TestValueObjectFactory.create()
+    return cast("BaseTestValueObject", TestValueObjectFactory.create())
 
 
 @pytest.fixture
@@ -327,7 +342,7 @@ def performance_data() -> dict[str, object]:
 @pytest.fixture
 def large_dataset() -> list[BaseTestEntity]:
     """Fixture providing large dataset for performance testing."""
-    return TestEntityFactory.create_batch(size=1000)
+    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=1000))
 
 
 @pytest.fixture
@@ -375,10 +390,24 @@ async def async_executor() -> AsyncGenerator[object]:
 class AsyncTestService:
     """Test service for async testing."""
 
-    async def process(self, data: object) -> FlextResult[object]:
+    def __init__(self) -> None:
+        self._executor = AsyncExecutor()
+
+    async def process(self, data: object) -> dict[str, object]:
         """Process data asynchronously."""
         await asyncio.sleep(0.001)  # Simulate async work
-        return FlextResult[object].ok(f"processed_{data}")
+        return {"processed": True, "original": data}
+
+    async def validate(self, data: dict[str, object]) -> dict[str, object]:
+        """Validate data asynchronously."""
+        await asyncio.sleep(0.001)  # Simulate async work
+        has_required = "required_field" in data
+        return {"valid": has_required}
+
+    async def transform(self, data: dict[str, object]) -> dict[str, object]:
+        """Transform data asynchronously."""
+        await asyncio.sleep(0.001)  # Simulate async work
+        return {"transformed": True, "output": f"transformed_{data.get('input', '')}"}
 
     async def fail_operation(self) -> FlextResult[object]:
         """Simulate async failure."""
@@ -408,8 +437,7 @@ class AsyncExecutor:
     async def execute(self, coro: object) -> object:
         """Execute coroutine."""
         if not self._running:
-            msg = "Executor not running"
-            raise RuntimeError(msg)
+            await self.start()
 
         # Ensure coro is a coroutine before creating task
         if not asyncio.iscoroutine(coro):
@@ -419,6 +447,27 @@ class AsyncExecutor:
         task: asyncio.Task[object] = asyncio.create_task(coro)
         self._tasks.append(task)
         return await task
+
+    async def execute_batch(self, coros: list[object]) -> list[object]:
+        """Execute multiple coroutines in batch."""
+        if not self._running:
+            await self.start()
+
+        tasks = []
+        for coro in coros:
+            if not asyncio.iscoroutine(coro):
+                msg = f"Expected coroutine, got {type(coro)}"
+                raise TypeError(msg)
+            task = asyncio.create_task(coro)
+            self._tasks.append(task)
+            tasks.append(task)
+
+        results = await asyncio.gather(*tasks)
+        return list(results)
+
+    def cleanup(self) -> None:
+        """Cleanup completed tasks."""
+        self._tasks.clear()
 
 
 # Error simulation fixtures
@@ -455,7 +504,7 @@ def timeline_events() -> list[dict[str, object]]:
 @pytest.fixture
 def entity_batch() -> list[BaseTestEntity]:
     """Fixture providing batch of entities."""
-    return TestEntityFactory.create_batch(size=50)
+    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=50))
 
 
 # Factory registry fixture
@@ -553,6 +602,7 @@ class SessionTestService:
 
     def __init__(self) -> None:
         self._data: dict[str, object] = {}
+        self._session_data: dict[str, dict[str, object]] = {}
 
     def store(self, key: str, value: object) -> None:
         """Store data in session service."""
@@ -565,6 +615,30 @@ class SessionTestService:
     def clear(self) -> None:
         """Clear session data."""
         self._data.clear()
+        self._session_data.clear()
+
+    def create_session(self, session_id: str) -> None:
+        """Create a new session."""
+        self._session_data[session_id] = {"created_at": datetime.now(UTC), "data": {}}
+
+    def get_session(self, session_id: str) -> dict[str, object] | None:
+        """Get session by ID."""
+        return self._session_data.get(session_id)
+
+    def update_session(self, session_id: str, data: dict[str, object]) -> None:
+        """Update session data."""
+        if session_id in self._session_data:
+            session_data = self._session_data[session_id]["data"]
+            if isinstance(session_data, dict):
+                session_data.update(data)
+
+    def delete_session(self, session_id: str) -> None:
+        """Delete session."""
+        self._session_data.pop(session_id, None)
+
+    def cleanup_sessions(self) -> None:
+        """Cleanup all sessions."""
+        self._session_data.clear()
 
 
 # HTTP testing fixtures using pytest-httpx
@@ -682,3 +756,23 @@ def event_sourcing_data() -> list[dict[str, object]]:
         }
         for i in range(5)
     ]
+
+
+__all__ = [
+    "BenchmarkFixture",
+    "benchmark_config",
+    "config_builder",
+    "failure_result",
+    "flext_config",
+    "flext_container",
+    "large_dataset",
+    "nested_data",
+    "performance_data",
+    "result_chain",
+    "success_result",
+    "temp_config_file",
+    "temp_directory",
+    "test_command",
+    "test_entity",
+    "test_value_object",
+]

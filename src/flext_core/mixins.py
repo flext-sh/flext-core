@@ -434,8 +434,8 @@ class FlextMixins:
 
     @staticmethod
     def validate_field(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,  # noqa: ARG004
-        field_name: str,  # noqa: ARG004
+        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
+        field_name: str,
         value: object,
     ) -> bool:
         """Validate a single field."""

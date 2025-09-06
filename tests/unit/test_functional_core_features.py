@@ -67,7 +67,18 @@ class TestFlextCoreIntegration:
         core = FlextCore.get_instance()
 
         # Create a message payload
-        data = {
+        data: dict[
+            str,
+            str
+            | int
+            | float
+            | bool
+            | list[str | int | float | bool | list[object] | dict[str, object] | None]
+            | dict[
+                str, str | int | float | bool | list[object] | dict[str, object] | None
+            ]
+            | None,
+        ] = {
             "user_id": "user-123",
             "action": "profile_update",
             "changes": {"email": "new@example.com"},
@@ -98,8 +109,8 @@ class TestFlextCoreIntegration:
         assert payload.retry_count == 0
 
         # Test message expiration
-        assert not payload.is_expired
-        assert payload.age_seconds >= 0
+        assert not payload.is_expired()
+        assert payload.age_seconds() >= 0
 
     def test_service_container_integration(self) -> None:
         """Test dependency injection container functionality."""
@@ -170,10 +181,13 @@ class TestFlextCoreIntegration:
     def test_result_railway_operations(self) -> None:
         """Test FlextResult railway-oriented programming patterns."""
 
-        def validate_user_data(data: dict[str, object]) -> FlextResult[dict]:
+        def validate_user_data(
+            data: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             if not data.get("email"):
                 return FlextResult[dict[str, object]].fail("Email required")
-            if "@" not in data["email"]:
+            email_value = data.get("email", "")
+            if isinstance(email_value, str) and "@" not in email_value:
                 return FlextResult[dict[str, object]].fail("Invalid email format")
             return FlextResult[dict[str, object]].ok(data)
 
@@ -181,13 +195,16 @@ class TestFlextCoreIntegration:
             # Simulate save operation
             if data.get("email") == "existing@example.com":
                 return FlextResult[str].fail("Email already exists")
-            return FlextResult[str].ok(f"user_{data['email'].split('@')[0]}")
+            email_value = data.get("email", "")
+            if isinstance(email_value, str):
+                return FlextResult[str].ok(f"user_{email_value.split('@')[0]}")
+            return FlextResult[str].fail("Invalid email type")
 
         def send_welcome_email(user_id: str) -> FlextResult[str]:
             return FlextResult[str].ok(f"Welcome email sent to {user_id}")
 
         # Test successful railway
-        user_data = {"email": "new@example.com", "name": "New User"}
+        user_data: dict[str, object] = {"email": "new@example.com", "name": "New User"}
 
         result = (
             validate_user_data(user_data)
@@ -199,7 +216,7 @@ class TestFlextCoreIntegration:
         assert "Welcome email sent to user_new" in result.unwrap()
 
         # Test failure railway
-        invalid_data = {"name": "No Email User"}
+        invalid_data: dict[str, object] = {"name": "No Email User"}
 
         result = (
             validate_user_data(invalid_data)

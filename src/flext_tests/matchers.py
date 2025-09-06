@@ -109,11 +109,11 @@ class FlextMatchers:
 
     # Convenience boolean helpers used by some tests
     @staticmethod
-    def is_successful_result(result: FlextResult[object]) -> bool:
+    def is_successful_result(result: FlextResult[T]) -> bool:
         return bool(getattr(result, "success", False))
 
     @staticmethod
-    def is_failed_result(result: FlextResult[object]) -> bool:
+    def is_failed_result(result: FlextResult[T]) -> bool:
         return bool(getattr(result, "is_failure", False))
 
     @staticmethod

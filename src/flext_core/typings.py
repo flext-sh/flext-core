@@ -345,7 +345,11 @@ P = ParamSpec("P")  # Parameter specification
 # EXPORTS - Hierarchical types only
 # =============================================================================
 
+# Convenience top-level aliases for common types used in tests/examples
+type ConfigDict = FlextTypes.Config.ConfigDict
+
 __all__: list[str] = [
+    "ConfigDict",
     "E",
     "F",
     "FlextTypes",
