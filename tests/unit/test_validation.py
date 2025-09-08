@@ -1,10 +1,7 @@
 """Real functionality tests for validation module without mocks.
 
-Tests the actual FlextValidation implementation with FlextTypes.Config integration,
-StrEnum validation, and real execution paths.
-
-Created to achieve comprehensive test coverage with actual functionality validation,
-following the user's requirement for real tests without mocks.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,7 +11,8 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextConstants, FlextTypes, FlextValidations
+from flext_core import FlextConstants, FlextValidations
+from flext_core.typings import FlextTypes
 
 # Create alias for backward compatibility
 FlextValidation = FlextValidations
@@ -284,7 +282,7 @@ class TestFlextValidationStrEnumIntegration:
 
     def test_all_validation_level_values_work_real(self) -> None:
         """Test all ValidationLevel StrEnum values work in validation."""
-        validation_levels: list[str] = []
+        validation_levels: FlextTypes.Core.StringList = []
 
         # Test each validation level enum value
         for val_enum in FlextConstants.Config.ValidationLevel:

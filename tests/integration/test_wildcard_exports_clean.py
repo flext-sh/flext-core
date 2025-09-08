@@ -3,6 +3,9 @@
 This module validates that the wildcard import system works correctly across
 the entire flext-core ecosystem, ensuring all major components are properly
 exported and functional.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -24,10 +27,10 @@ from flext_core import (
     FlextExceptions,
     FlextFields,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
     FlextValidations,
 )
+from flext_core.typings import FlextTypes
 
 
 class TestFlextCoreWildcardExports:
@@ -283,7 +286,7 @@ class TestFlextCoreIntegrationScenarios:
         operation_id = FlextUtilities.generate_uuid()
 
         # 2. Create a result and validate it
-        result = FlextResult[dict[str, str]].ok(
+        result = FlextResult[FlextTypes.Core.Headers].ok(
             {
                 "operation_id": operation_id,
                 "status": "started",
@@ -305,7 +308,9 @@ class TestFlextCoreIntegrationScenarios:
         assert "timestamp" in processed_result.value
 
         # 4. Handle any potential errors using exception system
-        def _handle_workflow_failure(result: FlextResult[dict[str, str]]) -> None:
+        def _handle_workflow_failure(
+            result: FlextResult[FlextTypes.Core.Headers],
+        ) -> None:
             if not result.success:
                 error_msg = "Workflow failed"
                 raise FlextExceptions.OperationError(error_msg)

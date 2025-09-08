@@ -253,7 +253,7 @@ class FieldRegistryManager:
         """Get field from registry."""
         return self.registry.get_field(field_name)
 
-    def list_all_fields(self) -> FlextResult[list[str]]:
+    def list_all_fields(self) -> FlextResult[FlextTypes.Core.StringList]:
         """List all registered fields."""
         return self.registry.list_registered_fields()
 

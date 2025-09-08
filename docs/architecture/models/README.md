@@ -169,8 +169,8 @@ class FlextMeltanoModels(FlextModels):
         meltano_version: str = Field(default="3.9.1")
 
         # Project configuration
-        plugins: list[dict[str, object]] = Field(default_factory=list)
-        environments: list[str] = Field(default_factory=lambda: ["dev", "prod"])
+        plugins: list[FlextTypes.Core.Dict] = Field(default_factory=list)
+        environments: FlextTypes.Core.StringList = Field(default_factory=lambda: ["dev", "prod"])
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate Meltano project business rules."""
@@ -185,7 +185,7 @@ class FlextMeltanoModels(FlextModels):
 
             return FlextResult[None].ok(None)
 
-        def add_plugin(self, plugin_config: dict[str, object]) -> FlextResult[None]:
+        def add_plugin(self, plugin_config: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Add plugin to project with domain event."""
             try:
                 # Validate plugin configuration
@@ -216,8 +216,8 @@ class FlextMeltanoModels(FlextModels):
         name: str = Field(min_length=1, max_length=100)
         namespace: str = Field(default="tap")
         executable: str = Field(description="Tap executable name")
-        config: dict[str, object] = Field(default_factory=dict)
-        schema: dict[str, object] | None = Field(default=None)
+        config: FlextTypes.Core.Dict = Field(default_factory=dict)
+        schema: FlextTypes.Core.Dict | None = Field(default=None)
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate Singer tap business rules."""
@@ -318,8 +318,8 @@ class FlextApiModels(FlextModels):
 
         method: str = Field(pattern=r"^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)$")
         url: str = Field(min_length=1)
-        headers: dict[str, str] = Field(default_factory=dict)
-        body: dict[str, object] | None = Field(default=None)
+        headers: FlextTypes.Core.Headers = Field(default_factory=dict)
+        body: FlextTypes.Core.Dict | None = Field(default=None)
 
         def validate_business_rules(self) -> FlextResult[None]:
             """Validate HTTP request business rules."""
@@ -374,7 +374,7 @@ class FlextMeltanoModels(FlextModels):
 
         project_name: str = Field(min_length=1, max_length=100)
         project_path: str = Field(description="Project directory path")
-        plugins: list[dict[str, object]] = Field(default_factory=list)
+        plugins: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
         def validate_business_rules(self) -> FlextResult[None]:
             # Project-specific business validation
@@ -384,8 +384,8 @@ class FlextMeltanoModels(FlextModels):
         """Singer record value object."""
 
         stream: str = Field(min_length=1)
-        record: dict[str, object] = Field()
-        schema: dict[str, object] | None = Field(default=None)
+        record: FlextTypes.Core.Dict = Field()
+        schema: FlextTypes.Core.Dict | None = Field(default=None)
 
         def validate_business_rules(self) -> FlextResult[None]:
             # Singer specification validation
@@ -412,19 +412,19 @@ class FlextMeltanoModels(FlextModels):
         meltano_version: str = Field(default="3.9.1", description="Meltano version")
 
         # Project configuration
-        plugins: list[dict[str, object]] = Field(
+        plugins: list[FlextTypes.Core.Dict] = Field(
             default_factory=list, description="Installed plugins"
         )
-        environments: list[str] = Field(
+        environments: FlextTypes.Core.StringList = Field(
             default_factory=lambda: ["dev", "staging", "prod"],
             description="Available environments"
         )
-        schedules: list[dict[str, object]] = Field(
+        schedules: list[FlextTypes.Core.Dict] = Field(
             default_factory=list, description="ETL schedules"
         )
 
         # Business operations
-        def add_tap(self, tap_config: dict[str, object]) -> FlextResult[None]:
+        def add_tap(self, tap_config: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Add Singer tap to project with validation."""
             try:
                 # Validate tap configuration
@@ -465,7 +465,7 @@ class FlextMeltanoModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to add tap: {e}")
 
-        def create_schedule(self, schedule_config: dict[str, object]) -> FlextResult[None]:
+        def create_schedule(self, schedule_config: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Create ETL schedule with validation."""
             try:
                 # Validate schedule configuration
@@ -529,8 +529,8 @@ class FlextMeltanoModels(FlextModels):
 
         type: str = Field(description="Record type (RECORD, SCHEMA, STATE)")
         stream: str = Field(min_length=1, description="Stream name")
-        record: dict[str, object] | None = Field(default=None, description="Record data")
-        schema: dict[str, object] | None = Field(default=None, description="Stream schema")
+        record: FlextTypes.Core.Dict | None = Field(default=None, description="Record data")
+        schema: FlextTypes.Core.Dict | None = Field(default=None, description="Stream schema")
         time_extracted: datetime | None = Field(default=None, description="Extraction timestamp")
 
         def validate_business_rules(self) -> FlextResult[None]:
@@ -582,9 +582,9 @@ class FlextMeltanoModels(FlextModels):
         bytes_processed: int = Field(default=0, ge=0)
 
         # Error tracking
-        errors: list[dict[str, object]] = Field(default_factory=list)
+        errors: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
-        def mark_completed(self, final_metrics: dict[str, object]) -> FlextResult[None]:
+        def mark_completed(self, final_metrics: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Mark ETL run as completed with final metrics."""
             try:
                 self.completed_at = datetime.utcnow()
@@ -651,7 +651,7 @@ class FlextOracleWmsModels(FlextModels):
 
         warehouse_code: str = Field(min_length=1, max_length=10)
         warehouse_name: str = Field(min_length=1, max_length=100)
-        location: dict[str, object] = Field(description="Warehouse location data")
+        location: FlextTypes.Core.Dict = Field(description="Warehouse location data")
         capacity: int = Field(gt=0, description="Storage capacity")
         current_utilization: int = Field(ge=0, description="Current utilization")
 

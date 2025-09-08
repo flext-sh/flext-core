@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Unit tests for 02_dependency_injection.py example.
 
 Tests the refactored dependency injection implementation using real FlextContainer

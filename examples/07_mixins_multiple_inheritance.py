@@ -14,6 +14,7 @@ from __future__ import annotations
 import time
 
 from flext_core import FlextMixins, FlextResult
+from flext_core import FlextTypes
 
 # Constants
 MIN_USERNAME_LENGTH = 3
@@ -72,7 +73,7 @@ class EnhancedUserService:
             self._logger.exception("User creation failed", error=error)
             return FlextResult[User].fail(error)
 
-    def get_user_summary(self, user: User) -> dict[str, object]:
+    def get_user_summary(self, user: User) -> FlextTypes.Core.Dict:
         """Get user summary with mixins functionality."""
         # Use mixins to add metadata
         summary = {
@@ -91,7 +92,7 @@ class CacheableService:
 
     def __init__(self) -> None:
         """Initialize cacheable service."""
-        self._cache: dict[str, object] = {}
+        self._cache: FlextTypes.Core.Dict = {}
         self._logger = FlextMixins.flext_logger(self)
 
     def get_cached_data(self, key: str) -> FlextResult[object]:
@@ -209,23 +210,23 @@ class ComposedUserManager:
         self._logger.info("User created and cached", username=username)
         return FlextResult[User].ok(user)
 
-    def get_user_info(self, username: str) -> FlextResult[dict[str, object]]:
+    def get_user_info(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Get comprehensive user information."""
         cache_key = f"user_{username}"
         cached_result = self._cache_service.get_cached_data(cache_key)
 
         if cached_result.is_failure:
-            return FlextResult[dict[str, object]].fail("User not found")
+            return FlextResult[FlextTypes.Core.Dict].fail("User not found")
 
         user = cached_result.value
         if not isinstance(user, User):
-            return FlextResult[dict[str, object]].fail("Invalid user data in cache")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid user data in cache")
 
         # Get user summary
         summary = self._user_service.get_user_summary(user)
 
         self._logger.info("User info retrieved", username=username)
-        return FlextResult[dict[str, object]].ok(summary)
+        return FlextResult[FlextTypes.Core.Dict].ok(summary)
 
 
 def demonstrate_mixins_composition() -> None:

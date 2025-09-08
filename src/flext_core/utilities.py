@@ -1,41 +1,31 @@
 """Utility functions and helpers.
 
-Provides FlextUtilities with helper functions, conversion utilities,
-validation helpers, and cross-cutting tools.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import functools
 import json
+import os
 import re
 import time
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import ClassVar, TypeGuard, cast
+from pathlib import Path
+from typing import ClassVar, cast
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from flext_core.constants import FlextConstants
-from flext_core.loggings import FlextLogger
-from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, P, R, T
 
-logger = FlextLogger(__name__)
-
 
 class FlextUtilities:
-    """Comprehensive utility functions organized by functional domain.
-
-    This class serves as the central container for all FLEXT utility functions,
-    organized into nested classes by functional area. Provides common operations
-    for ID generation, text processing, validation, performance monitoring,
-    JSON handling, and more.
-
-
-    """
+    """Comprehensive utility functions organized by functional domain."""
 
     # ==========================================================================
     # CLASS CONSTANTS
@@ -45,39 +35,33 @@ class FlextUtilities:
     MAX_PORT: int = FlextConstants.Network.MAX_PORT
 
     # Performance metrics storage
-    PERFORMANCE_METRICS: ClassVar[dict[str, dict[str, object]]] = {}
+    PERFORMANCE_METRICS: ClassVar[dict[str, FlextTypes.Core.Dict]] = {}
 
     # ==========================================================================
     # NESTED CLASSES FOR ORGANIZATION
     # ==========================================================================
 
     class Generators:
-        """ID and timestamp generation utilities with consistent prefixing.
-
-        Provides various ID generation methods with semantic prefixes for
-        different use cases. All IDs use UUID4 for uniqueness with shortened
-        hex representations for readability.
-
-        """
+        """ID and timestamp generation utilities."""
 
         @staticmethod
         def generate_uuid() -> str:
-            """Generate standard UUID4."""
+            """Generate UUID4."""
             return str(uuid.uuid4())
 
         @staticmethod
         def generate_id() -> str:
-            """Generate unique ID with flext_ prefix."""
+            """Generate ID with flext_ prefix."""
             return f"flext_{uuid.uuid4().hex[:8]}"
 
         @staticmethod
         def generate_entity_id() -> str:
-            """Generate entity ID with entity_ prefix."""
+            """Generate entity ID."""
             return f"entity_{uuid.uuid4().hex[:12]}"
 
         @staticmethod
         def generate_correlation_id() -> str:
-            """Generate correlation ID for request tracing."""
+            """Generate correlation ID."""
             return f"corr_{uuid.uuid4().hex[:16]}"
 
         @staticmethod
@@ -87,12 +71,12 @@ class FlextUtilities:
 
         @staticmethod
         def generate_session_id() -> str:
-            """Generate session ID for web sessions."""
+            """Generate session ID."""
             return f"sess_{uuid.uuid4().hex[:16]}"
 
         @staticmethod
         def generate_request_id() -> str:
-            """Generate request ID for web requests."""
+            """Generate request ID."""
             return f"req_{uuid.uuid4().hex[:12]}"
 
     class TextProcessor:
@@ -105,7 +89,7 @@ class FlextUtilities:
 
         @staticmethod
         def truncate(text: str, max_length: int = 100, suffix: str = "...") -> str:
-            """Truncate text to maximum length with suffix."""
+            """Truncate text to maximum length."""
             if len(text) <= max_length:
                 return text
             if max_length <= len(suffix):
@@ -114,7 +98,7 @@ class FlextUtilities:
 
         @staticmethod
         def safe_string(value: object, default: str = "") -> str:
-            """Convert any value to string safely."""
+            """Convert value to string safely."""
             try:
                 return str(value) if value is not None else default
             except Exception:
@@ -122,7 +106,7 @@ class FlextUtilities:
 
         @staticmethod
         def clean_text(text: str) -> str:
-            """Clean text by removing extra whitespace and controlling characters."""
+            """Clean text removing whitespace and control characters."""
             if not text:
                 return ""
             # Remove control characters except tabs and newlines
@@ -133,7 +117,7 @@ class FlextUtilities:
 
         @staticmethod
         def slugify(text: str) -> str:
-            """Convert text to URL-safe slug format."""
+            """Convert text to URL-safe slug."""
             if not text:
                 return ""
             # Convert to lowercase and remove extra whitespace
@@ -151,16 +135,7 @@ class FlextUtilities:
             show_first: int | None = None,
             show_last: int | None = None,
         ) -> str:
-            """Mask sensitive information with flexible visibility options.
-
-            Args:
-                text: Text to mask
-                mask_char: Character to use for masking
-                visible_chars: Number of characters to show at the end (legacy parameter)
-                show_first: Number of characters to show at the start
-                show_last: Number of characters to show at the end
-
-            """
+            """Mask sensitive information with flexible visibility options."""
             if not text:
                 return mask_char * 8  # Default masked length
 
@@ -189,7 +164,7 @@ class FlextUtilities:
 
         @staticmethod
         def sanitize_filename(name: str) -> str:
-            """Sanitize a filename for safe filesystem usage."""
+            """Sanitize filename for filesystem usage."""
             # Basic cleanup
             cleaned = FlextUtilities.TextProcessor.clean_text(name)
             cleaned = cleaned.strip()
@@ -217,7 +192,7 @@ class FlextUtilities:
 
         @staticmethod
         def generate_camel_case_alias(field_name: str) -> str:
-            """Generate camelCase alias from snake_case field name."""
+            """Generate camelCase from snake_case."""
             if not field_name:
                 return ""
             components = field_name.split("_")
@@ -317,7 +292,7 @@ class FlextUtilities:
                     metrics["last_error"] = error
 
         @staticmethod
-        def get_metrics(operation: str | None = None) -> dict[str, object]:
+        def get_metrics(operation: str | None = None) -> FlextTypes.Core.Dict:
             """Get performance metrics."""
             if operation:
                 return FlextUtilities.PERFORMANCE_METRICS.get(operation, {})
@@ -327,15 +302,7 @@ class FlextUtilities:
         def create_performance_config(
             performance_level: str = "medium",
         ) -> FlextTypes.Config.ConfigDict:
-            """Create performance configuration based on level.
-
-            Args:
-                performance_level: Performance level (high, medium, low)
-
-            Returns:
-                Configuration dictionary with performance-tuned settings
-
-            """
+            """Create performance configuration based on level."""
             base_config: FlextTypes.Config.ConfigDict = {
                 "performance_level": performance_level,
                 "optimization_enabled": True,
@@ -501,7 +468,7 @@ class FlextUtilities:
         def is_dict_non_empty(value: object) -> bool:
             """Check if value is non-empty dict."""
             if isinstance(value, dict):
-                sized_dict = cast("FlextProtocols.Foundation.SizedDict", value)
+                sized_dict = cast("FlextTypes.Core.Dict", value)
                 return len(sized_dict) > 0
             return False
 
@@ -509,7 +476,7 @@ class FlextUtilities:
         def is_list_non_empty(value: object) -> bool:
             """Check if value is non-empty list."""
             if isinstance(value, list):
-                sized_list = cast("FlextProtocols.Foundation.SizedList", value)
+                sized_list = cast("FlextTypes.Core.List", value)
                 return len(sized_list) > 0
             return False
 
@@ -548,6 +515,182 @@ class FlextUtilities:
             """Format value as percentage."""
             return f"{value * 100:.{precision}f}%"
 
+    class EnvironmentUtils:
+        """Environment and file system utilities.
+
+        Provides safe utilities for environment variables, file operations,
+        and configuration management with FlextResult error handling.
+        """
+
+        @staticmethod
+        def safe_get_env_var(
+            var_name: str,
+            default: str | None = None,
+        ) -> FlextResult[str]:
+            """Safely get environment variable with optional default value."""
+            try:
+                value = os.getenv(var_name, default)
+                if value is None:
+                    return FlextResult[str].fail(
+                        f"Environment variable {var_name} not set"
+                    )
+                return FlextResult[str].ok(value)
+            except Exception as e:
+                return FlextResult[str].fail(
+                    f"{FlextConstants.Errors.CONFIG_ERROR}: {e}"
+                )
+
+        @staticmethod
+        def safe_load_json_file(
+            file_path: str | Path,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Safely load JSON file with validation."""
+            try:
+                with Path(file_path).open(encoding="utf-8") as f:
+                    data = json.load(f)
+
+                if not isinstance(data, dict):
+                    return FlextResult[FlextTypes.Core.Dict].fail(
+                        FlextConstants.Messages.TYPE_MISMATCH,
+                    )
+
+                return FlextResult[FlextTypes.Core.Dict].ok(
+                    cast("FlextTypes.Core.Dict", data)
+                )
+            except FileNotFoundError:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"{FlextConstants.Errors.NOT_FOUND}: {file_path}",
+                )
+            except json.JSONDecodeError as e:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"{FlextConstants.Errors.SERIALIZATION_ERROR}: {e}",
+                )
+            except Exception as e:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"{FlextConstants.Errors.CONFIG_ERROR}: {e}",
+                )
+
+        @staticmethod
+        def merge_dicts(
+            base_dict: FlextTypes.Core.Dict,
+            override_dict: FlextTypes.Core.Dict,
+            *,
+            required_non_null_fields: set[str] | None = None,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Merge two dictionaries with validation for required fields."""
+            try:
+                merged = {**base_dict, **override_dict}
+
+                # Validate required non-null fields if specified
+                if required_non_null_fields:
+                    for key in required_non_null_fields:
+                        if key in merged and merged[key] is None:
+                            return FlextResult[FlextTypes.Core.Dict].fail(
+                                f"{FlextConstants.Messages.VALIDATION_FAILED} for {key}: {FlextConstants.Messages.NULL_DATA}",
+                            )
+
+                return FlextResult[FlextTypes.Core.Dict].ok(merged)
+            except Exception as e:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"Dictionary merge failed: {e}"
+                )
+
+    class ValidationUtils:
+        """Generic validation utilities.
+
+        Provides reusable validation functions for common validation patterns.
+        """
+
+        @staticmethod
+        def validate_with_callable(
+            value: object,
+            validator: object,
+            error_message: str = "Validation failed",
+        ) -> FlextResult[bool]:
+            """Validate a value using a callable validator function."""
+            try:
+                if not callable(validator):
+                    return FlextResult[bool].fail("Validator must be callable")
+
+                try:
+                    result = validator(value)
+                    if not result:
+                        return FlextResult[bool].fail(error_message)
+                    return FlextResult[bool].ok(data=True)
+                except Exception as e:
+                    return FlextResult[bool].fail(f"Validation error: {e}")
+            except Exception as e:
+                return FlextResult[bool].fail(f"Validation failed: {e}")
+
+        @staticmethod
+        def validate_email(email: str) -> FlextResult[bool]:
+            """Validate email address format."""
+            try:
+                if not email or not isinstance(email, str):
+                    return FlextResult[bool].fail("Invalid email: empty or not string")
+
+                if "@" not in email:
+                    return FlextResult[bool].fail("Invalid email: missing @ symbol")
+
+                domain_part = email.rsplit("@", maxsplit=1)[-1]
+                if "." not in domain_part:
+                    return FlextResult[bool].fail("Invalid email: invalid domain")
+
+                return FlextResult[bool].ok(data=True)
+            except Exception as e:
+                return FlextResult[bool].fail(f"Email validation error: {e}")
+
+        @staticmethod
+        def validate_url(url: str) -> FlextResult[bool]:
+            """Validate URL format."""
+            try:
+                if not url or not isinstance(url, str):
+                    return FlextResult[bool].fail("Invalid URL: empty or not string")
+
+                url = url.strip()
+                if not url:
+                    return FlextResult[bool].fail("Invalid URL: empty string")
+
+                # Basic URL validation
+                if not (url.startswith(("http://", "https://"))):
+                    return FlextResult[bool].fail(
+                        "Invalid URL: must start with http:// or https://"
+                    )
+
+                # Check for valid characters
+                if " " in url:
+                    return FlextResult[bool].fail("Invalid URL: contains spaces")
+
+                return FlextResult[bool].ok(data=True)
+            except Exception as e:
+                return FlextResult[bool].fail(f"URL validation error: {e}")
+
+        @staticmethod
+        def validate_phone(phone: str) -> FlextResult[bool]:
+            """Validate phone number format."""
+            try:
+                if not phone or not isinstance(phone, str):
+                    return FlextResult[bool].fail("Invalid phone: empty or not string")
+
+                # Remove common separators
+                cleaned = re.sub(r"[\s\-\.\(\)\+]", "", phone)
+
+                # Check if all remaining are digits
+                if not cleaned.isdigit():
+                    return FlextResult[bool].fail(
+                        "Invalid phone: contains non-digit characters"
+                    )
+
+                # Basic length check (international numbers can vary)
+                min_phone_length = 7
+                max_phone_length = 15
+                if len(cleaned) < min_phone_length or len(cleaned) > max_phone_length:
+                    return FlextResult[bool].fail("Invalid phone: invalid length")
+
+                return FlextResult[bool].ok(data=True)
+            except Exception as e:
+                return FlextResult[bool].fail(f"Phone validation error: {e}")
+
     class ProcessingUtils:
         """Data processing utilities for JSON, models, and structured data.
 
@@ -560,13 +703,13 @@ class FlextUtilities:
         @staticmethod
         def safe_json_parse(
             json_str: str,
-            default: dict[str, object] | None = None,
-        ) -> dict[str, object]:
+            default: FlextTypes.Core.Dict | None = None,
+        ) -> FlextTypes.Core.Dict:
             """Safely parse JSON string."""
             try:
                 result: object = json.loads(json_str)
                 if isinstance(result, dict):
-                    return cast("dict[str, object]", result)
+                    return cast("FlextTypes.Core.Dict", result)
                 return default or {}
             except (json.JSONDecodeError, TypeError):
                 return default or {}
@@ -580,20 +723,20 @@ class FlextUtilities:
                 return default
 
         @staticmethod
-        def extract_model_data(obj: object) -> dict[str, object]:
+        def extract_model_data(obj: object) -> FlextTypes.Core.Dict:
             """Extract data from Pydantic model or dict."""
-            if hasattr(obj, "model_dump"):
-                model_obj = cast("FlextProtocols.Foundation.HasModelDump", obj)
-                return model_obj.model_dump()
-            if hasattr(obj, "dict"):
-                dict_obj = cast("FlextProtocols.Foundation.HasDict", obj)
-                return dict_obj.dict()
+            if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
+                # Cast to dict since we've already checked hasattr and callable
+                return cast("FlextTypes.Core.Dict", getattr(obj, "model_dump")())
+            if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
+                # Cast to dict since we've already checked hasattr and callable
+                return cast("FlextTypes.Core.Dict", getattr(obj, "dict")())
             if isinstance(obj, dict):
-                return cast("dict[str, object]", obj)
+                return cast("FlextTypes.Core.Dict", obj)
             return {}
 
         @staticmethod
-        def parse_json_to_model[TModel](
+        def parse_json_to_model[TModel: BaseModel](
             json_text: str,
             model_class: type[TModel],
         ) -> FlextResult[TModel]:
@@ -602,23 +745,15 @@ class FlextUtilities:
                 parsed_data: object = json.loads(json_text)
 
                 # Strategy 1: Pydantic v2 model_validate (preferred for validation)
-                # Use a type guard to narrow to classes supporting model_validate
-                def _supports_model_validate(
-                    cls: type[object],
-                ) -> TypeGuard[type[FlextProtocols.Foundation.HasModelValidate]]:
-                    return hasattr(cls, "model_validate") and callable(
-                        getattr(cls, "model_validate", None),
-                    )
-
-                if _supports_model_validate(model_class):
+                if hasattr(model_class, "model_validate") and callable(
+                    getattr(model_class, "model_validate", None)
+                ):
                     validated_obj = model_class.model_validate(parsed_data)
-                    # Direct cast to target type
-                    instance = cast("TModel", validated_obj)
-                    return FlextResult[TModel].ok(instance)
+                    return FlextResult[TModel].ok(validated_obj)
 
                 # Strategy 2: Dictionary constructor (for dict-like data)
                 if isinstance(parsed_data, dict):
-                    dict_data = cast("dict[str, object]", parsed_data)
+                    dict_data = cast("FlextTypes.Core.Dict", parsed_data)
                     instance = model_class(**dict_data)
                     return FlextResult[TModel].ok(instance)
 
@@ -668,10 +803,10 @@ class FlextUtilities:
         def batch_process[TInput, TOutput](
             items: list[TInput],
             processor: Callable[[TInput], FlextResult[TOutput]],
-        ) -> tuple[list[TOutput], list[str]]:
+        ) -> tuple[list[TOutput], FlextTypes.Core.StringList]:
             """Process list of items, collecting successes and errors."""
             successes: list[TOutput] = []
-            errors: list[str] = []
+            errors: FlextTypes.Core.StringList = []
 
             for item in items:
                 result = processor(item)
@@ -683,13 +818,7 @@ class FlextUtilities:
             return successes, errors
 
     class Configuration:
-        """Configuration utilities with FlextTypes.Config and StrEnum integration.
-
-        Provides efficient configuration management utilities including
-        environment detection, configuration validation, and system configuration
-        generation using FlextTypes.Config hierarchical structure.
-
-        """
+        """Configuration utilities with FlextTypes.Config and StrEnum integration."""
 
         @staticmethod
         def create_default_config(
@@ -907,7 +1036,7 @@ class FlextUtilities:
         return cls.Generators.generate_iso_timestamp()
 
     @classmethod
-    def get_performance_metrics(cls) -> dict[str, object]:
+    def get_performance_metrics(cls) -> FlextTypes.Core.Dict:
         """Get all performance metrics (delegates to Performance)."""
         return cls.Performance.get_metrics()
 
@@ -971,6 +1100,6 @@ class FlextUtilities:
 # EXPORTS - Clean public API
 # =============================================================================
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextUtilities",  # ONLY main class exported
 ]

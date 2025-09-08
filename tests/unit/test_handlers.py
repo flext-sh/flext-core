@@ -5,6 +5,11 @@ StrEnum validation, and real execution paths.
 
 Created to achieve comprehensive test coverage with actual functionality validation,
 following the user's requirement for real tests without mocks.
+
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -371,7 +376,9 @@ class TestHandlersConfigurationIntegration:
 
         # Test with properly typed invalid environment using cast
         # Define Environment type locally to avoid import issues
-        type Environment = Literal["development", "production", "staging", "test", "local"]
+        type Environment = Literal[
+            "development", "production", "staging", "test", "local"
+        ]
 
         invalid_result = (
             FlextHandlers.Implementation.BasicHandler.create_environment_handler_config(

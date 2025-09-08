@@ -1,71 +1,146 @@
 """FLEXT Core Test Support - Comprehensive testing utilities and fixtures.
 
-This module provides the test support foundation for the FLEXT ecosystem with test utilities,
-fixtures, builders, matchers, performance testing, and domain-specific test helpers following
-modern testing patterns and SOLID principles.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-
-from .asyncs import *
-from .builders import *
-from .domains import *
-from .factories import *
-from .fixtures import *
-from .http_support import *
-from .hypothesis import *
-from .matchers import *
-from .performance import *
-from .utilities import *
+from .asyncs import AsyncTestUtils, FlextTestsAsync
+from .builders import FlextTestsBuilders, TestBuilders
+from .domains import (
+    FlextTestsDomains,
+    PayloadDataFactory,
+    ServiceDataFactory,
+    SimpleConfigurationFactory,
+    UserDataFactory,
+)
+from .factories import (
+    AdminUserFactory,
+    BaseTestEntity,
+    BaseTestValueObject,
+    BatchFactories,
+    BooleanFieldFactory,
+    ConfigFactory,
+    EdgeCaseGenerators,
+    FlextResultFactory,
+    FloatFieldFactory,
+    InactiveUserFactory,
+    IntegerFieldFactory,
+    ProductionConfigFactory,
+    RepositoryError,
+    SequenceGenerators,
+    StringFieldFactory,
+    TestConfig,
+    TestEntityFactory,
+    TestField,
+    TestUser,
+    TestValueObjectFactory,
+    UserFactory,
+    create_validation_test_cases,
+    failure_result,
+    success_result,
+    validation_failure,
+)
+from .fixtures import (
+    BenchmarkFixture,
+    FailingUserRepository,
+    FlextTestsFixtures,
+    InMemoryUserRepository,
+    RealAuditService,
+    RealEmailService,
+)
+from .http_support import APITestClient, FlextTestsHttp, HTTPTestUtils
+from .hypothesis import (
+    CompositeStrategies,
+    EdgeCaseStrategies,
+    FlextStrategies,
+    FlextTestsHypothesis,
+    PerformanceStrategies,
+    PropertyTestHelpers,
+)
+from .matchers import FlextMatchers, FlextTestsMatchers
+from .performance import (
+    BenchmarkProtocol,
+    BenchmarkUtils,
+    ComplexityAnalyzer,
+    FlextTestsPerformance,
+    MemoryProfiler,
+    PerformanceProfiler,
+    StressTestRunner,
+)
+from .utilities import FlextTestUtilities, FlextTestsUtilities
 
 # =============================================================================
-# CONSOLIDATED EXPORTS - Combine all __all__ from modules
+# EXPORTS - Explicit list of all exported items
 # =============================================================================
 
-# Import modules for __all__ collection
-from . import asyncs as _asyncs
-from . import builders as _builders
-from . import domains as _domains
-from . import factories as _factories
-from . import fixtures as _fixtures
-from . import http_support as _http
-from . import hypothesis as _hypothesis
-from . import matchers as _matchers
-from . import performance as _performance
-from . import utilities as _utilities
-
-
-# Collect all __all__ exports from imported modules
-_temp_exports: list[str] = []
-
-_modules_to_check = [
-    _asyncs,
-    _builders,
-    _domains,
-    _factories,
-    _fixtures,
-    _http,
-    _hypothesis,
-    _matchers,
-    _performance,
-    _utilities,
+__all__ = [
+    # Main module classes
+    "FlextTestsAsync",
+    "FlextTestsBuilders",
+    "FlextTestsDomains",
+    "FlextTestsFixtures",
+    "FlextTestsHttp",
+    "FlextTestsHypothesis",
+    "CompositeStrategies",
+    "EdgeCaseStrategies",
+    "FlextStrategies",
+    "PerformanceStrategies",
+    "PropertyTestHelpers",
+    "FlextTestsMatchers",
+    "FlextTestsPerformance",
+    "FlextTestsUtilities",
+    "BenchmarkProtocol",
+    "ComplexityAnalyzer",
+    "FlextTestUtilities",
+    "BenchmarkFixture",
+    # Factory classes
+    "AdminUserFactory",
+    "UserFactory",
+    "InactiveUserFactory",
+    "ConfigFactory",
+    "ProductionConfigFactory",
+    "StringFieldFactory",
+    "IntegerFieldFactory",
+    "BooleanFieldFactory",
+    "FloatFieldFactory",
+    "TestEntityFactory",
+    "TestValueObjectFactory",
+    "FlextResultFactory",
+    # Model classes
+    "BaseTestEntity",
+    "BaseTestValueObject",
+    "TestConfig",
+    "TestField",
+    "TestUser",
+    # Utility classes
+    "APITestClient",
+    "AsyncTestUtils",
+    "BatchFactories",
+    "BenchmarkUtils",
+    "EdgeCaseGenerators",
+    "FlextMatchers",
+    "HTTPTestUtils",
+    "MemoryProfiler",
+    "PayloadDataFactory",
+    "PerformanceProfiler",
+    "SequenceGenerators",
+    "ServiceDataFactory",
+    "SimpleConfigurationFactory",
+    "StressTestRunner",
+    "TestBuilders",
+    "UserDataFactory",
+    # Repository classes
+    "FailingUserRepository",
+    "InMemoryUserRepository",
+    "RealAuditService",
+    "RealEmailService",
+    # Exception classes
+    "RepositoryError",
+    # Functions
+    "create_validation_test_cases",
+    "failure_result",
+    "success_result",
+    "validation_failure",
 ]
-
-
-for module in _modules_to_check:
-    if hasattr(module, "__all__"):
-        _temp_exports.extend(module.__all__)
-
-# Remove duplicates and sort for consistent exports - build complete list first
-_seen: set[str] = set()
-_final_exports: list[str] = []
-for item in _temp_exports:
-    if item not in _seen:
-        _seen.add(item)
-        _final_exports.append(item)
-_final_exports.sort()
-
-# Define __all__ as literal list for linter compatibility
-# This dynamic assignment is necessary for aggregating module exports
-__all__: list[str] = _final_exports  # pyright: ignore[reportUnsupportedDunderAll] # noqa: PLE0605

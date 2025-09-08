@@ -1,7 +1,7 @@
 """FLEXT Core - Data integration foundation library.
 
-Foundation library providing railway-oriented programming, dependency
-injection, and domain-driven design patterns for the FLEXT ecosystem.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ R = TypeVar("R")
 # FOUNDATION LAYER - Import classes directly to avoid conflicts
 # =============================================================================
 
-# Version and constants
 from flext_core.version import FlextVersionManager, __version__
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
@@ -85,17 +84,35 @@ from flext_core.core import FlextCore
 
 # Direct access to key functions without class instantiation
 def flext_logger(name: str = __name__) -> FlextLogger:
-    """Get a structured logger instance."""
+    """Get a structured logger instance.
+
+    Args:
+        name: Logger name, defaults to module name.
+
+    Returns:
+        Configured FlextLogger instance.
+
+    """
     return FlextLogger(name)
 
 
 def get_flext_container() -> FlextContainer:
-    """Get the global FlextContainer instance."""
+    """Get the global FlextContainer instance.
+
+    Returns:
+        Global FlextContainer singleton instance.
+
+    """
     return FlextContainer.get_global()
 
 
 def get_flext_core() -> FlextCore:
-    """Get the global FlextCore instance."""
+    """Get the global FlextCore instance.
+
+    Returns:
+        FlextCore singleton instance.
+
+    """
     return FlextCore.get_instance()
 
 

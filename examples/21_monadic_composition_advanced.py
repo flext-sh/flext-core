@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from __future__ import annotations
 from datetime import UTC, datetime
-
+from flext_core import FlextTypes
 from decimal import Decimal
 from typing import cast
 
@@ -60,7 +60,7 @@ class Order:
         order_id: str,
         user_id: str,
         amount: Decimal,
-        items: list[str],
+        items: FlextTypes.Core.StringList,
     ) -> None:
         """Initialize Order with details."""
         self.order_id = order_id
@@ -95,7 +95,9 @@ def demonstrate_rshift_operator() -> FlextResult[str]:
     logger.info("🚀 Demonstrating >> operator for monadic bind")
 
     # Traditional approach with flat_map
-    def traditional_approach(data: dict[str, object]) -> FlextResult[ProcessingResult]:
+    def traditional_approach(
+        data: FlextTypes.Core.Dict,
+    ) -> FlextResult[ProcessingResult]:
         return (
             validate_user_data(data)
             .flat_map(create_user)
@@ -108,7 +110,7 @@ def demonstrate_rshift_operator() -> FlextResult[str]:
         )
 
     # New approach with >> operator
-    def monadic_approach(data: dict[str, object]) -> FlextResult[ProcessingResult]:
+    def monadic_approach(data: FlextTypes.Core.Dict) -> FlextResult[ProcessingResult]:
         return (
             validate_user_data(data)
             >> create_user
@@ -303,18 +305,18 @@ def demonstrate_applicative_lift() -> FlextResult[str]:
 # === HELPER FUNCTIONS ===
 
 
-def validate_user_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate user data dictionary."""
     required_fields = ["user_id", "name", "email", "age"]
     for field in required_fields:
         if field not in data:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Missing required field: {field}",
             )
-    return FlextResult[dict[str, object]].ok(data)
+    return FlextResult[FlextTypes.Core.Dict].ok(data)
 
 
-def create_user(data: dict[str, object]) -> FlextResult[User]:
+def create_user(data: FlextTypes.Core.Dict) -> FlextResult[User]:
     """Create user from validated data."""
     try:
         user = User(
@@ -328,21 +330,23 @@ def create_user(data: dict[str, object]) -> FlextResult[User]:
         return FlextResult[User].fail(f"User creation failed: {e}")
 
 
-def validate_order_data(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+def validate_order_data(
+    data: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate order data dictionary."""
     if "order_amount" not in data or "items" not in data:
-        return FlextResult[dict[str, object]].fail("Missing order data")
-    return FlextResult[dict[str, object]].ok(data)
+        return FlextResult[FlextTypes.Core.Dict].fail("Missing order data")
+    return FlextResult[FlextTypes.Core.Dict].ok(data)
 
 
-def create_order(user: User, order_data: dict[str, object]) -> FlextResult[Order]:
+def create_order(user: User, order_data: FlextTypes.Core.Dict) -> FlextResult[Order]:
     """Create order for user."""
     try:
         order = Order(
             order_id=f"order_{len(user.user_id)}",
             user_id=user.user_id,
             amount=Decimal(str(order_data["order_amount"])),
-            items=list(cast("list[str]", order_data["items"])),
+            items=list(cast("FlextTypes.Core.StringList", order_data["items"])),
         )
         return FlextResult[Order].ok(order)
     except Exception as e:

@@ -1,7 +1,7 @@
 """Decorator patterns for cross-cutting concerns.
 
-Provides FlextDecorators with validation, caching, retry logic,
-rate limiting, authentication, and performance monitoring.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -22,28 +22,15 @@ from flext_core.typings import FlextTypes, P, T
 
 
 class FlextDecorators(FlextMixins.Entity):
-    """Hierarchical decorator system built on FlextMixins architecture.
-
-    This class inherits from FlextMixins.Entity to leverage all mixin behaviors,
-    drastically reducing code complexity through intensive mixin reuse.
-    All decorator functionality is implemented as thin wrappers over mixin patterns.
-
-    Architecture Benefits:
-        - 90% code reduction through mixin delegation
-        - Consistent behavior across all decorators
-        - Centralized error handling via FlextMixins
-        - Unified logging through mixin patterns
-        - Performance tracking via mixin timing
-        - State management through mixin state patterns
-    """
+    """Hierarchical decorator system built on FlextMixins architecture."""
 
     @staticmethod
     def _create_context() -> FlextProtocols.Foundation.SupportsDynamicAttributes:
-        """Create a context object for mixin functionality."""
+        """Create context object for mixin functionality."""
 
         class Context:
             def __init__(self) -> None:
-                self.__dict__: dict[str, object] = {}
+                self.__dict__: FlextTypes.Core.Dict = {}
 
             def __setattr__(self, name: str, value: object) -> None:
                 object.__setattr__(self, name, value)
@@ -58,22 +45,19 @@ class FlextDecorators(FlextMixins.Entity):
         return context_instance
 
     class Reliability:
-        """Reliability decorators using FlextMixins error handling patterns."""
+        """Reliability decorators using error handling patterns."""
 
         @staticmethod
         def safe_result(
             func: Callable[P, T],
-        ) -> Callable[P, FlextTypes.Result.Success[T]]:
-            """Convert function to return FlextResult - SIMPLIFIED VERSION.
-
-            Uses direct composition instead of complex mixin wrappers.
-            """
+        ) -> Callable[P, FlextResult[T]]:
+            """Convert function to return FlextResult."""
 
             @functools.wraps(func)
             def wrapper(
                 *args: P.args,
                 **kwargs: P.kwargs,
-            ) -> FlextTypes.Result.Success[T]:
+            ) -> FlextResult[T]:
                 # Direct execution without wrapper complexity
                 try:
                     result = func(*args, **kwargs)
@@ -93,7 +77,7 @@ class FlextDecorators(FlextMixins.Entity):
             backoff_factor: float = 1.0,
             exceptions: tuple[type[Exception], ...] = (Exception,),
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Add retry functionality using mixin state tracking."""
+            """Add retry functionality."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -132,7 +116,7 @@ class FlextDecorators(FlextMixins.Entity):
             seconds: float = FlextConstants.Defaults.TIMEOUT,
             error_message: str | None = None,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Add timeout using mixin timing patterns."""
+            """Add timeout functionality."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -169,14 +153,14 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
     class Validation:
-        """Validation decorators using FlextMixins validation patterns."""
+        """Validation decorators using validation patterns."""
 
         @staticmethod
         def validate_input(
-            validator: Callable[[object], bool],
+            validator: FlextTypes.Validation.Validator,
             error_message: str = "Input validation failed",
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Add input validation using mixin validation patterns."""
+            """Add input validation."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -208,7 +192,7 @@ class FlextDecorators(FlextMixins.Entity):
             arg_types: list[type] | None = None,
             return_type: type | None = None,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Add type validation using mixin type checking."""
+            """Add type validation."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -247,7 +231,7 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
     class Performance:
-        """Performance decorators using FlextMixins timing and caching."""
+        """Performance decorators using timing and caching."""
 
         @staticmethod
         def monitor(
@@ -256,7 +240,7 @@ class FlextDecorators(FlextMixins.Entity):
             log_slow: bool = True,
             collect_metrics: bool = False,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Monitor performance using mixin timing patterns."""
+            """Monitor performance using timing patterns."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -301,7 +285,7 @@ class FlextDecorators(FlextMixins.Entity):
             max_size: int = FlextConstants.Performance.CACHE_MAX_SIZE,
             ttl: int | None = FlextConstants.Performance.CACHE_TTL,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Add caching using mixin cache patterns."""
+            """Add caching functionality."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 cache_obj = FlextDecorators._create_context()
@@ -345,7 +329,7 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
     class Observability:
-        """Observability decorators using FlextMixins logging patterns."""
+        """Observability decorators using logging patterns."""
 
         @staticmethod
         def log_execution(
@@ -353,7 +337,7 @@ class FlextDecorators(FlextMixins.Entity):
             include_args: bool = False,
             include_result: bool = True,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Log execution using mixin logging patterns."""
+            """Log execution using logging patterns."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -363,7 +347,7 @@ class FlextDecorators(FlextMixins.Entity):
                     FlextMixins.start_timing(log_obj)
 
                     # Log entry
-                    log_data: dict[str, object] = {
+                    log_data: FlextTypes.Core.Dict = {
                         "function": func.__name__,
                         "correlation_id": FlextMixins.ensure_id(log_obj),
                     }
@@ -415,7 +399,7 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
     class Lifecycle:
-        """Lifecycle decorators using FlextMixins state management."""
+        """Lifecycle decorators using state management."""
 
         @staticmethod
         def deprecated(
@@ -423,7 +407,7 @@ class FlextDecorators(FlextMixins.Entity):
             reason: str | None = None,
             removal_version: str | None = None,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Mark as deprecated using mixin state tracking."""
+            """Mark as deprecated."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 @functools.wraps(func)
@@ -465,14 +449,14 @@ class FlextDecorators(FlextMixins.Entity):
             return decorator
 
     class Integration:
-        """Integration decorators for composing multiple concerns."""
+        """Integration decorators for composing concerns."""
 
         @classmethod
         def create_enterprise_decorator(
             cls,
             *,
             with_validation: bool = False,
-            validator: Callable[[object], bool] | None = None,
+            validator: FlextTypes.Validation.Validator | None = None,
             with_retry: bool = False,
             max_retries: int = FlextConstants.Defaults.MAX_RETRIES,
             with_timeout: bool = False,
@@ -483,7 +467,7 @@ class FlextDecorators(FlextMixins.Entity):
             monitor_threshold: float = FlextConstants.Performance.SLOW_QUERY_THRESHOLD,
             with_logging: bool = False,
         ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-            """Create composed decorator using mixin patterns."""
+            """Create composed decorator."""
 
             def decorator(func: Callable[P, T]) -> Callable[P, T]:
                 enhanced_func = func

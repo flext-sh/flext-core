@@ -6,19 +6,24 @@ Tests the new FlextLogger with enterprise-grade features including:
 - Performance metrics tracking
 - Security sanitization
 - Real output validation without mocks
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import logging
-import sys
 import threading
 import time
 import uuid
 from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from datetime import datetime
+from types import FrameType
 from typing import NoReturn, cast
+from unittest.mock import patch
 
 import pytest
 import structlog
@@ -28,6 +33,7 @@ from flext_core import (
     FlextContext,
     FlextLogger,
 )
+from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -190,7 +196,7 @@ class TestStructuredLogging:
 
         # Check service metadata
         assert "service" in log_entry
-        service_data = cast("dict[str, object]", log_entry["service"])
+        service_data = cast("FlextTypes.Core.Dict", log_entry["service"])
         assert service_data["name"] == "validation-test"
         assert "version" in service_data
         assert "instance_id" in service_data
@@ -198,7 +204,7 @@ class TestStructuredLogging:
 
         # Check system metadata
         assert "system" in log_entry
-        system_data = cast("dict[str, object]", log_entry["system"])
+        system_data = cast("FlextTypes.Core.Dict", log_entry["system"])
         assert "hostname" in system_data
         assert "platform" in system_data
         assert "python_version" in system_data
@@ -207,7 +213,7 @@ class TestStructuredLogging:
 
         # Check execution context
         assert "execution" in log_entry
-        execution_data = cast("dict[str, object]", log_entry["execution"])
+        execution_data = cast("FlextTypes.Core.Dict", log_entry["execution"])
         assert "function" in execution_data
         assert "line" in execution_data
         assert "uptime_seconds" in execution_data
@@ -396,7 +402,7 @@ class TestSecuritySanitization:
         """Test that sensitive fields are automatically sanitized."""
         logger = FlextLogger("security_test")
 
-        sensitive_context: dict[str, object] = {
+        sensitive_context: FlextTypes.Core.Dict = {
             "username": "john_doe",
             "password": "secret123",
             "api_key": "sk_live_abc123",
@@ -423,7 +429,7 @@ class TestSecuritySanitization:
         """Test sanitization of nested sensitive data."""
         logger = FlextLogger("security_test")
 
-        nested_context: dict[str, object] = {
+        nested_context: FlextTypes.Core.Dict = {
             "user": {
                 "name": "john",
                 "password": "secret",
@@ -435,10 +441,10 @@ class TestSecuritySanitization:
         sanitized = logger._sanitize_context(nested_context)
 
         # Non-sensitive nested data should remain
-        user_data = cast("dict[str, object]", sanitized["user"])
-        profile_data = cast("dict[str, object]", user_data["profile"])
-        request_data = cast("dict[str, object]", sanitized["request"])
-        headers_data = cast("dict[str, object]", request_data["headers"])
+        user_data = cast("FlextTypes.Core.Dict", sanitized["user"])
+        profile_data = cast("FlextTypes.Core.Dict", user_data["profile"])
+        request_data = cast("FlextTypes.Core.Dict", sanitized["request"])
+        headers_data = cast("FlextTypes.Core.Dict", request_data["headers"])
 
         assert user_data["name"] == "john"
         assert profile_data["email"] == "john@example.com"
@@ -465,7 +471,7 @@ class TestSecuritySanitization:
 
         # Check that sensitive data was properly sanitized in the actual log entry
         log_entry = output.entries[0]
-        context_data = cast("dict[str, object]", log_entry.get("context", {}))
+        context_data = cast("FlextTypes.Core.Dict", log_entry.get("context", {}))
 
         # Username should appear (not sensitive)
         assert context_data.get("username") == "john_doe"
@@ -859,7 +865,12 @@ class TestAdvancedLoggingFeatures:
     def test_invalid_log_level_during_initialization(self) -> None:
         """Test handling of invalid log level during logger initialization."""
         # Test with invalid log level - should default to INFO
-        logger = FlextLogger("invalid_level_test", level="INVALID_LEVEL")
+        # Test with invalid log level - should default to INFO
+
+        logger = FlextLogger(
+            "invalid_level_test",
+            level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL"),
+        )
 
         # Should default to INFO level
         assert logger._level == "INFO"
@@ -905,7 +916,7 @@ class TestAdvancedLoggingFeatures:
 
         # Performance section should be included with rounded duration
         assert "performance" in entry
-        performance_data = cast("dict[str, object]", entry["performance"])
+        performance_data = cast("FlextTypes.Core.Dict", entry["performance"])
         assert performance_data["duration_ms"] == 123.456
 
     def test_system_information_gathering(self) -> None:
@@ -917,7 +928,7 @@ class TestAdvancedLoggingFeatures:
 
         # Check system metadata exists
         assert "system" in entry
-        system_data = cast("dict[str, object]", entry["system"])
+        system_data = cast("FlextTypes.Core.Dict", entry["system"])
 
         # Verify system information fields
         assert "hostname" in system_data
@@ -941,7 +952,7 @@ class TestAdvancedLoggingFeatures:
 
         entry = logger._build_log_entry("INFO", "Test uptime", {})
 
-        execution_data = cast("dict[str, object]", entry["execution"])
+        execution_data = cast("FlextTypes.Core.Dict", entry["execution"])
         uptime = execution_data["uptime_seconds"]
 
         # Should be a positive number
@@ -979,15 +990,24 @@ class TestAdvancedLoggingFeatures:
     def test_log_level_validation_edge_cases(self) -> None:
         """Test log level validation with various edge cases."""
         # Test with invalid level - should default to INFO
-        logger = FlextLogger("level_edge_test", level="INVALID_LEVEL")
+        # Test with invalid level - should default to INFO
+        logger = FlextLogger(
+            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL")
+        )
         assert logger._level == "INFO"  # Should default to INFO
 
         # Test with empty string level - should default to INFO
-        logger = FlextLogger("level_edge_test", level="")
+        # Test with empty string level - should default to INFO
+        logger = FlextLogger(
+            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "")
+        )
         assert logger._level == "INFO"  # Should default to INFO
 
         # Test with lowercase valid level - should convert to uppercase
-        logger = FlextLogger("level_edge_test", level="debug")
+        # Test with lowercase valid level - should convert to uppercase
+        logger = FlextLogger(
+            "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "debug")
+        )
         assert logger._level == "DEBUG"  # Should convert to uppercase
 
     def test_service_name_extraction_from_environment(
@@ -1166,7 +1186,7 @@ class TestUncoveredLinesTargeted:
         logger = FlextLogger("sanitize_test")
 
         # Create a processor that will trigger the sanitization line 909
-        sensitive_data: dict[str, object] = {
+        sensitive_data: FlextTypes.Core.Dict = {
             "user_data": "normal",
             "password_field": "should_be_redacted",  # This should trigger line 909
             "normal_field": "normal_value",
@@ -1215,7 +1235,7 @@ class TestUncoveredLinesTargeted:
 
         # Test line 909: Force sanitization processor to run
         # Create data with mixed case sensitive keys
-        data_with_sensitive: dict[str, object] = {
+        data_with_sensitive: FlextTypes.Core.Dict = {
             "PASSWORD": "secret",  # Uppercase sensitive
             "Api_Key": "key123",  # Mixed case
             "SECRET_TOKEN": "token456",  # Underscore
@@ -1246,7 +1266,7 @@ class TestUncoveredLinesTargeted:
         logger = FlextLogger("coverage_909")
 
         # Create data that will definitely trigger line 909 multiple times
-        sensitive_data_complex: dict[str, object] = {
+        sensitive_data_complex: FlextTypes.Core.Dict = {
             "password": "secret1",  # Should trigger line 909
             "api_key": "secret2",  # Should trigger line 909
             "token": "secret3",  # Should trigger line 909
@@ -1355,7 +1375,7 @@ class TestCoverageTargetedTests:
         logger = FlextLogger("sanitize_test")
 
         # Test with simple sensitive data first
-        simple_context: dict[str, object] = {
+        simple_context: FlextTypes.Core.Dict = {
             "password": "secret123",
             "api_key": "key456",
             "username": "john_doe",  # Not sensitive
@@ -1438,16 +1458,14 @@ class TestCoverageTargetedTests:
         """Test frame exception handling to cover lines 411-412, 419-420."""
         logger = FlextLogger("frame_test")
 
-        # Mock sys._getframe to raise exception
-        original_getframe = sys._getframe
+        # Mock sys._getframe to raise exception using unittest.mock
+
         frame_error_msg = "Mocked frame error"
 
-        def mock_getframe(_depth: int) -> object:
+        def mock_getframe(_depth: int = 0) -> FrameType:
             raise ValueError(frame_error_msg)
 
-        sys._getframe = mock_getframe
-
-        try:
+        with patch("sys._getframe", side_effect=mock_getframe):
             with capture_structured_logs() as output:
                 logger.info("Test frame exception handling")
 
@@ -1455,8 +1473,6 @@ class TestCoverageTargetedTests:
             # Should have fallback values when frame access fails
             assert entry["execution"]["function"] == "unknown"
             assert entry["execution"]["line"] == 0
-        finally:
-            sys._getframe = original_getframe
 
     def test_global_correlation_id_edge_cases(self) -> None:
         """Test global correlation ID edge cases to cover line 475."""

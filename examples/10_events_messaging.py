@@ -31,13 +31,13 @@ def demonstrate_basic_payload_creation() -> None:
     print(f"Type: {greeting_payload.message_type}")
 
     # Structured data payload
-    user_data: dict[str, object] = {
+    user_data: FlextTypes.Core.Dict = {
         "id": "user123",
         "name": "John Doe",
         "email": "john@example.com",
     }
 
-    user_payload = FlextModels.Payload[dict[str, object]](
+    user_payload = FlextModels.Payload[FlextTypes.Core.Dict](
         data=user_data,
         source_service="user_service",
         message_type="user_registered",
@@ -54,7 +54,7 @@ def demonstrate_message_routing() -> None:
     print("\n=== Message Routing ===")
 
     # Order processing message
-    order_payload = FlextModels.Payload[dict[str, object]](
+    order_payload = FlextModels.Payload[FlextTypes.Core.Dict](
         data={"order_id": "ORD001", "amount": 99.99},
         source_service="order_service",
         target_service="payment_service",
@@ -136,7 +136,7 @@ def demonstrate_typed_payloads() -> None:
     print(f"String payload: {string_payload.data} (length: {message_length})")
 
     # Dict payload
-    dict_payload = FlextModels.Payload[dict[str, object]](
+    dict_payload = FlextModels.Payload[FlextTypes.Core.Dict](
         data={"key": "value", "number": 42},
         source_service="demo_service",
         message_type="typed_dict",

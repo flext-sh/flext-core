@@ -165,7 +165,7 @@ class FlextDecorators.Validation:
     """Input/output validation, type checking, and constraints."""
 
     @staticmethod
-    def validate_input(validator: Callable[[object], bool],
+    def validate_input(validator: FlextTypes.Validation.Validator,
                       error_message: str = "") -> Callable:
         """Add input validation to function execution."""
         # Predicate-based input validation with custom error messages

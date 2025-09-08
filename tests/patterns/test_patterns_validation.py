@@ -1,4 +1,8 @@
-"""Comprehensive tests for FLEXT validation pattern."""
+"""Comprehensive tests for FLEXT validation pattern.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,6 +11,7 @@ from collections.abc import Callable
 import pytest
 
 from flext_core import FlextResult, FlextValidations
+from flext_core.typings import FlextTypes
 
 # =============================================================================
 # TEST VALIDATION UTILITIES
@@ -252,12 +257,14 @@ class TestValidationIntegration:
 
         def validate_user_data(
             data: object,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Validate user data using FlextValidation utilities."""
             # Check if data is a dict using type validation
             dict_validation = FlextValidations.Core.TypeValidators.validate_dict(data)
             if not dict_validation.success:
-                return FlextResult[dict[str, object]].fail("Data must be a dictionary")
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    "Data must be a dictionary"
+                )
 
             # Now we know data is a dict, safe to cast and access
             data_dict = dict_validation.data  # Use validated data
@@ -265,7 +272,7 @@ class TestValidationIntegration:
             # Check required fields using string validation
             name = data_dict.get("name")
             if not FlextValidations.validate_non_empty_string_func(name):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     "Name is required and must be a non-empty string",
                 )
 
@@ -274,7 +281,9 @@ class TestValidationIntegration:
             if email:
                 email_validation = FlextValidations.Validators.validate_email(email)
                 if not email_validation.success:
-                    return FlextResult[dict[str, object]].fail("Invalid email format")
+                    return FlextResult[FlextTypes.Core.Dict].fail(
+                        "Invalid email format"
+                    )
 
             # Check if roles is a list when provided using type validation
             roles = data_dict.get("roles")
@@ -283,19 +292,21 @@ class TestValidationIntegration:
                     roles,
                 )
                 if not roles_validation.success:
-                    return FlextResult[dict[str, object]].fail("Roles must be a list")
+                    return FlextResult[FlextTypes.Core.Dict].fail(
+                        "Roles must be a list"
+                    )
 
-            return FlextResult[dict[str, object]].ok(data_dict)
+            return FlextResult[FlextTypes.Core.Dict].ok(data_dict)
 
         self._test_valid_user_data(validate_user_data)
         self._test_invalid_user_data(validate_user_data)
 
     def _test_valid_user_data(
         self,
-        validate_func: Callable[[object], FlextResult[dict[str, object]]],
+        validate_func: Callable[[object], FlextResult[FlextTypes.Core.Dict]],
     ) -> None:
         """Test validation with valid user data."""
-        valid_data: dict[str, object] = {
+        valid_data: FlextTypes.Core.Dict = {
             "name": "John Doe",
             "email": "john@example.com",
             "roles": ["user", "admin"],
@@ -307,7 +318,7 @@ class TestValidationIntegration:
 
     def _test_invalid_user_data(
         self,
-        validate_func: Callable[[object], FlextResult[dict[str, object]]],
+        validate_func: Callable[[object], FlextResult[FlextTypes.Core.Dict]],
     ) -> None:
         """Test validation with various invalid user data scenarios."""
         # Test invalid data - not a dict
@@ -323,10 +334,10 @@ class TestValidationIntegration:
 
     def _test_missing_name_scenario(
         self,
-        validate_func: Callable[[object], FlextResult[dict[str, object]]],
+        validate_func: Callable[[object], FlextResult[FlextTypes.Core.Dict]],
     ) -> None:
         """Test validation with missing name."""
-        invalid_data: dict[str, object] = {"email": "test@example.com"}
+        invalid_data: FlextTypes.Core.Dict = {"email": "test@example.com"}
         result = validate_func(invalid_data)
         assert result.is_failure
         assert result.error is not None
@@ -335,10 +346,10 @@ class TestValidationIntegration:
 
     def _test_bad_email_scenario(
         self,
-        validate_func: Callable[[object], FlextResult[dict[str, object]]],
+        validate_func: Callable[[object], FlextResult[FlextTypes.Core.Dict]],
     ) -> None:
         """Test validation with bad email."""
-        invalid_email_data: dict[str, object] = {"name": "John", "email": "invalid"}
+        invalid_email_data: FlextTypes.Core.Dict = {"name": "John", "email": "invalid"}
         result = validate_func(invalid_email_data)
         assert result.is_failure
         assert result.error is not None
@@ -349,10 +360,13 @@ class TestValidationIntegration:
 
     def _test_bad_roles_scenario(
         self,
-        validate_func: Callable[[object], FlextResult[dict[str, object]]],
+        validate_func: Callable[[object], FlextResult[FlextTypes.Core.Dict]],
     ) -> None:
         """Test validation with bad roles."""
-        invalid_roles_data: dict[str, object] = {"name": "John", "roles": "not a list"}
+        invalid_roles_data: FlextTypes.Core.Dict = {
+            "name": "John",
+            "roles": "not a list",
+        }
         result = validate_func(invalid_roles_data)
         assert result.is_failure
         assert result.error is not None

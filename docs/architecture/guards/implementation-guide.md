@@ -26,14 +26,14 @@ if config_result.success:
 ### Type Guard Example
 
 ```python
-def process_user_data(data: object) -> FlextResult[dict[str, str]]:
+def process_user_data(data: object) -> FlextResult[FlextTypes.Core.Headers]:
     """Process user data with type safety."""
 
     if not FlextGuards.is_dict_of(data, str):
-        return FlextResult[dict[str, str]].fail("Data must be dict[str, str]")
+        return FlextResult[FlextTypes.Core.Headers].fail("Data must be FlextTypes.Core.Headers")
 
     processed_data = {k.upper(): v.strip() for k, v in data.items()}
-    return FlextResult[dict[str, str]].ok(processed_data)
+    return FlextResult[FlextTypes.Core.Headers].ok(processed_data)
 ```
 
 ### Pure Function Example

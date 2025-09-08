@@ -2,13 +2,15 @@
 
 Provides factory_boy-based factories for creating test objects with proper
 relationships, sequences, and customization following SOLID principles.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 # mypy: disable-error-code="var-annotated,valid-type,no-untyped-call,name-defined,misc,no-any-return"
 
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import ClassVar, cast
 
@@ -21,8 +23,16 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
-AuditLogValue = str | int | bool | None | dict[str, str | int | bool | None] | list[str]
+AuditLogValue = (
+    str
+    | int
+    | bool
+    | None
+    | dict[str, str | int | bool | None]
+    | FlextTypes.Core.StringList
+)
 AuditLog = dict[str, AuditLogValue]
 
 
@@ -40,18 +50,18 @@ class TestUser(FlextModels.Config):
     age: int
     is_active: bool
     created_at: datetime
-    metadata: dict[str, object]
+    metadata: FlextTypes.Core.Dict
 
 
 class TestConfig(FlextModels.Config):
     """Test configuration model for factory testing."""
 
     database_url: str
-    log_level: str
-    debug: bool
+    log_level: str = "INFO"  # Override base class field with default
+    debug: bool = False  # Override base class field with default
     timeout: int
     max_connections: int
-    features: list[str]
+    features: FlextTypes.Core.StringList
 
 
 class TestField(FlextModels.Config):
@@ -78,7 +88,7 @@ class BaseTestEntity(FlextModels.Config):
     created_at: datetime
     updated_at: datetime
     version: int = 1
-    metadata: ClassVar[dict[str, object]] = {}
+    metadata: ClassVar[FlextTypes.Core.Dict] = {}
 
 
 class BaseTestValueObject(FlextModels.Config):
@@ -87,14 +97,14 @@ class BaseTestValueObject(FlextModels.Config):
     value: str
     description: str
     category: str
-    tags: ClassVar[list[str]] = []
+    tags: ClassVar[FlextTypes.Core.StringList] = []
 
 
 # Factory Boy Factories
 class UserFactory(factory.Factory[TestUser]):
     """Factory for creating test users with factory_boy."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestUser
@@ -115,13 +125,13 @@ class AdminUserFactory(UserFactory):
 
     # Use build/create methods to override values instead of class attributes
     @classmethod
-    def _adjust_kwargs(cls, **kwargs: object) -> dict[str, object]:
+    def _adjust_kwargs(cls, **kwargs: object) -> FlextTypes.Core.Dict:
         # Override default kwargs for admin users
         if "name" not in kwargs:
             kwargs["name"] = "Admin User"
         if "email" not in kwargs:
             kwargs["email"] = "admin@example.com"
-        return cast("dict[str, object]", super()._adjust_kwargs(**kwargs))
+        return cast("FlextTypes.Core.Dict", super()._adjust_kwargs(**kwargs))
 
     metadata = LazyFunction(
         lambda: {"department": "admin", "level": "admin", "permissions": "all"},
@@ -144,7 +154,7 @@ class InactiveUserFactory(UserFactory):
 class ConfigFactory(factory.Factory[TestConfig]):
     """Factory for creating test configurations."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestConfig
@@ -173,7 +183,7 @@ class ProductionConfigFactory(ConfigFactory):
 class StringFieldFactory(factory.Factory[TestField]):
     """Factory for string field testing."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestField
@@ -193,7 +203,7 @@ class StringFieldFactory(factory.Factory[TestField]):
 class IntegerFieldFactory(factory.Factory[TestField]):
     """Factory for integer field testing."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestField
@@ -212,7 +222,7 @@ class IntegerFieldFactory(factory.Factory[TestField]):
 class BooleanFieldFactory(factory.Factory[TestField]):
     """Factory for boolean field testing."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestField
@@ -230,7 +240,7 @@ class BooleanFieldFactory(factory.Factory[TestField]):
 class FloatFieldFactory(factory.Factory[TestField]):
     """Factory for float field testing."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = TestField
@@ -249,7 +259,7 @@ class FloatFieldFactory(factory.Factory[TestField]):
 class TestEntityFactory(factory.Factory[BaseTestEntity]):
     """Factory for creating test entities."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = BaseTestEntity
@@ -261,11 +271,21 @@ class TestEntityFactory(factory.Factory[BaseTestEntity]):
     version = 1
     # metadata é ClassVar, não é passado na inicialização
 
+    @classmethod
+    def create(cls, **kwargs: object) -> BaseTestEntity:
+        """Create a single test entity."""
+        return super().create(**kwargs)
+
+    @classmethod
+    def create_batch(cls, size: int, **kwargs: object) -> list[BaseTestEntity]:
+        """Create a batch of test entities."""
+        return super().create_batch(size, **kwargs)
+
 
 class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
     """Factory for creating test value objects."""
 
-    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]
+    class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
         """Factory meta compatibility."""
 
         model = BaseTestValueObject
@@ -274,6 +294,11 @@ class TestValueObjectFactory(factory.Factory[BaseTestValueObject]):
     description = Faker("sentence")
     category = Faker("word")
     # tags é ClassVar, não é passado na inicialização
+
+    @classmethod
+    def create(cls, **kwargs: object) -> BaseTestValueObject:
+        """Create a single test value object."""
+        return super().create(**kwargs)
 
 
 # FlextResult factories
@@ -387,12 +412,12 @@ class EdgeCaseGenerators:
     """Generators for edge case testing scenarios."""
 
     @staticmethod
-    def unicode_strings() -> list[str]:
+    def unicode_strings() -> FlextTypes.Core.StringList:
         """Generate unicode test strings."""
         return ["🚀", "测试", "مرحبا", "🔥🎯", "Ñoño", "café"]
 
     @staticmethod
-    def special_characters() -> list[str]:
+    def special_characters() -> FlextTypes.Core.StringList:
         """Generate special character test strings."""
         return ["!@#$%^&*()", "\n\t\r", "\\", "'\"", "<script>", "SELECT * FROM"]
 
@@ -402,12 +427,12 @@ class EdgeCaseGenerators:
         return [0, -1, 1, 999999999, -999999999, 1e-10, float("inf"), float("-inf")]
 
     @staticmethod
-    def empty_values() -> list[object]:
+    def empty_values() -> FlextTypes.Core.List:
         """Generate empty/null test values."""
         return ["", [], {}, None, 0, False]
 
     @staticmethod
-    def large_values() -> list[object]:
+    def large_values() -> FlextTypes.Core.List:
         """Generate large value test cases."""
         return [
             "x" * 10000,
@@ -417,7 +442,7 @@ class EdgeCaseGenerators:
 
 
 # Utility functions for common test patterns
-def create_test_hierarchy() -> dict[str, object]:
+def create_test_hierarchy() -> FlextTypes.Core.Dict:
     """Create hierarchical test data structure."""
     return {
         "root": cast("TestUser", UserFactory()),
@@ -428,7 +453,7 @@ def create_test_hierarchy() -> dict[str, object]:
     }
 
 
-def create_validation_test_cases() -> list[dict[str, object]]:
+def create_validation_test_cases() -> list[FlextTypes.Core.Dict]:
     """Create comprehensive validation test cases."""
     return [
         {
@@ -509,15 +534,11 @@ __all__ = [
     "BooleanFieldFactory",
     "ConfigFactory",
     "EdgeCaseGenerators",
-    "FailingUserRepository",
     "FlextResultFactory",
     "FloatFieldFactory",
-    "InMemoryUserRepository",
     "InactiveUserFactory",
     "IntegerFieldFactory",
     "ProductionConfigFactory",
-    "RealAuditService",
-    "RealEmailService",
     "RepositoryError",
     "SequenceGenerators",
     "StringFieldFactory",
@@ -526,243 +547,9 @@ __all__ = [
     "TestField",
     "TestUser",
     "TestValueObjectFactory",
-    "User",
     "UserFactory",
-    "create_test_hierarchy",
     "create_validation_test_cases",
     "failure_result",
     "success_result",
     "validation_failure",
 ]
-"""Real implementations for testing - eliminating mocks.
-
-Provides real implementations of repositories, services, and other dependencies
-to replace mock objects in tests for true functional testing.
-"""
-
-
-@dataclass
-class User:
-    """Real user model for testing."""
-
-    id: str
-    username: str
-    email: str
-    age: int = 18
-    is_admin: bool = False
-    created_at: datetime | None = None
-
-
-class InMemoryUserRepository:
-    """Real in-memory user repository implementation."""
-
-    def __init__(self) -> None:
-        self._users: dict[str, User] = {}
-        self._users_by_username: dict[str, User] = {}
-
-    def create(self, user: User) -> bool:
-        """Create a user."""
-        if user.id in self._users or user.username in self._users_by_username:
-            return False
-
-        if user.created_at is None:
-            user.created_at = datetime.now(UTC)
-
-        self._users[user.id] = user
-        self._users_by_username[user.username] = user
-        return True
-
-    def find_by_username(
-        self,
-        username: str,
-    ) -> dict[str, str | int | bool | None] | None:
-        """Find user by username."""
-        user = self._users_by_username.get(username)
-        if user is None:
-            return None
-
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "age": user.age,
-            "is_admin": user.is_admin,
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-        }
-
-    def find_by_id(self, user_id: str) -> dict[str, str | int | bool | None] | None:
-        """Find user by ID."""
-        user = self._users.get(user_id)
-        if user is None:
-            return None
-
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "age": user.age,
-            "is_admin": user.is_admin,
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-        }
-
-    def update(self, user_id: str, updates: dict[str, str | int | bool | None]) -> bool:
-        """Update a user."""
-        if user_id not in self._users:
-            return False
-
-        user = self._users[user_id]
-        old_username = user.username
-
-        # Update user attributes
-        for key, value in updates.items():
-            if hasattr(user, key):
-                setattr(user, key, value)
-
-        # Update username index if changed
-        if old_username != user.username:
-            del self._users_by_username[old_username]
-            self._users_by_username[user.username] = user
-
-        return True
-
-    def delete(self, user_id: str) -> bool:
-        """Delete a user."""
-        if user_id not in self._users:
-            return False
-
-        user = self._users[user_id]
-        del self._users[user_id]
-        del self._users_by_username[user.username]
-        return True
-
-    def count(self) -> int:
-        """Get user count."""
-        return len(self._users)
-
-    def clear(self) -> None:
-        """Clear all users."""
-        self._users.clear()
-        self._users_by_username.clear()
-
-
-class RealEmailService:
-    """Real email service implementation for testing."""
-
-    def __init__(self) -> None:
-        self.sent_emails: list[dict[str, str | int | bool | None]] = []
-        self.should_fail = False
-
-    def send_welcome_email(
-        self,
-        user: dict[str, str | int | bool | None],
-    ) -> FlextResult[bool]:
-        """Send welcome email."""
-        if self.should_fail:
-            return FlextResult[bool].fail("Email service unavailable")
-
-        email_data = {
-            "to": user["email"],
-            "subject": "Welcome!",
-            "body": f"Welcome {user['username']}!",
-            "sent_at": datetime.now(UTC).isoformat(),
-        }
-
-        self.sent_emails.append(email_data)
-        return FlextResult[bool].ok(data=True)
-
-    def get_sent_emails(self) -> list[dict[str, str | int | bool | None]]:
-        """Get all sent emails."""
-        return self.sent_emails.copy()
-
-    def clear_sent_emails(self) -> None:
-        """Clear sent emails."""
-        self.sent_emails.clear()
-
-
-class RealAuditService:
-    """Real audit service implementation for testing."""
-
-    def __init__(self) -> None:
-        self.audit_logs: list[AuditLog] = []
-
-    def log_user_created(self, user: dict[str, str | int | bool | None]) -> None:
-        """Log user creation event."""
-        audit_entry: AuditLog = {
-            "event": "USER_CREATED",
-            "user_id": user["id"],
-            "username": user["username"],
-            "timestamp": datetime.now(UTC).isoformat(),
-            "metadata": {
-                "email": user["email"],
-                "is_admin": user.get("is_admin", False),
-            },
-        }
-
-        self.audit_logs.append(audit_entry)
-
-    def log_user_updated(
-        self,
-        user_id: str,
-        changes: dict[str, str | int | bool | None],
-    ) -> None:
-        """Log user update event."""
-        audit_entry: AuditLog = {
-            "event": "USER_UPDATED",
-            "user_id": user_id,
-            "changes": changes,
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
-
-        self.audit_logs.append(audit_entry)
-
-    def get_audit_logs(self) -> list[AuditLog]:
-        """Get all audit logs."""
-        return self.audit_logs.copy()
-
-    def clear_audit_logs(self) -> None:
-        """Clear audit logs."""
-        self.audit_logs.clear()
-
-
-class FailingUserRepository(InMemoryUserRepository):
-    """Repository implementation that simulates database failures."""
-
-    def __init__(
-        self,
-        *,
-        fail_on_create: bool = True,
-        error_message: str = "Database connection failed",
-    ) -> None:
-        self._fail_on_create = fail_on_create
-        self._error_message = error_message
-        self._users: dict[str, User] = {}
-        self._users_by_username: dict[str, User] = {}
-
-    def find_by_username(
-        self,
-        username: str,
-    ) -> dict[str, str | int | bool | None] | None:
-        """Find user by username."""
-        user = self._users_by_username.get(username)
-        if user is None:
-            return None
-
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "age": user.age,
-            "is_admin": user.is_admin,
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-        }
-
-    def create(self, user: User) -> bool:
-        """Create user - fails if configured to fail."""
-        if self._fail_on_create:
-            raise RepositoryError(self._error_message)
-
-        if user.id in self._users or user.username in self._users_by_username:
-            return False
-        self._users[user.id] = user
-        self._users_by_username[user.username] = user
-        return True

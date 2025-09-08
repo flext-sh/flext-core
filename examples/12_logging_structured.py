@@ -309,7 +309,7 @@ def _basic_exception_logging() -> None:
         )
 
 
-def _process_payment(amount: float, payment_method: str) -> dict[str, object]:
+def _process_payment(amount: float, payment_method: str) -> FlextTypes.Core.Dict:
     contextual_logger = FlextLogger("myapp.payment", "INFO")
     with create_log_context(
         contextual_logger,
@@ -459,7 +459,7 @@ def _process_user_request(
     user_id: str,
     request_id: str,
     operation: str,
-) -> dict[str, object]:
+) -> FlextTypes.Core.Dict:
     gateway_logger = FlextLogger("enterprise.api_gateway", "INFO")
     auth_logger = FlextLogger("enterprise.auth_service", "INFO")
     user_logger = FlextLogger("enterprise.user_service", "INFO")
@@ -598,7 +598,7 @@ class PerformanceMonitor:
 
 def _performance_monitoring_demo() -> None:
     perf_logger = FlextLogger("enterprise.performance", "INFO")
-    operations: list[dict[str, object]] = [
+    operations: list[FlextTypes.Core.Dict] = [
         {"op": "database_query", "table": "users", "complexity": "simple"},
         {"op": "cache_lookup", "cache_type": "redis", "key_pattern": "user:*"},
         {"op": "external_api_call", "service": "payment_processor", "timeout_ms": 5000},
@@ -620,7 +620,7 @@ def _performance_monitoring_demo() -> None:
 
 def _business_metrics_demo() -> None:
     business_logger = FlextLogger("enterprise.business", "INFO")
-    business_events: list[dict[str, object]] = [
+    business_events: list[FlextTypes.Core.Dict] = [
         {
             "event": "user_registration",
             "user_id": "new_user_001",

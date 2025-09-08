@@ -2,6 +2,11 @@
 
 This file contains precise tests targeting the specific remaining uncovered lines
 in utilities.py focusing on Configuration class, generators, and processing utils.
+
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +14,8 @@ from __future__ import annotations
 import math
 from typing import Literal, cast
 
-from flext_core import FlextConstants, FlextTypes, FlextUtilities
+from flext_core import FlextConstants, FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class TestUtilitiesConfiguration100PercentCoverage:

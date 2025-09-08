@@ -93,7 +93,7 @@ gantt
           project_name: str = Field(pattern=r"^[a-zA-Z0-9_-]+$")
           project_path: str = Field(description="Project directory path")
           meltano_version: str = Field(default="3.9.1")
-          plugins: list[dict[str, object]] = Field(default_factory=list)
+          plugins: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
           def add_tap(self, tap_config: TapConfig) -> FlextResult[None]:
               # Business logic with validation and events
@@ -104,14 +104,14 @@ gantt
 
           name: str = Field(pattern=r"^tap-[a-zA-Z0-9_-]+$")
           pip_url: str = Field(min_length=1)
-          config: dict[str, object] = Field(default_factory=dict)
+          config: FlextTypes.Core.Dict = Field(default_factory=dict)
 
       class SingerRecord(FlextModels.Value):
           """Singer specification-compliant record."""
 
           type: str = Field(pattern="^(RECORD|SCHEMA|STATE)$")
           stream: str = Field(min_length=1)
-          record: dict[str, object] | None = Field(default=None)
+          record: FlextTypes.Core.Dict | None = Field(default=None)
   ```
 
 - [ ] **Entity Models**: MeltanoProject, Plugin, Environment, Schedule
@@ -405,8 +405,8 @@ gantt
 
       metric_name: str = Field(description="Metric name")
       metric_type: str = Field(pattern="^(counter|gauge|histogram|summary)$")
-      labels: dict[str, str] = Field(default_factory=dict)
-      data_points: list[dict[str, object]] = Field(default_factory=list)
+      labels: FlextTypes.Core.Headers = Field(default_factory=dict)
+      data_points: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
       def add_data_point(self, value: float, timestamp: datetime | None = None) -> FlextResult[None]:
           # Add validated data point
@@ -608,7 +608,7 @@ class FlextModelsMigrationTools:
     """Tools to assist with FlextModels migration and enhancement."""
 
     @staticmethod
-    def analyze_existing_models(library_path: str) -> dict[str, object]:
+    def analyze_existing_models(library_path: str) -> FlextTypes.Core.Dict:
         """Analyze existing model implementations for enhancement opportunities."""
         return {
             "entities_found": ["User", "Project", "Configuration"],
@@ -619,14 +619,14 @@ class FlextModelsMigrationTools:
         }
 
     @staticmethod
-    def generate_domain_event_template(entity_name: str, operations: list[str]) -> str:
+    def generate_domain_event_template(entity_name: str, operations: FlextTypes.Core.StringList) -> str:
         """Generate domain event implementation template."""
         return f"""
 class {entity_name}Events:
     \"\"\"Domain events for {entity_name} entity.\"\"\"
 
     @staticmethod
-    def {entity_name.lower()}_created(entity_id: str, created_by: str) -> dict[str, object]:
+    def {entity_name.lower()}_created(entity_id: str, created_by: str) -> FlextTypes.Core.Dict:
         return {{
             "event_type": "{entity_name}Created",
             "aggregate_id": entity_id,
@@ -636,7 +636,7 @@ class {entity_name}Events:
 """
 
     @staticmethod
-    def validate_business_rules_implementation(model_class: type) -> list[str]:
+    def validate_business_rules_implementation(model_class: type) -> FlextTypes.Core.StringList:
         """Validate business rules implementation completeness."""
         validation_issues = []
 

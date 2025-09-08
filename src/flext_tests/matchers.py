@@ -2,6 +2,9 @@
 
 Leverages pytest-clarity, pytest-benchmark, pytest-mock, and other plugins
 for comprehensive testing with clear error messages and performance insights.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,12 +15,13 @@ from collections.abc import Callable, Sequence
 from typing import Protocol, TypeGuard, TypeVar
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 
 from .performance import BenchmarkProtocol
 
 T = TypeVar("T")
 
-JsonDict = dict[str, object]
+JsonDict = FlextTypes.Core.Dict
 
 
 class ContainerProtocol(Protocol):
@@ -427,8 +431,21 @@ class PerformanceMatchers:
         return benchmark(func)
 
 
+# Main unified class
+class FlextTestsMatchers:
+    """Unified test matchers for FLEXT ecosystem.
+
+    Consolidates all matcher patterns into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    Matchers = FlextMatchers
+    Performance = PerformanceMatchers
+
+
 # Export all matchers
 __all__ = [
     "FlextMatchers",
+    "FlextTestsMatchers",
     "PerformanceMatchers",
 ]

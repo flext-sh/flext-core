@@ -1,4 +1,8 @@
-"""Simple tests for FlextTypeAdapters static methods."""
+"""Simple tests for FlextTypeAdapters static methods.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,8 +13,8 @@ from typing import cast
 import pytest
 from pydantic import TypeAdapter
 
-# from pydantic import BaseModel  # Using FlextModels.Config instead
 from flext_core import FlextModels, FlextTypeAdapters
+from flext_core.typings import FlextTypes
 
 
 class TestBasicAdapters:
@@ -284,7 +288,7 @@ class TestSchemaGenerators:
         schema = result.unwrap()
         assert isinstance(schema, dict)
         assert "properties" in schema
-        schema_props = cast("dict[str, object]", schema["properties"])
+        schema_props = cast("FlextTypes.Core.Dict", schema["properties"])
         assert "name" in schema_props
         assert "age" in schema_props
 
@@ -319,7 +323,7 @@ class TestBatchOperations:
             name: str
             value: int
 
-        items: list[object] = [
+        items: FlextTypes.Core.List = [
             {"name": "Item1", "value": 10},
             {"name": "Item2", "value": 20},
             {"name": "Item3", "value": 30},

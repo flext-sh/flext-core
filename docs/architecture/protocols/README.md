@@ -112,7 +112,7 @@ class FlextProtocols.Foundation:
     @runtime_checkable
     class HasToDict(Protocol):
         """Runtime-checkable serialization protocol."""
-        def to_dict(self) -> dict[str, object]: ...
+        def to_dict(self) -> FlextTypes.Core.Dict: ...
 
     class ErrorHandler(Protocol):
         """Exception transformation protocol."""
@@ -136,7 +136,7 @@ class UserFactory(FlextProtocols.Foundation.Factory[User]):
         return User(**validated_data)
 
 # Runtime validation
-def process_serializable_object(obj: object) -> dict[str, object]:
+def process_serializable_object(obj: object) -> FlextTypes.Core.Dict:
     if isinstance(obj, FlextProtocols.Foundation.HasToDict):
         return obj.to_dict()
     else:
@@ -181,10 +181,10 @@ class FlextProtocols.Domain:
         event_type: str
         aggregate_id: str
 
-        def to_dict(self) -> dict[str, object]: ...
+        def to_dict(self) -> FlextTypes.Core.Dict: ...
 
         @classmethod
-        def from_dict(cls, data: dict[str, object]) -> FlextProtocols.Domain.DomainEvent: ...
+        def from_dict(cls, data: FlextTypes.Core.Dict) -> FlextProtocols.Domain.DomainEvent: ...
 ```
 
 **Key Features**:
@@ -249,7 +249,7 @@ class FlextProtocols.Application:
 
     class AuthorizingHandler(MessageHandler, Protocol):
         """Handler with authorization."""
-        def authorize(self, message: object, context: dict[str, object]) -> object: ...
+        def authorize(self, message: object, context: FlextTypes.Core.Dict) -> object: ...
 
     class UnitOfWork(Protocol):
         """Transaction management."""
@@ -353,15 +353,15 @@ class FlextProtocols.Infrastructure:
         def connect(self, uri: str, bind_dn: str, password: str) -> object: ...
         def bind(self, bind_dn: str, password: str) -> object: ...
         def search(self, base_dn: str, search_filter: str, scope: str = "subtree") -> object: ...
-        def add(self, dn: str, attributes: dict[str, object]) -> object: ...
-        def modify(self, dn: str, modifications: dict[str, object]) -> object: ...
+        def add(self, dn: str, attributes: FlextTypes.Core.Dict) -> object: ...
+        def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> object: ...
         def delete(self, dn: str) -> object: ...
 
     @runtime_checkable
     class Configurable(Protocol):
         """Configuration management contract."""
-        def configure(self, config: dict[str, object]) -> object: ...
-        def get_config(self) -> dict[str, object]: ...
+        def configure(self, config: FlextTypes.Core.Dict) -> object: ...
+        def get_config(self) -> FlextTypes.Core.Dict: ...
 
     @runtime_checkable
     class LoggerProtocol(Protocol):
@@ -385,7 +385,7 @@ class FlextProtocols.Infrastructure:
 ```python
 # LDAP service implementation
 class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
-    def __init__(self, config: dict[str, object]):
+    def __init__(self, config: FlextTypes.Core.Dict):
         self.config = config
         self.connection = None
         self.connected = False
@@ -426,7 +426,7 @@ class ConfigurableUserService(
         self.config = {}
         self._running = False
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         self.config.update(config)
         self.logger.info("Service configured", config_keys=list(config.keys()))
         return FlextResult[None].ok(None)
@@ -456,8 +456,8 @@ class FlextProtocols.Extensions:
 
     class Plugin(Protocol):
         """Plugin system contract."""
-        def configure(self, config: dict[str, object]) -> object: ...
-        def get_config(self) -> dict[str, object]: ...
+        def configure(self, config: FlextTypes.Core.Dict) -> object: ...
+        def get_config(self) -> FlextTypes.Core.Dict: ...
 
         @abstractmethod
         def initialize(self, context: FlextProtocols.Extensions.PluginContext) -> object: ...
@@ -466,12 +466,12 @@ class FlextProtocols.Extensions:
         def shutdown(self) -> object: ...
 
         @abstractmethod
-        def get_info(self) -> dict[str, object]: ...
+        def get_info(self) -> FlextTypes.Core.Dict: ...
 
     class PluginContext(Protocol):
         """Plugin execution context."""
         def get_service(self, service_name: str) -> object: ...
-        def get_config(self) -> dict[str, object]: ...
+        def get_config(self) -> FlextTypes.Core.Dict: ...
         def FlextLogger(self) -> FlextProtocols.Infrastructure.LoggerProtocol: ...
 
     class Middleware(Protocol):
@@ -481,7 +481,7 @@ class FlextProtocols.Extensions:
     @runtime_checkable
     class Observability(Protocol):
         """Observability and monitoring contract."""
-        def record_metric(self, name: str, value: float, tags: dict[str, str] | None = None) -> object: ...
+        def record_metric(self, name: str, value: float, tags: FlextTypes.Core.Headers | None = None) -> object: ...
         def start_trace(self, operation_name: str) -> object: ...
         def health_check(self) -> object: ...
 ```
@@ -520,11 +520,11 @@ class UserAnalyticsPlugin(FlextProtocols.Extensions.Plugin):
             logger.exception("Failed to initialize user analytics plugin")
             return FlextResult[None].fail(f"Initialization failed: {e}")
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         self.config.update(config)
         return FlextResult[None].ok(None)
 
-    def get_info(self) -> dict[str, object]:
+    def get_info(self) -> FlextTypes.Core.Dict:
         return {
             "name": "UserAnalyticsPlugin",
             "version": "1.0.0",
@@ -565,7 +565,7 @@ class MetricsCollector(FlextProtocols.Extensions.Observability):
         self.metrics = {}
         self.traces = {}
 
-    def record_metric(self, name: str, value: float, tags: dict[str, str] | None = None) -> object:
+    def record_metric(self, name: str, value: float, tags: FlextTypes.Core.Headers | None = None) -> object:
         metric_key = f"{name}:{tags}" if tags else name
         self.metrics[metric_key] = {
             "name": name,

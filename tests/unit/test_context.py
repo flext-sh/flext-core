@@ -1,4 +1,8 @@
-"""Tests for FlextContext context management system."""
+"""Tests for FlextContext context management system.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,6 +13,7 @@ from time import sleep
 import pytest
 
 from flext_core import FlextContext
+from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -311,7 +316,7 @@ class TestPerformanceContext:
 
     def test_add_operation_metadata_existing(self) -> None:
         """Test adding to existing metadata."""
-        initial: dict[str, object] = {"existing": "value"}
+        initial: FlextTypes.Core.Dict = {"existing": "value"}
         FlextContext.Performance.set_operation_metadata(initial)
 
         FlextContext.Performance.add_operation_metadata("new_key", "new_value")
@@ -391,7 +396,7 @@ class TestContextSerialization:
         FlextContext.Request.set_request_id("req-012")
 
         start_time = datetime.now(UTC)
-        metadata: dict[str, object] = {"key": "value"}
+        metadata: FlextTypes.Core.Dict = {"key": "value"}
         FlextContext.Performance.set_operation_start_time(start_time)
         FlextContext.Performance.set_operation_metadata(metadata)
 
@@ -576,7 +581,7 @@ class TestContextThreadSafety:
 
     def test_context_isolation_between_threads(self) -> None:
         """Test that context is isolated between threads."""
-        results: dict[str, object] = {}
+        results: FlextTypes.Core.Dict = {}
 
         def thread_worker(thread_id: str) -> None:
             # Each thread sets its own correlation ID

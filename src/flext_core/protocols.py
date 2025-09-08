@@ -1,7 +1,7 @@
 """Protocol definitions and interface contracts.
 
-Provides FlextProtocols with interface definitions organized by domain,
-supporting both runtime Protocol and ABC patterns.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -10,7 +10,9 @@ from abc import abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import Generic, Protocol, TypeVar, cast, runtime_checkable
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
@@ -31,80 +33,40 @@ TOutput_co = TypeVar("TOutput_co", covariant=True)
 
 
 class FlextProtocols:
-    """Hierarchical protocol architecture with optimized composition patterns.
-
-    This class implements a structured hierarchy where subclasses compose with each
-    other using Python 3.13+ syntax. The architecture follows Clean Architecture
-    principles with clear separation of concerns and dependency inversion.
-
-    Hierarchy Structure:
-        Foundation -> Domain -> Application -> Infrastructure -> Extensions
-
-    Composition Features:
-        - Type-safe protocol inheritance with Python 3.13+ generics
-        - Mixin composition for cross-cutting concerns
-        - Runtime checkable protocols for dynamic validation
-        - FlextResult integration for railway-oriented programming
-
-    Examples:
-        Foundation layer usage::
-
-            processor: Foundation.Callable[str] = lambda x: x.upper()
-            result = processor("test")  # Returns "TEST"
-
-        Domain composition::
-
-            class UserService(
-                FlextProtocols.Domain.Service, Foundation.Validator[User]
-            ):
-                def validate(self, user: User) -> object: ...
-                def start(self) -> object: ...
-
-        Application layer patterns::
-
-            handler: FlextProtocols.Application.Handler[CreateUser, str] = (
-                CreateUserHandler()
-            )
-            result = handler(CreateUser(name="John"))  # Returns object
-
-    """
+    """Hierarchical protocol architecture with composition patterns."""
 
     # =========================================================================
     # FOUNDATION LAYER - Core building blocks
     # =========================================================================
 
     class Foundation:
-        """Foundation layer protocols - core building blocks for the ecosystem."""
+        """Foundation layer protocols - core building blocks."""
 
         class Callable(Protocol, Generic[T_co]):
-            """Generic callable protocol with parameter and return type safety."""
+            """Generic callable protocol with type safety."""
 
             def __call__(self, *args: object, **kwargs: object) -> T_co:
-                """Execute the callable with given arguments."""
+                """Execute callable with arguments."""
                 ...
 
         @runtime_checkable
         class DecoratedCallable(Protocol, Generic[T_co]):
-            """Callable protocol with function attributes for decorators.
-
-            This protocol represents a function that has been decorated and
-            includes all standard function attributes.
-            """
+            """Callable protocol with function attributes for decorators."""
 
             def __call__(self, *args: object, **kwargs: object) -> T_co:
-                """Execute the callable with given arguments."""
+                """Execute callable with arguments."""
                 ...
 
             __name__: str
             __module__: str
             __doc__: str | None
             __qualname__: str
-            __annotations__: dict[str, object]
-            __dict__: dict[str, object]
+            __annotations__: FlextTypes.Core.Dict
+            __dict__: FlextTypes.Core.Dict
             __wrapped__: object | None  # Can be any callable
 
         class SupportsRichComparison(Protocol):
-            """Protocol for objects that support rich comparison operations."""
+            """Protocol for objects supporting rich comparison."""
 
             def __lt__(self, other: object) -> bool:
                 """Less than comparison."""
@@ -131,32 +93,32 @@ class FlextProtocols:
                 ...
 
             def __hash__(self) -> int:
-                """Hash support for objects that implement rich comparison."""
+                """Hash support for rich comparison objects."""
                 ...
 
         class Validator(Protocol, Generic[T_contra]):
-            """Generic validator protocol for type-safe validation."""
+            """Generic validator protocol."""
 
             def validate(self, data: T_contra) -> object:
-                """Validate input data and return success/failure status."""
+                """Validate input data and return status."""
                 ...
 
         class ErrorHandler(Protocol):
-            """Error handler protocol for exception transformation."""
+            """Error handler protocol."""
 
             def handle_error(self, error: Exception) -> str:
-                """Transform an exception into an error message string."""
+                """Transform exception to error message."""
                 ...
 
         class Factory(Protocol, Generic[T_co]):
-            """Type-safe factory protocol for object creation."""
+            """Type-safe factory protocol."""
 
             def create(self, **kwargs: object) -> T_co:
                 """Create instance of type T."""
                 ...
 
         class AsyncFactory(Protocol, Generic[T_co]):
-            """Async factory protocol for asynchronous object creation."""
+            """Async factory protocol."""
 
             async def create_async(self, **kwargs: object) -> T_co:
                 """Create instance asynchronously."""
@@ -164,20 +126,22 @@ class FlextProtocols:
 
         @runtime_checkable
         class HasToDictBasic(Protocol):
-            """Runtime-checkable protocol for objects exposing to_dict_basic."""
+            """Protocol for objects exposing to_dict_basic."""
 
             def to_dict_basic(
                 self,
-            ) -> dict[str, object]:  # pragma: no cover - typing helper
-                """Convert object to basic dictionary representation."""
+            ) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
+                """Convert object to basic dictionary."""
                 ...
 
         @runtime_checkable
         class HasToDict(Protocol):
-            """Runtime-checkable protocol for objects exposing to_dict."""
+            """Protocol for objects exposing to_dict."""
 
-            def to_dict(self) -> dict[str, object]:  # pragma: no cover - typing helper
-                """Convert object to dictionary representation."""
+            def to_dict(
+                self,
+            ) -> FlextTypes.Core.Dict:  # pragma: no cover - typing helper
+                """Convert object to dictionary."""
                 ...
 
         @runtime_checkable
@@ -200,7 +164,7 @@ class FlextProtocols:
         class HasModelDump(Protocol):
             """Protocol for Pydantic v2 models with model_dump method."""
 
-            def model_dump(self) -> dict[str, object]:
+            def model_dump(self) -> FlextTypes.Core.Dict:
                 """Convert model to dictionary (Pydantic v2 style)."""
                 ...
 
@@ -208,7 +172,7 @@ class FlextProtocols:
         class HasDict(Protocol):
             """Protocol for Pydantic v1 models with dict method."""
 
-            def dict(self) -> dict[str, object]:
+            def dict(self) -> FlextTypes.Core.Dict:
                 """Convert model to dictionary (Pydantic v1 style)."""
                 ...
 
@@ -250,13 +214,13 @@ class FlextProtocols:
     # =========================================================================
 
     class Domain:
-        """Domain layer protocols - business logic and domain services."""
+        """Domain layer protocols - business logic."""
 
         class Service(Protocol):
-            """Domain service protocol with lifecycle management and callable interface."""
+            """Domain service protocol with lifecycle management."""
 
             def __call__(self, *args: object, **kwargs: object) -> object:
-                """Callable interface for service invocation."""
+                """Callable interface for service."""
                 ...
 
             @abstractmethod
@@ -275,7 +239,7 @@ class FlextProtocols:
                 ...
 
         class Repository(Protocol, Generic[T_contra]):
-            """Repository protocol for data access patterns."""
+            """Repository protocol for data access."""
 
             @abstractmethod
             def get_by_id(self, entity_id: str) -> object:
@@ -298,7 +262,7 @@ class FlextProtocols:
                 ...
 
         class DomainEvent(Protocol):
-            """Domain event protocol for event sourcing."""
+            """Domain event protocol."""
 
             event_id: str
             event_type: str
@@ -306,20 +270,20 @@ class FlextProtocols:
             event_version: int
             timestamp: str
 
-            def to_dict(self) -> dict[str, object]:
+            def to_dict(self) -> FlextTypes.Core.Dict:
                 """Convert event to dictionary."""
                 ...
 
             @classmethod
             def from_dict(
                 cls,
-                data: dict[str, object],
+                data: FlextTypes.Core.Dict,
             ) -> FlextProtocols.Domain.DomainEvent:
                 """Create event from dictionary."""
                 ...
 
         class EventStore(Protocol):
-            """Event store protocol for domain event persistence."""
+            """Event store protocol."""
 
             @abstractmethod
             def save_events(
@@ -341,17 +305,17 @@ class FlextProtocols:
     # =========================================================================
 
     class Application:
-        """Application layer protocols - use cases, handlers, and orchestration."""
+        """Application layer protocols - use cases and handlers."""
 
         class Handler(Protocol, Generic[TInput_contra, TOutput_co]):
-            """Application handler with validation and processing."""
+            """Application handler with validation."""
 
             def __call__(self, input_data: TInput_contra) -> object:
-                """Process input data and return transformed output."""
+                """Process input and return output."""
                 ...
 
             def validate(self, data: TInput_contra) -> object:
-                """Validate input before processing (Foundation.Validator composition)."""
+                """Validate input before processing."""
                 ...
 
         class MessageHandler(Protocol):
@@ -378,7 +342,7 @@ class FlextProtocols:
             def authorize(
                 self,
                 message: object,
-                context: dict[str, object],
+                context: FlextTypes.Core.Dict,
             ) -> object:
                 """Check authorization for message processing."""
                 ...
@@ -386,7 +350,7 @@ class FlextProtocols:
         class EventProcessor(Protocol):
             """Event processor for domain event handling."""
 
-            def process_event(self, event: dict[str, object]) -> object:
+            def process_event(self, event: FlextTypes.Core.Dict) -> object:
                 """Process domain event."""
                 ...
 
@@ -417,32 +381,32 @@ class FlextProtocols:
     # =========================================================================
 
     class Infrastructure:
-        """Infrastructure layer protocols - external systems and cross-cutting concerns."""
+        """Infrastructure layer protocols - external systems."""
 
         class Connection(Protocol):
-            """Connection protocol for external systems with callable interface."""
+            """Connection protocol for external systems."""
 
             def __call__(self, *args: object, **kwargs: object) -> object:
-                """Callable interface for connection operations."""
+                """Callable interface for connection."""
                 ...
 
             def test_connection(self) -> object:
-                """Test connection to an external system."""
+                """Test connection to external system."""
                 ...
 
             def get_connection_string(self) -> str:
-                """Get connection string for an external system."""
+                """Get connection string for external system."""
                 ...
 
             def close_connection(self) -> object:
-                """Close connection to an external system."""
+                """Close connection to external system."""
                 ...
 
         class LdapConnection(Connection, Protocol):
-            """LDAP-specific connection protocol extending base Connection."""
+            """LDAP-specific connection protocol."""
 
             def connect(self, uri: str, bind_dn: str, password: str) -> object:
-                """Connect to LDAP server with authentication."""
+                """Connect to LDAP server."""
                 ...
 
             def bind(self, bind_dn: str, password: str) -> object:
@@ -462,11 +426,11 @@ class FlextProtocols:
                 """Perform LDAP search operation."""
                 ...
 
-            def add(self, dn: str, attributes: dict[str, object]) -> object:
+            def add(self, dn: str, attributes: FlextTypes.Core.Dict) -> object:
                 """Add new LDAP entry."""
                 ...
 
-            def modify(self, dn: str, modifications: dict[str, object]) -> object:
+            def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> object:
                 """Modify existing LDAP entry."""
                 ...
 
@@ -483,14 +447,14 @@ class FlextProtocols:
 
             def authenticate(
                 self,
-                credentials: dict[str, object],
+                credentials: FlextTypes.Core.Dict,
             ) -> object:
-                """Authenticate user with provided credentials."""
+                """Authenticate user with credentials."""
                 ...
 
             def authorize(
                 self,
-                user_info: dict[str, object],
+                user_info: FlextTypes.Core.Dict,
                 resource: str,
             ) -> object:
                 """Authorize user access to resource."""
@@ -504,11 +468,11 @@ class FlextProtocols:
         class Configurable(Protocol):
             """Configurable component protocol."""
 
-            def configure(self, config: dict[str, object]) -> object:
+            def configure(self, config: FlextTypes.Core.Dict) -> object:
                 """Configure component with provided settings."""
                 ...
 
-            def get_config(self) -> dict[str, object]:
+            def get_config(self) -> FlextTypes.Core.Dict:
                 """Get current configuration."""
                 ...
 
@@ -555,17 +519,17 @@ class FlextProtocols:
     # =========================================================================
 
     class Extensions:
-        """Extensions layer protocols - plugins, middleware, and advanced patterns."""
+        """Extensions layer protocols - plugins and advanced patterns."""
 
         class Plugin(Protocol):
-            """Plugin protocol with configuration support."""
+            """Plugin protocol with configuration."""
 
-            def configure(self, config: dict[str, object]) -> object:
-                """Configure component with provided settings (Infrastructure.Configurable composition)."""
+            def configure(self, config: FlextTypes.Core.Dict) -> object:
+                """Configure component with settings."""
                 ...
 
-            def get_config(self) -> dict[str, object]:
-                """Get current configuration (Infrastructure.Configurable composition)."""
+            def get_config(self) -> FlextTypes.Core.Dict:
+                """Get current configuration."""
                 ...
 
             @abstractmethod
@@ -573,28 +537,28 @@ class FlextProtocols:
                 self,
                 context: FlextProtocols.Extensions.PluginContext,
             ) -> object:
-                """Initialize plugin with context."""
+                """Initialize plugin."""
                 ...
 
             @abstractmethod
             def shutdown(self) -> object:
-                """Shutdown plugin and cleanup resources."""
+                """Shutdown plugin and cleanup."""
                 ...
 
             @abstractmethod
-            def get_info(self) -> dict[str, object]:
+            def get_info(self) -> FlextTypes.Core.Dict:
                 """Get plugin information."""
                 ...
 
         class PluginContext(Protocol):
-            """Plugin execution context protocol."""
+            """Plugin execution context."""
 
             def get_service(self, service_name: str) -> object:
-                """Get service instance by name."""
+                """Get service by name."""
                 ...
 
-            def get_config(self) -> dict[str, object]:
-                """Get configuration for plugin."""
+            def get_config(self) -> FlextTypes.Core.Dict:
+                """Get plugin configuration."""
                 ...
 
             def flext_logger(self) -> FlextProtocols.Infrastructure.LoggerProtocol:
@@ -631,7 +595,7 @@ class FlextProtocols:
                 self,
                 name: str,
                 value: float,
-                tags: dict[str, str] | None = None,
+                tags: FlextTypes.Core.Headers | None = None,
             ) -> object:
                 """Record metric value."""
                 ...
@@ -671,113 +635,74 @@ class FlextProtocols:
         @classmethod
         def configure_protocols_system(
             cls,
-            config: dict[str, object],
+            config: FlextTypes.Core.Dict,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Configure protocols system using FlextTypes.Config with StrEnum validation.
-
-            Configures the FLEXT protocol management system including interface validation,
-            protocol inheritance checking, runtime type validation, contract enforcement,
-            composition pattern optimization, and hierarchical protocol organization
-            with efficient validation and type safety.
-
-            Args:
-                config: Configuration dictionary supporting:
-                       - environment: Runtime environment (development, staging, production, test, local)
-                       - protocol_level: Protocol validation level (strict, loose, disabled)
-                       - log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL, TRACE)
-                       - enable_runtime_checking: Enable runtime protocol validation
-                       - protocol_composition_mode: HIERARCHICAL, FLAT, MIXED
-                       - enable_protocol_caching: Cache protocol validation results
-
-            Returns:
-                FlextResult containing validated configuration with protocol system settings
-
-            Example:
-                ```python
-                config = {
-                    "environment": "production",
-                    "protocol_level": "strict",
-                    "log_level": "INFO",
-                    "enable_runtime_checking": True,
-                    "protocol_composition_mode": "HIERARCHICAL",
-                }
-                result = FlextProtocols.Config.configure_protocols_system(config)
-                if result.success:
-                    protocol_config = result.unwrap()
-                ```
-
-            """
-            try:
-                # Create working copy of config
-                validated_config = dict(config)
-
-                # Validate environment
-                if "environment" in config:
-                    env_value = config["environment"]
-                    valid_environments = [
-                        e.value for e in FlextConstants.Config.ConfigEnvironment
-                    ]
-                    if env_value not in valid_environments:
-                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                        )
-                else:
-                    validated_config["environment"] = (
-                        FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            """Configure protocols system using FlextConfig.ProtocolsSettings with single class model."""
+            # Map protocol_level to validation_level for backward compatibility
+            config_dict = dict(config)
+            original_protocol_level = None
+            if "protocol_level" in config_dict:
+                # Validate protocol_level explicitly to preserve expected error message
+                valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
+                level_value = config_dict.get("protocol_level")
+                if level_value not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid protocol_level '{level_value}'",
                     )
+                # Save original protocol_level value to restore later
+                original_protocol_level = level_value
+                # Remove protocol_level from config_dict since FlextConfig doesn't have this field
+                config_dict.pop("protocol_level")
 
-                # Validate protocol_level (using validation level as basis)
-                if "protocol_level" in config:
-                    level_value = config["protocol_level"]
-                    valid_levels = [
-                        e.value for e in FlextConstants.Config.ValidationLevel
-                    ]
-                    if level_value not in valid_levels:
-                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid protocol_level '{level_value}'. Valid options: {valid_levels}",
-                        )
-                else:
-                    validated_config["protocol_level"] = (
-                        FlextConstants.Config.ValidationLevel.LOOSE.value
-                    )
-
-                # Validate log_level
-                if "log_level" in config:
-                    log_level_value = config["log_level"]
-                    valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
-                    if log_level_value not in valid_log_levels:
-                        return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                            f"Invalid log_level '{log_level_value}'. Valid options: {valid_log_levels}",
-                        )
-                else:
-                    validated_config["log_level"] = (
-                        FlextConstants.Config.LogLevel.INFO.value
-                    )
-
-                # Set default values for additional configuration options
-                validated_config.setdefault("enable_runtime_checking", True)
-                validated_config.setdefault("protocol_composition_mode", "HIERARCHICAL")
-                validated_config.setdefault("enable_protocol_caching", True)
-
-                return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                    cast("FlextTypes.Config.ConfigDict", validated_config),
+            # If environment is not explicitly provided, set default
+            if "environment" not in config_dict:
+                config_dict["environment"] = (
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
                 )
 
-            except Exception as e:
+            # Use FlextConfig.ProtocolsSettings for validation with no env overrides
+            # Pass empty env_overrides to prevent loading from environment variables
+            settings_res = FlextConfig.create_from_environment(
+                extra_settings=config_dict if isinstance(config_dict, dict) else None,
+            )
+            if settings_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Protocol configuration failed: {e!s}",
+                    f"Protocol configuration failed: {settings_res.error}",
                 )
+
+            # Get validated config dict from FlextConfig instance
+            validated_config = settings_res.value.model_dump()
+
+            # Restore original protocol_level or use default
+            if original_protocol_level is not None:
+                validated_config["protocol_level"] = original_protocol_level
+            else:
+                validated_config["protocol_level"] = (
+                    FlextConstants.Config.ValidationLevel.LOOSE.value
+                )
+
+            # Add backward compatibility fields
+            validated_config.setdefault(
+                "environment", FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            )
+            validated_config.setdefault("enable_runtime_checking", True)
+            validated_config.setdefault("protocol_composition_mode", "HIERARCHICAL")
+            validated_config.setdefault("enable_protocol_caching", True)
+
+            # Preserve custom fields from original config that are not in validated_config
+            for key, value in config.items():
+                if key not in validated_config:
+                    validated_config[key] = value
+
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("FlextTypes.Config.ConfigDict", validated_config),
+            )
 
         @classmethod
         def get_protocols_system_config(
             cls,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Get current protocols system configuration.
-
-            Returns:
-                FlextResult containing current protocol system configuration
-
-            """
+            """Get current protocols system configuration."""
             default_config = {
                 "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
@@ -786,24 +711,29 @@ class FlextProtocols:
                 "protocol_composition_mode": "HIERARCHICAL",
                 "enable_protocol_caching": True,
             }
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", default_config),
-            )
+            try:
+                core_validation = {
+                    "environment": default_config.get("environment"),
+                    "log_level": default_config.get("log_level"),
+                    "validation_level": default_config.get("protocol_level"),
+                }
+                _ = FlextModels.SystemConfigs.ProtocolsConfig.model_validate(
+                    core_validation
+                )
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                    cast("FlextTypes.Config.ConfigDict", default_config),
+                )
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid default protocol config: {e!s}",
+                )
 
         @classmethod
         def create_environment_protocols_config(
             cls,
             environment: str,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Create environment-specific protocol configuration.
-
-            Args:
-                environment: Target environment (development, staging, production, test, local)
-
-            Returns:
-                FlextResult containing environment-optimized configuration
-
-            """
+            """Create environment-specific protocol configuration."""
             environment_configs = {
                 "development": {
                     "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
@@ -835,26 +765,30 @@ class FlextProtocols:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
                     f"Unknown environment '{environment}'. Valid options: {list(environment_configs.keys())}",
                 )
-
             config = environment_configs[environment.lower()]
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", config),
-            )
+            try:
+                core_validation = {
+                    "environment": config.get("environment"),
+                    "log_level": config.get("log_level"),
+                    "validation_level": config.get("protocol_level"),
+                }
+                _ = FlextModels.SystemConfigs.ProtocolsConfig.model_validate(
+                    core_validation
+                )
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                    cast("FlextTypes.Config.ConfigDict", config),
+                )
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid environment protocol config: {e!s}",
+                )
 
         @classmethod
         def optimize_protocols_performance(
             cls,
             performance_level: str = "balanced",
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Optimize protocol system performance.
-
-            Args:
-                performance_level: Optimization level (low, balanced, high)
-
-            Returns:
-                FlextResult containing performance-optimized configuration
-
-            """
+            """Optimize protocol system performance."""
             optimization_configs = {
                 "low": {
                     "enable_runtime_checking": True,
@@ -877,11 +811,23 @@ class FlextProtocols:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
                     f"Invalid performance level '{performance_level}'. Valid options: {list(optimization_configs.keys())}",
                 )
-
             config = optimization_configs[performance_level]
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", config),
-            )
+            try:
+                core_validation = {
+                    "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
+                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
+                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
+                }
+                _ = FlextModels.SystemConfigs.ProtocolsConfig.model_validate(
+                    core_validation
+                )
+                return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                    cast("FlextTypes.Config.ConfigDict", config),
+                )
+            except Exception as e:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Invalid optimized protocol config: {e!s}",
+                )
 
 
 # =============================================================================
@@ -905,6 +851,6 @@ class FlextProtocols:
 # EXPORTS - Hierarchical protocols
 # =============================================================================
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextProtocols",  # Main hierarchical protocol architecture with Config
 ]

@@ -268,7 +268,7 @@ class FlextCliContext(FlextContext):
     working_directory: Path | None = Field(default=None)
 
     # Additional context data
-    environment_variables: dict[str, str] = Field(default_factory=dict)
+    environment_variables: FlextTypes.Core.Headers = Field(default_factory=dict)
     user_id: str | None = Field(default=None)
     session_id: str | None = Field(default=None)
 ```

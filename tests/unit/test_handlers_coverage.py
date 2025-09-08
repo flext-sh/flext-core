@@ -1,10 +1,15 @@
-"""Comprehensive test coverage for FlextHandlers enterprise system."""
+"""Comprehensive test coverage for FlextHandlers enterprise system.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import threading
 
 from flext_core import FlextHandlers, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class TestFlextHandlersCoverage:
@@ -64,7 +69,7 @@ class TestFlextHandlersCoverage:
         """Test AbstractHandler basic functionality."""
 
         class TestHandler(
-            FlextHandlers.Implementation.AbstractHandler[dict[str, object], str]
+            FlextHandlers.Implementation.AbstractHandler[FlextTypes.Core.Dict, str]
         ):
             def __init__(self) -> None:
                 super().__init__()
@@ -74,7 +79,7 @@ class TestFlextHandlersCoverage:
             def handler_name(self) -> str:
                 return self._handler_name
 
-            def handle(self, request: dict[str, object]) -> FlextResult[str]:
+            def handle(self, request: FlextTypes.Core.Dict) -> FlextResult[str]:
                 if isinstance(request, dict) and "data" in request:
                     return FlextResult.ok(f"processed: {request['data']}")
                 return FlextResult.fail("Invalid request")
@@ -82,7 +87,7 @@ class TestFlextHandlersCoverage:
             def can_handle(self, message_type: type) -> bool:
                 return message_type is dict
 
-            def configure(self, config: dict[str, object]) -> FlextResult[None]:
+            def configure(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
                 # Basic configuration logic
                 if "timeout" in config:
                     return FlextResult.ok(None)
@@ -206,8 +211,8 @@ class TestFlextHandlersCoverage:
 
         # Create a simple command handler
         def create_user_handler(
-            command: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            command: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             if "name" in command:
                 return FlextResult.ok({"user_id": "123", "name": command["name"]})
             return FlextResult.fail("Name required")
@@ -228,8 +233,8 @@ class TestFlextHandlersCoverage:
 
         # Create a simple query handler
         def get_user_handler(
-            query: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            query: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             if "user_id" in query:
                 return FlextResult.ok({"id": query["user_id"], "name": "John"})
             return FlextResult.fail("User ID required")
@@ -265,7 +270,7 @@ class TestFlextHandlersCoverage:
         # Create simple handlers for the chain
         class ValidationHandler(
             FlextHandlers.Implementation.AbstractHandler[
-                dict[str, object], dict[str, object]
+                FlextTypes.Core.Dict, FlextTypes.Core.Dict
             ],
             FlextHandlers.Protocols.ChainableHandler,
         ):
@@ -273,7 +278,7 @@ class TestFlextHandlersCoverage:
             def handler_name(self) -> str:
                 return "validator"
 
-            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+            def handle(self, request: object) -> FlextResult[FlextTypes.Core.Dict]:
                 if isinstance(request, dict) and "data" in request:
                     request["validated"] = True
                     return FlextResult.ok(request)
@@ -284,7 +289,7 @@ class TestFlextHandlersCoverage:
 
         class ProcessingHandler(
             FlextHandlers.Implementation.AbstractHandler[
-                dict[str, object], dict[str, object]
+                FlextTypes.Core.Dict, FlextTypes.Core.Dict
             ],
             FlextHandlers.Protocols.ChainableHandler,
         ):
@@ -292,7 +297,7 @@ class TestFlextHandlersCoverage:
             def handler_name(self) -> str:
                 return "processor"
 
-            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+            def handle(self, request: object) -> FlextResult[FlextTypes.Core.Dict]:
                 if isinstance(request, dict) and request.get("validated"):
                     request["processed"] = True
                     return FlextResult.ok(request)
@@ -440,7 +445,7 @@ class TestFlextHandlersCoverage:
 
         # Test configuration
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {"timeout": 30, "max_retries": 3, "enable_metrics": True}
         config_result = handler.configure(config)
         assert isinstance(config_result, FlextResult)
@@ -485,14 +490,14 @@ class TestFlextHandlersCoverage:
 
         class ErrorProneHandler(
             FlextHandlers.Implementation.AbstractHandler[
-                dict[str, object], dict[str, object]
+                FlextTypes.Core.Dict, FlextTypes.Core.Dict
             ],
         ):
             @property
             def handler_name(self) -> str:
                 return "error_prone"
 
-            def handle(self, request: object) -> FlextResult[dict[str, object]]:
+            def handle(self, request: object) -> FlextResult[FlextTypes.Core.Dict]:
                 if isinstance(request, dict) and request.get("should_fail"):
                     return FlextResult.fail("Simulated failure")
                 return FlextResult.ok({"processed": True})

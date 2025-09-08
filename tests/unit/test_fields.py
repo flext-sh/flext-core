@@ -1,4 +1,8 @@
-"""Extended test coverage for fields.py module."""
+"""Extended test coverage for fields.py module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -280,7 +284,7 @@ class TestFlextFieldsValidation:
             ),
         ]
 
-        values: dict[str, object] = {
+        values: FlextTypes.Core.Dict = {
             "name": "John",
             "age": 25,
             "email": "john@example.com",
@@ -460,9 +464,9 @@ class TestFlextFieldsSchema:
             "metadata": {"version": "1.0"},
         }
 
-        result = processor.process_field_schema(cast("dict[str, object]", schema))
+        result = processor.process_field_schema(cast("FlextTypes.Core.Dict", schema))
         assert result.success
-        assert len(cast("list[object]", result.value["fields"])) == 1
+        assert len(cast("FlextTypes.Core.List", result.value["fields"])) == 1
 
     def test_field_processor_validation(self) -> None:
         """Test FieldProcessor validation."""
@@ -476,7 +480,7 @@ class TestFlextFieldsSchema:
         }
 
         result = processor.process_field_schema(
-            cast("dict[str, object]", invalid_schema)
+            cast("FlextTypes.Core.Dict", invalid_schema)
         )
         assert result.success  # Should still succeed but with empty fields
 
@@ -489,7 +493,7 @@ class TestFlextFieldsSchema:
         ]
 
         result = processor.process_multiple_fields_schema(
-            cast("list[dict[str, object]]", schemas)
+            cast("list[FlextTypes.Core.Dict]", schemas)
         )
         assert result.success
         assert len(result.value) == 2
@@ -554,7 +558,7 @@ class TestFlextFieldsFactory:
         }
 
         result = FlextFields.Factory.create_fields_from_schema(
-            cast("dict[str, object]", schema)
+            cast("FlextTypes.Core.Dict", schema)
         )
         assert result.success
         assert len(result.value) == 2
@@ -570,7 +574,7 @@ class TestFlextFieldsFactory:
         # Invalid fields structure
         schema = {"fields": "not_a_list"}
         result = FlextFields.Factory.create_fields_from_schema(
-            cast("dict[str, object]", schema)
+            cast("FlextTypes.Core.Dict", schema)
         )
         assert result.failure
 
@@ -623,7 +627,7 @@ class TestFlextFieldsMetadata:
         assert analysis["field_class"] == "StringField"
         assert "string_constraints" in analysis
         a_dict = analysis
-        sc = cast("dict[str, object]", a_dict["string_constraints"])
+        sc = cast("FlextTypes.Core.Dict", a_dict["string_constraints"])
         assert cast("int", sc["min_length"]) == 3
         assert cast("int", sc["max_length"]) == 20
 
@@ -639,7 +643,7 @@ class TestFlextFieldsMetadata:
         analysis = result.value
         assert "numeric_constraints" in analysis
         a2 = analysis
-        nc = cast("dict[str, object]", a2["numeric_constraints"])
+        nc = cast("FlextTypes.Core.Dict", a2["numeric_constraints"])
         assert cast("int", nc["min_value"]) == 0
         assert cast("int", nc["max_value"]) == 100
 
@@ -672,7 +676,7 @@ class TestFlextFieldsMetadata:
         assert summary["required_fields"] == 3
         assert summary["optional_fields"] == 1
         assert summary["fields_with_defaults"] == 2
-        field_types = cast("list[str]", summary["field_types"])
+        field_types = cast("FlextTypes.Core.StringList", summary["field_types"])
         assert "string" in field_types
         assert "integer" in field_types
 
@@ -714,7 +718,7 @@ class TestFlextFieldsConfiguration:
         assert "environment" in config
         assert "available_field_types" in config
         assert "supported_constraints" in config
-        available = cast("list[object]", config["available_field_types"])
+        available = cast("FlextTypes.Core.List", config["available_field_types"])
         assert len(available) >= 7
 
     def test_create_environment_fields_config(self) -> None:

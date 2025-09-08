@@ -1,13 +1,45 @@
-"""Functional tests for core FlextCore features."""
+"""Functional tests for core FlextCore features.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 import pytest
+from pydantic import Field
 
 from flext_core import FlextCore, FlextResult
 from flext_core.models import FlextModels
+from flext_core.typings import FlextTypes
+
+
+class UserEntity(FlextModels.Entity):
+    """Test user entity for functional testing."""
+
+    name: str = Field(..., description="User name")
+    email: str = Field(..., description="User email")
+    status: str = Field(default="active", description="User status")
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        if "@" not in self.email:
+            return FlextResult[None].fail("Invalid email format")
+        return FlextResult[None].ok(None)
+
+    def activate(self) -> None:
+        """Business method that triggers domain events."""
+        if self.status == "inactive":
+            self.status = "active"
+            self.add_domain_event(
+                {
+                    "event_type": "UserActivated",
+                    "user_id": self.id,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                },
+            )
 
 
 class TestFlextCoreIntegration:
@@ -17,28 +49,7 @@ class TestFlextCoreIntegration:
         """Test complete entity creation, modification, and event handling."""
         core = FlextCore.get_instance()
 
-        # Define a domain entity
-        class UserEntity(FlextModels.Entity):
-            name: str
-            email: str
-            status: str = "active"
-
-            def validate_business_rules(self) -> FlextResult[None]:
-                if "@" not in self.email:
-                    return FlextResult[None].fail("Invalid email format")
-                return FlextResult[None].ok(None)
-
-            def activate(self) -> None:
-                """Business method that triggers domain events."""
-                if self.status == "inactive":
-                    self.status = "active"
-                    self.add_domain_event(
-                        {
-                            "event_type": "UserActivated",
-                            "user_id": self.id,
-                            "timestamp": datetime.now(UTC).isoformat(),
-                        },
-                    )
+        # Use the UserEntity class defined at module level
 
         # Create entity with business validation
         result = core.create_entity(
@@ -49,7 +60,7 @@ class TestFlextCoreIntegration:
         )
 
         assert result.success
-        user = result.unwrap()
+        user: UserEntity = cast("UserEntity", result.unwrap())
         assert user.name == "John Doe"
         assert user.email == "john@example.com"
         assert user.status == "active"
@@ -73,9 +84,24 @@ class TestFlextCoreIntegration:
             | int
             | float
             | bool
-            | list[str | int | float | bool | list[object] | dict[str, object] | None]
+            | list[
+                str
+                | int
+                | float
+                | bool
+                | FlextTypes.Core.List
+                | FlextTypes.Core.Dict
+                | None
+            ]
             | dict[
-                str, str | int | float | bool | list[object] | dict[str, object] | None
+                str,
+                str
+                | int
+                | float
+                | bool
+                | FlextTypes.Core.List
+                | FlextTypes.Core.Dict
+                | None,
             ]
             | None,
         ] = {
@@ -121,7 +147,7 @@ class TestFlextCoreIntegration:
             def __init__(self) -> None:
                 self.connected = True
 
-            def query(self, sql: str, *args: object) -> list[dict[str, object]]:
+            def query(self, sql: str, *args: object) -> list[FlextTypes.Core.Dict]:
                 return [{"id": 1, "name": "test"}] if self.connected else []
 
         class NotificationService:
@@ -144,7 +170,7 @@ class TestFlextCoreIntegration:
             if db_result.failure:
                 error_msg = "Database service not available"
                 raise RuntimeError(error_msg)
-            return NotificationService(db_result.unwrap())
+            return NotificationService(cast("DatabaseService", db_result.unwrap()))
 
         factory_result = core.register_factory("notifications", notification_factory)
         assert factory_result.success
@@ -182,16 +208,16 @@ class TestFlextCoreIntegration:
         """Test FlextResult railway-oriented programming patterns."""
 
         def validate_user_data(
-            data: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
+            data: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             if not data.get("email"):
-                return FlextResult[dict[str, object]].fail("Email required")
+                return FlextResult[FlextTypes.Core.Dict].fail("Email required")
             email_value = data.get("email", "")
             if isinstance(email_value, str) and "@" not in email_value:
-                return FlextResult[dict[str, object]].fail("Invalid email format")
-            return FlextResult[dict[str, object]].ok(data)
+                return FlextResult[FlextTypes.Core.Dict].fail("Invalid email format")
+            return FlextResult[FlextTypes.Core.Dict].ok(data)
 
-        def save_user(data: dict[str, object]) -> FlextResult[str]:
+        def save_user(data: FlextTypes.Core.Dict) -> FlextResult[str]:
             # Simulate save operation
             if data.get("email") == "existing@example.com":
                 return FlextResult[str].fail("Email already exists")
@@ -204,7 +230,10 @@ class TestFlextCoreIntegration:
             return FlextResult[str].ok(f"Welcome email sent to {user_id}")
 
         # Test successful railway
-        user_data: dict[str, object] = {"email": "new@example.com", "name": "New User"}
+        user_data: FlextTypes.Core.Dict = {
+            "email": "new@example.com",
+            "name": "New User",
+        }
 
         result = (
             validate_user_data(user_data)
@@ -216,7 +245,7 @@ class TestFlextCoreIntegration:
         assert "Welcome email sent to user_new" in result.unwrap()
 
         # Test failure railway
-        invalid_data: dict[str, object] = {"name": "No Email User"}
+        invalid_data: FlextTypes.Core.Dict = {"name": "No Email User"}
 
         result = (
             validate_user_data(invalid_data)

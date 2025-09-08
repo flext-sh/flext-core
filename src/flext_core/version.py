@@ -1,7 +1,7 @@
 """Version management and compatibility tracking.
 
-Provides version information, compatibility checks, and semantic
-versioning support for the FLEXT ecosystem.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from typing import ClassVar, NamedTuple
@@ -15,12 +15,7 @@ __version__: str = "0.9.0"
 
 
 class FlextVersionManager:
-    """Single consolidated class for all version management functionality.
-
-    Consolidates ALL version-related classes and operations into one class
-    following FLEXT patterns. Provides version information, compatibility
-    checking, and utility functions.
-    """
+    """Single consolidated class for all version management functionality."""
 
     # Version constants consolidated within the class
     VERSION_MAJOR: int = 0
@@ -53,7 +48,7 @@ class FlextVersionManager:
     }
 
     class VersionInfo(NamedTuple):
-        """Structured version information nested inside consolidated class."""
+        """Structured version information."""
 
         major: int
         minor: int
@@ -63,7 +58,7 @@ class FlextVersionManager:
         build_type: str
 
     class CompatibilityResult:
-        """Result of Python version compatibility check."""
+        """Python version compatibility check result."""
 
         def __init__(
             self,

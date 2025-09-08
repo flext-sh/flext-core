@@ -1,6 +1,6 @@
 # Settings Architecture Unification Plan — flext-core
 
-Status: Draft (incremental, sob padrões flext-core)
+Status: Fases 1–4 concluídas; Fase 5 (docs/extensão) em andamento
 Autoridade: flext-core 0.9.0 + FLEXT_REFACTORING_PROMPT.md + CLAUDE.md + README.md
 
 ## Objetivo
@@ -94,7 +94,7 @@ Autoridade: flext-core 0.9.0 + FLEXT_REFACTORING_PROMPT.md + CLAUDE.md + README.
 - Campos estáticos: padrão (sem marcação) em `FlextStaticSettings` ou `frozen=True`.
 - Helper:
   - `is_dynamic(field_name) -> bool`
-  - `diff_requires_restart(old: SystemConfig, new: SystemConfig) -> list[str]` (lista de campos estáticos alterados).
+  - `diff_requires_restart(old: SystemConfig, new: SystemConfig) -> FlextTypes.Core.StringList` (lista de campos estáticos alterados).
   - `apply_runtime_update(current: SystemConfig, patch: dict) -> FlextResult[SystemConfig]` (falha se patch altera campo estático; caso contrário, `model_copy(update=...)`).
 
 ### Loader com Prioridade (Layered)
@@ -143,7 +143,7 @@ Fase 3 — Adotar Settings Loader nas fachadas
 
 Fase 4 — Dinâmicas vs Estáticas e Registry
 - Marcar campos dinamicamente atualizáveis (`json_schema_extra={"dynamic": True}`) nos Settings; mapear para `*Config`.
-- Implementar `FlextSettingsRegistry` e métodos `update_runtime`/`reload` por subsistema.
+- Implementar `FlextConfig.SettingsRegistry` e métodos `update_runtime`/`reload` por subsistema.
 - Testes de mutação dinâmica com `apply_runtime_update` e rejeição de alterações estáticas.
 - Validação: pytest -k runtime -k reload.
 
@@ -163,3 +163,13 @@ Fase 5 — Documentação e Extensão
 
 - APIs públicas que retornam dict continuam retornando dict (via `model_dump()`), sem caminhos de validação duplicados.
 - Para consumo interno, preferir `*Settings/*.Config` em vez de dicts crus.
+
+---
+
+## Atualização de Status (Execução)
+
+- Fase 1: Concluída — `FlextConfig.Settings`, utilitários locais (env/json/merge), `from_sources(...)`
+- Fase 2: Concluída — `*Settings` por subsistema mapeando para `FlextModels.SystemConfigs.*`
+- Fase 3: Concluída — fachadas `configure_*` usam Settings → SystemConfigs → `model_dump()` (compat)
+- Fase 4: Concluída — campos dinâmicos marcados; `FlextConfig.SettingsRegistry` com `update_runtime` e `reload_from_sources`
+- Fase 5: Em andamento — Guia em `docs/guides/configuration.md`; exemplos de extensão planejados

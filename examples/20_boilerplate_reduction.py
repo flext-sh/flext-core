@@ -170,7 +170,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
     def orchestrate_business_process(
         self,
         data: Mapping[str, object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Complete business process orchestration."""
         return (
             self._validate_data(data).map(self._process_data).map(self._enhance_result)
@@ -185,7 +185,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
             return FlextResult[Mapping[str, object]].fail("Action required")
         return FlextResult[Mapping[str, object]].ok(data)
 
-    def _process_data(self, data: Mapping[str, object]) -> dict[str, object]:
+    def _process_data(self, data: Mapping[str, object]) -> FlextTypes.Core.Dict:
         """Process business data."""
         return {
             **dict(data),
@@ -193,7 +193,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
-    def _enhance_result(self, result: dict[str, object]) -> dict[str, object]:
+    def _enhance_result(self, result: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         """Enhance result with metadata."""
         return {
             **result,

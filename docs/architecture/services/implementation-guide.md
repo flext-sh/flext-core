@@ -260,8 +260,8 @@ class ServiceOrchestrationService:
 
     def execute_complex_workflow(
         self,
-        workflow_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        workflow_data: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute complex multi-service workflow."""
 
         workflow_definition = {
@@ -311,7 +311,7 @@ class ServiceOrchestrationService:
         self,
         workflow_id: str,
         failed_step: str
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Implement compensation patterns for failed workflows."""
 
         compensation_actions = {
@@ -328,7 +328,7 @@ class ServiceOrchestrationService:
             action_result = self._execute_compensation_action(action, workflow_id)
             compensation_results[action] = action_result.success
 
-        return FlextResult[dict[str, object]].ok(compensation_results)
+        return FlextResult[FlextTypes.Core.Dict].ok(compensation_results)
 ```
 
 #### Advanced Service Coordination
@@ -342,8 +342,8 @@ class AdvancedServiceCoordination:
 
     def implement_saga_pattern(
         self,
-        saga_definition: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        saga_definition: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Implement Saga pattern for distributed transactions."""
 
         saga_steps = saga_definition["steps"]
@@ -360,14 +360,14 @@ class AdvancedServiceCoordination:
                     compensation_result = self._compensate_saga_steps(
                         executed_steps, saga_id
                     )
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Saga failed at step {step['name']}: {step_result.error}. "
                         f"Compensation: {compensation_result}"
                     )
 
                 executed_steps.append(step)
 
-            return FlextResult[dict[str, object]].ok({
+            return FlextResult[FlextTypes.Core.Dict].ok({
                 "saga_id": saga_id,
                 "status": "completed",
                 "executed_steps": len(executed_steps)
@@ -376,7 +376,7 @@ class AdvancedServiceCoordination:
         except Exception as e:
             # Handle unexpected errors
             compensation_result = self._compensate_saga_steps(executed_steps, saga_id)
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Saga failed with exception: {e}. Compensation: {compensation_result}"
             )
 
@@ -385,7 +385,7 @@ class AdvancedServiceCoordination:
         service_name: str,
         failure_threshold: int = 5,
         timeout_ms: int = 60000
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Implement circuit breaker pattern for service resilience."""
 
         circuit_breaker_config = {
@@ -400,7 +400,7 @@ class AdvancedServiceCoordination:
         # Store circuit breaker configuration
         self._circuit_breakers[service_name] = circuit_breaker_config
 
-        return FlextResult[dict[str, object]].ok(circuit_breaker_config)
+        return FlextResult[FlextTypes.Core.Dict].ok(circuit_breaker_config)
 ```
 
 ### Step 3: Service Registry and Discovery Implementation
@@ -417,12 +417,12 @@ class EnterpriseServiceRegistry:
         self.validator = FlextServices.ServiceValidation()
 
         # Service storage and monitoring
-        self._service_health: dict[str, dict[str, object]] = {}
+        self._service_health: dict[str, FlextTypes.Core.Dict] = {}
         self._load_balancing_weights: dict[str, dict[str, float]] = {}
 
     def register_microservice_with_health_monitoring(
         self,
-        service_info: dict[str, object]
+        service_info: FlextTypes.Core.Dict
     ) -> FlextResult[str]:
         """Register microservice with comprehensive health monitoring."""
 
@@ -469,7 +469,7 @@ class EnterpriseServiceRegistry:
         self,
         service_type: str,
         load_balancing_strategy: str = "weighted_round_robin"
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
         """Discover services with load balancing information."""
 
         # Discover services by type
@@ -492,7 +492,7 @@ class EnterpriseServiceRegistry:
                     all_services.append(service_entry)
 
         if not all_services:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[FlextTypes.Core.Dict]].fail(
                 f"No services found for type: {service_type}"
             )
 
@@ -507,9 +507,9 @@ class EnterpriseServiceRegistry:
             # Sort by uptime (highest first)
             all_services.sort(key=lambda s: s["uptime_percentage"], reverse=True)
 
-        return FlextResult[list[dict[str, object]]].ok(all_services)
+        return FlextResult[list[FlextTypes.Core.Dict]].ok(all_services)
 
-    def perform_comprehensive_health_checks(self) -> FlextResult[dict[str, object]]:
+    def perform_comprehensive_health_checks(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Perform comprehensive health checks with detailed reporting."""
 
         health_summary = {
@@ -573,7 +573,7 @@ class EnterpriseServiceRegistry:
 
         health_summary["health_check_timestamp"] = datetime.utcnow().isoformat()
 
-        return FlextResult[dict[str, object]].ok(health_summary)
+        return FlextResult[FlextTypes.Core.Dict].ok(health_summary)
 ```
 
 ### Step 4: Performance Monitoring and Metrics Implementation
@@ -588,10 +588,10 @@ class ServicePerformanceManager:
         self.metrics = FlextServices.ServiceMetrics()
 
         # Performance data storage
-        self._performance_history: dict[str, list[dict[str, object]]] = {}
+        self._performance_history: dict[str, list[FlextTypes.Core.Dict]] = {}
         self._performance_baselines: dict[str, dict[str, float]] = {}
         self._alert_thresholds: dict[str, dict[str, float]] = {}
-        self._anomaly_detection: dict[str, object] = {}
+        self._anomaly_detection: FlextTypes.Core.Dict = {}
 
     def track_comprehensive_service_metrics(
         self,
@@ -599,7 +599,7 @@ class ServicePerformanceManager:
         operation_name: str,
         duration_ms: float,
         success: bool,
-        metadata: dict[str, object] | None = None
+        metadata: FlextTypes.Core.Dict | None = None
     ) -> FlextResult[None]:
         """Track comprehensive service metrics with anomaly detection."""
 
@@ -646,7 +646,7 @@ class ServicePerformanceManager:
         self,
         service_name: str,
         time_window_hours: int = 24
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Generate comprehensive performance analysis report."""
 
         cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
@@ -703,7 +703,7 @@ class ServicePerformanceManager:
                     overall_stats["total_duration_ms"] += sum(durations)
 
         if not service_operations:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"No performance data found for service {service_name}"
             )
 
@@ -729,7 +729,7 @@ class ServicePerformanceManager:
             "alerts": self._generate_performance_alerts(service_name, service_operations)
         }
 
-        return FlextResult[dict[str, object]].ok(report)
+        return FlextResult[FlextTypes.Core.Dict].ok(report)
 
 # Usage examples
 performance_manager = ServicePerformanceManager()
@@ -866,7 +866,7 @@ class MicroserviceIntegrationManager:
         self.orchestrator = FlextServices.ServiceOrchestrator()
         self.validator = FlextServices.ServiceValidation()
 
-    def register_microservice_ecosystem(self) -> FlextResult[dict[str, str]]:
+    def register_microservice_ecosystem(self) -> FlextResult[FlextTypes.Core.Headers]:
         """Register complete microservice ecosystem."""
 
         microservices = [
@@ -899,7 +899,7 @@ class MicroserviceIntegrationManager:
             # Validate service configuration
             validation_result = self._validate_microservice_config(service_info)
             if validation_result.is_failure:
-                return FlextResult[dict[str, str]].fail(
+                return FlextResult[FlextTypes.Core.Headers].fail(
                     f"Service {service_info['name']} validation failed: {validation_result.error}"
                 )
 
@@ -914,12 +914,12 @@ class MicroserviceIntegrationManager:
                     self._create_service_proxy(service_info)
                 )
 
-        return FlextResult[dict[str, str]].ok(registration_results)
+        return FlextResult[FlextTypes.Core.Headers].ok(registration_results)
 
     def execute_cross_service_workflow(
         self,
-        workflow_request: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        workflow_request: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute workflow spanning multiple microservices."""
 
         # Discover required services
@@ -928,7 +928,7 @@ class MicroserviceIntegrationManager:
         notification_service = self.registry.discover("notification-service")
 
         if any(service.is_failure for service in [auth_service, user_service, notification_service]):
-            return FlextResult[dict[str, object]].fail("Required services not available")
+            return FlextResult[FlextTypes.Core.Dict].fail("Required services not available")
 
         # Define cross-service workflow
         cross_service_workflow = {

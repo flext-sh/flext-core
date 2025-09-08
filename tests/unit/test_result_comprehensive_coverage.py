@@ -1,4 +1,8 @@
-"""Comprehensive test coverage for FlextResult railway-oriented programming."""
+"""Comprehensive test coverage for FlextResult railway-oriented programming.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class TestFlextResultComprehensiveCoverage:
@@ -408,7 +413,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_tap_success_executes_side_effect(self) -> None:
         """Test tap() executes side effect on successful results."""
-        side_effects: list[str] = []
+        side_effects: FlextTypes.Core.StringList = []
 
         result = FlextResult.ok("data").tap(
             lambda x: side_effects.append(f"processed: {x}"),
@@ -420,7 +425,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_tap_failure_skips_side_effect(self) -> None:
         """Test tap() skips side effect on failed results."""
-        side_effects: list[str] = []
+        side_effects: FlextTypes.Core.StringList = []
 
         result: FlextResult[object] = FlextResult.fail("error").tap(
             lambda x: side_effects.append(str(x))
@@ -432,7 +437,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_tap_none_data_skips_side_effect(self) -> None:
         """Test tap() skips side effect when data is None."""
-        side_effects: list[str] = []
+        side_effects: FlextTypes.Core.StringList = []
 
         FlextResult(data=None).tap(lambda x: side_effects.append(str(x)))
 
@@ -440,7 +445,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_tap_error_failure_executes_side_effect(self) -> None:
         """Test tap_error() executes side effect on failed results."""
-        side_effects: list[str] = []
+        side_effects: FlextTypes.Core.StringList = []
 
         result: FlextResult[object] = FlextResult.fail("error").tap_error(
             lambda err: side_effects.append(f"error: {err}"),
@@ -452,7 +457,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_tap_error_success_skips_side_effect(self) -> None:
         """Test tap_error() skips side effect on successful results."""
-        side_effects: list[str] = []
+        side_effects: FlextTypes.Core.StringList = []
 
         result = FlextResult.ok("data").tap_error(
             lambda err: side_effects.append(str(err)),
@@ -635,7 +640,7 @@ class TestFlextResultComprehensiveCoverage:
 
     def test_combine_filters_none_values(self) -> None:
         """Test combine() filters out None values from successful results."""
-        results: list[object] = [
+        results: FlextTypes.Core.List = [
             FlextResult.ok(1),
             FlextResult(data=None),
             FlextResult.ok(3),

@@ -3,6 +3,10 @@
 This module provides extensive test coverage for the consolidated FlextProcessors system,
 testing all nested classes, methods, and functionality paths with real execution.
 
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 import re
@@ -16,7 +20,8 @@ from unittest.mock import Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from flext_core import FlextProcessors, FlextResult, FlextTypes
+from flext_core import FlextProcessors, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class ConfigObjectProtocol(Protocol):
@@ -52,7 +57,7 @@ class TestFlextProcessorsEntry:
     """Test Entry value object functionality."""
 
     @pytest.fixture
-    def valid_entry_data(self) -> dict[str, object]:
+    def valid_entry_data(self) -> FlextTypes.Core.Dict:
         """Valid entry data for testing."""
         return {
             "entry_type": "user",
@@ -62,7 +67,9 @@ class TestFlextProcessorsEntry:
             "metadata": {"source": "ldap", "active": True},
         }
 
-    def test_entry_creation_success(self, valid_entry_data: dict[str, object]) -> None:
+    def test_entry_creation_success(
+        self, valid_entry_data: FlextTypes.Core.Dict
+    ) -> None:
         """Test successful entry creation."""
         entry = FlextProcessors.Entry.model_validate(valid_entry_data)
 
@@ -88,7 +95,7 @@ class TestFlextProcessorsEntry:
         with pytest.raises(ValidationError):
             FlextProcessors.Entry.model_validate({"entry_type": "user"})
 
-    def test_entry_equality(self, valid_entry_data: dict[str, object]) -> None:
+    def test_entry_equality(self, valid_entry_data: FlextTypes.Core.Dict) -> None:
         """Test entry equality based on type and identifier."""
         entry1 = FlextProcessors.Entry.model_validate(valid_entry_data)
         entry2 = FlextProcessors.Entry.model_validate(valid_entry_data)
@@ -102,7 +109,7 @@ class TestFlextProcessorsEntry:
         entry3 = FlextProcessors.Entry.model_validate(data_different)
         assert entry1 != entry3
 
-    def test_entry_hash(self, valid_entry_data: dict[str, object]) -> None:
+    def test_entry_hash(self, valid_entry_data: FlextTypes.Core.Dict) -> None:
         """Test entry hashing for use in sets and dicts."""
         entry1 = FlextProcessors.Entry.model_validate(valid_entry_data)
         entry2 = FlextProcessors.Entry.model_validate(valid_entry_data)
@@ -115,7 +122,7 @@ class TestFlextProcessorsEntry:
 
     def test_entry_inequality_different_types(
         self,
-        valid_entry_data: dict[str, object],
+        valid_entry_data: FlextTypes.Core.Dict,
     ) -> None:
         """Test entry inequality with different object types."""
         entry = FlextProcessors.Entry.model_validate(valid_entry_data)
@@ -195,7 +202,7 @@ class TestFlextProcessorsBaseProcessor:
                 self.entry_type = "user"
                 self.identifier = "test"
                 self.original_content = "bad content"
-                self.metadata: dict[str, object] = {}
+                self.metadata: FlextTypes.Core.Dict = {}
 
             @property
             def clean_content(self) -> str:
@@ -414,7 +421,7 @@ class TestFlextProcessorsConfigProcessor:
         config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test successful config value retrieval."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "database_url": "postgresql://localhost/test",
             "debug": True,
         }
@@ -428,7 +435,7 @@ class TestFlextProcessorsConfigProcessor:
         config_processor: FlextProcessors.ConfigProcessor,
     ) -> None:
         """Test config value retrieval with missing key."""
-        config: dict[str, object] = {"debug": True}
+        config: FlextTypes.Core.Dict = {"debug": True}
         result = config_processor.get_config_value(config, "missing_key")
 
         assert result.is_failure
@@ -486,7 +493,7 @@ class TestFlextProcessorsConfigProcessor:
         bad_dict = BadDict()
         # Cast to expected type for type checker
 
-        bad_dict_typed = cast("dict[str, object]", bad_dict)
+        bad_dict_typed = cast("FlextTypes.Core.Dict", bad_dict)
         result = config_processor.get_config_value(bad_dict_typed, "error_key")
 
         assert result.is_failure
@@ -663,7 +670,7 @@ class TestFlextProcessorsFactoryMethods:
 
     def test_create_entry_success(self) -> None:
         """Test successful entry creation via factory method."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "entry_type": "user",
             "identifier": "test_user",
             "clean_content": "john_doe",
@@ -680,7 +687,7 @@ class TestFlextProcessorsFactoryMethods:
 
     def test_create_entry_with_type_parameter(self) -> None:
         """Test entry creation with explicit entry_type parameter."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "identifier": "test_user",
             "clean_content": "john_doe",
             "original_content": "John Doe",
@@ -694,7 +701,7 @@ class TestFlextProcessorsFactoryMethods:
 
     def test_create_entry_missing_required_fields(self) -> None:
         """Test entry creation with missing required fields."""
-        data: dict[str, object] = {"entry_type": "user"}
+        data: FlextTypes.Core.Dict = {"entry_type": "user"}
 
         result = FlextProcessors.create_entry(data)
 
@@ -704,7 +711,7 @@ class TestFlextProcessorsFactoryMethods:
 
     def test_create_entry_defaults_unknown_type(self) -> None:
         """Test entry creation defaults to unknown type."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "identifier": "test_user",
             "clean_content": "john_doe",
             "original_content": "John Doe",
@@ -762,7 +769,7 @@ class TestFlextProcessorsFactoryMethods:
     def test_create_entry_exception_handling(self) -> None:
         """Test entry creation exception handling."""
         # Test with data that might cause validation issues
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "entry_type": "user",
             "identifier": "test_user",
             "clean_content": "content",
@@ -814,7 +821,7 @@ class TestFlextProcessorsFactoryMethods:
 
         result = FlextProcessors.validate_configuration(config)
 
-        # Now accepts non-string keys since dict[str, object] allows this
+        # Now accepts non-string keys since FlextTypes.Core.Dict allows this
         assert result.success
         validated_config = result.unwrap()
         validated_config_obj = cast("dict[object, object]", validated_config)
@@ -1079,7 +1086,7 @@ class TestFlextProcessorsEdgeCases:
 
     def test_unicode_content(self) -> None:
         """Test processors with Unicode content."""
-        entry_data: dict[str, object] = {
+        entry_data: FlextTypes.Core.Dict = {
             "entry_type": "user",
             "identifier": "unicode_user",
             "clean_content": "josé_andré",
@@ -1098,7 +1105,7 @@ class TestFlextProcessorsEdgeCases:
         """Test entry with large metadata dictionary."""
         large_metadata = {f"key_{i}": f"value_{i}" for i in range(1000)}
 
-        entry_data: dict[str, object] = {
+        entry_data: FlextTypes.Core.Dict = {
             "entry_type": "data",
             "identifier": "large_data",
             "clean_content": "content",
@@ -1150,7 +1157,7 @@ class TestFlextProcessorsPerformance:
 
     def test_entry_creation_performance(self) -> None:
         """Test entry creation performance with many entries."""
-        entry_data: dict[str, object] = {
+        entry_data: FlextTypes.Core.Dict = {
             "entry_type": "user",
             "identifier": "perf_user",
             "clean_content": "performance_test",
@@ -1239,7 +1246,7 @@ class TestFlextProcessorsThreadSafety:
         def create_entries(thread_id: int) -> None:
             thread_results = []
             for i in range(100):
-                data: dict[str, object] = {
+                data: FlextTypes.Core.Dict = {
                     "entry_type": "user",
                     "identifier": f"thread{thread_id}_user{i}",
                     "clean_content": f"content_{i}",
@@ -1320,7 +1327,7 @@ class TestFlextProcessorsIntegration:
     def test_full_workflow_integration(self) -> None:
         """Test complete workflow integration."""
         # 1. Create entries
-        entry_data_list: list[dict[str, object]] = [
+        entry_data_list: list[FlextTypes.Core.Dict] = [
             {
                 "entry_type": "user",
                 "identifier": "user_alice",
@@ -1416,7 +1423,7 @@ class TestFlextProcessorsIntegration:
     def test_configuration_and_validation_integration(self) -> None:
         """Test configuration validation integrated with system configuration."""
         # Create custom configuration
-        custom_config: dict[str, object] = {
+        custom_config: FlextTypes.Core.Dict = {
             "enable_regex_caching": True,
             "max_processing_errors": 200,
             "custom_processors": ["regex", "base"],
@@ -1459,7 +1466,7 @@ class TestFlextProcessorsBenchmarks:
         # Create 10,000 entries
         entries = []
         for i in range(10000):
-            data: dict[str, object] = {
+            data: FlextTypes.Core.Dict = {
                 "entry_type": "user" if i % 2 == 0 else "group",
                 "identifier": f"entity_{i:05d}",
                 "clean_content": f"content_{i}",
@@ -1705,9 +1712,9 @@ class TestFlextProcessorsAdditionalCoverage:
             def process_data(
                 self,
                 entry: FlextProcessors.Entry,
-            ) -> FlextResult[dict[str, object]]:
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 _ = entry  # Explicitly mark as unused
-                return FlextResult[dict[str, object]].fail("Processing failed")
+                return FlextResult[FlextTypes.Core.Dict].fail("Processing failed")
 
         processor = FailingProcessor()
 
@@ -2083,7 +2090,7 @@ class TestFlextProcessorsAdditionalCoverage:
             FlextProcessors.BaseProcessor,
             "process_data",
         ) as mock_process:
-            mock_process.return_value = FlextResult[dict[str, object]].fail(
+            mock_process.return_value = FlextResult[FlextTypes.Core.Dict].fail(
                 "Base processing failed",
             )
 

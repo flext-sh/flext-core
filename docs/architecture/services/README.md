@@ -349,7 +349,7 @@ class BatchUserProcessor(
             return FlextResult[list[User]].fail("Batch size cannot exceed 100 users")
 
         processed_users: list[User] = []
-        errors: list[str] = []
+        errors: FlextTypes.Core.StringList = []
 
         # Process each user individually
         for i, request in enumerate(requests):
@@ -543,7 +543,7 @@ class OrderFulfillmentOrchestrator:
 
         return f"Compensation completed: {', '.join(compensation_actions)}"
 
-    def get_orchestration_metrics(self) -> dict[str, object]:
+    def get_orchestration_metrics(self) -> FlextTypes.Core.Dict:
         """Get comprehensive orchestration metrics."""
 
         metrics = {}
@@ -602,8 +602,8 @@ class EnterpriseServiceRegistry:
 
         # Service health monitoring
         self._health_check_interval = 30  # seconds
-        self._registered_services: dict[str, dict[str, object]] = {}
-        self._health_status: dict[str, dict[str, object]] = {}
+        self._registered_services: dict[str, FlextTypes.Core.Dict] = {}
+        self._health_status: dict[str, FlextTypes.Core.Dict] = {}
 
     def register_microservice(
         self,
@@ -657,7 +657,7 @@ class EnterpriseServiceRegistry:
     def discover_services_by_type(
         self,
         service_type: str
-    ) -> FlextResult[list[dict[str, object]]]:
+    ) -> FlextResult[list[FlextTypes.Core.Dict]]:
         """Discover services by type with health status."""
 
         matching_services = []
@@ -681,16 +681,16 @@ class EnterpriseServiceRegistry:
                 matching_services.append(service_entry)
 
         if not matching_services:
-            return FlextResult[list[dict[str, object]]].fail(
+            return FlextResult[list[FlextTypes.Core.Dict]].fail(
                 f"No services found for type: {service_type}"
             )
 
         # Sort by health score (healthiest first)
         matching_services.sort(key=lambda s: s["health_score"], reverse=True)
 
-        return FlextResult[list[dict[str, object]]].ok(matching_services)
+        return FlextResult[list[FlextTypes.Core.Dict]].ok(matching_services)
 
-    def perform_health_checks(self) -> FlextResult[dict[str, object]]:
+    def perform_health_checks(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Perform health checks on all registered services."""
 
         health_results = {}
@@ -746,23 +746,23 @@ class EnterpriseServiceRegistry:
             "services": health_results
         }
 
-        return FlextResult[dict[str, object]].ok(summary)
+        return FlextResult[FlextTypes.Core.Dict].ok(summary)
 
     def get_service_load_balancing_info(
         self,
         service_type: str
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Get service information for load balancing."""
 
         services_result = self.discover_services_by_type(service_type)
         if services_result.is_failure:
-            return FlextResult[dict[str, object]].fail(services_result.error)
+            return FlextResult[FlextTypes.Core.Dict].fail(services_result.error)
 
         services = services_result.value
         healthy_services = [s for s in services if s["health_status"] == "healthy"]
 
         if not healthy_services:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"No healthy services available for type: {service_type}"
             )
 
@@ -793,7 +793,7 @@ class EnterpriseServiceRegistry:
 
             load_balancing_info["services"].append(service_lb_info)
 
-        return FlextResult[dict[str, object]].ok(load_balancing_info)
+        return FlextResult[FlextTypes.Core.Dict].ok(load_balancing_info)
 
 # Service registry usage example
 class MicroserviceInfo:
@@ -803,8 +803,8 @@ class MicroserviceInfo:
         version: str,
         endpoint: str,
         service_type: str,
-        capabilities: list[str] | None = None,
-        tags: list[str] | None = None
+        capabilities: FlextTypes.Core.StringList | None = None,
+        tags: FlextTypes.Core.StringList | None = None
     ):
         self.name = name
         self.version = version
@@ -877,7 +877,7 @@ class ServicePerformanceMonitor:
         self.registry = FlextServices.ServiceRegistry()
 
         # Performance tracking storage
-        self._service_call_history: dict[str, list[dict[str, object]]] = {}
+        self._service_call_history: dict[str, list[FlextTypes.Core.Dict]] = {}
         self._performance_baselines: dict[str, dict[str, float]] = {}
         self._alert_thresholds: dict[str, dict[str, float]] = {}
 
@@ -886,7 +886,7 @@ class ServicePerformanceMonitor:
         service_name: str,
         operation_name: str,
         duration_ms: float,
-        metadata: dict[str, object] | None = None
+        metadata: FlextTypes.Core.Dict | None = None
     ) -> FlextResult[None]:
         """Track service performance with comprehensive metrics."""
 
@@ -931,7 +931,7 @@ class ServicePerformanceMonitor:
         self,
         service_name: str,
         time_window_hours: int = 24
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Generate comprehensive service performance report."""
 
         cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
@@ -974,7 +974,7 @@ class ServicePerformanceMonitor:
                     total_duration += sum(durations)
 
         if not service_operations:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"No performance data found for service {service_name} in the last {time_window_hours} hours"
             )
 
@@ -998,7 +998,7 @@ class ServicePerformanceMonitor:
             "recommendations": self._generate_performance_recommendations(service_name, service_operations)
         }
 
-        return FlextResult[dict[str, object]].ok(report)
+        return FlextResult[FlextTypes.Core.Dict].ok(report)
 
     def set_performance_alerts(
         self,
@@ -1018,7 +1018,7 @@ class ServicePerformanceMonitor:
 
         return FlextResult[None].ok(None)
 
-    def get_real_time_metrics(self, service_name: str) -> FlextResult[dict[str, object]]:
+    def get_real_time_metrics(self, service_name: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Get real-time metrics for a service."""
 
         # Get recent performance data (last 5 minutes)
@@ -1054,7 +1054,7 @@ class ServicePerformanceMonitor:
             "operations": recent_metrics
         }
 
-        return FlextResult[dict[str, object]].ok(real_time_summary)
+        return FlextResult[FlextTypes.Core.Dict].ok(real_time_summary)
 
 # Performance monitoring usage example
 monitor = ServicePerformanceMonitor()
@@ -1124,7 +1124,7 @@ class ServiceContractManager:
         self.registry = FlextServices.ServiceRegistry()
 
         # Contract storage and validation schemas
-        self._service_contracts: dict[str, dict[str, object]] = {}
+        self._service_contracts: dict[str, FlextTypes.Core.Dict] = {}
         self._validation_schemas: dict[str, dict[str, Callable]] = {}
 
     def register_service_contract(
@@ -1160,12 +1160,12 @@ class ServiceContractManager:
     def validate_service_input(
         self,
         service_name: str,
-        input_data: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        input_data: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate service input against registered contract."""
 
         if service_name not in self._validation_schemas:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"No contract registered for service: {service_name}"
             )
 
@@ -1175,7 +1175,7 @@ class ServiceContractManager:
         validation_result = self.validator.validate_input(input_data, input_validator)
 
         if validation_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Input validation failed for {service_name}: {validation_result.error}"
             )
 
@@ -1184,22 +1184,22 @@ class ServiceContractManager:
         business_validation = business_rules_validator(input_data)
 
         if business_validation.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Business rules validation failed for {service_name}: {business_validation.error}"
             )
 
-        return FlextResult[dict[str, object]].ok(input_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(input_data)
 
     def validate_service_output(
         self,
         service_name: str,
-        output_data: dict[str, object],
-        input_context: dict[str, object] | None = None
-    ) -> FlextResult[dict[str, object]]:
+        output_data: FlextTypes.Core.Dict,
+        input_context: FlextTypes.Core.Dict | None = None
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate service output against registered contract."""
 
         if service_name not in self._validation_schemas:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"No contract registered for service: {service_name}"
             )
 
@@ -1209,7 +1209,7 @@ class ServiceContractManager:
         validation_result = self.validator.validate_output(output_data, output_validator)
 
         if validation_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Output validation failed for {service_name}: {validation_result.error}"
             )
 
@@ -1221,13 +1221,13 @@ class ServiceContractManager:
             if context_validation.is_failure:
                 return context_validation
 
-        return FlextResult[dict[str, object]].ok(output_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(output_data)
 
     def validate_complete_service_interaction(
         self,
         service_name: str,
-        input_data: dict[str, object],
-        output_data: dict[str, object],
+        input_data: FlextTypes.Core.Dict,
+        output_data: FlextTypes.Core.Dict,
         performance_metrics: dict[str, float] | None = None
     ) -> FlextResult[ServiceInteractionValidation]:
         """Validate complete service interaction including SLA compliance."""
@@ -1266,9 +1266,9 @@ class ServiceContract:
     def __init__(
         self,
         version: str,
-        input_schema: dict[str, object],
-        output_schema: dict[str, object],
-        business_rules: list[dict[str, object]],
+        input_schema: FlextTypes.Core.Dict,
+        output_schema: FlextTypes.Core.Dict,
+        business_rules: list[FlextTypes.Core.Dict],
         sla_requirements: dict[str, float]
     ):
         self.version = version
@@ -1285,8 +1285,8 @@ class ServiceInteractionValidation:
         output_valid: bool,
         sla_compliant: bool,
         validation_timestamp: datetime,
-        input_data_summary: dict[str, object],
-        output_data_summary: dict[str, object],
+        input_data_summary: FlextTypes.Core.Dict,
+        output_data_summary: FlextTypes.Core.Dict,
         performance_summary: dict[str, float]
     ):
         self.service_name = service_name
@@ -1413,7 +1413,7 @@ else:
 
 ```python
 # Current: Excellent Template Method pattern usage
-class FlextLDAPServices(FlextServiceProcessor[dict[str, object], object, dict[str, object]]):
+class FlextLDAPServices(FlextServiceProcessor[FlextTypes.Core.Dict, object, FlextTypes.Core.Dict]):
     """Single FlextLDAPServices class inheriting from FlextServiceProcessor.
 
     Consolidates ALL LDAP services into a single class following FLEXT patterns.
@@ -1428,12 +1428,12 @@ class FlextLDAPServices(FlextServiceProcessor[dict[str, object], object, dict[st
         - Dependency Inversion: Depends on FlextServiceProcessor abstraction
     """
 
-    def process(self, request: dict[str, object]) -> FlextResult[object]:
+    def process(self, request: FlextTypes.Core.Dict) -> FlextResult[object]:
         """Process LDAP request using Template Method pattern."""
         # LDAP-specific processing logic
         pass
 
-    def build(self, domain: object, *, correlation_id: str) -> dict[str, object]:
+    def build(self, domain: object, *, correlation_id: str) -> FlextTypes.Core.Dict:
         """Build LDAP response using Template Method pattern."""
         # LDAP-specific result building
         pass
@@ -1949,7 +1949,7 @@ result = service.run_with_metrics("user_registration", request)
 class AIServiceOptimizer:
     def optimize_service_performance(
         self,
-        service_metrics: dict[str, object]
+        service_metrics: FlextTypes.Core.Dict
     ) -> FlextResult[ServiceOptimizationPlan]:
         """Generate AI-powered service optimization recommendations."""
         # AI analysis of service performance patterns
@@ -1957,7 +1957,7 @@ class AIServiceOptimizer:
 
     def predict_service_failures(
         self,
-        service_history: list[dict[str, object]]
+        service_history: list[FlextTypes.Core.Dict]
     ) -> FlextResult[list[ServiceFailurePrediction]]:
         """Predict potential service failures using AI analysis."""
         pass
@@ -1970,8 +1970,8 @@ class AIServiceOptimizer:
 class AdaptiveServiceOrchestrator:
     def execute_adaptive_workflow(
         self,
-        workflow_definition: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        workflow_definition: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute workflows that adapt based on runtime conditions."""
         pass
 

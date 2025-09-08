@@ -55,25 +55,25 @@ class FlextMeltanoGuards:
         return (obj.get("type") in ["RECORD", "SCHEMA", "STATE"] and
                 "stream" in obj)
 
-def process_singer_record(record: object) -> FlextResult[dict[str, object]]:
+def process_singer_record(record: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Process Singer record with type safety."""
 
     if not FlextMeltanoGuards.is_singer_record(record):
-        return FlextResult[dict[str, object]].fail("Invalid Singer record format")
+        return FlextResult[FlextTypes.Core.Dict].fail("Invalid Singer record format")
 
-    # record is now typed as dict[str, str] by static analyzers
-    return FlextResult[dict[str, object]].ok(record)
+    # record is now typed as FlextTypes.Core.Headers by static analyzers
+    return FlextResult[FlextTypes.Core.Dict].ok(record)
 ```
 
 ##### B. ETL Pipeline Validation
 
 ```python
-def validate_meltano_config(config: object) -> FlextResult[dict[str, object]]:
+def validate_meltano_config(config: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate Meltano configuration with comprehensive checks."""
 
     # Type guard validation
     if not FlextGuards.is_dict_of(config, object):
-        return FlextResult[dict[str, object]].fail("Config must be dictionary")
+        return FlextResult[FlextTypes.Core.Dict].fail("Config must be dictionary")
 
     # Required fields validation
     project_name = FlextGuards.ValidationUtils.require_not_none(
@@ -86,7 +86,7 @@ def validate_meltano_config(config: object) -> FlextResult[dict[str, object]]:
         "Version is required"
     )
 
-    return FlextResult[dict[str, object]].ok(config)
+    return FlextResult[FlextTypes.Core.Dict].ok(config)
 ```
 
 ##### C. Performance Optimization with Pure Functions
@@ -100,7 +100,7 @@ def validate_meltano_project_structure(project_path: str) -> bool:
     return all(Path(project_path, file).exists() for file in required_files)
 
 @FlextGuards.pure
-def discover_available_extractors(registry_url: str) -> list[dict[str, object]]:
+def discover_available_extractors(registry_url: str) -> list[FlextTypes.Core.Dict]:
     """Discover available extractors with automatic caching."""
     # HTTP request results cached for repeated calls
     response = requests.get(f"{registry_url}/extractors")
@@ -136,12 +136,12 @@ class FlextApiGuards:
 
         return all(field in obj for field in ["method", "url"])
 
-def validate_api_request(request_data: object) -> FlextResult[dict[str, object]]:
+def validate_api_request(request_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate API request with comprehensive checks."""
 
     # Type guard validation
     if not FlextApiGuards.is_http_request_valid(request_data):
-        return FlextResult[dict[str, object]].fail("Invalid HTTP request format")
+        return FlextResult[FlextTypes.Core.Dict].fail("Invalid HTTP request format")
 
     # Method validation
     method = FlextGuards.ValidationUtils.require_not_none(
@@ -151,7 +151,7 @@ def validate_api_request(request_data: object) -> FlextResult[dict[str, object]]
 
     valid_methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     if str(method).upper() not in valid_methods:
-        return FlextResult[dict[str, object]].fail(f"Invalid HTTP method: {method}")
+        return FlextResult[FlextTypes.Core.Dict].fail(f"Invalid HTTP method: {method}")
 
     # URL validation
     url = FlextGuards.ValidationUtils.require_non_empty(
@@ -159,7 +159,7 @@ def validate_api_request(request_data: object) -> FlextResult[dict[str, object]]
         "URL cannot be empty"
     )
 
-    return FlextResult[dict[str, object]].ok(request_data)
+    return FlextResult[FlextTypes.Core.Dict].ok(request_data)
 ```
 
 ##### B. Immutable Response Objects
@@ -169,7 +169,7 @@ def validate_api_request(request_data: object) -> FlextResult[dict[str, object]]
 class ApiResponse:
     """Immutable API response for data integrity."""
 
-    def __init__(self, status_code: int, body: dict[str, object], headers: dict[str, str]):
+    def __init__(self, status_code: int, body: FlextTypes.Core.Dict, headers: FlextTypes.Core.Headers):
         self.status_code = status_code
         self.body = body
         self.headers = headers
@@ -179,7 +179,7 @@ class ApiResponse:
 class ApiError:
     """Immutable API error representation."""
 
-    def __init__(self, error_code: str, message: str, details: dict[str, object] = None):
+    def __init__(self, error_code: str, message: str, details: FlextTypes.Core.Dict = None):
         self.error_code = error_code
         self.message = message
         self.details = details or {}
@@ -190,7 +190,7 @@ class ApiError:
 
 ```python
 @FlextGuards.pure
-def validate_api_schema(schema_definition: dict[str, object]) -> bool:
+def validate_api_schema(schema_definition: FlextTypes.Core.Dict) -> bool:
     """Validate API schema with caching for repeated schemas."""
     # Complex schema validation cached automatically
     return jsonschema.validate(schema_definition)
@@ -260,12 +260,12 @@ class FlextLDAPGuards:
 ##### B. Comprehensive LDAP Validation
 
 ```python
-def validate_ldap_search_params(search_params: object) -> FlextResult[dict[str, object]]:
+def validate_ldap_search_params(search_params: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate LDAP search parameters with comprehensive checks."""
 
     # Type safety validation
     if not FlextGuards.is_dict_of(search_params, object):
-        return FlextResult[dict[str, object]].fail("Search params must be dictionary")
+        return FlextResult[FlextTypes.Core.Dict].fail("Search params must be dictionary")
 
     # Required base DN
     base_dn = FlextGuards.ValidationUtils.require_not_none(
@@ -282,7 +282,7 @@ def validate_ldap_search_params(search_params: object) -> FlextResult[dict[str, 
     if "filter" in search_params:
         search_filter = search_params["filter"]
         if not FlextLDAPGuards.is_ldap_search_filter(search_filter):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 "Invalid LDAP search filter format"
             )
 
@@ -290,11 +290,11 @@ def validate_ldap_search_params(search_params: object) -> FlextResult[dict[str, 
     scope = search_params.get("scope", "sub")
     valid_scopes = ["base", "one", "sub"]
     if scope not in valid_scopes:
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Core.Dict].fail(
             f"Invalid LDAP scope '{scope}'. Valid scopes: {valid_scopes}"
         )
 
-    return FlextResult[dict[str, object]].ok(search_params)
+    return FlextResult[FlextTypes.Core.Dict].ok(search_params)
 ```
 
 ##### C. Immutable LDAP Objects
@@ -304,7 +304,7 @@ def validate_ldap_search_params(search_params: object) -> FlextResult[dict[str, 
 class LdapEntry:
     """Immutable LDAP entry for data integrity."""
 
-    def __init__(self, dn: str, attributes: dict[str, list[str]]):
+    def __init__(self, dn: str, attributes: dict[str, FlextTypes.Core.StringList]):
         self.dn = dn
         self.attributes = attributes
         self.retrieved_at = datetime.now()
@@ -360,12 +360,12 @@ class FlextOracleWmsGuards:
 
         return quantity >= 0 and quantity <= 1_000_000  # Max reasonable quantity
 
-def validate_warehouse_operation(operation_data: object) -> FlextResult[dict[str, object]]:
+def validate_warehouse_operation(operation_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate warehouse operation with business rules."""
 
     # Type guard validation
     if not FlextGuards.is_dict_of(operation_data, object):
-        return FlextResult[dict[str, object]].fail("Operation data must be dictionary")
+        return FlextResult[FlextTypes.Core.Dict].fail("Operation data must be dictionary")
 
     # Warehouse code validation
     warehouse_code = FlextGuards.ValidationUtils.require_not_none(
@@ -374,7 +374,7 @@ def validate_warehouse_operation(operation_data: object) -> FlextResult[dict[str
     )
 
     if not FlextOracleWmsGuards.is_warehouse_code_valid(warehouse_code):
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Core.Dict].fail(
             "Invalid warehouse code format (must be 3-10 uppercase alphanumeric)"
         )
 
@@ -386,7 +386,7 @@ def validate_warehouse_operation(operation_data: object) -> FlextResult[dict[str
 
     valid_operations = ["RECEIVE", "PICK", "PUT_AWAY", "SHIP", "COUNT"]
     if operation_type not in valid_operations:
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Core.Dict].fail(
             f"Invalid operation type '{operation_type}'. Valid types: {valid_operations}"
         )
 
@@ -398,9 +398,9 @@ def validate_warehouse_operation(operation_data: object) -> FlextResult[dict[str
         )
 
         if not FlextOracleWmsGuards.is_inventory_quantity_valid(quantity):
-            return FlextResult[dict[str, object]].fail("Invalid inventory quantity")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid inventory quantity")
 
-    return FlextResult[dict[str, object]].ok(operation_data)
+    return FlextResult[FlextTypes.Core.Dict].ok(operation_data)
 ```
 
 ##### B. Performance Optimization for WMS Calculations
@@ -421,7 +421,7 @@ def calculate_warehouse_utilization(warehouse_data: tuple[tuple[str, int], ...])
 
 @FlextGuards.pure
 def optimize_picking_route(warehouse_layout: tuple[tuple[str, tuple[int, int]], ...],
-                          pick_list: tuple[str, ...]) -> list[str]:
+                          pick_list: tuple[str, ...]) -> FlextTypes.Core.StringList:
     """Optimize picking route with caching for repeated layouts."""
     # Complex route optimization algorithm cached
     return calculate_optimal_route(warehouse_layout, pick_list)

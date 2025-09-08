@@ -2,6 +2,9 @@
 
 This module contains comprehensive tests for architectural patterns including
 Clean Architecture, DDD, CQRS, and enterprise design patterns.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
 
 class TestCleanArchitecturePatterns:
@@ -327,7 +331,7 @@ class TestCleanArchitecturePatterns:
                 query = request  # Type narrowing
 
                 # Simulate data retrieval
-                user_data: dict[str, object] = {
+                user_data: FlextTypes.Core.Dict = {
                     "id": query.user_id,
                     "name": "John Doe",
                     "email": "john@example.com",
@@ -362,23 +366,25 @@ class TestEnterprisePatterns:
             """Factory for creating different types of services."""
 
             @staticmethod
-            def create_service(service_type: str) -> FlextResult[dict[str, str]]:
+            def create_service(
+                service_type: str,
+            ) -> FlextResult[FlextTypes.Core.Headers]:
                 """Create service based on type."""
                 if service_type == "email":
-                    return FlextResult[dict[str, str]].ok(
+                    return FlextResult[FlextTypes.Core.Headers].ok(
                         {
                             "type": "email",
                             "provider": "smtp",
                         },
                     )
                 if service_type == "sms":
-                    return FlextResult[dict[str, str]].ok(
+                    return FlextResult[FlextTypes.Core.Headers].ok(
                         {
                             "type": "sms",
                             "provider": "twilio",
                         },
                     )
-                return FlextResult[dict[str, str]].fail(
+                return FlextResult[FlextTypes.Core.Headers].fail(
                     f"Unknown service type: {service_type}",
                 )
 
@@ -405,7 +411,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize builder."""
-                self._config: dict[str, object] = {}
+                self._config: FlextTypes.Core.Dict = {}
 
             def with_database(self, host: str, port: int) -> ConfigurationBuilder:
                 """Add database configuration."""
@@ -422,14 +428,14 @@ class TestEnterprisePatterns:
                 self._config["cache"] = {"enabled": enabled}
                 return self
 
-            def build(self) -> FlextResult[dict[str, object]]:
+            def build(self) -> FlextResult[FlextTypes.Core.Dict]:
                 """Build the configuration."""
                 if not self._config:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         "Configuration cannot be empty",
                     )
 
-                return FlextResult[dict[str, object]].ok(self._config.copy())
+                return FlextResult[FlextTypes.Core.Dict].ok(self._config.copy())
 
         # Test builder usage
         config_result = (
@@ -443,12 +449,12 @@ class TestEnterprisePatterns:
         assert config_result.success
         config = config_result.value
         assert isinstance(config, dict)
-        config_dict = config  # Already dict[str, object] from assertion
-        database_dict = cast("dict[str, object]", config_dict["database"])
+        config_dict = config  # Already FlextTypes.Core.Dict from assertion
+        database_dict = cast("FlextTypes.Core.Dict", config_dict["database"])
         assert database_dict["host"] == "localhost"
-        logging_dict = cast("dict[str, object]", config_dict["logging"])
+        logging_dict = cast("FlextTypes.Core.Dict", config_dict["logging"])
         assert logging_dict["level"] == "INFO"
-        cache_dict = cast("dict[str, object]", config_dict["cache"])
+        cache_dict = cast("FlextTypes.Core.Dict", config_dict["cache"])
         assert cache_dict["enabled"]
 
     @pytest.mark.architecture
@@ -461,7 +467,7 @@ class TestEnterprisePatterns:
 
             def __init__(self) -> None:
                 """Initialize repository."""
-                self._data: dict[str, object] = {}
+                self._data: FlextTypes.Core.Dict = {}
                 self._query_count = 0
 
             def save(self, entity_id: str, data: object) -> FlextResult[None]:
@@ -498,7 +504,7 @@ class TestEnterprisePatterns:
         for i in range(100):
             query_result: FlextResult[object] = repo.find_by_id(f"entity_{i}")
             assert query_result.success
-            entity_data = cast("dict[str, object]", query_result.value)
+            entity_data = cast("FlextTypes.Core.Dict", query_result.value)
             assert entity_data["id"] == i
 
         query_duration = time.time() - start_time
@@ -588,15 +594,15 @@ class TestEventDrivenPatterns:
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
         # Simple observer pattern test
-        observers: list[dict[str, object]] = []
+        observers: list[FlextTypes.Core.Dict] = []
 
         def notify_all(state: str) -> None:
             for observer in observers:
                 observer["state"] = state
 
         # Create observers
-        obs1: dict[str, object] = {"name": "Observer1", "state": None}
-        obs2: dict[str, object] = {"name": "Observer2", "state": None}
+        obs1: FlextTypes.Core.Dict = {"name": "Observer1", "state": None}
+        obs2: FlextTypes.Core.Dict = {"name": "Observer2", "state": None}
         observers.extend([obs1, obs2])
 
         # Test notifications

@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 import uuid
 import re
-
+from flext_core import FlextTypes
 import json
 from typing import Protocol, TypeVar, TYPE_CHECKING
 
@@ -21,14 +21,9 @@ from flext_core import (
     FlextResult,
     FlextValidations,
 )
+from shared_example_strategies import ExamplePatternFactory
 
 T = TypeVar("T")
-
-# For static type checkers, use a package-relative import that mypy can resolve
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .shared_example_strategies import (
-        ExamplePatternFactory as _ExamplePatternFactory,
-    )
 
 
 class HasError(Protocol):
@@ -134,14 +129,14 @@ class EnterpriseValidation:
             return FlextResult[str].fail("Invalid UUID format")
 
     @staticmethod
-    def validate_json(json_str: str) -> FlextResult[dict[str, object]]:
+    def validate_json(json_str: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate JSON using native FlextValidations validator."""
         # Simple JSON validation (since is_json doesn't exist)
         try:
             parsed = json.loads(json_str)
-            return FlextResult[dict[str, object]].ok(parsed)
+            return FlextResult[FlextTypes.Core.Dict].ok(parsed)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Invalid JSON format: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Invalid JSON format: {e}")
 
     @staticmethod
     def validate_phone(phone: str) -> FlextResult[str]:
@@ -186,8 +181,8 @@ class EnterpriseFormValidator:
 
     @staticmethod
     def validate_user_registration(
-        data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate complete user registration using FlextCore validators."""
         # Extract and type-safe conversion
         name = str(data.get("name", ""))
@@ -212,18 +207,18 @@ class EnterpriseFormValidator:
             }
 
             # Return validated data dictionary instead of Entity
-            return FlextResult[dict[str, object]].ok(entity_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(entity_data)
 
         # Aggregate validation errors using FlextCore patterns
         errors = _aggregate_validation_errors([name_result, email_result, age_result])
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Core.Dict].fail(
             f"User registration validation failed: {errors}",
         )
 
     @staticmethod
     def validate_product_data(
-        data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
+        data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate product data using FlextGuards and FlextUtilities."""
         name = str(data.get("name", ""))
         price_obj = data.get("price", 0)
@@ -272,7 +267,7 @@ class EnterpriseFormValidator:
             }
 
             # Return validated data dictionary instead of Entity
-            return FlextResult[dict[str, object]].ok(entity_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(entity_data)
 
         errors = _aggregate_validation_errors(
             [
@@ -281,7 +276,7 @@ class EnterpriseFormValidator:
                 category_result,
             ],
         )
-        return FlextResult[dict[str, object]].fail(
+        return FlextResult[FlextTypes.Core.Dict].fail(
             f"Product validation failed: {errors}",
         )
 
@@ -321,7 +316,7 @@ class BusinessRuleValidator:
     """
 
     @staticmethod
-    def validate_user_eligibility(user_data: dict[str, object]) -> FlextResult[bool]:
+    def validate_user_eligibility(user_data: FlextTypes.Core.Dict) -> FlextResult[bool]:
         """Validate user eligibility using business rules and FlextCore validation."""
         age_obj = user_data.get("age", 0)
         age = int(age_obj) if isinstance(age_obj, (int, str)) else 0
@@ -343,7 +338,7 @@ class BusinessRuleValidator:
 
     @staticmethod
     def validate_order_business_rules(
-        order_data: dict[str, object],
+        order_data: FlextTypes.Core.Dict,
     ) -> FlextResult[bool]:
         """Validate order against business rules using FlextGuards."""
         total_obj = order_data.get("total", 0)
@@ -482,7 +477,7 @@ def demonstrate_business_rules() -> None:
     print()
 
     # Order validation tests
-    orders: list[dict[str, object]] = [
+    orders: list[FlextTypes.Core.Dict] = [
         {"total": 150.00, "item_count": 5},
         {"total": 15000.00, "item_count": 10},  # Too expensive
         {"total": 50.00, "item_count": 0},  # No items
@@ -497,11 +492,6 @@ def demonstrate_business_rules() -> None:
 
 
 if __name__ == "__main__":
-    # Use Strategy Pattern to eliminate code duplication in examples
-    # Runtime import from sibling module (works when running this file directly)
-    # Add type ignore so mypy doesn't flag it when analyzing without this path on sys.path
-    from shared_example_strategies import ExamplePatternFactory
-
     print("FlextCore Advanced Validation System")
     print("====================================")
 

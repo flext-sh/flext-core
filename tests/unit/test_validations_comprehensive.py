@@ -1,10 +1,7 @@
 """Comprehensive test coverage for FlextValidations validation framework.
 
-This module provides complete test coverage for validations.py following FLEXT patterns:
-- Single TestFlextValidationsComprehensive class per module
-- Real tests without mocks, testing actual business validation behavior
-- Coverage of all FlextValidations nested classes and validation patterns
-- Railway-oriented validation patterns with FlextResult integration
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -16,6 +13,7 @@ from typing import Literal, cast
 from pydantic import BaseModel
 
 from flext_core import FlextResult, FlextValidations
+from flext_core.typings import FlextTypes
 
 
 class TestUser(BaseModel):
@@ -32,8 +30,8 @@ class TestApiRequest(BaseModel):
 
     endpoint: str
     method: str
-    payload: dict[str, object]
-    headers: dict[str, str] = {}
+    payload: FlextTypes.Core.Dict
+    headers: FlextTypes.Core.Headers = {}
 
 
 class TestFlextValidationsComprehensive:
@@ -200,7 +198,7 @@ class TestFlextValidationsComprehensive:
     def test_create_schema_validator(self) -> None:
         """Test create_schema_validator factory method."""
         # Create a simple schema
-        user_schema: dict[str, object] = {
+        user_schema: FlextTypes.Core.Dict = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
@@ -243,7 +241,7 @@ class TestFlextValidationsComprehensive:
     def test_validate_user_data_method(self) -> None:
         """Test validate_user_data method."""
         # Test valid user data
-        user_data: dict[str, object] = {
+        user_data: FlextTypes.Core.Dict = {
             "name": "John Doe",
             "email": "john@example.com",
             "age": 30,
@@ -253,14 +251,14 @@ class TestFlextValidationsComprehensive:
         assert isinstance(result, FlextResult)
 
         # Test invalid user data (missing required fields)
-        invalid_data: dict[str, object] = {"name": "John"}
+        invalid_data: FlextTypes.Core.Dict = {"name": "John"}
         result = FlextValidations.validate_user_data(invalid_data)
         assert isinstance(result, FlextResult)
 
     def test_validate_api_request_method(self) -> None:
         """Test validate_api_request method."""
         # Test valid API request
-        request_data: dict[str, object] = {
+        request_data: FlextTypes.Core.Dict = {
             "endpoint": "/api/users",
             "method": "GET",
             "payload": {"limit": 10},
@@ -272,14 +270,14 @@ class TestFlextValidationsComprehensive:
     def test_validate_with_schema_method(self) -> None:
         """Test validate_with_schema method."""
         # Create a simple schema
-        schema: dict[str, object] = {
+        schema: FlextTypes.Core.Dict = {
             "type": "object",
             "properties": {"name": {"type": "string"}, "age": {"type": "integer"}},
             "required": ["name"],
         }
 
         # Test valid data
-        valid_data: dict[str, object] = {"name": "John", "age": 30}
+        valid_data: FlextTypes.Core.Dict = {"name": "John", "age": 30}
         result = FlextValidations.validate_with_schema(
             valid_data,
             cast("dict[str, Callable[[object], FlextResult[object]]]", schema),
@@ -287,7 +285,7 @@ class TestFlextValidationsComprehensive:
         assert isinstance(result, FlextResult)
 
         # Test invalid data
-        invalid_data: dict[str, object] = {"age": 30}  # missing required name
+        invalid_data: FlextTypes.Core.Dict = {"age": 30}  # missing required name
         result = FlextValidations.validate_with_schema(
             invalid_data,
             cast("dict[str, Callable[[object], FlextResult[object]]]", schema),
@@ -298,7 +296,7 @@ class TestFlextValidationsComprehensive:
     def test_configure_validation_system(self) -> None:
         """Test configure_validation_system method."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "strict_mode": True,
             "cache_enabled": True,
@@ -343,7 +341,8 @@ class TestFlextValidationsComprehensive:
         # Test different performance levels
         for level in ["low", "medium", "high", "ultra"]:
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str,
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"performance_level": level}
             result = FlextValidations.optimize_validation_performance(config)
             assert isinstance(result, FlextResult)
@@ -384,7 +383,7 @@ class TestFlextValidationsComprehensive:
         # This tests the rules indirectly through other validation methods
 
         # Test list data in user validation
-        user_data_with_list: dict[str, object] = {
+        user_data_with_list: FlextTypes.Core.Dict = {
             "name": "John",
             "email": "john@example.com",
             "tags": ["admin", "developer"],
@@ -397,7 +396,7 @@ class TestFlextValidationsComprehensive:
     def test_schema_validator_advanced_patterns(self) -> None:
         """Test Advanced.SchemaValidator complex schema patterns."""
         # Complex nested schema
-        complex_schema: dict[str, object] = {
+        complex_schema: FlextTypes.Core.Dict = {
             "type": "object",
             "properties": {
                 "user": {
@@ -425,7 +424,7 @@ class TestFlextValidationsComprehensive:
         assert hasattr(schema_validator, "validate")
 
         # Test complex valid data
-        complex_data: dict[str, object] = {
+        complex_data: FlextTypes.Core.Dict = {
             "user": {
                 "profile": {
                     "name": "John Doe",
@@ -499,13 +498,13 @@ class TestFlextValidationsComprehensive:
             pass
 
         # Test empty values
-        empty_result: FlextResult[dict[str, object]] = (
+        empty_result: FlextResult[FlextTypes.Core.Dict] = (
             FlextValidations.validate_user_data({})
         )
         assert isinstance(empty_result, FlextResult)
 
         # Test malformed data
-        malformed_result: FlextResult[dict[str, object]] = (
+        malformed_result: FlextResult[FlextTypes.Core.Dict] = (
             FlextValidations.validate_api_request({})
         )  # Use empty dict instead of string
         assert isinstance(malformed_result, FlextResult)
@@ -518,7 +517,7 @@ class TestFlextValidationsComprehensive:
 
         # Test invalid configuration
         invalid_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {"invalid_key": "invalid_value"}
         result = FlextValidations.configure_validation_system(invalid_config)
         assert isinstance(result, FlextResult)
@@ -554,7 +553,8 @@ class TestFlextValidationsComprehensive:
 
         for level in performance_levels:
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str,
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"performance_level": level}
             result = FlextValidations.optimize_validation_performance(config)
             assert isinstance(result, FlextResult)
@@ -596,7 +596,7 @@ class TestFlextValidationsComprehensive:
 
         # 1. Configure system
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "strict_mode": True,
             "performance_level": "high",
@@ -607,7 +607,7 @@ class TestFlextValidationsComprehensive:
 
         # 2. Optimize performance
         perf_config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {"performance_level": "high"}
         perf_result = FlextValidations.optimize_validation_performance(perf_config)
         assert isinstance(perf_result, FlextResult)
@@ -644,10 +644,10 @@ class TestFlextValidationsComprehensive:
         assert isinstance(result, FlextResult)
 
         # Test complex nested validation
-        deeply_nested_data: dict[str, object] = {
+        deeply_nested_data: FlextTypes.Core.Dict = {
             "level1": {"level2": {"level3": {"level4": {"value": "deep"}}}},
         }
-        nested_result: FlextResult[dict[str, object]] = (
+        nested_result: FlextResult[FlextTypes.Core.Dict] = (
             FlextValidations.validate_user_data(deeply_nested_data)
         )
         assert isinstance(nested_result, FlextResult)
@@ -679,9 +679,18 @@ class TestFlextValidationsComprehensive:
         # Test system config doesn't leak memory
         for i in range(50):
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str,
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"test_config": f"value_{i}"}
             config_result: FlextResult[
-                dict[str, str | int | float | bool | list[object] | dict[str, object]]
+                dict[
+                    str,
+                    str
+                    | int
+                    | float
+                    | bool
+                    | FlextTypes.Core.List
+                    | FlextTypes.Core.Dict,
+                ]
             ] = FlextValidations.configure_validation_system(config)
             assert isinstance(config_result, FlextResult)

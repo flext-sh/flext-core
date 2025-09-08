@@ -1,10 +1,7 @@
 """Comprehensive test coverage for FlextTypeAdapters type conversion system.
 
-This module provides complete test coverage for type_adapters.py following FLEXT patterns:
-- Single TestFlextTypeAdaptersCoverage class per module
-- Real tests without mocks, testing actual behavior
-- Coverage of all FlextTypeAdapters methods and patterns
-- Type conversion and validation patterns validation
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,6 +12,7 @@ from typing import cast
 from pydantic import BaseModel, TypeAdapter
 
 from flext_core import FlextResult, FlextTypeAdapters
+from flext_core.typings import FlextTypes
 
 
 class TestUser(BaseModel):
@@ -351,7 +349,7 @@ class TestFlextTypeAdaptersCoverage:
 
         # Test with None
         result = FlextTypeAdapters.Application.deserialize_from_dict(
-            cast("dict[str, object]", None),
+            cast("FlextTypes.Core.Dict", None),
             TestUser,
             cast("TypeAdapter[object]", adapter),
         )
@@ -376,7 +374,7 @@ class TestFlextTypeAdaptersCoverage:
         assert result.success is True
         schema = result.value
         assert "properties" in schema
-        props = cast("dict[str, object]", schema["properties"])
+        props = cast("FlextTypes.Core.Dict", schema["properties"])
         assert "name" in props
         assert "age" in props
 
@@ -437,7 +435,7 @@ class TestFlextTypeAdaptersCoverage:
         if dict_result.success:
             d = dict_result.value
             assert d["id"] == "order_123"
-            u = cast("dict[str, object]", d["user"])
+            u = cast("FlextTypes.Core.Dict", d["user"])
             assert u["name"] == "John"
 
     def test_error_handling_and_recovery_patterns(self) -> None:

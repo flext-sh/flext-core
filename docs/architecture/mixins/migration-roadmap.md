@@ -429,7 +429,7 @@ class FlextMixinsMigrationTools:
     """Tools for behavioral pattern migration and validation."""
 
     @staticmethod
-    def analyze_service_behavioral_patterns(service_path: str) -> dict[str, list[str]]:
+    def analyze_service_behavioral_patterns(service_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze service for behavioral pattern migration opportunities."""
         return {
             "custom_logging": ["manual_logger_setup", "custom_log_methods"],
@@ -440,7 +440,7 @@ class FlextMixinsMigrationTools:
         }
 
     @staticmethod
-    def generate_mixin_integration_template(service_name: str, patterns: list[str]) -> str:
+    def generate_mixin_integration_template(service_name: str, patterns: FlextTypes.Core.StringList) -> str:
         """Generate behavioral pattern integration template."""
         if "complete" in patterns:
             base_class = "FlextMixins.Entity"
@@ -485,7 +485,7 @@ class BehavioralPatternMigrationTools:
     """Automated tools for behavioral pattern migration."""
 
     @staticmethod
-    def detect_duplicate_behavioral_code(codebase_paths: list) -> dict[str, list[str]]:
+    def detect_duplicate_behavioral_code(codebase_paths: list) -> dict[str, FlextTypes.Core.StringList]:
         """Detect duplicate behavioral implementations across services."""
         return {
             "duplicate_logging": ["service_a.logger_setup", "service_b.logger_setup"],
@@ -495,7 +495,7 @@ class BehavioralPatternMigrationTools:
         }
 
     @staticmethod
-    def generate_migration_checklist(library_name: str) -> dict[str, list[str]]:
+    def generate_migration_checklist(library_name: str) -> dict[str, FlextTypes.Core.StringList]:
         """Generate migration checklist for specific library."""
         return {
             "pre_migration": [

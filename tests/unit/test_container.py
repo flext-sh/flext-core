@@ -1,4 +1,8 @@
-"""Comprehensive test suite for FlextContainer with 100% coverage."""
+"""Comprehensive test suite for FlextContainer with 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -14,8 +18,9 @@ import pytest
 from hypothesis import assume, given, strategies as st
 from pydantic import Field
 
-from flext_core import FlextContainer, FlextResult, FlextTypes
+from flext_core import FlextContainer, FlextResult
 from flext_core.models import FlextModels
+from flext_core.typings import FlextTypes
 from flext_tests import (
     AsyncTestUtils,
     FlextMatchers,
@@ -59,7 +64,7 @@ class ContainerTestModels:
         host: str = Field(default="localhost")
         timeout: float = Field(default=30.0, gt=0)
         retries: int = Field(default=3, ge=0)
-        metadata: dict[str, object] = Field(default_factory=dict)
+        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
 
         class Config:
             """Pydantic config for validation."""
@@ -90,7 +95,7 @@ class ContainerTestModels:
             pattern=r"^(active|inactive|maintenance)$",
         )
 
-        def get_connection_info(self) -> dict[str, object]:
+        def get_connection_info(self) -> FlextTypes.Core.Dict:
             """Get connection information."""
             return {
                 "service": f"{self.config.host}:{self.config.port}",
@@ -166,7 +171,7 @@ class TestFlextContainerCore:
         container = TestBuilders.container().build()
 
         # Test simple factory
-        def create_user() -> dict[str, object]:
+        def create_user() -> FlextTypes.Core.Dict:
             return UserDataFactory.create(name="Factory User", age=30)
 
         factory_result = container.register_factory("user_factory", create_user)
@@ -175,7 +180,7 @@ class TestFlextContainerCore:
         # Test factory execution
         get_result = container.get("user_factory")
         FlextMatchers.assert_result_success(get_result)
-        user_data = cast("dict[str, object]", get_result.value)
+        user_data = cast("FlextTypes.Core.Dict", get_result.value)
         assert user_data["name"] == "Factory User"
         assert user_data["age"] == 30
 
@@ -246,7 +251,7 @@ class TestFlextContainerAdvanced:
         container = TestBuilders.container().build()
 
         # Create batch of services using different factories
-        services_batch: dict[str, object] = {}
+        services_batch: FlextTypes.Core.Dict = {}
 
         # Add regular services
         for i in range(5):
@@ -305,7 +310,7 @@ class TestFlextContainerAdvanced:
         assert second_register.is_success or second_register.is_failure
 
         # Test factory that raises exception
-        def failing_factory() -> dict[str, object]:
+        def failing_factory() -> FlextTypes.Core.Dict:
             error_msg = "Factory intentionally failed"
             raise ValueError(error_msg)
 
@@ -331,7 +336,7 @@ class TestFlextContainerAdvanced:
         container = TestBuilders.container().build()
 
         # Register async factory
-        async def async_service_factory() -> dict[str, object]:
+        async def async_service_factory() -> FlextTypes.Core.Dict:
             await AsyncTestUtils.simulate_delay(0.001)
             return ServiceDataFactory.create(name="async_service", port=8080)
 
@@ -586,7 +591,7 @@ class TestFlextContainerIntegration:
                 max_size=10,
             ),
         )
-        def test_various_service_types(services_dict: dict[str, object]) -> None:
+        def test_various_service_types(services_dict: FlextTypes.Core.Dict) -> None:
             # Filter out keys that might cause issues
             clean_services = {
                 key.strip(): value
@@ -619,7 +624,7 @@ class TestFlextContainerAdvancedCoverage:
         # Test configure_container with config dict
         config_dict: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "max_services": 100,
             "allow_overrides": True,
@@ -720,7 +725,7 @@ class TestFlextContainerAdvancedCoverage:
         container = TestBuilders.container().build()
 
         # Test get_or_create with new service
-        def create_new_service() -> dict[str, object]:
+        def create_new_service() -> FlextTypes.Core.Dict:
             return {"type": "created", "timestamp": time.time()}
 
         get_or_create_result = container.get_or_create(
@@ -775,7 +780,7 @@ class TestFlextContainerAdvancedCoverage:
         container.register("app_config", {"environment": "test", "debug": True})
 
         # Register complex factory with dependencies
-        def create_complex_service() -> dict[str, object]:
+        def create_complex_service() -> FlextTypes.Core.Dict:
             # Factory can access container services (simplified for testing)
             return {
                 "type": "complex_service",
@@ -872,7 +877,7 @@ class TestFlextContainerAdvancedCoverage:
         # Test with MemoryProfiler from flext_tests
         with MemoryProfiler.track_memory_leaks(max_increase_mb=10.0):
             # Register many services to test memory efficiency
-            services_batch: dict[str, object] = {}
+            services_batch: FlextTypes.Core.Dict = {}
             for i in range(100):
                 service_name = f"performance_service_{i}"
                 service_data: object = {
@@ -987,7 +992,7 @@ class TestFlextContainerAdvancedCoverage:
         assert register_cmd.correlation_id
 
         # Test RegisterFactory command
-        def test_factory() -> dict[str, object]:
+        def test_factory() -> FlextTypes.Core.Dict:
             return {"created": True}
 
         factory_cmd = FlextContainer.Commands.RegisterFactory.create(
@@ -1053,7 +1058,7 @@ class TestFlextContainerAdvancedCoverage:
         assert registrar.has_service("test_service") is True
 
         # Test factory registration
-        def test_factory() -> dict[str, object]:
+        def test_factory() -> FlextTypes.Core.Dict:
             return {"factory": True}
 
         factory_result = registrar.register_factory("factory_service", test_factory)
@@ -1085,7 +1090,7 @@ class TestFlextContainerAdvancedCoverage:
         service_data = ServiceDataFactory.create(name="retriever_test", port=4000)
         container.register("test_service", service_data)
 
-        def factory_service() -> dict[str, object]:
+        def factory_service() -> FlextTypes.Core.Dict:
             return {"from_factory": True}
 
         container.register_factory("factory_service", factory_service)
@@ -1240,7 +1245,7 @@ class TestFlextContainerAdvancedCoverage:
         # Test comprehensive configuration
         comprehensive_config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "environment": "production",
             "log_level": "DEBUG",
@@ -1258,7 +1263,7 @@ class TestFlextContainerAdvancedCoverage:
         # Test get container config
         get_config_result = container.get_container_config()
         FlextMatchers.assert_result_success(get_config_result)
-        config = cast("dict[str, object]", get_config_result.value)
+        config = cast("FlextTypes.Core.Dict", get_config_result.value)
         assert config["environment"] == "production"
         assert config["max_services"] == 500
 
@@ -1269,7 +1274,7 @@ class TestFlextContainerAdvancedCoverage:
 
         scoped_config_result = scoped_container.get_container_config()
         FlextMatchers.assert_result_success(scoped_config_result)
-        scoped_config = cast("dict[str, object]", scoped_config_result.value)
+        scoped_config = cast("FlextTypes.Core.Dict", scoped_config_result.value)
         assert scoped_config["environment"] == "test"
 
         # Test configuration summary
@@ -1282,7 +1287,10 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test invalid configuration values
         invalid_configs: list[
-            dict[str, str | int | float | bool | list[object] | dict[str, object]]
+            dict[
+                str,
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
+            ]
         ] = [
             {"environment": "invalid_env"},
             {"log_level": "INVALID_LEVEL"},
@@ -1357,7 +1365,7 @@ class TestFlextContainerAdvancedCoverage:
         FlextMatchers.assert_result_success(reg_result)
 
         # Test factory registration through registrar directly
-        def internal_factory() -> dict[str, str]:
+        def internal_factory() -> FlextTypes.Core.Headers:
             return {"internal_factory": "created"}
 
         factory_result = registrar.register_factory(

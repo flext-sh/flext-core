@@ -1,6 +1,10 @@
 """Comprehensive tests for flext_tests.utilities module to achieve 100% coverage.
 
 Real functional tests using the actual flext_tests library without mocks.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -8,6 +12,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 from flext_tests.utilities import (
     FlextTestAssertion,
     FlextTestFactory,
@@ -58,7 +63,7 @@ class TestFlextTestFactory:
         """Test batch creation with variations."""
         factory = FlextTestFactory[FlextTestModel](FlextTestModel)
 
-        variations: list[dict[str, object]] = [
+        variations: list[FlextTypes.Core.Dict] = [
             {"name": "test1"},
             {"name": "test2"},
             {"name": "test3"},

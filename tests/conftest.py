@@ -2,6 +2,9 @@
 
 Provides centralized fixtures, test utilities, and configuration for all flext-core tests
 using the consolidated tests/support/ infrastructure for maximum testing efficiency.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextContainer, FlextCore
+from flext_core.typings import FlextTypes
 from flext_tests import (
     APITestClient,
     AsyncTestUtils,
@@ -41,7 +45,7 @@ from flext_tests import (
 
 # Core Fixtures
 @pytest.fixture
-def test_scenario() -> dict[str, str]:
+def test_scenario() -> FlextTypes.Core.Headers:
     """Basic test scenario fixture."""
     return {"status": "test", "environment": "test"}
 
@@ -64,7 +68,7 @@ def clean_container() -> Generator[FlextContainer]:
 
 
 @pytest.fixture
-def sample_data() -> dict[str, object]:
+def sample_data() -> FlextTypes.Core.Dict:
     """Provide deterministic sample data for tests.
 
     Enterprise-grade test data factory providing consistent, typed sample data
@@ -88,7 +92,7 @@ def sample_data() -> dict[str, object]:
 
 
 @pytest.fixture
-def test_user_data() -> dict[str, str | int | bool | list[str] | None]:
+def test_user_data() -> dict[str, str | int | bool | FlextTypes.Core.StringList | None]:
     """Provide consistent user data for domain testing.
 
     User data factory aligned with shared domain patterns
@@ -194,7 +198,7 @@ def performance_threshold() -> dict[str, float]:
 
 
 @pytest.fixture
-def benchmark_data() -> dict[str, object]:
+def benchmark_data() -> FlextTypes.Core.Dict:
     """Provide standardized data for performance testing.
 
     Benchmark data factory for testing performance characteristics
@@ -261,6 +265,7 @@ def payload_factory() -> type[PayloadDataFactory]:
 # -----------------------------------------------------------------------------
 # Test isolation for FlextCore singleton state
 # -----------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _isolate_flext_core_state() -> None:

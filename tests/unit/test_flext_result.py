@@ -1,4 +1,8 @@
-"""Comprehensive tests for FlextResult using all test infrastructure."""
+"""Comprehensive tests for FlextResult using all test infrastructure.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,6 +15,7 @@ from unittest.mock import Mock
 import pytest
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 from flext_tests import (
     BenchmarkFixture,
     FlextResultFactory,
@@ -114,12 +119,12 @@ class TestFlextResultComprehensive:
         assert int_result.value == 42
 
         # List result
-        list_result = FlextResult[list[str]].ok(["a", "b", "c"])
+        list_result = FlextResult[FlextTypes.Core.StringList].ok(["a", "b", "c"])
         assert list_result.success
         assert list_result.value == ["a", "b", "c"]
 
         # Dict result
-        dict_result = FlextResult[dict[str, object]].ok({"key": "value"})
+        dict_result = FlextResult[FlextTypes.Core.Dict].ok({"key": "value"})
         assert dict_result.success
         assert dict_result.value == {"key": "value"}
 
@@ -199,10 +204,12 @@ class TestFlextResultComprehensive:
         large_data = {f"key_{i}": f"value_{i}" for i in range(10000)}
 
         # Benchmark result creation
-        def create_large_result() -> FlextResult[dict[str, str]]:
-            return FlextResult[dict[str, str]].ok(large_data)
+        def create_large_result() -> FlextResult[FlextTypes.Core.Headers]:
+            return FlextResult[FlextTypes.Core.Headers].ok(large_data)
 
-        result = cast("FlextResult[dict[str, str]]", benchmark(create_large_result))
+        result = cast(
+            "FlextResult[FlextTypes.Core.Headers]", benchmark(create_large_result)
+        )
 
         assert result.success
         assert len(result.value) == 10000
@@ -219,16 +226,16 @@ class TestFlextResultComprehensive:
         assert result_with_mock.value.name == "test_mock"
 
         # Test with nested complex data
-        complex_data: dict[str, object] = {
+        complex_data: FlextTypes.Core.Dict = {
             "nested": {"level": 2, "data": [1, 2, 3]},
             "timestamp": "2024-01-01T00:00:00Z",
             "metadata": {"source": "test", "version": 1.0},
         }
 
-        complex_result = FlextResult[dict[str, object]].ok(complex_data)
+        complex_result = FlextResult[FlextTypes.Core.Dict].ok(complex_data)
         assert complex_result.success
         nested = complex_result.value
-        assert cast("dict[str, object]", nested["nested"])["level"] == 2
+        assert cast("FlextTypes.Core.Dict", nested["nested"])["level"] == 2
 
     def test_result_chaining_patterns(self) -> None:
         """Test FlextResult chaining and composition patterns."""
@@ -267,14 +274,16 @@ class TestFlextResultComprehensive:
     def test_result_with_test_utilities_validation(self) -> None:
         """Test FlextResult integration with TestUtilities."""
         # Create test result
-        result = FlextResult[dict[str, str]].ok({"status": "active", "role": "admin"})
+        result = FlextResult[FlextTypes.Core.Headers].ok(
+            {"status": "active", "role": "admin"}
+        )
 
         # Use TestUtilities for validation
         assert TestUtilities.is_valid_result(result)
         assert TestUtilities.result_has_data(result)
 
         # Test with failure result
-        failure = FlextResult[dict[str, str]].fail(
+        failure = FlextResult[FlextTypes.Core.Headers].fail(
             "Access denied",
             error_code="AUTH_001",
         )
@@ -329,7 +338,7 @@ class TestFlextResultComprehensive:
     def test_result_concurrent_access_safety(self) -> None:
         """Test FlextResult thread safety characteristics."""
         # FlextResult should be immutable after creation
-        result = FlextResult[dict[str, str]].ok({"key": "value"})
+        result = FlextResult[FlextTypes.Core.Headers].ok({"key": "value"})
 
         original_value = result.value
         original_success = result.success
@@ -380,10 +389,10 @@ class TestFlextResultComprehensive:
     def test_result_json_serialization_comprehensive(self) -> None:
         """Test FlextResult JSON serialization edge cases."""
         # Test success result with JSON-serializable data
-        json_data: dict[str, object] = {
+        json_data: FlextTypes.Core.Dict = {
             "users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
         }
-        result = FlextResult[dict[str, object]].ok(json_data)
+        result = FlextResult[FlextTypes.Core.Dict].ok(json_data)
 
         # Should be able to serialize the data
         serialized = json.dumps(result.value)
@@ -391,7 +400,7 @@ class TestFlextResultComprehensive:
         assert deserialized == json_data
 
         # Test failure result serialization
-        failure = FlextResult[dict[str, object]].fail(
+        failure = FlextResult[FlextTypes.Core.Dict].fail(
             "JSON serialization error",
             error_code="JSON_001",
             error_data={

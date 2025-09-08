@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-
+from flext_core import FlextTypes
 from flext_core import (
     FlextCore,
     FlextHandlers,
@@ -117,9 +117,9 @@ class UserCreatedEvent:
         self.email = user.email
         self.event_type = "user_created"
 
-    def to_entity(self) -> FlextResult[dict[str, object]]:
+    def to_entity(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Convert event to entity dictionary."""
-        event_data: dict[str, object] = {
+        event_data: FlextTypes.Core.Dict = {
             "event_id": self.event_id,
             "event_type": self.event_type,
             "timestamp": self.timestamp,
@@ -128,7 +128,7 @@ class UserCreatedEvent:
             "email": self.email,
         }
         # Return a simple entity representation
-        return FlextResult[dict[str, object]].ok(event_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(event_data)
 
 
 # =============================================================================
@@ -164,14 +164,14 @@ class UserService(FlextProtocols.Domain.Service):
         self._logger.info("User service stopped")
         return FlextResult[None].ok(None)
 
-    def health_check(self) -> FlextResult[dict[str, object]]:
+    def health_check(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Health check using FlextProtocols pattern."""
-        health_status: dict[str, object] = {
+        health_status: FlextTypes.Core.Dict = {
             "status": "healthy" if self._is_started else "stopped",
             "users_count": len(self._users),
             "timestamp": time.time(),
         }
-        return FlextResult[dict[str, object]].ok(health_status)
+        return FlextResult[FlextTypes.Core.Dict].ok(health_status)
 
     def __call__(self, *_args: object, **_kwargs: object) -> FlextResult[object]:
         """Make service callable (required by FlextProtocols.Domain.Service)."""

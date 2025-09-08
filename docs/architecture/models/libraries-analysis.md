@@ -81,15 +81,15 @@ class FlextMeltanoModels(FlextModels):
         )
 
         # Project configuration
-        plugins: list[dict[str, object]] = Field(
+        plugins: list[FlextTypes.Core.Dict] = Field(
             default_factory=list,
             description="Installed plugins configuration"
         )
-        environments: list[str] = Field(
+        environments: FlextTypes.Core.StringList = Field(
             default_factory=lambda: ["dev", "staging", "prod"],
             description="Available environments"
         )
-        schedules: list[dict[str, object]] = Field(
+        schedules: list[FlextTypes.Core.Dict] = Field(
             default_factory=list,
             description="ETL schedules configuration"
         )
@@ -217,11 +217,11 @@ class FlextMeltanoModels(FlextModels):
             min_length=1,
             description="Pip installation URL"
         )
-        config: dict[str, object] = Field(
+        config: FlextTypes.Core.Dict = Field(
             default_factory=dict,
             description="Tap configuration parameters"
         )
-        select_filter: list[str] = Field(
+        select_filter: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Selected streams for extraction"
         )
@@ -259,11 +259,11 @@ class FlextMeltanoModels(FlextModels):
             min_length=1,
             description="Stream name"
         )
-        record: dict[str, object] | None = Field(
+        record: FlextTypes.Core.Dict | None = Field(
             default=None,
             description="Record data for RECORD type"
         )
-        schema: dict[str, object] | None = Field(
+        schema: FlextTypes.Core.Dict | None = Field(
             default=None,
             description="Schema definition for SCHEMA type"
         )
@@ -322,13 +322,13 @@ class FlextMeltanoModels(FlextModels):
         records_extracted: int = Field(default=0, ge=0)
         records_loaded: int = Field(default=0, ge=0)
         bytes_processed: int = Field(default=0, ge=0)
-        streams_processed: list[str] = Field(default_factory=list)
+        streams_processed: FlextTypes.Core.StringList = Field(default_factory=list)
 
         # Error tracking
-        errors: list[dict[str, object]] = Field(default_factory=list)
-        warnings: list[dict[str, object]] = Field(default_factory=list)
+        errors: list[FlextTypes.Core.Dict] = Field(default_factory=list)
+        warnings: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
-        def mark_completed(self, final_metrics: dict[str, object]) -> FlextResult[None]:
+        def mark_completed(self, final_metrics: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Mark ETL run as completed with final metrics."""
             try:
                 if self.status != "running":
@@ -365,7 +365,7 @@ class FlextMeltanoModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to mark ETL run completed: {e}")
 
-        def add_error(self, error_data: dict[str, object]) -> None:
+        def add_error(self, error_data: FlextTypes.Core.Dict) -> None:
             """Add error to ETL run tracking."""
             error_entry = {
                 **error_data,
@@ -414,7 +414,7 @@ class FlextMeltanoModels(FlextModels):
         project_name: str,
         project_path: str,
         meltano_version: str = "3.9.1",
-        environments: list[str] | None = None,
+        environments: FlextTypes.Core.StringList | None = None,
         created_by: str | None = None
     ) -> FlextResult[MeltanoProject]:
         """Create Meltano project with comprehensive validation."""
@@ -504,7 +504,7 @@ class FlextOracleWmsModels(FlextModels):
         )
 
         # Location and capacity
-        location: dict[str, object] = Field(
+        location: FlextTypes.Core.Dict = Field(
             description="Physical warehouse location data"
         )
         total_capacity: int = Field(
@@ -517,17 +517,17 @@ class FlextOracleWmsModels(FlextModels):
         )
 
         # Operational configuration
-        operation_types: list[str] = Field(
+        operation_types: FlextTypes.Core.StringList = Field(
             default_factory=lambda: ["RECEIVE", "PICK", "PUTAWAY", "TRANSFER"],
             description="Supported operation types"
         )
-        zones: list[dict[str, object]] = Field(
+        zones: list[FlextTypes.Core.Dict] = Field(
             default_factory=list,
             description="Warehouse zones configuration"
         )
 
         # Inventory tracking
-        inventory_items: list[str] = Field(
+        inventory_items: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="IDs of inventory items in warehouse"
         )
@@ -837,17 +837,17 @@ class AlgarOudMigModels(FlextModels):
             pattern=r"^(00|01|02|03|04)$",
             description="Current migration phase"
         )
-        phases_completed: list[str] = Field(
+        phases_completed: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Completed migration phases"
         )
 
         # Schema and data
-        source_schemas: list[str] = Field(
+        source_schemas: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Source LDAP schemas to migrate"
         )
-        target_schemas: list[str] = Field(
+        target_schemas: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Target OUD schemas"
         )
@@ -971,10 +971,10 @@ class FlextObservabilityModels(FlextModels):
             pattern="^(counter|gauge|histogram|summary)$",
             description="Prometheus-compatible metric type"
         )
-        labels: dict[str, str] = Field(default_factory=dict)
+        labels: FlextTypes.Core.Headers = Field(default_factory=dict)
 
         # Time-series data points
-        data_points: list[dict[str, object]] = Field(default_factory=list)
+        data_points: list[FlextTypes.Core.Dict] = Field(default_factory=list)
 
         def add_data_point(self, value: float, timestamp: datetime | None = None) -> FlextResult[None]:
             """Add data point with validation and event generation."""
@@ -1079,7 +1079,7 @@ class FlextModelsDomainAnalyzer:
     """Tool to analyze and discover domain modeling opportunities."""
 
     @staticmethod
-    def scan_library_for_domain_concepts(library_path: str) -> dict[str, list[str]]:
+    def scan_library_for_domain_concepts(library_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Scan library for potential domain entities and value objects."""
         return {
             "potential_entities": ["User", "Project", "Configuration", "Session"],
@@ -1089,7 +1089,7 @@ class FlextModelsDomainAnalyzer:
         }
 
     @staticmethod
-    def generate_domain_model_template(domain_concepts: dict[str, list[str]]) -> str:
+    def generate_domain_model_template(domain_concepts: dict[str, FlextTypes.Core.StringList]) -> str:
         """Generate FlextModels implementation template."""
         return "# Generated FlextModels implementation template"
 ```
@@ -1101,7 +1101,7 @@ class FlextModelsValidator:
     """Validation utilities for FlextModels implementations."""
 
     @staticmethod
-    def validate_model_inheritance(model_class: type) -> list[str]:
+    def validate_model_inheritance(model_class: type) -> FlextTypes.Core.StringList:
         """Validate proper FlextModels inheritance patterns."""
         issues = []
 

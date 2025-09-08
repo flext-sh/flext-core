@@ -609,7 +609,7 @@ class FlextContextDevTools:
     """Development tools for context integration and migration."""
 
     @staticmethod
-    def analyze_service_context_opportunities(service_path: str) -> dict[str, list[str]]:
+    def analyze_service_context_opportunities(service_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze service for context integration opportunities."""
         return {
             "request_patterns": ["http_requests", "message_processing", "data_operations"],
@@ -619,7 +619,7 @@ class FlextContextDevTools:
         }
 
     @staticmethod
-    def generate_context_integration_template(service_name: str, patterns: list[str]) -> str:
+    def generate_context_integration_template(service_name: str, patterns: FlextTypes.Core.StringList) -> str:
         """Generate context integration template for service."""
         return f"""
 class {service_name}ContextOrchestrator:
@@ -654,7 +654,7 @@ class FlextContextMigrationTools:
     """Automated tools for context migration across services."""
 
     @staticmethod
-    def detect_context_propagation_gaps(service_calls: list) -> dict[str, list[str]]:
+    def detect_context_propagation_gaps(service_calls: list) -> dict[str, FlextTypes.Core.StringList]:
         """Detect gaps in context propagation between services."""
         return {
             "missing_correlation_headers": ["service_a_to_b", "service_c_to_d"],
@@ -664,7 +664,7 @@ class FlextContextMigrationTools:
         }
 
     @staticmethod
-    def generate_migration_checklist(library_name: str) -> dict[str, list[str]]:
+    def generate_migration_checklist(library_name: str) -> dict[str, FlextTypes.Core.StringList]:
         """Generate migration checklist for specific library."""
         return {
             "pre_migration": [

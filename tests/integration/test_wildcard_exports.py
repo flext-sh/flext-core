@@ -3,6 +3,9 @@
 This module validates that the wildcard import system works correctly across
 the entire flext-core ecosystem, ensuring all major components are properly
 exported and functional.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -17,6 +20,7 @@ from flext_core import (
     FlextResult,
     FlextUtilities,
 )
+from flext_core.typings import FlextTypes
 
 
 class TestFlextCoreWildcardExports:
@@ -168,7 +172,7 @@ class TestFlextCoreIntegrationScenarios:
         assert isinstance(operation_id, str)
 
         # 2. Create a result
-        result = FlextResult[dict[str, object]].ok(
+        result = FlextResult[FlextTypes.Core.Dict].ok(
             {
                 "operation_id": operation_id,
                 "status": "started",

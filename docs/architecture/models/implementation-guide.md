@@ -119,13 +119,13 @@ class YourLibraryModels(FlextModels):
             min_length=1,
             description="Entity category"
         )
-        configuration: dict[str, object] = Field(
+        configuration: FlextTypes.Core.Dict = Field(
             default_factory=dict,
             description="Entity configuration data"
         )
 
         # Metadata
-        tags: list[str] = Field(
+        tags: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="Entity tags for organization"
         )
@@ -185,7 +185,7 @@ class YourLibraryModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to activate entity: {e}")
 
-        def update_configuration(self, new_config: dict[str, object], updated_by: str) -> FlextResult[None]:
+        def update_configuration(self, new_config: FlextTypes.Core.Dict, updated_by: str) -> FlextResult[None]:
             """Update entity configuration with validation."""
             try:
                 # Validate configuration structure
@@ -221,7 +221,7 @@ class YourLibraryModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to update configuration: {e}")
 
-        def _validate_configuration(self, config: dict[str, object]) -> FlextResult[None]:
+        def _validate_configuration(self, config: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Validate configuration data."""
             try:
                 # Basic validation
@@ -412,7 +412,7 @@ class YourLibraryModels(FlextModels):
         )
 
         # Related entities
-        entities: list[str] = Field(
+        entities: FlextTypes.Core.StringList = Field(
             default_factory=list,
             description="IDs of related entities"
         )
@@ -478,7 +478,7 @@ class YourLibraryModels(FlextModels):
             except Exception as e:
                 return FlextResult[None].fail(f"Failed to enable service: {e}")
 
-        def update_health_status(self, new_status: str, health_data: dict[str, object]) -> FlextResult[None]:
+        def update_health_status(self, new_status: str, health_data: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Update service health status with monitoring data."""
             try:
                 if new_status not in ["healthy", "unhealthy", "degraded", "unknown"]:
@@ -542,7 +542,7 @@ class YourLibraryModels(FlextModels):
         cls,
         name: str,
         category: str,
-        configuration: dict[str, object] | None = None,
+        configuration: FlextTypes.Core.Dict | None = None,
         created_by: str | None = None
     ) -> FlextResult[YourMainEntity]:
         """Create main entity with validation."""
@@ -621,8 +621,8 @@ class YourLibraryModels(FlextModels):
         cls,
         service_name: str,
         service_type: str,
-        connection_config: dict[str, object],
-        processing_config: dict[str, object] | None = None,
+        connection_config: FlextTypes.Core.Dict,
+        processing_config: FlextTypes.Core.Dict | None = None,
         created_by: str | None = None
     ) -> FlextResult[YourServiceAggregate]:
         """Create service aggregate with full validation."""
@@ -745,7 +745,7 @@ class YourLibraryEventHandler:
         except Exception as e:
             return FlextResult[None].fail(f"Failed to handle health status change: {e}")
 
-    def _send_critical_activation_notification(self, event_data: dict[str, object]) -> FlextResult[None]:
+    def _send_critical_activation_notification(self, event_data: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Send notification for critical entity activation."""
         # Implementation would integrate with notification service
         return FlextResult[None].ok(None)
@@ -755,7 +755,7 @@ class YourLibraryEventHandler:
         # Implementation would integrate with monitoring service
         return FlextResult[None].ok(None)
 
-    def _send_health_alert(self, service_name: str, status: str, health_data: dict[str, object]) -> FlextResult[None]:
+    def _send_health_alert(self, service_name: str, status: str, health_data: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Send health status alert."""
         # Implementation would integrate with alerting service
         return FlextResult[None].ok(None)

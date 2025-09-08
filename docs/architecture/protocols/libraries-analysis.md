@@ -165,7 +165,7 @@ class WebAuthMiddleware(FlextProtocols.Extensions.Middleware):
             # Skip authentication for public routes
             return next_handler(request)
 
-    def _extract_credentials(self, request: object) -> dict[str, object] | None:
+    def _extract_credentials(self, request: object) -> FlextTypes.Core.Dict | None:
         """Extract authentication credentials from request."""
         # Implementation would extract from headers, cookies, etc.
         return getattr(request, 'auth_headers', None)
@@ -237,12 +237,12 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
 
     def __init__(self, tap_name: str):
         self.tap_name = tap_name
-        self.config: dict[str, object] = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.context: FlextProtocols.Extensions.PluginContext | None = None
         self.initialized = False
         self.connection: FlextProtocols.Infrastructure.Connection | None = None
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         """Configure tap with Meltano settings."""
         required_keys = ["source_connection", "catalog", "state"]
         missing_keys = [key for key in required_keys if key not in config]
@@ -253,7 +253,7 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
         self.config.update(config)
         return FlextResult[None].ok(None)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current tap configuration."""
         return self.config.copy()
 
@@ -295,7 +295,7 @@ class FlextMeltanoTap(FlextProtocols.Extensions.Plugin):
         self.initialized = False
         return FlextResult[None].ok(None)
 
-    def get_info(self) -> dict[str, object]:
+    def get_info(self) -> FlextTypes.Core.Dict:
         """Get tap information."""
         return {
             "name": self.tap_name,
@@ -358,12 +358,12 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
 
     def __init__(self, target_name: str):
         self.target_name = target_name
-        self.config: dict[str, object] = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.context: FlextProtocols.Extensions.PluginContext | None = None
         self.initialized = False
         self.connection: FlextProtocols.Infrastructure.Connection | None = None
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         """Configure target with Meltano settings."""
         required_keys = ["target_connection", "schema_mapping"]
         missing_keys = [key for key in required_keys if key not in config]
@@ -374,7 +374,7 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
         self.config.update(config)
         return FlextResult[None].ok(None)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current target configuration."""
         return self.config.copy()
 
@@ -416,7 +416,7 @@ class FlextMeltanoTarget(FlextProtocols.Extensions.Plugin):
         self.initialized = False
         return FlextResult[None].ok(None)
 
-    def get_info(self) -> dict[str, object]:
+    def get_info(self) -> FlextTypes.Core.Dict:
         """Get target information."""
         return {
             "name": self.target_name,
@@ -589,8 +589,8 @@ class SimpleMeltanoPluginContext(FlextProtocols.Extensions.PluginContext):
     """Simple Meltano plugin context."""
 
     def __init__(self):
-        self.services: dict[str, object] = {}
-        self.config: dict[str, object] = {
+        self.services: FlextTypes.Core.Dict = {}
+        self.config: FlextTypes.Core.Dict = {
             "tap-oracle": {
                 "source_type": "database",
                 "source_connection": "oracle://user:pass@localhost:1521/XE"
@@ -606,7 +606,7 @@ class SimpleMeltanoPluginContext(FlextProtocols.Extensions.PluginContext):
         """Get service by name."""
         return self.services.get(service_name)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get plugin configuration."""
         return self.config.copy()
 
@@ -826,7 +826,7 @@ class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
             self.logger.exception("LDAP search failed", base_dn=base_dn)
             return FlextResult[list].fail(f"LDAP search failed: {e}")
 
-    def add(self, dn: str, attributes: dict[str, object]) -> object:
+    def add(self, dn: str, attributes: FlextTypes.Core.Dict) -> object:
         """Add new LDAP entry."""
         if not self.connected:
             return FlextResult[None].fail("Not connected to LDAP server")
@@ -848,7 +848,7 @@ class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
             self.logger.exception("LDAP add failed", dn=dn)
             return FlextResult[dict].fail(f"LDAP add failed: {e}")
 
-    def modify(self, dn: str, modifications: dict[str, object]) -> object:
+    def modify(self, dn: str, modifications: FlextTypes.Core.Dict) -> object:
         """Modify existing LDAP entry."""
         if not self.connected:
             return FlextResult[None].fail("Not connected to LDAP server")
@@ -901,7 +901,7 @@ class FlextLDAPService(FlextProtocols.Infrastructure.LdapConnection):
         user_filter = f"(&(objectClass=person){filter_criteria})" if filter_criteria else "(objectClass=person)"
         return self.search(base_dn, user_filter)
 
-    def create_user(self, user_data: dict[str, object]) -> object:
+    def create_user(self, user_data: FlextTypes.Core.Dict) -> object:
         """Create new user in LDAP."""
         if "uid" not in user_data or "cn" not in user_data:
             return FlextResult[dict].fail("Missing required user data: uid and cn")

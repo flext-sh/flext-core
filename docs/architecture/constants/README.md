@@ -138,7 +138,7 @@ def validate_function_complexity(branches: int, returns: int) -> bool:
             returns <= FlextConstants.Core.MAX_RETURN_STATEMENTS_ALLOWED)
 
 # Architectural pattern identification
-def get_supported_patterns() -> list[str]:
+def get_supported_patterns() -> FlextTypes.Core.StringList:
     """Get list of supported architectural patterns."""
     return [
         FlextConstants.Core.RAILWAY_PATTERN,
@@ -247,7 +247,7 @@ class FlextConstants.Errors:
     TIMEOUT_ERROR: Final[str] = "FLEXT_2002"
 
     # Error message mappings for structured error codes
-    MESSAGES: Final[dict[str, str]] = {
+    MESSAGES: Final[FlextTypes.Core.Headers] = {
         GENERIC_ERROR: "An error occurred",
         VALIDATION_ERROR: "Validation failed",
         BUSINESS_RULE_VIOLATION: "Business rule violation",
@@ -311,7 +311,7 @@ def validate_business_rule(condition: bool, rule_name: str) -> FlextResult[None]
     return FlextResult.ok(None)
 
 # Security validation with appropriate error codes
-def validate_authorization(user_permissions: list[str], required_permission: str) -> FlextResult[bool]:
+def validate_authorization(user_permissions: FlextTypes.Core.StringList, required_permission: str) -> FlextResult[bool]:
     """Validate user authorization with security error codes."""
     if required_permission not in user_permissions:
         return FlextResult.fail(
@@ -459,11 +459,11 @@ class FlextConstants.Config:
     CONSTANTS_PRIORITY: Final[int] = 5
 
     # Configuration file patterns
-    DOTENV_FILES: Final[list[str]] = [".env", ".env.local", ".env.production"]
-    CONFIG_FILES: Final[list[str]] = ["config.json", "config.yaml", "flext.config.json"]
+    DOTENV_FILES: Final[FlextTypes.Core.StringList] = [".env", ".env.local", ".env.production"]
+    CONFIG_FILES: Final[FlextTypes.Core.StringList] = ["config.json", "config.yaml", "flext.config.json"]
 
     # Environment definitions
-    ENVIRONMENTS: Final[list[str]] = ["development", "staging", "production", "test"]
+    ENVIRONMENTS: Final[FlextTypes.Core.StringList] = ["development", "staging", "production", "test"]
     DEFAULT_ENVIRONMENT: Final[str] = "development"
 
     class ConfigEnvironment(StrEnum):
@@ -536,7 +536,7 @@ def load_environment_config(environment: str) -> dict:
         }
 
 # Configuration provider priority system
-def resolve_configuration_value(providers: dict[str, str]) -> str:
+def resolve_configuration_value(providers: FlextTypes.Core.Headers) -> str:
     """Resolve configuration value using provider priority."""
 
     priority_map = {

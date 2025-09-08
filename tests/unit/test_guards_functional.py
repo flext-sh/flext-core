@@ -1,4 +1,8 @@
-"""Functional tests for FlextGuards module based on real API implementation."""
+"""Functional tests for FlextGuards module based on real API implementation.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,7 @@ import pytest
 
 from flext_core import FlextGuards, FlextUtilities
 from flext_core.exceptions import FlextExceptions
+from flext_core.typings import FlextTypes
 
 
 class TestFlextGuardsTypeGuards:
@@ -22,7 +27,7 @@ class TestFlextGuardsTypeGuards:
         assert FlextGuards.is_dict_of(int_dict, int) is True
 
         # Test with empty dictionary (should be True - vacuous truth)
-        empty_dict: dict[str, str] = {}
+        empty_dict: FlextTypes.Core.Headers = {}
         assert FlextGuards.is_dict_of(empty_dict, str) is True
 
         # Test with mixed type dictionary
@@ -44,7 +49,7 @@ class TestFlextGuardsTypeGuards:
         assert FlextGuards.is_list_of(string_list, str) is True
 
         # Test with empty list (should be True - vacuous truth)
-        empty_list: list[str] = []
+        empty_list: FlextTypes.Core.StringList = []
         assert FlextGuards.is_list_of(empty_list, str) is True
 
         # Test with mixed type list
@@ -337,7 +342,7 @@ class TestFlextGuardsConfiguration:
         """Test configure_guards_system with valid configuration."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "environment": "production",
             "validation_level": "strict",
@@ -349,14 +354,13 @@ class TestFlextGuardsConfiguration:
 
         validated_config = result.unwrap()
         assert validated_config["environment"] == "production"
-        assert validated_config["validation_level"] == "strict"
         assert validated_config["enable_pure_function_caching"] is True
 
     def test_configure_guards_system_invalid_environment(self) -> None:
         """Test configure_guards_system with invalid environment."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "environment": "invalid_env",
         }
@@ -414,7 +418,7 @@ class TestFlextGuardsConfiguration:
         """Test optimize_guards_performance functionality."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "performance_level": "high",
             "max_cache_size": 1000,

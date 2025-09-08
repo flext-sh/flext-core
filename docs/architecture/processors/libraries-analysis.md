@@ -65,13 +65,13 @@ class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.singer_config = singer_config or {}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record through Meltano ETL pipeline."""
         try:
             # Validate Singer record structure
             singer_validation = self._validate_singer_record(entry)
             if singer_validation.is_failure:
-                return FlextResult[dict[str, object]].fail(singer_validation.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(singer_validation.error)
 
             # Transform for target system
             etl_data = {
@@ -88,10 +88,10 @@ class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
             if transform_result.is_failure:
                 return transform_result
 
-            return FlextResult[dict[str, object]].ok(transform_result.value)
+            return FlextResult[FlextTypes.Core.Dict].ok(transform_result.value)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Meltano ETL processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Meltano ETL processing failed: {e}")
 
     def _validate_singer_record(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
         """Validate Singer record against schema."""
@@ -154,7 +154,7 @@ class FlextMeltanoETLPipeline:
 
         return None
 
-    def process_singer_stream(self, singer_records: list[dict]) -> FlextResult[dict[str, object]]:
+    def process_singer_stream(self, singer_records: list[dict]) -> FlextResult[FlextTypes.Core.Dict]:
         """Process complete Singer stream through ETL pipeline."""
         try:
             processed_count = 0
@@ -188,10 +188,10 @@ class FlextMeltanoETLPipeline:
                 "pipeline_timestamp": datetime.utcnow().isoformat()
             }
 
-            return FlextResult[dict[str, object]].ok(etl_result)
+            return FlextResult[FlextTypes.Core.Dict].ok(etl_result)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"ETL pipeline processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"ETL pipeline processing failed: {e}")
 ```
 
 **Migration Effort**: 4-5 weeks  
@@ -261,13 +261,13 @@ class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
 
         return regex_result.value if regex_result.success else None
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry with comprehensive validation."""
         try:
             # Parse LDIF content
             ldif_data = self._parse_ldif_content(entry.clean_content)
             if ldif_data is None:
-                return FlextResult[dict[str, object]].fail("Failed to parse LDIF content")
+                return FlextResult[FlextTypes.Core.Dict].fail("Failed to parse LDIF content")
 
             # Validate LDIF structure
             validation_result = self._validate_ldif_structure(ldif_data)
@@ -295,12 +295,12 @@ class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
                 processed_ldif["validation_status"] = "failed"
                 processed_ldif["validation_errors"] = [business_validation.error]
 
-            return FlextResult[dict[str, object]].ok(processed_ldif)
+            return FlextResult[FlextTypes.Core.Dict].ok(processed_ldif)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"LDIF processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"LDIF processing failed: {e}")
 
-    def _parse_ldif_content(self, content: str) -> dict[str, object] | None:
+    def _parse_ldif_content(self, content: str) -> FlextTypes.Core.Dict | None:
         """Parse LDIF content using regex processor."""
         try:
             if not self.regex_processor:
@@ -350,7 +350,7 @@ class FlextLDIFBatchProcessor:
         self.ldif_processor = FlextLDIFEntryProcessor()
         self.processors = FlextProcessors()
 
-    def process_ldif_file(self, file_path: str) -> FlextResult[dict[str, object]]:
+    def process_ldif_file(self, file_path: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Process complete LDIF file in batches."""
         try:
             # Read LDIF file
@@ -385,10 +385,10 @@ class FlextLDIFBatchProcessor:
                 "processing_timestamp": datetime.utcnow().isoformat()
             }
 
-            return FlextResult[dict[str, object]].ok(processing_result)
+            return FlextResult[FlextTypes.Core.Dict].ok(processing_result)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"LDIF file processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"LDIF file processing failed: {e}")
 ```
 
 **Migration Effort**: 3-4 weeks  
@@ -426,7 +426,7 @@ class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
         self.tap_config = tap_config
         self.ldif_processor = FlextLDIFEntryProcessor(tap_config.get("ldif_config"))
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry and generate Singer record."""
         try:
             # Process LDIF entry first
@@ -450,10 +450,10 @@ class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
                 "time_extracted": datetime.utcnow().isoformat()
             }
 
-            return FlextResult[dict[str, object]].ok(singer_record)
+            return FlextResult[FlextTypes.Core.Dict].ok(singer_record)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"LDIF tap processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"LDIF tap processing failed: {e}")
 ```
 
 ### 4. algar-oud-mig - OUD Migration Processing
@@ -502,7 +502,7 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
 
         return regex_result.value if regex_result.success else None
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process OUD migration entry."""
         try:
             # Extract migration patterns
@@ -535,10 +535,10 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
                 migration_entry["migration_status"] = "validation_failed"
                 migration_entry["validation_errors"] = [business_result.error]
 
-            return FlextResult[dict[str, object]].ok(migration_entry)
+            return FlextResult[FlextTypes.Core.Dict].ok(migration_entry)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"OUD migration processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"OUD migration processing failed: {e}")
 ```
 
 ---
@@ -557,7 +557,7 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
 class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
     """Oracle OIC target processor using FlextProcessors."""
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record for Oracle OIC format."""
         try:
             # Parse Singer record
@@ -578,10 +578,10 @@ class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
                 if validation_result.is_failure:
                     return validation_result
 
-            return FlextResult[dict[str, object]].ok(oic_record)
+            return FlextResult[FlextTypes.Core.Dict].ok(oic_record)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"OIC record processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"OIC record processing failed: {e}")
 ```
 
 ### 6. flext-oracle-wms - WMS Data Processing
@@ -596,7 +596,7 @@ class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
 class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
     """Oracle WMS data processor using FlextProcessors."""
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process WMS operation data."""
         try:
             # Parse WMS operation data
@@ -616,10 +616,10 @@ class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
             if validation_result.is_failure:
                 return validation_result
 
-            return FlextResult[dict[str, object]].ok(processed_operation)
+            return FlextResult[FlextTypes.Core.Dict].ok(processed_operation)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"WMS processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"WMS processing failed: {e}")
 ```
 
 ---
@@ -694,7 +694,7 @@ class FlextProcessorsDiscovery:
     """Tool to discover and analyze processing patterns across ecosystem."""
 
     @staticmethod
-    def scan_libraries_for_processing() -> dict[str, dict[str, object]]:
+    def scan_libraries_for_processing() -> dict[str, FlextTypes.Core.Dict]:
         """Scan all FLEXT libraries for processing patterns."""
         return {
             "flext-meltano": {
@@ -725,7 +725,7 @@ class FlextProcessorsMigrationAssistant:
     """Assistant tool for migrating to FlextProcessors patterns."""
 
     @staticmethod
-    def generate_processor_template(library_name: str, entry_types: list[str]) -> str:
+    def generate_processor_template(library_name: str, entry_types: FlextTypes.Core.StringList) -> str:
         """Generate FlextProcessors implementation template."""
         return f"""
 class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
@@ -736,7 +736,7 @@ class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.config = config or {{}}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         \"\"\"Process {library_name} entry data.\"\"\"
         try:
             # Add your processing logic here
@@ -748,10 +748,10 @@ class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
                 "processed_at": datetime.utcnow().isoformat()
             }}
 
-            return FlextResult[dict[str, object]].ok(processed_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(processed_data)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"{library_name} processing failed: {{e}}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"{library_name} processing failed: {{e}}")
 """
 ```
 

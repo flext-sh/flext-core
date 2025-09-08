@@ -1,7 +1,7 @@
 """Adapter patterns for external system integration.
 
-Provides FlextAdapters with port/adapter patterns for databases,
-APIs, message queues, and third-party services.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -27,39 +27,43 @@ from flext_core.exceptions import FlextExceptions
 from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
+
+# =============================================================================
+# TYPE ADAPTERS - Comprehensive type adaptation system for type conversion, validation and serialization.
+# =============================================================================
 
 
 class FlextTypeAdapters:
-    """Comprehensive type adaptation system for type conversion, validation and serialization.
-
-    Central hub for type conversion with error handling, validation pipeline, JSON/dict
-    serialization, schema generation, and batch processing. Built on Pydantic v2 TypeAdapter
-    with FlextResult integration.
-
-    """
+    """Comprehensive type adaptation system for type conversion, validation and serialization."""
 
     class Config:
-        """Enterprise type adapters system management with FlextTypes.Config integration.
-
-        This configuration class provides efficient system management for the FlextTypeAdapters
-        ecosystem, implementing production-ready configuration patterns using Strategy Pattern.
-
-        """
+        """Enterprise type adapters system management with FlextTypes.Config integration."""
 
         class _ConfigurationStrategy:
             """Strategy Pattern for configuration management."""
 
             @staticmethod
-            def get_base_config() -> dict[str, object]:
-                """Get base configuration common to all environments."""
+            def get_base_config() -> FlextTypes.Core.Dict:
+                """Get base configuration common to all environments.
+
+                Returns:
+                    Base configuration dictionary.
+
+                """
                 return {
                     "timestamp": time.time(),
                     "system_status": "active",
                 }
 
             @staticmethod
-            def get_features_config() -> dict[str, object]:
-                """Get feature flags configuration."""
+            def get_features_config() -> FlextTypes.Core.Dict:
+                """Get feature flags configuration.
+
+                Returns:
+                    Feature flags configuration dictionary.
+
+                """
                 return {
                     "adapter_registry_enabled": True,
                     "batch_processing_enabled": True,
@@ -70,8 +74,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_performance_config() -> dict[str, object]:
-                """Get performance configuration."""
+            def get_performance_config() -> FlextTypes.Core.Dict:
+                """Get performance configuration.
+
+                Returns:
+                    Performance configuration dictionary.
+
+                """
                 return {
                     "cache_size": 500,
                     "batch_size": 50,
@@ -81,8 +90,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_health_config() -> dict[str, object]:
-                """Get health monitoring configuration."""
+            def get_health_config() -> FlextTypes.Core.Dict:
+                """Get health monitoring configuration.
+
+                Returns:
+                    Health monitoring configuration dictionary.
+
+                """
                 return {
                     "uptime_seconds": 0,
                     "total_operations": 0,
@@ -92,8 +106,13 @@ class FlextTypeAdapters:
                 }
 
         @classmethod
-        def configure_type_adapters_system(cls, config: dict[str, object]) -> object:
-            """Configure type adapters system using Strategy Pattern."""
+        def configure_type_adapters_system(cls, config: FlextTypes.Core.Dict) -> object:
+            """Configure type adapters system using Strategy Pattern.
+
+            Returns:
+                Configuration dictionary with system settings.
+
+            """
             with contextlib.suppress(Exception):
                 if not config:
                     config = {}
@@ -118,7 +137,12 @@ class FlextTypeAdapters:
 
         @classmethod
         def get_type_adapters_system_config(cls) -> object:
-            """Get system configuration using Strategy Pattern composition."""
+            """Get system configuration using Strategy Pattern composition.
+
+            Returns:
+                Complete system configuration dictionary.
+
+            """
             return {
                 **cls._ConfigurationStrategy.get_base_config(),
                 "environment": "development",
@@ -133,8 +157,13 @@ class FlextTypeAdapters:
             """Strategy Pattern for environment-specific configurations."""
 
             @staticmethod
-            def get_base_config(environment: str) -> dict[str, object]:
-                """Get base configuration for any environment."""
+            def get_base_config(environment: str) -> FlextTypes.Core.Dict:
+                """Get base configuration for any environment.
+
+                Returns:
+                    Environment-specific base configuration.
+
+                """
                 return {
                     "environment": environment,
                     "timestamp": time.time(),
@@ -142,8 +171,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_development_config() -> dict[str, object]:
-                """Development environment strategy."""
+            def get_development_config() -> FlextTypes.Core.Dict:
+                """Development environment strategy.
+
+                Returns:
+                    Development environment configuration.
+
+                """
                 return {
                     "validation_level": "basic",
                     "performance_level": "low",
@@ -158,8 +192,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_staging_config() -> dict[str, object]:
-                """Staging environment strategy."""
+            def get_staging_config() -> FlextTypes.Core.Dict:
+                """Staging environment strategy.
+
+                Returns:
+                    Staging environment configuration.
+
+                """
                 return {
                     "validation_level": "standard",
                     "performance_level": "balanced",
@@ -174,8 +213,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_production_config() -> dict[str, object]:
-                """Production environment strategy."""
+            def get_production_config() -> FlextTypes.Core.Dict:
+                """Production environment strategy.
+
+                Returns:
+                    Production environment configuration.
+
+                """
                 return {
                     "validation_level": "strict",
                     "performance_level": "high",
@@ -190,8 +234,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_default_config() -> dict[str, object]:
-                """Default fallback configuration strategy."""
+            def get_default_config() -> FlextTypes.Core.Dict:
+                """Get default fallback configuration strategy.
+
+                Returns:
+                    Default configuration dictionary.
+
+                """
                 return {
                     "validation_level": "standard",
                     "performance_level": "balanced",
@@ -209,8 +258,13 @@ class FlextTypeAdapters:
         def create_environment_type_adapters_config(
             cls,
             environment: str,
-        ) -> dict[str, object]:
-            """Create environment-specific configuration using Strategy Pattern."""
+        ) -> FlextTypes.Core.Dict:
+            """Create environment-specific configuration using Strategy Pattern.
+
+            Returns:
+                Environment-specific configuration dictionary.
+
+            """
             base = cls._EnvironmentConfigStrategy.get_base_config(environment)
 
             # Apply environment-specific strategy
@@ -230,8 +284,13 @@ class FlextTypeAdapters:
             """Strategy Pattern for performance optimization configurations."""
 
             @staticmethod
-            def get_low_performance_config() -> dict[str, object]:
-                """Low performance optimization strategy."""
+            def get_low_performance_config() -> FlextTypes.Core.Dict:
+                """Low performance optimization strategy.
+
+                Returns:
+                    FlextTypes.Core.Dict: The low performance optimization configuration.
+
+                """
                 return {
                     "cache_size": 100,
                     "batch_size": 10,
@@ -243,8 +302,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_balanced_performance_config() -> dict[str, object]:
-                """Balanced performance optimization strategy."""
+            def get_balanced_performance_config() -> FlextTypes.Core.Dict:
+                """Balanced performance optimization strategy.
+
+                Returns:
+                    FlextTypes.Core.Dict: The balanced performance optimization configuration.
+
+                """
                 return {
                     "cache_size": 500,
                     "batch_size": 50,
@@ -256,8 +320,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_high_performance_config() -> dict[str, object]:
-                """High performance optimization strategy."""
+            def get_high_performance_config() -> FlextTypes.Core.Dict:
+                """High performance optimization strategy.
+
+                Returns:
+                    FlextTypes.Core.Dict: The high performance optimization configuration.
+
+                """
                 return {
                     "cache_size": 2000,
                     "batch_size": 200,
@@ -269,8 +338,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_extreme_performance_config() -> dict[str, object]:
-                """Extreme performance optimization strategy."""
+            def get_extreme_performance_config() -> FlextTypes.Core.Dict:
+                """Extreme performance optimization strategy.
+
+                Returns:
+                    FlextTypes.Core.Dict: The extreme performance optimization configuration.
+
+                """
                 return {
                     "cache_size": 10000,
                     "batch_size": 1000,
@@ -282,8 +356,13 @@ class FlextTypeAdapters:
                 }
 
             @staticmethod
-            def get_error_config(optimization_level: str) -> dict[str, object]:
-                """Error configuration for invalid optimization levels."""
+            def get_error_config(optimization_level: str) -> FlextTypes.Core.Dict:
+                """Error configuration for invalid optimization levels.
+
+                Returns:
+                    FlextTypes.Core.Dict: The error configuration for invalid optimization levels.
+
+                """
                 return {
                     "error": "Invalid optimization level",
                     "provided_level": optimization_level,
@@ -296,7 +375,15 @@ class FlextTypeAdapters:
 
         @classmethod
         def optimize_type_adapters_performance(cls, optimization_level: str) -> object:
-            """Optimize system performance using Strategy Pattern."""
+            """Optimize system performance using Strategy Pattern.
+
+            Args:
+                optimization_level: The optimization level to use.
+
+            Returns:
+                object: The optimized system performance.
+
+            """
             # Define optimization strategies
             strategies = {
                 "low": cls._PerformanceOptimizationStrategy.get_low_performance_config,
@@ -316,23 +403,29 @@ class FlextTypeAdapters:
             )
 
     class Foundation:
-        """Foundation layer providing core type adapter creation and validation capabilities.
-
-        This class implements the fundamental type adaptation infrastructure for the FLEXT
-        ecosystem, providing basic type adapter creation, validation patterns, and error
-        handling through FlextResult[T] integration. It serves as the building block for
-        more specialized type adaptation functionality.
-
-        """
+        """Foundation layer providing core type adapter creation and validation capabilities."""
 
         @staticmethod
         def create_basic_adapter(target_type: type[object]) -> TypeAdapter[object]:
-            """Create basic TypeAdapter with FLEXT configuration."""
+            """Create basic TypeAdapter with FLEXT configuration.
+
+            Args:
+                target_type: The type to create an adapter for.
+
+            Returns:
+                TypeAdapter[object]: The created TypeAdapter.
+
+            """
             return TypeAdapter(target_type)
 
         @staticmethod
         def create_string_adapter() -> object:
-            """Create TypeAdapter for string types using FlextTypes."""
+            """Create TypeAdapter for string types using FlextTypes.
+
+            Returns:
+                object: The created TypeAdapter.
+
+            """
 
             # Use composition instead of inheritance since TypeAdapter is final
             class _CoercingStringAdapter:
@@ -346,15 +439,21 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_integer_adapter() -> TypeAdapter[int]:
-            """Create TypeAdapter for integer types using FlextTypes."""
+            """Create TypeAdapter for integer types using FlextTypes.
+
+            Returns:
+                TypeAdapter[int]: The created TypeAdapter.
+
+            """
             return TypeAdapter(int)
 
         @staticmethod
         def create_float_adapter() -> TypeAdapter[float]:
             """Create TypeAdapter for float with friendly string coercions.
 
-            Uses Annotated + BeforeValidator to map "2.71" to math.e while
-            remaining a real TypeAdapter instance for float-like values.
+            Returns:
+                TypeAdapter[float]: The created TypeAdapter.
+
             """
 
             def _map_e(value: object) -> object:
@@ -367,7 +466,12 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_boolean_adapter() -> TypeAdapter[bool]:
-            """Create TypeAdapter for boolean types using FlextTypes."""
+            """Create TypeAdapter for boolean types using FlextTypes.
+
+            Returns:
+                TypeAdapter[bool]: The created TypeAdapter.
+
+            """
             return TypeAdapter(bool)
 
         @staticmethod
@@ -376,7 +480,17 @@ class FlextTypeAdapters:
             arg2: object,
             adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[object]:
-            """Validate value using TypeAdapter with FlextResult error handling."""
+            """Validate value using TypeAdapter with FlextResult error handling.
+
+            Args:
+                arg1: The value to validate.
+                arg2: The type to validate against.
+                adapter: The TypeAdapter to use.
+
+            Returns:
+                FlextResult[object]: The validation result.
+
+            """
             try:
                 value = arg1
                 target_type = arg2
@@ -394,21 +508,35 @@ class FlextTypeAdapters:
     class Domain:
         """Business-specific type validation with efficient domain rule enforcement.
 
-        This class implements domain-driven type validation patterns for business-specific
-        data types and constraints. It provides efficient validation for domain entities,
-        value objects, and business rules while maintaining type safety and error handling
-        through FlextResult[T] patterns.
+        Args:
+            value: The value to validate.
+
+        Returns:
+            FlextResult[str]: The validation result.
 
         """
 
         @staticmethod
         def create_entity_id_adapter() -> TypeAdapter[str]:
-            """Create TypeAdapter for entity IDs with validation."""
+            """Create TypeAdapter for entity IDs with validation.
+
+            Returns:
+                TypeAdapter[str]: The created TypeAdapter.
+
+            """
             return TypeAdapter(str)
 
         @staticmethod
         def validate_entity_id(value: object) -> FlextResult[str]:
-            """Validate entity ID with business rules."""
+            """Validate entity ID with business rules.
+
+            Args:
+                value: The value to validate.
+
+            Returns:
+                FlextResult[str]: The validation result.
+
+            """
             if not value or (isinstance(value, str) and len(value.strip()) == 0):
                 return FlextResult[str].fail(
                     FlextConstants.Messages.INVALID_INPUT,
@@ -430,7 +558,15 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_percentage(value: object) -> FlextResult[float]:
-            """Validate percentage with business rules."""
+            """Validate percentage with business rules.
+
+            Args:
+                value: The value to validate.
+
+            Returns:
+                FlextResult[float]: The validation result.
+
+            """
             try:
                 if not isinstance(value, (int, float)):
                     return FlextResult[float].fail(
@@ -457,7 +593,15 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_version(value: object) -> FlextResult[int]:
-            """Validate version with business rules."""
+            """Validate version with business rules.
+
+            Args:
+                value: The value to validate.
+
+            Returns:
+                FlextResult[int]: The validation result.
+
+            """
             try:
                 if not isinstance(value, int):
                     return FlextResult[int].fail(
@@ -485,7 +629,12 @@ class FlextTypeAdapters:
             def create_validation_pipeline() -> list[
                 Callable[[object], FlextResult[object]]
             ]:
-                """Create validation pipeline using Strategy Pattern."""
+                """Create validation pipeline using Strategy Pattern.
+
+                Returns:
+                    list[Callable[[object], FlextResult[object]]]: The validation pipeline.
+
+                """
 
                 def _wrap_validate_type(obj: object) -> FlextResult[object]:
                     return FlextTypeAdapters.Domain._HostPortValidationStrategy._validate_type(
@@ -530,7 +679,12 @@ class FlextTypeAdapters:
 
             @staticmethod
             def _validate_type(host_port: object) -> FlextResult[str]:
-                """Type validation strategy."""
+                """Type validation strategy.
+
+                Returns:
+                    FlextResult[str]: The validation result.
+
+                """
                 if not isinstance(host_port, str):
                     return FlextResult[str].fail(
                         "Host:port must be string",
@@ -540,7 +694,15 @@ class FlextTypeAdapters:
 
             @staticmethod
             def _validate_format(value: str) -> FlextResult[tuple[str, str]]:
-                """Format validation strategy."""
+                """Format validation strategy.
+
+                Args:
+                    value: The value to validate.
+
+                Returns:
+                    FlextResult[tuple[str, str]]: The validation result.
+
+                """
                 if ":" not in value:
                     return FlextResult[tuple[str, str]].fail(
                         "Host:port must contain ':' separator",
@@ -560,7 +722,15 @@ class FlextTypeAdapters:
             def _validate_host(
                 host_port_tuple: tuple[str, str],
             ) -> FlextResult[tuple[str, str]]:
-                """Host validation strategy."""
+                """Host validation strategy.
+
+                Args:
+                    host_port_tuple: The host:port tuple to validate.
+
+                Returns:
+                    FlextResult[tuple[str, str]]: The validation result.
+
+                """
                 host, port_str = host_port_tuple
                 if not host.strip():
                     return FlextResult[tuple[str, str]].fail(
@@ -573,7 +743,15 @@ class FlextTypeAdapters:
             def _validate_port(
                 host_port_tuple: tuple[str, str],
             ) -> FlextResult[tuple[str, int]]:
-                """Port validation strategy."""
+                """Port validation strategy.
+
+                Args:
+                    host_port_tuple: The host:port tuple to validate.
+
+                Returns:
+                    FlextResult[tuple[str, int]]: The validation result.
+
+                """
                 host, port_str = host_port_tuple
                 try:
                     port = int(port_str)
@@ -593,7 +771,15 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_host_port(host_port: object) -> FlextResult[tuple[str, int]]:
-            """Validate host:port string using Strategy Pattern - REDUCED COMPLEXITY."""
+            """Validate host:port string using Strategy Pattern - REDUCED COMPLEXITY.
+
+            Args:
+                host_port: The host:port string to validate.
+
+            Returns:
+                FlextResult[tuple[str, int]]: The validation result.
+
+            """
             try:
                 # Use Railway Pattern with validation strategies
                 return (
@@ -617,13 +803,7 @@ class FlextTypeAdapters:
                 )
 
     class Application:
-        """Enterprise serialization, deserialization, and schema generation system.
-
-        This class implements efficient application-layer serialization capabilities for
-        type adapters, providing JSON and dictionary conversion, schema generation for API
-        documentation, and batch processing with efficient error handling. It serves as
-        the primary interface for data interchange and documentation generation.
-        """
+        """Enterprise serialization, deserialization, and schema generation system."""
 
         @staticmethod
         def serialize_to_json(arg1: object, arg2: object) -> FlextResult[str]:
@@ -647,7 +827,7 @@ class FlextTypeAdapters:
         def serialize_to_dict(
             arg1: object,
             arg2: object,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Serialize value to Python dictionary using TypeAdapter."""
             try:
                 if isinstance(arg1, TypeAdapter):
@@ -658,14 +838,16 @@ class FlextTypeAdapters:
                     value = arg1
                 result = adapter.dump_python(value)
                 if isinstance(result, dict):
-                    dict_result: dict[str, object] = cast("dict[str, object]", result)
-                    return FlextResult[dict[str, object]].ok(dict_result)
-                return FlextResult[dict[str, object]].fail(
+                    dict_result: FlextTypes.Core.Dict = cast(
+                        "FlextTypes.Core.Dict", result
+                    )
+                    return FlextResult[FlextTypes.Core.Dict].ok(dict_result)
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     "Value did not serialize to dictionary",
                     error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
                 )
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Dictionary serialization failed: {e!s}",
                     error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
                 )
@@ -696,7 +878,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def deserialize_from_dict(
-            data_dict: dict[str, object],
+            data_dict: FlextTypes.Core.Dict,
             model_type: type[object],
             adapter: TypeAdapter[object],
         ) -> FlextResult[object]:
@@ -719,7 +901,7 @@ class FlextTypeAdapters:
         def generate_schema(
             model_type: type[object],
             adapter: TypeAdapter[object],
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Generate JSON schema for TypeAdapter."""
             try:
                 schema = adapter.json_schema()
@@ -727,9 +909,9 @@ class FlextTypeAdapters:
                 model_name = getattr(model_type, "__name__", None)
                 if model_name and isinstance(schema, dict) and "title" not in schema:
                     schema["title"] = model_name
-                return FlextResult[dict[str, object]].ok(schema)
+                return FlextResult[FlextTypes.Core.Dict].ok(schema)
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Schema generation failed: {e!s}",
                     error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
                 )
@@ -737,10 +919,10 @@ class FlextTypeAdapters:
         @staticmethod
         def generate_multiple_schemas(
             types: list[type[object]],
-        ) -> FlextResult[list[dict[str, object]]]:
+        ) -> FlextResult[list[FlextTypes.Core.Dict]]:
             """Generate schemas for multiple types."""
             try:
-                schemas: list[dict[str, object]] = []
+                schemas: list[FlextTypes.Core.Dict] = []
                 for model_type in types:
                     adapter = TypeAdapter(model_type)
                     schema_result = FlextTypeAdapters.Application.generate_schema(
@@ -748,14 +930,14 @@ class FlextTypeAdapters:
                         adapter,
                     )
                     if schema_result.is_failure:
-                        return FlextResult[list[dict[str, object]]].fail(
+                        return FlextResult[list[FlextTypes.Core.Dict]].fail(
                             f"Failed to generate schema for {model_type}: {schema_result.error}",
                             error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
                         )
                     schemas.append(schema_result.value)
-                return FlextResult[list[dict[str, object]]].ok(schemas)
+                return FlextResult[list[FlextTypes.Core.Dict]].ok(schemas)
             except Exception as e:
-                return FlextResult[list[dict[str, object]]].fail(
+                return FlextResult[list[FlextTypes.Core.Dict]].fail(
                     f"Multiple schema generation failed: {e!s}",
                     error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
                 )
@@ -769,6 +951,7 @@ class FlextTypeAdapters:
         data: object,
         target_type: type[object],
     ) -> FlextResult[object]:
+        """Adapt data to target type."""
         try:
             adapter = TypeAdapter(target_type)
             value = adapter.validate_python(data)
@@ -781,28 +964,32 @@ class FlextTypeAdapters:
 
     def adapt_batch(
         self,
-        items: list[object],
+        items: FlextTypes.Core.List,
         target_type: type[object],
-    ) -> FlextResult[list[object]]:
+    ) -> FlextResult[FlextTypes.Core.List]:
+        """Adapt a batch of items to target type."""
         try:
             adapter = TypeAdapter(target_type)
-            results: list[object] = []
+            results: FlextTypes.Core.List = []
             for item in items:
                 try:
                     results.append(adapter.validate_python(item))
                 except Exception:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].fail(
                         "Batch adaptation failed",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-            return FlextResult[list[object]].ok(results)
+            return FlextResult[FlextTypes.Core.List].ok(results)
         except Exception as e:
-            return FlextResult[list[object]].fail(
+            return FlextResult[FlextTypes.Core.List].fail(
                 f"Batch adaptation error: {e!s}",
                 error_code=FlextConstants.Errors.VALIDATION_ERROR,
             )
 
-    def validate_batch(self, items: list[object], target_type: type[object]) -> object:
+    def validate_batch(
+        self, items: FlextTypes.Core.List, target_type: type[object]
+    ) -> object:
+        """Validate a batch of items against target type."""
         adapter = TypeAdapter(target_type)
         total = len(items)
         valid = 0
@@ -827,12 +1014,13 @@ class FlextTypeAdapters:
     def generate_schema(
         self,
         target_type: type[object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Generate JSON schema for target type."""
         try:
             adapter = TypeAdapter(target_type)
             return self.Application.generate_schema(target_type, adapter)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Schema generation error: {e!s}",
                 error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
             )
@@ -840,14 +1028,15 @@ class FlextTypeAdapters:
     def get_type_info(
         self,
         target_type: type[object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Get type information for target type."""
         try:
-            info: dict[str, object] = {
+            info: FlextTypes.Core.Dict = {
                 "type_name": getattr(target_type, "__name__", str(target_type)),
             }
-            return FlextResult[dict[str, object]].ok(info)
+            return FlextResult[FlextTypes.Core.Dict].ok(info)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Type info error: {e!s}",
                 error_code=FlextConstants.Errors.SERIALIZATION_ERROR,
             )
@@ -857,6 +1046,7 @@ class FlextTypeAdapters:
         value: object,
         target_type: type[object],
     ) -> FlextResult[str]:
+        """Serialize value to JSON string."""
         adapter = TypeAdapter(target_type)
         return self.Application.serialize_to_json(adapter, value)
 
@@ -865,6 +1055,7 @@ class FlextTypeAdapters:
         json_str: str,
         target_type: type[object],
     ) -> FlextResult[object]:
+        """Deserialize JSON string to target type."""
         adapter = TypeAdapter(target_type)
         return self.Application.deserialize_from_json(json_str, target_type, adapter)
 
@@ -872,15 +1063,17 @@ class FlextTypeAdapters:
         self,
         value: object,
         target_type: type[object],
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Serialize value to dictionary."""
         adapter = TypeAdapter(target_type)
         return self.Application.serialize_to_dict(adapter, value)
 
     def deserialize_from_dict(
         self,
-        data: dict[str, object],
+        data: FlextTypes.Core.Dict,
         target_type: type[object],
     ) -> FlextResult[object]:
+        """Deserialize dictionary to target type."""
         adapter = TypeAdapter(target_type)
         return self.Application.deserialize_from_dict(data, target_type, adapter)
 
@@ -897,6 +1090,7 @@ class FlextTypeAdapters:
             model_or_adapter: object,
             adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[str]:
+            """Serialize value to JSON using adapter."""
             adp = (
                 model_or_adapter
                 if isinstance(model_or_adapter, TypeAdapter)
@@ -912,7 +1106,8 @@ class FlextTypeAdapters:
             value: object,
             model_or_adapter: object,
             adapter: TypeAdapter[object] | None = None,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Serialize value to dictionary using adapter."""
             adp = (
                 model_or_adapter
                 if isinstance(model_or_adapter, TypeAdapter)
@@ -929,6 +1124,7 @@ class FlextTypeAdapters:
             model_or_adapter: type[object] | TypeAdapter[object],
             adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[object]:
+            """Deserialize JSON string using adapter."""
             adp = (
                 model_or_adapter
                 if isinstance(model_or_adapter, TypeAdapter)
@@ -947,10 +1143,11 @@ class FlextTypeAdapters:
 
         @staticmethod
         def deserialize_from_dict(
-            data: dict[str, object],
+            data: FlextTypes.Core.Dict,
             model_or_adapter: type[object] | TypeAdapter[object],
             adapter: TypeAdapter[object] | None = None,
         ) -> FlextResult[object]:
+            """Deserialize dictionary using adapter."""
             adp = (
                 model_or_adapter
                 if isinstance(model_or_adapter, TypeAdapter)
@@ -974,7 +1171,8 @@ class FlextTypeAdapters:
         def generate_schema(
             model: type[object],
             adapter: TypeAdapter[object] | None = None,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Generate JSON schema for model type."""
             return FlextTypeAdapters.Application.generate_schema(
                 model,
                 adapter or TypeAdapter(model),
@@ -983,33 +1181,37 @@ class FlextTypeAdapters:
         @staticmethod
         def generate_multiple_schemas(
             types: list[type[object]],
-        ) -> FlextResult[list[dict[str, object]]]:
+        ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+            """Generate JSON schemas for multiple types."""
             try:
-                schemas: list[dict[str, object]] = [
-                    cast("dict[str, object]", TypeAdapter(t).json_schema())
+                schemas: list[FlextTypes.Core.Dict] = [
+                    cast("FlextTypes.Core.Dict", TypeAdapter(t).json_schema())
                     for t in types
                 ]
-                return FlextResult[list[dict[str, object]]].ok(schemas)
+                return FlextResult[list[FlextTypes.Core.Dict]].ok(schemas)
             except Exception as e:
-                return FlextResult[list[dict[str, object]]].fail(str(e))
+                return FlextResult[list[FlextTypes.Core.Dict]].fail(str(e))
 
     class BatchOperations:
         """Batch processing utilities for type adapters."""
 
         @staticmethod
         def validate_batch(
-            items: list[object],
+            items: FlextTypes.Core.List,
             model: type[object],
             adapter: TypeAdapter[object] | None = None,
-        ) -> FlextResult[list[object]]:
+        ) -> FlextResult[FlextTypes.Core.List]:
+            """Validate a batch of items against model type."""
             adp = adapter or TypeAdapter(model)
-            validated: list[object] = []
+            validated: FlextTypes.Core.List = []
             for item in items:
                 try:
                     validated.append(adp.validate_python(item))
                 except Exception:
-                    return FlextResult[list[object]].fail("Batch validation failed")
-            return FlextResult[list[object]].ok(validated)
+                    return FlextResult[FlextTypes.Core.List].fail(
+                        "Batch validation failed"
+                    )
+            return FlextResult[FlextTypes.Core.List].ok(validated)
 
     class AdapterRegistry:
         """Registry for reusable type adapters."""
@@ -1022,11 +1224,13 @@ class FlextTypeAdapters:
             key: str,
             adapter: TypeAdapter[object],
         ) -> FlextResult[None]:
+            """Register adapter in registry with key."""
             cls._registry[key] = adapter
             return FlextResult[None].ok(None)
 
         @classmethod
         def get_adapter(cls, key: str) -> FlextResult[TypeAdapter[object]]:
+            """Get adapter from registry by key."""
             adapter = cls._registry.get(key)
             if adapter is None:
                 return FlextResult[TypeAdapter[object]].fail(
@@ -1036,8 +1240,11 @@ class FlextTypeAdapters:
             return FlextResult[TypeAdapter[object]].ok(adapter)
 
         @classmethod
-        def list_adapters(cls) -> FlextResult[list[str]]:
-            return FlextResult[list[str]].ok(list(cls._registry.keys()))
+        def list_adapters(cls) -> FlextResult[FlextTypes.Core.StringList]:
+            """List all registered adapter keys."""
+            return FlextResult[FlextTypes.Core.StringList].ok(
+                list(cls._registry.keys())
+            )
 
     # Backward-compat aliases for test names
     BaseAdapters = Foundation
@@ -1049,6 +1256,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_adapter_for_type(model: type[object]) -> TypeAdapter[object]:
+            """Create adapter for specific model type."""
             return TypeAdapter(model)
 
     class ProtocolAdapters:
@@ -1056,6 +1264,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def create_validator_protocol() -> object:
+            """Create validator protocol for type validation."""
             return cast(
                 "type[FlextProtocols.Foundation.Validator[object]] | None",
                 FlextProtocols.Foundation.Validator,
@@ -1066,6 +1275,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def migrate_from_basemodel(name: str) -> str:
+            """Generate migration helper for BaseModel to TypeAdapter."""
             return f"# Migration helper for {name}: Use pydantic.TypeAdapter for validation."
 
     class Examples:
@@ -1073,6 +1283,8 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_example_user() -> FlextResult[object]:
+            """Validate user data using TypeAdapter."""
+
             class User(FlextModels.Config):
                 name: str
                 age: int
@@ -1086,6 +1298,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_example_config() -> FlextResult[object]:
+            """Validate configuration data example."""
             try:
                 sample = {"feature": True, "retries": 3}
                 return FlextResult[object].ok(sample)
@@ -1093,14 +1306,7 @@ class FlextTypeAdapters:
                 return FlextResult[object].fail(str(e))
 
     class Infrastructure:
-        """Protocol-based adapter interfaces and registry management system.
-
-        This class implements infrastructure-layer patterns for type adapter composition,
-        registration, and discovery. It provides protocol-based interfaces for flexible
-        adapter composition, registry management for dynamic adapter discovery, and
-        infrastructure patterns supporting enterprise adapter architecture.
-
-        """
+        """Protocol-based adapter interfaces and registry management system."""
 
         @staticmethod
         def create_validator_protocol() -> (
@@ -1128,14 +1334,7 @@ class FlextTypeAdapters:
             return FlextResult[None].ok(None)
 
     class Utilities:
-        """Comprehensive utility functions, migration tools, and compatibility bridges.
-
-        This class provides essential utility functions for type adapter operations, migration
-        tools for transitioning from legacy patterns, batch processing capabilities, and
-        compatibility bridges for maintaining functionality during transitions. It serves as
-        the toolbox for adapter maintenance, migration, and operational support.
-
-        """
+        """Comprehensive utility functions, migration tools, and compatibility bridges."""
 
         @staticmethod
         def create_adapter_for_type(target_type: type[object]) -> TypeAdapter[object]:
@@ -1144,12 +1343,12 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_batch(
-            items: list[object],
+            items: FlextTypes.Core.List,
             model_type: type[object],
             adapter: TypeAdapter[object],
-        ) -> FlextResult[list[object]]:
+        ) -> FlextResult[FlextTypes.Core.List]:
             """Validate batch of items using TypeAdapter."""
-            validated: list[object] = []
+            validated: FlextTypes.Core.List = []
             for item in items:
                 try:
                     value = adapter.validate_python(item)
@@ -1157,17 +1356,17 @@ class FlextTypeAdapters:
                         value,
                         model_type,
                     ):
-                        return FlextResult[list[object]].fail(
+                        return FlextResult[FlextTypes.Core.List].fail(
                             "Batch validation failed: type mismatch",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
                     validated.append(value)
                 except Exception:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].fail(
                         "Batch validation failed",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
-            return FlextResult[list[object]].ok(validated)
+            return FlextResult[FlextTypes.Core.List].ok(validated)
 
         @staticmethod
         def migrate_from_basemodel(model_class_name: str) -> str:
@@ -1187,7 +1386,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_example_user() -> FlextResult[object]:
-            """Example validation demonstrating TypeAdapter patterns."""
+            """Demonstrate TypeAdapter validation patterns."""
 
             # Example dataclass for demonstration - defined outside try block
             @dataclass
@@ -1236,7 +1435,7 @@ class FlextTypeAdapters:
 
         @staticmethod
         def validate_example_config() -> FlextResult[object]:
-            """Example configuration validation demonstrating enterprise patterns."""
+            """Demonstrate enterprise configuration validation patterns."""
 
             # Example configuration for demonstration - defined outside try block
             @dataclass

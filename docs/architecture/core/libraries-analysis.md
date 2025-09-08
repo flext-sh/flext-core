@@ -647,7 +647,7 @@ class FlextTapOracleWMS(FlextSingerPluginBase):
     def get_plugin_name(self) -> str:
         return "tap-oracle-wms"
 
-    def get_required_config(self) -> list[str]:
+    def get_required_config(self) -> FlextTypes.Core.StringList:
         return ["host", "port", "database", "username", "password"]
 
     def _perform_extraction(self, config: dict, state: dict) -> FlextResult[list]:

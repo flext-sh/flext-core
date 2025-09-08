@@ -1,4 +1,8 @@
-"""Comprehensive tests for FlextTypeAdapters using flext_tests - 100% coverage without mocks."""
+"""Comprehensive tests for FlextTypeAdapters using flext_tests - 100% coverage without mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,6 +15,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextExceptions, FlextModels, FlextResult, FlextTypeAdapters
+from flext_core.typings import FlextTypes
 from flext_tests import FlextMatchers, FlextTestUtilities, TestBuilders
 
 
@@ -132,7 +137,7 @@ class TestFlextTypeAdaptersValidation:
 
         for item in test_data:
             assert isinstance(item, dict)
-            item_dict: dict[str, object] = item
+            item_dict: FlextTypes.Core.Dict = item
             assert "type" in item_dict
             assert "value" in item_dict
             assert isinstance(item_dict["value"], (str, int, bool, list))
@@ -166,7 +171,7 @@ class TestFlextTypeAdaptersConversion:
                 self.name = name
                 self.value = value
 
-            def to_dict(self) -> dict[str, object]:
+            def to_dict(self) -> FlextTypes.Core.Dict:
                 return {"name": self.name, "value": self.value}
 
         obj = TestObject("test", 42)
@@ -260,7 +265,7 @@ class TestFlextTypeAdaptersPerformance:
 
         start_time = time.time()
 
-        processed_items: list[dict[str, object]] = []
+        processed_items: list[FlextTypes.Core.Dict] = []
         for item in test_items:
             # Simple processing
             processed = {

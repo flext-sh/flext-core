@@ -95,7 +95,7 @@ gantt
           super().__init__(validator)
           self.singer_config = singer_config
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Singer record processing with validation
           # Schema transformation
           # ETL business rules application
@@ -173,7 +173,7 @@ gantt
           super().__init__(validator)
           self.regex_processor = self._create_regex_processor()
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # LDIF entry parsing and validation
           # Distinguished Name (DN) processing
           # Attribute parsing and normalization
@@ -194,7 +194,7 @@ gantt
       def __init__(self, batch_size: int = 1000):
           self.ldif_processor = FlextLDIFEntryProcessor()
 
-      def process_ldif_file(self, file_path: str) -> FlextResult[dict[str, object]]:
+      def process_ldif_file(self, file_path: str) -> FlextResult[FlextTypes.Core.Dict]:
           # Read and split LDIF file
           # Process in batches
           # Aggregate results and errors
@@ -260,7 +260,7 @@ gantt
           super().__init__(validator)
           self.ldif_processor = FlextLDIFEntryProcessor(tap_config.get("ldif_config"))
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Process LDIF entry using flext-ldif processor
           # Generate Singer record from LDIF data
           # Apply tap-specific transformations
@@ -302,7 +302,7 @@ gantt
           super().__init__(validator)
           self.regex_processor = self._create_migration_regex_processor()
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Extract migration patterns using regex processor
           # Transform for OUD migration
           # Apply Algar-specific business rules
@@ -355,7 +355,7 @@ gantt
 
   ```python
   class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Parse Singer record from entry
           # Transform for Oracle OIC format
           # Validate against OIC schema
@@ -385,7 +385,7 @@ gantt
 
   ```python
   class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Parse WMS operation data
           # Transform for Oracle WMS format
           # Validate WMS business rules
@@ -569,7 +569,7 @@ class FlextProcessorsMigrationTools:
     """Tools to assist with FlextProcessors migration."""
 
     @staticmethod
-    def analyze_current_processing(library_path: str) -> dict[str, object]:
+    def analyze_current_processing(library_path: str) -> FlextTypes.Core.Dict:
         """Analyze current processing patterns in a library."""
         return {
             "custom_processors": ["CustomDataProcessor", "CustomValidator"],
@@ -584,7 +584,7 @@ class FlextProcessorsMigrationTools:
         pass
 
     @staticmethod
-    def validate_processor_implementation(processor_class: type) -> list[str]:
+    def validate_processor_implementation(processor_class: type) -> FlextTypes.Core.StringList:
         """Validate FlextProcessors implementation."""
         pass
 ```

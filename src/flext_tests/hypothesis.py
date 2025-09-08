@@ -2,6 +2,9 @@
 
 Provides comprehensive property-based testing strategies, custom generators,
 and sophisticated test data generation patterns for FlextCore testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,6 +17,8 @@ from typing import TypeVar
 from uuid import uuid4
 
 from hypothesis import strategies as st
+
+from flext_core.typings import FlextTypes
 
 T = TypeVar("T")
 
@@ -284,7 +289,7 @@ class BusinessDomainStrategies:
         return f"{z:05d}"
 
     @staticmethod
-    def addresses() -> st.SearchStrategy[dict[str, str]]:
+    def addresses() -> st.SearchStrategy[FlextTypes.Core.Headers]:
         """Generate address objects."""
         street_names = [
             "Main St",
@@ -432,7 +437,7 @@ class EdgeCaseStrategies:
         )
 
     @staticmethod
-    def malformed_data() -> st.SearchStrategy[dict[str, object]]:
+    def malformed_data() -> st.SearchStrategy[FlextTypes.Core.Dict]:
         """Generate malformed data structures."""
         return st.one_of(
             [
@@ -546,7 +551,7 @@ class PropertyTestHelpers:
         data: object,
         id_val: str,
         scenario_name: str,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Build test scenario dictionary with metadata."""
         return {
             "scenario": scenario_name,
@@ -560,10 +565,10 @@ class PropertyTestHelpers:
         strategy: st.SearchStrategy[T],
         scenario_name: str = "test_scenario",
         _min_examples: int = 10,
-    ) -> st.SearchStrategy[dict[str, object]]:
+    ) -> st.SearchStrategy[FlextTypes.Core.Dict]:
         """Generate test scenarios with metadata."""
 
-        def _scenario_builder(data: T, id_val: str) -> dict[str, object]:
+        def _scenario_builder(data: T, id_val: str) -> FlextTypes.Core.Dict:
             return PropertyTestHelpers._build_test_scenario(data, id_val, scenario_name)
 
         return st.builds(
@@ -578,11 +583,11 @@ class CompositeStrategies:
     """Pre-configured composite strategies for common testing scenarios."""
 
     @staticmethod
-    def user_profiles() -> st.SearchStrategy[dict[str, object]]:
+    def user_profiles() -> st.SearchStrategy[FlextTypes.Core.Dict]:
         """Complete user profile data."""
 
         @st.composite
-        def _user_profile(draw: st.DrawFn) -> dict[str, object]:
+        def _user_profile(draw: st.DrawFn) -> FlextTypes.Core.Dict:
             return {
                 "id": draw(FlextStrategies.flext_ids()),
                 "name": draw(BusinessDomainStrategies.user_names()),
@@ -603,11 +608,11 @@ class CompositeStrategies:
         return _user_profile()
 
     @staticmethod
-    def api_requests() -> st.SearchStrategy[dict[str, object]]:
+    def api_requests() -> st.SearchStrategy[FlextTypes.Core.Dict]:
         """API request-like data structures."""
 
         @st.composite
-        def _api_request(draw: st.DrawFn) -> dict[str, object]:
+        def _api_request(draw: st.DrawFn) -> FlextTypes.Core.Dict:
             return {
                 "method": draw(
                     st.sampled_from(["GET", "POST", "PUT", "DELETE", "PATCH"]),
@@ -648,11 +653,11 @@ class CompositeStrategies:
         return f"postgresql://{host}:{port}/{db}"
 
     @staticmethod
-    def configuration_data() -> st.SearchStrategy[dict[str, object]]:
+    def configuration_data() -> st.SearchStrategy[FlextTypes.Core.Dict]:
         """Configuration-like data structures."""
 
         @st.composite
-        def _config_data(draw: st.DrawFn) -> dict[str, object]:
+        def _config_data(draw: st.DrawFn) -> FlextTypes.Core.Dict:
             return {
                 "database_url": draw(
                     st.builds(
@@ -689,3 +694,31 @@ class CompositeStrategies:
             }
 
         return _config_data()
+
+
+# Main unified class
+class FlextTestsHypothesis:
+    """Unified hypothesis strategies for FLEXT ecosystem.
+
+    Consolidates all property-based testing strategies into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    Strategies = FlextStrategies
+    BusinessDomain = BusinessDomainStrategies
+    EdgeCases = EdgeCaseStrategies
+    Performance = PerformanceStrategies
+    Helpers = PropertyTestHelpers
+    Composite = CompositeStrategies
+
+
+# Export all strategies
+__all__ = [
+    "BusinessDomainStrategies",
+    "CompositeStrategies",
+    "EdgeCaseStrategies",
+    "FlextStrategies",
+    "FlextTestsHypothesis",
+    "PerformanceStrategies",
+    "PropertyTestHelpers",
+]

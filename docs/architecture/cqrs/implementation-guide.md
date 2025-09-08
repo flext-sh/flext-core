@@ -91,7 +91,7 @@ class YourActionCommand(FlextCommands.Models.Command):
     flag_field: bool = False
 
     # Complex types
-    config_data: dict[str, object] = Field(default_factory=dict)
+    config_data: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     def validate_command(self) -> FlextResult[None]:
         """Business rule validation"""
@@ -220,7 +220,7 @@ class YourDataHandler(
         except Exception as e:
             return FlextResult[list[YourDataType]].fail(f"Query failed: {e}")
 
-    def _build_query_params(self, query: YourDataQuery) -> dict[str, object]:
+    def _build_query_params(self, query: YourDataQuery) -> FlextTypes.Core.Dict:
         """Convert query to repository parameters"""
         params = {}
         if query.status_filter:
@@ -464,7 +464,7 @@ class CreateUserCommand(FlextCommands.Models.Command):
 
 class UpdateUserProfileCommand(FlextCommands.Models.Command):
     user_id: str
-    profile_data: dict[str, object]
+    profile_data: FlextTypes.Core.Dict
 ```
 
 ### 2. **Business Logic in Commands**

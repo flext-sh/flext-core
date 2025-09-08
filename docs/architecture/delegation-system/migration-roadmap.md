@@ -459,7 +459,7 @@ class FlextDelegationDevTools:
     """Development tools for delegation implementation."""
 
     @staticmethod
-    def analyze_delegation_opportunities(library_path: str) -> dict[str, list[str]]:
+    def analyze_delegation_opportunities(library_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze existing code for delegation opportunities."""
         return {
             "manual_delegation_patterns": ["manual_method_forwarding", "property_delegation"],
@@ -469,7 +469,7 @@ class FlextDelegationDevTools:
         }
 
     @staticmethod
-    def generate_delegation_template(service_name: str, mixins: list[str]) -> str:
+    def generate_delegation_template(service_name: str, mixins: FlextTypes.Core.StringList) -> str:
         """Generate delegation implementation template."""
         return f"""
 class {service_name}Orchestrator:

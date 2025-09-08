@@ -311,7 +311,7 @@ for key, value in masked.items():
 
 ```python
 # Advanced text cleaning for data processing
-def clean_and_normalize_text_data(raw_data: list[str]) -> list[str]:
+def clean_and_normalize_text_data(raw_data: FlextTypes.Core.StringList) -> FlextTypes.Core.StringList:
     """Clean and normalize text data for processing."""
 
     cleaned_data = []
@@ -781,7 +781,7 @@ class BusinessDataConverter:
             "discount": {"min": 0.0, "max": 1.0}
         }
 
-    def convert_with_validation(self, data: dict) -> tuple[dict, list[str]]:
+    def convert_with_validation(self, data: dict) -> tuple[dict, FlextTypes.Core.StringList]:
         """Convert data with business rule validation."""
         converted_data = {}
         validation_errors = []
@@ -911,7 +911,7 @@ class JSONProcessor:
             "failed_serializations": 0
         }
 
-    def process_json_data(self, json_strings: list[str]) -> dict:
+    def process_json_data(self, json_strings: FlextTypes.Core.StringList) -> dict:
         """Process multiple JSON strings with error collection."""
         results = {
             "successful": [],
@@ -1092,7 +1092,7 @@ class ModelProcessor:
 
         return extracted_data
 
-    def parse_json_to_models(self, json_data: list[str], model_classes: list[type]) -> dict:
+    def parse_json_to_models(self, json_data: FlextTypes.Core.StringList, model_classes: list[type]) -> dict:
         """Parse JSON to model instances."""
         results = {
             "successful_conversions": [],

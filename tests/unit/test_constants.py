@@ -1,4 +1,8 @@
-"""Targeted tests for 100% coverage on FlextConstants module."""
+"""Targeted tests for 100% coverage on FlextConstants module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

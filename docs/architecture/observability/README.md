@@ -234,7 +234,7 @@ class FlextObservability.Metrics:
     def record_timer(self, name: str, duration_ms: float, **tags: object) -> None
 
     # Metrics management
-    def get_metrics_summary(self) -> dict[str, object]
+    def get_metrics_summary(self) -> FlextTypes.Core.Dict
     def reset_metrics(self, pattern: str | None = None) -> None
 ```
 

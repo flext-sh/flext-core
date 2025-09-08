@@ -373,11 +373,11 @@ class FlextTypesMigrationTools:
     """Tools for type system migration and validation."""
 
     @staticmethod
-    def analyze_service_types(service_path: str) -> dict[str, list[str]]:
+    def analyze_service_types(service_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze service for FlextTypes migration opportunities."""
         return {
-            "manual_types": ["dict[str, object]", "list[object]"],
-            "flext_type_candidates": ["FlextTypes.Config.ConfigDict", "list[object]"],
+            "manual_types": ["FlextTypes.Core.Dict", "FlextTypes.Core.List"],
+            "flext_type_candidates": ["FlextTypes.Config.ConfigDict", "FlextTypes.Core.List"],
             "migration_priority": "high"
         }
 
@@ -415,16 +415,16 @@ class TypeSafetyMigrationTools:
     """Automated tools for type safety migration."""
 
     @staticmethod
-    def detect_manual_types(codebase_paths: list) -> dict[str, list[str]]:
+    def detect_manual_types(codebase_paths: list) -> dict[str, FlextTypes.Core.StringList]:
         """Detect manual type definitions."""
         return {
-            "manual_dict_types": ["dict[str, object]", "dict[str, object]"],
-            "manual_list_types": ["list[object]", "list[object]"],
+            "manual_dict_types": ["FlextTypes.Core.Dict", "FlextTypes.Core.Dict"],
+            "manual_list_types": ["FlextTypes.Core.List", "FlextTypes.Core.List"],
             "flext_type_opportunities": ["FlextTypes.Config.ConfigDict"]
         }
 
     @staticmethod
-    def generate_migration_plan(library_name: str) -> dict[str, list[str]]:
+    def generate_migration_plan(library_name: str) -> dict[str, FlextTypes.Core.StringList]:
         """Generate type migration plan."""
         return {
             "phase_1": ["Design FlextTypes extension", "Identify manual types"],

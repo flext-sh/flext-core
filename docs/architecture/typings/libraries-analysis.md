@@ -34,10 +34,10 @@ This analysis reveals that `FlextTypes` has excellent architectural design but i
 # CURRENT: Manual type definitions without FlextTypes
 class ApiHandler:
     def __init__(self):
-        self.handlers: dict[str, object] = {}    # Manual typing
-        self.config: dict[str, object] = {}      # No domain separation
+        self.handlers: FlextTypes.Core.Dict = {}    # Manual typing
+        self.config: FlextTypes.Core.Dict = {}      # No domain separation
 
-    def handle_request(self, request_data: dict[str, object]) -> dict[str, object]:
+    def handle_request(self, request_data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         # No type safety for request/response
         return {"status": "processed"}
 ```
@@ -220,8 +220,8 @@ class FlextLDAPTypes(FlextTypes):
         type Scope = Literal["base", "onelevel", "subtree"]
 
     class Entry:
-        type AttributeDict = dict[str, list[str]]
-        type AttributeValue = list[str]
+        type AttributeDict = dict[str, FlextTypes.Core.StringList]
+        type AttributeValue = FlextTypes.Core.StringList
 
 # Usage with complete type safety
 dn: FlextLDAPTypes.LdapDomain.DistinguishedName = "cn=user,dc=example,dc=com"

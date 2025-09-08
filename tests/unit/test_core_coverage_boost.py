@@ -2,6 +2,10 @@
 
 Uses flext_tests library to create comprehensive real-world tests
 without mocks to achieve higher coverage on core.py module.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

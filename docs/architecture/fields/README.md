@@ -831,7 +831,7 @@ class EnterpriseFormValidationService:
             if registration_result.success:
                 print(f"✅ Registered field: {field_name}")
 
-    def validate_user_registration_form(self, form_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def validate_user_registration_form(self, form_data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate complete user registration form with comprehensive checks."""
 
         validated_data = {}
@@ -896,11 +896,11 @@ class EnterpriseFormValidationService:
         # Return results
         if validation_errors:
             error_message = "; ".join(validation_errors)
-            return FlextResult[dict[str, object]].fail(f"Form validation failed: {error_message}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Form validation failed: {error_message}")
 
-        return FlextResult[dict[str, object]].ok(validated_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(validated_data)
 
-    def validate_business_profile_form(self, form_data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def validate_business_profile_form(self, form_data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate business profile form with registered fields."""
 
         validated_data = {}
@@ -943,11 +943,11 @@ class EnterpriseFormValidationService:
         # Return results
         if validation_errors:
             error_message = "; ".join(validation_errors)
-            return FlextResult[dict[str, object]].fail(f"Business profile validation failed: {error_message}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Business profile validation failed: {error_message}")
 
-        return FlextResult[dict[str, object]].ok(validated_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(validated_data)
 
-    def create_dynamic_form_schema(self, field_definitions: list[dict[str, object]]) -> FlextResult[dict[str, object]]:
+    def create_dynamic_form_schema(self, field_definitions: list[FlextTypes.Core.Dict]) -> FlextResult[FlextTypes.Core.Dict]:
         """Create dynamic form schema from field definitions."""
 
         schema = {}
@@ -957,7 +957,7 @@ class EnterpriseFormValidationService:
             field_type = field_def.get("type")
 
             if not field_name or not field_type:
-                return FlextResult[dict[str, object]].fail("Field name and type are required")
+                return FlextResult[FlextTypes.Core.Dict].fail("Field name and type are required")
 
             # Create field using factory
             if field_type == "string":
@@ -984,7 +984,7 @@ class EnterpriseFormValidationService:
                     description=field_def.get("description", "")
                 )
             else:
-                return FlextResult[dict[str, object]].fail(f"Unsupported field type: {field_type}")
+                return FlextResult[FlextTypes.Core.Dict].fail(f"Unsupported field type: {field_type}")
 
             if field_result.success:
                 field = field_result.value
@@ -993,11 +993,11 @@ class EnterpriseFormValidationService:
                     "metadata": field.get_metadata()
                 }
             else:
-                return FlextResult[dict[str, object]].fail(f"Failed to create field {field_name}: {field_result.error}")
+                return FlextResult[FlextTypes.Core.Dict].fail(f"Failed to create field {field_name}: {field_result.error}")
 
-        return FlextResult[dict[str, object]].ok(schema)
+        return FlextResult[FlextTypes.Core.Dict].ok(schema)
 
-    def get_validation_statistics(self) -> dict[str, object]:
+    def get_validation_statistics(self) -> FlextTypes.Core.Dict:
         """Get comprehensive validation statistics."""
 
         # Get registered fields count

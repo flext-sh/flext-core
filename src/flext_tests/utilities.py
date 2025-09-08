@@ -1,16 +1,21 @@
-"""Testing utilities and helpers for FLEXT components."""
+"""Testing utilities and helpers for FLEXT components.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import ClassVar, Protocol, TypeVar, runtime_checkable
+from typing import ClassVar, Protocol, TypeVar, cast, runtime_checkable
 
 from flext_core import (
     FlextConstants,
     FlextModels,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
 T = TypeVar("T")
 
@@ -139,7 +144,7 @@ class FlextTestUtilities:
         *,
         size: int = 10,
         prefix: str = "test",
-    ) -> list[dict[str, object]]:
+    ) -> list[FlextTypes.Core.Dict]:
         """Create test data for testing.
 
         Args:
@@ -180,7 +185,7 @@ class FlextTestFactory[T]:
 
         """
         self._model_class = model_class
-        self._defaults: dict[str, object] = {}
+        self._defaults: FlextTypes.Core.Dict = {}
 
     def set_defaults(self, **defaults: object) -> FlextTestFactory[T]:
         """Set default values for created objects.
@@ -223,7 +228,7 @@ class FlextTestFactory[T]:
 
     def create_batch(
         self,
-        specifications: list[dict[str, object]],
+        specifications: list[FlextTypes.Core.Dict],
     ) -> list[T]:
         """Create objects from specifications.
 
@@ -419,8 +424,10 @@ class FunctionalTestService:
         """Initialize functional test service."""
         self.service_type = service_type
         self.config = config
-        self.call_history: list[tuple[str, tuple[object, ...], dict[str, object]]] = []
-        self.return_values: dict[str, object] = {}
+        self.call_history: list[
+            tuple[str, tuple[object, ...], FlextTypes.Core.Dict]
+        ] = []
+        self.return_values: FlextTypes.Core.Dict = {}
         self.side_effects: dict[str, list[object]] = {}
         self.should_fail: dict[str, bool] = {}
         self.failure_messages: dict[str, str] = {}
@@ -513,7 +520,7 @@ class FunctionalTestService:
     def get_calls_for_method(
         self,
         method_name: str,
-    ) -> list[tuple[tuple[object, ...], dict[str, object]]]:
+    ) -> list[tuple[tuple[object, ...], FlextTypes.Core.Dict]]:
         """Get all calls for a specific method.
 
         Args:
@@ -680,7 +687,7 @@ class FlextTestModel(FlextModels.Config):
     value: int = 42
     active: bool = True
     tags: ClassVar[list[str]] = []
-    metadata: ClassVar[dict[str, object]] = {}
+    metadata: ClassVar[FlextTypes.Core.Dict] = {}
 
     def activate(self) -> FlextResult[None]:
         """Activate the test model."""
@@ -740,7 +747,7 @@ def create_oud_connection_config() -> dict[str, str]:
     }
 
 
-def create_ldap_test_config() -> dict[str, object]:
+def create_ldap_test_config() -> FlextTypes.Core.Dict:
     """Create LDAP test configuration for testing.
 
     Returns:
@@ -762,7 +769,7 @@ def create_api_test_response(
     *,
     success: bool = True,
     data: object = None,
-) -> dict[str, object]:
+) -> FlextTypes.Core.Dict:
     """Create API test response structure.
 
     Args:
@@ -796,6 +803,44 @@ def create_api_test_response(
 
 
 # =============================================================================
+# MAIN UNIFIED CLASS
+# =============================================================================
+
+
+class FlextTestsUtilities:
+    """Unified test utilities for FLEXT ecosystem.
+
+    Consolidates all test utility patterns into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    Utilities = FlextTestUtilities
+    TestUtils = TestUtilities
+    Config = FlextTestConfig
+    Model = FlextTestModel
+    Factory = FlextTestFactory
+    Mocker = FlextTestMocker
+    Assertion = FlextTestAssertion
+
+    # Convenience class methods
+    @classmethod
+    def create_ldap_config(cls) -> FlextTypes.Core.Dict:
+        """Create LDAP test configuration."""
+        return create_ldap_test_config()
+
+    @classmethod
+    def create_oud_config(cls) -> FlextTypes.Core.Dict:
+        """Create OUD connection configuration."""
+        config = create_oud_connection_config()
+        return cast("FlextTypes.Core.Dict", config)
+
+    @classmethod
+    def create_api_response(cls) -> FlextTypes.Core.Dict:
+        """Create API test response."""
+        return create_api_test_response()
+
+
+# =============================================================================
 # EXPORTS
 # =============================================================================
 
@@ -806,6 +851,7 @@ __all__: list[str] = [
     "FlextTestMocker",
     "FlextTestModel",
     "FlextTestUtilities",
+    "FlextTestsUtilities",
     "ITestAssertion",
     "ITestFactory",
     "ITestMocker",

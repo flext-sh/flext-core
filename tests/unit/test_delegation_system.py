@@ -1,4 +1,8 @@
-"""Comprehensive tests for delegation_system.py to achieve maximum test coverage."""
+"""Comprehensive tests for delegation_system.py to achieve maximum test coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -9,6 +13,7 @@ from flext_core.delegation import (
     FlextDelegationSystem,
 )
 from flext_core.exceptions import FlextExceptions
+from flext_core.typings import FlextTypes
 
 
 class TestFlextDelegationSystemProtocols:
@@ -187,7 +192,7 @@ class TestMixinDelegator:
         class TestMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors: list[str] = []
+                self.validation_errors: FlextTypes.Core.StringList = []
 
             def test_method(self) -> str:
                 return "test_result"
@@ -268,7 +273,7 @@ class TestMixinDelegator:
         class TestMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors: list[str] = []
+                self.validation_errors: FlextTypes.Core.StringList = []
 
             def public_method(self) -> str:
                 return "public"
@@ -415,7 +420,7 @@ class TestMixinDelegator:
         # Now cause an exception by having dir() fail for a specific mixin instance
         with patch("builtins.dir") as mock_dir:
 
-            def side_effect_dir(obj: object) -> list[str]:
+            def side_effect_dir(obj: object) -> FlextTypes.Core.StringList:
                 # Cause exception only for ExceptionMixin instance
                 if isinstance(obj, ExceptionMixin):
                     msg = "Dir failed on ExceptionMixin"
@@ -577,12 +582,12 @@ class TestFlextDelegationValidation:
         class TestHost:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors: list[str] = []
+                self.validation_errors: FlextTypes.Core.StringList = []
                 self.has_validation_errors = lambda: False
                 self.to_dict_basic = dict
 
         host = TestHost()
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         # Should not raise exception
         FlextDelegationSystem._validate_delegation_methods(host, test_results)
@@ -597,7 +602,7 @@ class TestFlextDelegationValidation:
             pass
 
         host = TestHost()  # Missing required attributes
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         with pytest.raises(
             FlextExceptions.BaseError,
@@ -616,7 +621,7 @@ class TestFlextDelegationValidation:
                 return True
 
         host = TestHost()
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         # Should not raise exception
         FlextDelegationSystem._validate_method_functionality(host, test_results)
@@ -634,7 +639,7 @@ class TestFlextDelegationValidation:
                 return "not_a_bool"
 
         host = TestHost()
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         with pytest.raises(
             FlextExceptions.TypeError,
@@ -692,7 +697,7 @@ class TestFlextDelegationValidation:
                 self.delegator = FlextDelegationSystem.MixinDelegator(self)
 
         host = TestHost()
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         info = FlextDelegationSystem._validate_delegation_info(host, test_results)
 
@@ -714,7 +719,7 @@ class TestFlextDelegationValidation:
                 self.delegator = InvalidDelegator()
 
         host = TestHost()
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         with pytest.raises(
             FlextExceptions.BaseError,
@@ -728,7 +733,7 @@ class TestFlextDelegationConfig:
 
     def test_configure_delegation_system_success(self) -> None:
         """Test successful delegation system configuration."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",
@@ -744,7 +749,7 @@ class TestFlextDelegationConfig:
 
     def test_configure_delegation_system_missing_keys(self) -> None:
         """Test delegation system configuration with missing keys."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": "production",
         }  # Missing required keys
 
@@ -756,7 +761,7 @@ class TestFlextDelegationConfig:
 
     def test_configure_delegation_system_with_optional_params(self) -> None:
         """Test delegation system configuration with optional parameters."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",
@@ -776,7 +781,7 @@ class TestFlextDelegationConfig:
         # Test with None config to trigger exception in .get() calls
 
         result = FlextDelegationSystem.configure_delegation_system(
-            cast("dict[str, object]", None),
+            cast("FlextTypes.Core.Dict", None),
         )
 
         assert isinstance(result, dict)
@@ -912,14 +917,14 @@ class TestFlextDelegationIntegration:
         class ComprehensiveMixin:
             def __init__(self) -> None:
                 self.is_valid = True
-                self.validation_errors: list[str] = []
+                self.validation_errors: FlextTypes.Core.StringList = []
                 self.data = {"key": "value"}
 
-            def validate(self, data: dict[str, object]) -> bool:
+            def validate(self, data: FlextTypes.Core.Dict) -> bool:
                 return bool(data)
 
-            def get_data(self) -> dict[str, object]:
-                return cast("dict[str, object]", self.data)
+            def get_data(self) -> FlextTypes.Core.Dict:
+                return cast("FlextTypes.Core.Dict", self.data)
 
             def process(self, input_data: str) -> str:
                 return f"processed_{input_data}"
@@ -1021,7 +1026,7 @@ class TestFlextDelegationIntegration:
     def test_delegation_system_with_config(self) -> None:
         """Test delegation system with configuration management."""
         # Test configuration creation
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": "production",
             "config_source": "environment",
             "validation_level": "strict",

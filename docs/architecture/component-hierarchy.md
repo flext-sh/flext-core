@@ -31,7 +31,7 @@ class FlextResult[T]:
     def data(self) -> T | None  # Property
     def error(self) -> str | None  # Property
     def error_code(self) -> str | None
-    def error_data(self) -> dict[str, object]
+    def error_data(self) -> FlextTypes.Core.Dict
 
     @classmethod
     def ok(cls, data: T) -> FlextResult[T]
@@ -156,7 +156,7 @@ result.is_fail() -> bool
 result.data -> T | None  # property
 result.error -> str | None  # property
 result.error_code() -> str | None
-result.error_data() -> dict[str, object]
+result.error_data() -> FlextTypes.Core.Dict
 
 # Creation methods
 FlextResult[None].ok(data) -> FlextResult[T]

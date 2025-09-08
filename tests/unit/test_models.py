@@ -9,6 +9,11 @@ Classes Tested:
 - FlextModels: Immutable value objects with business rules
 - FlextModels: Mutable entities with identity and lifecycle
 - FlextFactory: Factory pattern implementations
+
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -21,7 +26,8 @@ from typing import TypeGuard
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextModels, FlextResult, FlextTypes
+from flext_core import FlextModels, FlextResult
+from flext_core.typings import FlextTypes
 from flext_tests import BenchmarkProtocol, FlextMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
@@ -145,7 +151,9 @@ class ConfigurationModel(FlextModels.Config):
     database_url: str = Field(..., description="Database connection URL")
     api_timeout: int = Field(default=30, ge=1, description="API timeout in seconds")
     debug_mode: bool = Field(default=False, description="Debug mode flag")
-    features: list[str] = Field(default_factory=list, description="Enabled features")
+    features: FlextTypes.Core.StringList = Field(
+        default_factory=list, description="Enabled features"
+    )
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Validate configuration business rules."""
@@ -299,7 +307,8 @@ class TestFlextValueRealFunctionality:
         # Should be frozen (immutable) - test that it's read-only
         with pytest.raises(ValidationError):
             # Try to modify a frozen property - this should raise ValidationError
-            email.address = "changed@example.com"
+            # Use setattr to bypass mypy's property assignment check
+            setattr(email, "address", "changed@example.com")
 
     def test_value_object_equality_by_value(self) -> None:
         """Test FlextModels equality comparison by value."""
@@ -520,8 +529,8 @@ class TestFlextEntityRealFunctionality:
         assert user.is_active is False
 
         # Should have both activation and deactivation events
-        domain_events: list[FlextTypes.Core.JsonObject] = user.domain_events
-        events_count: int = len(domain_events)
+        domain_events = user.domain_events
+        events_count = len(domain_events)
         assert events_count == 2  # Both activation and deactivation events
 
     def test_entity_business_rules_validation(self) -> None:
@@ -998,7 +1007,7 @@ class TestModelsPerformance:
             }
             user.add_domain_event(event_data)
 
-        def serialize_user() -> dict[str, object]:
+        def serialize_user() -> FlextTypes.Core.Dict:
             return user.model_dump()
 
         result = FlextMatchers.assert_performance_within_limit(
@@ -1159,8 +1168,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=future_time,
         )
         # Explicitly check the boolean value
-        is_expired_result: bool = payload.is_expired
-        assert not is_expired_result
+        assert not payload.is_expired
 
         # Test expired payload
         past_time = datetime.now(UTC) - timedelta(hours=1)
@@ -1171,8 +1179,7 @@ class TestFlextModelsRootModelValidation:
             expires_at=past_time,
         )
         # Explicitly check the boolean value
-        is_expired_result2: bool = expired_payload.is_expired
-        assert is_expired_result2
+        assert expired_payload.is_expired
 
         # Test payload without expiration
         no_expiry_payload = FlextModels.Payload(
@@ -1180,7 +1187,9 @@ class TestFlextModelsRootModelValidation:
             message_type="test_message",
             source_service="test_service",
         )
-        assert not no_expiry_payload.is_expired()
+        assert (
+            not no_expiry_payload.is_expired
+        )  # Changed from is_expired() to is_expired property
 
     def test_json_data_validation_serializable(self) -> None:
         """Test JsonData validation for JSON serializable data (lines 889-895)."""
@@ -1194,7 +1203,8 @@ class TestFlextModelsRootModelValidation:
             return "test"
 
         # Create a dict with function that can't be serialized
-        invalid_data: dict[str, object] = {"func": test_function}
+        # Use cast to bypass mypy's type checking for this test
+        invalid_data = {"func": test_function}
         with pytest.raises(ValidationError):
             FlextModels.JsonData(invalid_data)
 

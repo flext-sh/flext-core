@@ -1,6 +1,11 @@
-"""Testes para FlextCore."""
+"""Testes para FlextCore.
 
-from flext_core import FlextCore, FlextResult, FlextTypes
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from flext_core import FlextCore, FlextResult
+from flext_core.typings import FlextTypes
 
 
 class TestFlextCore:
@@ -44,7 +49,7 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "logging_level": "INFO",
             "debug": False,
@@ -63,7 +68,7 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "request_timeout": 30,
             "max_context_size": 1000,
@@ -135,7 +140,7 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "request_timeout": "invalid",  # Deveria ser int
             "max_context_size": -1,  # Deveria ser positivo
@@ -279,7 +284,7 @@ class TestFlextCore:
         """Testa configuração do sistema de decorators."""
         core = FlextCore.get_instance()
 
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "cache_enabled": True,
             "metrics_enabled": False,
             "timeout": 30,
@@ -294,7 +299,10 @@ class TestFlextCore:
         """Testa configuração do sistema de fields."""
         core = FlextCore.get_instance()
 
-        config: dict[str, object] = {"validation_strict": True, "auto_convert": False}
+        config: FlextTypes.Core.Dict = {
+            "validation_strict": True,
+            "auto_convert": False,
+        }
         result = core.configure_fields_system(config)
 
         assert result.success
@@ -409,7 +417,7 @@ class TestFlextCore:
         core = FlextCore.get_instance()
 
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "enable_aggregates": True,
             "max_aggregates": 100,

@@ -1,4 +1,8 @@
-"""Extended test coverage for decorators.py module."""
+"""Extended test coverage for decorators.py module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,6 +10,7 @@ import pytest
 from hypothesis import given, strategies as st
 
 from flext_core import FlextDecorators
+from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -261,7 +266,7 @@ class TestFlextDecoratorsLifecycle:
             reason="Replaced by new API",
             removal_version="3.0",
         )
-        def old_api_function() -> dict[str, str]:
+        def old_api_function() -> FlextTypes.Core.Headers:
             return {"status": "deprecated"}
 
         with pytest.warns(DeprecationWarning, match="deprecated"):
@@ -277,7 +282,7 @@ class TestFlextDecoratorsIntegration:
         decorator = FlextDecorators.Integration.create_enterprise_decorator()
 
         @decorator
-        def enterprise_function() -> dict[str, str]:
+        def enterprise_function() -> FlextTypes.Core.Headers:
             return {"status": "enterprise"}
 
         result = enterprise_function()

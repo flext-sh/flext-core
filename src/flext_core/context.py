@@ -1,7 +1,7 @@
 """Request context and correlation tracking.
 
-Provides context management, correlation ID tracking, and request
-lifecycle management for distributed system observability.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,38 +12,29 @@ from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
 from datetime import UTC, datetime
-from typing import Final
+from typing import Final, cast
 
+from pydantic import BaseModel
+
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
-
-# Removed FlextUtilities import to avoid circular dependency
+from flext_core.utilities import FlextUtilities
 
 
 class FlextContext:
-    """Hierarchical context management system following Clean Architecture principles.
-
-    This class implements a efficient, hierarchical context management system
-    for the FLEXT ecosystem, organizing context functionality by domain and following
-    Clean Architecture principles with SOLID design patterns.
-
-    """
+    """Hierarchical context management system."""
 
     # =========================================================================
     # Variables Domain - Context variables organized by functionality
     # =========================================================================
 
     class Variables:
-        """Context variables organized by domain for Clean Architecture.
-
-        This class provides a structured organization of all context variables used
-        throughout the FLEXT ecosystem, grouped by domain and functionality for better
-        maintainability, discoverability, and adherence to SOLID principles.
-        """
+        """Context variables organized by domain."""
 
         class Correlation:
-            """Correlation variables for distributed tracing/request tracking."""
+            """Correlation variables for distributed tracing."""
 
             CORRELATION_ID: Final[ContextVar[str | None]] = ContextVar(
                 "correlation_id",
@@ -55,7 +46,7 @@ class FlextContext:
             )
 
         class Service:
-            """Service context variables for service identification and versioning."""
+            """Service context variables for identification."""
 
             SERVICE_NAME: Final[ContextVar[str | None]] = ContextVar(
                 "service_name",
@@ -71,7 +62,7 @@ class FlextContext:
             )
 
         class Request:
-            """Request context variables for request metadata and user tracking."""
+            """Request context variables for metadata."""
 
             USER_ID: Final[ContextVar[str | None]] = ContextVar("user_id", default=None)
             REQUEST_ID: Final[ContextVar[str | None]] = ContextVar(
@@ -84,7 +75,7 @@ class FlextContext:
             )
 
         class Performance:
-            """Performance context variables for operation timing and monitoring."""
+            """Performance context variables for timing."""
 
             OPERATION_NAME: Final[ContextVar[str | None]] = ContextVar(
                 "operation_name",
@@ -94,7 +85,7 @@ class FlextContext:
                 "operation_start_time",
                 default=None,
             )
-            OPERATION_METADATA: Final[ContextVar[dict[str, object] | None]] = (
+            OPERATION_METADATA: Final[ContextVar[FlextTypes.Core.Dict | None]] = (
                 ContextVar("operation_metadata", default=None)
             )
 
@@ -103,40 +94,33 @@ class FlextContext:
     # =========================================================================
 
     class Correlation:
-        """Distributed tracing and correlation ID management.
-
-        Provides efficient correlation ID management functionality for the FLEXT
-        ecosystem, implementing distributed tracing patterns, parent-child relationship
-        tracking, and cross-service correlation for observability.
-
-
-        """
+        """Distributed tracing and correlation ID management."""
 
         @staticmethod
         def get_correlation_id() -> str | None:
-            """Get current correlation ID from context."""
+            """Get current correlation ID."""
             return FlextContext.Variables.Correlation.CORRELATION_ID.get()
 
         @staticmethod
         def set_correlation_id(correlation_id: str) -> None:
-            """Set correlation ID in current context."""
+            """Set correlation ID."""
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
 
         @staticmethod
         def generate_correlation_id() -> str:
-            """Generate a new unique correlation ID."""
-            correlation_id = f"corr_{uuid.uuid4().hex[:16]}"
+            """Generate unique correlation ID."""
+            correlation_id = FlextUtilities.Generators.generate_correlation_id()
             FlextContext.Variables.Correlation.CORRELATION_ID.set(correlation_id)
             return correlation_id
 
         @staticmethod
         def get_parent_correlation_id() -> str | None:
-            """Get parent correlation ID from context."""
+            """Get parent correlation ID."""
             return FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.get()
 
         @staticmethod
         def set_parent_correlation_id(parent_id: str) -> None:
-            """Set parent correlation ID in current context."""
+            """Set parent correlation ID."""
             FlextContext.Variables.Correlation.PARENT_CORRELATION_ID.set(parent_id)
 
         @staticmethod
@@ -145,7 +129,7 @@ class FlextContext:
             correlation_id: str | None = None,
             parent_id: str | None = None,
         ) -> Generator[str]:
-            """Create a new correlation context scope with automatic cleanup."""
+            """Create correlation context scope."""
             # Generate correlation ID if not provided
             if correlation_id is None:
                 correlation_id = f"corr_{uuid.uuid4().hex[:16]}"
@@ -191,7 +175,7 @@ class FlextContext:
         @staticmethod
         @contextmanager
         def inherit_correlation() -> Generator[str | None]:
-            """Inherit existing correlation or create new one."""
+            """Inherit or create correlation ID."""
             existing_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
             if existing_id:
                 # Use existing correlation
@@ -206,31 +190,26 @@ class FlextContext:
     # =========================================================================
 
     class Service:
-        """Service identification and lifecycle context management.
-
-        Provides efficient service identification functionality for the FLEXT
-        ecosystem, implementing service-to-service communication patterns, versioning
-        support, and service mesh integration for microservices.
-        """
+        """Service identification and lifecycle context management."""
 
         @staticmethod
         def get_service_name() -> str | None:
-            """Get current service name from context."""
+            """Get current service name."""
             return FlextContext.Variables.Service.SERVICE_NAME.get()
 
         @staticmethod
         def set_service_name(service_name: str) -> None:
-            """Set the service name in context."""
+            """Set service name."""
             FlextContext.Variables.Service.SERVICE_NAME.set(service_name)
 
         @staticmethod
         def get_service_version() -> str | None:
-            """Get the current service version from context."""
+            """Get current service version."""
             return FlextContext.Variables.Service.SERVICE_VERSION.get()
 
         @staticmethod
         def set_service_version(version: str) -> None:
-            """Set service version in context."""
+            """Set service version."""
             FlextContext.Variables.Service.SERVICE_VERSION.set(version)
 
         @staticmethod
@@ -239,7 +218,7 @@ class FlextContext:
             service_name: str,
             version: str | None = None,
         ) -> Generator[None]:
-            """Create service identification context scope with automatic cleanup."""
+            """Create service context scope."""
             # Save current context (for potential future use in logging/debugging)
             _ = FlextContext.Variables.Service.SERVICE_NAME.get()
             _ = FlextContext.Variables.Service.SERVICE_VERSION.get()
@@ -265,18 +244,11 @@ class FlextContext:
     # =========================================================================
 
     class Request:
-        """Request-level context management for user and operation metadata.
-
-        Provides efficient request metadata management functionality for the FLEXT
-        ecosystem, implementing user identification, operation tracking, and request
-        lifecycle management following security and audit best practices.
-
-
-        """
+        """Request-level context management for user and operation metadata."""
 
         @staticmethod
         def get_user_id() -> str | None:
-            """Get the current user ID from context."""
+            """Get current user ID."""
             return FlextContext.Variables.Request.USER_ID.get()
 
         @staticmethod
@@ -311,7 +283,7 @@ class FlextContext:
             user_id: str | None = None,
             operation_name: str | None = None,
             request_id: str | None = None,
-            metadata: dict[str, object] | None = None,
+            metadata: FlextTypes.Core.Dict | None = None,
         ) -> Generator[None]:
             """Create request metadata context scope with automatic cleanup."""
             # Save current context (for potential future use in logging/debugging)
@@ -362,15 +334,7 @@ class FlextContext:
     # =========================================================================
 
     class Performance:
-        """Performance monitoring and timing context management for operations.
-
-        Provides efficient performance tracking functionality for the FLEXT
-        ecosystem, implementing operation timing, metadata collection, and resource
-        monitoring following observability and performance engineering patterns.
-
-        Key Features:
-
-        """
+        """Performance monitoring and timing context management for operations."""
 
         @staticmethod
         def get_operation_start_time() -> datetime | None:
@@ -385,12 +349,12 @@ class FlextContext:
             FlextContext.Variables.Performance.OPERATION_START_TIME.set(start_time)
 
         @staticmethod
-        def get_operation_metadata() -> dict[str, object] | None:
+        def get_operation_metadata() -> FlextTypes.Core.Dict | None:
             """Get operation metadata from context."""
             return FlextContext.Variables.Performance.OPERATION_METADATA.get()
 
         @staticmethod
-        def set_operation_metadata(metadata: dict[str, object]) -> None:
+        def set_operation_metadata(metadata: FlextTypes.Core.Dict) -> None:
             """Set operation metadata in context."""
             FlextContext.Variables.Performance.OPERATION_METADATA.set(metadata)
 
@@ -407,10 +371,10 @@ class FlextContext:
         @contextmanager
         def timed_operation(
             operation_name: str | None = None,
-        ) -> Generator[dict[str, object]]:
+        ) -> Generator[FlextTypes.Core.Dict]:
             """Create timed operation context with performance tracking."""
             start_time = datetime.now(UTC)
-            operation_metadata: dict[str, object] = {
+            operation_metadata: FlextTypes.Core.Dict = {
                 "start_time": start_time,
                 "operation_name": operation_name,
             }
@@ -463,22 +427,11 @@ class FlextContext:
     # =========================================================================
 
     class Serialization:
-        """Context serialization and deserialization for cross-service communication.
-
-        Provides functionality for serializing context state for HTTP headers,
-        message queues, and other cross-service communication mechanisms following
-        distributed systems and observability patterns.
-
-        """
+        """Context serialization and deserialization for cross-service communication."""
 
         @staticmethod
-        def get_full_context() -> dict[str, object]:
-            """Get complete current context as dictionary.
-
-            Returns:
-                Dict[str, object]: All context variables with current values
-
-            """
+        def get_full_context() -> FlextTypes.Core.Dict:
+            """Get complete current context as dictionary."""
             context_vars = FlextContext.Variables
             return {
                 "correlation_id": context_vars.Correlation.CORRELATION_ID.get(),
@@ -493,14 +446,9 @@ class FlextContext:
             }
 
         @staticmethod
-        def get_correlation_context() -> dict[str, str]:
-            """Get correlation context for cross-service propagation.
-
-            Returns:
-                Dict[str, str]: Correlation context for HTTP headers/bridge calls
-
-            """
-            context: dict[str, str] = {}
+        def get_correlation_context() -> FlextTypes.Core.Headers:
+            """Get correlation context for cross-service propagation."""
+            context: FlextTypes.Core.Headers = {}
 
             correlation_id = FlextContext.Variables.Correlation.CORRELATION_ID.get()
             if correlation_id:
@@ -518,12 +466,7 @@ class FlextContext:
 
         @staticmethod
         def set_from_context(context: Mapping[str, object]) -> None:
-            """Set context from dictionary (e.g., from HTTP headers).
-
-            Args:
-                context: Context dictionary with values to set
-
-            """
+            """Set context from dictionary (e.g., from HTTP headers)."""
             correlation_id = context.get("X-Correlation-Id") or context.get(
                 "correlation_id",
             )
@@ -549,12 +492,7 @@ class FlextContext:
     # =========================================================================
 
     class Utilities:
-        """Utility methods for context management and helper operations.
-
-        Provides utility functionality for context management, debugging,
-        and maintenance operations following utility and helper patterns.
-
-        """
+        """Utility methods for context management and helper operations."""
 
         @staticmethod
         def clear_context() -> None:
@@ -597,7 +535,7 @@ class FlextContext:
         def get_context_summary() -> str:
             """Get a human-readable context summary for debugging."""
             context = FlextContext.Serialization.get_full_context()
-            parts: list[str] = []
+            parts: FlextTypes.Core.StringList = []
 
             correlation_id = context["correlation_id"]
             if isinstance(correlation_id, str) and correlation_id:
@@ -628,69 +566,22 @@ class FlextContext:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure context system using FlextTypes.Config with StrEnum validation.
-
-        Configures the FLEXT context management system including distributed tracing,
-        correlation ID management, service context tracking, performance monitoring,
-        and cross-service context propagation with thread-safe operations.
-        """
+        """Configure context system using unified Settings → SystemConfigs bridge."""
         try:
-            # Create working copy of config
-            validated_config = dict(config)
-
-            # Validate environment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                    )
-            else:
-                validated_config["environment"] = (
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            settings_res = FlextConfig.create_from_environment(
+                extra_settings=cast("FlextTypes.Core.Dict", config)
+                if isinstance(config, dict)
+                else None,
+            )
+            if settings_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    settings_res.error or "Failed to create ContextSettings",
                 )
-
-            # Validate context_level (using validation level as basis)
-            if "context_level" in config:
-                context_value = config["context_level"]
-                valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
-                if context_value not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid context_level '{context_value}'. Valid options: {valid_levels}",
-                    )
-            else:
-                validated_config["context_level"] = (
-                    FlextConstants.Config.ValidationLevel.LOOSE.value
-                )
-
-            # Validate log_level
-            if "log_level" in config:
-                log_value = config["log_level"]
-                valid_log_levels = [e.value for e in FlextConstants.Config.LogLevel]
-                if log_value not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
-                    )
-            else:
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.DEBUG.value
-                )
-
-            # Set default values for context system specific settings
-            validated_config.setdefault("enable_correlation_tracking", True)
-            validated_config.setdefault("enable_service_context", True)
-            validated_config.setdefault("enable_performance_tracking", True)
-            validated_config.setdefault("context_propagation_enabled", True)
-            validated_config.setdefault("max_context_depth", 20)
-            validated_config.setdefault("context_serialization_enabled", True)
-            validated_config.setdefault("context_cleanup_enabled", True)
-            validated_config.setdefault("enable_nested_contexts", True)
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
-
+            # Get FlextConfig instance directly - no to_config() method needed
+            config_instance = settings_res.value
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("BaseModel", config_instance).model_dump()
+            )
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
                 f"Failed to configure context system: {e}",
@@ -698,13 +589,7 @@ class FlextContext:
 
     @classmethod
     def get_context_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current context system configuration with runtime metrics.
-
-        Retrieves the current context system configuration including runtime metrics,
-        active context scopes, correlation tracking status, service context data,
-        and performance tracking metrics for monitoring and diagnostics.
-
-        """
+        """Get current context system configuration with runtime metrics."""
         try:
             # Get current context state for runtime metrics
             correlation_id = cls.Correlation.get_correlation_id()
@@ -764,14 +649,7 @@ class FlextContext:
         cls,
         environment: str,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific context system configuration.
-
-        Generates optimized configuration for context management based on the
-        target environment (development, staging, production, test, local)
-        with appropriate correlation tracking, service context management,
-        and performance settings for each environment.
-
-        """
+        """Create environment-specific context system configuration."""
         try:
             # Validate environment
             valid_environments = [
@@ -869,13 +747,7 @@ class FlextContext:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize context system performance based on configuration.
-
-        Analyzes the provided configuration and generates performance-optimized
-        settings for the FLEXT context system. This includes correlation tracking
-        optimization, service context caching, context propagation tuning,
-        and memory management for optimal distributed tracing performance.
-        """
+        """Optimize context system performance based on configuration."""
         try:
             # Create optimized configuration
             optimized_config = dict(config)
@@ -1006,6 +878,6 @@ class FlextContext:
             )
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextContext",
 ]

@@ -2,16 +2,20 @@
 
 Provides FlextCommands for implementing Command Query Responsibility
 Segregation patterns with type-safe handlers.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import re
+import warnings
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import TypeVar, cast
+from typing import Literal, Self, TypeVar, cast
 
-from pydantic import ConfigDict
+from pydantic import model_validator
 
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
@@ -35,68 +39,50 @@ class FlextCommands:
     # =========================================================================
 
     class Models:
-        """Base models providing default command/query behaviors.
+        """Base models providing default command/query behaviors."""
 
-        Implements default metadata, immutability and payload helpers
-        without forcing inheritance in tests that use Pydantic directly.
-        """
+        class Command(FlextModels.SystemConfigs.CommandModel):
+            """Command model with metadata and immutability using Pydantic."""
 
-        class Command(FlextModels.Config):
-            """Command model.
+            # Inherit all configuration from CommandModel
+            # Commands are frozen (immutable) by default
 
-            Implements default metadata, immutability and payload helpers
-            without forcing inheritance in tests that use Pydantic directly.
-            """
+            @model_validator(mode="before")
+            @classmethod
+            def _ensure_command_type(cls, data: object) -> object:
+                """Populate command_type based on class name if missing.
 
-            model_config = ConfigDict(
-                # Validation settings (inherited from Config)
-                validate_assignment=True,
-                validate_default=True,
-                use_enum_values=True,
-                # JSON settings (inherited from Config)
-                arbitrary_types_allowed=True,
-                ser_json_bytes="base64",
-                ser_json_timedelta="iso8601",
-                # Command-specific overrides
-                frozen=True,
-                extra="ignore",
-            )
+                Returns:
+                    Modified data with command_type populated.
+
+                """
+                if not isinstance(data, dict):
+                    return data
+                if "command_type" not in data or not data.get("command_type"):
+                    name = cls.__name__
+                    base = name.removesuffix("Command")
+                    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+                    data["command_type"] = re.sub(
+                        r"([a-z0-9])([A-Z])", r"\1_\2", s1
+                    ).lower()
+                return data
 
             def validate_command(self) -> FlextResult[None]:
+                """Validate command data."""
                 return FlextResult[None].ok(None)
 
             @property
             def id(self) -> str:
-                val = getattr(self, "command_id", None)
-                if isinstance(val, str) and val:
-                    return val
-                cached = self.__dict__.get("_flext_cmd_id")
-                if isinstance(cached, str):
-                    return cached
-                gen = f"cmd_{int(datetime.now(UTC).timestamp())}"
-                object.__setattr__(self, "_flext_cmd_id", gen)
-                return gen
+                """Get command ID (alias for command_id)."""
+                return self.command_id
 
-            @property
-            def created_at(self) -> datetime:
-                cached = self.__dict__.get("_flext_cmd_created_at")
-                if isinstance(cached, datetime):
-                    return cached
-                now = datetime.now(UTC)
-                object.__setattr__(self, "_flext_cmd_created_at", now)
-                return now
+            def get_command_type(self) -> str:
+                """Get command type derived from class name.
 
-            @property
-            def correlation_id(self) -> str:
-                cached = self.__dict__.get("_flext_cmd_corr_id")
-                if isinstance(cached, str):
-                    return cached
-                gen = f"corr_{int(datetime.now(UTC).timestamp())}"
-                object.__setattr__(self, "_flext_cmd_corr_id", gen)
-                return gen
+                Returns:
+                    Command type string.
 
-            @property
-            def command_type(self) -> str:
+                """
                 name = self.__class__.__name__
                 base = name.removesuffix("Command")
                 s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
@@ -105,10 +91,10 @@ class FlextCommands:
             def to_payload(
                 self,
             ) -> (
-                FlextModels.Payload[dict[str, object]]
-                | FlextResult[FlextModels.Payload[dict[str, object]]]
+                FlextModels.Payload[FlextTypes.Core.Dict]
+                | FlextResult[FlextModels.Payload[FlextTypes.Core.Dict]]
             ):
-                """Convert command to payload using direct class instantiation."""
+                """Convert command to payload."""
                 try:
                     data = {
                         k: v
@@ -125,7 +111,7 @@ class FlextCommands:
                     }
 
                     # Create payload directly using the class
-                    return FlextModels.Payload[dict[str, object]](
+                    return FlextModels.Payload[FlextTypes.Core.Dict](
                         data=data,
                         message_type=self.__class__.__name__,
                         source_service="command_service",
@@ -134,49 +120,62 @@ class FlextCommands:
                         message_id=FlextUtilities.Generators.generate_uuid(),
                     )
                 except Exception as e:
-                    return FlextResult[FlextModels.Payload[dict[str, object]]].fail(
+                    return FlextResult[FlextModels.Payload[FlextTypes.Core.Dict]].fail(
                         f"Failed to create payload: {e}",
                     )
 
             @classmethod
             def from_payload(
-                cls: type[FlextModels.Config],
-                payload: FlextModels.Payload[dict[str, object]],
-            ) -> FlextResult[FlextModels.Config]:
+                cls: type[Self],
+                payload: FlextModels.Payload[FlextTypes.Core.Dict],
+            ) -> FlextResult[Self]:
+                """Create command from payload.
+
+                Returns:
+                    FlextResult containing the command instance.
+
+                """
                 try:
                     data = payload.data if hasattr(payload, "data") else None
                     if not isinstance(data, dict):
-                        return FlextResult[FlextModels.Config].fail(
+                        return FlextResult[Self].fail(
                             "FlextModels data is not compatible",
                         )
                     model = cls.model_validate(data)
-                    return FlextResult[FlextModels.Config].ok(model)
+                    return FlextResult[Self].ok(model)
                 except Exception as e:
-                    return FlextResult[FlextModels.Config].fail(str(e))
+                    return FlextResult[Self].fail(str(e))
 
-        class Query(FlextModels.Config):
-            """Query model.
+        class Query(FlextModels.SystemConfigs.QueryModel):
+            """Query model with metadata and immutability using Pydantic."""
 
-            Implements default metadata, immutability and payload helpers
-            without forcing inheritance in tests that use Pydantic directly.
-            """
+            # Inherit all configuration from QueryModel
+            # Queries are frozen (immutable) by default
 
-            model_config = ConfigDict(
-                # Validation settings (inherited from Config)
-                validate_assignment=True,
-                validate_default=True,
-                use_enum_values=True,
-                # JSON settings (inherited from Config)
-                arbitrary_types_allowed=True,
-                ser_json_bytes="base64",
-                ser_json_timedelta="iso8601",
-                # Query-specific overrides
-                frozen=True,
-                extra="ignore",
-            )
+            @model_validator(mode="before")
+            @classmethod
+            def _ensure_query_type(cls, data: object) -> object:
+                """Populate query_type based on class name if missing.
 
-            def validate_query(self) -> FlextResult[None]:
-                return FlextResult[None].ok(None)
+                Returns:
+                    Modified data with query_type populated.
+
+                """
+                if not isinstance(data, dict):
+                    return data
+                if "query_type" not in data or not data.get("query_type"):
+                    name = cls.__name__
+                    base = name.removesuffix("Query")
+                    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", base)
+                    data["query_type"] = re.sub(
+                        r"([a-z0-9])([A-Z])", r"\1_\2", s1
+                    ).lower()
+                return data
+
+            @property
+            def id(self) -> str:
+                """Get query ID (alias for query_id)."""
+                return self.query_id
 
     # =========================================================================
     # HANDLERS - Command and query handler base classes
@@ -189,28 +188,38 @@ class FlextCommands:
             FlextHandlers.CQRS.CommandHandler[CommandT, ResultT],
             FlextMixins,
         ):
-            """Generic base class for command handlers."""
+            """Generic base class for command handlers with Pydantic configuration."""
 
             def __init__(
                 self,
                 handler_name: str | None = None,
                 handler_id: str | None = None,
+                handler_config: FlextModels.SystemConfigs.HandlerConfig | None = None,
             ) -> None:
-                """Initialize handler with logging and timing mixins.
-
-                Args:
-                    handler_name: Human-readable handler name
-                    handler_id: Unique handler identifier
-
-                """
+                """Initialize handler with optional Pydantic configuration."""
                 super().__init__()
                 # Initialize mixins manually since we don't inherit from them
                 FlextMixins.initialize_validation(self)
                 FlextMixins.start_timing(self)
 
-                self._metrics_state: dict[str, object] | None = None
-                self._handler_name = handler_name or self.__class__.__name__
-                self.handler_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
+                self._metrics_state: FlextTypes.Core.Dict | None = None
+
+                # Use HandlerConfig if provided, otherwise create default
+                if handler_config:
+                    self._config = handler_config
+                    self._handler_name = handler_config.handler_name
+                    self.handler_id = handler_config.handler_id
+                else:
+                    # Create default config
+                    default_name = handler_name or self.__class__.__name__
+                    default_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
+                    self._config = FlextModels.SystemConfigs.HandlerConfig(
+                        handler_id=default_id,
+                        handler_name=default_name,
+                        handler_type="command",
+                    )
+                    self._handler_name = default_name
+                    self.handler_id = default_id
 
             # Timing functionality is now provided by FlextTiming.Timeable mixin
             # Provides: start_timing, stop_timing, get_elapsed_time, measure_operation
@@ -236,7 +245,7 @@ class FlextCommands:
                 return FlextResult[None].ok(None)
 
             def handle(self, command: CommandT) -> FlextResult[ResultT]:
-                """Handle the command and return result.sing."""
+                """Handle the command and return result."""
                 # Subclasses must implement this method
                 msg = "Subclasses must implement handle method"
                 raise NotImplementedError(msg)
@@ -366,29 +375,44 @@ class FlextCommands:
                     )
 
             def handle_command(self, command: CommandT) -> FlextResult[ResultT]:
-                """Delegate CQRS handle_command to this handler's execute pipeline."""
+                """Delegate CQRS handle_command."""
                 return self.execute(command)
 
         class QueryHandler[QueryT, QueryResultT](
             FlextHandlers.CQRS.QueryHandler[QueryT, QueryResultT],
             FlextMixins,
         ):
-            """Generic base class for query handlers."""
+            """Generic base class for query handlers with Pydantic configuration."""
 
-            def __init__(self, handler_name: str | None = None) -> None:
-                """Initialize query handler with mixins.
-
-                Args:
-                    handler_name: Human-readable handler name
-
-                """
+            def __init__(
+                self,
+                handler_name: str | None = None,
+                handler_id: str | None = None,
+                handler_config: FlextModels.SystemConfigs.HandlerConfig | None = None,
+            ) -> None:
+                """Initialize query handler with optional Pydantic configuration."""
                 super().__init__()
                 # Initialize mixins manually since we don't inherit from them
                 FlextMixins.initialize_validation(self)
                 FlextMixins.start_timing(self)
                 FlextMixins.clear_cache(self)
 
-                self._handler_name = handler_name or self.__class__.__name__
+                # Use HandlerConfig if provided, otherwise create default
+                if handler_config:
+                    self._config = handler_config
+                    self._handler_name = handler_config.handler_name
+                    self.handler_id = handler_config.handler_id
+                else:
+                    # Create default config
+                    default_name = handler_name or self.__class__.__name__
+                    default_id = handler_id or f"{self.__class__.__name__}_{id(self)}"
+                    self._config = FlextModels.SystemConfigs.HandlerConfig(
+                        handler_id=default_id,
+                        handler_name=default_name,
+                        handler_type="query",
+                    )
+                    self._handler_name = default_name
+                    self.handler_id = default_id
 
             @property
             def handler_name(self) -> str:
@@ -402,7 +426,7 @@ class FlextCommands:
                 return True
 
             def validate_query(self, query: QueryT) -> FlextResult[None]:
-                """Validate query using its own validation method."""
+                """Validate query."""
                 validate_method = getattr(query, "validate_query", None)
                 if callable(validate_method):
                     result = validate_method()
@@ -417,7 +441,7 @@ class FlextCommands:
                 raise NotImplementedError(msg)
 
             def handle_query(self, query: QueryT) -> FlextResult[QueryResultT]:
-                """Delegate CQRS handle_query with built-in validation."""
+                """Delegate CQRS handle_query."""
                 validation = self.validate_query(query)
                 if validation.is_failure:
                     return FlextResult[QueryResultT].fail(
@@ -433,10 +457,13 @@ class FlextCommands:
     class Bus(
         FlextMixins,
     ):
-        """Command bus for routing and executing commands."""
+        """Command bus for routing and executing commands with Pydantic configuration."""
 
-        def __init__(self) -> None:
-            """Initialize command bus with mixin support and CQRS adapter."""
+        def __init__(
+            self,
+            bus_config: FlextModels.SystemConfigs.BusConfig | None = None,
+        ) -> None:
+            """Initialize command bus with optional Pydantic configuration."""
             super().__init__()
             # Initialize mixins manually since we don't inherit from them
             FlextMixins.initialize_validation(self)
@@ -445,19 +472,27 @@ class FlextCommands:
             self._created_at = datetime.now(UTC)
             FlextMixins.start_timing(self)
 
+            # Use BusConfig if provided, otherwise create default
+            if bus_config:
+                self._config = bus_config
+            else:
+                self._config = FlextModels.SystemConfigs.BusConfig()
+
             # Handlers registry: command type -> handler instance
-            self._handlers: dict[str, object] = {}
-            # Middleware pipeline
-            self._middleware: list[object] = []
+            self._handlers: FlextTypes.Core.Dict = {}
+            # Middleware pipeline (controlled by config)
+            self._middleware: list[FlextModels.SystemConfigs.MiddlewareConfig] = []
+            # Middleware instances cache
+            self._middleware_instances: FlextTypes.Core.Dict = {}
             # Execution counter
             self._execution_count: int = 0
             # Underlying FlextCommands CQRS bus for direct registrations
             self._fb_bus = FlextHandlers.CQRS.CommandBus()
             # Auto-discovery handlers (single-arg registration)
-            self._auto_handlers: list[object] = []
+            self._auto_handlers: FlextTypes.Core.List = []
 
         def register_handler(self, *args: object) -> None:
-            """Register command handler with flexible signature support."""
+            """Register command handler."""
             if len(args) == 1:
                 handler = args[0]
                 if handler is None:
@@ -517,7 +552,7 @@ class FlextCommands:
             raise TypeError(msg)
 
         def find_handler(self, command: object) -> object | None:
-            """Find handler capable of processing the given command."""
+            """Find handler for command."""
             # Search auto-registered handlers first (single-arg form)
             for handler in self._auto_handlers:
                 can_handle_method = getattr(handler, "can_handle", None)
@@ -526,12 +561,21 @@ class FlextCommands:
             return None
 
         def execute(self, command: object) -> FlextResult[object]:
-            """Execute command through registered handler with middleware."""
+            """Execute command through registered handler."""
+            # Check if bus is enabled
+            if not self._config.enable_middleware and self._middleware:
+                return FlextResult[object].fail(
+                    "Middleware pipeline is disabled but middleware is configured",
+                    error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
+                )
+
             self._execution_count = int(self._execution_count) + 1
             command_type = type(command)
 
-            # Check cache for query results if this is a query
-            if hasattr(command, "query_id") or "Query" in command_type.__name__:
+            # Check cache for query results if this is a query (and if metrics are enabled)
+            if self._config.enable_metrics and (
+                hasattr(command, "query_id") or "Query" in command_type.__name__
+            ):
                 cache_key = f"{command_type.__name__}_{hash(str(command))}"
                 cached_result = self.get_cached_value(self, cache_key)
                 if cached_result is not None:
@@ -609,13 +653,32 @@ class FlextCommands:
             command: object,
             handler: object,
         ) -> FlextResult[None]:
-            """Apply middleware pipeline to command processing."""
-            for i, middleware in enumerate(self._middleware):
+            """Apply middleware pipeline using Pydantic configs."""
+            if not self._config.enable_middleware:
+                return FlextResult[None].ok(None)
+
+            # Sort middleware by order
+            sorted_middleware = sorted(self._middleware, key=lambda m: m.order)
+
+            for middleware_config in sorted_middleware:
+                if not middleware_config.enabled:
+                    continue
+
+                # Get actual middleware instance
+
+                middleware = self._middleware_instances.get(
+                    middleware_config.middleware_id
+                )
+                if middleware is None:
+                    # Skip middleware configs without instances
+                    continue
+
                 self.log_debug(
                     self,
                     "Applying middleware",
-                    middleware_index=i,
-                    middleware_type=type(middleware).__name__,
+                    middleware_id=middleware_config.middleware_id,
+                    middleware_type=middleware_config.middleware_type,
+                    order=middleware_config.order,
                 )
 
                 process_method = getattr(middleware, "process", None)
@@ -625,7 +688,7 @@ class FlextCommands:
                         self.log_info(
                             self,
                             "Middleware rejected command",
-                            middleware_type=type(middleware).__name__,
+                            middleware_type=middleware_config.middleware_type,
                             error=result.error or "Unknown error",
                         )
                         return FlextResult[None].fail(
@@ -639,7 +702,7 @@ class FlextCommands:
             handler: object,
             command: object,
         ) -> FlextResult[object]:
-            """Execute command through handler with error handling."""
+            """Execute command through handler."""
             self.log_debug(
                 self,
                 "Delegating to handler",
@@ -669,22 +732,44 @@ class FlextCommands:
                 error_code=FlextConstants.Errors.COMMAND_BUS_ERROR,
             )
 
-        def add_middleware(self, middleware: object) -> None:
-            """Add middleware to the processing pipeline."""
-            self._middleware.append(middleware)
+        def add_middleware(
+            self,
+            middleware: object,
+            middleware_config: FlextModels.SystemConfigs.MiddlewareConfig | None = None,
+        ) -> None:
+            """Add middleware to pipeline with optional Pydantic configuration."""
+            if not self._config.enable_middleware:
+                # Middleware pipeline is disabled, skip adding
+                return
+
+            # Create config if not provided
+            if middleware_config is None:
+                middleware_config = FlextModels.SystemConfigs.MiddlewareConfig(
+                    middleware_id=f"mw_{len(self._middleware)}",
+                    middleware_type=type(middleware).__name__,
+                    enabled=True,
+                    order=len(self._middleware),
+                )
+
+            # Store both middleware and config
+            self._middleware.append(middleware_config)
+            # Also store the actual middleware instance
+            self._middleware_instances[middleware_config.middleware_id] = middleware
+
             self.log_info(
                 self,
                 "Middleware added to pipeline",
-                middleware_type=type(middleware).__name__,
+                middleware_type=middleware_config.middleware_type,
+                middleware_id=middleware_config.middleware_id,
                 total_middleware=len(self._middleware),
             )
 
-        def get_all_handlers(self) -> list[object]:
-            """Get all registered handlers for inspection."""
+        def get_all_handlers(self) -> FlextTypes.Core.List:
+            """Get all registered handlers."""
             return list(self._handlers.values())
 
         def unregister_handler(self, command_type: str) -> bool:
-            """Unregister command handler by command type."""
+            """Unregister command handler."""
             for key in list(self._handlers.keys()):
                 key_name = getattr(key, "__name__", None)
                 if (key_name is not None and key_name == command_type) or str(
@@ -701,16 +786,11 @@ class FlextCommands:
             return False
 
         def send_command(self, command: object) -> FlextResult[object]:
-            """Send command for processing (alias for execute)."""
+            """Send command for processing."""
             return self.execute(command)
 
-        def get_registered_handlers(self) -> dict[str, object]:
-            """Get registered handlers as string-keyed dictionary.
-
-            Returns:
-                Dictionary mapping handler names to handler objects
-
-            """
+        def get_registered_handlers(self) -> FlextTypes.Core.Dict:
+            """Get registered handlers as dictionary."""
             return {str(k): v for k, v in self._handlers.items()}
 
     # =========================================================================
@@ -721,26 +801,26 @@ class FlextCommands:
         """Decorators for function-based command handlers."""
 
         @staticmethod
-        def command_handler(
-            command_type: type[T],
-        ) -> Callable[[Callable[[T], U]], Callable[[T], U]]:
-            """Mark function as command handler with automatic registration."""
+        def command_handler[TCmd, TResult](
+            command_type: type[TCmd],
+        ) -> Callable[[Callable[[TCmd], TResult]], Callable[[TCmd], TResult]]:
+            """Mark function as command handler."""
 
             def decorator(
-                func: Callable[[T], U],
-            ) -> Callable[[T], U]:
+                func: Callable[[TCmd], TResult],
+            ) -> Callable[[TCmd], TResult]:
                 # Create handler class from function
                 class FunctionHandler(
-                    FlextCommands.Handlers.CommandHandler[T, U],
+                    FlextCommands.Handlers.CommandHandler[TCmd, TResult],
                 ):
-                    def handle(self, command: T) -> FlextResult[U]:
+                    def handle(self, command: TCmd) -> FlextResult[TResult]:
                         result = func(command)
                         if isinstance(result, FlextResult):
-                            return cast("FlextResult[U]", result)
-                        return FlextResult[U].ok(result)
+                            return cast("FlextResult[TResult]", result)
+                        return FlextResult[TResult].ok(result)
 
                 # Create wrapper function with metadata
-                def wrapper(command: T) -> U:
+                def wrapper(command: TCmd) -> TResult:
                     return func(command)
 
                 # Preserve the original function's return type
@@ -755,24 +835,6 @@ class FlextCommands:
             return decorator
 
     # =========================================================================
-    # TYPES - Type aliases for command system types
-    # =========================================================================
-
-    class Types:
-        """Type aliases for command system components."""
-
-        # Import types from FlextTypes.Commands
-        CommandId = FlextTypes.Commands.CommandId
-        CommandName = FlextTypes.Commands.CommandName
-        CommandStatus = FlextTypes.Commands.CommandStatus
-        CommandResult = FlextTypes.Commands.CommandResult
-
-        # Additional convenient type aliases
-        CommandType = str  # Type identifier for commands
-        CommandMetadata = dict[str, str]  # Metadata dictionary
-        CommandParameters = dict[str, object]  # Parameters dictionary
-
-    # =========================================================================
     # RESULTS - Result helper methods for FlextResult patterns
     # =========================================================================
 
@@ -781,34 +843,16 @@ class FlextCommands:
 
         @staticmethod
         def success(data: object) -> FlextResult[object]:
-            """Create successful result with data.
-
-            Args:
-                data: Success data to wrap in result
-
-            Returns:
-                FlextResult containing success data
-
-            """
+            """Create successful result."""
             return FlextResult[object].ok(data)
 
         @staticmethod
         def failure(
             error: str,
             error_code: str | None = None,
-            error_data: dict[str, object] | None = None,
+            error_data: FlextTypes.Core.Dict | None = None,
         ) -> FlextResult[object]:
-            """Create failure result with structured error information.
-
-            Args:
-                error: Error message
-                error_code: Structured error code from FlextConstants
-                error_data: Additional error context data
-
-            Returns:
-                FlextResult containing structured error information
-
-            """
+            """Create failure result."""
             return FlextResult[object].fail(
                 error,
                 error_code=error_code
@@ -825,19 +869,14 @@ class FlextCommands:
 
         @staticmethod
         def create_command_bus() -> FlextCommands.Bus:
-            """Create a new command bus instance with default configuration.
-
-            Returns:
-                Configured FlextCommands.Bus instance
-
-            """
+            """Create a new command bus instance."""
             return FlextCommands.Bus()
 
         @staticmethod
         def create_simple_handler(
             handler_func: FlextTypes.Core.OperationCallable,
         ) -> FlextCommands.Handlers.CommandHandler[object, object]:
-            """Create handler from function with automatic FlextResult wrapping."""
+            """Create handler from function."""
 
             class SimpleHandler(FlextCommands.Handlers.CommandHandler[object, object]):
                 def handle(self, command: object) -> FlextResult[object]:
@@ -872,142 +911,76 @@ class FlextCommands:
     @classmethod
     def configure_commands_system(
         cls,
-        config: FlextTypes.Config.ConfigDict,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure commands system with StrEnum validation."""
+        config: FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict]:
+        """Configure commands system with Pydantic model or legacy dict."""
         try:
-            # Create working copy of config
-            validated_config = dict(config)
-
-            # Validate environment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                    )
-                validated_config["environment"] = env_value
-            else:
-                validated_config["environment"] = (
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            # Handle dict input with deprecation warning
+            if isinstance(config, dict):
+                warnings.warn(
+                    "Using dict for configure_commands_system is deprecated. Use FlextModels.SystemConfigs.CommandsConfig instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
                 )
+                # Convert dict to Pydantic model, validate, then convert back to dict
+                model = FlextModels.SystemConfigs.CommandsConfig.model_validate(config)
+                validated_dict = model.model_dump()
+                # Return validated dict with proper type casting
+                return FlextResult[
+                    FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+                ].ok(validated_dict)
 
-            # Validate validation level
-            if "validation_level" in config:
-                val_level = config["validation_level"]
-                valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
-                if val_level not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}",
-                    )
-                validated_config["validation_level"] = val_level
-            else:
-                validated_config["validation_level"] = (
-                    FlextConstants.Config.ValidationLevel.NORMAL.value
-                )
-
-            # Validate log level
-            if "log_level" in config:
-                log_level = config["log_level"]
-                valid_log_levels = [
-                    level.value for level in FlextConstants.Config.LogLevel
-                ]
-                if log_level not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}",
-                    )
-                validated_config["log_level"] = log_level
-            else:
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.INFO.value
-                )
-
-            # Set default values for commands-specific settings
-            validated_config.setdefault("enable_handler_discovery", True)
-            validated_config.setdefault("enable_middleware_pipeline", True)
-            validated_config.setdefault("enable_performance_monitoring", False)
-            validated_config.setdefault("max_concurrent_commands", 100)
-            validated_config.setdefault("command_timeout_seconds", 30)
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
-
+            # Pydantic model input - return as-is
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].ok(config)
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].fail(
                 f"Failed to configure commands system: {e}",
             )
 
     @classmethod
-    def get_commands_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current commands system configuration with runtime info."""
+    def get_commands_system_config(
+        cls,
+        *,
+        return_model: bool = False,
+    ) -> FlextResult[FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict]:
+        """Get current commands system configuration.
+
+        Args:
+            return_model: If True, return Pydantic model. If False, return dict for backward compatibility.
+
+        """
         try:
-            # Get current system configuration
-            config: FlextTypes.Config.ConfigDict = {
-                # Core configuration
-                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                # Commands-specific settings
-                "enable_handler_discovery": True,
-                "enable_middleware_pipeline": True,
-                "enable_performance_monitoring": False,
-                "max_concurrent_commands": 100,
-                "command_timeout_seconds": 30,
-                # Runtime information
-                "command_execution_count": 0,
-                "processing_success_rate": 100.0,
-                "avg_processing_time_ms": 15.5,
-                "registered_handler_count": 8,  # Example handler count
-                # Performance metrics
-                "throughput_per_second": 65.2,
-                "handler_discovery_time_ms": 2.1,
-                "middleware_pipeline_time_ms": 3.8,
-                "validation_time_ms": 4.2,
-                # System features
-                "supported_command_types": [
-                    "Command",
-                    "Query",
-                    "DomainEvent",
-                    "IntegrationEvent",
-                ],
-                "handler_types_available": [
-                    "CommandHandler",
-                    "QueryHandler",
-                    "EventHandler",
-                    "FunctionHandler",
-                ],
-                "middleware_capabilities": [
-                    "authentication",
-                    "validation",
-                    "logging",
-                    "metrics",
-                    "caching",
-                ],
-                "bus_features": [
-                    "handler_discovery",
-                    "middleware_pipeline",
-                    "concurrent_execution",
-                    "error_handling",
-                ],
-            }
+            # Create default configuration model
+            config = FlextModels.SystemConfigs.CommandsConfig()
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
-
+            if return_model:
+                return FlextResult[
+                    FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+                ].ok(config)
+            # Return dict for backward compatibility
+            config_dict = config.model_dump()
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].ok(config_dict)
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].fail(
                 f"Failed to get commands system config: {e}",
             )
 
     class _EnvironmentConfigFactory:
-        """Factory for creating environment-specific configurations using Strategy Pattern."""
+        """Factory for environment-specific configurations."""
 
         @staticmethod
         def _get_base_config(
             environment: FlextTypes.Config.Environment,
         ) -> FlextTypes.Config.ConfigDict:
-            """Get base configuration shared across environments."""
+            """Get base configuration."""
             return {
                 "environment": environment,
                 "log_level": FlextConstants.Config.LogLevel.INFO.value,
@@ -1016,7 +989,7 @@ class FlextCommands:
 
         @staticmethod
         def _get_environment_strategies() -> dict[str, FlextTypes.Config.ConfigDict]:
-            """Get environment-specific configuration strategies."""
+            """Get environment strategies."""
             return {
                 "production": {
                     "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
@@ -1080,7 +1053,7 @@ class FlextCommands:
             cls,
             environment: FlextTypes.Config.Environment,
         ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-            """Create environment configuration using composition and strategy patterns."""
+            """Create environment configuration."""
             try:
                 # Validate environment
                 valid_environments = [
@@ -1111,41 +1084,169 @@ class FlextCommands:
     @classmethod
     def create_environment_commands_config(
         cls,
-        environment: FlextTypes.Config.Environment,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific commands configuration using Factory Pattern."""
-        return cls._EnvironmentConfigFactory.create_environment_config(environment)
+        environment: str,
+        *,
+        return_model: bool = False,
+    ) -> FlextResult[FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict]:
+        """Create environment-specific commands configuration."""
+        try:
+            # Validate environment is valid before proceeding
+            valid_environments = {
+                "development",
+                "production",
+                "staging",
+                "test",
+                "local",
+            }
+            if environment not in valid_environments:
+                error_msg = f"Invalid environment '{environment}'. Must be one of: {', '.join(sorted(valid_environments))}"
+                raise ValueError(error_msg)
+
+            # Use environment factory to get proper configuration for environment
+            # Cast to proper literal type for mypy
+            env_literal = cast(
+                "Literal['development', 'production', 'staging', 'test', 'local']",
+                environment,
+            )
+            config_result = cls._EnvironmentConfigFactory.create_environment_config(
+                env_literal
+            )
+            if config_result.is_failure:
+                return FlextResult[
+                    FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+                ].fail(
+                    config_result.error or "Failed to create environment config",
+                )
+
+            # Create CommandsConfig model from the factory result
+            config_dict = config_result.value
+            config = FlextModels.SystemConfigs.CommandsConfig.model_validate(
+                config_dict
+            )
+
+            if return_model:
+                return FlextResult[
+                    FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+                ].ok(config)
+            # Return the dict from factory for backward compatibility (default behavior)
+            # Cast to expected type for mypy invariance
+            typed_config_dict = cast("FlextTypes.Core.Dict", config_dict)
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].ok(typed_config_dict)
+        except Exception as e:
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].fail(
+                f"Failed to create environment commands config: {e}",
+            )
+
+    # =========================================================================
+    # PERFORMANCE OPTIMIZATION - Progressive migration with dual signatures
+    # =========================================================================
 
     @classmethod
     def optimize_commands_performance(
         cls,
-        config: FlextTypes.Config.ConfigDict,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize commands system performance based on configuration."""
+        config: FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict,
+        performance_level: Literal["low", "medium", "high", "extreme"] = "medium",
+    ) -> FlextResult[FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict]:
+        """Optimize commands system performance."""
+        # Handle dict input with deprecation warning
+        if isinstance(config, dict):
+            warnings.warn(
+                "Using dict for optimize_commands_performance is deprecated. Use FlextModels.SystemConfigs.CommandsConfig instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Call dict-specific method and return dict
+            dict_result = cls._optimize_commands_performance_as_dict(
+                cast(
+                    "dict[str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict]",
+                    config,
+                ),
+                performance_level,
+            )
+            if dict_result.is_success:
+                return FlextResult[
+                    FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+                ].ok(cast("FlextTypes.Core.Dict", dict_result.value))
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].fail(dict_result.error or "Optimization failed")
+
+        # Pydantic model input - use model method
+        model_result = cls._optimize_commands_performance_as_model(
+            config, performance_level
+        )
+        if model_result.is_success:
+            return FlextResult[
+                FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+            ].ok(model_result.value)
+        return FlextResult[
+            FlextModels.SystemConfigs.CommandsConfig | FlextTypes.Core.Dict
+        ].fail(model_result.error or "Model optimization failed")
+
+    @classmethod
+    def _optimize_commands_performance_as_model(
+        cls,
+        config: FlextModels.SystemConfigs.CommandsConfig,
+        performance_level: Literal["low", "medium", "high", "extreme"],
+    ) -> FlextResult[FlextModels.SystemConfigs.CommandsConfig]:
+        """Optimize commands performance using Pydantic model."""
         try:
-            # Get performance level from config
-            performance_level = config.get("performance_level", "medium")
-
-            # Ensure performance_level is a string
-            if not isinstance(performance_level, str):
-                performance_level = "medium"
-
-            # Create performance-optimized configuration using centralized utility
+            # Create performance-optimized configuration
             performance_config = FlextUtilities.Performance.create_performance_config(
                 performance_level,
             )
 
-            # Merge with base config, performance config takes precedence
+            # Update model with performance optimizations
+            optimized_data = config.model_dump()
+            optimized_data.update(performance_config)
+
+            # Create and validate optimized model
+            optimized_model = FlextModels.SystemConfigs.CommandsConfig.model_validate(
+                optimized_data
+            )
+
+            return FlextResult[FlextModels.SystemConfigs.CommandsConfig].ok(
+                optimized_model
+            )
+        except Exception as e:
+            return FlextResult[FlextModels.SystemConfigs.CommandsConfig].fail(
+                f"Failed to optimize commands performance: {e}",
+                error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
+            )
+
+    @classmethod
+    def _optimize_commands_performance_as_dict(
+        cls,
+        config: FlextTypes.Config.ConfigDict,
+        performance_level: Literal["low", "medium", "high", "extreme"],
+    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
+        """Optimize commands performance using dict (legacy)."""
+        try:
+            # Create performance-optimized configuration
+            performance_config = FlextUtilities.Performance.create_performance_config(
+                performance_level,
+            )
+
+            # Merge with base config
             optimized_config = {**config, **performance_config}
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+            # Validate via model but return dict
+            _ = FlextModels.SystemConfigs.CommandsConfig.model_validate(
+                optimized_config
+            )
 
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
                 f"Failed to optimize commands performance: {e}",
+                error_code=FlextConstants.Errors.COMMAND_PROCESSING_FAILED,
             )
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextCommands",
 ]

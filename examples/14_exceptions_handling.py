@@ -23,13 +23,7 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
-
-if not TYPE_CHECKING:
-    # Runtime import from sibling module; ignore for mypy when analyzing without this path
-    from shared_example_strategies import DemoStrategy, ExamplePatternFactory
+from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # =============================================================================
 # EXCEPTION CONSTANTS - Using FlextConstants centralized approach
@@ -169,7 +163,7 @@ class UserValidationService:
         return FlextResult[str].ok(value)
 
     @staticmethod
-    def _validate_name_required(data: dict[str, object]) -> FlextResult[None]:
+    def _validate_name_required(data: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Validate name field using FlextResult pattern."""
         if "name" not in data:
             msg: str = "Name is required"
@@ -193,7 +187,7 @@ class UserValidationService:
         return FlextResult[str].ok(name)
 
     @staticmethod
-    def _validate_email_required(data: dict[str, object]) -> FlextResult[None]:
+    def _validate_email_required(data: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Validate email field using FlextResult pattern."""
         if "email" not in data:
             msg: str = "Email is required"
@@ -260,7 +254,7 @@ class UserValidationService:
         error_msg = result.error or "Name format validation failed"
         raise ValueError(error_msg)
 
-    def validate_user_data(self, data: dict[str, object]) -> FlextResult[User]:
+    def validate_user_data(self, data: FlextTypes.Core.Dict) -> FlextResult[User]:
         """Validate user data and create a User instance.
 
         Raises validation and type errors for invalid input.
@@ -344,7 +338,7 @@ class UserManagementService:
         self._deleted_users: set[str] = set()
         self._validation_service = UserValidationService()
 
-    def create_user(self, user_data: dict[str, object]) -> FlextResult[User]:
+    def create_user(self, user_data: FlextTypes.Core.Dict) -> FlextResult[User]:
         """Create new user with comprehensive error handling."""
 
         def _raise_validation_error(validation_result: FlextResult[User]) -> None:
@@ -508,14 +502,16 @@ class ConfigurationService:
 
     def __init__(self) -> None:
         """Initialize ConfigurationService."""
-        self._config: dict[str, object] = {}
+        self._config: FlextTypes.Core.Dict = {}
 
-    def load_configuration(self, config_data: dict[str, object]) -> FlextResult[None]:
+    def load_configuration(
+        self, config_data: FlextTypes.Core.Dict
+    ) -> FlextResult[None]:
         """Load and validate configuration."""
 
         def _raise_missing_config_error(
             key: str,
-            required_keys: list[str],
+            required_keys: FlextTypes.Core.StringList,
             config_data: Mapping[str, object],
         ) -> None:
             """Raise error for missing configuration key."""
@@ -544,7 +540,7 @@ class ConfigurationService:
 
         def _raise_invalid_log_level_error(
             log_level: object,
-            valid_levels: list[str],
+            valid_levels: FlextTypes.Core.StringList,
         ) -> None:
             """Raise error for invalid log level."""
             msg: str = f"Invalid log level: {log_level}"
@@ -610,7 +606,7 @@ class ExternalAPIService:
         self.api_url = api_url
         self.timeout_seconds = timeout_seconds
 
-    def fetch_user_profile(self, user_id: str) -> FlextResult[dict[str, object]]:
+    def fetch_user_profile(self, user_id: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Fetch user profile from external API."""
 
         def _raise_connection_error() -> None:
@@ -667,7 +663,7 @@ class ExternalAPIService:
                 _raise_authentication_error()
 
             # Simulate successful response
-            profile_data: dict[str, object] = {
+            profile_data: FlextTypes.Core.Dict = {
                 "user_id": user_id,
                 "external_id": f"ext_{user_id}",
                 "profile_data": {
@@ -677,10 +673,10 @@ class ExternalAPIService:
                 },
             }
 
-            return FlextResult[dict[str, object]].ok(profile_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(profile_data)
 
         except (ValueError, TypeError, ConnectionError) as e:
-            return FlextResult[dict[str, object]].fail(str(e))
+            return FlextResult[FlextTypes.Core.Dict].fail(str(e))
         except (KeyError, AttributeError) as e:
             msg = "External API call failed unexpectedly"
             raise FlextExceptions.ProcessingError(
@@ -847,7 +843,7 @@ def demonstrate_operational_exceptions() -> FlextResult[None]:
     # Railway Helper Functions - CRUD operations as pure functions
     def _create_user_operation(
         service: UserManagementService,
-        user_data: dict[str, object],
+        user_data: FlextTypes.Core.Dict,
     ) -> FlextResult[UserManagementService]:
         """Create user operation with error propagation."""
         return (
@@ -990,7 +986,7 @@ def _complex_operation() -> FlextResult[str]:
             stage="user_validation",
         )
 
-    def _raise_api_error(_: FlextResult[dict[str, object]]) -> None:
+    def _raise_api_error(_: FlextResult[FlextTypes.Core.Dict]) -> None:
         msg = "Complex operation failed at API stage"
         raise FlextExceptions.OperationError(
             msg,

@@ -160,11 +160,11 @@ decorator: FlextTypes.Meta.DecoratorFactory = my_decorator_factory
 class FlextTypes:
     class Core:
         # Enhanced with union syntax and generics
-        type Dict = dict[str, object]
+        type Dict = FlextTypes.Core.Dict
         type JsonValue = (
             str | int | float | bool | None
-            | list[str | int | float | bool | None | list[object] | dict[str, object]]
-            | dict[str, str | int | float | bool | None | list[object] | dict[str, object]]
+            | list[str | int | float | bool | None | FlextTypes.Core.List | FlextTypes.Core.Dict]
+            | dict[str, str | int | float | bool | None | FlextTypes.Core.List | FlextTypes.Core.Dict]
         )
 
     class Result:
@@ -352,11 +352,11 @@ from typing import AsyncIterator
 class AsyncUserService:
     async def process_user_stream(
         self,
-        user_stream: FlextTypes.Async.AsyncStream[dict[str, object]]
-    ) -> FlextTypes.Async.AsyncResult[list[str]]:
+        user_stream: FlextTypes.Async.AsyncStream[FlextTypes.Core.Dict]
+    ) -> FlextTypes.Async.AsyncResult[FlextTypes.Core.StringList]:
         """Process user stream with async type safety."""
 
-        processed_ids: list[str] = []
+        processed_ids: FlextTypes.Core.StringList = []
 
         async for user_data in user_stream:
             # Type-safe async processing
@@ -368,7 +368,7 @@ class AsyncUserService:
 
     async def create_user_async(
         self,
-        user_data: dict[str, object]
+        user_data: FlextTypes.Core.Dict
     ) -> FlextTypes.Result.Success[str]:
         """Async user creation with type safety."""
 
@@ -556,8 +556,8 @@ class FlextLDAPTypes(FlextTypes):
 
     class Entry:
         """LDAP entry types."""
-        type AttributeDict = dict[str, list[str]]
-        type AttributeValue = list[str]
+        type AttributeDict = dict[str, FlextTypes.Core.StringList]
+        type AttributeValue = FlextTypes.Core.StringList
 
 # Usage with full type safety
 dn: FlextLDAPTypes.LdapDomain.DistinguishedName = "cn=user,dc=example,dc=com"
@@ -570,10 +570,10 @@ attrs: FlextLDAPTypes.Entry.AttributeDict = {"cn": ["John Doe"]}
 ```python
 # Current: Basic type usage without systematic adoption
 class MeltanoConfig:
-    def __init__(self, config_data: dict[str, object]):  # Should use FlextTypes.Config.ConfigDict
+    def __init__(self, config_data: FlextTypes.Core.Dict):  # Should use FlextTypes.Config.ConfigDict
         self.config_data = config_data
 
-    def get_tap_config(self) -> dict[str, object]:  # Should use FlextTypes.Service.ServiceDict
+    def get_tap_config(self) -> FlextTypes.Core.Dict:  # Should use FlextTypes.Service.ServiceDict
         return self.config_data.get("extractors", {})
 
 # Recommended: Complete FlextTypes integration
@@ -590,9 +590,9 @@ class FlextMeltanoTypes(FlextTypes):
 
     class Singer:
         """Singer protocol types."""
-        type SingerMessage = dict[str, object]
-        type SingerRecord = dict[str, object]
-        type SingerSchema = dict[str, object]
+        type SingerMessage = FlextTypes.Core.Dict
+        type SingerRecord = FlextTypes.Core.Dict
+        type SingerSchema = FlextTypes.Core.Dict
         type StreamName = str
 
 class MeltanoConfigEnhanced:
@@ -618,10 +618,10 @@ class MeltanoConfigEnhanced:
 # Current: Manual type definitions without FlextTypes
 class ApiHandler:
     def __init__(self):
-        self.handlers: dict[str, object] = {}  # Manual typing
-        self.config: dict[str, object] = {}    # Manual typing
+        self.handlers: FlextTypes.Core.Dict = {}  # Manual typing
+        self.config: FlextTypes.Core.Dict = {}    # Manual typing
 
-    def handle_request(self, request_data: dict[str, object]) -> dict[str, object]:
+    def handle_request(self, request_data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         # No type safety for request/response
         return {"status": "processed"}
 
@@ -1149,10 +1149,10 @@ class WorkflowOrchestrator:
 # Manual, inconsistent type definitions across services
 class UserService:
     def __init__(self):
-        self.users: dict[str, object] = {}           # Manual typing
-        self.config: dict[str, object] = {}          # No domain separation
+        self.users: FlextTypes.Core.Dict = {}           # Manual typing
+        self.config: FlextTypes.Core.Dict = {}          # No domain separation
 
-    def create_user(self, data: dict[str, object]) -> dict[str, object]:  # No type safety
+    def create_user(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:  # No type safety
         # No compile-time type checking
         user_id = str(uuid4())
         return {"id": user_id, "status": "created"}
@@ -1235,7 +1235,7 @@ class AIEnhancedTypes:
         # AI analysis of existing code to generate optimal type definitions
         pass
 
-    def suggest_type_improvements(self, current_types: FlextTypes) -> list[str]:
+    def suggest_type_improvements(self, current_types: FlextTypes) -> FlextTypes.Core.StringList:
         # AI suggestions for type system improvements
         pass
 ```
