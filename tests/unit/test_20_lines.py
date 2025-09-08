@@ -2,6 +2,11 @@
 
 This file contains precise tests targeting the specific remaining uncovered lines
 across serialization.py (10 lines), timestamps.py (3 lines), and core.py (7 lines).
+
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,7 +17,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextMixins
-from flext_core.typings import ConfigDict
+from flext_core.typings import ConfigDict, FlextTypes
 
 
 class TestFinal20LinesTo100Percent:
@@ -29,7 +34,7 @@ class TestFinal20LinesTo100Percent:
             def __init__(self) -> None:
                 self.name = "test"
 
-            def to_dict_basic(self) -> dict[str, object]:
+            def to_dict_basic(self) -> FlextTypes.Core.Dict:
                 return {"name": self.name, "type": "basic_dict"}
 
         # Skip protocol registration - PyRight doesn't recognize register method
@@ -58,7 +63,7 @@ class TestFinal20LinesTo100Percent:
             def __init__(self, name: str) -> None:
                 self.name = name
 
-            def to_dict_basic(self) -> dict[str, object]:
+            def to_dict_basic(self) -> FlextTypes.Core.Dict:
                 return {"name": self.name, "type": "basic"}
 
         # Skip protocol registration - PyRight doesn't recognize register method
@@ -76,7 +81,7 @@ class TestFinal20LinesTo100Percent:
         assert "items" in result
         items_result = result["items"]
         # Cast to list to satisfy PyRight type checker
-        items_list = cast("list[dict[str, object]]", items_result)
+        items_list = cast("list[FlextTypes.Core.Dict]", items_result)
         assert len(items_list) == 2
         assert isinstance(items_result, list)
         assert items_list[0]["name"] == "item1"
@@ -86,7 +91,7 @@ class TestFinal20LinesTo100Percent:
         """Test serialization lines 163-165: list item to_dict_basic exception."""
 
         class BadListItemBasic:
-            def to_dict_basic(self) -> dict[str, object]:
+            def to_dict_basic(self) -> FlextTypes.Core.Dict:
                 msg = "List item error"
                 raise ValueError(msg)
 

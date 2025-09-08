@@ -1,18 +1,7 @@
 """Railway-oriented programming for type-safe error handling.
 
-This module provides FlextResult[T], a monadic container for handling operations
-that may succeed or fail, eliminating exceptions in business logic.
-
-Example:
-    >>> result = (
-    ...     FlextResult.ok(10)
-    ...     .map(lambda x: x * 2)
-    ...     .flat_map(lambda x: process(x))
-    ...     .filter(lambda x: x > 0, "Invalid value")
-    ... )
-    >>> if result.success:
-    ...     value = result.unwrap()
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -22,6 +11,7 @@ from collections.abc import Callable, Iterator
 from typing import TypeGuard, TypeVar, cast, overload, override
 
 from flext_core.constants import FlextConstants
+from flext_core.typings import FlextTypes
 
 # Local type variables to avoid circular imports
 T = TypeVar("T")  # Generic type variable
@@ -40,19 +30,7 @@ T3 = TypeVar("T3")  # Third type variable for multi-arg functions
 
 
 class FlextResult[T]:
-    """Container for success value or error message.
-
-    A discriminated union that holds either a success value of type T or error
-    information. Supports monadic operations for railway-oriented programming.
-
-    Attributes:
-        is_success: True if contains success data.
-        is_failure: True if contains error.
-        value: Success data (check is_success first).
-        error: Error message if failed.
-        error_code: Optional structured error code.
-
-    """
+    """Container for success value or error message."""
 
     # Python 3.13+ discriminated union architecture.
     # Type discriminant based on success/failure state.
@@ -76,7 +54,7 @@ class FlextResult[T]:
         data: None = None,
         error: str,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
     ) -> None: ...
 
     def __init__(
@@ -85,17 +63,9 @@ class FlextResult[T]:
         data: T | None = None,
         error: str | None = None,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
     ) -> None:
-        """Initialize result with either success data or error.
-
-        Args:
-            data: Success value for successful results.
-            error: Error message for failures.
-            error_code: Optional error code.
-            error_data: Optional error metadata.
-
-        """
+        """Initialize result with either success data or error."""
         # Architectural invariant: exactly one of data or error must be provided.
         if error is not None:
             # Failure path: ensure data is None for type consistency.
@@ -107,7 +77,7 @@ class FlextResult[T]:
             self._error = None
 
         self._error_code = error_code
-        self._error_data: dict[str, object] = error_data or {}
+        self._error_data: FlextTypes.Core.Dict = error_data or {}
 
     def _is_success_state(self, value: T | None) -> TypeGuard[T]:
         """Type guard for success state checking."""
@@ -179,26 +149,18 @@ class FlextResult[T]:
         return self._error_code
 
     @property
-    def error_data(self) -> dict[str, object]:
+    def error_data(self) -> FlextTypes.Core.Dict:
         """Get error metadata dictionary."""
         return self._error_data
 
     @property
-    def metadata(self) -> dict[str, object]:
+    def metadata(self) -> FlextTypes.Core.Dict:
         """Alias for error_data."""
         return self._error_data
 
     @classmethod
     def ok(cls: type[FlextResult[T]], data: T) -> FlextResult[T]:
-        """Create successful result with data.
-
-        Args:
-            data: Success value to wrap.
-
-        Returns:
-            Successful FlextResult containing data.
-
-        """
+        """Create successful result with data."""
         return cls(data=data)
 
     # Note: Classmethod `success()` removed to avoid name collision with
@@ -211,7 +173,7 @@ class FlextResult[T]:
         /,
         *,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[T]:
         """Alias for fail method."""
         return cls.fail(error, error_code=error_code, error_data=error_data)
@@ -223,19 +185,9 @@ class FlextResult[T]:
         /,
         *,
         error_code: str | None = None,
-        error_data: dict[str, object] | None = None,
+        error_data: FlextTypes.Core.Dict | None = None,
     ) -> FlextResult[T]:
-        """Create failed result with error.
-
-        Args:
-            error: Error message.
-            error_code: Optional error code.
-            error_data: Optional error metadata.
-
-        Returns:
-            Failed FlextResult with error info.
-
-        """
+        """Create failed result with error."""
         # Normalize empty/whitespace errors to default message
         if not error or (isinstance(error, str) and error.isspace()):
             actual_error = "Unknown error occurred"
@@ -247,30 +199,21 @@ class FlextResult[T]:
 
     # Operations
     @staticmethod
-    def chain_results(*results: FlextResult[object]) -> FlextResult[list[object]]:
-        """Chain multiple results into a list, failing on first failure.
-
-        If no results are provided, returns success with an empty list.
-        """
+    def chain_results(
+        *results: FlextResult[object],
+    ) -> FlextResult[FlextTypes.Core.List]:
+        """Chain multiple results into a list, failing on first failure."""
         if not results:
-            return FlextResult[list[object]].ok([])
-        aggregated: list[object] = []
+            return FlextResult[FlextTypes.Core.List].ok([])
+        aggregated: FlextTypes.Core.List = []
         for res in results:
             if res.is_failure:
-                return FlextResult[list[object]].fail(res.error or "error")
+                return FlextResult[FlextTypes.Core.List].fail(res.error or "error")
             aggregated.append(res.value)
-        return FlextResult[list[object]].ok(aggregated)
+        return FlextResult[FlextTypes.Core.List].ok(aggregated)
 
     def map(self, func: Callable[[T], U]) -> FlextResult[U]:
-        """Transform success value with function.
-
-        Args:
-            func: Function to transform value.
-
-        Returns:
-            Result with transformed value or propagated error.
-
-        """
+        """Transform success value with function."""
         if self.is_failure:
             # Type-safe error propagation - ensure error is not None
             error_msg = self._error or "Map operation failed"
@@ -302,15 +245,7 @@ class FlextResult[T]:
             )
 
     def flat_map(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
-        """Chain operations returning FlextResult.
-
-        Args:
-            func: Function returning FlextResult.
-
-        Returns:
-            Chained result or propagated error.
-
-        """
+        """Chain operations returning FlextResult."""
         if self.is_failure:
             # Type-safe error propagation - ensure error is not None
             error_msg = self._error or "Flat map operation failed"
@@ -342,7 +277,7 @@ class FlextResult[T]:
             )
 
     def __bool__(self) -> bool:
-        """True if successful, False if failed."""
+        """Return True if successful, False if failed."""
         return self.is_success
 
     def __iter__(self) -> Iterator[T | None | str]:
@@ -397,18 +332,7 @@ class FlextResult[T]:
         return self._data if self.is_success else None
 
     def expect(self, message: str) -> T:
-        """Get value or raise with custom message.
-
-        Args:
-            message: Error message if failed.
-
-        Returns:
-            Success value.
-
-        Raises:
-            RuntimeError: If failed.
-
-        """
+        """Get value or raise with custom message."""
         if self.is_failure:
             msg = f"{message}: {self._error}"
             raise RuntimeError(msg)
@@ -504,15 +428,7 @@ class FlextResult[T]:
             return FlextResult[T].fail(str(e))
 
     def unwrap_or(self, default: T) -> T:
-        """Return value or default if failed.
-
-        Args:
-            default: Default value if failed.
-
-        Returns:
-            Success value or default.
-
-        """
+        """Return value or default if failed."""
         if self.is_success:
             # Type narrowing: success case guarantees _data is T (including None if T allows it)
             # Type cast required for static analyzers that don't support discriminated unions
@@ -520,15 +436,7 @@ class FlextResult[T]:
         return default
 
     def unwrap(self) -> T:
-        """Get value or raise if failed.
-
-        Returns:
-            Success value.
-
-        Raises:
-            RuntimeError: If failed.
-
-        """
+        """Get value or raise if failed."""
         if self.is_success:
             return cast("T", self._data)
         raise RuntimeError(self._error or "Operation failed")
@@ -634,15 +542,17 @@ class FlextResult[T]:
             return cls.fail(str(e))
 
     @staticmethod
-    def combine(*results: FlextResult[object]) -> FlextResult[list[object]]:
+    def combine(*results: FlextResult[object]) -> FlextResult[FlextTypes.Core.List]:
         """Combine multiple results into one."""
-        data: list[object] = []
+        data: FlextTypes.Core.List = []
         for result in results:
             if result.is_failure:
-                return FlextResult[list[object]].fail(result.error or "Combine failed")
+                return FlextResult[FlextTypes.Core.List].fail(
+                    result.error or "Combine failed"
+                )
             if result.value is not None:
                 data.append(result.value)
-        return FlextResult[list[object]].ok(data)
+        return FlextResult[FlextTypes.Core.List].ok(data)
 
     @staticmethod
     def all_success(*results: FlextResult[object]) -> bool:
@@ -699,19 +609,7 @@ class FlextResult[T]:
         result: FlextResult[TUtil],
         exception_type: type[Exception] = RuntimeError,
     ) -> TUtil:
-        """Unwrap or raise exception.
-
-        Args:
-            result: Result to unwrap.
-            exception_type: Exception to raise.
-
-        Returns:
-            Success value.
-
-        Raises:
-            exception_type: If failed.
-
-        """
+        """Unwrap or raise exception."""
         if result.success:
             return result.value
         raise exception_type(result.error or "Operation failed")
@@ -757,27 +655,15 @@ class FlextResult[T]:
     # === MONADIC COMPOSITION ADVANCED OPERATORS (Python 3.13) ===
 
     def __rshift__(self, func: Callable[[T], FlextResult[U]]) -> FlextResult[U]:
-        """Right shift operator (>>) for monadic bind - ADVANCED COMPOSITION.
-
-        Enables functional composition: result >> process_data >> validate >> save
-        Equivalent to flat_map but with mathematical notation for category theory.
-        """
+        """Right shift operator (>>) for monadic bind - ADVANCED COMPOSITION."""
         return self.flat_map(func)
 
     def __lshift__(self, func: Callable[[T], U]) -> FlextResult[U]:
-        """Left shift operator (<<) for functor map - ADVANCED COMPOSITION.
-
-        Enables functional composition: result << transform_data << format_output
-        Equivalent to map but with mathematical notation for category theory.
-        """
+        """Left shift operator (<<) for functor map - ADVANCED COMPOSITION."""
         return self.map(func)
 
     def __matmul__(self, other: FlextResult[U]) -> FlextResult[tuple[T, U]]:
-        """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION.
-
-        Enables parallel composition: result1 @ result2 @ result3
-        Combines multiple independent results into tuple, fails if any fails.
-        """
+        """Matrix multiplication operator (@) for applicative combination - ADVANCED COMPOSITION."""
         if self.is_failure:
             return FlextResult[tuple[T, U]].fail(self.error or "Left operand failed")
         if other.is_failure:
@@ -787,11 +673,7 @@ class FlextResult[T]:
         return FlextResult[tuple[T, U]].ok((self.unwrap(), other.unwrap()))
 
     def __truediv__(self, other: FlextResult[U]) -> FlextResult[T | U]:
-        """Division operator (/) for alternative fallback - ADVANCED COMPOSITION.
-
-        Enables fallback composition: primary_result / backup_result / default_result
-        Returns first successful result, equivalent to or_else but with operator syntax.
-        """
+        """Division operator (/) for alternative fallback - ADVANCED COMPOSITION."""
         if self.is_success:
             return FlextResult[T | U].ok(self.unwrap())
         if other.is_success:
@@ -801,11 +683,7 @@ class FlextResult[T]:
         )
 
     def __mod__(self, predicate: Callable[[T], bool]) -> FlextResult[T]:
-        """Modulo operator (%) for conditional filtering - ADVANCED COMPOSITION.
-
-        Enables validation composition: result % is_positive % is_even % is_valid
-        Equivalent to filter but returns self on success for chaining.
-        """
+        """Modulo operator (%) for conditional filtering - ADVANCED COMPOSITION."""
         if self.is_failure:
             return self
 
@@ -817,19 +695,11 @@ class FlextResult[T]:
             return FlextResult[T].fail(f"Predicate evaluation failed: {e}")
 
     def __and__(self, other: FlextResult[U]) -> FlextResult[tuple[T, U]]:
-        """AND operator (&) for sequential composition - ADVANCED COMPOSITION.
-
-        Enables sequential validation: result1 & result2 & result3
-        All must succeed for combined result to succeed.
-        """
+        """AND operator (&) for sequential composition - ADVANCED COMPOSITION."""
         return self @ other  # Delegate to matmul for consistency
 
     def __xor__(self, recovery_func: Callable[[str], T]) -> FlextResult[T]:
-        """XOR operator (^) for error recovery - ADVANCED COMPOSITION.
-
-        Enables recovery composition: result ^ recover_from_error ^ default_value
-        Equivalent to recover but with operator syntax for chaining.
-        """
+        """XOR operator (^) for error recovery - ADVANCED COMPOSITION."""
         return self.recover(recovery_func)
 
     # === ADVANCED MONADIC COMBINATORS (Category Theory) ===
@@ -840,11 +710,7 @@ class FlextResult[T]:
         items: list[TItem],
         func: Callable[[TItem], FlextResult[TResult]],
     ) -> FlextResult[list[TResult]]:
-        """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN.
-
-        Transforms list[T] -> (T -> FlextResult[U]) -> FlextResult[list[U]]
-        Stops at first failure, equivalent to sequence . map but more efficient.
-        """
+        """Traverse operation from Category Theory - ADVANCED FUNCTIONAL PATTERN."""
         results: list[TResult] = []
 
         for item in items:
@@ -862,11 +728,7 @@ class FlextResult[T]:
         f: Callable[[T], FlextResult[U]],
         g: Callable[[U], FlextResult[V]],
     ) -> Callable[[T], FlextResult[V]]:
-        """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN.
-
-        Composes two monadic functions into single function.
-        Mathematical: (T -> M[U]) -> (U -> M[V]) -> (T -> M[V])
-        """
+        """Kleisli composition (fish operator >>=) - ADVANCED MONADIC PATTERN."""
 
         def composed(value: T) -> FlextResult[V]:
             return FlextResult[T].ok(value).flat_map(f).flat_map(g)
@@ -880,11 +742,7 @@ class FlextResult[T]:
         result1: FlextResult[T1],
         result2: FlextResult[T2],
     ) -> FlextResult[TResult]:
-        """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN.
-
-        Mathematical: (T1 -> T2 -> R) -> M[T1] -> M[T2] -> M[R]
-        Parallel execution of independent computations.
-        """
+        """Lift binary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
         if result1.is_failure:
             return FlextResult[TResult].fail(result1.error or "First argument failed")
         if result2.is_failure:
@@ -900,10 +758,7 @@ class FlextResult[T]:
         result2: FlextResult[T2],
         result3: FlextResult[T3],
     ) -> FlextResult[TResult]:
-        """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN.
-
-        Mathematical: (T1 -> T2 -> T3 -> R) -> M[T1] -> M[T2] -> M[T3] -> M[R]
-        """
+        """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
         return cls.applicative_lift2(
             lambda t1_t2, t3: func(t1_t2[0], t1_t2[1], t3),
             result1 @ result2,

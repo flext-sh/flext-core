@@ -20,6 +20,10 @@ Integration Testing Strategy:
     - Type Safety: Ensure type system works across component boundaries
     - Performance: Validate integrated workflows meet performance standards
     - Error Handling: Test error propagation across component boundaries
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -33,6 +37,7 @@ from flext_core import (
     FlextResult,
     FlextUtilities,
 )
+from flext_core.typings import FlextTypes
 from flext_core.version import __version__
 
 
@@ -42,7 +47,7 @@ class FunctionalExternalService:
     def __init__(self) -> None:
         """Initialize functional external service with processing state."""
         self.call_count = 0
-        self.processed_items: list[str] = []
+        self.processed_items: FlextTypes.Core.StringList = []
         self.should_fail = False
         self.failure_message = "Service unavailable"
 
@@ -102,7 +107,7 @@ class TestLibraryIntegration:
         clean_container: FlextContainer,
         sample_data: dict[
             str,
-            str | int | float | bool | list[int] | dict[str, str] | None,
+            str | int | float | bool | list[int] | FlextTypes.Core.Headers | None,
         ],
     ) -> None:
         """Test comprehensive integration of core library exports.

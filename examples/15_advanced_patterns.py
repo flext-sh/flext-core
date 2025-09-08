@@ -24,13 +24,14 @@ from flext_core import (
     FlextMixins,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
 # =============================================================================
 # TYPE ALIASES - For better type safety
 # =============================================================================
 
-OrderData = dict[str, object]
-ItemData = dict[str, object]
+OrderData = FlextTypes.Core.Dict
+ItemData = FlextTypes.Core.Dict
 
 
 # =============================================================================
@@ -65,7 +66,7 @@ class AdvancedExamplesConfig(FlextConfig):
     password_complexity_required: bool = True
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,
         use_enum_values=True,
@@ -207,7 +208,7 @@ class OrderProcessor(FlextMixins.Entity):
     def _validate_required_fields(
         self,
         item_data: ItemData,
-        fields: list[str],
+        fields: FlextTypes.Core.StringList,
     ) -> FlextResult[ItemData]:
         """Validate required fields exist."""
         for field in fields:

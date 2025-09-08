@@ -279,7 +279,7 @@ class FlextConfigSchemaAppConfig(FlextConfig):
 
     # Security
     secret_key: str = Field(..., min_length=32, description="Secret key for JWT")
-    cors_origins: list[str] = Field(default_factory=list)
+    cors_origins: FlextTypes.Core.StringList = Field(default_factory=list)
 
     # Optional features
     enable_metrics: bool = Field(False)

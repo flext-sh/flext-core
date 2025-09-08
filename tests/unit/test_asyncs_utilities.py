@@ -1,6 +1,9 @@
 """Comprehensive tests for flext_tests.asyncs module to achieve 100% coverage.
 
 Real functional tests using actual async functionality without mocks.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -10,6 +13,7 @@ import time
 
 import pytest
 
+from flext_core.typings import FlextTypes
 from flext_tests.asyncs import (
     AsyncConcurrencyTesting,
     AsyncContextManager,
@@ -137,7 +141,7 @@ class TestAsyncTestUtils:
     @pytest.mark.asyncio
     async def test_run_concurrently_empty(self) -> None:
         """Test running concurrently with no coroutines."""
-        results: list[object] = await AsyncTestUtils.run_concurrently()
+        results: FlextTypes.Core.List = await AsyncTestUtils.run_concurrently()
         assert results == []
 
     @pytest.mark.asyncio

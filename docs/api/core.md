@@ -172,7 +172,7 @@ class FlextContainer:
     def unregister(self, key: str) -> FlextResult[None]:
         """Remove service registration."""
 
-    def list_services(self) -> list[str]:
+    def list_services(self) -> FlextTypes.Core.StringList:
         """Get all registered service keys."""
 
     def clear(self) -> None:

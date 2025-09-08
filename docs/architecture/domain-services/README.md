@@ -164,7 +164,7 @@ from flext_core import FlextDomainService, FlextResult
 class ComplexBusinessOperationService(FlextDomainService[BusinessOperationResult]):
     """Complex business operation using domain service patterns."""
 
-    input_data: dict[str, object]
+    input_data: FlextTypes.Core.Dict
     entity_1_config: EntityConfig
     entity_2_config: EntityConfig
 
@@ -246,7 +246,7 @@ class ComplexBusinessOperationService(FlextDomainService[BusinessOperationResult
             return FlextResult[BusinessOperationResult].fail(f"Entity coordination failed: {e}")
 
 # Usage with proper error handling and logging
-def execute_complex_business_operation(input_data: dict[str, object]) -> FlextResult[BusinessOperationResult]:
+def execute_complex_business_operation(input_data: FlextTypes.Core.Dict) -> FlextResult[BusinessOperationResult]:
     """Execute complex business operation with comprehensive error handling."""
 
     service = ComplexBusinessOperationService(
@@ -406,7 +406,7 @@ class FlextLDAPDomain:
                 )
             )
 
-        def validate_user_creation(self, user_data: dict[str, object]) -> FlextResult[object]:
+        def validate_user_creation(self, user_data: FlextTypes.Core.Dict) -> FlextResult[object]:
             """Validate user creation with business rules."""
             try:
                 return self._perform_all_user_validations(user_data)
@@ -776,7 +776,7 @@ class TestFlextDomainServiceIntegration:
         """Test domain service execution with railway programming."""
 
         class TestDomainService(FlextDomainService[TestResult]):
-            test_data: dict[str, object]
+            test_data: FlextTypes.Core.Dict
 
             def execute(self) -> FlextResult[TestResult]:
                 return (
@@ -790,11 +790,11 @@ class TestFlextDomainServiceIntegration:
                     return FlextResult[None].fail("Required field missing")
                 return FlextResult[None].ok(None)
 
-            def process_test_data(self) -> FlextResult[dict[str, object]]:
+            def process_test_data(self) -> FlextResult[FlextTypes.Core.Dict]:
                 processed = {"processed": True, **self.test_data}
-                return FlextResult[dict[str, object]].ok(processed)
+                return FlextResult[FlextTypes.Core.Dict].ok(processed)
 
-            def create_test_result(self, processed_data: dict[str, object]) -> FlextResult[TestResult]:
+            def create_test_result(self, processed_data: FlextTypes.Core.Dict) -> FlextResult[TestResult]:
                 result = TestResult(
                     success=True,
                     data=processed_data,
@@ -868,7 +868,7 @@ class TestFlextDomainServiceIntegration:
         """Test transaction support in domain services."""
 
         class TransactionalDomainService(FlextDomainService[TransactionResult]):
-            operation_data: dict[str, object]
+            operation_data: FlextTypes.Core.Dict
 
             def execute(self) -> FlextResult[TransactionResult]:
                 return (
@@ -883,12 +883,12 @@ class TestFlextDomainServiceIntegration:
                 # Simulate transaction begin
                 return FlextResult[None].ok(None)
 
-            def execute_transactional_operations(self) -> FlextResult[dict[str, object]]:
+            def execute_transactional_operations(self) -> FlextResult[FlextTypes.Core.Dict]:
                 # Simulate operations that require transaction
                 operations_result = {"operation1": "completed", "operation2": "completed"}
-                return FlextResult[dict[str, object]].ok(operations_result)
+                return FlextResult[FlextTypes.Core.Dict].ok(operations_result)
 
-            def commit_transaction_with_result(self, operations: dict[str, object]) -> FlextResult[TransactionResult]:
+            def commit_transaction_with_result(self, operations: FlextTypes.Core.Dict) -> FlextResult[TransactionResult]:
                 # Simulate transaction commit
                 result = TransactionResult(
                     transaction_id="tx_123",
@@ -915,7 +915,7 @@ class TestFlextDomainServiceIntegration:
         """Test domain event integration patterns."""
 
         class EventDrivenDomainService(FlextDomainService[EventResult]):
-            event_data: dict[str, object]
+            event_data: FlextTypes.Core.Dict
 
             def execute(self) -> FlextResult[EventResult]:
                 return (

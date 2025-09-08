@@ -1,7 +1,7 @@
 """Handler system for request processing.
 
-Provides FlextHandlers implementing Chain of Responsibility, CQRS,
-command buses, and validation handlers with metrics collection.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,43 +14,80 @@ from contextlib import contextmanager
 from typing import Final, cast, override
 
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
-class FlextHandlers:
-    """Comprehensive handler system providing production-ready request processing capabilities.
+def _convert_config_for_pydantic(config: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+    """Convert config dict to proper types for Pydantic models.
 
-    This class serves as the central container for all handler-related functionality
-    in the FLEXT ecosystem, implementing sophisticated patterns for request processing,
-    validation, authorization, CQRS, and metrics collection. The system is designed
-    for high-performance, thread-safe operation in enterprise environments.
-
+    This function safely converts object values to the expected types
+    that Pydantic models require, handling type conversion errors gracefully.
     """
+    converted: FlextTypes.Core.Dict = {}
+
+    for key, value in config.items():
+        if value is None:
+            converted[key] = None
+        elif isinstance(value, (str, int, float, bool)):
+            converted[key] = value
+        elif isinstance(value, str):
+            # Try to convert string to appropriate type
+            if key in {
+                "timeout",
+                "max_retries",
+                "max_validation_errors",
+                "max_cache_size",
+            }:
+                try:
+                    converted[key] = int(value)
+                except (ValueError, TypeError):
+                    converted[key] = value  # Keep as string if conversion fails
+            elif key in {
+                "enable_metrics",
+                "enable_validation",
+                "validation_strict",
+                "enable_authorization",
+                "enable_events",
+                "enable_caching",
+            }:
+                if value.lower() in {"true", "1", "yes", "on"}:
+                    converted[key] = True
+                elif value.lower() in {"false", "0", "no", "off"}:
+                    converted[key] = False
+                else:
+                    converted[key] = value  # Keep as string if conversion fails
+            else:
+                converted[key] = value
+        else:
+            # For any other type, convert to string
+            converted[key] = str(value)
+
+    return converted
+
+
+def _create_pydantic_config(config_class: type, **kwargs: object) -> object:
+    """Create Pydantic config instance with proper type handling."""
+    return config_class(**kwargs)
+
+
+class FlextHandlers:
+    """Handler system for request processing with CQRS and metrics."""
 
     # =========================================================================
     # CONSTANTS - Handler system constants extending FlextConstants
     # =========================================================================
 
     class Constants(FlextConstants):
-        """Handler execution constants and limits extending FlextConstants.
-
-        This class provides handler-specific constants while inheriting all base
-        constants from FlextConstants. It organizes constants into logical categories
-        for handler execution parameters, state definitions, and type classifications.
-        """
+        """Handler execution constants and limits."""
 
         # Inherit all base constants from FlextConstants
         # Add handler-specific constant categories
 
         class Handler:
-            """Handler execution timeouts, retries, and performance limits from FlextConstants.
-
-            This class provides execution parameters and performance thresholds for
-            handler operations, sourced from the centralized FlextConstants system
-            to ensure consistency across the FLEXT ecosystem.
-            """
+            """Handler execution timeouts, retries, and performance limits."""
 
             # Execution parameters from centralized constants
             DEFAULT_TIMEOUT: Final[int] = FlextConstants.Network.DEFAULT_TIMEOUT
@@ -78,7 +115,7 @@ class FlextHandlers:
             )
 
             class States:
-                """Handler execution states (IDLE, PROCESSING, COMPLETED, etc.)."""
+                """Handler execution states."""
 
                 IDLE: Final[str] = FlextConstants.Handlers.HANDLER_STATE_IDLE
                 PROCESSING: Final[str] = (
@@ -90,7 +127,7 @@ class FlextHandlers:
                 PAUSED: Final[str] = FlextConstants.Handlers.HANDLER_STATE_PAUSED
 
             class Types:
-                """Handler type classifications (BASIC, VALIDATING, COMMAND, etc.)."""
+                """Handler type classifications."""
 
                 BASIC: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_BASIC
                 VALIDATING: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_VALIDATING
@@ -109,21 +146,21 @@ class FlextHandlers:
     # =========================================================================
 
     class Types(FlextTypes):
-        """Type definitions for handler names, states, metrics, and functions."""
+        """Type definitions for handler system."""
 
         class HandlerTypes:
-            """Type aliases for handler identifiers, states, metrics, and functions."""
+            """Type aliases for handler components."""
 
             # Core handler types
             type Name = str  # Handler identifier
             type State = str  # Handler execution state
-            type Metadata = dict[str, object]  # Handler configuration metadata
+            type Metadata = FlextTypes.Core.Dict  # Handler configuration metadata
 
             # Metrics and performance types
-            type Metrics = dict[str, object]  # Flexible metrics storage
+            type Metrics = FlextTypes.Core.Dict  # Flexible metrics storage
             type Counter = int  # Simple counter metric
             type Timing = float  # Timing measurements
-            type ErrorMap = dict[str, int]  # Error type counters
+            type ErrorMap = FlextTypes.Core.CounterDict  # Error type counters
             type SizeList = list[int]  # Size measurements
             type PerformanceMap = dict[
                 str,
@@ -133,23 +170,23 @@ class FlextHandlers:
             # Handler function types
             type HandlerFunction = Callable[[object], FlextResult[object]]
             type ValidatorFunction = Callable[[object], bool | FlextResult[None]]
-            type AuthorizerFunction = Callable[[object], bool]
+            type AuthorizerFunction = FlextTypes.Validation.Validator
             type ProcessorFunction = Callable[[object], FlextResult[object]]
 
         class Message:
-            """Type aliases for message data, headers, and context."""
+            """Type aliases for message components."""
 
-            type Data = dict[str, object]  # Message payload
+            type Data = FlextTypes.Core.Dict  # Message payload
             type Type = str  # Message type identifier
-            type Headers = dict[str, str]  # Message headers
-            type Context = dict[str, object]  # Processing context
+            type Headers = FlextTypes.Core.Headers  # Message headers
+            type Context = FlextTypes.Core.Dict  # Processing context
 
     # =========================================================================
     # PROTOCOLS - Handler protocol definitions for type safety
     # =========================================================================
 
     class Protocols:
-        """Protocol interfaces for handlers, validators, and metrics collection."""
+        """Protocol interfaces for handlers."""
 
         # Alias core protocols for handler use
         Validator = FlextProtocols.Foundation.Validator
@@ -159,11 +196,11 @@ class FlextHandlers:
 
         # Handler-specific protocol extensions
         class MetricsHandler(FlextProtocols.Application.MessageHandler):
-            """Handler protocol that provides metrics collection and reset methods."""
+            """Handler protocol with metrics collection."""
 
             @abstractmethod
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get efficient handler metrics."""
+                """Get handler metrics."""
                 ...
 
             @abstractmethod
@@ -172,17 +209,17 @@ class FlextHandlers:
                 ...
 
         class ChainableHandler(FlextProtocols.Application.MessageHandler):
-            """Handler protocol for chain participation with name and type checking."""
+            """Handler protocol for chain participation."""
 
             @property
             @abstractmethod
             def handler_name(self) -> FlextHandlers.Types.HandlerTypes.Name:
-                """Get unique handler identifier."""
+                """Get handler identifier."""
                 ...
 
             @abstractmethod
             def can_handle(self, message_type: type) -> bool:
-                """Check if handler can process given message type."""
+                """Check if can handle message type."""
                 ...
 
     # =========================================================================
@@ -195,7 +232,7 @@ class FlextHandlers:
     @staticmethod
     @contextmanager
     def thread_safe_operation() -> Iterator[None]:
-        """Context manager for thread-safe handler state modifications."""
+        """Context manager for thread-safe operations."""
         with FlextHandlers._handlers_lock:
             yield
 
@@ -204,46 +241,64 @@ class FlextHandlers:
     # =========================================================================
 
     class Implementation:
-        """Concrete handler implementations with production-ready capabilities."""
+        """Concrete handler implementations."""
 
         class AbstractHandler[TInput, TOutput](ABC):
-            """Abstract base class defining handler contract.
-
-            Requires implementation of handler_name property, handle method,
-            and can_handle method for type checking.
-            """
+            """Abstract base class defining handler contract."""
 
             @property
             @abstractmethod
             def handler_name(self) -> FlextHandlers.Types.HandlerTypes.Name:
-                """Get unique handler identifier."""
+                """Get handler identifier."""
                 ...
 
             @abstractmethod
             def handle(self, request: TInput) -> FlextResult[TOutput]:
-                """Process request with railway-oriented programming."""
+                """Process request."""
                 ...
 
             @abstractmethod
             def can_handle(self, message_type: type) -> bool:
-                """Check if handler can process given message type."""
+                """Check if can handle message type."""
                 ...
 
         class BasicHandler:
-            """Basic handler with metrics collection and state tracking.
-
-            Tracks request counts, success/failure rates, processing times,
-            and execution state. Uses template method pattern - override
-            _process_request() for custom logic.
-            """
+            """Basic handler with metrics collection and state tracking."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
+                config: FlextTypes.Core.Dict | None = None,
             ) -> None:
-                """Initialize handler with name and metrics infrastructure."""
+                """Initialize handler with optional Pydantic configuration."""
+                # Support both dict and Pydantic config for backward compatibility
+                if config is None:
+                    config = {}
+
+                # If dict provided, validate with Pydantic model
+                if isinstance(config, dict):
+                    # Convert to proper types for Pydantic
+                    typed_cfg = _convert_config_for_pydantic(config)
+                    if (
+                        "handler_name" in typed_cfg
+                        and typed_cfg["handler_name"] is not None
+                    ):
+                        pydantic_config = _create_pydantic_config(
+                            FlextModels.SystemConfigs.BasicHandlerConfig, **typed_cfg
+                        )
+                    else:
+                        pydantic_config = _create_pydantic_config(
+                            FlextModels.SystemConfigs.BasicHandlerConfig,
+                            handler_name=name,
+                            **typed_cfg,
+                        )
+                    # Convert back to dict for internal use
+                    self._config = cast(
+                        "FlextModels.SystemConfigs.BasicHandlerConfig", pydantic_config
+                    ).model_dump()
+
                 self._handler_name: Final[FlextHandlers.Types.HandlerTypes.Name] = (
-                    name or self.__class__.__name__
+                    self._config.get("handler_name") or name or self.__class__.__name__
                 )
                 self._state: FlextHandlers.Types.HandlerTypes.State = (
                     FlextHandlers.Constants.Handler.States.IDLE
@@ -257,98 +312,48 @@ class FlextHandlers:
                     "error_count": 0,
                 }
 
-                # Initialize handler configuration with FlextTypes.Config
-                self._config: FlextTypes.Config.ConfigDict = {
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "timeout": 30000,  # milliseconds
-                    "max_retries": 3,
-                }
-
             @property
             def handler_name(self) -> FlextHandlers.Types.HandlerTypes.Name:
-                """Get handler unique identifier."""
+                """Get handler identifier."""
                 return self._handler_name
 
             @property
             def state(self) -> FlextHandlers.Types.HandlerTypes.State:
-                """Get current handler execution state.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.State: Current state
-
-                """
+                """Get current handler execution state."""
                 return self._state
 
             def configure(
                 self,
-                config: FlextTypes.Config.ConfigDict,
+                config: FlextTypes.Core.Dict
+                | FlextModels.SystemConfigs.BasicHandlerConfig,
             ) -> FlextResult[None]:
-                """Configure handler with FlextTypes.Config integration.
-
-                Args:
-                    config: Configuration dictionary with FlextTypes.Config validation
-
-                Returns:
-                    FlextResult[None]: Success or failure with validation errors
-
-                """
+                """Configure handler with dict or Pydantic model."""
                 try:
-                    # Validate log level
-                    if "log_level" in config:
-                        log_level = config["log_level"]
-                        valid_levels = [
-                            level.value for level in FlextConstants.Config.LogLevel
-                        ]
-                        if log_level not in valid_levels:
-                            return FlextResult[None].fail(
-                                f"Invalid log_level: {log_level}",
-                            )
+                    # Support both dict and Pydantic config
+                    if isinstance(config, dict):
+                        # Convert to proper types for Pydantic
+                        typed_cfg = _convert_config_for_pydantic(config)
+                        pydantic_config = _create_pydantic_config(
+                            FlextModels.SystemConfigs.BasicHandlerConfig, **typed_cfg
+                        )
+                        validated_config = cast(
+                            "FlextModels.SystemConfigs.BasicHandlerConfig",
+                            pydantic_config,
+                        ).model_dump()
+                    else:
+                        # Already a Pydantic model
+                        validated_config = config.model_dump()
 
-                    # Validate environment
-                    if "environment" in config:
-                        env = config["environment"]
-                        valid_envs = [
-                            e.value for e in FlextConstants.Config.ConfigEnvironment
-                        ]
-                        if env not in valid_envs:
-                            return FlextResult[None].fail(f"Invalid environment: {env}")
-
-                    # Validate validation level
-                    if "validation_level" in config:
-                        val_level = config["validation_level"]
-                        valid_levels = [
-                            v.value for v in FlextConstants.Config.ValidationLevel
-                        ]
-                        if val_level not in valid_levels:
-                            return FlextResult[None].fail(
-                                f"Invalid validation_level: {val_level}",
-                            )
-
-                    # Update configuration
-                    self._config.update(config)
+                    # Update configuration with validated values
+                    # Pydantic has already performed all validation
+                    self._config.update(validated_config)
                     return FlextResult[None].ok(None)
 
                 except Exception as e:
                     return FlextResult[None].fail(f"Handler configuration failed: {e}")
 
             def handle(self, request: object) -> FlextResult[object]:
-                """Handle request with efficient metrics and state management.
-
-                Provides production-ready request processing with:
-                    - Thread-safe metrics collection
-                    - State management throughout request lifecycle
-                    - Performance monitoring with timing
-                    - Error handling with FlextResult patterns
-
-                Args:
-                    request: Request data to process
-
-                Returns:
-                    FlextResult[object]: Success with result or failure with error
-
-                """
+                """Handle request with metrics and state management."""
                 start_time = time.time()
 
                 # Update state to processing with thread safety
@@ -428,45 +433,21 @@ class FlextHandlers:
                         self._state = FlextHandlers.Constants.Handler.States.IDLE
 
             def _process_request(self, request: object) -> FlextResult[object]:
-                """Process request - Template method pattern for extensibility.
-
-                Override this method in subclasses to implement specific processing logic.
-                Default implementation returns the request unchanged as success.
-
-                Args:
-                    request: Request data to process
-
-                Returns:
-                    FlextResult[object]: Processing result
-
-                """
+                """Process request."""
                 return FlextResult[object].ok(request)
 
             def can_handle(self, message_type: type) -> bool:
-                """Check if handler can process given message type.
-
-                Args:
-                    message_type: Type of message to evaluate
-
-                Returns:
-                    bool: True if handler can process this message type
-
-                """
+                """Check if handler can process message type."""
                 _ = message_type  # Base handler accepts all message types
                 return True
 
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get efficient handler metrics with thread safety.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Current metrics snapshot
-
-                """
+                """Get handler metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return dict(self._metrics)
 
             def reset_metrics(self) -> None:
-                """Reset all handler metrics to initial state."""
+                """Reset handler metrics."""
                 with FlextHandlers.thread_safe_operation():
                     self._metrics = {
                         "requests_processed": 0,
@@ -482,12 +463,7 @@ class FlextHandlers:
             # =============================================================================
 
             def get_handler_config(self) -> FlextResult[FlextTypes.Config.ConfigDict]:
-                """Get current handler configuration with system information.
-
-                Returns:
-                    FlextResult containing current handler configuration with runtime state
-
-                """
+                """Get current handler configuration."""
                 try:
                     current_config: FlextTypes.Config.ConfigDict = {
                         "handler_name": self._handler_name,
@@ -567,15 +543,7 @@ class FlextHandlers:
                 cls,
                 environment: FlextTypes.Config.Environment,
             ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-                """Create environment-specific handler configuration.
-
-                Args:
-                    environment: Target environment for handler configuration
-
-                Returns:
-                    FlextResult containing environment-optimized handler configuration
-
-                """
+                """Create environment-specific handler configuration."""
                 try:
                     # Validate environment
                     valid_environments = [
@@ -646,15 +614,7 @@ class FlextHandlers:
                 cls,
                 config: FlextTypes.Config.ConfigDict,
             ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-                """Optimize handler performance based on configuration.
-
-                Args:
-                    config: Performance optimization configuration dictionary
-
-                Returns:
-                    FlextResult containing optimized handler configuration
-
-                """
+                """Optimize handler performance."""
                 try:
                     # Optimize based on performance level
                     performance_level = config.get("performance_level", "standard")
@@ -730,40 +690,41 @@ class FlextHandlers:
                     )
 
         class ValidatingHandler(BasicHandler):
-            """Handler that validates requests before processing using validator functions."""
+            """Handler that validates requests before processing."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
                 validators: list[FlextProtocols.Foundation.Validator[object]]
                 | None = None,
+                config: FlextTypes.Core.Dict | None = None,
             ) -> None:
-                """Initialize with optional validators.
+                """Initialize with optional validators and Pydantic configuration."""
+                # Validate config with ValidatingHandlerConfig
+                if config is None:
+                    config = {}
 
-                Args:
-                    name: Optional handler name
-                    validators: List of validator protocols to apply
+                if isinstance(config, dict):
+                    # Convert to proper types for Pydantic
+                    typed_cfg = _convert_config_for_pydantic(config)
+                    pydantic_config = _create_pydantic_config(
+                        FlextModels.SystemConfigs.ValidatingHandlerConfig,
+                        handler_name=name,
+                        **typed_cfg,
+                    )
+                    validated_config = cast(
+                        "FlextModels.SystemConfigs.ValidatingHandlerConfig",
+                        pydantic_config,
+                    ).model_dump()
 
-                """
-                super().__init__(name)
+                super().__init__(name, validated_config)
                 self._validators: Final[
                     list[FlextProtocols.Foundation.Validator[object]]
                 ] = validators or []
 
             @override
             def handle(self, request: object) -> FlextResult[object]:
-                """Handle with validation before processing.
-
-                Validates request using all configured validators before
-                delegating to parent handler for processing.
-
-                Args:
-                    request: Request data to validate and process
-
-                Returns:
-                    FlextResult[object]: Validation and processing result
-
-                """
+                """Handle with validation before processing."""
                 # Validate request first
                 validation_result = self.validate(request)
                 if validation_result.is_failure:
@@ -776,15 +737,7 @@ class FlextHandlers:
                 return super().handle(request)
 
             def validate(self, request: object) -> FlextResult[None]:
-                """Validate request using configured validators.
-
-                Args:
-                    request: Request data to validate
-
-                Returns:
-                    FlextResult[None]: Validation result
-
-                """
+                """Validate request."""
                 for validator in self._validators:
                     try:
                         validation_result = validator.validate(request)
@@ -813,46 +766,45 @@ class FlextHandlers:
                 self,
                 validator: FlextProtocols.Foundation.Validator[object],
             ) -> None:
-                """Add validator to the validation chain.
-
-                Args:
-                    validator: Validator protocol to add
-
-                """
+                """Add validator to chain."""
                 self._validators.append(validator)
 
         class AuthorizingHandler(BasicHandler):
-            """Handler that checks authorization before processing requests."""
+            """Handler with authorization checking."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
                 authorization_check: FlextHandlers.Types.HandlerTypes.AuthorizerFunction
                 | None = None,
+                config: FlextTypes.Core.Dict | None = None,
             ) -> None:
-                """Initialize with optional authorization function.
+                """Initialize with authorization and Pydantic configuration."""
+                # Validate config with AuthorizingHandlerConfig
+                if config is None:
+                    config = {}
 
-                Args:
-                    name: Optional handler name
-                    authorization_check: Authorization function, defaults to allow-all
+                if isinstance(config, dict):
+                    # Convert to proper types for Pydantic
+                    typed_cfg = _convert_config_for_pydantic(config)
+                    pydantic_config = _create_pydantic_config(
+                        FlextModels.SystemConfigs.AuthorizingHandlerConfig,
+                        handler_name=name,
+                        **typed_cfg,
+                    )
+                    validated_config = cast(
+                        "FlextModels.SystemConfigs.AuthorizingHandlerConfig",
+                        pydantic_config,
+                    ).model_dump()
 
-                """
-                super().__init__(name)
+                super().__init__(name, validated_config)
                 self._authorization_check: FlextHandlers.Types.HandlerTypes.AuthorizerFunction = (
                     authorization_check or self._default_authorization
                 )
 
             @override
             def handle(self, request: object) -> FlextResult[object]:
-                """Handle with authorization check before processing.
-
-                Args:
-                    request: Request data to authorize and process
-
-                Returns:
-                    FlextResult[object]: Authorization and processing result
-
-                """
+                """Handle with authorization check."""
                 # Check authorization first
                 if not self._authorization_check(request):
                     return FlextResult[object].fail(
@@ -864,31 +816,36 @@ class FlextHandlers:
                 return super().handle(request)
 
             def _default_authorization(self, _request: object) -> bool:
-                """Default authorization - allows all requests.
-
-                Args:
-                    _request: Request data (unused in default implementation)
-
-                Returns:
-                    bool: True (allow all)
-
-                """
+                """Default authorization allows all."""
                 return True
 
         class MetricsHandler(BasicHandler):
-            """Handler with enhanced metrics including request/response sizes and error types."""
+            """Handler with enhanced metrics collection."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
+                config: FlextTypes.Core.Dict | None = None,
             ) -> None:
-                """Initialize with enhanced metrics infrastructure.
+                """Initialize with enhanced metrics and Pydantic configuration."""
+                # Validate config with MetricsHandlerConfig
+                if config is None:
+                    config = {}
 
-                Args:
-                    name: Optional handler name
+                if isinstance(config, dict):
+                    # Convert to proper types for Pydantic
+                    typed_cfg = _convert_config_for_pydantic(config)
+                    pydantic_config = _create_pydantic_config(
+                        FlextModels.SystemConfigs.MetricsHandlerConfig,
+                        handler_name=name,
+                        **typed_cfg,
+                    )
+                    validated_config = cast(
+                        "FlextModels.SystemConfigs.MetricsHandlerConfig",
+                        pydantic_config,
+                    ).model_dump()
 
-                """
-                super().__init__(name)
+                super().__init__(name, validated_config)
                 self._error_types: FlextHandlers.Types.HandlerTypes.ErrorMap = {}
                 self._request_sizes: FlextHandlers.Types.HandlerTypes.SizeList = []
                 self._response_sizes: FlextHandlers.Types.HandlerTypes.SizeList = []
@@ -896,15 +853,7 @@ class FlextHandlers:
 
             @override
             def handle(self, request: object) -> FlextResult[object]:
-                """Handle with enhanced metrics collection.
-
-                Args:
-                    request: Request data to process with metrics
-
-                Returns:
-                    FlextResult[object]: Processing result with metrics
-
-                """
+                """Handle with enhanced metrics."""
                 # Track request size
                 request_size = len(str(request)) if request else 0
                 self._request_sizes.append(request_size)
@@ -926,12 +875,7 @@ class FlextHandlers:
 
             @override
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get enhanced metrics including base metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Complete metrics data
-
-                """
+                """Get enhanced metrics."""
                 base_metrics = super().get_metrics()
 
                 enhanced_metrics: FlextHandlers.Types.HandlerTypes.Metrics = {
@@ -955,34 +899,38 @@ class FlextHandlers:
                 return {**base_metrics, **enhanced_metrics}
 
         class EventHandler:
-            """Specialized handler for domain events following CQRS patterns."""
+            """Handler for domain events."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
+                config: FlextTypes.Core.Dict | None = None,
             ) -> None:
-                """Initialize event handler.
+                """Initialize event handler with Pydantic configuration."""
+                # Validate config with EventHandlerConfig
+                if config is None:
+                    config = {}
 
-                Args:
-                    name: Optional handler name, defaults to EventHandler
+                if isinstance(config, dict):
+                    # Convert to proper types for Pydantic
+                    typed_cfg = _convert_config_for_pydantic(config)
+                    pydantic_config = _create_pydantic_config(
+                        FlextModels.SystemConfigs.EventHandlerConfig,
+                        handler_name=name,
+                        **typed_cfg,
+                    )
+                    self._config = cast(
+                        "FlextModels.SystemConfigs.EventHandlerConfig", pydantic_config
+                    ).model_dump()
 
-                """
                 self._name: FlextHandlers.Types.HandlerTypes.Name = (
-                    name or "EventHandler"
+                    self._config.get("handler_name") or name or "EventHandler"
                 )
                 self._events_processed: FlextHandlers.Types.HandlerTypes.Counter = 0
                 self._event_types: FlextHandlers.Types.HandlerTypes.ErrorMap = {}
 
             def handle_event(self, event: object) -> FlextResult[None]:
-                """Handle domain event with type tracking.
-
-                Args:
-                    event: Domain event to process
-
-                Returns:
-                    FlextResult[None]: Event processing result
-
-                """
+                """Handle domain event."""
                 with FlextHandlers.thread_safe_operation():
                     self._events_processed += 1
                     event_type = type(event).__name__
@@ -993,24 +941,11 @@ class FlextHandlers:
                 return self._process_event(event)
 
             def _process_event(self, _event: object) -> FlextResult[None]:
-                """Process event - Template method for extensibility.
-
-                Args:
-                    _event: Event to process
-
-                Returns:
-                    FlextResult[None]: Processing result
-
-                """
+                """Process event."""
                 return FlextResult[None].ok(None)
 
             def get_event_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get event-specific metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Event metrics
-
-                """
+                """Get event metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "events_processed": self._events_processed,
@@ -1022,63 +957,32 @@ class FlextHandlers:
     # =========================================================================
 
     class CQRS:
-        """CQRS pattern implementations for command and query separation.
-
-        Provides production-ready CQRS infrastructure with:
-            - Command bus for write operations
-            - Query bus for read operations
-            - Handler registration and routing
-            - Performance metrics and monitoring
-        """
+        """CQRS pattern implementations."""
 
         class CommandHandler[TCommand, TResult](ABC):
-            """Abstract command handler for CQRS write operations."""
+            """Abstract command handler."""
 
             @abstractmethod
             def handle_command(self, command: TCommand) -> FlextResult[TResult]:
-                """Handle command execution.
-
-                Args:
-                    command: Command to execute
-
-                Returns:
-                    FlextResult[TResult]: Command execution result
-
-                """
+                """Handle command."""
                 ...
 
             @abstractmethod
             def can_handle(self, command_type: type) -> bool:
-                """Check if handler can execute command type.
-
-                Args:
-                    command_type: Type of command to check
-
-                Returns:
-                    bool: True if handler can execute this command type
-
-                """
+                """Check if handler can execute command type."""
 
         class QueryHandler[TQuery, TResult](ABC):
-            """Abstract query handler for CQRS read operations."""
+            """Abstract query handler."""
 
             @abstractmethod
             def handle_query(self, query: TQuery) -> FlextResult[TResult]:
-                """Handle query execution.
-
-                Args:
-                    query: Query to execute
-
-                Returns:
-                    FlextResult[TResult]: Query execution result
-
-                """
+                """Handle query."""
 
         class CommandBus:
-            """Command bus for routing commands to registered handlers."""
+            """Command bus for routing commands."""
 
             def __init__(self) -> None:
-                """Initialize command bus with metrics infrastructure."""
+                """Initialize command bus."""
                 self._handlers: dict[type, object] = {}
                 self._commands_processed: FlextHandlers.Types.HandlerTypes.Counter = 0
                 self._successful_commands: FlextHandlers.Types.HandlerTypes.Counter = 0
@@ -1089,30 +993,13 @@ class FlextHandlers:
                 command_type: type,
                 handler: object,
             ) -> FlextResult[None]:
-                """Register command handler for specific command type.
-
-                Args:
-                    command_type: Type of command to handle
-                    handler: Handler instance for the command
-
-                Returns:
-                    FlextResult[None]: Registration result
-
-                """
+                """Register command handler."""
                 with FlextHandlers.thread_safe_operation():
                     self._handlers[command_type] = handler
                     return FlextResult[None].ok(None)
 
             def send(self, command: object) -> FlextResult[object]:
-                """Send command to registered handler.
-
-                Args:
-                    command: Command instance to execute
-
-                Returns:
-                    FlextResult[object]: Command execution result
-
-                """
+                """Send command to handler."""
                 command_type = type(command)
 
                 with FlextHandlers.thread_safe_operation():
@@ -1152,12 +1039,7 @@ class FlextHandlers:
                     )
 
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get command bus metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Bus metrics
-
-                """
+                """Get command bus metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "commands_processed": self._commands_processed,
@@ -1167,10 +1049,10 @@ class FlextHandlers:
                     }
 
         class QueryBus:
-            """Query bus for routing queries to registered handlers."""
+            """Query bus for routing queries."""
 
             def __init__(self) -> None:
-                """Initialize query bus with metrics infrastructure."""
+                """Initialize query bus."""
                 self._handlers: dict[
                     type,
                     FlextProtocols.Application.MessageHandler,
@@ -1184,30 +1066,13 @@ class FlextHandlers:
                 query_type: type,
                 handler: FlextProtocols.Application.MessageHandler,
             ) -> FlextResult[None]:
-                """Register query handler for specific query type.
-
-                Args:
-                    query_type: Type of query to handle
-                    handler: Handler instance for the query
-
-                Returns:
-                    FlextResult[None]: Registration result
-
-                """
+                """Register query handler."""
                 with FlextHandlers.thread_safe_operation():
                     self._handlers[query_type] = handler
                     return FlextResult[None].ok(None)
 
             def send(self, query: object) -> FlextResult[object]:
-                """Send query to registered handler.
-
-                Args:
-                    query: Query instance to execute
-
-                Returns:
-                    FlextResult[object]: Query execution result
-
-                """
+                """Send query to handler."""
                 query_type = type(query)
 
                 with FlextHandlers.thread_safe_operation():
@@ -1242,12 +1107,7 @@ class FlextHandlers:
                     )
 
             def get_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get query bus metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Bus metrics
-
-                """
+                """Get query bus metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "queries_processed": self._queries_processed,
@@ -1261,27 +1121,16 @@ class FlextHandlers:
     # =========================================================================
 
     class Patterns:
-        """Enterprise design pattern implementations for handler composition.
-
-        Provides production-ready implementations of common enterprise patterns:
-            - Chain of Responsibility for request processing pipelines
-            - Pipeline for sequential data transformation
-            - Registry for handler lifecycle management
-        """
+        """Enterprise design pattern implementations."""
 
         class HandlerChain:
-            """Chain of Responsibility pattern with performance monitoring."""
+            """Chain of Responsibility pattern."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
-                """Initialize handler chain.
-
-                Args:
-                    name: Optional chain name, defaults to HandlerChain
-
-                """
+                """Initialize handler chain."""
                 self._name: FlextHandlers.Types.HandlerTypes.Name = (
                     name or "HandlerChain"
                 )
@@ -1294,15 +1143,7 @@ class FlextHandlers:
                 self,
                 handler: FlextHandlers.Protocols.ChainableHandler,
             ) -> FlextResult[None]:
-                """Add handler to the processing chain.
-
-                Args:
-                    handler: Handler to add to chain
-
-                Returns:
-                    FlextResult[None]: Addition result
-
-                """
+                """Add handler to chain."""
                 if (
                     len(self._handlers)
                     >= FlextHandlers.Constants.Handler.MAX_CHAIN_HANDLERS
@@ -1317,15 +1158,7 @@ class FlextHandlers:
                     return FlextResult[None].ok(None)
 
             def handle(self, request: object) -> FlextResult[object]:
-                """Execute chain of handlers until one handles the request.
-
-                Args:
-                    request: Request data to process through chain
-
-                Returns:
-                    FlextResult[object]: Processing result from first applicable handler
-
-                """
+                """Execute chain of handlers."""
                 with FlextHandlers.thread_safe_operation():
                     self._chain_executions += 1
 
@@ -1375,12 +1208,7 @@ class FlextHandlers:
                 )
 
             def get_chain_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get chain performance metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Chain metrics
-
-                """
+                """Get chain metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "chain_executions": self._chain_executions,
@@ -1390,18 +1218,13 @@ class FlextHandlers:
                     }
 
         class Pipeline:
-            """Pipeline pattern for sequential data transformation."""
+            """Pipeline pattern for data transformation."""
 
             def __init__(
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name | None = None,
             ) -> None:
-                """Initialize processing pipeline.
-
-                Args:
-                    name: Optional pipeline name, defaults to Pipeline
-
-                """
+                """Initialize pipeline."""
                 self._name: Final[FlextHandlers.Types.HandlerTypes.Name] = (
                     name or "Pipeline"
                 )
@@ -1416,15 +1239,7 @@ class FlextHandlers:
                 self,
                 stage: FlextHandlers.Types.HandlerTypes.ProcessorFunction,
             ) -> FlextResult[None]:
-                """Add processing stage to pipeline.
-
-                Args:
-                    stage: Processing function to add to pipeline
-
-                Returns:
-                    FlextResult[None]: Addition result
-
-                """
+                """Add stage to pipeline."""
                 if (
                     len(self._stages)
                     >= FlextHandlers.Constants.Handler.MAX_PIPELINE_STAGES
@@ -1439,15 +1254,7 @@ class FlextHandlers:
                     return FlextResult[None].ok(None)
 
             def process(self, data: object) -> FlextResult[object]:
-                """Process data through all pipeline stages sequentially.
-
-                Args:
-                    data: Data to process through pipeline
-
-                Returns:
-                    FlextResult[object]: Final processing result
-
-                """
+                """Process data through pipeline."""
                 with FlextHandlers.thread_safe_operation():
                     self._pipeline_executions += 1
 
@@ -1499,12 +1306,7 @@ class FlextHandlers:
                 return FlextResult[object].ok(current_data)
 
             def get_pipeline_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get pipeline performance metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Pipeline metrics
-
-                """
+                """Get pipeline metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "pipeline_executions": self._pipeline_executions,
@@ -1518,20 +1320,13 @@ class FlextHandlers:
     # =========================================================================
 
     class Management:
-        """Handler lifecycle and registry management infrastructure.
-
-        Provides production-ready handler management with:
-            - Handler registration and discovery
-            - Lifecycle management
-            - Performance monitoring
-            - Resource cleanup
-        """
+        """Handler lifecycle and registry management."""
 
         class HandlerRegistry:
-            """Registry for handler lifecycle management and discovery."""
+            """Registry for handler management."""
 
             def __init__(self) -> None:
-                """Initialize handler registry with management infrastructure."""
+                """Initialize handler registry."""
                 self._handlers: dict[FlextHandlers.Types.HandlerTypes.Name, object] = {}
                 self._registrations: FlextHandlers.Types.HandlerTypes.Counter = 0
                 self._lookups: FlextHandlers.Types.HandlerTypes.Counter = 0
@@ -1542,16 +1337,7 @@ class FlextHandlers:
                 name: FlextHandlers.Types.HandlerTypes.Name,
                 handler: object,
             ) -> FlextResult[object]:
-                """Register handler in the registry.
-
-                Args:
-                    name: Unique handler identifier
-                    handler: Handler instance to register
-
-                Returns:
-                    FlextResult[object]: Registration result with registered handler
-
-                """
+                """Register handler."""
                 if not name or not name.strip():
                     return FlextResult[object].fail(
                         "Handler name cannot be empty",
@@ -1573,15 +1359,7 @@ class FlextHandlers:
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name,
             ) -> FlextResult[object]:
-                """Get handler by name from registry.
-
-                Args:
-                    name: Handler identifier to lookup
-
-                Returns:
-                    FlextResult[object]: Retrieved handler or failure
-
-                """
+                """Get handler by name."""
                 with FlextHandlers.thread_safe_operation():
                     self._lookups += 1
                     handler = self._handlers.get(name)
@@ -1598,12 +1376,7 @@ class FlextHandlers:
             def get_all_handlers(
                 self,
             ) -> dict[FlextHandlers.Types.HandlerTypes.Name, object]:
-                """Get all registered handlers.
-
-                Returns:
-                    dict[str, object]: Copy of all registered handlers
-
-                """
+                """Get all registered handlers."""
                 with FlextHandlers.thread_safe_operation():
                     return dict(self._handlers)
 
@@ -1611,15 +1384,7 @@ class FlextHandlers:
                 self,
                 name: FlextHandlers.Types.HandlerTypes.Name,
             ) -> FlextResult[None]:
-                """Unregister handler from registry.
-
-                Args:
-                    name: Handler identifier to unregister
-
-                Returns:
-                    FlextResult[None]: Unregistration result
-
-                """
+                """Unregister handler."""
                 with FlextHandlers.thread_safe_operation():
                     if name in self._handlers:
                         del self._handlers[name]
@@ -1631,12 +1396,7 @@ class FlextHandlers:
                 )
 
             def get_registry_metrics(self) -> FlextHandlers.Types.HandlerTypes.Metrics:
-                """Get registry performance and usage metrics.
-
-                Returns:
-                    FlextHandlers.Types.HandlerTypes.Metrics: Registry metrics
-
-                """
+                """Get registry metrics."""
                 with FlextHandlers.thread_safe_operation():
                     return {
                         "total_handlers": len(self._handlers),

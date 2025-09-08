@@ -1,4 +1,8 @@
-"""Comprehensive tests for FLEXT services module - targeting 100% coverage."""
+"""Comprehensive tests for FLEXT services module - targeting 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,7 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from flext_core import FlextProtocols, FlextResult, FlextServices, FlextTypes
+from flext_core import FlextProtocols, FlextResult, FlextServices
+from flext_core.typings import FlextTypes
 
 
 class MockConfigError(Exception):
@@ -158,7 +163,7 @@ class TestFlextServicesConfiguration:
         """Test performance optimization for high performance level."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"performance_level": "high", "cpu_cores": 8}  # Set higher CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -179,7 +184,7 @@ class TestFlextServicesConfiguration:
         """Test performance optimization for medium performance level."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"performance_level": "medium"}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -197,7 +202,7 @@ class TestFlextServicesConfiguration:
         """Test performance optimization for low performance level."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"performance_level": "low", "cpu_cores": 1}  # Set low CPU cores
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -218,7 +223,7 @@ class TestFlextServicesConfiguration:
         # Test low memory scenario
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"memory_limit_mb": 256}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -248,7 +253,7 @@ class TestFlextServicesConfiguration:
         """Test CPU-based optimization."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"cpu_cores": 8}
         result = FlextServices.optimize_services_performance(config)
         assert result.success
@@ -262,7 +267,7 @@ class TestFlextServicesConfiguration:
         """Test type conversion in optimization."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "memory_limit_mb": "1024",  # String value
             "cpu_cores": "4",  # String value
@@ -279,7 +284,7 @@ class TestFlextServicesConfiguration:
         with patch("builtins.int", side_effect=ValueError("Invalid conversion")):
             config: dict[
                 str,
-                str | int | float | bool | list[object] | dict[str, object],
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"memory_limit_mb": "invalid"}
             result = FlextServices.optimize_services_performance(config)
             # Should handle gracefully and use defaults
@@ -322,7 +327,7 @@ class TestServiceOrchestrator:
     def test_orchestrate_workflow_success(self) -> None:
         """Test successful workflow orchestration."""
         orchestrator = FlextServices.ServiceOrchestrator()
-        workflow_definition: dict[str, object] = {
+        workflow_definition: FlextTypes.Core.Dict = {
             "id": "test_workflow",
             "steps": ["step1", "step2"],
         }
@@ -340,7 +345,7 @@ class TestServiceOrchestrator:
     def test_orchestrate_workflow_no_id(self) -> None:
         """Test workflow orchestration without ID."""
         orchestrator = FlextServices.ServiceOrchestrator()
-        workflow_definition: dict[str, object] = {"steps": ["step1", "step2"]}
+        workflow_definition: FlextTypes.Core.Dict = {"steps": ["step1", "step2"]}
 
         result = orchestrator.orchestrate_workflow(workflow_definition)
         assert result.success
@@ -365,7 +370,7 @@ class TestServiceRegistry:
     def test_register_service_success(self) -> None:
         """Test successful service registration."""
         registry = FlextServices.ServiceRegistry()
-        service_info: dict[str, object] = {
+        service_info: FlextTypes.Core.Dict = {
             "name": "test_service",
             "version": "1.0.0",
             "endpoint": "http://test.example.com",
@@ -380,7 +385,7 @@ class TestServiceRegistry:
     def test_discover_service_success(self) -> None:
         """Test successful service discovery."""
         registry = FlextServices.ServiceRegistry()
-        service_info: dict[str, object] = {
+        service_info: FlextTypes.Core.Dict = {
             "name": "test_service",
             "version": "1.0.0",
             "endpoint": "http://test.example.com",
@@ -411,7 +416,7 @@ class TestServiceRegistry:
     def test_register_service_no_name(self) -> None:
         """Test registering service without name."""
         registry = FlextServices.ServiceRegistry()
-        service_info: dict[str, object] = {"version": "1.0.0"}  # No name
+        service_info: FlextTypes.Core.Dict = {"version": "1.0.0"}  # No name
 
         result = registry.register(service_info)
         assert result.success  # Should use "unknown" as default name
@@ -540,10 +545,12 @@ class TestServiceValidation:
         """Test successful output validation."""
         validation = FlextServices.ServiceValidation()
 
-        def mock_contract(_data: dict[str, str]) -> FlextResult[dict[str, str]]:
+        def mock_contract(
+            _data: FlextTypes.Core.Headers,
+        ) -> FlextResult[FlextTypes.Core.Headers]:
             if "result" in _data:
-                return FlextResult[dict[str, str]].ok(_data)
-            return FlextResult[dict[str, str]].fail("Missing result")
+                return FlextResult[FlextTypes.Core.Headers].ok(_data)
+            return FlextResult[FlextTypes.Core.Headers].fail("Missing result")
 
         output_data = {"result": "success"}
         result = validation.validate_output(output_data, mock_contract)
@@ -554,8 +561,10 @@ class TestServiceValidation:
         """Test output validation failure."""
         validation = FlextServices.ServiceValidation()
 
-        def mock_contract(_data: dict[str, str]) -> FlextResult[dict[str, str]]:
-            return FlextResult[dict[str, str]].fail("Contract violation")
+        def mock_contract(
+            _data: FlextTypes.Core.Headers,
+        ) -> FlextResult[FlextTypes.Core.Headers]:
+            return FlextResult[FlextTypes.Core.Headers].fail("Contract violation")
 
         result = validation.validate_output({"data": "test"}, mock_contract)
         assert result.is_failure
@@ -566,7 +575,9 @@ class TestServiceValidation:
         """Test output validation with exception."""
         validation = FlextServices.ServiceValidation()
 
-        def mock_contract(_data: dict[str, str]) -> FlextResult[dict[str, str]]:
+        def mock_contract(
+            _data: FlextTypes.Core.Headers,
+        ) -> FlextResult[FlextTypes.Core.Headers]:
             msg = "Contract error"
             raise RuntimeError(msg)
 
@@ -579,23 +590,23 @@ class TestServiceValidation:
 
 
 class ConcreteServiceProcessor(
-    FlextServices.ServiceProcessor[str, dict[str, object], str],
+    FlextServices.ServiceProcessor[str, FlextTypes.Core.Dict, str],
 ):
     """Concrete implementation of ServiceProcessor for testing."""
 
-    def process(self, request: str) -> FlextResult[dict[str, object]]:
+    def process(self, request: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Process string request into dict."""
         if not request:
-            return FlextResult[dict[str, object]].fail("Empty request")
+            return FlextResult[FlextTypes.Core.Dict].fail("Empty request")
 
-        return FlextResult[dict[str, object]].ok(
+        return FlextResult[FlextTypes.Core.Dict].ok(
             {
                 "processed": request,
                 "length": len(request),
             },
         )
 
-    def build(self, domain: dict[str, object], *, correlation_id: str) -> str:
+    def build(self, domain: FlextTypes.Core.Dict, *, correlation_id: str) -> str:
         """Build final string result."""
         processed = domain["processed"]
         length = domain["length"]
@@ -683,8 +694,8 @@ class TestServiceProcessor:
         """Test JSON processing success."""
         processor = ConcreteServiceProcessor()
 
-        def handler(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            return FlextResult[dict[str, object]].ok({"handled": data})
+        def handler(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
+            return FlextResult[FlextTypes.Core.Dict].ok({"handled": data})
 
         json_text = '{"key": "value"}'
         result = processor.process_json(json_text, dict, handler)
@@ -699,8 +710,8 @@ class TestServiceProcessor:
         """Test JSON processing with invalid JSON."""
         processor = ConcreteServiceProcessor()
 
-        def handler(data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            return FlextResult[dict[str, object]].ok(data)
+        def handler(data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
+            return FlextResult[FlextTypes.Core.Dict].ok(data)
 
         result = processor.process_json("invalid json", dict, handler)
         assert result.is_failure
@@ -713,8 +724,10 @@ class TestServiceProcessor:
         """Test JSON processing with handler failure."""
         processor = ConcreteServiceProcessor()
 
-        def failing_handler(_data: dict[str, object]) -> FlextResult[dict[str, object]]:
-            return FlextResult[dict[str, object]].fail("Handler error")
+        def failing_handler(
+            _data: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            return FlextResult[FlextTypes.Core.Dict].fail("Handler error")
 
         json_text = '{"key": "value"}'
         result = processor.process_json(json_text, dict, failing_handler)
@@ -781,7 +794,7 @@ class TestServiceIntegration:
         processor = ConcreteServiceProcessor()
 
         # Register a service
-        service_info: dict[str, object] = {
+        service_info: FlextTypes.Core.Dict = {
             "name": "test_processor",
             "type": "processor",
         }
@@ -874,7 +887,7 @@ class TestServiceEdgeCases:
         assert result.success
 
         # Workflow definition with complex nested structure
-        complex_workflow: dict[str, object] = {
+        complex_workflow: FlextTypes.Core.Dict = {
             "id": "complex",
             "nested": {"deep": {"very_deep": "value"}},
             "list": [1, 2, 3],
@@ -945,7 +958,7 @@ class TestServiceExceptionPaths:
         with patch("builtins.min", side_effect=Exception("Mock optimization error")):
             config: dict[
                 str,
-                str | int | float | bool | list[object] | dict[str, object],
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"performance_level": "high", "cpu_cores": 8}
             result = FlextServices.optimize_services_performance(config)
             # Should return failure result

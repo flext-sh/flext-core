@@ -1,12 +1,16 @@
-# ruff: noqa: PLC0415
 """HTTP testing utilities using pytest-httpx for comprehensive API testing.
 
 Provides advanced HTTP mocking, request/response validation, and API testing
 patterns with automatic retry, error simulation, and performance monitoring.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 from datetime import UTC, datetime
 from typing import cast
 from urllib.parse import urljoin
@@ -16,8 +20,9 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from flext_core import FlextResult
+from flext_core.typings import FlextTypes
 
-JsonDict = dict[str, object]
+JsonDict = FlextTypes.Core.Dict
 JsonValue = object
 
 
@@ -31,7 +36,7 @@ class HTTPTestUtils:
         method: str = "GET",
         json_data: JsonDict | None = None,
         status_code: int = 200,
-        headers: dict[str, str] | None = None,
+        headers: FlextTypes.Core.Headers | None = None,
     ) -> None:
         """Mock successful HTTP response."""
         response_data = json_data or {"status": "success"}
@@ -80,8 +85,6 @@ class HTTPTestUtils:
         method: str = "GET",
     ) -> None:
         """Mock timeout response."""
-        import httpx
-
         httpx_mock.add_exception(
             httpx.TimeoutException("Request timed out"),
             method=method,
@@ -182,8 +185,8 @@ class APITestClient:
     def validate_response_structure(
         self,
         response_data: JsonDict,
-        required_fields: list[str],
-        _: list[str] | None = None,
+        required_fields: FlextTypes.Core.StringList,
+        _: FlextTypes.Core.StringList | None = None,
     ) -> FlextResult[None]:
         """Validate API response structure."""
         missing_fields = [
@@ -255,7 +258,7 @@ class HTTPScenarioBuilder:
 
     def __init__(self, httpx_mock: HTTPXMock) -> None:
         self.httpx_mock = httpx_mock
-        self.scenarios: list[dict[str, object]] = []
+        self.scenarios: list[FlextTypes.Core.Dict] = []
 
     def add_successful_request(
         self,
@@ -388,7 +391,7 @@ class HTTPScenarioBuilder:
 
         return self
 
-    def build_scenario(self) -> dict[str, object]:
+    def build_scenario(self) -> FlextTypes.Core.Dict:
         """Build complete scenario."""
         return {
             "total_requests": len(self.scenarios),
@@ -425,9 +428,6 @@ class WebhookTestUtils:
         secret: str,
     ) -> bool:
         """Validate webhook signature (simplified)."""
-        import hashlib
-        import hmac
-
         expected_signature = hmac.new(
             secret.encode(),
             payload.encode(),
@@ -476,9 +476,24 @@ def http_scenario_builder(httpx_mock: HTTPXMock) -> HTTPScenarioBuilder:
     return HTTPScenarioBuilder(httpx_mock)
 
 
+# Main unified class
+class FlextTestsHttp:
+    """Unified HTTP testing utilities for FLEXT ecosystem.
+
+    Consolidates all HTTP testing patterns into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    Utils = HTTPTestUtils
+    Client = APITestClient
+    ScenarioBuilder = HTTPScenarioBuilder
+    Webhooks = WebhookTestUtils
+
+
 # Export utilities
 __all__ = [
     "APITestClient",
+    "FlextTestsHttp",
     "HTTPScenarioBuilder",
     "HTTPTestUtils",
     "WebhookTestUtils",

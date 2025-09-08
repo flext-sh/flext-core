@@ -1,6 +1,10 @@
 """Comprehensive tests for flext_tests.fixtures module.
 
 Tests all utility functions and fixtures to achieve 100% coverage.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,6 +16,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextConfig
+from flext_core.typings import FlextTypes
 from flext_tests.fixtures import (
     AsyncExecutor,
     AsyncTestService,
@@ -197,7 +202,7 @@ class TestFactoryRegistry:
         """Test getting existing factory."""
         registry = FactoryRegistry()
 
-        def test_factory() -> dict[str, str]:
+        def test_factory() -> FlextTypes.Core.Headers:
             return {"result": "success"}
 
         registry.register("existing", test_factory)
@@ -344,7 +349,7 @@ class TestAsyncExecutor:
             await asyncio.sleep(0.001)
             return value * 2
 
-        tasks: list[object] = [task(i) for i in range(3)]
+        tasks: FlextTypes.Core.List = [task(i) for i in range(3)]
         results = await executor.execute_batch(tasks)
 
         assert len(results) == 3
@@ -397,7 +402,7 @@ class TestAsyncTestService:
         service = AsyncTestService()
 
         # Test valid data
-        valid_data: dict[str, object] = {"required_field": "value"}
+        valid_data: FlextTypes.Core.Dict = {"required_field": "value"}
         result = await service.validate(valid_data)
 
         assert isinstance(result, dict)
@@ -405,7 +410,7 @@ class TestAsyncTestService:
         assert result["valid"] is True
 
         # Test invalid data
-        invalid_data: dict[str, object] = {"wrong_field": "value"}
+        invalid_data: FlextTypes.Core.Dict = {"wrong_field": "value"}
         result = await service.validate(invalid_data)
 
         assert isinstance(result, dict)
@@ -417,7 +422,7 @@ class TestAsyncTestService:
         """Test async transformation."""
         service = AsyncTestService()
 
-        input_data: dict[str, object] = {"input": "test_value"}
+        input_data: FlextTypes.Core.Dict = {"input": "test_value"}
         result = await service.transform(input_data)
 
         assert isinstance(result, dict)
@@ -480,7 +485,7 @@ class TestSessionTestService:
 
         session = service.get_session(session_id)
         assert session is not None
-        session_data = cast("dict[str, object]", session["data"])
+        session_data = cast("FlextTypes.Core.Dict", session["data"])
         assert session_data["updated"] is True
         assert session_data["timestamp"] == "2024-01-01"
 
@@ -539,7 +544,7 @@ class TestFixturesIntegration:
         assert "payload" in combined_data
         assert "sequence" in combined_data
         assert len(combined_data["sequence"]) == 5
-        payload = cast("dict[str, object]", combined_data["payload"])
+        payload = cast("FlextTypes.Core.Dict", combined_data["payload"])
         assert payload["size_mb"] == 2
 
     def test_error_and_registry_integration(self) -> None:
@@ -583,9 +588,9 @@ class TestFixturesIntegration:
         # Verify integration
         session = session_service.get_session(session_id)
         assert session is not None
-        session_data = cast("dict[str, object]", session["data"])
+        session_data = cast("FlextTypes.Core.Dict", session["data"])
         assert "result" in session_data
-        result_data = cast("dict[str, object]", session_data["result"])
+        result_data = cast("FlextTypes.Core.Dict", session_data["result"])
         assert result_data["processed"] is True
 
     def test_config_and_command_integration(self) -> None:

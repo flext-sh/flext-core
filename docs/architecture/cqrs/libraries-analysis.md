@@ -142,7 +142,7 @@ class ExecutePipelineCommand(FlextCommands.Models.Command):
     pipeline_name: str
     environment: str = "development"
     dry_run: bool = False
-    parameters: dict[str, object] = Field(default_factory=dict)
+    parameters: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     def validate_command(self) -> FlextResult[None]:
         return self.require_field("pipeline_name", self.pipeline_name)
@@ -231,7 +231,7 @@ class CreateWebAppCommand(FlextCommands.Models.Command):
     description: str = ""
     host: str = "localhost"
     port: int = 8000
-    config: dict[str, object] = Field(default_factory=dict)
+    config: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     def validate_command(self) -> FlextResult[None]:
         return (
@@ -319,7 +319,7 @@ class RunMeltanoPipelineCommand(FlextCommands.Models.Command):
     environment: str = "development"
     full_refresh: bool = False
     schedule: str | None = None
-    config_overrides: dict[str, object] = Field(default_factory=dict)
+    config_overrides: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     def validate_command(self) -> FlextResult[None]:
         return (
@@ -402,7 +402,7 @@ class WMSClient:
 class ExecuteWMSQueryCommand(FlextCommands.Models.Command):
     query_type: str
     warehouse_id: str
-    parameters: dict[str, object] = Field(default_factory=dict)
+    parameters: FlextTypes.Core.Dict = Field(default_factory=dict)
     timeout_seconds: int = 30
 
     def validate_command(self) -> FlextResult[None]:

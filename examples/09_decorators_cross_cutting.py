@@ -37,15 +37,17 @@ class LocalDomainFactory:
     """Local domain factory for user creation without external dependencies."""
 
     @staticmethod
-    def create_user(name: str, email: str, age: int) -> FlextResult[dict[str, object]]:
+    def create_user(
+        name: str, email: str, age: int
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Create user with validation."""
         # Basic validation
         if not name or len(name) < MIN_NAME_LENGTH:
-            return FlextResult[dict[str, object]].fail("Invalid name")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid name")
         if "@" not in email:
-            return FlextResult[dict[str, object]].fail("Invalid email")
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid email")
         if age < MINIMUM_AGE:
-            return FlextResult[dict[str, object]].fail("User must be 18+")
+            return FlextResult[FlextTypes.Core.Dict].fail("User must be 18+")
 
         user_data = {
             "name": name,
@@ -53,7 +55,7 @@ class LocalDomainFactory:
             "age": age,
             "id": f"user_{FlextUtilities.Generators.generate_uuid()}",
         }
-        return FlextResult[dict[str, object]].ok(user_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(user_data)
 
 
 # FlextCore singleton removed - using direct imports
@@ -133,17 +135,19 @@ def demonstrate_complete_decorator() -> FlextResult[str]:
     # Strategy Pattern: Use FlextUtilities for data generation
     @FlextDecorators.Performance.monitor()
     @FlextDecorators.Performance.cache(max_size=64)
-    def business_operation(data: dict[str, object]) -> FlextResult[dict[str, object]]:
+    def business_operation(
+        data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Business operation with flext-core validation."""
         return (
-            FlextResult[dict[str, object]]
+            FlextResult[FlextTypes.Core.Dict]
             .ok(data)
             .flat_map(
-                lambda d: FlextResult[dict[str, object]].fail(
+                lambda d: FlextResult[FlextTypes.Core.Dict].fail(
                     FlextConstants.Errors.VALIDATION_ERROR,
                 )
                 if not d or not isinstance(d, dict)
-                else FlextResult[dict[str, object]].ok(d),
+                else FlextResult[FlextTypes.Core.Dict].ok(d),
             )
             .map(
                 lambda d: {
@@ -201,7 +205,7 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
         name: str,
         email: str,
         age: int,
-    ) -> FlextResult[dict[str, object]]:
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Create user using flext-core validation patterns."""
         return LocalDomainFactory.create_user(name, email, age)
 
@@ -257,7 +261,7 @@ def main() -> FlextResult[str]:
 
     success_count: int = 0
     total_operations: int = 5
-    operation_results: list[str] = []
+    operation_results: FlextTypes.Core.StringList = []
 
     try:
         # Execute all decorator demonstrations with FlextResult handling

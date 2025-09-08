@@ -1,7 +1,7 @@
 """Validation framework with predicate-based rules.
 
-Provides FlextValidations for data validation using composable predicates
-and FlextResult error handling.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from collections.abc import Callable
 from typing import cast
 
 from flext_core.constants import FlextConstants
+from flext_core.models import FlextModels
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
@@ -35,7 +36,7 @@ class FlextValidations:
 
             def __init__(
                 self,
-                func: Callable[[object], bool],
+                func: FlextTypes.Function.Validator,
                 name: str = "predicate",
             ) -> None:
                 """Initialize predicate with function and optional name."""
@@ -120,7 +121,7 @@ class FlextValidations:
                         return False
                     return not (max_length is not None and length > max_length)
 
-                name_parts: list[str] = []
+                name_parts: FlextTypes.Core.StringList = []
                 if min_length is not None:
                     name_parts.append(f"min_{min_length}")
                 if max_length is not None:
@@ -143,7 +144,7 @@ class FlextValidations:
                         return False
                     return not (max_value is not None and value > max_value)
 
-                name_parts: list[str] = []
+                name_parts: FlextTypes.Core.StringList = []
                 if min_value is not None:
                     name_parts.append(f"min_{min_value}")
                 if max_value is not None:
@@ -186,23 +187,25 @@ class FlextValidations:
                 )
 
             @staticmethod
-            def validate_dict(value: object) -> FlextResult[dict[str, object]]:
+            def validate_dict(value: object) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate value is dictionary."""
                 if isinstance(value, dict):
-                    return FlextResult[dict[str, object]].ok(
-                        cast("dict[str, object]", value),
+                    return FlextResult[FlextTypes.Core.Dict].ok(
+                        cast("FlextTypes.Core.Dict", value),
                     )
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     FlextConstants.Messages.TYPE_MISMATCH,
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
             @staticmethod
-            def validate_list(value: object) -> FlextResult[list[object]]:
+            def validate_list(value: object) -> FlextResult[FlextTypes.Core.List]:
                 """Validate value is list type."""
                 if isinstance(value, list):
-                    return FlextResult[list[object]].ok(cast("list[object]", value))
-                return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].ok(
+                        cast("FlextTypes.Core.List", value)
+                    )
+                return FlextResult[FlextTypes.Core.List].fail(
                     FlextConstants.Messages.TYPE_MISMATCH,
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
@@ -246,14 +249,14 @@ class FlextValidations:
 
             def validate_business_rules(
                 self,
-                user_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
+                user_data: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate user business rules."""
                 # Validate required fields
                 required_fields = ["name", "email"]
                 for field in required_fields:
                     if field not in user_data:
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             f"Required field missing: {field}",
                             error_code=FlextConstants.Errors.BUSINESS_RULE_VIOLATION,
                         )
@@ -261,7 +264,7 @@ class FlextValidations:
                 # Validate email format
                 email_result = self._validate_email_format(user_data["email"])
                 if email_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         email_result.error or "Email validation failed",
                         error_code=FlextConstants.Errors.BUSINESS_RULE_VIOLATION,
                     )
@@ -272,12 +275,12 @@ class FlextValidations:
                     isinstance(name, str)
                     and len(name) < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH
                 ):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Name too short, minimum: {FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH}",
                         error_code=FlextConstants.Errors.BUSINESS_RULE_VIOLATION,
                     )
 
-                return FlextResult[dict[str, object]].ok(user_data)
+                return FlextResult[FlextTypes.Core.Dict].ok(user_data)
 
             def _validate_email_format(self, email: object) -> FlextResult[str]:
                 """Validate email format."""
@@ -301,12 +304,12 @@ class FlextValidations:
 
             def validate_entity_constraints(
                 self,
-                entity_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
+                entity_data: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate common entity constraints."""
                 # Validate entity has ID
                 if "id" not in entity_data:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         FlextConstants.Entities.ENTITY_ID_EMPTY,
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -314,7 +317,7 @@ class FlextValidations:
                 # Validate ID format
                 id_result = self.validate_entity_id(entity_data["id"])
                 if id_result.is_failure:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         id_result.error or "Entity ID validation failed",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -323,7 +326,7 @@ class FlextValidations:
                 if "created_at" in entity_data:
                     timestamp = entity_data["created_at"]
                     if not isinstance(timestamp, str):
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             "Timestamp must be string format",
                             error_code=FlextConstants.Errors.TYPE_ERROR,
                         )
@@ -333,12 +336,12 @@ class FlextValidations:
                         r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z?$"  # ISO 8601 pattern
                     )
                     if not re.match(iso_pattern, timestamp):
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             "Invalid timestamp format, must be ISO format",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
 
-                return FlextResult[dict[str, object]].ok(entity_data)
+                return FlextResult[FlextTypes.Core.Dict].ok(entity_data)
 
     # =========================================================================
     # SERVICE VALIDATION - Service-level patterns and API validation
@@ -356,12 +359,12 @@ class FlextValidations:
 
             def validate_request(
                 self,
-                request_data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
+                request_data: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate API request structure and constraints."""
                 # Validate request is not empty
                 if not request_data:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         FlextConstants.Messages.INVALID_INPUT,
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -369,7 +372,7 @@ class FlextValidations:
                 # Validate payload size using FlextConstants limits
                 payload_size = len(str(request_data))
                 if payload_size > FlextConstants.Limits.MAX_FILE_SIZE:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Request payload too large: {payload_size} bytes",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
@@ -378,12 +381,12 @@ class FlextValidations:
                 required_fields = ["action", "version"]
                 for field in required_fields:
                     if field not in request_data:
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             f"Required API field missing: {field}",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
 
-                return FlextResult[dict[str, object]].ok(request_data)
+                return FlextResult[FlextTypes.Core.Dict].ok(request_data)
 
             def validate_timeout(self, timeout_value: object) -> FlextResult[int]:
                 """Validate timeout value."""
@@ -422,7 +425,7 @@ class FlextValidations:
                     )
 
                 # Validate configuration keys are strings
-                config_dict = cast("dict[str, object]", config)
+                config_dict = cast("FlextTypes.Core.Dict", config)
                 for key, value in config_dict.items():
                     # key is already str type from the cast
 
@@ -442,14 +445,14 @@ class FlextValidations:
 
             @staticmethod
             def validate_service_config(
-                config: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
+                config: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate service configuration."""
                 # Validate required service config fields
                 required_fields = ["service_name", "version"]
                 for field in required_fields:
                     if field not in config:
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             f"Required service config field missing: {field}",
                             error_code=FlextConstants.Errors.CONFIG_ERROR,
                         )
@@ -457,7 +460,7 @@ class FlextValidations:
                 # Validate service name using FlextConstants pattern
                 service_name = config["service_name"]
                 if not isinstance(service_name, str):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         "Service name must be string",
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
@@ -466,36 +469,26 @@ class FlextValidations:
                     len(service_name)
                     < FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH
                 ):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Service name too short, minimum: {FlextConstants.Validation.MIN_SERVICE_NAME_LENGTH}",
                         error_code=FlextConstants.Errors.CONFIG_ERROR,
                     )
 
-                return FlextResult[dict[str, object]].ok(config)
+                return FlextResult[FlextTypes.Core.Dict].ok(config)
 
     # =========================================================================
     # RULES VALIDATION - Comprehensive validation rule catalog
     # =========================================================================
 
     class Rules:
-        """Comprehensive validation rules catalog with factory patterns.
-
-        This class contains a complete catalog of validation rules organized
-        by type and domain, providing factory methods for creating validators
-        following the Factory pattern and Single Responsibility principle.
-
-        Architecture Principles Applied:
-            - Single Responsibility: Only validation rule definitions
-            - Factory Pattern: Rule creation through factory methods
-            - Open/Closed: Easy to extend with new rule categories
-        """
+        """Comprehensive validation rules catalog."""
 
         class StringRules:
-            """String validation rules using FlextConstants patterns."""
+            """String validation rules."""
 
             @staticmethod
             def validate_non_empty(value: object) -> FlextResult[str]:
-                """Validate string is not empty using centralized messages."""
+                """Validate string is not empty."""
                 if not isinstance(value, str):
                     return FlextResult[str].fail(
                         FlextConstants.Messages.TYPE_MISMATCH,
@@ -516,7 +509,7 @@ class FlextValidations:
                 min_length: int | None = None,
                 max_length: int | None = None,
             ) -> FlextResult[str]:
-                """Validate string length using FlextConstants limits."""
+                """Validate string length."""
                 length = len(value)
 
                 # Use FlextConstants for default limits
@@ -542,7 +535,7 @@ class FlextValidations:
                 pattern: str,
                 pattern_name: str = "pattern",
             ) -> FlextResult[str]:
-                """Validate string matches regex pattern with error handling."""
+                """Validate string matches regex pattern."""
                 try:
                     if re.match(pattern, value):
                         return FlextResult[str].ok(value)
@@ -558,7 +551,7 @@ class FlextValidations:
 
             @staticmethod
             def validate_email(value: str) -> FlextResult[str]:
-                """Validate email format using centralized FlextConstants pattern."""
+                """Validate email format."""
                 email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
                 return FlextValidations.Rules.StringRules.validate_pattern(
                     value,
@@ -567,11 +560,11 @@ class FlextValidations:
                 )
 
         class NumericRules:
-            """Numeric validation rules with range checking."""
+            """Numeric validation rules."""
 
             @staticmethod
             def validate_positive(value: object) -> FlextResult[float | int]:
-                """Validate number is positive with type safety."""
+                """Validate number is positive."""
                 if not isinstance(value, (int, float)) or isinstance(value, bool):
                     return FlextResult[float | int].fail(
                         FlextConstants.Messages.TYPE_MISMATCH,
@@ -592,7 +585,7 @@ class FlextValidations:
                 min_val: float | None = None,
                 max_val: float | None = None,
             ) -> FlextResult[float | int]:
-                """Validate number is within specified range using constants."""
+                """Validate number is within specified range."""
                 if min_val is not None and value < min_val:
                     return FlextResult[float | int].fail(
                         f"Value below minimum. Min: {min_val}, got: {value}",
@@ -609,7 +602,7 @@ class FlextValidations:
 
             @staticmethod
             def validate_percentage(value: object) -> FlextResult[float]:
-                """Validate percentage value using FlextConstants limits."""
+                """Validate percentage value."""
                 if not isinstance(value, (int, float)) or isinstance(value, bool):
                     return FlextResult[float].fail(
                         FlextConstants.Messages.TYPE_MISMATCH,
@@ -628,47 +621,47 @@ class FlextValidations:
                 return FlextResult[float].ok(float(value))
 
         class CollectionRules:
-            """Collection validation rules with size constraints."""
+            """Collection validation rules."""
 
             @staticmethod
             def validate_list_size(
                 value: object,
                 min_size: int | None = None,
                 max_size: int | None = None,
-            ) -> FlextResult[list[object]]:
-                """Validate list size using FlextConstants limits."""
+            ) -> FlextResult[FlextTypes.Core.List]:
+                """Validate list size."""
                 if not isinstance(value, list):
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].fail(
                         FlextConstants.Messages.TYPE_MISMATCH,
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
 
-                list_value = cast("list[object]", value)
+                list_value = cast("FlextTypes.Core.List", value)
                 size = len(list_value)
                 max_allowed = max_size or FlextConstants.Limits.MAX_LIST_SIZE
 
                 if min_size is not None and size < min_size:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].fail(
                         f"List too small. Minimum: {min_size}, got: {size}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
                 if size > max_allowed:
-                    return FlextResult[list[object]].fail(
+                    return FlextResult[FlextTypes.Core.List].fail(
                         f"List too large. Maximum: {max_allowed}, got: {size}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-                return FlextResult[list[object]].ok(list_value)
+                return FlextResult[FlextTypes.Core.List].ok(list_value)
 
             @staticmethod
             def validate_dict_keys(
                 value: object,
-                required_keys: list[str],
-            ) -> FlextResult[dict[str, object]]:
+                required_keys: FlextTypes.Core.StringList,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Validate dictionary contains required keys."""
                 if not isinstance(value, dict):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         FlextConstants.Messages.TYPE_MISMATCH,
                         error_code=FlextConstants.Errors.TYPE_ERROR,
                     )
@@ -676,13 +669,13 @@ class FlextValidations:
                 missing_keys = [key for key in required_keys if key not in value]
 
                 if missing_keys:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Missing required keys: {', '.join(missing_keys)}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-                return FlextResult[dict[str, object]].ok(
-                    cast("dict[str, object]", value),
+                return FlextResult[FlextTypes.Core.Dict].ok(
+                    cast("FlextTypes.Core.Dict", value),
                 )
 
     # =========================================================================
@@ -690,15 +683,10 @@ class FlextValidations:
     # =========================================================================
 
     class Advanced:
-        """Advanced validation patterns and complex composition.
-
-        This class contains sophisticated validation patterns including
-        schema validation, composition patterns, and performance-optimized
-        validation chains following advanced architectural patterns.
-        """
+        """Advanced validation patterns and complex composition."""
 
         class SchemaValidator:
-            """Schema-based validation using protocol composition."""
+            """Schema-based validation."""
 
             def __init__(
                 self,
@@ -709,12 +697,12 @@ class FlextValidations:
 
             def validate(
                 self,
-                data: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Validate data against schema with efficient error reporting."""
-                # data is already typed as dict[str, object]
-                validated_data: dict[str, object] = {}
-                errors: list[str] = []
+                data: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
+                """Validate data against schema."""
+                # data is already typed as FlextTypes.Core.Dict
+                validated_data: FlextTypes.Core.Dict = {}
+                errors: FlextTypes.Core.StringList = []
 
                 # Validate each field against its schema rule
                 for field_name, validator in self.schema.items():
@@ -729,15 +717,15 @@ class FlextValidations:
                         validated_data[field_name] = result.value
 
                 if errors:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Schema validation failed: {'; '.join(errors)}",
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-                return FlextResult[dict[str, object]].ok(validated_data)
+                return FlextResult[FlextTypes.Core.Dict].ok(validated_data)
 
         class CompositeValidator:
-            """Composite validator for complex validation chains."""
+            """Composite validator."""
 
             def __init__(
                 self,
@@ -747,7 +735,7 @@ class FlextValidations:
                 self.validators = validators
 
             def validate(self, data: object) -> FlextResult[object]:
-                """Validate data through validation chain with railway pattern."""
+                """Validate data through validation chain."""
                 current_result = FlextResult[object].ok(data)
 
                 for validator in self.validators:
@@ -759,7 +747,7 @@ class FlextValidations:
                 return current_result
 
         class PerformanceValidator:
-            """Performance-optimized validation with caching and metrics."""
+            """Performance-optimized validation with caching."""
 
             def __init__(self) -> None:
                 """Initialize performance validator with metrics."""
@@ -773,7 +761,7 @@ class FlextValidations:
                 validator: Callable[[object], FlextResult[object]],
                 cache_key: str | None = None,
             ) -> FlextResult[object]:
-                """Validate with caching for performance optimization."""
+                """Validate with caching."""
                 self._validation_count += 1
 
                 if cache_key and cache_key in self._validation_cache:
@@ -789,7 +777,7 @@ class FlextValidations:
                 return result
 
             def get_performance_metrics(self) -> FlextTypes.Handler.HandlerMetadata:
-                """Get performance metrics using FlextTypes."""
+                """Get performance metrics."""
                 cache_hit_rate = (
                     self._cache_hits / self._validation_count
                     if self._validation_count > 0
@@ -804,7 +792,7 @@ class FlextValidations:
                 }
 
             def clear_cache(self) -> None:
-                """Clear validation cache for memory management."""
+                """Clear validation cache."""
                 self._validation_cache.clear()
 
     # =========================================================================
@@ -812,21 +800,16 @@ class FlextValidations:
     # =========================================================================
 
     class Protocols:
-        """Protocol-based validation interfaces using centralized FlextProtocols.
-
-        This class integrates with the centralized FlextProtocols system to
-        provide protocol-based validation interfaces following Dependency
-        Inversion and Interface Segregation principles.
-        """
+        """Protocol-based validation interfaces."""
 
         class ValidatorProtocol(FlextProtocols.Foundation.Validator[T]):
-            """Base validator protocol extending centralized FlextProtocols."""
+            """Base validator protocol."""
 
         class DomainValidatorProtocol(FlextProtocols.Domain.Service):
-            """Domain validator protocol with service lifecycle."""
+            """Domain validator protocol."""
 
         class ServiceValidatorProtocol(FlextProtocols.Application.ValidatingHandler):
-            """Service validator protocol with handler patterns."""
+            """Service validator protocol."""
 
     # =========================================================================
     # FACTORY METHODS - Validator creation and composition
@@ -834,7 +817,7 @@ class FlextValidations:
 
     @classmethod
     def create_email_validator(cls) -> Callable[[str], FlextResult[str]]:
-        """Create email validator using hierarchical components."""
+        """Create email validator."""
 
         def validate(email: str) -> FlextResult[str]:
             return cls.Rules.StringRules.validate_email(email)
@@ -846,7 +829,7 @@ class FlextValidations:
         cls,
         validators: list[Callable[[object], FlextResult[object]]],
     ) -> Advanced.CompositeValidator:
-        """Create composite validator from component validators."""
+        """Create composite validator."""
         return cls.Advanced.CompositeValidator(validators)
 
     @classmethod
@@ -854,12 +837,12 @@ class FlextValidations:
         cls,
         schema: dict[str, Callable[[object], FlextResult[object]]],
     ) -> Advanced.SchemaValidator:
-        """Create schema validator with validation rules."""
+        """Create schema validator."""
         return cls.Advanced.SchemaValidator(schema)
 
     @classmethod
     def create_user_validator(cls) -> Domain.UserValidator:
-        """Create user validator with business rules."""
+        """Create user validator."""
         return cls.Domain.UserValidator()
 
     @classmethod
@@ -869,7 +852,7 @@ class FlextValidations:
 
     @classmethod
     def create_performance_validator(cls) -> Advanced.PerformanceValidator:
-        """Create performance validator with caching."""
+        """Create performance validator."""
         return cls.Advanced.PerformanceValidator()
 
     # =========================================================================
@@ -878,35 +861,35 @@ class FlextValidations:
 
     @classmethod
     def validate_email(cls, email: str) -> FlextResult[str]:
-        """Validate email using hierarchical email validator."""
+        """Validate email."""
         validator = cls.create_email_validator()
         return validator(email)
 
     @classmethod
     def validate_user_data(
         cls,
-        user_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
-        """Validate user data using domain validator."""
+        user_data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Validate user data."""
         validator = cls.create_user_validator()
         return validator.validate_business_rules(user_data)
 
     @classmethod
     def validate_api_request(
         cls,
-        request_data: dict[str, object],
-    ) -> FlextResult[dict[str, object]]:
-        """Validate API request using service validator."""
+        request_data: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Validate API request."""
         validator = cls.create_api_request_validator()
         return validator.validate_request(request_data)
 
     @classmethod
     def validate_with_schema(
         cls,
-        data: dict[str, object],
+        data: FlextTypes.Core.Dict,
         schema: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> FlextResult[dict[str, object]]:
-        """Validate data against schema using advanced validator."""
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Validate data against schema."""
         validator = cls.create_schema_validator(schema)
         return validator.validate(data)
 
@@ -919,117 +902,89 @@ class FlextValidations:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure validation system using FlextTypes.Config.
-
-        Configures validation behavior, strictness levels, and performance settings
-        based on environment and validation level settings.
-
-        Args:
-            config: Configuration dictionary with validation settings
-
-        Returns:
-            FlextResult containing validated configuration or error
-
-        """
+        """Configure validation system using Settings → SystemConfigs bridge."""
         try:
-            # Validate required FlextTypes.Config fields
-            validated_config: FlextTypes.Config.ConfigDict = {}
-
-            # Validate environment (affects validation behavior)
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                    )
-                validated_config["environment"] = env_value
-            else:
-                validated_config["environment"] = (
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            # Defaults guiados por ambiente (compatíveis com comportamento anterior)
+            env = str(
+                config.get(
+                    "environment",
+                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 )
-
-            # Validate validation level (core setting for validation strictness)
-            if "validation_level" in config:
-                val_level = config["validation_level"]
-                valid_levels = [v.value for v in FlextConstants.Config.ValidationLevel]
-                if val_level not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_level}'. Valid options: {valid_levels}",
-                    )
-                validated_config["validation_level"] = val_level
-            # Default based on environment
-            elif validated_config["environment"] == "production":
-                validated_config["validation_level"] = (
-                    FlextConstants.Config.ValidationLevel.STRICT.value
-                )
-            elif validated_config["environment"] == "test":
-                validated_config["validation_level"] = (
-                    FlextConstants.Config.ValidationLevel.NORMAL.value
-                )
-            else:
-                validated_config["validation_level"] = (
-                    FlextConstants.Config.ValidationLevel.LOOSE.value
-                )
-
-            # Validate log level (affects validation error logging)
-            if "log_level" in config:
-                log_level = config["log_level"]
-                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
-                if log_level not in valid_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_levels}",
-                    )
-                validated_config["log_level"] = log_level
-            # Default based on environment
-            elif validated_config["environment"] == "production":
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.WARNING.value
-                )
-            else:
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.DEBUG.value
-                )
-
-            # Add validation-specific configuration
-            validated_config["enable_detailed_errors"] = config.get(
-                "enable_detailed_errors",
-                validated_config["validation_level"] != "strict",
             )
-            validated_config["max_validation_errors"] = config.get(
+
+            # Defaults dependentes de ambiente
+            default_level = (
+                FlextConstants.Config.ValidationLevel.STRICT.value
+                if env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                else FlextConstants.Config.ValidationLevel.NORMAL.value
+                if env == FlextConstants.Config.ConfigEnvironment.TEST.value
+                else FlextConstants.Config.ValidationLevel.LOOSE.value
+            )
+            default_log = (
+                FlextConstants.Config.LogLevel.WARNING.value
+                if env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
+                else FlextConstants.Config.LogLevel.DEBUG.value
+            )
+
+            # Monte base para validação via Pydantic
+            base_for_validation: FlextTypes.Config.ConfigDict = {
+                "environment": env,
+                "validation_level": str(config.get("validation_level", default_level)),
+                "log_level": str(config.get("log_level", default_log)),
+            }
+
+            # Valide via SystemConfigs
+            _ = FlextModels.SystemConfigs.ValidationSystemConfig.model_validate(
+                base_for_validation
+            )
+
+            # Chaves derivadas e adicionais (compatibilidade)
+            validated_config: FlextTypes.Config.ConfigDict = dict(base_for_validation)
+
+            validated_config["enable_detailed_errors"] = bool(
+                config.get(
+                    "enable_detailed_errors",
+                    validated_config["validation_level"] != "strict",
+                )
+            )
+            mve = config.get(
                 "max_validation_errors",
                 100 if validated_config["validation_level"] == "strict" else 1000,
             )
-            validated_config["enable_performance_tracking"] = config.get(
-                "enable_performance_tracking",
-                True,
+            try:
+                validated_config["max_validation_errors"] = int(cast("int", mve))
+            except Exception:
+                validated_config["max_validation_errors"] = 100
+
+            # Flags de performance por ambiente
+            validated_config["enable_performance_tracking"] = bool(
+                config.get(
+                    "enable_performance_tracking",
+                    env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+                )
             )
-            validated_config["cache_validation_results"] = config.get(
-                "cache_validation_results",
-                validated_config["environment"] == "production",
+            validated_config["cache_validation_results"] = bool(
+                config.get(
+                    "cache_validation_results",
+                    env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
+                )
             )
-            validated_config["fail_fast_validation"] = config.get(
-                "fail_fast_validation",
-                validated_config["validation_level"] == "strict",
+            validated_config["fail_fast_validation"] = bool(
+                config.get(
+                    "fail_fast_validation",
+                    validated_config["validation_level"] == "strict",
+                )
             )
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
-
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Validation configuration error: {e}",
+                f"Failed to configure validation system: {e}",
             )
 
     @classmethod
     def get_validation_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current validation system configuration.
-
-        Returns:
-            FlextResult containing current validation system configuration
-
-        """
+        """Get current validation system configuration."""
         try:
             # Build current validation configuration
             current_config: FlextTypes.Config.ConfigDict = {
@@ -1141,18 +1096,7 @@ class FlextValidations:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize validation configuration for performance.
-
-        Analyzes validation configuration and applies performance optimizations
-        based on environment and usage patterns.
-
-        Args:
-            config: Base validation configuration to optimize
-
-        Returns:
-            FlextResult containing performance-optimized configuration
-
-        """
+        """Optimize validation configuration for performance."""
         try:
             # Since config is typed as ConfigDict (dict subtype), validation is ensured
             optimized_config = dict(config)  # Copy base config
@@ -1215,12 +1159,12 @@ class FlextValidations:
 
     @staticmethod
     def validate_non_empty_string_func(value: object) -> bool:
-        """Validate non-empty string (legacy compatibility)."""
+        """Validate non-empty string."""
         return isinstance(value, str) and len(value.strip()) > 0
 
     @staticmethod
     def validate_email_field(value: object) -> FlextResult[None]:
-        """Validate email field (legacy compatibility)."""
+        """Validate email field."""
         if not isinstance(value, str):
             return FlextResult[None].fail("Email must be a string")
 
@@ -1231,7 +1175,7 @@ class FlextValidations:
 
     @staticmethod
     def validate_numeric_field(value: object) -> FlextResult[None]:
-        """Validate numeric field (legacy compatibility)."""
+        """Validate numeric field."""
         if isinstance(value, (int, float)):
             return FlextResult[None].ok(None)
         if isinstance(value, str):
@@ -1244,17 +1188,17 @@ class FlextValidations:
 
     @staticmethod
     def validate_string_field(value: object) -> FlextResult[None]:
-        """Validate string field (legacy compatibility)."""
+        """Validate string field."""
         if isinstance(value, str) and len(value.strip()) > 0:
             return FlextResult[None].ok(None)
         return FlextResult[None].fail("Value is not a valid string")
 
     class Validators:
-        """Validators nested class for legacy compatibility."""
+        """Validators nested class."""
 
         @staticmethod
         def validate_email(value: object) -> FlextResult[None]:
-            """Validate email using validators pattern."""
+            """Validate email."""
             return FlextValidations.validate_email_field(value)
 
     @property
@@ -1267,6 +1211,6 @@ class FlextValidations:
 # EXPORTS - Hierarchical and legacy validation system
 # =============================================================================
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextValidations",  # ONLY main class exported
 ]

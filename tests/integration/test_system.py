@@ -3,6 +3,9 @@
 Este teste único e abrangente valida que todo o sistema flext-core funciona
 corretamente após wildcard imports, com foco em railway-oriented programming,
 hierarquia de constantes, sistema de exceções e utilitários.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,9 +18,9 @@ from flext_core import (
     FlextExceptions,
     FlextFields,
     FlextResult,
-    FlextTypes,
     FlextUtilities,
 )
+from flext_core.typings import FlextTypes
 
 
 class TestCompleteFlextSystemIntegration:
@@ -39,6 +42,10 @@ class TestCompleteFlextSystemIntegration:
         6. Sistema de campos (FlextFields)
         7. Validação e configuração
         8. Cenários de erro e recuperação
+
+        Returns:
+            None: Este teste não retorna valor; apenas valida cenários.
+
         """
         # =========================================================================
         # FASE 1: Validação de imports e disponibilidade de módulos
@@ -298,12 +305,12 @@ class TestCompleteFlextSystemIntegration:
 
         # Simulação de processamento de dados completo
         def processar_dados_usuario(
-            dados: dict[str, str],
-        ) -> FlextResult[dict[str, str]]:
+            dados: FlextTypes.Core.Headers,
+        ) -> FlextResult[FlextTypes.Core.Headers]:
             """Função que simula processamento completo usando todo o sistema."""
             # Validar entrada
             if not dados:
-                return FlextResult[dict[str, str]].fail(
+                return FlextResult[FlextTypes.Core.Headers].fail(
                     "Dados não fornecidos",
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
@@ -315,7 +322,7 @@ class TestCompleteFlextSystemIntegration:
             if "username" in dados:
                 username_result = string_field.validate(dados["username"])
                 if not username_result.success:
-                    return FlextResult[dict[str, str]].fail(
+                    return FlextResult[FlextTypes.Core.Headers].fail(
                         f"Username inválido: {username_result.error}",
                     )
                 dados_processados["username"] = username_result.value
@@ -326,7 +333,7 @@ class TestCompleteFlextSystemIntegration:
             # Adicionar timestamp
             dados_processados["created_at"] = FlextUtilities.generate_timestamp()
 
-            return FlextResult[dict[str, str]].ok(dados_processados)
+            return FlextResult[FlextTypes.Core.Headers].ok(dados_processados)
 
         # Teste do fluxo completo - sucesso
         dados_entrada = {"username": "usuario_teste"}

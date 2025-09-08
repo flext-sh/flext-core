@@ -2,9 +2,15 @@
 
 This file contains precise tests targeting the specific remaining uncovered lines
 in protocols.py focusing on FlextProtocols.Config class and protocol system methods.
+
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 from flext_core import FlextConstants, FlextProtocols, FlextResult
 from flext_core.constants import FlextConstants as FlextConstantsImport
@@ -40,7 +46,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_invalid_environment(self) -> None:
         """Test lines 825-828: Invalid environment validation."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": "invalid_environment",
             "protocol_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
         }
@@ -51,7 +57,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_missing_environment(self) -> None:
         """Test lines 829-832: Missing environment default."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "protocol_level": FlextConstants.Config.ValidationLevel.LOOSE.value
         }
 
@@ -67,7 +73,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_invalid_protocol_level(self) -> None:
         """Test lines 839-841: Invalid protocol_level validation."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": FlextConstants.Config.ConfigEnvironment.TEST.value,
             "protocol_level": "invalid_level",
         }
@@ -78,7 +84,7 @@ class TestProtocolsConfig100PercentCoverage:
 
     def test_configure_protocols_system_missing_protocol_level(self) -> None:
         """Test lines 842-845: Missing protocol_level default."""
-        config: dict[str, object] = {
+        config: FlextTypes.Core.Dict = {
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
         }
 
@@ -103,7 +109,7 @@ class TestProtocolsConfig100PercentCoverage:
         ]
 
         for env in environments:
-            config: dict[str, object] = {"environment": env}
+            config: FlextTypes.Core.Dict = {"environment": env}
             result = FlextProtocols.Config.configure_protocols_system(config)
             assert result.success
             validated_config = result.unwrap()
@@ -119,7 +125,7 @@ class TestProtocolsConfig100PercentCoverage:
         ]
 
         for level in levels:
-            config: dict[str, object] = {
+            config: FlextTypes.Core.Dict = {
                 "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
                 "protocol_level": level,
             }
@@ -245,7 +251,7 @@ class TestProtocolsIntegration100PercentCoverage:
     def test_protocol_configuration_edge_cases(self) -> None:
         """Test edge cases in protocol configuration."""
         # Empty config
-        empty_config: dict[str, object] = {}
+        empty_config: FlextTypes.Core.Dict = {}
         result = FlextProtocols.Config.configure_protocols_system(empty_config)
         assert result.success
 
@@ -274,6 +280,8 @@ class TestProtocolsIntegration100PercentCoverage:
         ]
 
         for invalid_config in invalid_configs:
-            result = FlextProtocols.Config.configure_protocols_system(invalid_config)
+            result = FlextProtocols.Config.configure_protocols_system(
+                cast("FlextTypes.Core.Dict", invalid_config)
+            )
             # Should either succeed with defaults or fail gracefully
             assert isinstance(result, FlextResult)

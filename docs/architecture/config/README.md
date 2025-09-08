@@ -278,7 +278,7 @@ class FlextWebConfig(FlextConfig):
     # Security configuration  
     secret_key: str = Field(min_length=32)
     cors_enabled: bool = Field(default=True)
-    cors_origins: list[str] = Field(default_factory=lambda: ["*"])
+    cors_origins: FlextTypes.Core.StringList = Field(default_factory=lambda: ["*"])
     
     # Feature flags
     debug_toolbar: bool = Field(default=False)

@@ -1,13 +1,4 @@
-# ruff: noqa: PLC0415
 """Unified fixtures for flext-core tests using massive pytest ecosystem.
-
-Comprehensive fixture library using:
-- pytest-asyncio for async testing
-- pytest-benchmark for performance testing
-- pytest-mock for advanced mocking
-- pytest-httpx for HTTP testing
-- factory_boy integration
-- pytest-randomly for randomized testing
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +9,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import random
+import socket
 import tempfile
 import uuid
 from collections.abc import AsyncGenerator, Generator
@@ -37,6 +31,7 @@ from flext_core import (
     FlextContainer,
     FlextResult,
 )
+from flext_core.typings import FlextTypes
 
 from .factories import (
     BaseTestEntity,
@@ -65,18 +60,18 @@ class PerformanceDataFactory:
     """Simple performance data factory."""
 
     @staticmethod
-    def create_large_payload(size_mb: int = 1) -> dict[str, object]:
+    def create_large_payload(size_mb: int = 1) -> FlextTypes.Core.Dict:
         """Create large test payload."""
         return {"data": "x" * (size_mb * 1024), "size_mb": size_mb}
 
     @staticmethod
-    def create_nested_structure(depth: int = 10) -> dict[str, object]:
+    def create_nested_structure(depth: int = 10) -> FlextTypes.Core.Dict:
         """Create nested data structure."""
-        result: dict[str, object] = {"value": f"depth_{depth}"}
+        result: FlextTypes.Core.Dict = {"value": f"depth_{depth}"}
         current = result
         for i in range(depth - 1):
             current["nested"] = {"value": f"depth_{depth - i - 1}"}
-            current = cast("dict[str, object]", current["nested"])
+            current = cast("FlextTypes.Core.Dict", current["nested"])
         return result
 
 
@@ -99,9 +94,9 @@ class ErrorSimulationFactory:
         return ValueError("Simulated validation error")
 
     @staticmethod
-    def create_error_scenario(error_type: str) -> dict[str, object]:
+    def create_error_scenario(error_type: str) -> FlextTypes.Core.Dict:
         """Create error scenario dict."""
-        error_map: dict[str, dict[str, object]] = {
+        error_map: dict[str, FlextTypes.Core.Dict] = {
             "ValidationError": {
                 "type": "validation",
                 "message": "Validation failed",
@@ -132,7 +127,7 @@ class SequenceFactory:
         length: int = 10,
         prefix: str = "",
         count: int | None = None,
-    ) -> list[str]:
+    ) -> FlextTypes.Core.StringList:
         """Create sequence with optional prefix."""
         actual_length = count if count is not None else length
         if prefix:
@@ -140,7 +135,7 @@ class SequenceFactory:
         return [str(i) for i in range(actual_length)]
 
     @staticmethod
-    def create_timeline_events(count: int = 10) -> list[dict[str, object]]:
+    def create_timeline_events(count: int = 10) -> list[FlextTypes.Core.Dict]:
         """Create timeline events."""
         return [
             {
@@ -157,7 +152,7 @@ class FactoryRegistry:
     """Simple factory registry."""
 
     def __init__(self) -> None:
-        self.factories: dict[str, object] = {}
+        self.factories: FlextTypes.Core.Dict = {}
 
     def register(self, name: str, factory: object) -> None:
         """Register a factory."""
@@ -193,24 +188,28 @@ class FlextConfigFactory:
 class TestCommand(FlextCommands.Models.Command):
     """Test command for fixtures."""
 
+    command_type: str = Field(default="test", description="Type of command")
     config: object = Field(default_factory=dict)
 
 
 class BatchCommand(FlextCommands.Models.Command):
     """Batch command for fixtures."""
 
+    command_type: str = Field(default="batch", description="Type of command")
     config: object = Field(default_factory=dict)
 
 
 class ValidationCommand(FlextCommands.Models.Command):
     """Validation command for fixtures."""
 
+    command_type: str = Field(default="validation", description="Type of command")
     config: object = Field(default_factory=dict)
 
 
 class ProcessingCommand(FlextCommands.Models.Command):
     """Processing command for fixtures."""
 
+    command_type: str = Field(default="processing", description="Type of command")
     config: object = Field(default_factory=dict)
 
 
@@ -254,19 +253,19 @@ def flext_container() -> FlextContainer:
 @pytest.fixture
 def test_entity() -> BaseTestEntity:
     """Fixture providing test domain entity."""
-    return cast("BaseTestEntity", TestEntityFactory.create())
+    return TestEntityFactory.create()
 
 
 @pytest.fixture
 def test_value_object() -> BaseTestValueObject:
     """Fixture providing test value object."""
-    return cast("BaseTestValueObject", TestValueObjectFactory.create())
+    return TestValueObjectFactory.create()
 
 
 @pytest.fixture
 def test_command() -> TestCommand:
     """Fixture providing test command."""
-    return TestCommand()
+    return TestCommand(config={})
 
 
 # Result fixtures
@@ -334,7 +333,7 @@ def benchmark_config(benchmark: BenchmarkFixture) -> BenchmarkFixture:
 
 
 @pytest.fixture
-def performance_data() -> dict[str, object]:
+def performance_data() -> FlextTypes.Core.Dict:
     """Fixture providing performance test data."""
     return PerformanceDataFactory.create_large_payload(size_mb=1)
 
@@ -342,11 +341,11 @@ def performance_data() -> dict[str, object]:
 @pytest.fixture
 def large_dataset() -> list[BaseTestEntity]:
     """Fixture providing large dataset for performance testing."""
-    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=1000))
+    return TestEntityFactory.create_batch(size=1000)
 
 
 @pytest.fixture
-def nested_data() -> dict[str, object]:
+def nested_data() -> FlextTypes.Core.Dict:
     """Fixture providing deeply nested data structure."""
     return PerformanceDataFactory.create_nested_structure(depth=10)
 
@@ -393,18 +392,18 @@ class AsyncTestService:
     def __init__(self) -> None:
         self._executor = AsyncExecutor()
 
-    async def process(self, data: object) -> dict[str, object]:
+    async def process(self, data: object) -> FlextTypes.Core.Dict:
         """Process data asynchronously."""
         await asyncio.sleep(0.001)  # Simulate async work
         return {"processed": True, "original": data}
 
-    async def validate(self, data: dict[str, object]) -> dict[str, object]:
+    async def validate(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         """Validate data asynchronously."""
         await asyncio.sleep(0.001)  # Simulate async work
         has_required = "required_field" in data
         return {"valid": has_required}
 
-    async def transform(self, data: dict[str, object]) -> dict[str, object]:
+    async def transform(self, data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         """Transform data asynchronously."""
         await asyncio.sleep(0.001)  # Simulate async work
         return {"transformed": True, "output": f"transformed_{data.get('input', '')}"}
@@ -448,7 +447,7 @@ class AsyncExecutor:
         self._tasks.append(task)
         return await task
 
-    async def execute_batch(self, coros: list[object]) -> list[object]:
+    async def execute_batch(self, coros: FlextTypes.Core.List) -> FlextTypes.Core.List:
         """Execute multiple coroutines in batch."""
         if not self._running:
             await self.start()
@@ -472,7 +471,7 @@ class AsyncExecutor:
 
 # Error simulation fixtures
 @pytest.fixture
-def error_scenarios() -> list[dict[str, object]]:
+def error_scenarios() -> list[FlextTypes.Core.Dict]:
     """Fixture providing various error scenarios."""
     return [
         ErrorSimulationFactory.create_error_scenario("ValidationError"),
@@ -490,13 +489,13 @@ def validation_error_result() -> FlextResult[object]:
 
 # Sequence and batch fixtures
 @pytest.fixture
-def item_sequence() -> list[str]:
+def item_sequence() -> FlextTypes.Core.StringList:
     """Fixture providing sequential items."""
     return SequenceFactory.create_sequence(prefix="test_item", count=20)
 
 
 @pytest.fixture
-def timeline_events() -> list[dict[str, object]]:
+def timeline_events() -> list[FlextTypes.Core.Dict]:
     """Fixture providing timeline events."""
     return SequenceFactory.create_timeline_events(count=10)
 
@@ -504,7 +503,7 @@ def timeline_events() -> list[dict[str, object]]:
 @pytest.fixture
 def entity_batch() -> list[BaseTestEntity]:
     """Fixture providing batch of entities."""
-    return cast("list[BaseTestEntity]", TestEntityFactory.create_batch(size=50))
+    return TestEntityFactory.create_batch(size=50)
 
 
 # Factory registry fixture
@@ -560,7 +559,7 @@ def environment(request: pytest.FixtureRequest) -> str:
         {"debug": False, "log_level": "ERROR"},
     ],
 )
-def config_variants(request: pytest.FixtureRequest) -> dict[str, object]:
+def config_variants(request: pytest.FixtureRequest) -> FlextTypes.Core.Dict:
     """Parametrized fixture providing config variants."""
     return dict(request.param)
 
@@ -588,7 +587,7 @@ def module_config() -> FlextConfig:
 
 
 @pytest.fixture(scope="class")
-def class_database() -> dict[str, object]:
+def class_database() -> FlextTypes.Core.Dict:
     """Class-scoped database for class-level tests."""
     return {
         "connection_string": "sqlite:///:memory:",
@@ -601,8 +600,8 @@ class SessionTestService:
     """Test service for session-scoped testing."""
 
     def __init__(self) -> None:
-        self._data: dict[str, object] = {}
-        self._session_data: dict[str, dict[str, object]] = {}
+        self._data: FlextTypes.Core.Dict = {}
+        self._session_data: dict[str, FlextTypes.Core.Dict] = {}
 
     def store(self, key: str, value: object) -> None:
         """Store data in session service."""
@@ -621,11 +620,11 @@ class SessionTestService:
         """Create a new session."""
         self._session_data[session_id] = {"created_at": datetime.now(UTC), "data": {}}
 
-    def get_session(self, session_id: str) -> dict[str, object] | None:
+    def get_session(self, session_id: str) -> FlextTypes.Core.Dict | None:
         """Get session by ID."""
         return self._session_data.get(session_id)
 
-    def update_session(self, session_id: str, data: dict[str, object]) -> None:
+    def update_session(self, session_id: str, data: FlextTypes.Core.Dict) -> None:
         """Update session data."""
         if session_id in self._session_data:
             session_data = self._session_data[session_id]["data"]
@@ -649,7 +648,7 @@ def http_client() -> object:
 
 
 @pytest.fixture
-def mock_http_responses() -> dict[str, object]:
+def mock_http_responses() -> FlextTypes.Core.Dict:
     """Fixture providing mock HTTP responses."""
     return {
         "success": {"status_code": 200, "json": {"result": "success"}},
@@ -669,7 +668,6 @@ def cleanup_environment() -> Generator[None]:
     yield
 
     # Teardown - restore environment
-    import os
 
     for key, value in original_env.items():
         if value is None:
@@ -680,10 +678,8 @@ def cleanup_environment() -> Generator[None]:
 
 # Randomly ordered fixtures for pytest-randomly
 @pytest.fixture
-def random_data() -> dict[str, object]:
+def random_data() -> FlextTypes.Core.Dict:
     """Fixture providing random test data (works with pytest-randomly)."""
-    import random
-
     return {
         "random_int": random.randint(1, 1000),
         "random_float": random.uniform(0.0, 100.0),
@@ -694,13 +690,13 @@ def random_data() -> dict[str, object]:
 
 # Marker-based fixtures
 @pytest.fixture
-def slow_operation_data() -> dict[str, object]:
+def slow_operation_data() -> FlextTypes.Core.Dict:
     """Fixture for data requiring slow operations (use with @pytest.mark.slow)."""
     return PerformanceDataFactory.create_large_payload(size_mb=10)
 
 
 @pytest.fixture
-def integration_services() -> dict[str, object]:
+def integration_services() -> FlextTypes.Core.Dict:
     """Fixture for integration test services (use with @pytest.mark.integration)."""
     return {
         "database": {"url": "postgresql://test:test@localhost/integration_test"},
@@ -713,16 +709,12 @@ def integration_services() -> dict[str, object]:
 @pytest.fixture
 def database_url() -> str:
     """Fixture providing database URL based on environment."""
-    import os
-
     return os.getenv("TEST_DATABASE_URL", "sqlite:///:memory:")
 
 
 @pytest.fixture
 def skip_if_no_network() -> None:
     """Fixture that skips test if no network available."""
-    import socket
-
     try:
         socket.create_connection(("8.8.8.8", 53), timeout=3)
     except OSError:
@@ -742,7 +734,7 @@ def command_pipeline() -> list[FlextCommands.Models.Command]:
 
 
 @pytest.fixture
-def event_sourcing_data() -> list[dict[str, object]]:
+def event_sourcing_data() -> list[FlextTypes.Core.Dict]:
     """Fixture providing event sourcing test data."""
     base_time = datetime.now(UTC)
 
@@ -758,8 +750,224 @@ def event_sourcing_data() -> list[dict[str, object]]:
     ]
 
 
+# Main unified class
+# Repository classes for functional testing
+class InMemoryUserRepository:
+    """In-memory user repository for functional testing."""
+
+    def __init__(self) -> None:
+        self._users: dict[str, FlextTypes.Core.Dict] = {}
+
+    def save(
+        self, user_data: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Save user data."""
+        user_id = user_data.get("id")
+        if not user_id:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                "User ID required", error_code="VALIDATION_ERROR"
+            )
+
+        self._users[str(user_id)] = dict(user_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(self._users[str(user_id)])
+
+    def find_by_id(self, user_id: str) -> FlextResult[FlextTypes.Core.Dict]:
+        """Find user by ID."""
+        user = self._users.get(user_id)
+        if not user:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                f"User not found: {user_id}", error_code="NOT_FOUND"
+            )
+        return FlextResult[FlextTypes.Core.Dict].ok(user)
+
+    def find_by_username(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
+        """Find user by username (or name field)."""
+        for user in self._users.values():
+            # Check both username and name fields for compatibility
+            if user.get("username") == username or user.get("name") == username:
+                return FlextResult[FlextTypes.Core.Dict].ok(user)
+        return FlextResult[FlextTypes.Core.Dict].fail(
+            f"User not found: {username}", error_code="NOT_FOUND"
+        )
+
+    def find_all(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        """Find all users."""
+        return FlextResult[list[FlextTypes.Core.Dict]].ok(list(self._users.values()))
+
+    def delete(self, user_id: str) -> FlextResult[None]:
+        """Delete user by ID."""
+        if user_id not in self._users:
+            return FlextResult[None].fail(
+                f"User not found: {user_id}", error_code="NOT_FOUND"
+            )
+        del self._users[user_id]
+        return FlextResult[None].ok(None)
+
+    def clear(self) -> None:
+        """Clear all users."""
+        self._users.clear()
+
+
+class FailingUserRepository:
+    """Repository that always fails for error scenario testing."""
+
+    def save(
+        self, user_data: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Always fail save operation."""
+        return FlextResult[FlextTypes.Core.Dict].fail(
+            "Repository operation failed", error_code="REPOSITORY_ERROR"
+        )
+
+    def find_by_id(self, user_id: str) -> FlextResult[FlextTypes.Core.Dict]:
+        """Always fail find operation."""
+        return FlextResult[FlextTypes.Core.Dict].fail(
+            "Repository operation failed", error_code="REPOSITORY_ERROR"
+        )
+
+    def find_by_username(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
+        """Always fail find by username operation."""
+        return FlextResult[FlextTypes.Core.Dict].fail(
+            "Repository operation failed", error_code="REPOSITORY_ERROR"
+        )
+
+    def find_all(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
+        """Always fail find all operation."""
+        return FlextResult[list[FlextTypes.Core.Dict]].fail(
+            "Repository operation failed", error_code="REPOSITORY_ERROR"
+        )
+
+    def delete(self, user_id: str) -> FlextResult[None]:
+        """Always fail delete operation."""
+        return FlextResult[None].fail(
+            "Repository operation failed", error_code="REPOSITORY_ERROR"
+        )
+
+
+# Service classes for functional testing
+class RealEmailService:
+    """Real email service for functional testing."""
+
+    def __init__(self) -> None:
+        self._sent_emails: list[FlextTypes.Core.Dict] = []
+
+    def send_email(
+        self,
+        to: str,
+        subject: str,
+        body: str,
+        from_email: str | None = None,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Send email (mock implementation for testing)."""
+        if not to or not subject:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                "Email recipient and subject required", error_code="VALIDATION_ERROR"
+            )
+
+        email_data: FlextTypes.Core.Dict = {
+            "id": str(uuid.uuid4()),
+            "to": to,
+            "subject": subject,
+            "body": body,
+            "from_email": from_email or "test@example.com",
+            "sent_at": datetime.now(UTC).isoformat(),
+        }
+
+        self._sent_emails.append(email_data)
+        return FlextResult[FlextTypes.Core.Dict].ok(email_data)
+
+    def get_sent_emails(self) -> list[FlextTypes.Core.Dict]:
+        """Get all sent emails for testing verification."""
+        return list(self._sent_emails)
+
+    def clear_sent_emails(self) -> None:
+        """Clear sent emails for test isolation."""
+        self._sent_emails.clear()
+
+
+class RealAuditService:
+    """Real audit service for functional testing."""
+
+    def __init__(self) -> None:
+        self._audit_logs: list[FlextTypes.Core.Dict] = []
+
+    def log_event(
+        self,
+        event_type: str,
+        entity_id: str,
+        details: FlextTypes.Core.Dict | None = None,
+        user_id: str | None = None,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Log audit event."""
+        if not event_type or not entity_id:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                "Event type and entity ID required", error_code="VALIDATION_ERROR"
+            )
+
+        audit_entry: FlextTypes.Core.Dict = {
+            "id": str(uuid.uuid4()),
+            "event_type": event_type,
+            "entity_id": entity_id,
+            "details": details or {},
+            "user_id": user_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+        self._audit_logs.append(audit_entry)
+        return FlextResult[FlextTypes.Core.Dict].ok(audit_entry)
+
+    def get_audit_logs(self) -> list[FlextTypes.Core.Dict]:
+        """Get all audit logs for testing verification."""
+        return list(self._audit_logs)
+
+    def get_audit_logs_for_entity(self, entity_id: str) -> list[FlextTypes.Core.Dict]:
+        """Get audit logs for specific entity."""
+        return [log for log in self._audit_logs if log["entity_id"] == entity_id]
+
+    def clear_audit_logs(self) -> None:
+        """Clear audit logs for test isolation."""
+        self._audit_logs.clear()
+
+
+class FlextTestsFixtures:
+    """Unified test fixtures for FLEXT ecosystem.
+
+    Consolidates all fixture patterns into a single class interface.
+    """
+
+    # Note: Fixtures are functions decorated with @pytest.fixture,
+    # so we can't directly assign them as class attributes.
+    # Instead, we provide factory methods that return the fixture functions.
+
+    @staticmethod
+    def get_all_fixtures() -> FlextTypes.Core.Dict:
+        """Get all available fixtures."""
+        return {
+            "benchmark_config": benchmark_config,
+            "config_builder": config_builder,
+            "failure_result": failure_result,
+            "flext_config": flext_config,
+            "flext_container": flext_container,
+            "large_dataset": large_dataset,
+            "nested_data": nested_data,
+            "performance_data": performance_data,
+            "result_chain": result_chain,
+            "success_result": success_result,
+            "temp_config_file": temp_config_file,
+            "temp_directory": temp_directory,
+            "test_command": test_command,
+            "test_entity": test_entity,
+            "test_value_object": test_value_object,
+        }
+
+
 __all__ = [
     "BenchmarkFixture",
+    "FailingUserRepository",
+    "FlextTestsFixtures",
+    "InMemoryUserRepository",
+    "RealAuditService",
+    "RealEmailService",
     "benchmark_config",
     "config_builder",
     "failure_result",

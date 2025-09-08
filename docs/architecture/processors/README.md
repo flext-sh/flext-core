@@ -189,14 +189,14 @@ class FlextMeltanoDataProcessor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.singer_schema = singer_schema
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record through Meltano pipeline."""
         try:
             # Validate against Singer schema
             if self.singer_schema:
                 schema_validation = self._validate_singer_schema(entry, self.singer_schema)
                 if schema_validation.is_failure:
-                    return FlextResult[dict[str, object]].fail(schema_validation.error)
+                    return FlextResult[FlextTypes.Core.Dict].fail(schema_validation.error)
 
             # Transform data for Meltano
             processed_data = {
@@ -206,10 +206,10 @@ class FlextMeltanoDataProcessor(FlextProcessors.BaseProcessor):
                 "metadata": entry.metadata
             }
 
-            return FlextResult[dict[str, object]].ok(processed_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(processed_data)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Meltano processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Meltano processing failed: {e}")
 
     def _validate_singer_schema(self, entry, schema):
         # Singer schema validation logic
@@ -309,7 +309,7 @@ class FlextLDIFProcessor(FlextProcessors.BaseProcessor):
         validator = FlextProcessors.EntryValidator()
         super().__init__(validator)
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         # Standardized LDIF processing using FlextProcessors
         try:
             ldif_data = {
@@ -319,9 +319,9 @@ class FlextLDIFProcessor(FlextProcessors.BaseProcessor):
                 "metadata": entry.metadata
             }
 
-            return FlextResult[dict[str, object]].ok(ldif_data)
+            return FlextResult[FlextTypes.Core.Dict].ok(ldif_data)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"LDIF processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"LDIF processing failed: {e}")
 ```
 
 ## 🔧 Implementation Recommendations by Library
@@ -387,7 +387,7 @@ class FlextLDIFDataProcessor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.ldif_config = ldif_config or {}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry data."""
         try:
             # Parse LDIF content
@@ -396,7 +396,7 @@ class FlextLDIFDataProcessor(FlextProcessors.BaseProcessor):
             # Validate LDIF structure
             validation_result = self._validate_ldif_entry(ldif_entry)
             if validation_result.is_failure:
-                return FlextResult[dict[str, object]].fail(validation_result.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(validation_result.error)
 
             # Transform LDIF data
             processed_ldif = {
@@ -410,12 +410,12 @@ class FlextLDIFDataProcessor(FlextProcessors.BaseProcessor):
                 }
             }
 
-            return FlextResult[dict[str, object]].ok(processed_ldif)
+            return FlextResult[FlextTypes.Core.Dict].ok(processed_ldif)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"LDIF processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"LDIF processing failed: {e}")
 
-    def _parse_ldif_entry(self, content: str) -> dict[str, object]:
+    def _parse_ldif_entry(self, content: str) -> FlextTypes.Core.Dict:
         # LDIF parsing logic
         return {"dn": "example", "attributes": {}}
 
@@ -440,13 +440,13 @@ class client-aOUDMigrationProcessor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.migration_config = migration_config
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[dict[str, object]]:
+    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process OUD migration entry."""
         try:
             # Validate migration entry
             validation_result = self._validate_migration_entry(entry)
             if validation_result.is_failure:
-                return FlextResult[dict[str, object]].fail(validation_result.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(validation_result.error)
 
             # Transform for OUD
             migration_entry = {
@@ -458,10 +458,10 @@ class client-aOUDMigrationProcessor(FlextProcessors.BaseProcessor):
                 "migration_phase": entry.metadata.get("phase", "00")
             }
 
-            return FlextResult[dict[str, object]].ok(migration_entry)
+            return FlextResult[FlextTypes.Core.Dict].ok(migration_entry)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Migration processing failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Migration processing failed: {e}")
 ```
 
 ## 🧪 Testing and Validation Strategy

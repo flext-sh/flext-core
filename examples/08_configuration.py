@@ -13,17 +13,15 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
+from flext_core import FlextTypes
 import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 from typing import cast
-
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 from flext_core import FlextConfig, FlextResult
 
 # =============================================================================
@@ -159,7 +157,9 @@ class SecurityConfig(FlextConfig):
         default=False,
         description="Enable two-factor authentication",
     )
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    cors_origins: FlextTypes.Core.StringList = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
 
     @field_validator("secret_key")
     @classmethod
@@ -265,7 +265,7 @@ class EnterpriseConfig(BaseSettings):
 
         return FlextResult[None].ok(None)
 
-    def get_summary(self) -> dict[str, object]:
+    def get_summary(self) -> FlextTypes.Core.Dict:
         """Get configuration summary safe for logging."""
         return {
             "app_name": self.app_name,
@@ -285,7 +285,7 @@ class EnterpriseConfig(BaseSettings):
 # =============================================================================
 
 
-def create_enterprise_config(config_data: dict[str, object]) -> EnterpriseConfig:
+def create_enterprise_config(config_data: FlextTypes.Core.Dict) -> EnterpriseConfig:
     """Create EnterpriseConfig instance from dictionary data.
 
     Helper function to properly handle model validation with type safety.
@@ -295,12 +295,12 @@ def create_enterprise_config(config_data: dict[str, object]) -> EnterpriseConfig
     return EnterpriseConfig.model_validate(config_data)
 
 
-def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object]]:
+def load_config_from_file(file_path: str | Path) -> FlextResult[FlextTypes.Core.Dict]:
     """Load configuration from JSON file."""
     try:
         path = Path(file_path)
         if not path.exists():
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Configuration file not found: {path}",
             )
 
@@ -308,20 +308,20 @@ def load_config_from_file(file_path: str | Path) -> FlextResult[dict[str, object
             data = json.load(f)
 
         if not isinstance(data, dict):
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 "Configuration must be a JSON object",
             )
 
-        return FlextResult[dict[str, object]].ok(dict(data))
+        return FlextResult[FlextTypes.Core.Dict].ok(dict(data))
 
     except json.JSONDecodeError as e:
-        return FlextResult[dict[str, object]].fail(f"Invalid JSON: {e}")
+        return FlextResult[FlextTypes.Core.Dict].fail(f"Invalid JSON: {e}")
     except Exception as e:
-        return FlextResult[dict[str, object]].fail(f"Error loading file: {e}")
+        return FlextResult[FlextTypes.Core.Dict].fail(f"Error loading file: {e}")
 
 
 def save_config_to_file(
-    config_data: dict[str, object],
+    config_data: FlextTypes.Core.Dict,
     file_path: str | Path,
 ) -> FlextResult[None]:
     """Save configuration to JSON file."""
@@ -339,17 +339,17 @@ def save_config_to_file(
 
 
 def merge_configurations(
-    base: dict[str, object],
-    override: dict[str, object],
-) -> dict[str, object]:
+    base: FlextTypes.Core.Dict,
+    override: FlextTypes.Core.Dict,
+) -> FlextTypes.Core.Dict:
     """Deep merge two configuration dictionaries."""
     result = base.copy()
 
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             # Cast to dict for type safety
-            result_dict = cast("dict[str, object]", result[key])
-            value_dict = cast("dict[str, object]", value)
+            result_dict = cast("FlextTypes.Core.Dict", result[key])
+            value_dict = cast("FlextTypes.Core.Dict", value)
             result[key] = merge_configurations(
                 result_dict,
                 value_dict,
@@ -360,13 +360,13 @@ def merge_configurations(
     return result
 
 
-def mask_sensitive_data(config_data: dict[str, object]) -> dict[str, object]:
+def mask_sensitive_data(config_data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
     """Mask sensitive values for safe logging."""
     sensitive_keys = {"password", "secret", "key", "token", "auth"}
 
     def mask_recursive(obj: object) -> object:
         if isinstance(obj, dict):
-            result: dict[str, object] = {}
+            result: FlextTypes.Core.Dict = {}
             for key, value in obj.items():
                 key_str = str(key)
                 if any(sensitive in key_str.lower() for sensitive in sensitive_keys):
@@ -380,7 +380,7 @@ def mask_sensitive_data(config_data: dict[str, object]) -> dict[str, object]:
 
     # Cast result to expected return type
     masked_result = mask_recursive(config_data)
-    return cast("dict[str, object]", masked_result)
+    return cast("FlextTypes.Core.Dict", masked_result)
 
 
 # =============================================================================
@@ -494,7 +494,7 @@ def demonstrate_file_configuration() -> FlextResult[None]:
 
     try:
         # Create test configuration data
-        config_data: dict[str, object] = {
+        config_data: FlextTypes.Core.Dict = {
             "app_name": "File-Based Enterprise App",
             "environment": "staging",
             "debug": True,
@@ -575,7 +575,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
 
     try:
         # Base configuration (defaults)
-        base_config: dict[str, object] = {
+        base_config: FlextTypes.Core.Dict = {
             "app_name": "Base Enterprise App",
             "debug": True,
             "workers": 2,
@@ -594,7 +594,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         }
 
         # Environment-specific overrides
-        env_overrides: dict[str, object] = {
+        env_overrides: FlextTypes.Core.Dict = {
             "environment": "production",
             "debug": False,
             "workers": 8,
@@ -610,7 +610,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         }
 
         # Local/deployment specific overrides
-        local_overrides: dict[str, object] = {
+        local_overrides: FlextTypes.Core.Dict = {
             "app_name": "Customized Production App",
             "port": 9000,
             "security": {
@@ -662,7 +662,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     print("🔍 Configuration Validation Scenarios")
     print("=" * 60)
 
-    scenarios: list[tuple[str, dict[str, object]]] = [
+    scenarios: list[tuple[str, FlextTypes.Core.Dict]] = [
         (
             "Invalid database port",
             {
@@ -701,7 +701,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     # Test valid configuration
     print("\nTesting: Valid configuration")
     try:
-        valid_config_data: dict[str, object] = {
+        valid_config_data: FlextTypes.Core.Dict = {
             "app_name": "Valid Test App",
             "environment": "development",
             "security": SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),

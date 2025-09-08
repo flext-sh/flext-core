@@ -1,16 +1,22 @@
-"""Constants and enumerations for the FLEXT ecosystem."""
+"""Constants and enumerations for the FLEXT ecosystem.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from enum import StrEnum
 from typing import ClassVar, Final, override
 
+from flext_core.typings import FlextTypes
+
 
 class FlextConstants:
     """Hierarchical constants system for the FLEXT ecosystem."""
 
     # Class-level metadata for ecosystem compatibility
-    ERROR_CODES: ClassVar[dict[str, str]] = {}  # Built at module level
+    ERROR_CODES: ClassVar[FlextTypes.Core.Headers] = {}  # Built at module level
     VERSION: Final[str] = "0.9.0"  # Legacy compatibility
 
     # =========================================================================
@@ -219,7 +225,7 @@ class FlextConstants:
         UNKNOWN_ERROR: Final[str] = "UNKNOWN_ERROR"
 
         # Error message mappings for structured error codes
-        MESSAGES: Final[dict[str, str]] = {
+        MESSAGES: Final[FlextTypes.Core.Headers] = {
             GENERIC_ERROR: "An error occurred",
             VALIDATION_ERROR: "Validation failed",
             BUSINESS_RULE_VIOLATION: "Business rule violation",
@@ -507,25 +513,30 @@ class FlextConstants:
         CONSTANTS_PRIORITY: Final[int] = 5
 
         # Configuration file patterns and locations
-        DOTENV_FILES: Final[list[str]] = [".env", ".internal.invalid", ".env.production"]
-        CONFIG_FILES: Final[list[str]] = [
+        DOTENV_FILES: Final[FlextTypes.Core.StringList] = [
+            ".env",
+            ".internal.invalid",
+            ".env.production",
+        ]
+        CONFIG_FILES: Final[FlextTypes.Core.StringList] = [
             "config.json",
             "config.yaml",
             "flext.config.json",
         ]
 
         # Environment type definitions
-        ENVIRONMENTS: Final[list[str]] = [
+        ENVIRONMENTS: Final[FlextTypes.Core.StringList] = [
             "development",
             "staging",
             "production",
             "test",
+            "local",
         ]
         DEFAULT_ENVIRONMENT: Final[str] = "development"
 
         # Configuration validation categories
-        REQUIRED_FIELDS: Final[list[str]] = ["REQUIRED"]
-        OPTIONAL_FIELDS: Final[list[str]] = ["OPTIONAL"]
+        REQUIRED_FIELDS: Final[FlextTypes.Core.StringList] = ["REQUIRED"]
+        OPTIONAL_FIELDS: Final[FlextTypes.Core.StringList] = ["OPTIONAL"]
 
         class ConfigSource(StrEnum):
             """Configuration source enumeration."""
@@ -627,25 +638,25 @@ class FlextConstants:
     # =========================================================================
 
     class Cli:
-        """Command-line interface constants for the FLEXT ecosystem.
-
-        This class contains CLI-related constants including argument patterns,
-        output formats, exit codes, and interface standards consolidated from
-        various CLI patterns throughout the system.
-        """
+        """Command-line interface constants for the FLEXT ecosystem."""
 
         # Standard CLI argument patterns
-        HELP_ARGS: Final[list[str]] = ["--help", "-h"]
-        VERSION_ARGS: Final[list[str]] = ["--version", "-v"]
-        CONFIG_ARGS: Final[list[str]] = ["--config", "-c"]
-        VERBOSE_ARGS: Final[list[str]] = ["--verbose", "-vv"]
+        HELP_ARGS: Final[FlextTypes.Core.StringList] = ["--help", "-h"]
+        VERSION_ARGS: Final[FlextTypes.Core.StringList] = ["--version", "-v"]
+        CONFIG_ARGS: Final[FlextTypes.Core.StringList] = ["--config", "-c"]
+        VERBOSE_ARGS: Final[FlextTypes.Core.StringList] = ["--verbose", "-vv"]
 
         # CLI syntax prefixes
         LONG_PREFIX: Final[str] = "--"
         SHORT_PREFIX: Final[str] = "-"
 
         # Output format options
-        OUTPUT_FORMATS: Final[list[str]] = ["json", "yaml", "table", "csv"]
+        OUTPUT_FORMATS: Final[FlextTypes.Core.StringList] = [
+            "json",
+            "yaml",
+            "table",
+            "csv",
+        ]
         DEFAULT_OUTPUT_FORMAT: Final[str] = "table"
 
         # Standard exit codes following POSIX conventions
@@ -658,12 +669,7 @@ class FlextConstants:
     # =========================================================================
 
     class Infrastructure:
-        """Infrastructure constants for the FLEXT ecosystem.
-
-        This class contains infrastructure-related constants including database
-        ports, connection pools, network settings, and service configuration
-        following infrastructure best practices.
-        """
+        """Infrastructure constants for the FLEXT ecosystem."""
 
         # Standard database service ports
         DEFAULT_DB_PORT: Final[int] = 5432
@@ -682,9 +688,13 @@ class FlextConstants:
 
         # Network and host configuration
         DEFAULT_HOST: Final[str] = "localhost"
-        LOCALHOST_ALIASES: Final[list[str]] = ["localhost", "127.0.0.1", "::1"]
+        LOCALHOST_ALIASES: Final[FlextTypes.Core.StringList] = [
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        ]
         DEFAULT_PROTOCOL: Final[str] = "http"
-        SECURE_PROTOCOLS: Final[list[str]] = ["https", "wss", "ssl"]
+        SECURE_PROTOCOLS: Final[FlextTypes.Core.StringList] = ["https", "wss", "ssl"]
 
     # =========================================================================
     # URLS AND ENDPOINTS - Centralized URL and API endpoint constants
@@ -842,14 +852,7 @@ class FlextConstants:
         HTML_MIME: Final[str] = "text/html"
 
     class CLI:
-        """Command-line interface constants for the FLEXT CLI ecosystem.
-
-        This class provides efficient CLI-related constants used by the flext-cli
-        module and other command-line tools. Includes terminal display settings,
-        table formatting, command-line operations, and user interaction defaults
-        for consistent CLI behavior across the FLEXT platform.
-
-        """
+        """Command-line interface constants for the FLEXT CLI ecosystem."""
 
         # Terminal dimensions
         DEFAULT_TERMINAL_WIDTH: Final[int] = 80
@@ -872,14 +875,7 @@ class FlextConstants:
         MAX_OUTPUT_WIDTH: Final[int] = 120
 
     class Observability:
-        """Observability and monitoring constants for the FLEXT ecosystem.
-
-        This class provides efficient observability constants including logging
-        configuration, distributed tracing, metrics collection, alerting thresholds,
-        and monitoring infrastructure for complete system visibility and performance
-        tracking across the entire FLEXT ecosystem.
-
-        """
+        """Observability and monitoring constants for the FLEXT ecosystem."""
 
         # Tracing configuration
         DEFAULT_TRACE_TIMEOUT: Final[float] = 30.0
@@ -897,7 +893,7 @@ class FlextConstants:
         MAX_ALERT_HISTORY: Final[int] = 1000
 
         # Logging level hierarchy
-        LOG_LEVELS: Final[list[str]] = [
+        LOG_LEVELS: Final[FlextTypes.Core.StringList] = [
             "TRACE",
             "DEBUG",
             "INFO",
@@ -911,9 +907,22 @@ class FlextConstants:
         TRACE_LEVEL: Final[int] = 5
 
         # Observability type classifications
-        SPAN_TYPES: Final[list[str]] = ["business", "technical", "error"]
-        METRIC_TYPES: Final[list[str]] = ["counter", "histogram", "gauge"]
-        ALERT_LEVELS: Final[list[str]] = ["info", "warning", "error", "critical"]
+        SPAN_TYPES: Final[FlextTypes.Core.StringList] = [
+            "business",
+            "technical",
+            "error",
+        ]
+        METRIC_TYPES: Final[FlextTypes.Core.StringList] = [
+            "counter",
+            "histogram",
+            "gauge",
+        ]
+        ALERT_LEVELS: Final[FlextTypes.Core.StringList] = [
+            "info",
+            "warning",
+            "error",
+            "critical",
+        ]
 
         # Distributed tracing headers (following OpenTelemetry standards)
         CORRELATION_ID_HEADER: Final[str] = "X-Correlation-ID"
@@ -973,11 +982,7 @@ class FlextConstants:
         SERVICE_NAME_PATTERN: Final[str] = r"^[A-Za-z][A-Za-z0-9_.]*$"
 
     class LDAP:
-        """LDAP specific constants.
-
-        These constants are used by flext-ldap module and provide defaults
-        for LDAP connections, searches, and directory operations.
-        """
+        """LDAP specific constants."""
 
         # Standard LDAP ports
         DEFAULT_LDAP_PORT: Final[int] = 389
@@ -1075,14 +1080,7 @@ class FlextConstants:
     # =========================================================================
 
     class DBT:
-        """DBT (Data Build Tool) constants for data transformation in the FLEXT ecosystem.
-
-        This class provides efficient constants for DBT-based data transformation
-        operations within the FLEXT ecosystem. Includes model configuration,
-        materialization strategies, testing frameworks, freshness monitoring,
-        and performance optimization for scalable data transformation pipelines.
-
-        """
+        """DBT (Data Build Tool) constants for data transformation in the FLEXT ecosystem."""
 
         # Model types
         MODEL_TYPE_TABLE: Final[str] = "table"
@@ -1115,11 +1113,7 @@ class FlextConstants:
         VERY_LARGE_OBJECT_COUNT_THRESHOLD: Final[int] = 1000
 
     class WebExtended:
-        """Extended web constants for efficient web operations.
-
-        Additional web constants beyond the basic Web class for advanced
-        web application features and validations.
-        """
+        """Extended web constants for efficient web operations."""
 
         # Session and security
         SESSION_TIMEOUT: Final[int] = 3600  # 1 hour
@@ -1140,11 +1134,7 @@ class FlextConstants:
         MAX_HTTP_STATUS_CODE: Final[int] = 599
 
     class QualityExtended:
-        """Extended quality constants for efficient quality assessment.
-
-        Quality thresholds and assessment levels used by flext-quality
-        for efficient code quality evaluation.
-        """
+        """Extended quality constants for efficient quality assessment."""
 
         # Quality score thresholds
         OUTSTANDING_THRESHOLD: Final[float] = 95.0
@@ -1168,11 +1158,7 @@ class FlextConstants:
         TARGET_MAINTAINABILITY: Final[float] = 90.0
 
     class Metrics:
-        """Metrics and observability constants for efficient monitoring.
-
-        Metric types, alert levels, trace statuses, and health check
-        configurations used across the observability ecosystem.
-        """
+        """Metrics and observability constants for efficient monitoring."""
 
         # Metric types
         METRIC_TYPE_COUNTER: Final[str] = "counter"
@@ -1205,11 +1191,7 @@ class FlextConstants:
         SERVICE_LOGGING: Final[str] = "logging"
 
     class Cache:
-        """Cache configuration constants across the ecosystem.
-
-        TTL values, cache sizes, and cleanup intervals used by various
-        caching systems throughout the FLEXT platform.
-        """
+        """Cache configuration constants across the ecosystem."""
 
         # TTL values in seconds
         METADATA_CACHE_TTL: Final[int] = 3600  # 1 hour
@@ -1231,11 +1213,7 @@ class FlextConstants:
     # =========================================================================
 
     class Singer:
-        """Singer ecosystem constants for taps and targets.
-
-        Common constants used across Singer taps, targets, and transformations
-        in the FLEXT Singer ecosystem.
-        """
+        """Singer ecosystem constants for taps and targets."""
 
         # Stream processing
         DEFAULT_BATCH_SIZE: Final[int] = 1000
@@ -1252,11 +1230,7 @@ class FlextConstants:
         DEFAULT_REQUEST_TIMEOUT: Final[int] = 300  # 5 minutes
 
     class OracleOIC:
-        """Oracle OIC (Oracle Integration Cloud) constants.
-
-        API paths, endpoints, and configurations for Oracle Integration Cloud
-        integrations used by flext-tap-oracle-oic.
-        """
+        """Oracle OIC (Oracle Integration Cloud) constants."""
 
         # Oracle OIC API base paths
         OIC_API_BASE_PATH: Final[str] = "/ic/api/integration/v1"
@@ -1279,14 +1253,7 @@ class FlextConstants:
         METADATA_ENDPOINT: Final[str] = "/metadata"
 
     class Targets:
-        """Singer target constants for data loading and processing.
-
-        This class provides efficient constants for Singer targets within
-        the FLEXT ecosystem, supporting data loading operations, stream processing,
-        batch management, error handling, and data validation for consistent
-        target implementation across all data destination systems.
-
-        """
+        """Singer target constants for data loading and processing."""
 
         # Default processing settings
         DEFAULT_BATCH_SIZE: Final[int] = 1000
@@ -1306,14 +1273,7 @@ class FlextConstants:
         MAX_TABLE_NAME_LENGTH: Final[int] = 64
 
     class Taps:
-        """Singer tap constants for data extraction and discovery.
-
-        This class provides efficient constants for Singer taps within
-        the FLEXT ecosystem, supporting data extraction operations, schema
-        discovery, stream management, replication strategies, and state
-        management for consistent tap implementation across all data sources.
-
-        """
+        """Singer tap constants for data extraction and discovery."""
 
         # Discovery settings
         DEFAULT_DISCOVERY_TIMEOUT: Final[int] = 60
@@ -1329,21 +1289,14 @@ class FlextConstants:
         LOG_BASED_REPLICATION: Final[str] = "LOG_BASED"
 
         # State management
-        STATE_BOOKMARK_PROPERTIES: Final[list[str]] = [
+        STATE_BOOKMARK_PROPERTIES: Final[FlextTypes.Core.StringList] = [
             "modified_at",
             "updated_at",
             "created_at",
         ]
 
     class Meltano:
-        """Meltano pipeline orchestration constants for the FLEXT ecosystem.
-
-        This class provides efficient constants for Meltano-based data pipeline
-        orchestration within the FLEXT ecosystem. Includes database connections,
-        pipeline timeouts, environment configurations, and operational settings
-        for consistent Meltano deployment and management.
-
-        """
+        """Meltano pipeline orchestration constants for the FLEXT ecosystem."""
 
         # Default database ports
         DEFAULT_POSTGRES_PORT: Final[int] = 5432
@@ -1362,11 +1315,7 @@ class FlextConstants:
         ENVIRONMENT_PROD: Final[str] = "prod"
 
     class LDIF:
-        """LDIF processing constants for RFC 2849 compliance.
-
-        Comprehensive constants for LDIF (LDAP Data Interchange Format) processing,
-        validation, and analytics following RFC 2849 specifications.
-        """
+        """LDIF processing constants for RFC 2849 compliance."""
 
         # RFC 2849 Line Processing Constants
         DEFAULT_LINE_WRAP_LENGTH: Final[int] = 76
@@ -1446,7 +1395,7 @@ class FlextConstants:
         DEFAULT_ENCODING: Final[str] = UTF8_ENCODING
 
         # Validation Messages
-        VALIDATION_MESSAGES: Final[dict[str, str]] = {
+        VALIDATION_MESSAGES: Final[FlextTypes.Core.Headers] = {
             "INVALID_DN": "Invalid Distinguished Name format",
             "MISSING_DN": "Entry missing required DN attribute",
             "INVALID_CHANGETYPE": "Invalid changetype value",
@@ -1531,11 +1480,7 @@ class FlextConstants:
         REFERENCE_VALIDATION_ENABLED: Final[bool] = False
 
     class OracleWMS:
-        """Oracle WMS (Warehouse Management System) constants.
-
-        Comprehensive constants for Oracle WMS API integration, entity management,
-        data processing, and system operations.
-        """
+        """Oracle WMS (Warehouse Management System) constants."""
 
         # Core system constants
         NAME: Final[str] = "flext-oracle-wms"
@@ -1543,7 +1488,7 @@ class FlextConstants:
         DEFAULT_ENVIRONMENT: Final[str] = "default"
 
         # API configuration constants
-        API_VERSIONS: Final[list[str]] = ["v10", "v9", "v8"]
+        API_VERSIONS: Final[FlextTypes.Core.StringList] = ["v10", "v9", "v8"]
         DEFAULT_API_VERSION: Final[str] = "v10"
         LGF_API_BASE: Final[str] = "/wms/lgfapi"
 
@@ -1562,23 +1507,31 @@ class FlextConstants:
         AUTH_ERROR_CODES: Final[tuple[int, ...]] = (401, 403)
 
         # Authentication configuration
-        AUTH_METHODS: Final[list[str]] = ["basic", "bearer", "api_key"]
+        AUTH_METHODS: Final[FlextTypes.Core.StringList] = ["basic", "bearer", "api_key"]
         MIN_TOKEN_LENGTH: Final[int] = 10
         MIN_API_KEY_LENGTH: Final[int] = 10
 
         # Entity types - Core entities
-        CORE_ENTITIES: Final[list[str]] = ["company", "facility", "location", "item"]
-        ORDER_ENTITIES: Final[list[str]] = ["order_hdr", "order_dtl"]
-        INVENTORY_ENTITIES: Final[list[str]] = ["inventory", "allocation"]
-        MOVEMENT_ENTITIES: Final[list[str]] = ["pick_hdr", "pick_dtl"]
-        SHIPMENT_ENTITIES: Final[list[str]] = ["shipment", "oblpn"]
+        CORE_ENTITIES: Final[FlextTypes.Core.StringList] = [
+            "company",
+            "facility",
+            "location",
+            "item",
+        ]
+        ORDER_ENTITIES: Final[FlextTypes.Core.StringList] = ["order_hdr", "order_dtl"]
+        INVENTORY_ENTITIES: Final[FlextTypes.Core.StringList] = [
+            "inventory",
+            "allocation",
+        ]
+        MOVEMENT_ENTITIES: Final[FlextTypes.Core.StringList] = ["pick_hdr", "pick_dtl"]
+        SHIPMENT_ENTITIES: Final[FlextTypes.Core.StringList] = ["shipment", "oblpn"]
 
         # Entity validation
         MAX_ENTITY_NAME_LENGTH: Final[int] = 100
         ENTITY_NAME_PATTERN: Final[str] = r"^[a-z0-9_]+$"
 
         # Filtering constants
-        FILTER_OPERATORS: Final[list[str]] = [
+        FILTER_OPERATORS: Final[FlextTypes.Core.StringList] = [
             "eq",
             "ne",
             "gt",
@@ -1593,13 +1546,22 @@ class FlextConstants:
         MAX_FILTER_CONDITIONS: Final[int] = 50
 
         # Pagination configuration
-        PAGINATION_MODES: Final[list[str]] = ["offset", "cursor", "token"]
+        PAGINATION_MODES: Final[FlextTypes.Core.StringList] = [
+            "offset",
+            "cursor",
+            "token",
+        ]
         DEFAULT_PAGE_SIZE: Final[int] = 100
         MAX_PAGE_SIZE: Final[int] = 1000
         MIN_PAGE_SIZE: Final[int] = 1
 
         # Processing configuration
-        WRITE_MODES: Final[list[str]] = ["insert", "update", "upsert", "delete"]
+        WRITE_MODES: Final[FlextTypes.Core.StringList] = [
+            "insert",
+            "update",
+            "upsert",
+            "delete",
+        ]
         DEFAULT_BATCH_SIZE: Final[int] = 50
         MAX_BATCH_SIZE: Final[int] = 500
 
@@ -1669,11 +1631,7 @@ class FlextConstants:
         PROCESSING_FAILED_MSG: Final[str] = "Data processing failed"
 
     class client-aMigration:
-        """client-a Oracle to OUD migration constants.
-
-        Comprehensive constants for client-a Telecom Oracle Unified Directory
-        migration system including phases, processing limits, and configurations.
-        """
+        """client-a Oracle to OUD migration constants."""
 
         # Core project constants
         PROJECT_NAME: Final[str] = "client-a-oud-mig"
@@ -1686,7 +1644,7 @@ class FlextConstants:
         SUPPORTED_OUTPUT_FORMATS: Final[tuple[str, ...]] = ("ldif",)
 
         # Migration phases
-        MIGRATION_PHASES: Final[list[str]] = [
+        MIGRATION_PHASES: Final[FlextTypes.Core.StringList] = [
             "validation",
             "parsing",
             "schema",
@@ -1703,7 +1661,7 @@ class FlextConstants:
         ]
 
         # Migration statuses
-        MIGRATION_STATUSES: Final[list[str]] = [
+        MIGRATION_STATUSES: Final[FlextTypes.Core.StringList] = [
             "pending",
             "running",
             "completed",
@@ -1791,12 +1749,7 @@ class FlextConstants:
     # =========================================================================
 
     class Models:
-        """Model system constants for the FLEXT ecosystem.
-
-        This class contains Pydantic model configuration constants consolidated
-        from various model patterns throughout the system for consistent
-        model behavior and validation.
-        """
+        """Model system constants for the FLEXT ecosystem."""
 
         # Validation behavior settings (consolidated from Pydantic patterns)
         VALIDATE_ASSIGNMENT: Final[bool] = True
@@ -1813,7 +1766,7 @@ class FlextConstants:
         EXTRA_IGNORE: Final[str] = "ignore"
 
         # Supported field type definitions
-        FIELD_TYPES: Final[list[str]] = [
+        FIELD_TYPES: Final[FlextTypes.Core.StringList] = [
             "str",
             "int",
             "float",
@@ -1823,19 +1776,19 @@ class FlextConstants:
         ]
 
         # Model lifecycle states
-        MODEL_STATES: Final[list[str]] = ["draft", "valid", "invalid", "frozen"]
+        MODEL_STATES: Final[FlextTypes.Core.StringList] = [
+            "draft",
+            "valid",
+            "invalid",
+            "frozen",
+        ]
 
     # =========================================================================
     # OBSERVABILITY CONSTANTS - Logging, monitoring, and tracing constants
     # =========================================================================
 
     class Reliability:
-        """Reliability constants for the FLEXT ecosystem.
-
-        This class contains reliability-related constants including retry policies,
-        timeout values, circuit breaker thresholds, and error handling parameters
-        following reliability engineering best practices.
-        """
+        """Reliability constants for the FLEXT ecosystem."""
 
         # Retry configuration
         MAX_RETRY_ATTEMPTS: Final[int] = 3
@@ -1858,11 +1811,7 @@ class FlextConstants:
 
     # NEW: Handler system constants (ADDED from string mapping analysis)
     class Handlers:
-        """Handler system constants for command/query processing.
-
-        Consolidated from handlers.py and commands.py to centralize all
-        handler-related constants in one place following SOLID principles.
-        """
+        """Handler system constants for command/query processing."""
 
         # Handler execution limits
         MAX_CHAIN_HANDLERS: Final[int] = 50
@@ -1915,10 +1864,7 @@ class FlextConstants:
     # =========================================================================
 
     class Commands:
-        """Command system constants for CQRS patterns.
-
-        Consolidated from commands.py to centralize command-related constants.
-        """
+        """Command system constants for CQRS patterns."""
 
         # Command states
         STATE_CREATED: Final[str] = "created"
@@ -1942,10 +1888,7 @@ class FlextConstants:
     # =========================================================================
 
     class Utilities:
-        """Utilities constants for helper functions.
-
-        Consolidated from utilities.py to centralize utility constants.
-        """
+        """Utilities constants for helper functions."""
 
         # Time conversion constants
         SECONDS_PER_MINUTE: Final[int] = 60
@@ -1961,10 +1904,7 @@ class FlextConstants:
     # =========================================================================
 
     class Api:
-        """API constants for service communication across FLEXT ecosystem.
-
-        Consolidated API-related constants from flext-api, flext-auth, etc.
-        """
+        """API constants for service communication across FLEXT ecosystem."""
 
         # API timeouts
         DEFAULT_API_TIMEOUT: Final[float] = 30.0
@@ -1984,10 +1924,7 @@ class FlextConstants:
     # =========================================================================
 
     class Auth:
-        """Authentication constants across FLEXT ecosystem.
-
-        Consolidated from flext-auth and other auth-related modules.
-        """
+        """Authentication constants across FLEXT ecosystem."""
 
         # Token expiration
         DEFAULT_TOKEN_EXPIRY: Final[int] = 3600  # 1 hour
@@ -2013,7 +1950,11 @@ class FlextConstants:
         JWT_DEFAULT_EXPIRY_MINUTES: Final[int] = 60
         JWT_MAX_EXPIRY_MINUTES: Final[int] = 1440  # 24 hours
         JWT_DEFAULT_ALGORITHM: Final[str] = "HS256"
-        JWT_ALLOWED_ALGORITHMS: Final[list[str]] = ["HS256", "HS384", "HS512"]
+        JWT_ALLOWED_ALGORITHMS: Final[FlextTypes.Core.StringList] = [
+            "HS256",
+            "HS384",
+            "HS512",
+        ]
         JWT_ISSUER_CLAIM: Final[str] = "flext-auth"
         JWT_AUDIENCE_CLAIM: Final[str] = "flext-ecosystem"
 
@@ -2054,10 +1995,7 @@ class FlextConstants:
     # =========================================================================
 
     class Database:
-        """Database constants for Oracle, LDAP, and other databases.
-
-        Consolidated from flext-db-oracle, flext-ldap, etc.
-        """
+        """Database constants for Oracle, LDAP, and other databases."""
 
         # Connection timeouts
         DEFAULT_DB_TIMEOUT: Final[int] = 30
@@ -2081,10 +2019,7 @@ class FlextConstants:
     # =========================================================================
 
     class Legacy:
-        """Legacy constants for backward compatibility.
-
-        Consolidated from legacy.py to maintain compatibility.
-        """
+        """Legacy constants for backward compatibility."""
 
         # Field types (from legacy.py)
         FIELD_TYPE_STRING: Final[str] = "string"
@@ -2147,14 +2082,7 @@ class FlextConstants:
 
     # NEW: Entity system constants (ADDED from string mapping analysis)
     class Entities:
-        """Entity system constants for domain-driven design patterns.
-
-        This class contains constants specific to entity management, validation,
-        and operations in the FLEXT domain modeling system. Provides standardized
-        messages, templates, and validation rules for entity lifecycle management
-        following DDD principles.
-
-        """
+        """Entity system constants for domain-driven design patterns."""
 
         # Entity validation
         ENTITY_ID_INVALID: Final[str] = "Invalid entity ID"
@@ -2419,6 +2347,6 @@ class FlextConstants:
             SUSPENDED = "suspended"
 
 
-__all__: Final[list[str]] = [
+__all__: Final[FlextTypes.Core.StringList] = [
     "FlextConstants",
 ]

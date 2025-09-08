@@ -39,7 +39,7 @@ class ExecutePipelineCommand(FlextCommands.Models.Command):
     pipeline_name: str
     environment: str = "development"
     dry_run: bool = False
-    parameters: dict[str, object] = Field(default_factory=dict)
+    parameters: FlextTypes.Core.Dict = Field(default_factory=dict)
     max_retries: int = 3
     timeout_minutes: int = 30
 
@@ -660,7 +660,7 @@ def init(name: str, project_type: str, template: str, git: bool,
 ```python
 class BatchProcessCommand(FlextCommands.Models.Command):
     operation: str  # "validate", "process", "deploy"
-    file_patterns: list[str] = Field(default_factory=list)
+    file_patterns: FlextTypes.Core.StringList = Field(default_factory=list)
     target_directory: str = "."
     parallel_workers: int = 4
     fail_fast: bool = False

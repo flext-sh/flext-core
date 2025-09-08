@@ -106,7 +106,7 @@ class BatchResult(FlextModels.Config):
     failed: int
     success_rate: float
     results: list[RegistrationResult]
-    errors: list[str]
+    errors: FlextTypes.Core.StringList
 
 
 # =============================================================================
@@ -189,7 +189,7 @@ class UserRegistrationService:
             return FlextResult[BatchResult].fail(FlextConstants.Errors.VALIDATION_ERROR)
 
         successful_results: list[RegistrationResult] = []
-        errors: list[str] = []
+        errors: FlextTypes.Core.StringList = []
 
         # Process each request individually
         for request in requests:

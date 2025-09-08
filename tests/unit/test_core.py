@@ -1,4 +1,8 @@
-"""Extended comprehensive tests for FlextCore."""
+"""Extended comprehensive tests for FlextCore.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import math
 import tempfile
@@ -567,7 +571,7 @@ class TestFlextCoreSystemConfigAndPerformance:
             {"environment": "bad", "log_level": "INFO"},
         )
         assert invalid_env.failure
-        assert "Invalid environment" in (invalid_env.error or "")
+        assert "environment" in (invalid_env.error or "")
 
         invalid_log = core.validate_config_with_types(
             {"environment": "development", "log_level": "BAD"},
@@ -579,7 +583,10 @@ class TestFlextCoreSystemConfigAndPerformance:
         core = FlextCore.get_instance()
 
         good = core.configure_core_system(
-            {"environment": "production", "log_level": "INFO"}
+            {
+                "environment": "production",
+                "log_level": "INFO",
+            }
         )
         assert good.success
         out = good.unwrap()
@@ -588,11 +595,11 @@ class TestFlextCoreSystemConfigAndPerformance:
 
         bad_env = core.configure_core_system({"environment": "nope"})
         assert bad_env.failure
-        assert "Invalid environment" in (bad_env.error or "")
+        assert "environment" in (bad_env.error or "")
 
         bad_log = core.configure_core_system({"log_level": "NOPE"})
         assert bad_log.failure
-        assert "Invalid log_level" in (bad_log.error or "")
+        assert "log_level" in (bad_log.error or "")
 
     def test_get_core_system_config_fields(self) -> None:
         core = FlextCore.get_instance()
@@ -630,7 +637,7 @@ class TestFlextCoreSystemConfigAndPerformance:
             )
         )
         assert invalid.failure
-        assert "Invalid environment" in (invalid.error or "")
+        assert "environment" in (invalid.error or "")
 
     def test_optimize_core_performance_levels(self) -> None:
         core = FlextCore.get_instance()
@@ -763,7 +770,7 @@ class TestFlextCoreSystemConfiguration:
         result = FlextCore.configure_core_system(invalid_config)
         assert result.failure
         err10 = result.error or ""
-        assert "Invalid environment" in err10
+        assert "environment" in err10
 
     def test_configure_core_system_invalid_log_level(self) -> None:
         """Test configure_core_system with invalid log level."""
@@ -775,7 +782,7 @@ class TestFlextCoreSystemConfiguration:
         result = FlextCore.configure_core_system(invalid_config)
         assert result.failure
         err11 = result.error or ""
-        assert "Invalid log_level" in err11
+        assert "log_level" in err11
 
     def test_configure_core_system_empty_config(self) -> None:
         """Test configure_core_system with empty configuration."""
@@ -801,7 +808,7 @@ class TestFlextCoreSystemConfiguration:
         )
         assert result.failure
         err12 = result.error or ""
-        assert "Invalid environment" in err12
+        assert "environment" in err12
 
 
 class TestFlextCoreFieldOperations:
@@ -894,7 +901,7 @@ class TestFlextCoreAdvancedFeatures:
         core = FlextCore.get_instance()
 
         # Test with various edge case inputs
-        edge_cases: list[object] = [None, "", 0, [], {}, False]
+        edge_cases: FlextTypes.Core.List = [None, "", 0, [], {}, False]
 
         for case in edge_cases:
             email_result = (

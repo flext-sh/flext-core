@@ -1,4 +1,8 @@
-"""Comprehensive tests for flext-core real functionality using available infrastructure."""
+"""Comprehensive tests for flext-core real functionality using available infrastructure.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,6 +20,7 @@ from flext_core import (
     FlextResult,
 )
 from flext_core.models import FlextModels
+from flext_core.typings import FlextTypes
 
 # =============================================================================
 # DOMAIN MODELS FOR TESTING
@@ -122,7 +127,7 @@ class TestComprehensiveRealFunctionality:
         assert user_result.value.username == "test"
 
         # List result
-        list_result = FlextResult[list[str]].ok(["a", "b", "c"])
+        list_result = FlextResult[FlextTypes.Core.StringList].ok(["a", "b", "c"])
         assert list_result.success
         assert len(list_result.value) == 3
 
@@ -167,17 +172,17 @@ class TestComprehensiveRealFunctionality:
         """Test FlextResult with edge cases and various types."""
         # Large data structures
         large_dict = {f"key_{i}": f"value_{i}" for i in range(1000)}
-        large_result = FlextResult[dict[str, str]].ok(large_dict)
+        large_result = FlextResult[FlextTypes.Core.Headers].ok(large_dict)
         assert large_result.success
         large_value = large_result.value
         assert len(large_value) == 1000
         assert large_value["key_999"] == "value_999"
 
         # Complex nested structures
-        nested: dict[str, object] = {
+        nested: FlextTypes.Core.Dict = {
             "level1": {"level2": {"data": [1, 2, 3], "metadata": {"source": "test"}}},
         }
-        nested_result = FlextResult[dict[str, object]].ok(nested)
+        nested_result = FlextResult[FlextTypes.Core.Dict].ok(nested)
         assert nested_result.success
 
         # Boolean results

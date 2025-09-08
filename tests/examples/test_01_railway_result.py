@@ -2,6 +2,9 @@
 
 Tests the refactored railway pattern implementation using real FlextResult patterns
 and FlextUtilities without mocks, following FLEXT testing standards.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

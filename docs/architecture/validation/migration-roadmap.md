@@ -200,8 +200,8 @@ gantt
 
       def validate_user_form(
           self,
-          form_data: dict[str, object]
-      ) -> FlextResult[dict[str, object]]:
+          form_data: FlextTypes.Core.Dict
+      ) -> FlextResult[FlextTypes.Core.Dict]:
           # Comprehensive form validation with detailed error reporting
           return self.form_validator.validate(form_data)
   ```
@@ -350,7 +350,7 @@ class FlextValidationMigrationTools:
     """Tools for validation migration and monitoring."""
 
     @staticmethod
-    def analyze_service_validation(service_path: str) -> dict[str, list[str]]:
+    def analyze_service_validation(service_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze service for FlextValidations migration opportunities."""
         return {
             "manual_validation_patterns": ["if not data.get('field')", "basic validation"],
@@ -387,7 +387,7 @@ class ValidationMigrationAutomation:
     """Automated tools for validation migration."""
 
     @staticmethod
-    def detect_manual_validation_patterns(codebase_paths: list) -> dict[str, list[str]]:
+    def detect_manual_validation_patterns(codebase_paths: list) -> dict[str, FlextTypes.Core.StringList]:
         """Detect manual validation patterns across codebase."""
         return {
             "boolean_validation": ["return True/False patterns"],
@@ -396,7 +396,7 @@ class ValidationMigrationAutomation:
         }
 
     @staticmethod
-    def generate_migration_plan(library_name: str) -> dict[str, list[str]]:
+    def generate_migration_plan(library_name: str) -> dict[str, FlextTypes.Core.StringList]:
         """Generate validation migration plan."""
         return {
             "phase_1": ["Analyze current validation", "Design FlextValidations architecture"],

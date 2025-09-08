@@ -136,7 +136,7 @@ class ValidationMixin:
     """Mixin providing validation capabilities."""
 
     def __init__(self):
-        self.validation_errors: list[str] = []
+        self.validation_errors: FlextTypes.Core.StringList = []
         self.validation_rules: dict[str, callable] = {}
 
     def validate(self, data: dict) -> bool:
@@ -165,7 +165,7 @@ class ValidationMixin:
         """Add validation rule for a field."""
         self.validation_rules[field] = rule
 
-    def get_validation_errors(self) -> list[str]:
+    def get_validation_errors(self) -> FlextTypes.Core.StringList:
         """Get list of validation errors."""
         return self.validation_errors.copy()
 ```
@@ -175,7 +175,7 @@ class CachingMixin:
     """Mixin providing caching capabilities."""
 
     def __init__(self):
-        self._cache: dict[str, object] = {}
+        self._cache: FlextTypes.Core.Dict = {}
         self._cache_stats = {"hits": 0, "misses": 0}
 
     def cache_get(self, key: str) -> object | None:

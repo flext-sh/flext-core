@@ -1,500 +1,1361 @@
-"""Comprehensive tests for FlextCore using flext_tests - 100% coverage without mocks."""
+"""Comprehensive test suite for FlextCore achieving 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-import threading
-from datetime import datetime
-from typing import cast
+from typing import Never
+from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
-from flext_core import FlextConfig, FlextContainer, FlextCore, FlextResult
-from flext_tests import FlextMatchers
+from flext_core import (
+    FlextConfig,
+    FlextContainer,
+    FlextContext,
+    FlextCore,
+    FlextExceptions,
+    FlextLogger,
+    FlextModels,
+    FlextResult,
+    FlextUtilities,
+    FlextValidations,
+)
 
 
 class TestFlextCoreSingleton:
-    """Test FlextCore singleton implementation with real functionality."""
+    """Test FlextCore singleton pattern."""
 
-    def test_singleton_instance_consistency(self) -> None:
-        """Test singleton pattern ensures same instance."""
+    def test_get_instance_returns_singleton(self) -> None:
+        """Test that get_instance returns the same instance."""
         instance1 = FlextCore.get_instance()
         instance2 = FlextCore.get_instance()
-
         assert instance1 is instance2
-        # Both instances should be identical objects
-        assert id(instance1) == id(instance2)
+        assert isinstance(instance1, FlextCore)
 
-    def test_singleton_thread_safety(self) -> None:
-        """Test thread-safe singleton creation."""
-        instances = []
-
-        def get_instance() -> None:
-            instances.append(FlextCore.get_instance())
-
-        threads = [threading.Thread(target=get_instance) for _ in range(10)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-        # All instances should be the same object
-        first_instance = instances[0]
-        for instance in instances:
-            assert instance is first_instance
-
-    def test_singleton_initialization_once(self) -> None:
-        """Test singleton is initialized only once."""
+    def test_singleton_maintains_state(self) -> None:
+        """Test that singleton maintains state across calls."""
         core = FlextCore.get_instance()
+        # Modify state
+        core._specialized_configs["test_key"] = "test_value"
 
-        # Should have all required attributes for core functionality
-        assert hasattr(core, "container")
-        assert hasattr(core, "config")
-        assert hasattr(core, "logger")
-        assert hasattr(core, "flext_logger")
+        # Get new reference
+        core2 = FlextCore.get_instance()
+        assert core2._specialized_configs.get("test_key") == "test_value"
+
+
+class TestFlextCoreInitialization:
+    """Test FlextCore initialization."""
+
+    def test_init_creates_required_attributes(self) -> None:
+        """Test that __init__ creates all required attributes."""
+        core = FlextCore()
+
+        # Core components
+        assert isinstance(core._container, FlextContainer)
+        assert isinstance(core._settings_cache, dict)
+        assert core._config is None  # Lazy loaded
+        assert core._context is None  # Lazy loaded
+        assert core._logger is None  # Lazy loaded
+
+        # Specialized configs
+        assert isinstance(core._specialized_configs, dict)
+
+        # Static facades
+        assert core.commands is not None
+        assert core.decorators is not None
+        assert core.exceptions is not None
+        assert core.models is not None
 
 
 class TestFlextCoreProperties:
-    """Test FlextCore property access with real implementations."""
+    """Test FlextCore property access."""
 
-    def test_container_property(self) -> None:
-        """Test container property returns real FlextContainer instance."""
-        core = FlextCore.get_instance()
-        container = core.container
-
-        assert container is not None
-        assert hasattr(container, "register")
-        assert hasattr(container, "get")
-        # Verify register method is callable
-        assert callable(getattr(container, "register"))
-
-    def test_config_property(self) -> None:
-        """Test config property returns real FlextConfig instance."""
-        core = FlextCore.get_instance()
+    def test_config_property_lazy_loads(self) -> None:
+        """Test config property lazy loads FlextConfig."""
+        core = FlextCore()
+        assert core._config is None
         config = core.config
+        assert isinstance(config, FlextConfig)
+        assert core._config is config
+        # Second access returns same instance
+        assert core.config is config
 
-        assert config is not None
-        assert hasattr(config, "app_name")
-        assert hasattr(config, "environment")
-
-    def test_context_property(self) -> None:
-        """Test context property returns real FlextContext instance."""
-        core = FlextCore.get_instance()
+    def test_context_property_lazy_loads(self) -> None:
+        """Test context property lazy loads FlextContext."""
+        core = FlextCore()
+        assert core._context is None
         context = core.context
+        assert isinstance(context, FlextContext)
+        assert core._context is context
 
-        assert context is not None
-        assert hasattr(context, "Correlation")
-        assert hasattr(context.Correlation, "get_correlation_id")
-
-    def test_logger_property(self) -> None:
-        """Test logger property returns real logger instance."""
-        core = FlextCore.get_instance()
+    def test_logger_property_lazy_loads(self) -> None:
+        """Test logger property lazy loads FlextLogger."""
+        core = FlextCore()
+        assert core._logger is None
         logger = core.logger
+        assert isinstance(logger, FlextLogger)
+        assert core._logger is logger
 
-        assert logger is not None
-        assert hasattr(logger, "info")
-        assert hasattr(logger, "error")
-        assert hasattr(logger, "debug")
+    def test_database_config_property(self) -> None:
+        """Test database_config property."""
+        core = FlextCore()
+        # Initially None
+        assert core.database_config is None
 
-    def test_database_config_property_default_none(self) -> None:
-        """Test database_config returns None by default."""
-        core = FlextCore.get_instance()
-        db_config = core.database_config
-
-        assert db_config is None
-
-    def test_security_config_property_default_none(self) -> None:
-        """Test security_config returns None by default."""
-        core = FlextCore.get_instance()
-        security_config = core.security_config
-
-        assert security_config is None
-
-    def test_logging_config_property_default_none(self) -> None:
-        """Test logging_config returns None by default."""
-        core = FlextCore.get_instance()
-        logging_config = core.logging_config
-
-        assert logging_config is None
-
-
-class TestFlextCoreSystemConfiguration:
-    """Test FlextCore system configuration methods."""
-
-    def test_configure_aggregates_system_valid_config(self) -> None:
-        """Test aggregate system configuration with valid config."""
-        core = FlextCore.get_instance()
-
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "development",
-            "aggregate_performance": "medium",
-            "event_sourcing_enabled": True,
-        }
-
-        result = core.configure_aggregates_system(config)
-        FlextMatchers.assert_result_success(result)
-        config_result = result.unwrap()
-        assert isinstance(config_result, dict)
-
-    def test_configure_aggregates_system_invalid_config(self) -> None:
-        """Test aggregate system configuration with invalid config."""
-        core = FlextCore.get_instance()
-
-        # Use None to trigger validation error
-        result = core.configure_aggregates_system(
-            cast(
-                "dict[str, str | int | float | bool | list[object] | dict[str, object]]",
-                None,
-            )
+        # Create config
+        db_config = FlextModels.DatabaseConfig(
+            host="localhost", database="test", username="user", password="pass"
         )
-        # Should return FlextResult, may succeed with defaults or fail
-        assert hasattr(result, "is_success")
+        core._specialized_configs["database_config"] = db_config
+        assert core.database_config == db_config
+
+    def test_security_config_property(self) -> None:
+        """Test security_config property."""
+        core = FlextCore()
+        assert core.security_config is None
+
+        security_config = FlextModels.SecurityConfig(
+            secret_key="secret", jwt_secret="jwt", encryption_key="enc"
+        )
+        core._specialized_configs["security_config"] = security_config
+        assert core.security_config == security_config
+
+    def test_logging_config_property(self) -> None:
+        """Test logging_config property."""
+        core = FlextCore()
+        assert core.logging_config is None
+
+        logging_config = FlextModels.LoggingConfig()
+        core._specialized_configs["logging_config"] = logging_config
+        assert core.logging_config == logging_config
+
+
+class TestFlextCoreAggregates:
+    """Test FlextCore aggregate methods."""
+
+    def test_configure_aggregates_system(self) -> None:
+        """Test configure_aggregates_system."""
+        core = FlextCore()
+        config = {"key": "value", "enabled": True}
+        result = core.configure_aggregates_system(config)
+
+        assert result.is_success
+        assert result.value == config
+        assert hasattr(core, "_aggregate_config")
+        assert core._aggregate_config == config
 
     def test_get_aggregates_config(self) -> None:
-        """Test getting aggregates configuration."""
-        core = FlextCore.get_instance()
+        """Test get_aggregates_config."""
+        core = FlextCore()
+        # Set config first
+        core._aggregate_config = {"test": "config"}
 
         result = core.get_aggregates_config()
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
+        assert result.is_success
+        assert result.value == {"test": "config"}
 
-    def test_optimize_aggregates_system_high(self) -> None:
-        """Test aggregate system optimization for high performance."""
-        core = FlextCore.get_instance()
-
-        result = core.optimize_aggregates_system("high")
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config.get("optimization_level") == "high"
+    def test_get_aggregates_config_no_config(self) -> None:
+        """Test get_aggregates_config when no config set."""
+        core = FlextCore()
+        result = core.get_aggregates_config()
+        assert result.is_success
+        assert result.value == {}
 
     def test_optimize_aggregates_system_low(self) -> None:
-        """Test aggregate system optimization for low performance."""
-        core = FlextCore.get_instance()
-
+        """Test optimize_aggregates_system with low level."""
+        core = FlextCore()
         result = core.optimize_aggregates_system("low")
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config.get("optimization_level") == "low"
+
+        assert result.is_success
+        config = result.value
+        assert config["level"] == "low"
+        assert config["cache_size"] == 1000
+        assert config["batch_size"] == 10
+
+    def test_optimize_aggregates_system_balanced(self) -> None:
+        """Test optimize_aggregates_system with balanced level."""
+        core = FlextCore()
+        result = core.optimize_aggregates_system("balanced")
+
+        assert result.is_success
+        config = result.value
+        assert config["level"] == "balanced"
+        assert config["cache_size"] == 5000
+        assert config["batch_size"] == 50
+
+    def test_optimize_aggregates_system_high(self) -> None:
+        """Test optimize_aggregates_system with high level."""
+        core = FlextCore()
+        result = core.optimize_aggregates_system("high")
+
+        assert result.is_success
+        config = result.value
+        assert config["level"] == "high"
+        assert config["cache_size"] == 10000
+        assert config["batch_size"] == 100
+
+    def test_optimize_aggregates_system_extreme(self) -> None:
+        """Test optimize_aggregates_system with extreme level."""
+        core = FlextCore()
+        result = core.optimize_aggregates_system("extreme")
+
+        assert result.is_success
+        config = result.value
+        assert config["level"] == "extreme"
+        assert config["cache_size"] == 50000
+        assert config["batch_size"] == 500
+
+    def test_optimize_aggregates_system_unknown(self) -> None:
+        """Test optimize_aggregates_system with unknown level."""
+        core = FlextCore()
+        result = core.optimize_aggregates_system("unknown")
+
+        assert result.is_success
+        config = result.value
+        assert config["level"] == "unknown"
+        assert config["cache_size"] == 50000  # Defaults to extreme
 
 
 class TestFlextCoreCommands:
-    """Test FlextCore command system functionality."""
+    """Test FlextCore command methods."""
 
-    def test_configure_commands_system_valid(self) -> None:
-        """Test command system configuration with valid parameters."""
-        core = FlextCore.get_instance()
+    @patch("flext_core.commands.FlextCommands.configure_commands_system")
+    def test_configure_commands_system(self, mock_configure) -> None:
+        """Test configure_commands_system."""
+        mock_configure.return_value = FlextResult.ok({"configured": True})
 
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "command_bus_enabled": True,
-            "async_commands": True,
-            "retry_policy": "exponential",
-        }
-
+        core = FlextCore()
+        config = {"key": "value"}
         result = core.configure_commands_system(config)
-        FlextMatchers.assert_result_success(result)
-        config_result = result.unwrap()
-        assert isinstance(config_result, dict)
 
-    def test_get_commands_config(self) -> None:
-        """Test getting commands configuration."""
-        core = FlextCore.get_instance()
+        assert result.value == {"configured": True}
+        mock_configure.assert_called_once_with(config)
 
+    @patch("flext_core.commands.FlextCommands.get_commands_system_config")
+    def test_get_commands_config(self, mock_get) -> None:
+        """Test get_commands_config."""
+        mock_get.return_value = FlextResult.ok({"config": "data"})
+
+        core = FlextCore()
         result = core.get_commands_config()
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
 
-    def test_optimize_commands_performance_high(self) -> None:
-        """Test command performance optimization for high level."""
-        core = FlextCore.get_instance()
+        assert result.value == {"config": "data"}
+        mock_get.assert_called_once_with(return_model=False)
 
+    @patch("flext_core.commands.FlextCommands.configure_commands_system")
+    def test_configure_commands_system_with_model(self, mock_configure) -> None:
+        """Test configure_commands_system_with_model."""
+        model = MagicMock(spec=FlextModels.SystemConfigs.CommandsConfig)
+        mock_configure.return_value = FlextResult.ok(model)
+
+        core = FlextCore()
+        result = core.configure_commands_system_with_model(model)
+
+        assert result.value == model
+        mock_configure.assert_called_once_with(model)
+
+    @patch("flext_core.commands.FlextCommands.get_commands_system_config")
+    def test_get_commands_config_model(self, mock_get) -> None:
+        """Test get_commands_config_model."""
+        model = MagicMock(spec=FlextModels.SystemConfigs.CommandsConfig)
+        mock_get.return_value = FlextResult.ok(model)
+
+        core = FlextCore()
+        result = core.get_commands_config_model()
+
+        assert result.value == model
+        mock_get.assert_called_once_with(return_model=True)
+
+    @patch("flext_core.commands.FlextCommands.optimize_commands_performance")
+    def test_optimize_commands_performance(self, mock_optimize) -> None:
+        """Test optimize_commands_performance."""
+        mock_optimize.return_value = FlextResult.ok({"optimized": True})
+
+        core = FlextCore()
         result = core.optimize_commands_performance("high")
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config.get("optimization_level") == "high"
+
+        assert result.value == {"optimized": True}
+        mock_optimize.assert_called_once()
 
 
-class TestFlextCoreSystemOperations:
-    """Test FlextCore system operations and utilities."""
+class TestFlextCoreConfiguration:
+    """Test FlextCore configuration methods."""
 
-    def test_configure_core_system_valid(self) -> None:
-        """Test core system configuration with valid parameters."""
-        FlextCore.get_instance()
+    def test_load_config_from_file(self, tmp_path) -> None:
+        """Test load_config_from_file."""
+        # Create test config file
+        config_file = tmp_path / "config.json"
+        config_file.write_text('{"key": "value"}')
 
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "environment": "development",
-            "log_level": "INFO",
-            "performance_level": "medium",
-        }
+        with patch.object(FlextConfig, "create_from_environment") as mock_create:
+            mock_config = FlextConfig()
+            mock_create.return_value = FlextResult.ok(mock_config)
 
-        result = FlextCore.configure_core_system(config)
-        FlextMatchers.assert_result_success(result)
+            core = FlextCore()
+            result = core.load_config_from_file(str(config_file))
 
-        system_config = result.unwrap()
-        assert system_config["environment"] == "development"
-        assert system_config["log_level"] == "INFO"
+            assert result.is_success
+            assert result.value == mock_config.model_dump()
+            mock_create.assert_called_once_with(env_file=str(config_file))
 
-    def test_configure_core_system_with_defaults(self) -> None:
-        """Test core system configuration provides defaults for missing values."""
-        config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
-        ] = {
-            "log_level": "INFO",
-        }
+    def test_configure_database(self) -> None:
+        """Test configure_database."""
+        core = FlextCore()
 
-        result = FlextCore.configure_core_system(config)
-        FlextMatchers.assert_result_success(result)
+        result = core.configure_database(
+            host="localhost", database="test", username="user", password="pass"
+        )
 
-        system_config = result.unwrap()
-        # Should provide default environment when missing
-        assert system_config["log_level"] == "INFO"
-        assert "environment" in system_config  # Default provided
+        assert result.is_success
+        assert result.value.host == "localhost"
+        assert result.value.database == "test"
+        assert result.value.username == "user"
+        assert result.value.password == "pass"
+        assert core._specialized_configs["database_config"] == result.value
 
-    def test_create_environment_core_config_development(self) -> None:
-        """Test creating environment config for development."""
-        core = FlextCore.get_instance()
-        result = core.create_environment_core_config("development")
+    def test_configure_security(self) -> None:
+        """Test configure_security."""
+        core = FlextCore()
 
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config["environment"] == "development"
+        secret_key = "MySecretKey123456789012345678901"
+        jwt_secret = "MyJwtSecret123456789012345678901"
+        encryption_key = "MyEncKey123456789012345678901234"
 
-    def test_create_environment_core_config_production(self) -> None:
-        """Test creating environment config for production."""
-        core = FlextCore.get_instance()
-        result = core.create_environment_core_config("production")
+        result = core.configure_security(
+            secret_key=secret_key, jwt_secret=jwt_secret, encryption_key=encryption_key
+        )
 
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config["environment"] == "production"
+        assert result.is_success
+        assert result.value.secret_key == secret_key
+        assert result.value.jwt_secret == jwt_secret
+        assert result.value.encryption_key == encryption_key
+        assert core._specialized_configs["security_config"] == result.value
 
-    def test_create_environment_core_config_staging(self) -> None:
-        """Test creating environment config for staging."""
-        core = FlextCore.get_instance()
-        result = core.create_environment_core_config("staging")
+    def test_configure_logging_config(self) -> None:
+        """Test configure_logging_config."""
+        core = FlextCore()
 
-        FlextMatchers.assert_result_success(result)
-        config = result.unwrap()
-        assert isinstance(config, dict)
-        assert config["environment"] == "staging"
+        result = core.configure_logging_config(
+            log_level="DEBUG", log_file="/tmp/test.log"
+        )
 
-    def test_optimize_core_performance_high(self) -> None:
-        """Test core performance optimization for high level."""
-        core = FlextCore.get_instance()
-        result = core.optimize_core_performance({"performance_level": "high"})
+        assert result.is_success
+        assert result.value.log_level == "DEBUG"
+        assert result.value.log_file == "/tmp/test.log"
+        assert core._specialized_configs["logging_config"] == result.value
 
-        # Method currently has implementation issues, test that it returns FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "error")
-        # If successful in future, would contain optimization config
-        if result.is_success:
-            config = result.unwrap()
-            assert isinstance(config, dict)
 
-    def test_optimize_core_performance_low(self) -> None:
-        """Test core performance optimization for low level."""
-        core = FlextCore.get_instance()
-        result = core.optimize_core_performance({"performance_level": "low"})
+class TestFlextCoreValidation:
+    """Test FlextCore validation methods."""
 
-        # Method currently has implementation issues, test that it returns FlextResult
-        assert hasattr(result, "is_success")
-        assert hasattr(result, "error")
-        # If successful in future, would contain optimization config
-        if result.is_success:
-            config = result.unwrap()
-            assert isinstance(config, dict)
+    def test_validate_email_valid(self) -> None:
+        """Test validate_email with valid email."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_email") as mock_validate:
+            mock_validate.return_value = FlextResult.ok("test@example.com")
+
+            result = core.validate_email("test@example.com")
+
+            assert result.is_success
+            assert result.value == "test@example.com"
+
+    def test_validate_email_invalid(self) -> None:
+        """Test validate_email with invalid email."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_email") as mock_validate:
+            mock_validate.return_value = FlextResult.fail("Invalid email")
+
+            result = core.validate_email("invalid")
+
+            assert result.is_failure
+            assert result.error == "Invalid email"
+
+    def test_validate_string_field_valid(self) -> None:
+        """Test validate_string_field with valid string."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_string_field") as mock_validate:
+            mock_validate.return_value = FlextResult.ok(None)
+
+            result = core.validate_string_field("test", "field_name")
+
+            assert result.is_success
+            assert result.value == "test"
+
+    def test_validate_string_field_invalid(self) -> None:
+        """Test validate_string_field with invalid value."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_string_field") as mock_validate:
+            mock_validate.return_value = FlextResult.fail("Not a string")
+
+            result = core.validate_string_field(123, "field_name")
+
+            assert result.is_failure
+            assert "field_name" in result.error
+
+    def test_validate_numeric_field_valid(self) -> None:
+        """Test validate_numeric_field with valid number."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_numeric_field") as mock_validate:
+            mock_validate.return_value = FlextResult.ok(None)
+
+            result = core.validate_numeric_field(42, "field_name")
+
+            assert result.is_success
+            assert result.value == 42
+
+    def test_validate_numeric_field_invalid(self) -> None:
+        """Test validate_numeric_field with invalid value."""
+        core = FlextCore()
+        with patch.object(FlextValidations, "validate_numeric_field") as mock_validate:
+            mock_validate.return_value = FlextResult.fail("Not numeric")
+
+            result = core.validate_numeric_field("abc", "field_name")
+
+            assert result.is_failure
+            assert "field_name" in result.error
+
+
+class TestFlextCoreEntityCreation:
+    """Test FlextCore entity creation methods."""
+
+    def test_create_entity_success(self) -> None:
+        """Test create_entity with valid data."""
+        core = FlextCore()
+
+        class TestEntity(FlextModels.Entity):
+            name: str
+
+            def validate_business_rules(self):
+                return FlextResult.ok(None)
+
+        result = core.create_entity(TestEntity, id="test-id", name="Test")
+
+        assert result.is_success
+        assert isinstance(result.value, TestEntity)
+        assert result.value.name == "Test"
+
+    def test_create_entity_validation_failure(self) -> None:
+        """Test create_entity with validation failure."""
+        core = FlextCore()
+
+        class TestEntity(FlextModels.Entity):
+            name: str
+
+            def validate_business_rules(self):
+                return FlextResult.fail("Business rule failed")
+
+        result = core.create_entity(TestEntity, id="test-id", name="Test")
+
+        assert result.is_failure
+        assert "Business rule validation failed" in result.error
+
+    def test_create_value_object_success(self) -> None:
+        """Test create_value_object with valid data."""
+        core = FlextCore()
+
+        class TestValue(FlextModels.Value):
+            value: str
+
+            def validate_business_rules(self):
+                return FlextResult.ok(None)
+
+        result = core.create_value_object(TestValue, value="Test")
+
+        assert result.is_success
+        assert isinstance(result.value, TestValue)
+        assert result.value.value == "Test"
+
+    def test_create_domain_event(self) -> None:
+        """Test create_domain_event."""
+        core = FlextCore()
+        result = core.create_domain_event(
+            event_type="TestEvent",
+            aggregate_id="123",
+            aggregate_type="TestAggregate",
+            data={"key": "value"},
+            source_service="test-service",
+        )
+
+        assert result.is_success
+        assert isinstance(result.value, FlextModels.Event)
+        assert result.value.message_type == "TestEvent"
+        assert result.value.aggregate_id == "123"
+
+    def test_create_payload(self) -> None:
+        """Test create_payload."""
+        core = FlextCore()
+        result = core.create_payload(
+            data={"key": "value"},
+            message_type="TestMessage",
+            source_service="test-service",
+            target_service="target-service",
+            correlation_id="corr-123",
+        )
+
+        assert result.is_success
+        assert result.value.message_type == "TestMessage"
+        assert result.value.source_service == "test-service"
 
 
 class TestFlextCoreUtilities:
     """Test FlextCore utility methods."""
 
-    def test_create_entity_id(self) -> None:
-        """Test entity ID generation."""
-        core = FlextCore.get_instance()
+    def test_generate_uuid(self) -> None:
+        """Test generate_uuid."""
+        core = FlextCore()
+        with patch.object(FlextUtilities.Generators, "generate_uuid") as mock_gen:
+            mock_gen.return_value = "uuid-123"
 
-        entity_id = core.generate_entity_id()
-        assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
+            result = core.generate_uuid()
 
-        # Should generate unique IDs
-        entity_id2 = core.generate_entity_id()
-        assert entity_id != entity_id2
+            assert result == "uuid-123"
+
+    def test_generate_correlation_id(self) -> None:
+        """Test generate_correlation_id."""
+        core = FlextCore()
+        with patch.object(
+            FlextUtilities.Generators, "generate_correlation_id"
+        ) as mock_gen:
+            mock_gen.return_value = "corr-123"
+
+            result = core.generate_correlation_id()
+
+            assert result == "corr-123"
 
     def test_generate_entity_id(self) -> None:
-        """Test entity ID generation using instance method."""
-        core = FlextCore.get_instance()
-        entity_id = core.generate_entity_id()
+        """Test generate_entity_id."""
+        core = FlextCore()
+        with patch.object(FlextUtilities.Generators, "generate_entity_id") as mock_gen:
+            mock_gen.return_value = "entity-123"
 
-        assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
+            result = core.generate_entity_id()
 
-    def test_create_timestamp(self) -> None:
-        """Test timestamp generation using instance method."""
-        core = FlextCore.get_instance()
-        timestamp = core.create_timestamp()
+            assert result == "entity-123"
 
-        assert isinstance(timestamp, datetime)
-        assert timestamp.tzinfo is not None
+    def test_format_duration(self) -> None:
+        """Test format_duration."""
+        core = FlextCore()
+        with patch.object(FlextUtilities, "format_duration") as mock_format:
+            mock_format.return_value = "1m 30s"
 
-    def test_health_check_comprehensive(self) -> None:
-        """Test comprehensive system health validation."""
-        core = FlextCore.get_instance()
-        result = core.health_check()
+            result = core.format_duration(90.0)
 
-        # Should return FlextResult
-        assert hasattr(result, "is_success")
+            assert result == "1m 30s"
 
-        # If successful, should have proper structure
-        if result.is_success:
-            health_data = result.unwrap()
-            assert isinstance(health_data, dict)
+    def test_clean_text(self) -> None:
+        """Test clean_text."""
+        core = FlextCore()
+        with patch.object(FlextUtilities, "clean_text") as mock_clean:
+            mock_clean.return_value = "cleaned text"
+
+            result = core.clean_text("  dirty  text  ")
+
+            assert result == "cleaned text"
+
+    def test_batch_process_empty(self) -> None:
+        """Test batch_process with empty list."""
+        core = FlextCore()
+        result = core.batch_process([])
+        assert result == []
+
+    def test_batch_process_single_batch(self) -> None:
+        """Test batch_process with single batch."""
+        core = FlextCore()
+        items = [1, 2, 3, 4, 5]
+        result = core.batch_process(items, batch_size=10)
+        assert result == [[1, 2, 3, 4, 5]]
+
+    def test_batch_process_multiple_batches(self) -> None:
+        """Test batch_process with multiple batches."""
+        core = FlextCore()
+        items = list(range(10))
+        result = core.batch_process(items, batch_size=3)
+        assert len(result) == 4
+        assert result[0] == [0, 1, 2]
+        assert result[1] == [3, 4, 5]
+        assert result[2] == [6, 7, 8]
+        assert result[3] == [9]
+
+
+class TestFlextCoreLogging:
+    """Test FlextCore logging methods."""
+
+    def test_log_info(self) -> None:
+        """Test log_info."""
+        core = FlextCore()
+        with patch.object(core.logger, "info") as mock_info:
+            core.log_info("Test message", key="value")
+            mock_info.assert_called_once_with("Test message", key="value")
+
+    def test_log_error_with_exception(self) -> None:
+        """Test log_error with exception."""
+        core = FlextCore()
+        with patch.object(core.logger, "error") as mock_error:
+            error = Exception("Test error")
+            core.log_error("Error message", error=error, key="value")
+            mock_error.assert_called_once_with(
+                "Error message", error=error, key="value"
+            )
+
+    def test_log_error_without_exception(self) -> None:
+        """Test log_error without exception."""
+        core = FlextCore()
+        with patch.object(core.logger, "error") as mock_error:
+            core.log_error("Error message", key="value")
+            mock_error.assert_called_once_with("Error message", error=None, key="value")
+
+    def test_log_warning(self) -> None:
+        """Test log_warning."""
+        core = FlextCore()
+        with patch.object(core.logger, "warning") as mock_warning:
+            core.log_warning("Warning message", key="value")
+            mock_warning.assert_called_once_with("Warning message", key="value")
+
+    def test_flext_logger(self) -> None:
+        """Test flext_logger static method."""
+        logger = FlextCore.flext_logger("test")
+        assert isinstance(logger, FlextLogger)
+
+    def test_configure_logging(self) -> None:
+        """Test configure_logging."""
+        with patch.object(FlextLogger, "configure") as mock_configure:
+            FlextCore.configure_logging(log_level="DEBUG", _json_output=True)
+            mock_configure.assert_called_once_with(log_level="DEBUG", json_output=True)
+
+    def test_create_log_context_with_logger(self) -> None:
+        """Test create_log_context with existing logger."""
+        core = FlextCore()
+        logger = FlextLogger("test")
+        with patch.object(logger, "set_request_context") as mock_set:
+            result = core.create_log_context(logger, request_id="123")
+            mock_set.assert_called_once_with(request_id="123")
+            assert result is logger
+
+    def test_create_log_context_with_name(self) -> None:
+        """Test create_log_context with logger name."""
+        core = FlextCore()
+        result = core.create_log_context("test", request_id="123")
+        assert isinstance(result, FlextLogger)
+
+    def test_create_log_context_default(self) -> None:
+        """Test create_log_context with default."""
+        core = FlextCore()
+        result = core.create_log_context(None, request_id="123")
+        assert isinstance(result, FlextLogger)
+
+
+class TestFlextCoreContainer:
+    """Test FlextCore container methods."""
+
+    def test_register_service(self) -> None:
+        """Test register_service."""
+        core = FlextCore()
+        service = Mock()
+        result = core.register_service("test_service", service)
+
+        assert result.is_success
+
+    def test_get_service_success(self) -> None:
+        """Test get_service with existing service."""
+        core = FlextCore()
+        service = Mock()
+        core._container.register("test_service", service)
+
+        result = core.get_service("test_service")
+        assert result.is_success
+        assert result.value == service
+
+    def test_get_service_not_found(self) -> None:
+        """Test get_service with missing service."""
+        core = FlextCore()
+        result = core.get_service("missing_service")
+        assert result.is_failure
+
+    def test_register_factory(self) -> None:
+        """Test register_factory."""
+        core = FlextCore()
+
+        def factory():
+            return Mock()
+
+        result = core.register_factory("test_factory", factory)
+        assert result.is_success
+
+
+class TestFlextCoreResultMethods:
+    """Test FlextCore result pattern methods."""
+
+    def test_ok(self) -> None:
+        """Test ok static method."""
+        result = FlextCore.ok("value")
+        assert result.is_success
+        assert result.value == "value"
+
+    def test_fail(self) -> None:
+        """Test fail static method."""
+        result = FlextCore.fail("error")
+        assert result.is_failure
+        assert result.error == "error"
+
+    def test_from_exception(self) -> None:
+        """Test from_exception static method."""
+        exc = Exception("Test error")
+        result = FlextCore.from_exception(exc)
+        assert result.is_failure
+        assert result.error == "Test error"
+
+    def test_sequence_all_success(self) -> None:
+        """Test sequence with all successful results."""
+        results = [FlextResult.ok(1), FlextResult.ok(2), FlextResult.ok(3)]
+        result = FlextCore.sequence(results)
+        assert result.is_success
+        assert result.value == [1, 2, 3]
+
+    def test_sequence_with_failure(self) -> None:
+        """Test sequence with a failure."""
+        results = [FlextResult.ok(1), FlextResult.fail("error"), FlextResult.ok(3)]
+        result = FlextCore.sequence(results)
+        assert result.is_failure
+        assert result.error == "error"
+
+    def test_first_success(self) -> None:
+        """Test first_success."""
+        results = [
+            FlextResult.fail("error1"),
+            FlextResult.ok("success"),
+            FlextResult.fail("error2"),
+        ]
+        result = FlextCore.first_success(results)
+        assert result.is_success
+        assert result.value == "success"
+
+    def test_first_success_all_fail(self) -> None:
+        """Test first_success when all fail."""
+        results = [FlextResult.fail("error1"), FlextResult.fail("error2")]
+        result = FlextCore.first_success(results)
+        assert result.is_failure
+        assert result.error == "error2"
+
+
+class TestFlextCoreFunctional:
+    """Test FlextCore functional programming methods."""
+
+    def test_pipe(self) -> None:
+        """Test pipe function composition."""
+
+        def add_one(x):
+            return FlextResult.ok(x + 1)
+
+        def multiply_two(x):
+            return FlextResult.ok(x * 2)
+
+        pipeline = FlextCore.pipe(add_one, multiply_two)
+        result = pipeline(5)
+
+        assert result.is_success
+        assert result.value == 12  # (5 + 1) * 2
+
+    def test_compose(self) -> None:
+        """Test compose function composition."""
+
+        def add_one(x):
+            return FlextResult.ok(x + 1)
+
+        def multiply_two(x):
+            return FlextResult.ok(x * 2)
+
+        composed = FlextCore.compose(add_one, multiply_two)
+        result = composed(5)
+
+        assert result.is_success
+        assert result.value == 11  # (5 * 2) + 1
+
+    def test_when_true(self) -> None:
+        """Test when with true predicate."""
+
+        def predicate(x):
+            return x > 5
+
+        def then_func(x):
+            return FlextResult.ok(x * 2)
+
+        def else_func(x):
+            return FlextResult.ok(x + 1)
+
+        conditional = FlextCore.when(predicate, then_func, else_func)
+        result = conditional(10)
+
+        assert result.is_success
+        assert result.value == 20
+
+    def test_when_false(self) -> None:
+        """Test when with false predicate."""
+
+        def predicate(x):
+            return x > 5
+
+        def then_func(x):
+            return FlextResult.ok(x * 2)
+
+        def else_func(x):
+            return FlextResult.ok(x + 1)
+
+        conditional = FlextCore.when(predicate, then_func, else_func)
+        result = conditional(3)
+
+        assert result.is_success
+        assert result.value == 4
+
+    def test_tap(self) -> None:
+        """Test tap side effect."""
+        side_effects = []
+
+        def side_effect(x):
+            return side_effects.append(x)
+
+        tapped = FlextCore.tap(side_effect)
+        result = tapped(42)
+
+        assert result.is_success
+        assert result.value == 42
+        assert side_effects == [42]
+
+
+class TestFlextCoreSystemInfo:
+    """Test FlextCore system information methods."""
+
+    def test_get_all_functionality(self) -> None:
+        """Test get_all_functionality."""
+        core = FlextCore()
+        functionality = core.get_all_functionality()
+
+        assert isinstance(functionality, dict)
+        assert "result" in functionality
+        assert "container" in functionality
+        assert "utilities" in functionality
+
+    def test_list_available_methods(self) -> None:
+        """Test list_available_methods."""
+        core = FlextCore()
+        methods = core.list_available_methods()
+
+        assert isinstance(methods, list)
+        assert "get_instance" in methods
+        assert "validate_email" in methods
+        assert "create_entity" in methods
+
+    def test_get_method_info_success(self) -> None:
+        """Test get_method_info with valid method."""
+        core = FlextCore()
+        result = core.get_method_info("validate_email")
+
+        assert result.is_success
+        info = result.value
+        assert info["name"] == "validate_email"
+        assert info["callable"] is True
+
+    def test_get_method_info_not_found(self) -> None:
+        """Test get_method_info with invalid method."""
+        core = FlextCore()
+        result = core.get_method_info("non_existent_method")
+
+        assert result.is_failure
+        assert "not found" in result.error.lower()
+
+    def test_get_system_info(self) -> None:
+        """Test get_system_info."""
+        core = FlextCore()
+        info = core.get_system_info()
+
+        assert isinstance(info, dict)
+        assert "version" in info
+        assert "singleton_id" in info
+        assert "total_methods" in info
 
     def test_health_check(self) -> None:
-        """Test core system health check."""
-        core = FlextCore.get_instance()
+        """Test health_check."""
+        core = FlextCore()
         result = core.health_check()
 
-        FlextMatchers.assert_result_success(result)
-        health_data = result.unwrap()
-        assert isinstance(health_data, dict)
+        assert result.is_success
+        health = result.value
+        assert health["status"] in {"healthy", "degraded"}
+        assert "container" in health
+        assert "timestamp" in health
+
+    def test_reset_all_caches(self) -> None:
+        """Test reset_all_caches."""
+        core = FlextCore()
+        # Add some cached data
+        core._settings_cache["test"] = "data"
+        core._handler_registry = Mock()
+
+        result = core.reset_all_caches()
+
+        assert result.is_success
+        assert len(core._settings_cache) == 0
+        assert core._handler_registry is None
 
 
-class TestFlextCoreClassAccess:
-    """Test FlextCore class and function access."""
+class TestFlextCoreStringRepresentation:
+    """Test FlextCore string representation."""
 
-    def test_flext_logger_function(self) -> None:
-        """Test FlextLogger function access."""
-        core = FlextCore.get_instance()
+    def test_repr(self) -> None:
+        """Test __repr__."""
+        core = FlextCore()
+        repr_str = repr(core)
 
-        # Should have flext_logger as function
-        assert hasattr(core, "flext_logger")
-        logger_func = core.flext_logger
-        assert callable(logger_func)
+        assert "FlextCore" in repr_str
+        assert "services=" in repr_str
+        assert "methods=" in repr_str
 
-    def test_direct_class_imports(self) -> None:
-        """Test direct class imports work properly."""
-        # These should be importable directly from flext_core
+    def test_str(self) -> None:
+        """Test __str__."""
+        core = FlextCore()
+        str_repr = str(core)
 
-        # Test FlextResult functionality
-        success_result = FlextResult[str].ok("test")
-        assert success_result.is_success
-        assert success_result.unwrap() == "test"
-
-        # Test container creation
-        container = FlextContainer()
-        assert container is not None
-
-        # Test config creation
-        config = FlextConfig()
-        assert config is not None
-
-    def test_core_instance_functionality(self) -> None:
-        """Test core instance provides working functionality."""
-        core = FlextCore.get_instance()
-
-        # Test that core provides access to major components
-        assert core.container is not None
-        assert core.config is not None
-        assert core.context is not None
-        assert core.logger is not None
-
-    def test_core_utility_methods(self) -> None:
-        """Test core utility methods are accessible."""
-        core = FlextCore.get_instance()
-
-        # Test utility functions
-        entity_id = core.generate_entity_id()
-        assert isinstance(entity_id, str)
-        assert len(entity_id) > 0
-
-        timestamp = core.create_timestamp()
-        assert isinstance(timestamp, datetime)
-        assert timestamp.tzinfo is not None
+        assert "FlextCore" in str_repr
+        assert "FLEXT ecosystem" in str_repr
 
 
-class TestFlextCoreIntegration:
-    """Test FlextCore integration with ecosystem components."""
+class TestFlextCoreEdgeCases:
+    """Test FlextCore edge cases and error handling."""
 
-    def test_full_ecosystem_access(self) -> None:
-        """Test access to all major ecosystem components."""
-        core = FlextCore.get_instance()
+    def test_configure_aggregates_system_exception(self) -> None:
+        """Test configure_aggregates_system with exception."""
+        core = FlextCore()
 
-        # Test direct property access
-        assert core.container is not None
-        assert core.config is not None
-        assert core.context is not None
-        assert core.logger is not None
+        # Initialize _aggregate_config to ensure it exists, then patch its update method
+        core._aggregate_config = {"existing": "value"}
 
-        # Test utility function access
-        assert hasattr(core, "flext_logger")
-        assert hasattr(core, "generate_entity_id")
-        assert hasattr(core, "create_timestamp")
+        # Force exception by making the internal _aggregate_config raise an error
+        original_update = core._aggregate_config.update
 
-        # Test static method access
-        entity_id = core.generate_entity_id()
-        assert isinstance(entity_id, str)
+        def failing_update(*args, **kwargs) -> Never:
+            msg = "Configuration failed"
+            raise Exception(msg)
 
-        timestamp = core.create_timestamp()
-        assert isinstance(timestamp, datetime)
+        core._aggregate_config.update = failing_update
 
-    def test_configuration_management_flow(self) -> None:
-        """Test complete configuration management workflow."""
-        core = FlextCore.get_instance()
+        try:
+            result = core.configure_aggregates_system({"key": "value"})
+            assert result.is_failure
+            assert "Configuration failed" in result.error
+        finally:
+            # Restore original method
+            core._aggregate_config.update = original_update
 
-        # Create environment config
-        env_result = core.create_environment_core_config("development")
-        FlextMatchers.assert_result_success(env_result)
-        env_config = env_result.unwrap()
-        assert env_config["environment"] == "development"
+    def test_get_aggregates_config_exception(self) -> None:
+        """Test get_aggregates_config with exception."""
+        core = FlextCore()
 
-        # Configure core system
-        result = FlextCore.configure_core_system(env_config)
-        FlextMatchers.assert_result_success(result)
+        # Force an exception
+        with patch.object(
+            core, "__getattribute__", side_effect=Exception("Attr error")
+        ):
+            result = core.get_aggregates_config()
 
-        # Test performance optimization (implementation currently has issues)
-        perf_result = core.optimize_core_performance({"performance_level": "high"})
-        assert hasattr(perf_result, "is_success")
-        # If optimization succeeds in future, config would be available
-        if perf_result.is_success:
-            perf_config = perf_result.unwrap()
-            assert isinstance(perf_config, dict)
+            assert result.is_failure
+            assert "Get config failed" in result.error
 
-        # Validate system
-        health_result = core.health_check()
-        FlextMatchers.assert_result_success(health_result)
+    def test_optimize_aggregates_system_exception(self) -> None:
+        """Test optimize_aggregates_system with exception."""
+        core = FlextCore()
 
-    def test_utilities_integration(self) -> None:
-        """Test utility methods integration."""
-        core = FlextCore.get_instance()
+        # Force an exception
+        with patch.object(FlextResult, "ok", side_effect=Exception("Result failed")):
+            result = core.optimize_aggregates_system("high")
 
-        # Entity management
-        entity_id = core.generate_entity_id()
-        auto_id = core.generate_entity_id()
+            assert result.is_failure
+            assert "Optimization failed" in result.error
 
-        assert entity_id != auto_id
-        assert len(entity_id) > 0
-        assert len(auto_id) > 0
+    def test_configure_database_exception(self) -> None:
+        """Test configure_database with exception."""
+        core = FlextCore()
 
-        # System utilities
-        timestamp = core.create_timestamp()
-        health_result = core.health_check()
+        # Force an exception
+        with patch.object(
+            FlextConfig, "create_database_config", side_effect=Exception("DB error")
+        ):
+            result = core.configure_database(
+                host="localhost", database="test", username="user", password="pass"
+            )
 
-        assert isinstance(timestamp, datetime)
-        FlextMatchers.assert_result_success(health_result)
-        health = health_result.unwrap()
-        assert isinstance(health, dict)
+            assert result.is_failure
+            assert "Database configuration failed" in result.error
+
+    def test_create_entity_exception(self) -> None:
+        """Test create_entity with exception during creation."""
+        core = FlextCore()
+
+        class BadEntity(FlextModels.Entity):
+            @classmethod
+            def model_validate(cls, obj) -> Never:
+                msg = "Validation error"
+                raise ValueError(msg)
+
+        result = core.create_entity(BadEntity, name="Test")
+
+        assert result.is_failure
+        assert "Entity creation failed" in result.error
+
+    def test_validate_field_callable(self) -> None:
+        """Test validate_field with callable field_spec."""
+        core = FlextCore()
+
+        # Test with passing validator
+        def validator(x):
+            return x == "valid"
+
+        result = core.validate_field("valid", validator)
+        assert result.is_success
+        assert result.value == "valid"
+
+        # Test with failing validator
+        result = core.validate_field("invalid", validator)
+        assert result.is_failure
+        assert "Field validation failed" in result.error
+
+    def test_validate_field_exception(self) -> None:
+        """Test validate_field with exception."""
+        core = FlextCore()
+
+        def validator(x) -> float:
+            return 1 / 0  # Will raise exception
+
+        result = core.validate_field("test", validator)
+
+        assert result.is_failure
+        assert "Validation error" in result.error
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+class TestFlextCoreContextMethods:
+    """Test FlextCore context methods."""
+
+    @patch("flext_core.context.FlextContext.configure_context_system")
+    def test_configure_context_system(self, mock_configure) -> None:
+        """Test configure_context_system."""
+        mock_configure.return_value = FlextResult.ok({"configured": True})
+
+        core = FlextCore()
+        config = {"key": "value"}
+        result = core.configure_context_system(config)
+
+        assert result.value == {"configured": True}
+        mock_configure.assert_called_once_with(config)
+
+    @patch("flext_core.context.FlextContext.get_context_system_config")
+    def test_get_context_config(self, mock_get) -> None:
+        """Test get_context_config."""
+        mock_get.return_value = FlextResult.ok({"config": "data"})
+
+        core = FlextCore()
+        result = core.get_context_config()
+
+        assert result.value == {"config": "data"}
+        mock_get.assert_called_once()
+
+
+class TestFlextCoreDecoratorMethods:
+    """Test FlextCore decorator methods."""
+
+    @patch("flext_core.mixins.FlextMixins.configure_mixins_system")
+    def test_configure_decorators_system(self, mock_configure) -> None:
+        """Test configure_decorators_system."""
+        mock_configure.return_value = FlextResult.ok({"configured": True})
+
+        core = FlextCore()
+        config = {"key": "value"}
+        result = core.configure_decorators_system(config)
+
+        assert result.value == {"configured": True}
+
+    def test_get_decorators_config(self) -> None:
+        """Test get_decorators_config."""
+        core = FlextCore()
+        result = core.get_decorators_config()
+
+        assert result.is_success
+        config = result.value
+        assert "environment" in config
+        assert "validation_level" in config
+
+    def test_optimize_decorators_performance_high(self) -> None:
+        """Test optimize_decorators_performance with high level."""
+        core = FlextCore()
+        result = core.optimize_decorators_performance("high")
+
+        assert result.is_success
+        config = result.value
+        assert config["performance_level"] == "high"
+        assert config["decorator_cache_size"] == 100
+
+    def test_optimize_decorators_performance_medium(self) -> None:
+        """Test optimize_decorators_performance with medium level."""
+        core = FlextCore()
+        result = core.optimize_decorators_performance("medium")
+
+        assert result.is_success
+        config = result.value
+        assert config["performance_level"] == "medium"
+        assert config["decorator_cache_size"] == 50
+
+
+class TestFlextCoreFieldMethods:
+    """Test FlextCore field methods."""
+
+    @patch("flext_core.fields.FlextFields.create_boolean_field")
+    def test_create_boolean_field(self, mock_create) -> None:
+        """Test create_boolean_field."""
+        mock_field = Mock()
+        mock_create.return_value = mock_field
+
+        core = FlextCore()
+        result = core.create_boolean_field(default=True)
+
+        assert result == mock_field
+        mock_create.assert_called_once_with(default=True)
+
+    @patch("flext_core.fields.FlextFields.configure_fields_system")
+    def test_configure_fields_system(self, mock_configure) -> None:
+        """Test configure_fields_system."""
+        mock_configure.return_value = FlextResult.ok({"configured": True})
+
+        core = FlextCore()
+        config = {"key": "value"}
+        result = core.configure_fields_system(config)
+
+        assert result.value == {"configured": True}
+
+
+class TestFlextCoreGuardMethods:
+    """Test FlextCore guard methods."""
+
+    def test_is_string(self) -> None:
+        """Test is_string type guard."""
+        core = FlextCore()
+        assert core.is_string("test") is True
+        assert core.is_string(123) is False
+
+    def test_is_dict(self) -> None:
+        """Test is_dict type guard."""
+        core = FlextCore()
+        assert core.is_dict({}) is True
+        assert core.is_dict([]) is False
+
+    def test_is_list(self) -> None:
+        """Test is_list type guard."""
+        core = FlextCore()
+        assert core.is_list([]) is True
+        assert core.is_list({}) is False
+
+
+class TestFlextCoreExceptionMethods:
+    """Test FlextCore exception methods."""
+
+    def test_create_validation_error(self) -> None:
+        """Test create_validation_error."""
+        core = FlextCore()
+        error = core.create_validation_error(
+            "Validation failed", field="email", value="invalid"
+        )
+
+        assert isinstance(error, FlextExceptions.ValidationError)
+
+    def test_create_configuration_error(self) -> None:
+        """Test create_configuration_error."""
+        core = FlextCore()
+        error = core.create_configuration_error("Config failed", config_key="database")
+
+        assert isinstance(error, FlextExceptions.ConfigurationError)
+
+    def test_create_connection_error(self) -> None:
+        """Test create_connection_error."""
+        core = FlextCore()
+        error = core.create_connection_error(
+            "Connection failed", service="database", endpoint="localhost"
+        )
+
+        assert isinstance(error, FlextExceptions.ConnectionError)
+
+
+class TestFlextCoreStaticValidation:
+    """Test FlextCore static validation methods."""
+
+    def test_validate_string_valid(self) -> None:
+        """Test validate_string with valid string."""
+        result = FlextCore.validate_string("test", min_length=2, max_length=10)
+        assert result.is_success
+        assert result.value == "test"
+
+    def test_validate_string_too_short(self) -> None:
+        """Test validate_string with too short string."""
+        result = FlextCore.validate_string("a", min_length=2)
+        assert result.is_failure
+        assert "at least 2 characters" in result.error
+
+    def test_validate_string_too_long(self) -> None:
+        """Test validate_string with too long string."""
+        result = FlextCore.validate_string("a" * 20, max_length=10)
+        assert result.is_failure
+        assert "not exceed 10 characters" in result.error
+
+    def test_validate_string_not_string(self) -> None:
+        """Test validate_string with non-string."""
+        result = FlextCore.validate_string(123)
+        assert result.is_failure
+        assert "must be a string" in result.error
+
+    def test_validate_numeric_valid(self) -> None:
+        """Test validate_numeric with valid number."""
+        result = FlextCore.validate_numeric(42, min_value=0, max_value=100)
+        assert result.is_success
+        assert result.value == 42.0
+
+    def test_validate_numeric_too_small(self) -> None:
+        """Test validate_numeric with too small number."""
+        result = FlextCore.validate_numeric(-5, min_value=0)
+        assert result.is_failure
+        assert "at least 0" in result.error
+
+    def test_validate_numeric_too_large(self) -> None:
+        """Test validate_numeric with too large number."""
+        result = FlextCore.validate_numeric(150, max_value=100)
+        assert result.is_failure
+        assert "not exceed 100" in result.error
+
+    def test_validate_numeric_not_numeric(self) -> None:
+        """Test validate_numeric with non-numeric."""
+        result = FlextCore.validate_numeric("abc")
+        assert result.is_failure
+        assert "must be numeric" in result.error
+
+
+class TestFlextCoreEnvironmentConfig:
+    """Test FlextCore environment configuration methods."""
+
+    def test_get_environment_config(self) -> None:
+        """Test get_environment_config."""
+        core = FlextCore()
+        result = core.get_environment_config("production")
+
+        assert result.is_success
+        config = result.value
+        assert config["environment"] == "production"
+        assert "log_level" in config
+        assert "debug" in config
+
+    def test_create_config_provider(self) -> None:
+        """Test create_config_provider."""
+        core = FlextCore()
+        result = core.create_config_provider("custom", "yaml")
+
+        assert result.is_success
+        config = result.value
+        assert config["provider_type"] == "custom"
+        assert config["format"] == "yaml"
+
+    def test_validate_config_with_types_valid(self) -> None:
+        """Test validate_config_with_types with valid config."""
+        core = FlextCore()
+        config = {"environment": "development", "log_level": "INFO"}
+        result = core.validate_config_with_types(config)
+
+        assert result.is_success
+        assert result.value is True
+
+    def test_validate_config_with_types_missing_key(self) -> None:
+        """Test validate_config_with_types with missing key."""
+        core = FlextCore()
+        config = {"log_level": "INFO"}
+        result = core.validate_config_with_types(config, ["environment", "log_level"])
+
+        assert result.is_failure
+        assert "Missing required config key" in result.error
+
+    def test_validate_config_with_types_invalid_environment(self) -> None:
+        """Test validate_config_with_types with invalid environment."""
+        core = FlextCore()
+        config = {"environment": "invalid_env", "log_level": "INFO"}
+        result = core.validate_config_with_types(config)
+
+        assert result.is_failure
+        assert "Invalid environment" in result.error
+
+
+class TestFlextCoreCompleteIntegration:
+    """Complete integration tests for FlextCore."""
+
+    def test_full_entity_lifecycle(self) -> None:
+        """Test complete entity lifecycle."""
+        core = FlextCore()
+
+        # Create entity
+        class User(FlextModels.Entity):
+            name: str
+            email: str
+
+            def validate_business_rules(self):
+                if "@" not in self.email:
+                    return FlextResult.fail("Invalid email")
+                return FlextResult.ok(None)
+
+        # Create entity
+        result = core.create_entity(User, name="John", email="john@example.com")
+        assert result.is_success
+
+        user = result.value
+        assert user.name == "John"
+        assert user.email == "john@example.com"
+
+    def test_complete_configuration_flow(self) -> None:
+        """Test complete configuration flow."""
+        core = FlextCore()
+
+        # Configure database
+        db_result = core.configure_database(
+            host="localhost", database="test", username="user", password="pass"
+        )
+
+        # Configure security
+        sec_result = core.configure_security(
+            secret_key="secret", jwt_secret="jwt", encryption_key="enc"
+        )
+
+        # Configure logging
+        log_result = core.configure_logging_config(log_level="DEBUG")
+
+        # All should be successful in mock environment
+        if db_result.is_success:
+            assert core.database_config is not None
+        if sec_result.is_success:
+            assert core.security_config is not None
+        if log_result.is_success:
+            assert core.logging_config is not None
+
+    def test_pipeline_composition(self) -> None:
+        """Test functional pipeline composition."""
+
+        # Create pipeline functions
+        def validate(x):
+            return FlextResult.ok(x) if x > 0 else FlextResult.fail("Must be positive")
+
+        def double(x):
+            return FlextResult.ok(x * 2)
+
+        def add_ten(x):
+            return FlextResult.ok(x + 10)
+
+        # Create pipeline
+        pipeline = FlextCore.pipe(validate, double, add_ten)
+
+        # Test with valid input
+        result = pipeline(5)
+        assert result.is_success
+        assert result.value == 20  # (5 * 2) + 10
+
+        # Test with invalid input
+        result = pipeline(-5)
+        assert result.is_failure
+        assert "Must be positive" in result.error

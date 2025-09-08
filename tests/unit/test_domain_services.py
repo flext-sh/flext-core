@@ -1,21 +1,26 @@
-"""Fixed comprehensive tests for FlextDomainService to achieve 100% coverage."""
+"""Fixed comprehensive tests for FlextDomainService to achieve 100% coverage.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import pytest
 from pydantic import Field, ValidationError
 
 from flext_core import FlextDomainService, FlextMixins, FlextModels, FlextResult
+from flext_core.typings import FlextTypes
 
 
 # Test Domain Service Implementations
-class TestUserService(FlextDomainService[dict[str, str]]):
+class TestUserService(FlextDomainService[FlextTypes.Core.Headers]):
     """Test service for user operations."""
 
     user_id: str
     email: str = ""
 
-    def execute(self) -> FlextResult[dict[str, str]]:
+    def execute(self) -> FlextResult[FlextTypes.Core.Headers]:
         """Execute user operation."""
-        return FlextResult[dict[str, str]].ok(
+        return FlextResult[FlextTypes.Core.Headers].ok(
             {
                 "user_id": self.user_id,
                 "email": self.email,
@@ -421,12 +426,12 @@ class TestDomainServicesFixed:
     def test_service_with_complex_types(self) -> None:
         """Test service with complex field types."""
 
-        class ComplexTypeService(FlextDomainService[dict[str, object]]):
-            data: dict[str, object]
+        class ComplexTypeService(FlextDomainService[FlextTypes.Core.Dict]):
+            data: FlextTypes.Core.Dict
             numbers: list[int] = Field(default_factory=list)
 
-            def execute(self) -> FlextResult[dict[str, object]]:
-                return FlextResult[dict[str, object]].ok(self.data)
+            def execute(self) -> FlextResult[FlextTypes.Core.Dict]:
+                return FlextResult[FlextTypes.Core.Dict].ok(self.data)
 
         service = ComplexTypeService(
             data={"key": "value", "nested": {"count": 42}},
@@ -449,7 +454,10 @@ class TestDomainServicesFixed:
         with pytest.raises(ValidationError):
             # Create service normally, then try to add extra field via model_validate
             TestUserService.model_validate(
-                {"user_id": "123", "extra_field": "not_allowed"}
+                {
+                    "user_id": "123",
+                    "extra_field": "not_allowed",
+                }
             )
 
 
@@ -460,7 +468,7 @@ class TestDomainServiceStaticMethods:
         """Test configure_domain_services_system method."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "environment": "test",
             "enable_performance_monitoring": True,
@@ -524,7 +532,7 @@ class TestDomainServiceStaticMethods:
         """Test optimize_domain_services_performance method."""
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {
             "environment": "production",
             "enable_caching": True,

@@ -6,7 +6,7 @@ T = TypeVar("T")
 class BenchmarkFixture:
     group: str
     name: str | None
-    extra_info: dict[str, object]
+    extra_info: FlextTypes.Core.Dict
 
     def __call__(
         self, func: Callable[[], T], /, *args: object, **kwargs: object

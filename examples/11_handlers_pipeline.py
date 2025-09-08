@@ -20,13 +20,7 @@ from flext_core import (
     FlextModels,
     FlextResult,
 )
-
-if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
-
-if not TYPE_CHECKING:
-    # Runtime import from sibling module; ignore for mypy when analyzing without this path
-    from shared_example_strategies import DemoStrategy, ExamplePatternFactory
+from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # =============================================================================
 # HANDLER CONSTANTS - Validation and business rule constraints
@@ -59,7 +53,7 @@ class Order:
 
     id: str
     user_id: str
-    items: list[str]
+    items: FlextTypes.Core.StringList
     total: float
     status: str = "pending"
 
@@ -171,7 +165,7 @@ class UserUpdatedEvent:
     """Event indicating user was updated."""
 
     user_id: str
-    changes: dict[str, object]
+    changes: FlextTypes.Core.Dict
     timestamp: float
 
 

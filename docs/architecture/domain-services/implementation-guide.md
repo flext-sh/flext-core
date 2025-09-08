@@ -46,7 +46,7 @@ class BasicBusinessOperationService(FlextDomainService[DomainResultType]):
     """Basic business operation service following DDD patterns."""
 
     # Service configuration fields (Pydantic fields)
-    operation_data: dict[str, object]
+    operation_data: FlextTypes.Core.Dict
     business_context: str = "default"
 
     def execute(self) -> FlextResult[DomainResultType]:
@@ -126,7 +126,7 @@ class UserRegistrationService(FlextDomainService[User]):
     # Service input data
     email: str
     password: str
-    user_profile: dict[str, object]
+    user_profile: FlextTypes.Core.Dict
     notification_preferences: dict[str, bool] = {"email": True, "sms": False}
 
     def execute(self) -> FlextResult[User]:
@@ -667,7 +667,7 @@ class ComplexBusinessRuleValidator:
 class TransactionalDomainService(FlextDomainService[TransactionResult]):
     """Domain service with comprehensive transaction support."""
 
-    operation_data: dict[str, object]
+    operation_data: FlextTypes.Core.Dict
     transaction_timeout: int = 30  # seconds
 
     def execute(self) -> FlextResult[TransactionResult]:
@@ -714,7 +714,7 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
         except Exception as e:
             return FlextResult[str].fail(f"Transaction initialization failed: {e}")
 
-    def execute_transactional_operations(self, transaction_id: str) -> FlextResult[dict[str, object]]:
+    def execute_transactional_operations(self, transaction_id: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute operations within transaction context."""
         try:
             operation_results = {}
@@ -722,27 +722,27 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
             # Operation 1: Database operations
             db_operation_result = self.execute_database_operations(transaction_id)
             if db_operation_result.is_failure:
-                return FlextResult[dict[str, object]].fail(db_operation_result.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(db_operation_result.error)
             operation_results["database"] = db_operation_result.value
 
             # Operation 2: Message queue operations
             queue_operation_result = self.execute_queue_operations(transaction_id)
             if queue_operation_result.is_failure:
-                return FlextResult[dict[str, object]].fail(queue_operation_result.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(queue_operation_result.error)
             operation_results["queue"] = queue_operation_result.value
 
             # Operation 3: External API operations
             api_operation_result = self.execute_external_api_operations(transaction_id)
             if api_operation_result.is_failure:
-                return FlextResult[dict[str, object]].fail(api_operation_result.error)
+                return FlextResult[FlextTypes.Core.Dict].fail(api_operation_result.error)
             operation_results["external_api"] = api_operation_result.value
 
-            return FlextResult[dict[str, object]].ok(operation_results)
+            return FlextResult[FlextTypes.Core.Dict].ok(operation_results)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Transactional operations failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Transactional operations failed: {e}")
 
-    def execute_database_operations(self, transaction_id: str) -> FlextResult[dict[str, object]]:
+    def execute_database_operations(self, transaction_id: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute database operations within transaction."""
         try:
             # Perform database operations using transaction context
@@ -754,7 +754,7 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
                 for entity_data in self.operation_data.get("entities", []):
                     entity_result = entity_repository.save(entity_data)
                     if entity_result.is_failure:
-                        return FlextResult[dict[str, object]].fail(entity_result.error)
+                        return FlextResult[FlextTypes.Core.Dict].fail(entity_result.error)
 
                 # Return operation summary
                 db_results = {
@@ -763,12 +763,12 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
                     "completed_at": datetime.utcnow().isoformat()
                 }
 
-                return FlextResult[dict[str, object]].ok(db_results)
+                return FlextResult[FlextTypes.Core.Dict].ok(db_results)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Database operations failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Database operations failed: {e}")
 
-    def execute_queue_operations(self, transaction_id: str) -> FlextResult[dict[str, object]]:
+    def execute_queue_operations(self, transaction_id: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute message queue operations within transaction."""
         try:
             # Perform queue operations using transaction context
@@ -779,7 +779,7 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
                 for message_data in self.operation_data.get("messages", []):
                     message_result = message_queue.send_message(message_data, transaction_id)
                     if message_result.is_failure:
-                        return FlextResult[dict[str, object]].fail(message_result.error)
+                        return FlextResult[FlextTypes.Core.Dict].fail(message_result.error)
 
                 # Return operation summary
                 queue_results = {
@@ -788,12 +788,12 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
                     "queue_status": "committed_on_transaction_commit"
                 }
 
-                return FlextResult[dict[str, object]].ok(queue_results)
+                return FlextResult[FlextTypes.Core.Dict].ok(queue_results)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(f"Queue operations failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Queue operations failed: {e}")
 
-    def commit_transaction_with_result(self, operation_results: dict[str, object]) -> FlextResult[TransactionResult]:
+    def commit_transaction_with_result(self, operation_results: FlextTypes.Core.Dict) -> FlextResult[TransactionResult]:
         """Commit transaction and create result."""
         try:
             transaction_id = operation_results.get("database", {}).get("transaction_id")
@@ -874,7 +874,7 @@ class TransactionalDomainService(FlextDomainService[TransactionResult]):
 class EventDrivenDomainService(FlextDomainService[EventDrivenResult]):
     """Domain service with comprehensive event integration."""
 
-    event_context: dict[str, object]
+    event_context: FlextTypes.Core.Dict
     publish_events: bool = True
 
     def execute(self) -> FlextResult[EventDrivenResult]:
@@ -1258,7 +1258,7 @@ class OptimizedDomainService(FlextDomainService[OptimizedResult]):
         except Exception as e:
             return FlextResult[list[ProcessedEntity]].fail(f"Entity batch processing failed: {e}")
 
-    def bulk_load_related_data(self, entities: list[Entity]) -> dict[str, object]:
+    def bulk_load_related_data(self, entities: list[Entity]) -> FlextTypes.Core.Dict:
         """Bulk load related data to minimize database queries."""
         try:
             entity_ids = [entity.id for entity in entities]

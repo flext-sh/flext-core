@@ -267,7 +267,7 @@ class APIServiceConfig(ServiceConfig):
 
     # Security
     secret_key: str = Field(..., description="JWT secret key")
-    cors_origins: list[str] = Field(default_factory=list, description="CORS origins")
+    cors_origins: FlextTypes.Core.StringList = Field(default_factory=list, description="CORS origins")
 
     class Config:
         env_prefix = "API_"
@@ -520,7 +520,7 @@ class ServiceDiscoverySettings(FlextConfig):
     # Service metadata
     service_name: str
     service_id: str
-    service_tags: list[str] = []
+    service_tags: FlextTypes.Core.StringList = []
 
     # Health check
     health_check_interval: int = 10

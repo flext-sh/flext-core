@@ -1,7 +1,7 @@
 """Delegation system for mixin behavior composition.
 
-Provides delegation patterns for composing behaviors from mixins
-without inheritance conflicts using descriptor protocol.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -10,76 +10,16 @@ import contextlib
 import time
 from typing import ClassVar, NoReturn, Protocol, cast, runtime_checkable
 
+from flext_core.config import FlextConfig
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.result import FlextResult
+from flext_core.typings import FlextTypes
 
 
 class FlextDelegationSystem:
-    """Delegation system for mixin composition and method forwarding.
-
-    Provides type-safe delegation patterns enabling behavior aggregation through
-    composition without multiple inheritance pitfalls. Implements automatic method
-    forwarding, property delegation via descriptors, and validation capabilities.
-
-    Components:
-        - HasDelegator: Protocol for delegation-capable objects
-        - DelegatorProtocol: Contract for delegator implementations
-        - DelegatedProperty: Descriptor for transparent property access
-        - MixinDelegator: Core engine for mixin composition
-        - Validation: Testing and validation framework
-
-    Example:
-        class DataProcessor:
-            def __init__(self):
-                self.delegator = FlextDelegationSystem.create_mixin_delegator(
-                    self, ValidationMixin, SerializationMixin
-                )
-
-            def process(self, data):
-                if self.validate(data):  # From ValidationMixin
-                    return self.serialize(data)  # From SerializationMixin
-
-    Nested Classes:
-        - **HasDelegator**: Protocol defining delegation capability interface
-        - **DelegatorProtocol**: Contract for delegator implementation requirements
-        - **DelegatedMethodProtocol**: Interface for delegated method callables
-        - **DelegatedProperty**: Property descriptor enabling transparent property delegation
-        - **MixinDelegator**: Core delegation engine managing mixin composition
-
-    Static Methods:
-        - **FlextDelegationSystem.create_mixin_delegator()**: Factory method for creating delegation configurations
-        - **FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()**: Comprehensive system validation with test cases
-        - **_validate_delegation_methods()**: Internal method validation testing
-        - **_validate_delegation_info()**: Internal delegation information validation
-
-    Integration Benefits:
-        - **FlextMixins Compatibility**: Works seamlessly with existing FLEXT mixin patterns
-        - **FlextExceptions Integration**: Proper error handling with FLEXT exception hierarchy
-        - **FlextLogger Support**: Structured logging with delegation context information
-        - **FlextResult Pattern**: Type-safe result handling for all validation operations
-        - **Protocol Enforcement**: Ensures type safety through protocol-based contracts
-
-    Performance Considerations:
-        - **Lazy Initialization**: Mixins are initialized only when needed
-        - **Efficient Method Lookup**: Delegated methods use efficient forwarding mechanisms
-        - **Minimal Overhead**: Delegation adds minimal performance overhead to method calls
-        - **Memory Efficiency**: Mixin instances are shared where possible
-
-    Thread Safety:
-        The delegation system is designed to be thread-safe for read operations.
-        Mixin registration should be performed during initialization before
-        concurrent access begins.
-
-    See Also:
-        - FlextMixins: FLEXT mixin system for behavioral composition
-        - FlextExceptions: Exception handling framework
-        - FlextLogger: Structured logging system
-        - FlextDelegationSystem.create_mixin_delegator(): Factory function for delegation setup
-        - FlextDelegationSystem.validate_delegation_system(): System validation and testing
-
-    """
+    """Delegation system for mixin composition and method forwarding."""
 
     # ==========================================================================
     # NESTED PROTOCOLS AND CLASSES FOR LOGICAL ORGANIZATION
@@ -88,148 +28,28 @@ class FlextDelegationSystem:
 
     @runtime_checkable
     class HasDelegator(Protocol):
-        """Protocol interface defining objects with delegation capabilities.
+        """Protocol interface defining objects with delegation capabilities."""
 
-        This protocol establishes the contract for objects that support delegation
-        functionality, ensuring type safety and consistent interface across the
-        delegation system. Objects implementing this protocol must provide access
-        to a delegator instance that manages the delegation behavior.
-
-        Attributes:
-            delegator (DelegatorProtocol): The delegator instance responsible for
-                managing method and property delegation to composed mixin objects.
-
-        Usage:
-            Classes that need delegation capabilities should implement this protocol::
-
-                class MyClass:
-                    def __init__(self):
-                        self.delegator = FlextDelegationSystem.MixinDelegator(
-                            self, MixinA, MixinB
-                        )
-
-
-                # MyClass now satisfies HasDelegator protocol
-                assert isinstance(my_instance, FlextDelegationSystem.HasDelegator)
-
-        """
-
-        delegator: FlextDelegationSystem.DelegatorProtocol
+        delegator: object  # Will be DelegatorProtocol, defined later
 
     @runtime_checkable
     class DelegatorProtocol(Protocol):
-        """Protocol contract defining the interface for delegator implementations.
+        """Protocol contract defining the interface for delegator implementations."""
 
-        This protocol establishes the required interface that all delegator objects
-        must implement, ensuring consistent behavior across different delegation
-        strategies and enabling type-safe delegation operations.
-
-        Methods:
-            get_delegation_info(): Returns efficient information about the
-                current delegation state including host class, mixin classes,
-                and delegated methods.
-
-        Usage:
-            Delegator implementations must satisfy this protocol::
-
-                class CustomDelegator:
-                    def get_delegation_info(self) -> dict[str, object]:
-                        return {
-                            "host_class": "MyHost",
-                            "mixin_classes": ["MixinA", "MixinB"],
-                            "delegated_methods": ["method1", "method2"],
-                        }
-
-
-                # CustomDelegator now satisfies DelegatorProtocol
-
-        """
-
-        def get_delegation_info(self) -> dict[str, object]: ...
+        def get_delegation_info(self) -> FlextTypes.Core.Dict:
+            """Get delegation information."""
+            ...
 
     @runtime_checkable
     class DelegatedMethodProtocol(Protocol):
-        """Protocol interface for delegated method callable objects.
+        """Protocol interface for delegated method callable objects."""
 
-        This protocol defines the contract for delegated methods that forward
-        calls to mixin implementations. It ensures type safety and consistent
-        behavior for all delegated method implementations.
-
-        The protocol requires callable objects that accept arbitrary positional
-        and keyword arguments and return arbitrary results, matching the flexible
-        signature requirements for method delegation.
-
-        Methods:
-            __call__(*args, **kwargs): Callable interface that forwards method
-                invocations to the appropriate mixin implementation with proper
-                error handling and context preservation.
-
-        Usage:
-            Delegated methods automatically satisfy this protocol when created
-            through the delegation system's method creation mechanisms.
-
-        """
-
-        def __call__(self, *args: object, **kwargs: object) -> object: ...
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            """Call delegated method with provided arguments."""
+            ...
 
     class DelegatedProperty:
-        """Property descriptor enabling transparent delegation of property access to mixin instances.
-
-        This descriptor implements the Python descriptor protocol to provide seamless
-        property delegation, allowing host objects to transparently access properties
-        from composed mixin instances. The descriptor handles both getter and setter
-        operations with proper fallback behavior.
-
-        The descriptor supports:
-        - **Transparent Access**: Property access appears native to the host object
-        - **Getter Delegation**: Property reads are forwarded to the mixin instance
-        - **Setter Delegation**: Property writes are forwarded with fallback support
-        - **Default Values**: Configurable default values for missing properties
-        - **Error Handling**: Graceful handling of delegation failures
-
-        Attributes:
-            prop_name (str): Name of the property being delegated
-            mixin_instance (object): The mixin instance that owns the property
-            default (object): Default value returned when property is not available
-
-        Usage Examples:
-            Manual descriptor creation::
-
-                class ValidationMixin:
-                    def __init__(self):
-                        self.is_valid = True
-                        self.error_count = 0
-
-
-                class HostClass:
-                    def __init__(self):
-                        mixin = ValidationMixin()
-                        # Create delegated properties
-                        self.__class__.is_valid = (
-                            FlextDelegationSystem.DelegatedProperty(
-                                "is_valid", mixin, default=False
-                            )
-                        )
-                        self.__class__.error_count = (
-                            FlextDelegationSystem.DelegatedProperty(
-                                "error_count", mixin, default=0
-                            )
-                        )
-
-
-                host = HostClass()
-                print(host.is_valid)  # True (from mixin)
-                print(host.error_count)  # 0 (from mixin)
-
-            Automatic delegation through MixinDelegator::
-
-                # Properties are automatically delegated by MixinDelegator
-                delegator = FlextDelegationSystem.MixinDelegator(
-                    host_instance, ValidationMixin, SerializationMixin
-                )
-                # Properties like 'is_valid' are automatically available on host
-
-        """
+        """Property descriptor enabling transparent delegation of property access to mixin instances."""
 
         def __init__(
             self,
@@ -237,28 +57,7 @@ class FlextDelegationSystem:
             mixin_instance: object,
             default: object = None,
         ) -> None:
-            """Initialize the delegated property descriptor.
-
-            Args:
-                prop_name (str): Name of the property to delegate from the mixin instance.
-                    This should match the exact property name on the mixin.
-                mixin_instance (object): The mixin instance that contains the actual
-                    property implementation.
-                default (object, optional): Default value to return when the property
-                    is not available on the mixin instance. Defaults to None.
-
-            Example:
-                Create a delegated property for validation status::
-
-                    validation_mixin = ValidationMixin()
-                    is_valid_prop = DelegatedProperty(
-                        "is_valid", validation_mixin, False
-                    )
-
-                    # Use as class attribute
-                    MyClass.is_valid = is_valid_prop
-
-            """
+            """Initialize the delegated property descriptor."""
             self.prop_name = prop_name
             self.mixin_instance = mixin_instance
             self.default = default
@@ -266,32 +65,12 @@ class FlextDelegationSystem:
         def __get__(self, instance: object, owner: type | None = None) -> object:
             """Get delegated property value from the mixin instance.
 
-            Implements the descriptor __get__ protocol to retrieve property values
-            from the mixin instance when accessed through the host object. This
-            provides transparent property access delegation.
-
             Args:
-                instance (object): The host object instance accessing the property.
-                    If None, returns the descriptor itself (class-level access).
-                owner (type | None): The owner class of the descriptor. Used for
-                    class-level access patterns.
+                instance: The instance of the host object.
+                owner: The owner of the property.
 
             Returns:
-                object: The property value from the mixin instance, or the configured
-                    default value if the property is not available.
-
-            Behavior:
-                - **Instance Access**: Returns property value from mixin instance
-                - **Class Access**: Returns the descriptor itself for introspection
-                - **Missing Property**: Returns configured default value
-                - **Error Handling**: Gracefully handles AttributeError exceptions
-
-            Example:
-                Property access through delegation::
-
-                    host = HostClass()
-                    # This calls __get__ on the delegated property descriptor
-                    value = host.is_valid  # Gets value from mixin instance
+                object: The delegated property value.
 
             """
             if instance is None:
@@ -301,33 +80,9 @@ class FlextDelegationSystem:
         def __set__(self, instance: object, value: object) -> None:
             """Set delegated property value on both mixin and host instances.
 
-            Implements the descriptor __set__ protocol to forward property assignment
-            operations to the mixin instance while providing fallback storage on
-            the host instance. This ensures property writes are properly delegated
-            with graceful error handling.
-
             Args:
-                instance (object): The host object instance where the property is being set.
-                value (object): The value to assign to the property.
-
-            Behavior:
-                1. **Primary Delegation**: Attempts to set the property on the mixin instance
-                2. **Fallback Storage**: Stores value on host instance with private name
-                3. **Error Handling**: Uses contextlib.suppress for graceful AttributeError handling
-                4. **Dual Storage**: Ensures value is available through both delegation and fallback
-
-            Implementation Details:
-                - Mixin property setting is attempted first for proper delegation
-                - Host fallback uses private attribute naming (_{prop_name})
-                - AttributeError exceptions are suppressed to handle read-only properties
-                - Both storage locations ensure value availability regardless of mixin state
-
-            Example:
-                Property assignment through delegation::
-
-                    host = HostClass()
-                    # This calls __set__ on the delegated property descriptor
-                    host.is_valid = False  # Sets on both mixin and host instances
+                instance: The instance of the host object.
+                value: The value to set.
 
             """
             # If the mixin instance has the setter, delegate to it
@@ -337,219 +92,15 @@ class FlextDelegationSystem:
             setattr(instance, f"_{self.prop_name}", value)
 
     class MixinDelegator:
-        """Advanced mixin composition engine providing sophisticated delegation patterns for complex behavior aggregation.
+        """Advanced mixin composition engine providing sophisticated delegation patterns."""
 
-        This class serves as the core delegation engine that enables powerful composition
-        patterns by automatically delegating methods and properties from multiple mixin
-        instances to a host object. It eliminates the complexity and limitations of
-        multiple inheritance while providing dynamic, runtime-configurable behavior composition.
-
-        **COMPOSITION OVER INHERITANCE**: The MixinDelegator implements the composition
-        design pattern, allowing objects to gain functionality by containing and delegating
-        to other objects rather than inheriting from multiple base classes.
-
-        Key Features:
-            - **Multi-Mixin Support**: Compose behavior from multiple mixin classes simultaneously
-            - **Automatic Method Delegation**: Methods are automatically forwarded from mixins to host
-            - **Property Delegation**: Properties use descriptor protocol for transparent access
-            - **Dynamic Registration**: Mixins can be registered and configured at runtime
-            - **Error Handling**: Comprehensive error management with detailed logging
-            - **Validation Framework**: Built-in validation of delegation correctness
-            - **Type Safety**: Protocol-based contracts ensure proper delegation interfaces
-            - **Performance Optimized**: Efficient method lookup and delegation mechanisms
-
-        Delegation Process:
-            1. **Mixin Registration**: Each mixin class is instantiated and registered
-            2. **Method Discovery**: Public methods are discovered from mixin instances
-            3. **Property Identification**: Properties are identified for descriptor creation
-            4. **Automatic Delegation**: Methods and properties are automatically delegated to host
-            5. **Validation**: Delegation correctness is validated for runtime safety
-
-        Attributes:
-            host_instance (object): The target object that will receive delegated functionality
-            mixin_instances (dict[type, object]): Mapping of mixin classes to their instances
-            logger (FlextLogger): Structured logger for delegation operations and debugging
-            _DELEGATED_PROPERTIES (ClassVar[list[str]]): List of properties to delegate automatically
-
-        Usage Examples:
-            Basic mixin composition::
-
-                class DataProcessor:
-                    def __init__(self):
-                        self.delegator = FlextDelegationSystem.MixinDelegator(
-                            self,
-                            ValidationMixin,  # Provides validate(), is_valid property
-                            SerializationMixin,  # Provides to_dict(), from_dict()
-                            CachingMixin,  # Provides cache_get(), cache_set()
-                            LoggingMixin,  # Provides log_info(), log_error()
-                        )
-
-                    def process_data(self, data: dict):
-                        # Use delegated methods seamlessly
-                        if not self.validate(data):  # From ValidationMixin
-                            self.log_error("Invalid data")  # From LoggingMixin
-                            return None
-
-                        # Check cache first
-                        cached = self.cache_get(data)  # From CachingMixin
-                        if cached:
-                            return cached
-
-                        # Process and cache result
-                        result = self.expensive_operation(data)
-                        self.cache_set(data, result)  # From CachingMixin
-
-                        # Serialize for logging
-                        serialized = self.to_dict()  # From SerializationMixin
-                        self.log_info(f"Processed: {serialized}")  # From LoggingMixin
-
-                        return result
-
-            Advanced delegation with validation::
-
-                processor = DataProcessor()
-
-                # Validate delegation is working correctly
-                validation_result = processor.delegator._validate_delegation()
-                if validation_result.success:
-                    info = processor.delegator.get_delegation_info()
-                    print(f"Host: {info['host_class']}")
-                    print(f"Mixins: {', '.join(info['mixin_classes'])}")
-                    print(f"Delegated methods: {len(info['delegated_methods'])}")
-                else:
-                    print(f"Delegation failed: {validation_result.error}")
-
-            Runtime mixin inspection::
-
-                # Get specific mixin instance for advanced operations
-                validation_mixin = processor.delegator.get_mixin_instance(
-                    ValidationMixin
-                )
-                if validation_mixin:
-                    # Direct access to mixin for advanced scenarios
-                    detailed_errors = validation_mixin.get_detailed_validation_errors()
-
-                # Get efficient delegation information
-                info = processor.delegator.get_delegation_info()
-                for method_name in info["delegated_methods"]:
-                    method = getattr(processor, method_name)
-                    print(f"Method {method_name}: {method.__doc__}")
-
-        Error Handling:
-            The delegator provides robust error handling:
-            - **Registration Errors**: Detailed logging and exception propagation for mixin registration failures
-            - **Delegation Errors**: Comprehensive error reporting with context preservation
-            - **Method Errors**: Wrapped method calls with proper exception handling and logging
-            - **Validation Errors**: Built-in validation framework for delegation correctness
-
-        Performance Considerations:
-            - **Lazy Evaluation**: Methods and properties are created only once during initialization
-            - **Efficient Lookup**: Delegated methods use direct function references for fast calls
-            - **Minimal Overhead**: Delegation adds minimal runtime overhead to method invocations
-            - **Memory Efficiency**: Mixin instances are created once and reused throughout lifecycle
-
-        Integration:
-            - **FlextMixins**: Works seamlessly with all FLEXT mixin classes
-            - **FlextLogger**: Comprehensive logging with structured context information
-            - **FlextExceptions**: Proper error handling using FLEXT exception hierarchy
-            - **FlextResult**: Type-safe validation results for delegation operations
-
-        """
-
-        _DELEGATED_PROPERTIES: ClassVar[list[str]] = [
+        _DELEGATED_PROPERTIES: ClassVar[FlextTypes.Core.StringList] = [
             "is_valid",
             "validation_errors",
         ]
 
         def __init__(self, host_instance: object, *mixin_classes: type) -> None:
-            """Initialize the mixin delegator with host object and mixin classes for composition.
-
-            Sets up the complete delegation system by instantiating mixin classes, registering
-            them for delegation, and automatically configuring method and property delegation
-            to the host instance. This creates a powerful composition-based architecture.
-
-            Args:
-                host_instance (object): The target object that will receive all delegated
-                    functionality. This object becomes the interface through which all
-                    mixin capabilities are accessed.
-                *mixin_classes (type): Variable number of mixin classes to instantiate
-                    and delegate from. Each class will be instantiated and its public
-                    methods and properties will be automatically delegated to the host.
-
-            Initialization Process:
-                1. **Host Registration**: Store reference to the host instance
-                2. **Mixin Instantiation**: Create instances of all provided mixin classes
-                3. **Method Discovery**: Discover public methods from each mixin instance
-                4. **Property Discovery**: Identify properties for descriptor-based delegation
-                5. **Automatic Delegation**: Set up method and property delegation to host
-                6. **Validation**: Perform initial validation of delegation correctness
-
-            Usage Examples:
-                Basic multi-mixin composition::
-
-                    class BusinessLogic:
-                        def __init__(self):
-                            # Compose functionality from multiple mixins
-                            self.delegator = FlextDelegationSystem.MixinDelegator(
-                                self,  # Host instance
-                                ValidationMixin,  # Provides validation capabilities
-                                SerializationMixin,  # Provides JSON serialization
-                                CachingMixin,  # Provides caching functionality
-                                AuditMixin,  # Provides audit logging
-                            )
-
-                        def process_request(self, request_data):
-                            # All mixin methods now available on self
-                            if self.validate(request_data):  # From ValidationMixin
-                                cached = self.get_cached(
-                                    request_data
-                                )  # From CachingMixin
-                                if not cached:
-                                    result = self.expensive_operation(request_data)
-                                    self.set_cached(
-                                        request_data, result
-                                    )  # From CachingMixin
-                                    self.audit_log(
-                                        "cache_miss", request_data
-                                    )  # From AuditMixin
-                                else:
-                                    result = cached
-                                    self.audit_log(
-                                        "cache_hit", request_data
-                                    )  # From AuditMixin
-
-                                return self.serialize(result)  # From SerializationMixin
-                            return None
-
-                Error handling and logging::
-
-                    try:
-                        logic = BusinessLogic()
-                        # Delegation automatically configured
-                        result = logic.process_request(data)
-                    except FlextExceptions.BaseError as e:
-                        # Handle delegation setup errors
-                        logger.error(f"Delegation setup failed: {e}")
-
-            Error Conditions:
-                The initialization process may raise FlextExceptions.BaseError for:
-                - **Mixin Instantiation Failures**: When mixin classes cannot be instantiated
-                - **Method Conflict Errors**: When multiple mixins provide conflicting methods
-                - **Property Delegation Errors**: When property delegation cannot be configured
-                - **Validation Failures**: When initial delegation validation fails
-
-            Performance Notes:
-                - Mixin instances are created once during initialization for efficiency
-                - Method delegation uses direct function references to minimize call overhead
-                - Property delegation uses Python's descriptor protocol for optimal performance
-                - Automatic delegation setup happens once, with no ongoing runtime overhead
-
-            See Also:
-                - get_delegation_info(): Retrieve information about configured delegation
-                - get_mixin_instance(): Access specific mixin instances for advanced operations
-                - _validate_delegation(): Validate that delegation is configured correctly
-
-            """
+            """Initialize the mixin delegator with host object and mixin classes for composition."""
             self.host_instance = host_instance
             self.mixin_instances: dict[type, object] = {}
             self.logger = FlextLogger(self.__class__.__name__)
@@ -562,7 +113,12 @@ class FlextDelegationSystem:
             self._auto_delegate_methods()
 
         def _register_mixin(self, mixin_class: type) -> None:
-            """Register and initialize a mixin class for delegation."""
+            """Register and initialize a mixin class for delegation.
+
+            Args:
+                mixin_class: The mixin class to register.
+
+            """
             try:
                 # Create mixin instance (assuming zero-arg constructor for now)
                 mixin_instance = mixin_class()
@@ -590,7 +146,12 @@ class FlextDelegationSystem:
                 raise FlextExceptions.BaseError(error_msg) from e
 
         def _auto_delegate_methods(self) -> None:
-            """Automatically delegate common methods from mixins to host."""
+            """Automatically delegate common methods from mixins to host.
+
+            Args:
+                mixin_class: The mixin class to register.
+
+            """
             for mixin_instance in self.mixin_instances.values():
                 # Delegate common properties using descriptors
                 for prop_name in self._DELEGATED_PROPERTIES:
@@ -627,7 +188,16 @@ class FlextDelegationSystem:
             prop_name: str,
             mixin_instance: object,
         ) -> FlextDelegationSystem.DelegatedProperty:
-            """Create a delegated property descriptor."""
+            """Create a delegated property descriptor.
+
+            Args:
+                prop_name: The name of the property to delegate.
+                mixin_instance: The instance of the mixin class.
+
+            Returns:
+                FlextDelegationSystem.DelegatedProperty: The delegated property descriptor.
+
+            """
             return FlextDelegationSystem.DelegatedProperty(prop_name, mixin_instance)
 
         def _create_delegated_method(
@@ -635,7 +205,16 @@ class FlextDelegationSystem:
             method_name: str,
             mixin_instance: object,
         ) -> FlextDelegationSystem.DelegatedMethodProtocol:
-            """Create a delegated method that forwards calls to mixin."""
+            """Create a delegated method that forwards calls to mixin.
+
+            Args:
+                method_name: The name of the method to delegate.
+                mixin_instance: The instance of the mixin class.
+
+            Returns:
+                FlextDelegationSystem.DelegatedMethodProtocol: The delegated method.
+
+            """
 
             def delegated_method(*args: object, **kwargs: object) -> object:
                 original_method = getattr(mixin_instance, method_name)
@@ -662,8 +241,13 @@ class FlextDelegationSystem:
             return delegated_method
 
         def _validate_delegation(self) -> FlextResult[None]:
-            """Validate that delegation is working correctly."""
-            validation_results: list[str] = []
+            """Validate that delegation is working correctly.
+
+            Returns:
+                FlextResult[None]: The validation result.
+
+            """
+            validation_results: FlextTypes.Core.StringList = []
 
             for mixin_class, mixin_instance in self.mixin_instances.items():
                 try:
@@ -701,114 +285,8 @@ class FlextDelegationSystem:
             """Get instance of specific mixin class."""
             return self.mixin_instances.get(mixin_class)
 
-        def get_delegation_info(self) -> dict[str, object]:
-            """Get efficient information about the current delegation state and configuration.
-
-            Provides detailed introspection into the delegation system's current state,
-            including host class information, registered mixin classes, and all methods
-            that have been successfully delegated. This information is valuable for
-            debugging, monitoring, and validation purposes.
-
-            Returns:
-                dict[str, object]: Comprehensive delegation information containing:
-                    - **host_class** (str): Name of the host class receiving delegated functionality
-                    - **mixin_classes** (list[str]): Names of all registered mixin classes
-                    - **delegated_methods** (list[str]): Names of all methods delegated to the host
-
-            Dictionary Structure:
-                The returned dictionary has the following structure::
-
-                    {
-                        "host_class": "BusinessLogic",
-                        "mixin_classes": [
-                            "ValidationMixin",
-                            "SerializationMixin",
-                            "CachingMixin",
-                        ],
-                        "delegated_methods": [
-                            "validate",
-                            "is_valid",
-                            "get_errors",  # From ValidationMixin
-                            "to_dict",
-                            "from_dict",
-                            "serialize",  # From SerializationMixin
-                            "cache_get",
-                            "cache_set",
-                            "clear_cache",  # From CachingMixin
-                        ],
-                    }
-
-            Usage Examples:
-                Basic delegation introspection::
-
-                    processor = DataProcessor()
-                    info = processor.delegator.get_delegation_info()
-
-                    print(f"Host class: {info['host_class']}")
-                    print(f"Number of mixins: {len(info['mixin_classes'])}")
-                    print(f"Total delegated methods: {len(info['delegated_methods'])}")
-
-                    for mixin in info["mixin_classes"]:
-                        print(f"  - {mixin}")
-
-                Debugging delegation issues::
-
-                    info = processor.delegator.get_delegation_info()
-
-                    # Check if expected methods are delegated
-                    expected_methods = ["validate", "serialize", "cache_get"]
-                    missing_methods = [
-                        method
-                        for method in expected_methods
-                        if method not in info["delegated_methods"]
-                    ]
-
-                    if missing_methods:
-                        print(f"Missing expected methods: {missing_methods}")
-                    else:
-                        print("All expected methods properly delegated")
-
-                Monitoring and logging::
-
-                    info = processor.delegator.get_delegation_info()
-
-                    logger.info(
-                        "Delegation status report",
-                        host_class=info["host_class"],
-                        mixin_count=len(info["mixin_classes"]),
-                        method_count=len(info["delegated_methods"]),
-                        mixins=info["mixin_classes"],
-                    )
-
-                    # Log detailed method mapping
-                    for method_name in info["delegated_methods"]:
-                        if hasattr(processor, method_name):
-                            method = getattr(processor, method_name)
-                            logger.debug(
-                                f"Delegated method: {method_name}",
-                                doc=getattr(method, "__doc__", "No documentation"),
-                                name=getattr(method, "__name__", method_name),
-                            )
-
-            Use Cases:
-                - **System Monitoring**: Track delegation health in production systems
-                - **Development Debugging**: Understand which methods are available through delegation
-                - **Testing Validation**: Verify that expected delegation patterns are configured
-                - **Documentation Generation**: Create dynamic documentation of delegated interfaces
-                - **Runtime Introspection**: Allow systems to adapt based on available delegated functionality
-
-            Performance Notes:
-                This method performs runtime introspection and should be used primarily
-                for debugging, monitoring, and validation rather than in performance-critical
-                code paths. The information gathering involves reflection operations that
-                may have performance implications if called frequently.
-
-            See Also:
-                - get_mixin_instance(): Retrieve specific mixin instances
-                - _validate_delegation(): Comprehensive validation of delegation correctness
-                - FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(): System-wide validation
-
-            """
+        def get_delegation_info(self) -> FlextTypes.Core.Dict:
+            """Return efficient information about the current delegation state and configuration."""
             return {
                 "host_class": self.host_instance.__class__.__name__,
                 "mixin_classes": [cls.__name__ for cls in self.mixin_instances],
@@ -830,284 +308,17 @@ class FlextDelegationSystem:
         host_instance: object,
         *mixin_classes: type,
     ) -> FlextDelegationSystem.MixinDelegator:
-        """Factory method for creating configured mixin delegators with efficient delegation setup.
-
-        This static factory method provides a convenient way to create and configure
-        MixinDelegator instances with automatic mixin registration and method delegation.
-        It serves as the primary entry point for setting up delegation patterns in the
-        FLEXT ecosystem.
-
-        Args:
-            host_instance (object): The target object that will receive all delegated
-                functionality from the mixin classes. This object becomes the unified
-                interface through which all mixin capabilities are accessed.
-            *mixin_classes (type): Variable number of mixin classes to instantiate
-                and delegate from. Each class will be automatically instantiated,
-                and its public methods and properties will be delegated to the host.
-
-        Returns:
-            FlextDelegationSystem.MixinDelegator: Fully configured delegator instance
-                with all specified mixins registered and their methods automatically
-                delegated to the host object.
-
-        Factory Benefits:
-            - **Convenience**: Single method call for complete delegation setup
-            - **Type Safety**: Returns properly typed MixinDelegator instance
-            - **Error Handling**: Comprehensive error management during setup
-            - **Consistency**: Ensures consistent delegation configuration patterns
-            - **Integration**: Seamless integration with FLEXT ecosystem components
-
-        Usage Examples:
-            Basic delegation setup::
-
-                class DataService:
-                    def __init__(self):
-                        # Use factory method for clean delegation setup
-                        self.delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
-                            self,
-                            ValidationMixin,  # Input validation
-                            SerializationMixin,  # JSON serialization
-                            CachingMixin,  # Result caching
-                            MetricsMixin,  # Performance metrics
-                        )
-
-                    def get_data(self, query: dict):
-                        # Use delegated methods seamlessly
-                        if not self.validate_input(query):  # From ValidationMixin
-                            return None
-
-                        # Check cache first
-                        cached_result = self.cache_get(query)  # From CachingMixin
-                        if cached_result:
-                            self.record_metric("cache_hit")  # From MetricsMixin
-                            return self.deserialize(
-                                cached_result
-                            )  # From SerializationMixin
-
-                        # Fetch and cache new data
-                        data = self.fetch_from_source(query)
-                        serialized = self.serialize(data)  # From SerializationMixin
-                        self.cache_set(query, serialized)  # From CachingMixin
-                        self.record_metric("cache_miss")  # From MetricsMixin
-
-                        return data
-
-            Advanced pattern with validation::
-
-                # Create service with delegation
-                service = DataService()
-
-                # Validate delegation was set up correctly
-                info = service.delegator.get_delegation_info()
-                expected_methods = [
-                    "validate_input",
-                    "serialize",
-                    "cache_get",
-                    "record_metric",
-                ]
-
-                missing = [
-                    m for m in expected_methods if m not in info["delegated_methods"]
-                ]
-                if missing:
-                    raise ValueError(f"Missing expected delegated methods: {missing}")
-
-                print(
-                    f"Successfully delegated {len(info['delegated_methods'])} methods"
-                )
-                print(f"From mixins: {', '.join(info['mixin_classes'])}")
-
-            Error handling::
-
-                try:
-                    delegator = FlextDelegationSystem.FlextDelegationSystem.create_mixin_delegator(
-                        host_instance,
-                        ValidMixin,
-                        InvalidMixin,  # This might fail instantiation
-                        AnotherMixin,
-                    )
-                except FlextExceptions.BaseError as e:
-                    logger.error(f"Delegation setup failed: {e}")
-                    # Handle delegation failure appropriately
-
-        Implementation Details:
-            The factory method internally:
-            1. Creates a new MixinDelegator instance
-            2. Passes all parameters directly to the constructor
-            3. Allows the MixinDelegator to handle mixin registration and delegation
-            4. Returns the fully configured delegator for immediate use
-
-        Error Conditions:
-            May raise FlextExceptions.BaseError for:
-            - **Invalid Host**: Host instance is None or invalid
-            - **Mixin Instantiation**: Mixin classes cannot be instantiated
-            - **Delegation Setup**: Automatic delegation configuration fails
-            - **Validation Errors**: Initial delegation validation fails
-
-        Performance Considerations:
-            - Factory method has minimal overhead, delegates to MixinDelegator constructor
-            - Mixin instantiation and delegation setup occur once during creation
-            - Resulting delegator provides efficient method delegation with minimal runtime overhead
-            - Consider caching delegator instances for frequently created objects with identical mixin patterns
-
-        See Also:
-            - MixinDelegator.__init__(): Direct constructor for advanced configuration
-            - FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system(): System-wide validation capabilities
-            - get_delegation_info(): Introspection of delegation configuration
-
-        """
+        """Create configured mixin delegators with efficient delegation setup."""
         return FlextDelegationSystem.MixinDelegator(host_instance, *mixin_classes)
 
     @staticmethod
     def validate_delegation_system() -> FlextResult[
-        dict[str, str | list[str] | dict[str, object]]
+        dict[str, str | FlextTypes.Core.StringList | FlextTypes.Core.Dict]
     ]:
-        """Comprehensive validation of the delegation system with extensive test cases and reporting.
-
-        Performs thorough validation of the entire delegation system by creating test
-        scenarios, executing delegation operations, and verifying correct behavior.
-        This method serves as both a system health check and a efficient test
-        suite for delegation functionality.
+        """Perform comprehensive validation of the delegation system with extensive test cases and reporting.
 
         Returns:
-            FlextResult[dict[str, str | list[str] | dict[str, object]]]: Comprehensive
-                validation result containing either:
-                - **Success**: Detailed validation report with test results and system information
-                - **Failure**: Error information with specific failure details and context
-
-        Validation Coverage:
-            The validation process covers:
-            - **Mixin Registration**: Verifies mixins can be properly instantiated and registered
-            - **Method Delegation**: Confirms methods are correctly delegated to host objects
-            - **Property Delegation**: Validates property access through descriptor protocol
-            - **Error Handling**: Tests error propagation and exception handling
-            - **Integration Points**: Verifies integration with FlextMixins and other components
-            - **Type Safety**: Confirms protocol compliance and type safety
-            - **Performance**: Basic performance validation of delegation operations
-
-        Test Scenarios:
-            The validation creates and tests:
-            1. **Basic Host Class**: Simple class with delegation setup
-            2. **FlextMixins Integration**: Integration with standard FLEXT mixin patterns
-            3. **Method Functionality**: Verification that delegated methods work correctly
-            4. **Property Access**: Validation of delegated property getter/setter behavior
-            5. **Error Conditions**: Testing error handling and exception propagation
-            6. **Information Retrieval**: Validation of delegation introspection capabilities
-
-        Success Response Structure::
-
-            {
-                "status": "SUCCESS",
-                "test_results": [
-                    "✓ Validation methods successfully delegated",
-                    "✓ Serialization methods successfully delegated",
-                    "✓ Delegated methods are functional",
-                    "✓ Delegation info validation successful",
-                ],
-                "delegation_info": {
-                    "host_class": "TestHost",
-                    "mixin_classes": ["ValidationMixin", "SerializationMixin"],
-                    "delegated_methods": [
-                        "validate",
-                        "serialize",
-                        "to_dict",
-                        "is_valid",
-                    ],
-                },
-            }
-
-        Failure Response:
-            On failure, returns detailed error information with context about what
-            specific validation step failed and why, enabling targeted debugging.
-
-        Usage Examples:
-            Basic system validation::
-
-                # Validate the entire delegation system
-                validation_result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
-
-                if validation_result.success:
-                    report = validation_result.value
-                    print(f"Validation Status: {report['status']}")
-                    print("Test Results:")
-                    for test in report["test_results"]:
-                        print(f"  {test}")
-
-                    info = report["delegation_info"]
-                    print(f"Host Class: {info['host_class']}")
-                    print(f"Mixins: {', '.join(info['mixin_classes'])}")
-                    print(f"Methods: {len(info['delegated_methods'])}")
-                else:
-                    print(f"Validation Failed: {validation_result.error}")
-
-            Integration with health checks::
-
-                def system_health_check() -> bool:
-                    # Check if delegation system is healthy
-                    validation = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
-
-                    if validation.success:
-                        report = validation.value
-                        # Additional health criteria
-                        return (
-                            report["status"] == "SUCCESS"
-                            and len(report["test_results"]) >= 4
-                            and all("✓" in result for result in report["test_results"])
-                        )
-                    return False
-
-
-                if system_health_check():
-                    print("Delegation system is healthy")
-                else:
-                    print("Delegation system health check failed")
-
-            Continuous monitoring::
-
-                import time
-
-
-                def monitor_delegation_system():
-                    # Periodic validation monitoring
-                    while True:
-                        result = FlextDelegationSystem.FlextDelegationSystem.validate_delegation_system()
-
-                        if result.success:
-                            report = result.value
-                            test_count = len(report["test_results"])
-                            logger.info(
-                                f"Delegation system healthy: {test_count} tests passed"
-                            )
-                        else:
-                            logger.error(f"Delegation system unhealthy: {result.error}")
-                            # Alert monitoring system
-
-                        time.sleep(300)  # Check every 5 minutes
-
-        Error Handling:
-            The validation method handles various error conditions:
-            - **Mixin Instantiation Failures**: When test mixins cannot be created
-            - **Delegation Setup Failures**: When delegation configuration fails
-            - **Method Validation Failures**: When delegated methods don't work correctly
-            - **Type Validation Failures**: When type safety is compromised
-            - **Integration Failures**: When FLEXT ecosystem integration fails
-
-        Performance Impact:
-            This is a efficient validation method that creates test objects,
-            performs multiple validation operations, and generates detailed reports.
-            It should be used for:
-            - System startup validation
-            - Periodic health checks
-            - Development and testing validation
-            - Troubleshooting delegation issues
-
-        It is not intended for high-frequency production use due to its efficient
-        nature and resource requirements.
-
-        See Also:
-            - MixinDelegator._validate_delegation(): Instance-level delegation validation
-            - FlextDelegationSystem.create_mixin_delegator(): Factory method for delegation setup
-            - get_delegation_info(): Delegation introspection capabilities
+            FlextResult[dict[str, str | FlextTypes.Core.StringList | FlextTypes.Core.Dict]]: The validation result.
 
         """
 
@@ -1134,7 +345,7 @@ class FlextDelegationSystem:
                 # Test delegation can work with FlextMixins static methods
                 self.delegator = FlextDelegationSystem.create_mixin_delegator(self)
 
-        test_results: list[str] = []
+        test_results: FlextTypes.Core.StringList = []
 
         try:
             # Create test instance
@@ -1145,7 +356,9 @@ class FlextDelegationSystem:
             FlextDelegationSystem._validate_method_functionality(host, test_results)
             info = FlextDelegationSystem._validate_delegation_info(host, test_results)
 
-            return FlextResult[dict[str, str | list[str] | dict[str, object]]].ok(
+            return FlextResult[
+                dict[str, str | FlextTypes.Core.StringList | FlextTypes.Core.Dict]
+            ].ok(
                 {
                     "status": "SUCCESS",
                     "test_results": test_results,
@@ -1166,12 +379,16 @@ class FlextDelegationSystem:
             error_msg: str = (
                 f"Delegation system validation failed: {'; '.join(test_results)}"
             )
-            return FlextResult[dict[str, str | list[str] | dict[str, object]]].fail(
+            return FlextResult[
+                dict[str, str | FlextTypes.Core.StringList | FlextTypes.Core.Dict]
+            ].fail(
                 error_msg,
             )
 
     @staticmethod
-    def _validate_delegation_methods(host: object, test_results: list[str]) -> None:
+    def _validate_delegation_methods(
+        host: object, test_results: FlextTypes.Core.StringList
+    ) -> None:
         """Validate that delegation methods exist on the host."""
 
         def _raise_delegation_error(message: str) -> NoReturn:
@@ -1192,7 +409,9 @@ class FlextDelegationSystem:
         test_results.append("✓ Serialization methods successfully delegated")
 
     @staticmethod
-    def _validate_method_functionality(host: object, test_results: list[str]) -> None:
+    def _validate_method_functionality(
+        host: object, test_results: FlextTypes.Core.StringList
+    ) -> None:
         """Validate that delegated methods are functional."""
 
         def _raise_type_error(message: str) -> NoReturn:
@@ -1225,9 +444,18 @@ class FlextDelegationSystem:
     @staticmethod
     def _validate_delegation_info(
         host: object,
-        test_results: list[str],
-    ) -> dict[str, object]:
-        """Validate delegation info and return it."""
+        test_results: FlextTypes.Core.StringList,
+    ) -> FlextTypes.Core.Dict:
+        """Validate delegation info and return it.
+
+        Args:
+            host: The host object.
+            test_results: The list of test results.
+
+        Returns:
+            FlextTypes.Core.Dict: The delegation info.
+
+        """
 
         def _raise_delegation_error(message: str) -> NoReturn:
             raise FlextExceptions.BaseError(message)
@@ -1242,30 +470,33 @@ class FlextDelegationSystem:
         return info
 
     @classmethod
-    def configure_delegation_system(cls, config: dict[str, object]) -> object:
+    def configure_delegation_system(cls, config: FlextTypes.Core.Dict) -> object:
         """Configure delegation system using FlextTypes.Config with StrEnum validation.
 
-        This method implements efficient system configuration for the FlextDelegationSystem
-        ecosystem, providing centralized configuration management for delegation systems,
-        mixin composition, method forwarding, and validation with full validation
-        using FlextConstants.Config StrEnum classes.
-
-        **ARCHITECTURAL IMPORTANCE**: This method serves as the primary configuration
-        entry point for the entire delegation system, ensuring consistent configuration
-        patterns across all delegation functionality while providing efficient
-        validation and error handling.
-
         Args:
-            config: Configuration dictionary with delegation system settings
-                Must include environment, config_source, and validation_level keys
-                using appropriate FlextConstants.Config StrEnum values
+            config: The configuration dictionary.
 
         Returns:
-            Configured delegation system instance with efficient functionality
+            object: The delegation system configuration.
 
         """
         # Delayed import to avoid circular dependencies during system initialization
         try:
+            # Optional validation of core env/log/validation via Settings bridge
+            try:
+                core_validation = {
+                    "environment": config.get("environment"),
+                    "log_level": config.get("log_level", "INFO"),
+                    "validation_level": config.get("validation_level"),
+                }
+                # Validate but ignore result to preserve backward-compatible behavior
+                _ = FlextConfig.create_from_environment(extra_settings=core_validation)
+            except Exception as e:
+                # Log validation failure but preserve backward-compatible behavior
+                logger = FlextLogger("DelegationSystem")
+                logger.debug(f"Delegation settings validation failed: {e}")
+                # Keep error semantics unchanged
+
             # Validate required configuration keys using FlextConstants.Config patterns
             required_keys = ["environment", "config_source", "validation_level"]
             missing_keys = [key for key in required_keys if key not in config]
@@ -1360,7 +591,7 @@ class FlextDelegationSystem:
         """Retrieve current delegation system configuration with runtime metrics.
 
         Returns:
-            Comprehensive configuration object containing system state and runtime metrics
+            object: The delegation system configuration.
 
         """
         try:
@@ -1424,10 +655,10 @@ class FlextDelegationSystem:
         """Create environment-specific configuration for delegation system.
 
         Args:
-            environment: Target environment name (development, testing, staging, production, performance)
+            environment: The environment name.
 
         Returns:
-            Environment-specific configuration object optimized for the target environment
+            object: The environment delegation configuration.
 
         """
         try:
@@ -1479,15 +710,7 @@ class FlextDelegationSystem:
 
     @classmethod
     def optimize_delegation_performance(cls, optimization_level: str) -> object:
-        """Optimize delegation system performance for specific performance requirements.
-
-        Args:
-            optimization_level: Performance optimization level (low, balanced, high, extreme)
-
-        Returns:
-            Comprehensive performance optimization configuration
-
-        """
+        """Optimize delegation system performance for specific performance requirements."""
         try:
             # Performance optimization configurations
             optimization_configs = {
@@ -1535,6 +758,6 @@ class FlextDelegationSystem:
             }
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextDelegationSystem",
 ]

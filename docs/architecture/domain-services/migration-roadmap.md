@@ -778,7 +778,7 @@ class FlextDomainServiceDevTools:
     """Development tools for domain service implementation."""
 
     @staticmethod
-    def analyze_business_operations(library_path: str) -> dict[str, list[str]]:
+    def analyze_business_operations(library_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze existing business operations for domain service opportunities."""
         return {
             "complex_operations": ["multi_step_process", "cross_entity_coordination"],
@@ -844,7 +844,7 @@ class FlextDomainServiceMigrationTools:
     """Automated tools for domain service migration."""
 
     @staticmethod
-    def detect_coordination_patterns(source_code: str) -> dict[str, list[str]]:
+    def detect_coordination_patterns(source_code: str) -> dict[str, FlextTypes.Core.StringList]:
         """Detect business operation coordination patterns in existing code."""
         import ast
         import re
@@ -859,7 +859,7 @@ class FlextDomainServiceMigrationTools:
         return patterns
 
     @staticmethod
-    def suggest_domain_service_refactoring(coordination_patterns: dict[str, list[str]]) -> dict[str, str]:
+    def suggest_domain_service_refactoring(coordination_patterns: dict[str, FlextTypes.Core.StringList]) -> FlextTypes.Core.Headers:
         """Suggest domain service refactoring based on detected patterns."""
         suggestions = {}
 

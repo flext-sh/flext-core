@@ -242,7 +242,7 @@ class FlextMeltanoETLService(
                 f"Compensation applied: {compensation_result}"
             )
 
-    def _validate_singer_schema(self, schema: dict[str, object]) -> bool:
+    def _validate_singer_schema(self, schema: FlextTypes.Core.Dict) -> bool:
         """Validate Singer schema format and requirements."""
         required_fields = ["stream", "schema", "key_properties"]
         return all(field in schema for field in required_fields)
@@ -537,7 +537,7 @@ class FlextGRPCService(
 
 ```python
 # CURRENT: Excellent Template Method pattern usage
-class FlextLDAPServices(FlextServiceProcessor[dict[str, object], object, dict[str, object]]):
+class FlextLDAPServices(FlextServiceProcessor[FlextTypes.Core.Dict, object, FlextTypes.Core.Dict]):
     """Single FlextLDAPServices class inheriting from FlextServiceProcessor.
 
     Consolidates ALL LDAP services into a single class following FLEXT patterns.
@@ -552,12 +552,12 @@ class FlextLDAPServices(FlextServiceProcessor[dict[str, object], object, dict[st
         - Dependency Inversion: Depends on FlextServiceProcessor abstraction
     """
 
-    def process(self, request: dict[str, object]) -> FlextResult[object]:
+    def process(self, request: FlextTypes.Core.Dict) -> FlextResult[object]:
         """Process LDAP request using Template Method pattern."""
         # Excellent business logic implementation
         pass
 
-    def build(self, domain: object, *, correlation_id: str) -> dict[str, object]:
+    def build(self, domain: object, *, correlation_id: str) -> FlextTypes.Core.Dict:
         """Build LDAP response using Template Method pattern."""
         # Excellent result building implementation
         pass
@@ -723,8 +723,8 @@ class FlextServiceOrchestrationTemplate:
 
     def setup_service_ecosystem(
         self,
-        service_definitions: list[dict[str, object]]
-    ) -> FlextResult[dict[str, str]]:
+        service_definitions: list[FlextTypes.Core.Dict]
+    ) -> FlextResult[FlextTypes.Core.Headers]:
         """Setup service ecosystem with registration and health monitoring."""
 
         registration_results = {}
@@ -748,12 +748,12 @@ class FlextServiceOrchestrationTemplate:
             if orchestrator_result.success and registry_result.success:
                 registration_results[service_def["name"]] = registry_result.value
 
-        return FlextResult[dict[str, str]].ok(registration_results)
+        return FlextResult[FlextTypes.Core.Headers].ok(registration_results)
 
     def execute_universal_workflow(
         self,
-        workflow_template: dict[str, object]
-    ) -> FlextResult[dict[str, object]]:
+        workflow_template: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Execute workflow with universal patterns."""
 
         # Add universal workflow steps
@@ -790,7 +790,7 @@ class FlextUniversalPerformanceMonitoring:
 
     def __init__(self):
         self.metrics = FlextServices.ServiceMetrics()
-        self._performance_store: dict[str, list[dict[str, object]]] = {}
+        self._performance_store: dict[str, list[FlextTypes.Core.Dict]] = {}
 
     def track_service_with_context(
         self,
@@ -798,7 +798,7 @@ class FlextUniversalPerformanceMonitoring:
         operation: str,
         duration_ms: float,
         success: bool,
-        context: dict[str, object] | None = None
+        context: FlextTypes.Core.Dict | None = None
     ) -> FlextResult[None]:
         """Track service performance with contextual information."""
 
@@ -829,7 +829,7 @@ class FlextUniversalPerformanceMonitoring:
 
         return tracking_result
 
-    def generate_cross_library_performance_report(self) -> FlextResult[dict[str, object]]:
+    def generate_cross_library_performance_report(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Generate performance report across all FLEXT libraries."""
 
         library_stats = {}
@@ -878,7 +878,7 @@ class FlextUniversalPerformanceMonitoring:
             "recommendations": self._generate_adoption_recommendations(template_method_adoption)
         }
 
-        return FlextResult[dict[str, object]].ok(cross_library_report)
+        return FlextResult[FlextTypes.Core.Dict].ok(cross_library_report)
 ```
 
 ### Ecosystem-Wide Benefits

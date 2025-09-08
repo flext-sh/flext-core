@@ -61,8 +61,8 @@ class FlextWebConfig(FlextConfig):
     # Security configuration
     secret_key: str = Field(min_length=32, description="Application secret key")
     jwt_secret: str = Field(min_length=32, description="JWT signing secret")
-    cors_origins: list[str] = Field(default_factory=lambda: ["*"], description="CORS allowed origins")
-    cors_methods: list[str] = Field(default_factory=lambda: ["GET", "POST"], description="CORS allowed methods")
+    cors_origins: FlextTypes.Core.StringList = Field(default_factory=lambda: ["*"], description="CORS allowed origins")
+    cors_methods: FlextTypes.Core.StringList = Field(default_factory=lambda: ["GET", "POST"], description="CORS allowed methods")
     
     # Session configuration
     session_timeout_minutes: int = Field(default=30, ge=5, le=1440, description="Session timeout in minutes")
@@ -238,7 +238,7 @@ class FlextOracleWmsConfig(FlextConfig):
         """Generate Oracle connection string from configuration."""
         return f"oracle://{self.oracle_user}:{self.oracle_password}@{self.oracle_host}:{self.oracle_port}/{self.oracle_service}"
     
-    def get_pool_config(self) -> dict[str, object]:
+    def get_pool_config(self) -> FlextTypes.Core.Dict:
         """Get connection pool configuration dictionary."""
         return {
             "pool_size": self.pool_size,
@@ -386,7 +386,7 @@ class FlextObservabilityConfig(FlextConfig):
     alert_threshold_memory: float = Field(default=85.0, ge=0.0, le=100.0, description="Memory usage alert threshold")
     
     # Export configuration
-    export_endpoints: list[str] = Field(default_factory=list, description="Metrics export endpoints")
+    export_endpoints: FlextTypes.Core.StringList = Field(default_factory=list, description="Metrics export endpoints")
     export_interval_seconds: int = Field(default=60, ge=10, le=3600, description="Export interval")
     
     class Settings(FlextConfig.Settings):
@@ -498,7 +498,7 @@ class FlextConfigDiscovery:
     """Tool to discover and analyze FlextConfig usage across ecosystem."""
     
     @staticmethod
-    def scan_ecosystem() -> dict[str, dict[str, object]]:
+    def scan_ecosystem() -> dict[str, FlextTypes.Core.Dict]:
         """Scan all FLEXT libraries for configuration patterns."""
         return {
             "flext-web": {

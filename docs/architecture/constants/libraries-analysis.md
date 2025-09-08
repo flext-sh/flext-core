@@ -58,7 +58,7 @@ class FlextGrpcConstants(FlextConstants):
     SERVICE_NAME_PATTERN: Final[str] = r"^[a-zA-Z][a-zA-Z0-9_-]*$"
 
     # Default configuration template
-    DEFAULT_CONFIG: Final[dict[str, object]] = {
+    DEFAULT_CONFIG: Final[FlextTypes.Core.Dict] = {
         "host": "localhost",
         "port": DEFAULT_PORT,
         "workers": DEFAULT_WORKERS,
@@ -103,7 +103,7 @@ class FlextGrpcConstants(FlextConstants):
         GRPC_INTERNAL_ERROR: Final[str] = "FLEXT_2012"
 
         # Extend base error messages
-        MESSAGES: Final[dict[str, str]] = {
+        MESSAGES: Final[FlextTypes.Core.Headers] = {
             **FlextConstants.Errors.MESSAGES,
             GRPC_UNAVAILABLE: "gRPC service unavailable",
             GRPC_DEADLINE_EXCEEDED: "gRPC request deadline exceeded",
@@ -269,7 +269,7 @@ class FlextMeltanoConstants(FlextConstants):
         RESOURCE_EXHAUSTION: Final[str] = "FLEXT_2026"
 
         # Extended error messages
-        MESSAGES: Final[dict[str, str]] = {
+        MESSAGES: Final[FlextTypes.Core.Headers] = {
             **FlextConstants.Errors.MESSAGES,
             EXTRACTION_FAILED: "Data extraction failed",
             TRANSFORMATION_FAILED: "Data transformation failed",
@@ -420,7 +420,7 @@ class FlextWebConstants(FlextConstants):
         """Web security constants and headers."""
 
         # Security headers
-        SECURITY_HEADERS: Final[dict[str, str]] = {
+        SECURITY_HEADERS: Final[FlextTypes.Core.Headers] = {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
@@ -466,7 +466,7 @@ class FlextWebConstants(FlextConstants):
         CSRF_TOKEN_TIMEOUT: Final[int] = 3600  # 1 hour
 
         # Cookie security attributes
-        SECURE_COOKIE_ATTRIBUTES: Final[dict[str, object]] = {
+        SECURE_COOKIE_ATTRIBUTES: Final[FlextTypes.Core.Dict] = {
             "secure": True,
             "httponly": True,
             "samesite": "strict"
@@ -491,7 +491,7 @@ class FlextWebConstants(FlextConstants):
         RATE_LIMIT_BURST_MULTIPLIER: Final[float] = 1.5
 
         # Rate limiting headers
-        RATE_LIMIT_HEADERS: Final[dict[str, str]] = {
+        RATE_LIMIT_HEADERS: Final[FlextTypes.Core.Headers] = {
             "limit": "X-RateLimit-Limit",
             "remaining": "X-RateLimit-Remaining",
             "reset": "X-RateLimit-Reset",
@@ -550,7 +550,7 @@ class FlextWebConstants(FlextConstants):
         GATEWAY_TIMEOUT: Final[str] = "FLEXT_2032"
 
         # Extended error messages
-        MESSAGES: Final[dict[str, str]] = {
+        MESSAGES: Final[FlextTypes.Core.Headers] = {
             **FlextConstants.Errors.MESSAGES,
             HTTP_BAD_REQUEST: "Bad request format",
             HTTP_UNAUTHORIZED: "Authentication required",
@@ -644,7 +644,7 @@ class FlextWebService:
             "reset_time": 60  # Based on RATE_LIMIT_WINDOW
         })
 
-    def create_security_headers(self) -> dict[str, str]:
+    def create_security_headers(self) -> FlextTypes.Core.Headers:
         """Create security headers using web constants."""
 
         return {

@@ -16,6 +16,7 @@ from typing import NamedTuple, Protocol, TypeVar
 from collections.abc import Callable
 
 from flext_core import FlextLogger, FlextResult
+from flext_core import FlextTypes
 
 T = TypeVar("T")
 
@@ -90,28 +91,28 @@ class ExamplePatternFactory:
     @staticmethod
     def create_validation_demo(
         name: str,
-        data: dict[str, object],
-        validation_rules: list[Callable[[dict[str, object]], FlextResult[None]]],
-    ) -> DemoStrategy[dict[str, object]]:
+        data: FlextTypes.Core.Dict,
+        validation_rules: list[Callable[[FlextTypes.Core.Dict], FlextResult[None]]],
+    ) -> DemoStrategy[FlextTypes.Core.Dict]:
         """Create validation demonstration using Railway Pattern - ELIMINATED LOOP RETURNS."""
 
-        def validation_demo() -> FlextResult[dict[str, object]]:
+        def validation_demo() -> FlextResult[FlextTypes.Core.Dict]:
             """Execute validation demonstration with Functional Railway Pattern."""
             logger.info(f"📋 Validating data for {name}")
 
             # Railway Pattern: Use reduce for functional validation chain
 
             def _apply_validation(
-                acc_result: FlextResult[dict[str, object]],
-                rule: Callable[[dict[str, object]], FlextResult[None]],
-            ) -> FlextResult[dict[str, object]]:
+                acc_result: FlextResult[FlextTypes.Core.Dict],
+                rule: Callable[[FlextTypes.Core.Dict], FlextResult[None]],
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Apply single validation rule in railway chain."""
                 return acc_result.flat_map(
                     lambda data_dict: rule(data_dict).map(lambda _: data_dict),
                 ).tap_error(lambda e: logger.error(f"Validation failed: {e}"))
 
             # Functional approach: Chain all validations without loop returns
-            initial_result = FlextResult[dict[str, object]].ok(data)
+            initial_result = FlextResult[FlextTypes.Core.Dict].ok(data)
             final_result = reduce(_apply_validation, validation_rules, initial_result)
 
             if final_result.is_success:
@@ -125,7 +126,7 @@ class ExamplePatternFactory:
     def create_configuration_demo(
         name: str,
         config_class: type,
-        config_data: dict[str, object],
+        config_data: FlextTypes.Core.Dict,
     ) -> DemoStrategy[object]:
         """Create configuration demonstration using Railway Pattern - ELIMINATED TRY/CATCH RETURNS."""
 
@@ -146,7 +147,7 @@ class ExamplePatternFactory:
         # Railway Helper Functions
         def _safe_create_config_instance(
             config_class: type,
-            config_data: dict[str, object],
+            config_data: FlextTypes.Core.Dict,
         ) -> FlextResult[object]:
             """Safely create config instance with error handling."""
             try:
@@ -180,13 +181,13 @@ class ExamplePatternFactory:
     @staticmethod
     def execute_demo_pipeline(
         demos: list[DemoStrategy[object]],
-    ) -> FlextResult[list[object]]:
+    ) -> FlextResult[FlextTypes.Core.List]:
         """Execute multiple demonstrations in pipeline using Railway Pattern - ELIMINATED LOOP RETURNS."""
         logger.info(f"🔄 Starting demo pipeline with {len(demos)} demonstrations")
 
         # Railway Pattern: Use functional approach with fold/reduce
         class PipelineState(NamedTuple):
-            results: list[object]
+            results: FlextTypes.Core.List
             executed_demos: list[DemoStrategy[object]]
 
         def _execute_single_demo(
@@ -213,7 +214,7 @@ class ExamplePatternFactory:
             for cleanup_demo in executed_demos:
                 cleanup_demo.cleanup()
 
-        def _perform_final_cleanup(final_state: PipelineState) -> list[object]:
+        def _perform_final_cleanup(final_state: PipelineState) -> FlextTypes.Core.List:
             """Perform cleanup on all demos and return results."""
             # Cleanup all demos after successful execution
             for demo in final_state.executed_demos:

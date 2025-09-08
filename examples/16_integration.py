@@ -49,7 +49,7 @@ class Order:
         self,
         order_id: str,
         customer_id: str,
-        items: list[dict[str, object]],
+        items: list[FlextTypes.Core.Dict],
     ) -> None:
         self.id = order_id
         self.customer_id = customer_id
@@ -123,9 +123,9 @@ def _create_order(customer_id: str, money: Money) -> FlextResult[Order]:
         },
     ]
     # Add price for calculate_total method
-    order_items_with_price: list[dict[str, object]] = []
+    order_items_with_price: list[FlextTypes.Core.Dict] = []
     for item in order_items:
-        item_copy: dict[str, object] = {
+        item_copy: FlextTypes.Core.Dict = {
             "product_id": item["product_id"],
             "product_name": item["product_name"],
             "quantity": item["quantity"],
@@ -149,7 +149,7 @@ def _print_order(order: Order) -> None:
 
 def _demo_command_pattern(
     customer_id: str,
-    order_items: list[dict[str, str]],
+    order_items: list[FlextTypes.Core.Headers],
 ) -> None:
     class CreateOrderCommand:
         """Command pattern for order creation with FlextTypes annotations."""
@@ -157,7 +157,7 @@ def _demo_command_pattern(
         def __init__(
             self,
             customer_id: str,
-            items: list[dict[str, str]],
+            items: list[FlextTypes.Core.Headers],
         ) -> None:
             self.customer_id = customer_id
             self.items = items

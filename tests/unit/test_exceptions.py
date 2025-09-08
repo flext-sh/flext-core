@@ -1,4 +1,8 @@
-"""Targeted tests for 100% coverage on FlextExceptions module."""
+"""Targeted tests for 100% coverage on FlextExceptions module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -109,6 +113,7 @@ class TestExceptions100PercentCoverage:
         """Test configuration methods lines 801-822."""
         # Test configure_error_handling
         config = {
+            "environment": "production",  # ERROR log level is valid in production
             "enable_metrics": True,
             "log_level": "ERROR",
             "context_tracking": True,
@@ -239,7 +244,7 @@ class TestExceptionsIntegration100PercentCoverage:
         # Configure error handling
         config: dict[
             str,
-            str | int | float | bool | list[object] | dict[str, object],
+            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
         ] = {"enable_metrics": True, "log_level": "DEBUG"}
         config_result = FlextExceptions.configure_error_handling(config)
         assert config_result.success

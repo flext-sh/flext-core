@@ -1,7 +1,7 @@
 """Dependency injection container for service management.
 
-This module provides FlextContainer, a type-safe DI container with factory
-patterns and global singleton access using FlextResult error handling.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,11 +23,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer:
-    """Dependency injection container with type-safe service management.
-
-    Manages service lifecycles through registration, factory patterns, and
-    type-safe retrieval. Supports singleton and instance patterns.
-    """
+    """Dependency injection container with type-safe service management."""
 
     # Class-level global manager instance
     _global_manager: FlextContainer.GlobalManager | None = None
@@ -230,11 +226,7 @@ class FlextContainer:
                 return FlextResult[None].ok(None)
 
     class Queries:
-        """Container query definitions following CQRS pattern.
-
-        Nested class containing all query definitions for container operations
-        following the Command Query Responsibility Segregation pattern.
-        """
+        """Container query definitions following CQRS pattern."""
 
         class GetService:
             """Query to retrieve a service."""
@@ -331,13 +323,7 @@ class FlextContainer:
                 )
 
     class ServiceRegistrar:
-        """Service registration component implementing Single Responsibility Principle.
-
-        This nested class handles all service and factory registration operations with validation
-        and error handling. It's separated from service retrieval to follow SRP and
-        provide clear separation of concerns in the dependency injection system.
-
-        """
+        """Service registration component implementing Single Responsibility Principle."""
 
         def __init__(self) -> None:
             """Initialize service registrar with empty registry."""
@@ -443,7 +429,7 @@ class FlextContainer:
             self._factories.clear()
             return FlextResult[None].ok(None)
 
-        def get_service_names(self) -> list[str]:
+        def get_service_names(self) -> FlextTypes.Core.StringList:
             """Get all registered service names."""
             return list(self._services.keys()) + list(self._factories.keys())
 
@@ -464,24 +450,14 @@ class FlextContainer:
             return self._factories
 
     class ServiceRetriever:
-        """Service retrieval component implementing single responsibility principle.
-
-        This nested class handles service retrieval operations including service
-        resolution, factory instantiation, and service information queries.
-        """
+        """Service retrieval component implementing single responsibility principle."""
 
         def __init__(
             self,
             services: FlextTypes.Service.ServiceDict,
             factories: FlextTypes.Service.FactoryDict,
         ) -> None:
-            """Initialize service retriever with references.
-
-            Args:
-                services: Services dictionary reference.
-                factories: Factories dictionary reference.
-
-            """
+            """Initialize service retriever with references."""
             super().__init__()
             self._services = services
             self._factories = factories
@@ -531,10 +507,18 @@ class FlextContainer:
 
             return FlextResult[object].fail(f"Service '{validated_name}' not found")
 
-        def get_service_info(self, name: str) -> FlextResult[dict[str, object]]:
-            """Get detailed information about a registered service or factory."""
+        def get_service_info(self, name: str) -> FlextResult[FlextTypes.Core.Dict]:
+            """Get detailed information about a registered service or factory.
+
+            Args:
+                name: The name of the service or factory to get information about.
+
+            Returns:
+                A FlextResult containing the information about the service or factory.
+
+            """
             if not name or not name.strip():
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
 
@@ -544,7 +528,7 @@ class FlextContainer:
             if validated_name in self._services:
                 service = self._services[validated_name]
                 service_class = service.__class__
-                return FlextResult[dict[str, object]].ok(
+                return FlextResult[FlextTypes.Core.Dict].ok(
                     {
                         "name": validated_name,
                         "type": "instance",
@@ -558,7 +542,7 @@ class FlextContainer:
                 factory = self._factories[validated_name]
                 factory_name = getattr(factory, "__name__", str(factory))
                 factory_module = getattr(factory, "__module__", "unknown")
-                return FlextResult[dict[str, object]].ok(
+                return FlextResult[FlextTypes.Core.Dict].ok(
                     {
                         "name": validated_name,
                         "type": "factory",
@@ -567,7 +551,7 @@ class FlextContainer:
                     },
                 )
 
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Service '{validated_name}' not found",
             )
 
@@ -584,11 +568,7 @@ class FlextContainer:
             return services_info
 
     class GlobalManager:
-        """Simple global container manager for singleton pattern.
-
-        This nested class manages the global container instance following
-        the singleton pattern for ecosystem-wide service sharing.
-        """
+        """Simple global container manager for singleton pattern."""
 
         def __init__(self) -> None:
             """Initialize with default container."""
@@ -606,26 +586,16 @@ class FlextContainer:
     # CONTAINER IMPLEMENTATION - Main container functionality
     # =========================================================================
 
-    def __init__(self, config: FlextTypes.Config.ConfigDict | None = None) -> None:
-        """Initialize container with internal components and FlextTypes.Config support.
-
-        Args:
-            config: Optional configuration dictionary using FlextTypes.Config.
-
-        """
+    def __init__(
+        self, config: FlextModels.SystemConfigs.ContainerConfig | None = None
+    ) -> None:
+        """Initialize container with Pydantic configuration."""
         super().__init__()
 
-        # Initialize container configuration with FlextTypes.Config
-        self._config: FlextTypes.Config.ConfigDict = config or {
-            "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-            "log_level": FlextConstants.Config.LogLevel.INFO.value,
-            "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-            "config_source": FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
-            "max_services": 1000,
-            "service_timeout": 30000,  # milliseconds
-            "enable_auto_wire": True,
-            "enable_factory_cache": True,
-        }
+        # Initialize container configuration with Pydantic model
+        self._config: FlextModels.SystemConfigs.ContainerConfig = (
+            config or FlextModels.SystemConfigs.ContainerConfig()
+        )
 
         # SRP: Delegate to focused internal components
         self._registrar = self.ServiceRegistrar()
@@ -675,128 +645,70 @@ class FlextContainer:
         self._logging_config = config
 
     # =========================================================================
-    # CONFIGURATION MANAGEMENT WITH FlextTypes.Config - Massive Integration
+    # CONFIGURATION MANAGEMENT - Using Pydantic models
     # =========================================================================
 
     def configure_container(
         self,
-        config: FlextTypes.Config.ConfigDict,
+        config: FlextModels.SystemConfigs.ContainerConfig | FlextTypes.Core.Dict,
     ) -> FlextResult[None]:
-        """Configure container with FlextTypes.Config and StrEnum validation."""
+        """Configure container with Pydantic configuration or dict."""
         try:
-            # Validate environment using FlextConstants.Config.ConfigEnvironment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[None].fail(
-                        f"Invalid environment: {env_value}. Must be one of: {valid_environments}",
-                    )
-
-            # Validate log level using FlextConstants.Config.LogLevel
-            if "log_level" in config:
-                log_level = config["log_level"]
-                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
-                if log_level not in valid_levels:
-                    return FlextResult[None].fail(
-                        f"Invalid log_level: {log_level}. Must be one of: {valid_levels}",
-                    )
-
-            # Validate validation level using FlextConstants.Config.ValidationLevel
-            if "validation_level" in config:
-                val_level = config["validation_level"]
-                valid_val_levels = [
-                    v.value for v in FlextConstants.Config.ValidationLevel
-                ]
-                if val_level not in valid_val_levels:
-                    return FlextResult[None].fail(
-                        f"Invalid validation_level: {val_level}. Must be one of: {valid_val_levels}",
-                    )
-
-            # Validate config source using FlextConstants.Config.ConfigSource
-            if "config_source" in config:
-                source = config["config_source"]
-                valid_sources = [s.value for s in FlextConstants.Config.ConfigSource]
-                if source not in valid_sources:
-                    return FlextResult[None].fail(
-                        f"Invalid config_source: {source}. Must be one of: {valid_sources}",
-                    )
-
-            # Validate numeric constraints
-            if "max_services" in config:
-                max_services = config["max_services"]
-                if not isinstance(max_services, int) or max_services < 1:
-                    return FlextResult[None].fail(
-                        "max_services must be a positive integer",
-                    )
-
-            if "service_timeout" in config:
-                timeout = config["service_timeout"]
-                if not isinstance(timeout, (int, float)) or timeout < 0:
-                    return FlextResult[None].fail(
-                        "service_timeout must be a non-negative number",
-                    )
-
-            # Update internal configuration
-            self._config.update(config)
-
+            # Handle both dict and ContainerConfig
+            if isinstance(config, dict):
+                # Create ContainerConfig from dict
+                self._config = FlextModels.SystemConfigs.ContainerConfig.model_validate(
+                    config
+                )
+            else:
+                # Simply replace the config - Pydantic handles all validation
+                self._config = config
             return FlextResult[None].ok(None)
-
         except Exception as e:
             return FlextResult[None].fail(f"Container configuration failed: {e}")
 
-    def get_container_config(self) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current container configuration using FlextTypes.Config."""
+    def get_container_config(
+        self,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
+        """Get current container configuration as dictionary."""
         try:
-            # Return copy to prevent external modification
-            config_copy: FlextTypes.Config.ConfigDict = dict(self._config)
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config_copy)
+            # Return as dict using model_dump for consistency with get_configuration_summary
+            return FlextResult[FlextTypes.Core.Dict].ok(self._config.model_dump())
         except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Config retrieval failed: {e}",
             )
 
     def create_environment_scoped_container(
         self,
-        environment: FlextTypes.Config.Environment,
+        environment: str,
     ) -> FlextResult[FlextContainer]:
-        """Create a new container scoped to a specific environment using FlextTypes.Config."""
+        """Create a new container scoped to a specific environment."""
         try:
-            # Validate environment is a valid StrEnum value
-            valid_environments = [
-                e.value for e in FlextConstants.Config.ConfigEnvironment
-            ]
-            if environment not in valid_environments:
-                return FlextResult[FlextContainer].fail(
-                    f"Invalid environment: {environment}. Must be one of: {valid_environments}",
-                )
-
-            # Create environment-specific configuration
-            env_config: FlextTypes.Config.ConfigDict = {
-                "environment": environment,
-                "log_level": self._config.get(
-                    "log_level",
-                    FlextConstants.Config.LogLevel.INFO.value,
-                ),
-                "validation_level": (
+            # Create new config with updated environment
+            env_config = FlextModels.SystemConfigs.ContainerConfig(
+                environment=environment,
+                log_level=self._config.log_level,
+                validation_level=(
                     FlextConstants.Config.ValidationLevel.STRICT.value
                     if environment
                     == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
-                    else FlextConstants.Config.ValidationLevel.NORMAL.value
+                    else self._config.validation_level
+                    or FlextConstants.Config.ValidationLevel.NORMAL.value
                 ),
-                "config_source": FlextConstants.Config.ConfigSource.ENVIRONMENT.value,
-                "max_services": self._config.get("max_services", 1000),
-                "service_timeout": (
+                config_source=self._config.config_source,
+                max_services=self._config.max_services,
+                service_timeout=(
                     60000
                     if environment
                     == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
-                    else 30000
+                    else self._config.service_timeout
                 ),
-                "enable_auto_wire": self._config.get("enable_auto_wire", True),
-                "enable_factory_cache": self._config.get("enable_factory_cache", True),
-            }
+                enable_auto_wire=self._config.enable_auto_wire,
+                enable_factory_cache=self._config.enable_factory_cache,
+                enable_lazy_loading=self._config.enable_lazy_loading,
+                enable_service_validation=self._config.enable_service_validation,
+            )
 
             # Create new container with environment-specific config
             scoped_container = FlextContainer(config=env_config)
@@ -807,30 +719,27 @@ class FlextContainer:
                 f"Environment scoped container creation failed: {e}",
             )
 
-    def get_configuration_summary(self) -> FlextResult[dict[str, object]]:
-        """Get efficient configuration summary with FlextTypes.Config integration."""
+    def get_configuration_summary(self) -> FlextResult[FlextTypes.Core.Dict]:
+        """Get configuration summary."""
         try:
-            # Build summary with proper object typing
-            summary: dict[str, object] = {
-                "container_config": dict(self._config),
+            # Build summary using Pydantic model
+            summary: FlextTypes.Core.Dict = {
+                "container_config": self._config.model_dump(),
                 "service_statistics": {
                     "total_services": self.get_service_count(),
                     "service_names": self.get_service_names(),
-                    "max_services_limit": self._config.get("max_services", 1000),
-                    "factory_cache_enabled": self._config.get(
-                        "enable_factory_cache",
-                        True,
-                    ),
+                    "max_services_limit": self._config.max_services,
+                    "factory_cache_enabled": self._config.enable_factory_cache,
                 },
                 "environment_info": {
-                    "current_environment": self._config.get("environment", "unknown"),
-                    "log_level": self._config.get("log_level", "INFO"),
-                    "validation_level": self._config.get("validation_level", "normal"),
-                    "config_source": self._config.get("config_source", "environment"),
+                    "current_environment": self._config.environment,
+                    "log_level": self._config.log_level,
+                    "validation_level": self._config.validation_level,
+                    "config_source": self._config.config_source,
                 },
                 "performance_settings": {
-                    "service_timeout_ms": self._config.get("service_timeout", 30000),
-                    "auto_wire_enabled": self._config.get("enable_auto_wire", True),
+                    "service_timeout_ms": self._config.service_timeout,
+                    "auto_wire_enabled": self._config.enable_auto_wire,
                 },
                 "available_enum_values": {
                     "environments": [
@@ -848,10 +757,10 @@ class FlextContainer:
                 },
             }
 
-            return FlextResult[dict[str, object]].ok(summary)
+            return FlextResult[FlextTypes.Core.Dict].ok(summary)
 
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Configuration summary generation failed: {e}",
             )
 
@@ -916,7 +825,7 @@ class FlextContainer:
         """List all services."""
         return self._retriever.list_services()
 
-    def get_service_names(self) -> list[str]:
+    def get_service_names(self) -> FlextTypes.Core.StringList:
         """Get service names."""
         return self._registrar.get_service_names()
 
@@ -929,30 +838,30 @@ class FlextContainer:
         """Access to the internal command bus for operations."""
         return self._command_bus
 
-    def get_info(self, name: str) -> FlextResult[dict[str, object]]:
+    def get_info(self, name: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Return basic info about a registered service or factory."""
         try:
             if name in self._registrar.get_services_dict():
                 service = self._registrar.get_services_dict()[name]
-                service_info: dict[str, object] = {
+                service_info: FlextTypes.Core.Dict = {
                     "name": name,
                     "kind": "instance",
                     "type": "instance",
                     "class": type(service).__name__,
                 }
-                return FlextResult[dict[str, object]].ok(service_info)
+                return FlextResult[FlextTypes.Core.Dict].ok(service_info)
             if name in self._registrar.get_factories_dict():
                 factory = self._registrar.get_factories_dict()[name]
-                factory_info: dict[str, object] = {
+                factory_info: FlextTypes.Core.Dict = {
                     "name": name,
                     "kind": "factory",
                     "type": "factory",
                     "class": type(factory).__name__,
                 }
-                return FlextResult[dict[str, object]].ok(factory_info)
-            return FlextResult[dict[str, object]].fail(f"Service '{name}' not found")
+                return FlextResult[FlextTypes.Core.Dict].ok(factory_info)
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Service '{name}' not found")
         except (KeyError, AttributeError, TypeError) as e:
-            return FlextResult[dict[str, object]].fail(f"Info retrieval failed: {e}")
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Info retrieval failed: {e}")
 
     def get_or_create(
         self,
@@ -997,8 +906,8 @@ class FlextContainer:
 
             # Get constructor signature
             sig = inspect.signature(service_class.__init__)
-            args: list[object] = []
-            kwargs: dict[str, object] = {}
+            args: FlextTypes.Core.List = []
+            kwargs: FlextTypes.Core.Dict = {}
 
             # Skip 'self' parameter
             params = list(sig.parameters.values())[1:]
@@ -1035,13 +944,13 @@ class FlextContainer:
 
     def batch_register(
         self,
-        registrations: dict[str, object],
-    ) -> FlextResult[list[str]]:
+        registrations: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.StringList]:
         """Register many services/factories atomically; roll back on failure."""
         # Snapshot current state for rollback
         services_snapshot = dict(self._registrar.get_services_dict())
         factories_snapshot = dict(self._registrar.get_factories_dict())
-        registered_names: list[str] = []
+        registered_names: FlextTypes.Core.StringList = []
         try:
             for key, value in registrations.items():
                 if callable(value):
@@ -1054,16 +963,20 @@ class FlextContainer:
                     self._registrar.get_services_dict().update(services_snapshot)
                     self._registrar.get_factories_dict().clear()
                     self._registrar.get_factories_dict().update(factories_snapshot)
-                    return FlextResult[list[str]].fail("Batch registration failed")
+                    return FlextResult[FlextTypes.Core.StringList].fail(
+                        "Batch registration failed"
+                    )
                 registered_names.append(key)
-            return FlextResult[list[str]].ok(registered_names)
+            return FlextResult[FlextTypes.Core.StringList].ok(registered_names)
         except (TypeError, ValueError, AttributeError, RuntimeError, KeyError) as e:
             # Rollback on unexpected errors
             self._registrar.get_services_dict().clear()
             self._registrar.get_services_dict().update(services_snapshot)
             self._registrar.get_factories_dict().clear()
             self._registrar.get_factories_dict().update(factories_snapshot)
-            return FlextResult[list[str]].fail(f"Batch registration crashed: {e}")
+            return FlextResult[FlextTypes.Core.StringList].fail(
+                f"Batch registration crashed: {e}"
+            )
 
     # =========================================================================
     # CLASS METHODS FOR GLOBAL CONTAINER MANAGEMENT - Architectural Tier 1
@@ -1108,7 +1021,7 @@ class FlextContainer:
         return container.register(name, service)
 
     @classmethod
-    def create_module_utilities(cls, module_name: str) -> dict[str, object]:
+    def create_module_utilities(cls, module_name: str) -> FlextTypes.Core.Dict:
         """Create standardized container helpers for a module namespace (class method)."""
 
         def _get_container() -> FlextContainer:
@@ -1157,6 +1070,6 @@ class FlextContainer:
         return cast("type[Exception]", getattr(FlextExceptions, name))
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextContainer",
 ]

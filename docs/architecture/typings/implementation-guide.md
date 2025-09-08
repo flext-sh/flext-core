@@ -113,7 +113,7 @@ class UserService:
 from flext_core.typings import FlextTypes
 
 # Core Foundation Types - Most frequently used
-core_dict: dict[str, object] = {"key": "value"}
+core_dict: FlextTypes.Core.Dict = {"key": "value"}
 core_string: str = "text"
 core_bool: bool = True
 
@@ -234,7 +234,7 @@ class FlextDataProcessingTypes(FlextTypes):
         """Data transformation types."""
         type TransformationType = Literal["filter", "map", "reduce", "aggregate"]
         type TransformationRule = FlextTypes.Config.ConfigDict
-        type TransformationResult = FlextTypes.Result.Success[list[object]]
+        type TransformationResult = FlextTypes.Result.Success[FlextTypes.Core.List]
 
     class DataValidation:
         """Data validation types."""
@@ -399,7 +399,7 @@ def process_messages(
 
 # Advanced decorator with parameter specification
 def create_type_safe_decorator(
-    validator: Callable[[object], bool]
+    validator: FlextTypes.Validation.Validator
 ) -> Callable[[Callable[P, R]], Callable[P, FlextResult[R]]]:
     """Create type-safe decorator with parameter specification."""
 
@@ -468,10 +468,10 @@ class AsyncDataService:
     async def process_async_stream(
         self,
         data_stream: FlextTypes.Async.AsyncStream[FlextTypes.Config.ConfigDict]
-    ) -> FlextTypes.Async.AsyncResult[list[str]]:
+    ) -> FlextTypes.Async.AsyncResult[FlextTypes.Core.StringList]:
         """Process async data stream with complete type safety."""
 
-        processed_ids: list[str] = []
+        processed_ids: FlextTypes.Core.StringList = []
 
         try:
             async for data_item in data_stream:
@@ -530,7 +530,7 @@ class AsyncDatabaseConnection:
 async def process_with_async_context(
     data_items: list[FlextTypes.Config.ConfigDict],
     connection_string: FlextTypes.Network.ConnectionString
-) -> FlextResult[list[str]]:
+) -> FlextResult[FlextTypes.Core.StringList]:
     """Process data with async context and complete type safety."""
 
     async with AsyncDatabaseConnection(connection_string) as connection_result:
@@ -576,7 +576,7 @@ class FlextIntegrationTypes(FlextTypes):
         type ServiceEndpoint = FlextTypes.Network.URL
         type ServiceVersion = str
         type ServiceHealth = Literal["healthy", "degraded", "unhealthy"]
-        type ServiceCapabilities = list[str]
+        type ServiceCapabilities = FlextTypes.Core.StringList
         type RegistryEntry = FlextTypes.Config.ConfigDict
 
 # Service A - User Management
@@ -946,7 +946,7 @@ else:
 # Inconsistent type usage
 class Service:
     def __init__(self):
-        self.config: dict[str, object] = {}  # Manual typing
+        self.config: FlextTypes.Core.Dict = {}  # Manual typing
         self.service_data: FlextTypes.Config.ConfigDict = {}  # FlextTypes
 ```
 
@@ -967,9 +967,9 @@ class Service:
 ```python
 # Flat type usage without domain separation
 def process_data(
-    data: dict[str, object],  # Should use FlextTypes.Config.ConfigDict
+    data: FlextTypes.Core.Dict,  # Should use FlextTypes.Config.ConfigDict
     result: object  # Should use FlextTypes.Result.Success[T]
-) -> dict[str, object]:  # Should use FlextResult[ConfigDict]
+) -> FlextTypes.Core.Dict:  # Should use FlextResult[ConfigDict]
     pass
 ```
 
@@ -991,7 +991,7 @@ def process_data(
 
 ```python
 # No generic programming
-def transform_list(items: list[object]) -> list[object]:  # Loses type information
+def transform_list(items: FlextTypes.Core.List) -> FlextTypes.Core.List:  # Loses type information
     return [str(item) for item in items]
 ```
 
@@ -999,7 +999,7 @@ def transform_list(items: list[object]) -> list[object]:  # Loses type informati
 
 ```python
 # Generic type programming with FlextTypes
-def transform_list(items: list[T]) -> list[str]:  # Preserves type information
+def transform_list(items: list[T]) -> FlextTypes.Core.StringList:  # Preserves type information
     """Transform list with generic type safety."""
     return [str(item) for item in items]
 

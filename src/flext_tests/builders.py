@@ -1,14 +1,18 @@
-# ruff: noqa: PLC0415
 """Test builders using Builder pattern with pytest integration.
 
 Provides fluent builders for creating complex test objects with
 pytest-mock, pytest-httpx, and other advanced testing capabilities.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
+import json
 import tempfile
 from collections.abc import Callable
+from typing import cast
 from unittest.mock import Mock
 
 from pytest_mock import MockerFixture
@@ -21,7 +25,9 @@ from flext_core import (
     FlextTypes,
 )
 
-JsonDict = dict[str, object]  # Use dict[str, object] for FlextResult compatibility
+JsonDict = (
+    FlextTypes.Core.Dict
+)  # Use FlextTypes.Core.Dict for FlextResult compatibility
 
 
 class TestBuilders:
@@ -38,7 +44,7 @@ class TestBuilders:
             self._data: object = None
             self._error: str | None = None
             self._error_code: str | None = None
-            self._error_data: dict[str, object] | None = None
+            self._error_data: FlextTypes.Core.Dict | None = None
             self._is_success: bool = True
 
         def with_success_data(self, data: object) -> TestBuilders.ResultBuilder:
@@ -51,7 +57,7 @@ class TestBuilders:
             self,
             error: str,
             error_code: str | None = None,
-            error_data: dict[str, object] | None = None,
+            error_data: FlextTypes.Core.Dict | None = None,
         ) -> TestBuilders.ResultBuilder:
             """Set failure result with error details."""
             self._error = error
@@ -76,7 +82,7 @@ class TestBuilders:
 
         def __init__(self) -> None:
             self._container = FlextContainer()
-            self._services: dict[str, object] = {}
+            self._services: FlextTypes.Core.Dict = {}
             self._factories: dict[str, Callable[[], object]] = {}
 
         def with_service(
@@ -155,7 +161,7 @@ class TestBuilders:
             self._field_type = field_type
             self._field_id = f"test_{field_type}_field"
             self._field_name = f"test_{field_type}_field"
-            self._config: dict[str, object] = {}
+            self._config: FlextTypes.Core.Dict = {}
 
         def with_id(self, field_id: str) -> TestBuilders.FieldBuilder:
             """Set field ID."""
@@ -239,7 +245,7 @@ class TestBuilders:
         """Builder for FlextConfig objects with various settings."""
 
         def __init__(self) -> None:
-            self._config_data: dict[str, object] = {}
+            self._config_data: FlextTypes.Core.Dict = {}
 
         def with_debug(self, *, debug: bool = True) -> TestBuilders.ConfigBuilder:
             """Set debug mode."""
@@ -283,8 +289,6 @@ class TestBuilders:
             if env_value not in valid_envs:
                 env_value = "test"  # Default fallback
 
-            from typing import cast
-
             return FlextConfig(
                 log_level=str(self._config_data.get("log_level", "INFO")),
                 environment=cast("FlextTypes.Config.Environment", env_value),
@@ -298,8 +302,8 @@ class TestBuilders:
         def __init__(self, mocker: MockerFixture) -> None:
             self._mocker = mocker
             self._mock = Mock()
-            self._return_values: list[object] = []
-            self._side_effects: list[object] = []
+            self._return_values: FlextTypes.Core.List = []
+            self._side_effects: FlextTypes.Core.List = []
 
         def returns(self, value: object) -> TestBuilders.MockBuilder:
             """Set return value."""
@@ -352,11 +356,9 @@ class TestBuilders:
 
         def with_json_content(
             self,
-            data: dict[str, object],
+            data: FlextTypes.Core.Dict,
         ) -> TestBuilders.FileBuilder:
             """Set JSON content."""
-            import json
-
             self._content = json.dumps(data, indent=2)
             self._suffix = ".json"
             return self
@@ -369,7 +371,7 @@ class TestBuilders:
 
         def with_config_content(
             self,
-            config: dict[str, object],
+            config: FlextTypes.Core.Dict,
         ) -> TestBuilders.FileBuilder:
             """Set configuration file content."""
             return self.with_json_content(config).with_suffix(".config.json")
@@ -460,8 +462,47 @@ def build_string_field(
     return builder.build()
 
 
+# Main unified class
+class FlextTestsBuilders:
+    """Unified test builders for FLEXT ecosystem.
+
+    Consolidates all builder patterns into a single class interface.
+    """
+
+    # Delegate to existing implementation
+    Builders = TestBuilders
+
+    # Convenience methods as class methods
+    @classmethod
+    def success_result(cls, data: object = "test_data") -> FlextResult[object]:
+        """Build a successful result quickly."""
+        return build_success_result(data)
+
+    @classmethod
+    def failure_result(cls, error: str = "test_error") -> FlextResult[object]:
+        """Build a failure result quickly."""
+        return build_failure_result(error)
+
+    @classmethod
+    def test_container(cls) -> FlextContainer:
+        """Build a container with common test services."""
+        return build_test_container()
+
+    @classmethod
+    def string_field(
+        cls,
+        field_id: str = "test_string",
+        *,
+        required: bool = True,
+        **constraints: object,
+    ) -> object:
+        """Build a string field quickly."""
+        return build_string_field(field_id, required=required, **constraints)
+
+
 # Export builders
 __all__ = [
+    "FlextTestsBuilders",
     "TestBuilders",
     "build_failure_result",
     "build_string_field",

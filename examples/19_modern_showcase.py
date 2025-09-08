@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-
+from flext_core import FlextTypes
 import sys
 from decimal import Decimal
 from enum import StrEnum
@@ -176,7 +176,7 @@ class ECommerceConfig(FlextConfig):
     enable_sms_notifications: bool = False
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,
         use_enum_values=True,
@@ -397,7 +397,7 @@ class Order(FlextModels.AggregateRoot):
 
         return FlextResult[None].ok(None)
 
-    def model_post_init(self, __context: dict[str, object] | None = None, /) -> None:
+    def model_post_init(self, __context: FlextTypes.Core.Dict | None = None, /) -> None:
         """Calculate total after initialization."""
         if not hasattr(self, "total_amount") and self.items:
             self.total_amount = self._calculate_total()
@@ -420,7 +420,7 @@ class Order(FlextModels.AggregateRoot):
     def create(
         cls,
         user: User,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
         config: ECommerceConfig,
         order_id: str | None = None,
     ) -> FlextResult[Order]:
@@ -451,7 +451,7 @@ class Order(FlextModels.AggregateRoot):
     @classmethod
     def _validate_order_constraints(
         cls,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
         config: ECommerceConfig,
     ) -> FlextResult[None]:
         """Validate order constraints."""
@@ -468,7 +468,7 @@ class Order(FlextModels.AggregateRoot):
     @classmethod
     def _create_order_items(
         cls,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[list[OrderItem]]:
         """Create order items from data."""
         items: list[OrderItem] = []
@@ -623,7 +623,7 @@ class OrderService:
     def create_and_process_order(
         self,
         user: User,
-        items_data: list[dict[str, object]],
+        items_data: list[FlextTypes.Core.Dict],
     ) -> FlextResult[Order]:
         """Create and process complete order."""
         try:
@@ -727,7 +727,7 @@ def demonstrate_order_processing(
     order_service = OrderService(config, payment_service)
 
     # Create order items
-    items_data: list[dict[str, object]] = [
+    items_data: list[FlextTypes.Core.Dict] = [
         {"product": products[0], "quantity": 1},  # Laptop
         {"product": products[1], "quantity": 2},  # Mouse x2
     ]

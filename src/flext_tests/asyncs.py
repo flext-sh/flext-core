@@ -1,8 +1,10 @@
-# ruff: noqa: PLC0415
 """Advanced async testing utilities using pytest-asyncio and pytest-timeout.
 
 Provides comprehensive async testing patterns, concurrency testing,
 timeout management, and async context management for robust testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from typing import Protocol, TypeGuard, TypeVar
 
 import pytest
 
-from flext_core import FlextLogger
+from flext_core import FlextLogger, FlextTypes
 
 T = TypeVar("T")
 
@@ -469,15 +471,15 @@ class AsyncFixtureUtils:
 
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
-            async def get(self, url: str) -> dict[str, object]:
+            async def get(self, url: str) -> FlextTypes.Core.Dict:
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
             async def post(
                 self,
                 url: str,
-                data: dict[str, object],
-            ) -> dict[str, object]:
+                data: FlextTypes.Core.Dict,
+            ) -> FlextTypes.Core.Dict:
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 
@@ -507,8 +509,8 @@ class AsyncConcurrencyTesting:
     @staticmethod
     async def run_parallel_tasks(
         task_func: Callable[[object], Awaitable[object]],
-        inputs: list[object],
-    ) -> list[object]:
+        inputs: FlextTypes.Core.List,
+    ) -> FlextTypes.Core.List:
         """Run the given async task function over inputs in parallel and collect results."""
         if not inputs:
             return []
@@ -521,9 +523,9 @@ class AsyncConcurrencyTesting:
         func1: Callable[[], Awaitable[object]],
         func2: Callable[[], Awaitable[object]],
         iterations: int = 100,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Test for race conditions between two async functions."""
-        results: list[dict[str, object]] = []
+        results: list[FlextTypes.Core.Dict] = []
 
         for _ in range(iterations):
             # Start both functions simultaneously
@@ -582,11 +584,11 @@ class AsyncConcurrencyTesting:
         func: Callable[[], Awaitable[object]],
         concurrency_level: int = 10,
         iterations_per_worker: int = 10,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Test concurrent access to a resource."""
 
-        async def worker() -> list[dict[str, object]]:
-            results: list[dict[str, object]] = []
+        async def worker() -> list[FlextTypes.Core.Dict]:
+            results: list[FlextTypes.Core.Dict] = []
             for _ in range(iterations_per_worker):
                 try:
                     result = await func()
@@ -600,7 +602,7 @@ class AsyncConcurrencyTesting:
         worker_results = await asyncio.gather(*workers)
 
         # Flatten results
-        all_results: list[dict[str, object]] = []
+        all_results: list[FlextTypes.Core.Dict] = []
         for worker_result in worker_results:
             all_results.extend(worker_result)
 
@@ -619,7 +621,7 @@ class AsyncConcurrencyTesting:
     async def test_deadlock_detection(
         operations: list[Callable[[], Awaitable[object]]],
         deadline: float = 5.0,
-    ) -> dict[str, object]:
+    ) -> FlextTypes.Core.Dict:
         """Test for potential deadlocks in async operations."""
         start_time = time.time()
 
@@ -668,19 +670,6 @@ class AsyncMarkers:
         return pytest.mark.slow
 
 
-# Export utilities
-__all__ = [
-    "AsyncConcurrencyTesting",
-    "AsyncContextManagers",
-    "AsyncFixtureUtils",
-    "AsyncMarkers",
-    "AsyncMockBuilder",
-    "AsyncMockUtils",
-    "AsyncTestUtils",
-    "ConcurrencyTestHelper",
-]
-
-
 class ConcurrencyTestHelper:
     """Lightweight helpers used by tests for concurrency measurements."""
 
@@ -689,7 +678,7 @@ class ConcurrencyTestHelper:
         func: Callable[[], Coroutine[object, object, object]],
         *,
         concurrent_count: int = 2,
-    ) -> list[object]:
+    ) -> FlextTypes.Core.List:
         """Run the same async function concurrently and return results."""
         tasks: list[asyncio.Task[object]] = [
             asyncio.create_task(func()) for _ in range(concurrent_count)
@@ -737,7 +726,7 @@ class AsyncMockBuilder:
         - None: always return return_value
         """
         # Normalize list-like side effects
-        sequence: list[object] | None = None
+        sequence: FlextTypes.Core.List | None = None
         if isinstance(side_effect, (list, tuple)):
             sequence = list(side_effect)
 
@@ -761,3 +750,37 @@ class AsyncMockBuilder:
             return return_value
 
         return async_mock
+
+
+# Main unified class
+class FlextTestsAsync:
+    """Unified async testing utilities for FLEXT ecosystem.
+
+    Consolidates all async testing patterns into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    Utils = AsyncTestUtils
+    ContextManagers = AsyncContextManagers
+    MockUtils = AsyncMockUtils
+    Fixtures = AsyncFixtureUtils
+    Concurrency = AsyncConcurrencyTesting
+    Markers = AsyncMarkers
+    MockBuilder = AsyncMockBuilder
+    ConcurrencyHelper = ConcurrencyTestHelper
+    ContextManager = AsyncContextManager
+
+
+# Export utilities
+__all__ = [
+    "AsyncConcurrencyTesting",
+    "AsyncContextManager",
+    "AsyncContextManagers",
+    "AsyncFixtureUtils",
+    "AsyncMarkers",
+    "AsyncMockBuilder",
+    "AsyncMockUtils",
+    "AsyncTestUtils",
+    "ConcurrencyTestHelper",
+    "FlextTestsAsync",
+]

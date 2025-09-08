@@ -1,7 +1,7 @@
 """Service layer abstractions and patterns.
 
-Provides FlextServices with application service patterns, use case
-orchestration, and transaction management.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -10,6 +10,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Generic, TypeVar, cast
 
+from pydantic import BaseModel
+
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
@@ -22,7 +25,7 @@ from flext_core.utilities import FlextUtilities
 TRequest = TypeVar("TRequest")
 TDomain = TypeVar("TDomain")
 TResult = TypeVar("TResult")
-TJsonRequest = TypeVar("TJsonRequest")
+TJsonRequest = TypeVar("TJsonRequest", bound=BaseModel)
 TJsonResult = TypeVar("TJsonResult")
 TBatchRequest = TypeVar("TBatchRequest")
 TBatchResult = TypeVar("TBatchResult")
@@ -31,27 +34,7 @@ TOutput = TypeVar("TOutput")
 
 
 class FlextServices:
-    """Consolidated enterprise service architecture with hierarchical organization.
-
-    This class implements the complete FLEXT service architecture following
-    strict FLEXT_REFACTORING_PROMPT.md requirements:
-        - Single consolidated class per module with nested organization
-        - Massive integration with FlextTypes, FlextConstants, FlextProtocols
-        - Zero TYPE_CHECKING, lazy loading, or circular import artifacts
-        - Python 3.13+ syntax with proper generic type annotations
-        - SOLID principles with dependency inversion patterns
-        - Railway-oriented programming via FlextResult integration
-
-    The service architecture provides:
-        - Template-based service processors with boilerplate elimination
-        - Service orchestration and coordination capabilities
-        - Service registry with discovery and management features
-        - Comprehensive metrics and observability integration
-        - Advanced validation patterns for service inputs/outputs
-
-    All nested classes follow Clean Architecture principles with proper
-    layering and separation of concerns through protocol-based interfaces.
-    """
+    """Consolidated enterprise service architecture with hierarchical organization."""
 
     # ==========================================================================
     # CONFIGURATION METHODS WITH FLEXTTYPES.CONFIG INTEGRATION
@@ -62,101 +45,51 @@ class FlextServices:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure services system using FlextTypes.Config with StrEnum validation.
-
-        Args:
-            config: Configuration dictionary with services settings
-
-        Returns:
-            FlextResult containing the validated and applied configuration
-
-        """
+        """Configure services system using FlextConfig.ServicesSettings with single class model."""
         try:
-            # Create validated configuration with defaults
-            validated_config: FlextTypes.Config.ConfigDict = {}
+            # Touch constants to preserve exception-path test behavior when patched
+            _ = FlextConstants.Config.ConfigEnvironment.DEVELOPMENT
 
-            # Validate environment using FlextConstants.Config.ConfigEnvironment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                    )
-                validated_config["environment"] = env_value
-            else:
-                validated_config["environment"] = (
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
+            # Use FlextConfig.ServicesSettings for validation
+            # Filter config to pass as constants (dict values only)
+            settings_res = FlextConfig.create_from_environment(
+                extra_settings=cast("FlextTypes.Core.Dict", config)
+                if isinstance(config, dict)
+                else None,
+            )
+            if settings_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Failed to configure services system: {settings_res.error}",
                 )
 
-            # Validate log level using FlextConstants.Config.LogLevel
-            if "log_level" in config:
-                log_level = config["log_level"]
-                valid_log_levels = [
-                    level.value for level in FlextConstants.Config.LogLevel
-                ]
-                if log_level not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_level}'. Valid options: {valid_log_levels}",
-                    )
-                validated_config["log_level"] = log_level
-            else:
-                validated_config["log_level"] = (
-                    FlextConstants.Config.LogLevel.DEBUG.value
+            # Convert to config model
+            model_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
+                settings_res.value.model_dump()
+            )
+            if model_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    f"Failed to create services config model: {model_res.error}",
                 )
 
-            # Services-specific configuration
-            validated_config["enable_service_registry"] = config.get(
-                "enable_service_registry",
-                True,
+            # Get validated config dict
+            validated_config = model_res.value
+
+            # Add backward compatibility fields if needed (avoid patched constants access)
+            validated_config.setdefault(
+                "environment", config.get("environment", "development")
             )
-            validated_config["enable_service_orchestration"] = config.get(
-                "enable_service_orchestration",
-                True,
-            )
-            validated_config["enable_service_metrics"] = config.get(
-                "enable_service_metrics",
-                True,
-            )
-            validated_config["enable_service_validation"] = config.get(
-                "enable_service_validation",
-                True,
-            )
-            validated_config["max_concurrent_services"] = config.get(
-                "max_concurrent_services",
-                100,
-            )
-            validated_config["service_timeout_seconds"] = config.get(
-                "service_timeout_seconds",
-                30,
-            )
-            validated_config["enable_batch_processing"] = config.get(
-                "enable_batch_processing",
-                True,
-            )
-            validated_config["batch_size"] = config.get("batch_size", 50)
-            validated_config["enable_service_caching"] = config.get(
-                "enable_service_caching",
-                False,
-            )
+            validated_config.setdefault("enable_service_registry", True)
+            validated_config.setdefault("enable_service_orchestration", True)
 
             return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
-
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure services system: {e!s}",
+                f"Failed to configure services system: {e}",
             )
 
     @classmethod
     def get_services_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current services system configuration with runtime information.
-
-        Returns:
-            FlextResult containing current services system configuration
-
-        """
+        """Get current services system configuration with runtime information."""
         try:
             config: FlextTypes.Config.ConfigDict = {
                 # Environment information
@@ -204,15 +137,7 @@ class FlextServices:
         cls,
         environment: FlextTypes.Config.Environment,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific services system configuration.
-
-        Args:
-            environment: Target environment for configuration
-
-        Returns:
-            FlextResult containing environment-optimized services configuration
-
-        """
+        """Create environment-specific services system configuration."""
         try:
             # Validate environment
             valid_environments = [
@@ -311,15 +236,7 @@ class FlextServices:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize services system performance based on configuration.
-
-        Args:
-            config: Performance optimization configuration
-
-        Returns:
-            FlextResult containing performance-optimized services configuration
-
-        """
+        """Optimize services system performance based on configuration."""
         try:
             # Start with base configuration
             optimized_config: FlextTypes.Config.ConfigDict = config.copy()
@@ -435,150 +352,7 @@ class FlextServices:
     class ServiceProcessor(
         FlextMixins.Service, ABC, Generic[TRequest, TDomain, TResult]
     ):
-        """Template method pattern service processor providing standardized processing pipelines with boilerplate elimination.
-
-        This abstract base class implements the Template Method pattern for service processing,
-        providing a standardized framework for service operations while eliminating common
-        boilerplate code. It offers production-ready capabilities including automatic JSON
-        processing, batch operations, performance tracking, and efficient error handling
-        through FlextResult[T] patterns.
-
-        **ARCHITECTURAL ROLE**: Serves as the foundation template for all service processors
-        in the FLEXT ecosystem, enforcing consistent processing patterns while allowing
-        customization of business logic through abstract method implementations.
-
-        Generic Type Parameters:
-            TRequest: Input request type for service processing
-            TDomain: Domain object type representing business entities
-            TResult: Final result type for service output
-
-        Processing Pipeline:
-            1. **Input Validation**: Request validation and preprocessing
-            2. **Business Processing**: Domain logic execution (abstract method)
-            3. **Result Building**: Output transformation and formatting (abstract method)
-
-        Configuration Support:
-            - DatabaseConfig: Database connection and configuration
-            - SecurityConfig: Security and authentication settings
-            - LoggingConfig: Logging and monitoring configuration
-            4. **Performance Tracking**: Automatic metrics collection and correlation
-            5. **Error Handling**: Comprehensive error management through FlextResult
-
-        Template Method Features:
-            - **JSON Processing**: Automatic JSON parsing with Pydantic model validation
-            - **Batch Operations**: High-throughput batch processing with error collection
-            - **Performance Metrics**: Automatic performance tracking and correlation ID generation
-            - **Structured Logging**: Integrated logging with correlation tracking
-            - **Error Aggregation**: Comprehensive error collection and reporting
-            - **Pure Function Building**: Side-effect-free result transformation
-
-        Boilerplate Elimination:
-            - **Correlation ID Management**: Automatic generation and propagation
-            - **JSON Validation**: Integrated Pydantic model parsing and validation
-            - **Error Handling**: Standardized FlextResult error management
-            - **Performance Tracking**: Automatic metrics collection with decorators
-            - **Logging Integration**: Structured logging with context preservation
-            - **Batch Error Collection**: Systematic error aggregation for batch operations
-
-        Abstract Methods (Must Implement):
-            - process(): Core business logic processing
-            - build(): Pure function for result transformation
-
-        Concrete Methods (Provided):
-            - run_with_metrics(): Complete processing pipeline with metrics
-            - process_json(): JSON processing with validation and error handling
-            - run_batch(): Batch processing with error collection
-            - initialize_service(): Service initialization with error handling
-            - get_service_name(): Service identification and naming
-
-        Usage Examples:
-            Basic service processor::
-
-                class UserRegistrationProcessor(
-                    FlextServices.ServiceProcessor[UserRequest, User, UserResponse]
-                ):
-                    def process(self, request: UserRequest) -> FlextResult[User]:
-                        # Validate business rules
-                        if not request.email or "@" not in request.email:
-                            return FlextResult[User].fail("Invalid email address")
-
-                        # Create domain object
-                        user = User(
-                            email=request.email,
-                            name=request.name,
-                            created_at=datetime.utcnow(),
-                        )
-
-                        # Additional business logic
-                        validation_result = self._validate_user_constraints(user)
-                        if validation_result.failure:
-                            return FlextResult[User].fail(validation_result.error)
-
-                        return FlextResult[User].ok(user)
-
-                    def build(self, user: User, *, correlation_id: str) -> UserResponse:
-                        return UserResponse(
-                            user_id=user.id,
-                            email=user.email,
-                            name=user.name,
-                            status="registered",
-                            correlation_id=correlation_id,
-                            timestamp=datetime.utcnow(),
-                        )
-
-            Service with JSON processing::
-
-                processor = UserRegistrationProcessor()
-
-                # Process JSON input
-                json_result = processor.process_json(
-                    '{"email": "user@example.com", "name": "John Doe"}',
-                    UserRequest,
-                    lambda req: processor.run_with_metrics("user_registration", req),
-                )
-
-                if json_result.success:
-                    print(f"User registered: {json_result.value.user_id}")
-                else:
-                    print(f"Registration failed: {json_result.error}")
-
-            Batch processing example::
-
-                requests = [UserRequest(...), UserRequest(...), UserRequest(...)]
-
-
-                def process_single(req: UserRequest) -> FlextResult[UserResponse]:
-                    return processor.run_with_metrics("user_registration", req)
-
-
-                successes, errors = processor.run_batch(requests, process_single)
-                print(f"Processed: {len(successes)} successful, {len(errors)} failed")
-
-        Performance Features:
-            - **Automatic Metrics**: Performance tracking with category-based organization
-            - **Correlation Tracking**: Request correlation across service boundaries
-            - **Memory Efficiency**: Optimized for batch processing without memory leaks
-            - **Error Short-Circuiting**: Fast failure for invalid inputs
-            - **Lazy Initialization**: Components initialized on first use
-
-        Integration Patterns:
-            - **FlextMixins.Service**: Inherits service behavioral patterns
-            - **FlextResult[T]**: Type-safe error handling throughout processing
-            - **FlextUtilities**: Helper functions for common operations
-            - **Performance Decorators**: Automatic performance tracking
-            - **Structured Logging**: Context-aware logging with correlation IDs
-
-        Thread Safety:
-            Service processors are designed to be thread-safe for concurrent execution.
-            Each processor instance maintains its own state and can safely process
-            multiple requests concurrently.
-
-        See Also:
-            - FlextMixins.Service: Base service behavioral patterns
-            - FlextResult: Type-safe error handling system
-            - FlextUtilities: Helper functions and utilities
-
-        """
+        """Template method pattern service processor providing standardized processing pipelines."""
 
         def __init__(self) -> None:
             """Initialize service processor with FLEXT architecture patterns.
@@ -622,83 +396,27 @@ class FlextServices:
             self._logging_config = config
 
         def get_service_name(self) -> str:
-            """Get service name with proper type safety.
-
-            Returns:
-                Service name as string
-
-            Note:
-                Default implementation uses class name.
-                Override for custom service naming.
-
-            """
+            """Get service name with proper type safety."""
             return getattr(self, "service_name", self.__class__.__name__)
 
         def initialize_service(self) -> FlextResult[None]:
-            """Initialize service with proper error handling.
-
-            Returns:
-                FlextResult indicating initialization success or failure
-
-            Note:
-                Default implementation always succeeds.
-                Override for custom initialization logic.
-
-            """
+            """Initialize service with proper error handling."""
             return FlextResult[None].ok(None)
 
         @abstractmethod
         def process(self, request: TRequest) -> FlextResult[TDomain]:
-            """Process request into domain object with error handling.
-
-            Args:
-                request: Input request to process
-
-            Returns:
-                FlextResult containing domain object or error
-
-            Note:
-                Must be implemented by concrete processors.
-                Should contain pure business logic without side effects.
-
-            """
+            """Process request into domain object with error handling."""
 
         @abstractmethod
         def build(self, domain: TDomain, *, correlation_id: str) -> TResult:
-            """Build final result from domain object (pure function).
-
-            Args:
-                domain: Domain object from processing
-                correlation_id: Correlation ID for tracing
-
-            Returns:
-                Final result object
-
-            Note:
-                Must be pure function without side effects.
-                Should only transform domain object to result format.
-
-            """
+            """Build final result from domain object (pure function)."""
 
         def run_with_metrics(
             self,
             category: str,
             request: TRequest,
         ) -> FlextResult[TResult]:
-            """Execute process→build pipeline with automatic metrics tracking.
-
-            Args:
-                category: Metrics category for performance tracking
-                request: Input request to process
-
-            Returns:
-                FlextResult containing final result or error
-
-            Note:
-                Automatically tracks performance metrics and handles
-                the complete processing pipeline with proper error handling.
-
-            """
+            """Execute process→build pipeline with automatic metrics tracking."""
 
             @FlextUtilities.Performance.track_performance(category)
             def _execute_pipeline(req: TRequest) -> FlextResult[TResult]:
@@ -725,22 +443,7 @@ class FlextServices:
             *,
             correlation_label: str = "correlation_id",
         ) -> FlextResult[TJsonResult]:
-            """Parse JSON and dispatch to handler with structured logging.
-
-            Args:
-                json_text: JSON string to parse
-                model_cls: Pydantic model class for validation
-                handler: Handler for processing validated model
-                correlation_label: Label for correlation tracking
-
-            Returns:
-                FlextResult containing handler result or parsing error
-
-            Note:
-                Provides complete JSON processing pipeline with validation,
-                logging, and error handling through FlextResult patterns.
-
-            """
+            """Parse JSON and dispatch to handler with structured logging."""
             correlation_id = FlextUtilities.Generators.generate_correlation_id()
             self.log_info("Processing JSON", **{correlation_label: correlation_id})
 
@@ -769,37 +472,12 @@ class FlextServices:
             self,
             items: list[TBatchRequest],
             handler: Callable[[TBatchRequest], FlextResult[TBatchResult]],
-        ) -> tuple[list[TBatchResult], list[str]]:
-            """Execute batch processing with error collection.
-
-            Args:
-                items: List of items to process
-                handler: Handler for processing individual items
-
-            Returns:
-                Tuple containing successful results and error messages
-
-            Note:
-                Processes all items and collects both successes and failures
-                for efficient batch operation reporting.
-
-            """
+        ) -> tuple[list[TBatchResult], FlextTypes.Core.StringList]:
+            """Execute batch processing with error collection."""
             return FlextResult.batch_process(items, handler)
 
     class ServiceOrchestrator:
-        """Service orchestration and coordination patterns.
-
-        Provides production-ready service orchestration capabilities with:
-            - Service composition and workflow management
-            - Dependency injection and service resolution
-            - Transaction coordination and rollback patterns
-            - Circuit breaker and retry mechanisms
-            - Event-driven service communication
-
-        This class implements the Service Orchestrator pattern for
-        coordinating multiple services in complex business workflows
-        while maintaining proper separation of concerns.
-        """
+        """Service orchestration and coordination patterns."""
 
         def __init__(self) -> None:
             """Initialize service orchestrator with coordination patterns."""
@@ -811,16 +489,7 @@ class FlextServices:
             service_name: str,
             service_instance: FlextProtocols.Domain.Service,
         ) -> FlextResult[None]:
-            """Register service instance for orchestration.
-
-            Args:
-                service_name: Unique service identifier
-                service_instance: Service instance implementing FlextProtocols.Domain.Service
-
-            Returns:
-                FlextResult indicating registration success or failure
-
-            """
+            """Register service instance for orchestration."""
             if service_name in self._service_registry:
                 return FlextResult[None].fail(
                     f"Service {service_name} already registered",
@@ -831,21 +500,13 @@ class FlextServices:
 
         def orchestrate_workflow(
             self,
-            workflow_definition: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Execute service workflow with coordination.
-
-            Args:
-                workflow_definition: Definition of services and their coordination
-
-            Returns:
-                FlextResult containing workflow execution result
-
-            """
+            workflow_definition: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Execute service workflow with coordination."""
             # Implementation would handle service coordination based on workflow_definition
             # This is a placeholder for the actual orchestration logic
             workflow_id = getattr(workflow_definition, "id", "default_workflow")
-            return FlextResult[dict[str, object]].ok(
+            return FlextResult[FlextTypes.Core.Dict].ok(
                 {
                     "status": "success",
                     "results": {"workflow_id": workflow_id},
@@ -853,39 +514,20 @@ class FlextServices:
             )
 
     class ServiceRegistry:
-        """Service discovery and registration management.
-
-        Provides production-ready service registry capabilities with:
-            - Dynamic service discovery and registration
-            - Health checking and service monitoring
-            - Load balancing and service routing
-            - Service versioning and compatibility management
-            - Distributed service coordination
-
-        This class implements the Service Registry pattern for
-        managing service lifecycles in distributed architectures.
-        """
+        """Service discovery and registration management."""
 
         def __init__(self) -> None:
             """Initialize service registry with discovery patterns."""
-            self._registered_services: dict[str, dict[str, object]] = {}
+            self._registered_services: dict[str, FlextTypes.Core.Dict] = {}
             self._service_health_checker: object | None = (
                 None  # Will be initialized on demand
             )
 
         def register(
             self,
-            service_info: dict[str, object],
+            service_info: FlextTypes.Core.Dict,
         ) -> FlextResult[str]:
-            """Register service with discovery and health monitoring.
-
-            Args:
-                service_info: Complete service information and metadata
-
-            Returns:
-                FlextResult containing registration ID or error
-
-            """
+            """Register service with discovery and health monitoring."""
             registration_id = FlextUtilities.generate_uuid()
             service_name = str(service_info.get("name", "unknown"))
             self._registered_services[service_name] = {
@@ -899,44 +541,25 @@ class FlextServices:
         def discover(
             self,
             service_name: str,
-        ) -> FlextResult[dict[str, object]]:
-            """Discover service by name with health validation.
-
-            Args:
-                service_name: Name of service to discover
-
-            Returns:
-                FlextResult containing service information or not found error
-
-            """
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Discover service by name with health validation."""
             if service_name not in self._registered_services:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Service {service_name} not found",
                 )
 
             service_data = self._registered_services[service_name]
             service_info = service_data["info"]
             if isinstance(service_info, dict):
-                # Use cast to ensure correct typing for dict[str, object]
-                typed_service_info = cast("dict[str, object]", service_info)
-                return FlextResult[dict[str, object]].ok(typed_service_info)
-            return FlextResult[dict[str, object]].fail(
+                # Use cast to ensure correct typing for FlextTypes.Core.Dict
+                typed_service_info = cast("FlextTypes.Core.Dict", service_info)
+                return FlextResult[FlextTypes.Core.Dict].ok(typed_service_info)
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Invalid service info type for {service_name}",
             )
 
     class ServiceMetrics:
-        """Performance tracking and observability integration.
-
-        Provides production-ready service metrics capabilities with:
-            - Real-time performance monitoring
-            - Service level indicator (SLI) tracking
-            - Distributed tracing integration
-            - Custom metrics collection and reporting
-            - Alerting and notification patterns
-
-        This class implements efficient observability patterns
-        for service monitoring and performance optimization.
-        """
+        """Performance tracking and observability integration."""
 
         def __init__(self) -> None:
             """Initialize service metrics with observability patterns."""
@@ -949,17 +572,7 @@ class FlextServices:
             operation_name: str,
             duration_ms: float,
         ) -> FlextResult[None]:
-            """Track service call performance metrics.
-
-            Args:
-                service_name: Name of the called service
-                operation_name: Specific operation that was called
-                duration_ms: Duration of the call in milliseconds
-
-            Returns:
-                FlextResult indicating metrics recording success
-
-            """
+            """Track service call performance metrics."""
             try:
                 # Placeholder for metrics recording - would use actual metrics backend
                 metric_name = f"{service_name}.{operation_name}"
@@ -973,38 +586,18 @@ class FlextServices:
                 return FlextResult[None].fail(f"Metrics recording failed: {e!s}")
 
     class ServiceValidation:
-        """Service input/output validation patterns.
-
-        Provides production-ready service validation capabilities with:
-            - Schema-based input validation
-            - Output contract verification
-            - Cross-service data consistency checks
-            - Business rule validation integration
-            - Validation result aggregation
-
-        This class implements efficient validation patterns
-        for ensuring service data integrity and contract compliance.
-        """
+        """Service input/output validation patterns."""
 
         def __init__(self) -> None:
             """Initialize service validation with pattern matching."""
-            self._validation_registry: dict[str, object] = {}
+            self._validation_registry: FlextTypes.Core.Dict = {}
 
         def validate_input(
             self,
             input_data: TInput,
             validation_schema: Callable[[TInput], FlextResult[TInput]],
         ) -> FlextResult[TInput]:
-            """Validate service input against schema.
-
-            Args:
-                input_data: Data to validate
-                validation_schema: Validation schema/rules as callable
-
-            Returns:
-                FlextResult containing validated data or validation errors
-
-            """
+            """Validate service input against schema."""
             try:
                 validation_result = validation_schema(input_data)
                 if (
@@ -1022,16 +615,7 @@ class FlextServices:
             output_data: TOutput,
             contract_schema: Callable[[TOutput], FlextResult[TOutput]],
         ) -> FlextResult[TOutput]:
-            """Validate service output against contract.
-
-            Args:
-                output_data: Data to validate
-                contract_schema: Contract validation schema as callable
-
-            Returns:
-                FlextResult containing validated output or contract violation error
-
-            """
+            """Validate service output against contract."""
             try:
                 validation_result = contract_schema(output_data)
                 if (

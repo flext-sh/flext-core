@@ -1,22 +1,7 @@
 """Schema and entry processing system with validation and transformation.
 
-Provides unified data processing capabilities including entry validation, regex pattern
-matching, configuration management, and pipeline processing with FlextResult error handling.
-
-Key Components:
-    - Entry: Immutable value object for structured data
-    - BaseProcessor: Core processing with validation
-    - RegexProcessor: Pattern matching and extraction
-    - ConfigProcessor: Configuration validation
-    - ValidatingProcessor: Handler-based validation
-    - ProcessingPipeline: Composable processing steps
-
-Example:
-    processors = FlextProcessors()
-    entry_result = processors.create_entry({"id": "user123", "name": "John"}, "USER")
-    if entry_result.success:
-        results = processors.process_entries([entry_result.unwrap()])
-
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -28,6 +13,7 @@ from typing import Protocol, cast
 
 from pydantic import Field
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.handlers import FlextHandlers
 from flext_core.models import FlextModels
@@ -38,20 +24,7 @@ from flext_core.validations import FlextValidations
 
 
 class FlextProcessors:
-    """Consolidated FLEXT processors system for entry processing, validation and transformation.
-
-    Provides unified data processing capabilities including entry validation, regex pattern
-    matching, configuration management, and pipeline processing. All processor types are
-    organized as nested classes for consistent configuration and type safety.
-
-    Key Features:
-        - Entry validation with type safety
-        - Regex-based pattern extraction
-        - Pipeline processing with handlers
-        - Configuration validation
-        - Service registry integration
-        - FlextResult error handling
-    """
+    """Consolidated processors system for entry processing, validation and transformation."""
 
     # =============================================================================
     # ENTRY TYPE DEFINITIONS AND MANAGEMENT
@@ -70,11 +43,7 @@ class FlextProcessors:
         UNKNOWN = "unknown"
 
     class Entry(FlextModels.Config):
-        """Base entry value object for schema and data processing.
-
-        Provides immutable, validated entry representations with standardized
-        fields for type identification, content management, and identifier tracking.
-        """
+        """Base entry value object for schema and data processing."""
 
         # Entry identification and typing
         entry_type: str
@@ -85,7 +54,7 @@ class FlextProcessors:
         original_content: str
 
         # Optional metadata
-        metadata: dict[str, object] = Field(default_factory=dict)
+        metadata: FlextTypes.Core.Dict = Field(default_factory=dict)
 
         def __eq__(self, other: object) -> bool:
             """Entries are equal if they have same type and identifier."""
@@ -103,7 +72,7 @@ class FlextProcessors:
     class EntryValidator(FlextValidations.Domain.BaseValidator):
         """Entry validator using FLEXT validation framework."""
 
-        def __init__(self, whitelist: list[str] | None = None) -> None:
+        def __init__(self, whitelist: FlextTypes.Core.StringList | None = None) -> None:
             """Initialize entry validator with optional identifier whitelist."""
             super().__init__()
             self.whitelist = whitelist or []
@@ -147,7 +116,7 @@ class FlextProcessors:
         FlextServices.ServiceProcessor[
             "FlextProcessors.Entry",
             "FlextProcessors.Entry",
-            dict[str, object],
+            FlextTypes.Core.Dict,
         ],
     ):
         """Base processor using FLEXT service architecture for entry processing."""
@@ -176,7 +145,7 @@ class FlextProcessors:
         def process_data(
             self,
             entry: FlextProcessors.Entry,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Process entry and extract information following service patterns."""
             try:
                 info = {
@@ -185,9 +154,9 @@ class FlextProcessors:
                     "content_length": len(entry.clean_content),
                     "has_metadata": bool(entry.metadata),
                 }
-                return FlextResult[dict[str, object]].ok(dict(info))
+                return FlextResult[FlextTypes.Core.Dict].ok(dict(info))
             except Exception as e:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Failed to process entry: {e}",
                 )
 
@@ -198,7 +167,7 @@ class FlextProcessors:
         def extract_info_from_entry(
             self,
             entry: FlextProcessors.Entry,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Legacy method for backward compatibility."""
             return self.process_data(entry)
 
@@ -222,7 +191,7 @@ class FlextProcessors:
             domain: FlextProcessors.Entry,
             *,
             correlation_id: str = "",
-        ) -> dict[str, object]:
+        ) -> FlextTypes.Core.Dict:
             """Build final result from domain object (required by ServiceProcessor)."""
             # Use process_data to build the final result
             result = self.process_data(domain)
@@ -248,8 +217,8 @@ class FlextProcessors:
         def process_data(
             self,
             entry: FlextProcessors.Entry,
-        ) -> FlextResult[dict[str, object]]:
-            """Default processing implementation."""
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Process data with default implementation."""
             return super().process_data(entry)
 
     class RegexProcessor(BaseProcessor):
@@ -291,7 +260,7 @@ class FlextProcessors:
         def process_data(
             self,
             entry: FlextProcessors.Entry,
-        ) -> FlextResult[dict[str, object]]:
+        ) -> FlextResult[FlextTypes.Core.Dict]:
             """Process entry with regex-specific logic."""
             # First do the base processing
             base_result = super().process_data(entry)
@@ -312,20 +281,20 @@ class FlextProcessors:
             format_result = self.validate_content_format(entry.clean_content)
             if format_result.is_success:
                 info["content_matches_pattern"] = format_result.unwrap()
-            return FlextResult[dict[str, object]].ok(info)
+            return FlextResult[FlextTypes.Core.Dict].ok(info)
 
     class ConfigProcessor:
         """Configuration processor for handling config validation and management."""
 
         def __init__(self) -> None:
             """Initialize configuration processor."""
-            self.config_cache: dict[str, object] = {}
+            self.config_cache: FlextTypes.Core.Dict = {}
 
         def validate_configuration_attribute(
             self,
             obj: object,
             attribute_name: str,
-            validator: Callable[[object], bool],
+            validator: FlextTypes.Validation.Validator,
         ) -> FlextResult[bool]:
             """Validate a configuration attribute."""
             try:
@@ -342,7 +311,7 @@ class FlextProcessors:
 
         def get_config_value(
             self,
-            config: dict[str, object],
+            config: FlextTypes.Core.Dict,
             key: str,
         ) -> FlextResult[object]:
             """Get configuration value with validation."""
@@ -500,7 +469,7 @@ class FlextProcessors:
     @classmethod
     def create_entry(
         cls,
-        data: dict[str, object],
+        data: FlextTypes.Core.Dict,
         entry_type: str | None = None,
     ) -> FlextResult[FlextProcessors.Entry]:
         """Create entry instance with validation."""
@@ -572,18 +541,20 @@ class FlextProcessors:
             )
 
     @classmethod
-    def validate_configuration(cls, config: object) -> FlextResult[dict[str, object]]:
+    def validate_configuration(
+        cls, config: object
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Validate configuration dictionary."""
         try:
             # Basic validation - can be extended
             if not isinstance(config, dict):
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     "Configuration must be a dictionary",
                 )
 
             # Type narrowing: we know config is dict at this point
             typed_config = cast(
-                "dict[str, object]",
+                "FlextTypes.Core.Dict",
                 config,
             )  # Cast to proper type after isinstance check
 
@@ -594,13 +565,13 @@ class FlextProcessors:
                     value,
                     (str, int, float, bool, list, dict),
                 ):
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         f"Configuration value for '{key}' must be a basic type",
                     )
 
-            return FlextResult[dict[str, object]].ok(typed_config)
+            return FlextResult[FlextTypes.Core.Dict].ok(typed_config)
         except Exception as e:
-            return FlextResult[dict[str, object]].fail(
+            return FlextResult[FlextTypes.Core.Dict].fail(
                 f"Configuration validation failed: {e}",
             )
 
@@ -620,7 +591,7 @@ class FlextProcessors:
     ) -> FlextResult[None]:
         """Register a named processor using service registry patterns."""
         try:
-            service_info: dict[str, object] = {
+            service_info: FlextTypes.Core.Dict = {
                 "name": name,
                 "type": "processor",
                 "instance": processor,
@@ -695,11 +666,34 @@ class FlextProcessors:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure processors system with validation."""
+        """Configure processors system using Settings → SystemConfigs bridge.
+
+        Valida environment/log_level se presentes, preservando as chaves
+        específicas já esperadas pelos testes e adicionando defaults.
+        """
         try:
+            # Validação leve com ProcessorsConfig (ignora extras)
+            settings_res = FlextConfig.create_from_environment(
+                extra_settings=cast("FlextTypes.Core.Dict", config)
+                if isinstance(config, dict)
+                else None,
+            )
+            if settings_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    settings_res.error or "Failed to create ProcessorsSettings",
+                )
+            cfg_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
+                settings_res.value.model_dump()
+            )
+            if cfg_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    cfg_res.error or "Failed to validate ProcessorsConfig",
+                )
+
+            # Preserve forma e valores esperados pela API atual
             validated_config = dict(config)
 
-            # Set default values for processors-specific settings
+            # Defaults para campos específicos do módulo
             validated_config.setdefault("enable_regex_caching", True)
             validated_config.setdefault("enable_pipeline_validation", True)
             validated_config.setdefault("max_processing_errors", 100)

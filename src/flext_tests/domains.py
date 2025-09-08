@@ -2,6 +2,9 @@
 
 Simple factory pattern without factory-boy complications.
 Uses FlextResult patterns and realistic data for testing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -20,9 +23,9 @@ class UserDataFactory:
     """Factory for creating realistic user data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, object]:
+    def create(**overrides: object) -> FlextTypes.Core.Dict:
         """Create user data dict."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "id": str(uuid.uuid4()),
             "name": f"User {random.randint(100, 999)}",
             "email": f"user{random.randint(1, 1000)}@example.com",
@@ -34,12 +37,12 @@ class UserDataFactory:
         return data
 
     @staticmethod
-    def build(**overrides: object) -> dict[str, object]:
+    def build(**overrides: object) -> FlextTypes.Core.Dict:
         """Build user data dict (alias for create)."""
         return UserDataFactory.create(**overrides)
 
     @staticmethod
-    def batch(count: int = 5) -> list[dict[str, object]]:
+    def batch(count: int = 5) -> list[FlextTypes.Core.Dict]:
         """Create batch of user data."""
         return [UserDataFactory.create() for _ in range(count)]
 
@@ -48,9 +51,9 @@ class SimpleConfigurationFactory:
     """Factory for creating realistic configuration data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, object]:
+    def create(**overrides: object) -> FlextTypes.Core.Dict:
         """Create configuration data dict."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "database_url": "postgresql://localhost:5432/test",
             "log_level": "INFO",
             "debug": False,
@@ -66,9 +69,9 @@ class ServiceDataFactory:
     """Factory for creating realistic service data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, object]:
+    def create(**overrides: object) -> FlextTypes.Core.Dict:
         """Create service data dict."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "name": f"test_service_{random.randint(1, 100)}",
             "version": f"1.{random.randint(0, 10)}.{random.randint(0, 50)}",
             "port": random.randint(8000, 9000),
@@ -83,9 +86,9 @@ class PayloadDataFactory:
     """Factory for creating realistic message/payload data."""
 
     @staticmethod
-    def create(**overrides: object) -> dict[str, object]:
+    def create(**overrides: object) -> FlextTypes.Core.Dict:
         """Create payload data dict."""
-        data: dict[str, object] = {
+        data: FlextTypes.Core.Dict = {
             "message_id": str(uuid.uuid4()),
             "type": "user_created",
             "timestamp": "2024-01-01T00:00:00Z",
@@ -100,7 +103,7 @@ class ValidationTestCases:
     """Validation test case data factory."""
 
     @staticmethod
-    def valid_email_cases() -> list[str]:
+    def valid_email_cases() -> FlextTypes.Core.StringList:
         """Return valid email test cases."""
         return [
             "user@example.com",
@@ -110,7 +113,7 @@ class ValidationTestCases:
         ]
 
     @staticmethod
-    def invalid_email_cases() -> list[str]:
+    def invalid_email_cases() -> FlextTypes.Core.StringList:
         """Return invalid email test cases."""
         return [
             "not-an-email",
@@ -135,7 +138,7 @@ class RealisticData:
     """Factory for realistic test data scenarios."""
 
     @staticmethod
-    def user_registration_data() -> dict[str, object]:
+    def user_registration_data() -> FlextTypes.Core.Dict:
         """Create realistic user registration data."""
         return {
             "name": f"John Doe {random.randint(1, 100)}",
@@ -151,7 +154,7 @@ class RealisticData:
         }
 
     @staticmethod
-    def order_data() -> dict[str, object]:
+    def order_data() -> FlextTypes.Core.Dict:
         """Create realistic order data."""
         return {
             "order_id": str(uuid.uuid4()),
@@ -171,7 +174,7 @@ class RealisticData:
         }
 
     @staticmethod
-    def api_response_data() -> dict[str, object]:
+    def api_response_data() -> FlextTypes.Core.Dict:
         """Create realistic API response data."""
         return {
             "success": True,
@@ -182,8 +185,25 @@ class RealisticData:
         }
 
 
+# Main unified class
+class FlextTestsDomains:
+    """Unified domain test data factories for FLEXT ecosystem.
+
+    Consolidates all domain data factory patterns into a single class interface.
+    """
+
+    # Delegate to existing implementations
+    UserData = UserDataFactory
+    Configuration = SimpleConfigurationFactory
+    ServiceData = ServiceDataFactory
+    PayloadData = PayloadDataFactory
+    Validation = ValidationTestCases
+    Realistic = RealisticData
+
+
 # Export all factories
 __all__ = [
+    "FlextTestsDomains",
     "PayloadDataFactory",
     "RealisticData",
     "ServiceDataFactory",

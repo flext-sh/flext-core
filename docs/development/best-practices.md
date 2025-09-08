@@ -476,7 +476,7 @@ class Order(FlextModels.AggregateRoot):
 Process multiple items efficiently:
 
 ```python
-def process_orders_batch(order_ids: list[str]) -> FlextResult[list[Order]]:
+def process_orders_batch(order_ids: FlextTypes.Core.StringList) -> FlextResult[list[Order]]:
     """Process multiple orders efficiently."""
     # Load all at once
     orders_result = repository.find_by_ids(order_ids)

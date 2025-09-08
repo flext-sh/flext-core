@@ -1037,7 +1037,7 @@ class FlextDomainServiceGenerator:
     """Tool to generate domain service templates for complex business operations."""
 
     @staticmethod
-    def analyze_business_operations(library_path: str) -> dict[str, list[str]]:
+    def analyze_business_operations(library_path: str) -> dict[str, FlextTypes.Core.StringList]:
         """Analyze existing business operations for domain service opportunities."""
         return {
             "complex_operations": ["multi_step_process", "cross_entity_coordination", "transaction_management"],

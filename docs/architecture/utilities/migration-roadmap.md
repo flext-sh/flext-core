@@ -882,7 +882,7 @@ class FlextAutoOptimizer:
 
     def _get_performance_recommendations(
         self, operation_name: str, metrics: dict
-    ) -> list[str]:
+    ) -> FlextTypes.Core.StringList:
         """Generate performance recommendations based on metrics analysis."""
 
         recommendations = []

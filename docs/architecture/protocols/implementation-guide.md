@@ -91,7 +91,7 @@ class User(FlextProtocols.Foundation.HasToDict):
         self.email = email
         self.created_at = time.time()
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         return {
             "id": self.id,
             "name": self.name,
@@ -693,10 +693,10 @@ class ConfigurableUserService(FlextProtocols.Infrastructure.Configurable):
 
     def __init__(self, logger: FlextProtocols.Infrastructure.LoggerProtocol):
         self.logger = logger
-        self.config: dict[str, object] = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.initialized = False
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         """Configure service with settings."""
         try:
             self.config.update(config)
@@ -720,7 +720,7 @@ class ConfigurableUserService(FlextProtocols.Infrastructure.Configurable):
             self.logger.exception("Configuration error")
             return FlextResult[None].fail(f"Configuration failed: {e}")
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current configuration."""
         return self.config.copy()
 
@@ -784,17 +784,17 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
     """Analytics plugin following Extensions.Plugin protocol."""
 
     def __init__(self):
-        self.config: dict[str, object] = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.context: FlextProtocols.Extensions.PluginContext | None = None
         self.initialized = False
         self.analytics_data: list[dict] = []
 
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         """Configure plugin with settings."""
         self.config.update(config)
         return FlextResult[None].ok(None)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get current plugin configuration."""
         return self.config.copy()
 
@@ -832,7 +832,7 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
         self.analytics_data.clear()
         return FlextResult[None].ok(None)
 
-    def get_info(self) -> dict[str, object]:
+    def get_info(self) -> FlextTypes.Core.Dict:
         """Get plugin information."""
         return {
             "name": "AnalyticsPlugin",
@@ -843,7 +843,7 @@ class AnalyticsPlugin(FlextProtocols.Extensions.Plugin):
             "config": self.config
         }
 
-    def track_event(self, event_type: str, data: dict[str, object]) -> FlextResult[None]:
+    def track_event(self, event_type: str, data: FlextTypes.Core.Dict) -> FlextResult[None]:
         """Track analytics event."""
         if not self.initialized:
             return FlextResult[None].fail("Plugin not initialized")
@@ -868,8 +868,8 @@ class SimplePluginContext(FlextProtocols.Extensions.PluginContext):
     """Simple plugin context implementation."""
 
     def __init__(self):
-        self.services: dict[str, object] = {}
-        self.config: dict[str, object] = {}
+        self.services: FlextTypes.Core.Dict = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.logger = StructuredLogger("plugin-context")
 
     def get_service(self, service_name: str) -> object:
@@ -879,7 +879,7 @@ class SimplePluginContext(FlextProtocols.Extensions.PluginContext):
         else:
             raise ValueError(f"Service not found: {service_name}")
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         """Get configuration for plugin."""
         return self.config.copy()
 
@@ -892,7 +892,7 @@ class SimplePluginContext(FlextProtocols.Extensions.PluginContext):
         self.services[name] = service
         self.logger.info("Service registered", service_name=name)
 
-    def set_config(self, config: dict[str, object]):
+    def set_config(self, config: FlextTypes.Core.Dict):
         """Set plugin configuration."""
         self.config.update(config)
 
@@ -936,7 +936,7 @@ class SimpleObservabilityCollector(FlextProtocols.Extensions.Observability):
         self.metrics: dict[str, dict] = {}
         self.traces: dict[str, dict] = {}
 
-    def record_metric(self, name: str, value: float, tags: dict[str, str] | None = None) -> object:
+    def record_metric(self, name: str, value: float, tags: FlextTypes.Core.Headers | None = None) -> object:
         """Record metric value."""
         metric_key = f"{name}:{tags}" if tags else name
 
@@ -1068,7 +1068,7 @@ class EnterpriseUserService(
 
     def __init__(self, logger: FlextProtocols.Infrastructure.LoggerProtocol):
         self.logger = logger
-        self.config: dict[str, object] = {}
+        self.config: FlextTypes.Core.Dict = {}
         self.metrics: dict[str, dict] = {}
         self.traces: dict[str, dict] = {}
         self._running = False
@@ -1100,16 +1100,16 @@ class EnterpriseUserService(
         })
 
     # Infrastructure.Configurable implementation
-    def configure(self, config: dict[str, object]) -> object:
+    def configure(self, config: FlextTypes.Core.Dict) -> object:
         self.config.update(config)
         self.logger.info("Service configured", config_keys=list(config.keys()))
         return FlextResult[None].ok(None)
 
-    def get_config(self) -> dict[str, object]:
+    def get_config(self) -> FlextTypes.Core.Dict:
         return self.config.copy()
 
     # Extensions.Observability implementation
-    def record_metric(self, name: str, value: float, tags: dict[str, str] | None = None) -> object:
+    def record_metric(self, name: str, value: float, tags: FlextTypes.Core.Headers | None = None) -> object:
         metric_key = f"{name}:{tags}" if tags else name
         self.metrics[metric_key] = {
             "name": name,

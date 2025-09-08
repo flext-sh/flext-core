@@ -1,7 +1,7 @@
 """Field definitions and metadata for domain models.
 
-Provides field types, validators, and metadata for Pydantic models
-with enterprise constraints and business rules.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from abc import abstractmethod
 from datetime import UTC, datetime
 from typing import Final, cast, override
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
@@ -20,15 +21,7 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextFields:
-    """Hierarchical field system organizing all field functionality by domain.
-
-    Consolidated class organizing field functionality into nested classes:
-    Core (basic field types), Validation (constraint checking), Registry
-    (field management), Schema (processing and metadata), Factory (creation patterns).
-
-    Using Strategy Pattern to reduce complexity by extracting validation logic into
-    composable strategy classes following existing flext-core architectural patterns.
-    """
+    """Hierarchical field system organizing field functionality by domain."""
 
     # ==========================================================================
     # VALIDATION STRATEGIES - Strategy Pattern for field validation
@@ -141,21 +134,10 @@ class FlextFields:
     # ==========================================================================
 
     class Core:
-        """Core field types and fundamental field operations.
-
-        This nested class contains all basic field type implementations and
-        core field operations. All field types inherit from BaseField and
-        implement the standard validation contract.
-        """
+        """Core field types and fundamental field operations."""
 
         class BaseField[T]:
-            """Abstract base class for all field types.
-
-            Defines the fundamental contract that all field implementations must
-            follow. Uses FlextResult for error handling and FlextTypes for
-            type annotations.
-
-            """
+            """Abstract base class for all field types."""
 
             def __init__(
                 self,
@@ -183,7 +165,7 @@ class FlextFields:
                 """Get field type identifier."""
                 return self.__class__.__name__.replace("Field", "").lower()
 
-            def get_metadata(self) -> dict[str, object]:
+            def get_metadata(self) -> FlextTypes.Core.Dict:
                 """Extract field metadata for introspection."""
                 return {
                     "name": self.name,
@@ -270,15 +252,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[int]:
-                """Validate integer value with range constraints.
-
-                Args:
-                    value: Value to validate as integer
-
-                Returns:
-                    FlextResult with validated integer or validation error
-
-                """
+                """Validate integer value with range constraints."""
                 if value is None and not self.required:
                     return FlextResult[int].ok(self.default or 0)
 
@@ -328,15 +302,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[float]:
-                """Validate float value with range and precision constraints.
-
-                Args:
-                    value: Value to validate as float
-
-                Returns:
-                    FlextResult with validated float or validation error
-
-                """
+                """Validate float value with range and precision constraints."""
                 if value is None and not self.required:
                     return FlextResult[float].ok(self.default or 0.0)
 
@@ -386,15 +352,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[bool]:
-                """Validate boolean value with flexible conversion.
-
-                Args:
-                    value: Value to validate and convert to boolean
-
-                Returns:
-                    FlextResult with validated boolean or validation error
-
-                """
+                """Validate boolean value with flexible conversion."""
                 if value is None and not self.required:
                     return FlextResult[bool].ok(self.default or False)
 
@@ -440,15 +398,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[str]:
-                """Validate email address format.
-
-                Args:
-                    value: Email address to validate
-
-                Returns:
-                    FlextResult with validated email or validation error
-
-                """
+                """Validate email address format."""
                 # First run string validation
                 string_result = super().validate(value)
                 if not string_result.success:
@@ -477,15 +427,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[str]:
-                """Validate UUID format.
-
-                Args:
-                    value: UUID string to validate
-
-                Returns:
-                    FlextResult with validated UUID string or validation error
-
-                """
+                """Validate UUID format."""
                 if value is None and not self.required:
                     # Use centralized UUID generation
                     if self.default:
@@ -536,15 +478,7 @@ class FlextFields:
 
             @override
             def validate(self, value: object) -> FlextResult[datetime]:
-                """Validate datetime value with format and range constraints.
-
-                Args:
-                    value: DateTime value to validate (string or datetime)
-
-                Returns:
-                    FlextResult with validated datetime or validation error
-
-                """
+                """Validate datetime value with format and range constraints."""
                 if value is None and not self.required:
                     return FlextResult[datetime].ok(self.default or datetime.now(UTC))
 
@@ -608,35 +542,17 @@ class FlextFields:
             field: FlextFields.Core.BaseField[object],
             value: object,
         ) -> FlextResult[object]:
-            """Validate a field value using the field's validation logic.
-
-            Args:
-                field: Field instance to use for validation
-                value: Value to validate
-
-            Returns:
-                FlextResult with validated value or validation error
-
-            """
+            """Validate a field value using the field's validation logic."""
             return field.validate(value)
 
         @staticmethod
         def validate_multiple_fields(
             fields: list[FlextFields.Core.BaseField[object]],
-            values: dict[str, object],
-        ) -> FlextResult[dict[str, object]]:
-            """Validate multiple fields with their corresponding values.
-
-            Args:
-                fields: List of field instances
-                values: Dictionary mapping field names to values
-
-            Returns:
-                FlextResult with validated values dict or validation errors
-
-            """
-            validated_values: dict[str, object] = {}
-            errors: list[str] = []
+            values: FlextTypes.Core.Dict,
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Validate multiple fields with their corresponding values."""
+            validated_values: FlextTypes.Core.Dict = {}
+            errors: FlextTypes.Core.StringList = []
 
             for field in fields:
                 field_value = values.get(field.name)
@@ -648,12 +564,12 @@ class FlextFields:
                     errors.append(f"{field.name}: {result.error}")
 
             if errors:
-                return FlextResult[dict[str, object]].fail(
+                return FlextResult[FlextTypes.Core.Dict].fail(
                     "; ".join(errors),
                     error_code=FlextConstants.Errors.VALIDATION_ERROR,
                 )
 
-            return FlextResult[dict[str, object]].ok(validated_values)
+            return FlextResult[FlextTypes.Core.Dict].ok(validated_values)
 
     # ==========================================================================
     # REGISTRY SUBSYSTEM - Field registration and management
@@ -750,24 +666,26 @@ class FlextFields:
                     field_type,
                 )
 
-            def list_fields(self) -> list[str]:
+            def list_fields(self) -> FlextTypes.Core.StringList:
                 """Get list of all registered field names."""
                 return list(self._fields.keys())
 
-            def list_field_types(self) -> list[str]:
+            def list_field_types(self) -> FlextTypes.Core.StringList:
                 """Get list of all registered field type names."""
                 return list(self._field_types.keys())
 
-            def get_field_metadata(self, name: str) -> FlextResult[dict[str, object]]:
+            def get_field_metadata(
+                self, name: str
+            ) -> FlextResult[FlextTypes.Core.Dict]:
                 """Get metadata for a registered field."""
                 field_result = self.get_field(name)
                 if not field_result.success:
-                    return FlextResult[dict[str, object]].fail(
+                    return FlextResult[FlextTypes.Core.Dict].fail(
                         field_result.error or "Unknown error",
                     )
 
                 metadata = field_result.value.get_metadata()
-                return FlextResult[dict[str, object]].ok(metadata)
+                return FlextResult[FlextTypes.Core.Dict].ok(metadata)
 
             def clear(self) -> None:
                 """Clear all registered fields and types."""
@@ -791,21 +709,13 @@ class FlextFields:
 
             def process_field_schema(
                 self,
-                schema: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Process field schema definition and extract metadata.
-
-                Args:
-                    schema: Schema definition dictionary
-
-                Returns:
-                    FlextResult with processed schema or validation error
-
-                """
+                schema: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
+                """Process field schema definition and extract metadata."""
                 # Type is already enforced by parameter annotation
 
-                processed_schema: dict[str, object] = {
-                    "fields": list[object](),
+                processed_schema: FlextTypes.Core.Dict = {
+                    "fields": [],
                     "metadata": {},
                     "validation_rules": [],
                 }
@@ -814,12 +724,12 @@ class FlextFields:
                 fields_data_raw = schema.get("fields", [])
                 if isinstance(fields_data_raw, list):
                     # Create a properly typed list for field definitions
-                    field_definitions: list[object] = []
+                    field_definitions: FlextTypes.Core.List = []
 
                     # Type cast the list to help Pyright inference
-                    fields_data = cast("list[dict[str, object]]", fields_data_raw)
+                    fields_data = cast("list[FlextTypes.Core.Dict]", fields_data_raw)
                     for field_def_raw in fields_data:
-                        # field_def_raw is guaranteed dict[str, object] from cast
+                        # field_def_raw is guaranteed FlextTypes.Core.Dict from cast
                         field_result = self._extract_field_definition(field_def_raw)
                         if field_result.success:
                             field_definitions.append(field_result.value)
@@ -832,28 +742,20 @@ class FlextFields:
                 if isinstance(metadata, dict):
                     processed_schema["metadata"] = metadata
 
-                return FlextResult[dict[str, object]].ok(processed_schema)
+                return FlextResult[FlextTypes.Core.Dict].ok(processed_schema)
 
             def _extract_field_definition(
                 self,
-                field_def: dict[str, object],
-            ) -> FlextResult[dict[str, object]]:
-                """Extract field definition from schema entry.
-
-                Args:
-                    field_def: Field definition dictionary
-
-                Returns:
-                    FlextResult with extracted field definition or error
-
-                """
-                # Type guard to ensure field_def is properly typed
-                field_def_dict = dict[str, object](field_def)
+                field_def: FlextTypes.Core.Dict,
+            ) -> FlextResult[FlextTypes.Core.Dict]:
+                """Extract field definition from schema entry."""
+                # field_def is already typed as dict, use directly
+                field_def_dict = field_def
 
                 required_keys = ["name", "type"]
                 for key in required_keys:
                     if key not in field_def_dict:
-                        return FlextResult[dict[str, object]].fail(
+                        return FlextResult[FlextTypes.Core.Dict].fail(
                             f"Missing required key: {key}",
                             error_code=FlextConstants.Errors.VALIDATION_ERROR,
                         )
@@ -868,23 +770,15 @@ class FlextFields:
                     "metadata": field_def_dict.get("metadata", {}),
                 }
 
-                return FlextResult[dict[str, object]].ok(extracted)
+                return FlextResult[FlextTypes.Core.Dict].ok(extracted)
 
             def process_multiple_fields_schema(
                 self,
-                schemas: list[dict[str, object]],
-            ) -> FlextResult[list[dict[str, object]]]:
-                """Process multiple field schemas.
-
-                Args:
-                    schemas: List of schema definitions
-
-                Returns:
-                    FlextResult with list of processed schemas or error
-
-                """
-                processed_schemas: list[dict[str, object]] = []
-                errors: list[str] = []
+                schemas: list[FlextTypes.Core.Dict],
+            ) -> FlextResult[list[FlextTypes.Core.Dict]]:
+                """Process multiple field schemas."""
+                processed_schemas: list[FlextTypes.Core.Dict] = []
+                errors: FlextTypes.Core.StringList = []
 
                 for i, schema in enumerate(schemas):
                     result = self.process_field_schema(schema)
@@ -894,12 +788,12 @@ class FlextFields:
                         errors.append(f"Schema {i}: {result.error}")
 
                 if errors:
-                    return FlextResult[list[dict[str, object]]].fail(
+                    return FlextResult[list[FlextTypes.Core.Dict]].fail(
                         "; ".join(errors),
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
 
-                return FlextResult[list[dict[str, object]]].ok(processed_schemas)
+                return FlextResult[list[FlextTypes.Core.Dict]].ok(processed_schemas)
 
     # ==========================================================================
     # FACTORY SUBSYSTEM - Factory patterns for field creation
@@ -918,17 +812,7 @@ class FlextFields:
             name: str,
             **config: object,
         ) -> FlextResult[object]:
-            """Create field instance using factory pattern.
-
-            Args:
-                field_type: Type of field to create
-                name: Name for the field
-                **config: Configuration parameters for the field
-
-            Returns:
-                FlextResult with created field instance or error
-
-            """
+            """Create field instance using factory pattern."""
             field_types = {
                 "string": FlextFields.Core.StringField,
                 "integer": FlextFields.Core.IntegerField,
@@ -964,19 +848,10 @@ class FlextFields:
         @staticmethod
         def _prepare_field_config(
             field_type: str,
-            config: dict[str, object],
-        ) -> dict[str, object]:
-            """Prepare field configuration with proper type narrowing.
-
-            Args:
-                field_type: Type of field being created
-                config: Raw configuration dictionary
-
-            Returns:
-                Processed configuration with proper types for the specific field type
-
-            """
-            processed_config: dict[str, object] = {}
+            config: FlextTypes.Core.Dict,
+        ) -> FlextTypes.Core.Dict:
+            """Prepare field configuration with proper type narrowing."""
+            processed_config: FlextTypes.Core.Dict = {}
 
             # Common field parameters
             if "required" in config:
@@ -1095,20 +970,9 @@ class FlextFields:
             ],
             name: str,
             field_type: str,
-            config: dict[str, object],
+            config: FlextTypes.Core.Dict,
         ) -> object:
-            """Create field with specific parameter handling for each type.
-
-            Args:
-                field_class: Field class to instantiate
-                name: Field name
-                field_type: Type of field being created
-                config: Configuration parameters
-
-            Returns:
-                Created field instance
-
-            """
+            """Create field with specific parameter handling for each type."""
             # Extract common parameters with type safety
             required = config.get("required", True)
             if isinstance(required, str):
@@ -1398,17 +1262,9 @@ class FlextFields:
 
         @staticmethod
         def create_fields_from_schema(
-            schema: dict[str, object],
+            schema: FlextTypes.Core.Dict,
         ) -> FlextResult[list[FlextFields.Core.BaseField[object]]]:
-            """Create multiple fields from schema definition.
-
-            Args:
-                schema: Schema containing field definitions
-
-            Returns:
-                FlextResult with list of created fields or error
-
-            """
+            """Create multiple fields from schema definition."""
             if "fields" not in schema:
                 return FlextResult[list[FlextFields.Core.BaseField[object]]].fail(
                     "Schema must contain 'fields' key",
@@ -1416,7 +1272,7 @@ class FlextFields:
                 )
 
             fields: list[FlextFields.Core.BaseField[object]] = []
-            errors: list[str] = []
+            errors: FlextTypes.Core.StringList = []
 
             # Extract field definitions using the same pattern as process_field_schema
             schema_fields_raw = schema["fields"]
@@ -1426,12 +1282,12 @@ class FlextFields:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
-            # Type-narrowed after isinstance check - Pylance can now infer this is list[object]
-            schema_fields = cast("list[dict[str, object]]", schema_fields_raw)
+            # Type-narrowed after isinstance check - Pylance can now infer this is FlextTypes.Core.List
+            schema_fields = cast("list[FlextTypes.Core.Dict]", schema_fields_raw)
 
             for field_definition in schema_fields:
-                # field_definition is now guaranteed to be dict[str, object] from cast
-                field_def: dict[str, object] = field_definition
+                # field_definition is now guaranteed to be FlextTypes.Core.Dict from cast
+                field_def: FlextTypes.Core.Dict = field_definition
                 field_type_obj = field_def.get("type")
                 field_name_obj = field_def.get("name")
 
@@ -1452,7 +1308,7 @@ class FlextFields:
                 field_name: str = field_name_obj
 
                 # Extração de configuração com tipos explícitos
-                config: dict[str, object] = {
+                config: FlextTypes.Core.Dict = {
                     k: v for k, v in field_def.items() if k not in {"type", "name"}
                 }
 
@@ -1486,22 +1342,14 @@ class FlextFields:
             ) -> None:
                 self.field_type = field_type
                 self.name = name
-                self.config: dict[str, object] = {}
+                self.config: FlextTypes.Core.Dict = {}
 
             def with_required(
                 self,
                 *,
                 required: bool,
             ) -> FlextFields.Factory.FieldBuilder:
-                """Set field as required or optional.
-
-                Args:
-                    required: Whether field is required
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set field as required or optional."""
                 self.config["required"] = required
                 return self
 
@@ -1509,15 +1357,7 @@ class FlextFields:
                 self,
                 default_value: object,
             ) -> FlextFields.Factory.FieldBuilder:
-                """Set default value for field.
-
-                Args:
-                    default_value: Default value for field
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set default value for field."""
                 self.config["default"] = default_value
                 return self
 
@@ -1525,15 +1365,7 @@ class FlextFields:
                 self,
                 description: str,
             ) -> FlextFields.Factory.FieldBuilder:
-                """Set field description.
-
-                Args:
-                    description: Human-readable description
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set field description."""
                 self.config["description"] = description
                 return self
 
@@ -1542,16 +1374,7 @@ class FlextFields:
                 min_length: int | None = None,
                 max_length: int | None = None,
             ) -> FlextFields.Factory.FieldBuilder:
-                """Set length constraints for string fields.
-
-                Args:
-                    min_length: Minimum string length
-                    max_length: Maximum string length
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set length constraints for string fields."""
                 if min_length is not None:
                     self.config["min_length"] = min_length
                 if max_length is not None:
@@ -1563,16 +1386,7 @@ class FlextFields:
                 min_value: float | None = None,
                 max_value: float | None = None,
             ) -> FlextFields.Factory.FieldBuilder:
-                """Set range constraints for numeric fields.
-
-                Args:
-                    min_value: Minimum numeric value
-                    max_value: Maximum numeric value
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set range constraints for numeric fields."""
                 if min_value is not None:
                     self.config["min_value"] = min_value
                 if max_value is not None:
@@ -1580,27 +1394,14 @@ class FlextFields:
                 return self
 
             def with_pattern(self, pattern: str) -> FlextFields.Factory.FieldBuilder:
-                """Set regex pattern for string validation.
-
-                Args:
-                    pattern: Regular expression pattern
-
-                Returns:
-                    Builder instance for method chaining
-
-                """
+                """Set regex pattern for string validation."""
                 self.config["pattern"] = pattern
                 return self
 
             def build(
                 self,
             ) -> FlextResult[object]:
-                """Build the field instance with configured parameters.
-
-                Returns:
-                    FlextResult with created field instance or error
-
-                """
+                """Build the field instance with configured parameters."""
                 return FlextFields.Factory.create_field(
                     self.field_type,
                     self.name,
@@ -1621,16 +1422,8 @@ class FlextFields:
         @staticmethod
         def analyze_field(
             field: FlextFields.Core.BaseField[object],
-        ) -> FlextResult[dict[str, object]]:
-            """Analyze field and extract efficient metadata.
-
-            Args:
-                field: Field instance to analyze
-
-            Returns:
-                FlextResult with field analysis data or error
-
-            """
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Analyze field and extract efficient metadata."""
             # Type is already enforced by parameter annotation
 
             analysis = {
@@ -1664,22 +1457,14 @@ class FlextFields:
                 }
 
             # Cast analysis to object dict for FlextResult compatibility
-            analysis_obj = cast("dict[str, object]", analysis)
-            return FlextResult[dict[str, object]].ok(analysis_obj)
+            analysis_obj = cast("FlextTypes.Core.Dict", analysis)
+            return FlextResult[FlextTypes.Core.Dict].ok(analysis_obj)
 
         @staticmethod
         def _analyze_field_capabilities(
             field: FlextFields.Core.BaseField[object],
         ) -> dict[str, bool]:
-            """Analyze field capabilities and features.
-
-            Args:
-                field: Field instance to analyze
-
-            Returns:
-                Dictionary of capability flags
-
-            """
+            """Analyze field capabilities and features."""
             capabilities = {
                 "validates_type": hasattr(field, "validate"),
                 "has_metadata": hasattr(field, "get_metadata"),
@@ -1727,20 +1512,12 @@ class FlextFields:
         @staticmethod
         def get_field_summary(
             fields: list[FlextFields.Core.BaseField[object]],
-        ) -> FlextResult[dict[str, object]]:
-            """Generate summary of multiple fields.
-
-            Args:
-                fields: List of fields to summarize
-
-            Returns:
-                FlextResult with field summary data or error
-
-            """
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Generate summary of multiple fields."""
             # Type is already enforced by parameter annotation
 
             # Use properly typed variables
-            field_types: dict[str, int] = {}
+            field_types: FlextTypes.Core.CounterDict = {}
             required_fields = 0
             optional_fields = 0
             fields_with_defaults = 0
@@ -1768,7 +1545,7 @@ class FlextFields:
                         validation_capabilities.add(capability)
 
             # Build result dictionary with proper typing
-            summary: dict[str, object] = {
+            summary: FlextTypes.Core.Dict = {
                 "total_fields": len(fields),
                 "field_types": field_types,
                 "required_fields": required_fields,
@@ -1777,7 +1554,7 @@ class FlextFields:
                 "validation_capabilities": list(validation_capabilities),
             }
 
-            return FlextResult[dict[str, object]].ok(summary)
+            return FlextResult[FlextTypes.Core.Dict].ok(summary)
 
     # =========================================================================
     # CONFIGURATION MANAGEMENT - FLEXT TYPES INTEGRATION
@@ -1788,42 +1565,29 @@ class FlextFields:
         cls,
         config: FlextTypes.Config.ConfigDict,
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure fields system using FlextTypes.Config with StrEnum validation."""
+        """Configure fields system using Settings → BaseSystemConfig bridge."""
         try:
-            # Validate environment
-            if "environment" in config:
-                env_value = config["environment"]
-                valid_environments = [
-                    e.value for e in FlextConstants.Config.ConfigEnvironment
-                ]
-                if env_value not in valid_environments:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid environment '{env_value}'. Valid options: {valid_environments}",
-                    )
+            # Validate env/log/validation via BaseSystemConfig
+            settings_res = FlextConfig.create_from_environment(
+                extra_settings=cast("FlextTypes.Core.Dict", config)
+                if isinstance(config, dict)
+                else None,
+            )
+            if settings_res.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    settings_res.error or "Failed to create FieldsSettings",
+                )
+            # Get FlextConfig instance directly - no to_config() method needed
+            config_instance = settings_res.value
 
-            # Validate log level
-            if "log_level" in config:
-                log_value = config["log_level"]
-                valid_log_levels = [
-                    level.value for level in FlextConstants.Config.LogLevel
-                ]
-                if log_value not in valid_log_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid log_level '{log_value}'. Valid options: {valid_log_levels}",
-                    )
+            # Use the config instance to validate runtime requirements
+            config_validation = config_instance.validate_runtime_requirements()
+            if config_validation.is_failure:
+                return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                    config_validation.error or "Configuration validation failed"
+                )
 
-            # Validate validation level
-            if "validation_level" in config:
-                val_value = config["validation_level"]
-                valid_validation_levels = [
-                    v.value for v in FlextConstants.Config.ValidationLevel
-                ]
-                if val_value not in valid_validation_levels:
-                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                        f"Invalid validation_level '{val_value}'. Valid options: {valid_validation_levels}",
-                    )
-
-            # Build validated configuration with defaults
+            # Preserve shape and defaults expected by current API
             validated_config: FlextTypes.Config.ConfigDict = {
                 "environment": config.get(
                     "environment",
@@ -2205,6 +1969,6 @@ class FlextFields:
 # Use FlextFields.create_string_field, FlextFields.create_integer_field, etc. instead
 
 
-__all__: Final[list[str]] = [
+__all__: Final[FlextTypes.Core.StringList] = [
     "FlextFields",
 ]

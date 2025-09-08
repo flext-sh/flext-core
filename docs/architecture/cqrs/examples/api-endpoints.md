@@ -603,7 +603,7 @@ async def create_user_REDACTED_LDAP_BIND_PASSWORD(request: CreateUserRequest):
 
 ```python
 class BulkUpdateUsersCommand(FlextCommands.Models.Command):
-    user_updates: list[dict[str, object]]
+    user_updates: list[FlextTypes.Core.Dict]
     rollback_on_error: bool = True
 
     def validate_command(self) -> FlextResult[None]:

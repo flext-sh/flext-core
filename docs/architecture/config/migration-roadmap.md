@@ -90,7 +90,7 @@ gantt
       
       # Security settings  
       secret_key: str = Field(min_length=32)
-      cors_origins: list[str] = Field(default_factory=list)
+      cors_origins: FlextTypes.Core.StringList = Field(default_factory=list)
       
       # Session settings
       session_timeout_minutes: int = Field(default=30, ge=5, le=1440)
@@ -454,7 +454,7 @@ class FlextConfigEcosystemAnalyzer:
     """Tool to analyze FlextConfig adoption across the ecosystem."""
     
     @staticmethod
-    def scan_libraries() -> dict[str, dict[str, object]]:
+    def scan_libraries() -> dict[str, FlextTypes.Core.Dict]:
         """Scan all FLEXT libraries for configuration patterns."""
         return {
             "adoption_rate": "65%",
@@ -479,7 +479,7 @@ class FlextConfigMigrationTools:
         pass
     
     @staticmethod
-    def validate_environment_variables(config_class: type) -> list[str]:
+    def validate_environment_variables(config_class: type) -> FlextTypes.Core.StringList:
         """Validate environment variable naming conventions."""
         pass
     
@@ -495,7 +495,7 @@ class FlextConfigTestingUtils:
     """Utilities for testing FlextConfig implementations."""
     
     @staticmethod
-    def create_test_environments() -> dict[str, dict[str, str]]:
+    def create_test_environments() -> dict[str, FlextTypes.Core.Headers]:
         """Create test environment variable sets."""
         return {
             "development": {"FLEXT_DEBUG": "true", "FLEXT_LOG_LEVEL": "DEBUG"},
@@ -503,7 +503,7 @@ class FlextConfigTestingUtils:
         }
     
     @staticmethod
-    def validate_configuration_security(config: FlextConfig) -> list[str]:
+    def validate_configuration_security(config: FlextConfig) -> FlextTypes.Core.StringList:
         """Validate configuration for security issues."""
         pass
 ```

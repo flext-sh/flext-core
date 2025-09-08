@@ -657,7 +657,7 @@ class FlextWebConstants(FlextConstants):
         )
 
         # Security headers
-        SECURITY_HEADERS: Final[dict[str, str]] = {
+        SECURITY_HEADERS: Final[FlextTypes.Core.Headers] = {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
@@ -676,7 +676,7 @@ class FlextWebConstants(FlextConstants):
         # Security settings
         CSRF_TOKEN_LENGTH: Final[int] = 32
         SESSION_ID_LENGTH: Final[int] = 32
-        SECURE_COOKIE_ATTRIBUTES: Final[dict[str, object]] = {
+        SECURE_COOKIE_ATTRIBUTES: Final[FlextTypes.Core.Dict] = {
             "secure": True,
             "httponly": True,
             "samesite": "strict"
@@ -695,7 +695,7 @@ class FlextWebConstants(FlextConstants):
         RATE_LIMIT_PRECISION: Final[int] = 10  # sub-windows
 
         # Rate limit headers
-        RATE_LIMIT_HEADERS: Final[dict[str, str]] = {
+        RATE_LIMIT_HEADERS: Final[FlextTypes.Core.Headers] = {
             "X-RateLimit-Limit": "X-RateLimit-Limit",
             "X-RateLimit-Remaining": "X-RateLimit-Remaining",
             "X-RateLimit-Reset": "X-RateLimit-Reset"

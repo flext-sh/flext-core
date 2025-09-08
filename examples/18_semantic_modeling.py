@@ -72,7 +72,7 @@ class FlextUserProfile(FlextModels.Value):
     email: str
     full_name: str
     role: Literal["REDACTED_LDAP_BIND_PASSWORD", "user", "viewer"]
-    preferences: dict[str, object] = Field(default_factory=dict)
+    preferences: FlextTypes.Core.Dict = Field(default_factory=dict)
 
     def validate_business_rules(self) -> FlextResult[None]:
         """Unified validation with semantic business rules."""
@@ -174,12 +174,12 @@ def pipeline_validator(p: FlextDataPipeline) -> bool:
 # Simplified type annotations without FlextTypes namespace
 DatabaseConnection: str = "oracle://localhost:1521/TESTDB"
 
-UserCredentials: dict[str, str] = {
+UserCredentials: FlextTypes.Core.Headers = {
     "username": "REDACTED_LDAP_BIND_PASSWORD",
     "password": "secret123",
 }
 
-LoggerContext: dict[str, str] = {
+LoggerContext: FlextTypes.Core.Headers = {
     "service": "flext-unified-patterns",
     "component": "pipeline-manager",
     "version": "2.0.0",
@@ -200,8 +200,8 @@ class FlextPipelineService:
     def create_pipeline(
         self,
         name: str,
-        database_config: dict[str, object],
-        owner_profile: dict[str, object],
+        database_config: FlextTypes.Core.Dict,
+        owner_profile: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextDataPipeline]:
         """Create pipeline using Railway Pattern for unified factory pattern."""
 
@@ -236,7 +236,7 @@ class FlextPipelineService:
                         owner_profile.get("role", "REDACTED_LDAP_BIND_PASSWORD"),
                     ),
                     preferences=cast(
-                        "dict[str, object]",
+                        "FlextTypes.Core.Dict",
                         owner_profile.get("preferences", {}),
                     ),
                 )
@@ -305,9 +305,9 @@ class FlextPipelineService:
         # Railway Pattern execution: get -> activate -> format
         return _get_pipeline(pipeline_id).flat_map(_activate_and_format_success)
 
-    def get_pipeline_stats(self) -> dict[str, object]:
+    def get_pipeline_stats(self) -> FlextTypes.Core.Dict:
         """Get pipeline statistics using unified types."""
-        stats: dict[str, object] = {
+        stats: FlextTypes.Core.Dict = {
             "total_pipelines": len(self._pipelines),
             "active_pipelines": sum(
                 1 for p in self._pipelines.values() if p.status == "active"
@@ -333,7 +333,9 @@ class FlextPipelineService:
 # Use standard library urllib.parse for URL parsing instead of custom implementation
 
 
-def validate_oracle_connection(connection_string: str) -> FlextResult[dict[str, str]]:
+def validate_oracle_connection(
+    connection_string: str,
+) -> FlextResult[FlextTypes.Core.Headers]:
     """Parse and validate Oracle connection strings using Railway Pattern - ELIMINATED MULTIPLE RETURNS."""
 
     def _safe_parse_url(url: str) -> FlextResult[ParseResult]:
@@ -352,7 +354,7 @@ def validate_oracle_connection(connection_string: str) -> FlextResult[dict[str, 
             )
         return FlextResult[ParseResult].ok(parsed)
 
-    def _extract_connection_dict(parsed: ParseResult) -> dict[str, str]:
+    def _extract_connection_dict(parsed: ParseResult) -> FlextTypes.Core.Headers:
         """Extract connection parameters to dict."""
         return {
             "host": parsed.hostname or "localhost",
@@ -368,7 +370,7 @@ def validate_oracle_connection(connection_string: str) -> FlextResult[dict[str, 
     )
 
 
-def format_metric_display(metric: dict[str, object]) -> str:
+def format_metric_display(metric: FlextTypes.Core.Dict) -> str:
     """Format metrics for display using unified patterns."""
     lines = ["=== Pipeline Metrics ==="]
     for key, value in metric.items():
@@ -378,15 +380,17 @@ def format_metric_display(metric: dict[str, object]) -> str:
 
 
 def safe_transform_data(
-    data: dict[str, object],
-    transformer: Callable[[dict[str, object]], dict[str, object]],
-) -> FlextResult[dict[str, object]]:
+    data: FlextTypes.Core.Dict,
+    transformer: Callable[[FlextTypes.Core.Dict], FlextTypes.Core.Dict],
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Safe data transformation with unified error handling."""
     try:
         result = transformer(data)
-        return FlextResult[dict[str, object]].ok(result)
+        return FlextResult[FlextTypes.Core.Dict].ok(result)
     except Exception as e:
-        return FlextResult[dict[str, object]].fail(f"Data transformation failed: {e}")
+        return FlextResult[FlextTypes.Core.Dict].fail(
+            f"Data transformation failed: {e}"
+        )
 
 
 # =============================================================================
@@ -409,7 +413,7 @@ async def demonstrate_foundation_models() -> FlextDataPipeline | None:
     }
 
     # Create user profile
-    owner_profile: dict[str, object] = {
+    owner_profile: FlextTypes.Core.Dict = {
         "email": "data.engineer@company.com",
         "full_name": "Senior Data Engineer",
         "role": "REDACTED_LDAP_BIND_PASSWORD",
@@ -462,7 +466,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
     # Demonstrate data transformation
     sample_data = {"records": 1000, "errors": 5, "success_rate": 0.995}
 
-    def enhance_data(data: dict[str, object]) -> dict[str, object]:
+    def enhance_data(data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
         enhanced = data.copy()
         success_rate = enhanced.get("success_rate")
         if isinstance(success_rate, (int, float)):
@@ -477,7 +481,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
         return enhanced
 
     transform_result = safe_transform_data(
-        cast("dict[str, object]", sample_data),
+        cast("FlextTypes.Core.Dict", sample_data),
         enhance_data,
     )
     if transform_result.success:
@@ -488,7 +492,7 @@ def demonstrate_utilities(service: FlextPipelineService) -> None:
 def demonstrate_error_handling(service: FlextPipelineService) -> None:
     """Demonstrate error handling patterns."""
     # Create user profile for error demonstration
-    owner_profile: dict[str, object] = {
+    owner_profile: FlextTypes.Core.Dict = {
         "email": "data.engineer@company.com",
         "full_name": "Senior Data Engineer",
         "role": "REDACTED_LDAP_BIND_PASSWORD",

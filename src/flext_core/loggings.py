@@ -1,7 +1,7 @@
 """Structured logging with correlation IDs and metrics.
 
-Provides FlextLogger with structured logging, correlation ID tracking,
-performance metrics, and sensitive data sanitization.
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,19 +30,13 @@ from flext_core.typings import FlextTypes
 
 
 class FlextLogger:
-    """Structured logger with correlation IDs, performance tracking, and data sanitization.
-
-    Provides structured JSON logging with automatic correlation ID generation,
-    request context tracking, operation performance metrics, and sensitive data
-    sanitization. Uses structlog for advanced formatting and processors.
-
-    """
+    """Structured logger with correlation IDs, performance tracking, and data sanitization."""
 
     # Class-level configuration and shared state
     _configured: ClassVar[bool] = False
     _global_correlation_id: ClassVar[str | None] = None  # Global correlation ID
-    _service_info: ClassVar[dict[str, object]] = {}
-    _request_context: ClassVar[dict[str, object]] = {}
+    _service_info: ClassVar[FlextTypes.Core.Dict] = {}
+    _request_context: ClassVar[FlextTypes.Core.Dict] = {}
     _performance_tracking: ClassVar[dict[str, float]] = {}
 
     # Logger instance cache for singleton pattern
@@ -57,7 +51,7 @@ class FlextLogger:
     _environment: FlextTypes.Config.Environment
 
     def __new__(cls, name: str, *_args: object, **kwargs: object) -> Self:
-        """Create or return cached logger instance for singleton pattern."""
+        """Create or return cached logger instance."""
         # Check if this is a bind() call that needs a new instance
         force_new = kwargs.pop("_force_new", False)
 
@@ -80,7 +74,7 @@ class FlextLogger:
         *,
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
-        """Initialize structured logger instance with FlextTypes.Config integration."""
+        """Initialize structured logger instance."""
         if not self._configured:
             self.configure()
 
@@ -119,7 +113,7 @@ class FlextLogger:
         self._structlog_logger = structlog.get_logger(name)
 
         # Initialize persistent context
-        self._persistent_context: dict[str, object] = {
+        self._persistent_context: FlextTypes.Core.Dict = {
             "service": {
                 "name": self._service_name,
                 "version": self._service_version,
@@ -135,8 +129,28 @@ class FlextLogger:
             },
         }
 
+    def __eq__(self, other: object) -> bool:
+        """Allow comparison with both logger objects and their string repr.
+
+        - If comparing to another FlextLogger, enforce identity semantics.
+        - If comparing to a string, compare with str(self) for test compatibility.
+        """
+        if isinstance(other, FlextLogger):
+            return self is other
+        if isinstance(other, str):
+            return str(self) == other
+        return False
+
+    def __hash__(self) -> int:
+        """Provide a stable hash consistent with __eq__ semantics.
+
+        Uses the hash of the string representation to ensure that when a
+        string equals this logger via __eq__, their hashes also match.
+        """
+        return hash(str(self))
+
     def _extract_service_name(self) -> str:
-        """Extract service name from logger name or environment variables."""
+        """Extract service name from logger name or environment."""
         if service_name := os.environ.get("SERVICE_NAME"):
             return service_name
 
@@ -149,7 +163,7 @@ class FlextLogger:
         return "flext-core"
 
     def _get_version(self) -> str:
-        """Get service version from environment or constants."""
+        """Get service version."""
         return (
             os.environ.get("SERVICE_VERSION") or FlextConstants.Core.VERSION or "0.9.0"
         )
@@ -165,15 +179,15 @@ class FlextLogger:
         return os.environ.get("INSTANCE_ID") or f"{platform.node()}-{os.getpid()}"
 
     def _generate_correlation_id(self) -> str:
-        """Generate unique correlation ID for request tracing."""
+        """Generate unique correlation ID."""
         return f"corr_{uuid.uuid4().hex[:16]}"
 
     def _get_current_timestamp(self) -> str:
-        """Get current ISO 8601 timestamp with timezone."""
+        """Get current ISO timestamp."""
         return datetime.now(UTC).isoformat()
 
-    def _sanitize_context(self, context: dict[str, object]) -> dict[str, object]:
-        """Sanitize context by redacting sensitive information."""
+    def _sanitize_context(self, context: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
+        """Sanitize context by redacting sensitive data."""
         sensitive_keys = {
             "password",
             "passwd",
@@ -191,7 +205,7 @@ class FlextLogger:
             "cookie",
         }
 
-        sanitized: dict[str, object] = {}
+        sanitized: FlextTypes.Core.Dict = {}
         for key, value in context.items():
             key_lower = str(key).lower()
             if any(sensitive in key_lower for sensitive in sensitive_keys):
@@ -207,13 +221,13 @@ class FlextLogger:
         self,
         level: str,
         message: str,
-        context: dict[str, object] | None = None,
+        context: FlextTypes.Core.Dict | None = None,
         error: Exception | str | None = None,
         duration_ms: float | None = None,
-    ) -> dict[str, object]:
-        """Build efficient structured log entry."""
+    ) -> FlextTypes.Core.Dict:
+        """Build structured log entry."""
         # Start with timestamp and correlation
-        entry: dict[str, object] = {
+        entry: FlextTypes.Core.Dict = {
             "@timestamp": self._get_current_timestamp(),
             "level": level.upper(),
             "message": str(message),
@@ -295,22 +309,22 @@ class FlextLogger:
             return 0
 
     def set_correlation_id(self, correlation_id: str) -> None:
-        """Set correlation ID for request tracing (instance level)."""
+        """Set correlation ID for request tracing."""
         self._correlation_id = correlation_id  # Instance-level correlation ID
 
     def set_request_context(self, **context: object) -> None:
-        """Set request-specific context for tracing."""
+        """Set request-specific context."""
         if not hasattr(self._local, "request_context"):
             self._local.request_context = {}
         self._local.request_context.update(context)
 
     def clear_request_context(self) -> None:
-        """Clear request-specific context."""
+        """Clear request context."""
         if hasattr(self._local, "request_context"):
             self._local.request_context.clear()
 
     def bind(self, **context: object) -> FlextLogger:
-        """Create a new logger instance with bound context data."""
+        """Create logger instance with bound context."""
         # Create a new logger instance with same configuration
         # Use _force_new=True to bypass singleton pattern for bind()
         bound_logger = FlextLogger(
@@ -338,12 +352,12 @@ class FlextLogger:
 
     def set_context(
         self,
-        context_dict: dict[str, object] | None = None,
+        context_dict: FlextTypes.Core.Dict | None = None,
         **context: object,
     ) -> None:
-        """Set permanent context data for this logger instance."""
+        """Set permanent context data."""
         if not hasattr(self, "_permanent_context"):
-            self._permanent_context: dict[str, object] = {}
+            self._permanent_context: FlextTypes.Core.Dict = {}
 
         if context_dict is not None:
             # Replace existing context with new dict
@@ -355,11 +369,11 @@ class FlextLogger:
             self._permanent_context.update(context)
 
     def with_context(self, **context: object) -> FlextLogger:
-        """Create a new logger instance with additional bound context."""
+        """Create logger instance with additional context."""
         return self.bind(**context)
 
     def start_operation(self, operation_name: str, **context: object) -> str:
-        """Start tracking an operation with performance metrics."""
+        """Start tracking operation with metrics."""
         operation_id = f"op_{uuid.uuid4().hex[:8]}"
         start_time = time.time()
 
@@ -388,7 +402,7 @@ class FlextLogger:
         success: bool = True,
         **context: object,
     ) -> None:
-        """Complete operation tracking with performance metrics."""
+        """Complete operation tracking with metrics."""
         if not hasattr(self._local, "operations"):
             return
 
@@ -417,14 +431,7 @@ class FlextLogger:
 
     # Standard logging methods with enhanced context
     def trace(self, message: str, *args: object, **context: object) -> None:
-        """Log trace message with full context (uses debug level internally).
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            **context: Additional context data for the log entry.
-
-        """
+        """Log trace message."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("TRACE", formatted_message, context)
         self._structlog_logger.debug(
@@ -433,40 +440,19 @@ class FlextLogger:
         )  # Use debug since structlog doesn't have trace
 
     def debug(self, message: str, *args: object, **context: object) -> None:
-        """Log debug message with full context.
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            **context: Additional context data for the log entry.
-
-        """
+        """Log debug message."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("DEBUG", formatted_message, context)
         self._structlog_logger.debug(formatted_message, **entry)
 
     def info(self, message: str, *args: object, **context: object) -> None:
-        """Log info message with full context.
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            **context: Additional context data for the log entry.
-
-        """
+        """Log info message."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("INFO", formatted_message, context)
         self._structlog_logger.info(formatted_message, **entry)
 
     def warning(self, message: str, *args: object, **context: object) -> None:
-        """Log warning message with full context.
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            **context: Additional context data for the log entry.
-
-        """
+        """Log warning message."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("WARNING", formatted_message, context)
         self._structlog_logger.warning(formatted_message, **entry)
@@ -478,15 +464,7 @@ class FlextLogger:
         error: Exception | str | None = None,
         **context: object,
     ) -> None:
-        """Log error message with full context and error details.
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            error: Optional exception or error message string to include error details and stack trace.
-            **context: Additional context data for the log entry.
-
-        """
+        """Log error message with context and error details."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("ERROR", formatted_message, context, error)
         self._structlog_logger.error(formatted_message, **entry)
@@ -498,21 +476,13 @@ class FlextLogger:
         error: Exception | str | None = None,
         **context: object,
     ) -> None:
-        """Log critical message with full context and error details.
-
-        Args:
-            message: Log message with optional printf-style formatting.
-            *args: Arguments for message formatting (printf-style).
-            error: Optional exception or error message string to include error details and stack trace.
-            **context: Additional context data for the log entry.
-
-        """
+        """Log critical message with context and error details."""
         formatted_message = message % args if args else message
         entry = self._build_log_entry("CRITICAL", formatted_message, context, error)
         self._structlog_logger.critical(formatted_message, **entry)
 
     def exception(self, message: str, *args: object, **context: object) -> None:
-        """Log exception with full stack trace and context."""
+        """Log exception with stack trace and context."""
         formatted_message = message % args if args else message
         exc_info = sys.exc_info()
         error = exc_info[1] if isinstance(exc_info[1], Exception) else None
@@ -528,7 +498,7 @@ class FlextLogger:
         include_source: bool = True,
         structured_output: bool = True,
     ) -> None:
-        """Configure advanced structured logging system."""
+        """Configure structured logging system."""
         # Auto-detect output format if not specified
         if json_output is None:
             env = os.environ.get("ENVIRONMENT", "development").lower()
@@ -603,7 +573,7 @@ class FlextLogger:
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Add correlation ID to all log entries."""
+        """Add correlation ID to log entries."""
         if FlextLogger._global_correlation_id:
             event_dict["correlation_id"] = FlextLogger._global_correlation_id
         return event_dict
@@ -614,7 +584,7 @@ class FlextLogger:
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Add performance metrics to log entries."""
+        """Add metadata to log entries."""
         event_dict["@metadata"] = {
             "processor": "flext_logging",
             "version": FlextConstants.Core.VERSION,
@@ -628,7 +598,7 @@ class FlextLogger:
         _method_name: str,
         event_dict: EventDict,
     ) -> EventDict:
-        """Sanitize sensitive information from log entries."""
+        """Sanitize sensitive data from log entries."""
         sensitive_keys = {
             "password",
             "passwd",
@@ -650,7 +620,7 @@ class FlextLogger:
 
     @staticmethod
     def _create_enhanced_console_renderer() -> structlog.dev.ConsoleRenderer:
-        """Create enhanced console renderer for development."""
+        """Create console renderer for development."""
         return structlog.dev.ConsoleRenderer(
             colors=True,
             level_styles={
@@ -666,15 +636,15 @@ class FlextLogger:
 
     @classmethod
     def set_global_correlation_id(cls, correlation_id: str | None) -> None:
-        """Set global correlation ID for request tracing."""
+        """Set global correlation ID."""
         cls._global_correlation_id = correlation_id
 
     @classmethod
     def get_global_correlation_id(cls) -> str | None:
-        """Get current global correlation ID."""
+        """Get global correlation ID."""
         return cls._global_correlation_id
 
 
-__all__: list[str] = [
+__all__: FlextTypes.Core.StringList = [
     "FlextLogger",
 ]

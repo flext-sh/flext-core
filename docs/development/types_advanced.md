@@ -74,7 +74,7 @@ class Config:
         self.name = name
         self.value = value
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> FlextTypes.Core.Dict:
         return {"name": self.name, "value": self.value}
 
     def to_json(self) -> str:

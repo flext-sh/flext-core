@@ -1,4 +1,8 @@
-"""Tests for FlextGuards module."""
+"""Tests for FlextGuards module.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,7 @@ from typing import cast
 import pytest
 
 from flext_core import FlextExceptions, FlextGuards, FlextUtilities
+from flext_core.typings import FlextTypes
 
 
 class TestFlextGuards:
@@ -203,7 +208,7 @@ class TestFlextGuardsAdvanced:
     def test_guards_system_configuration(self) -> None:
         """Test guards system configuration."""
         config: dict[
-            str, str | int | float | bool | list[object] | dict[str, object]
+            str, str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict
         ] = {
             "validation_level": "strict",
             "cache_enabled": True,
@@ -222,7 +227,8 @@ class TestFlextGuardsAdvanced:
         # Test valid performance levels
         for level in ["low", "balanced", "high", "extreme"]:
             config: dict[
-                str, str | int | float | bool | list[object] | dict[str, object]
+                str,
+                str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
             ] = {"performance_level": level}
             result = FlextGuards.optimize_guards_performance(config)
             assert result.success is True
