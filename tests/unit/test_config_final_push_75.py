@@ -38,7 +38,7 @@ class TestConfigFinalPush75:
                 config_data = scenario["data"]
 
                 with tempfile.NamedTemporaryFile(
-                    mode="w",
+                    encoding="utf-8", mode="w",
                     suffix=f".{file_format}",
                     delete=False
                 ) as tmp_file:
@@ -107,7 +107,7 @@ class TestConfigFinalPush75:
                 if env_file:
                     # Create temporary environment file
                     with tempfile.NamedTemporaryFile(
-                        mode="w",
+                        encoding="utf-8", mode="w",
                         suffix=f"_{env_file}",
                         delete=False
                     ) as tmp_file:
@@ -411,7 +411,7 @@ class TestConfigFinalPush75:
             {"invalid_json": '{"environment": "testing", "debug": }'},  # Malformed JSON
             {"invalid_env_var": "INVALID_ENV_VAR_NAME_12345"},
             {"invalid_file_path": "/nonexistent/path/to/config.json"},
-            {"circular_reference": {"ref": "${self}"}},  # Potential circular reference
+            {"circular_reference": {"ref": f"${self}"}},  # Potential circular reference
         ]
 
         for scenario in error_recovery_scenarios:

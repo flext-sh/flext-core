@@ -18,13 +18,13 @@ class TestRealConfigCoverage:
         """Test basic config creation."""
         config = FlextConfig()
         assert config.name == "flext"
-        assert config.environment in [
+        assert config.environment in {
             "development",
             "production",
             "staging",
             "test",
             "local",
-        ]
+        }
 
     def test_config_environment_validation(self) -> None:
         """Test environment validation with real values."""

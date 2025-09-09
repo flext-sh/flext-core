@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 from pydantic import TypeAdapter
 
@@ -34,7 +32,7 @@ class TestAdaptersErrorPaths75:
                 lambda x: x,  # Function object
                 complex(1, 2),  # Complex number
                 object(),  # Plain object
-                type  # Type object itself
+                type,  # Type object itself
             ]
 
             for bad_value in error_values:
@@ -70,7 +68,7 @@ class TestAdaptersErrorPaths75:
                 object(),  # Object that can't be converted
                 [],  # Empty list
                 {},  # Empty dict
-                lambda: 42  # Function
+                lambda: 42,  # Function
             ]
 
             for bad_value in bad_int_values:
@@ -95,7 +93,7 @@ class TestAdaptersErrorPaths75:
                 complex(1, 2),  # Complex number
                 object(),  # Object that can't be converted
                 "infinity_but_not_inf",  # Invalid infinity string
-                []  # Empty list
+                [],  # Empty list
             ]
 
             for bad_value in bad_float_values:
@@ -123,12 +121,16 @@ class TestAdaptersErrorPaths75:
                     {"type": "uuid", "value": "not_a_uuid"},
                     {"type": "datetime", "value": "not_a_datetime"},
                     {"type": "phone", "value": "invalid_phone"},
-                    {"type": "unknown", "value": "anything"}
+                    {"type": "unknown", "value": "anything"},
                 ]
 
                 validation_methods = [
-                    "validate_email", "validate_url", "validate_uuid",
-                    "validate_datetime", "validate_phone", "validate_domain_value"
+                    "validate_email",
+                    "validate_url",
+                    "validate_uuid",
+                    "validate_datetime",
+                    "validate_phone",
+                    "validate_domain_value",
                 ]
 
                 for method_name in validation_methods:
@@ -137,7 +139,10 @@ class TestAdaptersErrorPaths75:
                             method = getattr(domain, method_name)
                             if callable(method):
                                 for invalid_data in invalid_domain_data:
-                                    if invalid_data["type"] in method_name or "domain_value" in method_name:
+                                    if (
+                                        invalid_data["type"] in method_name
+                                        or "domain_value" in method_name
+                                    ):
                                         try:
                                             result = method(invalid_data["value"])
                                             # If validation passes, that's fine
@@ -162,14 +167,16 @@ class TestAdaptersErrorPaths75:
             {"performance": {"level": object()}},  # Object instead of string
             {"features": ["invalid_feature_name"]},  # Invalid feature list
             {},  # Empty config
-            None  # None config
+            None,  # None config
         ]
 
         for invalid_config in invalid_configs:
             try:
                 # Test configure_type_adapters_system with invalid config
                 if invalid_config is not None:
-                    result = FlextTypeAdapters.Config.configure_type_adapters_system(invalid_config)
+                    result = FlextTypeAdapters.Config.configure_type_adapters_system(
+                        invalid_config
+                    )
                     assert result is not None or result is None
 
                 # Test performance optimization with invalid config
@@ -177,7 +184,9 @@ class TestAdaptersErrorPaths75:
                 for invalid_level in invalid_levels:
                     try:
                         if isinstance(invalid_level, str) or invalid_level is None:
-                            result = FlextTypeAdapters.Config.optimize_type_adapters_performance(invalid_level or "")
+                            result = FlextTypeAdapters.Config.optimize_type_adapters_performance(
+                                invalid_level or ""
+                            )
                             assert result is not None or result is None
                     except Exception:
                         # Expected error for invalid levels (lines 689, 715)
@@ -197,7 +206,7 @@ class TestAdaptersErrorPaths75:
             type(None),  # NoneType
             object,  # Object base class
             type,  # Type itself
-            Any,  # Any type from typing
+            object,  # object type from typing
         ]
 
         for edge_type in edge_case_types:
@@ -234,9 +243,15 @@ class TestAdaptersErrorPaths75:
 
                 # Test coercing adapter with problematic values
                 problematic_values = [
-                    type("ProblematicClass", (), {"__str__": lambda self: None})(),  # __str__ returns None
-                    type("BadRepr", (), {"__repr__": lambda self: object()})(),  # __repr__ returns object
-                    type("ErrorStr", (), {"__str__": lambda self: 1/0})(),  # __str__ raises exception
+                    type(
+                        "ProblematicClass", (), {"__str__": lambda self: None}
+                    )(),  # __str__ returns None
+                    type(
+                        "BadRepr", (), {"__repr__": lambda self: object()}
+                    )(),  # __repr__ returns object
+                    type(
+                        "ErrorStr", (), {"__str__": lambda self: 1 / 0}
+                    )(),  # __str__ raises exception
                 ]
 
                 for prob_value in problematic_values:
@@ -292,12 +307,14 @@ class TestAdaptersErrorPaths75:
                     {"protocol": None, "data": "test"},
                     {"protocol": "invalid_protocol", "data": {}},
                     {"protocol": object(), "data": []},
-                    {"protocol": 123, "data": "string"}
+                    {"protocol": 123, "data": "string"},
                 ]
 
                 protocol_methods = [
-                    "validate_protocol", "create_protocol_adapter",
-                    "register_protocol_validator", "check_protocol_compliance"
+                    "validate_protocol",
+                    "create_protocol_adapter",
+                    "register_protocol_validator",
+                    "check_protocol_compliance",
                 ]
 
                 for method_name in protocol_methods:
@@ -307,7 +324,9 @@ class TestAdaptersErrorPaths75:
                             if callable(method):
                                 for scenario in protocol_error_scenarios:
                                     try:
-                                        result = method(scenario["protocol"], scenario["data"])
+                                        result = method(
+                                            scenario["protocol"], scenario["data"]
+                                        )
                                         assert result is not None or result is None
                                     except Exception:
                                         # Expected protocol validation error (lines 971-984, 993-1002)
@@ -327,7 +346,7 @@ class TestAdaptersErrorPaths75:
             {"format": None, "data": {}},
             {"format": "json", "data": "invalid_json{["},
             {"format": "xml", "data": "<invalid><xml>"},
-            {"format": 123, "data": [1, 2, 3]}
+            {"format": 123, "data": [1, 2, 3]},
         ]
 
         try:
@@ -335,8 +354,11 @@ class TestAdaptersErrorPaths75:
                 integration = FlextTypeAdapters.Integration
 
                 integration_methods = [
-                    "parse_format", "validate_format", "convert_format",
-                    "serialize_format", "deserialize_format"
+                    "parse_format",
+                    "validate_format",
+                    "convert_format",
+                    "serialize_format",
+                    "deserialize_format",
                 ]
 
                 for method_name in integration_methods:
@@ -346,7 +368,9 @@ class TestAdaptersErrorPaths75:
                             if callable(method):
                                 for error_data in integration_error_data:
                                     try:
-                                        result = method(error_data["format"], error_data["data"])
+                                        result = method(
+                                            error_data["format"], error_data["data"]
+                                        )
                                         assert result is not None or result is None
                                     except Exception:
                                         # Expected integration error (lines 1019-1023, 1033-1039, 1050-1051)
@@ -362,9 +386,19 @@ class TestAdaptersErrorPaths75:
         """Test final error scenarios for maximum coverage."""
         # Test any remaining error paths with extreme edge cases
         extreme_edge_cases = [
-            {"value": type("Recursive", (), {"__getattribute__": lambda self, name: self})()},
+            {
+                "value": type(
+                    "Recursive", (), {"__getattribute__": lambda self, name: self}
+                )()
+            },
             {"value": type("InfiniteStr", (), {"__str__": lambda self: "x" * 10000})()},
-            {"value": type("NoneReturner", (), {"__str__": lambda self: None, "__repr__": lambda self: None})()},
+            {
+                "value": type(
+                    "NoneReturner",
+                    (),
+                    {"__str__": lambda self: None, "__repr__": lambda self: None},
+                )()
+            },
         ]
 
         foundation = FlextTypeAdapters.Foundation
@@ -373,7 +407,7 @@ class TestAdaptersErrorPaths75:
         adapter_creators = [
             foundation.create_string_adapter,
             foundation.create_integer_adapter,
-            foundation.create_float_adapter
+            foundation.create_float_adapter,
         ]
 
         for create_adapter in adapter_creators:

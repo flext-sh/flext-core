@@ -16,7 +16,9 @@ from flext_core import (
     FlextUtilities,
     FlextValidations,
 )
-from flext_core.config import FlextConfigFactory
+
+# FlextConfigFactory is now a nested class within FlextConfig
+# from flext_core.config import FlextConfigFactory  # Removed loose class
 
 
 class TestConfigCoverage:
@@ -26,7 +28,13 @@ class TestConfigCoverage:
         """Test basic config creation - covers core paths."""
         config = FlextConfig()
         assert config.name == "flext"
-        assert config.environment in ["development", "production", "staging", "test", "local"]
+        assert config.environment in {
+            "development",
+            "production",
+            "staging",
+            "test",
+            "local",
+        }
 
     def test_config_with_environment_validation(self) -> None:
         """Test environment validation paths."""
@@ -37,10 +45,8 @@ class TestConfigCoverage:
 
     def test_config_factory_create_for_testing(self) -> None:
         """Test factory method for testing configs."""
-        result = FlextConfigFactory.create_for_testing(
-            name="test-config",
-            debug=True,
-            environment="test"
+        result = FlextConfig.Factory.create_for_testing(
+            name="test-config", debug=True, environment="test"
         )
         assert result.is_success
         config = result.value
@@ -207,7 +213,7 @@ class TestIntegrationCoverage:
             "name": "integration-test",
             "environment": "test",
             "debug": True,
-            "max_workers": 4
+            "max_workers": 4,
         }
 
         # Validate config data first
@@ -234,7 +240,9 @@ class TestIntegrationCoverage:
         assert convert_result.is_success
 
         # Validate converted result
-        validate_result = FlextValidations.Numbers.validate_integer(convert_result.value, min_value=1)
+        validate_result = FlextValidations.Numbers.validate_integer(
+            convert_result.value, min_value=1
+        )
         assert validate_result.is_success
 
     def test_utilities_integration(self) -> None:
@@ -243,15 +251,14 @@ class TestIntegrationCoverage:
         test_data = {
             "config": {
                 "name": "test-service",
-                "settings": {
-                    "timeout": "30",
-                    "retries": "3"
-                }
+                "settings": {"timeout": "30", "retries": "3"},
             }
         }
 
         # Use utilities to extract and convert
-        name_result = FlextUtilities.Collections.safe_dict_get(test_data["config"], "name", "default")
+        name_result = FlextUtilities.Collections.safe_dict_get(
+            test_data["config"], "name", "default"
+        )
         assert name_result == "test-service"
 
         timeout_value = test_data["config"]["settings"]["timeout"]
@@ -282,5 +289,7 @@ class TestPerformanceCoverage:
         # Test safe access to large data
         for i in range(5):  # Test first 5 keys for coverage
             key = f"key_{i}"
-            result = FlextUtilities.Collections.safe_dict_get(large_data, key, "default")
+            result = FlextUtilities.Collections.safe_dict_get(
+                large_data, key, "default"
+            )
             assert result == f"value_{i}"

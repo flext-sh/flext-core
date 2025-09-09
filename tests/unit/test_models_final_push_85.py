@@ -22,8 +22,12 @@ class TestModels85PercentBarrierBreaker:
         """Test all validation exception paths in Config."""
         # Test environment validation errors (lines 152-153)
         invalid_environments = [
-            "invalid_env", "wrong_environment", "bad_env",
-            "non_existent", "testing_invalid", "prod_typo"
+            "invalid_env",
+            "wrong_environment",
+            "bad_env",
+            "non_existent",
+            "testing_invalid",
+            "prod_typo",
         ]
 
         for invalid_env in invalid_environments:
@@ -41,8 +45,12 @@ class TestModels85PercentBarrierBreaker:
 
         # Test source validation errors (lines 164-165, 176-177)
         invalid_sources = [
-            "invalid_source", "bad_config_source", "wrong_source",
-            "nonexistent_source", "", "null_source"
+            "invalid_source",
+            "bad_config_source",
+            "wrong_source",
+            "nonexistent_source",
+            "",
+            "null_source",
         ]
 
         for invalid_source in invalid_sources:
@@ -64,7 +72,7 @@ class TestModels85PercentBarrierBreaker:
                 debug_mode=False,
                 enable_metrics=True,
                 enable_audit_logging=True,
-                config_source="file"
+                config_source="file",
             )
 
             # Test get_environment_config method (lines 193-199)
@@ -87,9 +95,7 @@ class TestModels85PercentBarrierBreaker:
         try:
             # Test development environment paths
             dev_config = FlextModels.Config(
-                environment="development",
-                debug_mode=True,
-                enable_metrics=False
+                environment="development", debug_mode=True, enable_metrics=False
             )
 
             dev_env = dev_config.get_environment_config()
@@ -105,9 +111,14 @@ class TestModels85PercentBarrierBreaker:
 
             # Test various configuration methods that might exist
             methods_to_test = [
-                "get_config_metadata", "validate_environment_settings",
-                "get_runtime_config", "initialize_config", "setup_environment",
-                "configure_system", "apply_defaults", "merge_configs"
+                "get_config_metadata",
+                "validate_environment_settings",
+                "get_runtime_config",
+                "initialize_config",
+                "setup_environment",
+                "configure_system",
+                "apply_defaults",
+                "merge_configs",
             ]
 
             for method_name in methods_to_test:
@@ -129,13 +140,19 @@ class TestModels85PercentBarrierBreaker:
         try:
             db_configs = [
                 {
-                    "host": "localhost", "port": 5432, "database": "testdb",
-                    "username": "user", "password": "pass"
+                    "host": "localhost",
+                    "port": 5432,
+                    "database": "testdb",
+                    "username": "user",
+                    "password": "pass",
                 },
                 {
-                    "host": "remote.db.com", "port": 3306, "database": "proddb",
-                    "ssl_mode": "require", "pool_size": 20
-                }
+                    "host": "remote.db.com",
+                    "port": 3306,
+                    "database": "proddb",
+                    "ssl_mode": "require",
+                    "pool_size": 20,
+                },
             ]
 
             for db_data in db_configs:
@@ -143,8 +160,12 @@ class TestModels85PercentBarrierBreaker:
 
                 # Test connection validation methods (lines 391-392)
                 connection_methods = [
-                    "validate_connection", "test_connection", "get_connection_info",
-                    "check_connectivity", "ping_database", "verify_credentials"
+                    "validate_connection",
+                    "test_connection",
+                    "get_connection_info",
+                    "check_connectivity",
+                    "ping_database",
+                    "verify_credentials",
                 ]
 
                 for method_name in connection_methods:
@@ -166,13 +187,17 @@ class TestModels85PercentBarrierBreaker:
         try:
             security_configs = [
                 {
-                    "encryption_enabled": True, "auth_required": True,
-                    "ssl_verification": True, "secure_headers": True
+                    "encryption_enabled": True,
+                    "auth_required": True,
+                    "ssl_verification": True,
+                    "secure_headers": True,
                 },
                 {
-                    "encryption_algorithm": "AES256", "key_length": 256,
-                    "certificate_validation": True, "token_expiry": 3600
-                }
+                    "encryption_algorithm": "AES256",
+                    "key_length": 256,
+                    "certificate_validation": True,
+                    "token_expiry": 3600,
+                },
             ]
 
             for security_data in security_configs:
@@ -180,9 +205,12 @@ class TestModels85PercentBarrierBreaker:
 
                 # Test security validation methods (lines 422-423, 428-438)
                 security_methods = [
-                    "validate_security_settings", "check_encryption_config",
-                    "verify_ssl_settings", "validate_auth_config",
-                    "get_security_policies", "is_secure_mode"
+                    "validate_security_settings",
+                    "check_encryption_config",
+                    "verify_ssl_settings",
+                    "validate_auth_config",
+                    "get_security_policies",
+                    "is_secure_mode",
                 ]
 
                 for method_name in security_methods:
@@ -212,8 +240,12 @@ class TestModels85PercentBarrierBreaker:
             # Test configuration interaction methods
             for config in configs:
                 interaction_methods = [
-                    "get_dependencies", "validate_compatibility", "merge_with",
-                    "apply_overrides", "get_configuration_hash", "serialize_config"
+                    "get_dependencies",
+                    "validate_compatibility",
+                    "merge_with",
+                    "apply_overrides",
+                    "get_configuration_hash",
+                    "serialize_config",
                 ]
 
                 for method_name in interaction_methods:
@@ -223,7 +255,11 @@ class TestModels85PercentBarrierBreaker:
                             if callable(method):
                                 # Execute to hit lines 442-469
                                 if method_name == "merge_with" and len(configs) > 1:
-                                    other_config = configs[0] if config != configs[0] else configs[1]
+                                    other_config = (
+                                        configs[0]
+                                        if config != configs[0]
+                                        else configs[1]
+                                    )
                                     result = method(other_config)
                                 else:
                                     result = method()
@@ -243,7 +279,11 @@ class TestModels85PercentBarrierBreaker:
                 id: str = "123"
 
                 def validate(self):
-                    return FlextResult[None].ok(None) if hasattr(self, "FlextResult") else None
+                    return (
+                        FlextResult[None].ok(None)
+                        if hasattr(self, "FlextResult")
+                        else None
+                    )
 
             # Create multiple entities for comparison testing
             entity1 = TestEntity(name="entity1", id="123")
@@ -254,22 +294,22 @@ class TestModels85PercentBarrierBreaker:
 
             # Test all comparison operations (line 798)
             comparison_results = []
-            for _i, ent1 in enumerate(entities):
-                for _j, ent2 in enumerate(entities):
+            for ent1 in entities:
+                for ent2 in entities:
                     try:
                         # Test == operator (line 798)
-                        eq_result = (ent1 == ent2)
+                        eq_result = ent1 == ent2
                         comparison_results.append(eq_result)
 
                         # Test != operator
-                        neq_result = (ent1 != ent2)
+                        neq_result = ent1 != ent2
                         comparison_results.append(neq_result)
 
                         # Test hash function (line 852, 861, 870)
                         try:
                             hash1 = hash(ent1)
                             hash2 = hash(ent2)
-                            hash_equal = (hash1 == hash2)
+                            hash_equal = hash1 == hash2
                             comparison_results.append(hash_equal)
                         except Exception:
                             pass
@@ -289,7 +329,11 @@ class TestModels85PercentBarrierBreaker:
                 currency: str = "USD"
 
                 def validate(self):
-                    return FlextResult[None].ok(None) if hasattr(self, "FlextResult") else None
+                    return (
+                        FlextResult[None].ok(None)
+                        if hasattr(self, "FlextResult")
+                        else None
+                    )
 
             value1 = TestValue(amount=100.0, currency="USD")
             value2 = TestValue(amount=200.0, currency="EUR")
@@ -297,8 +341,8 @@ class TestModels85PercentBarrierBreaker:
 
             # Test value comparisons (line 851)
             try:
-                val_eq = (value1 == value3)
-                val_neq = (value1 != value2)
+                val_eq = value1 == value3
+                val_neq = value1 != value2
                 assert isinstance(val_eq, bool)
                 assert isinstance(val_neq, bool)
             except Exception:
@@ -314,7 +358,7 @@ class TestModels85PercentBarrierBreaker:
                 "bool_value": True,
                 "float_value": 123.45,
                 "int_value": 42,
-                "string_value": "test"
+                "string_value": "test",
             }
 
             payload = FlextModels.Payload(content=payload_data)
@@ -355,9 +399,15 @@ class TestModels85PercentBarrierBreaker:
         # Test URL validation edge cases (line 1766)
         try:
             edge_case_urls = [
-                "", "  ", "not_a_url", "http://", "https://",
-                "ftp://invalid.domain", "mailto:invalid",
-                "javascript:alert('xss')", "data:text/plain,test"
+                "",
+                "  ",
+                "not_a_url",
+                "http://",
+                "https://",
+                "ftp://invalid.domain",
+                "mailto:invalid",
+                "javascript:alert('xss')",
+                "data:text/plain,test",
             ]
 
             for edge_url in edge_case_urls:
@@ -377,8 +427,12 @@ class TestModels85PercentBarrierBreaker:
         # Test JsonData validation edge cases (lines 1784-1786)
         try:
             edge_case_json = [
-                None, "", "invalid_json", 123, [],
-                {"valid": "json", "but": "edge_case"}
+                None,
+                "",
+                "invalid_json",
+                123,
+                [],
+                {"valid": "json", "but": "edge_case"},
             ]
 
             for edge_json in edge_case_json:
@@ -398,14 +452,14 @@ class TestModels85PercentBarrierBreaker:
         """Test SystemConfig edge methods (lines 1401-1405, 1539)."""
         try:
             # Test DomainServicesConfig edge cases (lines 1401-1405)
-            domain_config = FlextModels.SystemConfigs.DomainServicesConfig(
-                enabled=True
-            )
+            domain_config = FlextModels.SystemConfigs.DomainServicesConfig(enabled=True)
 
             domain_methods = [
-                "validate_domain_services", "get_service_registry",
-                "configure_auto_discovery", "setup_domain_events",
-                "initialize_domain_layer"
+                "validate_domain_services",
+                "get_service_registry",
+                "configure_auto_discovery",
+                "setup_domain_events",
+                "initialize_domain_layer",
             ]
 
             for method_name in domain_methods:
@@ -424,13 +478,13 @@ class TestModels85PercentBarrierBreaker:
 
         try:
             # Test HandlersConfig edge cases (line 1539)
-            handlers_config = FlextModels.SystemConfigs.HandlersConfig(
-                max_handlers=100
-            )
+            handlers_config = FlextModels.SystemConfigs.HandlersConfig(max_handlers=100)
 
             handler_methods = [
-                "validate_handler_configuration", "get_handler_metadata",
-                "setup_handler_pipeline", "configure_handler_registry"
+                "validate_handler_configuration",
+                "get_handler_metadata",
+                "setup_handler_pipeline",
+                "configure_handler_registry",
             ]
 
             for method_name in handler_methods:

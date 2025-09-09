@@ -104,7 +104,7 @@ class TestFlextFieldsComprehensiveCoverage:
             (999.99, True),   # Max boundary
             (-1.0, False),    # Below min
             (1000.0, False),  # Above max
-            (50.123456, True), # High precision
+            (50.123456, True),  # High precision
         ]
 
         for test_value, _should_pass in test_cases:
@@ -292,8 +292,7 @@ class TestFlextFieldsComprehensiveCoverage:
         string_field = FlextFields.Core.StringField(name="name", required=True)
         email_field = FlextFields.Core.EmailField(name="email", required=True)
 
-        field_configs.append({"field": string_field, "type": "string"})
-        field_configs.append({"field": email_field, "type": "email"})
+        field_configs.extend(({"field": string_field, "type": "string"}, {"field": email_field, "type": "email"}))
 
         # Test processing scenarios
         test_data = {
@@ -452,7 +451,6 @@ class TestFlextFieldsIntegrationCoverage:
     def test_field_registry_with_multiple_field_types(self) -> None:
         """Test comprehensive field type management scenarios."""
         # Initialize field collection
-        field_registry = {}
 
         # Create comprehensive field set
         fields = {
@@ -466,8 +464,7 @@ class TestFlextFieldsIntegrationCoverage:
         }
 
         # Add all fields to registry
-        for field_name, field in fields.items():
-            field_registry[field_name] = field
+        field_registry = dict(fields.items())
 
         # Validate field registration
         assert len(field_registry) == 7
@@ -479,7 +476,7 @@ class TestFlextFieldsIntegrationCoverage:
         required_count = 0
         optional_count = 0
 
-        for field_name, field in field_registry.items():
+        for field in field_registry.values():
             metadata = field.get_metadata()
             if metadata.get("required", False):
                 required_count += 1
@@ -496,7 +493,7 @@ class TestFlextFieldsIntegrationCoverage:
         string_count = 0
         numeric_count = 0
 
-        for field_name, field in field_registry.items():
+        for field in field_registry.values():
             if isinstance(field, FlextFields.Core.StringField):
                 string_count += 1
             elif isinstance(field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)):
@@ -554,7 +551,6 @@ class TestFlextFieldsIntegrationCoverage:
     def test_field_processor_with_complex_schemas(self) -> None:
         """Test complex field validation and processing scenarios."""
         # Create complex validation schema
-        validation_schema = {}
 
         # Define complex validation schema
         user_fields = {
@@ -570,8 +566,7 @@ class TestFlextFieldsIntegrationCoverage:
         }
 
         # Add all fields to validation schema
-        for field_name, field in user_fields.items():
-            validation_schema[field_name] = field
+        validation_schema = dict(user_fields.items())
 
         # Test complex data validation scenarios
         valid_complex_data = {

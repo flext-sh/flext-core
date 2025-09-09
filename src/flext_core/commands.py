@@ -1239,7 +1239,11 @@ class FlextCommands:
                 optimized_config
             )
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
+            # Filter out None values to match expected type
+            filtered_config = {
+                k: v for k, v in optimized_config.items() if v is not None
+            }
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(filtered_config)
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(
                 f"Failed to optimize commands performance: {e}",

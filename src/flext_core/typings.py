@@ -278,16 +278,27 @@ class FlextTypes:
 
         type ServiceKey = str
         type ServiceInstance = object
-        type ServiceRegistration = "object"  # FlextResult[None]
-        type ServiceRetrieval = "object"  # FlextResult[object]
-        type FactoryFunction = "Callable[[], object]"
-        type FactoryRegistration = "object"  # FlextResult[None]
+        type ServiceRegistration = object  # FlextResult[None]
+        type ServiceRetrieval = object  # FlextResult[object]
+        type FactoryFunction = Callable[[], object]
+        type FactoryRegistration = object  # FlextResult[None]
 
     class Handler:
         """Handler types for validations.py compatibility."""
 
         type Context = dict[str, object]
         type HandlerMetadata = dict[str, object]
+
+    # =========================================================================
+    # RESULT TYPES - Result pattern types for test compatibility
+    # =========================================================================
+
+    class Result:
+        """Result types for test compatibility."""
+
+        type ResultData = object
+        type ResultError = str | None
+        type ResultValue = object
 
 
 # =============================================================================

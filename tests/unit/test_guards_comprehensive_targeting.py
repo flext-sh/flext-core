@@ -24,7 +24,7 @@ class TestFlextGuardsSystemConfiguration:
             "validation_enabled": True,
             "strict_mode": False,
             "cache_guards": True,
-            "performance_level": "standard"
+            "performance_level": "standard",
         }
 
         try:
@@ -47,12 +47,12 @@ class TestFlextGuardsSystemConfiguration:
             "retry_failed_validations": True,
             "custom_validators": {
                 "email": {"pattern": r"^[^@]+@[^@]+\.[^@]+$"},
-                "phone": {"pattern": r"^\+?1?\d{9,15}$"}
+                "phone": {"pattern": r"^\+?1?\d{9,15}$"},
             },
             "error_handling": {
                 "on_validation_error": "collect_and_continue",
-                "max_errors_before_abort": 5
-            }
+                "max_errors_before_abort": 5,
+            },
         }
 
         try:
@@ -68,7 +68,10 @@ class TestFlextGuardsSystemConfiguration:
         edge_configs = [
             {},  # Empty config
             {"validation_enabled": False},  # Disabled validation
-            {"strict_mode": True, "performance_level": "minimal"},  # Conflicting settings
+            {
+                "strict_mode": True,
+                "performance_level": "minimal",
+            },  # Conflicting settings
             {"max_validation_errors": -1},  # Invalid negative value
             {"timeout_seconds": 0},  # Zero timeout
             {"invalid_key": "invalid_value"},  # Invalid configuration
@@ -97,7 +100,7 @@ class TestFlextGuardsSystemConfiguration:
                     result = FlextGuards.create_environment_guards_config(
                         environment=env,
                         validation_level=validation_level,
-                        cache_enabled=True
+                        cache_enabled=True,
                     )
                     if isinstance(result, FlextResult):
                         assert result.is_success or result.is_failure
@@ -113,7 +116,7 @@ class TestFlextGuardsSystemConfiguration:
                 "validation_level": "standard",
                 "cache_enabled": True,
                 "debug_guards": True,
-                "detailed_errors": True
+                "detailed_errors": True,
             },
             {
                 "env": "production",
@@ -121,15 +124,15 @@ class TestFlextGuardsSystemConfiguration:
                 "cache_enabled": True,
                 "performance_optimized": True,
                 "security_guards": True,
-                "audit_enabled": True
+                "audit_enabled": True,
             },
             {
                 "env": "testing",
                 "validation_level": "strict",
                 "cache_enabled": False,
                 "test_mode": True,
-                "mock_guards": True
-            }
+                "mock_guards": True,
+            },
         ]
 
         for config in env_specific_configs:
@@ -137,7 +140,11 @@ class TestFlextGuardsSystemConfiguration:
                 result = FlextGuards.create_environment_guards_config(
                     environment=config["env"],
                     validation_level=config["validation_level"],
-                    **{k: v for k, v in config.items() if k not in ["env", "validation_level"]}
+                    **{
+                        k: v
+                        for k, v in config.items()
+                        if k not in {"env", "validation_level"}
+                    },
                 )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
@@ -158,9 +165,7 @@ class TestFlextGuardsSystemConfiguration:
         for env, level, kwargs in edge_cases:
             try:
                 result = FlextGuards.create_environment_guards_config(
-                    environment=env,
-                    validation_level=level,
-                    **kwargs
+                    environment=env, validation_level=level, **kwargs
                 )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
@@ -231,7 +236,9 @@ class TestFlextGuardsValidationUtils:
                     if expected_success:
                         assert result.is_success or result.is_failure  # Either is valid
                     else:
-                        assert result.is_failure or result.is_success  # Failure expected but either valid
+                        assert (
+                            result.is_failure or result.is_success
+                        )  # Failure expected but either valid
                 # May return value directly or boolean
                 elif expected_success:
                     assert result is not None
@@ -248,12 +255,14 @@ class TestFlextGuardsValidationUtils:
         custom_messages = [
             "Value cannot be None",
             "Required field is missing",
-            "Null value not allowed"
+            "Null value not allowed",
         ]
 
         for message in custom_messages:
             try:
-                result = FlextGuards.ValidationUtils.require_not_none(None, message=message)
+                result = FlextGuards.ValidationUtils.require_not_none(
+                    None, message=message
+                )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
                 else:
@@ -296,7 +305,9 @@ class TestFlextGuardsValidationUtils:
 
         # Test with custom error messages
         try:
-            result = FlextGuards.ValidationUtils.require_non_empty([], message="Collection cannot be empty")
+            result = FlextGuards.ValidationUtils.require_non_empty(
+                [], message="Collection cannot be empty"
+            )
             if isinstance(result, FlextResult):
                 assert result.is_success or result.is_failure
             else:
@@ -342,7 +353,9 @@ class TestFlextGuardsValidationUtils:
 
         # Test with custom error messages
         try:
-            result = FlextGuards.ValidationUtils.require_positive(-5, message="Value must be positive")
+            result = FlextGuards.ValidationUtils.require_positive(
+                -5, message="Value must be positive"
+            )
             if isinstance(result, FlextResult):
                 assert result.is_success or result.is_failure
             else:
@@ -368,7 +381,9 @@ class TestFlextGuardsValidationUtils:
 
         for value, min_val, max_val, expected_success in range_test_cases:
             try:
-                result = FlextGuards.ValidationUtils.require_in_range(value, min_val, max_val)
+                result = FlextGuards.ValidationUtils.require_in_range(
+                    value, min_val, max_val
+                )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
                 # May return value directly or boolean
@@ -383,17 +398,19 @@ class TestFlextGuardsValidationUtils:
         # Test edge cases
         edge_cases = [
             (5, None, 10),  # No min boundary
-            (5, 1, None),   # No max boundary
+            (5, 1, None),  # No max boundary
             (5, None, None),  # No boundaries
-            (5, 10, 1),     # Invalid range (min > max)
+            (5, 10, 1),  # Invalid range (min > max)
             ("not_numeric", 1, 10),  # Non-numeric value
             (5, "not_numeric", 10),  # Non-numeric min
-            (5, 1, "not_numeric"),   # Non-numeric max
+            (5, 1, "not_numeric"),  # Non-numeric max
         ]
 
         for value, min_val, max_val in edge_cases:
             try:
-                result = FlextGuards.ValidationUtils.require_in_range(value, min_val, max_val)
+                result = FlextGuards.ValidationUtils.require_in_range(
+                    value, min_val, max_val
+                )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
                 else:
@@ -520,18 +537,24 @@ class TestFlextGuardsFactoryAndBuilder:
             {
                 "factory_type": "user_factory",
                 "default_values": {"role": "user", "active": True},
-                "validation_rules": {"email": "email_format", "age": "positive_integer"}
+                "validation_rules": {
+                    "email": "email_format",
+                    "age": "positive_integer",
+                },
             },
             {
                 "factory_type": "product_factory",
                 "default_values": {"category": "general", "available": True},
-                "validation_rules": {"price": "positive_number", "name": "non_empty_string"}
+                "validation_rules": {
+                    "price": "positive_number",
+                    "name": "non_empty_string",
+                },
             },
             {
                 "factory_type": "config_factory",
                 "default_values": {"environment": "development", "debug": True},
-                "validation_rules": {"port": "valid_port", "host": "valid_hostname"}
-            }
+                "validation_rules": {"port": "valid_port", "host": "valid_hostname"},
+            },
         ]
 
         for factory_config in basic_factory_configs:
@@ -559,13 +582,9 @@ class TestFlextGuardsFactoryAndBuilder:
             "hooks": {
                 "pre_create": "validate_input",
                 "post_create": "log_creation",
-                "on_error": "handle_factory_error"
+                "on_error": "handle_factory_error",
             },
-            "caching": {
-                "enabled": True,
-                "ttl": 300,
-                "key_strategy": "content_hash"
-            }
+            "caching": {"enabled": True, "ttl": 300, "key_strategy": "content_hash"},
         }
 
         try:
@@ -578,7 +597,7 @@ class TestFlextGuardsFactoryAndBuilder:
                     {"valid": "input"},
                     {"complex": {"nested": "data"}},
                     "invalid_input",
-                    None
+                    None,
                 ]
                 for test_input in test_inputs:
                     try:
@@ -618,20 +637,20 @@ class TestFlextGuardsFactoryAndBuilder:
                 "builder_type": "user_builder",
                 "required_fields": ["name", "email"],
                 "optional_fields": ["age", "role", "preferences"],
-                "validation_enabled": True
+                "validation_enabled": True,
             },
             {
                 "builder_type": "config_builder",
                 "required_fields": ["environment"],
                 "optional_fields": ["debug", "log_level", "database_url"],
-                "fluent_interface": True
+                "fluent_interface": True,
             },
             {
                 "builder_type": "api_request_builder",
                 "required_fields": ["method", "url"],
                 "optional_fields": ["headers", "body", "timeout"],
-                "immutable": True
-            }
+                "immutable": True,
+            },
         ]
 
         for builder_config in basic_builder_configs:
@@ -651,8 +670,15 @@ class TestFlextGuardsFactoryAndBuilder:
                                     method = getattr(builder_instance, method_name)
                                     if callable(method):
                                         try:
-                                            method_result = method("test", "value") if method_name == "set" else method()
-                                            assert method_result is not None or method_result is None
+                                            method_result = (
+                                                method("test", "value")
+                                                if method_name == "set"
+                                                else method()
+                                            )
+                                            assert (
+                                                method_result is not None
+                                                or method_result is None
+                                            )
                                         except Exception:
                                             pass
                     except Exception:
@@ -669,16 +695,10 @@ class TestFlextGuardsFactoryAndBuilder:
             "immutable": True,
             "validation_rules": {
                 "email": {"pattern": r"^[^@]+@[^@]+\.[^@]+$"},
-                "age": {"min": 0, "max": 150}
+                "age": {"min": 0, "max": 150},
             },
-            "default_values": {
-                "created_at": "now",
-                "status": "active"
-            },
-            "transformations": {
-                "name": "capitalize",
-                "email": "lowercase"
-            }
+            "default_values": {"created_at": "now", "status": "active"},
+            "transformations": {"name": "capitalize", "email": "lowercase"},
         }
 
         try:
@@ -695,7 +715,7 @@ class TestFlextGuardsFactoryAndBuilder:
                             ("name", "John Doe"),
                             ("email", "john@example.com"),
                             ("age", 30),
-                            ("invalid_field", "should_be_ignored")
+                            ("invalid_field", "should_be_ignored"),
                         ]
                         for field, value in test_values:
                             try:
@@ -757,17 +777,15 @@ class TestFlextGuardsFactoryAndBuilder:
         complex_objects = [
             {
                 "level1": {
-                    "level2": {
-                        "level3": ["deep", "nested", "list"]
-                    },
-                    "list_in_dict": [{"dict": "in_list"}]
+                    "level2": {"level3": ["deep", "nested", "list"]},
+                    "list_in_dict": [{"dict": "in_list"}],
                 }
             },
             [
                 {"dict_in_list": True},
                 [["nested", "list"], {"in": "nested_list"}],
-                {"complex": {"structure": ["mixed", "types"]}}
-            ]
+                {"complex": {"structure": ["mixed", "types"]}},
+            ],
         ]
 
         for complex_obj in complex_objects:

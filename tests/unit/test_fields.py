@@ -13,8 +13,7 @@ from typing import cast
 import pytest
 from hypothesis import given, strategies as st
 
-from flext_core import FlextConstants, FlextFields
-from flext_core.typings import FlextTypes
+from flext_core import FlextConstants, FlextFields, FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 

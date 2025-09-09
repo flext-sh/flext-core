@@ -76,13 +76,13 @@ class FlextLogger:
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
         """Initialize structured logger instance."""
-        if not self._configured:
+        if not type(self)._configured:
             # Use stored configuration if available, otherwise configure with defaults
-            if self._configuration:
+            if type(self)._configuration:
                 # Configuration already exists, just reuse it
-                pass
+                type(self)._configured = True
             else:
-                self.configure()
+                type(self).configure()
 
         self._name = name
         # Validate and set level (LogLevel is already a str type)

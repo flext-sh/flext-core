@@ -12,9 +12,11 @@ import json
 import os
 import tempfile
 import time
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock
+
+from pydantic import BaseModel
 
 from flext_core import FlextResult, FlextUtilities
 
@@ -62,7 +64,7 @@ class TestFlextUtilitiesComprehensiveCoverage:
         for input_val, _expected in int_test_cases:
             try:
                 result = conversions.safe_int(input_val, default=0)
-                assert isinstance(result, int) or result is None
+                assert isinstance(result, int)
             except Exception:
                 pass
 
@@ -114,7 +116,9 @@ class TestFlextUtilitiesComprehensiveCoverage:
         assert result == {"test": "value"}
 
         # Test safe_load_json_file with temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             test_data = {"test": "json_data", "number": 42}
             json.dump(test_data, f)
             temp_path = f.name
@@ -406,7 +410,7 @@ class TestFlextUtilitiesComprehensiveCoverage:
             ["a", "b", "c"],
         ]
 
-        def sample_processor(item: Any) -> FlextResult[str]:
+        def sample_processor(item: object) -> FlextResult[str]:
             return FlextResult[str].ok(str(item))
 
         for batch in batch_inputs:
@@ -471,7 +475,6 @@ class TestFlextUtilitiesComprehensiveCoverage:
                 pass
 
         # Test extract_model_data with various model objects
-        from pydantic import BaseModel
 
         class TestModel(BaseModel):
             name: str = "test"
@@ -542,7 +545,7 @@ class TestFlextUtilitiesGlobalFunctions:
             pass
 
         # Test get_elapsed_time with datetime
-        from datetime import datetime
+
         start_time = datetime.now()
         time.sleep(0.01)
         try:
@@ -678,7 +681,8 @@ class TestFlextUtilitiesGlobalFunctions:
 
     def test_batch_process_global(self) -> None:
         """Test global batch_process function."""
-        def sample_processor(item: Any) -> FlextResult[str]:
+
+        def sample_processor(item: object) -> FlextResult[str]:
             return FlextResult[str].ok(f"processed_{item}")
 
         items = [1, 2, 3, 4, 5]
@@ -706,7 +710,7 @@ class TestFlextUtilitiesEdgeCases:
             try:
                 result = test_func()
                 # Should handle None gracefully
-                assert result is not None or result is None  # Any result is valid
+                assert result is not None or result is None  # object result is valid
             except Exception:
                 # Exception handling is also valid
                 pass

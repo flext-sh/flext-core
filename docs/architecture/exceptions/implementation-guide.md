@@ -435,7 +435,7 @@ class UserService:
 ```python
 import sqlite3
 import psycopg2
-from typing import object, Callable, TypeVar
+from typing import Callable, TypeVar
 
 T = TypeVar('T')
 

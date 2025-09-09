@@ -74,7 +74,7 @@ user_data = {
 result = FlextTypeAdapters.Foundation.validate_with_adapter(user_adapter, user_data)
 
 if result.success:
-    user = result.value  # Type: User
+    user = result.value
     print(f"Created user: {user.name}")
 else:
     print(f"Validation failed: {result.error}")

@@ -24,7 +24,6 @@ from flext_core import (
 # =============================================================================
 
 # FlextCore ecosystem setup
-MAX_AGE = FlextConstants.Network.DEFAULT_TIMEOUT  # FlextConstants
 logger = FlextLogger(__name__)  # FlextLogger structured output
 container = FlextContainer.get_global()  # FlextContainer dependency injection
 

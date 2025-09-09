@@ -1,4 +1,16 @@
-"""Constants and enumerations for the FLEXT ecosystem.
+"""FLEXT Core Constants - Enterprise-grade constants system.
+
+This module provides a hierarchical constants system for the FLEXT ecosystem,
+following FLEXT architectural principles and Python 3.13+ best practices.
+
+Key Features:
+- Hierarchical constant organization by domain
+- Type-safe constants with Final annotations
+- Performance optimized with caching strategies
+- Pydantic V2 integration for validation schemas
+- Pattern matching support for constant resolution
+- Comprehensive error code categorization
+- StrEnum integration for type-safe enumerations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,6 +18,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import functools
 from enum import StrEnum
 from typing import ClassVar, Final, override
 
@@ -20,11 +33,41 @@ class FlextConstants:
     VERSION: Final[str] = "0.9.0"  # Legacy compatibility
 
     # =========================================================================
+    # CONSTANT-SPECIFIC VALIDATION METHODS
+    # =========================================================================
+
+    @classmethod
+    @functools.cache
+    def validate_constant_range(
+        cls, _constant_name: str, value: int, min_val: int, max_val: int
+    ) -> bool:
+        """Validate that a constant value is within its defined range."""
+        return min_val <= value <= max_val
+
+    @classmethod
+    def get_constant_metadata(cls, constant_path: str) -> dict[str, object]:
+        """Get metadata about a specific constant."""
+        try:
+            parts = constant_path.split(".")
+            current = cls
+            for part in parts:
+                current = getattr(current, part)
+
+            return {
+                "name": constant_path,
+                "value": current,
+                "type": type(current).__name__,
+                "module": cls.__name__,
+            }
+        except AttributeError:
+            return {}
+
+    # =========================================================================
     # CORE CONSTANTS - Fundamental system constants
     # =========================================================================
 
     class Core:
-        """Core system constants."""
+        """Core system constants with validation and optimization methods."""
 
         # System identity constants
         NAME: Final[str] = "FLEXT"
@@ -48,12 +91,18 @@ class FlextConstants:
         DDD_PATTERN: Final[str] = "domain_driven_design"
         CQRS_PATTERN: Final[str] = "command_query_responsibility_segregation"
 
+        @classmethod
+        @functools.cache
+        def validate_python_version_range(cls, version: tuple[int, int, int]) -> bool:
+            """Validate Python version is within FLEXT supported range."""
+            return cls.MIN_PYTHON_VERSION <= version < cls.MAX_PYTHON_VERSION
+
     # =========================================================================
     # NETWORK CONSTANTS - Network and connectivity constants
     # =========================================================================
 
     class Network:
-        """Network and connectivity constants."""
+        """Network and connectivity constants with validation methods."""
 
         # Port range boundaries
         MIN_PORT: Final[int] = 1
@@ -77,12 +126,18 @@ class FlextConstants:
         READ_TIMEOUT: Final[int] = 30
         TOTAL_TIMEOUT: Final[int] = 60
 
+        @classmethod
+        @functools.cache
+        def validate_port_range(cls, port: int) -> bool:
+            """Validate port is within valid range."""
+            return cls.MIN_PORT <= port <= cls.MAX_PORT
+
     # =========================================================================
     # VALIDATION CONSTANTS - Validation rules and limits
     # =========================================================================
 
     class Validation:
-        """Validation constants and limits."""
+        """Validation constants and limits with validation methods."""
 
         # String length constraints
         MIN_SERVICE_NAME_LENGTH: Final[int] = 2
@@ -125,12 +180,18 @@ class FlextConstants:
         MAX_FILE_SIZE: Final[int] = 10 * 1024 * 1024  # 10MB
         MAX_STRING_LENGTH: Final[int] = 1000
 
+        @classmethod
+        @functools.cache
+        def validate_numeric_range(cls, value: int, min_val: int, max_val: int) -> bool:
+            """Validate numeric value is within specified range."""
+            return min_val <= value <= max_val
+
     # =========================================================================
     # ERROR CONSTANTS - Comprehensive error code hierarchy
     # =========================================================================
 
     class Errors:
-        """Error codes and categorization."""
+        """Error codes and categorization with validation methods."""
 
         # Error category ranges for structured error handling
         BUSINESS_ERROR_RANGE: Final[tuple[int, int]] = (1000, 1999)
@@ -158,6 +219,15 @@ class FlextConstants:
         COMMAND_HANDLER_NOT_FOUND: Final[str] = "FLEXT_2007"
         COMMAND_BUS_ERROR: Final[str] = "FLEXT_2008"
         QUERY_PROCESSING_FAILED: Final[str] = "FLEXT_2009"
+
+        @classmethod
+        @functools.cache
+        def validate_error_format(cls, error_code: str) -> bool:
+            """Validate error code format."""
+            return (
+                error_code.startswith("FLEXT_")
+                and len(error_code) > cls.BUSINESS_ERROR_RANGE[0]
+            )
 
         # Legacy compatibility codes (existing ecosystem dependencies)
         # Business Logic Errors
@@ -1630,18 +1700,9 @@ class FlextConstants:
         DISCOVERY_FAILED_MSG: Final[str] = "Entity discovery failed"
         PROCESSING_FAILED_MSG: Final[str] = "Data processing failed"
 
-    class client-aMigration:
-        """client-a Oracle to OUD migration constants."""
-
-        # Core project constants
-        PROJECT_NAME: Final[str] = "client-a-oud-mig"
-        DESCRIPTION: Final[str] = "client-a Oracle to OUD Migration Tool"
-        AUTHOR: Final[str] = "client-a Telecom"
-        LICENSE: Final[str] = "Proprietary"
-
-        # Supported formats
-        SUPPORTED_INPUT_FORMATS: Final[tuple[str, ...]] = ("ldif",)
-        SUPPORTED_OUTPUT_FORMATS: Final[tuple[str, ...]] = ("ldif",)
+        # ELIMINATED: client-aMigration - DOMAIN VIOLATION!
+        # CRITICAL: Generalizable libraries must NOT contain domain-specific constants
+        # MOVED TO: client-a-oud-mig/foundation.py where it belongs
 
         # Migration phases
         MIGRATION_PHASES: Final[FlextTypes.Core.StringList] = [
@@ -1669,23 +1730,11 @@ class FlextConstants:
             "cancelled",
         ]
 
-        # OUD (Oracle Unified Directory) connection constants
-        OUD_DEFAULT_HOST: Final[str] = "localhost"
-        OUD_DEFAULT_PORT: Final[int] = 3389
-        OUD_DOCKER_MAPPED_PORT: Final[int] = 11389
-        OUD_DEFAULT_BIND_DN: Final[str] = "cn=orclREDACTED_LDAP_BIND_PASSWORD"
-        OUD_DEFAULT_BASE_DN: Final[str] = "dc=ctbc,dc=com"
-        OUD_BASE_DN_SHORT: Final[str] = "dc=ctbc"
-        OUD_DEFAULT_USE_SSL: Final[bool] = False
-        OUD_DEFAULT_TIMEOUT: Final[int] = 30
-        OUD_DEFAULT_POOL_SIZE: Final[int] = 10
-        OUD_DEFAULT_MAX_RETRIES: Final[int] = 3
-        OUD_MAX_PORT_VALUE: Final[int] = 65535
-        OUD_BASE_DN_PATTERN: Final[str] = r"dc=ctbc$"
+        # ELIMINATED: OUD/client-a-specific constants - MASSIVE DOMAIN VIOLATION!
+        # CRITICAL: Generalizable libraries must NEVER contain domain-specific constants
+        # MOVED TO: client-a-oud-mig where these client-a-specific values belong
 
         # Processing configuration
-        DEFAULT_BATCH_SIZE: Final[int] = 100
-        MAX_BATCH_SIZE: Final[int] = 10000
         DEFAULT_MAX_WORKERS: Final[int] = 4
         MAX_LINE_LENGTH: Final[int] = 2000
         MAX_ENTRIES_PER_FILE: Final[int] = 50000

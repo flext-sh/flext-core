@@ -11,8 +11,9 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock, patch
+
+from pydantic import BaseModel, TypeAdapter
 
 from flext_core import FlextResult, FlextTypeAdapters
 
@@ -108,7 +109,9 @@ class TestFlextAdaptersRemainingCoverage:
         test_types = [str, int, dict, list, bool]
 
         for test_type in test_types:
-            result = FlextTypeAdapters.AdvancedAdapters.create_adapter_for_type(test_type)
+            result = FlextTypeAdapters.AdvancedAdapters.create_adapter_for_type(
+                test_type
+            )
             assert isinstance(result, FlextResult)
 
         # Test with None type
@@ -128,7 +131,9 @@ class TestFlextAdaptersRemainingCoverage:
         # Test create_validator_protocol with various inputs
 
         # Test with valid protocol creation
-        result = FlextTypeAdapters.ProtocolAdapters.create_validator_protocol("test_validator")
+        result = FlextTypeAdapters.ProtocolAdapters.create_validator_protocol(
+            "test_validator"
+        )
         assert isinstance(result, FlextResult)
 
         # Test with empty protocol name
@@ -140,7 +145,9 @@ class TestFlextAdaptersRemainingCoverage:
             pass
 
         # Test Infrastructure create_validator_protocol as well
-        result = FlextTypeAdapters.Infrastructure.create_validator_protocol("infra_validator")
+        result = FlextTypeAdapters.Infrastructure.create_validator_protocol(
+            "infra_validator"
+        )
         assert isinstance(result, FlextResult)
 
         # Test Infrastructure register_adapter
@@ -149,7 +156,6 @@ class TestFlextAdaptersRemainingCoverage:
 
     def test_migration_adapters_edge_cases(self) -> None:
         """Test MigrationAdapters uncovered paths."""
-        from pydantic import BaseModel
 
         # Create a test BaseModel for migration
         class TestModel(BaseModel):
@@ -159,7 +165,9 @@ class TestFlextAdaptersRemainingCoverage:
         test_instance = TestModel(name="migration_test", value=100)
 
         # Test migrate_from_basemodel with actual BaseModel
-        result = FlextTypeAdapters.MigrationAdapters.migrate_from_basemodel(test_instance)
+        result = FlextTypeAdapters.MigrationAdapters.migrate_from_basemodel(
+            test_instance
+        )
         assert isinstance(result, FlextResult)
 
         # Test with None BaseModel
@@ -249,28 +257,26 @@ class TestFlextAdaptersRemainingCoverage:
             "metadata": {
                 "timestamp": "2025-01-01T00:00:00Z",
                 "version": "1.0.0",
-                "tags": ["test", "coverage", "boost"]
+                "tags": ["test", "coverage", "boost"],
             },
             "payload": {
                 "items": [
                     {"id": 1, "data": {"nested": True}},
-                    {"id": 2, "data": {"nested": False}}
+                    {"id": 2, "data": {"nested": False}},
                 ],
-                "summary": {
-                    "total": 2,
-                    "processed": 2
-                }
-            }
+                "summary": {"total": 2, "processed": 2},
+            },
         }
 
         # Test successful serialization
-        result = application.serialize_to_json(complex_data)
+        adapter = TypeAdapter(dict)
+        result = application.serialize_to_json(complex_data, adapter)
         assert result.is_success
 
         # Test serialization of problematic data
-        with patch("json.dumps") as mock_dumps:
-            mock_dumps.side_effect = TypeError("Mock serialization error")
-            result = application.serialize_to_json({"test": "data"})
+        with patch.object(adapter, "dump_json") as mock_dump_json:
+            mock_dump_json.side_effect = TypeError("Mock serialization error")
+            result = application.serialize_to_json({"test": "data"}, adapter)
             assert result.is_failure
 
     def test_application_schema_generation_errors(self) -> None:
@@ -311,8 +317,9 @@ class TestFlextAdaptersRemainingCoverage:
 
     def test_validation_with_custom_validators(self) -> None:
         """Test validation with custom validator functions."""
+
         # Test with lambda validators
-        def positive_number_validator(value: Any) -> bool:
+        def positive_number_validator(value: object) -> bool:
             return isinstance(value, (int, float)) and value > 0
 
         # Test Foundation validation with custom validator
@@ -362,7 +369,9 @@ class TestFlextAdaptersRemainingCoverage:
     def test_file_adapter_operations(self) -> None:
         """Test file-based adapter operations if available."""
         # Create temporary file for testing
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             test_data = {"test": "file_adapter", "number": 42}
             json.dump(test_data, f)
             temp_path = f.name
@@ -379,7 +388,9 @@ class TestFlextAdaptersRemainingCoverage:
                 assert isinstance(result, FlextResult)
 
                 # Test with non-existent file
-                result = FlextTypeAdapters.Domain.validate_file_path("/non/existent/path")
+                result = FlextTypeAdapters.Domain.validate_file_path(
+                    "/non/existent/path"
+                )
                 assert isinstance(result, FlextResult)
         finally:
             # Cleanup
@@ -444,8 +455,8 @@ class TestFlextAdaptersIntegrationCoverage:
                 "data": f"data_value_{i}",
                 "metadata": {
                     "processed": True,
-                    "timestamp": f"2025-01-01T{i:02d}:00:00Z"
-                }
+                    "timestamp": f"2025-01-01T{i:02d}:00:00Z",
+                },
             }
             for i in range(100)  # 100 items for performance testing
         }

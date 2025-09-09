@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 from pydantic import ValidationInfo
 from datetime import datetime
 import os
@@ -83,7 +83,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
 
     # Nested configurations
     endpoints: list[ApiEndpointConfig] = Field(default_factory=list)
-    cors_config: dict[str, Any] = Field(
+    cors_config: dict[str, object] = Field(
         default_factory=lambda: {
             "allowed_origins": ["*"],
             "allowed_methods": ["GET", "POST"],
@@ -168,7 +168,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
 
         return self
 
-    def add_endpoint(self, endpoint: dict[str, Any]) -> ApiConfig:
+    def add_endpoint(self, endpoint: dict[str, object]) -> ApiConfig:
         """Add an endpoint configuration."""
         endpoint_config = ApiEndpointConfig.model_validate(endpoint)
         self.endpoints.append(endpoint_config)
@@ -181,7 +181,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
                 return endpoint
         return None
 
-    def to_deployment_config(self) -> dict[str, Any]:
+    def to_deployment_config(self) -> dict[str, object]:
         """Generate deployment configuration (e.g., for Kubernetes)."""
         return {
             "name": self.service_name,
@@ -251,7 +251,7 @@ class ApiSettings(FlextConfig.Settings):
 # =============================================================================
 
 
-def configure_api_system(config: dict[str, Any]) -> FlextResult[dict[str, Any]]:
+def configure_api_system(config: dict[str, object]) -> FlextResult[dict[str, object]]:
     """Configure API system with validation.
 
     This follows the FLEXT pattern:
@@ -465,12 +465,12 @@ def example_with_registry() -> None:
 class ApiApplication:
     """Example API application using the configuration."""
 
-    def __init__(self, config: dict[str, Any] | None = None) -> None:
+    def __init__(self, config: dict[str, object] | None = None) -> None:
         """Initialize application with configuration."""
         self.config = self._load_configuration(config)
         self.logger = FlextLogger(__name__)
 
-    def _load_configuration(self, config_dict: dict[str, Any] | None) -> ApiConfig:
+    def _load_configuration(self, config_dict: dict[str, object] | None) -> ApiConfig:
         """Load and validate configuration."""
         if config_dict:
             # Use provided configuration
@@ -485,7 +485,7 @@ class ApiApplication:
 
         return ApiConfig.model_validate(result.unwrap())
 
-    def _load_from_environment(self) -> FlextResult[dict[str, Any]]:
+    def _load_from_environment(self) -> FlextResult[dict[str, object]]:
         """Load configuration from environment."""
         try:
             settings = ApiSettings.from_sources(

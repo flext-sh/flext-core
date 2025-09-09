@@ -15,13 +15,15 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextConfig, FlextResult
-from flext_core.config import (
-    ConfigBusinessValidator,
-    ConfigFilePersistence,
-    ConfigRuntimeValidator,
-    DefaultEnvironmentAdapter,
-    FlextConfigFactory,
-)
+
+# Use nested classes instead of removed loose classes
+# from flext_core.config import (
+#     ConfigBusinessValidator,     -> FlextConfig.BusinessValidator
+#     ConfigFilePersistence,       -> FlextConfig.FilePersistence
+#     ConfigRuntimeValidator,      -> FlextConfig.RuntimeValidator
+#     FlextConfig.EnvironmentAdapter,   -> FlextConfig.EnvironmentAdapter
+#     FlextConfigFactory,          -> FlextConfig.Factory
+# )
 
 
 class TestConfigMassiveCoverage75Plus:
@@ -43,7 +45,9 @@ class TestConfigMassiveCoverage75Plus:
                 config = FlextConfig(**config_data)
 
                 # Test business rule validation (lines 238, 243, 250, 256)
-                validation_result = ConfigBusinessValidator.validate_business_rules(config)
+                validation_result = (
+                    FlextConfig.BusinessValidator.validate_business_rules(config)
+                )
                 assert isinstance(validation_result, FlextResult)
 
                 # Test specific business rule scenarios
@@ -69,11 +73,18 @@ class TestConfigMassiveCoverage75Plus:
                 config = FlextConfig(**scenario)
 
                 # Test runtime requirements validation (lines 194, 197, 204, 207-208)
-                runtime_result = ConfigRuntimeValidator.validate_runtime_requirements(config)
+                runtime_result = (
+                    FlextConfig.RuntimeValidator.validate_runtime_requirements(config)
+                )
                 assert isinstance(runtime_result, FlextResult)
 
                 # Test validation success/failure based on scenario
-                if any(v <= 0 for k, v in scenario.items() if isinstance(v, int) and k in ["max_connections", "timeout", "workers"]):
+                if any(
+                    v <= 0
+                    for k, v in scenario.items()
+                    if isinstance(v, int)
+                    and k in {"max_connections", "timeout", "workers"}
+                ):
                     # Invalid values should trigger validation errors (lines 207-208)
                     pass  # Can be success or failure depending on implementation
 
@@ -81,8 +92,8 @@ class TestConfigMassiveCoverage75Plus:
                 pass
 
     def test_environment_adapter_comprehensive(self) -> None:
-        """Test DefaultEnvironmentAdapter methods (lines 144-145)."""
-        adapter = DefaultEnvironmentAdapter()
+        """Test FlextConfig.EnvironmentAdapter methods (lines 144-145)."""
+        adapter = FlextConfig.EnvironmentAdapter()
 
         # Test environment variable retrieval (lines 144-145)
         env_var_tests = [
@@ -112,23 +123,24 @@ class TestConfigMassiveCoverage75Plus:
         # Test save_to_file method (lines 293-296)
         try:
             config = FlextConfig(
-                environment="testing",
-                debug=True,
-                host="localhost",
-                port=8080
+                environment="testing", debug=True, host="localhost", port=8080
             )
 
             # Create temporary file for testing
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp_file:
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8", mode="w", suffix=".json", delete=False
+            ) as tmp_file:
                 temp_path = tmp_file.name
 
             try:
                 # Test save_to_file (lines 293-296)
-                save_result = ConfigFilePersistence.save_to_file(config, temp_path)
+                save_result = FlextConfig.FilePersistence.save_to_file(
+                    config, temp_path
+                )
                 assert isinstance(save_result, FlextResult)
 
                 # Test load_from_file (line 362)
-                load_result = ConfigFilePersistence.load_from_file(temp_path)
+                load_result = FlextConfig.FilePersistence.load_from_file(temp_path)
                 assert isinstance(load_result, FlextResult)
 
             finally:
@@ -142,17 +154,17 @@ class TestConfigMassiveCoverage75Plus:
         """Test FlextConfigFactory methods (lines 409, 418, 425-426)."""
         # Test create_from_env method (lines 409, 418, 425-426)
         env_prefix_tests = [
-            "FLEXT_",      # Default prefix
-            "TEST_",       # Custom prefix
-            "MYAPP_",      # Another custom prefix
-            "",            # Empty prefix
-            "INVALID_",    # Prefix with no matching env vars
+            "FLEXT_",  # Default prefix
+            "TEST_",  # Custom prefix
+            "MYAPP_",  # Another custom prefix
+            "",  # Empty prefix
+            "INVALID_",  # Prefix with no matching env vars
         ]
 
         for prefix in env_prefix_tests:
             try:
                 # Test factory method (lines 409, 418, 425-426)
-                factory_result = FlextConfigFactory.create_from_env(prefix)
+                factory_result = FlextConfig.Factory.create_from_env(prefix)
                 assert isinstance(factory_result, FlextResult)
 
                 # Test different prefix scenarios
@@ -169,8 +181,15 @@ class TestConfigMassiveCoverage75Plus:
 
         # Test validate_environment method (lines 840-844)
         environment_values = [
-            "development", "staging", "production", "testing",
-            "invalid_env", "", "DEVELOPMENT", "Production", "TEST"
+            "development",
+            "staging",
+            "production",
+            "testing",
+            "invalid_env",
+            "",
+            "DEVELOPMENT",
+            "Production",
+            "TEST",
         ]
 
         for env_value in environment_values:
@@ -178,7 +197,12 @@ class TestConfigMassiveCoverage75Plus:
                 validated_env = FlextConfig.validate_environment(env_value)
                 assert isinstance(validated_env, str)
 
-                if env_value.lower() not in ["development", "staging", "production", "testing"]:
+                if env_value.lower() not in {
+                    "development",
+                    "staging",
+                    "production",
+                    "testing",
+                }:
                     # Invalid environments might trigger validation errors (lines 840-844)
                     pass  # Depends on implementation
 
@@ -218,8 +242,15 @@ class TestConfigMassiveCoverage75Plus:
         """Test host and URL validation methods (lines 902-903, 911-912)."""
         # Test validate_host method (lines 902-903)
         host_values = [
-            "localhost", "127.0.0.1", "example.com", "api.service.com",
-            "192.168.1.1", "invalid..host", "", "host with spaces", "http://invalid"
+            "localhost",
+            "127.0.0.1",
+            "example.com",
+            "api.service.com",
+            "192.168.1.1",
+            "invalid..host",
+            "",
+            "host with spaces",
+            "http://invalid",
         ]
 
         for host_value in host_values:
@@ -235,8 +266,14 @@ class TestConfigMassiveCoverage75Plus:
 
         # Test validate_base_url method (lines 911-912)
         url_values = [
-            "http://localhost:8080", "https://api.example.com", "http://127.0.0.1",
-            "invalid_url", "", "ftp://invalid", "http://", "https://"
+            "http://localhost:8080",
+            "https://api.example.com",
+            "http://127.0.0.1",
+            "invalid_url",
+            "",
+            "ftp://invalid",
+            "http://",
+            "https://",
         ]
 
         for url_value in url_values:
@@ -253,16 +290,34 @@ class TestConfigMassiveCoverage75Plus:
     def test_config_log_level_validation(self) -> None:
         """Test log level validation (lines 914-915, 926-927)."""
         log_level_values = [
-            "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL",
-            "debug", "info", "warning", "error", "critical",
-            "INVALID", "", "123", "TRACE", "FATAL"
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+            "debug",
+            "info",
+            "warning",
+            "error",
+            "critical",
+            "INVALID",
+            "",
+            "123",
+            "TRACE",
+            "FATAL",
         ]
 
         for log_level in log_level_values:
             try:
                 validated_level = FlextConfig.validate_log_level(log_level)
                 assert isinstance(validated_level, str)
-                assert validated_level.upper() in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+                assert validated_level.upper() in {
+                    "DEBUG",
+                    "INFO",
+                    "WARNING",
+                    "ERROR",
+                    "CRITICAL",
+                }
 
             except Exception:
                 # Expected for invalid log levels (lines 914-915, 926-927)
@@ -274,9 +329,21 @@ class TestConfigMassiveCoverage75Plus:
         """Test validate_configuration_consistency method (lines 970-971, 996-997)."""
         # Test configuration consistency with various scenarios
         consistency_scenarios = [
-            {"environment": "production", "debug": False, "ssl_enabled": True},  # Consistent
-            {"environment": "production", "debug": True, "ssl_enabled": False},  # Inconsistent
-            {"environment": "development", "debug": True, "ssl_enabled": False},  # Consistent
+            {
+                "environment": "production",
+                "debug": False,
+                "ssl_enabled": True,
+            },  # Consistent
+            {
+                "environment": "production",
+                "debug": True,
+                "ssl_enabled": False,
+            },  # Inconsistent
+            {
+                "environment": "development",
+                "debug": True,
+                "ssl_enabled": False,
+            },  # Consistent
             {"max_connections": 1000, "workers": 1},  # Might be inconsistent
             {"timeout": 1, "max_connections": 10000},  # Might be inconsistent
         ]
@@ -290,7 +357,9 @@ class TestConfigMassiveCoverage75Plus:
                 assert isinstance(validated_config, FlextConfig)
 
                 # Check if inconsistencies were detected and handled
-                if scenario.get("environment") == "production" and scenario.get("debug"):
+                if scenario.get("environment") == "production" and scenario.get(
+                    "debug"
+                ):
                     # This might trigger consistency warnings/errors (lines 970-971)
                     pass  # Depends on implementation
 
@@ -301,8 +370,11 @@ class TestConfigMassiveCoverage75Plus:
         """Test environment variable methods (lines 1081-1082, 1113-1119)."""
         # Test get_env_var class method (lines 1081-1082)
         env_var_scenarios = [
-            "PATH", "HOME", "USER",  # Common environment variables
-            "FLEXT_CONFIG_TEST", "NONEXISTENT_VAR",  # Custom/non-existent variables
+            "PATH",
+            "HOME",
+            "USER",  # Common environment variables
+            "FLEXT_CONFIG_TEST",
+            "NONEXISTENT_VAR",  # Custom/non-existent variables
         ]
 
         for var_name in env_var_scenarios:
@@ -324,11 +396,7 @@ class TestConfigMassiveCoverage75Plus:
     def test_config_sealing_methods(self) -> None:
         """Test configuration sealing methods (lines 1162-1171, 1177)."""
         try:
-            config = FlextConfig(
-                environment="testing",
-                debug=True,
-                host="localhost"
-            )
+            config = FlextConfig(environment="testing", debug=True, host="localhost")
 
             # Test is_sealed method before sealing (line 1177)
             sealed_status_before = config.is_sealed()
@@ -360,7 +428,7 @@ class TestConfigMassiveCoverage75Plus:
                 debug=True,
                 host="api.example.com",
                 port=8080,
-                max_connections=100
+                max_connections=100,
             )
 
             # Test get_metadata method (lines 1197-1198)
@@ -387,9 +455,18 @@ class TestConfigMassiveCoverage75Plus:
         """Test advanced factory methods (lines 1277-1278, 1300)."""
         # Test advanced factory scenarios
         factory_scenarios = [
-            {"method": "create_web_service_config", "kwargs": {"host": "web.service.com", "port": 80}},
-            {"method": "create_microservice_config", "kwargs": {"service_name": "auth", "port": 8080}},
-            {"method": "create_api_client_config", "kwargs": {"base_url": "https://api.example.com"}},
+            {
+                "method": "create_web_service_config",
+                "kwargs": {"host": "web.service.com", "port": 80},
+            },
+            {
+                "method": "create_microservice_config",
+                "kwargs": {"service_name": "auth", "port": 8080},
+            },
+            {
+                "method": "create_api_client_config",
+                "kwargs": {"base_url": "https://api.example.com"},
+            },
         ]
 
         for scenario in factory_scenarios:
@@ -435,8 +512,11 @@ class TestConfigMassiveCoverage75Plus:
                 # Test various methods with edge case configurations
                 methods_to_test = [
                     "validate_configuration_consistency",
-                    "seal", "is_sealed", "get_metadata",
-                    "to_api_payload", "as_api_payload"
+                    "seal",
+                    "is_sealed",
+                    "get_metadata",
+                    "to_api_payload",
+                    "as_api_payload",
                 ]
 
                 for method_name in methods_to_test:
@@ -459,8 +539,19 @@ class TestConfigMassiveCoverage75Plus:
     def test_config_source_validation_comprehensive(self) -> None:
         """Test config source validation comprehensively (lines 1422-1444)."""
         config_source_values = [
-            "file", "env", "default", "database", "api", "remote",
-            "INVALID", "", "File", "ENV", "Default", "123", None
+            "file",
+            "env",
+            "default",
+            "database",
+            "api",
+            "remote",
+            "INVALID",
+            "",
+            "File",
+            "ENV",
+            "Default",
+            "123",
+            None,
         ]
 
         for source_value in config_source_values:
@@ -470,14 +561,25 @@ class TestConfigMassiveCoverage75Plus:
                     assert isinstance(validated_source, str)
 
                     # Test source validation rules (lines 1422-1444)
-                    valid_sources = ["file", "env", "default", "database", "api", "remote"]
+                    valid_sources = [
+                        "file",
+                        "env",
+                        "default",
+                        "database",
+                        "api",
+                        "remote",
+                    ]
                     if source_value.lower() not in valid_sources:
                         # Invalid sources should trigger validation errors
                         pass  # Depends on validation implementation
 
             except Exception:
                 # Expected for invalid config sources (lines 1422-1444)
-                if source_value and source_value.lower() not in ["file", "env", "default"]:
+                if source_value and source_value.lower() not in {
+                    "file",
+                    "env",
+                    "default",
+                }:
                     assert True  # Expected validation error
 
 

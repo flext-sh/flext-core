@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import os
+import time
 from pathlib import Path
 
 import pytest
@@ -26,10 +26,18 @@ class TestUtilities85PercentBarrierBreaker:
 
         # Test safe_bool edge cases (lines 94, 96)
         edge_cases_bool = [
-            (None, False, True), ("", False, False), ("0", False, True),
-            ("false", True, False), ("no", True, False), ("off", True, False),
-            ("FALSE", True, False), ("NO", True, False), ("OFF", True, False),
-            ("invalid", False, True), (123, False, True), ([], False, True)
+            (None, False, True),
+            ("", False, False),
+            ("0", False, True),
+            ("false", True, False),
+            ("no", True, False),
+            ("off", True, False),
+            ("FALSE", True, False),
+            ("NO", True, False),
+            ("OFF", True, False),
+            ("invalid", False, True),
+            (123, False, True),
+            ([], False, True),
         ]
 
         for value, default, _expected_with_default in edge_cases_bool:
@@ -48,8 +56,13 @@ class TestUtilities85PercentBarrierBreaker:
 
         # Test safe_int edge cases (lines 104-105)
         edge_cases_int = [
-            ("", 0), ("invalid", 42), ("123.45", 123), (None, -1),
-            ("0", 0), ("-123", -123), ("999999999999", 999999999999)
+            ("", 0),
+            ("invalid", 42),
+            ("123.45", 123),
+            (None, -1),
+            ("0", 0),
+            ("-123", -123),
+            ("999999999999", 999999999999),
         ]
 
         for value, default in edge_cases_int:
@@ -74,7 +87,7 @@ class TestUtilities85PercentBarrierBreaker:
             ("PATH", "", True),  # Should exist
             ("NONEXISTENT_VAR_12345", "default", False),  # Should not exist
             ("HOME", "/tmp", True),  # Should exist on Unix
-            ("USER", "testuser", True)  # Should exist on Unix
+            ("USER", "testuser", True),  # Should exist on Unix
         ]
 
         for var_name, default, should_exist in env_var_tests:
@@ -124,9 +137,15 @@ class TestUtilities85PercentBarrierBreaker:
 
         # Test advanced text processing methods (line 159, 169-191)
         text_samples = [
-            "Hello World Test", "  spaced text  ", "UPPERCASE TEXT",
-            "mixed-Case_Text", "text with numbers 123", "special@chars#text",
-            "", "a", "very_long_text_" * 10
+            "Hello World Test",
+            "  spaced text  ",
+            "UPPERCASE TEXT",
+            "mixed-Case_Text",
+            "text with numbers 123",
+            "special@chars#text",
+            "",
+            "a",
+            "very_long_text_" * 10,
         ]
 
         for text in text_samples:
@@ -176,7 +195,7 @@ class TestUtilities85PercentBarrierBreaker:
             # Mismatched types
             ("string", int, False),
             (123, str, False),
-            ([], dict, False)
+            ([], dict, False),
         ]
 
         for value, expected_type, should_match in validation_scenarios:
@@ -200,8 +219,12 @@ class TestUtilities85PercentBarrierBreaker:
         try:
             # Test is_callable method (line 290-292)
             callable_tests = [
-                (lambda x: x, True), (print, True), (str, True),
-                ("not callable", False), (123, False), ([], False)
+                (lambda x: x, True),
+                (print, True),
+                (str, True),
+                ("not callable", False),
+                (123, False),
+                ([], False),
             ]
 
             for test_value, _is_callable_expected in callable_tests:
@@ -222,7 +245,7 @@ class TestUtilities85PercentBarrierBreaker:
             {"email": "test@example.com", "age": 25},
             {"name": "", "valid": False},
             {},
-            {"complex": {"nested": {"data": True}}}
+            {"complex": {"nested": {"data": True}}},
         ]
 
         for test_data in validation_test_data:
@@ -230,18 +253,27 @@ class TestUtilities85PercentBarrierBreaker:
                 # Test validate_dict method (line 422)
                 if hasattr(validation_utils, "validate_dict"):
                     dict_validation = validation_utils.validate_dict(test_data)
-                    assert isinstance(dict_validation, (bool, FlextResult, dict, type(None)))
+                    assert isinstance(
+                        dict_validation, (bool, FlextResult, dict, type(None))
+                    )
 
                 # Test validate_schema method (line 430)
                 if hasattr(validation_utils, "validate_schema"):
-                    schema = {"type": "object", "properties": {"key": {"type": "string"}}}
-                    schema_validation = validation_utils.validate_schema(test_data, schema)
+                    schema = {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                    }
+                    schema_validation = validation_utils.validate_schema(
+                        test_data, schema
+                    )
                     assert schema_validation is not None or schema_validation is None
 
                 # Test validate_business_rules method (line 436)
                 if hasattr(validation_utils, "validate_business_rules"):
                     rules = ["required_key", "positive_numbers"]
-                    rules_validation = validation_utils.validate_business_rules(test_data, rules)
+                    rules_validation = validation_utils.validate_business_rules(
+                        test_data, rules
+                    )
                     assert rules_validation is not None or rules_validation is None
 
             except Exception:
@@ -257,7 +289,7 @@ class TestUtilities85PercentBarrierBreaker:
             ("ANOTHER STRING", "lower"),
             ("Mixed Case String", "title"),
             ("text_with_underscores", "snake_case"),
-            ("textWithCamelCase", "camel_case")
+            ("textWithCamelCase", "camel_case"),
         ]
 
         for text, format_type in format_test_data:
@@ -288,7 +320,6 @@ class TestUtilities85PercentBarrierBreaker:
 
             # Test format_timestamp method (line 538-539)
             if hasattr(time_utils, "format_timestamp"):
-                import time
                 current_time = time.time()
                 formatted_time = time_utils.format_timestamp(current_time)
                 assert isinstance(formatted_time, (str, type(None)))
@@ -298,7 +329,7 @@ class TestUtilities85PercentBarrierBreaker:
                 timestamp_strings = [
                     "2024-01-15T10:00:00Z",
                     "2024-01-15 10:00:00",
-                    "1642248000"
+                    "1642248000",
                 ]
 
                 for ts_str in timestamp_strings:
@@ -316,6 +347,7 @@ class TestUtilities85PercentBarrierBreaker:
         try:
             # Test measure_execution_time method (lines 586-588)
             if hasattr(performance, "measure_execution_time"):
+
                 def test_function():
                     return sum(range(1000))
 
@@ -324,10 +356,13 @@ class TestUtilities85PercentBarrierBreaker:
 
             # Test benchmark_function method (lines 593-594)
             if hasattr(performance, "benchmark_function"):
+
                 def benchmark_test() -> str:
                     return "test" * 100
 
-                benchmark_result = performance.benchmark_function(benchmark_test, iterations=10)
+                benchmark_result = performance.benchmark_function(
+                    benchmark_test, iterations=10
+                )
                 assert benchmark_result is not None or benchmark_result is None
 
             # Test profile_memory method (lines 593-594)
@@ -348,7 +383,7 @@ class TestUtilities85PercentBarrierBreaker:
                 FlextResult[str].ok("success"),
                 FlextResult[str].fail("error message"),
                 FlextResult[int].ok(42),
-                FlextResult[dict].ok({"key": "value"})
+                FlextResult[dict].ok({"key": "value"}),
             ]
 
             for result in test_results:
@@ -359,7 +394,7 @@ class TestUtilities85PercentBarrierBreaker:
 
                 # Test map_results method (lines 611-623)
                 if hasattr(result_utils, "map_results"):
-                    mapped = result_utils.map_results([result], lambda x: str(x))
+                    mapped = result_utils.map_results([result], str)
                     assert mapped is not None or mapped is None
 
                 # Test filter_successful method (lines 611-623)
@@ -379,7 +414,7 @@ class TestUtilities85PercentBarrierBreaker:
             [1, 2, 3, 4, 5],
             ["a", "b", "c", "d"],
             [{"id": 1}, {"id": 2}, {"id": 3}],
-            []
+            [],
         ]
 
         for data_set in test_data_sets:
@@ -392,9 +427,7 @@ class TestUtilities85PercentBarrierBreaker:
                 # Test parallel_process method (line 652)
                 if hasattr(processing, "parallel_process"):
                     parallel_result = processing.parallel_process(
-                        data_set,
-                        lambda x: x,
-                        max_workers=2
+                        data_set, lambda x: x, max_workers=2
                     )
                     assert parallel_result is not None or parallel_result is None
 
@@ -417,8 +450,8 @@ class TestUtilities85PercentBarrierBreaker:
                 if isinstance(temp_file, (str, Path)):
                     # Clean up temp file
                     try:
-                        if os.path.exists(temp_file):
-                            os.remove(temp_file)
+                        if Path(temp_file).exists():
+                            Path(temp_file).unlink()
                     except Exception:
                         pass
 
@@ -439,9 +472,17 @@ class TestUtilities85PercentBarrierBreaker:
         """Test edge case utility methods (lines 733, 736, 751-752)."""
         # Test edge case methods (lines 733, 736, 751-752)
         edge_case_data = [
-            None, "", 0, [], {}, False, True,
-            "edge_case_string", 999999, [1, 2, 3],
-            {"edge": "case", "data": True}
+            None,
+            "",
+            0,
+            [],
+            {},
+            False,
+            True,
+            "edge_case_string",
+            999999,
+            [1, 2, 3],
+            {"edge": "case", "data": True},
         ]
 
         for edge_data in edge_case_data:
@@ -454,7 +495,9 @@ class TestUtilities85PercentBarrierBreaker:
                 # Test validate_edge_case method (line 736)
                 if hasattr(FlextUtilities, "validate_edge_case"):
                     validation_result = FlextUtilities.validate_edge_case(edge_data)
-                    assert isinstance(validation_result, (bool, FlextResult, type(None)))
+                    assert isinstance(
+                        validation_result, (bool, FlextResult, type(None))
+                    )
 
                 # Test process_edge_case method (lines 751-752)
                 if hasattr(FlextUtilities, "process_edge_case"):
@@ -486,8 +529,10 @@ class TestUtilities85PercentBarrierBreaker:
 
             # Test comprehensive validation (lines 869-870, 926, 940, 950)
             validation_methods = [
-                "validate_comprehensive", "run_diagnostics",
-                "perform_health_check", "execute_maintenance"
+                "validate_comprehensive",
+                "run_diagnostics",
+                "perform_health_check",
+                "execute_maintenance",
             ]
 
             for method_name in validation_methods:
@@ -518,7 +563,7 @@ class TestUtilities85PercentBarrierBreaker:
             error_scenarios = [
                 {"trigger": "error", "type": "validation"},
                 {"trigger": "exception", "type": "processing"},
-                {"trigger": "failure", "type": "system"}
+                {"trigger": "failure", "type": "system"},
             ]
 
             for scenario in error_scenarios:
@@ -529,7 +574,7 @@ class TestUtilities85PercentBarrierBreaker:
             # Test final edge cases (lines 1081-1083, 1093)
             final_test_data = [
                 {"final": True, "test": "comprehensive"},
-                {"coverage": "maximum", "target": "85_percent"}
+                {"coverage": "maximum", "target": "85_percent"},
             ]
 
             for final_data in final_test_data:

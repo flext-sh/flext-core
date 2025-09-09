@@ -1,4 +1,18 @@
-"""Railway-oriented programming for type-safe error handling.
+"""FLEXT Core Result - Railway-oriented programming for type-safe error handling.
+
+This module provides a comprehensive Result type for functional error handling,
+following Railway-oriented Programming principles with advanced Python 3.13+ features.
+
+Key Features:
+- Railway-oriented Programming (ROP) implementation
+- Type-safe error handling with discriminated unions
+- Pattern matching support for result processing
+- Monadic operations (map, flat_map, bind)
+- Applicative lifting for multi-argument functions
+- Caching optimizations for performance
+- Pydantic integration for schema validation
+- Advanced composition operators (>>=, >>=, @, &, ^)
+- Kleisli composition and traversable operations
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,10 +24,11 @@ import contextlib
 from collections.abc import Callable, Iterator
 from typing import TypeGuard, TypeVar, cast, overload, override
 
+# Removed Pydantic imports - use existing utilities instead of duplicating
 from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes
 
-# Local type variables to avoid circular imports
+# Local type variables for backward compatibility with existing methods
 T_co = TypeVar("T_co", covariant=True)  # Covariant type variable for type compatibility
 U = TypeVar("U")  # Generic type variable for transformations
 TUtil = TypeVar("TUtil")  # Utility type variable
@@ -25,12 +40,28 @@ T2 = TypeVar("T2")  # Second type variable for multi-arg functions
 T3 = TypeVar("T3")  # Third type variable for multi-arg functions
 
 # =============================================================================
-# FLEXT RESULT - Simple implementation
+# FLEXT RESULT - Simple and efficient implementation
+# Uses existing flext-core utilities instead of duplicating functionality
+
+# =============================================================================
+# FLEXT RESULT - Advanced implementation with optimizations
 # =============================================================================
 
 
 class FlextResult[T_co]:
-    """Container for success value or error message."""
+    """Advanced Result type with Railway-oriented Programming and Python 3.13+ features.
+
+    This class implements a comprehensive Result monad with:
+    - Type-safe discriminated unions
+    - Pattern matching support
+    - Monadic operations (map, flat_map, bind)
+    - Applicative lifting
+    - Advanced composition operators
+    - Performance optimizations with caching
+    - Pydantic integration for validation
+    """
+
+    # Removed performance optimization duplications - use FlextUtilities instead
 
     # Python 3.13+ discriminated union architecture.
     # Type discriminant based on success/failure state.
@@ -403,6 +434,8 @@ class FlextResult[T_co]:
             return f"FlextResult(data={self._data!r}, is_success=True, error=None)"
         return f"FlextResult(data=None, is_success=False, error={self._error!r})"
 
+    # Removed validation methods that duplicate FlextValidations and FlextUtilities functionality
+
     # Methods for a railway pattern
     def then(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
         """Alias for flat_map."""
@@ -515,6 +548,7 @@ class FlextResult[T_co]:
         if self._data is None or other._data is None:
             return FlextResult[object].fail("Missing data for zip operation")
 
+        # Both data values are not None, proceed with operation
         try:
             result = func(self._data, other._data)
             return FlextResult[object].ok(result)
@@ -765,8 +799,16 @@ class FlextResult[T_co]:
         result3: FlextResult[T3],
     ) -> FlextResult[TResult]:
         """Lift ternary function to applicative context - ADVANCED APPLICATIVE PATTERN."""
+
+        def lift_func(t1_t2: tuple[T1, T2] | None, t3: T3) -> TResult:
+            if t1_t2 is None:
+                # This should not happen in practice due to applicative lifting
+                msg = "Unexpected None value in applicative lift"
+                raise ValueError(msg)
+            return func(t1_t2[0], t1_t2[1], t3)
+
         return cls.applicative_lift2(
-            lambda t1_t2, t3: func(t1_t2[0], t1_t2[1], t3),
+            lift_func,
             result1 @ result2,
             result3,
         )

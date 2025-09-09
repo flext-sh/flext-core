@@ -52,440 +52,13 @@ _PROFILE_API_CLIENT = "api_client"
 _PROFILE_BATCH_JOB = "batch_job"
 _PROFILE_MICROSERVICE = "microservice"
 
-# =============================================================================
-# SOLID PRINCIPLE INTERFACES - Interface Segregation Principle
-# =============================================================================
-
-
-class ConfigValidator(Protocol):
-    """Protocol for configuration validation strategies.
-
-    Follows Interface Segregation Principle - clients only depend on
-    validation methods they actually use.
-    """
-
-    def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements."""
-        ...
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for configuration consistency."""
-        ...
-
-
-class ConfigPersistence(Protocol):
-    """Protocol for configuration persistence operations.
-
-    Follows Single Responsibility Principle - only handles persistence.
-    """
-
-    def save_to_file(
-        self, file_path: str | Path, **kwargs: object
-    ) -> FlextResult[None]:
-        """Save configuration to file."""
-        ...
-
-    @classmethod
-    def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
-        """Load configuration from file."""
-        ...
-
-
-class ConfigFactory(Protocol):
-    """Protocol for configuration factory methods.
-
-    Follows Open/Closed Principle - extensible for new configuration types.
-    """
-
-    @classmethod
-    def create_web_service_config(cls, **kwargs: object) -> FlextResult[Self]:
-        """Create web service configuration."""
-        ...
-
-    @classmethod
-    def create_microservice_config(cls, **kwargs: object) -> FlextResult[Self]:
-        """Create microservice configuration."""
-        ...
-
-
-class EnvironmentConfigAdapter(ABC):
-    """Abstract base for environment-specific configuration adapters.
-
-    Follows Dependency Inversion Principle - depend on abstractions.
-    """
-
-    @abstractmethod
-    def get_env_var(self, var_name: str) -> FlextResult[str]:
-        """Get environment variable with error handling."""
-
-    @abstractmethod
-    def get_env_vars_with_prefix(
-        self, prefix: str
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Get all environment variables with given prefix."""
-
-
-class DefaultEnvironmentAdapter(EnvironmentConfigAdapter):
-    """Default implementation of environment adapter using os.environ.
-
-    Concrete implementation following Dependency Inversion Principle.
-    """
-
-    def get_env_var(self, var_name: str) -> FlextResult[str]:
-        """Get environment variable with FlextResult error handling."""
-        try:
-            value = os.environ.get(var_name)
-            if value is None:
-                return FlextResult[str].fail(
-                    f"Environment variable {var_name} not set",
-                    error_code="ENV_VAR_NOT_FOUND",
-                )
-            return FlextResult[str].ok(value)
-        except Exception as error:
-            return FlextResult[str].fail(
-                f"Failed to get environment variable '{var_name}': {error}",
-                error_code="ENV_VAR_ERROR",
-            )
-
-    def get_env_vars_with_prefix(
-        self, prefix: str
-    ) -> FlextResult[FlextTypes.Core.Dict]:
-        """Get all environment variables with given prefix."""
-        try:
-            env_vars: FlextTypes.Core.Dict = {
-                key[len(prefix) :]: value
-                for key, value in os.environ.items()
-                if key.startswith(prefix)
-            }
-            return FlextResult[FlextTypes.Core.Dict].ok(env_vars)
-        except Exception as error:
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Failed to get environment variables with prefix '{prefix}': {error}",
-                error_code="ENV_PREFIX_ERROR",
-            )
-
-
-# =============================================================================
-# VALIDATION COMPONENTS - Single Responsibility Principle
-# =============================================================================
-
-
-class ConfigRuntimeValidator:
-    """Handles runtime validation requirements.
-
-    Follows Single Responsibility Principle - only validates runtime requirements.
-    """
-
-    @staticmethod
-    def validate_runtime_requirements(config: FlextConfig) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements.
-
-        Args:
-            config: Configuration instance to validate
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
-        errors = []
-
-        # Check required fields are not empty
-        if not config.app_name.strip():
-            errors.append("app_name cannot be empty")
-
-        if not config.name.strip():
-            errors.append("name cannot be empty")
-
-        # Validate version format
-        if (
-            not config.version
-            or len(config.version.split(".")) < _SEMANTIC_VERSION_MIN_PARTS
-        ):
-            errors.append("version must follow semantic versioning (x.y.z)")
-
-        if errors:
-            error_msg = "; ".join(errors)
-            return FlextResult[None].fail(
-                f"Runtime validation failed: {error_msg}",
-                error_code="CONFIG_RUNTIME_VALIDATION_ERROR",
-            )
-
-        return FlextResult[None].ok(None)
-
-
-class ConfigBusinessValidator:
-    """Handles business rule validation.
-
-    Follows Single Responsibility Principle - only validates business rules.
-    """
-
-    @staticmethod
-    def validate_business_rules(config: FlextConfig) -> FlextResult[None]:
-        """Validate business rules for configuration consistency.
-
-        Args:
-            config: Configuration instance to validate
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
-        errors = []
-
-        # Production environment validation
-        if config.environment == "production":
-            if config.debug and config.config_source != "default":
-                errors.append(
-                    "Debug mode in production requires explicit configuration"
-                )
-
-            if config.max_workers < _MIN_PRODUCTION_WORKERS:
-                errors.append("Production environment should have at least 2 workers")
-
-        # Performance consistency checks
-        if (
-            config.timeout_seconds > _HIGH_TIMEOUT_THRESHOLD
-            and config.max_workers < _MIN_WORKERS_FOR_HIGH_TIMEOUT
-        ):
-            errors.append(
-                "High timeout with low worker count may cause performance issues"
-            )
-
-        # Resource validation
-        if config.max_workers > _MAX_WORKERS_THRESHOLD:
-            errors.append("Worker count above 50 may cause resource exhaustion")
-
-        if errors:
-            error_msg = "; ".join(errors)
-            return FlextResult[None].fail(
-                f"Business rule validation failed: {error_msg}",
-                error_code="CONFIG_BUSINESS_RULE_ERROR",
-            )
-
-        return FlextResult[None].ok(None)
-
-
-class ConfigFilePersistence:
-    """Handles file-based configuration persistence operations.
-
-    Follows Single Responsibility Principle - only handles file I/O operations.
-    """
-
-    @staticmethod
-    def save_to_file(config: FlextConfig, file_path: str) -> FlextResult[None]:
-        """Save configuration to a JSON file.
-
-        Args:
-            config: Configuration instance to save
-            file_path: Target file path for saving
-
-        Returns:
-            FlextResult indicating save operation success or failure
-
-        """
-        try:
-            config_data = cast("BaseModel", config).model_dump()
-            config_path = Path(file_path)
-
-            # Ensure parent directory exists
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with config_path.open("w", encoding="utf-8") as f:
-                json.dump(config_data, f, indent=2, ensure_ascii=False)
-
-            return FlextResult[None].ok(None)
-
-        except (OSError, json.JSONDecodeError, PermissionError) as e:
-            return FlextResult[None].fail(
-                f"Failed to save configuration to file: {e}",
-                error_code="CONFIG_SAVE_ERROR",
-            )
-
-    @staticmethod
-    def load_from_file(file_path: str) -> FlextResult[FlextTypes.Core.JsonDict]:
-        """Load configuration data from a JSON file.
-
-        Args:
-            file_path: Source file path for loading
-
-        Returns:
-            FlextResult containing loaded configuration data or error
-
-        """
-        try:
-            config_path = Path(file_path)
-
-            if not config_path.exists():
-                return FlextResult[FlextTypes.Core.JsonDict].fail(
-                    f"Configuration file not found: {file_path}",
-                    error_code="CONFIG_FILE_NOT_FOUND",
-                )
-
-            with config_path.open(encoding="utf-8") as f:
-                file_content = f.read()
-                config_data = json.loads(file_content)
-
-            return FlextResult[FlextTypes.Core.JsonDict].ok(config_data)
-
-        except (OSError, json.JSONDecodeError, PermissionError) as e:
-            return FlextResult[FlextTypes.Core.JsonDict].fail(
-                f"Failed to load configuration from file: {e}",
-                error_code="CONFIG_LOAD_ERROR",
-            )
-
-
-class FlextConfigFactory:
-    """Factory for creating FlextConfig instances with various strategies.
-
-    Follows Single Responsibility Principle - only handles configuration creation.
-    Follows Open/Closed Principle - extensible for new creation strategies.
-    """
-
-    @staticmethod
-    def create_from_env(env_prefix: str = "FLEXT_") -> FlextResult[FlextConfig]:
-        """Create configuration from environment variables.
-
-        Args:
-            env_prefix: Environment variable prefix for configuration
-
-        Returns:
-            FlextResult containing configured FlextConfig instance or error
-
-        """
-        try:
-            # Use Pydantic's built-in environment loading
-            config = FlextConfig(_env_prefix=env_prefix)
-
-            # Validate the created configuration
-            validation_result = config.validate_all()
-            if validation_result.failure:
-                return FlextResult[FlextConfig].fail(
-                    f"Configuration validation failed: {validation_result.error}",
-                    error_code="CONFIG_ENV_VALIDATION_ERROR",
-                )
-
-            return FlextResult[FlextConfig].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextConfig].fail(
-                f"Failed to create configuration from environment: {e}",
-                error_code="CONFIG_ENV_CREATION_ERROR",
-            )
-
-    @staticmethod
-    def create_from_file(
-        file_path: str, _env_prefix: str = "FLEXT_"
-    ) -> FlextResult[FlextConfig]:
-        """Create configuration from JSON file with environment override.
-
-        Args:
-            file_path: JSON configuration file path
-            _env_prefix: Environment variable prefix for overrides (reserved for future use)
-
-        Returns:
-            FlextResult containing configured FlextConfig instance or error
-
-        """
-        # NOTE: _env_prefix reserved for future environment override functionality
-        # Currently unused but kept for API compatibility
-
-        # Load configuration data from file
-        file_data_result = ConfigFilePersistence.load_from_file(file_path)
-        if file_data_result.failure:
-            return FlextResult[FlextConfig].fail(
-                f"Failed to load file data: {file_data_result.error}",
-                error_code="CONFIG_FILE_LOAD_ERROR",
-            )
-
-        try:
-            file_data = file_data_result.unwrap()
-
-            # Create configuration with file data and environment overrides
-            # Use the create method for proper type handling
-            create_result = FlextConfig.create(
-                constants=cast("FlextTypes.Core.Dict", file_data)
-            )
-            if create_result.failure:
-                return FlextResult[FlextConfig].fail(
-                    f"Configuration creation failed: {create_result.error}",
-                    error_code="CONFIG_FILE_CREATION_ERROR",
-                )
-            config = create_result.value
-
-            # Validate the created configuration
-            validation_result = config.validate_all()
-            if validation_result.failure:
-                return FlextResult[FlextConfig].fail(
-                    f"Configuration validation failed: {validation_result.error}",
-                    error_code="CONFIG_FILE_VALIDATION_ERROR",
-                )
-
-            return FlextResult[FlextConfig].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextConfig].fail(
-                f"Failed to create configuration from file: {e}",
-                error_code="CONFIG_FILE_CREATION_ERROR",
-            )
-
-    @staticmethod
-    def create_for_testing(
-        **overrides: FlextTypes.Core.JsonValue,
-    ) -> FlextResult[FlextConfig]:
-        """Create configuration optimized for testing environments.
-
-        Args:
-            **overrides: Configuration field overrides
-
-        Returns:
-            FlextResult containing test-optimized FlextConfig instance
-
-        """
-        try:
-            # Default test configuration values
-            test_defaults = {
-                "environment": "test",
-                "debug": True,
-                "log_level": "DEBUG",
-                "timeout_seconds": 5,
-                "max_workers": 1,
-                "config_source": "test_factory",
-            }
-
-            # Merge test defaults with user overrides
-            final_config = {**test_defaults, **overrides}
-
-            # Use the create method for proper type handling
-            create_result = FlextConfig.create(constants=final_config)
-            if create_result.failure:
-                return FlextResult[FlextConfig].fail(
-                    f"Test configuration creation failed: {create_result.error}",
-                    error_code="CONFIG_TEST_CREATION_ERROR",
-                )
-            config = create_result.value
-
-            # Skip validation for test configurations to allow flexibility
-            return FlextResult[FlextConfig].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextConfig].fail(
-                f"Failed to create test configuration: {e}",
-                error_code="CONFIG_TEST_CREATION_ERROR",
-            )
-
-
-# =============================================================================
-# MAIN CONFIGURATION CLASS - Enhanced with SOLID Principles
-# =============================================================================
-
 
 class FlextConfig(BaseSettings):
-    """Type-safe configuration management with environment integration.
+    """Unified configuration management system with nested specialized components.
 
-    Provides declarative configuration fields with automatic environment
-    variable binding, validation, and FlextResult-based error handling.
-    Follows Single Responsibility Principle - only handles configuration
-    loading, validation, and access.
+    This is the single unified class for all configuration functionality, with
+    specialized nested classes for different responsibilities following SOLID principles
+    and the unified class pattern required by CLAUDE.md.
 
     Features:
     - Automatic environment variable mapping with FLEXT_ prefix
@@ -494,6 +67,431 @@ class FlextConfig(BaseSettings):
     - Configuration sealing to prevent runtime modifications
     - Structured configuration metadata tracking
     """
+
+    # =============================================================================
+    # NESTED PROTOCOLS - Interface Segregation Principle
+    # =============================================================================
+
+    class ConfigValidator(Protocol):
+        """Protocol for configuration validation strategies.
+
+        Follows Interface Segregation Principle - clients only depend on
+        validation methods they actually use.
+        """
+
+        def validate_runtime_requirements(self) -> FlextResult[None]:
+            """Validate configuration meets runtime requirements."""
+            ...
+
+        def validate_business_rules(self) -> FlextResult[None]:
+            """Validate business rules for configuration consistency."""
+            ...
+
+    class ConfigPersistence(Protocol):
+        """Protocol for configuration persistence operations.
+
+        Follows Single Responsibility Principle - only handles persistence.
+        """
+
+        def save_to_file(
+            self, file_path: str | Path, **kwargs: object
+        ) -> FlextResult[None]:
+            """Save configuration to file."""
+            ...
+
+        @classmethod
+        def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
+            """Load configuration from file."""
+            ...
+
+    class ConfigFactory(Protocol):
+        """Protocol for configuration factory methods.
+
+        Follows Open/Closed Principle - extensible for new configuration types.
+        """
+
+        @classmethod
+        def create_web_service_config(cls, **kwargs: object) -> FlextResult[Self]:
+            """Create web service configuration."""
+            ...
+
+        @classmethod
+        def create_microservice_config(cls, **kwargs: object) -> FlextResult[Self]:
+            """Create microservice configuration."""
+            ...
+
+    # =============================================================================
+    # NESTED ENVIRONMENT ADAPTER - Dependency Inversion Principle
+    # =============================================================================
+
+    class EnvironmentConfigAdapter(ABC):
+        """Abstract base for environment-specific configuration adapters.
+
+        Follows Dependency Inversion Principle - depend on abstractions.
+        """
+
+        @abstractmethod
+        def get_env_var(self, var_name: str) -> FlextResult[str]:
+            """Get environment variable with error handling."""
+
+        @abstractmethod
+        def get_env_vars_with_prefix(
+            self, prefix: str
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Get all environment variables with given prefix."""
+
+    class DefaultEnvironmentAdapter(EnvironmentConfigAdapter):
+        """Default implementation of environment adapter using os.environ.
+
+        Concrete implementation following Dependency Inversion Principle.
+        """
+
+        def get_env_var(self, var_name: str) -> FlextResult[str]:
+            """Get environment variable with FlextResult error handling."""
+            try:
+                value = os.environ.get(var_name)
+                if value is None:
+                    return FlextResult[str].fail(
+                        f"Environment variable {var_name} not set",
+                        error_code="ENV_VAR_NOT_FOUND",
+                    )
+                return FlextResult[str].ok(value)
+            except Exception as error:
+                return FlextResult[str].fail(
+                    f"Failed to get environment variable '{var_name}': {error}",
+                    error_code="ENV_VAR_ERROR",
+                )
+
+        def get_env_vars_with_prefix(
+            self, prefix: str
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Get all environment variables with given prefix."""
+            try:
+                env_vars: FlextTypes.Core.Dict = {
+                    key[len(prefix) :]: value
+                    for key, value in os.environ.items()
+                    if key.startswith(prefix)
+                }
+                return FlextResult[FlextTypes.Core.Dict].ok(env_vars)
+            except Exception as error:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"Failed to get environment variables with prefix '{prefix}': {error}",
+                    error_code="ENV_PREFIX_ERROR",
+                )
+
+    # =============================================================================
+    # NESTED VALIDATION COMPONENTS - Single Responsibility Principle
+    # =============================================================================
+
+    class RuntimeValidator:
+        """Handles runtime validation requirements.
+
+        Follows Single Responsibility Principle - only validates runtime requirements.
+        """
+
+        @staticmethod
+        def validate_runtime_requirements(config: FlextConfig) -> FlextResult[None]:
+            """Validate configuration meets runtime requirements.
+
+            Args:
+                config: Configuration instance to validate
+
+            Returns:
+                FlextResult indicating validation success or specific failures
+
+            """
+            errors = []
+
+            # Check required fields are not empty
+            if not config.app_name.strip():
+                errors.append("app_name cannot be empty")
+
+            if not config.name.strip():
+                errors.append("name cannot be empty")
+
+            # Validate version format
+            if (
+                not config.version
+                or len(config.version.split(".")) < _SEMANTIC_VERSION_MIN_PARTS
+            ):
+                errors.append("version must follow semantic versioning (x.y.z)")
+
+            if errors:
+                error_msg = "; ".join(errors)
+                return FlextResult[None].fail(
+                    f"Runtime validation failed: {error_msg}",
+                    error_code="CONFIG_RUNTIME_VALIDATION_ERROR",
+                )
+
+            return FlextResult[None].ok(None)
+
+    class BusinessValidator:
+        """Handles business rule validation.
+
+        Follows Single Responsibility Principle - only validates business rules.
+        """
+
+        @staticmethod
+        def validate_business_rules(config: FlextConfig) -> FlextResult[None]:
+            """Validate business rules for configuration consistency.
+
+            Args:
+                config: Configuration instance to validate
+
+            Returns:
+                FlextResult indicating validation success or specific failures
+
+            """
+            errors = []
+
+            # Production environment validation
+            if config.environment == "production":
+                if config.debug and config.config_source != "default":
+                    errors.append(
+                        "Debug mode in production requires explicit configuration"
+                    )
+
+                if config.max_workers < _MIN_PRODUCTION_WORKERS:
+                    errors.append(
+                        "Production environment should have at least 2 workers"
+                    )
+
+            # Performance consistency checks
+            if (
+                config.timeout_seconds > _HIGH_TIMEOUT_THRESHOLD
+                and config.max_workers < _MIN_WORKERS_FOR_HIGH_TIMEOUT
+            ):
+                errors.append(
+                    "High timeout with low worker count may cause performance issues"
+                )
+
+            # Resource validation
+            if config.max_workers > _MAX_WORKERS_THRESHOLD:
+                errors.append("Worker count above 50 may cause resource exhaustion")
+
+            # Check security requirements
+            if config.enable_auth and not config.api_key.strip():
+                errors.append("API key required when authentication is enabled")
+
+            if errors:
+                error_msg = "; ".join(errors)
+                return FlextResult[None].fail(
+                    f"Business rule validation failed: {error_msg}",
+                    error_code="CONFIG_BUSINESS_RULE_ERROR",
+                )
+
+            return FlextResult[None].ok(None)
+
+    class FilePersistence:
+        """Handles file-based configuration persistence operations.
+
+        Follows Single Responsibility Principle - only handles file I/O operations.
+        """
+
+        @staticmethod
+        def save_to_file(config: FlextConfig, file_path: str) -> FlextResult[None]:
+            """Save configuration to a JSON file.
+
+            Args:
+                config: Configuration instance to save
+                file_path: Target file path for saving
+
+            Returns:
+                FlextResult indicating save operation success or failure
+
+            """
+            try:
+                config_data = cast("BaseModel", config).model_dump()
+                config_path = Path(file_path)
+
+                # Ensure parent directory exists
+                config_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with config_path.open("w", encoding="utf-8") as f:
+                    json.dump(config_data, f, indent=2, ensure_ascii=False)
+
+                return FlextResult[None].ok(None)
+
+            except (OSError, json.JSONDecodeError, PermissionError) as e:
+                return FlextResult[None].fail(
+                    f"Failed to save configuration to file: {e}",
+                    error_code="CONFIG_SAVE_ERROR",
+                )
+
+        @staticmethod
+        def load_from_file(file_path: str) -> FlextResult[FlextTypes.Core.JsonDict]:
+            """Load configuration data from a JSON file.
+
+            Args:
+                file_path: Source file path for loading
+
+            Returns:
+                FlextResult containing loaded configuration data or error
+
+            """
+            try:
+                config_path = Path(file_path)
+
+                if not config_path.exists():
+                    return FlextResult[FlextTypes.Core.JsonDict].fail(
+                        f"Configuration file not found: {file_path}",
+                        error_code="CONFIG_FILE_NOT_FOUND",
+                    )
+
+                with config_path.open(encoding="utf-8") as f:
+                    file_content = f.read()
+                    config_data = json.loads(file_content)
+
+                return FlextResult[FlextTypes.Core.JsonDict].ok(config_data)
+
+            except (OSError, json.JSONDecodeError, PermissionError) as e:
+                return FlextResult[FlextTypes.Core.JsonDict].fail(
+                    f"Failed to load configuration from file: {e}",
+                    error_code="CONFIG_LOAD_ERROR",
+                )
+
+    class Factory:
+        """Factory for creating FlextConfig instances with various strategies.
+
+        Follows Single Responsibility Principle - only handles configuration creation.
+        Follows Open/Closed Principle - extensible for new creation strategies.
+        """
+
+        @staticmethod
+        def create_from_env(env_prefix: str = "FLEXT_") -> FlextResult[FlextConfig]:
+            """Create configuration from environment variables.
+
+            Args:
+                env_prefix: Environment variable prefix for configuration
+
+            Returns:
+                FlextResult containing configured FlextConfig instance or error
+
+            """
+            try:
+                # Use Pydantic's built-in environment loading
+                config = FlextConfig(_env_prefix=env_prefix)
+
+                # Validate the created configuration
+                validation_result = config.validate_all()
+                if validation_result.is_failure:
+                    return FlextResult[FlextConfig].fail(
+                        f"Configuration validation failed: {validation_result.error}",
+                        error_code="CONFIG_ENV_VALIDATION_ERROR",
+                    )
+
+                return FlextResult[FlextConfig].ok(config)
+
+            except Exception as e:
+                return FlextResult[FlextConfig].fail(
+                    f"Failed to create configuration from environment: {e}",
+                    error_code="CONFIG_ENV_CREATION_ERROR",
+                )
+
+        @staticmethod
+        def create_from_file(
+            file_path: str, _env_prefix: str = "FLEXT_"
+        ) -> FlextResult[FlextConfig]:
+            """Create configuration from JSON file with environment override.
+
+            Args:
+                file_path: JSON configuration file path
+                _env_prefix: Environment variable prefix for overrides (reserved for future use)
+
+            Returns:
+                FlextResult containing configured FlextConfig instance or error
+
+            """
+            # NOTE: _env_prefix reserved for future environment override functionality
+            # Currently unused but kept for API compatibility
+
+            # Load configuration data from file
+            file_data_result = FlextConfig.FilePersistence.load_from_file(file_path)
+            if file_data_result.is_failure:
+                return FlextResult[FlextConfig].fail(
+                    f"Failed to load file data: {file_data_result.error}",
+                    error_code="CONFIG_FILE_LOAD_ERROR",
+                )
+
+            try:
+                file_data = file_data_result.unwrap()
+
+                # Create configuration with file data and environment overrides
+                # Use the create method for proper type handling
+                create_result = FlextConfig.create(
+                    constants=cast("FlextTypes.Core.Dict", file_data)
+                )
+                if create_result.is_failure:
+                    return FlextResult[FlextConfig].fail(
+                        f"Configuration creation failed: {create_result.error}",
+                        error_code="CONFIG_FILE_CREATION_ERROR",
+                    )
+                config = create_result.value
+
+                # Validate the created configuration
+                validation_result = config.validate_all()
+                if validation_result.is_failure:
+                    return FlextResult[FlextConfig].fail(
+                        f"Configuration validation failed: {validation_result.error}",
+                        error_code="CONFIG_FILE_VALIDATION_ERROR",
+                    )
+
+                return FlextResult[FlextConfig].ok(config)
+
+            except Exception as e:
+                return FlextResult[FlextConfig].fail(
+                    f"Failed to create configuration from file: {e}",
+                    error_code="CONFIG_FILE_CREATION_ERROR",
+                )
+
+        @staticmethod
+        def create_for_testing(
+            **overrides: FlextTypes.Core.JsonValue,
+        ) -> FlextResult[FlextConfig]:
+            """Create configuration optimized for testing environments.
+
+            Args:
+                **overrides: Configuration field overrides
+
+            Returns:
+                FlextResult containing test-optimized FlextConfig instance
+
+            """
+            try:
+                # Default test configuration values
+                test_defaults = {
+                    "environment": "test",
+                    "debug": True,
+                    "log_level": "DEBUG",
+                    "timeout_seconds": 5,
+                    "max_workers": 1,
+                    "config_source": "default",
+                }
+
+                # Merge test defaults with user overrides
+                final_config = {**test_defaults, **overrides}
+
+                # Use the create method for proper type handling
+                create_result = FlextConfig.create(constants=final_config)
+                if create_result.is_failure:
+                    return FlextResult[FlextConfig].fail(
+                        f"Test configuration creation failed: {create_result.error}",
+                        error_code="CONFIG_TEST_CREATION_ERROR",
+                    )
+                config = create_result.unwrap()
+
+                # Skip validation for test configurations to allow flexibility
+                return FlextResult[FlextConfig].ok(config)
+
+            except Exception as e:
+                return FlextResult[FlextConfig].fail(
+                    f"Failed to create test configuration: {e}",
+                    error_code="CONFIG_TEST_CREATION_ERROR",
+                )
+
+    # =============================================================================
+    # CONFIGURATION FIELDS - Pydantic model fields
+    # =============================================================================
 
     # Core application identity fields
     app_name: str = Field(
@@ -697,6 +695,10 @@ class FlextConfig(BaseSettings):
         },
     )
 
+    # =============================================================================
+    # INITIALIZATION AND ENVIRONMENT LOADING
+    # =============================================================================
+
     def __init__(
         self,
         /,
@@ -746,7 +748,6 @@ class FlextConfig(BaseSettings):
         if env_path.exists():
             if env_file_format == "toml":
                 # Load TOML format
-
                 with env_path.open("rb") as f:
                     toml_data = tomllib.load(f)
                 # Set environment variables from TOML data
@@ -757,7 +758,6 @@ class FlextConfig(BaseSettings):
                         os.environ[key.upper()] = str(value)
             elif env_file_format == "json":
                 # Load JSON format
-
                 json_content = env_path.read_text(encoding="utf-8")
                 json_data = json.loads(json_content)
                 # Set environment variables from JSON data
@@ -794,6 +794,7 @@ class FlextConfig(BaseSettings):
                 not in FlextConstants.Config.DOTENV_FILES
             ):
                 load_dotenv(dotenv_path=env_specific_path, override=False)
+
         environment_explicit = "environment" in data
         debug_explicit = "debug" in data
         log_level_explicit = "log_level" in data
@@ -809,6 +810,7 @@ class FlextConfig(BaseSettings):
                     # Set attribute directly - validation will happen via Pydantic
                     # Don't catch validation errors to allow proper test failures
                     setattr(self, field_name, value)
+
         # Only force defaults when NOT in factory mode
         if not _factory_mode:
             # Helper for field defaults avoiding direct attribute coupling for type checker
@@ -830,6 +832,10 @@ class FlextConfig(BaseSettings):
                 object.__setattr__(self, "debug", _get_field_default("debug"))
             if not log_level_explicit:
                 object.__setattr__(self, "log_level", _get_field_default("log_level"))
+
+    # =============================================================================
+    # FIELD VALIDATION METHODS
+    # =============================================================================
 
     @field_validator("environment")
     @classmethod
@@ -928,8 +934,11 @@ class FlextConfig(BaseSettings):
 
         return self
 
-    # Dependency Injection - Environment Adapter
-    _env_adapter: EnvironmentConfigAdapter = PrivateAttr(
+    # =============================================================================
+    # ENVIRONMENT ACCESS METHODS - Dependency Injection
+    # =============================================================================
+
+    _env_adapter: DefaultEnvironmentAdapter = PrivateAttr(
         default_factory=DefaultEnvironmentAdapter
     )
 
@@ -947,7 +956,7 @@ class FlextConfig(BaseSettings):
             FlextResult containing variable value or error details
 
         """
-        adapter = DefaultEnvironmentAdapter()
+        adapter = cls.DefaultEnvironmentAdapter()
         return adapter.get_env_var(var_name)
 
     @classmethod
@@ -998,6 +1007,10 @@ class FlextConfig(BaseSettings):
                 f"Config merge failed: {error}",
                 error_code="CONFIG_MERGE_ERROR",
             )
+
+    # =============================================================================
+    # FACTORY METHODS - Creation and instantiation
+    # =============================================================================
 
     @classmethod
     def create(
@@ -1152,6 +1165,136 @@ class FlextConfig(BaseSettings):
                 error_code="CONFIG_CREATION_ERROR",
             )
 
+    # =============================================================================
+    # VALIDATION METHODS - Using nested validators
+    # =============================================================================
+
+    def validate_runtime_requirements(self) -> FlextResult[None]:
+        """Validate configuration meets runtime requirements.
+
+        Delegates to specialized validator following Single Responsibility Principle.
+
+        Returns:
+            FlextResult indicating validation success or specific failures
+
+        """
+        return self.RuntimeValidator.validate_runtime_requirements(self)
+
+    def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for configuration consistency.
+
+        Delegates to specialized validator following Single Responsibility Principle.
+
+        Returns:
+            FlextResult indicating validation success or specific failures
+
+        """
+        return self.BusinessValidator.validate_business_rules(self)
+
+    def validate_all(self) -> FlextResult[None]:
+        """Perform complete configuration validation using specialized validators.
+
+        Executes both runtime requirements and business rule validation.
+        Follows Open/Closed Principle - extensible without modifying this method.
+
+        Returns:
+            FlextResult indicating overall validation success or first failure encountered
+
+        """
+        # Validate runtime requirements first
+        runtime_result = self.validate_runtime_requirements()
+        if runtime_result.is_failure:
+            return runtime_result
+
+        # Then validate business rules
+        business_result = self.validate_business_rules()
+        if business_result.is_failure:
+            return business_result
+
+        return FlextResult[None].ok(None)
+
+    # =============================================================================
+    # PERSISTENCE METHODS - Using nested persistence handler
+    # =============================================================================
+
+    def save_to_file(self, file_path: str) -> FlextResult[None]:
+        """Save configuration to file using specialized persistence handler.
+
+        Delegates to FilePersistence following Single Responsibility Principle.
+
+        Args:
+            file_path: Target file path for saving configuration
+
+        Returns:
+            FlextResult indicating save operation success or failure
+
+        """
+        return self.FilePersistence.save_to_file(self, file_path)
+
+    @classmethod
+    def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
+        """Load configuration from JSON, YAML, or TOML file.
+
+        Args:
+            file_path: Path to configuration file (.json, .yaml, .yml, .toml)
+
+        Returns:
+            FlextResult containing loaded configuration or error details
+
+        """
+        try:
+            path = Path(file_path)
+            if not path.exists():
+                return FlextResult[Self].fail(
+                    f"Configuration file not found: {file_path}",
+                    error_code="CONFIG_FILE_NOT_FOUND",
+                )
+
+            suffix = path.suffix.lower()
+            content = path.read_text(encoding="utf-8")
+
+            if suffix == ".json":
+                data = json.loads(content)
+            elif suffix in {".yaml", ".yml"}:
+                try:
+                    data = yaml.safe_load(content)
+                except NameError:
+                    return FlextResult[Self].fail(
+                        "YAML support not available. Install PyYAML: pip install PyYAML",
+                        error_code="MISSING_DEPENDENCY",
+                    )
+            elif suffix == ".toml":
+                try:
+                    data = tomllib.loads(content)
+                except NameError:
+                    return FlextResult[Self].fail(
+                        "TOML support not available. Requires Python 3.11+ or install tomli",
+                        error_code="MISSING_DEPENDENCY",
+                    )
+            else:
+                return FlextResult[Self].fail(
+                    f"Unsupported file format: {suffix}. Supported: .json, .yaml, .yml, .toml",
+                    error_code="UNSUPPORTED_FILE_FORMAT",
+                )
+
+            result = cls.create(constants=data)
+            if result.is_success:
+                instance = result.value
+                instance._metadata["loaded_from_file"] = str(path)
+                instance._metadata["file_format"] = suffix
+
+            return result
+
+        except Exception as error:
+            return FlextResult[Self].fail(
+                f"Failed to load configuration from {file_path}: {error}",
+                error_code="CONFIG_FILE_LOAD_ERROR",
+            )
+
+    # =============================================================================
+    # STATE MANAGEMENT METHODS
+    # =============================================================================
+
     def seal(self) -> FlextResult[None]:
         """Seal configuration to prevent further modifications.
 
@@ -1179,6 +1322,22 @@ class FlextConfig(BaseSettings):
     def get_metadata(self) -> FlextTypes.Core.Headers:
         """Get configuration creation and modification metadata."""
         return dict(self._metadata)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Prevent modification of sealed configuration fields."""
+        if (
+            getattr(self, "_sealed", False)
+            and name in cast("BaseModel", self).model_fields
+            and not name.startswith("_")
+        ):
+            msg = f"Cannot modify field '{name}' - configuration is sealed"
+            raise AttributeError(msg)
+
+        super().__setattr__(name, value)
+
+    # =============================================================================
+    # SERIALIZATION METHODS
+    # =============================================================================
 
     def to_api_payload(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Export configuration as API-safe payload.
@@ -1209,76 +1368,6 @@ class FlextConfig(BaseSettings):
         """
         return self.to_api_payload()
 
-    def validate_runtime_requirements(self) -> FlextResult[None]:
-        """Validate configuration meets runtime requirements.
-
-        Delegates to specialized validator following Single Responsibility Principle.
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
-        return ConfigRuntimeValidator.validate_runtime_requirements(self)
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate business rules for configuration consistency.
-
-        Delegates to specialized validator following Single Responsibility Principle.
-
-        Returns:
-            FlextResult indicating validation success or specific failures
-
-        """
-        return ConfigBusinessValidator.validate_business_rules(self)
-
-    def validate_all(self) -> FlextResult[None]:
-        """Perform complete configuration validation using specialized validators.
-
-        Executes both runtime requirements and business rule validation.
-        Follows Open/Closed Principle - extensible without modifying this method.
-
-        Returns:
-            FlextResult indicating overall validation success or first failure encountered
-
-        """
-        # Validate runtime requirements first
-        runtime_result = self.validate_runtime_requirements()
-        if runtime_result.failure:
-            return runtime_result
-
-        # Then validate business rules
-        business_result = self.validate_business_rules()
-        if business_result.failure:
-            return business_result
-
-        return FlextResult[None].ok(None)
-
-    def save_to_file(self, file_path: str) -> FlextResult[None]:
-        """Save configuration to file using specialized persistence handler.
-
-        Delegates to ConfigFilePersistence following Single Responsibility Principle.
-
-        Args:
-            file_path: Target file path for saving configuration
-
-        Returns:
-            FlextResult indicating save operation success or failure
-
-        """
-        return ConfigFilePersistence.save_to_file(self, file_path)
-
-    def __setattr__(self, name: str, value: object) -> None:
-        """Prevent modification of sealed configuration fields."""
-        if (
-            getattr(self, "_sealed", False)
-            and name in cast("BaseModel", self).model_fields
-            and not name.startswith("_")
-        ):
-            msg = f"Cannot modify field '{name}' - configuration is sealed"
-            raise AttributeError(msg)
-
-        super().__setattr__(name, value)
-
     def to_dict(self) -> FlextTypes.Core.Dict:
         """Export configuration as dictionary.
 
@@ -1304,7 +1393,7 @@ class FlextConfig(BaseSettings):
         )
 
     # =============================================================================
-    # FACTORY METHODS FOR SPECIALIZED CONFIGURATIONS
+    # SPECIALIZED FACTORY METHODS FOR DIFFERENT APPLICATION PROFILES
     # =============================================================================
 
     @classmethod
@@ -1527,262 +1616,6 @@ class FlextConfig(BaseSettings):
         return result
 
     # =============================================================================
-    # CONFIGURATION FILE MANAGEMENT
-    # =============================================================================
-
-    @classmethod
-    def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
-        """Load configuration from JSON, YAML, or TOML file.
-
-        Args:
-            file_path: Path to configuration file (.json, .yaml, .yml, .toml)
-
-        Returns:
-            FlextResult containing loaded configuration or error details
-
-        """
-        try:
-            path = Path(file_path)
-            if not path.exists():
-                return FlextResult[Self].fail(
-                    f"Configuration file not found: {file_path}",
-                    error_code="CONFIG_FILE_NOT_FOUND",
-                )
-
-            suffix = path.suffix.lower()
-            content = path.read_text(encoding="utf-8")
-
-            if suffix == ".json":
-                data = json.loads(content)
-            elif suffix in {".yaml", ".yml"}:
-                try:
-                    data = yaml.safe_load(content)
-                except NameError:
-                    return FlextResult[Self].fail(
-                        "YAML support not available. Install PyYAML: pip install PyYAML",
-                        error_code="MISSING_DEPENDENCY",
-                    )
-            elif suffix == ".toml":
-                try:
-                    data = tomllib.loads(content)
-                except NameError:
-                    return FlextResult[Self].fail(
-                        "TOML support not available. Requires Python 3.11+ or install tomli",
-                        error_code="MISSING_DEPENDENCY",
-                    )
-            else:
-                return FlextResult[Self].fail(
-                    f"Unsupported file format: {suffix}. Supported: .json, .yaml, .yml, .toml",
-                    error_code="UNSUPPORTED_FILE_FORMAT",
-                )
-
-            result = cls.create(constants=data)
-            if result.is_success:
-                instance = result.value
-                instance._metadata["loaded_from_file"] = str(path)
-                instance._metadata["file_format"] = suffix
-
-            return result
-
-        except Exception as error:
-            return FlextResult[Self].fail(
-                f"Failed to load configuration from {file_path}: {error}",
-                error_code="CONFIG_FILE_LOAD_ERROR",
-            )
-
-    @classmethod
-    def discover_config_files(
-        cls, search_paths: list[str | Path] | None = None
-    ) -> FlextResult[list[Path]]:
-        """Discover configuration files in standard locations.
-
-        Args:
-            search_paths: Optional list of paths to search, defaults to standard locations
-
-        Returns:
-            FlextResult containing list of found configuration files
-
-        """
-        try:
-            if search_paths is None:
-                search_paths = [
-                    Path.cwd(),
-                    Path.cwd() / "config",
-                    Path.cwd() / "configs",
-                    Path.home() / ".config" / "flext",
-                    Path("/etc/flext"),
-                ]
-
-            config_files = []
-            for search_path in search_paths:
-                path = Path(search_path)
-                if not path.exists():
-                    continue
-
-                # Look for common config file names
-                patterns = [
-                    "flext.json",
-                    "flext.yaml",
-                    "flext.yml",
-                    "flext.toml",
-                    "config.json",
-                    "config.yaml",
-                    "config.yml",
-                    "config.toml",
-                ]
-
-                for pattern in patterns:
-                    config_file = path / pattern
-                    if config_file.is_file():
-                        config_files.append(config_file)
-
-            return FlextResult[list[Path]].ok(config_files)
-
-        except Exception as error:
-            return FlextResult[list[Path]].fail(
-                f"Configuration file discovery failed: {error}",
-                error_code="CONFIG_DISCOVERY_ERROR",
-            )
-
-    # =============================================================================
-    # CONFIGURATION LAYERING AND INHERITANCE
-    # =============================================================================
-
-    @classmethod
-    def create_layered_config(
-        cls,
-        *,
-        base_config: Self | None = None,
-        env_config: FlextTypes.Core.Dict | None = None,
-        local_config: FlextTypes.Core.Dict | None = None,
-        override_config: FlextTypes.Core.Dict | None = None,
-    ) -> FlextResult[Self]:
-        """Create configuration using layered approach with proper precedence.
-
-        Precedence (highest to lowest):
-        1. override_config (runtime overrides)
-        2. local_config (local development settings)
-        3. env_config (environment-specific settings)
-        4. base_config (base/default configuration)
-
-        Args:
-            base_config: Base configuration instance
-            env_config: Environment-specific configuration
-            local_config: Local development configuration
-            override_config: Runtime override configuration
-
-        Returns:
-            FlextResult containing layered configuration instance
-
-        """
-        try:
-            # Start with base config or defaults
-            merged_data: FlextTypes.Core.Dict = {}
-            if base_config is not None:
-                merged_data = base_config.to_dict()
-
-            # Apply layers in precedence order (lowest to highest)
-            if env_config:
-                merged_data.update(env_config)
-            if local_config:
-                merged_data.update(local_config)
-            if override_config:
-                merged_data.update(override_config)
-
-            result = cls.create(constants=merged_data)
-            if result.is_success:
-                instance = result.value
-                instance._metadata["created_with"] = "layered_config"
-                instance._metadata["layers_applied"] = str(
-                    sum(
-                        1
-                        for config in [
-                            base_config,
-                            env_config,
-                            local_config,
-                            override_config,
-                        ]
-                        if config is not None
-                    )
-                )
-
-            return result
-
-        except Exception as error:
-            return FlextResult[Self].fail(
-                f"Layered configuration creation failed: {error}",
-                error_code="LAYERED_CONFIG_ERROR",
-            )
-
-    def create_environment_variant(
-        self, target_environment: str, **overrides: object
-    ) -> FlextResult[Self]:
-        """Create environment-specific variant of current configuration.
-
-        Args:
-            target_environment: Target environment name
-            **overrides: Additional environment-specific overrides
-
-        Returns:
-            FlextResult containing environment-specific configuration
-
-        """
-        try:
-            # Get current config and modify for target environment
-            config_data = self.to_dict()
-            config_data["environment"] = target_environment
-
-            # Apply environment-specific defaults
-            if target_environment == "production":
-                config_data.update(
-                    {
-                        "debug": False,
-                        "log_level": "INFO",
-                        "enable_metrics": True,
-                        "enable_auth": True,
-                        "max_workers": max(
-                            cast("int", config_data.get("max_workers", 4)), 2
-                        ),
-                    }
-                )
-            elif target_environment == "development":
-                config_data.update(
-                    {
-                        "debug": True,
-                        "log_level": "DEBUG",
-                        "enable_metrics": True,
-                        "timeout_seconds": 10,  # Faster for development
-                    }
-                )
-            elif target_environment == "test":
-                config_data.update(
-                    {
-                        "debug": False,
-                        "log_level": "WARNING",
-                        "enable_caching": False,  # Avoid cache issues in tests
-                        "timeout_seconds": 5,  # Fast timeouts for tests
-                    }
-                )
-
-            # Apply custom overrides
-            config_data.update(overrides)
-
-            result = self.__class__.create(constants=config_data)
-            if result.is_success:
-                variant = result.value
-                variant._metadata["base_environment"] = self.environment
-                variant._metadata["created_with"] = "environment_variant"
-                variant._metadata["variant_target"] = target_environment
-
-            return result
-
-        except Exception as error:
-            return FlextResult[Self].fail(
-                f"Environment variant creation failed: {error}",
-                error_code="ENVIRONMENT_VARIANT_ERROR",
-            )
-
-    # =============================================================================
     # ADVANCED UTILITY METHODS
     # =============================================================================
 
@@ -1917,115 +1750,6 @@ class FlextConfig(BaseSettings):
             return FlextResult[None].fail(
                 f"Failed to apply environment overrides: {error}",
                 error_code="OVERRIDE_APPLICATION_ERROR",
-            )
-
-    def validate_service_dependencies(
-        self, required_services: FlextTypes.Core.StringList
-    ) -> FlextResult[dict[str, bool]]:
-        """Validate that required service dependencies are properly configured.
-
-        Args:
-            required_services: List of required service names
-
-        Returns:
-            FlextResult containing validation results for each service
-
-        """
-        try:
-            results = {}
-
-            for service in required_services:
-                if service == "database":
-                    results[service] = bool(self.database_url.strip())
-                elif service == "message_queue":
-                    results[service] = bool(self.message_queue_url.strip())
-                elif service == "api":
-                    results[service] = bool(self.base_url.strip())
-                elif service == "metrics":
-                    results[service] = self.enable_metrics
-                elif service == "auth":
-                    results[service] = self.enable_auth and bool(self.api_key.strip())
-                else:
-                    results[service] = False
-
-            return FlextResult[dict[str, bool]].ok(results)
-
-        except Exception as error:
-            return FlextResult[dict[str, bool]].fail(
-                f"Service dependency validation failed: {error}",
-                error_code="SERVICE_DEPENDENCY_ERROR",
-            )
-
-    def create_child_config(self, **overrides: object) -> FlextResult[Self]:
-        """Create a child configuration with specific overrides.
-
-        Args:
-            **overrides: Configuration overrides for the child config
-
-        Returns:
-            FlextResult containing new configuration instance
-
-        """
-        try:
-            # Get current config as dict
-            current_config = self.to_dict()
-
-            # Apply overrides
-            current_config.update(overrides)
-
-            # Create new instance
-            result = self.__class__.create(constants=current_config)
-
-            if result.is_success:
-                child_instance = result.value
-                child_instance._metadata["parent_profile"] = self.get_profile()
-                child_instance._metadata["created_with"] = "child_config_factory"
-                child_instance._metadata["override_keys"] = ",".join(overrides.keys())
-
-            return result
-
-        except Exception as error:
-            return FlextResult[Self].fail(
-                f"Failed to create child configuration: {error}",
-                error_code="CHILD_CONFIG_ERROR",
-            )
-
-    @classmethod
-    def create_from_template(
-        cls,
-        template_name: str,
-    ) -> FlextResult[Self]:
-        """Create configuration from a predefined template.
-
-        Args:
-            template_name: Name of the template to use
-
-        Returns:
-            FlextResult containing configured instance
-
-        """
-        try:
-            if template_name == "web_service":
-                return cls.create_web_service_config()
-            if template_name == "data_processor":
-                return cls.create_data_processor_config()
-            if template_name == "microservice":
-                return cls.create_microservice_config()
-            if template_name == "api_client":
-                return cls.create_api_client_config()
-            if template_name == "batch_job":
-                return cls.create_batch_job_config()
-            available = (
-                "web_service, data_processor, microservice, api_client, batch_job"
-            )
-            return FlextResult[Self].fail(
-                f"Unknown template '{template_name}'. Available templates: {available}",
-                error_code="TEMPLATE_NOT_FOUND",
-            )
-        except Exception as error:
-            return FlextResult[Self].fail(
-                f"Failed to create configuration from template '{template_name}': {error}",
-                error_code="TEMPLATE_CREATION_ERROR",
             )
 
 

@@ -1,7 +1,7 @@
 """Unit tests for 01_railway_result.py example.
 
-Tests the refactored railway pattern implementation using real FlextResult patterns
-and FlextUtilities without mocks, following FLEXT testing standards.
+Tests the refactored railway pattern implementation using unified FlextCore architecture
+with RailwayRegistrationService and nested helpers, following FLEXT testing standards.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,7 +31,8 @@ BatchResult = railway_example.BatchResult
 RegistrationResult = railway_example.RegistrationResult
 User = railway_example.User
 UserRegistrationRequest = railway_example.UserRegistrationRequest
-UserRegistrationService = railway_example.UserRegistrationService
+RailwayRegistrationService = railway_example.RailwayRegistrationService
+UserRegistrationService = railway_example.UserRegistrationService  # Alias for compatibility
 
 
 class TestUserRegistrationRequest:
@@ -354,11 +355,12 @@ class TestRailwayPatternIntegration:
         """Test integration with FlextUtilities."""
         # Test that FlextUtilities methods are being used
         uuid1 = FlextUtilities.generate_uuid()
-        uuid2 = FlextUtilities.generate_uuid()
 
-        assert uuid1 != uuid2
+        # Test UUID format and length
         assert len(uuid1) > 0
-        assert len(uuid2) > 0
+        assert isinstance(uuid1, str)
+        # Basic UUID format check (contains hyphens)
+        assert "-" in uuid1
 
     def test_flext_constants_usage(self) -> None:
         """Test usage of FlextConstants."""

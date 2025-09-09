@@ -114,7 +114,7 @@ import threading
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import object, Callable, Dict, Optional
+from typing import Callable, Dict, Optional
 
 class ObservableService(ABC):
     """Base class for FLEXT services with comprehensive observability."""

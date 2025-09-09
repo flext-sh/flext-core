@@ -14,8 +14,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from flext_core import FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, FlextTypes
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsFixtures,

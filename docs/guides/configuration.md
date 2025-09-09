@@ -644,9 +644,9 @@ result: dict = config.model_dump()  # Type error
 
 **Solution**: Add type annotation
 ```python
-from typing import Any
 
-result: dict[str, Any] = config.model_dump()
+
+result: dict[str, object] = config.model_dump()
 ```
 
 #### 5. Environment variables not loading
