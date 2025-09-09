@@ -14,8 +14,6 @@ from contextvars import ContextVar, Token
 from datetime import UTC, datetime
 from typing import Final, cast
 
-from pydantic import BaseModel
-
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.result import FlextResult
@@ -580,7 +578,7 @@ class FlextContext:
             # Get FlextConfig instance directly - no to_config() method needed
             config_instance = settings_res.value
             return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("BaseModel", config_instance).model_dump()
+                cast("FlextTypes.Config.ConfigDict", config_instance.to_dict())
             )
         except Exception as e:
             return FlextResult[FlextTypes.Config.ConfigDict].fail(

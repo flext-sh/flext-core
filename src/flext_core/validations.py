@@ -866,6 +866,74 @@ class FlextValidations:
         return validator(email)
 
     @classmethod
+    def validate_string(
+        cls, value: object, min_length: int | None = None, max_length: int | None = None
+    ) -> FlextResult[str]:
+        """Validate string value."""
+        # First validate it's a string
+        if not isinstance(value, str):
+            return FlextResult.fail(
+                f"Value must be a string, got {type(value).__name__}"
+            )
+
+        # Check minimum length
+        if min_length is not None and len(value) < min_length:
+            return FlextResult.fail(
+                f"String length {len(value)} is less than minimum {min_length}"
+            )
+
+        # Check maximum length
+        if max_length is not None and len(value) > max_length:
+            return FlextResult.fail(
+                f"String length {len(value)} is greater than maximum {max_length}"
+            )
+
+        return FlextResult.ok(value)
+
+    @classmethod
+    def validate_number(
+        cls,
+        value: object,
+        min_value: float | None = None,
+        max_value: float | None = None,
+    ) -> FlextResult[float | int]:
+        """Validate numeric value."""
+        # Check if value is already numeric
+        if isinstance(value, (int, float)):
+            numeric_val = value
+        else:
+            # Try to convert string or other types to numeric
+            try:
+                if isinstance(value, str):
+                    # Try int first, then float
+                    try:
+                        numeric_val = int(value)
+                    except ValueError:
+                        numeric_val = float(value)
+                elif hasattr(value, "__int__"):
+                    numeric_val = int(value)  # type: ignore[call-overload]
+                elif hasattr(value, "__float__"):
+                    numeric_val = float(value)  # type: ignore[call-overload]
+                else:
+                    return FlextResult.fail(
+                        f"Value {value} cannot be converted to a number"
+                    )
+            except (ValueError, TypeError, OverflowError):
+                return FlextResult.fail(f"Value {value} is not a valid number")
+
+        # Validate range
+        if min_value is not None and numeric_val < min_value:
+            return FlextResult.fail(
+                f"Value {numeric_val} is less than minimum {min_value}"
+            )
+        if max_value is not None and numeric_val > max_value:
+            return FlextResult.fail(
+                f"Value {numeric_val} is greater than maximum {max_value}"
+            )
+
+        return FlextResult.ok(numeric_val)
+
+    @classmethod
     def validate_user_data(
         cls,
         user_data: FlextTypes.Core.Dict,
@@ -1200,6 +1268,11 @@ class FlextValidations:
         def validate_email(value: object) -> FlextResult[None]:
             """Validate email."""
             return FlextValidations.validate_email_field(value)
+
+    # Convenience attributes for backward compatibility
+    Fields = Rules.StringRules
+    Collections = Rules.CollectionRules
+    Numbers = Rules.NumericRules
 
     @property
     def is_valid(self) -> bool:

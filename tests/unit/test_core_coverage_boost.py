@@ -15,8 +15,8 @@ from typing import cast
 from flext_core import FlextCore, FlextResult
 from flext_core.typings import FlextTypes
 from flext_tests import (
-    AsyncTestUtils,
-    FlextMatchers,
+    FlextTestsAsyncs,
+    FlextTestsMatchers,
 )
 
 
@@ -55,14 +55,14 @@ class TestFlextCoreCoverageBoost:
             result = core.optimize_aggregates_system(
                 cast("FlextTypes.Aggregates.PerformanceLevel", level)
             )
-            FlextMatchers.assert_result_success(result)
+            FlextTestsMatchers.assert_result_success(result)
             config = result.unwrap()
             assert isinstance(config, dict)
             assert config.get("optimization_level") == level
 
             # Test commands optimization
             commands_result = core.optimize_commands_performance(level)
-            FlextMatchers.assert_result_success(commands_result)
+            FlextTestsMatchers.assert_result_success(commands_result)
             commands_config = commands_result.unwrap()
             assert isinstance(commands_config, dict)
 
@@ -88,9 +88,9 @@ class TestFlextCoreCoverageBoost:
                 pass
 
     def test_core_async_operations_with_utils(self) -> None:
-        """Test async-related operations using AsyncTestUtils."""
-        # Use AsyncTestUtils for async testing patterns
-        AsyncTestUtils()
+        """Test async-related operations using FlextTestsAsyncs."""
+        # Use FlextTestsAsyncs for async testing patterns
+        FlextTestsAsyncs.AsyncTestUtils()
 
         # Test that core can be used in async contexts
         core = FlextCore.get_instance()
@@ -134,7 +134,7 @@ class TestFlextCoreCoverageBoost:
             result = core.optimize_aggregates_system(
                 cast("FlextTypes.Aggregates.PerformanceLevel", level)
             )
-            FlextMatchers.assert_result_success(result)
+            FlextTestsMatchers.assert_result_success(result)
 
             config = result.unwrap()
             assert config.get("optimization_level") == level
@@ -193,7 +193,7 @@ class TestFlextCoreCoverageBoost:
                 cast("FlextTypes.Aggregates.PerformanceLevel", case.lower())
             )
             # Should handle case variations gracefully
-            FlextMatchers.assert_result_success(result)
+            FlextTestsMatchers.assert_result_success(result)
 
     def test_core_state_management(self) -> None:
         """Test core state management and consistency."""

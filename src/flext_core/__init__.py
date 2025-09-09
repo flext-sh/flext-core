@@ -78,42 +78,8 @@ from flext_core.utilities import FlextUtilities
 from flext_core.core import FlextCore
 
 # =============================================================================
-# CONVENIENCE FUNCTIONS - Direct access to key functionality
+# NO WRAPPER FUNCTIONS - Use direct class access only
 # =============================================================================
-
-
-# Direct access to key functions without class instantiation
-def flext_logger(name: str = __name__) -> FlextLogger:
-    """Get a structured logger instance.
-
-    Args:
-        name: Logger name, defaults to module name.
-
-    Returns:
-        Configured FlextLogger instance.
-
-    """
-    return FlextLogger(name)
-
-
-def get_flext_container() -> FlextContainer:
-    """Get the global FlextContainer instance.
-
-    Returns:
-        Global FlextContainer singleton instance.
-
-    """
-    return FlextContainer.get_global()
-
-
-def get_flext_core() -> FlextCore:
-    """Get the global FlextCore instance.
-
-    Returns:
-        FlextCore singleton instance.
-
-    """
-    return FlextCore.get_instance()
 
 
 # =============================================================================
@@ -155,10 +121,6 @@ __all__ = [
     "FlextTypes",
     # Version info
     "__version__",
-    # Convenience functions
-    "FlextLogger",
-    "get_flext_container",
-    "get_flext_core",
     # Type variables
     "T",
     "U",

@@ -9,7 +9,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TypeVar, cast
 
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
@@ -140,7 +140,9 @@ class FlextDomainService[TDomainResult](
             "service_id": f"service_{self.__class__.__name__.lower()}_{FlextUtilities.Generators.generate_id()}",
             "config_valid": config_result.is_success,
             "business_rules_valid": rules_result.is_success,
-            "configuration": self.model_dump(),  # Add configuration as expected by tests
+            "configuration": cast(
+                "BaseModel", self
+            ).model_dump(),  # Add configuration as expected by tests
             "is_valid": is_valid,  # Add overall validity as expected by tests
             "timestamp": FlextUtilities.Generators.generate_iso_timestamp(),
         }
@@ -179,7 +181,7 @@ class FlextDomainService[TDomainResult](
 
             # Convert to model for validation
             model_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
-                settings_res.value.model_dump()
+                cast("FlextTypes.Config.ConfigDict", settings_res.value.to_dict())
             )
             if model_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(

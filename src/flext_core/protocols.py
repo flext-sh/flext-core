@@ -640,7 +640,7 @@ class FlextProtocols:
             """Configure protocols system using FlextConfig.ProtocolsSettings with single class model."""
             # Map protocol_level to validation_level for backward compatibility
             config_dict = dict(config)
-            original_protocol_level = None
+            original_protocol_level: str | None = None
             if "protocol_level" in config_dict:
                 # Validate protocol_level explicitly to preserve expected error message
                 valid_levels = [e.value for e in FlextConstants.Config.ValidationLevel]
@@ -650,7 +650,7 @@ class FlextProtocols:
                         f"Invalid protocol_level '{level_value}'",
                     )
                 # Save original protocol_level value to restore later
-                original_protocol_level = level_value
+                original_protocol_level = cast("str", level_value)
                 # Remove protocol_level from config_dict since FlextConfig doesn't have this field
                 config_dict.pop("protocol_level")
 
@@ -671,7 +671,9 @@ class FlextProtocols:
                 )
 
             # Get validated config dict from FlextConfig instance
-            validated_config = settings_res.value.model_dump()
+            validated_config = cast(
+                "FlextTypes.Config.ConfigDict", settings_res.value.to_dict()
+            )
 
             # Restore original protocol_level or use default
             if original_protocol_level is not None:
@@ -692,11 +694,9 @@ class FlextProtocols:
             # Preserve custom fields from original config that are not in validated_config
             for key, value in config.items():
                 if key not in validated_config:
-                    validated_config[key] = value
+                    validated_config[key] = cast("FlextTypes.Config.ConfigValue", value)
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(
-                cast("FlextTypes.Config.ConfigDict", validated_config),
-            )
+            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
 
         @classmethod
         def get_protocols_system_config(

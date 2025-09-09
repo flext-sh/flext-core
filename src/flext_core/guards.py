@@ -295,13 +295,9 @@ class FlextGuards:
                     settings_res.error or "Failed to create GuardsSettings",
                 )
             # Convert FlextConfig to dict for backwards compatibility
-            config_instance = settings_res.value
-            if hasattr(config_instance, "model_dump"):
-                cfg_dict = config_instance.model_dump()
-            else:
-                # Fallback for type checking
-                cfg_dict = {}
-            cfg_res = FlextResult[FlextTypes.Config.ConfigDict].ok(cfg_dict)
+            cfg_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
+                cast("FlextTypes.Config.ConfigDict", settings_res.value.to_dict())
+            )
             if cfg_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
                     cfg_res.error or "Failed to validate GuardsConfig",

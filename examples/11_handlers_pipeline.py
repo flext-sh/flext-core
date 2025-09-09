@@ -19,6 +19,7 @@ from flext_core import (
     FlextLogger,
     FlextModels,
     FlextResult,
+    FlextTypes,
 )
 from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 

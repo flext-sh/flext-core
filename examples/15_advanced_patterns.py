@@ -16,6 +16,7 @@ import sys
 from decimal import Decimal
 
 from pydantic import ConfigDict
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
     FlextConfig,
@@ -65,7 +66,7 @@ class AdvancedExamplesConfig(FlextConfig):
     require_email_verification: bool = True
     password_complexity_required: bool = True
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,

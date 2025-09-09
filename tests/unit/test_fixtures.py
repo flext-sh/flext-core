@@ -17,16 +17,8 @@ import pytest
 
 from flext_core import FlextConfig
 from flext_core.typings import FlextTypes
-from flext_tests.fixtures import (
-    AsyncExecutor,
-    AsyncTestService,
-    CommandFactory,
-    ErrorSimulationFactory,
-    FactoryRegistry,
-    FlextConfigFactory,
-    PerformanceDataFactory,
-    SequenceFactory,
-    SessionTestService,
+from flext_tests import (
+    FlextTestsFixtures,
 )
 
 
@@ -35,7 +27,9 @@ class TestPerformanceDataFactory:
 
     def test_create_large_payload(self) -> None:
         """Test large payload creation."""
-        payload = PerformanceDataFactory.create_large_payload(size_mb=1)
+        payload = FlextTestsFixtures.PerformanceDataFactory.create_large_payload(
+            size_mb=1
+        )
 
         assert isinstance(payload, dict)
         assert "data" in payload
@@ -50,12 +44,14 @@ class TestPerformanceDataFactory:
     def test_create_nested_structure(self) -> None:
         """Test nested structure creation."""
         # Test default depth
-        structure = PerformanceDataFactory.create_nested_structure()
+        structure = FlextTestsFixtures.PerformanceDataFactory.create_nested_structure()
         assert isinstance(structure, dict)
         assert "value" in structure
 
         # Test custom depth
-        structure = PerformanceDataFactory.create_nested_structure(depth=5)
+        structure = FlextTestsFixtures.PerformanceDataFactory.create_nested_structure(
+            depth=5
+        )
         assert isinstance(structure, dict)
         assert structure["value"] == "depth_5"
 
@@ -75,25 +71,27 @@ class TestErrorSimulationFactory:
 
     def test_create_timeout_error(self) -> None:
         """Test timeout error creation."""
-        error = ErrorSimulationFactory.create_timeout_error()
+        error = FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error()
         assert isinstance(error, TimeoutError)
         assert "timeout" in str(error).lower()
 
     def test_create_connection_error(self) -> None:
         """Test connection error creation."""
-        error = ErrorSimulationFactory.create_connection_error()
+        error = FlextTestsFixtures.ErrorSimulationFactory.create_connection_error()
         assert isinstance(error, ConnectionError)
         assert "connection" in str(error).lower()
 
     def test_create_validation_error(self) -> None:
         """Test validation error creation."""
-        error = ErrorSimulationFactory.create_validation_error()
+        error = FlextTestsFixtures.ErrorSimulationFactory.create_validation_error()
         assert isinstance(error, ValueError)
         assert "validation" in str(error).lower()
 
     def test_create_error_scenario_validation(self) -> None:
         """Test validation error scenario."""
-        scenario = ErrorSimulationFactory.create_error_scenario("ValidationError")
+        scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
+            "ValidationError"
+        )
 
         assert isinstance(scenario, dict)
         assert scenario["type"] == "validation"
@@ -102,7 +100,9 @@ class TestErrorSimulationFactory:
 
     def test_create_error_scenario_processing(self) -> None:
         """Test processing error scenario."""
-        scenario = ErrorSimulationFactory.create_error_scenario("ProcessingError")
+        scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
+            "ProcessingError"
+        )
 
         assert isinstance(scenario, dict)
         assert scenario["type"] == "processing"
@@ -111,7 +111,9 @@ class TestErrorSimulationFactory:
 
     def test_create_error_scenario_network(self) -> None:
         """Test network error scenario."""
-        scenario = ErrorSimulationFactory.create_error_scenario("NetworkError")
+        scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
+            "NetworkError"
+        )
 
         assert isinstance(scenario, dict)
         assert scenario["type"] == "network"
@@ -120,7 +122,9 @@ class TestErrorSimulationFactory:
 
     def test_create_error_scenario_unknown(self) -> None:
         """Test unknown error scenario defaults to unknown."""
-        scenario = ErrorSimulationFactory.create_error_scenario("UnknownError")
+        scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
+            "UnknownError"
+        )
 
         assert isinstance(scenario, dict)
         assert scenario["type"] == "unknown"
@@ -133,7 +137,7 @@ class TestSequenceFactory:
 
     def test_create_sequence_default(self) -> None:
         """Test default sequence creation."""
-        sequence = SequenceFactory.create_sequence()
+        sequence = FlextTestsFixtures.SequenceFactory.create_sequence()
 
         assert isinstance(sequence, list)
         assert len(sequence) == 10  # Default length
@@ -144,7 +148,9 @@ class TestSequenceFactory:
     def test_create_sequence_with_prefix(self) -> None:
         """Test sequence creation with prefix."""
         prefix = "test"
-        sequence = SequenceFactory.create_sequence(length=5, prefix=prefix)
+        sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
+            length=5, prefix=prefix
+        )
 
         assert len(sequence) == 5
         for i, item in enumerate(sequence):
@@ -152,7 +158,9 @@ class TestSequenceFactory:
 
     def test_create_sequence_with_count_override(self) -> None:
         """Test sequence with count parameter override."""
-        sequence = SequenceFactory.create_sequence(length=10, count=3)
+        sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
+            length=10, count=3
+        )
 
         assert len(sequence) == 3  # Count overrides length
         for i, item in enumerate(sequence):
@@ -160,7 +168,7 @@ class TestSequenceFactory:
 
     def test_create_timeline_events(self) -> None:
         """Test timeline events creation."""
-        events = SequenceFactory.create_timeline_events(count=5)
+        events = FlextTestsFixtures.SequenceFactory.create_timeline_events(count=5)
 
         assert isinstance(events, list)
         assert len(events) == 5
@@ -180,7 +188,7 @@ class TestFactoryRegistry:
 
     def test_init(self) -> None:
         """Test factory registry initialization."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         assert hasattr(registry, "factories")
         assert isinstance(registry.factories, dict)
@@ -188,7 +196,7 @@ class TestFactoryRegistry:
 
     def test_register_factory(self) -> None:
         """Test factory registration."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         def test_factory() -> str:
             return "test_value"
@@ -200,7 +208,7 @@ class TestFactoryRegistry:
 
     def test_get_factory_existing(self) -> None:
         """Test getting existing factory."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         def test_factory() -> FlextTypes.Core.Headers:
             return {"result": "success"}
@@ -213,14 +221,14 @@ class TestFactoryRegistry:
 
     def test_get_factory_missing(self) -> None:
         """Test getting non-existent factory."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         result = registry.get("missing")
         assert result is None
 
     def test_registry_functionality(self) -> None:
         """Test registry basic functionality."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         def factory1() -> str:
             return "factory1"
@@ -242,14 +250,14 @@ class TestFlextConfigFactory:
 
     def test_init(self) -> None:
         """Test config factory initialization."""
-        factory = FlextConfigFactory()
+        factory = FlextTestsFixtures.FlextConfigFactory()
 
         # Should initialize without errors
         assert factory is not None
 
     def test_create_test_config(self) -> None:
         """Test test config creation."""
-        factory = FlextConfigFactory()
+        factory = FlextTestsFixtures.FlextConfigFactory()
         config = factory.create_test_config()
 
         assert isinstance(config, FlextConfig)
@@ -260,7 +268,7 @@ class TestFlextConfigFactory:
 
     def test_create_development_config(self) -> None:
         """Test development config creation."""
-        factory = FlextConfigFactory()
+        factory = FlextTestsFixtures.FlextConfigFactory()
         config = factory.create_development_config()
 
         assert isinstance(config, FlextConfig)
@@ -271,7 +279,7 @@ class TestFlextConfigFactory:
 
     def test_create_production_config(self) -> None:
         """Test production config creation."""
-        factory = FlextConfigFactory()
+        factory = FlextTestsFixtures.FlextConfigFactory()
         config = factory.create_production_config()
 
         assert isinstance(config, FlextConfig)
@@ -286,7 +294,7 @@ class TestCommandFactory:
 
     def test_create_test_command(self) -> None:
         """Test creating test command."""
-        command = CommandFactory.create_test_command("test_data")
+        command = FlextTestsFixtures.CommandFactory.create_test_command("test_data")
 
         assert hasattr(command, "config")
         assert command.config == "test_data"
@@ -294,7 +302,7 @@ class TestCommandFactory:
     def test_create_batch_command(self) -> None:
         """Test creating batch command."""
         items = ["item1", "item2", "item3"]
-        command = CommandFactory.create_batch_command(items)
+        command = FlextTestsFixtures.CommandFactory.create_batch_command(items)
 
         assert hasattr(command, "config")
         assert command.config == items
@@ -302,7 +310,7 @@ class TestCommandFactory:
     def test_create_validation_command(self) -> None:
         """Test creating validation command."""
         rules = {"required": ["field1", "field2"]}
-        command = CommandFactory.create_validation_command(rules)
+        command = FlextTestsFixtures.CommandFactory.create_validation_command(rules)
 
         assert hasattr(command, "config")
         assert command.config == rules
@@ -310,19 +318,19 @@ class TestCommandFactory:
     def test_create_processing_command(self) -> None:
         """Test creating processing command."""
         config = {"timeout": 30, "retries": 3}
-        command = CommandFactory.create_processing_command(config)
+        command = FlextTestsFixtures.CommandFactory.create_processing_command(config)
 
         assert hasattr(command, "config")
         assert command.config == config
 
 
 class TestAsyncExecutor:
-    """Test AsyncExecutor functionality."""
+    """Test FlextTestsAsyncs.AsyncExecutor functionality."""
 
     @pytest.mark.asyncio
     async def test_init(self) -> None:
         """Test async executor initialization."""
-        executor = AsyncExecutor()
+        executor = FlextTestsFixtures.AsyncExecutor()
 
         assert hasattr(executor, "_tasks")
         assert isinstance(executor._tasks, list)
@@ -331,7 +339,7 @@ class TestAsyncExecutor:
     @pytest.mark.asyncio
     async def test_execute_async(self) -> None:
         """Test async execution."""
-        executor = AsyncExecutor()
+        executor = FlextTestsFixtures.AsyncExecutor()
 
         async def test_coro() -> str:
             await asyncio.sleep(0.001)
@@ -343,7 +351,7 @@ class TestAsyncExecutor:
     @pytest.mark.asyncio
     async def test_execute_batch(self) -> None:
         """Test batch execution."""
-        executor = AsyncExecutor()
+        executor = FlextTestsFixtures.AsyncExecutor()
 
         async def task(value: int) -> int:
             await asyncio.sleep(0.001)
@@ -360,7 +368,7 @@ class TestAsyncExecutor:
     @pytest.mark.asyncio
     async def test_cleanup(self) -> None:
         """Test cleanup functionality."""
-        executor = AsyncExecutor()
+        executor = FlextTestsFixtures.AsyncExecutor()
 
         # Add some mock tasks
         executor._tasks.extend(
@@ -377,15 +385,15 @@ class TestAsyncTestService:
     @pytest.mark.asyncio
     async def test_init(self) -> None:
         """Test service initialization."""
-        service = AsyncTestService()
+        service = FlextTestsFixtures.AsyncTestService()
 
         assert hasattr(service, "_executor")
-        assert isinstance(service._executor, AsyncExecutor)
+        assert isinstance(service._executor, FlextTestsFixtures.AsyncExecutor)
 
     @pytest.mark.asyncio
     async def test_process_async(self) -> None:
         """Test async processing."""
-        service = AsyncTestService()
+        service = FlextTestsFixtures.AsyncTestService()
 
         data = {"test": "value"}
         result = await service.process(data)
@@ -399,7 +407,7 @@ class TestAsyncTestService:
     @pytest.mark.asyncio
     async def test_validate_async(self) -> None:
         """Test async validation."""
-        service = AsyncTestService()
+        service = FlextTestsFixtures.AsyncTestService()
 
         # Test valid data
         valid_data: FlextTypes.Core.Dict = {"required_field": "value"}
@@ -420,7 +428,7 @@ class TestAsyncTestService:
     @pytest.mark.asyncio
     async def test_transform_async(self) -> None:
         """Test async transformation."""
-        service = AsyncTestService()
+        service = FlextTestsFixtures.AsyncTestService()
 
         input_data: FlextTypes.Core.Dict = {"input": "test_value"}
         result = await service.transform(input_data)
@@ -436,14 +444,14 @@ class TestSessionTestService:
 
     def test_init(self) -> None:
         """Test service initialization."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         assert hasattr(service, "_data")
         assert isinstance(service._data, dict)
 
     def test_create_session(self) -> None:
         """Test session creation."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         session_id = "test_session_123"
         service.create_session(session_id)
@@ -456,7 +464,7 @@ class TestSessionTestService:
 
     def test_get_session_existing(self) -> None:
         """Test getting existing session."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         session_id = "existing_session"
         service.create_session(session_id)
@@ -468,14 +476,14 @@ class TestSessionTestService:
 
     def test_get_session_missing(self) -> None:
         """Test getting non-existent session."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         session = service.get_session("missing_session")
         assert session is None
 
     def test_update_session(self) -> None:
         """Test session update."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         session_id = "update_session"
         service.create_session(session_id)
@@ -491,7 +499,7 @@ class TestSessionTestService:
 
     def test_delete_session(self) -> None:
         """Test session deletion."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         session_id = "delete_session"
         service.create_session(session_id)
@@ -507,7 +515,7 @@ class TestSessionTestService:
 
     def test_cleanup_sessions(self) -> None:
         """Test cleanup functionality."""
-        service = SessionTestService()
+        service = FlextTestsFixtures.SessionTestService()
 
         # Create multiple sessions
         service.create_session("session1")
@@ -529,10 +537,14 @@ class TestFixturesIntegration:
     def test_performance_and_sequence_integration(self) -> None:
         """Test performance data with sequence generation."""
         # Create large payload
-        payload = PerformanceDataFactory.create_large_payload(size_mb=2)
+        payload = FlextTestsFixtures.PerformanceDataFactory.create_large_payload(
+            size_mb=2
+        )
 
         # Create sequence
-        sequence = SequenceFactory.create_sequence(length=5, prefix="item")
+        sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
+            length=5, prefix="item"
+        )
 
         # Combine them
         combined_data = {
@@ -549,11 +561,16 @@ class TestFixturesIntegration:
 
     def test_error_and_registry_integration(self) -> None:
         """Test error simulation with factory registry."""
-        registry = FactoryRegistry()
+        registry = FlextTestsFixtures.FactoryRegistry()
 
         # Register error factories
-        registry.register("timeout", ErrorSimulationFactory.create_timeout_error)
-        registry.register("connection", ErrorSimulationFactory.create_connection_error)
+        registry.register(
+            "timeout", FlextTestsFixtures.ErrorSimulationFactory.create_timeout_error
+        )
+        registry.register(
+            "connection",
+            FlextTestsFixtures.ErrorSimulationFactory.create_connection_error,
+        )
 
         # Use factories
         timeout_factory = registry.get("timeout")
@@ -571,8 +588,8 @@ class TestFixturesIntegration:
     @pytest.mark.asyncio
     async def test_async_services_integration(self) -> None:
         """Test async services working together."""
-        test_service = AsyncTestService()
-        session_service = SessionTestService()
+        test_service = FlextTestsFixtures.AsyncTestService()
+        session_service = FlextTestsFixtures.SessionTestService()
 
         # Create session for async processing
         session_id = "async_test_session"
@@ -595,13 +612,15 @@ class TestFixturesIntegration:
 
     def test_config_and_command_integration(self) -> None:
         """Test config factory with command factory."""
-        config_factory = FlextConfigFactory()
+        config_factory = FlextTestsFixtures.FlextConfigFactory()
 
         # Create test config
         test_config = config_factory.create_test_config()
 
         # Create processing command with config
-        command = CommandFactory.create_processing_command(test_config)
+        command = FlextTestsFixtures.CommandFactory.create_processing_command(
+            test_config
+        )
 
         assert hasattr(command, "config")
         assert hasattr(command.config, "environment")

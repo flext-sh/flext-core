@@ -17,33 +17,27 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import cast
+from typing import TypeVar, cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
 
 from flext_core import FlextTypes
 from flext_tests import (
-    AsyncTestUtils,
-    BenchmarkProtocol,
-    BenchmarkUtils,
-    ComplexityAnalyzer,
-    CompositeStrategies,
-    EdgeCaseStrategies,
-    FlextStrategies,
-    PerformanceProfiler,
-    PerformanceStrategies,
-    PropertyTestHelpers,
-    StressTestRunner,
+    FlextTestsAsyncs,
+    FlextTestsHypothesis,
+    FlextTestsPerformance,
 )
+
+T = TypeVar("T")
 
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[Callable[[T], None]], Callable[[T], None]]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., object]) -> Callable[..., object]:
+    def decorator(func: Callable[[T], None]) -> Callable[[T], None]:
         # Use hasattr/setattr for dynamic attribute setting to avoid PyRight error
         setattr(func, "_test_pattern", pattern)
         return func
@@ -306,13 +300,13 @@ class TestFixtureBuilder:
 
 
 def arrange_act_assert(
-    _arrange_func: Callable[..., object],
+    _arrange_func: Callable[[], object],
     _act_func: Callable[[object], object],
     _assert_func: Callable[[object, object], None],
-) -> Callable[[Callable[..., object]], Callable[..., object]]:
+) -> Callable[[Callable[[], object]], Callable[[], object]]:
     """Decorator for AAA pattern testing."""
 
-    def decorator(_test_func: Callable[..., object]) -> Callable[..., object]:
+    def decorator(_test_func: Callable[[], object]) -> Callable[[], object]:
         def wrapper() -> object:
             data = _arrange_func()
             result = _act_func(data)
@@ -332,10 +326,10 @@ def arrange_act_assert(
 class TestPropertyBasedPatterns:
     """Demonstrate property-based testing with custom strategies."""
 
-    @given(FlextStrategies.emails())
+    @given(FlextTestsHypothesis.FlextStrategies.emails())
     def test_email_properties(self, email: str) -> None:
         """Property-based test for email handling."""
-        assume(PropertyTestHelpers.assume_valid_email(email))
+        assume(FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(email))
 
         # Properties that should always hold for valid emails
         assert "@" in email
@@ -343,7 +337,7 @@ class TestPropertyBasedPatterns:
         assert not email.startswith("@")
         assert not email.endswith("@")
 
-    @given(CompositeStrategies.user_profiles())
+    @given(FlextTestsHypothesis.CompositeStrategies.user_profiles())
     def test_user_profile_properties(self, profile: FlextTypes.Core.Dict) -> None:
         """Property-based test for user profiles."""
         # Verify required fields
@@ -357,9 +351,13 @@ class TestPropertyBasedPatterns:
         assert isinstance(profile["email"], str)
 
         # Assume valid email format (filters invalid inputs)
-        assume(PropertyTestHelpers.assume_valid_email(profile["email"]))
+        assume(
+            FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(
+                profile["email"]
+            )
+        )
 
-    @given(PerformanceStrategies.large_strings())
+    @given(FlextTestsHypothesis.PerformanceStrategies.large_strings())
     def test_string_processing_scalability(self, large_string: str) -> None:
         """Property-based test for string processing performance."""
         assume(len(large_string) >= 1000)
@@ -379,7 +377,7 @@ class TestPropertyBasedPatterns:
         assert word_count >= 0
         assert len(processed) <= len(large_string)
 
-    @given(EdgeCaseStrategies.unicode_edge_cases())
+    @given(FlextTestsHypothesis.EdgeCaseStrategies.unicode_edge_cases())
     def test_unicode_handling_properties(self, unicode_text: str) -> None:
         """Property-based test for Unicode handling."""
         # Should handle Unicode gracefully without crashing
@@ -400,7 +398,7 @@ class TestPerformanceAnalysis:
 
     def test_complexity_analysis_linear(self) -> None:
         """Test complexity analysis for linear algorithms."""
-        analyzer = ComplexityAnalyzer()
+        analyzer = FlextTestsPerformance.ComplexityAnalyzer()
 
         def linear_operation(size: int) -> None:
             """Simulate a linear operation."""
@@ -421,7 +419,7 @@ class TestPerformanceAnalysis:
 
     def test_stress_testing_load(self) -> None:
         """Demonstrate stress testing with load patterns."""
-        stress_runner = StressTestRunner()
+        stress_runner = FlextTestsPerformance.StressTestRunner()
 
         def simple_operation() -> str:
             """Simple operation for stress testing."""
@@ -441,7 +439,7 @@ class TestPerformanceAnalysis:
 
     def test_endurance_testing(self) -> None:
         """Demonstrate endurance testing."""
-        stress_runner = StressTestRunner()
+        stress_runner = FlextTestsPerformance.StressTestRunner()
 
         def memory_operation() -> list[int]:
             """Operation that uses some memory."""
@@ -462,7 +460,7 @@ class TestPerformanceAnalysis:
 
     def test_memory_profiling_advanced(self) -> None:
         """Demonstrate advanced memory profiling."""
-        profiler = PerformanceProfiler()
+        profiler = FlextTestsPerformance.PerformanceProfiler()
 
         with profiler.profile_memory("list_operations"):
             # Create and manipulate large data structures
@@ -651,7 +649,7 @@ class TestComprehensiveIntegration:
     @pytest.mark.asyncio
     async def test_async_with_all_patterns(
         self,
-        async_test_utils: AsyncTestUtils,
+        async_test_utils: FlextTestsAsyncs,
     ) -> None:
         """Demonstrate async testing with all patterns."""
         # Build test data
@@ -685,7 +683,7 @@ class TestComprehensiveIntegration:
 
     def test_performance_with_property_testing(
         self,
-        benchmark: BenchmarkProtocol,
+        benchmark: FlextTestsPerformance.BenchmarkProtocol,
     ) -> None:
         """Combine performance testing with property-based testing."""
 
@@ -696,12 +694,18 @@ class TestComprehensiveIntegration:
             return [
                 f"{profile['name']} <{profile['email']}>"
                 for profile in profiles
-                if PropertyTestHelpers.assume_valid_email(cast("str", profile["email"]))
+                if FlextTestsHypothesis.PropertyTestHelpers.assume_valid_email(
+                    cast("str", profile["email"])
+                )
             ]
 
         # Generate test data using our strategies
 
-        st.lists(CompositeStrategies.user_profiles(), min_size=10, max_size=100)
+        st.lists(
+            FlextTestsHypothesis.CompositeStrategies.user_profiles(),
+            min_size=10,
+            max_size=100,
+        )
 
         # Use a fixed set of test profiles instead of Hypothesis example
         test_profiles = [
@@ -741,7 +745,7 @@ class TestComprehensiveIntegration:
         def benchmark_operation() -> FlextTypes.Core.StringList:
             return process_user_profiles(test_profiles)
 
-        results = BenchmarkUtils.benchmark_with_warmup(
+        results = FlextTestsPerformance.BenchmarkUtils.benchmark_with_warmup(
             benchmark,
             benchmark_operation,
             warmup_rounds=3,
@@ -801,7 +805,7 @@ class TestRealWorldScenarios:
                 }
 
             # Execute with performance monitoring
-            profiler = PerformanceProfiler()
+            profiler = FlextTestsPerformance.PerformanceProfiler()
 
             with profiler.profile_memory("api_processing"):
                 result = process_api_request(test_request)
@@ -818,7 +822,7 @@ class TestRealWorldScenarios:
                 "should have valid HTTP method",
             ).assert_all()
 
-    @given(CompositeStrategies.configuration_data())
+    @given(FlextTestsHypothesis.CompositeStrategies.configuration_data())
     def test_configuration_validation_comprehensive(
         self,
         config: FlextTypes.Core.Dict,

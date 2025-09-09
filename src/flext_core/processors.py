@@ -683,7 +683,7 @@ class FlextProcessors:
                     settings_res.error or "Failed to create ProcessorsSettings",
                 )
             cfg_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
-                settings_res.value.model_dump()
+                cast("FlextTypes.Config.ConfigDict", settings_res.value.to_dict())
             )
             if cfg_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(

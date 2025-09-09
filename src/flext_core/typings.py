@@ -13,10 +13,7 @@ from __future__ import annotations
 from collections.abc import (
     Callable,
 )
-from typing import TYPE_CHECKING, Literal, ParamSpec, TypeVar
-
-if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+from typing import Literal, ParamSpec, TypeVar
 
 # =============================================================================
 # FLEXT TYPE SYSTEM - Hierarchical organization following FLEXT patterns
@@ -46,14 +43,14 @@ class FlextTypes:
         TEntry = TypeVar("TEntry")  # Entry types for schema processing
 
         # Primary type variables for generic programming (Python 3.13+ syntax)
-        T = TypeVar("T")  # Primary generic type for FLEXT ecosystem
+        # T and P are defined at module level per user requirement
         U = TypeVar("U")  # Secondary generic type for FLEXT ecosystem
         V = TypeVar("V")  # Tertiary generic type
         K = TypeVar("K")  # Key type for mappings
         R = TypeVar("R")  # Return type for functions
         E = TypeVar("E", bound=Exception)  # Exception type
         F = TypeVar("F")  # Function/field type variable
-        P = ParamSpec("P")  # Parameter specification for callables
+        # P is defined at module level per user requirement
 
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
@@ -102,6 +99,7 @@ class FlextTypes:
             ]
         )
         type JsonObject = dict[str, JsonValue]
+        JsonDict = dict[str, JsonValue]
 
         # Value type - Union type for domain operations
         type Value = str | int | float | bool | None | object
@@ -226,7 +224,7 @@ class FlextTypes:
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
         type ConfigDict = dict[str, ConfigValue]  # Primary models config type
 
-        # Basic configuration types without FlextResult dependency
+        # Basic configuration types
         type PerformanceConfig = dict[str, ConfigValue]  # Performance config input
 
     # =========================================================================
@@ -238,23 +236,6 @@ class FlextTypes:
 
         type Validator = Callable[[object], bool]
         type Processor = Callable[[object], object]
-
-    # =========================================================================
-    # RESULT TYPES - Result factory methods
-    # =========================================================================
-
-    class Result:
-        """Result factory methods and types."""
-
-        @staticmethod
-        def dict_result() -> type:
-            """Factory for FlextResult[dict[str, object]]."""
-            from flext_core.result import FlextResult  # noqa: PLC0415
-
-            return FlextResult[dict[str, object]]
-
-        # Types for compatibility
-        type Success = object  # Generic success type without FlextResult dependency
 
     # =========================================================================
     # VALIDATION TYPES - Validation patterns used across modules
@@ -297,11 +278,10 @@ class FlextTypes:
 
         type ServiceKey = str
         type ServiceInstance = object
-        type FactoryFunction = Callable[[], object]
-        # These return FlextResult, not dict
-        type ServiceRegistration = FlextResult[None]
-        type ServiceRetrieval = FlextResult[object]
-        type FactoryRegistration = FlextResult[None]
+        type ServiceRegistration = "object"  # FlextResult[None]
+        type ServiceRetrieval = "object"  # FlextResult[object]
+        type FactoryFunction = "Callable[[], object]"
+        type FactoryRegistration = "object"  # FlextResult[None]
 
     class Handler:
         """Handler types for validations.py compatibility."""

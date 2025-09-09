@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -236,15 +237,18 @@ class FlextCore:
 
     def get_commands_config(self) -> FlextResult[FlextTypes.Core.Dict]:
         """Get commands configuration as FlextResult[dict] (legacy compatibility)."""
-        # Use return_model=False to get dict for legacy compatibility
-        result = self.commands.get_commands_system_config(return_model=False)
-        # Convert to Core.Dict type
-        if result.success:
-            dict_value = cast("FlextTypes.Core.Dict", result.value)
-            return FlextResult[FlextTypes.Core.Dict].ok(dict_value)
-        return FlextResult[FlextTypes.Core.Dict].fail(
-            result.error or "Get config failed"
-        )
+        try:
+            # Use return_model=False to get dict for legacy compatibility
+            result = self.commands.get_commands_system_config(return_model=False)
+            # Convert to Core.Dict type
+            if result.success:
+                dict_value = cast("FlextTypes.Core.Dict", result.value)
+                return FlextResult[FlextTypes.Core.Dict].ok(dict_value)
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                result.error or "Get config failed"
+            )
+        except Exception as e:
+            return FlextResult[FlextTypes.Core.Dict].fail(f"Get config failed: {e}")
 
     def configure_commands_system_with_model(
         self,
@@ -405,7 +409,12 @@ class FlextCore:
         return self.context.configure_context_system(config)
 
     def get_context_config(self) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        return self.context.get_context_system_config()
+        try:
+            return self.context.get_context_system_config()
+        except Exception as e:
+            return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                f"Get context config failed: {e}"
+            )
 
     # Validation Methods - Direct Delegations (Python 3.13+ compatible)
     def validate_email(self, email: str) -> FlextResult[str]:
@@ -464,6 +473,10 @@ class FlextCore:
     ) -> FlextResult[FlextModels.Entity]:
         """Create an entity instance with validation."""
         try:
+            # Generate id if not provided
+            if "id" not in kwargs:
+                kwargs["id"] = str(uuid.uuid4())
+
             entity = entity_class.model_validate(kwargs)
             validation_result = entity.validate_business_rules()
             if validation_result.success:
@@ -700,9 +713,6 @@ class FlextCore:
         ].ok(optimized_config)
 
     # Field Methods
-    def create_boolean_field(self, *, default: bool = False) -> object:
-        """Create boolean field."""
-        return self.fields.create_boolean_field(default=default)
 
     def configure_fields_system(
         self,
@@ -734,6 +744,26 @@ class FlextCore:
             return FlextResult[object].ok(value)
         except Exception as e:
             return FlextResult[object].fail(f"Validation error: {e}")
+
+    def create_boolean_field(self, *, default: bool = False) -> object:
+        """Create boolean field - simple wrapper for convenience."""
+        return self.fields.create_boolean_field(default=default)
+
+    @staticmethod
+    def create_string_field(name: str, **kwargs: object) -> object:
+        """Create string field - simple wrapper for convenience."""
+        result = FlextFields.Factory.create_field("string", name, **kwargs)
+        if result.is_success:
+            return result.value
+        return result.error
+
+    @staticmethod
+    def create_integer_field(name: str, **kwargs: object) -> object:
+        """Create integer field - simple wrapper for convenience."""
+        result = FlextFields.Factory.create_field("integer", name, **kwargs)
+        if result.is_success:
+            return result.value
+        return result.error
 
     # Guard Methods
     def is_string(self, value: object) -> bool:
@@ -796,11 +826,6 @@ class FlextCore:
     # =========================================================================
     # LOGGING & OBSERVABILITY
     # =========================================================================
-
-    @staticmethod
-    def flext_logger(name: str) -> _FlextLogger:
-        """Get configured logger instance."""
-        return _FlextLogger(name)
 
     @staticmethod
     def configure_logging(
@@ -925,6 +950,26 @@ class FlextCore:
         try:
             # Direct configuration validation
             validated_config = dict(config)
+
+            # Validate log_level if present
+            if "log_level" in validated_config:
+                log_level = validated_config["log_level"]
+                valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
+                if log_level not in valid_levels:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid log_level: {log_level}. Valid levels: {valid_levels}"
+                    )
+
+            # Validate environment if present
+            if "environment" in validated_config:
+                environment = validated_config["environment"]
+                valid_environments = [
+                    env.value for env in FlextConstants.Config.ConfigEnvironment
+                ]
+                if environment not in valid_environments:
+                    return FlextResult[FlextTypes.Config.ConfigDict].fail(
+                        f"Invalid environment: {environment}. Valid environments: {valid_environments}"
+                    )
 
             # Add backward compatibility fields
             validated_config["enable_observability"] = False  # observability removed
@@ -1685,22 +1730,6 @@ class FlextCore:
             self._field_registry = FlextFields.Registry.FieldRegistry()
         return self._field_registry
 
-    @staticmethod
-    def create_string_field(name: str, **kwargs: object) -> object:
-        """Create string field definition."""
-        result = FlextFields.Factory.create_field("string", name, **kwargs)
-        if result.is_success:
-            return result.value
-        return result.error
-
-    @staticmethod
-    def create_integer_field(name: str, **kwargs: object) -> object:
-        """Create integer field definition."""
-        result = FlextFields.Factory.create_field("integer", name, **kwargs)
-        if result.is_success:
-            return result.value
-        return result.error
-
     def create_validation_decorator(
         self,
         validator: FlextTypes.Core.OperationCallable,
@@ -2001,14 +2030,14 @@ class FlextCore:
                         return None  # This line should never be reached
                     duration = (datetime.now(UTC) - start_time).total_seconds()
                     # Log performance metrics
-                    logger = self.flext_logger(__name__)
+                    logger = _FlextLogger(__name__)
                     logger.info(
                         f"Operation {operation_name} completed in {duration:.3f}s",
                     )
                     return result
                 except Exception:
                     duration = (datetime.now(UTC) - start_time).total_seconds()
-                    logger = self.flext_logger(__name__)
+                    logger = _FlextLogger(__name__)
                     logger.exception(
                         f"Operation {operation_name} failed after {duration:.3f}s",
                     )
@@ -2399,7 +2428,7 @@ class FlextCore:
         success_msg: str,
         logger_name: str | None = None,
     ) -> FlextResult[object]:
-        logger = self.flext_logger(logger_name or __name__)
+        logger = _FlextLogger(logger_name or __name__)
         if result.is_success:
             logger.info(f"✅ {success_msg}", result_type=type(result.value).__name__)
         else:
@@ -2415,7 +2444,10 @@ class FlextCore:
         default_factory: Callable[[], T],
     ) -> T:
         r = self.get_service(service_name)
-        return cast("T", r.unwrap()) if r.success else default_factory()
+        # Since get_service returns a FlextResult, we can use its methods
+        if isinstance(r, FlextResult) and r.success:
+            return cast("T", r.unwrap())
+        return default_factory()
 
     def create_standard_validators(
         self,
@@ -2450,6 +2482,23 @@ class FlextCore:
     # =========================================================================
     # UTILITY METHODS
     # =========================================================================
+
+    # =========================================================================
+    # DIRECT WRAPPERS - método = Classe.método format
+    # =========================================================================
+
+    # Logger wrappers - direct assignment
+    create_logger = _FlextLogger
+
+    # Field wrappers - direct assignment (verified methods only)
+    create_field = FlextFields.Factory.create_field
+
+    # Result wrappers - direct assignment
+    result_ok = FlextResult.ok
+    result_fail = FlextResult.fail
+
+    # Exception wrappers - direct assignment (avoid redefinition)
+    create_exception = FlextExceptions.Error
 
     # String Representation Methods - Compact Delegations
     @override

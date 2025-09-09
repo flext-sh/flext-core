@@ -292,7 +292,7 @@ def create_enterprise_config(config_data: FlextTypes.Core.Dict) -> EnterpriseCon
     """
     # Use model_validate for proper type validation with pydantic v2
     # This handles type conversion and validation correctly
-    return EnterpriseConfig.model_validate(config_data)
+    return EnterpriseConfig(**config_data)
 
 
 def load_config_from_file(file_path: str | Path) -> FlextResult[FlextTypes.Core.Dict]:

@@ -254,6 +254,7 @@ class TestFlextConfigComprehensive:
             result = FlextConfig.create(env_file=temp_path)
             assert result.is_failure
             assert result.error is not None
+            # The error should mention invalid environment
             assert "Invalid environment" in (result.error or "")
         finally:
             Path(temp_path).unlink()

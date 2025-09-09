@@ -34,6 +34,7 @@ class FlextLogger:
 
     # Class-level configuration and shared state
     _configured: ClassVar[bool] = False
+    _configuration: ClassVar[dict[str, object]] = {}  # Singleton configuration storage
     _global_correlation_id: ClassVar[str | None] = None  # Global correlation ID
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
@@ -76,7 +77,12 @@ class FlextLogger:
     ) -> None:
         """Initialize structured logger instance."""
         if not self._configured:
-            self.configure()
+            # Use stored configuration if available, otherwise configure with defaults
+            if self._configuration:
+                # Configuration already exists, just reuse it
+                pass
+            else:
+                self.configure()
 
         self._name = name
         # Validate and set level (LogLevel is already a str type)
@@ -442,20 +448,32 @@ class FlextLogger:
     def debug(self, message: str, *args: object, **context: object) -> None:
         """Log debug message."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("DEBUG", formatted_message, context)
-        self._structlog_logger.debug(formatted_message, **entry)
+        # Use simple output if structured_output is disabled
+        if not self._configuration.get("structured_output", True):
+            self._structlog_logger.debug(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("DEBUG", formatted_message, context)
+            self._structlog_logger.debug(formatted_message, **entry)
 
     def info(self, message: str, *args: object, **context: object) -> None:
         """Log info message."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("INFO", formatted_message, context)
-        self._structlog_logger.info(formatted_message, **entry)
+        # Use simple output if structured_output is disabled
+        if not self._configuration.get("structured_output", True):
+            self._structlog_logger.info(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("INFO", formatted_message, context)
+            self._structlog_logger.info(formatted_message, **entry)
 
     def warning(self, message: str, *args: object, **context: object) -> None:
         """Log warning message."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("WARNING", formatted_message, context)
-        self._structlog_logger.warning(formatted_message, **entry)
+        # Use simple output if structured_output is disabled
+        if not self._configuration.get("structured_output", True):
+            self._structlog_logger.warning(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("WARNING", formatted_message, context)
+            self._structlog_logger.warning(formatted_message, **entry)
 
     def error(
         self,
@@ -466,8 +484,14 @@ class FlextLogger:
     ) -> None:
         """Log error message with context and error details."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("ERROR", formatted_message, context, error)
-        self._structlog_logger.error(formatted_message, **entry)
+        # Use simple output if structured_output is disabled
+        if not self._configuration.get("structured_output", True):
+            if error:
+                context["error"] = str(error)
+            self._structlog_logger.error(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("ERROR", formatted_message, context, error)
+            self._structlog_logger.error(formatted_message, **entry)
 
     def critical(
         self,
@@ -478,8 +502,14 @@ class FlextLogger:
     ) -> None:
         """Log critical message with context and error details."""
         formatted_message = message % args if args else message
-        entry = self._build_log_entry("CRITICAL", formatted_message, context, error)
-        self._structlog_logger.critical(formatted_message, **entry)
+        # Use simple output if structured_output is disabled
+        if not self._configuration.get("structured_output", True):
+            if error:
+                context["error"] = str(error)
+            self._structlog_logger.critical(formatted_message, **context)
+        else:
+            entry = self._build_log_entry("CRITICAL", formatted_message, context, error)
+            self._structlog_logger.critical(formatted_message, **entry)
 
     def exception(self, message: str, *args: object, **context: object) -> None:
         """Log exception with stack trace and context."""
@@ -498,11 +528,35 @@ class FlextLogger:
         include_source: bool = True,
         structured_output: bool = True,
     ) -> None:
-        """Configure structured logging system."""
+        """Configure structured logging system.
+
+        This configuration is stored as a singleton and reused by all FlextLogger instances.
+
+        Args:
+            log_level: Logging level string
+            json_output: Use JSON output format
+            include_source: Include source code location info
+            structured_output: Use structured logging format
+
+        """
+        # Reset if already configured (allow reconfiguration)
+
+        if cls._configured and structlog.is_configured():
+            structlog.reset_defaults()
+
+        # Store configuration in singleton for reuse
+        cls._configuration = {
+            "log_level": log_level,
+            "json_output": json_output,
+            "include_source": include_source,
+            "structured_output": structured_output,
+        }
+
         # Auto-detect output format if not specified
         if json_output is None:
             env = os.environ.get("ENVIRONMENT", "development").lower()
             json_output = env in {"production", "staging", "prod"}
+            cls._configuration["json_output"] = json_output
 
         processors: list[Processor] = [
             # Essential processors
@@ -545,6 +599,14 @@ class FlextLogger:
                     sort_keys=True,
                     ensure_ascii=False,
                 ),
+            )
+        elif not structured_output:
+            # For non-structured output, use KeyValueRenderer for simple readable output
+            processors.append(
+                structlog.processors.KeyValueRenderer(
+                    key_order=["message"],  # Show message first
+                    drop_missing=True,
+                )
             )
         else:
             processors.append(FlextLogger._create_enhanced_console_renderer())
@@ -643,6 +705,26 @@ class FlextLogger:
     def get_global_correlation_id(cls) -> str | None:
         """Get global correlation ID."""
         return cls._global_correlation_id
+
+    @classmethod
+    def get_configuration(cls) -> dict[str, object]:
+        """Get current logging configuration.
+
+        Returns:
+            Dictionary with current configuration settings
+
+        """
+        return cls._configuration.copy()
+
+    @classmethod
+    def is_configured(cls) -> bool:
+        """Check if logging has been configured.
+
+        Returns:
+            True if configured, False otherwise
+
+        """
+        return cls._configured
 
 
 __all__: FlextTypes.Core.StringList = [
