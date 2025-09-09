@@ -28,7 +28,7 @@ from pydantic import Field, ValidationError
 
 from flext_core import FlextModels, FlextResult
 from flext_core.typings import FlextTypes
-from flext_tests import BenchmarkProtocol, FlextMatchers
+from flext_tests import FlextTestsFixtures, FlextTestsMatchers
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -849,22 +849,24 @@ class TestModelsIntegrationRealFunctionality:
 
 
 class TestModelsWithFlextMatchers:
-    """Enhanced model tests using FlextMatchers for comprehensive validation."""
+    """Enhanced model tests using FlextTestsMatchers for comprehensive validation."""
 
     def test_result_validation_with_matchers(self) -> None:
-        """Test FlextResult validation using FlextMatchers."""
+        """Test FlextResult validation using FlextTestsMatchers."""
         # Test success case
         email = EmailValue(address="valid@example.com", domain="example.com")
         result = email.validate_business_rules()
 
-        # Use FlextMatchers for cleaner assertions
-        FlextMatchers.assert_result_success(result)
+        # Use FlextTestsMatchers for cleaner assertions
+        FlextTestsMatchers.CoreMatchers.assert_result_success(result)
 
         # Test failure case with specific error checking
         invalid_email = EmailValue(address="invalid", domain="example.com")
         result = invalid_email.validate_business_rules()
 
-        FlextMatchers.assert_result_failure(result, expected_error="@ symbol")
+        FlextTestsMatchers.CoreMatchers.assert_result_failure(
+            result, expected_error="@ symbol"
+        )
 
     def test_entity_validation_with_matchers(self) -> None:
         """Test entity validation with comprehensive matchers."""
@@ -877,11 +879,11 @@ class TestModelsWithFlextMatchers:
         )
 
         result = user.validate_business_rules()
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.CoreMatchers.assert_result_success(result)
 
         # Test business logic operations
         activation_result = user.activate()
-        FlextMatchers.assert_result_failure(
+        FlextTestsMatchers.CoreMatchers.assert_result_failure(
             activation_result,
             expected_error="already active",
         )
@@ -889,10 +891,10 @@ class TestModelsWithFlextMatchers:
         # Deactivate first
         user.is_active = False
         activation_result = user.activate()
-        FlextMatchers.assert_result_success(activation_result)
+        FlextTestsMatchers.CoreMatchers.assert_result_success(activation_result)
 
     def test_json_structure_validation(self) -> None:
-        """Test JSON structure validation with FlextMatchers."""
+        """Test JSON structure validation with FlextTestsMatchers."""
         user = UserEntity(
             id="json_test_123",
             name="JSON Test User",
@@ -905,10 +907,12 @@ class TestModelsWithFlextMatchers:
 
         # Test required fields are present
         expected_keys = ["id", "name", "email", "age", "is_active", "version"]
-        FlextMatchers.assert_json_structure(user_data, expected_keys, exact_match=False)
+        FlextTestsMatchers.CoreMatchers.assert_json_structure(
+            user_data, expected_keys, exact_match=False
+        )
 
     def test_regex_matching_validation(self) -> None:
-        """Test regex pattern matching with FlextMatchers."""
+        """Test regex pattern matching with FlextTestsMatchers."""
         user = UserEntity(
             id="regex_test_123",
             name="Regex Test User",
@@ -918,13 +922,13 @@ class TestModelsWithFlextMatchers:
 
         # Test string representations contain expected patterns
         user_str = str(user)
-        FlextMatchers.assert_regex_match(user_str, r"regex_test_123")
+        FlextTestsMatchers.CoreMatchers.assert_regex_match(user_str, r"regex_test_123")
 
         user_repr = repr(user)
-        FlextMatchers.assert_regex_match(user_repr, r"regex_test_123")
+        FlextTestsMatchers.CoreMatchers.assert_regex_match(user_repr, r"regex_test_123")
 
     def test_type_guard_validation(self) -> None:
-        """Test type guard validation with FlextMatchers."""
+        """Test type guard validation with FlextTestsMatchers."""
         email = EmailValue(address="typeguard@example.com", domain="example.com")
         user = UserEntity(
             id="type_test_123",
@@ -940,14 +944,16 @@ class TestModelsWithFlextMatchers:
         def is_user_entity(obj: object) -> TypeGuard[UserEntity]:
             return isinstance(obj, UserEntity)
 
-        FlextMatchers.assert_type_guard(email, is_email_value)
-        FlextMatchers.assert_type_guard(user, is_user_entity)
+        FlextTestsMatchers.CoreMatchers.assert_type_guard(email, is_email_value)
+        FlextTestsMatchers.CoreMatchers.assert_type_guard(user, is_user_entity)
 
 
 class TestModelsPerformance:
     """Performance tests using PerformanceProfiler for comprehensive benchmarking."""
 
-    def test_entity_creation_performance(self, benchmark: BenchmarkProtocol) -> None:
+    def test_entity_creation_performance(
+        self, benchmark: FlextTestsFixtures.BenchmarkFixture
+    ) -> None:
         """Test entity creation performance with benchmarking."""
 
         def create_user_entity() -> UserEntity:
@@ -958,8 +964,8 @@ class TestModelsPerformance:
                 age=30,
             )
 
-        # Use FlextMatchers for performance assertion
-        result = FlextMatchers.assert_performance_within_limit(
+        # Use FlextTestsMatchers for performance assertion
+        result = FlextTestsMatchers.assert_performance_within_limit(
             benchmark,
             create_user_entity,
             max_time_seconds=0.01,  # 10ms limit
@@ -968,7 +974,9 @@ class TestModelsPerformance:
         assert isinstance(result, UserEntity)
         assert result.name == "Performance Test User"
 
-    def test_validation_performance(self, benchmark: BenchmarkProtocol) -> None:
+    def test_validation_performance(
+        self, benchmark: FlextTestsFixtures.BenchmarkFixture
+    ) -> None:
         """Test validation performance with comprehensive profiling."""
         user = UserEntity(
             id="validation_perf_123",
@@ -981,15 +989,17 @@ class TestModelsPerformance:
             return user.validate_business_rules()
 
         # Test validation performance
-        result = FlextMatchers.assert_performance_within_limit(
+        result = FlextTestsMatchers.PerformanceMatchers.assert_performance_within_limit(
             benchmark,
             validate_user,
             max_time_seconds=0.005,  # 5ms limit
         )
 
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.CoreMatchers.assert_result_success(result)
 
-    def test_serialization_performance(self, benchmark: BenchmarkProtocol) -> None:
+    def test_serialization_performance(
+        self, benchmark: FlextTestsFixtures.BenchmarkFixture
+    ) -> None:
         """Test serialization performance with comprehensive metrics."""
         user = UserEntity(
             id="serialization_perf_123",
@@ -1010,7 +1020,7 @@ class TestModelsPerformance:
         def serialize_user() -> FlextTypes.Core.Dict:
             return user.model_dump()
 
-        result = FlextMatchers.assert_performance_within_limit(
+        result = FlextTestsMatchers.assert_performance_within_limit(
             benchmark,
             serialize_user,
             max_time_seconds=0.01,  # 10ms limit
@@ -1020,7 +1030,9 @@ class TestModelsPerformance:
         assert "id" in result
         assert result["name"] == "Serialization Performance User"
 
-    def test_bulk_operations_performance(self, benchmark: BenchmarkProtocol) -> None:
+    def test_bulk_operations_performance(
+        self, benchmark: FlextTestsFixtures.BenchmarkFixture
+    ) -> None:
         """Test bulk operations performance with linear complexity validation."""
 
         def create_bulk_users(count: int) -> list[UserEntity]:
@@ -1036,7 +1048,7 @@ class TestModelsPerformance:
             return users
 
         # Test linear complexity for bulk operations
-        FlextMatchers.assert_performance_within_limit(
+        FlextTestsMatchers.CoreMatchers.assert_performance_within_limit(
             benchmark,
             lambda: create_bulk_users(100),
             max_time_seconds=0.1,  # 100ms for 100 users

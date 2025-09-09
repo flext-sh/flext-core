@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from flext_core import FlextExceptions, FlextModels, FlextResult, FlextTypeAdapters
 from flext_core.typings import FlextTypes
-from flext_tests import FlextMatchers, FlextTestUtilities, TestBuilders
+from flext_tests import FlextTestsBuilders, FlextTestsMatchers, FlextTestsUtilities
 
 
 class TestFlextTypeAdaptersConfig:
@@ -340,7 +340,7 @@ class TestFlextTypeAdaptersIntegration:
         """Test integration with FlextResult patterns."""
         # Test successful result creation
         success_result = FlextResult[str].ok("test_value")
-        FlextMatchers.assert_result_success(success_result)
+        FlextTestsMatchers.assert_result_success(success_result)
 
         value = success_result.unwrap()
         assert value == "test_value"
@@ -370,9 +370,9 @@ class TestFlextTypeAdaptersIntegration:
 
     def test_builder_pattern_integration(self) -> None:
         """Test integration with TestBuilders pattern."""
-        # Create test result using TestBuilders
-        result = TestBuilders.result().with_success_data("adapter_test").build()
-        FlextMatchers.assert_result_success(result)
+        # Create test result using FlextTestsBuilders
+        result = FlextTestsBuilders.result().with_success_data("adapter_test").build()
+        FlextTestsMatchers.assert_result_success(result)
 
         data = result.unwrap()
         assert data == "adapter_test"
@@ -380,11 +380,11 @@ class TestFlextTypeAdaptersIntegration:
     def test_utilities_integration(self) -> None:
         """Test integration with FlextTestUtilities."""
         # Test that utilities are available and functional
-        assert FlextTestUtilities is not None
+        assert FlextTestsUtilities is not None
 
         # Test basic utility functionality
         # Note: Specific utility methods would be tested based on actual API
-        assert hasattr(FlextTestUtilities, "__name__")
+        assert hasattr(FlextTestsUtilities, "__name__")
 
 
 if __name__ == "__main__":

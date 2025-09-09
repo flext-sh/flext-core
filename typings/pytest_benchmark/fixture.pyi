@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from typing import TypeVar
 
+from flext_core.typings import FlextTypes
+
 T = TypeVar("T")
 
 class BenchmarkFixture:

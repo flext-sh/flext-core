@@ -178,7 +178,7 @@ platform = "linux"
 # Package structure
 explicit_package_bases = true
 namespace_packages = true
-mypy_path = ["src", "typings"]
+mypy_path = ["src", "typings", "src", "tests", "examples", "scripts"]
 files = ["src"]
 
 # Plugins

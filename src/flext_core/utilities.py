@@ -451,6 +451,21 @@ class FlextUtilities:
             except (ValueError, TypeError):
                 return default
 
+        @staticmethod
+        def safe_dict_get(data: object, key: str, default: object = None) -> object:
+            """Safely get value from dictionary-like object."""
+            if data is None:
+                return default
+            try:
+                if isinstance(data, dict):
+                    return data.get(key, default)
+                # For other objects, try attribute access
+                if hasattr(data, key):
+                    return getattr(data, key, default)
+                return default
+            except (AttributeError, KeyError, TypeError):
+                return default
+
     class TypeGuards:
         """Type checking and validation guard utilities.
 
@@ -1095,8 +1110,13 @@ class FlextUtilities:
         delta = current_time - start_time
         return delta.total_seconds()
 
+    # =============================================================================
+    # Convenience attributes for backward compatibility
+    Strings = TextProcessor
+    Files = EnvironmentUtils  # File operations are in EnvironmentUtils
+    Collections = Conversions  # Collection operations are in Conversions
 
-# =============================================================================
+
 # EXPORTS - Clean public API
 # =============================================================================
 

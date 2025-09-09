@@ -64,7 +64,7 @@ class FlextServices:
 
             # Convert to config model
             model_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
-                settings_res.value.model_dump()
+                cast("FlextTypes.Config.ConfigDict", settings_res.value.to_dict())
             )
             if model_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(

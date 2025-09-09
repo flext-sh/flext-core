@@ -11,7 +11,6 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
-from itertools import starmap
 from typing import TypedDict, cast
 
 import pytest
@@ -22,16 +21,13 @@ from flext_core import FlextContainer, FlextResult
 from flext_core.models import FlextModels
 from flext_core.typings import FlextTypes
 from flext_tests import (
-    AsyncTestUtils,
-    FlextMatchers,
-    FlextResultFactory,
-    MemoryProfiler,
-    ServiceDataFactory,
-    TestBuilders,
-    TestEntityFactory,
-    TestValueObjectFactory,
-    UserDataFactory,
-    UserFactory,
+    FlextTestsAsyncs,
+    FlextTestsBuilders,
+    FlextTestsDomains,
+    FlextTestsFactories,
+    FlextTestsMatchers,
+    FlextTestsPerformance,
+    FlextTestsUtilities,
 )
 
 
@@ -111,17 +107,17 @@ class TestFlextContainerCore:
     def test_container_initialization_and_basic_operations(self) -> None:
         """Test container initialization and basic service operations."""
         # Test container creation
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
         assert isinstance(container, FlextContainer)
 
         # Test basic service registration
-        service_data = ServiceDataFactory.create(name="test_service", port=8080)
+        service_data = FlextTestsDomains.create_service(name="test_service", port=8080)
         result = container.register("test_service", service_data)
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(cast("FlextResult[object]", result))
 
         # Test service retrieval
         get_result = container.get("test_service")
-        FlextMatchers.assert_result_success(get_result, service_data)
+        FlextTestsMatchers.assert_result_success(get_result, service_data)
 
         # Test service count
         assert container.get_service_count() == 1
@@ -139,7 +135,7 @@ class TestFlextContainerCore:
 
     def test_pydantic_model_integration(self) -> None:
         """Test container with Pydantic models."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test with Pydantic service config
         service_config = ContainerTestModels.ServiceConfig(
@@ -152,11 +148,11 @@ class TestFlextContainerCore:
         )
 
         result = container.register("api_config", service_config)
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(cast("FlextResult[object]", result))
 
         # Retrieve and validate
         get_result = container.get("api_config")
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
         retrieved_config = cast("ContainerTestModels.ServiceConfig", get_result.value)
 
         assert retrieved_config.name == "api_service"
@@ -168,18 +164,20 @@ class TestFlextContainerCore:
 
     def test_factory_pattern_comprehensive(self) -> None:
         """Test comprehensive factory pattern functionality."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test simple factory
         def create_user() -> FlextTypes.Core.Dict:
-            return UserDataFactory.create(name="Factory User", age=30)
+            return FlextTestsDomains.create_user(name="Factory User", age=30)
 
         factory_result = container.register_factory("user_factory", create_user)
-        FlextMatchers.assert_result_success(factory_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", factory_result)
+        )
 
         # Test factory execution
         get_result = container.get("user_factory")
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
         user_data = cast("FlextTypes.Core.Dict", get_result.value)
         assert user_data["name"] == "Factory User"
         assert user_data["age"] == 30
@@ -204,11 +202,13 @@ class TestFlextContainerCore:
             "complex_service",
             create_complex_service,
         )
-        FlextMatchers.assert_result_success(complex_factory_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", complex_factory_result)
+        )
 
         # Test complex factory execution
         complex_get_result = container.get("complex_service")
-        FlextMatchers.assert_result_success(complex_get_result)
+        FlextTestsMatchers.assert_result_success(complex_get_result)
         complex_service = cast(
             "ContainerTestModels.ComplexService",
             complex_get_result.value,
@@ -237,41 +237,47 @@ class TestFlextContainerAdvanced:
         """Test service name validation with hypothesis."""
         assume(service_name.strip())  # Ensure non-empty after strip
 
-        container = TestBuilders.container().build()
-        service_data = ServiceDataFactory.create(name=service_name)
+        container = FlextTestsBuilders.container().build()
+        service_data = FlextTestsDomains.create_service(name=service_name)
 
         result = container.register(service_name.strip(), service_data)
-        FlextMatchers.assert_result_success(result)
+        FlextTestsMatchers.assert_result_success(cast("FlextResult[object]", result))
 
         get_result = container.get(service_name.strip())
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
 
     def test_batch_operations_comprehensive(self) -> None:
         """Test comprehensive batch operations."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Create batch of services using different factories
         services_batch: FlextTypes.Core.Dict = {}
 
         # Add regular services
         for i in range(5):
-            services_batch[f"service_{i}"] = ServiceDataFactory.create(
+            services_batch[f"service_{i}"] = FlextTestsDomains.create_service(
                 name=f"service_{i}",
                 port=8000 + i,
             )
 
         # Add Pydantic models
         for i in range(3):
-            services_batch[f"entity_{i}"] = TestEntityFactory.create()
-            services_batch[f"value_obj_{i}"] = TestValueObjectFactory.create()
+            services_batch[f"entity_{i}"] = (
+                FlextTestsFactories.TestEntityFactory.create()
+            )
+            services_batch[f"value_obj_{i}"] = (
+                FlextTestsFactories.TestValueObjectFactory.create()
+            )
 
         # Add factory_boy models
         for i in range(2):
-            services_batch[f"user_{i}"] = UserFactory.create()
+            services_batch[f"user_{i}"] = FlextTestsFactories.UserFactory.create()
 
         # Batch register
         batch_result = container.batch_register(services_batch)
-        FlextMatchers.assert_result_success(batch_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", batch_result)
+        )
 
         # Verify all services are registered
         assert container.get_service_count() == len(services_batch)
@@ -279,30 +285,34 @@ class TestFlextContainerAdvanced:
         # Verify each service can be retrieved
         for name in services_batch:
             get_result = container.get(name)
-            FlextMatchers.assert_result_success(get_result)
+            FlextTestsMatchers.assert_result_success(get_result)
 
         # Test batch unregister
         service_names = list(services_batch.keys())[:5]  # Unregister first 5
         for name in service_names:
             unregister_result = container.unregister(name)
-            FlextMatchers.assert_result_success(unregister_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", unregister_result)
+            )
 
         assert container.get_service_count() == len(services_batch) - 5
 
     def test_error_handling_comprehensive(self) -> None:
         """Test comprehensive error handling scenarios."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test non-existent service retrieval
         missing_result = container.get("non_existent_service")
-        FlextMatchers.assert_result_failure(missing_result)
+        FlextTestsMatchers.assert_result_failure(missing_result)
         error_message = missing_result.error or ""
         assert "not found" in error_message.lower()
 
         # Test duplicate registration
-        service_data = ServiceDataFactory.create(name="duplicate_test")
+        service_data = FlextTestsDomains.create_service(name="duplicate_test")
         first_register = container.register("duplicate_test", service_data)
-        FlextMatchers.assert_result_success(first_register)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", first_register)
+        )
 
         second_register = container.register("duplicate_test", service_data)
         # Should succeed with replacement or handle gracefully
@@ -318,7 +328,7 @@ class TestFlextContainerAdvanced:
             "failing_factory",
             failing_factory,
         )
-        FlextMatchers.assert_result_success(
+        FlextTestsUtilities.TestUtilities.assert_result_success(
             factory_register,
         )  # Registration should succeed
 
@@ -329,46 +339,61 @@ class TestFlextContainerAdvanced:
 
         # Test unregistering non-existent service
         unregister_missing = container.unregister("definitely_missing")
-        FlextMatchers.assert_result_failure(unregister_missing)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", unregister_missing)
+        )
 
     async def test_async_container_operations(self) -> None:
         """Test container operations in async context."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register async factory
         async def async_service_factory() -> FlextTypes.Core.Dict:
-            await AsyncTestUtils.simulate_delay(0.001)
-            return ServiceDataFactory.create(name="async_service", port=8080)
+            await FlextTestsAsyncs.simulate_delay(0.001)
+            return FlextTestsDomains.create_service(name="async_service", port=8080)
 
         # Register services concurrently
         services_to_register = [
-            ("async_service_1", ServiceDataFactory.create(name="async_1", port=8001)),
-            ("async_service_2", ServiceDataFactory.create(name="async_2", port=8002)),
-            ("async_service_3", ServiceDataFactory.create(name="async_3", port=8003)),
+            (
+                "async_service_1",
+                FlextTestsDomains.create_service(name="async_1", port=8001),
+            ),
+            (
+                "async_service_2",
+                FlextTestsDomains.create_service(name="async_2", port=8002),
+            ),
+            (
+                "async_service_3",
+                FlextTestsDomains.create_service(name="async_3", port=8003),
+            ),
         ]
 
         async def register_service(name: str, service: object) -> FlextResult[None]:
-            await AsyncTestUtils.simulate_delay(0.001)
+            await FlextTestsAsyncs.simulate_delay(0.001)
             return container.register(name, service)
 
         # Test concurrent registrations
-        tasks = list(starmap(register_service, services_to_register))
-        results = await AsyncTestUtils.run_concurrently(*tasks)
+        tasks = [
+            register_service(name, service) for name, service in services_to_register
+        ]
+        results = await FlextTestsAsyncs.run_concurrently(*tasks)
 
         # All registrations should succeed
         for result in results:
-            FlextMatchers.assert_result_success(result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", result)
+            )
 
         # Test concurrent retrievals
         async def get_service(name: str) -> FlextResult[object]:
-            await AsyncTestUtils.simulate_delay(0.001)
+            await FlextTestsAsyncs.simulate_delay(0.001)
             return container.get(name)
 
         get_tasks = [get_service(name) for name, _ in services_to_register]
-        get_results = await AsyncTestUtils.run_concurrently(*get_tasks)
+        get_results = await FlextTestsAsyncs.run_concurrently(*get_tasks)
 
         for get_result in get_results:
-            FlextMatchers.assert_result_success(get_result)
+            FlextTestsMatchers.assert_result_success(get_result)
 
 
 class TestFlextContainerPerformance:
@@ -376,12 +401,12 @@ class TestFlextContainerPerformance:
 
     def test_performance_benchmarking(self) -> None:
         """Test container performance with benchmarking."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Simple time benchmark for service registration
         def register_services() -> None:
             for i in range(100):
-                service_data = ServiceDataFactory.create(
+                service_data = FlextTestsDomains.create_service(
                     name=f"perf_service_{i}",
                     port=8000 + i,
                 )
@@ -404,15 +429,17 @@ class TestFlextContainerPerformance:
         assert retrieval_time < 0.5  # Should be faster than registration
 
         # Memory profiling with context manager
-        with MemoryProfiler.track_memory_leaks(max_increase_mb=50.0):
+        with FlextTestsPerformance.MemoryProfiler.track_memory_leaks(
+            max_increase_mb=50.0
+        ):
             # Add many services
             for i in range(100):  # Reduced count for reasonable test time
-                service_data = ServiceDataFactory.create(name=f"memory_test_{i}")
+                service_data = FlextTestsDomains.create_service(name=f"memory_test_{i}")
                 container.register(f"memory_test_{i}", service_data)
 
     def test_concurrent_access_thread_safety(self) -> None:
         """Test thread safety with concurrent access."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
         results: list[FlextResult[None]] = []
         errors: list[Exception] = []
 
@@ -422,7 +449,7 @@ class TestFlextContainerPerformance:
                 services_to_register = []
                 for i in range(5):  # Reduced number to minimize race conditions
                     service_name = f"thread_{thread_id}_service_{i}"
-                    service_data = ServiceDataFactory.create(
+                    service_data = FlextTestsDomains.create_service(
                         name=service_name,
                         port=8000 + thread_id * 100 + i,
                     )
@@ -477,21 +504,23 @@ class TestFlextContainerPerformance:
 
     def test_memory_efficiency_and_cleanup(self) -> None:
         """Test memory efficiency and proper cleanup."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test memory usage within reasonable limits
-        with MemoryProfiler.track_memory_leaks(max_increase_mb=20.0):
+        with FlextTestsPerformance.MemoryProfiler.track_memory_leaks(
+            max_increase_mb=20.0
+        ):
             # Create many services
             service_count = 100  # Reduced for reasonable test performance
             for i in range(service_count):
                 # Mix different types of services
                 service: object
                 if i % 3 == 0:
-                    service = TestEntityFactory.create()
+                    service = FlextTestsFactories.TestEntityFactory.create()
                 elif i % 3 == 1:
-                    service = TestValueObjectFactory.create()
+                    service = FlextTestsFactories.TestValueObjectFactory.create()
                 else:
-                    service = ServiceDataFactory.create(name=f"service_{i}")
+                    service = FlextTestsDomains.create_service(name=f"service_{i}")
 
                 container.register(f"memory_service_{i}", service)
 
@@ -500,7 +529,9 @@ class TestFlextContainerPerformance:
 
             # Clear container
             clear_result = container.clear()
-            FlextMatchers.assert_result_success(clear_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", clear_result)
+            )
 
             # Verify cleanup
             assert container.get_service_count() == 0
@@ -514,11 +545,11 @@ class TestFlextContainerIntegration:
 
     def test_flext_result_integration_comprehensive(self) -> None:
         """Test comprehensive FlextResult integration."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test with FlextResult services
-        success_result = FlextResultFactory.create_success({"data": "success_data"})
-        failure_result = FlextResultFactory.create_failure("test_error", "TEST_CODE")
+        success_result = FlextTestsBuilders.success_result({"data": "success_data"})
+        failure_result = FlextTestsBuilders.failure_result("test_error")
 
         # Register FlextResult objects
         container.register("success_service", success_result)
@@ -526,25 +557,29 @@ class TestFlextContainerIntegration:
 
         # Retrieve and verify
         get_success = container.get("success_service")
-        FlextMatchers.assert_result_success(get_success)
+        FlextTestsMatchers.assert_result_success(get_success)
         retrieved_success = cast("FlextResult[object]", get_success.value)
-        FlextMatchers.assert_result_success(retrieved_success)
+        FlextTestsMatchers.assert_result_success(retrieved_success)
 
         get_failure = container.get("failure_service")
-        FlextMatchers.assert_result_success(get_failure)  # Container operation succeeds
+        FlextTestsMatchers.assert_result_success(
+            get_failure
+        )  # Container operation succeeds
         retrieved_failure = cast("FlextResult[object]", get_failure.value)
-        FlextMatchers.assert_result_failure(
+        FlextTestsMatchers.assert_result_failure(
             retrieved_failure,
         )  # But contained result fails
 
     def test_builders_integration_comprehensive(self) -> None:
         """Test comprehensive TestBuilders integration."""
         # Create container using builder
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test with various factory-created objects
-        entities = [TestEntityFactory.create() for _ in range(5)]
-        value_objects = [TestValueObjectFactory.create() for _ in range(3)]
+        entities = [FlextTestsFactories.TestEntityFactory.create() for _ in range(5)]
+        value_objects = [
+            FlextTestsFactories.TestValueObjectFactory.create() for _ in range(3)
+        ]
 
         # Register factory-created objects
         for i, entity in enumerate(entities):
@@ -559,15 +594,15 @@ class TestFlextContainerIntegration:
         # Test retrieval of factory-created objects
         for i in range(len(entities)):
             entity_result = container.get(f"entity_{i}")
-            FlextMatchers.assert_result_success(entity_result)
+            FlextTestsMatchers.assert_result_success(entity_result)
 
         for i in range(len(value_objects)):
             value_obj_result = container.get(f"value_obj_{i}")
-            FlextMatchers.assert_result_success(value_obj_result)
+            FlextTestsMatchers.assert_result_success(value_obj_result)
 
     def test_hypothesis_comprehensive_validation(self) -> None:
         """Test comprehensive validation with hypothesis strategies."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         @given(
             st.dictionaries(
@@ -603,12 +638,14 @@ class TestFlextContainerIntegration:
             # Register services
             for name, service in clean_services.items():
                 result = container.register(name, service)
-                FlextMatchers.assert_result_success(result)
+                FlextTestsMatchers.assert_result_success(
+                    cast("FlextResult[object]", result)
+                )
 
             # Verify retrieval
             for name, expected_service in clean_services.items():
                 get_result = container.get(name)
-                FlextMatchers.assert_result_success(get_result, expected_service)
+                FlextTestsMatchers.assert_result_success(get_result, expected_service)
 
         # Run the property-based test
         test_various_service_types()
@@ -619,7 +656,7 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_container_configuration_comprehensive(self) -> None:
         """Test container configuration methods for complete coverage."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test configure_container with config dict
         config_dict: dict[
@@ -634,18 +671,26 @@ class TestFlextContainerAdvancedCoverage:
             "validation_enabled": True,
             "environment": "test",
         }
-        config_result = container.configure_container(config_dict)
-        FlextMatchers.assert_result_success(config_result)
+        config_result = container.configure_container(
+            cast("dict[str, object]", config_dict)
+        )
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", config_result)
+        )
 
         # Test get_container_config
         config_get_result = container.get_container_config()
-        FlextMatchers.assert_result_success(config_get_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", config_get_result)
+        )
         config_data = config_get_result.value
         assert isinstance(config_data, dict)
 
         # Test get_configuration_summary
         summary_result = container.get_configuration_summary()
-        FlextMatchers.assert_result_success(summary_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", summary_result)
+        )
         summary_data = summary_result.value
         assert isinstance(summary_data, dict)
         # Verify the summary contains expected configuration information
@@ -654,13 +699,15 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_environment_scoped_container_creation(self) -> None:
         """Test creation of environment-scoped containers."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test environment scoped container creation
         env_container_result = container.create_environment_scoped_container(
             "production",
         )
-        FlextMatchers.assert_result_success(env_container_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", env_container_result)
+        )
 
         env_container = env_container_result.value
         assert isinstance(env_container, FlextContainer)
@@ -668,11 +715,13 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test with different environments
         test_container_result = container.create_environment_scoped_container("test")
-        FlextMatchers.assert_result_success(test_container_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", test_container_result)
+        )
 
     def test_get_typed_comprehensive(self) -> None:
         """Test typed service retrieval with comprehensive type checking."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register services with known types
         string_service = "test_string_service"
@@ -685,13 +734,13 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test typed retrieval with correct types
         string_result = container.get_typed("string_service", str)
-        FlextMatchers.assert_result_success(string_result, string_service)
+        FlextTestsUtilities.TestUtilities.assert_result_success(string_result)
 
         int_result = container.get_typed("int_service", int)
-        FlextMatchers.assert_result_success(int_result, int_service)
+        FlextTestsUtilities.TestUtilities.assert_result_success(int_result)
 
         dict_result = container.get_typed("dict_service", dict)
-        FlextMatchers.assert_result_success(dict_result, dict_service)
+        FlextTestsUtilities.TestUtilities.assert_result_success(dict_result)
 
         # Test typed retrieval with wrong types (should handle gracefully)
         wrong_type_result = container.get_typed("string_service", int)
@@ -700,16 +749,20 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_service_info_and_metadata(self) -> None:
         """Test service information and metadata retrieval."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register service with metadata
-        service_data = ServiceDataFactory.create(name="info_service", port=9090)
+        service_data = FlextTestsDomains.create_service(name="info_service", port=9090)
         register_result = container.register("info_service", service_data)
-        FlextMatchers.assert_result_success(register_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", register_result)
+        )
 
         # Test get_info
         info_result = container.get_info("info_service")
-        FlextMatchers.assert_result_success(info_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", info_result)
+        )
 
         info_data = info_result.value
         assert isinstance(info_data, dict)
@@ -718,11 +771,13 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test get_info for non-existent service
         missing_info_result = container.get_info("non_existent_service")
-        FlextMatchers.assert_result_failure(missing_info_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", missing_info_result)
+        )
 
     def test_get_or_create_pattern(self) -> None:
         """Test get_or_create functionality for lazy initialization."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test get_or_create with new service
         def create_new_service() -> FlextTypes.Core.Dict:
@@ -732,7 +787,7 @@ class TestFlextContainerAdvancedCoverage:
             "lazy_service",
             create_new_service,
         )
-        FlextMatchers.assert_result_success(get_or_create_result)
+        FlextTestsMatchers.assert_result_success(get_or_create_result)
 
         first_service = get_or_create_result.value
         assert isinstance(first_service, dict)
@@ -740,7 +795,7 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test get_or_create with existing service (should return existing)
         second_get_result = container.get_or_create("lazy_service", create_new_service)
-        FlextMatchers.assert_result_success(second_get_result)
+        FlextTestsMatchers.assert_result_success(second_get_result)
 
         second_service = second_get_result.value
         # Should be the same service instance/data
@@ -748,7 +803,7 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_auto_wire_functionality(self) -> None:
         """Test auto-wiring dependency resolution."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register dependencies first
         database_config = {"host": "localhost", "port": 5432}
@@ -763,18 +818,20 @@ class TestFlextContainerAdvancedCoverage:
                 self.config = {"additional_config": "test"}
 
         auto_wire_result = container.auto_wire(CompositeService, "composite_service")
-        FlextMatchers.assert_result_success(auto_wire_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", auto_wire_result)
+        )
 
         # Verify the auto-wired service exists
         assert container.has("composite_service")
 
         # Retrieve and verify the auto-wired service
         composite_result = container.get("composite_service")
-        FlextMatchers.assert_result_success(composite_result)
+        FlextTestsMatchers.assert_result_success(composite_result)
 
     def test_advanced_factory_patterns(self) -> None:
         """Test advanced factory patterns with complex dependencies."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register dependencies for factory
         container.register("app_config", {"environment": "test", "debug": True})
@@ -793,14 +850,14 @@ class TestFlextContainerAdvancedCoverage:
             "complex_service_factory",
             create_complex_service,
         )
-        FlextMatchers.assert_result_success(factory_register_result)
+        FlextTestsUtilities.TestUtilities.assert_result_success(factory_register_result)
 
         # Get service from factory multiple times
         first_get = container.get("complex_service_factory")
-        FlextMatchers.assert_result_success(first_get)
+        FlextTestsUtilities.TestUtilities.assert_result_success(first_get)
 
         second_get = container.get("complex_service_factory")
-        FlextMatchers.assert_result_success(second_get)
+        FlextTestsUtilities.TestUtilities.assert_result_success(second_get)
 
         # Each call should create a new instance (factory pattern)
         first_service = first_get.value
@@ -816,34 +873,44 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_comprehensive_error_scenarios(self) -> None:
         """Test comprehensive error scenarios for robust error handling."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test registration with invalid names
         empty_name_result = container.register("", "service")
-        FlextMatchers.assert_result_failure(empty_name_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", empty_name_result)
+        )
 
         # Test getting non-existent service
         missing_service_result = container.get("definitely_does_not_exist")
-        FlextMatchers.assert_result_failure(missing_service_result)
+        FlextTestsMatchers.assert_result_failure(missing_service_result)
 
         # Test unregistering non-existent service
         unregister_missing_result = container.unregister("also_does_not_exist")
-        FlextMatchers.assert_result_failure(unregister_missing_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", unregister_missing_result)
+        )
 
         # Test info for non-existent service
         info_missing_result = container.get_info("missing_service_info")
-        FlextMatchers.assert_result_failure(info_missing_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", info_missing_result)
+        )
 
     def test_service_lifecycle_complete(self) -> None:
         """Test complete service lifecycle from registration to cleanup."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Phase 1: Registration
         initial_count = container.get_service_count()
 
-        service_data = ServiceDataFactory.create(name="lifecycle_service", port=8080)
+        service_data = FlextTestsDomains.create_service(
+            name="lifecycle_service", port=8080
+        )
         register_result = container.register("lifecycle_service", service_data)
-        FlextMatchers.assert_result_success(register_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", register_result)
+        )
 
         # Verify registration
         assert container.get_service_count() == initial_count + 1
@@ -852,18 +919,22 @@ class TestFlextContainerAdvancedCoverage:
 
         # Phase 2: Usage
         get_result = container.get("lifecycle_service")
-        FlextMatchers.assert_result_success(get_result, service_data)
+        FlextTestsMatchers.assert_result_success(get_result, service_data)
 
         # Phase 3: Metadata access
         services_list = container.list_services()
         assert "lifecycle_service" in services_list
 
         info_result = container.get_info("lifecycle_service")
-        FlextMatchers.assert_result_success(info_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", info_result)
+        )
 
         # Phase 4: Cleanup
         unregister_result = container.unregister("lifecycle_service")
-        FlextMatchers.assert_result_success(unregister_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", unregister_result)
+        )
 
         # Verify cleanup
         assert not container.has("lifecycle_service")
@@ -872,10 +943,12 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_memory_and_performance_edge_cases(self) -> None:
         """Test memory management and performance edge cases."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test with MemoryProfiler from flext_tests
-        with MemoryProfiler.track_memory_leaks(max_increase_mb=10.0):
+        with FlextTestsPerformance.MemoryProfiler.track_memory_leaks(
+            max_increase_mb=10.0
+        ):
             # Register many services to test memory efficiency
             services_batch: FlextTypes.Core.Dict = {}
             for i in range(100):
@@ -890,7 +963,9 @@ class TestFlextContainerAdvancedCoverage:
 
             # Batch register
             batch_result = container.batch_register(services_batch)
-            FlextMatchers.assert_result_success(batch_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", batch_result)
+            )
 
             # Verify all services are registered
             assert container.get_service_count() >= 100
@@ -899,11 +974,13 @@ class TestFlextContainerAdvancedCoverage:
             for i in range(100):
                 service_name = f"performance_service_{i}"
                 get_result = container.get(service_name)
-                FlextMatchers.assert_result_success(get_result)
+                FlextTestsMatchers.assert_result_success(get_result)
 
             # Clear all services
             clear_result = container.clear()
-            FlextMatchers.assert_result_success(clear_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", clear_result)
+            )
 
             # Verify cleanup
             assert container.get_service_count() == 0
@@ -912,7 +989,7 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_hypothesis_edge_cases_comprehensive(self) -> None:
         """Test edge cases using hypothesis for comprehensive validation."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         @given(
             service_name=st.text(min_size=1, max_size=50).filter(lambda x: x.strip()),
@@ -930,18 +1007,22 @@ class TestFlextContainerAdvancedCoverage:
 
             # Register service
             register_result = container.register(service_name.strip(), service_data)
-            FlextMatchers.assert_result_success(register_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", register_result)
+            )
 
             # Verify registration
             assert container.has(service_name.strip())
 
             # Retrieve service
             get_result = container.get(service_name.strip())
-            FlextMatchers.assert_result_success(get_result, service_data)
+            FlextTestsMatchers.assert_result_success(get_result, service_data)
 
             # Cleanup for next iteration
             unregister_result = container.unregister(service_name.strip())
-            FlextMatchers.assert_result_success(unregister_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", unregister_result)
+            )
 
         # Run the property-based test
         test_various_data_types()
@@ -955,36 +1036,46 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test ServiceKey validation - cast return type for test compatibility
         validation_result = cast("FlextResult[str]", key.validate("valid_service"))
-        FlextMatchers.assert_result_success(validation_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", validation_result)
+        )
 
         # Test empty string validation
         empty_result = cast("FlextResult[str]", key.validate(""))
-        FlextMatchers.assert_result_failure(empty_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", empty_result)
+        )
 
         # Test whitespace validation
         whitespace_result = cast("FlextResult[str]", key.validate("   "))
-        FlextMatchers.assert_result_failure(whitespace_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", whitespace_result)
+        )
 
         # Test with container usage
-        container = TestBuilders.container().build()
-        service_data = ServiceDataFactory.create(name="key_test", port=9000)
+        container = FlextTestsBuilders.container().build()
+        service_data = FlextTestsDomains.create_service(name="key_test", port=9000)
 
         register_result = container.register(key.name, service_data)
-        FlextMatchers.assert_result_success(register_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", register_result)
+        )
 
         get_result = container.get(key.name)
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
 
     def test_commands_comprehensive(self) -> None:
         """Test FlextContainer.Commands functionality comprehensively."""
         # Test RegisterService command
         register_cmd = FlextContainer.Commands.RegisterService.create(
             "test_service",
-            ServiceDataFactory.create(name="cmd_test", port=8080),
+            FlextTestsDomains.create_service(name="cmd_test", port=8080),
         )
 
         validation_result = register_cmd.validate_command()
-        FlextMatchers.assert_result_success(validation_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", validation_result)
+        )
 
         assert register_cmd.service_name == "test_service"
         assert register_cmd.command_type == "register_service"
@@ -1001,28 +1092,36 @@ class TestFlextContainerAdvancedCoverage:
         )
 
         factory_validation = factory_cmd.validate_command()
-        FlextMatchers.assert_result_success(factory_validation)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", factory_validation)
+        )
 
         # Test UnregisterService command
         unregister_cmd = FlextContainer.Commands.UnregisterService.create(
             "test_service",
         )
         unregister_validation = unregister_cmd.validate_command()
-        FlextMatchers.assert_result_success(unregister_validation)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", unregister_validation)
+        )
 
         # Test validation failures
         empty_register_cmd = FlextContainer.Commands.RegisterService(
             service_name="", service_instance=None
         )
         empty_validation = empty_register_cmd.validate_command()
-        FlextMatchers.assert_result_failure(empty_validation)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", empty_validation)
+        )
 
     def test_queries_comprehensive(self) -> None:
         """Test FlextContainer.Queries functionality comprehensively."""
         # Test GetService query
         get_query = FlextContainer.Queries.GetService.create("test_service", "str")
         query_validation = get_query.validate_query()
-        FlextMatchers.assert_result_success(query_validation)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", query_validation)
+        )
 
         assert get_query.service_name == "test_service"
         assert get_query.expected_type == "str"
@@ -1041,16 +1140,22 @@ class TestFlextContainerAdvancedCoverage:
         # Test validation failure
         empty_get_query = FlextContainer.Queries.GetService("", None)
         empty_validation = empty_get_query.validate_query()
-        FlextMatchers.assert_result_failure(empty_validation)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", empty_validation)
+        )
 
     def test_service_registrar_comprehensive(self) -> None:
         """Test FlextContainer.ServiceRegistrar functionality comprehensively."""
         registrar = FlextContainer.ServiceRegistrar()
 
         # Test service registration
-        service_data = ServiceDataFactory.create(name="registrar_test", port=3000)
+        service_data = FlextTestsDomains.create_service(
+            name="registrar_test", port=3000
+        )
         register_result = registrar.register_service("test_service", service_data)
-        FlextMatchers.assert_result_success(register_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", register_result)
+        )
 
         # Test service count and names
         assert registrar.get_service_count() == 1
@@ -1062,7 +1167,9 @@ class TestFlextContainerAdvancedCoverage:
             return {"factory": True}
 
         factory_result = registrar.register_factory("factory_service", test_factory)
-        FlextMatchers.assert_result_success(factory_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", factory_result)
+        )
         assert registrar.get_service_count() == 2
 
         # Test invalid factory (requires parameters)
@@ -1070,24 +1177,32 @@ class TestFlextContainerAdvancedCoverage:
             return required_param
 
         invalid_result = registrar.register_factory("invalid", invalid_factory)
-        FlextMatchers.assert_result_failure(invalid_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", invalid_result)
+        )
 
         # Test unregister
         unregister_result = registrar.unregister_service("test_service")
-        FlextMatchers.assert_result_success(unregister_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", unregister_result)
+        )
         assert registrar.get_service_count() == 1
 
         # Test clear all
         clear_result = registrar.clear_all()
-        FlextMatchers.assert_result_success(clear_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", clear_result)
+        )
         assert registrar.get_service_count() == 0
 
     def test_service_retriever_comprehensive(self) -> None:
         """Test FlextContainer.ServiceRetriever functionality comprehensively."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Register services for retrieval testing
-        service_data = ServiceDataFactory.create(name="retriever_test", port=4000)
+        service_data = FlextTestsDomains.create_service(
+            name="retriever_test", port=4000
+        )
         container.register("test_service", service_data)
 
         def factory_service() -> FlextTypes.Core.Dict:
@@ -1097,7 +1212,9 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test service info retrieval
         info_result = container.get_info("test_service")
-        FlextMatchers.assert_result_success(info_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", info_result)
+        )
         info = cast("ServiceInfo", info_result.value)
         assert info.get("name") == "test_service"
         # kind might be present as "instance"
@@ -1106,7 +1223,9 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test factory info retrieval
         factory_info_result = container.get_info("factory_service")
-        FlextMatchers.assert_result_success(factory_info_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", factory_info_result)
+        )
         factory_info = cast("ServiceInfo", factory_info_result.value)
         assert factory_info.get("name") == "factory_service"
         # Check that we have the expected name field, kind might not exist
@@ -1126,16 +1245,18 @@ class TestFlextContainerAdvancedCoverage:
         assert isinstance(global_container, FlextContainer)
 
         # Test global registration
-        global_service = ServiceDataFactory.create(name="global_test", port=5000)
+        global_service = FlextTestsDomains.create_service(name="global_test", port=5000)
         register_result = FlextContainer.register_global(
             "global_service",
             global_service,
         )
-        FlextMatchers.assert_result_success(register_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", register_result)
+        )
 
         # Test global typed retrieval
         typed_result = FlextContainer.get_global_typed("global_service", object)
-        FlextMatchers.assert_result_success(typed_result)
+        FlextTestsMatchers.assert_result_success(typed_result)
 
         # Test configure global
         new_container = FlextContainer()
@@ -1169,10 +1290,10 @@ class TestFlextContainerAdvancedCoverage:
             utilities["configure_dependencies"],
         )
         config_result = configure_func()
-        FlextMatchers.assert_result_success(config_result)
+        FlextTestsMatchers.assert_result_success(config_result)
 
         # Test get_service utility with namespaced lookup
-        service_data = ServiceDataFactory.create(name="module_test", port=6000)
+        service_data = FlextTestsDomains.create_service(name="module_test", port=6000)
         container.register("test_module.namespaced_service", service_data)
 
         get_service_func = cast(
@@ -1180,11 +1301,11 @@ class TestFlextContainerAdvancedCoverage:
             utilities["get_service"],
         )
         service_result = get_service_func("namespaced_service")
-        FlextMatchers.assert_result_success(service_result)
+        FlextTestsMatchers.assert_result_success(service_result)
 
     def test_validation_edge_cases_comprehensive(self) -> None:
         """Test comprehensive validation edge cases."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test service name validation edge cases
         validation_tests = [
@@ -1195,27 +1316,37 @@ class TestFlextContainerAdvancedCoverage:
             ("  valid  ", True),  # Valid with whitespace (gets stripped)
         ]
 
-        test_service = ServiceDataFactory.create(name="validation_test", port=7000)
+        test_service = FlextTestsDomains.create_service(
+            name="validation_test", port=7000
+        )
 
         for name, should_succeed in validation_tests:
             register_result = container.register(name, test_service)
             if should_succeed:
-                FlextMatchers.assert_result_success(register_result)
+                FlextTestsMatchers.assert_result_success(
+                    cast("FlextResult[object]", register_result)
+                )
                 # Clean up
                 container.unregister(name.strip())
             else:
-                FlextMatchers.assert_result_failure(register_result)
+                FlextTestsMatchers.assert_result_failure(
+                    cast("FlextResult[object]", register_result)
+                )
 
         # Test static validation method
         static_valid = FlextContainer.flext_validate_service_name("valid_name")
-        FlextMatchers.assert_result_success(static_valid)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", static_valid)
+        )
 
         static_invalid = FlextContainer.flext_validate_service_name("")
-        FlextMatchers.assert_result_failure(static_invalid)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", static_invalid)
+        )
 
     def test_representation_and_introspection(self) -> None:
         """Test container representation and introspection methods."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test empty container representation
         repr_empty = repr(container)
@@ -1223,7 +1354,9 @@ class TestFlextContainerAdvancedCoverage:
 
         # Add services and test representation
         for i in range(3):
-            service = ServiceDataFactory.create(name=f"service_{i}", port=8000 + i)
+            service = FlextTestsDomains.create_service(
+                name=f"service_{i}", port=8000 + i
+            )
             container.register(f"service_{i}", service)
 
         repr_filled = repr(container)
@@ -1240,7 +1373,7 @@ class TestFlextContainerAdvancedCoverage:
 
     def test_comprehensive_configuration_methods(self) -> None:
         """Test comprehensive configuration methods with all parameters."""
-        container = TestBuilders.container().build()
+        container = FlextTestsBuilders.container().build()
 
         # Test comprehensive configuration
         comprehensive_config: dict[
@@ -1257,29 +1390,41 @@ class TestFlextContainerAdvancedCoverage:
             "enable_factory_cache": False,
         }
 
-        config_result = container.configure_container(comprehensive_config)
-        FlextMatchers.assert_result_success(config_result)
+        config_result = container.configure_container(
+            cast("dict[str, object]", comprehensive_config)
+        )
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", config_result)
+        )
 
         # Test get container config
         get_config_result = container.get_container_config()
-        FlextMatchers.assert_result_success(get_config_result)
-        config = cast("FlextTypes.Core.Dict", get_config_result.value)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", get_config_result)
+        )
+        config = get_config_result.value
         assert config["environment"] == "production"
         assert config["max_services"] == 500
 
         # Test environment scoped container
         scoped_result = container.create_environment_scoped_container("test")
-        FlextMatchers.assert_result_success(scoped_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", scoped_result)
+        )
         scoped_container = scoped_result.value
 
         scoped_config_result = scoped_container.get_container_config()
-        FlextMatchers.assert_result_success(scoped_config_result)
-        scoped_config = cast("FlextTypes.Core.Dict", scoped_config_result.value)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", scoped_config_result)
+        )
+        scoped_config = scoped_config_result.value
         assert scoped_config["environment"] == "test"
 
         # Test configuration summary
         summary_result = container.get_configuration_summary()
-        FlextMatchers.assert_result_success(summary_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", summary_result)
+        )
         summary = cast("ConfigurationSummary", summary_result.value)
         assert "container_config" in summary
         assert "service_statistics" in summary
@@ -1300,8 +1445,12 @@ class TestFlextContainerAdvancedCoverage:
         ]
 
         for invalid_config in invalid_configs:
-            invalid_result = container.configure_container(invalid_config)
-            FlextMatchers.assert_result_failure(invalid_result)
+            invalid_result = container.configure_container(
+                cast("FlextTypes.Core.Dict", invalid_config)
+            )
+            FlextTestsMatchers.assert_result_failure(
+                cast("FlextResult[object]", invalid_result)
+            )
 
     def test_command_validation_edge_cases_coverage(self) -> None:
         """Test command validation edge cases to cover missing lines."""
@@ -1362,7 +1511,9 @@ class TestFlextContainerAdvancedCoverage:
         # Test service registration through registrar directly
         service_obj = {"internal": "test_data"}
         reg_result = registrar.register_service("internal_service", service_obj)
-        FlextMatchers.assert_result_success(reg_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", reg_result)
+        )
 
         # Test factory registration through registrar directly
         def internal_factory() -> FlextTypes.Core.Headers:
@@ -1372,7 +1523,9 @@ class TestFlextContainerAdvancedCoverage:
             "internal_factory",
             internal_factory,
         )
-        FlextMatchers.assert_result_success(factory_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", factory_result)
+        )
 
         # Test service count and names through registrar
         count = registrar.get_service_count()
@@ -1389,12 +1542,14 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test get_service through retriever
         get_result = retriever.get_service("internal_service")
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
         assert get_result.value == service_obj
 
         # Test get_service_info through retriever
         info_result = retriever.get_service_info("internal_service")
-        FlextMatchers.assert_result_success(info_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", info_result)
+        )
         info = cast("ServiceInfo", info_result.value)
         assert info.get("name") == "internal_service"
         # Service info might have 'kind' or 'type' key, test both possibilities
@@ -1403,7 +1558,7 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test factory service retrieval through retriever
         factory_get = retriever.get_service("internal_factory")
-        FlextMatchers.assert_result_success(factory_get)
+        FlextTestsMatchers.assert_result_success(factory_get)
         factory_obj = factory_get.value
         assert isinstance(factory_obj, dict)
         assert factory_obj["internal_factory"] == "created"
@@ -1416,12 +1571,16 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test unregister functionality through registrar
         unreg_result = registrar.unregister_service("internal_service")
-        FlextMatchers.assert_result_success(unreg_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", unreg_result)
+        )
         assert not registrar.has_service("internal_service")
 
         # Test clear_all functionality through registrar
         clear_result = registrar.clear_all()
-        FlextMatchers.assert_result_success(clear_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", clear_result)
+        )
         assert registrar.get_service_count() == 0
 
     def test_advanced_error_scenarios_coverage(self) -> None:
@@ -1430,19 +1589,25 @@ class TestFlextContainerAdvancedCoverage:
 
         # Test retrieval of non-existent service
         get_result = container.get("completely_nonexistent_service")
-        FlextMatchers.assert_result_failure(get_result)
+        FlextTestsMatchers.assert_result_failure(get_result)
 
         # Test get_typed with non-existent service
         typed_result = container.get_typed("completely_nonexistent_service", str)
-        FlextMatchers.assert_result_failure(typed_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", typed_result)
+        )
 
         # Test get_info for non-existent service
         info_result = container.get_info("completely_nonexistent_service")
-        FlextMatchers.assert_result_failure(info_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", info_result)
+        )
 
         # Test unregister non-existent service
         unreg_result = container.unregister("completely_nonexistent_service")
-        FlextMatchers.assert_result_failure(unreg_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", unreg_result)
+        )
 
         # Test factory registration with validation scenarios
         def failing_factory() -> str:
@@ -1451,11 +1616,15 @@ class TestFlextContainerAdvancedCoverage:
 
         # Register factory that could fail during creation
         result = container.register_factory("failing_factory", failing_factory)
-        FlextMatchers.assert_result_success(result)  # Registration should succeed
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", result)
+        )  # Registration should succeed
 
         # Try to get the service (this will trigger factory execution)
         get_result = container.get("failing_factory")
-        FlextMatchers.assert_result_failure(get_result)  # Should fail during execution
+        FlextTestsMatchers.assert_result_failure(
+            get_result
+        )  # Should fail during execution
 
         # Test auto_wire with complex scenarios
         class ServiceRequiringDependency:
@@ -1480,11 +1649,13 @@ class TestFlextContainerAdvancedCoverage:
             "complex_edge_case_service",
             complex_service,
         )
-        FlextMatchers.assert_result_success(complex_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", complex_result)
+        )
 
         # Test retrieval of complex service
         complex_get = container.get("complex_edge_case_service")
-        FlextMatchers.assert_result_success(complex_get)
+        FlextTestsMatchers.assert_result_success(complex_get)
         retrieved = complex_get.value
         assert isinstance(retrieved, dict)
         assert retrieved["nested"]["data"] == [1, 2, 3]
@@ -1508,11 +1679,13 @@ class TestFlextContainerAdvancedCoverage:
             "complex_global_service",
             complex_global_service,
         )
-        FlextMatchers.assert_result_success(global_result)
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", global_result)
+        )
 
         # Test global retrieval with complex validation
         get_result = global_container.get("complex_global_service")
-        FlextMatchers.assert_result_success(get_result)
+        FlextTestsMatchers.assert_result_success(get_result)
         retrieved_global = get_result.value
         assert isinstance(retrieved_global, dict)
         assert retrieved_global["global_config"]["environment"] == "test"
@@ -1524,7 +1697,7 @@ class TestFlextContainerAdvancedCoverage:
 
         # Verify global service is accessible from second reference
         second_get = second_global.get("complex_global_service")
-        FlextMatchers.assert_result_success(second_get)
+        FlextTestsMatchers.assert_result_success(second_get)
         assert second_get.value == complex_global_service
 
         # Test global container configuration with advanced settings
@@ -1536,8 +1709,12 @@ class TestFlextContainerAdvancedCoverage:
             "performance_monitoring": True,
             "environment": "test",  # Valid environment
         }
-        global_config_result = global_container.configure_container(global_config_dict)
-        FlextMatchers.assert_result_success(global_config_result)
+        global_config_result = global_container.configure_container(
+            cast("dict[str, object]", global_config_dict)
+        )
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", global_config_result)
+        )
 
         # Test module utilities creation if available
         try:
@@ -1556,7 +1733,9 @@ class TestFlextContainerAdvancedCoverage:
                 "complex_global_service",
                 dict,
             )
-            FlextMatchers.assert_result_success(typed_global_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", typed_global_result)
+            )
             assert isinstance(typed_global_result.value, dict)
         except (AttributeError, TypeError):
             # Method might not exist
@@ -1568,7 +1747,9 @@ class TestFlextContainerAdvancedCoverage:
                 "another_global_service",
                 {"global": True, "priority": "high"},
             )
-            FlextMatchers.assert_result_success(register_global_result)
+            FlextTestsMatchers.assert_result_success(
+                cast("FlextResult[object]", register_global_result)
+            )
         except (AttributeError, TypeError):
             # Method might not exist
             pass

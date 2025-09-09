@@ -19,6 +19,7 @@ from enum import StrEnum
 from typing import Self, NotRequired, TypedDict, Unpack
 
 from pydantic import ConfigDict, Field
+from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextConfig, FlextModels, FlextResult
 
@@ -175,7 +176,7 @@ class ECommerceConfig(FlextConfig):
     enable_email_notifications: bool = True
     enable_sms_notifications: bool = False
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         extra="allow",
         str_strip_whitespace=True,
         validate_assignment=True,

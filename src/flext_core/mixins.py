@@ -202,22 +202,6 @@ class FlextMixins:
     # ==========================================================================
 
     @staticmethod
-    def flext_logger(
-        obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
-    ) -> FlextLogger:
-        """Get logger for object."""
-        # Check if object already has a proper logger
-        existing_logger = getattr(obj, "_logger", None)
-        if isinstance(existing_logger, FlextLogger):
-            return existing_logger
-
-        # Create new logger and assign it to the object
-        logger = FlextLogger(obj.__class__.__name__)
-        # Store string representation for compatibility with tests that expect str
-        obj._logger = str(logger)
-        return logger
-
-    @staticmethod
     def get_logger(
         obj: FlextProtocols.Foundation.SupportsDynamicAttributes,
     ) -> FlextLogger:
@@ -231,7 +215,7 @@ class FlextMixins:
         **kwargs: object,
     ) -> None:
         """Log operation."""
-        logger = FlextMixins.flext_logger(obj)
+        logger = FlextLogger(obj.__class__.__name__)
         if hasattr(logger, "info"):
             logger.info(f"Operation: {operation}", extra=kwargs)
 
@@ -242,7 +226,7 @@ class FlextMixins:
         **kwargs: object,
     ) -> None:
         """Log error."""
-        logger = FlextMixins.flext_logger(obj)
+        logger = FlextLogger(obj.__class__.__name__)
         if hasattr(logger, "error"):
             logger.error(message, extra=kwargs)
 
@@ -253,7 +237,7 @@ class FlextMixins:
         **kwargs: object,
     ) -> None:
         """Log info message."""
-        logger = FlextMixins.flext_logger(obj)
+        logger = FlextLogger(obj.__class__.__name__)
         if hasattr(logger, "info"):
             logger.info(message, extra=kwargs)
 
@@ -264,7 +248,7 @@ class FlextMixins:
         **kwargs: object,
     ) -> None:
         """Log debug message."""
-        logger = FlextMixins.flext_logger(obj)
+        logger = FlextLogger(obj.__class__.__name__)
         if hasattr(logger, "debug"):
             logger.debug(message, extra=kwargs)
 
@@ -850,7 +834,7 @@ class FlextMixins:
             # Para isso, validamos com um log_level seguro e reatribuímos o informado na saída.
             raw_input_log = config.get("log_level")
             cfg_res = FlextResult[FlextTypes.Config.ConfigDict].ok(
-                settings_res.value.model_dump()
+                cast("FlextTypes.Config.ConfigDict", settings_res.value.to_dict())
             )
             if cfg_res.is_failure:
                 return FlextResult[FlextTypes.Config.ConfigDict].fail(
@@ -1013,10 +997,6 @@ class FlextMixins:
         def log_error(self, message: str, **kwargs: object) -> None:
             """Log error message."""
             FlextMixins.log_error(self, message, **kwargs)
-
-        def flext_logger(self) -> object:
-            """Get FlextLogger for this object."""
-            return FlextMixins.flext_logger(self)
 
         def log_debug(self, message: str, **kwargs: object) -> None:
             """Log debug message."""

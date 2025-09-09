@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 
-from flext_core import FlextMixins, FlextResult
+from flext_core import FlextMixins, FlextResult, FlextLogger
 from flext_core import FlextTypes
 
 # Constants
@@ -43,7 +43,7 @@ class EnhancedUserService:
         self._mixins = FlextMixins()
 
         # Get logger for this instance
-        self._logger = FlextMixins.flext_logger(self)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     def create_user(self, username: str, email: str, age: int) -> FlextResult[User]:
         """Create a user with validation and logging."""
@@ -93,7 +93,7 @@ class CacheableService:
     def __init__(self) -> None:
         """Initialize cacheable service."""
         self._cache: FlextTypes.Core.Dict = {}
-        self._logger = FlextMixins.flext_logger(self)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     def get_cached_data(self, key: str) -> FlextResult[object]:
         """Get data from cache."""
@@ -128,7 +128,7 @@ class ValidationService:
 
     def __init__(self) -> None:
         """Initialize validation service."""
-        self._logger = FlextMixins.flext_logger(self)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     def validate_email(self, email: str) -> FlextResult[bool]:
         """Validate email format."""
@@ -161,7 +161,7 @@ class ComposedUserManager:
         self._user_service = EnhancedUserService()
         self._cache_service = CacheableService()
         self._validation_service = ValidationService()
-        self._logger = FlextMixins.flext_logger(self)
+        self._logger = FlextLogger(self.__class__.__name__)
 
     def create_and_cache_user(
         self,

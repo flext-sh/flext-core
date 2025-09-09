@@ -21,25 +21,29 @@ import pytest
 
 from flext_core import FlextLogger, FlextTypes
 
+logger = FlextLogger(__name__)
+
 T = TypeVar("T")
 
 
-def _is_not_exception[T](value: T | BaseException) -> TypeGuard[T]:
-    """Type guard to filter out BaseException instances."""
-    return not isinstance(value, BaseException)
+class FlextTestsAsyncs:
+    """Unified async testing utilities for FLEXT ecosystem.
 
+    Consolidates all async testing patterns, concurrency testing, timeout management,
+    async context management, and mock utilities into a single comprehensive class.
+    """
 
-class AsyncMockProtocol(Protocol):
-    """Protocol for async mock functions."""
+    @staticmethod
+    def _is_not_exception(value: T | BaseException) -> TypeGuard[T]:
+        """Type guard to filter out BaseException instances."""
+        return not isinstance(value, BaseException)
 
-    async def __call__(self, *args: object, **kwargs: object) -> object: ...
+    class AsyncMockProtocol(Protocol):
+        """Protocol for async mock functions."""
 
+        async def __call__(self, *args: object, **kwargs: object) -> object: ...
 
-logger = FlextLogger(__name__)
-
-
-class AsyncTestUtils:
-    """Comprehensive async testing utilities with timeout and concurrency support."""
+    # === Core Async Testing Utilities ===
 
     @staticmethod
     async def wait_for_condition(
@@ -76,13 +80,7 @@ class AsyncTestUtils:
         *,
         timeout_seconds: float = 5.0,
     ) -> T:
-        """Run coroutine with timeout, with light retry if callable is discoverable.
-
-        If the provided awaitable raises before the timeout and the originating
-        coroutine function can be discovered from the caller frame, the call is
-        retried until success or timeout. This preserves real behavior in tests
-        that use transiently failing coroutines.
-        """
+        """Run coroutine with timeout, with light retry if callable is discoverable."""
         start = time.time()
 
         async def attempt_once() -> T:
@@ -151,7 +149,9 @@ class AsyncTestUtils:
         if return_exceptions:
             results = await asyncio.gather(*coroutines, return_exceptions=True)
             # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
+            filtered_results: list[T] = [
+                r for r in results if FlextTestsAsyncs._is_not_exception(r)
+            ]
             return filtered_results
 
         # When return_exceptions=False, asyncio.gather will raise on first exception
@@ -164,7 +164,7 @@ class AsyncTestUtils:
         return_exceptions: bool = False,
     ) -> list[T]:
         """Run coroutines from a list concurrently."""
-        return await AsyncTestUtils.run_concurrently(
+        return await FlextTestsAsyncs.run_concurrently(
             *coroutines,
             return_exceptions=return_exceptions,
         )
@@ -191,11 +191,12 @@ class AsyncTestUtils:
         if return_exceptions:
             results = await asyncio.gather(*tasks, return_exceptions=True)
             # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [r for r in results if _is_not_exception(r)]
+            filtered_results: list[T] = [
+                r for r in results if FlextTestsAsyncs._is_not_exception(r)
+            ]
             return filtered_results
         # When return_exceptions=False, asyncio.gather will raise on first exception
         return await asyncio.gather(*tasks, return_exceptions=False)
-        # Type assertion: when return_exceptions=False, results is guaranteed to be list[T]
 
     @staticmethod
     async def retry_async(
@@ -224,9 +225,7 @@ class AsyncTestUtils:
         msg = "All retry attempts failed"
         raise RuntimeError(msg)
 
-
-class AsyncContextManagers:
-    """Async context managers for testing scenarios."""
+    # === Async Context Managers ===
 
     @staticmethod
     @asynccontextmanager
@@ -303,9 +302,43 @@ class AsyncContextManagers:
             msg = f"Event not set within {wait_duration} seconds"
             raise TimeoutError(msg) from e
 
+    @staticmethod
+    @asynccontextmanager
+    async def create_test_context(
+        *,
+        setup_coro: Awaitable[T],
+        teardown_func: Callable[[T], Awaitable[None]],
+    ) -> AsyncGenerator[T]:
+        """Create a simple async context with explicit setup and teardown."""
+        resource = await setup_coro
+        try:
+            yield resource
+        finally:
+            await teardown_func(resource)
 
-class AsyncMockUtils:
-    """Utilities for mocking async functions and testing async behavior."""
+    @staticmethod
+    @asynccontextmanager
+    async def managed_resource(
+        value: T,
+        *,
+        cleanup_func: Callable[[T], Awaitable[None]] | None = None,
+    ) -> AsyncGenerator[T]:
+        """Yield a value and run optional async cleanup on exit."""
+        try:
+            yield value
+        finally:
+            if cleanup_func is not None:
+                await cleanup_func(value)
+
+    @staticmethod
+    @asynccontextmanager
+    async def timeout_context(duration: float) -> AsyncGenerator[None]:
+        """Timeout context built on asyncio.timeout to raise asyncio.TimeoutError."""
+        # Python 3.13+: asyncio.timeout is available for context-based timeouts
+        async with asyncio.timeout(duration):
+            yield
+
+    # === Mock Utilities ===
 
     @staticmethod
     def create_async_mock(
@@ -347,12 +380,7 @@ class AsyncMockUtils:
         failure_count: int | None = None,
         exception_type: type[Exception] | None = None,
     ) -> AsyncMockProtocol:
-        """Create async mock with either random failure or fixed failure count.
-
-        Two modes:
-        - Random: use failure_rate in [0,1] and optional exception instance.
-        - Counter: fail first `failure_count` calls with `exception_type`, then return success_value.
-        """
+        """Create async mock with either random failure or fixed failure count."""
         # Counter mode
         if failure_count is not None:
             remaining = int(failure_count)
@@ -378,82 +406,42 @@ class AsyncMockUtils:
 
         return flaky_random_mock
 
-
-class AsyncContextManager:
-    """Facade with simple async context helpers expected by tests.
-
-    Provides lightweight wrappers delegating to AsyncContextManagers implementations
-    or using asyncio primitives to offer concise async context managers.
-    """
-
     @staticmethod
-    @asynccontextmanager
-    async def create_test_context(
-        *,
-        setup_coro: Awaitable[T],
-        teardown_func: Callable[[T], Awaitable[None]],
-    ) -> AsyncGenerator[T]:
-        """Create a simple async context with explicit setup and teardown."""
-        resource = await setup_coro
-        try:
-            yield resource
-        finally:
-            await teardown_func(resource)
-
-    @staticmethod
-    @asynccontextmanager
-    async def managed_resource(
-        value: T,
-        *,
-        cleanup_func: Callable[[T], Awaitable[None]] | None = None,
-    ) -> AsyncGenerator[T]:
-        """Yield a value and run optional async cleanup on exit."""
-        try:
-            yield value
-        finally:
-            if cleanup_func is not None:
-                await cleanup_func(value)
-
-    @staticmethod
-    @asynccontextmanager
-    async def timeout_context(duration: float) -> AsyncGenerator[None]:
-        """Timeout context built on asyncio.timeout to raise asyncio.TimeoutError."""
-        # Python 3.13+: asyncio.timeout is available for context-based timeouts
-        async with asyncio.timeout(duration):
-            yield
-
-    @staticmethod
-    def create_delayed_async_mock(
+    def create_async_mock_with_side_effect(
         return_value: object = None,
-        delay: float = 0.1,
-        side_effect: Exception | None = None,
+        side_effect: object | None = None,
     ) -> AsyncMockProtocol:
-        """Deprecated placement; use AsyncMockUtils.create_delayed_async_mock."""
-        # Delegate to AsyncMockUtils for canonical implementation
-        return AsyncMockUtils.create_delayed_async_mock(
-            return_value=return_value,
-            delay=delay,
-            side_effect=side_effect,
-        )
+        """Create async mock with extended side_effect semantics."""
+        # Normalize list-like side effects
+        sequence: FlextTypes.Core.List | None = None
+        if isinstance(side_effect, (list, tuple)):
+            sequence = list(side_effect)
+
+        async def async_mock(*args: object, **kwargs: object) -> object:
+            nonlocal sequence
+            if sequence is not None:
+                if not sequence:
+                    msg = "Side effect sequence exhausted"
+                    raise RuntimeError(msg)
+                return sequence.pop(0)
+            if side_effect is None:
+                return return_value
+            if isinstance(side_effect, Exception):
+                raise side_effect
+            if callable(side_effect):
+                result = side_effect(*args, **kwargs)
+                if asyncio.iscoroutine(result):
+                    return await result
+                return result
+            # side_effect is some other non-callable object
+            return return_value
+
+        return async_mock
+
+    # === Fixture Utilities ===
 
     @staticmethod
-    def create_flaky_async_mock(
-        return_value: object = None,
-        failure_rate: float = 0.3,
-        exception: Exception | None = None,
-    ) -> AsyncMockProtocol:
-        """Deprecated placement; use AsyncMockUtils.create_flaky_async_mock."""
-        return AsyncMockUtils.create_flaky_async_mock(
-            return_value=return_value,
-            failure_rate=failure_rate,
-            exception=exception,
-        )
-
-
-class AsyncFixtureUtils:
-    """Utilities for creating async fixtures."""
-
-    @staticmethod
+    @asynccontextmanager
     async def async_setup_teardown(
         setup: Callable[[], Awaitable[T]],
         teardown: Callable[[T], Awaitable[None]],
@@ -466,7 +454,8 @@ class AsyncFixtureUtils:
             await teardown(resource)
 
     @staticmethod
-    async def create_async_test_client() -> object:
+    @asynccontextmanager
+    async def create_async_test_client() -> AsyncGenerator[object]:
         """Create async test client (placeholder for actual implementation)."""
 
         # This would typically create an async HTTP client or similar
@@ -493,6 +482,7 @@ class AsyncFixtureUtils:
             await client.close()
 
     @staticmethod
+    @asynccontextmanager
     async def create_async_event_loop() -> AsyncGenerator[asyncio.AbstractEventLoop]:
         """Create isolated event loop for testing."""
         loop = asyncio.new_event_loop()
@@ -502,9 +492,7 @@ class AsyncFixtureUtils:
         finally:
             loop.close()
 
-
-class AsyncConcurrencyTesting:
-    """Advanced concurrency testing patterns."""
+    # === Concurrency Testing ===
 
     @staticmethod
     async def run_parallel_tasks(
@@ -649,32 +637,8 @@ class AsyncConcurrencyTesting:
                 "potential_deadlock": True,
             }
 
-
-# Pytest markers for async tests
-class AsyncMarkers:
-    """Custom pytest markers for async tests."""
-
-    asyncio = pytest.mark.asyncio
-    timeout = pytest.mark.timeout
-    concurrency = pytest.mark.concurrency
-    race_condition = pytest.mark.race_condition
-
     @staticmethod
-    def async_timeout(seconds: float) -> object:
-        """Mark async test with specific timeout."""
-        return pytest.mark.timeout(seconds)
-
-    @staticmethod
-    def async_slow() -> object:
-        """Mark async test as slow."""
-        return pytest.mark.slow
-
-
-class ConcurrencyTestHelper:
-    """Lightweight helpers used by tests for concurrency measurements."""
-
-    @staticmethod
-    async def test_race_condition(
+    async def test_race_condition_simple(
         func: Callable[[], Coroutine[object, object, object]],
         *,
         concurrent_count: int = 2,
@@ -708,79 +672,77 @@ class ConcurrencyTestHelper:
             "throughput": throughput,
         }
 
-
-class AsyncMockBuilder:
-    """Builder for async mocks supporting side_effect lists and callables."""
+    # === Pytest Markers ===
+    asyncio = pytest.mark.asyncio
+    timeout = pytest.mark.timeout
+    concurrency = pytest.mark.concurrency
+    race_condition = pytest.mark.race_condition
 
     @staticmethod
-    def create_async_mock(
-        return_value: object = None,
-        side_effect: object | None = None,
-    ) -> AsyncMockProtocol:
-        """Create async mock with extended side_effect semantics.
+    def async_timeout(seconds: float) -> object:
+        """Mark async test with specific timeout."""
+        return pytest.mark.timeout(seconds)
 
-        side_effect may be:
-        - Exception: raised when called
-        - list/tuple: elements returned one by one on successive calls
-        - callable: awaited and its return used
-        - None: always return return_value
-        """
-        # Normalize list-like side effects
-        sequence: FlextTypes.Core.List | None = None
-        if isinstance(side_effect, (list, tuple)):
-            sequence = list(side_effect)
-
-        async def async_mock(*args: object, **kwargs: object) -> object:
-            nonlocal sequence
-            if sequence is not None:
-                if not sequence:
-                    msg = "Side effect sequence exhausted"
-                    raise RuntimeError(msg)
-                return sequence.pop(0)
-            if side_effect is None:
-                return return_value
-            if isinstance(side_effect, Exception):
-                raise side_effect
-            if callable(side_effect):
-                result = side_effect(*args, **kwargs)
-                if asyncio.iscoroutine(result):
-                    return await result
-                return result
-            # side_effect is some other non-callable object
-            return return_value
-
-        return async_mock
+    @staticmethod
+    def async_slow() -> object:
+        """Mark async test as slow."""
+        return pytest.mark.slow
 
 
-# Main unified class
-class FlextTestsAsync:
-    """Unified async testing utilities for FLEXT ecosystem.
+# === REMOVED COMPATIBILITY ALIASES AND FACADES ===
+# Legacy compatibility removed as per user request
+# All compatibility facades, aliases and protocol facades have been commented out
+# Only FlextTestsAsyncs class is now exported
 
-    Consolidates all async testing patterns into a single class interface.
-    """
+# Main class alias for backward compatibility - REMOVED
+# FlextTestsAsync = FlextTestsAsyncs
 
-    # Delegate to existing implementations
-    Utils = AsyncTestUtils
-    ContextManagers = AsyncContextManagers
-    MockUtils = AsyncMockUtils
-    Fixtures = AsyncFixtureUtils
-    Concurrency = AsyncConcurrencyTesting
-    Markers = AsyncMarkers
-    MockBuilder = AsyncMockBuilder
-    ConcurrencyHelper = ConcurrencyTestHelper
-    ContextManager = AsyncContextManager
+# Legacy AsyncTestUtils class - REMOVED (commented out)
+# class AsyncTestUtils:
+#     """Compatibility facade for AsyncTestUtils - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
 
+# Legacy AsyncContextManagers class - REMOVED (commented out)
+# class AsyncContextManagers:
+#     """Compatibility facade for AsyncContextManagers - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
 
-# Export utilities
+# Legacy AsyncMockUtils class - REMOVED (commented out)
+# class AsyncMockUtils:
+#     """Compatibility facade for AsyncMockUtils - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy AsyncContextManager class - REMOVED (commented out)
+# class AsyncContextManager:
+#     """Compatibility facade for AsyncContextManager - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy AsyncFixtureUtils class - REMOVED (commented out)
+# class AsyncFixtureUtils:
+#     """Compatibility facade for AsyncFixtureUtils - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy AsyncConcurrencyTesting class - REMOVED (commented out)
+# class AsyncConcurrencyTesting:
+#     """Compatibility facade for AsyncConcurrencyTesting - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy AsyncMarkers class - REMOVED (commented out)
+# class AsyncMarkers:
+#     """Compatibility facade for AsyncMarkers - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy ConcurrencyTestHelper class - REMOVED (commented out)
+# class ConcurrencyTestHelper:
+#     """Compatibility facade for ConcurrencyTestHelper - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Legacy AsyncMockBuilder class - REMOVED (commented out)
+# class AsyncMockBuilder:
+#     """Compatibility facade for AsyncMockBuilder - use FlextTestsAsyncs instead."""
+#     ... all methods commented out
+
+# Export only the unified class
 __all__ = [
-    "AsyncConcurrencyTesting",
-    "AsyncContextManager",
-    "AsyncContextManagers",
-    "AsyncFixtureUtils",
-    "AsyncMarkers",
-    "AsyncMockBuilder",
-    "AsyncMockUtils",
-    "AsyncTestUtils",
-    "ConcurrencyTestHelper",
-    "FlextTestsAsync",
+    "FlextTestsAsyncs",
 ]

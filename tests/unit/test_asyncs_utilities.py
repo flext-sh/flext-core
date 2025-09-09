@@ -14,18 +14,11 @@ import time
 import pytest
 
 from flext_core.typings import FlextTypes
-from flext_tests.asyncs import (
-    AsyncConcurrencyTesting,
-    AsyncContextManager,
-    AsyncMockBuilder,
-    AsyncMockUtils,
-    AsyncTestUtils,
-    ConcurrencyTestHelper,
-)
+from flext_tests import FlextTestsAsyncs, FlextTestsMatchers
 
 
 class TestAsyncTestUtils:
-    """Test AsyncTestUtils with real async functionality."""
+    """Test FlextTestsAsyncs with real async functionality."""
 
     @pytest.mark.asyncio
     async def test_wait_for_condition_success(self) -> None:
@@ -37,7 +30,7 @@ class TestAsyncTestUtils:
             counter += 1
             return counter >= 3
 
-        await AsyncTestUtils.wait_for_condition(
+        await FlextTestsAsyncs.wait_for_condition(
             condition,
             timeout_seconds=1.0,
             poll_interval=0.1,
@@ -52,7 +45,7 @@ class TestAsyncTestUtils:
             return False
 
         with pytest.raises(TimeoutError, match="Condition not met"):
-            await AsyncTestUtils.wait_for_condition(
+            await FlextTestsAsyncs.wait_for_condition(
                 always_false,
                 timeout_seconds=0.2,
                 poll_interval=0.05,
@@ -69,7 +62,7 @@ class TestAsyncTestUtils:
             await asyncio.sleep(0.01)
             return counter >= 2
 
-        await AsyncTestUtils.wait_for_condition(
+        await FlextTestsAsyncs.wait_for_condition(
             async_condition,
             timeout_seconds=1.0,
         )
@@ -88,7 +81,7 @@ class TestAsyncTestUtils:
                 raise ValueError(msg)
             return True
 
-        await AsyncTestUtils.wait_for_condition(
+        await FlextTestsAsyncs.wait_for_condition(
             flaky_condition,
             timeout_seconds=1.0,
             poll_interval=0.1,
@@ -103,7 +96,7 @@ class TestAsyncTestUtils:
             await asyncio.sleep(0.1)
             return "completed"
 
-        result = await AsyncTestUtils.run_with_timeout(
+        result = await FlextTestsAsyncs.run_with_timeout(
             quick_task(),
             timeout_seconds=1.0,
         )
@@ -118,7 +111,7 @@ class TestAsyncTestUtils:
             return "never reached"
 
         with pytest.raises(TimeoutError, match="timed out after"):
-            await AsyncTestUtils.run_with_timeout(
+            await FlextTestsAsyncs.run_with_timeout(
                 slow_task(),
                 timeout_seconds=0.1,
             )
@@ -131,7 +124,7 @@ class TestAsyncTestUtils:
             await asyncio.sleep(0.01)
             return value * 2
 
-        results = await AsyncTestUtils.run_concurrently(
+        results = await FlextTestsAsyncs.run_concurrently(
             task(1),
             task(2),
             task(3),
@@ -141,7 +134,7 @@ class TestAsyncTestUtils:
     @pytest.mark.asyncio
     async def test_run_concurrently_empty(self) -> None:
         """Test running concurrently with no coroutines."""
-        results: FlextTypes.Core.List = await AsyncTestUtils.run_concurrently()
+        results: FlextTypes.Core.List = await FlextTestsAsyncs.run_concurrently()
         assert results == []
 
     @pytest.mark.asyncio
@@ -155,7 +148,7 @@ class TestAsyncTestUtils:
             msg = "Task failed"
             raise ValueError(msg)
 
-        results = await AsyncTestUtils.run_concurrently(
+        results = await FlextTestsMatchers.run_concurrently(
             good_task(1),
             bad_task(),
             good_task(2),
@@ -173,7 +166,7 @@ class TestAsyncTestUtils:
             raise ValueError(msg)
 
         with pytest.raises(ValueError, match="Failed"):
-            await AsyncTestUtils.run_concurrently(
+            await FlextTestsMatchers.run_concurrently(
                 failing_task(),
                 return_exceptions=False,
             )
@@ -192,7 +185,7 @@ class TestAsyncTestUtils:
             return "success"
 
         # This should succeed after retries
-        result = await AsyncTestUtils.run_with_timeout(
+        result = await FlextTestsMatchers.run_with_timeout(
             flaky_task(),
             timeout_seconds=1.0,
         )
@@ -205,14 +198,14 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_async_mock_with_return_value(self) -> None:
         """Test creating async mock with return value."""
-        mock = AsyncMockBuilder.create_async_mock(return_value="test_result")
+        mock = FlextTestsMatchers.create_async_mock(return_value="test_result")
         result = await mock()
         assert result == "test_result"
 
     @pytest.mark.asyncio
     async def test_create_async_mock_with_side_effect_list(self) -> None:
         """Test async mock with list of side effects."""
-        mock = AsyncMockBuilder.create_async_mock(side_effect=[1, 2, 3])
+        mock = FlextTestsMatchers.create_async_mock(side_effect=[1, 2, 3])
 
         assert await mock() == 1
         assert await mock() == 2
@@ -221,7 +214,9 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_async_mock_with_side_effect_exception(self) -> None:
         """Test async mock that raises exception."""
-        mock = AsyncMockBuilder.create_async_mock(side_effect=ValueError("Test error"))
+        mock = FlextTestsMatchers.create_async_mock(
+            side_effect=ValueError("Test error")
+        )
 
         with pytest.raises(ValueError, match="Test error"):
             await mock()
@@ -236,7 +231,7 @@ class TestAsyncMockUtils:
             call_count += 1
             return call_count
 
-        mock = AsyncMockBuilder.create_async_mock(side_effect=side_effect_func)
+        mock = FlextTestsMatchers.create_async_mock(side_effect=side_effect_func)
 
         assert await mock() == 1
         assert await mock() == 2
@@ -246,7 +241,7 @@ class TestAsyncMockUtils:
     async def test_create_delayed_response(self) -> None:
         """Test creating delayed response mock."""
         start_time = time.time()
-        mock = AsyncMockUtils.create_delayed_async_mock(
+        mock = FlextTestsMatchers.create_delayed_async_mock(
             return_value="result",
             delay=0.1,
         )
@@ -260,7 +255,7 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_flaky_mock(self) -> None:
         """Test creating flaky mock that fails initially."""
-        mock = AsyncMockUtils.create_flaky_async_mock(
+        mock = FlextTestsMatchers.create_flaky_async_mock(
             success_value="success",
             failure_count=2,
             exception_type=ValueError,
@@ -290,7 +285,7 @@ class TestConcurrencyTestHelper:
                 return n * 2
             return 0
 
-        results = await AsyncConcurrencyTesting.run_parallel_tasks(
+        results = await FlextTestsMatchers.run_parallel_tasks(
             task,
             [1, 2, 3, 4],
         )
@@ -303,7 +298,7 @@ class TestConcurrencyTestHelper:
         async def task(n: object) -> object:
             return n
 
-        results = await AsyncConcurrencyTesting.run_parallel_tasks(
+        results = await FlextTestsMatchers.run_parallel_tasks(
             task,
             [],
         )
@@ -323,7 +318,7 @@ class TestConcurrencyTestHelper:
                 shared_counter = temp + 1
                 return shared_counter
 
-        result = await ConcurrencyTestHelper.test_race_condition(
+        result = await FlextTestsMatchers.test_race_condition(
             safe_increment,
             concurrent_count=5,
         )
@@ -340,7 +335,7 @@ class TestConcurrencyTestHelper:
             await asyncio.sleep(0.01)
             return "done"
 
-        metrics = await ConcurrencyTestHelper.measure_concurrency_performance(
+        metrics = await FlextTestsMatchers.measure_concurrency_performance(
             task,
             iterations=3,
         )
@@ -371,7 +366,7 @@ class TestAsyncContextManager:
             assert resource == "test_resource"
             resource_cleaned = True
 
-        context = AsyncContextManager.create_test_context(
+        context = FlextTestsMatchers.create_test_context(
             setup_coro=setup(),
             teardown_func=teardown,
         )
@@ -395,7 +390,7 @@ class TestAsyncContextManager:
             nonlocal cleaned_up
             cleaned_up = True
 
-        context = AsyncContextManager.create_test_context(
+        context = FlextTestsMatchers.create_test_context(
             setup_coro=setup(),
             teardown_func=teardown,
         )
@@ -411,7 +406,7 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_managed_resource_simple(self) -> None:
         """Test simple managed resource."""
-        async with AsyncContextManager.managed_resource("test_value") as value:
+        async with FlextTestsMatchers.managed_resource("test_value") as value:
             assert value == "test_value"
 
     @pytest.mark.asyncio
@@ -424,7 +419,7 @@ class TestAsyncContextManager:
             assert value == "test"
             cleaned = True
 
-        async with AsyncContextManager.managed_resource(
+        async with FlextTestsMatchers.managed_resource(
             "test",
             cleanup_func=cleanup,
         ) as value:
@@ -437,7 +432,7 @@ class TestAsyncContextManager:
     async def test_timeout_context(self) -> None:
         """Test timeout context manager."""
         # Should complete within timeout
-        async with AsyncContextManager.timeout_context(1.0):
+        async with FlextTestsMatchers.timeout_context(1.0):
             await asyncio.sleep(0.01)
             result = "completed"
 
@@ -447,5 +442,5 @@ class TestAsyncContextManager:
     async def test_timeout_context_exceeded(self) -> None:
         """Test timeout context when time is exceeded."""
         with pytest.raises(asyncio.TimeoutError):
-            async with AsyncContextManager.timeout_context(0.1):
+            async with FlextTestsMatchers.timeout_context(0.1):
                 await asyncio.sleep(1.0)

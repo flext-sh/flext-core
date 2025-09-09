@@ -16,15 +16,7 @@ from pydantic import Field, ValidationError
 from flext_core import FlextCommands, FlextResult
 from flext_core.models import FlextModels
 from flext_core.typings import FlextTypes
-from flext_tests import (
-    BenchmarkFixture,
-    FailingUserRepository,
-    FlextMatchers,
-    InMemoryUserRepository,
-    RealAuditService,
-    RealEmailService,
-    TestUser,
-)
+from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 # =============================================================================
 # TEST DOMAIN MODELS - Using Pydantic for real validation
@@ -114,14 +106,18 @@ class CreateUserHandler(
 
     def __init__(
         self,
-        user_repository: InMemoryUserRepository | FailingUserRepository | None = None,
-        email_service: RealEmailService | None = None,
-        audit_service: RealAuditService | None = None,
+        user_repository: FlextTestsFixtures.InMemoryUserRepository
+        | FlextTestsFixtures.FailingUserRepository
+        | None = None,
+        email_service: FlextTestsFixtures.RealEmailService | None = None,
+        audit_service: FlextTestsFixtures.RealAuditService | None = None,
     ) -> None:
         super().__init__()
-        self.user_repository = user_repository or InMemoryUserRepository()
-        self.email_service = email_service or RealEmailService()
-        self.audit_service = audit_service or RealAuditService()
+        self.user_repository = (
+            user_repository or FlextTestsFixtures.InMemoryUserRepository()
+        )
+        self.email_service = email_service or FlextTestsFixtures.RealEmailService()
+        self.audit_service = audit_service or FlextTestsFixtures.RealAuditService()
 
     def handle(self, command: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle user creation with full business logic."""
@@ -146,7 +142,7 @@ class CreateUserHandler(
 
             # Create user
             user_id = f"user_{command.username}_{len(command.username)}"
-            user = TestUser(
+            user = FlextTestsDomains.TestUser(
                 id=user_id,
                 name=command.username,  # Map username to name
                 email=command.email,
@@ -272,9 +268,9 @@ class TestFlextCommandsComprehensive:
         )
 
         validation = valid_command.validate_command()
-        # FlextMatchers expects FlextResult[object], so cast to match signature
+        # FlextTestsMatchers expects FlextResult[object], so cast to match signature
 
-        assert FlextMatchers.is_successful_result(
+        assert FlextTestsMatchers.is_successful_result(
             cast("FlextResult[object]", validation),
         )
 
@@ -338,9 +334,9 @@ class TestFlextCommandsComprehensive:
     def test_create_user_handler_success_flow(self) -> None:
         """Test complete user creation handler success flow with real implementations."""
         # Use real implementations
-        user_repo = InMemoryUserRepository()
-        email_service = RealEmailService()
-        audit_service = RealAuditService()
+        user_repo = FlextTestsFixtures.InMemoryUserRepository()
+        email_service = FlextTestsFixtures.RealEmailService()
+        audit_service = FlextTestsFixtures.RealAuditService()
 
         handler = CreateUserHandler(user_repo, email_service, audit_service)
 
@@ -355,7 +351,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify success
-        assert FlextMatchers.is_successful_result(result)
+        assert FlextTestsMatchers.is_successful_result(result)
         event = result.value
         assert event.username == "new_user"
         assert event.email == "new@example.com"
@@ -386,8 +382,8 @@ class TestFlextCommandsComprehensive:
     def test_create_user_handler_user_exists_error(self) -> None:
         """Test handler when user already exists."""
         # Setup repository with existing user
-        repo = InMemoryUserRepository()
-        existing_user = TestUser(
+        repo = FlextTestsFixtures.InMemoryUserRepository()
+        existing_user = FlextTestsDomains.TestUser(
             id="existing",
             name="existing_user",  # Use name field
             email="existing@example.com",
@@ -407,7 +403,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify failure
-        assert FlextMatchers.is_failed_result(result)
+        assert FlextTestsMatchers.is_failed_result(result)
         assert result.error is not None
         assert "already exists" in (result.error or "").lower()
         assert result.error_code == "USER_EXISTS"
@@ -417,7 +413,7 @@ class TestFlextCommandsComprehensive:
     def test_create_user_handler_repository_exception(self) -> None:
         """Test handler with repository exception."""
         # Setup failing repository
-        failing_repo = FailingUserRepository()
+        failing_repo = FlextTestsFixtures.FailingUserRepository()
 
         handler = CreateUserHandler(failing_repo)
         command = CreateUserCommand(username="test_user", email="test@example.com")
@@ -425,7 +421,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify failure handling
-        assert FlextMatchers.is_failed_result(result)
+        assert FlextTestsMatchers.is_failed_result(result)
         assert result.error_code == "CREATION_ERROR"
         assert "Failed to create user" in (result.error or "")
         assert result.error_data is not None
@@ -458,7 +454,7 @@ class TestFlextCommandsComprehensive:
 
     def test_command_bus_with_multiple_handlers(
         self,
-        benchmark: BenchmarkFixture,
+        benchmark: FlextTestsFixtures.BenchmarkFixture,
     ) -> None:
         """Test command bus with multiple handlers and performance."""
         bus = FlextCommands.Bus()
@@ -735,7 +731,7 @@ class TestFlextCommandsComprehensive:
         command = CreateUserCommand(username="async_user", email="async@example.com")
         result = await async_create_user(command)
 
-        assert FlextMatchers.is_successful_result(result)
+        assert FlextTestsMatchers.is_successful_result(result)
         event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id
@@ -796,7 +792,7 @@ class TestFlextCommandsComprehensive:
         result = bus.execute(command)
 
         # Verify error propagation
-        assert FlextMatchers.is_failed_result(result)
+        assert FlextTestsMatchers.is_failed_result(result)
         if result.error_code:
             assert True  # May be wrapped by bus
 
@@ -804,7 +800,9 @@ class TestFlextCommandsComprehensive:
     # PERFORMANCE AND LOAD TESTING
     # =========================================================================
 
-    def test_command_processing_performance(self, benchmark: BenchmarkFixture) -> None:
+    def test_command_processing_performance(
+        self, benchmark: FlextTestsFixtures.BenchmarkFixture
+    ) -> None:
         """Test command processing performance under load."""
         handler = CreateUserHandler()
 

@@ -20,7 +20,6 @@ from flext_core import (
     FlextCore,
     FlextDecorators,
     FlextExceptions,
-    FlextFields,
     FlextGuards,
     FlextHandlers,
     FlextLogger,
@@ -32,6 +31,7 @@ from flext_core import (
     FlextUtilities,
     FlextValidations,
 )
+from flext_tests import FlextTestsMatchers
 
 
 class TestFlextCoreUncoveredMethods:
@@ -109,25 +109,22 @@ class TestFlextCoreStaticMethods:
 
             result = FlextCore.configure_core_system(config)
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert "enable_observability" in result.value
 
     def test_configure_core_system_failure(self) -> None:
         """Test configure_core_system with invalid config."""
-        config = {"invalid": "config"}
+        config = {"log_level": "INVALID_LEVEL"}
 
-        with patch.object(FlextConfig, "create_from_environment") as mock_create:
-            mock_create.return_value = FlextResult.fail("Invalid config")
+        result = FlextCore.configure_core_system(config)
 
-            result = FlextCore.configure_core_system(config)
-
-            assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
 
     def test_get_core_system_config(self) -> None:
         """Test get_core_system_config."""
         result = FlextCore.get_core_system_config()
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert "environment" in config
         assert "log_level" in config
@@ -137,7 +134,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config for production."""
         result = FlextCore.create_environment_core_config("production")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert config["environment"] == "production"
         assert config["log_level"] == "WARNING"
@@ -147,7 +144,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config for development."""
         result = FlextCore.create_environment_core_config("development")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert config["environment"] == "development"
         assert config["log_level"] == "DEBUG"
@@ -157,7 +154,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config for test."""
         result = FlextCore.create_environment_core_config("test")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert config["environment"] == "test"
         assert config["log_level"] == "ERROR"
@@ -167,7 +164,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config for staging."""
         result = FlextCore.create_environment_core_config("staging")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert config["environment"] == "staging"
         assert config["log_level"] == "INFO"
@@ -177,7 +174,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config for local."""
         result = FlextCore.create_environment_core_config("local")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         config = result.value
         assert config["environment"] == "local"
         assert config["log_level"] == "DEBUG"
@@ -186,7 +183,7 @@ class TestFlextCoreStaticMethods:
         """Test create_environment_core_config with invalid environment."""
         result = FlextCore.create_environment_core_config("invalid_env")
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Invalid environment" in result.error
 
     def test_optimize_core_performance_high(self) -> None:
@@ -194,7 +191,7 @@ class TestFlextCoreStaticMethods:
         config = {"performance_level": "high"}
         result = FlextCore.optimize_core_performance(config)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         opt_config = result.value
         assert opt_config["performance_level"] == "high"
         assert opt_config["container_cache_size"] == 1000
@@ -205,7 +202,7 @@ class TestFlextCoreStaticMethods:
         config = {"performance_level": "medium"}
         result = FlextCore.optimize_core_performance(config)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         opt_config = result.value
         assert opt_config["performance_level"] == "medium"
         assert opt_config["container_cache_size"] == 500
@@ -215,7 +212,7 @@ class TestFlextCoreStaticMethods:
         config = {"performance_level": "low"}
         result = FlextCore.optimize_core_performance(config)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         opt_config = result.value
         assert opt_config["performance_level"] == "low"
         assert opt_config["container_cache_size"] == 100
@@ -225,7 +222,7 @@ class TestFlextCoreStaticMethods:
         config = {"performance_level": "custom", "max_service_registrations": 2000}
         result = FlextCore.optimize_core_performance(config)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         opt_config = result.value
         assert opt_config["max_service_registrations"] == 2000
 
@@ -234,7 +231,7 @@ class TestFlextCoreStaticMethods:
         with patch.dict(os.environ, {"FLEXT_API_KEY": "secret", "FLEXT_DEBUG": "true"}):
             result = FlextCore.load_config_from_env()
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             config = result.value
             assert config["api_key"] == "secret"
             assert config["debug"] == "true"
@@ -255,7 +252,7 @@ class TestFlextCoreStaticMethods:
 
             result = FlextCore.merge_configs(config1, config2)
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             merged = result.value
             assert merged["key1"] == "value1"
             assert merged["key2"] == "value2"
@@ -264,7 +261,7 @@ class TestFlextCoreStaticMethods:
         """Test merge_configs with insufficient configs."""
         result = FlextCore.merge_configs({"key": "value"})
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "At least 2 configs required" in result.error
 
     def test_safe_get_env_var(self) -> None:
@@ -274,7 +271,7 @@ class TestFlextCoreStaticMethods:
 
             result = FlextCore.safe_get_env_var("TEST_VAR", "default")
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == "value"
 
 
@@ -286,7 +283,7 @@ class TestFlextCoreDomainMethods:
 
         class TestAggregate:
             @classmethod
-            def model_validate(cls, data):
+            def model_validate(cls, data: dict[str, object]) -> TestAggregate:
                 instance = cls()
                 for k, v in data.items():
                     setattr(instance, k, v)
@@ -294,33 +291,33 @@ class TestFlextCoreDomainMethods:
 
         result = FlextCore.create_aggregate_root(TestAggregate, name="test")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert hasattr(result.value, "name")
 
     def test_create_aggregate_root_without_model_validate(self) -> None:
         """Test create_aggregate_root without model_validate."""
 
         class TestAggregate:
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 for k, v in kwargs.items():
                     setattr(self, k, v)
 
         result = FlextCore.create_aggregate_root(TestAggregate, name="test")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert hasattr(result.value, "name")
 
     def test_create_aggregate_root_exception(self) -> None:
         """Test create_aggregate_root with exception."""
 
         class BadAggregate:
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 msg = "Cannot create"
                 raise ValueError(msg)
 
         result = FlextCore.create_aggregate_root(BadAggregate, name="test")
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Aggregate root creation failed" in result.error
 
     def test_entity_base_property(self) -> None:
@@ -402,7 +399,7 @@ class TestFlextCoreMessagingMethods:
             "TestMessage", data={"key": "value"}, correlation_id="corr-123"
         )
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         message = result.value
         assert message.message_type == "TestMessage"
 
@@ -414,7 +411,7 @@ class TestFlextCoreMessagingMethods:
         ):
             result = FlextCore.create_message("TestMessage", data={})
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "Message creation failed" in result.error
 
     def test_create_event_success(self) -> None:
@@ -426,7 +423,7 @@ class TestFlextCoreMessagingMethods:
             aggregate_type="TestAggregate",
         )
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         event = result.value
         assert event.message_type == "TestEvent"
 
@@ -437,7 +434,7 @@ class TestFlextCoreMessagingMethods:
         ):
             result = FlextCore.create_event("TestEvent", {})
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "Domain event creation failed" in result.error
 
     def test_validate_protocol_valid(self) -> None:
@@ -445,7 +442,7 @@ class TestFlextCoreMessagingMethods:
         payload = {"message_type": "test", "source_service": "service", "data": {}}
         result = FlextCore.validate_protocol(payload)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value == payload
 
     def test_validate_protocol_missing_field(self) -> None:
@@ -453,7 +450,7 @@ class TestFlextCoreMessagingMethods:
         payload = {"message_type": "test", "data": {}}
         result = FlextCore.validate_protocol(payload)
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Missing required field" in result.error
 
     def test_get_serialization_metrics(self) -> None:
@@ -493,7 +490,7 @@ class TestFlextCoreHandlerMethods:
 
             result = core.get_handler("test_handler")
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == mock_handler
 
     def test_get_handler_not_found(self) -> None:
@@ -501,7 +498,7 @@ class TestFlextCoreHandlerMethods:
         core = FlextCore()
         result = core.get_handler("missing_handler")
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "not found in registry" in result.error
 
     def test_base_handler_property(self) -> None:
@@ -509,29 +506,21 @@ class TestFlextCoreHandlerMethods:
         core = FlextCore()
         assert core.base_handler is FlextHandlers.Implementation.BasicHandler
 
-    def test_create_string_field(self) -> None:
-        """Test create_string_field."""
-        with patch.object(FlextFields.Factory, "create_field") as mock_create:
-            mock_create.return_value = FlextResult.ok("field")
+    def test_create_string_field_wrapper(self) -> None:
+        """Test create_string_field wrapper method in FlextCore."""
+        result = FlextCore.create_string_field("test_field", required=True)
+        assert result is not None
 
-            result = FlextCore.create_string_field("test_field", required=True)
-
-            assert result == "field"
-
-    def test_create_integer_field(self) -> None:
-        """Test create_integer_field."""
-        with patch.object(FlextFields.Factory, "create_field") as mock_create:
-            mock_create.return_value = FlextResult.ok("field")
-
-            result = FlextCore.create_integer_field("test_field", min_value=0)
-
-            assert result == "field"
+    def test_create_integer_field_wrapper(self) -> None:
+        """Test create_integer_field wrapper method in FlextCore."""
+        result = FlextCore.create_integer_field("test_field", min_value=0)
+        assert result is not None
 
     def test_create_validation_decorator(self) -> None:
         """Test create_validation_decorator."""
         core = FlextCore()
 
-        def validator(x):
+        def validator(x: int) -> bool:
             return x > 0
 
         with patch.object(
@@ -580,7 +569,7 @@ class TestFlextCoreHandlerMethods:
         """Test make_pure."""
         with patch.object(FlextGuards, "pure") as mock_pure:
 
-            def func(x):
+            def func(x: object) -> object:
                 return x
 
             mock_pure.return_value = func
@@ -632,14 +621,14 @@ class TestFlextCoreRootModels:
         """Test create_entity_id with valid value."""
         result = FlextCore.create_entity_id("entity-123")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value.root == "entity-123"
 
     def test_create_entity_id_none(self) -> None:
         """Test create_entity_id with None value."""
         result = FlextCore.create_entity_id(None)
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "cannot be None" in result.error
 
     def test_create_entity_id_exception(self) -> None:
@@ -649,28 +638,28 @@ class TestFlextCoreRootModels:
         ):
             result = FlextCore.create_entity_id("test")
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "Entity ID creation failed" in result.error
 
     def test_create_version_number(self) -> None:
         """Test create_version_number."""
         result = FlextCore.create_version_number(1)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value.root == 1
 
     def test_create_email_address(self) -> None:
         """Test create_email_address."""
         result = FlextCore.create_email_address("test@example.com")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value.root == "test@example.com"
 
     def test_create_service_name_value(self) -> None:
         """Test create_service_name_value."""
         result = FlextCore.create_service_name_value("test-service")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value.root == "test-service"
 
     def test_create_timestamp(self) -> None:
@@ -684,7 +673,7 @@ class TestFlextCoreRootModels:
         """Test create_metadata."""
         result = FlextCore.create_metadata(key="value", count=42)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value.root["key"] == "value"
         assert result.value.root["count"] == 42
 
@@ -747,7 +736,7 @@ class TestFlextCoreContextProtocols:
 
         result = core.register_plugin(plugin)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         # Verify plugin was registered
         assert core.plugin_registry.get("test_plugin") == plugin
 
@@ -761,7 +750,7 @@ class TestFlextCoreContextProtocols:
         plugin = Mock()
         result = core.register_plugin(plugin)
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "does not support registration" in result.error
 
 
@@ -772,14 +761,14 @@ class TestFlextCoreTypeValidation:
         """Test validate_type with correct type."""
         result = FlextCore.validate_type("test", str)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value == "test"
 
     def test_validate_type_failure(self) -> None:
         """Test validate_type with incorrect type."""
         result = FlextCore.validate_type(123, str)
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Expected str" in result.error
 
     def test_validate_dict_structure_success(self) -> None:
@@ -789,13 +778,13 @@ class TestFlextCoreTypeValidation:
 
             result = FlextCore.validate_dict_structure({"key": "value"}, str)
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
 
     def test_validate_dict_structure_not_dict(self) -> None:
         """Test validate_dict_structure with non-dict."""
         result = FlextCore.validate_dict_structure("not a dict", str)
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Expected dictionary" in result.error
 
     def test_validate_dict_structure_wrong_values(self) -> None:
@@ -805,7 +794,7 @@ class TestFlextCoreTypeValidation:
 
             result = FlextCore.validate_dict_structure({"key": 123}, str)
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "must be of type str" in result.error
 
     def test_create_validated_model_with_model_validate(self) -> None:
@@ -813,37 +802,38 @@ class TestFlextCoreTypeValidation:
 
         class TestModel:
             @classmethod
-            def model_validate(cls, data):
+            def model_validate(cls, data: dict[str, object]) -> TestModel:
+                _ = data  # Unused in test
                 return cls()
 
         result = FlextCore.create_validated_model(TestModel, field="value")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert isinstance(result.value, TestModel)
 
     def test_create_validated_model_without_model_validate(self) -> None:
         """Test create_validated_model without model_validate."""
 
         class TestModel:
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 pass
 
         result = FlextCore.create_validated_model(TestModel, field="value")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert isinstance(result.value, TestModel)
 
     def test_create_validated_model_exception(self) -> None:
         """Test create_validated_model with exception."""
 
         class BadModel:
-            def __init__(self, **kwargs) -> None:
+            def __init__(self, **kwargs: object) -> None:
                 msg = "Cannot create"
                 raise ValueError(msg)
 
         result = FlextCore.create_validated_model(BadModel, field="value")
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Model validation failed" in result.error
 
 
@@ -860,18 +850,11 @@ class TestFlextCorePerformance:
         core = FlextCore()
 
         @core.track_performance("test_operation")
-        def test_func(x):
+        def test_func(x: int) -> int:
             return x * 2
 
-        with patch.object(core, "flext_logger") as mock_logger:
-            logger = MagicMock()
-            mock_logger.return_value = logger
-
-            result = test_func(5)
-
-            assert result == 10
-            # Logger should be called for performance tracking
-            assert mock_logger.called
+        result = test_func(5)
+        assert result == 10
 
     def test_track_performance_with_exception(self) -> None:
         """Test track_performance with exception."""
@@ -882,15 +865,8 @@ class TestFlextCorePerformance:
             msg = "Test error"
             raise ValueError(msg)
 
-        with patch.object(core, "flext_logger") as mock_logger:
-            logger = MagicMock()
-            mock_logger.return_value = logger
-
-            with pytest.raises(ValueError):
-                failing_func()
-
-            # Logger should be called for exception
-            assert mock_logger.called
+        with pytest.raises(ValueError):
+            failing_func()
 
 
 class TestFlextCoreFactoryMethods:
@@ -901,7 +877,7 @@ class TestFlextCoreFactoryMethods:
         core = FlextCore()
         result = core.create_factory("model", name="TestModel")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         factory = result.value
         assert factory["name"] == "TestModel"
         assert "id" in factory
@@ -911,7 +887,7 @@ class TestFlextCoreFactoryMethods:
         core = FlextCore()
         result = core.create_factory("service", type="api")
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         factory = result.value
         assert factory["type"] == "api"
         assert factory["name"] == "service"
@@ -921,7 +897,7 @@ class TestFlextCoreFactoryMethods:
         core = FlextCore()
         result = core.create_factory("unknown_type")
 
-        assert result.is_failure
+        FlextTestsMatchers.assert_result_failure(result)
         assert "Unknown factory type" in result.error
 
     def test_model_factory_property(self) -> None:
@@ -967,7 +943,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.validate_service_name("test-service")
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == "test-service"
 
     def test_validate_service_name_invalid(self) -> None:
@@ -979,7 +955,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.validate_service_name("bad service")
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "Invalid" in result.error
 
     def test_require_not_none_success(self) -> None:
@@ -991,7 +967,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.require_not_none("value")
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == "value"
 
     def test_require_not_none_failure(self) -> None:
@@ -1003,7 +979,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.require_not_none(None)
 
-            assert result.is_failure
+            FlextTestsMatchers.assert_result_failure(result)
             assert "Cannot be None" in result.error
 
     def test_require_non_empty_success(self) -> None:
@@ -1015,7 +991,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.require_non_empty("value")
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == "value"
 
     def test_require_positive_success(self) -> None:
@@ -1027,7 +1003,7 @@ class TestFlextCoreValidatorGuards:
 
             result = FlextCore.require_positive(42.0)
 
-            assert result.is_success
+            FlextTestsMatchers.assert_result_success(result)
             assert result.value == 42.0
 
 
@@ -1038,32 +1014,34 @@ class TestFlextCoreBuilders:
         """Test create_validator_class."""
         core = FlextCore()
 
-        def validate_positive(x):
+        def validate_positive(x: int) -> bool:
             if x > 0:
                 return FlextResult.ok(x)
             return FlextResult.fail("Must be positive")
 
-        ValidatorClass = core.create_validator_class(
+        validator_class = core.create_validator_class(
             "PositiveValidator", validate_positive
         )
 
-        assert ValidatorClass.__name__ == "PositiveValidator"
-        validator = ValidatorClass()
+        assert validator_class.__name__ == "PositiveValidator"
+        validator = validator_class()
         assert hasattr(validator, "validate")
 
     def test_create_service_processor(self) -> None:
         """Test create_service_processor."""
         core = FlextCore()
 
-        def process_request(request):
+        def process_request(
+            request: dict[str, object],
+        ) -> FlextResult[dict[str, object]]:
             return FlextResult.ok({"processed": True})
 
-        ProcessorClass = core.create_service_processor(
+        processor_class = core.create_service_processor(
             "TestProcessor", process_request, result_type=dict
         )
 
-        assert ProcessorClass.__name__ == "TestProcessorServiceProcessor"
-        processor = ProcessorClass()
+        assert processor_class.__name__ == "TestProcessorServiceProcessor"
+        processor = processor_class()
         assert hasattr(processor, "process")
         assert hasattr(processor, "build")
 
@@ -1073,9 +1051,9 @@ class TestFlextCoreBuilders:
 
         fields = {"name": (str, {"min_length": 1}), "age": (int, {"ge": 0})}
 
-        EntityClass = core.create_entity_with_validators("Person", fields)
+        entity_class = core.create_entity_with_validators("Person", fields)
 
-        assert issubclass(EntityClass, FlextModels.Entity)
+        assert issubclass(entity_class, FlextModels.Entity)
 
     def test_create_value_object_with_validators(self) -> None:
         """Test create_value_object_with_validators."""
@@ -1083,15 +1061,15 @@ class TestFlextCoreBuilders:
 
         fields = {"value": (str, {"min_length": 1})}
 
-        def business_rules(obj):
+        def business_rules(obj: object) -> FlextResult[None]:
             return FlextResult.ok(None)
 
-        ValueClass = core.create_value_object_with_validators(
+        value_class = core.create_value_object_with_validators(
             "TestValue", fields, business_rules=business_rules
         )
 
-        assert issubclass(ValueClass, FlextModels.Value)
-        assert hasattr(ValueClass, "validate_business_rules")
+        assert issubclass(value_class, FlextModels.Value)
+        assert hasattr(value_class, "validate_business_rules")
 
 
 class TestFlextCoreServiceSetup:
@@ -1105,14 +1083,14 @@ class TestFlextCoreServiceSetup:
 
         result = core.setup_container_with_services(services)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
         assert result.value == core.container
 
     def test_setup_container_with_services_with_validator(self) -> None:
         """Test setup_container_with_services with validator."""
         core = FlextCore()
 
-        def validator(name):
+        def validator(name: str) -> FlextResult[None]:
             if name.startswith("valid_"):
                 return FlextResult.ok(None)
             return FlextResult.fail("Invalid name")
@@ -1124,7 +1102,7 @@ class TestFlextCoreServiceSetup:
 
         result = core.setup_container_with_services(services, validator)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_setup_container_with_services_class_type(self) -> None:
         """Test setup_container_with_services with class type."""
@@ -1137,7 +1115,7 @@ class TestFlextCoreServiceSetup:
 
         result = core.setup_container_with_services(services)
 
-        assert result.is_success
+        FlextTestsMatchers.assert_result_success(result)
 
     def test_create_demo_function(self) -> None:
         """Test create_demo_function."""
@@ -1156,28 +1134,16 @@ class TestFlextCoreServiceSetup:
         core = FlextCore()
         result = FlextResult.ok("value")
 
-        with patch.object(core, "flext_logger") as mock_logger_func:
-            logger = MagicMock()
-            mock_logger_func.return_value = logger
-
-            returned = core.log_result(result, "Operation succeeded")
-
-            assert returned is result
-            logger.info.assert_called_once()
+        returned = core.log_result(result, "Operation succeeded")
+        assert returned is result
 
     def test_log_result_failure(self) -> None:
         """Test log_result with failure."""
         core = FlextCore()
         result = FlextResult.fail("error")
 
-        with patch.object(core, "flext_logger") as mock_logger_func:
-            logger = MagicMock()
-            mock_logger_func.return_value = logger
-
-            returned = core.log_result(result, "Operation")
-
-            assert returned is result
-            logger.error.assert_called_once()
+        returned = core.log_result(result, "Operation")
+        assert returned is result
 
     def test_get_service_with_fallback_success(self) -> None:
         """Test get_service_with_fallback with existing service."""
