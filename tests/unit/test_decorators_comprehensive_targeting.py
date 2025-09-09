@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import time
 
 from flext_core import FlextDecorators, FlextResult
@@ -150,7 +151,7 @@ class TestFlextDecoratorsValidation:
 
                     # Test with correct types
                     correct_calls = [
-                        (["hello", 42, 3.14], {"name": "test", "count": 10}),
+                        (["hello", 42, math.pi], {"name": "test", "count": 10}),
                         (["string"], {}),
                         ([{"dict": True}, [1, 2, 3]], {"config": {}, "options": []})
                     ]

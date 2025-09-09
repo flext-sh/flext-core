@@ -12,9 +12,7 @@ from typing import cast
 import pytest
 from pydantic import Field
 
-from flext_core import FlextCore, FlextResult
-from flext_core.models import FlextModels
-from flext_core.typings import FlextTypes
+from flext_core import FlextCore, FlextModels, FlextResult, FlextTypes
 
 
 class UserEntity(FlextModels.Entity):

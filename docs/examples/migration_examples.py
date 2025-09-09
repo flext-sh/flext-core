@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
 from flext_core import FlextResult, FlextConstants, FlextModels
 
@@ -274,7 +274,7 @@ class CommandsConfig(FlextModels.SystemConfigs.BaseSystemConfig):
     enable_async: bool = Field(default=False)
 
     # Dynamic fields (command handlers)
-    command_handlers: dict[str, Any] = Field(
+    command_handlers: dict[str, object] = Field(
         default_factory=dict,
         json_schema_extra={"dynamic": True},  # Mark as dynamic
     )
@@ -287,7 +287,7 @@ class CommandsConfig(FlextModels.SystemConfigs.BaseSystemConfig):
 
     @field_validator("command_handlers")
     @classmethod
-    def validate_handlers(cls, v: dict[str, Any]) -> dict[str, Any]:
+    def validate_handlers(cls, v: dict[str, object]) -> dict[str, object]:
         """Validate command handlers structure."""
         for name, handler in v.items():
             if not isinstance(handler, dict):
@@ -555,7 +555,7 @@ class CommonPatterns:
             model_config = ConfigDict(extra="allow")
 
             # Option 2: Explicit dynamic fields
-            metadata: dict[str, Any] = Field(default_factory=dict)
+            metadata: dict[str, object] = Field(default_factory=dict)
             custom_handlers: dict[str, dict] = Field(
                 default_factory=dict, json_schema_extra={"dynamic": True}
             )

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import FlextCore, FlextResult
+from flext_core import FlextCore
 from flext_core.typings import FlextTypes
 from flext_tests import (
     FlextTestsAsyncs,
@@ -51,20 +51,25 @@ class TestFlextCoreCoverageBoost:
         levels = ["low", "medium", "high", "balanced"]
 
         for level in levels:
-            # Test aggregates optimization
-            result = core.optimize_aggregates_system(
-                cast("FlextTypes.Aggregates.PerformanceLevel", level)
-            )
-            FlextTestsMatchers.assert_result_success(result)
-            config = result.unwrap()
+            # Test performance optimization using FlextUtilities DIRECTLY - NO WRAPPERS!
+            config = core.utilities.Performance.create_performance_config(level)
             assert isinstance(config, dict)
-            assert config.get("optimization_level") == level
+            assert config.get("optimization_level") in {
+                "high",
+                "balanced",
+                "conservative",
+            }
 
-            # Test commands optimization
-            commands_result = core.optimize_commands_performance(level)
-            FlextTestsMatchers.assert_result_success(commands_result)
-            commands_config = commands_result.unwrap()
-            assert isinstance(commands_config, dict)
+            # Test using FlextUtilities DIRECTLY for performance tracking
+            @core.utilities.Performance.track_performance(f"test_operation_{level}")
+            def test_function() -> str:
+                return "test_result"
+
+            result = test_function()
+            assert result == "test_result"
+            # Verify performance metrics were recorded
+            metrics = core.utilities.Performance.get_metrics()
+            assert isinstance(metrics, dict)
 
     def test_core_error_handling_paths(self) -> None:
         """Test error handling paths in core methods."""
@@ -77,14 +82,14 @@ class TestFlextCoreCoverageBoost:
             if invalid_input is None:
                 continue
             try:
-                # This should handle gracefully
-                result = core.optimize_aggregates_system(
-                    cast("FlextTypes.Aggregates.PerformanceLevel", str(invalid_input))
+                # Test error handling using FlextUtilities DIRECTLY - NO WRAPPERS!
+                config = core.utilities.Performance.create_performance_config(
+                    str(invalid_input)
                 )
-                # Even invalid inputs should return a result
-                assert isinstance(result, FlextResult)
+                # Should get a valid config with defaults even for invalid inputs
+                assert isinstance(config, dict)
             except Exception:
-                # If exception occurs, it should be specific
+                # FlextUtilities should handle invalid inputs gracefully
                 pass
 
     def test_core_async_operations_with_utils(self) -> None:

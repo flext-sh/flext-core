@@ -388,7 +388,7 @@ class TestFlextConfigUncoveredMethods:
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
                 else:
-                    assert result in [True, False] or result is None
+                    assert result in {True, False} or result is None
             except Exception:
                 pass
 
@@ -412,7 +412,7 @@ class TestFlextConfigUncoveredMethods:
                     # Should fail validation
                     assert result.is_failure or result.is_success
                 else:
-                    assert result in [True, False] or result is None
+                    assert result in {True, False} or result is None
             except Exception:
                 # Exception expected for invalid rules
                 pass
@@ -435,7 +435,7 @@ class TestFlextConfigUncoveredMethods:
                     if isinstance(result, FlextResult):
                         assert result.is_success or result.is_failure
                     else:
-                        assert result in [True, False] or result is None
+                        assert result in {True, False} or result is None
                 except Exception:
                     pass
 
@@ -535,7 +535,7 @@ class TestFlextConfigUncoveredMethods:
                 if isinstance(specific_flag, FlextResult):
                     assert specific_flag.is_success or specific_flag.is_failure
                 else:
-                    assert specific_flag in [True, False] or specific_flag is None
+                    assert specific_flag in {True, False} or specific_flag is None
             except Exception:
                 pass
 
@@ -577,7 +577,7 @@ class TestFlextConfigEdgeCasesAndErrorPaths:
             {"very_long_key_name_that_exceeds_normal_length": "value"},  # Long keys
         ]
 
-        for _i, edge_case in enumerate(edge_cases):
+        for edge_case in edge_cases:
             try:
                 if edge_case is not None:
                     config = FlextConfig()
@@ -626,7 +626,7 @@ class TestFlextConfigEdgeCasesAndErrorPaths:
                                     # Validation may succeed or fail
                                     assert result.is_success or result.is_failure
                                 else:
-                                    assert result in [True, False] or result is None
+                                    assert result in {True, False} or result is None
                             except Exception:
                                 # Exception is acceptable for invalid data
                                 pass

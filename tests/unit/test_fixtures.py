@@ -15,8 +15,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextConfig
-from flext_core.typings import FlextTypes
+from flext_core import FlextConfig, FlextTypes
 from flext_tests import (
     FlextTestsFixtures,
 )

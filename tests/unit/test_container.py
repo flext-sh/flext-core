@@ -11,6 +11,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from itertools import starmap
 from typing import TypedDict, cast
 
 import pytest
@@ -373,9 +374,7 @@ class TestFlextContainerAdvanced:
             return container.register(name, service)
 
         # Test concurrent registrations
-        tasks = [
-            register_service(name, service) for name, service in services_to_register
-        ]
+        tasks = list(starmap(register_service, services_to_register))
         results = await FlextTestsAsyncs.run_concurrently(*tasks)
 
         # All registrations should succeed

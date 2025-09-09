@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
 import os
 import re
 from collections.abc import Callable, Sequence
@@ -253,7 +254,7 @@ class FlextTestsMatchers:
                 AssertionError: If performance exceeds limit
 
             """
-            result = benchmark.benchmark(func, *args, **kwargs)
+            result = benchmark(func, *args, **kwargs)  # type: ignore[operator]
 
             # Get stats from benchmark
             stats = benchmark.stats
@@ -533,6 +534,97 @@ class FlextTestsMatchers:
     def is_failed_result(cls, result: FlextResult[object]) -> bool:
         """Check if result is failed quickly."""
         return cls.CoreMatchers.is_failed_result(result)
+
+    @classmethod
+    async def run_with_timeout(cls, coro: object, timeout_seconds: float = 5.0) -> object:
+        """Run coroutine with timeout for test compatibility."""
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout_seconds)  # type: ignore[arg-type]
+        except TimeoutError as timeout_err:
+            raise AssertionError(f"Operation timed out after {timeout_seconds} seconds") from timeout_err
+        except Exception as e:
+            raise AssertionError(f"Operation failed: {e}") from e
+
+    @classmethod
+    async def simulate_delay(cls, delay_seconds: float) -> None:
+        """Simulate async delay for test compatibility."""
+        await asyncio.sleep(delay_seconds)
+
+    @classmethod
+    async def run_parallel_tasks(cls, task_func: object, inputs: list[object]) -> list[object]:
+        """Run tasks in parallel for test compatibility."""
+        if not callable(task_func):
+            msg = "task_func must be callable"
+            raise ValueError(msg)
+
+        # Run tasks concurrently - create awaitable tasks
+        tasks = [task_func(input_item) for input_item in inputs]  # type: ignore[operator]
+        # Use gather with type ignoring for the asyncio call since task_func return type is unknown
+        results = await asyncio.gather(*tasks)  # type: ignore[arg-type]
+        return list(results)
+
+    @classmethod
+    def timeout_context(cls, timeout_seconds: float) -> object:
+        """Create timeout context manager for test compatibility."""
+        return asyncio.timeout(timeout_seconds)
+
+    @classmethod
+    def create_async_mock(cls, return_value: object = None, side_effect: object = None) -> object:
+        """Create async mock for test compatibility."""
+
+        class AsyncMock:
+            def __init__(self, return_value: object = None, side_effect: object = None) -> None:
+                self.return_value = return_value
+                self.side_effect = side_effect
+                self.call_count = 0
+                self.called = False
+                self._side_effect_iter: object = None
+                if isinstance(side_effect, list):
+                    self._side_effect_iter = iter(side_effect)
+
+            async def __call__(self, *args: object, **kwargs: object) -> object:
+                self.call_count += 1
+                self.called = True
+
+                if self.side_effect is not None:
+                    if isinstance(self.side_effect, list) and self._side_effect_iter:
+                        try:
+                            return next(self._side_effect_iter)  # type: ignore[call-overload,arg-type]
+                        except StopIteration:
+                            return self.return_value
+                    elif callable(self.side_effect):
+                        return self.side_effect(*args, **kwargs)  # type: ignore[operator]
+                    else:
+                        return self.side_effect
+
+                return self.return_value
+
+        return AsyncMock(return_value, side_effect)
+
+    @classmethod
+    def create_test_context(
+        cls,
+        setup_coro: object = None,
+        teardown_func: object = None
+    ) -> object:
+        """Create async context manager for test compatibility."""
+
+        class AsyncTestContext:
+            def __init__(self, setup_coro: object = None, teardown_func: object = None) -> None:
+                self.setup_coro = setup_coro
+                self.teardown_func = teardown_func
+                self.resource: object = None
+
+            async def __aenter__(self) -> object:
+                if self.setup_coro:
+                    self.resource = await self.setup_coro  # type: ignore[misc]
+                return self.resource
+
+            async def __aexit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
+                if self.teardown_func and self.resource is not None:
+                    await self.teardown_func(self.resource)  # type: ignore[misc,operator]
+
+        return AsyncTestContext(setup_coro, teardown_func)
 
 
 # === REMOVED COMPATIBILITY ALIASES AND FACADES ===

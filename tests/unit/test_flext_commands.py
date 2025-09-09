@@ -13,9 +13,7 @@ from typing import cast
 import pytest
 from pydantic import Field, ValidationError
 
-from flext_core import FlextCommands, FlextResult
-from flext_core.models import FlextModels
-from flext_core.typings import FlextTypes
+from flext_core import FlextCommands, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
 # =============================================================================

@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -129,7 +130,7 @@ class TestFlextValidationsCoreUncovered:
         # Test edge cases
         edge_ranges = [
             (0, 0, int),      # Zero range
-            (-100, -50, int), # Negative range
+            (-100, -50, int),  # Negative range
             (float("inf"), float("-inf"), float),  # Infinite values
         ]
 
@@ -230,7 +231,7 @@ class TestFlextValidationsCoreUncovered:
             (42, True),
             (0, True),
             (-10, True),
-            (3.14, False),  # Float not valid int
+            (math.pi, False),  # Float not valid int
             ("42", False),  # String not valid int
             (None, False),  # None not valid int
             (True, False),  # Boolean not valid int (depends on implementation)
@@ -248,7 +249,7 @@ class TestFlextValidationsCoreUncovered:
 
         # Test validate_float with various scenarios
         float_test_cases = [
-            (3.14, True),
+            (math.pi, True),
             (42.0, True),
             (0.0, True),
             (-1.5, True),
@@ -274,7 +275,7 @@ class TestFlextValidationsCoreUncovered:
             ([], True),
             ([1, 2, 3], True),
             (["a", "b", "c"], True),
-            ([1, "mixed", 3.14], True),
+            ([1, "mixed", math.pi], True),
             ("not_a_list", False),
             (None, False),
             ({"dict": "not_list"}, False),
@@ -738,12 +739,9 @@ class TestFlextValidationsEdgeCasesAndErrors:
         ]
 
         # Test various validators with complex data
-        validation_methods = []
 
         # Collect available validation methods
-        for attr_name in ["create_composite_validator", "create_api_request_validator"]:
-            if hasattr(FlextValidations, attr_name):
-                validation_methods.append(getattr(FlextValidations, attr_name))
+        validation_methods = [getattr(FlextValidations, attr_name) for attr_name in ["create_composite_validator", "create_api_request_validator"] if hasattr(FlextValidations, attr_name)]
 
         for validator_creator in validation_methods:
             try:

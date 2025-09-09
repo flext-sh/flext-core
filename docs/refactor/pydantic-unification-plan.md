@@ -461,7 +461,7 @@ A seguir, cada módulo com: papel, uso de Pydantic, problemas/duplicações, aç
 
 ```python
 import warnings
-from typing import overload, Union, Dict, Any
+from typing import overload, Union, Dict, object
 from pydantic import ValidationError
 
 class FlextCommands:

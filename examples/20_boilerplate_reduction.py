@@ -25,6 +25,7 @@ from flext_core import (
     FlextContext,
     FlextMixins,
     FlextResult,
+    FlextTypes,
 )
 
 # ==============================================================================

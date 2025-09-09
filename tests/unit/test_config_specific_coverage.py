@@ -17,7 +17,9 @@ from unittest.mock import patch
 import pytest
 
 from flext_core import FlextConfig
-from flext_core.config import FlextConfigFactory
+
+# Use nested class instead of removed loose class
+# from flext_core.config import FlextConfigFactory  -> FlextConfig.Factory
 
 
 class TestFlextConfigSpecificPaths:
@@ -68,11 +70,11 @@ class TestFlextConfigSpecificPaths:
         # Access all properties to trigger coverage
         assert config.name is not None
         assert config.version is not None
-        assert config.environment in ["development", "production", "staging", "test", "local"]
+        assert config.environment in {"development", "production", "staging", "test", "local"}
         assert isinstance(config.debug, bool)
         assert isinstance(config.max_workers, int)
         assert isinstance(config.timeout_seconds, int)
-        assert config.log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        assert config.log_level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
     def test_config_optional_properties(self) -> None:
         """Test optional property paths."""
@@ -133,7 +135,7 @@ class TestFlextConfigSpecificPaths:
 
 
 class TestFlextConfigFactorySpecificPaths:
-    """Test specific uncovered paths in FlextConfigFactory."""
+    """Test specific uncovered paths in FlextConfig.Factory."""
 
     def test_factory_create_from_env_with_real_env_vars(self) -> None:
         """Test factory with actual environment variables."""
@@ -147,12 +149,12 @@ class TestFlextConfigFactorySpecificPaths:
         }
 
         with patch.dict(os.environ, test_env, clear=False):
-            result = FlextConfigFactory.create_from_env()
+            result = FlextConfig.Factory.create_from_env()
             if result.is_success:
                 config = result.value
                 assert config.name == "env-service"
                 # Note: Environment might have default behavior, just verify it's set
-                assert config.environment in ["development", "production", "staging", "test", "local"]
+                assert config.environment in {"development", "production", "staging", "test", "local"}
                 assert config.max_workers == 8
 
     def test_factory_create_from_dict(self) -> None:
@@ -177,7 +179,7 @@ class TestFlextConfigFactorySpecificPaths:
 
     def test_factory_create_for_testing_with_overrides(self) -> None:
         """Test factory testing configuration with overrides."""
-        result = FlextConfigFactory.create_for_testing(
+        result = FlextConfig.Factory.create_for_testing(
             name="test-override",
             debug=True,
             max_workers=2,
@@ -203,12 +205,12 @@ class TestFlextConfigFactorySpecificPaths:
             "api_key": "json-key"
         }
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             temp_path = f.name
 
         try:
-            result = FlextConfigFactory.create_from_file(temp_path)
+            result = FlextConfig.Factory.create_from_file(temp_path)
             if result.is_success:
                 config = result.value
                 assert config.name == "json-service"
@@ -220,13 +222,13 @@ class TestFlextConfigFactorySpecificPaths:
     def test_factory_error_handling_paths(self) -> None:
         """Test error handling in factory methods."""
         # Test invalid file path
-        result = FlextConfigFactory.create_from_file("/nonexistent/config.json")
+        result = FlextConfig.Factory.create_from_file("/nonexistent/config.json")
         assert result.is_failure
         assert "not found" in result.error.lower()
 
         # Test empty environment
         with patch.dict(os.environ, {}, clear=True):
-            result = FlextConfigFactory.create_from_env()
+            result = FlextConfig.Factory.create_from_env()
             # Should still work with defaults
             if result.is_success:
                 config = result.value
@@ -247,7 +249,7 @@ class TestFlextConfigIntegrationPaths:
 
         with patch.dict(os.environ, env_vars, clear=False):
             # Create config that should be overridden by env vars
-            result = FlextConfigFactory.create_from_env()
+            result = FlextConfig.Factory.create_from_env()
             if result.is_success:
                 config = result.value
                 # Verify environment variables take precedence
