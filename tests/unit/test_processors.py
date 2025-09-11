@@ -1659,7 +1659,9 @@ class TestFlextProcessorsAdditionalCoverage:
 
         # Create validator that always fails
         class FailingValidator(FlextProcessors.EntryValidator):
-            def validate_entry(self, _entry: FlextProcessors.Entry) -> FlextResult[None]:
+            def validate_entry(
+                self, _entry: FlextProcessors.Entry
+            ) -> FlextResult[None]:
                 return FlextResult[None].fail("Validation always fails")
 
         failing_validator = FailingValidator()
@@ -1783,7 +1785,9 @@ class TestFlextProcessorsAdditionalCoverage:
         """Test BaseProcessor transform_data method execution (line 309)."""
 
         class TestTransformProcessor(FlextProcessors.BaseProcessor):
-            def validate_input(self, _entry: FlextProcessors.Entry) -> FlextResult[None]:
+            def validate_input(
+                self, _entry: FlextProcessors.Entry
+            ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
             def transform_data(

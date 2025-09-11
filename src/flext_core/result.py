@@ -620,7 +620,7 @@ class FlextResult[T_co]:
                 return FlextResult[list[T_co]].fail(
                     result.error or "Sequence failed",
                     error_code=result.error_code,
-                    error_data=result.error_data
+                    error_data=result.error_data,
                 )
             values.append(result.unwrap())
         return FlextResult[list[T_co]].ok(values)

@@ -14,15 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ParamSpec, TypeVar
 from unittest.mock import Mock
 
 import pytest
 
-from flext_core import FlextTypes
-
-P = ParamSpec("P")
-T = TypeVar("T")
+from flext_core import FlextTypes, P
 
 # Type alias for test functions
 TestFunction = Callable[..., None]
@@ -221,22 +217,28 @@ class TestAssertionBuilder:
 
     def assert_equals(self, expected: object) -> TestAssertionBuilder:
         """assert_equals method."""
+
         def assertion() -> None:
             assert self.data == expected
+
         self._assertions.append(assertion)
         return self
 
     def assert_contains(self, item: object) -> TestAssertionBuilder:
         """assert_contains method."""
+
         def assertion() -> None:
             assert item in self.data
+
         self._assertions.append(assertion)
         return self
 
     def assert_type(self, expected_type: type) -> TestAssertionBuilder:
         """assert_type method."""
+
         def assertion() -> None:
             assert isinstance(self.data, expected_type)
+
         self._assertions.append(assertion)
         return self
 
@@ -293,14 +295,21 @@ class TestAdvancedPatterns:
         """Test parameterized test builder pattern."""
         builder = (
             ParameterizedTestBuilder("email_validation")
-            .add_success_cases([
-                {"email": "valid@example.com", "input": "valid@example.com"},
-                {"email": "user.name@domain.co.uk", "input": "user.name@domain.co.uk"},
-            ])
-            .add_failure_cases([
-                {"email": "invalid-email", "input": "invalid-email"},
-                {"email": "@domain.com", "input": "@domain.com"},
-            ])
+            .add_success_cases(
+                [
+                    {"email": "valid@example.com", "input": "valid@example.com"},
+                    {
+                        "email": "user.name@domain.co.uk",
+                        "input": "user.name@domain.co.uk",
+                    },
+                ]
+            )
+            .add_failure_cases(
+                [
+                    {"email": "invalid-email", "input": "invalid-email"},
+                    {"email": "@domain.com", "input": "@domain.com"},
+                ]
+            )
         )
 
         params = builder.build_pytest_params()

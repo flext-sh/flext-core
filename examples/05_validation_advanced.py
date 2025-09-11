@@ -137,9 +137,5 @@ def main() -> None:
     )
 
 
-# Simple aliases for test compatibility (CLAUDE.md compliant)
-ValidationService = ValidationShowcaseService
-
-
 if __name__ == "__main__":
     main()

@@ -79,7 +79,7 @@ class TestCacheExtraComplete100:
 
         # Test Cacheable mixin methods (lines 148-154)
         obj.set_cached_value("test_key", "test_value")
-        assert obj.get_cached_value("test_key") == "test_value"
+        assert obj.get_cached_value_by_key("test_key") == "test_value"
 
         # Test has_cached_value
         assert obj.has_cached_value("test_key") is True
@@ -87,7 +87,7 @@ class TestCacheExtraComplete100:
 
         # Test clear_cache
         obj.clear_cache()
-        assert obj.get_cached_value("test_key") is None
+        assert obj.get_cached_value_by_key("test_key") is None
 
     def test_cache_line_185_has_cached_value_method(self) -> None:
         """Test line 185: has_cached_value method."""
@@ -216,11 +216,11 @@ class TestCacheComplete100:
 
         # Test set and get
         obj.set_cached_value("key1", "value1")
-        assert obj.get_cached_value("key1") == "value1"
+        assert obj.get_cached_value_by_key("key1") == "value1"
 
         # Test clear
         obj.clear_cache()
-        assert obj.get_cached_value("key1") is None
+        assert obj.get_cached_value_by_key("key1") is None
 
     def test_cache_line_177_cache_statistics(self) -> None:
         """Test line 177: cache statistics collection."""
@@ -500,7 +500,7 @@ class TestCoreComplete100:
         obj.state = "active"  # State
         assert obj.state == "active"
         obj.set_cached_value("k", "v")  # Cache
-        assert obj.get_cached_value("k") == "v"
+        assert obj.get_cached_value_by_key("k") == "v"
         obj.start_timing()  # Timing
         obj.stop_timing()
         assert obj.get_last_elapsed_time() >= 0
@@ -807,7 +807,7 @@ class TestFinalHundredPercentCoverage:
 
         # Verify integration worked
         assert obj.data == "integrated"
-        assert obj.get_cached_value("key") == "value"
+        assert obj.get_cached_value_by_key("key") == "value"
         assert obj.state == "active"
 
 
@@ -2788,9 +2788,9 @@ class TestRemainingSpecificLines100:
         cache_obj.set_cached_value("test_key_1", "value_1")
         cache_obj.set_cached_value("test_key_2", {"complex": "value"})
 
-        # Test get_cached_value
-        assert cache_obj.get_cached_value("test_key_1") == "value_1"
-        assert cache_obj.get_cached_value("nonexistent") is None
+        # Test get_cached_value_by_key
+        assert cache_obj.get_cached_value_by_key("test_key_1") == "value_1"
+        assert cache_obj.get_cached_value_by_key("nonexistent") is None
 
         # Test has_cached_value (line 185)
         assert cache_obj.has_cached_value("test_key_1") is True
@@ -2804,7 +2804,7 @@ class TestRemainingSpecificLines100:
 
         # Test clear_cache
         cache_obj.clear_cache()
-        assert cache_obj.get_cached_value("test_key_1") is None
+        assert cache_obj.get_cached_value_by_key("test_key_1") is None
         assert cache_obj.has_cached_value("test_key_1") is False
 
     def test_identification_lines_62_67_72_84_comprehensive(self) -> None:
@@ -3042,11 +3042,11 @@ class TestFinalUncoveredLines100:
         cache_obj = ExactCacheable()
 
         # Test exact method calls that trigger lines 149-151
-        result = cache_obj.get_cached_value("missing_key")  # Line 149
+        result = cache_obj.get_cached_value_by_key("missing_key")  # Line 149
         assert result is None
 
         cache_obj.set_cached_value("exact_key", "exact_value")  # Line 150
-        result = cache_obj.get_cached_value("exact_key")  # Line 151
+        result = cache_obj.get_cached_value_by_key("exact_key")  # Line 151
         assert result == "exact_value"
 
     def test_core_lines_368_369_precise_exception(self) -> None:
@@ -3399,7 +3399,9 @@ class TestAbsoluteLastLines100:
         assert result == "test_value"
 
         # Try to access non-existent key to hit line 150-151
-        result = cache_obj.get_cached_value_by_key("missing_key")  # Should hit lines 150-151
+        result = cache_obj.get_cached_value_by_key(
+            "missing_key"
+        )  # Should hit lines 150-151
         assert result is None
 
     def test_state_line_272_final(self) -> None:
@@ -3602,8 +3604,8 @@ class TestFinal35LinesTo100Percent:
 
                 # Cache stores (value, timestamp) tuples
                 self._cache = {"exists": ("value", time.time())}
-                result1 = self.get_cached_value("exists")  # Line 149
-                result2 = self.get_cached_value("missing")  # Lines 150-151
+                result1 = self.get_cached_value_by_key("exists")  # Line 149
+                result2 = self.get_cached_value_by_key("missing")  # Lines 150-151
                 return (result1, result2)
 
         obj = SpecificCacheable()
@@ -3725,7 +3727,7 @@ class TestFinal35LinesTo100Percent:
         class StatefulUltimate(FlextMixins.Stateful):
             def execute_line_272(self) -> str:
                 # This should force execution of line 272
-                history = self.state_history  # Accessing property might be line 272
+                history = self.get_state_history()  # Accessing method might be line 272
                 return f"History length: {len(history)}"
 
         stateful = StatefulUltimate()

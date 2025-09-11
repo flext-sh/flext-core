@@ -392,10 +392,3 @@ if __name__ == "__main__":
     print(
         "\nCode reduction: 1610 → 400 lines (75% reduction) while adding more functionality!",
     )
-
-
-# Simple aliases for test compatibility (CLAUDE.md compliant)
-ArchitectureService = UserService
-DomainService = UserService
-ArchitecturePatterns = UserService
-EnterpriseService = UserService

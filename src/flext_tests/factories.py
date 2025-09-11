@@ -46,10 +46,10 @@ class FlextTestsFactories:
 
     # === Factory Boy Factories ===
 
-    class UserFactory(factory.Factory[FlextTestsDomains.TestUser]):
+    class UserFactory(factory.Factory[dict[str, object]]):
         """Factory for creating test users with factory_boy."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestUser
@@ -71,8 +71,8 @@ class FlextTestsFactories:
             return [cls._ensure_dict(user) for user in users]
 
         @classmethod
-        def create(cls, **kwargs: object) -> dict[str, object]:
-            """Ultra-simple alias for test compatibility - create single user as dict."""
+        def create_dict(cls, **kwargs: object) -> dict[str, object]:
+            """Create single user as dictionary for test compatibility."""
             user = super().create(**kwargs)
             return cls._ensure_dict(user)
 
@@ -101,15 +101,18 @@ class FlextTestsFactories:
                 "email": getattr(user, "email", ""),
                 "age": getattr(user, "age", 0),
                 "active": getattr(user, "is_active", True),
-                "created_at": getattr(user, "created_at", "").isoformat()
-                if hasattr(getattr(user, "created_at", ""), "isoformat")
-                else str(getattr(user, "created_at", "")),
+                "created_at": (
+                    created_at.isoformat()
+                    if (created_at := getattr(user, "created_at", None))
+                    and hasattr(created_at, "isoformat")
+                    else str(getattr(user, "created_at", ""))
+                ),
             }
 
-    class AdminUserFactory(factory.Factory[FlextTestsDomains.TestUser]):
+    class AdminUserFactory(factory.Factory[dict[str, object]]):
         """Factory for admin users."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestUser
@@ -129,10 +132,10 @@ class FlextTestsFactories:
             """Create single admin as object (TestUser) for tests that need attribute access."""
             return super().create(**kwargs)
 
-    class InactiveUserFactory(factory.Factory[FlextTestsDomains.TestUser]):
+    class InactiveUserFactory(factory.Factory[dict[str, object]]):
         """Factory for inactive users."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestUser
@@ -151,10 +154,10 @@ class FlextTestsFactories:
             },
         )
 
-    class ConfigFactory(factory.Factory[FlextTestsDomains.TestConfig]):
+    class ConfigFactory(factory.Factory[dict[str, object]]):
         """Factory for creating test configurations."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestConfig
@@ -166,10 +169,10 @@ class FlextTestsFactories:
         max_connections: int = 100
         features = LazyFunction(lambda: ["auth", "cache", "metrics", "monitoring"])
 
-    class ProductionConfigFactory(factory.Factory[FlextTestsDomains.TestConfig]):
+    class ProductionConfigFactory(factory.Factory[dict[str, object]]):
         """Factory for production-like configurations."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestConfig
@@ -183,10 +186,10 @@ class FlextTestsFactories:
             lambda: ["auth", "cache", "metrics", "monitoring", "alerts"],
         )
 
-    class StringFieldFactory(factory.Factory[FlextTestsDomains.TestField]):
+    class StringFieldFactory(factory.Factory[str]):
         """Factory for string field testing."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestField
@@ -202,10 +205,10 @@ class FlextTestsFactories:
         max_length = 100
         pattern = r"^[a-zA-Z0-9_]+$"
 
-    class IntegerFieldFactory(factory.Factory[FlextTestsDomains.TestField]):
+    class IntegerFieldFactory(factory.Factory[int]):
         """Factory for integer field testing."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestField
@@ -220,10 +223,10 @@ class FlextTestsFactories:
         min_value = 0
         max_value = 1000
 
-    class BooleanFieldFactory(factory.Factory[FlextTestsDomains.TestField]):
+    class BooleanFieldFactory(factory.Factory[bool]):
         """Factory for boolean field testing."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestField
@@ -237,10 +240,10 @@ class FlextTestsFactories:
         )
         default_value = False
 
-    class FloatFieldFactory(factory.Factory[FlextTestsDomains.TestField]):
+    class FloatFieldFactory(factory.Factory[float]):
         """Factory for float field testing."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.TestField
@@ -255,10 +258,10 @@ class FlextTestsFactories:
         min_value = 0.0
         max_value = 1000.0
 
-    class TestEntityFactory(factory.Factory[FlextTestsDomains.BaseTestEntity]):
+    class TestEntityFactory(factory.Factory[dict[str, object]]):
         """Factory for creating test entities."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.BaseTestEntity
@@ -269,24 +272,10 @@ class FlextTestsFactories:
         updated_at = LazyAttribute(lambda _: datetime.now(UTC))
         version = 1
 
-        @classmethod
-        def create(cls, **kwargs: object) -> FlextTestsDomains.BaseTestEntity:
-            """Create a single test entity."""
-            return super().create(**kwargs)
-
-        @classmethod
-        def create_batch(
-            cls, size: int, **kwargs: object
-        ) -> list[FlextTestsDomains.BaseTestEntity]:
-            """Create a batch of test entities."""
-            return super().create_batch(size, **kwargs)
-
-    class TestValueObjectFactory(
-        factory.Factory[FlextTestsDomains.BaseTestValueObject]
-    ):
+    class TestValueObjectFactory(factory.Factory[dict[str, object]]):
         """Factory for creating test value objects."""
 
-        class Meta:  # pyright: ignore[reportIncompatibleVariableOverride]:
+        class Meta:
             """Factory meta compatibility."""
 
             model = FlextTestsDomains.BaseTestValueObject
@@ -294,11 +283,6 @@ class FlextTestsFactories:
         value = Faker("word")
         description = Faker("sentence")
         category = Faker("word")
-
-        @classmethod
-        def create(cls, **kwargs: object) -> FlextTestsDomains.BaseTestValueObject:
-            """Create a single test value object."""
-            return super().create(**kwargs)
 
     # === FlextResult Factories ===
 
@@ -386,7 +370,10 @@ class FlextTestsFactories:
         @staticmethod
         def create_users(count: int = 10) -> list[FlextTestsDomains.TestUser]:
             """Create batch of test users."""
-            return FlextTestsFactories.UserFactory.create_batch(count)
+            return cast(
+                "list[FlextTestsDomains.TestUser]",
+                FlextTestsFactories.UserFactory.create_batch(count),
+            )
 
         @staticmethod
         def create_mixed_users(count: int = 10) -> list[FlextTestsDomains.TestUser]:
@@ -420,10 +407,30 @@ class FlextTestsFactories:
         def create_field_matrix() -> list[FlextTestsDomains.TestField]:
             """Create comprehensive field test matrix."""
             fields: list[FlextTestsDomains.TestField] = []
-            fields.extend(FlextTestsFactories.StringFieldFactory.create_batch(3))
-            fields.extend(FlextTestsFactories.IntegerFieldFactory.create_batch(3))
-            fields.extend(FlextTestsFactories.BooleanFieldFactory.create_batch(2))
-            fields.extend(FlextTestsFactories.FloatFieldFactory.create_batch(2))
+            fields.extend(
+                cast(
+                    "list[FlextTestsDomains.TestField]",
+                    FlextTestsFactories.StringFieldFactory.create_batch(3),
+                )
+            )
+            fields.extend(
+                cast(
+                    "list[FlextTestsDomains.TestField]",
+                    FlextTestsFactories.IntegerFieldFactory.create_batch(3),
+                )
+            )
+            fields.extend(
+                cast(
+                    "list[FlextTestsDomains.TestField]",
+                    FlextTestsFactories.BooleanFieldFactory.create_batch(2),
+                )
+            )
+            fields.extend(
+                cast(
+                    "list[FlextTestsDomains.TestField]",
+                    FlextTestsFactories.FloatFieldFactory.create_batch(2),
+                )
+            )
             return fields
 
     # === Edge Case Generators ===

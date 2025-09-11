@@ -48,7 +48,7 @@ class TestFlextHandlersRealFunctionality:
         handler = FlextHandlers.Implementation.BasicHandler("config_handler")
 
         # Test valid configuration
-        config: FlextTypes.Config.ConfigDict = {
+        config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
             "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
@@ -59,7 +59,7 @@ class TestFlextHandlersRealFunctionality:
         assert result.success is True
 
         # Test invalid log level
-        invalid_config: FlextTypes.Config.ConfigDict = {
+        invalid_config: dict[str, object] = {
             "log_level": "INVALID_LEVEL",
         }
 
@@ -76,12 +76,12 @@ class TestFlextHandlersRealFunctionality:
         valid_environments = [e.value for e in FlextConstants.Config.ConfigEnvironment]
 
         for env in valid_environments:
-            config: FlextTypes.Config.ConfigDict = {"environment": env}
+            config: dict[str, object] = {"environment": env}
             result = handler.configure(config)
             assert result.success is True, f"Failed for environment: {env}"
 
         # Test invalid environment
-        invalid_config: FlextTypes.Config.ConfigDict = {"environment": "invalid_env"}
+        invalid_config: dict[str, object] = {"environment": "invalid_env"}
         result = handler.configure(invalid_config)
         assert result.success is False
         assert result.error is not None
@@ -95,7 +95,7 @@ class TestFlextHandlersRealFunctionality:
         valid_levels = [level.value for level in FlextConstants.Config.LogLevel]
 
         for level in valid_levels:
-            config: FlextTypes.Config.ConfigDict = {"log_level": level}
+            config: dict[str, object] = {"log_level": level}
             result = handler.configure(config)
             assert result.success is True, f"Failed for log level: {level}"
 
@@ -105,7 +105,7 @@ class TestFlextHandlersRealFunctionality:
 
         # Test all validation levels
         for val_level in FlextConstants.Config.ValidationLevel:
-            config: FlextTypes.Config.ConfigDict = {"validation_level": val_level.value}
+            config: dict[str, object] = {"validation_level": val_level.value}
             result = handler.configure(config)
             assert result.success is True
             assert val_level.value in {"strict", "normal", "loose", "disabled"}
@@ -115,7 +115,7 @@ class TestFlextHandlersRealFunctionality:
         handler = FlextHandlers.Implementation.BasicHandler("complete_handler")
 
         # Complete configuration with all supported options
-        complete_config: FlextTypes.Config.ConfigDict = {
+        complete_config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.INFO.value,
             "environment": FlextConstants.Config.ConfigEnvironment.STAGING.value,
             "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
@@ -140,7 +140,7 @@ class TestFlextHandlersRealFunctionality:
         handler = FlextHandlers.Implementation.BasicHandler("metrics_handler")
 
         # Configure handler
-        config: FlextTypes.Config.ConfigDict = {
+        config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
             "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
         }
@@ -173,7 +173,7 @@ class TestFlextHandlersStrEnumIntegration:
 
         # Test each environment enum value
         for env_enum in FlextConstants.Config.ConfigEnvironment:
-            config: FlextTypes.Config.ConfigDict = {"environment": env_enum.value}
+            config: dict[str, object] = {"environment": env_enum.value}
             result = handler.configure(config)
             assert result.success is True
             assert env_enum.value in {
@@ -190,7 +190,7 @@ class TestFlextHandlersStrEnumIntegration:
 
         # Test each log level enum value
         for log_enum in FlextConstants.Config.LogLevel:
-            config: FlextTypes.Config.ConfigDict = {"log_level": log_enum.value}
+            config: dict[str, object] = {"log_level": log_enum.value}
             result = handler.configure(config)
             assert result.success is True
             assert log_enum.value in {
@@ -209,7 +209,7 @@ class TestFlextHandlersStrEnumIntegration:
         # Test each validation level
         validation_levels = []
         for val_enum in FlextConstants.Config.ValidationLevel:
-            config: FlextTypes.Config.ConfigDict = {"validation_level": val_enum.value}
+            config: dict[str, object] = {"validation_level": val_enum.value}
             result = handler.configure(config)
             assert result.success is True
             validation_levels.append(val_enum.value)
@@ -228,7 +228,7 @@ class TestHandlersPerformanceReal:
         """Test configuration performance with real execution."""
         handler = FlextHandlers.Implementation.BasicHandler("perf_handler")
 
-        config: FlextTypes.Config.ConfigDict = {
+        config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.INFO.value,
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
             "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
@@ -258,7 +258,7 @@ class TestHandlersPerformanceReal:
             handlers.append(handler)
 
         # Configure all handlers
-        config: FlextTypes.Config.ConfigDict = {
+        config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
             "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
         }
@@ -286,7 +286,7 @@ class TestHandlersConfigurationIntegration:
         handler = FlextHandlers.Implementation.BasicHandler("get_config_handler")
 
         # Configure handler first
-        config: FlextTypes.Config.ConfigDict = {
+        config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.WARNING.value,
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
             "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
@@ -392,7 +392,7 @@ class TestHandlersConfigurationIntegration:
     def test_optimize_handler_performance_real(self) -> None:
         """Test handler performance optimization with real execution."""
         # Test high performance configuration
-        high_perf_config: FlextTypes.Config.ConfigDict = {
+        high_perf_config: dict[str, object] = {
             "performance_level": "high",
             "max_concurrent_requests": 100,
         }
@@ -418,7 +418,7 @@ class TestHandlersConfigurationIntegration:
         assert int(queue_size) >= 1000
 
         # Test medium performance configuration
-        medium_perf_config: FlextTypes.Config.ConfigDict = {
+        medium_perf_config: dict[str, object] = {
             "performance_level": "medium",
             "max_concurrent_requests": 50,
         }
@@ -436,7 +436,7 @@ class TestHandlersConfigurationIntegration:
         assert 10 <= int(medium_concurrent) <= 100
 
         # Test low performance configuration
-        low_perf_config: FlextTypes.Config.ConfigDict = {
+        low_perf_config: dict[str, object] = {
             "performance_level": "low",
             "max_concurrent_requests": 10,
         }
@@ -458,7 +458,7 @@ class TestHandlersConfigurationIntegration:
         handler = FlextHandlers.Implementation.BasicHandler("state_handler")
 
         # Configure handler
-        initial_config: FlextTypes.Config.ConfigDict = {
+        initial_config: dict[str, object] = {
             "log_level": FlextConstants.Config.LogLevel.CRITICAL.value,
             "environment": FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
             "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
@@ -504,7 +504,7 @@ class TestHandlersConfigurationEdgeCases:
         handler = FlextHandlers.Implementation.BasicHandler("validation_handler")
 
         # Test invalid timeout type
-        invalid_timeout_config: FlextTypes.Config.ConfigDict = {
+        invalid_timeout_config: dict[str, object] = {
             "timeout": "invalid_timeout",  # Should be integer
         }
 
@@ -515,7 +515,7 @@ class TestHandlersConfigurationEdgeCases:
         assert hasattr(result, "error")
 
         # Test negative timeout
-        negative_timeout_config: FlextTypes.Config.ConfigDict = {
+        negative_timeout_config: dict[str, object] = {
             "timeout": -1000,
         }
 
@@ -549,7 +549,7 @@ class TestHandlersConfigurationEdgeCases:
     def test_performance_optimization_edge_cases_real(self) -> None:
         """Test performance optimization with edge case configurations."""
         # Test with minimal configuration
-        minimal_config: FlextTypes.Config.ConfigDict = {}
+        minimal_config: dict[str, object] = {}
 
         result = FlextHandlers.Implementation.BasicHandler.optimize_handler_performance(
             minimal_config,
@@ -561,7 +561,7 @@ class TestHandlersConfigurationEdgeCases:
         assert "max_concurrent_requests" in optimized
 
         # Test with zero concurrent requests
-        zero_config: FlextTypes.Config.ConfigDict = {
+        zero_config: dict[str, object] = {
             "max_concurrent_requests": 0,
         }
 
@@ -572,7 +572,7 @@ class TestHandlersConfigurationEdgeCases:
         assert result.success is True
 
         # Test with very high concurrent requests
-        high_config: FlextTypes.Config.ConfigDict = {
+        high_config: dict[str, object] = {
             "max_concurrent_requests": 10000,
         }
 

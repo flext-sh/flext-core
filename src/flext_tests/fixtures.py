@@ -308,7 +308,7 @@ class FlextTestsFixtures:
 
             """
             if prefix:
-                to_delete = [k for k in self._data.keys() if k.startswith(prefix)]
+                to_delete = [k for k in self._data if k.startswith(prefix)]
                 for key in to_delete:
                     del self._data[key]
                 return len(to_delete)
@@ -445,35 +445,6 @@ class FlextTestsFixtures:
             """Cleanup completed tasks."""
             self._tasks.clear()
 
-    class SessionTestService:
-        """Test service for session-scoped testing."""
-
-        def __init__(self) -> None:
-            """Initialize session test service."""
-            self._data: FlextTypes.Core.Dict = {}
-            self._session_data: dict[str, FlextTypes.Core.Dict] = {}
-
-        def set_session_data(self, session_id: str, data: FlextTypes.Core.Dict) -> None:
-            """Set session-specific data."""
-            self._session_data[session_id] = data
-
-        def get_session_data(self, session_id: str) -> FlextTypes.Core.Dict | None:
-            """Get session-specific data."""
-            return self._session_data.get(session_id)
-
-        def clear_session(self, session_id: str) -> None:
-            """Clear session data."""
-            self._session_data.pop(session_id, None)
-
-        def create_session(self, session_id: str) -> None:
-            """Create a new session."""
-            self._session_data[session_id] = {}
-
-        def update_session(self, session_id: str, data: FlextTypes.Core.Dict) -> None:
-            """Update session data."""
-            if session_id in self._session_data:
-                self._session_data[session_id].update(data)
-
     class MockDataService:
         """Mock data service for testing."""
 
@@ -596,21 +567,6 @@ class FlextTestsFixtures:
 
     # === Factory Classes ===
 
-    class PerformanceDataFactory:
-        """Factory for creating performance test data."""
-
-        @staticmethod
-        def create_large_payload(size_mb: int = 1) -> dict[str, object]:
-            """Create large payload for performance testing."""
-            # Create data of approximately the requested size
-            data_size = size_mb * 1024 * 1024  # Convert MB to bytes
-            data = "x" * data_size
-            return {
-                "data": data,
-                "size_mb": size_mb,
-                "created_at": datetime.now(UTC).isoformat(),
-            }
-
     class CommandFactory:
         """Factory for creating test commands."""
 
@@ -624,19 +580,6 @@ class FlextTestsFixtures:
                 "data": data or {"test": "value"},
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-
-    class ErrorSimulationFactory:
-        """Factory for creating error scenarios."""
-
-        @staticmethod
-        def create_timeout_error() -> Exception:
-            """Create timeout error for testing."""
-            return TimeoutError("Simulated timeout error")
-
-        @staticmethod
-        def create_validation_error() -> Exception:
-            """Create validation error for testing."""
-            return ValueError("Simulated validation error")
 
 
 # Export only the unified class

@@ -309,7 +309,7 @@ class TestFlextLoggerUsage:
 
     def test_bound_logger_usage(self) -> None:
         """Test using bound logger."""
-        logger = FlextLogger("bound_test", "DEBUG")
+        logger = FlextLogger("bound_test", level="DEBUG")
         bound_logger = logger.bind(request_id="req-123", user_id="user-456")
 
         # Context should be automatically included in these logs

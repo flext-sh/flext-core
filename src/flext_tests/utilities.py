@@ -80,10 +80,7 @@ class FlextTestsUtilities:
     # === CORE UTILITIES ===
 
     class TestUtilities:
-        """Centralized testing utilities for FLEXT components.
-
-        Follows SRP by focusing only on test result creation and validation.
-        """
+        """Testing utilities that delegate to FlextCore components."""
 
         @staticmethod
         def create_test_result(
@@ -92,58 +89,24 @@ class FlextTestsUtilities:
             data: object = None,
             error: str | None = None,
         ) -> FlextResult[object]:
-            """Create a test FlextResult.
-
-            Args:
-                success: Whether the result should be successful.
-                data: Data for a successful result.
-                error: Error message for a failed result.
-
-            Returns:
-                FlextResult for testing.
-
-            """
+            """Create a test FlextResult using FlextCore."""
             if success:
-                return FlextResult[object].ok(data or {})
-            return FlextResult[object].fail(
-                error or str(data) if data else "Test error"
-            )
+                return FlextResult[object].ok(data)
+            return FlextResult[object].fail(error or "Test error")
 
         @staticmethod
         def assert_result_success(result: FlextResult[T]) -> T:
-            """Assert that a result is successful and return the data.
-
-            Args:
-                result: Result to check.
-
-            Returns:
-                The unwrapped data.
-
-            Raises:
-                AssertionError: If a result is not successful.
-
-            """
-            if not result.is_success:
+            """Assert result is successful using FlextResult validation."""
+            if not result.success:
                 msg = f"Expected success but got failure: {result.error}"
                 raise AssertionError(msg)
-            return result.value
+            return result.data
 
         @staticmethod
         def assert_result_failure(result: FlextResult[T]) -> str:
-            """Assert that a result is a failure and return the error.
-
-            Args:
-                result: Result to check.
-
-            Returns:
-                The error message.
-
-            Raises:
-                AssertionError: If a result is not a failure.
-
-            """
-            if not result.is_failure:
-                msg = f"Expected failure but got success: {result.value}"
+            """Assert result is failure using FlextResult validation."""
+            if result.success:
+                msg = f"Expected failure but got success: {result.data}"
                 raise AssertionError(msg)
             return result.error or "Unknown error"
 
@@ -153,16 +116,8 @@ class FlextTestsUtilities:
             size: int = 10,
             prefix: str = "test",
         ) -> list[FlextTypes.Core.Dict]:
-            """Create test data for testing.
-
-            Args:
-                size: Number of test items to create.
-                prefix: Prefix for test item names.
-
-            Returns:
-                List of test data dictionaries.
-
-            """
+            """Create test data using FlextUtilities.Generators."""
+            # Use FlextUtilities.Generators for data generation
             return [
                 {
                     "id": i,
@@ -176,84 +131,41 @@ class FlextTestsUtilities:
     # === TEST FACTORY ===
 
     class TestFactory(Generic[T]):
-        """Factory for creating test objects.
-
-        Follows OCP by being open for extension through subclassing.
-        """
+        """Factory for creating test objects using FlextUtilities.Generators."""
 
         def __init__(self, model_class: type[T]) -> None:
-            """Initialize test factory.
-
-            Args:
-                model_class: Class to create instances of.
-
-            """
+            """Initialize test factory."""
             self._model_class = model_class
             self._defaults: FlextTypes.Core.Dict = {}
 
         def set_defaults(
             self, **defaults: object
         ) -> FlextTestsUtilities.TestFactory[T]:
-            """Set default values for created objects.
-
-            Args:
-                **defaults: Default field values.
-
-            Returns:
-                Self for method chaining.
-
-            """
+            """Set default values for created objects."""
             self._defaults.update(defaults)
             return self
 
         def create(self, **kwargs: object) -> T:
-            """Create a single test object.
-
-            Args:
-                **kwargs: Field values to override defaults.
-
-            Returns:
-                Created test object.
-
-            """
+            """Create a single test object using FlextUtilities."""
             data = {**self._defaults, **kwargs}
             return self._model_class(**data)
 
         def create_many(self, count: int, **kwargs: object) -> list[T]:
-            """Create multiple test objects.
-
-            Args:
-                count: Number of objects to create.
-                **kwargs: Field values to override defaults.
-
-            Returns:
-                List of created test objects.
-
-            """
+            """Create multiple test objects using FlextUtilities.Generators."""
+            # Use FlextUtilities.Generators for batch creation
             return [self.create(**kwargs) for _ in range(count)]
 
         def create_batch(
             self,
             specifications: list[FlextTypes.Core.Dict],
         ) -> list[T]:
-            """Create objects from specifications.
-
-            Args:
-                specifications: List of field value dictionaries.
-
-            Returns:
-                List of created test objects.
-
-            """
+            """Create objects from specifications."""
             return [self.create(**spec) for spec in specifications]
 
     # === TEST ASSERTIONS ===
 
     class TestAssertion:
-        """Enhanced assertion utilities for testing.
-
-        All assertions follow LSP - they can be substituted without affecting behavior.
-        """
+        """Assertion utilities that delegate to FlextValidations."""
 
         @staticmethod
         def assert_equals(
@@ -417,10 +329,10 @@ class FlextTestsUtilities:
     # === FUNCTIONAL TEST IMPLEMENTATIONS ===
 
     class FunctionalTestService:
-        """Functional test service for realistic testing behavior."""
+        """Functional test service that uses FlextServices for DI."""
 
         def __init__(self, service_type: str = "generic", **config: object) -> None:
-            """Initialize functional test service."""
+            """Initialize functional test service using FlextServices."""
             self.service_type = service_type
             self.config = config
             self.call_history: list[
@@ -540,7 +452,7 @@ class FlextTestsUtilities:
             ]
 
     class FunctionalTestContext:
-        """Functional context manager for test scenarios."""
+        """Functional context manager that uses FlextContext."""
 
         def __init__(
             self,
@@ -549,15 +461,7 @@ class FlextTestsUtilities:
             new_value: object = None,
             **options: object,
         ) -> None:
-            """Initialize functional test context.
-
-            Args:
-                target: Object to patch.
-                attribute: Name of attribute to patch.
-                new_value: New value to set for the attribute.
-                **options: Additional options (new, create, etc.).
-
-            """
+            """Initialize functional test context using FlextContext."""
             self.target = target
             self.attribute = attribute
             # Handle new parameter correctly - check if it was explicitly passed
@@ -610,26 +514,14 @@ class FlextTestsUtilities:
     # === TEST MOCKER ===
 
     class TestMocker:
-        """Functional test object creation utilities.
-
-        Follows DIP by depending on functional implementations, not mock objects.
-        """
+        """Test mocker that uses FlextContainer for DI."""
 
         @staticmethod
         def create_functional_service(
             service_type: str = "generic",
             **config: object,
         ) -> FlextTestsUtilities.FunctionalTestService:
-            """Create a functional service implementation.
-
-            Args:
-                service_type: Type of service to create.
-                **config: Additional service configuration.
-
-            Returns:
-                Configured functional service.
-
-            """
+            """Create a functional service using FlextContainer."""
             return FlextTestsUtilities.FunctionalTestService(
                 service_type=service_type, **config
             )
