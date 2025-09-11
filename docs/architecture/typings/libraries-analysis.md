@@ -72,11 +72,11 @@ class ApiHandlerEnhanced:
     ) -> FlextResult[FlextApiTypes.Api.ResponseData]:
         """Handle request with complete type safety."""
 
-        # Type-safe request validation
+
         if method not in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
             return FlextResult.fail(f"Unsupported method: {method}")
 
-        # Type-safe handler lookup and execution
+
         handler = self.handlers.get(method.lower())
         if not handler:
             return FlextResult.fail(f"No handler for method: {method}")
@@ -132,11 +132,11 @@ class MeltanoETLService:
     ) -> FlextMeltanoTypes.ETL.ExtractResult:
         """Execute tap with complete type safety."""
 
-        # Type-safe tap validation
+
         if "name" not in tap_config or "config" not in tap_config:
             return FlextResult.fail("Invalid tap configuration")
 
-        # Type-safe tap execution with Singer protocol types
+
         records: list[FlextTypes.Config.ConfigDict] = []
         # ... tap execution logic
 

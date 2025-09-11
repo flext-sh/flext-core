@@ -23,20 +23,12 @@ from pydantic_settings import SettingsConfigDict
 
 from flext_core import FlextConfig, FlextModels, FlextResult
 
-# =============================================================================
-# TYPE ALIASES AND CONSTANTS
-# =============================================================================
 
 MIN_AGE = 18
 MAX_AGE = 120
 MIN_PRICE = Decimal("0.01")
 MAX_PRICE = Decimal("100000.00")
 CURRENCY_CODE_LENGTH = 3
-
-
-# =============================================================================
-# ENUMS AND VALUE OBJECTS
-# =============================================================================
 
 
 class OrderStatus(StrEnum):
@@ -150,11 +142,6 @@ class EmailAddress(FlextModels.Value):
             return FlextResult[Self].fail(f"Invalid email: {e}")
 
 
-# =============================================================================
-# CONFIGURATION
-# =============================================================================
-
-
 class ECommerceConfig(FlextConfig):
     """E-commerce system configuration."""
 
@@ -192,11 +179,6 @@ class ECommerceConfig(FlextConfig):
         if self.max_order_items <= 0:
             return FlextResult[None].fail("max_order_items must be positive")
         return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# DOMAIN ENTITIES
-# =============================================================================
 
 
 class User(FlextModels.Entity):
@@ -574,11 +556,6 @@ class Order(FlextModels.AggregateRoot):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# SERVICES
-# =============================================================================
-
-
 class PaymentService:
     """Payment processing service."""
 
@@ -656,11 +633,6 @@ class OrderService:
 
         except Exception as e:
             return FlextResult[Order].fail(f"Order processing failed: {e}")
-
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS
-# =============================================================================
 
 
 def demonstrate_user_creation() -> FlextResult[User]:
@@ -745,11 +717,6 @@ def demonstrate_order_processing(
         print(f"❌ Order processing failed: {order_result.error}")
 
     return order_result
-
-
-# =============================================================================
-# MAIN EXECUTION
-# =============================================================================
 
 
 def main() -> int:

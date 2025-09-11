@@ -187,7 +187,7 @@ make check        # Quick check (lint + type only)
 make test         # Run test suite with coverage
 
 # Code quality
-make lint         # Ruff linting with all rules
+make lint
 make type-check   # MyPy strict mode checking
 make format       # Auto-format code
 make security     # Security vulnerability scan

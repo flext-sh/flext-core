@@ -23,7 +23,7 @@ class FlextDelegationSystem:
 
     # ==========================================================================
     # NESTED PROTOCOLS AND CLASSES FOR LOGICAL ORGANIZATION
-    # Type-safe interfaces and descriptor implementations for delegation patterns
+
     # ==========================================================================
 
     @runtime_checkable

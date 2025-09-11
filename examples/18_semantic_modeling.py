@@ -25,10 +25,6 @@ from flext_core import (
     FlextTypes,
 )
 
-# =============================================================================
-# LAYER 0: FOUNDATION PATTERNS - Core Pydantic Models
-# =============================================================================
-
 
 class DatabaseConfig(FlextConfig):
     """Example database configuration using unified patterns with FlextTypes.
@@ -142,11 +138,6 @@ class FlextDataPipeline(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# LAYER 1: SEMANTIC TYPE SYSTEM - Unified Type Organization
-# =============================================================================
-
-
 # Use unified semantic types
 def pipeline_factory() -> FlextDataPipeline:
     """Create a default FlextDataPipeline instance."""
@@ -184,11 +175,6 @@ LoggerContext: FlextTypes.Core.Headers = {
     "component": "pipeline-manager",
     "version": "2.0.0",
 }
-
-
-# =============================================================================
-# LAYER 2: DOMAIN SERVICES - Unified Service Patterns
-# =============================================================================
 
 
 class FlextPipelineService:
@@ -325,11 +311,6 @@ class FlextPipelineService:
         return stats
 
 
-# =============================================================================
-# LAYER 3: UTILITIES - Unified Utility Patterns
-# =============================================================================
-
-
 # Use standard library urllib.parse for URL parsing instead of custom implementation
 
 
@@ -391,11 +372,6 @@ def safe_transform_data(
         return FlextResult[FlextTypes.Core.Dict].fail(
             f"Data transformation failed: {e}"
         )
-
-
-# =============================================================================
-# DEMONSTRATION - Complete Working Example
-# =============================================================================
 
 
 async def demonstrate_foundation_models() -> FlextDataPipeline | None:
@@ -551,11 +527,6 @@ async def demonstrate_unified_patterns() -> None:
 
     # Print summary
     print_completion_summary()
-
-
-# =============================================================================
-# MAIN EXECUTION
-# =============================================================================
 
 
 def main() -> None:

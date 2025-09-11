@@ -797,6 +797,64 @@ class FlextExceptions:
     # =============================================================================
 
 
+def create_module_exception_classes(module_name: str) -> FlextTypes.Core.Dict:
+    """Create module-specific exception classes.
+
+    Creates a dictionary of exception classes tailored for a specific module,
+    following the FLEXT ecosystem naming conventions.
+
+    Args:
+        module_name: Name of the module (e.g., "flext_grpc")
+
+    Returns:
+        Dictionary mapping exception names to exception classes
+
+    """
+    # Normalize module name for class naming
+    normalized_name = module_name.upper().replace("-", "_").replace(".", "_")
+
+    # Create base exception class for the module
+    class ModuleBaseError(FlextExceptions.BaseError):
+        """Base exception for module-specific errors."""
+
+    # Create configuration error class
+    class ModuleConfigurationError(ModuleBaseError):
+        """Configuration-related errors for the module."""
+
+    # Create connection error class
+    class ModuleConnectionError(ModuleBaseError):
+        """Connection-related errors for the module."""
+
+    # Create validation error class
+    class ModuleValidationError(ModuleBaseError):
+        """Validation-related errors for the module."""
+
+    # Create authentication error class
+    class ModuleAuthenticationError(ModuleBaseError):
+        """Authentication-related errors for the module."""
+
+    # Create processing error class
+    class ModuleProcessingError(ModuleBaseError):
+        """Processing-related errors for the module."""
+
+    # Create timeout error class
+    class ModuleTimeoutError(ModuleBaseError):
+        """Timeout-related errors for the module."""
+
+    # Return dictionary with module-specific naming
+    return {
+        f"{normalized_name}BaseError": ModuleBaseError,
+        f"{normalized_name}Error": ModuleBaseError,  # General error alias
+        f"{normalized_name}ConfigurationError": ModuleConfigurationError,
+        f"{normalized_name}ConnectionError": ModuleConnectionError,
+        f"{normalized_name}ValidationError": ModuleValidationError,
+        f"{normalized_name}AuthenticationError": ModuleAuthenticationError,
+        f"{normalized_name}ProcessingError": ModuleProcessingError,
+        f"{normalized_name}TimeoutError": ModuleTimeoutError,
+    }
+
+
 __all__: FlextTypes.Core.StringList = [
     "FlextExceptions",
+    "create_module_exception_classes",
 ]

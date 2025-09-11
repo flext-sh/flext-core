@@ -72,8 +72,7 @@ class TestFieldsMassiveOpportunity85:
 
         # Test field transformation
         transformed_field = advanced.create_transformed_field(
-            source_field="original",
-            transformer=lambda x: str(x).upper()
+            source_field="original", transformer=lambda x: str(x).upper()
         )
         assert transformed_field is not None
 
@@ -81,7 +80,7 @@ class TestFieldsMassiveOpportunity85:
         conditional_field = advanced.create_conditional_field(
             condition=lambda x: x is not None,
             true_field="active_field",
-            false_field="inactive_field"
+            false_field="inactive_field",
         )
         assert conditional_field is not None
 
@@ -142,22 +141,20 @@ class TestFieldsMassiveOpportunity85:
 
         # Test field version migration
         migrated_field = migration.migrate_field_version(
-            field_definition={"type": "string", "version": "1.0"},
-            target_version="2.0"
+            field_definition={"type": "string", "version": "1.0"}, target_version="2.0"
         )
         assert migrated_field is not None
 
         # Test field schema migration
         migrated_schema = migration.migrate_field_schema(
             old_schema={"name": {"type": "string"}},
-            new_schema={"name": {"type": "text", "max_length": 255}}
+            new_schema={"name": {"type": "text", "max_length": 255}},
         )
         assert migrated_schema is not None
 
         # Test field compatibility check
         compatibility = migration.check_field_compatibility(
-            field_v1={"type": "string"},
-            field_v2={"type": "text"}
+            field_v1={"type": "string"}, field_v2={"type": "text"}
         )
         assert isinstance(compatibility, bool)
 
@@ -172,15 +169,18 @@ class TestFieldsMassiveOpportunity85:
             {"field_type": "phone", "value": "invalid_phone", "should_pass": False},
             {"field_type": "url", "value": "https://example.com", "should_pass": True},
             {"field_type": "url", "value": "invalid_url", "should_pass": False},
-            {"field_type": "uuid", "value": "123e4567-e89b-12d3-a456-426614174000", "should_pass": True},
+            {
+                "field_type": "uuid",
+                "value": "123e4567-e89b-12d3-a456-426614174000",
+                "should_pass": True,
+            },
             {"field_type": "uuid", "value": "invalid_uuid", "should_pass": False},
         ]
 
         for scenario in validation_scenarios:
             try:
                 validation_result = validation.validate_field_value(
-                    field_type=scenario["field_type"],
-                    value=scenario["value"]
+                    field_type=scenario["field_type"], value=scenario["value"]
                 )
 
                 # Result should match expectation
@@ -211,7 +211,9 @@ class TestFieldsMassiveOpportunity85:
         assert optimized_field is not None
 
         # Test performance metrics
-        performance_metrics = performance.get_field_performance_metrics(field_name="test_field")
+        performance_metrics = performance.get_field_performance_metrics(
+            field_name="test_field"
+        )
         assert performance_metrics is not None
 
     def test_field_factory_patterns(self) -> None:
@@ -219,18 +221,22 @@ class TestFieldsMassiveOpportunity85:
         factory = FlextFields.Factory
 
         # Test factory registration
-        factory.register_field_factory("custom_type", lambda **kwargs: f"custom_field_{kwargs}")
+        factory.register_field_factory(
+            "custom_type", lambda **kwargs: f"custom_field_{kwargs}"
+        )
 
         # Test factory creation
         custom_field = factory.create_field(field_type="custom_type", name="test")
         assert custom_field is not None
 
         # Test factory batch creation
-        field_batch = factory.create_field_batch([
-            {"type": "string", "name": "field1"},
-            {"type": "integer", "name": "field2"},
-            {"type": "boolean", "name": "field3"}
-        ])
+        field_batch = factory.create_field_batch(
+            [
+                {"type": "string", "name": "field1"},
+                {"type": "integer", "name": "field2"},
+                {"type": "boolean", "name": "field3"},
+            ]
+        )
         assert field_batch is not None
         assert len(field_batch) == 3
 
@@ -241,21 +247,21 @@ class TestFieldsMassiveOpportunity85:
         # Test field integration with external systems
         integrated_field = integration.integrate_with_system(
             system_name="external_api",
-            field_definition={"type": "reference", "target": "external_entity"}
+            field_definition={"type": "reference", "target": "external_entity"},
         )
         assert integrated_field is not None
 
         # Test field mapping
         mapped_field = integration.map_field(
             source_field={"name": "source_name", "type": "string"},
-            target_system="target_api"
+            target_system="target_api",
         )
         assert mapped_field is not None
 
         # Test field synchronization
         sync_result = integration.synchronize_field(
             local_field={"name": "local", "type": "string"},
-            remote_field={"name": "remote", "type": "text"}
+            remote_field={"name": "remote", "type": "text"},
         )
         assert sync_result is not None
 
@@ -270,7 +276,7 @@ class TestFieldsMassiveOpportunity85:
         # Test metadata enhancement
         enhanced_metadata = metadata.enhance_field_metadata(
             base_metadata={"type": "string"},
-            enhancements={"description": "Enhanced field", "version": "1.0"}
+            enhancements={"description": "Enhanced field", "version": "1.0"},
         )
         assert enhanced_metadata is not None
 
@@ -285,20 +291,21 @@ class TestFieldsMassiveOpportunity85:
         security = FlextFields.Security
 
         # Test field encryption
-        encrypted_field = security.create_encrypted_field(field_definition="sensitive_data")
+        encrypted_field = security.create_encrypted_field(
+            field_definition="sensitive_data"
+        )
         assert encrypted_field is not None
 
         # Test field access control
         access_controlled_field = security.create_access_controlled_field(
-            field_definition="restricted_field",
-            access_roles=["REDACTED_LDAP_BIND_PASSWORD", "user"]
+            field_definition="restricted_field", access_roles=["REDACTED_LDAP_BIND_PASSWORD", "user"]
         )
         assert access_controlled_field is not None
 
         # Test field sanitization
         sanitized_field = security.create_sanitized_field(
             field_definition="user_input",
-            sanitization_rules=["html_escape", "sql_escape"]
+            sanitization_rules=["html_escape", "sql_escape"],
         )
         assert sanitized_field is not None
 
@@ -308,22 +315,20 @@ class TestFieldsMassiveOpportunity85:
 
         # Test field versioning
         versioned_field = advanced.create_versioned_field(
-            field_definition="versioned_field",
-            version="2.1"
+            field_definition="versioned_field", version="2.1"
         )
         assert versioned_field is not None
 
         # Test field localization
         localized_field = advanced.create_localized_field(
-            field_definition="multilang_field",
-            supported_locales=["en", "es", "pt"]
+            field_definition="multilang_field", supported_locales=["en", "es", "pt"]
         )
         assert localized_field is not None
 
         # Test field audit trail
         audited_field = advanced.create_audited_field(
             field_definition="audit_field",
-            audit_config={"track_changes": True, "store_history": True}
+            audit_config={"track_changes": True, "store_history": True},
         )
         assert audited_field is not None
 
@@ -341,9 +346,11 @@ class TestFieldsMassiveOpportunity85:
                 base_type="composite",
                 components=[
                     advanced.create_dynamic_field(type="string", validation="email"),
-                    advanced.create_dynamic_field(type="integer", constraints={"min": 0}),
-                    advanced.create_dynamic_field(type="boolean", default=False)
-                ]
+                    advanced.create_dynamic_field(
+                        type="integer", constraints={"min": 0}
+                    ),
+                    advanced.create_dynamic_field(type="boolean", default=False),
+                ],
             )
             assert complex_field is not None
 
@@ -360,13 +367,12 @@ class TestFieldsMassiveOpportunity85:
                 {"format": "json", "field": "test_field_1"},
                 {"format": "xml", "field": "test_field_2"},
                 {"format": "yaml", "field": "test_field_3"},
-                {"format": "binary", "field": "test_field_4"}
+                {"format": "binary", "field": "test_field_4"},
             ]
 
             for scenario in serialization_scenarios:
                 serialized = serialization.serialize_field(
-                    field_definition=scenario["field"],
-                    format=scenario["format"]
+                    field_definition=scenario["field"], format=scenario["format"]
                 )
                 assert serialized is not None or serialized is None
 

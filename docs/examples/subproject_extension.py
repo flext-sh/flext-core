@@ -28,11 +28,6 @@ from flext_core import (
 logger = FlextLogger(__name__)
 
 
-# =============================================================================
-# STEP 1: Define Your Domain-Specific Configuration Model
-# =============================================================================
-
-
 class ApiEndpointConfig(FlextModels.Config):
     """Configuration for a single API endpoint."""
 
@@ -200,11 +195,6 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
         }
 
 
-# =============================================================================
-# STEP 2: Create Extended Settings Class (Optional)
-# =============================================================================
-
-
 class ApiSettings(FlextConfig.Settings):
     """Extended settings for API service with environment variable support."""
 
@@ -244,11 +234,6 @@ class ApiSettings(FlextConfig.Settings):
         with Path(file_path).open(encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return cls.model_validate(data)
-
-
-# =============================================================================
-# STEP 3: Create Configuration Functions with FlextResult
-# =============================================================================
 
 
 def configure_api_system(config: dict[str, object]) -> FlextResult[dict[str, object]]:
@@ -336,11 +321,6 @@ def create_api_config_for_environment(
     config = {**env_configs[environment], **overrides}
 
     return configure_api_system(config)
-
-
-# =============================================================================
-# STEP 4: Usage Examples
-# =============================================================================
 
 
 def example_basic_usage() -> None:
@@ -457,11 +437,6 @@ def example_with_registry() -> None:
         print("Configuration reloaded successfully")
 
 
-# =============================================================================
-# STEP 5: Integration with Application
-# =============================================================================
-
-
 class ApiApplication:
     """Example API application using the configuration."""
 
@@ -535,10 +510,6 @@ class ApiApplication:
         """Start a worker process."""
         self.logger.debug(f"Starting worker {worker_id}")
 
-
-# =============================================================================
-# Run examples if executed directly
-# =============================================================================
 
 if __name__ == "__main__":
     print("=== Basic Usage ===")

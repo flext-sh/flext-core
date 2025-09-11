@@ -16,10 +16,6 @@ from pydantic import Field, ValidationError
 from flext_core import FlextCommands, FlextModels, FlextResult, FlextTypes
 from flext_tests import FlextTestsDomains, FlextTestsFixtures, FlextTestsMatchers
 
-# =============================================================================
-# TEST DOMAIN MODELS - Using Pydantic for real validation
-# =============================================================================
-
 
 class CreateUserCommand(FlextModels.Config):
     """Real command for user creation."""
@@ -90,11 +86,6 @@ class UserCreatedEvent(FlextModels.Config):
     username: str
     email: str
     created_at: str
-
-
-# =============================================================================
-# REAL COMMAND HANDLERS - Enterprise patterns
-# =============================================================================
 
 
 class CreateUserHandler(
@@ -242,11 +233,6 @@ class DeleteUserHandler(FlextCommands.Handlers.CommandHandler[DeleteUserCommand,
         return FlextResult[bool].ok(data=True)
 
 
-# =============================================================================
-# COMPREHENSIVE TEST CLASS
-# =============================================================================
-
-
 class TestFlextCommandsComprehensive:
     """Comprehensive FlextCommands testing with 100% coverage."""
 
@@ -349,7 +335,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify success
-        assert FlextTestsMatchers.is_successful_result(result)
+        assert result.success
         event = result.value
         assert event.username == "new_user"
         assert event.email == "new@example.com"
@@ -401,7 +387,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify failure
-        assert FlextTestsMatchers.is_failed_result(result)
+        assert result.is_failure
         assert result.error is not None
         assert "already exists" in (result.error or "").lower()
         assert result.error_code == "USER_EXISTS"
@@ -419,7 +405,7 @@ class TestFlextCommandsComprehensive:
         result = handler.handle(command)
 
         # Verify failure handling
-        assert FlextTestsMatchers.is_failed_result(result)
+        assert result.is_failure
         assert result.error_code == "CREATION_ERROR"
         assert "Failed to create user" in (result.error or "")
         assert result.error_data is not None
@@ -482,7 +468,7 @@ class TestFlextCommandsComprehensive:
             return results
 
         results = benchmark(execute_commands)
-        # Type assertion for benchmark fixture return value
+
         assert isinstance(results, list)
         assert len(results) == 3
 
@@ -729,7 +715,7 @@ class TestFlextCommandsComprehensive:
         command = CreateUserCommand(username="async_user", email="async@example.com")
         result = await async_create_user(command)
 
-        assert FlextTestsMatchers.is_successful_result(result)
+        assert result.success
         event = result.value
         assert event.username == "async_user"
         assert "async_user_async_user" in event.user_id

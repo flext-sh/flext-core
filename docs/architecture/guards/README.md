@@ -152,7 +152,7 @@ from flext_core import FlextGuards
 def validate_config_with_guards(config: object) -> FlextResult[FlextTypes.Core.Headers]:
     """Validate configuration using FlextGuards patterns."""
 
-    # Type guard for runtime safety
+
     if not FlextGuards.is_dict_of(config, str, str):
         return FlextResult[FlextTypes.Core.Headers].fail("Config must be FlextTypes.Core.Headers")
 
@@ -226,7 +226,7 @@ def process_singer_records(records: FlextTypes.Core.List) -> FlextResult[list[Fl
 
     for record in records:
         if FlextDomainTypeGuards.is_singer_record(record):
-            # Type narrowed to FlextTypes.Core.Dict
+
             validated_records.append(record)
         else:
             return FlextResult[list[FlextTypes.Core.Dict]].fail("Invalid Singer record format")
@@ -348,7 +348,7 @@ def validate_singer_record(record):
 def validate_singer_record_with_guards(record: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate Singer record using FlextGuards."""
 
-    # Type guard first
+
     if not FlextGuards.is_dict_of(record, str):
         return FlextResult[FlextTypes.Core.Dict].fail("Singer record must be FlextTypes.Core.Dict")
 
@@ -361,7 +361,7 @@ def validate_singer_record_with_guards(record: object) -> FlextResult[FlextTypes
         if field_result.is_failure:
             return FlextResult[FlextTypes.Core.Dict].fail(field_result.error)
 
-    # Type-specific validation
+
     if record["type"] == "RECORD":
         record_result = FlextGuards.ValidationUtils.require_dict_has_key(
             record, "record", "RECORD type must have 'record' field"
@@ -402,7 +402,7 @@ class FlextMeltanoGuards:
 def process_tap_discovery(discovery_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Process tap discovery with validation."""
 
-    # Type safety first
+
     if not FlextGuards.is_dict_of(discovery_data, str):
         return FlextResult[FlextTypes.Core.Dict].fail("Discovery data must be dict")
 
@@ -447,7 +447,7 @@ class FlextApiGuards:
 def validate_http_request(request_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate HTTP request with comprehensive checks."""
 
-    # Type guard validation
+
     if not FlextApiGuards.is_http_request_valid(request_data):
         return FlextResult[FlextTypes.Core.Dict].fail("Invalid HTTP request format")
 
@@ -511,7 +511,7 @@ class FlextLDAPGuards:
 def search_ldap_entries(search_params: object) -> FlextResult[list[FlextTypes.Core.Dict]]:
     """Search LDAP entries with comprehensive validation."""
 
-    # Type safety validation
+
     if not FlextGuards.is_dict_of(search_params, str):
         return FlextResult[list[FlextTypes.Core.Dict]].fail("Search params must be FlextTypes.Core.Headers")
 
@@ -557,7 +557,7 @@ class FlextOracleWmsGuards:
 def validate_warehouse_operation(operation_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate warehouse operation with business rules."""
 
-    # Type guard validation
+
     if not FlextGuards.is_dict_of(operation_data, str):
         return FlextResult[FlextTypes.Core.Dict].fail("Operation data must be dict")
 

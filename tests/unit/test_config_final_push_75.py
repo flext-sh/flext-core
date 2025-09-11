@@ -28,7 +28,10 @@ class TestConfigFinalPush75:
             {"format": "json", "data": {"environment": "testing", "debug": True}},
             {"format": "toml", "data": {"environment": "testing", "debug": False}},
             {"format": "yaml", "data": {"environment": "development", "debug": True}},
-            {"format": "unknown", "data": {"environment": "production", "debug": False}},
+            {
+                "format": "unknown",
+                "data": {"environment": "production", "debug": False},
+            },
         ]
 
         for scenario in file_format_scenarios:
@@ -38,11 +41,8 @@ class TestConfigFinalPush75:
                 config_data = scenario["data"]
 
                 with tempfile.NamedTemporaryFile(
-                    encoding="utf-8", mode="w",
-                    suffix=f".{file_format}",
-                    delete=False
+                    encoding="utf-8", mode="w", suffix=f".{file_format}", delete=False
                 ) as tmp_file:
-
                     if file_format == "json":
                         # Test JSON format path (line 742)
                         json.dump(config_data, tmp_file)
@@ -59,8 +59,12 @@ class TestConfigFinalPush75:
                     elif file_format == "toml":
                         # Test TOML format path (lines 761-768)
                         # Write TOML format data
-                        toml_content = "\n".join(f'{k} = "{v}"' if isinstance(v, str) else f"{k} = {str(v).lower()}"
-                                               for k, v in config_data.items())
+                        toml_content = "\n".join(
+                            f'{k} = "{v}"'
+                            if isinstance(v, str)
+                            else f"{k} = {str(v).lower()}"
+                            for k, v in config_data.items()
+                        )
                         tmp_file.write(toml_content)
                         tmp_file.flush()
 
@@ -107,17 +111,14 @@ class TestConfigFinalPush75:
                 if env_file:
                     # Create temporary environment file
                     with tempfile.NamedTemporaryFile(
-                        encoding="utf-8", mode="w",
-                        suffix=f"_{env_file}",
-                        delete=False
+                        encoding="utf-8", mode="w", suffix=f"_{env_file}", delete=False
                     ) as tmp_file:
-
                         # Write environment configuration
                         env_config = {
                             "FLEXT_ENVIRONMENT": "testing",
                             "FLEXT_DEBUG": "true",
                             "FLEXT_HOST": "localhost",
-                            "FLEXT_PORT": "8080"
+                            "FLEXT_PORT": "8080",
                         }
 
                         if file_format == "json":
@@ -188,7 +189,9 @@ class TestConfigFinalPush75:
                     # This should trigger specific sealing edge case handling (lines 1170-1171)
                     if second_seal.is_failure:
                         # Already sealed error path
-                        assert "already sealed" in str(second_seal.error).lower() or True
+                        assert (
+                            "already sealed" in str(second_seal.error).lower() or True
+                        )
 
             except Exception:
                 pass
@@ -198,15 +201,19 @@ class TestConfigFinalPush75:
         metadata_scenarios = [
             {
                 "config": {"environment": "testing", "debug": True},
-                "expected_keys": ["environment", "debug", "created_at", "version"]
+                "expected_keys": ["environment", "debug", "created_at", "version"],
             },
             {
-                "config": {"host": "api.service.com", "port": 8080, "ssl_enabled": True},
-                "expected_keys": ["host", "port", "ssl_enabled"]
+                "config": {
+                    "host": "api.service.com",
+                    "port": 8080,
+                    "ssl_enabled": True,
+                },
+                "expected_keys": ["host", "port", "ssl_enabled"],
             },
             {
                 "config": {},  # Empty config
-                "expected_keys": ["created_at", "version"]
+                "expected_keys": ["created_at", "version"],
             },
         ]
 
@@ -284,19 +291,23 @@ class TestConfigFinalPush75:
         advanced_factory_scenarios = [
             {
                 "method_name": "create_web_service_config",
-                "kwargs": {"host": "web.example.com", "port": 80, "ssl_enabled": False}
+                "kwargs": {"host": "web.example.com", "port": 80, "ssl_enabled": False},
             },
             {
                 "method_name": "create_microservice_config",
-                "kwargs": {"service_name": "user-service", "port": 8080, "health_check": True}
+                "kwargs": {
+                    "service_name": "user-service",
+                    "port": 8080,
+                    "health_check": True,
+                },
             },
             {
                 "method_name": "create_api_client_config",
-                "kwargs": {"base_url": "https://api.example.com", "timeout": 30}
+                "kwargs": {"base_url": "https://api.example.com", "timeout": 30},
             },
             {
                 "method_name": "create_batch_job_config",
-                "kwargs": {"job_name": "data-processor", "batch_size": 1000}
+                "kwargs": {"job_name": "data-processor", "batch_size": 1000},
             },
         ]
 
@@ -312,7 +323,9 @@ class TestConfigFinalPush75:
                         try:
                             # Test advanced factory method (lines 1277-1278, 1300)
                             factory_result = method(**kwargs)
-                            assert isinstance(factory_result, (FlextResult, FlextConfig))
+                            assert isinstance(
+                                factory_result, (FlextResult, FlextConfig)
+                            )
 
                             if isinstance(factory_result, FlextResult):
                                 if factory_result.is_success:
@@ -326,6 +339,7 @@ class TestConfigFinalPush75:
                 # Test on FlextConfigFactory if available
                 try:
                     from flext_core.config import FlextConfigFactory
+
                     if hasattr(FlextConfigFactory, method_name):
                         method = getattr(FlextConfigFactory, method_name)
                         if callable(method):
@@ -345,20 +359,24 @@ class TestConfigFinalPush75:
         # Test comprehensive validation with edge case configurations
         edge_validation_scenarios = [
             {
-                "config": {"environment": "production", "debug": True, "ssl_enabled": False},
-                "should_warn": True  # Production with debug enabled
+                "config": {
+                    "environment": "production",
+                    "debug": True,
+                    "ssl_enabled": False,
+                },
+                "should_warn": True,  # Production with debug enabled
             },
             {
                 "config": {"max_connections": -1, "timeout": 0, "workers": -5},
-                "should_fail": True  # All negative/zero values
+                "should_fail": True,  # All negative/zero values
             },
             {
                 "config": {"host": "", "port": 999999, "base_url": "not_a_url"},
-                "should_fail": True  # Invalid host, port, and URL
+                "should_fail": True,  # Invalid host, port, and URL
             },
             {
                 "config": {"environment": "PRODUCTION", "log_level": "INVALID"},
-                "should_normalize": True  # Case normalization needed
+                "should_normalize": True,  # Case normalization needed
             },
         ]
 
@@ -376,12 +394,18 @@ class TestConfigFinalPush75:
 
                     # Test business rule validation
                     from flext_core.config import ConfigBusinessValidator
-                    business_result = ConfigBusinessValidator.validate_business_rules(config)
+
+                    business_result = ConfigBusinessValidator.validate_business_rules(
+                        config
+                    )
                     assert isinstance(business_result, FlextResult)
 
                     # Test runtime validation
                     from flext_core.config import ConfigRuntimeValidator
-                    runtime_result = ConfigRuntimeValidator.validate_runtime_requirements(config)
+
+                    runtime_result = (
+                        ConfigRuntimeValidator.validate_runtime_requirements(config)
+                    )
                     assert isinstance(runtime_result, FlextResult)
 
                     # Check validation outcomes based on scenario
@@ -420,7 +444,9 @@ class TestConfigFinalPush75:
                     # Test JSON parsing error recovery
                     try:
                         # This should trigger JSON error handling paths
-                        config = FlextConfig.model_validate_json(scenario["invalid_json"])
+                        config = FlextConfig.model_validate_json(
+                            scenario["invalid_json"]
+                        )
                         assert isinstance(config, FlextConfig)
                     except Exception:
                         # Expected JSON parsing error
@@ -429,7 +455,9 @@ class TestConfigFinalPush75:
                 elif "invalid_env_var" in scenario:
                     # Test environment variable error recovery
                     try:
-                        env_result = FlextConfig.get_env_var(scenario["invalid_env_var"])
+                        env_result = FlextConfig.get_env_var(
+                            scenario["invalid_env_var"]
+                        )
                         assert isinstance(env_result, FlextResult)
                         assert env_result.is_failure  # Should fail for invalid env var
                     except Exception:
@@ -439,7 +467,10 @@ class TestConfigFinalPush75:
                     # Test file loading error recovery
                     try:
                         from flext_core.config import ConfigFilePersistence
-                        load_result = ConfigFilePersistence.load_from_file(scenario["invalid_file_path"])
+
+                        load_result = ConfigFilePersistence.load_from_file(
+                            scenario["invalid_file_path"]
+                        )
                         assert isinstance(load_result, FlextResult)
                         assert load_result.is_failure  # Should fail for invalid path
                     except Exception:

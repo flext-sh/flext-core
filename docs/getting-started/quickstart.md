@@ -336,7 +336,7 @@ class UserRegistrationService:
         # Hash password
         hash_result = self.password_service.hash_password(password)
         if hash_result.is_failure:
-            return hash_result.map(lambda _: User(...))  # Type conversion
+            return hash_result.map(lambda _: User(...))
 
         # Create user
         user = User(

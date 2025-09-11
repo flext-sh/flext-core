@@ -157,7 +157,7 @@ config_result = FlextValidations.Core.TypeValidators.validate_dict({
 })
 
 if config_result.success:
-    config: FlextTypes.Core.Dict = config_result.value  # Type-safe access
+    config: FlextTypes.Core.Dict = config_result.value
     print(f"Configuration validated: {config}")
 
 # Chain type validation with other validators
@@ -543,7 +543,7 @@ class ComplexValidationService:
             if field not in data:
                 return FlextResult.fail(f"Missing required field: {field}")
 
-        # Type validation
+
         if data["type"] not in ["user", "order", "product", "transaction"]:
             return FlextResult.fail(f"Invalid entity type: {data['type']}")
 
@@ -588,7 +588,7 @@ class ComplexValidationService:
         # PII detection
         entity_data = str(data.get("data", {}))
 
-        # Simple PII patterns (in real implementation, use proper PII detection)
+      
         pii_patterns = [
             r"\d{3}-\d{2}-\d{4}",  # SSN pattern
             r"\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}",  # Credit card pattern
@@ -1053,7 +1053,7 @@ class FlextUserManagementValidationService:
     def _validate_username_comprehensive(self, username: object) -> FlextResult[str]:
         """Comprehensive username validation with multiple checks."""
 
-        # Type validation
+
         type_result = FlextValidations.Core.TypeValidators.validate_string(username)
         if type_result.is_failure:
             return type_result
@@ -1084,7 +1084,7 @@ class FlextUserManagementValidationService:
     def _validate_password_comprehensive(self, password: object) -> FlextResult[str]:
         """Comprehensive password validation with strength checking."""
 
-        # Type validation
+
         type_result = FlextValidations.Core.TypeValidators.validate_string(password)
         if type_result.is_failure:
             return type_result

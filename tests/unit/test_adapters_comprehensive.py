@@ -59,7 +59,7 @@ class TestFlextTypeAdaptersCore:
         for value in test_values:
             # Test that string values can be processed
             assert isinstance(value, str)
-            # Type conversion should preserve string values
+
             converted = str(value)
             assert converted == value
 
@@ -267,7 +267,6 @@ class TestFlextTypeAdaptersPerformance:
 
         processed_items: list[FlextTypes.Core.Dict] = []
         for item in test_items:
-            # Simple processing
             processed = {
                 "original_type": item["type"],
                 "processed_value": str(item["value"]).upper(),
@@ -329,7 +328,6 @@ class TestFlextTypeAdaptersErrorHandling:
         assert isinstance(expected_int, int)
         assert isinstance(expected_bool, bool)
 
-        # Type mismatches are detectable by mypy static analysis
         # (Removed unreachable isinstance checks as they are always True)
 
 

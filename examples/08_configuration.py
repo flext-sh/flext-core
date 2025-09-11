@@ -24,9 +24,6 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from flext_core import FlextConfig, FlextResult
 
-# =============================================================================
-# DEMONSTRATION CONSTANTS
-# =============================================================================
 
 # Example security keys for demonstration purposes only - NOT FOR PRODUCTION
 _DEMO_SECRET_KEY_1 = os.getenv(
@@ -38,10 +35,6 @@ _DEMO_SECRET_KEY_2 = os.getenv(
     "ValidSecretKey123WithComplexityAndLength",
 )
 _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
-
-# =============================================================================
-# ENTERPRISE DATABASE CONFIGURATION
-# =============================================================================
 
 
 class DatabaseConfig(FlextConfig):
@@ -81,11 +74,6 @@ class DatabaseConfig(FlextConfig):
         return f"{protocol}://{self.user}:***@{self.host}:{self.port}/{self.name}"
 
 
-# =============================================================================
-# CACHE CONFIGURATION
-# =============================================================================
-
-
 class CacheConfig(FlextConfig):
     """Cache configuration supporting Redis and Memcached."""
 
@@ -120,11 +108,6 @@ class CacheConfig(FlextConfig):
         if self.provider == "memcached":
             return f"memcached://{self.host}:{self.port}"
         return "memory://"
-
-
-# =============================================================================
-# SECURITY CONFIGURATION
-# =============================================================================
 
 
 class SecurityConfig(FlextConfig):
@@ -195,11 +178,6 @@ class SecurityConfig(FlextConfig):
             return FlextResult[None].fail("CORS origins must be specified")
 
         return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# MAIN ENTERPRISE CONFIGURATION
-# =============================================================================
 
 
 class EnterpriseConfig(BaseSettings):
@@ -278,11 +256,6 @@ class EnterpriseConfig(BaseSettings):
             "security_2fa": self.security.enable_2fa,
             "feature_flags": self.feature_flags,
         }
-
-
-# =============================================================================
-# CONFIGURATION UTILITIES
-# =============================================================================
 
 
 def create_enterprise_config(config_data: FlextTypes.Core.Dict) -> EnterpriseConfig:
@@ -381,11 +354,6 @@ def mask_sensitive_data(config_data: FlextTypes.Core.Dict) -> FlextTypes.Core.Di
     # Cast result to expected return type
     masked_result = mask_recursive(config_data)
     return cast("FlextTypes.Core.Dict", masked_result)
-
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS
-# =============================================================================
 
 
 def demonstrate_basic_configuration() -> FlextResult[None]:
@@ -722,11 +690,6 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
         return FlextResult[None].fail(f"Valid configuration failed: {e}")
 
     return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# MAIN EXECUTION
-# =============================================================================
 
 
 def main() -> int:

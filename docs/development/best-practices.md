@@ -517,7 +517,7 @@ make validate  # Runs all checks
 
 # Individual checks
 make lint       # Code style
-make type-check # Type safety
+make type-check
 make test       # Test suite
 make format     # Auto-format
 ```

@@ -27,26 +27,14 @@ from flext_core import (
 )
 from flext_core.typings import FlextTypes
 
-# =============================================================================
-# TYPE ALIASES - For better type safety
-# =============================================================================
 
 OrderData = FlextTypes.Core.Dict
 ItemData = FlextTypes.Core.Dict
 
 
-# =============================================================================
-# VALIDATION CONSTANTS - Domain rule constraints
-# =============================================================================
-
 MAX_ORDER_ITEMS = 100
 MIN_ORDER_VALUE = Decimal("0.01")
 MAX_ORDER_VALUE = Decimal("100000.00")
-
-
-# =============================================================================
-# CONFIGURATION - Enterprise settings with validation
-# =============================================================================
 
 
 class AdvancedExamplesConfig(FlextConfig):
@@ -87,11 +75,6 @@ class AdvancedExamplesConfig(FlextConfig):
             )
 
         return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# BUSINESS LOGIC - Order processing with validation
-# =============================================================================
 
 
 class OrderProcessor(FlextMixins.Entity):
@@ -244,11 +227,6 @@ class OrderProcessor(FlextMixins.Entity):
             return FlextResult[ItemData].fail(f"Invalid item data: {e}")
 
 
-# =============================================================================
-# DEMONSTRATION FUNCTIONS - Example usage patterns
-# =============================================================================
-
-
 def demonstrate_order_processing() -> FlextResult[None]:
     """Demonstrate advanced order processing with error handling."""
     print("Starting order processing demonstration")
@@ -339,11 +317,6 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
         error_msg = f"Configuration demonstration failed: {e}"
         print(error_msg)
         return FlextResult[None].fail(error_msg)
-
-
-# =============================================================================
-# MAIN EXECUTION - Comprehensive demonstration
-# =============================================================================
 
 
 def main() -> int:

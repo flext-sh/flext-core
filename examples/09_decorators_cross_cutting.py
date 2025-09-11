@@ -21,16 +21,9 @@ from flext_core import (
     FlextUtilities,
 )
 
-# =============================================================================
-# CONSTANTS
-# =============================================================================
 
 MIN_NAME_LENGTH = 2
 MINIMUM_AGE = 18
-
-# =============================================================================
-# LOCAL DOMAIN FACTORY (replacing shared_domain dependency)
-# =============================================================================
 
 
 class LocalDomainFactory:
@@ -67,10 +60,6 @@ MIN_AGE: int = 0
 SUCCESS_THRESHOLD: float = 0.4
 MIN_USER_CREATION_ARGS: int = 3
 
-# =============================================================================
-# PROTOCOLS - Using FlextProtocols hierarchical patterns
-# =============================================================================
-
 
 class CalculationProtocol(FlextProtocols.Foundation.Validator[int]):
     """Protocol for calculation operations using centralized FlextProtocols."""
@@ -90,11 +79,6 @@ class ValidationProtocol(FlextProtocols.Foundation.Validator[int]):
         if data <= 0:
             return FlextResult[int].fail("Value must be positive")
         return FlextResult[int].ok(data)
-
-
-# =============================================================================
-# MODERN FLEXT DECORATORS SHOWCASE - Maximum FLEXT Integration
-# =============================================================================
 
 
 def demonstrate_cache_decorator() -> FlextResult[str]:
@@ -240,11 +224,6 @@ def demonstrate_decorator_categories() -> None:
     # Execute test
     result = complete_example_function()
     logger.info(f"Decorator categories test: {result}")
-
-
-# =============================================================================
-# DEMONSTRATIONS - Modern decorator usage
-# =============================================================================
 
 
 def main() -> FlextResult[str]:

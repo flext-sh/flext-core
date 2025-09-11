@@ -414,10 +414,12 @@ class TestAdapterRegistry:
         class CustomModel(FlextModels.Config):
             field: str
 
-        adapter = FlextTypeAdapters.AdvancedAdapters.create_adapter_for_type(
+        adapter_result = FlextTypeAdapters.AdvancedAdapters.create_adapter_for_type(
             CustomModel,
         )
 
+        assert adapter_result.is_success
+        adapter = adapter_result.unwrap()
         assert isinstance(adapter, TypeAdapter)
 
         # Test it works

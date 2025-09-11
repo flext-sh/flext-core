@@ -641,7 +641,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                 if not expression:
                     return FlextResult[pd.DataFrame].fail("expression parameter required")
 
-                # Simple expression evaluation (extend as needed)
+              
                 data[rule.target_column] = data.eval(expression)
                 return FlextResult[pd.DataFrame].ok(data)
 

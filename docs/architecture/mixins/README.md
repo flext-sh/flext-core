@@ -549,10 +549,10 @@ class FlextUserManagementService(FlextMixins.Entity):
                 self.add_validation_error("Required field validation failed")
                 return FlextResult[dict].fail("User creation validation failed")
 
-            # Type validation
+
             field_types = {"username": str, "email": str, "password": str}
             type_validation = FlextMixins.validate_field_types(self, field_types)
-            if type_validation:  # type_validation is not None if there are errors
+            if type_validation:
                 return FlextResult[dict].fail("User creation type validation failed")
 
             if not self.is_valid:

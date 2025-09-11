@@ -20,7 +20,6 @@ def demonstrate_basic_payload_creation() -> None:
     """Show basic payload creation with required fields."""
     print("=== Basic Payload Creation ===")
 
-    # Simple string payload
     greeting_payload = FlextModels.Payload[str](
         data="Hello, World!",
         source_service="demo_service",
@@ -132,7 +131,7 @@ def demonstrate_typed_payloads() -> None:
     )
 
     # The data is properly typed as str
-    message_length = len(string_payload.data)  # Type-safe
+    message_length = len(string_payload.data)
     print(f"String payload: {string_payload.data} (length: {message_length})")
 
     # Dict payload
@@ -143,7 +142,7 @@ def demonstrate_typed_payloads() -> None:
     )
 
     # The data is properly typed as dict
-    keys = list(dict_payload.data.keys())  # Type-safe
+    keys = list(dict_payload.data.keys())
     print(f"Dict payload keys: {keys}")
 
 

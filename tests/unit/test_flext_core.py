@@ -198,13 +198,7 @@ class TestFlextCore:
         core: FlextCore = FlextCore.get_instance()
 
         data: FlextTypes.Core.JsonObject = {"user_id": "123", "action": "create"}
-        result = core.create_payload(
-            data,
-            "command",
-            "api_service",
-            "database_service",
-            "corr_123",
-        )
+        result = core.create_payload(data)
 
         assert result.success
         payload = result.unwrap()
@@ -230,12 +224,12 @@ class TestFlextCore:
 
         data: FlextTypes.Core.JsonObject = {"email": "user@example.com", "name": "John"}
         result = core.create_domain_event(
-            "UserRegistered",
-            "user_123",
-            "User",
-            data,
-            "registration_service",
-            1,
+            event_type="UserRegistered",
+            entity_id="user_123",
+            entity_type="User",
+            payload=data,
+            source="registration_service",
+            version=1,
         )
 
         assert result.success

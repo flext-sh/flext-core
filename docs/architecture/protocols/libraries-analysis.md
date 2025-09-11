@@ -221,7 +221,7 @@ def setup_standardized_web_service():
 ```python
 # Current minimal approach
 class FlextMeltanoPluginTypes:
-    TapPlugin = object  # Simple alias - NO protocol definitions
+    TapPlugin = object
     TargetPlugin = object
     DbtPlugin = object
 ```

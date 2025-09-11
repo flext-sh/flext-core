@@ -21,10 +21,7 @@ class TestFlextFieldsComprehensiveCoverage:
         """Test StringField with various validation scenarios."""
         # Test basic string field creation
         string_field = FlextFields.Core.StringField(
-            name="test_string",
-            required=True,
-            min_length=5,
-            max_length=50
+            name="test_string", required=True, min_length=5, max_length=50
         )
 
         # Test validation with various inputs
@@ -56,18 +53,15 @@ class TestFlextFieldsComprehensiveCoverage:
         """Test IntegerField with range validation."""
         # Test integer field with range constraints
         int_field = FlextFields.Core.IntegerField(
-            name="test_int",
-            required=True,
-            min_value=10,
-            max_value=100
+            name="test_int", required=True, min_value=10, max_value=100
         )
 
         # Test validation with various integer values
         test_cases = [
-            (50, True),    # Valid range
-            (10, True),    # Min boundary
-            (100, True),   # Max boundary
-            (5, False),    # Below min
+            (50, True),  # Valid range
+            (10, True),  # Min boundary
+            (100, True),  # Max boundary
+            (5, False),  # Below min
             (150, False),  # Above max
             (-10, False),  # Negative
         ]
@@ -91,18 +85,15 @@ class TestFlextFieldsComprehensiveCoverage:
         """Test FloatField with precision and range validation."""
         # Create float field with constraints
         float_field = FlextFields.Core.FloatField(
-            name="test_float",
-            required=True,
-            min_value=0.0,
-            max_value=999.99
+            name="test_float", required=True, min_value=0.0, max_value=999.99
         )
 
         # Test various float values
         test_cases = [
-            (100.50, True),   # Valid value
-            (0.0, True),      # Min boundary
-            (999.99, True),   # Max boundary
-            (-1.0, False),    # Below min
+            (100.50, True),  # Valid value
+            (0.0, True),  # Min boundary
+            (999.99, True),  # Max boundary
+            (-1.0, False),  # Below min
             (1000.0, False),  # Above max
             (50.123456, True),  # High precision
         ]
@@ -125,20 +116,17 @@ class TestFlextFieldsComprehensiveCoverage:
     def test_boolean_field_comprehensive(self) -> None:
         """Test BooleanField with various input types."""
         # Create boolean field
-        bool_field = FlextFields.Core.BooleanField(
-            name="test_bool",
-            required=False
-        )
+        bool_field = FlextFields.Core.BooleanField(name="test_bool", required=False)
 
         # Test boolean and boolean-like values
         test_cases = [
             (True, True),
             (False, True),
-            (1, True),        # Truthy
-            (0, True),        # Falsy
-            ("true", True),   # String representation
+            (1, True),  # Truthy
+            (0, True),  # Falsy
+            ("true", True),  # String representation
             ("false", True),  # String representation
-            (None, True),     # None for non-required field
+            (None, True),  # None for non-required field
         ]
 
         for test_value, _should_pass in test_cases:
@@ -159,10 +147,7 @@ class TestFlextFieldsComprehensiveCoverage:
     def test_email_field_comprehensive(self) -> None:
         """Test EmailField with various email formats."""
         # Create email field
-        email_field = FlextFields.Core.EmailField(
-            name="test_email",
-            required=True
-        )
+        email_field = FlextFields.Core.EmailField(name="test_email", required=True)
 
         # Test various email formats
         test_cases = [
@@ -193,10 +178,7 @@ class TestFlextFieldsComprehensiveCoverage:
     def test_uuid_field_comprehensive(self) -> None:
         """Test UuidField with various UUID formats."""
         # Create UUID field
-        uuid_field = FlextFields.Core.UuidField(
-            name="test_uuid",
-            required=True
-        )
+        uuid_field = FlextFields.Core.UuidField(name="test_uuid", required=True)
 
         # Test various UUID values
         valid_uuid = str(uuid.uuid4())
@@ -228,8 +210,7 @@ class TestFlextFieldsComprehensiveCoverage:
         """Test DateTimeField with various datetime formats."""
         # Create datetime field
         datetime_field = FlextFields.Core.DateTimeField(
-            name="test_datetime",
-            required=False
+            name="test_datetime", required=False
         )
 
         # Test various datetime values
@@ -240,7 +221,7 @@ class TestFlextFieldsComprehensiveCoverage:
             ("2023-01-01T12:00:00", True),  # ISO format string
             ("invalid-date", False),
             (None, True),  # None for non-required field
-            ("", False),   # Empty string
+            ("", False),  # Empty string
         ]
 
         for test_value, _should_pass in test_cases:
@@ -292,13 +273,15 @@ class TestFlextFieldsComprehensiveCoverage:
         string_field = FlextFields.Core.StringField(name="name", required=True)
         email_field = FlextFields.Core.EmailField(name="email", required=True)
 
-        field_configs.extend(({"field": string_field, "type": "string"}, {"field": email_field, "type": "email"}))
+        field_configs.extend(
+            (
+                {"field": string_field, "type": "string"},
+                {"field": email_field, "type": "email"},
+            )
+        )
 
         # Test processing scenarios
-        test_data = {
-            "name": "John Doe",
-            "email": "john@example.com"
-        }
+        test_data = {"name": "John Doe", "email": "john@example.com"}
 
         # Process each field individually
         for config in field_configs:
@@ -315,7 +298,7 @@ class TestFlextFieldsComprehensiveCoverage:
         # Test invalid data scenarios
         invalid_data = {
             "name": "",  # Empty required field
-            "email": "invalid-email"
+            "email": "invalid-email",
         }
 
         # Process invalid data with each field
@@ -341,7 +324,7 @@ class TestFlextFieldsComprehensiveCoverage:
             "name": "custom_string",
             "required": True,
             "min_length": 3,
-            "max_length": 20
+            "max_length": 20,
         }
         string_field = FlextFields.Core.StringField(**string_config)
         field_builders.append(("string", string_field))
@@ -351,16 +334,13 @@ class TestFlextFieldsComprehensiveCoverage:
             "name": "custom_int",
             "required": False,
             "min_value": 1,
-            "max_value": 100
+            "max_value": 100,
         }
         int_field = FlextFields.Core.IntegerField(**int_config)
         field_builders.append(("integer", int_field))
 
         # Build email field
-        email_config = {
-            "name": "custom_email",
-            "required": True
-        }
+        email_config = {"name": "custom_email", "required": True}
         email_field = FlextFields.Core.EmailField(**email_config)
         field_builders.append(("email", email_field))
 
@@ -397,14 +377,14 @@ class TestFlextFieldsComprehensiveCoverage:
         string_field = FlextFields.Core.StringField(name="test", required=False)
 
         edge_cases = [
-            None,           # None value
-            "",             # Empty string
-            " ",            # Whitespace
-            "   test   ",   # Padded string
-            0,              # Zero
-            False,          # False boolean
-            [],             # Empty list
-            {},             # Empty dict
+            None,  # None value
+            "",  # Empty string
+            " ",  # Whitespace
+            "   test   ",  # Padded string
+            0,  # Zero
+            False,  # False boolean
+            [],  # Empty list
+            {},  # Empty dict
         ]
 
         for edge_case in edge_cases:
@@ -454,8 +434,12 @@ class TestFlextFieldsIntegrationCoverage:
 
         # Create comprehensive field set
         fields = {
-            "user_name": FlextFields.Core.StringField(name="user_name", required=True, min_length=2),
-            "user_age": FlextFields.Core.IntegerField(name="user_age", min_value=0, max_value=150),
+            "user_name": FlextFields.Core.StringField(
+                name="user_name", required=True, min_length=2
+            ),
+            "user_age": FlextFields.Core.IntegerField(
+                name="user_age", min_value=0, max_value=150
+            ),
             "user_email": FlextFields.Core.EmailField(name="user_email", required=True),
             "user_id": FlextFields.Core.UuidField(name="user_id", required=True),
             "is_active": FlextFields.Core.BooleanField(name="is_active"),
@@ -496,7 +480,9 @@ class TestFlextFieldsIntegrationCoverage:
         for field in field_registry.values():
             if isinstance(field, FlextFields.Core.StringField):
                 string_count += 1
-            elif isinstance(field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)):
+            elif isinstance(
+                field, (FlextFields.Core.IntegerField, FlextFields.Core.FloatField)
+            ):
                 numeric_count += 1
 
         # Test field type analysis works
@@ -511,9 +497,15 @@ class TestFlextFieldsIntegrationCoverage:
 
         # Define validation stages
         stages = [
-            ("stage1", FlextFields.Core.StringField(name="input", required=True, min_length=3)),
+            (
+                "stage1",
+                FlextFields.Core.StringField(name="input", required=True, min_length=3),
+            ),
             ("stage2", FlextFields.Core.EmailField(name="processed", required=True)),
-            ("stage3", FlextFields.Core.IntegerField(name="final", min_value=0, max_value=100)),
+            (
+                "stage3",
+                FlextFields.Core.IntegerField(name="final", min_value=0, max_value=100),
+            ),
         ]
 
         for stage_name, field in stages:
@@ -554,15 +546,31 @@ class TestFlextFieldsIntegrationCoverage:
 
         # Define complex validation schema
         user_fields = {
-            "first_name": FlextFields.Core.StringField(name="first_name", required=True, min_length=1, max_length=50),
-            "last_name": FlextFields.Core.StringField(name="last_name", required=True, min_length=1, max_length=50),
-            "primary_email": FlextFields.Core.EmailField(name="primary_email", required=True),
-            "backup_email": FlextFields.Core.EmailField(name="backup_email", required=False),
-            "age": FlextFields.Core.IntegerField(name="age", min_value=13, max_value=120),
+            "first_name": FlextFields.Core.StringField(
+                name="first_name", required=True, min_length=1, max_length=50
+            ),
+            "last_name": FlextFields.Core.StringField(
+                name="last_name", required=True, min_length=1, max_length=50
+            ),
+            "primary_email": FlextFields.Core.EmailField(
+                name="primary_email", required=True
+            ),
+            "backup_email": FlextFields.Core.EmailField(
+                name="backup_email", required=False
+            ),
+            "age": FlextFields.Core.IntegerField(
+                name="age", min_value=13, max_value=120
+            ),
             "email_verified": FlextFields.Core.BooleanField(name="email_verified"),
-            "account_balance": FlextFields.Core.FloatField(name="account_balance", min_value=0.0),
-            "external_id": FlextFields.Core.UuidField(name="external_id", required=False),
-            "last_login": FlextFields.Core.DateTimeField(name="last_login", required=False),
+            "account_balance": FlextFields.Core.FloatField(
+                name="account_balance", min_value=0.0
+            ),
+            "external_id": FlextFields.Core.UuidField(
+                name="external_id", required=False
+            ),
+            "last_login": FlextFields.Core.DateTimeField(
+                name="last_login", required=False
+            ),
         }
 
         # Add all fields to validation schema

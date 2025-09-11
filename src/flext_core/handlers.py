@@ -142,7 +142,7 @@ class FlextHandlers:
                 CHAIN: Final[str] = FlextConstants.Handlers.HANDLER_TYPE_CHAIN
 
     # =========================================================================
-    # TYPES - Handler type definitions extending FlextTypes
+
     # =========================================================================
 
     class Types(FlextTypes):
@@ -158,7 +158,7 @@ class FlextHandlers:
 
             # Metrics and performance types
             type Metrics = FlextTypes.Core.Dict  # Flexible metrics storage
-            type Counter = int  # Simple counter metric
+            type Counter = int
             type Timing = float  # Timing measurements
             type ErrorMap = FlextTypes.Core.CounterDict  # Error type counters
             type SizeList = list[int]  # Size measurements
@@ -188,7 +188,6 @@ class FlextHandlers:
     class Protocols:
         """Protocol interfaces for handlers."""
 
-        # Alias core protocols for handler use
         Validator = FlextProtocols.Foundation.Validator
         MessageHandler = FlextProtocols.Application.MessageHandler
         ValidatingHandler = FlextProtocols.Application.ValidatingHandler
@@ -407,7 +406,6 @@ class FlextHandlers:
                     # Update timing metrics
                     processing_time = time.time() - start_time
                     with FlextHandlers.thread_safe_operation():
-                        # Type-safe arithmetic operations
                         current_total = self._metrics["total_processing_time"]
                         if isinstance(current_total, (int, float)):
                             self._metrics["total_processing_time"] = (
@@ -1410,10 +1408,9 @@ class FlextHandlers:
                         ),
                     }
 
+    # Ultra-simple alias for test compatibility
+    Registry = Management.HandlerRegistry
 
-# =============================================================================
-# MODULE EXPORTS - Only FlextHandlers (ABI compatibility in legacy.py)
-# =============================================================================
 
 __all__ = [
     "FlextHandlers",  # Single consolidated export following FLEXT patterns

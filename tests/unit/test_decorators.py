@@ -125,7 +125,6 @@ class TestFlextDecoratorsValidation:
             result = return_string("hello")
             assert result == "HELLO"
         except TypeError:
-            # Type validation is currently broken
             pass
 
     def test_validate_types_with_multiple_args(self) -> None:
@@ -142,7 +141,6 @@ class TestFlextDecoratorsValidation:
             result = format_message(5, "test")
             assert result == "test_5"
         except TypeError:
-            # Type validation is currently broken
             pass
 
 

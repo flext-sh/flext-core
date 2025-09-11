@@ -32,7 +32,7 @@ class TestAdaptersErrorPaths75:
                 lambda x: x,  # Function object
                 complex(1, 2),  # Complex number
                 object(),  # Plain object
-                type,  # Type object itself
+                type,
             ]
 
             for bad_value in error_values:
@@ -205,7 +205,7 @@ class TestAdaptersErrorPaths75:
             None,  # None type
             type(None),  # NoneType
             object,  # Object base class
-            type,  # Type itself
+            type,
             object,  # object type from typing
         ]
 

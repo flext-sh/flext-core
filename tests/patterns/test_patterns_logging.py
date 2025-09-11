@@ -333,7 +333,7 @@ class TestFlextLoggerUsage:
         perf_logger = FlextLogger("performance_test")
 
         # Performance loggers should support similar operations
-        # Type check to ensure we have a logger-like object
+
         assert hasattr(perf_logger, "info")
         perf_logger.info("Performance test message")
 

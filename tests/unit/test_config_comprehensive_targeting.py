@@ -25,7 +25,7 @@ class TestFlextConfigUncoveredMethods:
         basic_config = {
             "base_url": "https://api.example.com",
             "timeout": 30,
-            "retries": 3
+            "retries": 3,
         }
 
         try:
@@ -44,7 +44,7 @@ class TestFlextConfigUncoveredMethods:
             "timeout": 60,
             "retries": 5,
             "headers": {"Authorization": "Bearer test-token"},
-            "rate_limiting": {"requests_per_minute": 100}
+            "rate_limiting": {"requests_per_minute": 100},
         }
 
         try:
@@ -59,8 +59,8 @@ class TestFlextConfigUncoveredMethods:
         # Test with invalid configuration
         invalid_config = {
             "base_url": "",  # Invalid empty URL
-            "timeout": -1,   # Invalid negative timeout
-            "retries": "invalid"  # Invalid type
+            "timeout": -1,  # Invalid negative timeout
+            "retries": "invalid",  # Invalid type
         }
 
         try:
@@ -78,7 +78,7 @@ class TestFlextConfigUncoveredMethods:
             "job_name": "data_processor",
             "batch_size": 1000,
             "max_workers": 4,
-            "timeout": 3600
+            "timeout": 3600,
         }
 
         try:
@@ -98,7 +98,7 @@ class TestFlextConfigUncoveredMethods:
             "timeout": 7200,
             "retry_policy": {"max_retries": 3, "backoff_seconds": 60},
             "memory_limit": "2GB",
-            "queue_name": "high_priority"
+            "queue_name": "high_priority",
         }
 
         try:
@@ -133,7 +133,7 @@ class TestFlextConfigUncoveredMethods:
             "service_name": "user-service",
             "port": 8080,
             "host": "0.0.0.0",
-            "environment": "development"
+            "environment": "development",
         }
 
         try:
@@ -154,7 +154,7 @@ class TestFlextConfigUncoveredMethods:
             "ssl_enabled": True,
             "health_check_path": "/health",
             "metrics_enabled": True,
-            "logging_level": "INFO"
+            "logging_level": "INFO",
         }
 
         try:
@@ -172,7 +172,7 @@ class TestFlextConfigUncoveredMethods:
             "port": 8090,
             "database_url": "postgresql://user:pass@db:5432/service_db",
             "redis_url": "redis://cache:6379/0",
-            "max_connections": 100
+            "max_connections": 100,
         }
 
         try:
@@ -193,7 +193,7 @@ class TestFlextConfigUncoveredMethods:
                 database_port=5432,
                 database_username="test_user",
                 database_password="test_pass",
-                database_name="test_db"
+                database_name="test_db",
             )
         except Exception:
             # Fallback to basic config creation
@@ -237,7 +237,7 @@ class TestFlextConfigUncoveredMethods:
             "FLEXT_DEBUG": "true",
             "FLEXT_DATABASE_URL": "postgresql://localhost/test",
             "FLEXT_REDIS_URL": "redis://localhost:6379/0",
-            "FLEXT_LOG_LEVEL": "DEBUG"
+            "FLEXT_LOG_LEVEL": "DEBUG",
         }
 
         # Backup original environment
@@ -276,7 +276,7 @@ class TestFlextConfigUncoveredMethods:
                 custom_mapping = {
                     "app_name": "FLEXT_APP_NAME",
                     "debug_mode": "FLEXT_DEBUG",
-                    "database_url": "FLEXT_DATABASE_URL"
+                    "database_url": "FLEXT_DATABASE_URL",
                 }
                 result = FlextConfig.create_from_environment(mapping=custom_mapping)
                 if isinstance(result, FlextResult):
@@ -302,7 +302,7 @@ class TestFlextConfigUncoveredMethods:
                 app_name="base_app",
                 debug=False,
                 database_host="localhost",
-                database_port=5432
+                database_port=5432,
             )
         except Exception:
             # Fallback to basic config
@@ -314,7 +314,7 @@ class TestFlextConfigUncoveredMethods:
                 "FLEXT_DEBUG": "true",
                 "FLEXT_DATABASE_HOST": "prod-db.example.com",
                 "FLEXT_DATABASE_PORT": "5433",
-                "FLEXT_FEATURES_FEATURE_A": "true"
+                "FLEXT_FEATURES_FEATURE_A": "true",
             }
 
             # Set up test environment
@@ -376,7 +376,7 @@ class TestFlextConfigUncoveredMethods:
                 max_connections=100,
                 timeout_seconds=30,
                 retry_count=3,
-                batch_size=1000
+                batch_size=1000,
             )
         except Exception:
             # Fallback to basic config
@@ -399,7 +399,7 @@ class TestFlextConfigUncoveredMethods:
                 max_connections=50,
                 timeout_seconds=-10,  # Negative timeout (invalid)
                 retry_count=0,
-                batch_size=-500      # Negative batch size (invalid)
+                batch_size=-500,  # Negative batch size (invalid)
             )
         except Exception:
             # Fallback to basic config
@@ -421,7 +421,11 @@ class TestFlextConfigUncoveredMethods:
         edge_cases = [
             {"min_connections": 0, "max_connections": 0},  # Zero limits
             {"timeout_seconds": 999999, "retry_count": 999},  # Extreme values
-            {"batch_size": 1, "min_connections": 1, "max_connections": 1}  # Minimal values
+            {
+                "batch_size": 1,
+                "min_connections": 1,
+                "max_connections": 1,
+            },  # Minimal values
         ]
 
         for _edge_case in edge_cases:
@@ -455,7 +459,9 @@ class TestFlextConfigUncoveredMethods:
 
                 try:
                     # Save to JSON
-                    save_result = test_config.save_to_file(str(json_file), format="json")
+                    save_result = test_config.save_to_file(
+                        str(json_file), format="json"
+                    )
                     if isinstance(save_result, FlextResult):
                         assert save_result.is_success or save_result.is_failure
 
@@ -474,7 +480,9 @@ class TestFlextConfigUncoveredMethods:
 
                 try:
                     # Save to YAML
-                    save_result = test_config.save_to_file(str(yaml_file), format="yaml")
+                    save_result = test_config.save_to_file(
+                        str(yaml_file), format="yaml"
+                    )
                     if isinstance(save_result, FlextResult):
                         assert save_result.is_success or save_result.is_failure
 
@@ -531,7 +539,9 @@ class TestFlextConfigUncoveredMethods:
 
             # Test getting specific feature flag
             try:
-                specific_flag = config_with_features.get_feature_flags(flag_name="new_ui")
+                specific_flag = config_with_features.get_feature_flags(
+                    flag_name="new_ui"
+                )
                 if isinstance(specific_flag, FlextResult):
                     assert specific_flag.is_success or specific_flag.is_failure
                 else:
@@ -553,7 +563,9 @@ class TestFlextConfigUncoveredMethods:
 
             # Test getting non-existent feature flag
             try:
-                missing_flag = config_with_features.get_feature_flags(flag_name="nonexistent_flag")
+                missing_flag = config_with_features.get_feature_flags(
+                    flag_name="nonexistent_flag"
+                )
                 if isinstance(missing_flag, FlextResult):
                     assert missing_flag.is_failure or missing_flag.is_success
                 else:
@@ -614,7 +626,7 @@ class TestFlextConfigEdgeCasesAndErrorPaths:
                     validation_methods = [
                         "validate_all",
                         "validate_base_url",
-                        "validate_business_rules"
+                        "validate_business_rules",
                     ]
 
                     for method_name in validation_methods:
@@ -640,7 +652,7 @@ class TestFlextConfigEdgeCasesAndErrorPaths:
         missing_env_vars = [
             "NONEXISTENT_VAR_12345",
             "MISSING_DATABASE_URL",
-            "UNDEFINED_API_KEY"
+            "UNDEFINED_API_KEY",
         ]
 
         for var_name in missing_env_vars:
@@ -676,7 +688,7 @@ class TestFlextConfigEdgeCasesAndErrorPaths:
             "FLEXT_MALFORMED_JSON": "{'invalid': json}",
             "FLEXT_MALFORMED_BOOL": "not_a_boolean",
             "FLEXT_MALFORMED_INT": "not_an_integer",
-            "FLEXT_MALFORMED_URL": "://invalid-url"
+            "FLEXT_MALFORMED_URL": "://invalid-url",
         }
 
         for var_name, var_value in malformed_env_vars.items():

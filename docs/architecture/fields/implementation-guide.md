@@ -716,7 +716,7 @@ class FieldAnalyzer:
         compatibility_score = 0
         compatibility_details = []
 
-        # Type compatibility
+
         if same_type:
             compatibility_score += 50
             compatibility_details.append("✅ Same field type")

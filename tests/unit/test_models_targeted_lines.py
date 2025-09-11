@@ -53,7 +53,7 @@ class TestModelsTargetedLineCoverage:
                 environment="production",
                 debug_mode=False,
                 enable_metrics=True,
-                enable_audit_logging=True
+                enable_audit_logging=True,
             )
 
             # Test get_environment_config method (lines 237-268)
@@ -72,7 +72,7 @@ class TestModelsTargetedLineCoverage:
                 environment="development",
                 debug_mode=True,
                 enable_metrics=False,
-                enable_audit_logging=False
+                enable_audit_logging=False,
             )
 
             # Test development-specific configuration
@@ -118,9 +118,7 @@ class TestModelsTargetedLineCoverage:
         """Test DatabaseConfig specific methods (lines 391-392, 400-401)."""
         try:
             db_config = FlextModels.DatabaseConfig(
-                host="localhost",
-                port=5432,
-                database="test_db"
+                host="localhost", port=5432, database="test_db"
             )
 
             # Test database-specific validation methods
@@ -145,8 +143,7 @@ class TestModelsTargetedLineCoverage:
         """Test SecurityConfig specific methods (lines 422-423, 428-438)."""
         try:
             security_config = FlextModels.SecurityConfig(
-                encryption_enabled=True,
-                auth_required=True
+                encryption_enabled=True, auth_required=True
             )
 
             # Test security validation methods (lines 422-423)
@@ -170,9 +167,7 @@ class TestModelsTargetedLineCoverage:
         """Test LoggingConfig specific methods (lines 691-692, 701-702)."""
         try:
             logging_config = FlextModels.LoggingConfig(
-                level="INFO",
-                format="json",
-                enable_file_logging=True
+                level="INFO", format="json", enable_file_logging=True
             )
 
             # Test logging configuration methods (lines 691-692)
@@ -201,7 +196,11 @@ class TestModelsTargetedLineCoverage:
                 value: int = 42
 
                 def validate(self):
-                    return FlextResult[None].ok(None) if hasattr(self, "FlextResult") else None
+                    return (
+                        FlextResult[None].ok(None)
+                        if hasattr(self, "FlextResult")
+                        else None
+                    )
 
             # Test entity creation
             entity1 = TestEntity(name="test1", value=100)
@@ -210,14 +209,14 @@ class TestModelsTargetedLineCoverage:
 
             # Test equality comparison (line 798)
             try:
-                are_equal = (entity1 == entity3)
+                are_equal = entity1 == entity3
                 assert isinstance(are_equal, bool)
             except Exception:
                 pass
 
             # Test inequality comparison
             try:
-                are_different = (entity1 != entity2)
+                are_different = entity1 != entity2
                 assert isinstance(are_different, bool)
             except Exception:
                 pass
@@ -244,7 +243,11 @@ class TestModelsTargetedLineCoverage:
                 currency: str = "USD"
 
                 def validate(self):
-                    return FlextResult[None].ok(None) if hasattr(self, "FlextResult") else None
+                    return (
+                        FlextResult[None].ok(None)
+                        if hasattr(self, "FlextResult")
+                        else None
+                    )
 
             # Test value object creation
             value1 = TestValue(amount=100.0, currency="USD")
@@ -253,14 +256,14 @@ class TestModelsTargetedLineCoverage:
 
             # Test equality comparison (line 851)
             try:
-                are_equal = (value1 == value3)
+                are_equal = value1 == value3
                 assert isinstance(are_equal, bool)
             except Exception:
                 pass
 
             # Test inequality comparison
             try:
-                are_different = (value1 != value2)
+                are_different = value1 != value2
                 assert isinstance(are_different, bool)
             except Exception:
                 pass
@@ -282,8 +285,7 @@ class TestModelsTargetedLineCoverage:
         try:
             # Test DomainServicesConfig validation
             domain_config = FlextModels.SystemConfigs.DomainServicesConfig(
-                enabled=True,
-                auto_discovery=True
+                enabled=True, auto_discovery=True
             )
 
             # Test configuration validation methods (lines 1401-1405)
@@ -362,7 +364,7 @@ class TestModelsTargetedLineCoverage:
             # Test CommandModel creation and methods
             command_data = {
                 "command_type": "create_user",
-                "payload": {"name": "John", "email": "john@example.com"}
+                "payload": {"name": "John", "email": "john@example.com"},
             }
 
             command = FlextModels.SystemConfigs.CommandModel(**command_data)
@@ -383,7 +385,7 @@ class TestModelsTargetedLineCoverage:
             # Test QueryModel creation and methods
             query_data = {
                 "query_type": "find_user",
-                "filters": {"active": True, "role": "REDACTED_LDAP_BIND_PASSWORD"}
+                "filters": {"active": True, "role": "REDACTED_LDAP_BIND_PASSWORD"},
             }
 
             query = FlextModels.SystemConfigs.QueryModel(**query_data)
@@ -401,8 +403,7 @@ class TestModelsTargetedLineCoverage:
         try:
             # Test HandlersConfig with edge cases
             handlers_config = FlextModels.SystemConfigs.HandlersConfig(
-                max_handlers=100,
-                timeout=60
+                max_handlers=100, timeout=60
             )
 
             # Test edge case methods (line 1539)

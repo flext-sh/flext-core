@@ -51,15 +51,15 @@ class TestFlextModelsComprehensive:
                 "port": 5432,
                 "database": "test_db",
                 "username": "test_user",
-                "password": "test_pass"
+                "password": "test_pass",
             },
             {
                 "host": "db.example.com",
                 "port": 3306,
                 "database": "prod_db",
                 "pool_size": 20,
-                "timeout": 30
-            }
+                "timeout": 30,
+            },
         ]
 
         for config_data in db_configurations:
@@ -90,18 +90,18 @@ class TestFlextModelsComprehensive:
             {
                 "encryption_key": "test_key_12345",
                 "auth_method": "jwt",
-                "token_expiry": 3600
+                "token_expiry": 3600,
             },
             {
                 "ssl_enabled": True,
                 "certificate_path": "/path/to/cert",
-                "private_key_path": "/path/to/key"
+                "private_key_path": "/path/to/key",
             },
             {
                 "oauth_client_id": "client_123",
                 "oauth_client_secret": "secret_456",
-                "allowed_origins": ["https://example.com"]
-            }
+                "allowed_origins": ["https://example.com"],
+            },
         ]
 
         for security_data in security_scenarios:
@@ -125,19 +125,15 @@ class TestFlextModelsComprehensive:
             {
                 "level": "INFO",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                "handlers": ["console", "file"]
+                "handlers": ["console", "file"],
             },
             {
                 "level": "DEBUG",
                 "output_file": "/var/log/app.log",
                 "max_file_size": "10MB",
-                "backup_count": 5
+                "backup_count": 5,
             },
-            {
-                "structured_logging": True,
-                "json_format": True,
-                "correlation_id": True
-            }
+            {"structured_logging": True, "json_format": True, "correlation_id": True},
         ]
 
         for logging_data in logging_scenarios:
@@ -271,14 +267,14 @@ class TestFlextModelsComprehensive:
                     "method": "GET",
                     "url": "https://api.example.com/data",
                     "timeout": 30,
-                    "retries": 3
+                    "retries": 3,
                 },
                 {
                     "method": "POST",
                     "url": "https://api.example.com/create",
                     "headers": {"Content-Type": "application/json"},
-                    "body": '{"key": "value"}'
-                }
+                    "body": '{"key": "value"}',
+                },
             ]
 
             for config_data in request_configs:
@@ -291,16 +287,12 @@ class TestFlextModelsComprehensive:
         # Test HttpErrorConfig
         try:
             error_configs = [
-                {
-                    "status_code": 404,
-                    "error_message": "Not Found",
-                    "retry_after": 60
-                },
+                {"status_code": 404, "error_message": "Not Found", "retry_after": 60},
                 {
                     "status_code": 500,
                     "error_message": "Internal Server Error",
-                    "should_retry": True
-                }
+                    "should_retry": True,
+                },
             ]
 
             for config_data in error_configs:
@@ -316,13 +308,13 @@ class TestFlextModelsComprehensive:
                 {
                     "strict_mode": True,
                     "allow_extra_fields": False,
-                    "validate_on_assignment": True
+                    "validate_on_assignment": True,
                 },
                 {
                     "strict_mode": False,
                     "custom_validators": ["email", "phone"],
-                    "error_format": "detailed"
-                }
+                    "error_format": "detailed",
+                },
             ]
 
             for config_data in validation_configs:
@@ -336,7 +328,11 @@ class TestFlextModelsComprehensive:
         """Test Payload, Message, and Event classes."""
         # Test Payload class
         try:
-            payload_data = {"action": "create", "resource": "user", "data": {"name": "John"}}
+            payload_data = {
+                "action": "create",
+                "resource": "user",
+                "data": {"name": "John"},
+            }
             payload = FlextModels.Payload[FlextTypes.Core.JsonObject](
                 content=payload_data
             )
@@ -347,7 +343,11 @@ class TestFlextModelsComprehensive:
 
         # Test Message class
         try:
-            message_data = {"type": "notification", "content": "Hello World", "timestamp": "2024-01-15T10:00:00Z"}
+            message_data = {
+                "type": "notification",
+                "content": "Hello World",
+                "timestamp": "2024-01-15T10:00:00Z",
+            }
             message = FlextModels.Message(content=message_data)
             assert isinstance(message, FlextModels.Message)
             assert isinstance(message, FlextModels.Payload)
@@ -357,7 +357,11 @@ class TestFlextModelsComprehensive:
 
         # Test Event class
         try:
-            event_data = {"event_type": "user_created", "user_id": "123", "timestamp": "2024-01-15T10:00:00Z"}
+            event_data = {
+                "event_type": "user_created",
+                "user_id": "123",
+                "timestamp": "2024-01-15T10:00:00Z",
+            }
             event = FlextModels.Event(content=event_data)
             assert isinstance(event, FlextModels.Event)
             assert isinstance(event, FlextModels.Payload)
@@ -416,12 +420,14 @@ class TestFlextModelsComprehensive:
         try:
             base_configs = [
                 {"enabled": True, "debug": False},
-                {"enabled": False, "debug": True, "log_level": "DEBUG"}
+                {"enabled": False, "debug": True, "log_level": "DEBUG"},
             ]
 
             for config_data in base_configs:
                 base_config = FlextModels.SystemConfigs.BaseSystemConfig(**config_data)
-                assert isinstance(base_config, FlextModels.SystemConfigs.BaseSystemConfig)
+                assert isinstance(
+                    base_config, FlextModels.SystemConfigs.BaseSystemConfig
+                )
 
         except Exception:
             pass
@@ -430,7 +436,7 @@ class TestFlextModelsComprehensive:
         try:
             command_configs = [
                 {"max_retries": 3, "timeout": 30},
-                {"async_execution": True, "batch_size": 100}
+                {"async_execution": True, "batch_size": 100},
             ]
 
             for config_data in command_configs:
@@ -444,12 +450,14 @@ class TestFlextModelsComprehensive:
         try:
             handler_configs = [
                 {"priority": 1, "async_mode": True},
-                {"priority": 5, "timeout": 60, "retries": 2}
+                {"priority": 5, "timeout": 60, "retries": 2},
             ]
 
             for config_data in handler_configs:
                 handler_config = FlextModels.SystemConfigs.HandlerConfig(**config_data)
-                assert isinstance(handler_config, FlextModels.SystemConfigs.HandlerConfig)
+                assert isinstance(
+                    handler_config, FlextModels.SystemConfigs.HandlerConfig
+                )
 
         except Exception:
             pass
@@ -460,12 +468,16 @@ class TestFlextModelsComprehensive:
         try:
             domain_configs = [
                 {"auto_discovery": True, "service_timeout": 30},
-                {"validation_enabled": True, "event_sourcing": True}
+                {"validation_enabled": True, "event_sourcing": True},
             ]
 
             for config_data in domain_configs:
-                domain_config = FlextModels.SystemConfigs.DomainServicesConfig(**config_data)
-                assert isinstance(domain_config, FlextModels.SystemConfigs.DomainServicesConfig)
+                domain_config = FlextModels.SystemConfigs.DomainServicesConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    domain_config, FlextModels.SystemConfigs.DomainServicesConfig
+                )
 
         except Exception:
             pass
@@ -474,12 +486,16 @@ class TestFlextModelsComprehensive:
         try:
             validation_configs = [
                 {"strict_validation": True, "fail_fast": False},
-                {"custom_validators": True, "async_validation": True}
+                {"custom_validators": True, "async_validation": True},
             ]
 
             for config_data in validation_configs:
-                val_config = FlextModels.SystemConfigs.ValidationSystemConfig(**config_data)
-                assert isinstance(val_config, FlextModels.SystemConfigs.ValidationSystemConfig)
+                val_config = FlextModels.SystemConfigs.ValidationSystemConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    val_config, FlextModels.SystemConfigs.ValidationSystemConfig
+                )
 
         except Exception:
             pass
@@ -488,12 +504,16 @@ class TestFlextModelsComprehensive:
         try:
             container_configs = [
                 {"auto_wire": True, "singleton_by_default": False},
-                {"lazy_initialization": True, "circular_dependency_check": True}
+                {"lazy_initialization": True, "circular_dependency_check": True},
             ]
 
             for config_data in container_configs:
-                container_config = FlextModels.SystemConfigs.ContainerConfig(**config_data)
-                assert isinstance(container_config, FlextModels.SystemConfigs.ContainerConfig)
+                container_config = FlextModels.SystemConfigs.ContainerConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    container_config, FlextModels.SystemConfigs.ContainerConfig
+                )
 
         except Exception:
             pass
@@ -504,12 +524,16 @@ class TestFlextModelsComprehensive:
         try:
             basic_configs = [
                 {"handler_name": "test_handler", "enabled": True},
-                {"handler_name": "batch_handler", "batch_size": 50, "timeout": 120}
+                {"handler_name": "batch_handler", "batch_size": 50, "timeout": 120},
             ]
 
             for config_data in basic_configs:
-                basic_config = FlextModels.SystemConfigs.BasicHandlerConfig(**config_data)
-                assert isinstance(basic_config, FlextModels.SystemConfigs.BasicHandlerConfig)
+                basic_config = FlextModels.SystemConfigs.BasicHandlerConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    basic_config, FlextModels.SystemConfigs.BasicHandlerConfig
+                )
 
         except Exception:
             pass
@@ -517,13 +541,21 @@ class TestFlextModelsComprehensive:
         # Test ValidatingHandlerConfig
         try:
             validating_configs = [
-                {"handler_name": "validator", "validation_rules": ["required", "format"]},
-                {"handler_name": "strict_validator", "fail_on_first_error": True}
+                {
+                    "handler_name": "validator",
+                    "validation_rules": ["required", "format"],
+                },
+                {"handler_name": "strict_validator", "fail_on_first_error": True},
             ]
 
             for config_data in validating_configs:
-                val_handler_config = FlextModels.SystemConfigs.ValidatingHandlerConfig(**config_data)
-                assert isinstance(val_handler_config, FlextModels.SystemConfigs.ValidatingHandlerConfig)
+                val_handler_config = FlextModels.SystemConfigs.ValidatingHandlerConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    val_handler_config,
+                    FlextModels.SystemConfigs.ValidatingHandlerConfig,
+                )
 
         except Exception:
             pass
@@ -532,12 +564,16 @@ class TestFlextModelsComprehensive:
         try:
             event_configs = [
                 {"event_type": "user_created", "async_processing": True},
-                {"event_type": "order_completed", "retry_policy": "exponential"}
+                {"event_type": "order_completed", "retry_policy": "exponential"},
             ]
 
             for config_data in event_configs:
-                event_config = FlextModels.SystemConfigs.EventHandlerConfig(**config_data)
-                assert isinstance(event_config, FlextModels.SystemConfigs.EventHandlerConfig)
+                event_config = FlextModels.SystemConfigs.EventHandlerConfig(
+                    **config_data
+                )
+                assert isinstance(
+                    event_config, FlextModels.SystemConfigs.EventHandlerConfig
+                )
 
         except Exception:
             pass
@@ -571,7 +607,7 @@ class TestFlextModelsComprehensive:
             urls = [
                 "https://api.example.com",
                 "http://localhost:8080/health",
-                "postgres://user:pass@localhost:5432/db"
+                "postgres://user:pass@localhost:5432/db",
             ]
             for url_str in urls:
                 url = FlextModels.Url(url_str)
@@ -586,8 +622,15 @@ class TestFlextModelsComprehensive:
         # Test Metadata
         try:
             metadata_samples = [
-                {"Content-Type": "application/json", "Authorization": "Bearer token123"},
-                {"User-Agent": "FlextClient/1.0", "Accept": "application/json", "Cache-Control": "no-cache"}
+                {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer token123",
+                },
+                {
+                    "User-Agent": "FlextClient/1.0",
+                    "Accept": "application/json",
+                    "Cache-Control": "no-cache",
+                },
             ]
 
             for meta_data in metadata_samples:
@@ -603,7 +646,13 @@ class TestFlextModelsComprehensive:
             json_samples = [
                 {"user": {"id": 123, "name": "John Doe", "active": True}},
                 {"orders": [{"id": 1, "total": 99.99}, {"id": 2, "total": 149.50}]},
-                {"config": {"debug": True, "timeout": 30, "features": ["auth", "logging"]}}
+                {
+                    "config": {
+                        "debug": True,
+                        "timeout": 30,
+                        "features": ["auth", "logging"],
+                    }
+                },
             ]
 
             for json_data in json_samples:

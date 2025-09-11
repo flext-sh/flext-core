@@ -520,7 +520,7 @@ class FlextConstants:
         # Batch processing configuration
         DEFAULT_BATCH_SIZE: Final[int] = 1000
         MAX_BATCH_SIZE: Final[int] = 10000
-        BATCH_SIZE: Final[int] = 1000  # Alias for compatibility
+        BATCH_SIZE: Final[int] = 1000
 
         # Handler performance thresholds (in seconds)
         HANDLER_EXCELLENT_THRESHOLD: Final[float] = 0.1
@@ -2182,7 +2182,6 @@ class FlextConstants:
         VALUE_OBJECT_EMPTY: Final[str] = "Value object cannot be empty"
         VALUE_OBJECT_FORMAT_INVALID: Final[str] = "Invalid value object format"
 
-        # Type validation
         TYPE_MISMATCH: Final[str] = "Type mismatch error"
         TYPE_CONVERSION_FAILED: Final[str] = "Type conversion failed"
         TYPE_VALIDATION_FAILED: Final[str] = "Type validation failed"

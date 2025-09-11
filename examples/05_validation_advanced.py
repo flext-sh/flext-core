@@ -18,10 +18,6 @@ from flext_core import (
 )
 import math
 
-# =============================================================================
-# VALIDATION SHOWCASE - Using EXISTING FlextValidations directly
-# =============================================================================
-
 
 class ValidationShowcaseService(FlextValidations.Service.ApiRequestValidator):
     """Showcase usando APENAS funcionalidades existentes do FlextCore."""

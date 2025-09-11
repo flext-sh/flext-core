@@ -552,7 +552,6 @@ class FlextProcessors:
                     "Configuration must be a dictionary",
                 )
 
-            # Type narrowing: we know config is dict at this point
             typed_config = cast(
                 "FlextTypes.Core.Dict",
                 config,
@@ -754,10 +753,6 @@ class FlextProcessors:
                 f"Failed to get processors system config: {e}",
             )
 
-
-# =============================================================================
-# MODULE EXPORTS
-# =============================================================================
 
 __all__ = [
     "FlextProcessors",

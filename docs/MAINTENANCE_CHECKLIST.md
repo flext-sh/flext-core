@@ -39,7 +39,7 @@ make validate
 
 # Individual checks
 make lint        # Linting
-make type-check  # Type checking
+make type-check
 make test        # Tests with coverage
 make security    # Security scan
 ```

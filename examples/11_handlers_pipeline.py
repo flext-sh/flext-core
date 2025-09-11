@@ -23,19 +23,12 @@ from flext_core import (
 )
 from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
-# =============================================================================
-# HANDLER CONSTANTS - Validation and business rule constraints
-# =============================================================================
 
 # Name validation constants
 MIN_NAME_LENGTH = 2  # Minimum characters for name fields
 
 # Order processing constants
 MIN_ITEMS_FOR_DISCOUNT = 3  # Minimum items in order to qualify for discount
-
-# =============================================================================
-# DOMAIN MODELS - Business entities and messages
-# =============================================================================
 
 
 @dataclass
@@ -92,11 +85,6 @@ class UserEntity(FlextModels.Entity):
             is_active=True,
         )
         return FlextResult["UserEntity"].ok(activated_user)
-
-
-# =============================================================================
-# CQRS MESSAGES - Commands, Queries, and Events
-# =============================================================================
 
 
 @dataclass
@@ -178,11 +166,6 @@ class OrderCreatedEvent:
     user_id: str
     total: float
     timestamp: float
-
-
-# =============================================================================
-# COMMAND HANDLERS - CQRS command processing
-# =============================================================================
 
 
 class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
@@ -330,11 +313,6 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[object].ok(user)
 
 
-# =============================================================================
-# QUERY HANDLERS - CQRS query processing
-# =============================================================================
-
-
 class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
     """Handler for retrieving individual users."""
 
@@ -373,7 +351,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         """Validate query (renamed from validate_command for consistency)."""
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
-        # Simple query validation
+
         if not query.user_id:
             return FlextResult[None].fail("User ID is required")
         return FlextResult[None].ok(None)
@@ -382,7 +360,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         """Check query authorization."""
         if not isinstance(query, GetUserQuery):
             return FlextResult[None].fail("Invalid query type")
-        # Simple authorization check
+
         if not query.user_id:
             return FlextResult[None].fail("User ID is required for authorization")
         return FlextResult[None].ok(None)
@@ -470,11 +448,6 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
         )
 
         return FlextResult[object].ok(paginated_users)
-
-
-# =============================================================================
-# EVENT HANDLERS - Domain event processing
-# =============================================================================
 
 
 class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
@@ -608,7 +581,6 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
     def process_event(self, event: object) -> FlextResult[None]:
         """Process order created event."""
-        # Type guard
         if not isinstance(event, OrderCreatedEvent):
             return FlextResult[None].fail("Invalid event type")
 
@@ -636,11 +608,6 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         )
 
         return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS USING STRATEGY PATTERN
-# =============================================================================
 
 
 def demonstrate_command_handlers() -> FlextResult[None]:

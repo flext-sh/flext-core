@@ -183,7 +183,7 @@ request = {"user_id": "12345", "action": "create_profile"}
 result = handler.handle(request)
 
 if result.success:
-    processed_data: str = result.value  # Type-safe access
+    processed_data: str = result.value
     print(f"Success: {processed_data}")
 else:
     print(f"Failed: {result.error}")

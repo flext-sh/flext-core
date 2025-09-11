@@ -800,7 +800,6 @@ class FlextContainer:
 
         service: object = result.value
 
-        # Simple isinstance check instead of complex type guards
         if not isinstance(service, expected_type):
             actual_type = type(service).__name__
             return FlextResult[T].fail(
@@ -987,7 +986,7 @@ class FlextContainer:
         """Ensure global manager is initialized."""
         if cls._global_manager is None:
             cls._global_manager = cls.GlobalManager()
-        # Type assertion since we just ensured it's not None
+
         return cls._global_manager
 
     @classmethod

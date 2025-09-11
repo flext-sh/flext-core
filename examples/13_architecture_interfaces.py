@@ -178,7 +178,7 @@ class UserService(FlextProtocols.Domain.Service):
         }
         return FlextResult[FlextTypes.Core.Dict].ok(health_status)
 
-    def __call__(self, *_args: object, **_kwargs: object) -> FlextResult[object]:
+    def __call__(self, *_args: object) -> FlextResult[object]:
         """Make service callable (required by FlextProtocols.Domain.Service)."""
         return FlextResult[object].ok("UserService called")
 
@@ -350,7 +350,6 @@ def demonstrate_enterprise_architecture() -> None:
     """Demonstrate complete enterprise architecture with FlextCore."""
     print("\n=== FlextCore Enterprise Architecture Demo ===")
 
-    # Simple health check simulation - no wrapper needed
     print("✅ System health: healthy")
     print("✅ Environment configuration loaded")
 

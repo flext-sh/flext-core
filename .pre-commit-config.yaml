@@ -20,7 +20,7 @@ repos:
   # Poetry-managed tools via local repo
   - repo: local
     hooks:
-      # Ruff linting and formatting with PEP8 strict (primary formatter)
+
       - id: ruff-format
         name: "⚡ Ruff Format (PEP8 Strict - 79 chars)"
         entry: poetry run ruff format

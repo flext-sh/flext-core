@@ -202,7 +202,6 @@ class FlextDecorators(FlextMixins.Entity):
 
                     # Validate argument types
                     if arg_types:
-                        # Simple type validation
                         for i, (arg, expected_type) in enumerate(
                             zip(args, arg_types, strict=False),
                         ):

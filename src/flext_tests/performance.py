@@ -90,7 +90,6 @@ class FlextTestsPerformance:
             if len(results) < 2:
                 return {"pattern": "insufficient_data"}
 
-            # Simple pattern detection with type casting
             sizes = [
                 float(r["input_size"])
                 for r in results

@@ -23,19 +23,17 @@ class TestFlextDecoratorsValidation:
         # Test basic input validation decorator
         validation_rules = {
             "required_fields": ["name", "email"],
-            "field_types": {
-                "name": str,
-                "email": str,
-                "age": int
-            },
+            "field_types": {"name": str, "email": str, "age": int},
             "field_validators": {
                 "email": r"^[^@]+@[^@]+\.[^@]+$",
-                "age": {"min": 0, "max": 150}
-            }
+                "age": {"min": 0, "max": 150},
+            },
         }
 
         try:
-            validator_decorator = FlextDecorators.Validation.validate_input(validation_rules)
+            validator_decorator = FlextDecorators.Validation.validate_input(
+                validation_rules
+            )
             if callable(validator_decorator):
                 # Create a test function to decorate
                 @validator_decorator
@@ -46,7 +44,7 @@ class TestFlextDecoratorsValidation:
                 valid_inputs = [
                     {"name": "John Doe", "email": "john@example.com", "age": 30},
                     {"name": "Jane Smith", "email": "jane@example.com"},
-                    {"name": "Bob", "email": "bob@test.org", "age": 25}
+                    {"name": "Bob", "email": "bob@test.org", "age": 25},
                 ]
 
                 for valid_input in valid_inputs:
@@ -62,8 +60,16 @@ class TestFlextDecoratorsValidation:
                     {"name": "John"},  # Missing required email
                     {"email": "john@example.com"},  # Missing required name
                     {"name": "John", "email": "invalid_email"},  # Invalid email format
-                    {"name": "John", "email": "john@example.com", "age": -5},  # Invalid age
-                    {"name": "John", "email": "john@example.com", "age": "not_number"},  # Wrong age type
+                    {
+                        "name": "John",
+                        "email": "john@example.com",
+                        "age": -5,
+                    },  # Invalid age
+                    {
+                        "name": "John",
+                        "email": "john@example.com",
+                        "age": "not_number",
+                    },  # Wrong age type
                 ]
 
                 for invalid_input in invalid_inputs:
@@ -86,26 +92,27 @@ class TestFlextDecoratorsValidation:
             {
                 "required_fields": [],  # No required fields
                 "optional_fields": ["optional1", "optional2"],
-                "strict_mode": False
+                "strict_mode": False,
             },
             {
                 "custom_validators": {
                     "phone": lambda x: isinstance(x, str) and len(x) >= 10,
-                    "date": lambda x: isinstance(x, str) and "2024" in x
+                    "date": lambda x: isinstance(x, str) and "2024" in x,
                 },
-                "error_behavior": "collect_errors"
+                "error_behavior": "collect_errors",
             },
             {
                 "nested_validation": True,
                 "max_nesting_depth": 3,
-                "validate_list_elements": True
-            }
+                "validate_list_elements": True,
+            },
         ]
 
         for advanced_rule in advanced_rules:
             try:
                 validator = FlextDecorators.Validation.validate_input(advanced_rule)
                 if callable(validator):
+
                     @validator
                     def advanced_test_function(data):
                         return data
@@ -126,18 +133,14 @@ class TestFlextDecoratorsValidation:
             {
                 "args": [str, int, float],
                 "kwargs": {"name": str, "count": int},
-                "return_type": str
+                "return_type": str,
             },
             {
                 "args": [dict, list],
                 "kwargs": {"config": dict, "options": list},
-                "return_type": dict
+                "return_type": dict,
             },
-            {
-                "strict_mode": True,
-                "args": [str],
-                "return_type": str
-            }
+            {"strict_mode": True, "args": [str], "return_type": str},
         ]
 
         for type_spec in type_specifications:
@@ -153,7 +156,7 @@ class TestFlextDecoratorsValidation:
                     correct_calls = [
                         (["hello", 42, math.pi], {"name": "test", "count": 10}),
                         (["string"], {}),
-                        ([{"dict": True}, [1, 2, 3]], {"config": {}, "options": []})
+                        ([{"dict": True}, [1, 2, 3]], {"config": {}, "options": []}),
                     ]
 
                     for args, kwargs in correct_calls:
@@ -161,14 +164,13 @@ class TestFlextDecoratorsValidation:
                             result = typed_function(*args, **kwargs)
                             assert result is not None or result is None
                         except Exception:
-                            # Type validation might still fail
                             pass
 
                     # Test with incorrect types
                     incorrect_calls = [
                         ([123, "wrong_order"], {}),  # Wrong argument types
                         ([], {"name": 123, "count": "wrong"}),  # Wrong kwarg types
-                        ([None], {"name": None})  # None values
+                        ([None], {"name": None}),  # None values
                     ]
 
                     for args, kwargs in incorrect_calls:
@@ -192,20 +194,20 @@ class TestFlextDecoratorsValidation:
                 "field": "email",
                 "message": "Invalid email format",
                 "code": "EMAIL_INVALID",
-                "value": "invalid_email"
+                "value": "invalid_email",
             },
             {
                 "field": "age",
                 "message": "Age must be positive",
                 "code": "AGE_NEGATIVE",
-                "value": -5
+                "value": -5,
             },
             {
                 "field": "nested.field",
                 "message": "Nested field validation failed",
                 "code": "NESTED_INVALID",
-                "value": None
-            }
+                "value": None,
+            },
         ]
 
         for scenario in error_scenarios:
@@ -214,7 +216,7 @@ class TestFlextDecoratorsValidation:
                     field=scenario["field"],
                     message=scenario["message"],
                     error_code=scenario.get("code"),
-                    value=scenario.get("value")
+                    value=scenario.get("value"),
                 )
 
                 if isinstance(result, FlextResult):
@@ -256,7 +258,7 @@ class TestFlextDecoratorsPerformance:
             {"ttl": 300, "max_size": 1000, "cache_key_func": "args_hash"},
             {"ttl": 0, "max_size": 10},  # No TTL
             {"strategy": "lru", "max_size": 50},
-            {"strategy": "fifo", "max_size": 25, "ttl": 120}
+            {"strategy": "fifo", "max_size": 25, "ttl": 120},
         ]
 
         for cache_config in cache_configs:
@@ -297,8 +299,15 @@ class TestFlextDecoratorsPerformance:
 
         # Test cache with different key strategies
         key_strategies = [
-            {"cache_key_func": lambda *args, **kwargs: str(hash(str(args) + str(kwargs)))},
-            {"cache_key_func": lambda *args, **kwargs: f"{args[0]}_{kwargs.get('key', 'default')}"},
+            {
+                "cache_key_func": lambda *args, **kwargs: str(
+                    hash(str(args) + str(kwargs))
+                )
+            },
+            {
+                "cache_key_func": lambda *args,
+                **kwargs: f"{args[0]}_{kwargs.get('key', 'default')}"
+            },
             {"include_kwargs": True, "exclude_args": [0]},
             {"custom_hasher": "md5"},
         ]
@@ -307,6 +316,7 @@ class TestFlextDecoratorsPerformance:
             try:
                 cache_decorator = FlextDecorators.Performance.cache(strategy)
                 if callable(cache_decorator):
+
                     @cache_decorator
                     def strategy_test_function(a, b, key=None) -> str:
                         return f"Strategy test: {a}, {b}, {key}"
@@ -330,7 +340,7 @@ class TestFlextDecoratorsPerformance:
             {"metrics": ["memory_usage", "cpu_usage"], "sample_rate": 0.1},
             {"detailed_profiling": True, "include_args": False},
             {"custom_metrics": {"business_metric": "lambda: len(args)"}},
-            {"alert_thresholds": {"execution_time": 1.0, "memory_mb": 100}}
+            {"alert_thresholds": {"execution_time": 1.0, "memory_mb": 100}},
         ]
 
         for monitor_config in monitor_configs:
@@ -360,7 +370,7 @@ class TestFlextDecoratorsPerformance:
         # Test monitoring with async functions (if supported)
         async_configs = [
             {"async_mode": True, "metrics": ["async_execution_time"]},
-            {"coroutine_monitoring": True, "track_context_switches": True}
+            {"coroutine_monitoring": True, "track_context_switches": True},
         ]
 
         for async_config in async_configs:
@@ -394,7 +404,12 @@ class TestFlextDecoratorsPerformance:
             pass
 
         # Test clear_cache with specific cache names
-        cache_names = ["user_cache", "config_cache", "session_cache", "nonexistent_cache"]
+        cache_names = [
+            "user_cache",
+            "config_cache",
+            "session_cache",
+            "nonexistent_cache",
+        ]
         for cache_name in cache_names:
             try:
                 result = FlextDecorators.clear_cache(cache_name)
@@ -432,7 +447,11 @@ class TestFlextDecoratorsReliability:
     def test_reliability_decorators_comprehensive(self) -> None:
         """Test reliability decorators with various failure handling scenarios."""
         if hasattr(FlextDecorators, "Reliability"):
-            reliability_attrs = [attr for attr in dir(FlextDecorators.Reliability) if not attr.startswith("_")]
+            reliability_attrs = [
+                attr
+                for attr in dir(FlextDecorators.Reliability)
+                if not attr.startswith("_")
+            ]
 
             # Test reliability decorators
             for attr_name in reliability_attrs[:3]:  # Test first 3 methods
@@ -443,7 +462,7 @@ class TestFlextDecoratorsReliability:
                         reliability_configs = [
                             {"max_retries": 3, "backoff_factor": 2},
                             {"timeout": 5.0, "fallback_value": "default"},
-                            {"circuit_breaker": True, "failure_threshold": 5}
+                            {"circuit_breaker": True, "failure_threshold": 5},
                         ]
 
                         for config in reliability_configs:
@@ -484,7 +503,11 @@ class TestFlextDecoratorsObservability:
     def test_observability_decorators_comprehensive(self) -> None:
         """Test observability decorators with logging and monitoring scenarios."""
         if hasattr(FlextDecorators, "Observability"):
-            obs_attrs = [attr for attr in dir(FlextDecorators.Observability) if not attr.startswith("_")]
+            obs_attrs = [
+                attr
+                for attr in dir(FlextDecorators.Observability)
+                if not attr.startswith("_")
+            ]
 
             # Test observability decorators
             for attr_name in obs_attrs[:3]:  # Test first 3 methods
@@ -493,9 +516,16 @@ class TestFlextDecoratorsObservability:
                     if callable(attr_obj):
                         # Test with observability configurations
                         obs_configs = [
-                            {"log_level": "INFO", "include_args": True, "include_result": False},
+                            {
+                                "log_level": "INFO",
+                                "include_args": True,
+                                "include_result": False,
+                            },
                             {"tracing_enabled": True, "span_name": "test_operation"},
-                            {"metrics": ["duration", "call_count"], "labels": {"service": "test"}}
+                            {
+                                "metrics": ["duration", "call_count"],
+                                "labels": {"service": "test"},
+                            },
                         ]
 
                         for config in obs_configs:
@@ -504,7 +534,9 @@ class TestFlextDecoratorsObservability:
                                 if callable(decorator):
                                     # Test the decorator
                                     @decorator
-                                    def observable_function(operation, data=None) -> str:
+                                    def observable_function(
+                                        operation, data=None
+                                    ) -> str:
                                         return f"Operation {operation} completed with {data}"
 
                                     # Test observable execution
@@ -512,12 +544,14 @@ class TestFlextDecoratorsObservability:
                                         ("create", {"id": 1, "name": "test"}),
                                         ("update", {"id": 1, "status": "active"}),
                                         ("delete", {"id": 1}),
-                                        ("query", None)
+                                        ("query", None),
                                     ]
 
                                     for operation, data in test_calls:
                                         try:
-                                            result = observable_function(operation, data)
+                                            result = observable_function(
+                                                operation, data
+                                            )
                                             assert result is not None or result is None
                                         except Exception:
                                             pass
@@ -533,7 +567,11 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
     def test_integration_decorators_comprehensive(self) -> None:
         """Test integration decorators with external service integration scenarios."""
         if hasattr(FlextDecorators, "Integration"):
-            int_attrs = [attr for attr in dir(FlextDecorators.Integration) if not attr.startswith("_")]
+            int_attrs = [
+                attr
+                for attr in dir(FlextDecorators.Integration)
+                if not attr.startswith("_")
+            ]
 
             # Test integration decorators
             for attr_name in int_attrs[:3]:  # Test first 3 methods
@@ -545,17 +583,17 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                             {
                                 "service_url": "https://api.example.com",
                                 "timeout": 10,
-                                "retry_policy": {"max_attempts": 3}
+                                "retry_policy": {"max_attempts": 3},
                             },
                             {
                                 "auth_method": "bearer_token",
                                 "token": "test_token",
-                                "headers": {"Content-Type": "application/json"}
+                                "headers": {"Content-Type": "application/json"},
                             },
                             {
                                 "mock_mode": True,
-                                "mock_responses": {"default": {"status": "ok"}}
-                            }
+                                "mock_responses": {"default": {"status": "ok"}},
+                            },
                         ]
 
                         for config in int_configs:
@@ -565,19 +603,37 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                                     # Test integration decorator
                                     @decorator
                                     def integrated_function(action, payload=None):
-                                        return {"action": action, "payload": payload, "integrated": True}
+                                        return {
+                                            "action": action,
+                                            "payload": payload,
+                                            "integrated": True,
+                                        }
 
                                     # Test integration scenarios
                                     integration_tests = [
                                         ("get_user", {"user_id": "123"}),
-                                        ("create_order", {"items": ["item1", "item2"], "total": 99.99}),
-                                        ("send_notification", {"recipient": "user@example.com", "message": "Hello"}),
-                                        ("health_check", None)
+                                        (
+                                            "create_order",
+                                            {
+                                                "items": ["item1", "item2"],
+                                                "total": 99.99,
+                                            },
+                                        ),
+                                        (
+                                            "send_notification",
+                                            {
+                                                "recipient": "user@example.com",
+                                                "message": "Hello",
+                                            },
+                                        ),
+                                        ("health_check", None),
                                     ]
 
                                     for action, payload in integration_tests:
                                         try:
-                                            result = integrated_function(action, payload)
+                                            result = integrated_function(
+                                                action, payload
+                                            )
                                             assert result is not None or result is None
                                         except Exception:
                                             pass
@@ -589,7 +645,11 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
     def test_lifecycle_decorators_comprehensive(self) -> None:
         """Test lifecycle decorators with component lifecycle management scenarios."""
         if hasattr(FlextDecorators, "Lifecycle"):
-            lifecycle_attrs = [attr for attr in dir(FlextDecorators.Lifecycle) if not attr.startswith("_")]
+            lifecycle_attrs = [
+                attr
+                for attr in dir(FlextDecorators.Lifecycle)
+                if not attr.startswith("_")
+            ]
 
             # Test lifecycle decorators
             for attr_name in lifecycle_attrs[:3]:  # Test first 3 methods
@@ -601,16 +661,22 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                             {
                                 "pre_hooks": ["validate_input", "log_start"],
                                 "post_hooks": ["log_completion", "cleanup"],
-                                "error_hooks": ["log_error", "notify_REDACTED_LDAP_BIND_PASSWORD"]
+                                "error_hooks": ["log_error", "notify_REDACTED_LDAP_BIND_PASSWORD"],
                             },
                             {
-                                "initialization": {"auto_setup": True, "config_validation": True},
-                                "cleanup": {"auto_cleanup": True, "resource_disposal": True}
+                                "initialization": {
+                                    "auto_setup": True,
+                                    "config_validation": True,
+                                },
+                                "cleanup": {
+                                    "auto_cleanup": True,
+                                    "resource_disposal": True,
+                                },
                             },
                             {
                                 "state_management": True,
-                                "persistence": {"enabled": True, "storage": "memory"}
-                            }
+                                "persistence": {"enabled": True, "storage": "memory"},
+                            },
                         ]
 
                         for config in lifecycle_configs:
@@ -619,23 +685,34 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                                 if callable(decorator):
                                     # Test lifecycle decorator
                                     @decorator
-                                    def lifecycle_managed_function(phase, operation=None):
+                                    def lifecycle_managed_function(
+                                        phase, operation=None
+                                    ):
                                         if phase == "error":
                                             msg = "Simulated lifecycle error"
                                             raise Exception(msg)
-                                        return {"phase": phase, "operation": operation, "timestamp": time.time()}
+                                        return {
+                                            "phase": phase,
+                                            "operation": operation,
+                                            "timestamp": time.time(),
+                                        }
 
                                     # Test lifecycle phases
                                     lifecycle_phases = [
                                         ("initialization", "setup"),
                                         ("execution", "process_data"),
                                         ("cleanup", "dispose_resources"),
-                                        ("error", "handle_failure")  # Should trigger error handling
+                                        (
+                                            "error",
+                                            "handle_failure",
+                                        ),  # Should trigger error handling
                                     ]
 
                                     for phase, operation in lifecycle_phases:
                                         try:
-                                            result = lifecycle_managed_function(phase, operation)
+                                            result = lifecycle_managed_function(
+                                                phase, operation
+                                            )
                                             assert result is not None or result is None
                                         except Exception:
                                             # Expected for error phase
@@ -657,15 +734,23 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
         # Test combining multiple decorators
         try:
             # Try to create a composition of decorators
-            validation_config = {"required_fields": ["input"], "field_types": {"input": str}}
+            validation_config = {
+                "required_fields": ["input"],
+                "field_types": {"input": str},
+            }
             cache_config = {"ttl": 60, "max_size": 10}
             monitor_config = {"metrics": ["execution_time"]}
 
-            validation_decorator = FlextDecorators.Validation.validate_input(validation_config)
+            validation_decorator = FlextDecorators.Validation.validate_input(
+                validation_config
+            )
             cache_decorator = FlextDecorators.Performance.cache(cache_config)
             monitor_decorator = FlextDecorators.Performance.monitor(monitor_config)
 
-            if all(callable(d) for d in [validation_decorator, cache_decorator, monitor_decorator]):
+            if all(
+                callable(d)
+                for d in [validation_decorator, cache_decorator, monitor_decorator]
+            ):
                 # Compose decorators
                 @validation_decorator
                 @cache_decorator
@@ -679,7 +764,7 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
                     {"input": "another_valid_string"},
                     {"input": "valid_string"},  # Should hit cache
                     {"wrong_field": "invalid"},  # Should fail validation
-                    {}  # Empty input
+                    {},  # Empty input
                 ]
 
                 for test_input in test_inputs:
@@ -703,7 +788,7 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
         decorator_methods = [
             FlextDecorators.Validation.validate_input,
             FlextDecorators.Performance.cache,
-            FlextDecorators.Performance.monitor
+            FlextDecorators.Performance.monitor,
         ]
 
         for method in decorator_methods:
@@ -711,6 +796,7 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
                 try:
                     decorator = method(config)
                     if callable(decorator):
+
                         @decorator
                         def error_test_function() -> str:
                             return "test_result"
@@ -739,12 +825,23 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
             try:
                 cache_decorator = FlextDecorators.Performance.cache(config)
                 if callable(cache_decorator):
+
                     @cache_decorator
                     def extreme_cached_function(x):
                         return x * 2
 
                     # Test with extreme values
-                    extreme_values = [0, 1, -1, 999999, -999999, 0.000001, None, "", "string"]
+                    extreme_values = [
+                        0,
+                        1,
+                        -1,
+                        999999,
+                        -999999,
+                        0.000001,
+                        None,
+                        "",
+                        "string",
+                    ]
                     for value in extreme_values:
                         try:
                             result = extreme_cached_function(value)
@@ -756,8 +853,11 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
 
         # Test monitor with high-frequency calls
         try:
-            monitor_decorator = FlextDecorators.Performance.monitor({"metrics": ["call_count"]})
+            monitor_decorator = FlextDecorators.Performance.monitor(
+                {"metrics": ["call_count"]}
+            )
             if callable(monitor_decorator):
+
                 @monitor_decorator
                 def high_frequency_function() -> str:
                     return "frequent_result"

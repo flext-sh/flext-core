@@ -19,9 +19,7 @@ from flext_core import (
     FlextResult,
     FlextUtilities,
 )
-# =============================================================================
-# 🚀 MAXIMUM FLEXT-CORE SHOWCASE - 20+ Features in Minimal Code
-# =============================================================================
+
 
 # FlextCore ecosystem setup
 logger = FlextLogger(__name__)  # FlextLogger structured output
@@ -61,10 +59,6 @@ class User(FlextModels.Config):
             "age": self.age,
         }
 
-
-# =============================================================================
-# 🚀 MAXIMUM FUNCTIONALITY - 10+ Features in 50 Lines!
-# =============================================================================
 
 # FlextContainer DI setup
 container.register("user_db", dict[str, User]())

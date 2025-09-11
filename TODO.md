@@ -206,7 +206,7 @@ python -c "from flext_core import FlextCoreModels, FlextCoreHandlers"
 
 ```bash
 # DEPOIS de cada mudança - MANDATÓRIO
-make validate  # Ruff + MyPy + Tests
+make validate
 ruff check src/flext_core --output-format=github
 mypy src/flext_core --strict --show-error-codes
 pytest tests/unit/core/ -v --tb=short

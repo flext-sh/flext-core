@@ -347,7 +347,7 @@ class FlextTestsAsyncs:
     ) -> AsyncMockProtocol:
         """Create async mock function."""
 
-        async def async_mock(*_args: object, **_kwargs: object) -> object:
+        async def async_mock(*_args: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
@@ -362,7 +362,7 @@ class FlextTestsAsyncs:
     ) -> AsyncMockProtocol:
         """Create async mock with delay before returning/raising."""
 
-        async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
+        async def delayed_async_mock(*_args: object) -> object:
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -387,7 +387,7 @@ class FlextTestsAsyncs:
             exc_type = exception_type or RuntimeError
             result_value = success_value if success_value is not None else return_value
 
-            async def flaky_count_mock(*_args: object, **_kwargs: object) -> object:
+            async def flaky_count_mock(*_args: object) -> object:
                 nonlocal remaining
                 if remaining > 0:
                     remaining -= 1
@@ -399,7 +399,7 @@ class FlextTestsAsyncs:
         # Random mode
         rate = 0.3 if failure_rate is None else float(failure_rate)
 
-        async def flaky_random_mock(*_args: object, **_kwargs: object) -> object:
+        async def flaky_random_mock(*_args: object) -> object:
             if random.random() < rate:
                 raise exception or RuntimeError("flaky failure")
             return return_value
@@ -687,6 +687,12 @@ class FlextTestsAsyncs:
     def async_slow() -> object:
         """Mark async test as slow."""
         return pytest.mark.slow
+
+    class AsyncTestUtils:
+        """Ultra-simple alias for test compatibility."""
+
+        def __init__(self) -> None:
+            """Ultra-simple alias for test compatibility."""
 
 
 # === REMOVED COMPATIBILITY ALIASES AND FACADES ===

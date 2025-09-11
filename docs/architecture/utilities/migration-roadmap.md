@@ -577,7 +577,7 @@ class FlextPerformanceStorage:
         if len(values) < 2:
             return "insufficient_data"
 
-        # Simple linear trend calculation
+      
         recent_avg = sum(values[-5:]) / min(5, len(values))
         historical_avg = sum(values[:-5]) / max(1, len(values) - 5)
 

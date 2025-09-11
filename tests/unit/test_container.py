@@ -402,7 +402,6 @@ class TestFlextContainerPerformance:
         """Test container performance with benchmarking."""
         container = FlextTestsBuilders.container().build()
 
-        # Simple time benchmark for service registration
         def register_services() -> None:
             for i in range(100):
                 service_data = FlextTestsDomains.create_service(

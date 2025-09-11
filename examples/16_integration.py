@@ -21,9 +21,6 @@ from flext_core import (
     FlextTypes,
 )
 
-# =============================================================================
-# VALIDATION CONSTANTS - Integration example constraints using FlextTypes
-# =============================================================================
 
 # Email validation constants using proper FlextTypes annotations
 MIN_EMAIL_LENGTH: int = 5  # Minimum characters for basic email validation
@@ -57,7 +54,6 @@ class Order:
 
     def calculate_total(self) -> FlextResult[Money]:
         """Calculate order total."""
-        # Simple calculation for demo
         total = Decimal(0)
         for item in self.items:
             price = item.get("price", 0)

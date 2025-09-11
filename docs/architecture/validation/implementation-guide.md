@@ -189,7 +189,7 @@ class SchemaValidationService:
         """Create comprehensive username validator."""
 
         def validate_username(username: object) -> FlextResult[str]:
-            # Type validation
+
             if not isinstance(username, str):
                 return FlextResult.fail("Username must be a string")
 

@@ -63,11 +63,6 @@ def make_hashable(obj: object) -> object:
     return obj
 
 
-# =============================================================================
-# REAL DOMAIN MODELS FOR TESTING
-# =============================================================================
-
-
 # Use the base classes from models.py and create test-specific implementations
 class EmailValue(FlextModels.Value):
     """Real email value object for testing FlextModels."""
@@ -180,11 +175,6 @@ class DataRootModel(FlextModels.Value):
         return FlextResult[None].ok(None)
 
 
-# =============================================================================
-# FLEXT MODEL TESTS - Base Pydantic Model with Aliases
-# =============================================================================
-
-
 class TestFlextModelRealFunctionality:
     """Test FlextModels real functionality and patterns."""
 
@@ -254,11 +244,6 @@ class TestFlextModelRealFunctionality:
         )
 
 
-# =============================================================================
-# FLEXT ROOT MODEL TESTS - Root Data Structures
-# =============================================================================
-
-
 class TestFlextRootModelRealFunctionality:
     """Test FlextRootModel real functionality."""
 
@@ -287,11 +272,6 @@ class TestFlextRootModelRealFunctionality:
         assert dict_data["application_name"] == "TestApp"
         assert dict_data["version"] == "2.1.5"
         assert dict_data["environment"] == "development"  # default value
-
-
-# =============================================================================
-# FLEXT VALUE TESTS - Immutable Value Objects
-# =============================================================================
 
 
 class TestFlextValueRealFunctionality:
@@ -377,11 +357,6 @@ class TestFlextValueRealFunctionality:
         str_repr = str(email)
         assert "user@example.com" in str_repr
         assert "example.com" in str_repr
-
-
-# =============================================================================
-# FLEXT ENTITY TESTS - Mutable Entities with Identity
-# =============================================================================
 
 
 class TestFlextEntityRealFunctionality:
@@ -577,11 +552,6 @@ class TestFlextEntityRealFunctionality:
         assert "user_606" in repr_str
 
 
-# =============================================================================
-# FLEXT FACTORY TESTS - Factory Pattern Implementation
-# =============================================================================
-
-
 class TestFlextFactoryRealFunctionality:
     """Test FlextFactory real functionality."""
 
@@ -623,11 +593,6 @@ class TestFlextFactoryRealFunctionality:
         for user in users:
             result = user.validate_business_rules()
             assert result.is_success
-
-
-# =============================================================================
-# HELPER FUNCTION TESTS - Utility Functions
-# =============================================================================
 
 
 class TestFlextModelsUrlValidationEdgeCases:
@@ -741,11 +706,6 @@ class TestHelperFunctionsRealFunctionality:
         assert isinstance(result, frozenset)
 
 
-# =============================================================================
-# INTEGRATION TESTS - Multiple Components Working Together
-# =============================================================================
-
-
 class TestModelsIntegrationRealFunctionality:
     """Test integration between different model components."""
 
@@ -841,11 +801,6 @@ class TestModelsIntegrationRealFunctionality:
         assert user_dict["id"] == "serialization_test_123"
         assert user_dict["name"] == "Serialization Test User"
         assert user_dict["email"] == "serialize@example.com"
-
-
-# =============================================================================
-# ENHANCED TESTS WITH TESTS/SUPPORT FUNCTIONALITY
-# =============================================================================
 
 
 class TestModelsWithFlextMatchers:
@@ -964,12 +919,22 @@ class TestModelsPerformance:
                 age=30,
             )
 
-        # Use FlextTestsMatchers for performance assertion
-        result = FlextTestsMatchers.assert_performance_within_limit(
-            benchmark,
-            create_user_entity,
-            max_time_seconds=0.01,  # 10ms limit
+        # Use FlextTestsMatchers.PerformanceMatchers for performance assertion
+        benchmark_result = (
+            FlextTestsMatchers.PerformanceMatchers.assert_performance_within_limit(
+                benchmark,
+                create_user_entity,
+                max_time_seconds=0.01,  # 10ms limit
+            )
         )
+
+        # The result comes from the function being benchmarked - extract from FlextResult if needed
+        if hasattr(benchmark_result, "value"):
+            result = benchmark_result.value
+        elif hasattr(benchmark_result, "data"):
+            result = benchmark_result.data
+        else:
+            result = benchmark_result
 
         assert isinstance(result, UserEntity)
         assert result.name == "Performance Test User"
@@ -1020,11 +985,21 @@ class TestModelsPerformance:
         def serialize_user() -> FlextTypes.Core.Dict:
             return user.model_dump()
 
-        result = FlextTestsMatchers.assert_performance_within_limit(
-            benchmark,
-            serialize_user,
-            max_time_seconds=0.01,  # 10ms limit
+        benchmark_result = (
+            FlextTestsMatchers.PerformanceMatchers.assert_performance_within_limit(
+                benchmark,
+                serialize_user,
+                max_time_seconds=0.01,  # 10ms limit
+            )
         )
+
+        # Extract result from FlextResult if needed
+        if hasattr(benchmark_result, "value"):
+            result = benchmark_result.value
+        elif hasattr(benchmark_result, "data"):
+            result = benchmark_result.data
+        else:
+            result = benchmark_result
 
         assert isinstance(result, dict)
         assert "id" in result

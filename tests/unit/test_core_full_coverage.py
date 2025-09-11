@@ -60,7 +60,7 @@ class TestFlextCoreFullCoverage:
 
         # Test aggregates property exception
         with patch(
-            "flext_core.core.FlextModels.Aggregates.AggregateRoot",
+            "flext_core.core.FlextModels.AggregateRoot",
             side_effect=Exception("Init error"),
         ):
             aggregates = core.aggregates
@@ -245,9 +245,9 @@ class TestFlextCoreFullCoverage:
 
         # Test get_system_info
         result = core.get_system_info()
-        assert result.is_success
-        assert "version" in result.value
-        assert "environment" in result.value
+        assert isinstance(result, dict)
+        assert "version" in result
+        assert "environment" in result
 
     def test_performance_optimization_methods(self) -> None:
         """Test performance optimization methods."""
