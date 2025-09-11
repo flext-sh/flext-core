@@ -71,7 +71,7 @@ def process_singer_record(record: object) -> FlextResult[FlextTypes.Core.Dict]:
 def validate_meltano_config(config: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate Meltano configuration with comprehensive checks."""
 
-    # Type guard validation
+
     if not FlextGuards.is_dict_of(config, object):
         return FlextResult[FlextTypes.Core.Dict].fail("Config must be dictionary")
 
@@ -139,7 +139,7 @@ class FlextApiGuards:
 def validate_api_request(request_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate API request with comprehensive checks."""
 
-    # Type guard validation
+
     if not FlextApiGuards.is_http_request_valid(request_data):
         return FlextResult[FlextTypes.Core.Dict].fail("Invalid HTTP request format")
 
@@ -263,7 +263,7 @@ class FlextLDAPGuards:
 def validate_ldap_search_params(search_params: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate LDAP search parameters with comprehensive checks."""
 
-    # Type safety validation
+
     if not FlextGuards.is_dict_of(search_params, object):
         return FlextResult[FlextTypes.Core.Dict].fail("Search params must be dictionary")
 
@@ -363,7 +363,7 @@ class FlextOracleWmsGuards:
 def validate_warehouse_operation(operation_data: object) -> FlextResult[FlextTypes.Core.Dict]:
     """Validate warehouse operation with business rules."""
 
-    # Type guard validation
+
     if not FlextGuards.is_dict_of(operation_data, object):
         return FlextResult[FlextTypes.Core.Dict].fail("Operation data must be dictionary")
 

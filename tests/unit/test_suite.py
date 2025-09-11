@@ -22,10 +22,6 @@ from flext_core import (
 from flext_core.models import FlextModels
 from flext_core.typings import FlextTypes
 
-# =============================================================================
-# DOMAIN MODELS FOR TESTING
-# =============================================================================
-
 
 class User(FlextModels.Config):
     """User domain model."""
@@ -94,11 +90,6 @@ class UserService:
         return FlextResult[User].ok(self.users[user_id])
 
 
-# =============================================================================
-# COMPREHENSIVE TEST CLASS
-# =============================================================================
-
-
 class TestComprehensiveRealFunctionality:
     """Test real functionality with comprehensive coverage."""
 
@@ -143,7 +134,6 @@ class TestComprehensiveRealFunctionality:
 
     def test_flext_result_failure_scenarios_complete(self) -> None:
         """Test all FlextResult failure scenarios."""
-        # Simple failure
         simple_fail = FlextResult[str].fail("Operation failed")
         assert simple_fail.is_failure
         assert simple_fail.error == "Operation failed"

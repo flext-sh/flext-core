@@ -25,9 +25,6 @@ from flext_core import (
 )
 from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
-# =============================================================================
-# EXCEPTION CONSTANTS - Using FlextConstants centralized approach
-# =============================================================================
 
 # Age validation constants - using FlextConstants pattern
 MIN_USER_AGE: int = 18
@@ -35,10 +32,6 @@ MAX_USER_AGE: int = 120
 
 # Retry attempt constants - using FlextConstants
 MAX_RETRY_ATTEMPTS: int = 2
-
-# =============================================================================
-# DOMAIN MODELS - Business entities for examples
-# =============================================================================
 
 
 class User:
@@ -137,11 +130,6 @@ class DatabaseConnection:
             )
 
         return FlextResult[None].ok(None)
-
-
-# =============================================================================
-# APPLICATION SERVICES - Business logic with exception handling
-# =============================================================================
 
 
 class UserValidationService:
@@ -687,11 +675,6 @@ class ExternalAPIService:
                     "api_url": self.api_url,
                 },
             ) from e
-
-
-# =============================================================================
-# DEMONSTRATION FUNCTIONS USING STRATEGY PATTERN
-# =============================================================================
 
 
 def demonstrate_base_exceptions() -> FlextResult[None]:

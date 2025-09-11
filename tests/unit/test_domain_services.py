@@ -55,7 +55,6 @@ class TestComplexService(FlextDomainService[str]):
 
     def execute(self) -> FlextResult[str]:
         """Execute complex operation."""
-        # Simple validation first
         if not self.name:
             return FlextResult[str].fail("Name is required")
         if self.value < 0:

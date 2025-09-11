@@ -47,8 +47,16 @@ class TestFlextExceptionsComprehensive:
     def test_specific_error_types_coverage(self) -> None:
         """Test specific error types with their specialized parameters."""
         error_test_cases = [
-            (FlextExceptions.ConfigurationError, "Config error", {"config_key": "database.host"}),
-            (FlextExceptions.AuthenticationError, "Auth failed", {"auth_method": "oauth2"}),
+            (
+                FlextExceptions.ConfigurationError,
+                "Config error",
+                {"config_key": "database.host"},
+            ),
+            (
+                FlextExceptions.AuthenticationError,
+                "Auth failed",
+                {"auth_method": "oauth2"},
+            ),
             (FlextExceptions.ConnectionError, "Connection failed", {}),
             (FlextExceptions.AlreadyExistsError, "Resource exists", {}),
             (FlextExceptions.NotFoundError, "Resource not found", {}),
@@ -78,18 +86,30 @@ class TestFlextExceptionsComprehensive:
             {
                 "message": "Validation failed",
                 "code": "VAL_001",
-                "context": {"field": "email", "value": "invalid", "rule": "email_format"}
+                "context": {
+                    "field": "email",
+                    "value": "invalid",
+                    "rule": "email_format",
+                },
             },
             {
                 "message": "Database operation failed",
                 "code": "DB_001",
-                "context": {"table": "users", "operation": "insert", "constraint": "unique"}
+                "context": {
+                    "table": "users",
+                    "operation": "insert",
+                    "constraint": "unique",
+                },
             },
             {
                 "message": "Service unavailable",
                 "code": "SVC_503",
-                "context": {"service": "auth_service", "endpoint": "/login", "retry_after": 30}
-            }
+                "context": {
+                    "service": "auth_service",
+                    "endpoint": "/login",
+                    "retry_after": 30,
+                },
+            },
         ]
 
         for scenario in error_scenarios:
@@ -97,7 +117,7 @@ class TestFlextExceptionsComprehensive:
                 error = FlextExceptions.BaseError(
                     scenario["message"],
                     code=scenario["code"],
-                    context=scenario["context"]
+                    context=scenario["context"],
                 )
 
                 # Test error properties
@@ -120,7 +140,7 @@ class TestFlextExceptionsComprehensive:
             {"message": "System shutdown required", "code": "CRITICAL_001"},
             {"message": "Memory exhaustion detected", "code": "CRITICAL_002"},
             {"message": "Security breach detected", "code": "CRITICAL_003"},
-            {"message": "Data corruption detected", "code": "CRITICAL_004"}
+            {"message": "Data corruption detected", "code": "CRITICAL_004"},
         ]
 
         for scenario in critical_scenarios:
@@ -128,7 +148,7 @@ class TestFlextExceptionsComprehensive:
                 error = FlextExceptions.BaseError(
                     scenario["message"],
                     code=scenario["code"],
-                    context={"severity": "critical", "immediate_action_required": True}
+                    context={"severity": "critical", "immediate_action_required": True},
                 )
 
                 # Test critical error handling
@@ -151,7 +171,7 @@ class TestFlextExceptionsComprehensive:
             config_error = FlextExceptions.ConfigurationError(
                 "Database configuration invalid",
                 config_key="database.host",
-                config_file="config.yaml"
+                config_file="config.yaml",
             )
             assert isinstance(config_error, FlextExceptions.ConfigurationError)
             assert "Database configuration invalid" in str(config_error)
@@ -161,8 +181,7 @@ class TestFlextExceptionsComprehensive:
         # Authentication errors
         try:
             auth_error = FlextExceptions.AuthenticationError(
-                "OAuth2 authentication failed",
-                auth_method="oauth2"
+                "OAuth2 authentication failed", auth_method="oauth2"
             )
             assert isinstance(auth_error, FlextExceptions.AuthenticationError)
             assert "OAuth2 authentication failed" in str(auth_error)
@@ -180,7 +199,9 @@ class TestFlextExceptionsComprehensive:
         """Test error chaining and context propagation patterns."""
         try:
             # Create original error
-            original_error = FlextExceptions.ConnectionError("Database connection failed")
+            original_error = FlextExceptions.ConnectionError(
+                "Database connection failed"
+            )
 
             # Create chained error
             try:
@@ -189,7 +210,7 @@ class TestFlextExceptionsComprehensive:
                 chained_error = FlextExceptions.BaseError(
                     "User operation failed due to database issue",
                     code="CHAIN_001",
-                    context={"operation": "create_user", "user_id": "123"}
+                    context={"operation": "create_user", "user_id": "123"},
                 )
 
                 # Test chaining works
@@ -207,21 +228,19 @@ class TestFlextExceptionsComprehensive:
                 "error_class": FlextExceptions.ConnectionError,
                 "message": "Temporary connection failure",
                 "recoverable": True,
-                "retry_strategy": "exponential_backoff"
+                "retry_strategy": "exponential_backoff",
             },
             {
                 "error_class": FlextExceptions.ConfigurationError,
                 "message": "Missing required configuration",
                 "recoverable": False,
-                "retry_strategy": "none"
-            }
+                "retry_strategy": "none",
+            },
         ]
 
         for scenario in recovery_scenarios:
             try:
-                error = scenario["error_class"](
-                    scenario["message"]
-                )
+                error = scenario["error_class"](scenario["message"])
 
                 # Test error recovery information
                 assert isinstance(error, scenario["error_class"])
@@ -239,7 +258,6 @@ class TestFlextExceptionsComprehensive:
 
     def _simulate_recovery(self, error: Exception) -> bool:
         """Simulate error recovery logic."""
-        # Simple simulation of recovery attempt
         if isinstance(error, FlextExceptions.ConnectionError):
             return True  # Simulate successful recovery
         return False
@@ -250,7 +268,7 @@ class TestFlextExceptionsComprehensive:
             error = FlextExceptions.BaseError(
                 "Serialization test error",
                 code="SER_001",
-                context={"timestamp": "2024-01-15T10:00:00Z", "user_id": "123"}
+                context={"timestamp": "2024-01-15T10:00:00Z", "user_id": "123"},
             )
 
             # Test error can be serialized to string
@@ -265,7 +283,7 @@ class TestFlextExceptionsComprehensive:
             log_data = {
                 "error_message": str(error),
                 "error_type": type(error).__name__,
-                "timestamp": "2024-01-15T10:00:00Z"
+                "timestamp": "2024-01-15T10:00:00Z",
             }
             assert log_data["error_message"] == "Serialization test error"
             assert log_data["error_type"] == "BaseError"
@@ -285,7 +303,7 @@ class TestFlextExceptionsComprehensive:
             ("CONN_001", "Connection timeout"),
             ("CONN_002", "Connection refused"),
             ("VAL_001", "Validation failed"),
-            ("VAL_002", "Invalid input format")
+            ("VAL_002", "Invalid input format"),
         ]
 
         for code, message in error_code_patterns:

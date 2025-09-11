@@ -67,7 +67,7 @@ class ProfessionalValidationService(FlextDomainService[object]):
             for description, value, expected_type in validation_data:
                 if callable(validator_func):
                     try:
-                        result = validator_func(value)  # type: ignore[misc]
+                        result = validator_func(value)
                         if hasattr(result, "is_success") and getattr(
                             result, "is_success", False
                         ):

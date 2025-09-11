@@ -17,7 +17,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager, contextmanager
-from typing import Protocol, TypeVar, cast
+from typing import ParamSpec, Protocol, TypeVar, cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
@@ -35,15 +35,16 @@ class TestFunction(Protocol):
 
     _test_pattern: str
 
-    def __call__(self, *args: object, **kwargs: object) -> None: ...
+    def __call__(self, *args: object, **kwargs: object) -> None:
+        """Call the test function."""
 
 
 def mark_test_pattern(
     pattern: str,
-) -> Callable[[Callable[..., None]], TestFunction]:
+) -> Callable[[Callable[P, None]], TestFunction]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[..., None]) -> TestFunction:
+    def decorator(func: Callable[P, None]) -> TestFunction:
         # Cast to TestFunction to add the attribute
         test_func = cast("TestFunction", func)
         test_func._test_pattern = pattern
@@ -309,17 +310,18 @@ class TestFixtureBuilder:
 
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 def arrange_act_assert(
     _arrange_func: Callable[[], object],
     _act_func: Callable[[object], object],
     _assert_func: Callable[[object, object], None],
-) -> Callable[[Callable[..., None]], Callable[[], object]]:
+) -> Callable[[Callable[P, None]], Callable[P, object]]:
     """Decorator for AAA pattern testing that returns the act result."""
 
-    def decorator(_test_func: Callable[..., None]) -> Callable[[], object]:
-        def wrapper() -> object:
+    def decorator(_test_func: Callable[P, None]) -> Callable[P, object]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> object:
             data = _arrange_func()
             result = _act_func(data)
             _assert_func(result, data)
@@ -425,7 +427,6 @@ class TestPerformanceAnalysis:
             "linear_operation",
         )
 
-        # Type cast for proper type checking
         assert result["operation"] == "linear_operation"
         results = result["results"]
         assert isinstance(results, list)
@@ -447,7 +448,6 @@ class TestPerformanceAnalysis:
             operation_name="simple_ops",
         )
 
-        # Type cast for proper type checking
         assert result["iterations"] == 1000
         successes = result["successes"]
         assert isinstance(successes, (int, float))
@@ -474,7 +474,6 @@ class TestPerformanceAnalysis:
             operation_name="memory_ops",
         )
 
-        # Type cast for proper type checking
         actual_duration = result["actual_duration_seconds"]
         assert isinstance(actual_duration, (int, float))
         assert actual_duration >= 1.8  # Allow some variance
@@ -529,7 +528,7 @@ class TestAdvancedPatterns:
         )
 
         assert scenario.name == "user_registration"
-        # Type cast for proper type checking
+
         given_dict = scenario.given
         assert isinstance(given_dict, dict)
         assert "email" in given_dict
@@ -608,7 +607,7 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object, **_kwargs: object) -> object:
+        def arrange_data(*_args: object) -> object:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: object) -> object:

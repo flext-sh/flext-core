@@ -572,7 +572,7 @@ class TestAdvancedPatterns:
     def test_arrange_act_assert_decorator(self) -> None:
         """Demonstrate Arrange-Act-Assert pattern decorator."""
 
-        def arrange_data(*_args: object, **_kwargs: object) -> FlextTypes.Core.Dict:
+        def arrange_data(*_args: object) -> FlextTypes.Core.Dict:
             return {"numbers": [1, 2, 3, 4, 5]}
 
         def act_on_data(data: FlextTypes.Core.Dict) -> int:

@@ -24,10 +24,6 @@ from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.typings import FlextTypes
 
-# =============================================================================
-# ADVANCED STRUCTURED LOGGING - Enterprise Grade Implementation
-# =============================================================================
-
 
 class FlextLogger:
     """Structured logger with correlation IDs, performance tracking, and data sanitization."""

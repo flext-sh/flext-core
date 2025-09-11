@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Never
 from unittest.mock import MagicMock, Mock, patch
 
@@ -291,7 +291,9 @@ class TestFlextCoreStaticMethods:
         )  # SOURCE OF TRUTH real value
         assert opt_config["handler_cache_size"] == 100  # SOURCE OF TRUTH value
         assert opt_config["command_batch_size"] == 10  # SOURCE OF TRUTH value
-        assert opt_config["memory_pool_size_mb"] == 50  # SOURCE OF TRUTH real key and value
+        assert (
+            opt_config["memory_pool_size_mb"] == 50
+        )  # SOURCE OF TRUTH real key and value
 
     def test_optimize_core_performance_custom(self) -> None:
         """Test optimize_core_performance using FlextUtilities DIRECTLY."""
@@ -556,7 +558,11 @@ class TestFlextCoreMessagingMethods:
         core = FlextCore()
         # Use FlextCore payload creation alias with error simulation
         result = core.create_payload(
-            "ErrorPayload", message_type="TestMessage", error="Payload error"
+            {
+                "payload": "ErrorPayload",
+                "message_type": "TestMessage",
+                "error": "Payload error",
+            }
         )
 
         # This should succeed with error data
@@ -626,7 +632,9 @@ class TestFlextCoreMessagingMethods:
         )
 
         FlextTestsMatchers.assert_result_failure(result)
-        assert "Missing required keys" in result.error  # SOURCE OF TRUTH real error message
+        assert (
+            "Missing required keys" in result.error
+        )  # SOURCE OF TRUTH real error message
 
     def test_get_serialization_metrics(self) -> None:
         """Test get_serialization_metrics using FlextUtilities DIRECTLY."""
@@ -812,7 +820,9 @@ class TestFlextCoreMixinProperties:
         """Test timestamp_mixin using direct access to core.mixins."""
         core = FlextCore()
         # Use DIRECT ACCESS through core.mixins - ZERO aliases
-        assert core.mixins.create_timestamp_fields is FlextMixins.create_timestamp_fields
+        assert (
+            core.mixins.create_timestamp_fields is FlextMixins.create_timestamp_fields
+        )
 
     def test_identifiable_mixin(self) -> None:
         """Test identifiable_mixin using direct access to core.mixins."""
@@ -830,7 +840,9 @@ class TestFlextCoreMixinProperties:
         """Test validatable_mixin using direct access to core.mixins."""
         core = FlextCore()
         # Use DIRECT ACCESS through core.mixins - ZERO aliases
-        assert core.mixins.validate_required_fields is FlextMixins.validate_required_fields
+        assert (
+            core.mixins.validate_required_fields is FlextMixins.validate_required_fields
+        )
 
     def test_serializable_mixin(self) -> None:
         """Test serializable_mixin using direct access to core.mixins."""
@@ -885,7 +897,9 @@ class TestFlextCoreRootModels:
                 entity = core.models.EntityId("test")
                 result = FlextResult[FlextModels.EntityId].ok(entity)
             except Exception as e:
-                result = FlextResult[FlextModels.EntityId].fail(f"Entity ID creation failed: {e}")
+                result = FlextResult[FlextModels.EntityId].fail(
+                    f"Entity ID creation failed: {e}"
+                )
 
             FlextTestsMatchers.assert_result_failure(result)
             assert "Entity ID creation failed" in result.error
@@ -925,8 +939,6 @@ class TestFlextCoreRootModels:
 
     def test_create_timestamp(self) -> None:
         """Test create_timestamp using direct access to datetime."""
-        from datetime import UTC
-
         # Use DIRECT ACCESS - no need for wrapper, just create timestamp directly
         timestamp = datetime.now(UTC)
 
@@ -938,7 +950,10 @@ class TestFlextCoreRootModels:
         core = FlextCore.get_instance()
 
         # Use DIRECT ACCESS through core.models - ZERO aliases (all values as strings for Metadata)
-        metadata_dict = {"key": "value", "count": "42"}  # SOURCE OF TRUTH: Metadata expects strings
+        metadata_dict = {
+            "key": "value",
+            "count": "42",
+        }  # SOURCE OF TRUTH: Metadata expects strings
         metadata = core.models.Metadata(metadata_dict)
         result = FlextResult[FlextModels.Metadata].ok(metadata)
 
@@ -1106,7 +1121,11 @@ class TestFlextCoreTypeValidation:
             result = FlextResult[dict].fail("Expected dictionary, got str")
         else:
             is_valid = core.guards.is_dict_of("not a dict", str)
-            result = FlextResult[dict].ok("not a dict") if is_valid else FlextResult[dict].fail("Invalid dict structure")
+            result = (
+                FlextResult[dict].ok("not a dict")
+                if is_valid
+                else FlextResult[dict].fail("Invalid dict structure")
+            )
 
         FlextTestsMatchers.assert_result_failure(result)
         assert "Expected dictionary" in result.error
@@ -1334,7 +1353,9 @@ class TestFlextCoreValidatorGuards:
             mock_validate.return_value = FlextResult.ok(None)
 
             # Use DIRECT ACCESS through core.container - ZERO aliases
-            validation_result = core.container.flext_validate_service_name("test-service")
+            validation_result = core.container.flext_validate_service_name(
+                "test-service"
+            )
             if validation_result.is_success:
                 result = FlextResult[str].ok("test-service")
             else:
@@ -1353,7 +1374,9 @@ class TestFlextCoreValidatorGuards:
             mock_validate.return_value = FlextResult.fail("Invalid format")
 
             # Use DIRECT ACCESS through core.container - ZERO aliases
-            validation_result = core.container.flext_validate_service_name("bad service")
+            validation_result = core.container.flext_validate_service_name(
+                "bad service"
+            )
             if validation_result.is_success:
                 result = FlextResult[str].ok("bad service")
             else:
@@ -1455,9 +1478,7 @@ class TestFlextCoreBuilders:
 
         # Create validator class dynamically
         validator_class = type(
-            "PositiveValidator",
-            (),
-            {"validate": staticmethod(validate_positive)}
+            "PositiveValidator", (), {"validate": staticmethod(validate_positive)}
         )
 
         assert validator_class.__name__ == "PositiveValidator"

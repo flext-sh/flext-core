@@ -639,7 +639,7 @@ def configure() -> FlextResult[dict]:
 **Problem**: Type checker doesn't recognize dict return
 ```python
 config: MyConfig = MyConfig()
-result: dict = config.model_dump()  # Type error
+result: dict = config.model_dump()
 ```
 
 **Solution**: Add type annotation

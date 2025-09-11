@@ -68,8 +68,11 @@ class TestFieldsRealAPI85:
 
         # Test validation strategy methods
         validation_methods = [
-            "validate_email", "validate_url", "validate_phone",
-            "validate_numeric", "validate_pattern"
+            "validate_email",
+            "validate_url",
+            "validate_phone",
+            "validate_numeric",
+            "validate_pattern",
         ]
 
         for method_name in validation_methods:
@@ -100,8 +103,11 @@ class TestFieldsRealAPI85:
 
         # Test metadata methods for field management
         metadata_methods = [
-            "get_field_metadata", "set_field_metadata", "extract_metadata",
-            "validate_metadata", "serialize_metadata"
+            "get_field_metadata",
+            "set_field_metadata",
+            "extract_metadata",
+            "validate_metadata",
+            "serialize_metadata",
         ]
 
         for method_name in metadata_methods:
@@ -132,8 +138,11 @@ class TestFieldsRealAPI85:
 
         # Test schema generation and validation
         schema_methods = [
-            "generate_schema", "validate_schema", "merge_schemas",
-            "compare_schemas", "upgrade_schema"
+            "generate_schema",
+            "validate_schema",
+            "merge_schemas",
+            "compare_schemas",
+            "upgrade_schema",
         ]
 
         for method_name in schema_methods:
@@ -164,8 +173,11 @@ class TestFieldsRealAPI85:
 
         # Test registry operations
         registry_methods = [
-            "register_field", "unregister_field", "list_fields",
-            "get_field", "field_exists"
+            "register_field",
+            "unregister_field",
+            "list_fields",
+            "get_field",
+            "field_exists",
         ]
 
         for method_name in registry_methods:
@@ -196,8 +208,16 @@ class TestFieldsRealAPI85:
 
         # Test validation with various field types
         field_validation_scenarios = [
-            {"field_type": "string", "value": "test_string", "constraints": {"min_length": 1}},
-            {"field_type": "integer", "value": 42, "constraints": {"min": 0, "max": 100}},
+            {
+                "field_type": "string",
+                "value": "test_string",
+                "constraints": {"min_length": 1},
+            },
+            {
+                "field_type": "integer",
+                "value": 42,
+                "constraints": {"min": 0, "max": 100},
+            },
             {"field_type": "boolean", "value": True, "constraints": {}},
             {"field_type": "email", "value": "test@example.com", "constraints": {}},
             {"field_type": "url", "value": "https://example.com", "constraints": {}},
@@ -210,14 +230,13 @@ class TestFieldsRealAPI85:
                     result = validation.validate_field(
                         scenario["field_type"],
                         scenario["value"],
-                        scenario["constraints"]
+                        scenario["constraints"],
                     )
                     assert result is not None or result is None
 
                 if hasattr(validation, "validate_field_value"):
                     result = validation.validate_field_value(
-                        scenario["value"],
-                        field_type=scenario["field_type"]
+                        scenario["value"], field_type=scenario["field_type"]
                     )
                     assert result is not None or result is None
 
@@ -277,7 +296,7 @@ class TestFieldsRealAPI85:
                     if hasattr(FlextFields, "create_field"):
                         result = FlextFields.create_field(
                             field_type=scenario["field_type"],
-                            constraints=scenario.get("constraints")
+                            constraints=scenario.get("constraints"),
                         )
 
                         if scenario.get("expected_error"):
@@ -302,16 +321,14 @@ class TestFieldsRealAPI85:
                 # Test field serialization if methods exist
                 if hasattr(FlextFields, "serialize_field"):
                     result = FlextFields.serialize_field(
-                        field_definition="test_field",
-                        format=format_type
+                        field_definition="test_field", format=format_type
                     )
                     assert result is not None or result is None
 
                 # Test field deserialization
                 if hasattr(FlextFields, "deserialize_field"):
                     result = FlextFields.deserialize_field(
-                        serialized_data="test_data",
-                        format=format_type
+                        serialized_data="test_data", format=format_type
                     )
                     assert result is not None or result is None
 
@@ -334,16 +351,14 @@ class TestFieldsRealAPI85:
                 # Test field integration methods if they exist
                 if hasattr(FlextFields, "integrate_field"):
                     result = FlextFields.integrate_field(
-                        system=scenario["system"],
-                        field_type=scenario["field_type"]
+                        system=scenario["system"], field_type=scenario["field_type"]
                     )
                     assert result is not None or result is None
 
                 # Test field mapping for integration
                 if hasattr(FlextFields, "map_field_for_system"):
                     result = FlextFields.map_field_for_system(
-                        field_definition="test_field",
-                        target_system=scenario["system"]
+                        field_definition="test_field", target_system=scenario["system"]
                     )
                     assert result is not None or result is None
 
@@ -367,8 +382,13 @@ class TestFieldsRealAPI85:
         # Test any class-level operations
         for attr_name in dir(FlextFields):
             if not attr_name.startswith("_") and attr_name not in {
-                "Core", "Factory", "Metadata", "Registry", "Schema",
-                "Validation", "ValidationStrategies"
+                "Core",
+                "Factory",
+                "Metadata",
+                "Registry",
+                "Schema",
+                "Validation",
+                "ValidationStrategies",
             }:
                 try:
                     attr = getattr(FlextFields, attr_name)

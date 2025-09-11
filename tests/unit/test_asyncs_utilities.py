@@ -184,9 +184,9 @@ class TestAsyncTestUtils:
                 raise ValueError(msg)
             return "success"
 
-        # This should succeed after retries
+        # This should succeed after retries - call function instead of coroutine
         result = await FlextTestsMatchers.run_with_timeout(
-            flaky_task(),
+            flaky_task,
             timeout_seconds=1.0,
         )
         assert result == "success"
@@ -241,7 +241,7 @@ class TestAsyncMockUtils:
     async def test_create_delayed_response(self) -> None:
         """Test creating delayed response mock."""
         start_time = time.time()
-        mock = FlextTestsMatchers.create_delayed_async_mock(
+        mock = FlextTestsAsyncs.create_delayed_async_mock(
             return_value="result",
             delay=0.1,
         )

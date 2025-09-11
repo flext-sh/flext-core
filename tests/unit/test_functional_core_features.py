@@ -108,12 +108,7 @@ class TestFlextCoreIntegration:
             "changes": {"email": "new@example.com"},
         }
 
-        result = core.create_payload(
-            data=data,
-            message_type="UserProfileUpdateRequested",
-            source_service="user_service",
-            target_service="notification_service",
-        )
+        result = core.create_payload(data)
 
         assert result.success
         payload = result.unwrap()
@@ -276,9 +271,7 @@ class TestFlextCoreIntegration:
         # Simulate some work with the core
         for i in range(5):
             result = core.create_payload(
-                data={"iteration": i, "timestamp": datetime.now(UTC).isoformat()},
-                message_type="PerformanceTest",
-                source_service="test_service",
+                {"iteration": i, "timestamp": datetime.now(UTC).isoformat()}
             )
             assert result.success
 

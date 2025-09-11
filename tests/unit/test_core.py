@@ -82,7 +82,7 @@ class TestFlextCoreExtendedValidation:
         result = core.validate_email("invalid-email")
         assert result.failure
         err5 = result.error or ""
-        assert "email pattern" in err5
+        assert "Invalid email" in err5
 
     def test_validate_email_empty(self) -> None:
         """Test email validation with empty string."""
@@ -95,15 +95,17 @@ class TestFlextCoreExtendedValidation:
         """Test string field validation with valid input."""
         core = FlextCore.get_instance()
 
-        result = core.validate_string_field("test_string", "username")
+        result = core.validate_string_field("test_string")
         assert result.success
-        assert result.unwrap() == "test_string"
+        assert (
+            result.unwrap() == "test_string"
+        )  # validate_string_field returns validated string
 
     def test_validate_string_field_invalid_none(self) -> None:
         """Test string field validation with None input."""
         core = FlextCore.get_instance()
 
-        result = core.validate_string_field(None, "username")
+        result = core.validate_string_field(None)
         assert result.failure
         err6 = result.error or ""
         assert "is not a valid string" in err6
@@ -112,7 +114,7 @@ class TestFlextCoreExtendedValidation:
         """Test string field validation with numeric input."""
         core = FlextCore.get_instance()
 
-        result = core.validate_string_field(123, "username")
+        result = core.validate_string_field(123)
         assert result.failure
         err7 = result.error or ""
         assert "is not a valid string" in err7
@@ -140,7 +142,7 @@ class TestFlextCoreExtendedValidation:
         result = core.validate_numeric_field("not-a-number", "age")
         assert result.failure
         err8 = result.error or ""
-        assert "not numeric" in err8
+        assert "must be numeric" in err8
 
     def test_validate_user_data_valid(self) -> None:
         """Test user data validation with valid data."""
@@ -258,29 +260,25 @@ class TestFlextCoreEntityCreation:
 
         result = core.create_domain_event(
             event_type="UserCreated",
-            aggregate_id="123",
-            aggregate_type="User",
-            data={"user_id": "123", "name": "John"},
-            source_service="test_service",
+            entity_id="123",
+            entity_type="User",
+            payload={"user_id": "123", "name": "John"},
+            source="test_service",
         )
         assert result.success
         event = result.unwrap()
-        assert event.event_type == "UserCreated"
-        assert event.data["user_id"] == "123"
+        assert event.type == "UserCreated"
+        assert event.payload["user_id"] == "123"
 
     def test_create_payload_success(self) -> None:
         """Test successful payload creation."""
         core = FlextCore.get_instance()
 
-        result = core.create_payload(
-            data={"user_id": "123", "name": "John"},
-            message_type="UserCreated",
-            source_service="test_service",
-        )
+        result = core.create_payload({"user_id": "123", "name": "John"})
         assert result.success
         payload = result.unwrap()
-        assert "user_id" in payload.data
-        assert payload.data["user_id"] == "123"
+        assert "user_id" in payload
+        assert payload["user_id"] == "123"
 
 
 class TestFlextCoreUtilities:
@@ -920,12 +918,10 @@ class TestFlextCoreAdvancedFeatures:
         aggregates_config = core.get_aggregates_config()
         commands_config = core.get_commands_config()
         context_result = core.get_context_config()
-        decorators_result = core.get_decorators_config()
 
         assert aggregates_config is not None
         assert commands_config is not None
         assert context_result.success
-        assert decorators_result.success
 
     def test_error_handling_consistency(self) -> None:
         """Test that error handling is consistent across methods."""

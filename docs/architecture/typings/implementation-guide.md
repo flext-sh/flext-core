@@ -48,7 +48,7 @@ headers: FlextTypes.Network.Headers = {"Content-Type": "application/json"}
 def process_data(input_data: T) -> FlextResult[U]:
     """Process data with complete type safety."""
     try:
-        # Type-safe processing logic
+
         processed = transform_data(input_data)
         return FlextResult.ok(processed)
     except Exception as e:
@@ -84,11 +84,11 @@ class UserService:
     ) -> FlextUserServiceTypes.UserOperations.UserResponse:
         """Create user with comprehensive type safety."""
 
-        # Type-safe validation
+
         if "username" not in request or "email" not in request:
             return FlextResult.fail("Missing required fields")
 
-        # Type-safe user creation
+
         user_id: FlextUserServiceTypes.UserDomain.UserId = self.generate_id()
         user_data = {
             "id": user_id,
@@ -191,15 +191,15 @@ class ApiEndpointHandler:
         """Handle API request with complete type safety."""
 
         try:
-            # Type-safe method validation
+
             if method not in ["GET", "POST", "PUT", "DELETE", "PATCH"]:
                 return FlextResult.fail(f"Unsupported HTTP method: {method}")
 
-            # Type-safe data validation
+
             if method in ["POST", "PUT", "PATCH"] and not data:
                 return FlextResult.fail(f"Request body required for {method}")
 
-            # Type-safe request processing
+
             request_id: FlextApiServiceTypes.ApiDomain.RequestId = self.generate_request_id()
 
             # Process request with type safety
@@ -267,11 +267,11 @@ class DataProcessingPipeline:
     ) -> FlextResult[None]:
         """Configure data source with type safety."""
 
-        # Type-safe source validation
+
         if source_type not in ["database", "file", "api", "stream"]:
             return FlextResult.fail(f"Invalid source type: {source_type}")
 
-        # Type-safe configuration validation
+
         required_keys = {
             "database": ["connection_string", "table"],
             "file": ["file_path", "format"],
@@ -283,7 +283,7 @@ class DataProcessingPipeline:
             if key not in config:
                 return FlextResult.fail(f"Missing required config key for {source_type}: {key}")
 
-        # Type-safe source storage
+
         self.sources[source_name] = config
 
         return FlextResult.ok(None)
@@ -298,20 +298,20 @@ class DataProcessingPipeline:
         """Process data through pipeline with complete type safety."""
 
         try:
-            # Type-safe source lookup
+
             if source_name not in self.sources:
                 return FlextResult.fail(f"Source not configured: {source_name}")
 
             source_config = self.sources[source_name]
 
-            # Type-safe data extraction
+
             extraction_result = self.extract_data(source_config)
             if extraction_result.is_failure:
                 return extraction_result
 
             raw_data = extraction_result.value
 
-            # Type-safe data transformation
+
             transformed_data = raw_data
             for transformation in transformations:
                 transform_result = self.apply_transformation(transformed_data, transformation)
@@ -319,18 +319,18 @@ class DataProcessingPipeline:
                     return transform_result
                 transformed_data = transform_result.value
 
-            # Type-safe data validation
+
             for rule in validation_rules:
                 validation_result = self.validate_data(transformed_data, rule)
                 if validation_result.is_failure:
                     return validation_result
 
-            # Type-safe data output
+
             output_result = self.output_data(transformed_data, output_config)
             if output_result.is_failure:
                 return output_result
 
-            # Type-safe metadata creation
+
             output_metadata: FlextDataProcessingTypes.DataOutput.OutputMetadata = {
                 "source_name": source_name,
                 "records_processed": len(transformed_data) if isinstance(transformed_data, list) else 1,
@@ -364,14 +364,14 @@ def transform_entities(
     transformed: list[U] = []
 
     for entity in entities:
-        # Type-safe transformation
+
         transform_result = transformer(entity)
         if transform_result.is_failure:
             return FlextResult.fail(f"Transformation failed: {transform_result.error}")
 
         transformed_value = transform_result.value
 
-        # Type-safe validation
+
         if validator and not validator(transformed_value):
             return FlextResult.fail("Validation failed for transformed value")
 
@@ -405,7 +405,7 @@ def create_type_safe_decorator(
 
     def decorator(func: Callable[P, R]) -> Callable[P, FlextResult[R]]:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> FlextResult[R]:
-            # Type-safe validation
+
             if args and not validator(args[0]):
                 return FlextResult.fail("Input validation failed")
 
@@ -449,7 +449,7 @@ users = [UserEntity("1", "john"), UserEntity("2", "jane")]
 transform_result = transform_entities(users, transform_user_to_dto, validate_user_dto)
 
 if transform_result.success:
-    user_dtos: list[UserDTO] = transform_result.value  # Type inferred correctly
+    user_dtos: list[UserDTO] = transform_result.value
 ```
 
 ### Step 4: Async Type Safety Implementation
@@ -475,7 +475,7 @@ class AsyncDataService:
 
         try:
             async for data_item in data_stream:
-                # Type-safe async processing
+
                 process_result = await self.process_data_item_async(data_item)
                 if process_result.success:
                     processed_ids.append(process_result.value)
@@ -491,11 +491,11 @@ class AsyncDataService:
     ) -> FlextResult[str]:
         """Process single data item asynchronously."""
 
-        # Type-safe async validation
+
         if "id" not in data_item:
             return FlextResult.fail("Missing id in data item")
 
-        # Type-safe async processing
+
         entity_id: str = str(data_item["id"])
 
         # Simulate async processing
@@ -537,7 +537,7 @@ async def process_with_async_context(
         if connection_result.is_failure:
             return FlextResult.fail(connection_result.error)
 
-        # Type-safe async processing
+
         service = AsyncDataService({"database": connection_result.value})
 
         # Create async stream from data items
@@ -598,14 +598,14 @@ class UserManagementService:
     ) -> FlextResult[str]:
         """Create user and send notification with type safety."""
 
-        # Type-safe user creation
+
         user_creation_result = self.create_user(user_data)
         if user_creation_result.is_failure:
             return user_creation_result
 
         user_id = user_creation_result.value
 
-        # Type-safe cross-service message
+
         notification_message: FlextIntegrationTypes.MessageBus.MessagePayload = {
             "message_type": "user_created_notification",
             "user_id": user_id,
@@ -615,7 +615,7 @@ class UserManagementService:
             "timestamp": datetime.utcnow().isoformat()
         }
 
-        # Type-safe message publishing
+
         publish_result = self.publish_message(notification_message, correlation_id)
         if publish_result.is_failure:
             # Log error but don't fail user creation
@@ -631,7 +631,7 @@ class UserManagementService:
         """Publish message to message bus with type safety."""
 
         try:
-            # Type-safe message creation
+
             message_id: FlextIntegrationTypes.MessageBus.MessageId = self.generate_message_id()
 
             message_envelope = {
@@ -668,23 +668,23 @@ class NotificationService:
         """Handle user created notification with complete type safety."""
 
         try:
-            # Type-safe message validation
+
             if "user_id" not in message:
                 return FlextResult.fail("Missing user_id in notification message")
 
             if "user_data" not in message:
                 return FlextResult.fail("Missing user_data in notification message")
 
-            # Type-safe data extraction
+
             user_id: str = str(message["user_id"])
             user_data: FlextTypes.Config.ConfigDict = message["user_data"]
 
-            # Type-safe email extraction and validation
+
             email = user_data.get("email")
             if not email or not isinstance(email, str):
                 return FlextResult.fail("Invalid or missing email in user data")
 
-            # Type-safe notification sending
+
             notification_result = self.send_welcome_notification(
                 user_id=user_id,
                 email=email,
@@ -704,12 +704,12 @@ class NotificationService:
     ) -> FlextResult[None]:
         """Send welcome notification with type safety."""
 
-        # Type-safe email validation
+
         if "@" not in email or len(email.strip()) == 0:
             return FlextResult.fail("Invalid email address")
 
         try:
-            # Type-safe notification data
+
             notification_data = {
                 "to": email,
                 "subject": "Welcome to FLEXT!",
@@ -753,12 +753,12 @@ class FlextConfigurableService:
     ) -> FlextResult[FlextTypes.Config.ConfigDict]:
         """Configure service based on environment with type safety."""
 
-        # Type-safe environment validation
+
         valid_environments = ["development", "production", "staging", "test", "local"]
         if env not in valid_environments:
             return FlextResult.fail(f"Invalid environment: {env}")
 
-        # Type-safe environment-specific configuration
+
         if env == "production":
             config: FlextTypes.Config.ConfigDict = {
                 "log_level": "ERROR",
@@ -796,12 +796,12 @@ class FlextConfigurableService:
                 "metrics_enabled": False
             }
 
-        # Type-safe configuration validation
+
         validation_result = self.validate_configuration(config)
         if validation_result.is_failure:
             return validation_result
 
-        # Type-safe configuration application
+
         self.config = config
         self.environment = env
 
@@ -819,13 +819,13 @@ class FlextConfigurableService:
             if key not in config:
                 return FlextResult.fail(f"Missing required configuration key: {key}")
 
-        # Type-safe log level validation
+
         log_level = config["log_level"]
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if log_level not in valid_log_levels:
             return FlextResult.fail(f"Invalid log level: {log_level}")
 
-        # Type-safe numeric validation
+
         timeout = config["timeout"]
         if not isinstance(timeout, (int, float)) or timeout <= 0:
             return FlextResult.fail("Timeout must be a positive number")
@@ -870,7 +870,7 @@ class FlextTypeSafeErrorHandler:
 
         error_type = type(error).__name__
 
-        # Type-safe error handler lookup
+
         handler = self.error_handlers.get(error_type)
         if handler:
             try:
@@ -898,7 +898,7 @@ class FlextTypeSafeErrorHandler:
                 result = func(*args, **kwargs)
                 return FlextResult.ok(result)
             except Exception as e:
-                # Type-safe error handling
+
                 error_result = self.handle_error(e, {"function": func.__name__})
                 return FlextResult.fail(error_result.error if error_result.is_failure else str(e))
 
@@ -929,7 +929,7 @@ def risky_function(data: FlextTypes.Config.ConfigDict) -> str:
 # Usage with complete error handling
 result = risky_function({"required_key": "test_value"})
 if result.success:
-    processed_value: str = result.value  # Type inferred correctly
+    processed_value: str = result.value
 else:
     print(f"Error: {result.error}")
 ```

@@ -181,7 +181,7 @@ make validate
 
 # Individual checks
 make lint        # Code style (ruff)
-make type-check  # Type safety (mypy strict)
+make type-check
 make test        # Tests with 75% coverage
 make security    # Security scanning
 ```

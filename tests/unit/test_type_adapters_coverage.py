@@ -51,7 +51,11 @@ class TestFlextTypeAdaptersCoverage:
 
     def test_foundation_create_string_adapter(self) -> None:
         """Test Foundation.create_string_adapter with coercion."""
-        adapter = FlextTypeAdapters.Foundation.create_string_adapter()
+        adapter_result = FlextTypeAdapters.Foundation.create_string_adapter()
+        assert adapter_result.is_success, (
+            f"Expected success, got: {adapter_result.error}"
+        )
+        adapter = adapter_result.unwrap()
         assert adapter is not None
 
         # Test validation through adapter
@@ -59,7 +63,11 @@ class TestFlextTypeAdaptersCoverage:
 
     def test_foundation_create_integer_adapter(self) -> None:
         """Test Foundation.create_integer_adapter creation."""
-        adapter = FlextTypeAdapters.Foundation.create_integer_adapter()
+        adapter_result = FlextTypeAdapters.Foundation.create_integer_adapter()
+        assert adapter_result.is_success, (
+            f"Expected success, got: {adapter_result.error}"
+        )
+        adapter = adapter_result.unwrap()
         assert adapter is not None
 
         # Test adapter validation
@@ -72,7 +80,11 @@ class TestFlextTypeAdaptersCoverage:
 
     def test_foundation_create_float_adapter(self) -> None:
         """Test Foundation.create_float_adapter creation."""
-        adapter = FlextTypeAdapters.Foundation.create_float_adapter()
+        adapter_result = FlextTypeAdapters.Foundation.create_float_adapter()
+        assert adapter_result.is_success, (
+            f"Expected success, got: {adapter_result.error}"
+        )
+        adapter = adapter_result.unwrap()
         assert adapter is not None
 
         # Test adapter validation
@@ -85,7 +97,11 @@ class TestFlextTypeAdaptersCoverage:
 
     def test_foundation_create_boolean_adapter(self) -> None:
         """Test Foundation.create_boolean_adapter creation."""
-        adapter = FlextTypeAdapters.Foundation.create_boolean_adapter()
+        adapter_result = FlextTypeAdapters.Foundation.create_boolean_adapter()
+        assert adapter_result.is_success, (
+            f"Expected success, got: {adapter_result.error}"
+        )
+        adapter = adapter_result.unwrap()
         assert adapter is not None
 
         # Test adapter validation
@@ -98,7 +114,11 @@ class TestFlextTypeAdaptersCoverage:
 
     def test_foundation_validate_with_adapter_success(self) -> None:
         """Test Foundation.validate_with_adapter with successful validation."""
-        adapter = FlextTypeAdapters.Foundation.create_integer_adapter()
+        adapter_result = FlextTypeAdapters.Foundation.create_integer_adapter()
+        assert adapter_result.is_success, (
+            f"Expected success, got: {adapter_result.error}"
+        )
+        adapter = adapter_result.unwrap()
 
         # Test adapter works directly first
         direct_result = adapter.validate_python("42")

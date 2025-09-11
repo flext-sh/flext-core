@@ -289,7 +289,7 @@ class TestFlextAdaptersRemainingCoverage:
             mock_adapter.json_schema.side_effect = Exception("Schema generation error")
             mock_type_adapter.return_value = mock_adapter
 
-            result = application.generate_schema(dict)
+            result = application.generate_schema(dict, mock_adapter)
             assert result.is_failure
 
     def test_config_type_coercion_edge_cases(self) -> None:
@@ -312,7 +312,6 @@ class TestFlextAdaptersRemainingCoverage:
                 if result is not None:
                     assert result == expected or isinstance(result, target_type)
             except Exception:
-                # Type coercion errors are valid
                 pass
 
     def test_validation_with_custom_validators(self) -> None:

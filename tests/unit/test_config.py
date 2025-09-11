@@ -239,25 +239,37 @@ class TestFlextConfigComprehensive:
 
     def test_load_and_validate_from_file_invalid_json(self) -> None:
         """Test loading from file with invalid env file content."""
-        with tempfile.NamedTemporaryFile(
-            encoding="utf-8",
-            mode="w",
-            suffix=".env",
-            delete=False,
-        ) as f:
-            # Write content that causes Pydantic validation failure
-            f.write("FLEXT_ENVIRONMENT=invalid_environment_value\n")
-            temp_path = f.name
+        import os
+
+        # Save original environment and clear FLEXT_ENVIRONMENT for test isolation
+        original_env = os.environ.get("FLEXT_ENVIRONMENT")
+        if "FLEXT_ENVIRONMENT" in os.environ:
+            del os.environ["FLEXT_ENVIRONMENT"]
 
         try:
-            # Use declarative create method
-            result = FlextConfig.create(env_file=temp_path)
-            assert result.is_failure
-            assert result.error is not None
-            # The error should mention invalid environment
-            assert "Invalid environment" in (result.error or "")
+            with tempfile.NamedTemporaryFile(
+                encoding="utf-8",
+                mode="w",
+                suffix=".env",
+                delete=False,
+            ) as f:
+                # Write content that causes Pydantic validation failure
+                f.write("FLEXT_ENVIRONMENT=invalid_environment_value\n")
+                temp_path = f.name
+
+            try:
+                # Use declarative create method
+                result = FlextConfig.create(env_file=temp_path)
+                assert result.is_failure
+                assert result.error is not None
+                # The error should mention invalid environment
+                assert "Invalid environment" in (result.error or "")
+            finally:
+                Path(temp_path).unlink()
         finally:
-            Path(temp_path).unlink()
+            # Restore original environment
+            if original_env is not None:
+                os.environ["FLEXT_ENVIRONMENT"] = original_env
 
     def test_safe_load_from_dict_success(self) -> None:
         """Test safe loading from dictionary."""
@@ -333,7 +345,7 @@ class TestFlextConfigComprehensive:
         # Use FlextConfig.get_env_var method
         result = FlextConfig.get_env_var("NON_EXISTENT_VAR")
         assert result.is_failure
-        assert "not set" in (result.error or "")
+        assert "not found" in (result.error or "")
 
     def test_get_env_with_validation_validator_failure(self) -> None:
         """Test getting environment variable with type validation failure."""
@@ -397,7 +409,7 @@ class TestFlextConfigFunctionality:
         result = FlextConfig.get_env_var("NON_EXISTENT_GET_VAR")
         assert result.is_failure
         assert result.error is not None
-        assert "Environment variable NON_EXISTENT_GET_VAR not set" in (
+        assert "Environment variable NON_EXISTENT_GET_VAR not found" in (
             result.error or ""
         )
 

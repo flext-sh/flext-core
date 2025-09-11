@@ -922,7 +922,7 @@ class TestServiceExceptionPaths:
         # Force an exception by mocking FlextResult.ok to raise during config creation
         with patch("flext_core.services.FlextResult.ok") as mock_ok:
 
-            def raise_error(*_args: object, **_kwargs: object) -> Never:
+            def raise_error(*_args: object) -> Never:
                 msg = "Mock config error during result creation"
                 raise MockResultCreationError(msg)
 

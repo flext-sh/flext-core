@@ -16,15 +16,8 @@ from pydantic import Field
 
 from flext_core import FlextConfig, FlextModels, FlextResult
 
-# =============================================================================
-# CONSTANTS
-# =============================================================================
 
 MINIMUM_AGE_REQUIREMENT = 21
-
-# =============================================================================
-# SIMPLE EXAMPLES - Basic FLEXT patterns
-# =============================================================================
 
 
 def _print_header() -> None:

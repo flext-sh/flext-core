@@ -186,10 +186,10 @@ class TestEdgeCasesCoverage:
     def test_boundary_conditions(self) -> None:
         """Test boundary conditions."""
         # Test empty collections
-        result = FlextValidations.Collections.validate_list([], min_items=0)
+        result = FlextValidations.Collections.validate_list_size([], min_size=0)
         assert result.is_success
 
-        result = FlextValidations.Collections.validate_list([], min_items=1)
+        result = FlextValidations.Collections.validate_list_size([], min_size=1)
         assert result.is_failure
 
     def test_none_and_empty_handling(self) -> None:
@@ -222,7 +222,7 @@ class TestIntegrationCoverage:
                 result = FlextValidations.Fields.validate_string(value, min_length=1)
                 assert result.is_success
             elif isinstance(value, int):
-                result = FlextValidations.Numbers.validate_integer(value, min_value=1)
+                result = FlextValidations.Numbers.validate_range(value, min_val=1)
                 assert result.is_success
 
         # Create config
@@ -240,8 +240,8 @@ class TestIntegrationCoverage:
         assert convert_result.is_success
 
         # Validate converted result
-        validate_result = FlextValidations.Numbers.validate_integer(
-            convert_result.value, min_value=1
+        validate_result = FlextValidations.Numbers.validate_range(
+            convert_result.value, min_val=1
         )
         assert validate_result.is_success
 

@@ -32,7 +32,7 @@ RegistrationResult = railway_example.RegistrationResult
 User = railway_example.User
 UserRegistrationRequest = railway_example.UserRegistrationRequest
 RailwayRegistrationService = railway_example.RailwayRegistrationService
-UserRegistrationService = railway_example.UserRegistrationService  # Alias for compatibility
+UserRegistrationService = railway_example.UserRegistrationService
 
 
 class TestUserRegistrationRequest:

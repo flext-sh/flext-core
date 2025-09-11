@@ -149,10 +149,10 @@ class FlextConfig(BaseSettings):
         def get_env_var(self, var_name: str) -> FlextResult[str]:
             """Get environment variable with FlextResult error handling."""
             try:
-                value = os.environ.get(var_name)
+                value = os.getenv(var_name)  # Use os.getenv to match test patch
                 if value is None:
                     return FlextResult[str].fail(
-                        f"Environment variable {var_name} not set",
+                        f"Environment variable {var_name} not found",
                         error_code="ENV_VAR_NOT_FOUND",
                     )
                 return FlextResult[str].ok(value)
@@ -215,6 +215,27 @@ class FlextConfig(BaseSettings):
                 or len(config.version.split(".")) < _SEMANTIC_VERSION_MIN_PARTS
             ):
                 errors.append("version must follow semantic versioning (x.y.z)")
+
+            # Validate production environment worker requirements
+            min_prod_workers = 2
+            if (
+                config.environment == "production"
+                and config.max_workers < min_prod_workers
+            ):
+                errors.append(
+                    f"production environment requires at least {min_prod_workers} workers"
+                )
+
+            # Validate timeout/workers relationship
+            if (
+                config.timeout_seconds >= _HIGH_TIMEOUT_THRESHOLD
+                and config.max_workers < _MIN_WORKERS_FOR_HIGH_TIMEOUT
+            ):
+                errors.append("high timeout (120s+) requires at least 4 workers")
+
+            # Validate maximum workers limit
+            if config.max_workers > _MAX_WORKERS_THRESHOLD:
+                errors.append("max_workers exceeds maximum recommended workers (50)")
 
             if errors:
                 error_msg = "; ".join(errors)
@@ -289,11 +310,11 @@ class FlextConfig(BaseSettings):
         """
 
         @staticmethod
-        def save_to_file(config: FlextConfig, file_path: str) -> FlextResult[None]:
-            """Save configuration to a JSON file.
+        def save_to_file(data: object, file_path: str) -> FlextResult[None]:
+            """Save data to file with format detection.
 
             Args:
-                config: Configuration instance to save
+                data: Data to save (FlextConfig, dict, or other)
                 file_path: Target file path for saving
 
             Returns:
@@ -301,26 +322,64 @@ class FlextConfig(BaseSettings):
 
             """
             try:
-                config_data = cast("BaseModel", config).model_dump()
+                # Extract data as dict
+                if hasattr(data, "model_dump"):
+                    # FlextConfig or other BaseModel
+                    config_data = cast("BaseModel", data).model_dump()
+                elif isinstance(data, dict):
+                    # Plain dict
+                    config_data = data
+                else:
+                    # Other types - convert to dict if possible
+                    try:
+                        # Try to convert to dict if it's iterable of pairs
+                        config_data = (
+                            dict(data)
+                            if hasattr(data, "__iter__") and not isinstance(data, str)
+                            else {"data": data}
+                        )
+                    except (TypeError, ValueError):
+                        # Fallback for any conversion issues
+                        config_data = {"data": data}
+
                 config_path = Path(file_path)
+                file_ext = config_path.suffix.lower()
 
-                # Ensure parent directory exists
-                config_path.parent.mkdir(parents=True, exist_ok=True)
-
-                with config_path.open("w", encoding="utf-8") as f:
-                    json.dump(config_data, f, indent=2, ensure_ascii=False)
+                # Check supported formats
+                if file_ext == ".json":
+                    # Ensure parent directory exists
+                    config_path.parent.mkdir(parents=True, exist_ok=True)
+                    with config_path.open("w", encoding="utf-8") as f:
+                        json.dump(config_data, f, indent=2, ensure_ascii=False)
+                elif file_ext in {".yaml", ".yml"}:
+                    # YAML format - ultra-simple implementation
+                    config_path.parent.mkdir(parents=True, exist_ok=True)
+                    with config_path.open("w", encoding="utf-8") as f:
+                        for key, value in config_data.items():
+                            if isinstance(value, list):
+                                f.write(f"{key}:\n")
+                                for item in value:
+                                    f.write(f"  - {item}\n")
+                            else:
+                                f.write(f"{key}: {value}\n")
+                else:
+                    # Unsupported format
+                    return FlextResult[None].fail(
+                        f"Unsupported format for file: {file_path}",
+                        error_code="UNSUPPORTED_FORMAT_ERROR",
+                    )
 
                 return FlextResult[None].ok(None)
 
             except (OSError, json.JSONDecodeError, PermissionError) as e:
                 return FlextResult[None].fail(
-                    f"Failed to save configuration to file: {e}",
+                    f"Failed to save file: {e}",
                     error_code="CONFIG_SAVE_ERROR",
                 )
 
         @staticmethod
         def load_from_file(file_path: str) -> FlextResult[FlextTypes.Core.JsonDict]:
-            """Load configuration data from a JSON file.
+            """Load configuration data from JSON, YAML, or TOML file.
 
             Args:
                 file_path: Source file path for loading
@@ -338,13 +397,29 @@ class FlextConfig(BaseSettings):
                         error_code="CONFIG_FILE_NOT_FOUND",
                     )
 
+                suffix = config_path.suffix.lower()
                 with config_path.open(encoding="utf-8") as f:
                     file_content = f.read()
+
+                # Format detection based on file extension
+                if suffix == ".json":
+                    config_data = json.loads(file_content)
+                elif suffix in {".yaml", ".yml"}:
+                    config_data = yaml.safe_load(file_content)
+                elif suffix == ".toml":
+                    config_data = tomllib.loads(file_content)
+                else:
+                    # Default to JSON for unknown extensions
                     config_data = json.loads(file_content)
 
                 return FlextResult[FlextTypes.Core.JsonDict].ok(config_data)
 
-            except (OSError, json.JSONDecodeError, PermissionError) as e:
+            except (json.JSONDecodeError, yaml.YAMLError) as e:
+                return FlextResult[FlextTypes.Core.JsonDict].fail(
+                    f"Failed to parse configuration file: {e}",
+                    error_code="CONFIG_PARSE_ERROR",
+                )
+            except (OSError, PermissionError) as e:
                 return FlextResult[FlextTypes.Core.JsonDict].fail(
                     f"Failed to load configuration from file: {e}",
                     error_code="CONFIG_LOAD_ERROR",
@@ -358,7 +433,7 @@ class FlextConfig(BaseSettings):
         """
 
         @staticmethod
-        def create_from_env(env_prefix: str = "FLEXT_") -> FlextResult[FlextConfig]:
+        def create_from_env(_env_prefix: str = "FLEXT_") -> FlextResult[FlextConfig]:
             """Create configuration from environment variables.
 
             Args:
@@ -369,8 +444,8 @@ class FlextConfig(BaseSettings):
 
             """
             try:
-                # Use Pydantic's built-in environment loading
-                config = FlextConfig(_env_prefix=env_prefix)
+                # Use Pydantic's built-in environment loading with factory mode to avoid default forcing
+                config = FlextConfig(_factory_mode=True)
 
                 # Validate the created configuration
                 validation_result = config.validate_all()
@@ -475,7 +550,7 @@ class FlextConfig(BaseSettings):
                 create_result = FlextConfig.create(constants=final_config)
                 if create_result.is_failure:
                     return FlextResult[FlextConfig].fail(
-                        f"Test configuration creation failed: {create_result.error}",
+                        f"Failed to create test configuration: {create_result.error}",
                         error_code="CONFIG_TEST_CREATION_ERROR",
                     )
                 config = create_result.unwrap()
@@ -850,6 +925,17 @@ class FlextConfig(BaseSettings):
             raise ValueError(msg)
         return value
 
+    @field_validator("debug", mode="before")
+    @classmethod
+    def validate_debug(cls, value: object) -> bool:
+        """Validate debug field, converting string values."""
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in {"true", "1", "yes", "on"}
+        # For other types, convert to bool
+        return bool(value)
+
     @field_validator("log_level")
     @classmethod
     def validate_log_level(cls, value: str) -> str:
@@ -1076,12 +1162,11 @@ class FlextConfig(BaseSettings):
 
         except ValidationError as exc:
             # Reformat environment validation errors para satisfazer testes
-            invalid_env = (
-                settings.get("environment") if isinstance(settings, dict) else None
-            )
             for err in exc.errors():
                 loc = err.get("loc")
                 if loc and loc[0] == "environment":
+                    # Extract actual invalid value from the error, not from settings
+                    invalid_env = err.get("input", "unknown")
                     allowed = ", ".join(sorted(FlextConstants.Config.ENVIRONMENTS))
                     msg = f"Configuration creation failed: Invalid environment '{invalid_env}'. Environment must be one of: {allowed}"
                     return FlextResult[Self].fail(

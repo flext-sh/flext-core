@@ -9,11 +9,6 @@ from typing import ClassVar, NamedTuple
 __version__: str = "0.9.0"
 
 
-# =============================================================================
-# VERSION UTILITIES - Programmatic version handling and compatibility
-# =============================================================================
-
-
 class FlextVersionManager:
     """Single consolidated class for all version management functionality."""
 

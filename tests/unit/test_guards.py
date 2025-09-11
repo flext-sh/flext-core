@@ -265,7 +265,6 @@ class TestFlextGuardsAdvanced:
         # Create a large dataset
         large_list = list(range(1000))
 
-        # Type checking should be efficient
         result = FlextGuards.is_list_of(large_list, int)
         assert result is True
 

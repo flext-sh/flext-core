@@ -56,7 +56,7 @@ class TestUtilitiesRealMethods85Barrier:
             ([], "list", "[]"),  # List should convert to string
             ({"key": "value"}, "dict", "{'key': 'value'}"),  # Dict conversion
             (True, "bool", "True"),  # Bool conversion
-            (False, "bool", "False")  # Bool conversion
+            (False, "bool", "False"),  # Bool conversion
         ]
 
         for value, default, _expected_type in edge_cases:
@@ -80,7 +80,7 @@ class TestUtilitiesRealMethods85Barrier:
             ("123 Numbers", "123-numbers"),
             ("Àccëntéd Tëxt", "accented-text"),  # Accented characters
             ("   ", ""),  # Only whitespace
-            ("a", "a")  # Single character
+            ("a", "a"),  # Single character
         ]
 
         for input_text, _expected_pattern in slugify_cases:
@@ -102,7 +102,7 @@ class TestUtilitiesRealMethods85Barrier:
             ("", "untitled"),  # Empty filename edge case
             ("...", "untitled"),  # Only dots
             ("file|name*here.txt", "filenamehere.txt"),
-            ("very_long_filename_" * 10 + ".txt", None)  # Very long filename
+            ("very_long_filename_" * 10 + ".txt", None),  # Very long filename
         ]
 
         for input_name, _expected_type in filename_cases:
@@ -126,7 +126,7 @@ class TestUtilitiesRealMethods85Barrier:
             ("", ""),  # Empty string
             ("single", "single"),
             ("UPPER_CASE", "upperCase"),
-            ("mixed_Case_field", "mixedCaseField")
+            ("mixed_Case_field", "mixedCaseField"),
         ]
 
         for field_name, _expected_pattern in camel_case_tests:
@@ -148,7 +148,7 @@ class TestUtilitiesRealMethods85Barrier:
             (3600, "1 hour"),
             (3661, "1 hour 1 minute 1 second"),
             (86400, "1 day"),
-            (90061, "1 day 1 hour 1 minute 1 second")
+            (90061, "1 day 1 hour 1 minute 1 second"),
         ]
 
         for seconds, _expected_pattern in duration_tests:
@@ -170,7 +170,7 @@ class TestUtilitiesRealMethods85Barrier:
             (None, {}),  # No specific operation
             ("test_operation", {}),
             ("database", {}),
-            ("api_call", {})
+            ("api_call", {}),
         ]
 
         for operation, _expected_type in metrics_tests:
@@ -191,7 +191,7 @@ class TestUtilitiesRealMethods85Barrier:
             (None, 0),  # None should return default
             (123.45, 123),  # Float should convert to int
             (True, 1),  # Bool should convert to int
-            (False, 0)  # Bool should convert to int
+            (False, 0),  # Bool should convert to int
         ]
 
         for value, _expected in int_tests:
@@ -208,7 +208,7 @@ class TestUtilitiesRealMethods85Barrier:
             (None, 0.0),  # None should return default
             (123, 123.0),  # Int should convert to float
             (True, 1.0),  # Bool should convert to float
-            (False, 0.0)  # Bool should convert to float
+            (False, 0.0),  # Bool should convert to float
         ]
 
         for value, _expected in float_tests:
@@ -237,7 +237,7 @@ class TestUtilitiesRealMethods85Barrier:
             ([], False),  # Empty list should be False
             ([1], True),  # Non-empty list should be True
             ({}, False),  # Empty dict should be False
-            ({"key": "value"}, True)  # Non-empty dict should be True
+            ({"key": "value"}, True),  # Non-empty dict should be True
         ]
 
         for value, _expected in bool_tests:
@@ -256,7 +256,7 @@ class TestUtilitiesRealMethods85Barrier:
             (None, False),
             (123, False),
             ([], False),
-            ({}, False)
+            ({}, False),
         ]
 
         for value, expected in string_tests:
@@ -271,7 +271,7 @@ class TestUtilitiesRealMethods85Barrier:
             (None, False),
             ("string", False),
             (123, False),
-            ([], False)
+            ([], False),
         ]
 
         for value, expected in dict_tests:

@@ -27,10 +27,6 @@ T_contra = TypeVar("T_contra", contravariant=True)  # For input types
 TInput_contra = TypeVar("TInput_contra", contravariant=True)
 TOutput_co = TypeVar("TOutput_co", covariant=True)
 
-# =============================================================================
-# HIERARCHICAL PROTOCOL ARCHITECTURE - Optimized with composition
-# =============================================================================
-
 
 class FlextProtocols:
     """Hierarchical protocol architecture with composition patterns."""
@@ -830,11 +826,6 @@ class FlextProtocols:
                 )
 
 
-# =============================================================================
-# PROTOCOLS CONFIGURATION - FlextTypes.Config Integration
-# =============================================================================
-
-
 # Delayed imports to avoid circular dependencies at runtime
 # Dead code removed - unused helper function
 
@@ -846,10 +837,6 @@ class FlextProtocols:
 
 # This section can be removed as the class is now nested within FlextProtocols
 
-
-# =============================================================================
-# EXPORTS - Hierarchical protocols
-# =============================================================================
 
 __all__: FlextTypes.Core.StringList = [
     "FlextProtocols",  # Main hierarchical protocol architecture with Config

@@ -21,11 +21,7 @@ class TestFlextConfigAdvancedUncovered:
     def test_create_web_service_config_comprehensive(self) -> None:
         """Test create_web_service_config with web service scenarios."""
         # Test basic web service configuration
-        basic_web_config = {
-            "service_name": "web-api",
-            "port": 8080,
-            "host": "0.0.0.0"
-        }
+        basic_web_config = {"service_name": "web-api", "port": 8080, "host": "0.0.0.0"}
 
         try:
             result = FlextConfig.create_web_service_config(basic_web_config)
@@ -49,10 +45,7 @@ class TestFlextConfigAdvancedUncovered:
             "timeout": 60,
             "cors_enabled": True,
             "cors_origins": ["https://app.production.com"],
-            "rate_limiting": {
-                "enabled": True,
-                "requests_per_minute": 100
-            }
+            "rate_limiting": {"enabled": True, "requests_per_minute": 100},
         }
 
         try:
@@ -90,7 +83,7 @@ class TestFlextConfigAdvancedUncovered:
             "processor_name": "etl_processor",
             "input_format": "json",
             "output_format": "parquet",
-            "batch_size": 10000
+            "batch_size": 10000,
         }
 
         try:
@@ -117,8 +110,12 @@ class TestFlextConfigAdvancedUncovered:
             "transforms": [
                 {"type": "filter", "condition": "status == 'active'"},
                 {"type": "map", "field": "timestamp", "format": "iso8601"},
-                {"type": "aggregate", "groupby": ["category"], "metrics": ["count", "sum"]}
-            ]
+                {
+                    "type": "aggregate",
+                    "groupby": ["category"],
+                    "metrics": ["count", "sum"],
+                },
+            ],
         }
 
         try:
@@ -138,7 +135,7 @@ class TestFlextConfigAdvancedUncovered:
             "output_stream": "kafka://processed_events",
             "window_size": "5 minutes",
             "watermark_delay": "30 seconds",
-            "state_backend": "rocksdb"
+            "state_backend": "rocksdb",
         }
 
         try:
@@ -156,14 +153,14 @@ class TestFlextConfigAdvancedUncovered:
         base_layer = {
             "database_url": "postgresql://localhost/dev",
             "debug": True,
-            "log_level": "DEBUG"
+            "log_level": "DEBUG",
         }
 
         override_layer = {
             "database_url": "postgresql://prod-db/app",
             "debug": False,
             "log_level": "INFO",
-            "cache_enabled": True
+            "cache_enabled": True,
         }
 
         try:
@@ -179,49 +176,26 @@ class TestFlextConfigAdvancedUncovered:
         default_layer = {
             "app_name": "flext_app",
             "version": "1.0.0",
-            "database": {
-                "host": "localhost",
-                "port": 5432,
-                "name": "default_db"
-            },
-            "features": {
-                "feature_a": False,
-                "feature_b": False,
-                "feature_c": True
-            }
+            "database": {"host": "localhost", "port": 5432, "name": "default_db"},
+            "features": {"feature_a": False, "feature_b": False, "feature_c": True},
         }
 
         environment_layer = {
-            "database": {
-                "host": "staging-db.example.com",
-                "name": "staging_db"
-            },
-            "features": {
-                "feature_a": True,
-                "feature_b": True
-            },
-            "cache": {
-                "enabled": True,
-                "ttl": 300
-            }
+            "database": {"host": "staging-db.example.com", "name": "staging_db"},
+            "features": {"feature_a": True, "feature_b": True},
+            "cache": {"enabled": True, "ttl": 300},
         }
 
         user_layer = {
-            "features": {
-                "feature_c": False
-            },
-            "cache": {
-                "ttl": 600
-            },
-            "custom_setting": "user_value"
+            "features": {"feature_c": False},
+            "cache": {"ttl": 600},
+            "custom_setting": "user_value",
         }
 
         try:
-            result = FlextConfig.create_layered_config([
-                default_layer,
-                environment_layer,
-                user_layer
-            ])
+            result = FlextConfig.create_layered_config(
+                [default_layer, environment_layer, user_layer]
+            )
             if isinstance(result, FlextResult):
                 assert result.is_success or result.is_failure
             else:
@@ -255,7 +229,7 @@ class TestFlextConfigAdvancedUncovered:
         basic_params = {
             "service_name": "my_web_service",
             "port": 8080,
-            "environment": "development"
+            "environment": "development",
         }
 
         try:
@@ -269,27 +243,39 @@ class TestFlextConfigAdvancedUncovered:
 
         # Test different template types
         templates_and_params = [
-            ("microservice", {
-                "service_name": "user_service",
-                "database_url": "postgresql://localhost/users",
-                "redis_url": "redis://localhost/0"
-            }),
-            ("batch_job", {
-                "job_name": "data_ETL",
-                "input_path": "/data/input",
-                "output_path": "/data/output",
-                "schedule": "0 2 * * *"
-            }),
-            ("api_gateway", {
-                "gateway_name": "main_gateway",
-                "upstream_services": ["user_service", "payment_service"],
-                "rate_limit": 1000
-            }),
-            ("data_pipeline", {
-                "pipeline_name": "analytics_pipeline",
-                "sources": ["database", "kafka"],
-                "sinks": ["warehouse", "cache"]
-            })
+            (
+                "microservice",
+                {
+                    "service_name": "user_service",
+                    "database_url": "postgresql://localhost/users",
+                    "redis_url": "redis://localhost/0",
+                },
+            ),
+            (
+                "batch_job",
+                {
+                    "job_name": "data_ETL",
+                    "input_path": "/data/input",
+                    "output_path": "/data/output",
+                    "schedule": "0 2 * * *",
+                },
+            ),
+            (
+                "api_gateway",
+                {
+                    "gateway_name": "main_gateway",
+                    "upstream_services": ["user_service", "payment_service"],
+                    "rate_limit": 1000,
+                },
+            ),
+            (
+                "data_pipeline",
+                {
+                    "pipeline_name": "analytics_pipeline",
+                    "sources": ["database", "kafka"],
+                    "sinks": ["warehouse", "cache"],
+                },
+            ),
         ]
 
         for template_name, params in templates_and_params:
@@ -335,7 +321,7 @@ class TestFlextConfigAdvancedUncovered:
                 "secrets.env",
                 "config/production.json",
                 "config/staging.yaml",
-                "environments/dev.json"
+                "environments/dev.json",
             ]
 
             for config_file in config_files:
@@ -374,7 +360,9 @@ class TestFlextConfigAdvancedUncovered:
             patterns = ["*.json", "*.yaml", "config/*", "environments/*"]
             for pattern in patterns:
                 try:
-                    result = FlextConfig.discover_config_files(str(temp_path), pattern=pattern)
+                    result = FlextConfig.discover_config_files(
+                        str(temp_path), pattern=pattern
+                    )
                     if isinstance(result, FlextResult):
                         assert result.is_success or result.is_failure
                     elif isinstance(result, list):
@@ -386,7 +374,9 @@ class TestFlextConfigAdvancedUncovered:
 
             # Test with recursive discovery
             try:
-                result = FlextConfig.discover_config_files(str(temp_path), recursive=True)
+                result = FlextConfig.discover_config_files(
+                    str(temp_path), recursive=True
+                )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
                 elif isinstance(result, list):
@@ -423,7 +413,7 @@ class TestFlextConfigAdvancedUncovered:
             "app_name": "my_app",
             "database_url": "postgresql://localhost/dev",
             "debug": False,
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
 
         environments = ["development", "staging", "production", "testing"]
@@ -441,46 +431,35 @@ class TestFlextConfigAdvancedUncovered:
         # Test with environment-specific overrides
         base_config_with_overrides = {
             "app_name": "advanced_app",
-            "database": {
-                "host": "localhost",
-                "port": 5432,
-                "name": "app_db"
-            },
-            "cache": {
-                "enabled": False,
-                "ttl": 300
-            },
-            "features": {
-                "new_feature": False,
-                "beta_feature": False
-            },
+            "database": {"host": "localhost", "port": 5432, "name": "app_db"},
+            "cache": {"enabled": False, "ttl": 300},
+            "features": {"new_feature": False, "beta_feature": False},
             "environment_overrides": {
                 "development": {
                     "database.host": "dev-db.internal",
                     "cache.enabled": True,
-                    "features.new_feature": True
+                    "features.new_feature": True,
                 },
                 "production": {
                     "database.host": "prod-db.internal",
                     "database.port": 5433,
                     "cache.enabled": True,
                     "cache.ttl": 3600,
-                    "features.beta_feature": False
+                    "features.beta_feature": False,
                 },
                 "staging": {
                     "database.host": "staging-db.internal",
                     "cache.enabled": True,
                     "features.new_feature": True,
-                    "features.beta_feature": True
-                }
-            }
+                    "features.beta_feature": True,
+                },
+            },
         }
 
         for env in environments:
             try:
                 result = FlextConfig.create_environment_variant(
-                    base_config_with_overrides,
-                    env
+                    base_config_with_overrides, env
                 )
                 if isinstance(result, FlextResult):
                     assert result.is_success or result.is_failure
@@ -517,18 +496,18 @@ class TestFlextConfigAdvancedUncovered:
                 profiles={
                     "default": {
                         "database_url": "postgresql://localhost/app",
-                        "cache_enabled": False
+                        "cache_enabled": False,
                     },
                     "high_performance": {
                         "database_url": "postgresql://fast-db/app",
                         "cache_enabled": True,
-                        "connection_pool_size": 100
+                        "connection_pool_size": 100,
                     },
                     "development": {
                         "database_url": "postgresql://dev-db/app",
                         "debug": True,
-                        "log_level": "DEBUG"
-                    }
+                        "log_level": "DEBUG",
+                    },
                 }
             )
         except Exception:
@@ -589,9 +568,9 @@ class TestFlextConfigAdvancedUncovered:
                     "dependencies": {
                         "database": "postgresql-14",
                         "cache": "redis-7",
-                        "queue": "rabbitmq-3.10"
-                    }
-                }
+                        "queue": "rabbitmq-3.10",
+                    },
+                },
             )
         except Exception:
             # Fallback to basic config
@@ -617,7 +596,7 @@ class TestFlextConfigAdvancedUncovered:
                 "region",
                 "tags",
                 "dependencies",
-                "nonexistent_key"
+                "nonexistent_key",
             ]
 
             for key in metadata_keys:
@@ -634,7 +613,7 @@ class TestFlextConfigAdvancedUncovered:
             nested_keys = [
                 "dependencies.database",
                 "dependencies.cache",
-                "dependencies.nonexistent"
+                "dependencies.nonexistent",
             ]
 
             for nested_key in nested_keys:

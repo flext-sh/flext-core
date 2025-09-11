@@ -54,7 +54,9 @@ class TestAdaptersMassiveImpact75Plus:
         """Test performance optimization strategies (lines 312, 348)."""
         try:
             if hasattr(FlextTypeAdapters.Config, "_PerformanceOptimizationStrategy"):
-                perf_strategy = FlextTypeAdapters.Config._PerformanceOptimizationStrategy
+                perf_strategy = (
+                    FlextTypeAdapters.Config._PerformanceOptimizationStrategy
+                )
 
                 # Test get_low_performance_config (around line 312)
                 if hasattr(perf_strategy, "get_low_performance_config"):
@@ -165,7 +167,7 @@ class TestAdaptersMassiveImpact75Plus:
             {"adapter_type": "string", "value": object(), "should_fail": True},
             {"adapter_type": "integer", "value": "not_a_number", "should_fail": True},
             {"adapter_type": "float", "value": "not_a_float", "should_fail": True},
-            {"adapter_type": "basic", "target": None, "should_fail": True}
+            {"adapter_type": "basic", "target": None, "should_fail": True},
         ]
 
         foundation = FlextTypeAdapters.Foundation
@@ -223,8 +225,12 @@ class TestAdaptersMassiveImpact75Plus:
         try:
             # Check if there are advanced adapter methods
             advanced_methods = [
-                "create_list_adapter", "create_dict_adapter", "create_union_adapter",
-                "create_optional_adapter", "create_generic_adapter", "create_custom_adapter"
+                "create_list_adapter",
+                "create_dict_adapter",
+                "create_union_adapter",
+                "create_optional_adapter",
+                "create_generic_adapter",
+                "create_custom_adapter",
             ]
 
             foundation = FlextTypeAdapters.Foundation
@@ -262,8 +268,12 @@ class TestAdaptersMassiveImpact75Plus:
                 domain = FlextTypeAdapters.Domain
 
                 domain_methods = [
-                    "create_email_adapter", "create_url_adapter", "create_uuid_adapter",
-                    "create_datetime_adapter", "create_enum_adapter", "validate_domain_rules"
+                    "create_email_adapter",
+                    "create_url_adapter",
+                    "create_uuid_adapter",
+                    "create_datetime_adapter",
+                    "create_enum_adapter",
+                    "validate_domain_rules",
                 ]
 
                 for method_name in domain_methods:
@@ -278,8 +288,10 @@ class TestAdaptersMassiveImpact75Plus:
                                 # Test domain adapter validation if applicable
                                 if hasattr(result, "validate_python"):
                                     test_values = [
-                                        "test@example.com", "https://example.com",
-                                        "123e4567-e89b-12d3-a456-426614174000", "2024-01-15T10:00:00Z"
+                                        "test@example.com",
+                                        "https://example.com",
+                                        "123e4567-e89b-12d3-a456-426614174000",
+                                        "2024-01-15T10:00:00Z",
                                     ]
 
                                     for value in test_values:
@@ -303,9 +315,13 @@ class TestAdaptersMassiveImpact75Plus:
                 application = FlextTypeAdapters.Application
 
                 app_methods = [
-                    "create_serialization_adapter", "create_deserialization_adapter",
-                    "create_validation_adapter", "create_transformation_adapter",
-                    "serialize_to_json", "deserialize_from_json", "generate_schema"
+                    "create_serialization_adapter",
+                    "create_deserialization_adapter",
+                    "create_validation_adapter",
+                    "create_transformation_adapter",
+                    "serialize_to_json",
+                    "deserialize_from_json",
+                    "generate_schema",
                 ]
 
                 for method_name in app_methods:
@@ -314,7 +330,10 @@ class TestAdaptersMassiveImpact75Plus:
                             method = getattr(application, method_name)
                             if callable(method):
                                 # Execute application methods (lines 924-940, 971-984, 993-1002)
-                                if "serialize" in method_name or "deserialize" in method_name:
+                                if (
+                                    "serialize" in method_name
+                                    or "deserialize" in method_name
+                                ):
                                     test_data = {"key": "value", "number": 42}
                                     result = method(test_data)
                                 elif "schema" in method_name:
@@ -338,8 +357,10 @@ class TestAdaptersMassiveImpact75Plus:
                 protocols = FlextTypeAdapters.Protocols
 
                 protocol_methods = [
-                    "create_protocol_adapter", "validate_protocol_compliance",
-                    "register_protocol", "get_protocol_adapters"
+                    "create_protocol_adapter",
+                    "validate_protocol_compliance",
+                    "register_protocol",
+                    "get_protocol_adapters",
                 ]
 
                 for method_name in protocol_methods:
@@ -364,7 +385,7 @@ class TestAdaptersMassiveImpact75Plus:
             {"type": "json", "data": {"key": "value"}},
             {"type": "xml", "data": "<root><key>value</key></root>"},
             {"type": "csv", "data": "key,value\ntest,data"},
-            {"type": "yaml", "data": "key: value"}
+            {"type": "yaml", "data": "key: value"},
         ]
 
         for test_case in integration_test_data:
@@ -374,7 +395,9 @@ class TestAdaptersMassiveImpact75Plus:
                     integration = FlextTypeAdapters.Integration
 
                     integration_methods = [
-                        "create_format_adapter", "convert_format", "validate_format"
+                        "create_format_adapter",
+                        "convert_format",
+                        "validate_format",
                     ]
 
                     for method_name in integration_methods:
@@ -383,7 +406,9 @@ class TestAdaptersMassiveImpact75Plus:
                                 method = getattr(integration, method_name)
                                 if callable(method):
                                     # Execute integration methods (lines 1059-1060, 1068-1069, 1077-1078)
-                                    result = method(test_case["type"], test_case["data"])
+                                    result = method(
+                                        test_case["type"], test_case["data"]
+                                    )
                                     assert result is not None
 
                             except Exception:
@@ -399,7 +424,7 @@ class TestAdaptersMassiveImpact75Plus:
             {"feature": "caching", "config": {"cache_size": 1000, "ttl": 300}},
             {"feature": "optimization", "config": {"level": "high", "parallel": True}},
             {"feature": "monitoring", "config": {"metrics": True, "logging": True}},
-            {"feature": "validation", "config": {"strict": True, "coercion": False}}
+            {"feature": "validation", "config": {"strict": True, "coercion": False}},
         ]
 
         for feature_test in advanced_features:
@@ -409,9 +434,9 @@ class TestAdaptersMassiveImpact75Plus:
                     advanced = FlextTypeAdapters.Advanced
 
                     feature_methods = [
-                        f'enable_{feature_test["feature"]}',
-                        f'configure_{feature_test["feature"]}',
-                        f'get_{feature_test["feature"]}_status'
+                        f"enable_{feature_test['feature']}",
+                        f"configure_{feature_test['feature']}",
+                        f"get_{feature_test['feature']}_status",
                     ]
 
                     for method_name in feature_methods:
@@ -436,9 +461,13 @@ class TestAdaptersMassiveImpact75Plus:
         """Test adapter migration features (lines 1296-1297, 1305-1306, 1316)."""
         # Test migration and compatibility features
         migration_scenarios = [
-            {"from_version": "1.0", "to_version": "2.0", "data": {"old_field": "value"}},
+            {
+                "from_version": "1.0",
+                "to_version": "2.0",
+                "data": {"old_field": "value"},
+            },
             {"from_format": "json", "to_format": "yaml", "data": {"key": "value"}},
-            {"from_schema": "old", "to_schema": "new", "data": {"legacy": True}}
+            {"from_schema": "old", "to_schema": "new", "data": {"legacy": True}},
         ]
 
         for scenario in migration_scenarios:
@@ -447,7 +476,9 @@ class TestAdaptersMassiveImpact75Plus:
                     migration = FlextTypeAdapters.Migration
 
                     migration_methods = [
-                        "create_migration_adapter", "migrate_data", "validate_migration"
+                        "create_migration_adapter",
+                        "migrate_data",
+                        "validate_migration",
                     ]
 
                     for method_name in migration_methods:
@@ -474,13 +505,15 @@ class TestAdaptersMassiveImpact75Plus:
             {"optimization_level": "invalid"},  # Invalid optimization level
             {"environment": "nonexistent"},  # Nonexistent environment
             {"performance": {"level": "extreme", "cache": True}},  # Complex config
-            None  # None config
+            None,  # None config
         ]
 
         for config in edge_case_configs:
             try:
                 # Test configure_type_adapters_system with edge cases
-                result = FlextTypeAdapters.Config.configure_type_adapters_system(config or {})
+                result = FlextTypeAdapters.Config.configure_type_adapters_system(
+                    config or {}
+                )
                 assert result is not None or result is None
 
                 # Test optimization with edge cases
@@ -488,7 +521,9 @@ class TestAdaptersMassiveImpact75Plus:
                 for level in optimization_levels:
                     if level is not None:
                         try:
-                            opt_result = FlextTypeAdapters.Config.optimize_type_adapters_performance(level)
+                            opt_result = FlextTypeAdapters.Config.optimize_type_adapters_performance(
+                                level
+                            )
                             assert opt_result is not None or opt_result is None
                         except Exception:
                             # Expected for invalid levels (hits lines 1329-1334, 1342, 1351-1369)
@@ -503,8 +538,12 @@ class TestAdaptersMassiveImpact75Plus:
         # Test final methods and cleanup
         try:
             final_methods = [
-                "finalize_adapters", "cleanup_adapters", "validate_adapter_system",
-                "get_adapter_statistics", "export_adapter_config", "import_adapter_config"
+                "finalize_adapters",
+                "cleanup_adapters",
+                "validate_adapter_system",
+                "get_adapter_statistics",
+                "export_adapter_config",
+                "import_adapter_config",
             ]
 
             # Test on main class and subclasses

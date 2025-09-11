@@ -64,7 +64,7 @@ class FlextMixins:
             now = datetime.now(UTC)
             obj._created_at = now
             return now
-        # Type guard to ensure we return datetime | None
+
         return created_at if isinstance(created_at, datetime | type(None)) else None
 
     @staticmethod
@@ -77,7 +77,7 @@ class FlextMixins:
             now = datetime.now(UTC)
             obj._updated_at = now
             return now
-        # Type guard to ensure we return datetime | None
+
         return updated_at if isinstance(updated_at, datetime | type(None)) else None
 
     @staticmethod
@@ -1294,14 +1294,12 @@ class FlextMixins:
                 normalized_list: FlextTypes.Core.List = []
                 for item in value:
                     if hasattr(item, "model_dump"):  # Pydantic BaseModel
-                        # Type narrowing for PyRight
                         model_dump_method = item.model_dump
                         if callable(model_dump_method):
                             normalized_list.append(model_dump_method())
                         else:
                             normalized_list.append(item)
                     elif hasattr(item, "dict"):  # Legacy Pydantic v1
-                        # Type narrowing for PyRight
                         dict_method = item.dict
                         if callable(dict_method):
                             normalized_list.append(dict_method())
@@ -1311,14 +1309,12 @@ class FlextMixins:
                         normalized_list.append(item)
                 normalized[key] = normalized_list
             elif hasattr(value, "model_dump"):  # Single BaseModel
-                # Type narrowing for PyRight
                 model_dump_method = getattr(value, "model_dump")
                 if callable(model_dump_method):
                     normalized[key] = model_dump_method()
                 else:
                     normalized[key] = value
             elif hasattr(value, "dict"):  # Legacy Pydantic v1
-                # Type narrowing for PyRight
                 dict_method = getattr(value, "dict")
                 if callable(dict_method):
                     normalized[key] = dict_method()

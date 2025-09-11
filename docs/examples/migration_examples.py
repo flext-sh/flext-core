@@ -14,11 +14,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator, Validat
 from flext_core import FlextResult, FlextConstants, FlextModels
 
 
-# =============================================================================
-# EXAMPLE 1: Simple Configuration Migration
-# =============================================================================
-
-
 # ❌ BEFORE: Manual validation with dicts
 def configure_logging_old(config: dict) -> FlextResult[dict]:
     """Old approach with manual validation.
@@ -99,11 +94,6 @@ def configure_logging_new(config: dict) -> FlextResult[dict]:
         return FlextResult.ok(validated.model_dump())
     except ValidationError as e:
         return FlextResult.fail(str(e))
-
-
-# =============================================================================
-# EXAMPLE 2: Complex Nested Configuration Migration
-# =============================================================================
 
 
 # ❌ BEFORE: Manual nested validation
@@ -216,11 +206,6 @@ def configure_database_new(config: dict) -> FlextResult[dict]:
         return FlextResult.fail(str(e))
 
 
-# =============================================================================
-# EXAMPLE 3: Dynamic Field Migration (Commands System)
-# =============================================================================
-
-
 # ❌ BEFORE: Manual validation with dynamic fields
 def configure_commands_old(config: dict) -> FlextResult[dict]:
     """Old commands configuration with manual validation."""
@@ -308,10 +293,6 @@ def configure_commands_new(config: dict) -> FlextResult[dict]:
         return FlextResult.fail(str(e))
 
 
-# =============================================================================
-# EXAMPLE 4: Backward Compatibility Migration (Mixins)
-# =============================================================================
-
 # This shows how we migrated mixins while preserving backward compatibility
 
 
@@ -376,11 +357,6 @@ def configure_mixins_with_compatibility(config: dict) -> FlextResult[dict]:
             for err in e.errors()
         )
         return FlextResult.fail(f"Configuration validation failed: {error_details}")
-
-
-# =============================================================================
-# EXAMPLE 5: Step-by-Step Migration Guide
-# =============================================================================
 
 
 def migration_step_by_step() -> None:
@@ -460,11 +436,6 @@ def migration_step_by_step() -> None:
     print("   Add migration notes to CHANGELOG.md")
 
     print("\n" + "=" * 60)
-
-
-# =============================================================================
-# EXAMPLE 6: Common Patterns and Solutions
-# =============================================================================
 
 
 class CommonPatterns:
@@ -562,10 +533,6 @@ class CommonPatterns:
 
         return "Use extra='allow' or explicit dict fields"
 
-
-# =============================================================================
-# Run Examples
-# =============================================================================
 
 if __name__ == "__main__":
     # Test Example 1: Simple Configuration

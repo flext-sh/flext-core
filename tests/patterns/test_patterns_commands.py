@@ -94,11 +94,6 @@ UpdateUserCommand.model_rebuild()
 FailingCommand.model_rebuild()
 
 
-# =============================================================================
-# TEST COMMAND HANDLER IMPLEMENTATIONS
-# =============================================================================
-
-
 class CreateUserCommandHandler(
     FlextCommandHandler[CreateUserCommand, FlextTypes.Core.Dict],
 ):
@@ -202,11 +197,6 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
         return self.handle(command)
 
 
-# =============================================================================
-# TEST FLEXT COMMAND
-# =============================================================================
-
-
 class TestFlextCommand:
     """Test FlextCommand functionality."""
 
@@ -303,11 +293,6 @@ class TestFlextCommand:
         assert command.username == "test_user"
         assert command.email == "test@example.com"
         assert isinstance(command, CreateUserCommand)
-
-
-# =============================================================================
-# TEST FLEXT COMMAND HANDLER
-# =============================================================================
 
 
 class TestFlextCommandHandler:
@@ -447,11 +432,6 @@ class TestFlextCommandHandler:
             raise AssertionError(f"Expected True, got {result.is_failure}")
 
 
-# =============================================================================
-# TEST FLEXT COMMAND BUS
-# =============================================================================
-
-
 class TestFlextCommandBus:
     """Test FlextCommandBus functionality."""
 
@@ -571,11 +551,6 @@ class TestFlextCommandBus:
         assert handler2 in all_handlers
 
 
-# =============================================================================
-# TEST FLEXT COMMAND RESULT
-# =============================================================================
-
-
 class TestFlextCommandResults:
     """Test FlextCommandResults functionality."""
 
@@ -619,11 +594,6 @@ class TestFlextCommandResults:
         if command_result.error_data == {}:
             # Test passes - metadata would be empty for successful results
             pass
-
-
-# =============================================================================
-# INTEGRATION TESTS
-# =============================================================================
 
 
 class TestCommandPatternIntegration:

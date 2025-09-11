@@ -414,6 +414,11 @@ class FlextUtilities:
             components = field_name.split("_")
             return components[0] + "".join(word.capitalize() for word in components[1:])
 
+        @staticmethod
+        def is_valid_string(value: str) -> bool:
+            """Check if string is valid (non-empty)."""
+            return bool(value and value.strip())
+
     class TimeUtils:
         """Time and duration utilities with formatting and conversion."""
 
@@ -626,7 +631,6 @@ class FlextUtilities:
 
         """
 
-        # Simple cache for conversion results (fallback if cachetools unavailable)
         _int_cache: ClassVar[dict[str, int]] = {}
         _float_cache: ClassVar[dict[str, float]] = {}
         _bool_cache: ClassVar[dict[str, bool]] = {}
@@ -711,10 +715,14 @@ class FlextUtilities:
                         return default
 
         @classmethod
-        @functools.cache
         def safe_bool(cls, value: object, *, default: bool = False) -> bool:
             """Convert value to bool safely with pattern matching optimization."""
-            cache_key = f"bool:{value!s}:{default}"
+            # Create hashable cache key by converting unhashable types to string representation
+            try:
+                cache_key = f"bool:{value!s}:{default}"
+            except Exception:
+                # For unhashable types, use type name and str representation
+                cache_key = f"bool:{type(value).__name__}_{value!s}:{default}"
 
             if cache_key in cls._bool_cache:
                 return cls._bool_cache[cache_key]
@@ -911,13 +919,17 @@ class FlextUtilities:
         def merge_dicts(
             base_dict: FlextTypes.Core.Dict,
             override_dict: FlextTypes.Core.Dict,
-        ) -> FlextTypes.Core.Dict:
-            """Merge two dictionaries - returns plain dict for test compatibility."""
-            # Simple merge for test compatibility - tests expect plain dict return
-            safe_base = base_dict if isinstance(base_dict, dict) else {}
-            safe_override = override_dict if isinstance(override_dict, dict) else {}
-
-            return {**safe_base, **safe_override}
+        ) -> FlextResult[FlextTypes.Core.Dict]:
+            """Ultra-simple alias for test compatibility - merge two dictionaries."""
+            try:
+                safe_base = base_dict if isinstance(base_dict, dict) else {}
+                safe_override = override_dict if isinstance(override_dict, dict) else {}
+                merged = {**safe_base, **safe_override}
+                return FlextResult[FlextTypes.Core.Dict].ok(merged)
+            except Exception as e:
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    f"Failed to merge dicts: {e}"
+                )
 
         @staticmethod
         def merge_dicts_safe(
@@ -943,6 +955,15 @@ class FlextUtilities:
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Dictionary merge failed: {e}"
                 )
+
+        @staticmethod
+        def is_valid_path(path: str) -> bool:
+            """Simple alias for test compatibility - validates if path is valid."""
+            if not path or not isinstance(path, str):
+                return False
+
+            # Basic path validation - not empty and reasonable length
+            return len(path.strip()) != 0
 
     class ValidationUtils:
         """Generic validation utilities.
@@ -1348,7 +1369,18 @@ class FlextUtilities:
     safe_json_stringify = ProcessingUtils.safe_json_stringify
     parse_json_to_model = ProcessingUtils.parse_json_to_model
     safe_int = Conversions.safe_int
-    batch_process = ResultUtils.batch_process
+
+    # batch_process wrapper to return FlextResult for test compatibility
+    @staticmethod
+    def batch_process[TInput, TOutput](
+        items: list[TInput],
+        processor: Callable[[TInput], FlextResult[TOutput]],
+    ) -> FlextResult[tuple[list[TOutput], FlextTypes.Core.StringList]]:
+        """Process list of items, collecting successes and errors (returns FlextResult)."""
+        successes, errors = FlextUtilities.ResultUtils.batch_process(items, processor)
+        return FlextResult[tuple[list[TOutput], FlextTypes.Core.StringList]].ok(
+            (successes, errors)
+        )
 
     # Additional methods needed by legacy compatibility layer
     @classmethod
@@ -1361,7 +1393,6 @@ class FlextUtilities:
         if value is None:
             return default
         try:
-            # Type narrowing: handle string and numeric types
             if isinstance(value, (str, int, float)):
                 return int(value)
             # For other objects, try str conversion first

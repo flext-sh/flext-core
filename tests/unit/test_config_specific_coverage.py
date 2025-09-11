@@ -40,7 +40,7 @@ class TestFlextConfigSpecificPaths:
             log_level="INFO",
             secret_key="super-secret",
             external_service_url="https://api.example.com",
-            _factory_mode=True
+            _factory_mode=True,
         )
 
         assert config.name == "test-service"
@@ -70,7 +70,13 @@ class TestFlextConfigSpecificPaths:
         # Access all properties to trigger coverage
         assert config.name is not None
         assert config.version is not None
-        assert config.environment in {"development", "production", "staging", "test", "local"}
+        assert config.environment in {
+            "development",
+            "production",
+            "staging",
+            "test",
+            "local",
+        }
         assert isinstance(config.debug, bool)
         assert isinstance(config.max_workers, int)
         assert isinstance(config.timeout_seconds, int)
@@ -92,7 +98,7 @@ class TestFlextConfigSpecificPaths:
             api_key="test",
             database_url="postgresql://test",
             message_queue_url="redis://localhost",
-            base_url="https://test.com"
+            base_url="https://test.com",
         )
         assert config.api_key == "test"
         assert config.database_url == "postgresql://test"
@@ -145,7 +151,7 @@ class TestFlextConfigFactorySpecificPaths:
             "FLEXT_DEBUG": "false",
             "FLEXT_MAX_WORKERS": "8",
             "FLEXT_API_KEY": "env-key",
-            "FLEXT_LOG_LEVEL": "WARNING"
+            "FLEXT_LOG_LEVEL": "WARNING",
         }
 
         with patch.dict(os.environ, test_env, clear=False):
@@ -154,7 +160,13 @@ class TestFlextConfigFactorySpecificPaths:
                 config = result.value
                 assert config.name == "env-service"
                 # Note: Environment might have default behavior, just verify it's set
-                assert config.environment in {"development", "production", "staging", "test", "local"}
+                assert config.environment in {
+                    "development",
+                    "production",
+                    "staging",
+                    "test",
+                    "local",
+                }
                 assert config.max_workers == 8
 
     def test_factory_create_from_dict(self) -> None:
@@ -166,7 +178,7 @@ class TestFlextConfigFactorySpecificPaths:
             "max_workers": 6,
             "timeout_seconds": 45,
             "api_key": "dict-key",
-            "log_level": "ERROR"
+            "log_level": "ERROR",
         }
 
         # Create config using factory pattern
@@ -184,7 +196,7 @@ class TestFlextConfigFactorySpecificPaths:
             debug=True,
             max_workers=2,
             timeout_seconds=120,
-            api_key="test-override-key"
+            api_key="test-override-key",
         )
 
         if result.is_success:
@@ -202,10 +214,12 @@ class TestFlextConfigFactorySpecificPaths:
             "environment": "development",
             "debug": True,
             "max_workers": 4,
-            "api_key": "json-key"
+            "api_key": "json-key",
         }
 
-        with tempfile.NamedTemporaryFile(encoding="utf-8", mode="w", suffix=".json", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            encoding="utf-8", mode="w", suffix=".json", delete=False
+        ) as f:
             json.dump(config_data, f)
             temp_path = f.name
 
@@ -244,7 +258,7 @@ class TestFlextConfigIntegrationPaths:
         env_vars = {
             "FLEXT_NAME": "env-override",
             "FLEXT_MAX_WORKERS": "12",
-            "FLEXT_PORT": "9000"
+            "FLEXT_PORT": "9000",
         }
 
         with patch.dict(os.environ, env_vars, clear=False):
@@ -260,10 +274,7 @@ class TestFlextConfigIntegrationPaths:
     def test_config_serialization_paths(self) -> None:
         """Test configuration serialization and representation."""
         config = FlextConfig(
-            name="serialize-test",
-            environment="production",
-            debug=False,
-            max_workers=8
+            name="serialize-test", environment="production", debug=False, max_workers=8
         )
 
         # Test string representation (triggers __str__ or __repr__)
@@ -286,7 +297,7 @@ class TestFlextConfigIntegrationPaths:
             debug=False,  # Should be False in production
             max_workers=4,  # Should be adequate for production
             timeout_seconds=30,  # Should be reasonable
-            api_key="prod-key"  # Should be present in production
+            api_key="prod-key",  # Should be present in production
         )
 
         # Verify the configuration is valid
@@ -300,7 +311,7 @@ class TestFlextConfigIntegrationPaths:
         config = FlextConfig(
             name="edge-test",
             max_workers=1,  # Minimum workers
-            timeout_seconds=1  # Minimum timeout
+            timeout_seconds=1,  # Minimum timeout
         )
         assert config.max_workers == 1
         assert config.timeout_seconds == 1
@@ -309,7 +320,7 @@ class TestFlextConfigIntegrationPaths:
         config = FlextConfig(
             name="edge-test-max",
             max_workers=100,  # High but valid
-            timeout_seconds=3600  # 1 hour timeout
+            timeout_seconds=3600,  # 1 hour timeout
         )
         assert config.max_workers == 100
         assert config.timeout_seconds == 3600

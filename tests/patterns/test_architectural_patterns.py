@@ -84,7 +84,7 @@ class TestCleanArchitecturePatterns:
                 if not isinstance(request, CreateUserCommand):
                     return FlextResult[object].fail("Invalid command type")
 
-                command = request  # Type narrowing for readability
+                command = request
 
                 # Create domain objects
                 try:
@@ -294,7 +294,7 @@ class TestCleanArchitecturePatterns:
                 if not isinstance(request, UpdateUserCommand):
                     return FlextResult[object].fail("Invalid command type")
 
-                command = request  # Type narrowing
+                command = request
 
                 # Simulate business logic
                 if not command.name.strip():
@@ -328,7 +328,7 @@ class TestCleanArchitecturePatterns:
                 if not isinstance(request, GetUserQuery):
                     return FlextResult[object].fail("Invalid query type")
 
-                query = request  # Type narrowing
+                query = request
 
                 # Simulate data retrieval
                 user_data: FlextTypes.Core.Dict = {
@@ -593,7 +593,6 @@ class TestEventDrivenPatterns:
     @pytest.mark.architecture
     def test_observer_pattern_implementation(self) -> None:
         """Test Observer pattern implementation."""
-        # Simple observer pattern test
         observers: list[FlextTypes.Core.Dict] = []
 
         def notify_all(state: str) -> None:

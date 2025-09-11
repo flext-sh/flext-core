@@ -516,7 +516,7 @@ test_observability_patterns()
 )
 def calculate_simple_tax(amount: float) -> float:
     """Legacy tax calculation (deprecated)."""
-    return amount * 0.08  # Simple 8% tax
+    return amount * 0.08
 
 # New implementation with enhanced features
 @FlextDecorators.Lifecycle.version("1.6.0")

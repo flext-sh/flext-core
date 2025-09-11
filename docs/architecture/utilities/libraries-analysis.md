@@ -535,7 +535,7 @@ def serialize_response(response_data):
 
 ```python
 def create_model_from_json(json_data, model_class):
-    # Type-safe model creation using FlextUtilities
+
     result = FlextUtilities.ProcessingUtils.parse_json_to_model(
         json_data, model_class
     )

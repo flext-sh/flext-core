@@ -23,7 +23,7 @@ The fundamental patterns that everything else builds upon:
 ├── result.py           # FlextResult[T] - Railway-oriented programming
 ├── container.py        # FlextContainer - Dependency injection
 ├── constants.py        # Core enums and constants
-├── typings.py          # Type system and utilities
+├── typings.py
 └── exceptions.py       # Exception hierarchy
 ```
 

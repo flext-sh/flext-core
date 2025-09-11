@@ -15,16 +15,12 @@ from collections.abc import (
 )
 from typing import Literal, ParamSpec, TypeVar
 
-# =============================================================================
-# FLEXT TYPE SYSTEM - Hierarchical organization following FLEXT patterns
-# =============================================================================
-
 
 class FlextTypes:
     """Hierarchical type system for FLEXT types."""
 
     # =========================================================================
-    # TYPE VARIABLES - Generic programming foundation
+
     # =========================================================================
 
     class TypeVars:
@@ -77,7 +73,6 @@ class FlextTypes:
         type ParameterDict = dict[str, object]
         type AttributeDict = dict[str, object]
 
-        # Type unions for flexible data
         type ConfigValue = (
             str | int | float | bool | None | list[object] | dict[str, object]
         )
@@ -301,10 +296,6 @@ class FlextTypes:
         type ResultValue = object
 
 
-# =============================================================================
-# TYPE VARIABLES
-# =============================================================================
-
 # Generic type variables
 
 T = TypeVar("T")  # Generic type
@@ -316,9 +307,6 @@ F = TypeVar("F")  # Generic function type
 K = TypeVar("K")  # Generic key type
 P = ParamSpec("P")  # Parameter specification
 
-# =============================================================================
-# EXPORTS - Hierarchical types only
-# =============================================================================
 
 # Convenience top-level aliases for common types used in tests/examples
 type ConfigDict = FlextTypes.Config.ConfigDict

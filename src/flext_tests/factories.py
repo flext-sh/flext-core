@@ -64,6 +64,48 @@ class FlextTestsFactories:
             lambda: {"department": "engineering", "level": "senior", "team": "backend"}
         )
 
+        @classmethod
+        def batch(cls, count: int = 10, **kwargs: object) -> list[dict[str, object]]:
+            """Ultra-simple alias for test compatibility - create batch of users as dicts."""
+            users = cls.create_batch(count, **kwargs)
+            return [cls._ensure_dict(user) for user in users]
+
+        @classmethod
+        def create(cls, **kwargs: object) -> dict[str, object]:
+            """Ultra-simple alias for test compatibility - create single user as dict."""
+            user = super().create(**kwargs)
+            return cls._ensure_dict(user)
+
+        @classmethod
+        def create_object(cls, **kwargs: object) -> object:
+            """Create single user as object (TestUser) for tests that need attribute access."""
+            return super().create(**kwargs)
+
+        @staticmethod
+        def _ensure_dict(user: object) -> dict[str, object]:
+            """Ensure user data is in dictionary format, handling both dict and TestUser objects."""
+            if isinstance(user, dict):
+                # Already a dict - ensure correct keys
+                return {
+                    "id": user.get("id", ""),
+                    "name": user.get("name", ""),
+                    "email": user.get("email", ""),
+                    "age": user.get("age", 0),
+                    "active": user.get("active", user.get("is_active", True)),
+                    "created_at": user.get("created_at", ""),
+                }
+            # TestUser object - convert to dict
+            return {
+                "id": getattr(user, "id", ""),
+                "name": getattr(user, "name", ""),
+                "email": getattr(user, "email", ""),
+                "age": getattr(user, "age", 0),
+                "active": getattr(user, "is_active", True),
+                "created_at": getattr(user, "created_at", "").isoformat()
+                if hasattr(getattr(user, "created_at", ""), "isoformat")
+                else str(getattr(user, "created_at", "")),
+            }
+
     class AdminUserFactory(factory.Factory[FlextTestsDomains.TestUser]):
         """Factory for admin users."""
 
@@ -81,6 +123,11 @@ class FlextTestsFactories:
         metadata = LazyFunction(
             lambda: {"department": "admin", "level": "admin", "permissions": "all"},
         )
+
+        @classmethod
+        def create_object(cls, **kwargs: object) -> object:
+            """Create single admin as object (TestUser) for tests that need attribute access."""
+            return super().create(**kwargs)
 
     class InactiveUserFactory(factory.Factory[FlextTestsDomains.TestUser]):
         """Factory for inactive users."""

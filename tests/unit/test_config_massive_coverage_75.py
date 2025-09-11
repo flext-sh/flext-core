@@ -92,8 +92,8 @@ class TestConfigMassiveCoverage75Plus:
                 pass
 
     def test_environment_adapter_comprehensive(self) -> None:
-        """Test FlextConfig.EnvironmentAdapter methods (lines 144-145)."""
-        adapter = FlextConfig.EnvironmentAdapter()
+        """Test FlextConfig.DefaultEnvironmentAdapter methods (lines 144-145)."""
+        adapter = FlextConfig.DefaultEnvironmentAdapter()
 
         # Test environment variable retrieval (lines 144-145)
         env_var_tests = [

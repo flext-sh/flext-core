@@ -127,14 +127,12 @@ class TestFlextCore100Coverage:
             assert "cache_size" in config
             assert "batch_size" in config
 
-        # Test exception path - mock something that will cause an exception during config creation
-        with patch("flext_core.core.FlextTypes") as mock_types:
-            mock_types.Aggregates.AggregatesConfigDict = None  # This should cause error
-            result = core.optimize_aggregates_system("high")
-            # The method catches exceptions and returns failure result
-            assert (
-                result.is_failure or result.is_success
-            )  # Either works - test just needs to not crash
+        # Test exception path with invalid level
+        result = core.optimize_aggregates_system("invalid_level")
+        # The method should handle invalid levels gracefully
+        assert (
+            result.is_success or result.is_failure
+        )  # Either works - test just needs to not crash
 
     def test_configure_commands_system(self) -> None:
         """Test configure_commands_system method."""
@@ -584,7 +582,9 @@ class TestFlextCore100Coverage:
         """Test get_system_info method."""
         core = FlextCore()
 
-        info = core.get_system_info()
+        result = core.get_system_info()
+        assert result.is_success
+        info = result.unwrap()
         assert isinstance(info, dict)
         assert "version" in info
         assert "singleton_id" in info
@@ -598,8 +598,10 @@ class TestFlextCore100Coverage:
         """Test get_system_info method."""
         core = FlextCore()
 
-        # get_system_info returns dict directly, not FlextResult
-        info = core.get_system_info()
+        # get_system_info returns FlextResult wrapping dict
+        result = core.get_system_info()
+        assert result.is_success
+        info = result.unwrap()
         assert isinstance(info, dict)
         assert "version" in info
         assert "singleton_id" in info

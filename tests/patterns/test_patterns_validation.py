@@ -13,10 +13,6 @@ import pytest
 from flext_core import FlextResult, FlextValidations
 from flext_core.typings import FlextTypes
 
-# =============================================================================
-# TEST VALIDATION UTILITIES
-# =============================================================================
-
 
 class TestFlextValidations:
     """Test FlextValidation functionality."""
@@ -178,11 +174,6 @@ class TestFlextValidations:
         assert string_result.success is True
 
 
-# =============================================================================
-# TEST FLEXT RESULT FOR VALIDATION
-# =============================================================================
-
-
 class TestFlextResultValidation:
     """Test FlextResult usage for validation scenarios."""
 
@@ -242,11 +233,6 @@ class TestFlextResultValidation:
         assert result.error is not None
         if "format" not in (result.error or ""):
             raise AssertionError(f"Expected 'format' in {result.error}")
-
-
-# =============================================================================
-# INTEGRATION TESTS
-# =============================================================================
 
 
 class TestValidationIntegration:

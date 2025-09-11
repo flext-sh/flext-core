@@ -231,7 +231,7 @@ __all__ = ["Component1", "Component2"]
 src/flext_core/
 ├── __init__.py              # Public API exports
 ├── __version__.py           # Version information
-├── py.typed                 # Type hint marker
+├── py.typed
 │
 ├── # Core Patterns
 ├── result.py                # FlextResult pattern
@@ -260,7 +260,7 @@ src/flext_core/
 ├── interfaces.py            # Interfaces
 │
 └── # Supporting
-    ├── typings.py           # Type definitions
+    ├── typings.py
     ├── constants.py         # Constants
     ├── models.py            # Models
     └── testing_utilities.py # Test helpers

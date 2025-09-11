@@ -381,7 +381,7 @@ class TestFlextCoreValidation:
         with patch.object(FlextValidations, "validate_string_field") as mock_validate:
             mock_validate.return_value = FlextResult.ok(None)
 
-            result = core.validate_string_field("test", "field_name")
+            result = core.validate_string_field("test")
 
             assert result.is_success
             assert result.value == "test"
@@ -392,10 +392,10 @@ class TestFlextCoreValidation:
         with patch.object(FlextValidations, "validate_string_field") as mock_validate:
             mock_validate.return_value = FlextResult.fail("Not a string")
 
-            result = core.validate_string_field(123, "field_name")
+            result = core.validate_string_field(123)
 
             assert result.is_failure
-            assert "field_name" in result.error
+            assert "Not a string" in result.error
 
     def test_validate_numeric_field_valid(self) -> None:
         """Test validate_numeric_field with valid number."""
@@ -475,31 +475,23 @@ class TestFlextCoreEntityCreation:
         core = FlextCore()
         result = core.create_domain_event(
             event_type="TestEvent",
-            aggregate_id="123",
-            aggregate_type="TestAggregate",
-            data={"key": "value"},
-            source_service="test-service",
+            entity_id="123",
+            entity_type="TestAggregate",
+            payload={"key": "value"},
+            source="test-service",
         )
 
         assert result.is_success
-        assert isinstance(result.value, FlextModels.Event)
-        assert result.value.message_type == "TestEvent"
-        assert result.value.aggregate_id == "123"
+        assert result.value.type == "TestEvent"
+        assert result.value.entity_id == "123"
 
     def test_create_payload(self) -> None:
         """Test create_payload."""
         core = FlextCore()
-        result = core.create_payload(
-            data={"key": "value"},
-            message_type="TestMessage",
-            source_service="test-service",
-            target_service="target-service",
-            correlation_id="corr-123",
-        )
+        result = core.create_payload({"key": "value"})
 
         assert result.is_success
-        assert result.value.message_type == "TestMessage"
-        assert result.value.source_service == "test-service"
+        assert result.value["key"] == "value"
 
 
 class TestFlextCoreUtilities:

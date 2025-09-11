@@ -330,7 +330,7 @@ class TestHandlersConfigurationIntegration:
             prod_config["validation_level"]
             == FlextConstants.Config.ValidationLevel.STRICT.value
         )
-        # Type-safe assertions for config values
+
         timeout_value = prod_config["timeout"]
         assert isinstance(timeout_value, (int, str))
         assert int(timeout_value) >= 30000  # Production should have reasonable timeout

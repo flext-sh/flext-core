@@ -28,10 +28,6 @@ from flext_core import (
     FlextValidations,
 )
 
-# =============================================================================
-# UNIFIED RAILWAY SERVICE - Single class using FlextCore DIRECTLY
-# =============================================================================
-
 
 class ProfessionalRailwayService(
     FlextDomainService["ProfessionalRailwayService.RegistrationResult"]
@@ -50,7 +46,7 @@ class ProfessionalRailwayService(
         super().__init__()
         self._validator = FlextValidations.create_user_validator()
         self._container = FlextContainer.get_global()
-        # Simple alias for test compatibility
+
         self._utilities = FlextUtilities()
 
     class _ValidationHelper:
@@ -62,7 +58,7 @@ class ProfessionalRailwayService(
         ) -> FlextResult[None]:
             """Validate user data using FlextValidations."""
             if hasattr(validator, "validate_business_rules"):
-                result = validator.validate_business_rules(data)  # type: ignore[attr-defined]
+                result = validator.validate_business_rules(data)
                 if result.is_failure:
                     return FlextResult[None].fail(
                         FlextConstants.Errors.VALIDATION_ERROR

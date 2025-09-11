@@ -43,10 +43,6 @@ T3 = TypeVar("T3")  # Third type variable for multi-arg functions
 # FLEXT RESULT - Simple and efficient implementation
 # Uses existing flext-core utilities instead of duplicating functionality
 
-# =============================================================================
-# FLEXT RESULT - Advanced implementation with optimizations
-# =============================================================================
-
 
 class FlextResult[T_co]:
     """Advanced Result type with Railway-oriented Programming and Python 3.13+ features.
@@ -64,7 +60,7 @@ class FlextResult[T_co]:
     # Removed performance optimization duplications - use FlextUtilities instead
 
     # Python 3.13+ discriminated union architecture.
-    # Type discriminant based on success/failure state.
+
     __match_args__ = ("_data", "_error")
 
     # Overloaded constructor for proper type discrimination.
@@ -246,7 +242,6 @@ class FlextResult[T_co]:
     def map(self, func: Callable[[T_co], U]) -> FlextResult[U]:
         """Transform success value with function."""
         if self.is_failure:
-            # Type-safe error propagation - ensure error is not None
             error_msg = self._error or "Map operation failed"
             new_result: FlextResult[U] = FlextResult(
                 error=error_msg,
@@ -258,7 +253,7 @@ class FlextResult[T_co]:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
             data = self._ensure_success_data()
-            result = func(data)  # Type narrowing: data is T_co here
+            result = func(data)
             return FlextResult[U](data=result)
         except (ValueError, TypeError, AttributeError) as e:
             # Handle specific transformation exceptions
@@ -278,7 +273,6 @@ class FlextResult[T_co]:
     def flat_map(self, func: Callable[[T_co], FlextResult[U]]) -> FlextResult[U]:
         """Chain operations returning FlextResult."""
         if self.is_failure:
-            # Type-safe error propagation - ensure error is not None
             error_msg = self._error or "Flat map operation failed"
             new_result: FlextResult[U] = FlextResult(
                 error=error_msg,
@@ -342,7 +336,7 @@ class FlextResult[T_co]:
         if self.is_failure:
             error_msg = self._error or "Context manager failed"
             raise RuntimeError(error_msg)
-        # Type narrowing: for success results, _data must be T_co
+
         if self._data is None:
             msg = "Success result has None data - this should not happen"
             raise RuntimeError(msg)
@@ -382,10 +376,10 @@ class FlextResult[T_co]:
         """Check equality with another result using Python 3.13+ type narrowing."""
         if not isinstance(other, FlextResult):
             return False
-        # Type narrowing: after isinstance check, other is FlextResult
+
         # Cast other to FlextResult[object] to help type checker
         other_result = cast("FlextResult[object]", other)
-        # Type-safe comparison - use try/except to handle comparison
+
         try:
             # Cast to help type checker with comparison
             self_data = cast("object", self._data)
@@ -463,8 +457,6 @@ class FlextResult[T_co]:
     def unwrap_or(self, default: T_co) -> T_co:
         """Return value or default if failed."""
         if self.is_success:
-            # Type narrowing: success case guarantees _data is T_co (including None if T_co allows it)
-            # Type cast required for static analyzers that don'T_co support discriminated unions
             return cast("T_co", self._data)
         return default
 
@@ -527,7 +519,7 @@ class FlextResult[T_co]:
             if self._data is None:
                 msg = "Success result has None data - this should not happen"
                 raise RuntimeError(msg)
-            if predicate(self._data):  # Type narrowing: _data is T_co here
+            if predicate(self._data):
                 return self
             return FlextResult[T_co].fail(error_msg)
         except (TypeError, ValueError, AttributeError) as e:
@@ -821,7 +813,6 @@ class FlextResult[T_co]:
             """Factory for FlextResult[dict[str, object]]."""
             return FlextResult[dict[str, object]]
 
-        # Types for compatibility
         type Success = object  # Generic success type without FlextResult dependency
 
 

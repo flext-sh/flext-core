@@ -100,7 +100,6 @@ class TestFlextResultComprehensive:
 
     def test_failure_result_creation_comprehensive(self) -> None:
         """Test failure result creation with all parameters."""
-        # Simple failure
         simple_fail = FlextResult[str].fail("Operation failed")
         assert simple_fail.is_failure
         assert simple_fail.error == "Operation failed"

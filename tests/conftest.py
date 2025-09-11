@@ -20,6 +20,7 @@ import pytest
 
 from flext_core import FlextContainer, FlextCore
 from flext_core.typings import FlextTypes
+from flext_tests import FlextTestsAsyncs
 
 
 # Core Fixtures
@@ -287,10 +288,12 @@ def _isolate_flext_core_state() -> None:
 #     """Use FlextTestsMatchers directly."""
 #     return FlextTestsMatchers()
 #
-# @pytest.fixture
-# COMMENTED OUT: # def async_test_utils() -> FlextTestsMatchers:
-#     """Use FlextTestsMatchers directly."""
-#     return FlextTestsMatchers()
+@pytest.fixture
+def async_test_utils() -> FlextTestsAsyncs:
+    """Provide async test utilities."""
+    return FlextTestsAsyncs()
+
+
 #
 # @pytest.fixture
 # COMMENTED OUT: # def test_builders() -> FlextTestsMatchers:
@@ -310,11 +313,6 @@ def setup_test_environment() -> None:
     # object global test setup can go here
     return
     # object global test teardown can go here
-
-
-# =============================================================================
-# FUNCTIONAL TESTING FIXTURES - Real implementations without mocks
-# =============================================================================
 
 
 # COMMENTED OUT: Use FlextTestsMatchers directly
@@ -346,11 +344,6 @@ def setup_test_environment() -> None:
 # def real_services() -> FlextTestsMatchers:
 #     """Use FlextTestsMatchers directly."""
 #     return FlextTestsMatchers()
-
-
-# =============================================================================
-# PYTEST CONFIGURATION
-# =============================================================================
 
 
 # Mark configuration
