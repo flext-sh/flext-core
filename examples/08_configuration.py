@@ -13,17 +13,18 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
+
 import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 from typing import cast
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from flext_core import FlextConfig, FlextResult
 
+from flext_core import FlextConfig, FlextResult, FlextTypes
 
 # Example security keys for demonstration purposes only - NOT FOR PRODUCTION
 _DEMO_SECRET_KEY_1 = os.getenv(

@@ -1,7 +1,7 @@
 """Advanced test factories using factory_boy for consistent test data generation.
 
 Provides factory_boy-based factories for creating test objects with proper
-relationships, sequences, and customization following SOLID principles.
+relationships, sequences, and customization
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

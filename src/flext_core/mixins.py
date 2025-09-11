@@ -920,6 +920,7 @@ class FlextMixins:
         """Timestampable mixin class."""
 
         def __init__(self) -> None:
+            """Initialize timestampable mixin."""
             FlextMixins.create_timestamp_fields(self)
 
         def touch(self) -> None:
@@ -969,6 +970,7 @@ class FlextMixins:
         """Identifiable mixin class."""
 
         def __init__(self) -> None:
+            """Initialize identifiable mixin."""
             FlextMixins.ensure_id(self)
 
         def ensure_id(self) -> str:
@@ -1033,6 +1035,7 @@ class FlextMixins:
         """Validatable mixin class."""
 
         def __init__(self) -> None:
+            """Initialize ValidatableMixin."""
             FlextMixins.initialize_validation(self)
 
         def is_valid(self) -> bool:
@@ -1069,6 +1072,7 @@ class FlextMixins:
         """Stateful mixin class."""
 
         def __init__(self) -> None:
+            """Initialize stateful mixin."""
             FlextMixins.initialize_state(self)
 
         def set_state(self, state: str) -> None:
@@ -1092,8 +1096,7 @@ class FlextMixins:
             """Set current state."""
             self.set_state(value)
 
-        @property
-        def state_history(self) -> FlextTypes.Core.StringList:
+        def get_state_history(self) -> list[str]:
             """Get state history."""
             return FlextMixins.get_state_history(self)
 
@@ -1108,7 +1111,7 @@ class FlextMixins:
             """Set cached value."""
             FlextMixins.set_cached_value(self, key, value)
 
-        def get_cached_value(self, key: str) -> object:
+        def get_cached_value_by_key(self, key: str) -> object:
             """Get cached value (alias for compatibility)."""
             return FlextMixins.get_cached_value(self, key)
 
@@ -1139,7 +1142,7 @@ class FlextMixins:
             """Stop timing."""
             return FlextMixins.stop_timing(self)
 
-        def get_last_elapsed_time(self) -> float:
+        def get_last_elapsed_time(self) -> object:
             """Get last elapsed time."""
             return FlextMixins.get_last_elapsed_time(self)
 
@@ -1147,7 +1150,7 @@ class FlextMixins:
             """Clear timing history."""
             FlextMixins.clear_timing_history(self)
 
-        def get_average_elapsed_time(self) -> float:
+        def get_average_elapsed_time(self) -> object:
             """Get average elapsed time."""
             return FlextMixins.get_average_elapsed_time(self)
 
@@ -1156,6 +1159,7 @@ class FlextMixins:
         """Service composite mixin."""
 
         def __init__(self) -> None:
+            """Initialize service mixin."""
             super().__init__()
 
     class Entity(
@@ -1171,6 +1175,7 @@ class FlextMixins:
         """Complete entity mixin with all behaviors."""
 
         def __init__(self) -> None:
+            """Initialize entity mixin."""
             super().__init__()
 
     # Configuration methods required by core.py

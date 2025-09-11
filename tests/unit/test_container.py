@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
 import gc
 import threading
 import time
@@ -370,12 +371,12 @@ class TestFlextContainerAdvanced:
         ]
 
         async def register_service(name: str, service: object) -> FlextResult[None]:
-            await FlextTestsAsyncs.simulate_delay(0.001)
+            await asyncio.sleep(0.001)
             return container.register(name, service)
 
         # Test concurrent registrations
         tasks = list(starmap(register_service, services_to_register))
-        results = await FlextTestsAsyncs.run_concurrently(*tasks)
+        results = await FlextTestsAsyncs.run_concurrently(tasks)
 
         # All registrations should succeed
         for result in results:
@@ -385,11 +386,11 @@ class TestFlextContainerAdvanced:
 
         # Test concurrent retrievals
         async def get_service(name: str) -> FlextResult[object]:
-            await FlextTestsAsyncs.simulate_delay(0.001)
+            await asyncio.sleep(0.001)
             return container.get(name)
 
         get_tasks = [get_service(name) for name, _ in services_to_register]
-        get_results = await FlextTestsAsyncs.run_concurrently(*get_tasks)
+        get_results = await asyncio.gather(*get_tasks)
 
         for get_result in get_results:
             FlextTestsMatchers.assert_result_success(get_result)

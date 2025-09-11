@@ -41,6 +41,7 @@ class FlextTestsPerformance:
         """Analyze algorithmic complexity and performance characteristics."""
 
         def __init__(self) -> None:
+            """Initialize complexityanalyzer:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
 
         def measure_complexity(
@@ -126,6 +127,7 @@ class FlextTestsPerformance:
         """Run stress tests with configurable load patterns."""
 
         def __init__(self) -> None:
+            """Initialize stresstestrunner:."""
             self.results: list[FlextTypes.Core.Dict] = []
 
         def run_load_test(
@@ -213,6 +215,7 @@ class FlextTestsPerformance:
         """Advanced performance profiling with memory and time tracking."""
 
         def __init__(self) -> None:
+            """Initialize performanceprofiler:."""
             self.measurements: list[FlextTypes.Core.Dict] = []
 
         @contextmanager
@@ -425,6 +428,7 @@ class FlextTestsPerformance:
             for thread_count in thread_counts:
 
                 def parallel_execution(workers: int = thread_count) -> list[T]:
+                    """parallel_execution method."""
                     with concurrent.futures.ThreadPoolExecutor(
                         max_workers=workers,
                     ) as executor:
@@ -557,6 +561,7 @@ class FlextTestsPerformance:
                 async def concurrent_execution(
                     workers: int = concurrency,
                 ) -> FlextTypes.Core.List:
+                    """concurrent_execution method."""
                     tasks = [func(*args, **kwargs) for _ in range(workers)]
                     return await asyncio.gather(*tasks)
 

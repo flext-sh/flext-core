@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flext_core import FlextCommands, FlextResult
 
@@ -318,7 +318,7 @@ class TestFlextCommandsFinalPush:
                                     "user_id": "user123",
                                     "action": "create_profile",
                                 },
-                                "timestamp": datetime.now(),
+                                "timestamp": datetime.now(UTC),
                             },
                             {
                                 "command_id": str(uuid.uuid4()),
@@ -513,7 +513,7 @@ class TestFlextCommandsFinalPush:
                                     "message": "Command executed successfully"
                                 },
                                 "execution_time": 0.123,
-                                "timestamp": datetime.now(),
+                                "timestamp": datetime.now(UTC),
                             },
                             {
                                 "command_id": str(uuid.uuid4()),
@@ -521,12 +521,12 @@ class TestFlextCommandsFinalPush:
                                 "error_message": "Command execution failed",
                                 "error_code": "CMD_ERROR_001",
                                 "retry_count": 2,
-                                "timestamp": datetime.now(),
+                                "timestamp": datetime.now(UTC),
                             },
                             {
                                 "command_id": str(uuid.uuid4()),
                                 "status": "pending",
-                                "queued_at": datetime.now(),
+                                "queued_at": datetime.now(UTC),
                             },
                             "invalid_result",
                             {"incomplete": "result_data"},

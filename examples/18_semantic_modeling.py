@@ -181,6 +181,7 @@ class FlextPipelineService:
     """Pipeline service using unified patterns."""
 
     def __init__(self) -> None:
+        """Initialize pipeline service with empty pipeline registry."""
         self._pipelines: dict[str, FlextDataPipeline] = {}
 
     def create_pipeline(

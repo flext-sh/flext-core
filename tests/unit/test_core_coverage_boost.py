@@ -15,7 +15,6 @@ from typing import cast
 from flext_core import FlextCore
 from flext_core.typings import FlextTypes
 from flext_tests import (
-    FlextTestsAsyncs,
     FlextTestsMatchers,
 )
 
@@ -95,7 +94,6 @@ class TestFlextCoreCoverageBoost:
     def test_core_async_operations_with_utils(self) -> None:
         """Test async-related operations using FlextTestsAsyncs."""
         # Use FlextTestsAsyncs for async testing patterns
-        FlextTestsAsyncs.AsyncTestUtils()
 
         # Test that core can be used in async contexts
         core = FlextCore.get_instance()

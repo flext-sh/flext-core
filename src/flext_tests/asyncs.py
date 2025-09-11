@@ -13,7 +13,7 @@ import asyncio
 import inspect
 import random
 import time
-from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from typing import Protocol, TypeGuard, TypeVar
 
@@ -26,6 +26,12 @@ logger = FlextLogger(__name__)
 T = TypeVar("T")
 
 
+class AsyncMockProtocol(Protocol):
+    """Protocol for async mock functions."""
+
+    async def __call__(self, *args: object, **kwargs: object) -> object: ...
+
+
 class FlextTestsAsyncs:
     """Unified async testing utilities for FLEXT ecosystem.
 
@@ -34,21 +40,15 @@ class FlextTestsAsyncs:
     """
 
     @staticmethod
-    def _is_not_exception(value: T | BaseException) -> TypeGuard[T]:
-        """Type guard to filter out BaseException instances."""
-        return not isinstance(value, BaseException)
-
-    class AsyncMockProtocol(Protocol):
-        """Protocol for async mock functions."""
-
-        async def __call__(self, *args: object, **kwargs: object) -> object: ...
+    def _is_not_exception(obj: object) -> TypeGuard[T]:
+        """Type guard to check if object is not an exception."""
+        return not isinstance(obj, Exception)
 
     # === Core Async Testing Utilities ===
 
     @staticmethod
     async def wait_for_condition(
         condition: Callable[[], bool | Awaitable[bool]],
-        *,
         timeout_seconds: float = 5.0,
         poll_interval: float = 0.1,
         error_message: str = "Condition not met within timeout",
@@ -77,13 +77,13 @@ class FlextTestsAsyncs:
     @staticmethod
     async def run_with_timeout(
         coro: Awaitable[T],
-        *,
         timeout_seconds: float = 5.0,
     ) -> T:
         """Run coroutine with timeout, with light retry if callable is discoverable."""
         start = time.time()
 
         async def attempt_once() -> T:
+            """attempt_once method."""
             return await asyncio.wait_for(
                 coro, timeout=max(0.0, timeout_seconds - (time.time() - start))
             )
@@ -139,7 +139,8 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def run_concurrently(
-        *coroutines: Awaitable[T],
+        coroutines: list[Awaitable[T]],
+        *,
         return_exceptions: bool = False,
     ) -> list[T]:
         """Run multiple coroutines concurrently."""
@@ -158,29 +159,12 @@ class FlextTestsAsyncs:
         return await asyncio.gather(*coroutines, return_exceptions=False)
 
     @staticmethod
-    async def run_concurrent(
-        coroutines: list[Awaitable[T]],
-        *,
-        return_exceptions: bool = False,
-    ) -> list[T]:
-        """Run coroutines from a list concurrently."""
-        return await FlextTestsAsyncs.run_concurrently(
-            *coroutines,
-            return_exceptions=return_exceptions,
-        )
-
-    @staticmethod
-    async def sleep_with_timeout(duration: float) -> None:
+    async def run_concurrent(duration: float) -> None:
         """Sleep for specified duration (alias for asyncio.sleep)."""
         await asyncio.sleep(duration)
 
     @staticmethod
-    async def simulate_delay(duration: float) -> None:
-        """Simulate delay for testing purposes (alias for asyncio.sleep)."""
-        await asyncio.sleep(duration)
-
-    @staticmethod
-    async def run_concurrent_tasks(
+    async def simulate_delay(
         tasks: list[Awaitable[T]],
         *,
         return_exceptions: bool = False,
@@ -229,11 +213,12 @@ class FlextTestsAsyncs:
 
     @staticmethod
     @asynccontextmanager
-    async def async_timer(duration: float = 5.0) -> AsyncGenerator[None]:
+    async def async_timer(duration: float) -> AsyncGenerator[None]:
         """Async context manager with timeout."""
         start_time = time.time()
 
         async def check_timeout() -> None:
+            """check_timeout method."""
             while True:
                 if time.time() - start_time > duration:
                     msg = f"Operation exceeded timeout of {duration} seconds"
@@ -273,6 +258,7 @@ class FlextTestsAsyncs:
         if not asyncio.iscoroutine(awaitable):
 
             async def _wrapper() -> None:
+                """_wrapper method."""
                 return await awaitable
 
             coro = _wrapper()
@@ -291,7 +277,6 @@ class FlextTestsAsyncs:
     @asynccontextmanager
     async def async_event_waiter(
         event: asyncio.Event,
-        *,
         wait_duration: float = 5.0,
     ) -> AsyncGenerator[None]:
         """Wait for event with timeout."""
@@ -305,7 +290,6 @@ class FlextTestsAsyncs:
     @staticmethod
     @asynccontextmanager
     async def create_test_context(
-        *,
         setup_coro: Awaitable[T],
         teardown_func: Callable[[T], Awaitable[None]],
     ) -> AsyncGenerator[T]:
@@ -342,25 +326,26 @@ class FlextTestsAsyncs:
 
     @staticmethod
     def create_async_mock(
-        return_value: object = None,
+        return_value: object | None = None,
         side_effect: Exception | None = None,
     ) -> AsyncMockProtocol:
-        """Create async mock function."""
+        """async_mock method."""
 
         async def async_mock(*_args: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
 
+        # Return the async function directly as it's compatible with AsyncMockProtocol
         return async_mock
 
     @staticmethod
     def create_delayed_async_mock(
-        return_value: object = None,
-        delay: float = 0.1,
+        delay: float,
+        return_value: object | None = None,
         side_effect: Exception | None = None,
     ) -> AsyncMockProtocol:
-        """Create async mock with delay before returning/raising."""
+        """delayed_async_mock method."""
 
         async def delayed_async_mock(*_args: object) -> object:
             await asyncio.sleep(delay)
@@ -388,6 +373,7 @@ class FlextTestsAsyncs:
             result_value = success_value if success_value is not None else return_value
 
             async def flaky_count_mock(*_args: object) -> object:
+                """flaky_count_mock method."""
                 nonlocal remaining
                 if remaining > 0:
                     remaining -= 1
@@ -400,6 +386,7 @@ class FlextTestsAsyncs:
         rate = 0.3 if failure_rate is None else float(failure_rate)
 
         async def flaky_random_mock(*_args: object) -> object:
+            """flaky_random_mock method."""
             if random.random() < rate:
                 raise exception or RuntimeError("flaky failure")
             return return_value
@@ -408,8 +395,8 @@ class FlextTestsAsyncs:
 
     @staticmethod
     def create_async_mock_with_side_effect(
-        return_value: object = None,
         side_effect: object | None = None,
+        return_value: object | None = None,
     ) -> AsyncMockProtocol:
         """Create async mock with extended side_effect semantics."""
         # Normalize list-like side effects
@@ -418,6 +405,7 @@ class FlextTestsAsyncs:
             sequence = list(side_effect)
 
         async def async_mock(*args: object, **kwargs: object) -> object:
+            """async_mock method."""
             nonlocal sequence
             if sequence is not None:
                 if not sequence:
@@ -460,19 +448,18 @@ class FlextTestsAsyncs:
 
         # This would typically create an async HTTP client or similar
         class AsyncTestClient:
-            async def get(self, url: str) -> FlextTypes.Core.Dict:
+            async def get(self, url: str) -> dict[str, object]:
+                """Get method."""
                 await asyncio.sleep(0.01)  # Simulate network delay
                 return {"url": url, "status": 200}
 
-            async def post(
-                self,
-                url: str,
-                data: FlextTypes.Core.Dict,
-            ) -> FlextTypes.Core.Dict:
+            async def post(self, url: str, data: object) -> dict[str, object]:
+                """Post method."""
                 await asyncio.sleep(0.01)
                 return {"url": url, "data": data, "status": 201}
 
             async def close(self) -> None:
+                """Close method."""
                 await asyncio.sleep(0.01)
 
         client = AsyncTestClient()
@@ -496,9 +483,9 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def run_parallel_tasks(
-        task_func: Callable[[object], Awaitable[object]],
-        inputs: FlextTypes.Core.List,
-    ) -> FlextTypes.Core.List:
+        inputs: list[T],
+        task_func: Callable[[T], Awaitable[object]],
+    ) -> list[object]:
         """Run the given async task function over inputs in parallel and collect results."""
         if not inputs:
             return []
@@ -523,19 +510,31 @@ class FlextTestsAsyncs:
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
 
-                async def _wrapper1(result: object = awaitable1) -> object:
-                    return result
+                def _make_wrapper1(
+                    aw: Awaitable[object],
+                ) -> Callable[[], Awaitable[object]]:
+                    async def _wrapper1() -> object:
+                        """_wrapper1 method."""
+                        return await aw
 
-                coro1 = _wrapper1()
+                    return _wrapper1
+
+                coro1 = _make_wrapper1(awaitable1)()
             else:
                 coro1 = awaitable1
 
             if not asyncio.iscoroutine(awaitable2):
 
-                async def _wrapper2(result: object = awaitable2) -> object:
-                    return result
+                def _make_wrapper2(
+                    aw: Awaitable[object],
+                ) -> Callable[[], Awaitable[object]]:
+                    async def _wrapper2() -> object:
+                        """_wrapper2 method."""
+                        return await aw
 
-                coro2 = _wrapper2()
+                    return _wrapper2
+
+                coro2 = _make_wrapper2(awaitable2)()
             else:
                 coro2 = awaitable2
 
@@ -570,12 +569,13 @@ class FlextTestsAsyncs:
     @staticmethod
     async def test_concurrent_access(
         func: Callable[[], Awaitable[object]],
-        concurrency_level: int = 10,
+        concurrency_level: int = 5,
         iterations_per_worker: int = 10,
     ) -> FlextTypes.Core.Dict:
         """Test concurrent access to a resource."""
 
         async def worker() -> list[FlextTypes.Core.Dict]:
+            """Worker method."""
             results: list[FlextTypes.Core.Dict] = []
             for _ in range(iterations_per_worker):
                 try:
@@ -608,7 +608,7 @@ class FlextTestsAsyncs:
     @staticmethod
     async def test_deadlock_detection(
         operations: list[Callable[[], Awaitable[object]]],
-        deadline: float = 5.0,
+        deadline: float = 10.0,
     ) -> FlextTypes.Core.Dict:
         """Test for potential deadlocks in async operations."""
         start_time = time.time()
@@ -639,10 +639,9 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def test_race_condition_simple(
-        func: Callable[[], Coroutine[object, object, object]],
-        *,
-        concurrent_count: int = 2,
-    ) -> FlextTypes.Core.List:
+        func: Callable[[], Awaitable[object]],
+        concurrent_count: int = 5,
+    ) -> list[object]:
         """Run the same async function concurrently and return results."""
         tasks: list[asyncio.Task[object]] = [
             asyncio.create_task(func()) for _ in range(concurrent_count)
@@ -652,10 +651,9 @@ class FlextTestsAsyncs:
 
     @staticmethod
     async def measure_concurrency_performance(
-        func: Callable[[], Awaitable[object]],
-        *,
-        iterations: int = 10,
-    ) -> dict[str, float]:
+        func: Callable[[], Awaitable[None]],
+        iterations: int = 100,
+    ) -> FlextTypes.Core.Dict:
         """Measure total time, average time and throughput for repeated async calls."""
         start_total = time.time()
         durations: list[float] = []
@@ -679,74 +677,15 @@ class FlextTestsAsyncs:
     race_condition = pytest.mark.race_condition
 
     @staticmethod
-    def async_timeout(seconds: float) -> object:
+    def async_timeout(seconds: float) -> pytest.MarkDecorator:
         """Mark async test with specific timeout."""
         return pytest.mark.timeout(seconds)
 
     @staticmethod
-    def async_slow() -> object:
-        """Mark async test as slow."""
+    def async_slow() -> pytest.MarkDecorator:
+        """Ultra-simple alias for test compatibility."""
         return pytest.mark.slow
 
-    class AsyncTestUtils:
-        """Ultra-simple alias for test compatibility."""
-
-        def __init__(self) -> None:
-            """Ultra-simple alias for test compatibility."""
-
-
-# === REMOVED COMPATIBILITY ALIASES AND FACADES ===
-# Legacy compatibility removed as per user request
-# All compatibility facades, aliases and protocol facades have been commented out
-# Only FlextTestsAsyncs class is now exported
-
-# Main class alias for backward compatibility - REMOVED
-# FlextTestsAsync = FlextTestsAsyncs
-
-# Legacy AsyncTestUtils class - REMOVED (commented out)
-# class AsyncTestUtils:
-#     """Compatibility facade for AsyncTestUtils - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncContextManagers class - REMOVED (commented out)
-# class AsyncContextManagers:
-#     """Compatibility facade for AsyncContextManagers - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncMockUtils class - REMOVED (commented out)
-# class AsyncMockUtils:
-#     """Compatibility facade for AsyncMockUtils - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncContextManager class - REMOVED (commented out)
-# class AsyncContextManager:
-#     """Compatibility facade for AsyncContextManager - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncFixtureUtils class - REMOVED (commented out)
-# class AsyncFixtureUtils:
-#     """Compatibility facade for AsyncFixtureUtils - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncConcurrencyTesting class - REMOVED (commented out)
-# class AsyncConcurrencyTesting:
-#     """Compatibility facade for AsyncConcurrencyTesting - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncMarkers class - REMOVED (commented out)
-# class AsyncMarkers:
-#     """Compatibility facade for AsyncMarkers - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy ConcurrencyTestHelper class - REMOVED (commented out)
-# class ConcurrencyTestHelper:
-#     """Compatibility facade for ConcurrencyTestHelper - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
-
-# Legacy AsyncMockBuilder class - REMOVED (commented out)
-# class AsyncMockBuilder:
-#     """Compatibility facade for AsyncMockBuilder - use FlextTestsAsyncs instead."""
-#     ... all methods commented out
 
 # Export only the unified class
 __all__ = [

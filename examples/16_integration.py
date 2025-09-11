@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 from decimal import Decimal
 from typing import cast
 
@@ -21,7 +22,6 @@ from flext_core import (
     FlextTypes,
 )
 
-
 # Email validation constants using proper FlextTypes annotations
 MIN_EMAIL_LENGTH: int = 5  # Minimum characters for basic email validation
 
@@ -31,6 +31,7 @@ class Money:
     """Simple money value object for demonstration."""
 
     def __init__(self, amount: Decimal, currency: str) -> None:
+        """Initialize money with amount and currency."""
         self.amount = amount
         self.currency = currency
 
@@ -48,6 +49,7 @@ class Order:
         customer_id: str,
         items: list[FlextTypes.Core.Dict],
     ) -> None:
+        """Initialize order with ID, customer, and items."""
         self.id = order_id
         self.customer_id = customer_id
         self.items = items
@@ -72,6 +74,7 @@ class User:
     """Simple user class for demonstration."""
 
     def __init__(self, user_id: str, name: str, email: str) -> None:
+        """Initialize user with ID, name, and email."""
         self.id = user_id
         self.name = name
         self.email = email

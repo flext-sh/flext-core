@@ -8,7 +8,7 @@ Classes Tested:
 - FlextRootModel: Root data structure model
 - FlextModels: Immutable value objects with business rules
 - FlextModels: Mutable entities with identity and lifecycle
-- FlextFactory: Factory pattern implementations
+- FlextModels: Factory pattern implementations
 
 
 
@@ -553,10 +553,10 @@ class TestFlextEntityRealFunctionality:
 
 
 class TestFlextFactoryRealFunctionality:
-    """Test FlextFactory real functionality."""
+    """Test FlextModels real functionality."""
 
     def test_factory_user_creation(self) -> None:
-        """Test FlextFactory creates users with proper patterns."""
+        """Test FlextModels creates users with proper patterns."""
         # Create user through factory
         user = UserEntity(
             id=f"factory_{int(time.time())}",
@@ -571,7 +571,7 @@ class TestFlextFactoryRealFunctionality:
         assert user.is_active is True
 
     def test_factory_batch_creation(self) -> None:
-        """Test FlextFactory patterns for batch creation."""
+        """Test FlextModels patterns for batch creation."""
         users = []
 
         for i in range(5):

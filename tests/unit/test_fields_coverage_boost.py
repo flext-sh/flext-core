@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from flext_core import FlextFields, FlextResult
 
@@ -214,10 +214,10 @@ class TestFlextFieldsComprehensiveCoverage:
         )
 
         # Test various datetime values
-        now = datetime.now()
+        now = datetime.now(UTC)
         test_cases = [
             (now, True),
-            (datetime(2023, 1, 1, 12, 0, 0), True),
+            (datetime(2023, 1, 1, 12, 0, 0, tzinfo=UTC), True),
             ("2023-01-01T12:00:00", True),  # ISO format string
             ("invalid-date", False),
             (None, True),  # None for non-required field
@@ -586,7 +586,7 @@ class TestFlextFieldsIntegrationCoverage:
             "email_verified": True,
             "account_balance": 1250.75,
             "external_id": str(uuid.uuid4()),
-            "last_login": datetime.now(),
+            "last_login": datetime.now(UTC),
         }
 
         # Validate each field against the data

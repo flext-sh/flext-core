@@ -12,17 +12,16 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
-from flext_core import FlextTypes
+
 import sys
 from decimal import Decimal
 from enum import StrEnum
-from typing import Self, NotRequired, TypedDict, Unpack
+from typing import NotRequired, Self, TypedDict, Unpack
 
-from pydantic import ConfigDict, Field
+from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from flext_core import FlextConfig, FlextModels, FlextResult
-
+from flext_core import FlextConfig, FlextModels, FlextResult, FlextTypes
 
 MIN_AGE = 18
 MAX_AGE = 120

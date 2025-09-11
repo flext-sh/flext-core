@@ -79,7 +79,7 @@ class TestCommandsPydanticMigration:
 
         # Create handler with config
         class TestCommandHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:
+            def handle(self, _command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
         handler = TestCommandHandler(handler_config=config)
@@ -96,7 +96,7 @@ class TestCommandsPydanticMigration:
         """Test CommandHandler creates default config when not provided."""
 
         class TestCommandHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:
+            def handle(self, _command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
         handler = TestCommandHandler(handler_name="MyHandler")
@@ -121,7 +121,7 @@ class TestCommandsPydanticMigration:
         )
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[dict, list]):
-            def handle(self, query: dict) -> FlextResult[list]:
+            def handle(self, _query: dict) -> FlextResult[list]:
                 return FlextResult[list].ok([])
 
         handler = TestQueryHandler(handler_config=config)
@@ -183,7 +183,7 @@ class TestCommandsPydanticMigration:
 
         # Create dummy middleware
         class AuthMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         middleware = AuthMiddleware()
@@ -203,7 +203,7 @@ class TestCommandsPydanticMigration:
         bus = FlextCommands.Bus()
 
         class LoggingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         middleware = LoggingMiddleware()
@@ -224,7 +224,7 @@ class TestCommandsPydanticMigration:
 
         # Try to add middleware
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         middleware = TestMiddleware()
@@ -399,12 +399,12 @@ class TestCommandsPydanticMigration:
 
         # Create middleware with different orders
         class FirstMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 execution_order.append("first")
                 return FlextResult[None].ok(None)
 
         class SecondMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 execution_order.append("second")
                 return FlextResult[None].ok(None)
 
@@ -425,7 +425,7 @@ class TestCommandsPydanticMigration:
 
         # Create handler
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:
+            def handle(self, _command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("done")
 
         handler = TestHandler()

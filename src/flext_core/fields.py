@@ -41,6 +41,7 @@ class FlextFields:
             """Strategy for type validation using flext-core type system."""
 
             def __init__(self, expected_type: type[T]) -> None:
+                """Initialize type validation strategy."""
                 self.expected_type = expected_type
 
             def validate(self, value: object, field_name: str = "") -> FlextResult[T]:
@@ -61,6 +62,7 @@ class FlextFields:
                 min_length: int | None = None,
                 max_length: int | None = None,
             ) -> None:
+                """Initialize length validation strategy."""
                 self.min_length = min_length
                 self.max_length = max_length
 
@@ -90,6 +92,7 @@ class FlextFields:
             """Strategy for pattern validation using flext-core regex patterns."""
 
             def __init__(self, pattern: str | None = None) -> None:
+                """Initialize pattern validation strategy."""
                 self.pattern = re.compile(pattern) if pattern else None
 
             def validate(self, value: object, field_name: str = "") -> FlextResult[str]:
@@ -117,6 +120,7 @@ class FlextFields:
                     FlextFields.ValidationStrategies.BaseValidationStrategy[T]
                 ],
             ) -> None:
+                """Initialize composite validation strategy."""
                 self.strategies = strategies
 
             def validate(self, value: object, field_name: str) -> FlextResult[T]:
@@ -147,6 +151,7 @@ class FlextFields:
                 default: T | None = None,
                 description: str = "",
             ) -> None:
+                """Initialize base field with validation."""
                 if not name or not name.strip():
                     error_msg = FlextConstants.Messages.VALIDATION_FAILED
                     raise ValueError(error_msg)
@@ -189,6 +194,7 @@ class FlextFields:
                 max_length: int | None = None,
                 pattern: str | None = None,
             ) -> None:
+                """Initialize string field with validation strategies."""
                 super().__init__(
                     name,
                     required=required,
@@ -241,6 +247,7 @@ class FlextFields:
                 min_value: int | None = None,
                 max_value: int | None = None,
             ) -> None:
+                """Initialize integer field with range validation."""
                 super().__init__(
                     name,
                     required=required,
@@ -290,6 +297,7 @@ class FlextFields:
                 max_value: float | None = None,
                 precision: int | None = None,
             ) -> None:
+                """Initialize float field with range and precision validation."""
                 super().__init__(
                     name,
                     required=required,
@@ -343,6 +351,7 @@ class FlextFields:
                 default: bool | None = None,
                 description: str = "",
             ) -> None:
+                """Initialize boolean field."""
                 super().__init__(
                     name,
                     required=required,
@@ -387,6 +396,7 @@ class FlextFields:
                 default: str | None = None,
                 description: str = "",
             ) -> None:
+                """Initialize email field."""
                 # Use FlextConstants for email pattern
                 super().__init__(
                     name,
@@ -441,6 +451,7 @@ class FlextFields:
                 default: str | None = None,
                 description: str = "",
             ) -> None:
+                """Initialize uuid field."""
                 super().__init__(
                     name,
                     required=required,
@@ -489,6 +500,7 @@ class FlextFields:
                 min_date: datetime | None = None,
                 max_date: datetime | None = None,
             ) -> None:
+                """Initialize datetime field."""
                 super().__init__(
                     name,
                     required=required,
@@ -661,6 +673,7 @@ class FlextFields:
             """
 
             def __init__(self) -> None:
+                """Initialize registry: field."""
                 self._fields: dict[str, FlextFields.Core.BaseField[object]] = {}
                 self._field_types: dict[
                     str,
@@ -909,11 +922,11 @@ class FlextFields:
 
                     if min_value is not None:
                         with contextlib.suppress(ValueError, TypeError):
-                            min_val = int(min_value)
+                            min_val = int(str(min_value))
 
                     if max_value is not None:
                         with contextlib.suppress(ValueError, TypeError):
-                            max_val = int(max_value)
+                            max_val = int(str(max_value))
 
                     description = str(config.get("description", ""))
                     field = FlextFields.Core.IntegerField(
@@ -1444,6 +1457,7 @@ class FlextFields:
                 field_type: str,
                 name: str,
             ) -> None:
+                """Initialize builder: field."""
                 self.field_type = field_type
                 self.name = name
                 self.config: FlextTypes.Core.Dict = {}

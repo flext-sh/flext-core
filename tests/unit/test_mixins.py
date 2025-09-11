@@ -3395,11 +3395,11 @@ class TestAbsoluteLastLines100:
 
         # Force specific execution paths for lines 149-151
         cache_obj.set_cached_value("test_key", "test_value")
-        result = cache_obj.get_cached_value("test_key")  # Should hit line 149
+        result = cache_obj.get_cached_value_by_key("test_key")  # Should hit line 149
         assert result == "test_value"
 
         # Try to access non-existent key to hit line 150-151
-        result = cache_obj.get_cached_value("missing_key")  # Should hit lines 150-151
+        result = cache_obj.get_cached_value_by_key("missing_key")  # Should hit lines 150-151
         assert result is None
 
     def test_state_line_272_final(self) -> None:

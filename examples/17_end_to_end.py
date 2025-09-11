@@ -16,7 +16,6 @@ from pydantic import Field
 
 from flext_core import FlextConfig, FlextModels, FlextResult
 
-
 MINIMUM_AGE_REQUIREMENT = 21
 
 

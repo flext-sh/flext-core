@@ -7,9 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
+import string
 import uuid
-from datetime import UTC, datetime
-from typing import Protocol, cast
+from datetime import UTC, datetime, timedelta
+from typing import Protocol
 
 from pydantic import Field
 
@@ -39,109 +40,21 @@ class FlextTestsFixtures:
 
         group: str
 
-        def __call__(
-            self, func: object, /, *args: object, **kwargs: object
-        ) -> object: ...
+        def __call__(self, func: object, /, *args: object, **kwargs: object) -> object:
+            """Call method for benchmark fixture."""
+            ...
 
-        def pedantic(
-            self, func: object, /, *args: object, **kwargs: object
-        ) -> object: ...
+        def pedantic(self, func: object, /, *args: object, **kwargs: object) -> object:
+            """Pedantic method for benchmark fixture."""
+            ...
 
     # === Factory Classes ===
-
-    class PerformanceDataFactory:
-        """Performance data factory for testing."""
-
-        @staticmethod
-        def create_large_payload(size_mb: int = 1) -> FlextTypes.Core.Dict:
-            """Create large test payload."""
-            return {"data": "x" * (size_mb * 1024), "size_mb": size_mb}
-
-        @staticmethod
-        def create_nested_structure(depth: int = 10) -> FlextTypes.Core.Dict:
-            """Create nested data structure."""
-            result: FlextTypes.Core.Dict = {"value": f"depth_{depth}"}
-            current = result
-            for i in range(depth - 1):
-                current["nested"] = {"value": f"depth_{depth - i - 1}"}
-                current = cast("FlextTypes.Core.Dict", current["nested"])
-            return result
-
-    class ErrorSimulationFactory:
-        """Error simulation factory for testing."""
-
-        @staticmethod
-        def create_timeout_error() -> Exception:
-            """Create timeout error."""
-            return TimeoutError("Simulated timeout")
-
-        @staticmethod
-        def create_connection_error() -> Exception:
-            """Create connection error."""
-            return ConnectionError("Simulated connection error")
-
-        @staticmethod
-        def create_validation_error() -> Exception:
-            """Create validation error."""
-            return ValueError("Simulated validation error")
-
-        @staticmethod
-        def create_error_scenario(error_type: str) -> FlextTypes.Core.Dict:
-            """Create error scenario dict."""
-            error_map: dict[str, FlextTypes.Core.Dict] = {
-                "ValidationError": {
-                    "type": "validation",
-                    "message": "Validation failed",
-                    "code": "VAL_001",
-                },
-                "ProcessingError": {
-                    "type": "processing",
-                    "message": "Processing failed",
-                    "code": "PROC_001",
-                },
-                "NetworkError": {
-                    "type": "network",
-                    "message": "Network error",
-                    "code": "NET_001",
-                },
-            }
-            return error_map.get(
-                error_type,
-                {"type": "unknown", "message": "Unknown error", "code": "UNK_001"},
-            )
-
-    class SequenceFactory:
-        """Sequence factory for testing."""
-
-        @staticmethod
-        def create_sequence(
-            length: int = 10,
-            prefix: str = "",
-            count: int | None = None,
-        ) -> FlextTypes.Core.StringList:
-            """Create sequence with optional prefix."""
-            actual_length = count if count is not None else length
-            if prefix:
-                return [f"{prefix}_{i}" for i in range(actual_length)]
-            return [str(i) for i in range(actual_length)]
-
-        @staticmethod
-        def create_timeline_events(count: int = 10) -> list[FlextTypes.Core.Dict]:
-            """Create timeline events."""
-            return [
-                {
-                    "id": f"event_{i}",
-                    "timestamp": f"2024-01-01T{i:02d}:00:00Z",
-                    "type": "test_event",
-                    "data": {"index": i, "description": f"Test event {i}"},
-                }
-                for i in range(count)
-            ]
 
     class FactoryRegistry:
         """Factory registry for testing."""
 
         def __init__(self) -> None:
+            """Initialize factory registry."""
             self.factories: FlextTypes.Core.Dict = {}
 
         def register(self, name: str, factory: object) -> None:
@@ -151,6 +64,258 @@ class FlextTestsFixtures:
         def get(self, name: str) -> object:
             """Get a factory."""
             return self.factories.get(name)
+
+    class SequenceFactory:
+        """Factory for creating sequence test data."""
+
+        @staticmethod
+        def create_sequence(
+            length: int = 10,
+            prefix: str = "",
+            count: int | None = None,
+        ) -> list[str]:
+            """Create a sequence of test data.
+
+            Args:
+                length: Length of the sequence (default 10)
+                prefix: Prefix for each item
+                count: Override for length if provided
+
+            Returns:
+                List of string items
+
+            """
+            actual_length = count if count is not None else length
+            if prefix:
+                return [f"{prefix}_{i}" for i in range(actual_length)]
+            return [str(i) for i in range(actual_length)]
+
+        @staticmethod
+        def create_timeline_events(count: int = 5) -> list[dict[str, object]]:
+            """Create timeline events for testing.
+
+            Args:
+                count: Number of events to create
+
+            Returns:
+                List of event dictionaries
+
+            """
+            base_time = datetime.now(UTC)
+            events = []
+
+            for i in range(count):
+                event = {
+                    "id": f"event_{i}",
+                    "timestamp": base_time + timedelta(hours=i),
+                    "type": "test_event",
+                    "data": {"index": i},
+                }
+                events.append(event)
+
+            return events
+
+    class PerformanceDataFactory:
+        """Factory for creating performance test data."""
+
+        @staticmethod
+        def create_large_payload(size_mb: float = 1.0) -> dict[str, object]:
+            """Create a large payload for performance testing.
+
+            Args:
+                size_mb: Size in megabytes
+
+            Returns:
+                Dictionary with large data
+
+            """
+            # Calculate approximate size in bytes
+            size_bytes = int(size_mb * 1024 * 1024)
+
+            # Create large string data
+            chunk_size = 1024  # 1KB chunks
+            num_chunks = size_bytes // chunk_size
+
+            large_string = (string.ascii_letters * 20)[:chunk_size] * num_chunks
+
+            return {
+                "data": large_string,
+                "size_mb": size_mb,
+                "chunks": num_chunks,
+            }
+
+        @staticmethod
+        def create_nested_structure(depth: int = 3) -> dict[str, object]:
+            """Create a nested data structure for testing.
+
+            Args:
+                depth: Nesting depth
+
+            Returns:
+                Nested dictionary
+
+            """
+
+            def create_nested(current_depth: int) -> dict[str, object]:
+                if current_depth <= 0:
+                    return {"value": f"leaf_{current_depth}"}
+
+                return {
+                    "value": f"level_{current_depth}",
+                    "nested": create_nested(current_depth - 1),
+                    "data": {"depth": current_depth},
+                }
+
+            return create_nested(depth)
+
+    class ErrorSimulationFactory:
+        """Factory for creating error scenarios."""
+
+        @staticmethod
+        def create_timeout_error() -> TimeoutError:
+            """Create a timeout error for testing."""
+            return TimeoutError("Simulated timeout error for testing")
+
+        @staticmethod
+        def create_connection_error() -> ConnectionError:
+            """Create a connection error for testing."""
+            return ConnectionError("Simulated connection error for testing")
+
+        @staticmethod
+        def create_validation_error() -> ValueError:
+            """Create a validation error for testing."""
+            return ValueError("Simulated validation error for testing")
+
+        @staticmethod
+        def create_error_scenario(error_type: str) -> dict[str, object]:
+            """Create an error scenario for testing.
+
+            Args:
+                error_type: Type of error scenario
+
+            Returns:
+                Error scenario dictionary
+
+            """
+            scenarios = {
+                "ValidationError": {
+                    "type": "validation",
+                    "message": "Validation failed",
+                    "code": 400,
+                    "details": {"field": "test_field", "reason": "invalid"},
+                },
+                "NetworkError": {
+                    "type": "network",
+                    "message": "Network error occurred",
+                    "code": 503,
+                    "details": {"retry_after": 60},
+                },
+                "TimeoutError": {
+                    "type": "timeout",
+                    "message": "Operation timed out",
+                    "code": 408,
+                    "details": {"timeout_seconds": 30},
+                },
+            }
+
+            return scenarios.get(
+                error_type,
+                {
+                    "type": "unknown",
+                    "message": f"Unknown error: {error_type}",
+                    "code": 500,
+                    "details": {},
+                },
+            )
+
+    class SessionTestService:
+        """Service for managing test sessions."""
+
+        def __init__(self) -> None:
+            """Initialize session service."""
+            self._data: dict[str, dict[str, object]] = {}
+
+        def create_session(
+            self, session_id: str, data: dict[str, object] | None = None
+        ) -> dict[str, object]:
+            """Create a new session.
+
+            Args:
+                session_id: Session identifier
+                data: Initial session data
+
+            Returns:
+                Session data
+
+            """
+            session_data = data or {}
+            session_data["id"] = session_id
+            session_data["created_at"] = "2024-01-01T00:00:00Z"
+            self._data[session_id] = session_data
+            return session_data
+
+        def get_session(self, session_id: str) -> dict[str, object] | None:
+            """Get session by ID.
+
+            Args:
+                session_id: Session identifier
+
+            Returns:
+                Session data or None
+
+            """
+            return self._data.get(session_id)
+
+        def update_session(self, session_id: str, data: dict[str, object]) -> bool:
+            """Update session data.
+
+            Args:
+                session_id: Session identifier
+                data: Data to update
+
+            Returns:
+                True if updated, False otherwise
+
+            """
+            if session_id in self._data:
+                self._data[session_id].update(data)
+                return True
+            return False
+
+        def delete_session(self, session_id: str) -> bool:
+            """Delete a session.
+
+            Args:
+                session_id: Session identifier
+
+            Returns:
+                True if deleted, False otherwise
+
+            """
+            if session_id in self._data:
+                del self._data[session_id]
+                return True
+            return False
+
+        def cleanup_sessions(self, prefix: str | None = None) -> int:
+            """Clean up sessions.
+
+            Args:
+                prefix: Optional prefix to filter sessions
+
+            Returns:
+                Number of sessions cleaned
+
+            """
+            if prefix:
+                to_delete = [k for k in self._data.keys() if k.startswith(prefix)]
+                for key in to_delete:
+                    del self._data[key]
+                return len(to_delete)
+
+            count = len(self._data)
+            self._data.clear()
+            return count
 
     class FlextConfigFactory:
         """Config factory for testing."""
@@ -190,49 +355,13 @@ class FlextTestsFixtures:
         command_type: str = Field(default="validation", description="Type of command")
         config: object = Field(default_factory=dict)
 
-    class ProcessingCommand(FlextCommands.Models.Command):
-        """Processing command for fixtures."""
-
-        command_type: str = Field(default="processing", description="Type of command")
-        config: object = Field(default_factory=dict)
-
-    class CommandFactory:
-        """Command factory for testing."""
-
-        @staticmethod
-        def create_test_command(
-            config: object | None = None,
-        ) -> FlextTestsFixtures.TestCommand:
-            """Create test command."""
-            return FlextTestsFixtures.TestCommand(config=config or {})
-
-        @staticmethod
-        def create_batch_command(
-            config: object | None = None,
-        ) -> FlextTestsFixtures.BatchCommand:
-            """Create batch command."""
-            return FlextTestsFixtures.BatchCommand(config=config or {})
-
-        @staticmethod
-        def create_validation_command(
-            config: object | None = None,
-        ) -> FlextTestsFixtures.ValidationCommand:
-            """Create validation command."""
-            return FlextTestsFixtures.ValidationCommand(config=config or {})
-
-        @staticmethod
-        def create_processing_command(
-            config: object | None = None,
-        ) -> FlextTestsFixtures.ProcessingCommand:
-            """Create processing command."""
-            return FlextTestsFixtures.ProcessingCommand(config=config or {})
-
     # === Service Classes ===
 
     class AsyncTestService:
         """Test service for async testing."""
 
         def __init__(self) -> None:
+            """Initialize async test service."""
             self._executor = FlextTestsFixtures.AsyncExecutor()
 
         async def process(self, data: object) -> FlextTypes.Core.Dict:
@@ -263,6 +392,7 @@ class FlextTestsFixtures:
         """Async executor for testing."""
 
         def __init__(self) -> None:
+            """Initialize async executor."""
             self._running = False
             self._tasks: list[asyncio.Task[object]] = []
 
@@ -319,276 +449,194 @@ class FlextTestsFixtures:
         """Test service for session-scoped testing."""
 
         def __init__(self) -> None:
+            """Initialize session test service."""
             self._data: FlextTypes.Core.Dict = {}
             self._session_data: dict[str, FlextTypes.Core.Dict] = {}
 
-        def store(self, key: str, value: object) -> None:
-            """Store data in session service."""
-            self._data[key] = value
+        def set_session_data(self, session_id: str, data: FlextTypes.Core.Dict) -> None:
+            """Set session-specific data."""
+            self._session_data[session_id] = data
 
-        def retrieve(self, key: str) -> object:
-            """Retrieve data from session service."""
-            return self._data.get(key)
+        def get_session_data(self, session_id: str) -> FlextTypes.Core.Dict | None:
+            """Get session-specific data."""
+            return self._session_data.get(session_id)
 
-        def clear(self) -> None:
+        def clear_session(self, session_id: str) -> None:
             """Clear session data."""
-            self._data.clear()
-            self._session_data.clear()
+            self._session_data.pop(session_id, None)
 
         def create_session(self, session_id: str) -> None:
             """Create a new session."""
-            self._session_data[session_id] = {
-                "created_at": datetime.now(UTC),
-                "data": {},
-            }
-
-        def get_session(self, session_id: str) -> FlextTypes.Core.Dict | None:
-            """Get session by ID."""
-            return self._session_data.get(session_id)
+            self._session_data[session_id] = {}
 
         def update_session(self, session_id: str, data: FlextTypes.Core.Dict) -> None:
             """Update session data."""
             if session_id in self._session_data:
-                session_data = self._session_data[session_id]["data"]
-                if isinstance(session_data, dict):
-                    session_data.update(data)
+                self._session_data[session_id].update(data)
 
-        def delete_session(self, session_id: str) -> None:
-            """Delete session."""
-            self._session_data.pop(session_id, None)
-
-        def cleanup_sessions(self) -> None:
-            """Cleanup all sessions."""
-            self._session_data.clear()
-
-    # === Repository Classes ===
-
-    class InMemoryUserRepository:
-        """In-memory user repository for functional testing."""
+    class MockDataService:
+        """Mock data service for testing."""
 
         def __init__(self) -> None:
-            self._users: dict[str, FlextTypes.Core.Dict] = {}
+            """Initialize mock data service."""
+            self._data_store: dict[str, object] = {}
+            self._call_count = 0
 
-        def save(
-            self, user_data: FlextTypes.Core.Dict
-        ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Save user data."""
-            user_id = user_data.get("id")
-            if not user_id:
-                return FlextResult[FlextTypes.Core.Dict].fail(
-                    "User ID required", error_code="VALIDATION_ERROR"
-                )
+        def store(self, key: str, value: object) -> None:
+            """Store data."""
+            self._data_store[key] = value
 
-            self._users[str(user_id)] = dict(user_data)
-            return FlextResult[FlextTypes.Core.Dict].ok(self._users[str(user_id)])
+        def retrieve(self, key: str) -> object | None:
+            """Retrieve data."""
+            self._call_count += 1
+            return self._data_store.get(key)
 
-        def find_by_id(self, user_id: str) -> FlextResult[FlextTypes.Core.Dict]:
-            """Find user by ID."""
-            user = self._users.get(user_id)
-            if not user:
-                return FlextResult[FlextTypes.Core.Dict].fail(
-                    f"User not found: {user_id}", error_code="NOT_FOUND"
-                )
-            return FlextResult[FlextTypes.Core.Dict].ok(user)
+        def get_call_count(self) -> int:
+            """Get number of calls made."""
+            return self._call_count
 
-        def find_by_username(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
-            """Find user by username (or name field)."""
-            for user in self._users.values():
-                # Check both username and name fields for compatibility
-                if user.get("username") == username or user.get("name") == username:
-                    return FlextResult[FlextTypes.Core.Dict].ok(user)
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                f"User not found: {username}", error_code="NOT_FOUND"
-            )
+        def reset(self) -> None:
+            """Reset service state."""
+            self._data_store.clear()
+            self._call_count = 0
 
-        def find_all(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
-            """Find all users."""
-            return FlextResult[list[FlextTypes.Core.Dict]].ok(
-                list(self._users.values())
-            )
+    # === Test Data Models ===
 
-        def delete(self, user_id: str) -> FlextResult[None]:
-            """Delete user by ID."""
-            if user_id not in self._users:
-                return FlextResult[None].fail(
-                    f"User not found: {user_id}", error_code="NOT_FOUND"
-                )
-            del self._users[user_id]
-            return FlextResult[None].ok(None)
+    class TestUser:
+        """Test user model."""
 
-        def clear(self) -> None:
-            """Clear all users."""
-            self._users.clear()
+        def __init__(self, user_id: str, name: str, email: str) -> None:
+            """Initialize test user."""
+            self.id = user_id
+            self.name = name
+            self.email = email
+            self.created_at = datetime.now(UTC)
 
-    class FailingUserRepository:
-        """Repository that always fails for error scenario testing."""
+    class TestOrder:
+        """Test order model."""
 
-        def save(
-            self, user_data: FlextTypes.Core.Dict
-        ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Always fail save operation."""
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                "Repository operation failed", error_code="REPOSITORY_ERROR"
-            )
+        def __init__(self, order_id: str, user_id: str, amount: float) -> None:
+            """Initialize test order."""
+            self.id = order_id
+            self.user_id = user_id
+            self.amount = amount
+            self.status = "pending"
+            self.created_at = datetime.now(UTC)
 
-        def find_by_id(self, user_id: str) -> FlextResult[FlextTypes.Core.Dict]:
-            """Always fail find operation."""
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                "Repository operation failed", error_code="REPOSITORY_ERROR"
-            )
+    class TestProduct:
+        """Test product model."""
 
-        def find_by_username(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
-            """Always fail find by username operation."""
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                "Repository operation failed", error_code="REPOSITORY_ERROR"
-            )
+        def __init__(self, product_id: str, name: str, price: float) -> None:
+            """Initialize test product."""
+            self.id = product_id
+            self.name = name
+            self.price = price
+            self.in_stock = True
 
-        def find_all(self) -> FlextResult[list[FlextTypes.Core.Dict]]:
-            """Always fail find all operation."""
-            return FlextResult[list[FlextTypes.Core.Dict]].fail(
-                "Repository operation failed", error_code="REPOSITORY_ERROR"
-            )
+    # === Utility Methods ===
 
-        def delete(self, user_id: str) -> FlextResult[None]:
-            """Always fail delete operation."""
-            return FlextResult[None].fail(
-                "Repository operation failed", error_code="REPOSITORY_ERROR"
-            )
+    @staticmethod
+    def generate_test_id() -> str:
+        """Generate unique test ID."""
+        return str(uuid.uuid4())
 
-    class RealEmailService:
-        """Real email service for functional testing."""
+    @staticmethod
+    def create_test_user(name: str = "Test User") -> TestUser:
+        """Create test user."""
+        return FlextTestsFixtures.TestUser(
+            user_id=FlextTestsFixtures.generate_test_id(),
+            name=name,
+            email=f"{name.lower().replace(' ', '.')}@test.com",
+        )
 
-        def __init__(self) -> None:
-            self._sent_emails: list[FlextTypes.Core.Dict] = []
+    @staticmethod
+    def create_test_order(user_id: str, amount: float = 100.0) -> TestOrder:
+        """Create test order."""
+        return FlextTestsFixtures.TestOrder(
+            order_id=FlextTestsFixtures.generate_test_id(),
+            user_id=user_id,
+            amount=amount,
+        )
 
-        def send_email(
-            self,
-            to: str,
-            subject: str,
-            body: str,
-            from_email: str | None = None,
-        ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Send email (mock implementation for testing)."""
-            if not to or not subject:
-                return FlextResult[FlextTypes.Core.Dict].fail(
-                    "Email recipient and subject required",
-                    error_code="VALIDATION_ERROR",
-                )
+    @staticmethod
+    def create_test_product(
+        name: str = "Test Product", price: float = 50.0
+    ) -> TestProduct:
+        """Create test product."""
+        return FlextTestsFixtures.TestProduct(
+            product_id=FlextTestsFixtures.generate_test_id(),
+            name=name,
+            price=price,
+        )
 
-            email_data: FlextTypes.Core.Dict = {
-                "id": str(uuid.uuid4()),
-                "to": to,
-                "subject": subject,
-                "body": body,
-                "from_email": from_email or "test@example.com",
-                "sent_at": datetime.now(UTC).isoformat(),
+    @staticmethod
+    def create_test_data() -> FlextTypes.Core.Dict:
+        """Create test data dictionary."""
+        return {
+            "id": FlextTestsFixtures.generate_test_id(),
+            "name": "test_data",
+            "value": 42,
+            "nested": {
+                "key": "value",
+                "number": 123,
+            },
+            "list": [1, 2, 3, "test"],
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+
+    @staticmethod
+    def create_failure_result(error_message: str = "test_error") -> FlextResult[object]:
+        """Create failure result for testing."""
+        return FlextResult[object].fail(error_message)
+
+    @staticmethod
+    def create_success_result(data: object = "test_data") -> FlextResult[object]:
+        """Create success result for testing."""
+        return FlextResult[object].ok(data)
+
+    # === Factory Classes ===
+
+    class PerformanceDataFactory:
+        """Factory for creating performance test data."""
+
+        @staticmethod
+        def create_large_payload(size_mb: int = 1) -> dict[str, object]:
+            """Create large payload for performance testing."""
+            # Create data of approximately the requested size
+            data_size = size_mb * 1024 * 1024  # Convert MB to bytes
+            data = "x" * data_size
+            return {
+                "data": data,
+                "size_mb": size_mb,
+                "created_at": datetime.now(UTC).isoformat(),
             }
 
-            self._sent_emails.append(email_data)
-            return FlextResult[FlextTypes.Core.Dict].ok(email_data)
+    class CommandFactory:
+        """Factory for creating test commands."""
 
-        def get_sent_emails(self) -> list[FlextTypes.Core.Dict]:
-            """Get all sent emails for testing verification."""
-            return list(self._sent_emails)
-
-        def clear_sent_emails(self) -> None:
-            """Clear sent emails for test isolation."""
-            self._sent_emails.clear()
-
-    class RealAuditService:
-        """Real audit service for functional testing."""
-
-        def __init__(self) -> None:
-            self._audit_logs: list[FlextTypes.Core.Dict] = []
-
-        def log_event(
-            self,
-            event_type: str,
-            entity_id: str,
-            details: FlextTypes.Core.Dict | None = None,
-            user_id: str | None = None,
-        ) -> FlextResult[FlextTypes.Core.Dict]:
-            """Log audit event."""
-            if not event_type or not entity_id:
-                return FlextResult[FlextTypes.Core.Dict].fail(
-                    "Event type and entity ID required", error_code="VALIDATION_ERROR"
-                )
-
-            audit_entry: FlextTypes.Core.Dict = {
-                "id": str(uuid.uuid4()),
-                "event_type": event_type,
-                "entity_id": entity_id,
-                "details": details or {},
-                "user_id": user_id,
+        @staticmethod
+        def create_processing_command(
+            data: dict[str, object] | None = None,
+        ) -> dict[str, object]:
+            """Create processing command for testing."""
+            return {
+                "command": "process",
+                "data": data or {"test": "value"},
                 "timestamp": datetime.now(UTC).isoformat(),
             }
 
-            self._audit_logs.append(audit_entry)
-            return FlextResult[FlextTypes.Core.Dict].ok(audit_entry)
+    class ErrorSimulationFactory:
+        """Factory for creating error scenarios."""
 
-        def get_audit_logs(self) -> list[FlextTypes.Core.Dict]:
-            """Get all audit logs for testing verification."""
-            return list(self._audit_logs)
+        @staticmethod
+        def create_timeout_error() -> Exception:
+            """Create timeout error for testing."""
+            return TimeoutError("Simulated timeout error")
 
-        def get_audit_logs_for_entity(
-            self, entity_id: str
-        ) -> list[FlextTypes.Core.Dict]:
-            """Get audit logs for specific entity."""
-            return [log for log in self._audit_logs if log["entity_id"] == entity_id]
-
-        def clear_audit_logs(self) -> None:
-            """Clear audit logs for test isolation."""
-            self._audit_logs.clear()
-
-    # === Fixture Methods (Static Factory Methods for Fixture Creation) ===
-
-    # === Convenience Factory Methods ===
-
-    @staticmethod
-    def create_performance_data() -> FlextTypes.Core.Dict:
-        """Create performance data for testing."""
-        return FlextTestsFixtures.PerformanceDataFactory.create_large_payload()
-
-    @staticmethod
-    def create_error_scenario(error_type: str) -> FlextTypes.Core.Dict:
-        """Create error scenario for testing."""
-        return FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            error_type
-        )
-
-    @staticmethod
-    def create_sequence(
-        length: int = 10, prefix: str = ""
-    ) -> FlextTypes.Core.StringList:
-        """Create sequence for testing."""
-        return FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=length, prefix=prefix
-        )
-
-    @staticmethod
-    def create_timeline_events(count: int = 10) -> list[FlextTypes.Core.Dict]:
-        """Create timeline events for testing."""
-        return FlextTestsFixtures.SequenceFactory.create_timeline_events(count=count)
-
-    @staticmethod
-    def create_test_config() -> FlextConfig:
-        """Create test config."""
-        return FlextTestsFixtures.FlextConfigFactory.create_test_config()
-
-    @staticmethod
-    def create_in_memory_repository() -> FlextTestsFixtures.InMemoryUserRepository:
-        """Create in-memory repository for testing."""
-        return FlextTestsFixtures.InMemoryUserRepository()
-
-    @staticmethod
-    def create_email_service() -> FlextTestsFixtures.RealEmailService:
-        """Create email service for testing."""
-        return FlextTestsFixtures.RealEmailService()
-
-    @staticmethod
-    def create_audit_service() -> FlextTestsFixtures.RealAuditService:
-        """Create audit service for testing."""
-        return FlextTestsFixtures.RealAuditService()
+        @staticmethod
+        def create_validation_error() -> Exception:
+            """Create validation error for testing."""
+            return ValueError("Simulated validation error")
 
 
 # Export only the unified class

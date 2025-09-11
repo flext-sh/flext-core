@@ -245,9 +245,11 @@ class TestFlextCoreFullCoverage:
 
         # Test get_system_info
         result = core.get_system_info()
-        assert isinstance(result, dict)
-        assert "version" in result
-        assert "environment" in result
+        assert result.is_success
+        system_info = result.unwrap()
+        assert isinstance(system_info, dict)
+        assert "version" in system_info
+        assert "environment" in system_info
 
     def test_performance_optimization_methods(self) -> None:
         """Test performance optimization methods."""
@@ -497,7 +499,7 @@ class TestFlextCoreFullCoverage:
         assert result.is_success
 
         # Test consume_messages
-        def handler(message: str) -> bool:
+        def handler(_message: str) -> bool:
             return True
 
         result = core.consume_messages("queue_name", handler)
@@ -545,7 +547,7 @@ class TestFlextCoreFullCoverage:
         core = FlextCore()
 
         # Test acquire_lock
-        result = core.acquire_lock("resource_id", timeout=5)
+        result = core.acquire_lock("resource_id", _timeout=5)
         assert result.is_success
 
         # Test release_lock
@@ -767,7 +769,7 @@ class TestFlextCoreFullCoverage:
         assert result.is_success
 
         # Test export_data
-        result = core.export_data("data.csv", format="csv")
+        result = core.export_data("data.csv", format_type="csv")
         assert result.is_success
 
         # Test import_data

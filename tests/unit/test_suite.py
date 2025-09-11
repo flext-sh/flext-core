@@ -55,6 +55,7 @@ class UserService:
     """Service for user operations."""
 
     def __init__(self) -> None:
+        """Initialize the user service."""
         self.users: dict[str, User] = {}
         self.next_id = 1
 

@@ -357,7 +357,7 @@ class TestFlextAdaptersRemainingCoverage:
             assert isinstance(result, FlextResult)
 
         # Test retrieval
-        for name, type_hint in adapter_configs:
+        for name, _type_hint in adapter_configs:
             result1 = registry.get_adapter(name)
             result2 = registry.get_adapter(name)
 

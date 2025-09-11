@@ -186,7 +186,6 @@ class FlextUtilities:
         )
 
         @classmethod
-        @functools.cache
         def generate_uuid(cls) -> str:
             """Generate UUID4 with caching for performance."""
             return str(uuid.uuid4())

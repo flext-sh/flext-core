@@ -17,18 +17,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from __future__ import annotations
+import operator
+import sys
 from datetime import UTC, datetime
-from flext_core import FlextTypes
 from decimal import Decimal
 from typing import cast
 
 from flext_core import (
-    FlextResult,
     FlextLogger,
+    FlextResult,
+    FlextTypes,
 )
-import sys
-import operator
 
 # Configure logging
 logger = FlextLogger(__name__)

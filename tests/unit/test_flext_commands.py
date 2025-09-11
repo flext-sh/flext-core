@@ -101,12 +101,19 @@ class CreateUserHandler(
         email_service: FlextTestsFixtures.RealEmailService | None = None,
         audit_service: FlextTestsFixtures.RealAuditService | None = None,
     ) -> None:
+        """Initialize the handler with user repository."""
         super().__init__()
-        self.user_repository = (
-            user_repository or FlextTestsFixtures.InMemoryUserRepository()
-        )
-        self.email_service = email_service or FlextTestsFixtures.RealEmailService()
-        self.audit_service = audit_service or FlextTestsFixtures.RealAuditService()
+        class MockEmailService:
+            def send_welcome_email(self, _email: str, _name: str) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        class MockAuditService:
+            def log_event(self, _event_type: str, _entity_id: str, _data: dict) -> FlextResult[None]:
+                return FlextResult[None].ok(None)
+
+        self.user_repository = user_repository
+        self.email_service = email_service or MockEmailService()
+        self.audit_service = audit_service or MockAuditService()
 
     def handle(self, command: CreateUserCommand) -> FlextResult[UserCreatedEvent]:
         """Handle user creation with full business logic."""
@@ -366,7 +373,23 @@ class TestFlextCommandsComprehensive:
     def test_create_user_handler_user_exists_error(self) -> None:
         """Test handler when user already exists."""
         # Setup repository with existing user
-        repo = FlextTestsFixtures.InMemoryUserRepository()
+        class InMemoryUserRepository:
+            def __init__(self) -> None:
+                self.users = {}
+
+            def get_by_email(self, email: str) -> FlextTestsDomains.TestUser | None:
+                return self.users.get(email)
+
+            def find_by_username(self, username: str) -> FlextTestsDomains.TestUser | None:
+                for user in self.users.values():
+                    if hasattr(user, "name") and user.name == username:
+                        return user
+                return None
+
+            def save(self, user: FlextTestsDomains.TestUser) -> None:
+                self.users[user.email] = user
+
+        repo = InMemoryUserRepository()
         existing_user = FlextTestsDomains.TestUser(
             id="existing",
             name="existing_user",  # Use name field
@@ -376,7 +399,7 @@ class TestFlextCommandsComprehensive:
             created_at=datetime.now(UTC),
             metadata={},
         )
-        repo.save(existing_user.model_dump())  # Use save method
+        repo.save(existing_user)  # Use save method
 
         handler = CreateUserHandler(repo)
         command = CreateUserCommand(
@@ -509,7 +532,7 @@ class TestFlextCommandsComprehensive:
 
         # Middleware rejection
         class RejectingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 return FlextResult[None].fail("rejected")
 
         bus.add_middleware(RejectingMiddleware())
@@ -531,7 +554,7 @@ class TestFlextCommandsComprehensive:
         assert res2.value == "OK"
 
         class FailingHandler:
-            def handle(self, cmd: EchoCmd) -> FlextResult[str]:
+            def handle(self, _cmd: EchoCmd) -> FlextResult[str]:
                 msg = "boom"
                 raise RuntimeError(msg)
 
@@ -642,12 +665,12 @@ class TestFlextCommandsComprehensive:
             def __init__(self) -> None:
                 self.executed_commands: FlextTypes.Core.List = []
 
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 self.executed_commands.append(command)
                 return FlextResult[None].ok(None)
 
         class ValidationMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:
+            def process(self, _command: object, _handler: object) -> FlextResult[None]:
                 if hasattr(command, "validate_command"):
                     validation = command.validate_command()
                     if validation.is_failure:

@@ -9,13 +9,13 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 import contextlib
 import operator
 import os
 import time
-from collections.abc import Mapping
-from typing import cast, TYPE_CHECKING
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from typing import cast
 
 from flext_core import (
     FlextConstants,
@@ -23,8 +23,8 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
+from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # Age validation constants - using FlextConstants pattern
 MIN_USER_AGE: int = 18

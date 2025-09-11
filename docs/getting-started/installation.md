@@ -188,7 +188,7 @@ make test         # Run test suite with coverage
 
 # Code quality
 make lint
-make type-check   # MyPy strict mode checking
+make type-check 
 make format       # Auto-format code
 make security     # Security vulnerability scan
 

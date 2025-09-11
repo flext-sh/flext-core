@@ -1381,9 +1381,19 @@ class FlextValidations:
         """Validators nested class."""
 
         @staticmethod
-        def validate_email(value: object) -> FlextResult[None]:
+        def validate_email(value: object) -> FlextResult[str]:
             """Validate email."""
-            return FlextValidations.validate_email_field(value)
+            if not isinstance(value, str):
+                return FlextResult[str].fail("Value must be a string")
+
+            email_pattern = FlextConstants.Patterns.EMAIL_PATTERN
+            if re.match(email_pattern, value):
+                return FlextResult[str].ok(value)
+
+            return FlextResult[str].fail(
+                "Invalid email format",
+                error_code=FlextConstants.Errors.VALIDATION_ERROR,
+            )
 
     class Types:
         """Ultra-simple type validation methods for test compatibility."""

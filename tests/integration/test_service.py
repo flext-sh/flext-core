@@ -201,9 +201,9 @@ class TestServiceIntegrationPatterns:
 
     @pytest.mark.integration
     @pytest.mark.performance
+    @pytest.mark.usefixtures("configured_container")
     def test_service_pipeline_performance(
         self,
-        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         performance_threshold: dict[str, float],
         benchmark_data: dict[
@@ -255,9 +255,9 @@ class TestServiceIntegrationPatterns:
 
     @pytest.mark.integration
     @pytest.mark.error_path
+    @pytest.mark.usefixtures("configured_container")
     def test_service_error_propagation(
         self,
-        configured_container: FlextContainer,
         mock_external_service: FunctionalExternalService,
         error_context: dict[str, str | None],
     ) -> None:

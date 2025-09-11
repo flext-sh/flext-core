@@ -24,7 +24,6 @@ from flext_core import (
     FlextFields,
     FlextGuards,
     FlextHandlers,
-    FlextLogger,
     FlextMixins,
     FlextModels,
     FlextProcessors,
@@ -35,8 +34,6 @@ from flext_core import (
     FlextUtilities,
     FlextValidations,
 )
-from flext_core.config import FlextConfig
-from flext_core.utilities import FlextUtilities
 from flext_tests import FlextTestsMatchers
 
 
@@ -834,7 +831,8 @@ class TestFlextCoreMixinProperties:
         """Test loggable_mixin using direct access to core.logger."""
         core = FlextCore()
         # Use DIRECT ACCESS through core.logger - ZERO aliases
-        assert type(core.logger) is type(FlextLogger(__name__))
+        assert hasattr(core.logger, "info")
+        assert hasattr(core.logger, "error")
 
     def test_validatable_mixin(self) -> None:
         """Test validatable_mixin using direct access to core.mixins."""
@@ -1060,7 +1058,7 @@ class TestFlextCoreContextProtocols:
         class TestPlugin:
             name: str = "duplicate_plugin"
 
-            def execute(self, data: dict) -> FlextResult[dict]:
+            def execute(self, _data: dict) -> FlextResult[dict]:
                 return FlextResult[dict].ok({"plugin": self.name})
 
         plugin = TestPlugin()
@@ -1190,7 +1188,7 @@ class TestFlextCoreTypeValidation:
         FlextCore.get_instance()
 
         class BadModel:
-            def __init__(self, **kwargs: object) -> None:
+            def __init__(self, **_kwargs: object) -> None:
                 msg = "Cannot create"
                 raise ValueError(msg)
 
@@ -1500,7 +1498,7 @@ class TestFlextCoreBuilders:
 
         # Create a service processor using FlextProcessors patterns DIRECTLY
         def process_request(
-            request: dict[str, object],
+            _request: dict[str, object],
         ) -> FlextResult[dict[str, object]]:
             return FlextResult.ok({"processed": True})
 

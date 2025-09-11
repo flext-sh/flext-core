@@ -125,16 +125,18 @@ class TestAsyncTestUtils:
             return value * 2
 
         results = await FlextTestsAsyncs.run_concurrently(
-            task(1),
-            task(2),
-            task(3),
+            [
+                task(1),
+                task(2),
+                task(3),
+            ]
         )
         assert results == [2, 4, 6]
 
     @pytest.mark.asyncio
     async def test_run_concurrently_empty(self) -> None:
         """Test running concurrently with no coroutines."""
-        results: FlextTypes.Core.List = await FlextTestsAsyncs.run_concurrently()
+        results: FlextTypes.Core.List = await FlextTestsAsyncs.run_concurrently([])
         assert results == []
 
     @pytest.mark.asyncio
@@ -226,7 +228,7 @@ class TestAsyncMockUtils:
         """Test async mock with callable side effect."""
         call_count = 0
 
-        async def side_effect_func(*args: object, **kwargs: object) -> int:
+        async def side_effect_func(*_args: object, **_kwargs: object) -> int:
             nonlocal call_count
             call_count += 1
             return call_count
@@ -367,7 +369,7 @@ class TestAsyncContextManager:
             resource_cleaned = True
 
         context = FlextTestsMatchers.create_test_context(
-            setup_coro=setup(),
+            setup_coro=setup,
             teardown_func=teardown,
         )
 
@@ -386,12 +388,12 @@ class TestAsyncContextManager:
         async def setup() -> str:
             return "resource"
 
-        async def teardown(resource: str) -> None:
+        async def teardown(_resource: str) -> None:
             nonlocal cleaned_up
             cleaned_up = True
 
         context = FlextTestsMatchers.create_test_context(
-            setup_coro=setup(),
+            setup_coro=setup,
             teardown_func=teardown,
         )
 

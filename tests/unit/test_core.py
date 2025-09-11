@@ -71,7 +71,7 @@ class TestFlextCoreExtendedValidation:
         """Test email validation with valid emails."""
         core = FlextCore.get_instance()
 
-        result = core.validate_email("user@example.com")
+        result = core.Validations.Validators.validate_email("user@example.com")
         assert result.success
         assert result.unwrap() == "user@example.com"
 
@@ -79,7 +79,7 @@ class TestFlextCoreExtendedValidation:
         """Test email validation with invalid emails."""
         core = FlextCore.get_instance()
 
-        result = core.validate_email("invalid-email")
+        result = core.Validations.Validators.validate_email("invalid-email")
         assert result.failure
         err5 = result.error or ""
         assert "Invalid email" in err5
@@ -88,7 +88,7 @@ class TestFlextCoreExtendedValidation:
         """Test email validation with empty string."""
         core = FlextCore.get_instance()
 
-        result = core.validate_email("")
+        result = core.Validations.Validators.validate_email("")
         assert result.failure
 
     def test_validate_string_field_valid(self) -> None:
@@ -288,8 +288,8 @@ class TestFlextCoreUtilities:
         """Test UUID generation."""
         core = FlextCore.get_instance()
 
-        uuid1 = core.generate_uuid()
-        uuid2 = core.generate_uuid()
+        uuid1 = core.Utilities.Generators.generate_uuid()
+        uuid2 = core.Utilities.Generators.generate_uuid()
 
         assert uuid1 != uuid2
         assert len(str(uuid1)) == 36  # Standard UUID format
@@ -299,8 +299,8 @@ class TestFlextCoreUtilities:
         """Test correlation ID generation."""
         core = FlextCore.get_instance()
 
-        id1 = core.generate_correlation_id()
-        id2 = core.generate_correlation_id()
+        id1 = core.Utilities.Generators.generate_correlation_id()
+        id2 = core.Utilities.Generators.generate_correlation_id()
 
         assert id1 != id2
         assert isinstance(id1, str)
@@ -321,7 +321,7 @@ class TestFlextCoreUtilities:
         """Test duration formatting in seconds."""
         core = FlextCore.get_instance()
 
-        result = core.format_duration(45.5)
+        result = core.Utilities.TimeUtils.format_duration(45.5)
         assert "45.5" in result or "45" in result
         assert "s" in result  # Should contain seconds abbreviation
 
@@ -329,21 +329,21 @@ class TestFlextCoreUtilities:
         """Test duration formatting in minutes."""
         core = FlextCore.get_instance()
 
-        result = core.format_duration(125.0)  # > 60 seconds
+        result = core.Utilities.TimeUtils.format_duration(125.0)  # > 60 seconds
         assert "m" in result or "s" in result  # Should contain time unit abbreviation
 
     def test_clean_text_basic(self) -> None:
         """Test text cleaning with basic input."""
         core = FlextCore.get_instance()
 
-        result = core.clean_text("  Hello World  ")
+        result = core.Utilities.clean_text("  Hello World  ")
         assert result.strip() == "Hello World"
 
     def test_clean_text_special_characters(self) -> None:
         """Test text cleaning with special characters."""
         core = FlextCore.get_instance()
 
-        result = core.clean_text("Hello\nWorld\t!")
+        result = core.Utilities.clean_text("Hello\nWorld\t!")
         assert result is not None
         assert isinstance(result, str)
 
@@ -545,6 +545,7 @@ class TestFlextCoreSystemConfigAndPerformance:
     """Additional coverage for core system configuration and performance paths."""
 
     def test_create_config_provider_and_validate_config(self) -> None:
+        """Test config provider creation and validation."""
         core = FlextCore.get_instance()
 
         provider = core.create_config_provider("file_provider", "json")
@@ -578,6 +579,7 @@ class TestFlextCoreSystemConfigAndPerformance:
         assert "Invalid log level" in (invalid_log.error or "")
 
     def test_configure_core_system_valid_and_invalid(self) -> None:
+        """Test core system configuration with valid and invalid inputs."""
         core = FlextCore.get_instance()
 
         good = core.configure_core_system(
@@ -600,6 +602,7 @@ class TestFlextCoreSystemConfigAndPerformance:
         assert "log_level" in (bad_log.error or "")
 
     def test_get_core_system_config_fields(self) -> None:
+        """Test getting core system configuration fields."""
         core = FlextCore.get_instance()
         result = core.get_core_system_config()
         assert result.success
@@ -615,6 +618,7 @@ class TestFlextCoreSystemConfigAndPerformance:
             assert key in cfg
 
     def test_create_environment_core_config_variants(self) -> None:
+        """Test creating environment-specific core configurations."""
         core = FlextCore.get_instance()
         prod = core.create_environment_core_config("production")
         assert prod.success
@@ -638,6 +642,7 @@ class TestFlextCoreSystemConfigAndPerformance:
         assert "environment" in (invalid.error or "")
 
     def test_optimize_core_performance_levels(self) -> None:
+        """Test core performance optimization at different levels."""
         core = FlextCore.get_instance()
         for level in ("high", "medium", "low"):
             res = core.optimize_core_performance({"performance_level": level})
@@ -668,7 +673,8 @@ class TestFlextCoreServiceManagement:
                 self.name = "test_service"
 
         service = TestService()
-        register_result = core.register_service("test_service", service)
+        container = FlextContainer.get_global()
+        register_result = container.register("test_service", service)
         assert register_result.success
 
         # Retrieve the service
@@ -689,10 +695,10 @@ class TestFlextCoreServiceManagement:
 
     def test_register_service_invalid_name(self) -> None:
         """Test service registration with invalid name."""
-        core = FlextCore.get_instance()
+        container = FlextContainer.get_global()
 
         service = object()
-        result = core.register_service("", service)
+        result = container.register("", service)
         assert result.failure
 
 
@@ -861,11 +867,12 @@ class TestFlextCoreAdvancedFeatures:
     def test_multiple_service_registration(self) -> None:
         """Test registering multiple services."""
         core = FlextCore.get_instance()
+        container = FlextContainer.get_global()
 
         services = {f"service_{i}": f"value_{i}" for i in range(5)}
 
         for name, service in services.items():
-            reg_result = core.register_service(name, service)
+            reg_result = container.register(name, service)
             assert reg_result.success
 
         # Verify all services can be retrieved
@@ -903,7 +910,7 @@ class TestFlextCoreAdvancedFeatures:
 
         for case in edge_cases:
             email_result = (
-                core.validate_email(case)
+                core.Validations.Validators.validate_email(case)
                 if isinstance(case, str)
                 else FlextResult.fail("not string")
             )
@@ -942,13 +949,13 @@ class TestFlextCoreAdvancedFeatures:
         core = FlextCore.get_instance()
 
         # Test format_duration with edge cases
-        assert core.format_duration(0) is not None
-        assert core.format_duration(0.5) is not None
-        assert core.format_duration(1000000) is not None
+        assert core.Utilities.TimeUtils.format_duration(0) is not None
+        assert core.Utilities.TimeUtils.format_duration(0.5) is not None
+        assert core.Utilities.TimeUtils.format_duration(1000000) is not None
 
         # Test clean_text with edge cases
-        assert core.clean_text("") is not None
-        assert core.clean_text("   ") is not None
+        assert core.Utilities.clean_text("") is not None
+        assert core.Utilities.clean_text("   ") is not None
 
         # Test batch_process with edge cases
         assert core.batch_process([], 1) == []

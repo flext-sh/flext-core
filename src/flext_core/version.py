@@ -64,6 +64,7 @@ class FlextVersionManager:
             error_message: str,
             recommendations: list[str],
         ) -> None:
+            """Initialize compatibility result."""
             self.is_compatible = is_compatible
             self.current_version = current_version
             self.required_version = required_version

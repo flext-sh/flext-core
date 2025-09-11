@@ -291,19 +291,18 @@ class TestFieldsRealAPI85:
 
         for scenario in edge_case_scenarios:
             try:
-                if scenario["field_type"]:
+                if scenario["field_type"] and hasattr(FlextFields, "create_field"):
                     # Test field creation with various scenarios
-                    if hasattr(FlextFields, "create_field"):
-                        result = FlextFields.create_field(
-                            field_type=scenario["field_type"],
-                            constraints=scenario.get("constraints"),
-                        )
+                    result = FlextFields.create_field(
+                        field_type=scenario["field_type"],
+                        constraints=scenario.get("constraints"),
+                    )
 
-                        if scenario.get("expected_error"):
-                            # Should have handled the error gracefully
-                            assert result is None or isinstance(result, str)
-                        else:
-                            assert result is not None
+                    if scenario.get("expected_error"):
+                        # Should have handled the error gracefully
+                        assert result is None or isinstance(result, str)
+                    else:
+                        assert result is not None
 
             except Exception:
                 # Expected for edge cases

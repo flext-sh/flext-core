@@ -152,16 +152,19 @@ class TestFlextConfigComprehensive:
         assert rules.success
 
     def test_environment_basic_value(self) -> None:
+        """Test basic environment value setting."""
         result = FlextConfig.create(constants={"environment": "production"})
         assert result.success
         assert result.unwrap().environment == "production"
 
     def test_log_level_basic_normalization(self) -> None:
+        """Test log level normalization to uppercase."""
         result = FlextConfig.create(constants={"log_level": "info"})
         assert result.success
         assert result.unwrap().log_level == "INFO"
 
     def test_as_api_payload(self) -> None:
+        """Test configuration serialization to API payload format."""
         result = FlextConfig.create(
             constants={
                 "app_name": "test-app",
@@ -239,8 +242,6 @@ class TestFlextConfigComprehensive:
 
     def test_load_and_validate_from_file_invalid_json(self) -> None:
         """Test loading from file with invalid env file content."""
-        import os
-
         # Save original environment and clear FLEXT_ENVIRONMENT for test isolation
         original_env = os.environ.get("FLEXT_ENVIRONMENT")
         if "FLEXT_ENVIRONMENT" in os.environ:

@@ -20,7 +20,7 @@ import time
 import traceback
 from collections.abc import Generator
 from types import TracebackType
-from typing import cast, Self
+from typing import Self, cast
 
 from flext_core import (
     FlextConstants,
@@ -106,7 +106,7 @@ def _raise_timeout_error() -> None:
 def demonstrate_basic_logging() -> None:
     """Demonstrate basic structured logging with FlextLogger."""
     # 1. Create basic logger
-    logger = FlextLogger("myapp.service", "DEBUG")
+    logger = FlextLogger("myapp.service", level="DEBUG")
 
     # Basic logging at different levels
     logger.trace("Application startup trace", phase="initialization", step=1)
@@ -123,7 +123,7 @@ def demonstrate_basic_logging() -> None:
     # 2. Logger with different level filtering
 
     # Create logger with WARNING level - should filter out DEBUG and INFO
-    warning_logger = FlextLogger("myapp.critical", "WARNING")
+    warning_logger = FlextLogger("myapp.critical", level="WARNING")
 
     warning_logger.debug("This debug message should be filtered out")
     warning_logger.info("This info message should be filtered out")
@@ -132,7 +132,7 @@ def demonstrate_basic_logging() -> None:
 
     # 3. Context-aware logging
 
-    context_logger = FlextLogger("myapp.context", "INFO")
+    context_logger = FlextLogger("myapp.context", level="INFO")
     context_logger.set_context(
         {
             "user_id": "user_123",
@@ -155,12 +155,12 @@ def demonstrate_logger_factory() -> None:
     # 1. Factory logger creation with caching
 
     # Create loggers using factory
-    service_logger = FlextLogger("myapp.service", "DEBUG")
-    database_logger = FlextLogger("myapp.database", "INFO")
-    api_logger = FlextLogger("myapp.api", "DEBUG")
+    service_logger = FlextLogger("myapp.service", level="DEBUG")
+    database_logger = FlextLogger("myapp.database", level="INFO")
+    api_logger = FlextLogger("myapp.api", level="DEBUG")
 
     # Create same logger again - should return cached instance
-    FlextLogger("myapp.service", "DEBUG")
+    FlextLogger("myapp.service", level="DEBUG")
 
     # 2. Global level configuration
 
@@ -188,7 +188,7 @@ def demonstrate_logger_factory() -> None:
     FlextLoggerFactory.set_global_level("DEBUG")
 
     # Use convenience function
-    convenience_logger = FlextLogger("myapp.convenience", "INFO")
+    convenience_logger = FlextLogger("myapp.convenience", level="INFO")
     convenience_logger.info("Logger created with convenience function", easy=True)
 
 
@@ -196,7 +196,7 @@ def demonstrate_context_management() -> None:
     """Demonstrate context management with scoped logging."""
     # 1. Basic context management
 
-    base_logger = FlextLogger("myapp.context", "INFO")
+    base_logger = FlextLogger("myapp.context", level="INFO")
     base_logger.set_context({"service": "user_service", "version": "0.9.0"})
 
     base_logger.info("Service started with base context")
@@ -231,7 +231,7 @@ def demonstrate_context_management() -> None:
 
     # 2. Context inheritance patterns
 
-    parent_logger = FlextLogger("myapp.parent", "DEBUG")
+    parent_logger = FlextLogger("myapp.parent", level="DEBUG")
     parent_logger.set_context({"environment": "production", "datacenter": "us-east-1"})
 
     # Create child logger with additional context
@@ -249,7 +249,7 @@ def demonstrate_context_management() -> None:
 
     # 3. Convenience context manager
 
-    convenience_logger = FlextLogger("myapp.convenience_context", "INFO")
+    convenience_logger = FlextLogger("myapp.convenience_context", level="INFO")
     convenience_logger.set_context({"application": "ecommerce"})
 
     with create_log_context(
@@ -277,7 +277,7 @@ def _print_exception_header() -> None:
 
 
 def _basic_exception_logging() -> None:
-    error_logger = FlextLogger("myapp.errors", "DEBUG")
+    error_logger = FlextLogger("myapp.errors", level="DEBUG")
     error_logger.set_context({"module": "payment_processor"})
     try:
         _ = 10 / 0
@@ -311,7 +311,7 @@ def _basic_exception_logging() -> None:
 
 
 def _process_payment(amount: float, payment_method: str) -> FlextTypes.Core.Dict:
-    contextual_logger = FlextLogger("myapp.payment", "INFO")
+    contextual_logger = FlextLogger("myapp.payment", level="INFO")
     with create_log_context(
         contextual_logger,
         amount=amount,
@@ -380,8 +380,8 @@ def _print_unified_header() -> None:
 
 
 def _unified_api_usage() -> None:
-    api_logger = FlextLogger("myapp.unified_api", "DEBUG")
-    metrics_logger = FlextLogger("myapp.metrics", "INFO")
+    api_logger = FlextLogger("myapp.unified_api", level="DEBUG")
+    metrics_logger = FlextLogger("myapp.metrics", level="INFO")
     api_logger.info(
         "API server starting",
         port=FlextConstants.Platform.FLEXCORE_PORT,
@@ -398,7 +398,7 @@ def _unified_api_usage() -> None:
 def _log_store_observability() -> None:
     FlextLoggerFactory.clear_loggers()
     FlextLoggerFactory.set_global_level("INFO")
-    observability_logger = FlextLogger("myapp.observability", "INFO")
+    observability_logger = FlextLogger("myapp.observability", level="INFO")
     with create_log_context(
         observability_logger,
         session_id="obs_session_123",
@@ -438,7 +438,7 @@ def _testing_utilities_demo() -> None:
     # FlextLoggerFactory.get_log_store() doesn't exist in refactored architecture
     # Simulating log store operations for demo purposes
     FlextLoggerFactory.clear_loggers()
-    fresh_logger = FlextLogger("myapp.fresh", "DEBUG")
+    fresh_logger = FlextLogger("myapp.fresh", level="DEBUG")
     fresh_logger.info("Fresh logger after cache clear", cache_cleared=True)
     FlextLoggerFactory.clear_loggers()
     # FlextLoggerFactory.get_log_store() call commented out - method doesn't exist
@@ -461,10 +461,10 @@ def _process_user_request(
     request_id: str,
     operation: str,
 ) -> FlextTypes.Core.Dict:
-    gateway_logger = FlextLogger("enterprise.api_gateway", "INFO")
-    auth_logger = FlextLogger("enterprise.auth_service", "INFO")
-    user_logger = FlextLogger("enterprise.user_service", "INFO")
-    db_logger = FlextLogger("enterprise.database", "INFO")
+    gateway_logger = FlextLogger("enterprise.api_gateway", level="INFO")
+    auth_logger = FlextLogger("enterprise.auth_service", level="INFO")
+    user_logger = FlextLogger("enterprise.user_service", level="INFO")
+    db_logger = FlextLogger("enterprise.database", level="INFO")
     correlation_context = {
         "correlation_id": request_id,
         "user_id": user_id,
@@ -551,6 +551,7 @@ class PerformanceMonitor:
     """Context manager for performance monitoring."""
 
     def __init__(self, logger: FlextLogger, operation: str, **context: object) -> None:
+        """Initialize performance monitor with logger and operation context."""
         self.logger = logger
         self.operation = operation
         self.context = context
@@ -598,7 +599,7 @@ class PerformanceMonitor:
 
 
 def _performance_monitoring_demo() -> None:
-    perf_logger = FlextLogger("enterprise.performance", "INFO")
+    perf_logger = FlextLogger("enterprise.performance", level="INFO")
     operations: list[FlextTypes.Core.Dict] = [
         {"op": "database_query", "table": "users", "complexity": "simple"},
         {"op": "cache_lookup", "cache_type": "redis", "key_pattern": "user:*"},
@@ -620,7 +621,7 @@ def _performance_monitoring_demo() -> None:
 
 
 def _business_metrics_demo() -> None:
-    business_logger = FlextLogger("enterprise.business", "INFO")
+    business_logger = FlextLogger("enterprise.business", level="INFO")
     business_events: list[FlextTypes.Core.Dict] = [
         {
             "event": "user_registration",

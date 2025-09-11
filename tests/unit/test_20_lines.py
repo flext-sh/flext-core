@@ -251,7 +251,7 @@ class TestFinal20LinesTo100Percent:
         # Verify complete integration
         assert obj.final_data == "ultimate_test"
         assert "final_data" in result
-        assert obj.get_cached_value("ultimate") == "value"
+        assert obj.get_cached_value_by_key("ultimate") == "value"
         assert obj.state == "ultimate"
         elapsed = obj.get_last_elapsed_time()
         assert elapsed >= 0

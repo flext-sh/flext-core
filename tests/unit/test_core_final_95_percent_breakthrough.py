@@ -1,4 +1,4 @@
-"""Final breakthrough tests for core.py - TARGET: 88%→95%+ PERFECTION!
+"""Final breakthrough tests for core.py - TARGET: 88%→95%+ PERFECTION.
 
 FlextCore main orchestrator class targeting 125 remaining uncovered lines.
 Strategic focus on real API methods to achieve near-perfect coverage.

@@ -37,6 +37,7 @@ class TraditionalDatabaseService:
     """Traditional service with massive boilerplate code."""
 
     def __init__(self, host: str, port: int, username: str, password: str) -> None:
+        """Initialize database connection with credentials."""
         self.host = host
         self.port = port
         self.username = username
@@ -121,6 +122,7 @@ class UltraModernDatabaseService(FlextMixins.Entity):
     """ULTIMATE concise service - 20+ classes in minimal code!."""
 
     def __init__(self) -> None:
+        """Initialize ultimate service with container and context."""
         super().__init__()
         self.container = FlextContainer()
         self.context = FlextContext()
@@ -164,6 +166,7 @@ class EnterpriseServiceOrchestrator(FlextMixins.Entity):
     """ULTIMATE Enterprise orchestrator using flext-core patterns!."""
 
     def __init__(self) -> None:
+        """Initialize enterprise orchestrator with container and context."""
         super().__init__()
         self.container = FlextContainer()
         self.context = FlextContext()

@@ -47,7 +47,7 @@ class FlextLogger:
     _level: FlextTypes.Config.LogLevel
     _environment: FlextTypes.Config.Environment
 
-    def __new__(cls, name: str, *_args: object, **kwargs: object) -> Self:
+    def __new__(cls, name: str, **kwargs: object) -> Self:
         """Create or return cached logger instance."""
         # Check if this is a bind() call that needs a new instance
         force_new = kwargs.pop("_force_new", False)

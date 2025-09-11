@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import math
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from flext_core import FlextResult, FlextValidations
@@ -543,7 +543,7 @@ class TestFlextValidationsServiceAndProtocols:
                         service_test_cases = [
                             {
                                 "request_id": str(uuid.uuid4()),
-                                "timestamp": datetime.now(),
+                                "timestamp": datetime.now(UTC),
                                 "user_id": "user123",
                                 "action": "create_user",
                             },
@@ -683,7 +683,7 @@ class TestFlextValidationsServiceAndProtocols:
                             "user_id": "user123",
                             "action": "create_post",
                             "metadata": {"source": "web"},
-                            "timestamp": datetime.now(),
+                            "timestamp": datetime.now(UTC),
                         },
                         {
                             "user_id": "",  # Invalid empty user_id
@@ -742,7 +742,7 @@ class TestFlextValidationsEdgeCasesAndErrors:
                 "metadata": {
                     "total_count": 2,
                     "page": 1,
-                    "created_at": datetime.now().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             },
             # Malformed versions
@@ -811,8 +811,8 @@ class TestFlextValidationsEdgeCasesAndErrors:
             {f"key_{i}": f"value_{i}" for i in range(1000)},
             # Edge case values
             Decimal("999999999999999999.999999999"),
-            datetime.min,
-            datetime.max,
+            datetime.min.replace(tzinfo=UTC),
+            datetime.max.replace(tzinfo=UTC),
             date.min,
             date.max,
         ]

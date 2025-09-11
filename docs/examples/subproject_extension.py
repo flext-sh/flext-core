@@ -9,20 +9,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Optional
-from pydantic import ValidationInfo
-from datetime import datetime
 import os
-import yaml
 from pathlib import Path
-from pydantic import Field, field_validator, model_validator, ConfigDict
+
+import yaml
+from pydantic import (
+    Field,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from flext_core import (
-    FlextModels,
-    FlextConfig,
-    FlextResult,
     FlextConstants,
-    FlextLogger,
     FlextExceptions,
+    FlextLogger,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
 )
 
 logger = FlextLogger(__name__)
@@ -135,32 +141,6 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
                 msg = "HTTPS required in production"
                 raise ValueError(msg)
 
-            # Adjust settings for production
-            self.debug = False
-            self.log_level = FlextConstants.Config.LogLevel.WARNING.value
-            self.enable_swagger = False  # Disable Swagger in production
-            self.enable_response_caching = True
-            self.worker_count = max(self.worker_count, 8)  # Minimum 8 workers
-
-        # Development settings
-        elif (
-            self.environment
-            == FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
-        ):
-            self.debug = True
-            self.log_level = FlextConstants.Config.LogLevel.DEBUG.value
-            self.enable_swagger = True
-            self.enable_cors = True  # Allow CORS in development
-            self.enable_request_logging = True
-
-        # Local settings
-        elif self.environment == FlextConstants.Config.ConfigEnvironment.LOCAL.value:
-            self.debug = True
-            self.enable_swagger = True
-            self.enable_cors = True
-            self.enable_rate_limiting = False  # No rate limiting locally
-            self.base_url = "http://localhost:8080"  # Override for local
-
         return self
 
     def add_endpoint(self, endpoint: dict[str, object]) -> ApiConfig:
@@ -195,8 +175,12 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
         }
 
 
-class ApiSettings(FlextConfig.Settings):
+class ApiSettings(BaseSettings):
     """Extended settings for API service with environment variable support."""
+
+    # Base settings fields (inherited from BaseSettings)
+    environment: str = "development"
+    log_level: str = "INFO"
 
     # Add API-specific settings fields
     api_version: str = "v1"
@@ -206,7 +190,7 @@ class ApiSettings(FlextConfig.Settings):
     service_port: int = 8080
     worker_count: int = 4
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_prefix="FLEXT_API_",  # Environment variable prefix
         env_nested_delimiter="__",  # For nested configs
         case_sensitive=False,
@@ -218,7 +202,6 @@ class ApiSettings(FlextConfig.Settings):
             # Base fields from parent
             environment=self.environment,
             log_level=self.log_level,
-            debug=self.debug,
             # API-specific fields
             api_version=self.api_version,
             base_url=self.base_url,
@@ -233,7 +216,10 @@ class ApiSettings(FlextConfig.Settings):
         """Load settings from YAML file."""
         with Path(file_path).open(encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        return cls.model_validate(data)
+        if not isinstance(data, dict):
+            msg = f"Invalid YAML format in {file_path}: expected dict, got {type(data)}"
+            raise TypeError(msg)
+        return cls(**data)
 
 
 def configure_api_system(config: dict[str, object]) -> FlextResult[dict[str, object]]:
@@ -253,16 +239,11 @@ def configure_api_system(config: dict[str, object]) -> FlextResult[dict[str, obj
         if api_config.enable_cors and api_config.environment == "production":
             logger.warning("CORS enabled in production - ensure origins are restricted")
 
-        # Register with global registry (optional)
-        FlextConfig.SettingsRegistry.register(
-            api_config.service_name, ApiSettings.model_validate(config)
-        )
-
         # Return as dict for compatibility
         return FlextResult.ok(api_config.model_dump())
 
     except ValidationError as e:
-        errors = "; ".join(f"{err['loc'][0]}: {err['msg']}" for err in e.errors())
+        errors = "; ".join(str(err) for err in e.errors())
         return FlextResult.fail(
             f"API configuration validation failed: {errors}",
             error_code=FlextConstants.Errors.CONFIGURATION_ERROR,
@@ -270,7 +251,7 @@ def configure_api_system(config: dict[str, object]) -> FlextResult[dict[str, obj
     except Exception as e:
         return FlextResult.fail(
             f"Failed to configure API system: {e!s}",
-            error_code=FlextConstants.Errors.SYSTEM_ERROR,
+            error_code=FlextConstants.Errors.GENERIC_ERROR,
         )
 
 
@@ -350,6 +331,8 @@ def example_with_endpoints() -> None:
         environment="development",
         api_version="v2",
         base_url="https://api.dev.example.com",
+        api_key="sk_live_" + "x" * 32,  # Required for development
+        jwt_secret="secret_" + "x" * 32,  # Required for development
     )
 
     # Add endpoints
@@ -388,10 +371,7 @@ def example_from_environment() -> None:
     os.environ["FLEXT_API_WORKER_COUNT"] = "8"
 
     # Load from environment
-    settings = ApiSettings.from_sources(
-        env_prefix="FLEXT_API_",
-        json_file="config.json",  # Also check JSON file
-    )
+    settings = ApiSettings()  # BaseSettings automatically loads from environment
 
     # Convert to config
     config = settings.to_config()
@@ -412,29 +392,37 @@ def example_deployment_generation() -> None:
 
 
 def example_with_registry() -> None:
-    """Example using the Settings Registry."""
-    # Register multiple services
+    """Example showing multiple services configuration."""
+    # Create multiple services configuration
     services = {
-        "api": ApiSettings(api_version="v1", service_port=8080),
-        "auth": ApiSettings(api_version="v1", service_port=8081),
-        "admin": ApiSettings(api_version="v1", service_port=8082),
+        "api": ApiSettings(),
+        "auth": ApiSettings(),
+        "admin": ApiSettings(),
     }
 
+    # Show configuration for each service
     for name, settings in services.items():
-        FlextConfig.SettingsRegistry.register(name, settings)
+        config = settings.to_config()
+        print(
+            f"{name.upper()} service: {config.service_name} on port {config.service_port}"
+        )
 
-    # Update runtime configuration
-    FlextConfig.SettingsRegistry.update_runtime(
-        "api", {"log_level": "DEBUG", "worker_count": 16}
+    # Update configuration (simulated)
+    api_settings = services["api"]
+    updated_config = ApiConfig(
+        environment="development",
+        log_level="DEBUG",
+        api_version=api_settings.api_version,
+        base_url=api_settings.base_url,
+        api_key=api_settings.api_key
+        or "sk_live_" + "x" * 32,  # Provide default if None
+        jwt_secret=api_settings.jwt_secret
+        or "secret_" + "x" * 32,  # Provide default if None
+        service_port=api_settings.service_port,
+        worker_count=16,  # Updated worker count
     )
 
-    # Reload from sources
-    result = FlextConfig.SettingsRegistry.reload_from_sources(
-        "api", env_prefix="FLEXT_API_"
-    )
-
-    if result.success:
-        print("Configuration reloaded successfully")
+    print(f"Updated API configuration: {updated_config.worker_count} workers")
 
 
 class ApiApplication:
@@ -463,9 +451,9 @@ class ApiApplication:
     def _load_from_environment(self) -> FlextResult[dict[str, object]]:
         """Load configuration from environment."""
         try:
-            settings = ApiSettings.from_sources(
-                env_prefix="FLEXT_API_", json_file="api_config.json"
-            )
+            settings = (
+                ApiSettings()
+            )  # BaseSettings automatically loads from environment
             config = settings.to_config()
             return FlextResult.ok(config.model_dump())
         except Exception as e:
