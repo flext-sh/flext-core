@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -395,7 +395,7 @@ class TestFlextModelsComprehensive:
 
         # Test Timestamp
         try:
-            now = datetime.now()
+            now = datetime.now(UTC)
             timestamp = FlextModels.Timestamp(now)
             assert isinstance(timestamp, FlextModels.Timestamp)
             assert timestamp.root == now

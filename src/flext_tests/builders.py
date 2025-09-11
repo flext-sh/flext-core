@@ -45,6 +45,7 @@ class FlextTestsBuilders:
         """Builder for FlextResult objects with various scenarios."""
 
         def __init__(self) -> None:
+            """Initialize result builder."""
             self._data: object = None
             self._error: str | None = None
             self._error_code: str | None = None
@@ -92,23 +93,20 @@ class FlextTestsBuilders:
         """Builder for FlextContainer with pre-configured services."""
 
         def __init__(self) -> None:
+            """Initialize container builder."""
             self._container = FlextContainer()
             self._services: FlextTypes.Core.Dict = {}
             self._factories: dict[str, Callable[[], object]] = {}
 
         def with_service(
-            self,
-            name: str,
-            service: object,
+            self, name: str, service: object
         ) -> FlextTestsBuilders.ContainerBuilder:
             """Add a service to the container."""
             self._services[name] = service
             return self
 
         def with_factory(
-            self,
-            name: str,
-            factory: Callable[[], object],
+            self, name: str, factory: Callable[[], object]
         ) -> FlextTestsBuilders.ContainerBuilder:
             """Add a factory to the container."""
             self._factories[name] = factory
@@ -168,14 +166,15 @@ class FlextTestsBuilders:
     # === Field Builder ===
 
     @classmethod
-    def field(cls, field_type: str = "string") -> FlextTestsBuilders.FieldBuilder:
+    def field(cls, field_type: str) -> FlextTestsBuilders.FieldBuilder:
         """Create a field builder."""
         return cls.FieldBuilder(field_type)
 
     class FieldBuilder:
         """Builder for FlextFields objects with various configurations."""
 
-        def __init__(self, field_type: str = "string") -> None:
+        def __init__(self, field_type: str) -> None:
+            """Initialize field builder."""
             self._field_type = field_type
             self._field_id = f"test_{field_type}_field"
             self._field_name = f"test_{field_type}_field"
@@ -246,11 +245,7 @@ class FlextTestsBuilders:
                 self._config["default_value"] = str(default_value)
             return self
 
-        def build(
-            self,
-        ) -> (
-            object
-        ):  # Return object instead of specific field type to avoid import issues
+        def build(self) -> object:
             """Build the field object."""
             result = FlextFields.Factory.create_field(
                 self._field_type,
@@ -274,6 +269,7 @@ class FlextTestsBuilders:
         """Builder for FlextConfig objects with various settings."""
 
         def __init__(self) -> None:
+            """Initialize config builder."""
             self._config_data: FlextTypes.Core.Dict = {}
 
         def with_debug(self, *, debug: bool = True) -> FlextTestsBuilders.ConfigBuilder:
@@ -281,12 +277,16 @@ class FlextTestsBuilders:
             self._config_data["debug"] = debug
             return self
 
-        def with_log_level(self, level: str) -> FlextTestsBuilders.ConfigBuilder:
+        def with_log_level(
+            self, level: str = "INFO"
+        ) -> FlextTestsBuilders.ConfigBuilder:
             """Set log level."""
             self._config_data["log_level"] = level
             return self
 
-        def with_environment(self, env: str) -> FlextTestsBuilders.ConfigBuilder:
+        def with_environment(
+            self, env: str = "test"
+        ) -> FlextTestsBuilders.ConfigBuilder:
             """Set environment."""
             self._config_data["environment"] = env
             return self
@@ -297,9 +297,7 @@ class FlextTestsBuilders:
             return self
 
         def with_custom_setting(
-            self,
-            key: str,
-            value: object,
+            self, key: str, value: object
         ) -> FlextTestsBuilders.ConfigBuilder:
             """Add custom configuration setting."""
             # Convert value to JsonValue format
@@ -336,6 +334,7 @@ class FlextTestsBuilders:
         """Builder for mock objects with pytest-mock integration."""
 
         def __init__(self, mocker: MockerFixture) -> None:
+            """Initialize mock builder."""
             self._mocker = mocker
             self._mock = Mock()
             self._return_values: FlextTypes.Core.List = []
@@ -347,8 +346,7 @@ class FlextTestsBuilders:
             return self
 
         def returns_result_success(
-            self,
-            data: object = None,
+            self, data: object
         ) -> FlextTestsBuilders.MockBuilder:
             """Return successful FlextResult."""
             result = FlextResult[object].ok(data)
@@ -385,22 +383,20 @@ class FlextTestsBuilders:
 
     @classmethod
     def file(cls) -> FlextTestsBuilders.FileBuilder:
-        """Create a file builder."""
+        """Builder for test files with automatic cleanup."""
         return cls.FileBuilder()
 
     class FileBuilder:
         """Builder for test files with automatic cleanup."""
 
         def __init__(self) -> None:
+            """Initialize file builder."""
             self._content = ""
             self._suffix = ".txt"
             self._encoding = "utf-8"
             self._mode = "w"
 
-        def with_json_content(
-            self,
-            data: FlextTypes.Core.Dict,
-        ) -> FlextTestsBuilders.FileBuilder:
+        def with_json_content(self, data: object) -> FlextTestsBuilders.FileBuilder:
             """Set JSON content."""
             self._content = json.dumps(data, indent=2)
             self._suffix = ".json"
@@ -412,10 +408,7 @@ class FlextTestsBuilders:
             self._suffix = ".txt"
             return self
 
-        def with_config_content(
-            self,
-            config: FlextTypes.Core.Dict,
-        ) -> FlextTestsBuilders.FileBuilder:
+        def with_config_content(self, config: object) -> FlextTestsBuilders.FileBuilder:
             """Set configuration file content."""
             return self.with_json_content(config).with_suffix(".config.json")
 
@@ -474,23 +467,6 @@ class FlextTestsBuilders:
 
         return builder.build()
 
-
-# === REMOVED COMPATIBILITY ALIASES AND FACADES ===
-# Legacy compatibility removed as per user request
-# All compatibility facades, aliases and protocol facades have been commented out
-# Only FlextTestsBuilders class is now exported
-
-# Main class alias for backward compatibility - REMOVED
-# FlextTestsBuilder = FlextTestsBuilders
-
-# Legacy TestBuilders class - REMOVED (commented out)
-# class TestBuilders:
-#     """Compatibility facade for TestBuilders - use FlextTestsBuilders instead."""
-#     ... all methods commented out
-
-# Convenience functions for backward compatibility - REMOVED (commented out)
-# def build_success_result(data: object = "test_data") -> FlextResult[object]:
-#     ... all functions commented out
 
 # Export only the unified class
 __all__ = [

@@ -37,7 +37,7 @@ class TestFlextDecoratorsValidation:
             if callable(validator_decorator):
                 # Create a test function to decorate
                 @validator_decorator
-                def test_function(data) -> str:
+                def test_function(data: object) -> str:
                     return f"Processed: {data}"
 
                 # Test with valid input
@@ -114,7 +114,7 @@ class TestFlextDecoratorsValidation:
                 if callable(validator):
 
                     @validator
-                    def advanced_test_function(data):
+                    def advanced_test_function(data: object) -> object:
                         return data
 
                     # Test advanced validation
@@ -149,7 +149,7 @@ class TestFlextDecoratorsValidation:
                 if callable(type_validator):
                     # Create test function with type validation
                     @type_validator
-                    def typed_function(*args, **kwargs) -> str:
+                    def typed_function(*args: object, **kwargs: object) -> str:
                         return f"Args: {args}, Kwargs: {kwargs}"
 
                     # Test with correct types
@@ -269,7 +269,7 @@ class TestFlextDecoratorsPerformance:
                     call_count = 0
 
                     @cache_decorator
-                    def cached_function(x, y=None) -> str:
+                    def cached_function(x: object, y: object | None = None) -> str:
                         nonlocal call_count
                         call_count += 1
                         return f"Result: {x}, {y} (call #{call_count})"
@@ -318,7 +318,7 @@ class TestFlextDecoratorsPerformance:
                 if callable(cache_decorator):
 
                     @cache_decorator
-                    def strategy_test_function(a, b, key=None) -> str:
+                    def strategy_test_function(a: object, b: object, key: object | None = None) -> str:
                         return f"Strategy test: {a}, {b}, {key}"
 
                     # Test with strategy
@@ -349,7 +349,7 @@ class TestFlextDecoratorsPerformance:
                 if callable(monitor_decorator):
                     # Create test function to monitor
                     @monitor_decorator
-                    def monitored_function(iterations=100):
+                    def monitored_function(iterations: int = 100) -> int:
                         # Simulate some work
                         total = 0
                         for i in range(iterations):
@@ -471,10 +471,10 @@ class TestFlextDecoratorsReliability:
                                 if callable(decorator):
                                     # Test the decorator
                                     @decorator
-                                    def unreliable_function(should_fail=False) -> str:
+                                    def unreliable_function(*, should_fail: bool = False) -> str:
                                         if should_fail:
                                             msg = "Simulated failure"
-                                            raise Exception(msg)
+                                            raise ValueError(msg)
                                         return "success"
 
                                     # Test normal execution
@@ -535,7 +535,7 @@ class TestFlextDecoratorsObservability:
                                     # Test the decorator
                                     @decorator
                                     def observable_function(
-                                        operation, data=None
+                                        operation: object, data: object | None = None
                                     ) -> str:
                                         return f"Operation {operation} completed with {data}"
 
@@ -602,7 +602,7 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                                 if callable(decorator):
                                     # Test integration decorator
                                     @decorator
-                                    def integrated_function(action, payload=None):
+                                    def integrated_function(action: object, payload: object | None = None) -> dict[str, object]:
                                         return {
                                             "action": action,
                                             "payload": payload,
@@ -686,11 +686,11 @@ class TestFlextDecoratorsIntegrationAndLifecycle:
                                     # Test lifecycle decorator
                                     @decorator
                                     def lifecycle_managed_function(
-                                        phase, operation=None
-                                    ):
+                                        phase: object, operation: object | None = None
+                                    ) -> dict[str, object]:
                                         if phase == "error":
                                             msg = "Simulated lifecycle error"
-                                            raise Exception(msg)
+                                            raise ValueError(msg)
                                         return {
                                             "phase": phase,
                                             "operation": operation,
@@ -755,7 +755,7 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
                 @validation_decorator
                 @cache_decorator
                 @monitor_decorator
-                def complex_decorated_function(input_data) -> str:
+                def complex_decorated_function(input_data: object) -> str:
                     return f"Processed: {input_data.get('input', 'no_input')}"
 
                 # Test composed function
@@ -827,7 +827,7 @@ class TestFlextDecoratorsEdgeCasesAndComplexScenarios:
                 if callable(cache_decorator):
 
                     @cache_decorator
-                    def extreme_cached_function(x):
+                    def extreme_cached_function(x: object) -> object:
                         return x * 2
 
                     # Test with extreme values

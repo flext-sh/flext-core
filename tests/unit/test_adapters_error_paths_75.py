@@ -244,13 +244,13 @@ class TestAdaptersErrorPaths75:
                 # Test coercing adapter with problematic values
                 problematic_values = [
                     type(
-                        "ProblematicClass", (), {"__str__": lambda self: None}
+                        "ProblematicClass", (), {"__str__": lambda _: None}
                     )(),  # __str__ returns None
                     type(
-                        "BadRepr", (), {"__repr__": lambda self: object()}
+                        "BadRepr", (), {"__repr__": lambda _: object()}
                     )(),  # __repr__ returns object
                     type(
-                        "ErrorStr", (), {"__str__": lambda self: 1 / 0}
+                        "ErrorStr", (), {"__str__": lambda _: 1 / 0}
                     )(),  # __str__ raises exception
                 ]
 
@@ -388,15 +388,15 @@ class TestAdaptersErrorPaths75:
         extreme_edge_cases = [
             {
                 "value": type(
-                    "Recursive", (), {"__getattribute__": lambda self, name: self}
+                    "Recursive", (), {"__getattribute__": lambda self, _: self}
                 )()
             },
-            {"value": type("InfiniteStr", (), {"__str__": lambda self: "x" * 10000})()},
+            {"value": type("InfiniteStr", (), {"__str__": lambda _: "x" * 10000})()},
             {
                 "value": type(
                     "NoneReturner",
                     (),
-                    {"__str__": lambda self: None, "__repr__": lambda self: None},
+                    {"__str__": lambda _: None, "__repr__": lambda _: None},
                 )()
             },
         ]

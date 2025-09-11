@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_core import FlextContainer
 
-from flext_core import FlextResult
+from flext_core import FlextContainer, FlextResult
 
 # Add examples directory to path
 sys.path.insert(0, str(Path(__file__).parent / "../../examples"))
@@ -379,7 +378,7 @@ class TestUserRegistrationService:
 
         # Create a failing notification service
         class FailingNotificationService:
-            def send_welcome(self, user: User) -> FlextResult[None]:
+            def send_welcome(self, _user: User) -> FlextResult[None]:
                 return FlextResult[None].fail("Notification system down")
 
         registration_service = UserRegistrationService(

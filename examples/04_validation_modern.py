@@ -12,13 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
+
 from flext_core import (
     FlextDomainService,
     FlextResult,
     FlextTypes,
     FlextValidations,
 )
-import math
 
 
 class ProfessionalValidationService(FlextDomainService[object]):
@@ -46,6 +47,7 @@ class ProfessionalValidationService(FlextDomainService[object]):
             success_rate: float,
             validation_errors: FlextTypes.Core.StringList,
         ) -> None:
+            """Initialize validation report with metrics."""
             self.total_validations = total_validations
             self.successful_validations = successful_validations
             self.failed_validations = failed_validations

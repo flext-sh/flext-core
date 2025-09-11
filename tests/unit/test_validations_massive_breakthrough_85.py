@@ -218,7 +218,7 @@ class TestValidationsMassiveBreakthrough85:
                 # Test advanced validation methods
                 if hasattr(advanced, "validate_conditional"):
                     result = advanced.validate_conditional(
-                        scenario["value"], scenario.get("condition", lambda x: True)
+                        scenario["value"], scenario.get("condition", lambda _: True)
                     )
                     assert result is not None or result is None
 

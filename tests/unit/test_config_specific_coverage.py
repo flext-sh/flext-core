@@ -87,11 +87,11 @@ class TestFlextConfigSpecificPaths:
         config = FlextConfig()
 
         # Test optional properties that exist
-        config.api_key  # Access to trigger coverage
-        config.database_url  # Access to trigger coverage
-        config.cors_origins  # Access to trigger coverage
-        config.message_queue_url  # Access to trigger coverage
-        config.base_url  # Access to trigger coverage
+        _ = config.api_key  # Access to trigger coverage
+        _ = config.database_url  # Access to trigger coverage
+        _ = config.cors_origins  # Access to trigger coverage
+        _ = config.message_queue_url  # Access to trigger coverage
+        _ = config.base_url  # Access to trigger coverage
 
         # Verify they can be set
         config = FlextConfig(
@@ -133,10 +133,19 @@ class TestFlextConfigSpecificPaths:
 
     def test_config_log_level_validation(self) -> None:
         """Test log level validation paths."""
-        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        # In development environment, ERROR and CRITICAL are too restrictive
+        # Test with production environment for all levels
+        valid_levels = ["DEBUG", "INFO", "WARNING"]
 
+        # Test allowed levels in development
         for level in valid_levels:
             config = FlextConfig(log_level=level)
+            assert config.log_level == level
+
+        # Test all levels in production environment
+        all_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        for level in all_levels:
+            config = FlextConfig(environment="production", log_level=level)
             assert config.log_level == level
 
 

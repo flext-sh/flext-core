@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+
 from flext_core import (
     FlextHandlers,
     FlextLogger,
@@ -178,8 +179,10 @@ class UserService(FlextProtocols.Domain.Service):
         }
         return FlextResult[FlextTypes.Core.Dict].ok(health_status)
 
-    def __call__(self, *_args: object) -> FlextResult[object]:
+    def __call__(self, *args: object, **kwargs: object) -> object:
         """Make service callable (required by FlextProtocols.Domain.Service)."""
+        # Arguments are required by protocol but not used in this implementation
+        _ = args, kwargs
         return FlextResult[object].ok("UserService called")
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:

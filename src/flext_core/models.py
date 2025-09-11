@@ -1861,10 +1861,6 @@ class FlextModels:
                 raise ValueError(msg)
             return v
 
-
-class FlextFactory:
-    """Factory class for creating FLEXT models with validation."""
-
     @staticmethod
     def create_model(model_class: type[T], **data: object) -> FlextResult[T]:
         """Create a model instance with validation.
@@ -1906,6 +1902,6 @@ class FlextFactory:
 
 
 __all__ = [
-    "FlextFactory",
+    "FlextModels",
     "FlextModels",
 ]

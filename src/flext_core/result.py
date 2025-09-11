@@ -603,6 +603,29 @@ class FlextResult[T_co]:
         return cls.fail(last_error)
 
     @classmethod
+    def sequence(cls, results: list[FlextResult[T_co]]) -> FlextResult[list[T_co]]:
+        """Convert list of results to result of list, failing on first failure.
+
+        Args:
+            results: List of FlextResult instances to sequence
+
+        Returns:
+            FlextResult containing list of all values if all successful,
+            or first failure encountered.
+
+        """
+        values: list[T_co] = []
+        for result in results:
+            if result.is_failure:
+                return FlextResult[list[T_co]].fail(
+                    result.error or "Sequence failed",
+                    error_code=result.error_code,
+                    error_data=result.error_data
+                )
+            values.append(result.unwrap())
+        return FlextResult[list[T_co]].ok(values)
+
+    @classmethod
     def try_all(cls, *funcs: Callable[[], T_co]) -> FlextResult[T_co]:
         """Try functions until one succeeds."""
         if not funcs:

@@ -190,7 +190,9 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
 
     def handle(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
-        return FlextResult[None].fail("Handler processing failed")
+        # Use command to demonstrate it's being processed
+        error_msg = f"Handler processing failed for command: {command.__class__.__name__}"
+        return FlextResult[None].fail(error_msg)
 
     def handle_command(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally (alias for handle)."""

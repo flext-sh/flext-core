@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
@@ -57,6 +58,7 @@ class MockScenario:
     """Mock scenario object for testing purposes."""
 
     def __init__(self, name: str, data: FlextTypes.Core.Dict) -> None:
+        """Initialize mock scenario with name and test data."""
         self.name = name
         self.given = data.get("given", {})
         self.when = data.get("when", {})
@@ -69,6 +71,7 @@ class GivenWhenThenBuilder:
     """Builder for Given-When-Then test scenarios."""
 
     def __init__(self, name: str) -> None:
+        """Initialize Given-When-Then builder with test name."""
         self.name = name
         self._given: FlextTypes.Core.Dict = {}
         self._when: FlextTypes.Core.Dict = {}
@@ -77,26 +80,32 @@ class GivenWhenThenBuilder:
         self._priority = "normal"
 
     def given(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        """Add given conditions to the test scenario."""
         self._given.update(kwargs)
         return self
 
     def when(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        """Add when actions to the test scenario."""
         self._when.update(kwargs)
         return self
 
     def then(self, _description: str, **kwargs: object) -> GivenWhenThenBuilder:
+        """Add then expectations to the test scenario."""
         self._then.update(kwargs)
         return self
 
     def with_tag(self, tag: str) -> GivenWhenThenBuilder:
+        """Add a tag to the test scenario."""
         self._tags.append(tag)
         return self
 
     def with_priority(self, priority: str) -> GivenWhenThenBuilder:
+        """Set the priority of the test scenario."""
         self._priority = priority
         return self
 
     def build(self) -> MockScenario:
+        """Build the final mock scenario object."""
         return MockScenario(
             self.name,
             {
@@ -113,35 +122,43 @@ class FlextTestBuilder:
     """Builder for test data objects."""
 
     def __init__(self) -> None:
+        """Initialize test data builder with empty data."""
         self._data: FlextTypes.Core.Dict = {}
 
     def with_id(self, id_: str) -> FlextTestBuilder:
+        """Add ID to the test data."""
         self._data["id"] = id_
         return self
 
     def with_correlation_id(self, correlation_id: str) -> FlextTestBuilder:
+        """Add correlation ID to the test data."""
         self._data["correlation_id"] = correlation_id
         return self
 
     def with_metadata(self, **kwargs: object) -> FlextTestBuilder:
+        """Add metadata to the test data."""
         self._data.update(kwargs)
         return self
 
     def with_user_data(self, name: str, email: str) -> FlextTestBuilder:
+        """Add user data to the test data."""
         self._data["name"] = name
         self._data["email"] = email
         return self
 
     def with_timestamp(self) -> FlextTestBuilder:
+        """Add timestamp fields to the test data."""
         self._data.setdefault("created_at", "2023-01-01T00:00:00+00:00")
         self._data.setdefault("updated_at", "2023-01-01T00:00:00+00:00")
         return self
 
     def with_validation_rules(self) -> FlextTestBuilder:
+        """Add validation rules to the test data (no-op stub)."""
         # No-op stub to keep example API; could attach schema metadata here
         return self
 
     def build(self) -> FlextTypes.Core.Dict:
+        """Build the final test data dictionary."""
         return self._data.copy()
 
 
@@ -149,12 +166,14 @@ class ParameterizedTestBuilder:
     """Builder for parametrized test cases."""
 
     def __init__(self, test_name: str) -> None:
+        """Initialize parameterized test builder with test name."""
         self.test_name = test_name
         self._cases: list[FlextTypes.Core.Dict] = []
         self._success_cases: list[FlextTypes.Core.Dict] = []
         self._failure_cases: list[FlextTypes.Core.Dict] = []
 
     def add_case(self, **kwargs: object) -> ParameterizedTestBuilder:
+        """Add a test case with the given parameters."""
         self._cases.append(kwargs)
         return self
 
@@ -162,6 +181,7 @@ class ParameterizedTestBuilder:
         self,
         cases: list[FlextTypes.Core.Dict],
     ) -> ParameterizedTestBuilder:
+        """Add multiple success test cases."""
         self._success_cases.extend(cases)
         return self
 
@@ -169,13 +189,16 @@ class ParameterizedTestBuilder:
         self,
         cases: list[FlextTypes.Core.Dict],
     ) -> ParameterizedTestBuilder:
+        """Add multiple failure test cases."""
         self._failure_cases.extend(cases)
         return self
 
     def build(self) -> list[FlextTypes.Core.Dict]:
+        """Build the list of test cases."""
         return self._cases.copy()
 
     def build_pytest_params(self) -> list[tuple[str, str, bool]]:
+        """Build pytest parametrized test parameters."""
         success_params = [
             (str(c.get("email", "")), str(c.get("input", "")), True)
             for c in self._success_cases
@@ -187,6 +210,7 @@ class ParameterizedTestBuilder:
         return success_params + failure_params
 
     def build_test_ids(self) -> FlextTypes.Core.StringList:
+        """Build test IDs for pytest parametrization."""
         return [
             str(c.get("input", ""))
             for c in (*self._success_cases, *self._failure_cases)
@@ -197,53 +221,64 @@ class TestAssertionBuilder:
     """Builder for complex test assertions."""
 
     def __init__(self, data: object) -> None:
+        """Initialize test assertion builder with data to test."""
         self._data = data
         self._checks: list[tuple[str, object]] = []
 
     def is_not_none(self) -> TestAssertionBuilder:
+        """Assert that the data is not None."""
         assert self._data is not None
         return self
 
     def has_length(self, length: int) -> TestAssertionBuilder:
+        """Assert that the data has the specified length."""
         assert len(cast("Sized", self._data)) == length
         return self
 
     def contains(self, item: object) -> TestAssertionBuilder:
+        """Assert that the data contains the specified item."""
         assert item in cast("Container[object]", self._data)
         return self
 
     def satisfies(self, predicate: object, message: str = "") -> TestAssertionBuilder:
+        """Assert that the data satisfies the given predicate."""
         if callable(predicate):
             assert predicate(self._data), message
         return self
 
     def assert_all(self) -> None:
+        """Execute all accumulated assertions."""
         # All checks are executed inline in this simple stub
-        return None
+        return
 
 
 class TestSuiteBuilder:
     """Builder for test suites."""
 
     def __init__(self, name: str) -> None:
+        """Initialize test suite builder with suite name."""
         self.name = name
         self._scenarios: FlextTypes.Core.List = []
         self._setup_data: FlextTypes.Core.Dict = {}
         self._tags: FlextTypes.Core.StringList = []
 
     def add_scenarios(self, scenarios: FlextTypes.Core.List) -> TestSuiteBuilder:
+        """Add multiple test scenarios to the suite."""
         self._scenarios.extend(scenarios)
         return self
 
     def with_setup_data(self, **kwargs: object) -> TestSuiteBuilder:
+        """Add setup data to the test suite."""
         self._setup_data.update(kwargs)
         return self
 
     def with_tag(self, tag: str) -> TestSuiteBuilder:
+        """Add a tag to the test suite."""
         self._tags.append(tag)
         return self
 
     def build(self) -> FlextTypes.Core.Dict:
+        """Build the test suite configuration."""
         return {
             "suite_name": self.name,
             "scenario_count": len(self._scenarios),
@@ -256,34 +291,42 @@ class TestFixtureBuilder:
     """Builder for test fixtures."""
 
     def __init__(self) -> None:
+        """Initialize test fixture builder with empty fixtures."""
         self._fixtures: FlextTypes.Core.Dict = {}
         self._setups: FlextTypes.Core.List = []
         self._teardowns: FlextTypes.Core.List = []
 
     def with_user(self, **kwargs: object) -> TestFixtureBuilder:
+        """Add user fixture data."""
         self._fixtures["user"] = kwargs
         return self
 
     def with_request(self, **kwargs: object) -> TestFixtureBuilder:
+        """Add request fixture data."""
         self._fixtures["request"] = kwargs
         return self
 
     def build(self) -> FlextTypes.Core.Dict:
+        """Build the test fixtures configuration."""
         return self._fixtures.copy()
 
     def add_setup(self, func: object) -> TestFixtureBuilder:
+        """Add a setup function to the fixtures."""
         self._setups.append(func)
         return self
 
     def add_teardown(self, func: object) -> TestFixtureBuilder:
+        """Add a teardown function to the fixtures."""
         self._teardowns.append(func)
         return self
 
     def add_fixture(self, key: str, value: object) -> TestFixtureBuilder:
+        """Add a custom fixture with the given key and value."""
         self._fixtures[key] = value
         return self
 
     def setup_context(self) -> Callable[[], ContextManager[FlextTypes.Core.Dict]]:
+        """Create a context manager for test setup and teardown."""
         @contextmanager
         def _ctx() -> Iterator[FlextTypes.Core.Dict]:
             for f in self._setups:
@@ -663,7 +706,7 @@ class TestComprehensiveIntegration:
 
         async def async_operation() -> FlextTypes.Core.Dict:
             """Simulate async operation."""
-            await async_test_utils.simulate_delay(0.1)
+            await asyncio.sleep(0.1)
             return {"result": "success", "data": test_data}
 
         # Execute with timeout

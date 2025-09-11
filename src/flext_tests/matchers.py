@@ -16,7 +16,7 @@ import asyncio
 import os
 import re
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from typing import Protocol, TypeGuard, TypeVar, runtime_checkable
 
 from flext_core import FlextResult, FlextTypes
@@ -34,13 +34,16 @@ class FlextTestsMatchers:
 
     # === PROTOCOL DEFINITIONS ===
 
+    # Benchmark fixture type - represents pytest-benchmark fixture
     @runtime_checkable
-    class BenchmarkProtocol(Protocol):
-        """Local benchmark protocol to avoid circular imports."""
+    class BenchmarkFixture(Protocol):
+        """Protocol for pytest-benchmark fixture."""
 
-        def benchmark(
-            self, func: object, *args: object, **kwargs: object
-        ) -> object: ...
+        def __call__(
+            self, func: Callable[[], object], *args: object, **kwargs: object
+        ) -> object:
+            """Call benchmark fixture."""
+            ...
 
         @property
         def stats(self) -> object:
@@ -136,10 +139,12 @@ class FlextTestsMatchers:
         # Convenience boolean helpers used by some tests
         @staticmethod
         def is_successful_result(result: FlextResult[object]) -> bool:
+            """is_successful_result method."""
             return bool(getattr(result, "success", False))
 
         @staticmethod
         def is_failed_result(result: FlextResult[object]) -> bool:
+            """is_failed_result method."""
             return bool(getattr(result, "is_failure", False))
 
         @staticmethod
@@ -233,7 +238,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_performance_within_limit(
-            benchmark: FlextTestsMatchers.BenchmarkProtocol,
+            benchmark: FlextTestsMatchers.BenchmarkFixture,
             func: Callable[[], object],
             _max_time_seconds: float = 1.0,
             *args: object,
@@ -324,8 +329,6 @@ class FlextTestsMatchers:
                 This leverages pytest-deadfixtures plugin for fixture analysis
 
             """
-            # This is checked automatically by pytest-deadfixtures
-            # This method serves as documentation and can trigger manual checks
 
         @staticmethod
         def assert_mock_called_with_result(
@@ -405,7 +408,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_linear_complexity(
-            benchmark: FlextTestsMatchers.BenchmarkProtocol,
+            benchmark: FlextTestsMatchers.BenchmarkFixture,
             func: Callable[[int], object],
             sizes: Sequence[int],
             tolerance_factor: float = 2.0,
@@ -442,7 +445,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_memory_efficient(
-            benchmark: FlextTestsMatchers.BenchmarkProtocol,
+            benchmark: FlextTestsMatchers.BenchmarkFixture,
             func: Callable[[], object],
             _max_memory_mb: float = 100.0,
         ) -> object:
@@ -463,7 +466,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_performance_within_limit(
-            benchmark: FlextTestsMatchers.BenchmarkProtocol,
+            benchmark: FlextTestsMatchers.BenchmarkFixture,
             func: Callable[[], object],
             max_time_seconds: float = 1.0,
             *args: object,
@@ -575,12 +578,17 @@ class FlextTestsMatchers:
         return cls.CoreMatchers.is_failed_result(result)
 
     @classmethod
-    async def run_with_timeout(
-        cls, coro: object, timeout_seconds: float = 5.0
-    ) -> object:
-        """Run coroutine with timeout and auto-retry for test compatibility."""
-        import time
+    async def simulate_delay(cls, delay_seconds: float) -> None:
+        """Simulate async delay for test compatibility."""
+        await asyncio.sleep(delay_seconds)
 
+    @classmethod
+    async def run_with_timeout(
+        cls,
+        coro: Callable[[], Awaitable[T]] | Awaitable[T],
+        timeout_seconds: float = 5.0,
+    ) -> T:
+        """Run coroutine with timeout and auto-retry for test compatibility."""
         start_time = time.time()
         last_exception = None
 
@@ -604,62 +612,47 @@ class FlextTestsMatchers:
         raise AssertionError(f"Operation failed: {last_exception}") from last_exception
 
     @classmethod
-    async def simulate_delay(cls, delay_seconds: float) -> None:
-        """Simulate async delay for test compatibility."""
-        await asyncio.sleep(delay_seconds)
-
-    @classmethod
     async def run_parallel_tasks(
-        cls, task_func: object, inputs: list[object]
-    ) -> list[object]:
+        cls, task_func: Callable[[object], Awaitable[T]], inputs: list[object]
+    ) -> list[T]:
         """Run tasks in parallel for test compatibility."""
-        if not callable(task_func):
-            msg = "task_func must be callable"
-            raise ValueError(msg)
-
         # Run tasks concurrently - create awaitable tasks
-        tasks = [task_func(input_item) for input_item in inputs]
-        # Use gather with type ignoring for the asyncio call since task_func return type is unknown
+        tasks: list[Awaitable[T]] = [task_func(input_item) for input_item in inputs]
         results = await asyncio.gather(*tasks)
         return list(results)
 
     @classmethod
     async def run_concurrently(
-        cls, *tasks: object, return_exceptions: bool = True
-    ) -> list[object]:
+        cls, *tasks: Awaitable[T], return_exceptions: bool = True
+    ) -> list[T] | list[T | BaseException]:
         """Ultra-simple alias for test compatibility - runs tasks concurrently."""
         if return_exceptions:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            results: list[T | BaseException] = await asyncio.gather(
+                *tasks, return_exceptions=True
+            )
             # Filter out exceptions when return_exceptions=True - only return successful results
             return [r for r in results if not isinstance(r, Exception)]
         return await asyncio.gather(*tasks)
 
     @classmethod
     async def test_race_condition(
-        cls, task_func: object, *, concurrent_count: int = 5
-    ) -> list[object]:
+        cls, task_func: Callable[[], Awaitable[T]], *, concurrent_count: int = 5
+    ) -> list[T]:
         """Ultra-simple alias for test compatibility - runs function concurrently to test race conditions."""
-        if not callable(task_func):
-            msg = "task_func must be callable"
-            raise ValueError(msg)
         # Run the same function multiple times concurrently
-        tasks = [task_func() for _ in range(concurrent_count)]
+        tasks: list[Awaitable[T]] = [task_func() for _ in range(concurrent_count)]
         results = await asyncio.gather(*tasks)
         return list(results)
 
     @classmethod
     async def measure_concurrency_performance(
-        cls, task_func: object, *, iterations: int = 3
+        cls, task_func: Callable[[], Awaitable[object]], *, iterations: int = 3
     ) -> dict[str, float]:
         """Ultra-simple alias for test compatibility - measures concurrency performance."""
-        if not callable(task_func):
-            msg = "task_func must be callable"
-            raise ValueError(msg)
-
         start_time = time.time()
 
         # Run tasks concurrently for performance measurement
-        tasks = [task_func() for _ in range(iterations)]
+        tasks: list[Awaitable[object]] = [task_func() for _ in range(iterations)]
         await asyncio.gather(*tasks)
 
         end_time = time.time()
@@ -680,14 +673,15 @@ class FlextTestsMatchers:
 
     @classmethod
     def create_async_mock(
-        cls, return_value: object = None, side_effect: object = None
-    ) -> object:
+        cls, return_value: T | None = None, side_effect: object = None
+    ) -> Callable[..., Awaitable[T | None]]:
         """Create async mock for test compatibility."""
 
         class AsyncMock:
             def __init__(
                 self, return_value: object = None, side_effect: object = None
             ) -> None:
+                """Initialize asyncmock:."""
                 self.return_value = return_value
                 self.side_effect = side_effect
                 self.call_count = 0
@@ -697,6 +691,7 @@ class FlextTestsMatchers:
                     self._side_effect_iter = iter(side_effect)
 
             async def __call__(self, *args: object, **kwargs: object) -> object:
+                """Call method for asyncmock:."""
                 self.call_count += 1
                 self.called = True
 
@@ -734,18 +729,22 @@ class FlextTestsMatchers:
         """Ultra-simple flaky async mock for test compatibility."""
 
         class FlakyAsyncMock:
+            """Flaky async mock for test compatibility."""
+
             def __init__(
                 self,
-                success_value: object,
+                success_value: T,
                 failure_count: int,
                 exception_type: type[Exception],
             ) -> None:
+                """Initialize flakyasyncmock:."""
                 self.success_value = success_value
                 self.failure_count = failure_count
                 self.exception_type = exception_type
                 self.call_count = 0
 
-            async def __call__(self, *args: object, **kwargs: object) -> object:
+            async def __call__(self) -> T:
+                """Call method for flakyasyncmock:."""
                 self.call_count += 1
                 if self.call_count <= self.failure_count:
                     mock_error_msg = "Mock failure"
@@ -755,20 +754,30 @@ class FlextTestsMatchers:
         return FlakyAsyncMock(success_value, failure_count, exception_type)
 
     @classmethod
-    def managed_resource(cls, value: object, *, cleanup_func: object = None) -> object:
+    def managed_resource(
+        cls, value: T, *, cleanup_func: Callable[[T], object] | None = None
+    ) -> object:
         """Ultra-simple managed resource context manager for test compatibility."""
 
         class ManagedResourceContext:
-            def __init__(self, value: object, cleanup_func: object = None) -> None:
+            def __init__(
+                self, value: T, cleanup_func: Callable[[T], object] | None = None
+            ) -> None:
+                """Initialize managedresourcecontext:."""
                 self.value = value
                 self.cleanup_func = cleanup_func
 
-            async def __aenter__(self) -> object:
+            async def __aenter__(self) -> T:
+                """__aenter__ method."""
                 return self.value
 
             async def __aexit__(
-                self, exc_type: object, exc_val: object, exc_tb: object
+                self,
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: object,
             ) -> None:
+                """__aexit__ method."""
                 if self.cleanup_func and callable(self.cleanup_func):
                     if asyncio.iscoroutinefunction(self.cleanup_func):
                         await self.cleanup_func(self.value)
@@ -779,26 +788,36 @@ class FlextTestsMatchers:
 
     @classmethod
     def create_test_context(
-        cls, setup_coro: object = None, teardown_func: object = None
+        cls,
+        setup_coro: Callable[[], Awaitable[T]] | None = None,
+        teardown_func: Callable[[T], object] | None = None,
     ) -> object:
         """Create async context manager for test compatibility."""
 
         class AsyncTestContext:
             def __init__(
-                self, setup_coro: object = None, teardown_func: object = None
+                self,
+                setup_coro: Callable[[], Awaitable[T]] | None = None,
+                teardown_func: Callable[[T], object] | None = None,
             ) -> None:
+                """Initialize asynctestcontext:."""
                 self.setup_coro = setup_coro
                 self.teardown_func = teardown_func
-                self.resource: object = None
+                self.resource: T | None = None
 
-            async def __aenter__(self) -> object:
+            async def __aenter__(self) -> T | None:
+                """__aenter__ method."""
                 if self.setup_coro:
-                    self.resource = await self.setup_coro
+                    self.resource = await self.setup_coro()
                 return self.resource
 
             async def __aexit__(
-                self, exc_type: object, exc_val: object, exc_tb: object
+                self,
+                exc_type: type[BaseException] | None,
+                exc_val: BaseException | None,
+                exc_tb: object,
             ) -> None:
+                """__aexit__ method."""
                 if self.teardown_func and self.resource is not None:
                     await self.teardown_func(self.resource)
 

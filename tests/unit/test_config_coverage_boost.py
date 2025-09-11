@@ -162,8 +162,7 @@ class TestDefaultEnvironmentAdapter:
     def test_get_env_vars_with_prefix_exception(self) -> None:
         """Test environment variables with prefix retrieval exception."""
         adapter = FlextConfig.DefaultEnvironmentAdapter()
-        with patch.dict("os.environ", {"FLEXT_VAR": "value"}):
-            with patch("os.environ.items", side_effect=Exception("OS error")):
+        with patch.dict("os.environ", {"FLEXT_VAR": "value"}), patch("os.environ.items", side_effect=Exception("OS error")):
                 result = adapter.get_env_vars_with_prefix("FLEXT_")
                 FlextTestsMatchers.assert_result_failure(result)
                 assert "Failed to get environment variables" in (result.error or "")
@@ -183,7 +182,7 @@ class TestConfigFilePersistence:
             FlextTestsMatchers.assert_result_success(result)
 
             # Verify file content
-            with open(temp_path, encoding="utf-8") as f:
+            with Path(temp_path).open(encoding="utf-8") as f:
                 loaded_data = json.load(f)
             assert loaded_data == data
         finally:

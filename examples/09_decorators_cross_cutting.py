@@ -7,8 +7,6 @@ Shows modern decorator composition patterns and FlextResult integration.
 
 from __future__ import annotations
 
-import contextlib
-import hashlib
 import time
 
 from flext_core import (
@@ -20,7 +18,6 @@ from flext_core import (
     FlextTypes,
     FlextUtilities,
 )
-
 
 MIN_NAME_LENGTH = 2
 MINIMUM_AGE = 18

@@ -9,13 +9,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Optional
-from pydantic import BaseModel, Field, field_validator, model_validator, ValidationError
-from flext_core import FlextResult, FlextConstants, FlextModels
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+
+from flext_core import FlextConstants, FlextModels, FlextResult
+from flext_core.typings import FlextTypes
 
 
-# ❌ BEFORE: Manual validation with dicts
-def configure_logging_old(config: dict) -> FlextResult[dict]:
+def configure_logging_old(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Old approach with manual validation.
 
     Args:
@@ -29,18 +38,23 @@ def configure_logging_old(config: dict) -> FlextResult[dict]:
     if "log_level" not in config:
         return FlextResult.fail("log_level is required")
 
+    log_level = config["log_level"]
+    if not isinstance(log_level, str):
+        return FlextResult.fail("log_level must be a string")
+
     # Manual validation of log level
     valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    if config["log_level"].upper() not in valid_levels:
+    if log_level.upper() not in valid_levels:
         return FlextResult.fail(
-            f"Invalid log_level: {config['log_level']}. Valid options: {valid_levels}"
+            f"Invalid log_level: {log_level}. Valid options: {valid_levels}"
         )
 
     # Manual type checking
     if "max_file_size" in config:
-        if not isinstance(config["max_file_size"], int):
+        max_file_size = config["max_file_size"]
+        if not isinstance(max_file_size, int):
             return FlextResult.fail("max_file_size must be an integer")
-        if config["max_file_size"] < 1048576:  # 1MB minimum
+        if max_file_size < 1048576:  # 1MB minimum
             return FlextResult.fail("max_file_size must be at least 1MB")
 
     # Manual defaults
@@ -50,7 +64,7 @@ def configure_logging_old(config: dict) -> FlextResult[dict]:
     config.setdefault("enable_console", True)
 
     # Normalize values
-    config["log_level"] = config["log_level"].upper()
+    config["log_level"] = log_level.upper()
 
     return FlextResult.ok(config)
 
@@ -79,7 +93,9 @@ class LoggingConfig(FlextModels.SystemConfigs.BaseSystemConfig):
         return v.upper()
 
 
-def configure_logging_new(config: dict) -> FlextResult[dict]:
+def configure_logging_new(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """New approach with Pydantic validation.
 
     Args:
@@ -97,13 +113,20 @@ def configure_logging_new(config: dict) -> FlextResult[dict]:
 
 
 # ❌ BEFORE: Manual nested validation
-def configure_database_old(config: dict) -> FlextResult[dict]:
+def configure_database_old(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Old approach with complex manual validation."""
     # Check main database config
     if "database" not in config:
         return FlextResult.fail("database configuration required")
 
-    db_config = config["database"]
+    db_config_raw = config["database"]
+    if not isinstance(db_config_raw, dict):
+        return FlextResult.fail("database configuration must be a dictionary")
+
+    # Cast to dict for type safety - using union type for flexibility
+    db_config: dict[str, object] = db_config_raw
 
     # Validate host
     if "host" not in db_config:
@@ -113,27 +136,34 @@ def configure_database_old(config: dict) -> FlextResult[dict]:
 
     # Validate port
     if "port" in db_config:
-        if not isinstance(db_config["port"], int):
+        port = db_config["port"]
+        if not isinstance(port, int):
             return FlextResult.fail("database.port must be an integer")
-        if not 1 <= db_config["port"] <= 65535:
+        if not 1 <= port <= 65535:
             return FlextResult.fail("database.port must be between 1 and 65535")
     else:
         db_config["port"] = 5432  # Default PostgreSQL port
 
     # Validate connection pool
     if "pool" in db_config:
-        pool = db_config["pool"]
+        pool_raw = db_config["pool"]
+        if not isinstance(pool_raw, dict):
+            return FlextResult.fail("database.pool must be a dictionary")
+        pool: dict[str, object] = pool_raw
+
         if "min_size" in pool:
-            if not isinstance(pool["min_size"], int) or pool["min_size"] < 1:
+            min_size = pool["min_size"]
+            if not isinstance(min_size, int) or min_size < 1:
                 return FlextResult.fail("pool.min_size must be positive integer")
         else:
             pool["min_size"] = 2
 
         if "max_size" in pool:
-            if (
-                not isinstance(pool["max_size"], int)
-                or pool["max_size"] < pool["min_size"]
-            ):
+            max_size = pool["max_size"]
+            min_size_val = pool.get("min_size", 2)
+            if not isinstance(max_size, int) or not isinstance(min_size_val, int):
+                return FlextResult.fail("pool.max_size and min_size must be integers")
+            if max_size < min_size_val:
                 return FlextResult.fail("pool.max_size must be >= min_size")
         else:
             pool["max_size"] = 10
@@ -141,10 +171,12 @@ def configure_database_old(config: dict) -> FlextResult[dict]:
         db_config["pool"] = {"min_size": 2, "max_size": 10}
 
     # Environment-specific validation
-    if config.get("environment") == "production":
+    environment = config.get("environment")
+    if isinstance(environment, str) and environment == "production":
         if "password" not in db_config:
             return FlextResult.fail("database.password required in production")
-        if db_config.get("ssl_mode") != "require":
+        ssl_mode = db_config.get("ssl_mode")
+        if isinstance(ssl_mode, str) and ssl_mode != "require":
             return FlextResult.fail("SSL required in production")
 
     return FlextResult.ok(config)
@@ -197,7 +229,9 @@ class SystemConfigWithDatabase(FlextModels.SystemConfigs.BaseSystemConfig):
         return self
 
 
-def configure_database_new(config: dict) -> FlextResult[dict]:
+def configure_database_new(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """New approach with Pydantic validation."""
     try:
         validated = SystemConfigWithDatabase.model_validate(config)
@@ -207,37 +241,46 @@ def configure_database_new(config: dict) -> FlextResult[dict]:
 
 
 # ❌ BEFORE: Manual validation with dynamic fields
-def configure_commands_old(config: dict) -> FlextResult[dict]:
+def configure_commands_old(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Old commands configuration with manual validation."""
     # Validate environment
     if "environment" in config:
+        environment = config["environment"]
+        if not isinstance(environment, str):
+            return FlextResult.fail("environment must be a string")
         valid_envs = ["development", "staging", "production", "test", "local"]
-        if config["environment"] not in valid_envs:
-            return FlextResult.fail(f"Invalid environment: {config['environment']}")
+        if environment not in valid_envs:
+            return FlextResult.fail(f"Invalid environment: {environment}")
     else:
         config["environment"] = "development"
 
     # Validate log_level
     if "log_level" in config:
+        log_level = config["log_level"]
+        if not isinstance(log_level, str):
+            return FlextResult.fail("log_level must be a string")
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if config["log_level"].upper() not in valid_levels:
-            return FlextResult.fail(f"Invalid log_level: {config['log_level']}")
-        config["log_level"] = config["log_level"].upper()
+        if log_level.upper() not in valid_levels:
+            return FlextResult.fail(f"Invalid log_level: {log_level}")
+        config["log_level"] = log_level.upper()
     else:
         config["log_level"] = "INFO"
 
     # Validate command-specific fields
     if "max_retries" in config:
-        if not isinstance(config["max_retries"], int) or config["max_retries"] < 0:
+        max_retries = config["max_retries"]
+        if not isinstance(max_retries, int) or max_retries < 0:
             return FlextResult.fail("max_retries must be non-negative integer")
     else:
         config["max_retries"] = 3
 
     # Handle dynamic command handlers
-    if "command_handlers" in config and not isinstance(
-        config["command_handlers"], dict
-    ):
-        return FlextResult.fail("command_handlers must be a dictionary")
+    if "command_handlers" in config:
+        command_handlers = config["command_handlers"]
+        if not isinstance(command_handlers, dict):
+            return FlextResult.fail("command_handlers must be a dictionary")
         # Can't validate dynamic keys easily
 
     # Add defaults
@@ -284,7 +327,9 @@ class CommandsConfig(FlextModels.SystemConfigs.BaseSystemConfig):
         return v
 
 
-def configure_commands_new(config: dict) -> FlextResult[dict]:
+def configure_commands_new(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """New commands configuration with Pydantic."""
     try:
         validated = CommandsConfig.model_validate(config)
@@ -296,7 +341,9 @@ def configure_commands_new(config: dict) -> FlextResult[dict]:
 # This shows how we migrated mixins while preserving backward compatibility
 
 
-def configure_mixins_with_compatibility(config: dict) -> FlextResult[dict]:
+def configure_mixins_with_compatibility(
+    config: FlextTypes.Core.Dict,
+) -> FlextResult[FlextTypes.Core.Dict]:
     """Mixins configuration with backward compatibility.
 
     This is the actual implementation used in flext-core that:
@@ -407,7 +454,9 @@ def migration_step_by_step() -> None:
     # Step 4: Update the configuration function
     print("\n4. UPDATE CONFIGURATION FUNCTION")
 
-    def configure_example_system(config: dict) -> FlextResult[dict]:
+    def configure_example_system(
+        config: FlextTypes.Core.Dict,
+    ) -> FlextResult[FlextTypes.Core.Dict]:
         """Updated configuration function."""
         try:
             # Single line replaces all manual validation!
@@ -446,7 +495,7 @@ class CommonPatterns:
         """Pattern: Validating against a list of valid values."""
 
         # ❌ OLD: Manual enum validation
-        def old_way(config: dict) -> FlextResult[dict]:
+        def old_way(config: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
             valid_levels = ["low", "medium", "high"]
             if config.get("level") not in valid_levels:
                 return FlextResult.fail(f"Invalid level. Valid: {valid_levels}")
@@ -465,7 +514,7 @@ class CommonPatterns:
         """Pattern: Fields required based on other fields."""
 
         # ❌ OLD: Manual conditional validation
-        def old_way(config: dict) -> FlextResult[dict]:
+        def old_way(config: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
             if config.get("mode") == "advanced" and "advanced_option" not in config:
                 return FlextResult.fail("advanced_option required in advanced mode")
             return FlextResult.ok(config)
@@ -489,9 +538,12 @@ class CommonPatterns:
         """Pattern: Normalizing values during validation."""
 
         # ❌ OLD: Manual normalization
-        def old_way(config: dict) -> FlextResult[dict]:
+        def old_way(config: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
             if "url" in config:
-                url = config["url"]
+                url_raw = config["url"]
+                if not isinstance(url_raw, str):
+                    return FlextResult.fail("url must be a string")
+                url = url_raw
                 if not url.startswith(("http://", "https://")):
                     config["url"] = f"https://{url}"
                 if url.endswith("/"):
@@ -516,7 +568,7 @@ class CommonPatterns:
         """Pattern: Handling unknown/dynamic fields."""
 
         # ❌ OLD: No validation for dynamic fields
-        def old_way(config: dict) -> FlextResult[dict]:
+        def old_way(config: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
             # Can't validate unknown fields
             return FlextResult.ok(config)
 
@@ -527,7 +579,7 @@ class CommonPatterns:
 
             # Option 2: Explicit dynamic fields
             metadata: dict[str, object] = Field(default_factory=dict)
-            custom_handlers: dict[str, dict] = Field(
+            custom_handlers: dict[str, dict[str, object]] = Field(
                 default_factory=dict, json_schema_extra={"dynamic": True}
             )
 
@@ -558,10 +610,14 @@ if __name__ == "__main__":
         },
     }
 
-    old_result = configure_database_old(db_config.copy())
+    # Convert dict to the expected type for mypy compatibility
+    from typing import cast
+
+    db_config_dict = cast("FlextTypes.Core.Dict", dict(db_config))
+    old_result = configure_database_old(db_config_dict)
     print(f"Old approach: {old_result.success}")
 
-    new_result = configure_database_new(db_config.copy())
+    new_result = configure_database_new(db_config_dict)
     print(f"New approach: {new_result.success}")
 
     # Test Example 3: Dynamic Fields

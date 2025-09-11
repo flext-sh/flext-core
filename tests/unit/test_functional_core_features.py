@@ -12,7 +12,7 @@ from typing import cast
 import pytest
 from pydantic import Field
 
-from flext_core import FlextCore, FlextModels, FlextResult, FlextTypes
+from flext_core import FlextContainer, FlextCore, FlextModels, FlextResult, FlextTypes
 
 
 class UserEntity(FlextModels.Entity):
@@ -23,6 +23,7 @@ class UserEntity(FlextModels.Entity):
     status: str = Field(default="active", description="User status")
 
     def validate_business_rules(self) -> FlextResult[None]:
+        """Validate business rules for the user."""
         if "@" not in self.email:
             return FlextResult[None].fail("Invalid email format")
         return FlextResult[None].ok(None)
@@ -140,21 +141,22 @@ class TestFlextCoreIntegration:
             def __init__(self) -> None:
                 self.connected = True
 
-            def query(self, sql: str, *args: object) -> list[FlextTypes.Core.Dict]:
+            def query(self, _sql: str, *_args: object) -> list[FlextTypes.Core.Dict]:
                 return [{"id": 1, "name": "test"}] if self.connected else []
 
         class NotificationService:
             def __init__(self, db_service: DatabaseService) -> None:
                 self.db = db_service
 
-            def send_notification(self, user_id: str, message: str) -> bool:
+            def send_notification(self, user_id: str, _message: str) -> bool:
                 # Safe query without SQL injection
                 users = self.db.query("SELECT * FROM users WHERE id=?", user_id)
                 return len(users) > 0
 
         # Register in container
         db_service = DatabaseService()
-        container_result = core.register_service("database", db_service)
+        container = FlextContainer.get_global()
+        container_result = container.register("database", db_service)
         assert container_result.success
 
         # Register factory
@@ -165,7 +167,7 @@ class TestFlextCoreIntegration:
                 raise RuntimeError(error_msg)
             return NotificationService(cast("DatabaseService", db_result.unwrap()))
 
-        factory_result = core.register_factory("notifications", notification_factory)
+        factory_result = container.register_factory("notifications", notification_factory)
         assert factory_result.success
 
         # Use services

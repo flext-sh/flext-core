@@ -1,7 +1,7 @@
-"""HTTP testing utilities using pytest-httpx for comprehensive API testing.
+"""HTTP testing utilities using pytest-httpx and pytest-mock.
 
-Provides advanced HTTP mocking, request/response validation, and API testing
-patterns with automatic retry, error simulation, and performance monitoring.
+Provides comprehensive HTTP testing patterns, API client testing,
+webhook testing, and HTTP scenario building for robust testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,175 +9,30 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import hashlib
-import hmac
-from datetime import UTC, datetime
-from typing import cast
 from urllib.parse import urljoin
 
-import httpx
-from pytest_httpx import HTTPXMock
+from httpx_mock import HTTPXMock
+from pydantic import BaseModel
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextLogger, FlextResult, FlextTypes
+
+logger = FlextLogger(__name__)
 
 
 class FlextTestsHttp:
     """Unified HTTP testing utilities for FLEXT ecosystem.
 
-    Consolidates all HTTP testing patterns into a single class interface.
-    Provides comprehensive HTTP mocking, request/response validation, and API testing
-    patterns with automatic retry, error simulation, and performance monitoring.
+    Consolidates all HTTP testing patterns, API client testing,
+    webhook testing, and HTTP scenario building into a single comprehensive class.
     """
 
-    # === HTTP Testing Utilities ===
-
-    class HTTPTestUtils:
-        """Comprehensive HTTP testing utilities with mocking and validation."""
-
-        @staticmethod
-        def mock_successful_response(
-            httpx_mock: HTTPXMock,
-            url: str,
-            method: str = "GET",
-            json_data: FlextTypes.Core.JsonObject | None = None,
-            status_code: int = 200,
-            headers: FlextTypes.Core.Headers | None = None,
-        ) -> None:
-            """Mock successful HTTP response."""
-            response_data = json_data or {"status": "success"}
-            default_headers = {"content-type": "application/json"}
-            if headers:
-                default_headers.update(headers)
-
-            httpx_mock.add_response(
-                method=method,
-                url=url,
-                json=response_data,
-                status_code=status_code,
-                headers=default_headers,
-            )
-
-        @staticmethod
-        def mock_error_response(
-            httpx_mock: HTTPXMock,
-            url: str,
-            method: str = "GET",
-            status_code: int = 500,
-            error_message: str = "Internal server error",
-            error_code: str = "INTERNAL_ERROR",
-        ) -> None:
-            """Mock error HTTP response."""
-            error_data = {
-                "error": {
-                    "message": error_message,
-                    "code": error_code,
-                    "status": status_code,
-                },
-            }
-
-            httpx_mock.add_response(
-                method=method,
-                url=url,
-                json=error_data,
-                status_code=status_code,
-                headers={"content-type": "application/json"},
-            )
-
-        @staticmethod
-        def mock_timeout_response(
-            httpx_mock: HTTPXMock,
-            url: str,
-            method: str = "GET",
-        ) -> None:
-            """Mock timeout response."""
-            httpx_mock.add_exception(
-                httpx.TimeoutException("Request timed out"),
-                method=method,
-                url=url,
-            )
-
-        @staticmethod
-        def mock_network_error(
-            httpx_mock: HTTPXMock,
-            url: str,
-            method: str = "GET",
-        ) -> None:
-            """Mock network error."""
-            httpx_mock.add_exception(
-                httpx.NetworkError("Network unreachable"),
-                method=method,
-                url=url,
-            )
-
-        @staticmethod
-        def mock_paginated_response(
-            httpx_mock: HTTPXMock,
-            base_url: str,
-            data_list: list[FlextTypes.Core.JsonObject],
-            page_size: int = 10,
-            method: str = "GET",
-        ) -> None:
-            """Mock paginated API responses."""
-            total_items = len(data_list)
-            total_pages = (total_items + page_size - 1) // page_size
-
-            for page in range(1, total_pages + 1):
-                start_idx = (page - 1) * page_size
-                end_idx = min(start_idx + page_size, total_items)
-                page_data = data_list[start_idx:end_idx]
-
-                url = f"{base_url}?page={page}&size={page_size}"
-
-                response_data = {
-                    "data": page_data,
-                    "pagination": {
-                        "page": page,
-                        "size": page_size,
-                        "total_pages": total_pages,
-                        "total_items": total_items,
-                        "has_next": page < total_pages,
-                        "has_prev": page > 1,
-                    },
-                }
-
-                httpx_mock.add_response(
-                    method=method,
-                    url=url,
-                    json=response_data,
-                )
-
-        @staticmethod
-        def mock_rate_limited_response(
-            httpx_mock: HTTPXMock,
-            url: str,
-            method: str = "GET",
-            retry_after: int = 60,
-        ) -> None:
-            """Mock rate-limited response."""
-            httpx_mock.add_response(
-                method=method,
-                url=url,
-                status_code=429,
-                json={
-                    "error": {
-                        "message": "Rate limit exceeded",
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "retry_after": retry_after,
-                    },
-                },
-                headers={
-                    "retry-after": str(retry_after),
-                    "x-ratelimit-remaining": "0",
-                    "x-ratelimit-reset": str(retry_after),
-                },
-            )
-
-    # === API Testing Client ===
+    # === API Test Client ===
 
     class APITestClient:
-        """Advanced API test client with automatic retry and validation."""
+        """API test client for comprehensive HTTP testing."""
 
         def __init__(self, base_url: str = "https://api.example.com") -> None:
+            """Initialize API test client."""
             self.base_url = base_url
             self.default_headers = {
                 "content-type": "application/json",
@@ -226,39 +81,39 @@ class FlextTestsHttp:
                     error_code="INVALID_ERROR_FORMAT",
                 )
 
-            error: FlextTypes.Core.JsonObject = cast(
-                "FlextTypes.Core.JsonObject", error_data
-            )  # Now we know it's a dict
-            required_error_fields = ["message", "code"]
-
-            for field in required_error_fields:
-                if field not in error:
-                    return FlextResult[None].fail(
-                        f"Error object missing '{field}' field",
-                        error_code="INVALID_ERROR_FORMAT",
-                    )
-
-            if expected_error_code and error["code"] != expected_error_code:
+            if expected_error_code and error_data.get("code") != expected_error_code:
                 return FlextResult[None].fail(
-                    f"Expected error code '{expected_error_code}', got '{error['code']}'",
+                    f"Expected error code {expected_error_code}, got {error_data.get('code')}",
                     error_code="UNEXPECTED_ERROR_CODE",
                 )
 
             return FlextResult[None].ok(None)
 
-        def assert_response_time(
+        def create_test_request(
             self,
-            response: object,
-            max_time_ms: float = 1000.0,
-        ) -> None:
-            """Assert response time is within limits."""
-            # This would typically extract timing from actual HTTP response
-            # For testing purposes, we'll simulate
-            response_time_ms = getattr(response, "elapsed_ms", 100.0)
+            method: str,
+            endpoint: str,
+            data: object | None = None,
+            headers: dict[str, str] | None = None,
+        ) -> dict[str, object]:
+            """Create test request data."""
+            request_headers = self.default_headers.copy()
+            if headers:
+                request_headers.update(headers)
 
-            assert response_time_ms <= max_time_ms, (
-                f"Response time {response_time_ms}ms exceeds limit {max_time_ms}ms"
-            )
+            request_data = {
+                "method": method.upper(),
+                "url": self.build_url(endpoint),
+                "headers": request_headers,
+            }
+
+            if data is not None:
+                if isinstance(data, (dict, list)):
+                    request_data["json"] = data
+                else:
+                    request_data["data"] = str(data)
+
+            return request_data
 
     # === HTTP Scenario Builder ===
 
@@ -266,6 +121,7 @@ class FlextTestsHttp:
         """Builder for complex HTTP testing scenarios."""
 
         def __init__(self, httpx_mock: HTTPXMock) -> None:
+            """Initialize HTTP scenario builder."""
             self.httpx_mock = httpx_mock
             self.scenarios: list[FlextTypes.Core.Dict] = []
 
@@ -273,16 +129,23 @@ class FlextTestsHttp:
             self,
             url: str,
             method: str = "GET",
-            response_data: FlextTypes.Core.JsonObject | None = None,
+            response_data: object | None = None,
             status_code: int = 200,
+            headers: dict[str, str] | None = None,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add successful request to scenario."""
-            FlextTestsHttp.HTTPTestUtils.mock_successful_response(
-                self.httpx_mock,
-                url,
-                method,
-                response_data,
-                status_code,
+            """Add successful request scenario."""
+            response_headers = {"content-type": "application/json"}
+            if headers:
+                response_headers.update(headers)
+
+            response_json = response_data or {"status": "success", "data": "test_data"}
+
+            self.httpx_mock.add_response(
+                method=method,
+                url=url,
+                json=response_json,
+                status_code=status_code,
+                headers=response_headers,
             )
 
             self.scenarios.append(
@@ -291,7 +154,8 @@ class FlextTestsHttp:
                     "url": url,
                     "method": method,
                     "status_code": status_code,
-                },
+                    "response_data": response_json,
+                }
             )
 
             return self
@@ -300,16 +164,25 @@ class FlextTestsHttp:
             self,
             url: str,
             method: str = "GET",
+            error_code: str = "INTERNAL_ERROR",
             status_code: int = 500,
-            error_message: str = "Server error",
+            error_message: str = "Internal server error",
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add error request to scenario."""
-            FlextTestsHttp.HTTPTestUtils.mock_error_response(
-                self.httpx_mock,
-                url,
-                method,
-                status_code,
-                error_message,
+            """Add error request scenario."""
+            error_response = {
+                "error": {
+                    "code": error_code,
+                    "message": error_message,
+                    "timestamp": "2025-01-01T00:00:00Z",
+                }
+            }
+
+            self.httpx_mock.add_response(
+                method=method,
+                url=url,
+                json=error_response,
+                status_code=status_code,
+                headers={"content-type": "application/json"},
             )
 
             self.scenarios.append(
@@ -318,7 +191,9 @@ class FlextTestsHttp:
                     "url": url,
                     "method": method,
                     "status_code": status_code,
-                },
+                    "error_code": error_code,
+                    "error_message": error_message,
+                }
             )
 
             return self
@@ -327,27 +202,29 @@ class FlextTestsHttp:
             self,
             url: str,
             method: str = "GET",
-            failure_count: int = 2,
-            final_response: FlextTypes.Core.JsonObject | None = None,
+            max_retries: int = 3,
+            success_after_retries: int = 2,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
-            """Add retry scenario (fail N times, then succeed)."""
+            """Add retry scenario with failures followed by success."""
             # Add failures
-            for i in range(failure_count):
+            for _ in range(success_after_retries):
                 self.httpx_mock.add_response(
                     method=method,
                     url=url,
-                    status_code=503,
                     json={
-                        "error": {"message": f"Service unavailable (attempt {i + 1})"}
+                        "error": {"code": "TEMPORARY_ERROR", "message": "Retry needed"}
                     },
+                    status_code=503,
+                    headers={"content-type": "application/json"},
                 )
 
-            # Add final success
-            FlextTestsHttp.HTTPTestUtils.mock_successful_response(
-                self.httpx_mock,
-                url,
-                method,
-                final_response or {"status": "success", "retry_succeeded": True},
+            # Add success
+            self.httpx_mock.add_response(
+                method=method,
+                url=url,
+                json={"status": "success", "retry_count": success_after_retries},
+                status_code=200,
+                headers={"content-type": "application/json"},
             )
 
             self.scenarios.append(
@@ -355,8 +232,9 @@ class FlextTestsHttp:
                     "type": "retry",
                     "url": url,
                     "method": method,
-                    "failure_count": failure_count,
-                },
+                    "max_retries": max_retries,
+                    "success_after_retries": success_after_retries,
+                }
             )
 
             return self
@@ -365,31 +243,19 @@ class FlextTestsHttp:
             self,
             url: str,
             method: str = "GET",
-            failure_threshold: int = 3,
+            failure_threshold: int = 5,
+            recovery_timeout: int = 60,
         ) -> FlextTestsHttp.HTTPScenarioBuilder:
             """Add circuit breaker scenario."""
-            # Add failures up to threshold
-            for i in range(failure_threshold):
-                FlextTestsHttp.HTTPTestUtils.mock_error_response(
-                    self.httpx_mock,
-                    url,
-                    method,
+            # Add failures to trigger circuit breaker
+            for _ in range(failure_threshold):
+                self.httpx_mock.add_response(
+                    method=method,
+                    url=url,
+                    json={"error": {"code": "CIRCUIT_BREAKER_TRIGGERED"}},
                     status_code=503,
-                    error_message=f"Service failure {i + 1}",
+                    headers={"content-type": "application/json"},
                 )
-
-            # Add circuit breaker open response
-            self.httpx_mock.add_response(
-                method=method,
-                url=url,
-                status_code=503,
-                json={
-                    "error": {
-                        "message": "Circuit breaker open",
-                        "code": "CIRCUIT_BREAKER_OPEN",
-                    },
-                },
-            )
 
             self.scenarios.append(
                 {
@@ -397,7 +263,8 @@ class FlextTestsHttp:
                     "url": url,
                     "method": method,
                     "failure_threshold": failure_threshold,
-                },
+                    "recovery_timeout": recovery_timeout,
+                }
             )
 
             return self
@@ -405,8 +272,9 @@ class FlextTestsHttp:
         def build_scenario(self) -> FlextTypes.Core.Dict:
             """Build complete scenario."""
             return {
-                "total_requests": len(self.scenarios),
                 "scenarios": self.scenarios,
+                "total_scenarios": len(self.scenarios),
+                "scenario_types": list({s["type"] for s in self.scenarios}),
             }
 
     # === Webhook Testing Utilities ===
@@ -417,62 +285,66 @@ class FlextTestsHttp:
         @staticmethod
         def create_webhook_payload(
             event_type: str,
-            data: FlextTypes.Core.JsonValue,
-            timestamp: str | None = None,
-            signature: str | None = None,
-        ) -> FlextTypes.Core.JsonObject:
+            data: FlextTypes.Core.Dict,
+            webhook_id: str | None = None,
+        ) -> FlextTypes.Core.Dict:
             """Create webhook payload."""
-            payload: FlextTypes.Core.JsonObject = {
+            return {
+                "id": webhook_id or "test_webhook_123",
                 "event": event_type,
                 "data": data,
-                "timestamp": timestamp or datetime.now(UTC).isoformat(),
+                "timestamp": "2025-01-01T00:00:00Z",
+                "version": "1.0",
             }
-
-            if signature:
-                payload["signature"] = signature
-
-            return payload
 
         @staticmethod
         def validate_webhook_signature(
             payload: str,
             signature: str,
             secret: str,
-        ) -> bool:
-            """Validate webhook signature (simplified)."""
-            expected_signature = hmac.new(
-                secret.encode(),
-                payload.encode(),
-                hashlib.sha256,
-            ).hexdigest()
+        ) -> FlextResult[bool]:
+            """Validate webhook signature."""
+            # Simple validation for testing
+            expected_signature = f"sha256={hash(payload + secret)}"
+            is_valid = signature == expected_signature
 
-            return hmac.compare_digest(signature, f"sha256={expected_signature}")
+            if is_valid:
+                return FlextResult[bool].ok(True)
+            return FlextResult[bool].fail(
+                "Invalid webhook signature",
+                error_code="INVALID_SIGNATURE",
+            )
 
         @staticmethod
-        def mock_webhook_delivery(
-            httpx_mock: HTTPXMock,
-            webhook_url: str,
-            _event_type: str,
-            _data: FlextTypes.Core.JsonObject,
-            *,
-            success: bool = True,
-        ) -> None:
-            """Mock webhook delivery."""
-            if success:
-                httpx_mock.add_response(
-                    method="POST",
-                    url=webhook_url,
-                    status_code=200,
-                    json={"received": True},
-                )
-            else:
-                FlextTestsHttp.HTTPTestUtils.mock_error_response(
-                    httpx_mock,
-                    webhook_url,
-                    "POST",
-                    status_code=500,
-                    error_message="Webhook delivery failed",
-                )
+        def create_webhook_response(
+            status: str = "received",
+            message: str = "Webhook processed successfully",
+        ) -> FlextTypes.Core.Dict:
+            """Create webhook response."""
+            return {
+                "status": status,
+                "message": message,
+                "processed_at": "2025-01-01T00:00:00Z",
+            }
+
+    # === HTTP Test Models ===
+
+    class HTTPTestRequest(BaseModel):
+        """HTTP test request model."""
+
+        method: str
+        url: str
+        headers: FlextTypes.Core.Dict | None = None
+        data: object | None = None
+        timeout: float = 30.0
+
+    class HTTPTestResponse(BaseModel):
+        """HTTP test response model."""
+
+        status_code: int
+        headers: FlextTypes.Core.Dict
+        data: object | None = None
+        json_data: FlextTypes.Core.JsonObject | None = None
 
     # === Convenience Factory Methods ===
 
@@ -491,109 +363,57 @@ class FlextTestsHttp:
         return FlextTestsHttp.HTTPScenarioBuilder(httpx_mock)
 
     @staticmethod
-    def mock_success(
-        httpx_mock: HTTPXMock,
+    def create_test_request(
+        method: str,
         url: str,
-        method: str = "GET",
+        data: object | None = None,
+        headers: FlextTypes.Core.Dict | None = None,
+    ) -> FlextTestsHttp.HTTPTestRequest:
+        """Create test request."""
+        return FlextTestsHttp.HTTPTestRequest(
+            method=method,
+            url=url,
+            data=data,
+            headers=headers,
+        )
+
+    @staticmethod
+    def create_test_response(
+        status_code: int,
+        headers: FlextTypes.Core.Dict | None = None,
+        data: object | None = None,
         json_data: FlextTypes.Core.JsonObject | None = None,
-        status_code: int = 200,
-    ) -> None:
-        """Convenience method to mock successful response."""
-        FlextTestsHttp.HTTPTestUtils.mock_successful_response(
-            httpx_mock, url, method, json_data, status_code
+    ) -> FlextTestsHttp.HTTPTestResponse:
+        """Create test response."""
+        return FlextTestsHttp.HTTPTestResponse(
+            status_code=status_code,
+            headers=headers or {},
+            data=data,
+            json_data=json_data,
         )
 
     @staticmethod
-    def mock_error(
+    def mock_httpx_response(
         httpx_mock: HTTPXMock,
         url: str,
         method: str = "GET",
-        status_code: int = 500,
-        error_message: str = "Internal server error",
+        json_data: object | None = None,
+        status_code: int = 200,
+        headers: FlextTypes.Core.Dict | None = None,
     ) -> None:
-        """Convenience method to mock error response."""
-        FlextTestsHttp.HTTPTestUtils.mock_error_response(
-            httpx_mock, url, method, status_code, error_message
+        """Mock HTTPX response."""
+        response_headers = {"content-type": "application/json"}
+        if headers:
+            response_headers.update(headers)
+
+        httpx_mock.add_response(
+            method=method,
+            url=url,
+            json=json_data,
+            status_code=status_code,
+            headers=response_headers,
         )
 
-    @staticmethod
-    def mock_timeout(httpx_mock: HTTPXMock, url: str, method: str = "GET") -> None:
-        """Convenience method to mock timeout."""
-        FlextTestsHttp.HTTPTestUtils.mock_timeout_response(httpx_mock, url, method)
-
-    @staticmethod
-    def mock_network_error(
-        httpx_mock: HTTPXMock, url: str, method: str = "GET"
-    ) -> None:
-        """Convenience method to mock network error."""
-        FlextTestsHttp.HTTPTestUtils.mock_network_error(httpx_mock, url, method)
-
-    @staticmethod
-    def create_webhook_payload(
-        event_type: str,
-        data: FlextTypes.Core.JsonValue,
-        timestamp: str | None = None,
-        signature: str | None = None,
-    ) -> FlextTypes.Core.JsonObject:
-        """Convenience method to create webhook payload."""
-        return FlextTestsHttp.WebhookTestUtils.create_webhook_payload(
-            event_type, data, timestamp, signature
-        )
-
-    @staticmethod
-    def validate_webhook_signature(
-        payload: str,
-        signature: str,
-        secret: str,
-    ) -> bool:
-        """Convenience method to validate webhook signature."""
-        return FlextTestsHttp.WebhookTestUtils.validate_webhook_signature(
-            payload, signature, secret
-        )
-
-
-# === REMOVED STANDALONE FUNCTIONS ===
-# Moved to FlextTestsHttp class as per user request
-# Only the unified FlextTestsHttp class should be used
-
-# @pytest.fixture
-# def api_client() -> FlextTestsHttp.APITestClient:
-#     """Provide API test client."""
-#     return FlextTestsHttp.APITestClient()
-
-# @pytest.fixture
-# def http_scenario_builder(httpx_mock: HTTPXMock) -> FlextTestsHttp.HTTPScenarioBuilder:
-#     """Provide HTTP scenario builder."""
-#     return FlextTestsHttp.HTTPScenarioBuilder(httpx_mock)
-
-
-# === REMOVED COMPATIBILITY ALIASES AND FACADES ===
-# Legacy compatibility removed as per user request
-# All compatibility facades, aliases and protocol facades have been commented out
-# Only FlextTestsHttp class is now exported
-
-# Main class alias for backward compatibility - REMOVED
-# FlextTestsHttpSupport = FlextTestsHttp
-
-# Legacy HTTPTestUtils class - REMOVED (commented out)
-# class HTTPTestUtils:
-#     """Compatibility facade for HTTPTestUtils - use FlextTestsHttp instead."""
-#     ... all methods commented out
-
-# Legacy APITestClient class - REMOVED (commented out)
-# class APITestClient:
-#     """Compatibility facade for APITestClient - use FlextTestsHttp instead."""
-#     ... all methods commented out
-
-# Legacy HTTPScenarioBuilder class - REMOVED (commented out)
-# class HTTPScenarioBuilder:
-#     """Compatibility facade for HTTPScenarioBuilder - use FlextTestsHttp instead."""
-#     ... all methods commented out
-
-# Legacy WebhookTestUtils class - REMOVED (commented out)
-# class WebhookTestUtils:
-#     """Compatibility facade for WebhookTestUtils - use FlextTestsHttp instead."""
-#     ... all methods commented out
 
 # Export only the unified class
 __all__ = [

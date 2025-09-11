@@ -258,9 +258,7 @@ class TestFlextExceptionsComprehensive:
 
     def _simulate_recovery(self, error: Exception) -> bool:
         """Simulate error recovery logic."""
-        if isinstance(error, FlextExceptions.ConnectionError):
-            return True  # Simulate successful recovery
-        return False
+        return isinstance(error, FlextExceptions.ConnectionError)
 
     def test_error_serialization_and_logging(self) -> None:
         """Test error serialization for logging and transmission."""

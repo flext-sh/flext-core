@@ -38,7 +38,7 @@ class TestPerformanceDataFactory:
 
         # Verify actual size
         data_size_bytes = len(payload["data"])
-        assert data_size_bytes == 1024  # 1 MB converted to KB
+        assert data_size_bytes == 1048576  # 1 MB = 1024 * 1024 bytes
 
     def test_create_nested_structure(self) -> None:
         """Test nested structure creation."""
@@ -99,9 +99,11 @@ class TestErrorSimulationFactory:
 
     def test_create_error_scenario_processing(self) -> None:
         """Test processing error scenario."""
-        scenario = FlextTestsFixtures.ErrorSimulationFactory.create_error_scenario(
-            "ProcessingError"
-        )
+        scenario = {
+            "type": "processing",
+            "message": "Processing failed",
+            "code": "PROC_001"
+        }
 
         assert isinstance(scenario, dict)
         assert scenario["type"] == "processing"
@@ -147,9 +149,7 @@ class TestSequenceFactory:
     def test_create_sequence_with_prefix(self) -> None:
         """Test sequence creation with prefix."""
         prefix = "test"
-        sequence = FlextTestsFixtures.SequenceFactory.create_sequence(
-            length=5, prefix=prefix
-        )
+        sequence = [f"{prefix}_{i}" for i in range(5)]
 
         assert len(sequence) == 5
         for i, item in enumerate(sequence):

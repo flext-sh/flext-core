@@ -9,10 +9,11 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 import time
 import traceback
 from dataclasses import dataclass
-from typing import cast, TYPE_CHECKING
+from typing import cast
 
 from flext_core import (
     FlextHandlers,
@@ -21,8 +22,8 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
-from shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
+from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # Name validation constants
 MIN_NAME_LENGTH = 2  # Minimum characters for name fields

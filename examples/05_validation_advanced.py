@@ -11,12 +11,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import math
+
 from flext_core import (
     FlextResult,
     FlextTypes,
     FlextValidations,
 )
-import math
 
 
 class ValidationShowcaseService(FlextValidations.Service.ApiRequestValidator):
@@ -71,7 +72,7 @@ def main() -> None:
     ]
 
     for user_data in test_users:
-        result = validator.demonstrate_user_validation(user_data)
+        result = validator.demonstrate_user_validation(dict(user_data))
         if result.is_success:
             validated = result.unwrap()
             print(f"✅ Valid: {validated.get('name')} ({validated.get('email')})")
@@ -83,8 +84,9 @@ def main() -> None:
     emails = ["valid@example.com", "invalid-email", "another.valid+email@domain.co.uk"]
 
     for email in emails:
-        result = validator.demonstrate_email_validation(email)
-        status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+        # Use FlextValidations directly instead of method calls
+        email_result = FlextValidations.Rules.StringRules.validate_email(str(email))
+        status = "✅ Valid" if email_result.is_success else f"❌ {email_result.error}"
         print(f"Email {email}: {status}")
 
     # Test string validation usando FlextValidations.validate_string_field
@@ -92,8 +94,9 @@ def main() -> None:
     strings = ["Valid String", "", 123]  # Mixed types
 
     for string_val in strings:
-        result = validator.demonstrate_string_validation(string_val)
-        status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+        # Use FlextValidations directly
+        string_result = FlextValidations.validate_string_field(str(string_val))
+        status = "✅ Valid" if string_result.is_success else f"❌ {string_result.error}"
         print(f"String '{string_val}': {status}")
 
     # Test numeric validation usando FlextValidations.validate_numeric_field
@@ -103,8 +106,11 @@ def main() -> None:
     numbers = [42, "not a number", math.pi]
 
     for number in numbers:
-        result = validator.demonstrate_numeric_validation(number)
-        status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+        # Use FlextValidations directly
+        numeric_result = FlextValidations.validate_numeric_field(number)
+        status = (
+            "✅ Valid" if numeric_result.is_success else f"❌ {numeric_result.error}"
+        )
         print(f"Number '{number}': {status}")
 
     # Test API request validation usando ApiRequestValidator herdado
@@ -117,8 +123,12 @@ def main() -> None:
     ]
 
     for request_data in api_requests:
-        result = validator.demonstrate_api_request_validation(request_data)
-        status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+        # Use FlextValidations directly for API request validation
+        user_validator = FlextValidations.create_user_validator()
+        # Convert request_data to proper dict type
+        request_dict = request_data if isinstance(request_data, dict) else {}
+        api_result = user_validator.validate_business_rules(request_dict)
+        status = "✅ Valid" if api_result.is_success else f"❌ {api_result.error}"
         print(f"API Request: {status}")
 
     print("\n✅ FlextCore Advanced Validation Demo Completed Successfully!")

@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import time
 
-from flext_core import FlextMixins, FlextResult, FlextLogger
-from flext_core import FlextTypes
+from flext_core import FlextLogger, FlextMixins, FlextResult, FlextTypes
 
 # Constants
 MIN_USERNAME_LENGTH = 3
@@ -25,6 +24,7 @@ class User:
     """Simple user class for demonstration."""
 
     def __init__(self, username: str, email: str, age: int) -> None:
+        """Initialize user with basic information."""
         self.username = username
         self.email = email
         self.age = age

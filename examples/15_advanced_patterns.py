@@ -15,7 +15,6 @@ import contextlib
 import sys
 from decimal import Decimal
 
-from pydantic import ConfigDict
 from pydantic_settings import SettingsConfigDict
 
 from flext_core import (
@@ -26,7 +25,6 @@ from flext_core import (
     FlextResult,
 )
 from flext_core.typings import FlextTypes
-
 
 OrderData = FlextTypes.Core.Dict
 ItemData = FlextTypes.Core.Dict

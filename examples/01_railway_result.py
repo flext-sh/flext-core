@@ -13,14 +13,13 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+
 from collections.abc import Sequence
 
 from flext_core import (
     FlextCommands,
     FlextConstants,
     FlextContainer,
-    FlextDomainService,
-    FlextHandlers,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -29,9 +28,7 @@ from flext_core import (
 )
 
 
-class ProfessionalRailwayService(
-    FlextDomainService["ProfessionalRailwayService.RegistrationResult"]
-):
+class ProfessionalRailwayService:
     """UNIFIED service demonstrating railway-oriented programming using FlextCore DIRECTLY.
 
     Eliminates ALL duplication by using FlextCore components directly:
@@ -53,16 +50,13 @@ class ProfessionalRailwayService(
         """Nested helper for validation logic."""
 
         @staticmethod
-        def validate_user_data(
-            validator: object, data: FlextTypes.Core.Dict
-        ) -> FlextResult[None]:
+        def validate_user_data(data: FlextTypes.Core.Dict) -> FlextResult[None]:
             """Validate user data using FlextValidations."""
-            if hasattr(validator, "validate_business_rules"):
-                result = validator.validate_business_rules(data)
-                if result.is_failure:
-                    return FlextResult[None].fail(
-                        FlextConstants.Errors.VALIDATION_ERROR
-                    )
+            # Use FlextValidations directly instead of passing validator object
+            user_validator = FlextValidations.create_user_validator()
+            result = user_validator.validate_business_rules(data)
+            if result.is_failure:
+                return FlextResult[None].fail(FlextConstants.Errors.VALIDATION_ERROR)
             return FlextResult[None].ok(None)
 
     class RegistrationResult(FlextModels.Config):
@@ -123,9 +117,7 @@ class ProfessionalRailwayService(
             }
 
         # Validate using FlextValidations DIRECTLY
-        validation_result = self._ValidationHelper.validate_user_data(
-            self._validator, command_data
-        )
+        validation_result = self._ValidationHelper.validate_user_data(command_data)
         if validation_result.is_failure:
             return FlextResult[ProfessionalRailwayService.RegistrationResult].fail(
                 validation_result.error or "Validation failed"

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Generic, TypeVar, cast
+from typing import Generic, Self, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -40,11 +40,11 @@ class FlextServices:
     # ULTRA-SIMPLE ALIASES FOR TEST COMPATIBILITY
     # ==========================================================================
 
-    def __new__(cls) -> type[FlextServices]:
+    def __new__(cls) -> Self:
         """Ultra-simple alias for test compatibility - when called, return the class itself."""
         # This allows FlextServices() to return the class instead of an instance
         # to support test patterns that expect services() to return the class
-        return cls
+        return super().__new__(cls)
 
     class DomainService(BaseModel):
         """Ultra-simple domain service base class for test compatibility."""

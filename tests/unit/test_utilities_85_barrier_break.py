@@ -86,7 +86,7 @@ class TestUtilities85PercentBarrierBreaker:
         env_var_tests = [
             ("PATH", "", True),  # Should exist
             ("NONEXISTENT_VAR_12345", "default", False),  # Should not exist
-            ("HOME", "/tmp", True),  # Should exist on Unix
+            ("HOME", "/home", True),  # Should exist on Unix
             ("USER", "testuser", True),  # Should exist on Unix
         ]
 
@@ -348,7 +348,7 @@ class TestUtilities85PercentBarrierBreaker:
             # Test measure_execution_time method (lines 586-588)
             if hasattr(performance, "measure_execution_time"):
 
-                def test_function():
+                def test_function() -> int:
                     return sum(range(1000))
 
                 execution_time = performance.measure_execution_time(test_function)

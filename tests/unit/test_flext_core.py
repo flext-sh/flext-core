@@ -324,9 +324,8 @@ class TestFlextCore:
 
     def test_fail_method(self) -> None:
         """Testa método fail para criar resultado de falha."""
-        core = FlextCore.get_instance()
-
-        result = core.fail("Operation failed")
+        # core.fail() foi removido - use FlextResult[T].fail() diretamente
+        result = FlextResult[object].fail("Operation failed")
 
         assert result.failure
         assert result.error == "Operation failed"
