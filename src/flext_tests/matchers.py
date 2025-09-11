@@ -16,10 +16,13 @@ import asyncio
 import os
 import re
 import time
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Iterator, Sequence
 from typing import Protocol, TypeGuard, TypeVar, runtime_checkable
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import (
+    FlextResult,
+    FlextTypes,
+)
 
 T = TypeVar("T")
 
@@ -43,6 +46,10 @@ class FlextTestsMatchers:
             self, func: Callable[[], object], *args: object, **kwargs: object
         ) -> object:
             """Call benchmark fixture."""
+            ...
+
+        def benchmark(self, func: object, *args: object, **kwargs: object) -> object:
+            """Run benchmark on function."""
             ...
 
         @property
@@ -73,35 +80,21 @@ class FlextTestsMatchers:
     # === CORE MATCHERS ===
 
     class CoreMatchers:
-        """Advanced matchers for flext-core testing with comprehensive assertions.
-
-        Uses pytest-clarity for better error messages and provides domain-specific
-        matchers for FlextResult, containers, and other core patterns.
-        """
+        """Matchers that delegate to FlextValidations and FlextCore components."""
 
         @staticmethod
         def assert_result_success(
             result: FlextResult[object],
             expected_data: object = None,
         ) -> None:
-            """Assert FlextResult is successful with optional data check.
+            """Assert FlextResult is successful using FlextResult validation."""
+            if not result.success:
+                msg = f"Expected successful result, but got failure: {result.error}"
+                raise AssertionError(msg)
 
-            Args:
-                result: FlextResult to test
-                expected_data: Expected data value (optional)
-
-            Raises:
-                AssertionError: With clear message about failure
-
-            """
-            assert result.is_success, (
-                f"Expected successful result, but got failure: {result.error}"
-            )
-
-            if expected_data is not None:
-                assert result.value == expected_data, (
-                    f"Expected data {expected_data!r}, got {result.value!r}"
-                )
+            if expected_data is not None and result.data != expected_data:
+                msg = f"Expected data {expected_data!r}, got {result.data!r}"
+                raise AssertionError(msg)
 
         @staticmethod
         def assert_result_failure(
@@ -109,43 +102,33 @@ class FlextTestsMatchers:
             expected_error: str | None = None,
             expected_error_code: str | None = None,
         ) -> None:
-            """Assert FlextResult is failed with optional error checks.
-
-            Args:
-                result: FlextResult to test
-                expected_error: Expected error message (optional)
-                expected_error_code: Expected error code (optional)
-
-            Raises:
-                AssertionError: With clear message about success
-
-            """
-            assert result.is_failure, (
-                f"Expected failed result, but got success: {result.value}"
-            )
+            """Assert FlextResult is failed using FlextResult validation."""
+            if result.success:
+                msg = f"Expected failed result, but got success: {result.data}"
+                raise AssertionError(msg)
 
             if expected_error is not None:
                 error_message = result.error or "Unknown error"
-                assert expected_error in str(error_message), (
-                    f"Expected error containing {expected_error!r}, got {error_message!r}"
-                )
+                if expected_error not in str(error_message):
+                    msg = f"Expected error containing {expected_error!r}, got {error_message!r}"
+                    raise AssertionError(msg)
 
             if expected_error_code is not None:
-                actual_code = result.error_code or "UNKNOWN"
-                assert actual_code == expected_error_code, (
-                    f"Expected error code {expected_error_code!r}, got {actual_code!r}"
-                )
+                actual_code = getattr(result, "error_code", None) or "UNKNOWN"
+                if actual_code != expected_error_code:
+                    msg = f"Expected error code {expected_error_code!r}, got {actual_code!r}"
+                    raise AssertionError(msg)
 
-        # Convenience boolean helpers used by some tests
+        # Convenience boolean helpers using FlextResult
         @staticmethod
         def is_successful_result(result: FlextResult[object]) -> bool:
-            """is_successful_result method."""
-            return bool(getattr(result, "success", False))
+            """Check if result is successful using FlextResult."""
+            return result.success
 
         @staticmethod
         def is_failed_result(result: FlextResult[object]) -> bool:
-            """is_failed_result method."""
-            return bool(getattr(result, "is_failure", False))
+            """Check if result is failed using FlextResult."""
+            return not result.success
 
         @staticmethod
         def assert_container_has_service(
@@ -404,7 +387,7 @@ class FlextTestsMatchers:
     # === PERFORMANCE MATCHERS ===
 
     class PerformanceMatchers:
-        """Performance-specific matchers using pytest-benchmark."""
+        """Performance matchers that use FlextUtilities.Performance."""
 
         @staticmethod
         def assert_linear_complexity(
@@ -673,8 +656,8 @@ class FlextTestsMatchers:
 
     @classmethod
     def create_async_mock(
-        cls, return_value: T | None = None, side_effect: object = None
-    ) -> Callable[..., Awaitable[T | None]]:
+        cls, return_value: object = None, side_effect: object = None
+    ) -> object:
         """Create async mock for test compatibility."""
 
         class AsyncMock:
@@ -686,7 +669,7 @@ class FlextTestsMatchers:
                 self.side_effect = side_effect
                 self.call_count = 0
                 self.called = False
-                self._side_effect_iter: object = None
+                self._side_effect_iter: Iterator[object] | None = None
                 if isinstance(side_effect, list):
                     self._side_effect_iter = iter(side_effect)
 
@@ -696,7 +679,10 @@ class FlextTestsMatchers:
                 self.called = True
 
                 if self.side_effect is not None:
-                    if isinstance(self.side_effect, list) and self._side_effect_iter:
+                    if (
+                        isinstance(self.side_effect, list)
+                        and self._side_effect_iter is not None
+                    ):
                         try:
                             effect = next(self._side_effect_iter)
                             if isinstance(effect, Exception):
@@ -733,7 +719,7 @@ class FlextTestsMatchers:
 
             def __init__(
                 self,
-                success_value: T,
+                success_value: object,
                 failure_count: int,
                 exception_type: type[Exception],
             ) -> None:
@@ -743,7 +729,7 @@ class FlextTestsMatchers:
                 self.exception_type = exception_type
                 self.call_count = 0
 
-            async def __call__(self) -> T:
+            async def __call__(self) -> object:
                 """Call method for flakyasyncmock:."""
                 self.call_count += 1
                 if self.call_count <= self.failure_count:
@@ -819,34 +805,12 @@ class FlextTestsMatchers:
             ) -> None:
                 """__aexit__ method."""
                 if self.teardown_func and self.resource is not None:
-                    await self.teardown_func(self.resource)
+                    result = self.teardown_func(self.resource)
+                    if asyncio.iscoroutine(result):
+                        await result
 
         return AsyncTestContext(setup_coro, teardown_func)
 
-
-# === REMOVED COMPATIBILITY ALIASES AND FACADES ===
-# Legacy compatibility removed as per user request
-# All compatibility facades, aliases and protocol facades have been commented out
-# Only FlextTestsMatchers class is now exported
-
-# Main class alias for backward compatibility - REMOVED
-# FlextTestsMatcher = FlextTestsMatchers
-
-# Legacy FlextTestsMatchers class - REMOVED (commented out)
-# class FlextTestsMatchers:
-#     """Compatibility facade for FlextTestsMatchers - use FlextTestsMatchers.CoreMatchers instead."""
-#     ... all methods commented out
-
-# Legacy PerformanceMatchers class - REMOVED (commented out)
-# class PerformanceMatchers:
-#     """Compatibility facade for PerformanceMatchers - use FlextTestsMatchers.PerformanceMatchers instead."""
-#     ... all methods commented out
-
-# Protocol facades for backward compatibility - REMOVED (commented out)
-# BenchmarkProtocol = FlextTestsMatchers.BenchmarkProtocol
-# ContainerProtocol = FlextTestsMatchers.ContainerProtocol
-# FieldProtocol = FlextTestsMatchers.FieldProtocol
-# MockProtocol = FlextTestsMatchers.MockProtocol
 
 # Export only the unified class
 __all__ = [

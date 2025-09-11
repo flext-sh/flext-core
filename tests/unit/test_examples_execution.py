@@ -82,12 +82,16 @@ class TestExamplesExecution:
         example_path = examples_dir / example_file
         assert example_path.exists(), f"Example file {example_file} not found"
 
-        # Run example with timeout
+        # Run example with timeout and proper module path
+        env = {
+            "PYTHONPATH": "src:examples",
+            **subprocess.os.environ
+        }
         result = subprocess.run(
             [sys.executable, str(example_path)],
             check=False,
             cwd=str(examples_dir.parent),
-            env={"PYTHONPATH": "src"},
+            env=env,
             capture_output=True,
             text=True,
             timeout=10,

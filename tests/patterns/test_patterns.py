@@ -327,6 +327,7 @@ class TestFixtureBuilder:
 
     def setup_context(self) -> Callable[[], ContextManager[FlextTypes.Core.Dict]]:
         """Create a context manager for test setup and teardown."""
+
         @contextmanager
         def _ctx() -> Iterator[FlextTypes.Core.Dict]:
             for f in self._setups:

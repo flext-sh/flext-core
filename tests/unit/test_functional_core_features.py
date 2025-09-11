@@ -167,7 +167,9 @@ class TestFlextCoreIntegration:
                 raise RuntimeError(error_msg)
             return NotificationService(cast("DatabaseService", db_result.unwrap()))
 
-        factory_result = container.register_factory("notifications", notification_factory)
+        factory_result = container.register_factory(
+            "notifications", notification_factory
+        )
         assert factory_result.success
 
         # Use services

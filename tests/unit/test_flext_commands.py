@@ -103,12 +103,15 @@ class CreateUserHandler(
     ) -> None:
         """Initialize the handler with user repository."""
         super().__init__()
+
         class MockEmailService:
             def send_welcome_email(self, _email: str, _name: str) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         class MockAuditService:
-            def log_event(self, _event_type: str, _entity_id: str, _data: dict) -> FlextResult[None]:
+            def log_event(
+                self, _event_type: str, _entity_id: str, _data: dict
+            ) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         self.user_repository = user_repository
@@ -372,6 +375,7 @@ class TestFlextCommandsComprehensive:
 
     def test_create_user_handler_user_exists_error(self) -> None:
         """Test handler when user already exists."""
+
         # Setup repository with existing user
         class InMemoryUserRepository:
             def __init__(self) -> None:
@@ -380,7 +384,9 @@ class TestFlextCommandsComprehensive:
             def get_by_email(self, email: str) -> FlextTestsDomains.TestUser | None:
                 return self.users.get(email)
 
-            def find_by_username(self, username: str) -> FlextTestsDomains.TestUser | None:
+            def find_by_username(
+                self, username: str
+            ) -> FlextTestsDomains.TestUser | None:
                 for user in self.users.values():
                     if hasattr(user, "name") and user.name == username:
                         return user

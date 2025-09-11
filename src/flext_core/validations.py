@@ -1,22 +1,5 @@
 """FLEXT Core Validations - Advanced validation framework with predicate-based rules.
 
-This module provides a comprehensive validation system with:
-- Predicate-based validation rules
-- Pattern matching support for complex validations
-- Caching optimizations for performance
-- Pydantic integration for schema validation
-- Hierarchical validation architecture
-- Type-safe validation results
-- Advanced composition operators
-
-Key Features:
-- Railway-oriented validation patterns
-- Composable validation predicates
-- Performance optimizations with caching
-- Schema validation with Pydantic
-- Advanced error handling and reporting
-- Type-safe validation chains
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -25,7 +8,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Sequence
-from typing import cast
+from typing import Protocol, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -36,15 +19,24 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
 
 
+class SupportsInt(Protocol):
+    """Protocol for objects that support conversion to int."""
+
+    def __int__(self) -> int:
+        """Convert to integer."""
+        ...
+
+
+class SupportsFloat(Protocol):
+    """Protocol for objects that support conversion to float."""
+
+    def __float__(self) -> float:
+        """Convert to float."""
+        ...
+
+
 class FlextValidations:
-    """Advanced hierarchical validation system with performance optimizations.
-
-    Enhanced with Python 3.13+ features, caching, and Pydantic validation.
-    """
-
-    # =========================================================================
-    # CORE VALIDATION - Basic primitives and type checking
-    # =========================================================================
+    """Advanced hierarchical validation system with performance optimizations."""
 
     class Core:
         """Core validation primitives and basic type checking."""
@@ -228,20 +220,6 @@ class FlextValidations:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
-            @staticmethod
-            def validate_string_non_empty(value: object) -> FlextResult[str]:
-                """Simple alias for test compatibility - validates string is not empty."""
-                if not isinstance(value, str):
-                    return FlextResult[str].fail(
-                        "Expected string type",
-                        error_code=FlextConstants.Errors.TYPE_ERROR,
-                    )
-                if not value.strip():
-                    return FlextResult[str].fail(
-                        "String cannot be empty",
-                        error_code=FlextConstants.Errors.VALIDATION_ERROR,
-                    )
-                return FlextResult[str].ok(value)
 
         # =========================================================================
         # ADVANCED VALIDATION METHODS - Performance optimized
@@ -1027,9 +1005,23 @@ class FlextValidations:
                     except ValueError:
                         numeric_val = float(value)
                 elif hasattr(value, "__int__"):
-                    numeric_val = int(value)
+                    # Type guard: ensure value can be converted to int
+                    try:
+                        # Cast to protocol type for type safety
+                        numeric_val = int(cast("SupportsInt", value))
+                    except (ValueError, TypeError):
+                        return FlextResult.fail(
+                            f"Value {value} cannot be converted to int"
+                        )
                 elif hasattr(value, "__float__"):
-                    numeric_val = float(value)
+                    # Type guard: ensure value can be converted to float
+                    try:
+                        # Cast to protocol type for type safety
+                        numeric_val = float(cast("SupportsFloat", value))
+                    except (ValueError, TypeError):
+                        return FlextResult.fail(
+                            f"Value {value} cannot be converted to float"
+                        )
                 else:
                     return FlextResult.fail(
                         f"Value {value} cannot be converted to a number"
@@ -1040,11 +1032,11 @@ class FlextValidations:
         # Validate range
         if min_value is not None and numeric_val < min_value:
             return FlextResult.fail(
-                f"Value {numeric_val} is less than minimum {min_value}"
+                f"Value {numeric_val} is less than minimum {min_value!s}"
             )
         if max_value is not None and numeric_val > max_value:
             return FlextResult.fail(
-                f"Value {numeric_val} is greater than maximum {max_value}"
+                f"Value {numeric_val} is greater than maximum {max_value!s}"
             )
 
         return FlextResult.ok(numeric_val)

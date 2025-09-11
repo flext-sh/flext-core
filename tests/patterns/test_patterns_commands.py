@@ -10,7 +10,6 @@ from typing import cast
 
 import pytest
 
-# # from pydantic import BaseModel  # Using FlextModels.Config instead
 from flext_core import FlextCommands, FlextModels, FlextResult
 from flext_core.typings import FlextTypes
 
@@ -191,7 +190,9 @@ class FailingCommandHandler(FlextCommandHandler[FailingCommand, None]):
     def handle(self, command: FailingCommand) -> FlextResult[None]:
         """Fail to handle command intentionally."""
         # Use command to demonstrate it's being processed
-        error_msg = f"Handler processing failed for command: {command.__class__.__name__}"
+        error_msg = (
+            f"Handler processing failed for command: {command.__class__.__name__}"
+        )
         return FlextResult[None].fail(error_msg)
 
     def handle_command(self, command: FailingCommand) -> FlextResult[None]:

@@ -13,7 +13,7 @@ import asyncio
 import inspect
 import random
 import time
-from collections.abc import AsyncGenerator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager, suppress
 from typing import Protocol, TypeGuard, TypeVar
 
@@ -40,7 +40,7 @@ class FlextTestsAsyncs:
     """
 
     @staticmethod
-    def _is_not_exception(obj: object) -> TypeGuard[T]:
+    def _is_not_exception(obj: object | Exception) -> TypeGuard[object]:
         """Type guard to check if object is not an exception."""
         return not isinstance(obj, Exception)
 
@@ -148,12 +148,11 @@ class FlextTestsAsyncs:
             return []
 
         if return_exceptions:
-            results = await asyncio.gather(*coroutines, return_exceptions=True)
-            # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [
-                r for r in results if FlextTestsAsyncs._is_not_exception(r)
-            ]
-            return filtered_results
+            results: list[T | BaseException] = await asyncio.gather(
+                *coroutines, return_exceptions=True
+            )
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]
 
         # When return_exceptions=False, asyncio.gather will raise on first exception
         return await asyncio.gather(*coroutines, return_exceptions=False)
@@ -173,12 +172,11 @@ class FlextTestsAsyncs:
         if not tasks:
             return []
         if return_exceptions:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            # Filter out exceptions and return only successful results using type guard
-            filtered_results: list[T] = [
-                r for r in results if FlextTestsAsyncs._is_not_exception(r)
-            ]
-            return filtered_results
+            results: list[T | BaseException] = await asyncio.gather(
+                *tasks, return_exceptions=True
+            )
+            # Filter out exceptions and return only successful results
+            return [r for r in results if not isinstance(r, BaseException)]
         # When return_exceptions=False, asyncio.gather will raise on first exception
         return await asyncio.gather(*tasks, return_exceptions=False)
 
@@ -331,7 +329,7 @@ class FlextTestsAsyncs:
     ) -> AsyncMockProtocol:
         """async_mock method."""
 
-        async def async_mock(*_args: object) -> object:
+        async def async_mock(*_args: object, **_kwargs: object) -> object:
             if side_effect:
                 raise side_effect
             return return_value
@@ -347,7 +345,7 @@ class FlextTestsAsyncs:
     ) -> AsyncMockProtocol:
         """delayed_async_mock method."""
 
-        async def delayed_async_mock(*_args: object) -> object:
+        async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
             await asyncio.sleep(delay)
             if side_effect:
                 raise side_effect
@@ -372,7 +370,7 @@ class FlextTestsAsyncs:
             exc_type = exception_type or RuntimeError
             result_value = success_value if success_value is not None else return_value
 
-            async def flaky_count_mock(*_args: object) -> object:
+            async def flaky_count_mock(*_args: object, **_kwargs: object) -> object:
                 """flaky_count_mock method."""
                 nonlocal remaining
                 if remaining > 0:
@@ -385,7 +383,7 @@ class FlextTestsAsyncs:
         # Random mode
         rate = 0.3 if failure_rate is None else float(failure_rate)
 
-        async def flaky_random_mock(*_args: object) -> object:
+        async def flaky_random_mock(*_args: object, **_kwargs: object) -> object:
             """flaky_random_mock method."""
             if random.random() < rate:
                 raise exception or RuntimeError("flaky failure")
@@ -509,37 +507,38 @@ class FlextTestsAsyncs:
 
             # Ensure we have coroutines for create_task
             if not asyncio.iscoroutine(awaitable1):
-
-                def _make_wrapper1(
+                # Create wrapper with proper variable binding
+                def make_wrapper1(
                     aw: Awaitable[object],
-                ) -> Callable[[], Awaitable[object]]:
+                ) -> Callable[[], Coroutine[None, None, object]]:
                     async def _wrapper1() -> object:
                         """_wrapper1 method."""
                         return await aw
 
                     return _wrapper1
 
-                coro1 = _make_wrapper1(awaitable1)()
+                coro1 = make_wrapper1(awaitable1)()
             else:
                 coro1 = awaitable1
 
             if not asyncio.iscoroutine(awaitable2):
-
-                def _make_wrapper2(
+                # Create wrapper with proper variable binding
+                def make_wrapper2(
                     aw: Awaitable[object],
-                ) -> Callable[[], Awaitable[object]]:
+                ) -> Callable[[], Coroutine[None, None, object]]:
                     async def _wrapper2() -> object:
                         """_wrapper2 method."""
                         return await aw
 
                     return _wrapper2
 
-                coro2 = _make_wrapper2(awaitable2)()
+                coro2 = make_wrapper2(awaitable2)()
             else:
                 coro2 = awaitable2
 
-            task1 = asyncio.create_task(coro1)
-            task2 = asyncio.create_task(coro2)
+            # Create tasks - coro1 and coro2 are guaranteed to be coroutines here
+            task1: asyncio.Task[object] = asyncio.create_task(coro1)
+            task2: asyncio.Task[object] = asyncio.create_task(coro2)
 
             # Wait for both to complete
             result1, result2 = await asyncio.gather(
@@ -643,8 +642,22 @@ class FlextTestsAsyncs:
         concurrent_count: int = 5,
     ) -> list[object]:
         """Run the same async function concurrently and return results."""
+        # Create coroutines and ensure they are proper coroutines
+        coroutines = []
+        for _ in range(concurrent_count):
+            result = func()
+            if asyncio.iscoroutine(result):
+                coroutines.append(result)
+            else:
+                # Wrap non-coroutine awaitables
+                async def _wrapper(aw: Awaitable[object] = result) -> object:
+                    """Wrapper for non-coroutine awaitable."""
+                    return await aw
+
+                coroutines.append(_wrapper())
+
         tasks: list[asyncio.Task[object]] = [
-            asyncio.create_task(func()) for _ in range(concurrent_count)
+            asyncio.create_task(coro) for coro in coroutines
         ]
         results = await asyncio.gather(*tasks)
         return list(results)

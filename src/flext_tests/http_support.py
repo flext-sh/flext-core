@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from urllib.parse import urljoin
 
-from httpx_mock import HTTPXMock
 from pydantic import BaseModel
+from pytest_httpx import HTTPXMock
 
 from flext_core import FlextLogger, FlextResult, FlextTypes
 
@@ -101,7 +101,7 @@ class FlextTestsHttp:
             if headers:
                 request_headers.update(headers)
 
-            request_data = {
+            request_data: dict[str, object] = {
                 "method": method.upper(),
                 "url": self.build_url(endpoint),
                 "headers": request_headers,
@@ -402,9 +402,13 @@ class FlextTestsHttp:
         headers: FlextTypes.Core.Dict | None = None,
     ) -> None:
         """Mock HTTPX response."""
-        response_headers = {"content-type": "application/json"}
+        response_headers: dict[str, str] = {"content-type": "application/json"}
         if headers:
-            response_headers.update(headers)
+            # Convert headers dict values to strings
+            for key, value in headers.items():
+                response_headers[key] = (
+                    str(value) if not isinstance(value, str) else value
+                )
 
         httpx_mock.add_response(
             method=method,

@@ -17,6 +17,7 @@ import json
 import os
 import tomllib
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, Self, cast
 
@@ -333,11 +334,21 @@ class FlextConfig(BaseSettings):
                     # Other types - convert to dict if possible
                     try:
                         # Try to convert to dict if it's iterable of pairs
-                        config_data = (
-                            dict(data)
-                            if hasattr(data, "__iter__") and not isinstance(data, str)
-                            else {"data": data}
-                        )
+                        if hasattr(data, "__iter__") and not isinstance(data, str):
+                            # Ensure it's iterable of key-value pairs
+                            if hasattr(data, "items"):
+                                # Type-safe conversion for objects with items() method
+                                # Cast to Mapping to satisfy type checker
+                                if isinstance(data, Mapping):
+                                    config_data = dict(data)
+                                else:
+                                    # Fallback for non-Mapping objects with items()
+                                    config_data = {"data": data}
+                            else:
+                                # For other iterables, wrap as data
+                                config_data = {"data": data}
+                        else:
+                            config_data = {"data": data}
                     except (TypeError, ValueError):
                         # Fallback for any conversion issues
                         config_data = {"data": data}

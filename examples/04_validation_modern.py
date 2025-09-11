@@ -242,15 +242,6 @@ def main() -> None:
     )
 
 
-# Simple aliases for test compatibility (CLAUDE.md compliant)
-ModernValidationShowcase = ProfessionalValidationService
-ModernValidationExamples = ProfessionalValidationService
-ValidationService = ProfessionalValidationService
-
-# Aliases for nested classes
-ValidationReport = ProfessionalValidationService.ValidationReport
-
-
 # Setup function for test compatibility
 def create_validation_service() -> FlextResult[ProfessionalValidationService]:
     """Create validation service for test compatibility."""
