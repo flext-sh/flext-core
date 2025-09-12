@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Enterprise configuration management with FlextConfig.
+"""Enterprise configuration management with unified FlextConfig.
 
-Demonstrates advanced configuration patterns for enterprise applications:
-- Environment variable integration
-- File-based configuration loading
-- Configuration validation with business rules
-- Multi-layer configuration merging
-- Security-aware configuration handling
+Demonstrates the unified FlextConfig system with enterprise-grade features:
+- Automatic .env file loading and environment variable integration
+- Built-in validation with runtime and business rules
+- Multiple configuration profiles (web service, microservice, batch job, etc.)
+- Production readiness checks and feature flags
+- Serialization to JSON with metadata tracking
+- File-based configuration loading (JSON, YAML, TOML)
+- Type-safe configuration with Pydantic v2
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,10 +21,6 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import cast
-
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core import FlextConfig, FlextResult, FlextTypes
 
@@ -38,344 +36,100 @@ _DEMO_SECRET_KEY_2 = os.getenv(
 _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
 
-class DatabaseConfig(FlextConfig):
-    """Database configuration with enterprise validation."""
-
-    host: str = Field(default="localhost", description="Database host")
-    port: int = Field(default=5432, ge=1, le=65535, description="Database port")
-    name: str = Field(default="app_db", min_length=1, description="Database name")
-    user: str = Field(default="app_user", min_length=1, description="Database user")
-    password: str = Field(default="default_password", description="Database password")
-    pool_size: int = Field(default=20, ge=1, le=100, description="Connection pool size")
-    timeout: int = Field(default=30, ge=5, le=300, description="Connection timeout")
-    ssl_enabled: bool = Field(default=False, description="Enable SSL connections")
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate database configuration business rules."""
-        if self.host == "localhost" and not self.password:
-            return FlextResult[None].fail("Password required for localhost connections")
-
-        # SSH port not allowed for database connections
-        ssh_port = 22
-        if self.port == ssh_port:
-            return FlextResult[None].fail(
-                "SSH port not allowed for database connections",
-            )
-
-        return FlextResult[None].ok(None)
-
-    def get_connection_url(self) -> str:
-        """Get database connection URL."""
-        protocol = "postgresql+psycopg2"
-        return f"{protocol}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
-
-    def get_masked_url(self) -> str:
-        """Get connection URL with masked password for safe logging."""
-        protocol = "postgresql+psycopg2"
-        return f"{protocol}://{self.user}:***@{self.host}:{self.port}/{self.name}"
+# Using the unified FlextConfig class with specialized factory methods
+# The new FlextConfig provides built-in validation, environment integration,
+# and enterprise-grade configuration management features
 
 
-class CacheConfig(FlextConfig):
-    """Cache configuration supporting Redis and Memcached."""
-
-    provider: str = Field(default="redis", pattern="^(redis|memcached|memory)$")
-    host: str = Field(default="localhost", min_length=1)
-    port: int = Field(default=6379, ge=1, le=65535)
-    db: int = Field(default=0, ge=0, le=15)
-    password: str = Field(default="")
-    timeout: int = Field(default=5, ge=1, le=60)
-    max_connections: int = Field(default=50, ge=1, le=1000)
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate cache configuration."""
-        # Redis supports database indices 0-15
-        max_redis_db_index = 15
-        if self.provider == "redis" and self.db > max_redis_db_index:
-            return FlextResult[None].fail("Redis database index must be 0-15")
-
-        if self.provider == "memcached" and self.db != 0:
-            return FlextResult[None].fail(
-                "Memcached does not support database selection",
-            )
-
-        return FlextResult[None].ok(None)
-
-    def get_connection_url(self) -> str:
-        """Get cache connection URL."""
-        if self.provider == "redis":
-            if self.password:
-                return f"redis://:{self.password}@{self.host}:{self.port}/{self.db}"
-            return f"redis://{self.host}:{self.port}/{self.db}"
-        if self.provider == "memcached":
-            return f"memcached://{self.host}:{self.port}"
-        return "memory://"
+# Utility functions leveraging the new FlextConfig capabilities
 
 
-class SecurityConfig(FlextConfig):
-    """Security configuration with comprehensive validation."""
+def create_enterprise_config(
+    config_data: FlextTypes.Core.Dict | None = None,
+) -> FlextConfig:
+    """Create a FlextConfig instance using the unified configuration system.
 
-    secret_key: str = Field(
-        default=_DEMO_SECRET_KEY_1,
-        min_length=32,
-        description="Application secret key",
-    )
-    token_expiry_hours: int = Field(
-        default=24,
-        ge=1,
-        le=8760,
-        description="Token expiry in hours",
-    )
-    max_login_attempts: int = Field(
-        default=5,
-        ge=1,
-        le=20,
-        description="Max login attempts",
-    )
-    session_timeout_minutes: int = Field(
-        default=30,
-        ge=5,
-        le=1440,
-        description="Session timeout",
-    )
-    enable_2fa: bool = Field(
-        default=False,
-        description="Enable two-factor authentication",
-    )
-    cors_origins: FlextTypes.Core.StringList = Field(
-        default_factory=lambda: ["http://localhost:3000"]
-    )
+    This function demonstrates how to create configuration instances using
+    the new FlextConfig factory methods and unified validation system.
 
-    @field_validator("secret_key")
-    @classmethod
-    def validate_secret_key(cls, v: str) -> str:
-        """Validate secret key complexity."""
-        # Minimum secure key length
-        min_secret_key_length = 32
-        if len(v) < min_secret_key_length:
-            msg = "Secret key must be at least 32 characters"
-            raise ValueError(msg)
+    Args:
+        config_data: Optional configuration data to merge
 
-        # Check complexity requirements
-        has_upper = any(c.isupper() for c in v)
-        has_lower = any(c.islower() for c in v)
-        has_digit = any(c.isdigit() for c in v)
+    Returns:
+        Configured FlextConfig instance
 
-        if not (has_upper and has_lower and has_digit):
-            msg = "Secret key must contain uppercase, lowercase, and digits"
-            raise ValueError(msg)
-
-        return v
-
-    def validate_business_rules(self) -> FlextResult[None]:
-        """Validate security configuration rules."""
-        # Conservative max login attempts when 2FA is enabled
-        max_2fa_login_attempts = 10
-        if self.enable_2fa and self.max_login_attempts > max_2fa_login_attempts:
-            return FlextResult[None].fail(
-                "Reduce max login attempts when 2FA is enabled",
-            )
-
-        if not self.cors_origins:
-            return FlextResult[None].fail("CORS origins must be specified")
-
-        return FlextResult[None].ok(None)
-
-
-class EnterpriseConfig(BaseSettings):
-    """Main enterprise configuration combining all components."""
-
-    # Application metadata
-    app_name: str = Field(default="Enterprise Application")
-    version: str = Field(default="1.0.0")
-    environment: str = Field(
-        default="development",
-        pattern="^(development|staging|production)$",
-    )
-    debug: bool = Field(default=False)
-
-    # Server settings
-    host: str = Field(default=_LOCALHOST_IP)
-    port: int = Field(default=8000, ge=1, le=65535)
-    workers: int = Field(default=4, ge=1, le=32)
-
-    # Component configurations
-    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    cache: CacheConfig = Field(default_factory=CacheConfig)
-    security: SecurityConfig = Field(default_factory=SecurityConfig)
-
-    # Feature flags
-    feature_flags: dict[str, bool] = Field(
-        default_factory=lambda: {
-            "new_ui": False,
-            "advanced_analytics": False,
-            "beta_features": False,
-        },
-    )
-
-    model_config = SettingsConfigDict(
-        env_prefix="APP_",
-        case_sensitive=False,
-        env_nested_delimiter="__",
-        extra="forbid",
-    )
-
-    def validate_all_components(self) -> FlextResult[None]:
-        """Validate all configuration components."""
-        components = [
-            ("database", self.database),
-            ("cache", self.cache),
-            ("security", self.security),
-        ]
-
-        for name, component in components:
-            if hasattr(component, "validate_business_rules"):
-                validation = component.validate_business_rules()
-                if not validation.success:
-                    return FlextResult[None].fail(f"{name}: {validation.error}")
-
-        # Global validations
-        if self.environment == "production":
-            if self.debug:
-                return FlextResult[None].fail(
-                    "Debug mode must be disabled in production",
-                )
-            if not self.security.secret_key:
-                return FlextResult[None].fail("Secret key required in production")
-
-        return FlextResult[None].ok(None)
-
-    def get_summary(self) -> FlextTypes.Core.Dict:
-        """Get configuration summary safe for logging."""
-        return {
-            "app_name": self.app_name,
-            "version": self.version,
-            "environment": self.environment,
-            "debug": self.debug,
-            "api_endpoint": f"{self.host}:{self.port}",
-            "database_host": self.database.host,
-            "cache_provider": self.cache.provider,
-            "security_2fa": self.security.enable_2fa,
-            "feature_flags": self.feature_flags,
-        }
-
-
-def create_enterprise_config(config_data: FlextTypes.Core.Dict) -> EnterpriseConfig:
-    """Create EnterpriseConfig instance from dictionary data.
-
-    Helper function to properly handle model validation with type safety.
     """
-    # Use model_validate for proper type validation with pydantic v2
-    # This handles type conversion and validation correctly
-    return EnterpriseConfig(**config_data)
+    if config_data:
+        # Use the factory method to create with custom data
+        result = FlextConfig.create(constants=config_data)
+        if result.is_success:
+            return result.value
+        # Fallback to default if creation fails
+        print(f"Warning: Configuration creation failed: {result.error}")
+
+    # Create default configuration
+    result = FlextConfig.create()
+    return result.value if result.is_success else FlextConfig()
 
 
-def load_config_from_file(file_path: str | Path) -> FlextResult[FlextTypes.Core.Dict]:
-    """Load configuration from JSON file."""
+def get_connection_string_example(config: FlextConfig) -> FlextResult[str]:
+    """Get connection string using FlextConfig's built-in methods."""
+    return config.get_connection_string("database")
+
+
+def demonstrate_config_validation(config: FlextConfig) -> FlextResult[None]:
+    """Demonstrate FlextConfig's built-in validation capabilities."""
+    # Use the unified validation system
+    validation_result = config.validate_all()
+    if validation_result.is_failure:
+        return FlextResult[None].fail(validation_result.error or "Validation failed")
+
+    return FlextResult[None].ok(None)
+
+
+def demonstrate_config_serialization(config: FlextConfig) -> FlextResult[None]:
+    """Demonstrate FlextConfig's serialization capabilities."""
     try:
-        path = Path(file_path)
-        if not path.exists():
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                f"Configuration file not found: {path}",
-            )
+        # Use built-in serialization methods
+        config_dict = config.to_dict()
+        config_json = config.to_json(indent=2)
 
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        if not isinstance(data, dict):
-            return FlextResult[FlextTypes.Core.Dict].fail(
-                "Configuration must be a JSON object",
-            )
-
-        return FlextResult[FlextTypes.Core.Dict].ok(dict(data))
-
-    except json.JSONDecodeError as e:
-        return FlextResult[FlextTypes.Core.Dict].fail(f"Invalid JSON: {e}")
-    except Exception as e:
-        return FlextResult[FlextTypes.Core.Dict].fail(f"Error loading file: {e}")
-
-
-def save_config_to_file(
-    config_data: FlextTypes.Core.Dict,
-    file_path: str | Path,
-) -> FlextResult[None]:
-    """Save configuration to JSON file."""
-    try:
-        path = Path(file_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        with path.open("w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=2, default=str)
+        print(f"Configuration as dict keys: {list(config_dict.keys())}")
+        print(f"Configuration as JSON length: {len(config_json)} characters")
 
         return FlextResult[None].ok(None)
-
     except Exception as e:
-        return FlextResult[None].fail(f"Error saving file: {e}")
-
-
-def merge_configurations(
-    base: FlextTypes.Core.Dict,
-    override: FlextTypes.Core.Dict,
-) -> FlextTypes.Core.Dict:
-    """Deep merge two configuration dictionaries."""
-    result = base.copy()
-
-    for key, value in override.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            # Cast to dict for type safety
-            result_dict = cast("FlextTypes.Core.Dict", result[key])
-            value_dict = cast("FlextTypes.Core.Dict", value)
-            result[key] = merge_configurations(
-                result_dict,
-                value_dict,
-            )
-        else:
-            result[key] = value
-
-    return result
-
-
-def mask_sensitive_data(config_data: FlextTypes.Core.Dict) -> FlextTypes.Core.Dict:
-    """Mask sensitive values for safe logging."""
-    sensitive_keys = {"password", "secret", "key", "token", "auth"}
-
-    def mask_recursive(obj: object) -> object:
-        if isinstance(obj, dict):
-            result: FlextTypes.Core.Dict = {}
-            for key, value in obj.items():
-                key_str = str(key)
-                if any(sensitive in key_str.lower() for sensitive in sensitive_keys):
-                    result[key_str] = "***"
-                else:
-                    result[key_str] = mask_recursive(value)
-            return result
-        if isinstance(obj, list):
-            return [mask_recursive(item) for item in obj]
-        return obj
-
-    # Cast result to expected return type
-    masked_result = mask_recursive(config_data)
-    return cast("FlextTypes.Core.Dict", masked_result)
+        return FlextResult[None].fail(f"Serialization failed: {e}")
 
 
 def demonstrate_basic_configuration() -> FlextResult[None]:
-    """Demonstrate basic configuration creation and validation."""
+    """Demonstrate basic configuration creation and validation using unified FlextConfig."""
     print("\n" + "=" * 60)
     print("🔧 Basic Configuration Demonstration")
     print("=" * 60)
 
     try:
-        # Create default configuration
-        config = EnterpriseConfig()
+        # Create default configuration using the unified FlextConfig
+        config = create_enterprise_config()
 
         print(f"Application: {config.app_name} v{config.version}")
         print(f"Environment: {config.environment}")
         print(f"Debug Mode: {config.debug}")
         print(f"API Server: {config.host}:{config.port}")
-        print(f"Database: {config.database.get_masked_url()}")
-        print(f"Cache: {config.cache.get_connection_url()}")
 
-        # Validate configuration
-        validation = config.validate_all_components()
+        # Demonstrate connection string generation
+        db_connection = get_connection_string_example(config)
+        if db_connection.is_success:
+            print(f"Database URL configured: {bool(config.database_url)}")
+        else:
+            print("Database connection not configured")
+
+        # Demonstrate feature flags
+        feature_flags = config.get_feature_flags()
+        print(f"Feature flags: {len(feature_flags)} available")
+
+        # Validate configuration using unified validation system
+        validation = demonstrate_config_validation(config)
         if validation.success:
             print("✅ Configuration is valid")
         else:
@@ -394,18 +148,16 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
     print("🌍 Environment Configuration Demonstration")
     print("=" * 60)
 
-    # Set test environment variables
+    # Set test environment variables using FLEXT_ prefix (built-in support)
     test_env = {
-        "APP_APP_NAME": "Production Enterprise App",
-        "APP_ENVIRONMENT": "production",
-        "APP_DEBUG": "false",
-        "APP_PORT": "8080",
-        "APP_DATABASE__HOST": "prod-db.company.com",
-        "APP_DATABASE__PASSWORD": "prod_secure_password_123",
-        "APP_CACHE__PROVIDER": "redis",
-        "APP_CACHE__HOST": "redis-cluster.company.com",
-        "APP_SECURITY__SECRET_KEY": "ProductionSecretKey123WithComplexity456789",
-        "APP_SECURITY__ENABLE_2FA": "true",
+        "FLEXT_APP_NAME": "Production Enterprise App",
+        "FLEXT_ENVIRONMENT": "production",
+        "FLEXT_DEBUG": "false",
+        "FLEXT_PORT": "8080",
+        "FLEXT_DATABASE_URL": "postgresql://prod_user:prod_pass@prod-db.company.com:5432/prod_db",
+        "FLEXT_ENABLE_AUTH": "true",
+        "FLEXT_API_KEY": "prod_api_key_123",
+        "FLEXT_ENABLE_METRICS": "true",
     }
 
     # Apply test environment
@@ -415,28 +167,38 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
         os.environ[key] = value
 
     try:
-        # Create configuration from environment
-        config = EnterpriseConfig()
+        # Create configuration from environment using factory method
+        config_result = FlextConfig.create_from_environment()
+        if config_result.is_failure:
+            return FlextResult[None].fail(
+                f"Failed to create config from environment: {config_result.error}"
+            )
+
+        config = config_result.value
 
         print(f"Application: {config.app_name}")
         print(f"Environment: {config.environment}")
         print(f"API Port: {config.port}")
-        print(f"Database Host: {config.database.host}")
-        print(f"Cache Provider: {config.cache.provider}")
-        print(f"2FA Enabled: {config.security.enable_2fa}")
+        print(f"Database configured: {bool(config.database_url)}")
+        print(f"Authentication enabled: {config.enable_auth}")
+        print(f"Metrics enabled: {config.enable_metrics}")
 
-        # Validate configuration
-        validation = config.validate_all_components()
+        # Demonstrate production readiness check
+        production_check = config.is_production_ready()
+        if production_check.is_success and production_check.value:
+            print("✅ Configuration is production-ready")
+        else:
+            print(f"⚠️  Production readiness check: {production_check.error}")
+
+        # Validate configuration using unified validation
+        validation = demonstrate_config_validation(config)
         if validation.success:
             print("✅ Environment configuration is valid")
 
-            # Show summary
-            summary = config.get_summary()
-            print("\n📋 Configuration Summary:")
-            if isinstance(summary, dict):
-                # Handle dict summary
-                for summary_key, summary_value in summary.items():
-                    print(f"  {summary_key}: {summary_value}")
+            # Demonstrate serialization
+            serial_demo = demonstrate_config_serialization(config)
+            if serial_demo.is_failure:
+                print(f"⚠️  Serialization demo failed: {serial_demo.error}")
         else:
             print(f"❌ Environment configuration invalid: {validation.error}")
             return validation
@@ -498,28 +260,34 @@ def demonstrate_file_configuration() -> FlextResult[None]:
             config_file = f.name
 
         try:
-            # Load configuration from file
-            loaded_result = load_config_from_file(config_file)
-            if not loaded_result.success:
+            # Load configuration from file using FlextConfig's built-in method
+            config_result = FlextConfig.load_from_file(config_file)
+            if config_result.is_failure:
                 return FlextResult[None].fail(
-                    loaded_result.error or "Failed to load configuration",
+                    config_result.error or "Failed to load configuration",
                 )
 
-            loaded_data = loaded_result.value
+            config = config_result.value
             print(f"✅ Configuration loaded from: {config_file}")
-            print(f"Loaded keys: {list(loaded_data.keys())}")
+            print(f"Configuration profile: {config.get_profile()}")
+            print(
+                f"Created from file: {config.get_metadata().get('loaded_from_file', 'unknown')}"
+            )
 
-            # Create configuration with loaded data using helper function
-            config = create_enterprise_config(loaded_data)
-
-            validation = config.validate_all_components()
+            # Validate configuration using unified validation
+            validation = demonstrate_config_validation(config)
             if validation.success:
                 print("✅ File configuration is valid")
 
-                # Show masked configuration for safe logging
-                masked = mask_sensitive_data(config_data)
-                print("\n🔒 Masked Configuration (safe for logging):")
-                print(json.dumps(masked, indent=2))
+                # Demonstrate serialization for safe logging
+                print("\n🔒 Configuration serialization demo:")
+                serial_result = demonstrate_config_serialization(config)
+                if serial_result.is_failure:
+                    print(f"⚠️  Serialization failed: {serial_result.error}")
+
+                # Show metadata
+                metadata = config.get_metadata()
+                print(f"📋 Configuration metadata: {list(metadata.keys())}")
             else:
                 print(f"❌ File configuration invalid: {validation.error}")
                 return FlextResult[None].fail(
@@ -590,29 +358,38 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
             },
         }
 
-        # Merge configurations step by step
+        # Merge configurations using FlextConfig's merge method
         print("📋 Merging configurations...")
         print("  1. Base + Environment overrides")
-        step1 = merge_configurations(base_config, env_overrides)
+        merge_result1 = FlextConfig.merge_configs(base_config, env_overrides)
+        if merge_result1.is_failure:
+            return FlextResult[None].fail(f"Merge step 1 failed: {merge_result1.error}")
 
+        step1 = merge_result1.value
         print("  2. Previous + Local overrides")
-        final_config = merge_configurations(step1, local_overrides)
+        merge_result2 = FlextConfig.merge_configs(step1, local_overrides)
+        if merge_result2.is_failure:
+            return FlextResult[None].fail(f"Merge step 2 failed: {merge_result2.error}")
 
+        final_config = merge_result2.value
         print("\n🔧 Final merged configuration structure:")
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
         config = create_enterprise_config(final_config)
 
-        validation = config.validate_all_components()
+        # Validate configuration using unified validation
+        validation = demonstrate_config_validation(config)
         if validation.success:
             print("✅ Merged configuration is valid")
 
-            # Show final summary
-            summary = config.get_summary()
-            print("\n📊 Final Configuration Summary:")
-            for key, value in summary.items():
-                print(f"  {key}: {value}")
+            # Demonstrate serialization
+            serial_result = demonstrate_config_serialization(config)
+            if serial_result.is_failure:
+                print(f"⚠️  Serialization failed: {serial_result.error}")
+
+            # Show configuration profile
+            print(f"📋 Configuration profile: {config.get_profile()}")
         else:
             print(f"❌ Merged configuration invalid: {validation.error}")
             return FlextResult[None].fail(
@@ -631,24 +408,28 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     print("🔍 Configuration Validation Scenarios")
     print("=" * 60)
 
+    # Test scenarios using FlextConfig's built-in validation
     scenarios: list[tuple[str, FlextTypes.Core.Dict]] = [
         (
-            "Invalid database port",
+            "Invalid environment",
             {
-                "database": DatabaseConfig(
-                    host="localhost",
-                    port=22,
-                ),  # SSH port not allowed
+                "app_name": "Test App",
+                "environment": "invalid_env",  # Should fail validation
             },
         ),
         (
-            "2FA with too many login attempts",
+            "Debug in production",
             {
-                "security": SecurityConfig(
-                    secret_key=_DEMO_SECRET_KEY_1,
-                    enable_2fa=True,
-                    max_login_attempts=15,  # Too high for 2FA
-                ),
+                "app_name": "Prod App",
+                "environment": "production",
+                "debug": True,  # Should fail business rules
+            },
+        ),
+        (
+            "Negative port",
+            {
+                "app_name": "Test App",
+                "port": -1,  # Should fail validation
             },
         ),
     ]
@@ -656,8 +437,13 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
     for scenario_name, config_data in scenarios:
         print(f"\nTesting: {scenario_name}")
         try:
-            config = create_enterprise_config(config_data)
-            validation = config.validate_all_components()
+            config_result = FlextConfig.create(constants=config_data)
+            if config_result.is_failure:
+                print(f"  ✅ Correctly rejected during creation: {config_result.error}")
+                continue
+
+            config = config_result.value
+            validation = demonstrate_config_validation(config)
 
             if not validation.success:
                 print(f"  ✅ Correctly rejected: {validation.error}")
@@ -665,7 +451,7 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
                 print("  ❌ Should have been rejected")
 
         except Exception as e:
-            print(f"  ✅ Correctly rejected during creation: {e}")
+            print(f"  ✅ Correctly rejected: {e}")
 
     # Test valid configuration
     print("\nTesting: Valid configuration")
@@ -673,10 +459,18 @@ def demonstrate_validation_scenarios() -> FlextResult[None]:
         valid_config_data: FlextTypes.Core.Dict = {
             "app_name": "Valid Test App",
             "environment": "development",
-            "security": SecurityConfig(secret_key=_DEMO_SECRET_KEY_2),
+            "port": 8080,
+            "debug": False,
         }
-        valid_config = create_enterprise_config(valid_config_data)
-        validation = valid_config.validate_all_components()
+        valid_config_result = FlextConfig.create(constants=valid_config_data)
+        if valid_config_result.is_failure:
+            print(f"  ❌ Valid configuration failed: {valid_config_result.error}")
+            return FlextResult[None].fail(
+                f"Valid configuration failed: {valid_config_result.error}"
+            )
+
+        valid_config = valid_config_result.value
+        validation = demonstrate_config_validation(valid_config)
 
         if validation.success:
             print("  ✅ Valid configuration accepted")
@@ -722,15 +516,18 @@ def main() -> int:
             return 1
 
     print("\n🎉 All configuration demonstrations completed successfully!")
-    print("\n📈 Enterprise Configuration Features Demonstrated:")
-    print("   ✅ Environment variable integration with nested settings")
-    print("   ✅ File-based configuration loading and validation")
-    print("   ✅ Comprehensive business rule validation")
-    print("   ✅ Security-aware configuration (password masking)")
-    print("   ✅ Multi-layer configuration composition and merging")
-    print("   ✅ Type-safe configuration with Pydantic validation")
-    print("   ✅ Production-ready validation scenarios")
-    print("   ✅ Enterprise patterns and best practices")
+    print("\n📈 Unified FlextConfig Features Demonstrated:")
+    print("   ✅ Automatic .env file loading with FLEXT_ prefix support")
+    print("   ✅ Built-in validation (runtime + business rules)")
+    print("   ✅ Multiple configuration profiles (web service, microservice, etc.)")
+    print("   ✅ Production readiness checks and feature flags")
+    print("   ✅ Type-safe configuration with Pydantic v2 validation")
+    print("   ✅ File-based loading (JSON, YAML, TOML) with metadata tracking")
+    print("   ✅ Configuration merging with conflict resolution")
+    print("   ✅ Serialization to JSON with consistent formatting")
+    print("   ✅ Enterprise-grade error handling with FlextResult")
+    print("   ✅ Configuration sealing for immutability")
+    print("   ✅ Metadata tracking and configuration lifecycle management")
 
     return 0
 

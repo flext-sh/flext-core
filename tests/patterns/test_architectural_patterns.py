@@ -17,6 +17,7 @@ import pytest
 from flext_core import (
     FlextHandlers,
     FlextModels,
+    FlextProcessing,
     FlextResult,
 )
 from flext_core.typings import FlextTypes
@@ -58,7 +59,7 @@ class TestCleanArchitecturePatterns:
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(FlextModels.Config):
+        class CreateUserCommand(FlextModels.BaseModel):
             """Application command."""
 
             name: str
@@ -268,26 +269,14 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(FlextModels.Config):
+        class UpdateUserCommand(FlextModels.BaseModel):
             """Command to update user information."""
 
             user_id: str
             name: str
 
-        class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
+        class UpdateUserHandler(FlextProcessing.Handler):
             """Handler for user update commands."""
-
-            @property
-            def handler_name(self) -> str:
-                """Get handler name."""
-                return "UpdateUserHandler"
-
-            def can_handle(self, message_type: type) -> bool:
-                """Check if handler can handle the message type."""
-                return message_type == UpdateUserCommand or issubclass(
-                    message_type,
-                    UpdateUserCommand,
-                )
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user update command."""
@@ -303,25 +292,13 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(FlextModels.Config):
+        class GetUserQuery(FlextModels.BaseModel):
             """Query to get user information."""
 
             user_id: str
 
-        class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
+        class GetUserHandler(FlextProcessing.Handler):
             """Handler for user queries."""
-
-            @property
-            def handler_name(self) -> str:
-                """Get handler name."""
-                return "GetUserHandler"
-
-            def can_handle(self, message_type: type) -> bool:
-                """Check if handler can handle the message type."""
-                return message_type == GetUserQuery or issubclass(
-                    message_type,
-                    GetUserQuery,
-                )
 
             def handle(self, request: object) -> FlextResult[object]:
                 """Handle user query."""
@@ -528,14 +505,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(FlextModels.Config):
+        class UserCreatedEvent(FlextModels.BaseModel):
             """Domain event for user creation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(FlextModels.Config):
+        class UserUpdatedEvent(FlextModels.BaseModel):
             """Domain event for user updates."""
 
             user_id: str
@@ -549,7 +526,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
-                self.processed_events: list[FlextModels.Config] = []
+                self.processed_events: list[FlextModels.BaseModel] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""

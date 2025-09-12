@@ -51,7 +51,7 @@ class TestFlextCoreIntegration:
         # Use the UserEntity class defined at module level
 
         # Create entity with business validation
-        result = core.create_entity(
+        result = core.Models.create_model(
             UserEntity,
             id="user-001",
             name="John Doe",
@@ -129,8 +129,8 @@ class TestFlextCoreIntegration:
         assert payload.retry_count == 0
 
         # Test message expiration
-        assert not payload.is_expired()
-        assert payload.age_seconds() >= 0
+        assert not payload.is_expired
+        assert float(payload.age_seconds) >= 0
 
     def test_service_container_integration(self) -> None:
         """Test dependency injection container functionality."""
@@ -306,7 +306,7 @@ class TestBusinessRuleValidation:
                 return FlextResult[None].ok(None)
 
         # Test valid order
-        valid_result = core.create_entity(
+        valid_result = core.Models.create_model(
             OrderEntity,
             id="order-001",
             customer_id="cust-123",
@@ -316,14 +316,19 @@ class TestBusinessRuleValidation:
         assert valid_result.success
 
         # Test invalid order (negative amount)
-        invalid_result = core.create_entity(
+        invalid_result = core.Models.create_model(
             OrderEntity,
             id="order-002",
             customer_id="cust-123",
             total_amount=-10.0,
         )
+        assert invalid_result.success  # Model creation succeeds
+
         # Business rule validation should fail
-        assert invalid_result.failure or "positive" in str(invalid_result.error)
+        order = invalid_result.unwrap()
+        validation_result = order.validate_business_rules()
+        assert validation_result.failure
+        assert "positive" in str(validation_result.error)
 
     def test_value_object_functionality(self) -> None:
         """Test value object functionality using EmailAddress model."""

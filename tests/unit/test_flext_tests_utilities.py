@@ -268,10 +268,10 @@ class TestFunctionalTestContext:
             test_obj, "existing_attr", "patched_value"
         ) as patched:
             assert patched == "patched_value"
-            assert test_obj.existing_attr == "patched_value"
+            assert getattr(test_obj, "existing_attr") == "patched_value"
 
         # After context, original value should be restored
-        assert test_obj.existing_attr == "original_value"
+        assert getattr(test_obj, "existing_attr") == "original_value"
 
 
 class TestFlextTestMocker:
@@ -310,9 +310,9 @@ class TestFlextTestMocker:
 
         with context as patched:
             assert patched == "patched"
-            assert test_obj.attr == "patched"
+            assert getattr(test_obj, "attr") == "patched"
 
-        assert test_obj.attr == "original"
+        assert getattr(test_obj, "attr") == "original"
 
 
 class TestProtocols:

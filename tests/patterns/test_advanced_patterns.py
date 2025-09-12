@@ -14,27 +14,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import cast
 from unittest.mock import Mock
 
 import pytest
 
-from flext_core import FlextTypes, P
+from flext_core import FlextTypes
 
 # Type alias for test functions
-TestFunction = Callable[..., None]
+TestFunction = Callable[[object], None]
 
 
-def mark_test_pattern(
-    pattern: str,
-) -> Callable[[Callable[P, None]], TestFunction]:
+def mark_test_pattern(pattern: str) -> Callable[[object], object]:
     """Mark test with a specific pattern for demonstration purposes."""
 
-    def decorator(func: Callable[P, None]) -> TestFunction:
+    def decorator(func: object) -> object:
         """Decorator method."""
-        # Cast to TestFunction to add the attribute
-        test_func = func
-        test_func._test_pattern = pattern
-        return test_func
+        # Use setattr to dynamically assign the pattern attribute
+        setattr(func, "_test_pattern", pattern)
+        return func
 
     return decorator
 
@@ -48,11 +46,11 @@ class MockScenario:
     def __init__(self, name: str, data: FlextTypes.Core.Dict) -> None:
         """Initialize mockscenario:."""
         self.name = name
-        self.given = data.get("given", {})
-        self.when = data.get("when", {})
-        self.then = data.get("then", {})
-        self.tags = data.get("tags", [])
-        self.priority = data.get("priority", "normal")
+        self.given = cast("FlextTypes.Core.Dict", data.get("given", {}))
+        self.when = cast("FlextTypes.Core.Dict", data.get("when", {}))
+        self.then = cast("FlextTypes.Core.Dict", data.get("then", {}))
+        self.tags = cast("FlextTypes.Core.StringList", data.get("tags", []))
+        self.priority = str(data.get("priority", "normal"))
 
 
 class GivenWhenThenBuilder:
@@ -228,7 +226,25 @@ class TestAssertionBuilder:
         """assert_contains method."""
 
         def assertion() -> None:
-            assert item in self.data
+            # Check if item is in the data container
+            if isinstance(self.data, (list, tuple, set, str)):
+                # Type-safe check for sequence types
+                if isinstance(self.data, (list, tuple, set)):
+                    assert item in self.data
+                elif isinstance(self.data, str):
+                    # For strings, check if item is also a string
+                    if isinstance(item, str):
+                        assert item in self.data
+                    else:
+                        raise AssertionError(
+                            f"Cannot check if {item!r} is in string {self.data!r}"
+                        )
+            elif isinstance(self.data, dict):
+                # For dict, check if item is a key
+                assert item in self.data
+            else:
+                # For other types, check if the item is equal to the data
+                assert item == self.data
 
         self._assertions.append(assertion)
         return self
@@ -347,7 +363,9 @@ class TestAdvancedPatterns:
             "priority": "medium",
         }
 
-        scenario = MockScenario("api_request", scenario_data)
+        scenario = MockScenario(
+            "api_request", cast("FlextTypes.Core.Dict", scenario_data)
+        )
 
         assert scenario.name == "api_request"
         assert scenario.given["user"] == "authenticated"
@@ -435,4 +453,6 @@ class TestAdvancedPatterns:
         # This test should have the pattern attribute set
         test_func = self.test_mock_scenario_pattern
         assert hasattr(test_func, "_test_pattern")
-        assert test_func._test_pattern == "mock_scenario"
+        # Use getattr to safely access the attribute
+        pattern_value = getattr(test_func, "_test_pattern", None)
+        assert pattern_value == "mock_scenario"

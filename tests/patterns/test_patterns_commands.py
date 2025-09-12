@@ -29,7 +29,7 @@ FlextCommandResults = FlextCommands.Results  # FlextCommands.Results with metada
 # =============================================================================
 
 
-class CreateUserCommand(FlextModels.Config):
+class CreateUserCommand(FlextModels.TimestampedModel):
     """Test command for creating users."""
 
     username: str
@@ -53,7 +53,7 @@ class CreateUserCommand(FlextModels.Config):
         return FlextResult[None].ok(None)
 
 
-class UpdateUserCommand(FlextModels.Config):
+class UpdateUserCommand(FlextModels.TimestampedModel):
     """Test command for updating users."""
 
     target_user_id: str
@@ -75,7 +75,7 @@ class UpdateUserCommand(FlextModels.Config):
         return FlextResult[None].ok(None)
 
 
-class FailingCommand(FlextModels.Config):
+class FailingCommand(FlextModels.TimestampedModel):
     """Test command that always fails validation."""
 
     def get_payload(self) -> FlextTypes.Core.Dict:

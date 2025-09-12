@@ -10,26 +10,30 @@ import time
 from collections.abc import Mapping
 from typing import ClassVar, cast
 
-from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 
 class FlextExceptions:
     """Hierarchical exception system with error codes and metrics tracking."""
 
+    # EXCEPTION HELL: 685 lines of hierarchical exception system!
+    # OVER-ENGINEERED: Metrics tracking in exceptions, correlation IDs, context mapping
+    # ENTERPRISE PARANOIA: Error codes, operation tracking, field validation for exceptions
+    # YAGNI DISASTER: Most projects just need "raise ValueError(message)" - DONE!
+
     def __call__(
         self,
         message: str,
         *,
-        operation: str | None = None,
-        field: str | None = None,
-        config_key: str | None = None,
-        error_code: str | None = None,
+        operation: str | None = None,      # POINTLESS: Operation tracking in exceptions
+        field: str | None = None,          # POINTLESS: Field tracking in exceptions
+        config_key: str | None = None,     # POINTLESS: Config key in exceptions
+        error_code: str | None = None,     # OVER-ENGINEERED: Error codes for exceptions
         **kwargs: object,
     ) -> FlextExceptions.BaseError:
         """Allow FlextExceptions() to be called directly."""
+        # OVER-COMPLEX: Custom __call__ method to make exceptions callable
         return self.create(
             message,
             operation=operation,
@@ -42,26 +46,32 @@ class FlextExceptions:
     # =============================================================================
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
+    # METRICS IN EXCEPTIONS: Exception tracking system - ARCHITECTURAL INSANITY!
+    # Why track exception metrics in the exception system itself? Use proper observability tools!
 
     class Metrics:
         """Thread-safe exception metrics tracking system."""
 
-        _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}
+        # OVER-ENGINEERED: Exception metrics tracking when most projects use external monitoring
+        # Prometheus, DataDog, New Relic exist for this - don't reinvent the wheel!
+
+        _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}  # Global exception counter
 
         @classmethod
         def record_exception(cls, exception_type: str) -> None:
             """Record exception occurrence."""
+            # POINTLESS: Manual exception counting when logging/monitoring tools do this better
             cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
 
         @classmethod
         def get_metrics(cls) -> FlextTypes.Core.CounterDict:
             """Get exception counts."""
-            return dict(cls._metrics)
+            return dict(cls._metrics)  # Return copy of metrics
 
         @classmethod
         def clear_metrics(cls) -> None:
             """Clear all exception metrics."""
-            cls._metrics.clear()
+            cls._metrics.clear()  # Clear all metrics
 
     # =============================================================================
     # BASE EXCEPTION CLASS - Clean hierarchical approach
@@ -622,239 +632,66 @@ class FlextExceptions:
         """Clear exception metrics."""
         cls.Metrics.clear_metrics()
 
-    # =============================================================================
-    # CONFIGURATION MANAGEMENT - FlextTypes.Config Integration
-    # =============================================================================
+    @staticmethod
+    def create_module_exception_classes(
+        module_name: str,
+    ) -> dict[str, type[FlextExceptions.BaseError]]:
+        """Create module-specific exception classes.
 
-    @classmethod
-    def configure_error_handling(
-        cls,
-        config: FlextTypes.Config.ConfigDict,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure error handling system via Settings → BaseSystemConfig bridge.
+        Creates a dictionary of exception classes tailored for a specific module,
+        following the FLEXT ecosystem naming conventions.
 
-        Mantém os defaults e chaves derivadas esperadas pelos testes.
+        Args:
+            module_name: Name of the module (e.g., "flext_grpc")
+
+        Returns:
+            Dictionary mapping exception names to exception classes
+
         """
-        try:
-            # Validação de env/log/validation via BaseSystemConfig
-            settings_res = FlextConfig.create_from_environment(
-                extra_settings=cast("FlextTypes.Core.Dict", config)
-                if isinstance(config, dict)
-                else None,
-            )
-            if settings_res.is_failure:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    settings_res.error or "Failed to create ExceptionsSettings",
-                )
-            # Get FlextConfig instance directly - no to_config() method needed
-            config_instance = settings_res.value
+        # Normalize module name for class naming
+        normalized_name = module_name.upper().replace("-", "_").replace(".", "_")
 
-            # Use the config instance to validate runtime requirements
-            config_validation = config_instance.validate_runtime_requirements()
-            if config_validation.is_failure:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    config_validation.error or "Configuration validation failed"
-                )
+        # Create base exception class for the module
+        class ModuleBaseError(FlextExceptions.BaseError):
+            """Base exception for module-specific errors."""
 
-            # Preserva a forma e defaults anteriores
-            validated_config: FlextTypes.Config.ConfigDict = {}
+        # Create configuration error class
+        class ModuleConfigurationError(ModuleBaseError):
+            """Configuration-related errors for the module."""
 
-            env_value = str(config.get("environment", "development"))
-            validated_config["environment"] = env_value
+        # Create connection error class
+        class ModuleConnectionError(ModuleBaseError):
+            """Connection-related errors for the module."""
 
-            log_level = config.get("log_level")
-            if isinstance(log_level, str):
-                validated_config["log_level"] = log_level
-            else:
-                validated_config["log_level"] = (
-                    "ERROR" if env_value == "production" else "WARNING"
-                )
+        # Create validation error class
+        class ModuleValidationError(ModuleBaseError):
+            """Validation-related errors for the module."""
 
-            val_level = config.get("validation_level")
-            if isinstance(val_level, str):
-                validated_config["validation_level"] = val_level
-            else:
-                validated_config["validation_level"] = (
-                    "strict" if env_value == "production" else "normal"
-                )
+        # Create authentication error class
+        class ModuleAuthenticationError(ModuleBaseError):
+            """Authentication-related errors for the module."""
 
-            # Configurações específicas de exceptions
-            validated_config["enable_metrics"] = bool(
-                config.get("enable_metrics", True)
-            )
-            validated_config["enable_stack_traces"] = bool(
-                config.get(
-                    "enable_stack_traces",
-                    env_value != "production",
-                )
-            )
-            max_error_value = config.get("max_error_details", 1000)
-            validated_config["max_error_details"] = (
-                int(max_error_value)
-                if isinstance(max_error_value, (int, str))
-                else 1000
-            )
-            validated_config["error_correlation_enabled"] = bool(
-                config.get("error_correlation_enabled", True)
-            )
+        # Create processing error class
+        class ModuleProcessingError(ModuleBaseError):
+            """Processing-related errors for the module."""
 
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
+        # Create timeout error class
+        class ModuleTimeoutError(ModuleBaseError):
+            """Timeout-related errors for the module."""
 
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Configuration error: {e}",
-            )
-
-    @classmethod
-    def get_error_handling_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current error handling configuration."""
-        try:
-            # Build current configuration from system state
-            current_config: FlextTypes.Config.ConfigDict = {
-                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                "enable_metrics": True,
-                "enable_stack_traces": True,
-                "max_error_details": 1000,
-                "error_correlation_enabled": True,
-                "total_errors_recorded": len(cls.Metrics._metrics),
-                "error_types_available": list(cls.Metrics._metrics.keys()),
-            }
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get config: {e}",
-            )
-
-    @classmethod
-    def create_environment_specific_config(
-        cls,
-        environment: FlextTypes.Config.Environment,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific error handling configuration."""
-        try:
-            # Validate environment
-            valid_environments = [
-                e.value for e in FlextConstants.Config.ConfigEnvironment
-            ]
-            if environment not in valid_environments:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
-                )
-
-            # Create environment-specific configuration
-            if environment == "production":
-                config: FlextTypes.Config.ConfigDict = {
-                    "environment": environment,
-                    "log_level": FlextConstants.Config.LogLevel.ERROR.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "enable_metrics": True,
-                    "enable_stack_traces": False,  # Hide stack traces in production
-                    "max_error_details": 500,  # Limit error details
-                    "error_correlation_enabled": True,
-                }
-            elif environment == "development":
-                config = {
-                    "environment": environment,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "enable_metrics": True,
-                    "enable_stack_traces": True,  # Full stack traces for debugging
-                    "max_error_details": 2000,  # More error details for debugging
-                    "error_correlation_enabled": True,
-                }
-            elif environment == "test":
-                config = {
-                    "environment": environment,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_metrics": False,  # Disable metrics in tests
-                    "enable_stack_traces": True,
-                    "max_error_details": 1000,
-                    "error_correlation_enabled": False,  # No correlation in tests
-                }
-            else:  # staging, local, etc.
-                config = {
-                    "environment": environment,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "enable_metrics": True,
-                    "enable_stack_traces": True,
-                    "max_error_details": 1000,
-                    "error_correlation_enabled": True,
-                }
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Environment config failed: {e}",
-            )
-
-    # =============================================================================
-
-
-def create_module_exception_classes(module_name: str) -> FlextTypes.Core.Dict:
-    """Create module-specific exception classes.
-
-    Creates a dictionary of exception classes tailored for a specific module,
-    following the FLEXT ecosystem naming conventions.
-
-    Args:
-        module_name: Name of the module (e.g., "flext_grpc")
-
-    Returns:
-        Dictionary mapping exception names to exception classes
-
-    """
-    # Normalize module name for class naming
-    normalized_name = module_name.upper().replace("-", "_").replace(".", "_")
-
-    # Create base exception class for the module
-    class ModuleBaseError(FlextExceptions.BaseError):
-        """Base exception for module-specific errors."""
-
-    # Create configuration error class
-    class ModuleConfigurationError(ModuleBaseError):
-        """Configuration-related errors for the module."""
-
-    # Create connection error class
-    class ModuleConnectionError(ModuleBaseError):
-        """Connection-related errors for the module."""
-
-    # Create validation error class
-    class ModuleValidationError(ModuleBaseError):
-        """Validation-related errors for the module."""
-
-    # Create authentication error class
-    class ModuleAuthenticationError(ModuleBaseError):
-        """Authentication-related errors for the module."""
-
-    # Create processing error class
-    class ModuleProcessingError(ModuleBaseError):
-        """Processing-related errors for the module."""
-
-    # Create timeout error class
-    class ModuleTimeoutError(ModuleBaseError):
-        """Timeout-related errors for the module."""
-
-    # Return dictionary with module-specific naming
-    return {
-        f"{normalized_name}BaseError": ModuleBaseError,
-        f"{normalized_name}Error": ModuleBaseError,  # General error alias
-        f"{normalized_name}ConfigurationError": ModuleConfigurationError,
-        f"{normalized_name}ConnectionError": ModuleConnectionError,
-        f"{normalized_name}ValidationError": ModuleValidationError,
-        f"{normalized_name}AuthenticationError": ModuleAuthenticationError,
-        f"{normalized_name}ProcessingError": ModuleProcessingError,
-        f"{normalized_name}TimeoutError": ModuleTimeoutError,
-    }
+        # Return dictionary with module-specific naming
+        return {
+            f"{normalized_name}BaseError": ModuleBaseError,
+            f"{normalized_name}Error": ModuleBaseError,  # General error alias
+            f"{normalized_name}ConfigurationError": ModuleConfigurationError,
+            f"{normalized_name}ConnectionError": ModuleConnectionError,
+            f"{normalized_name}ValidationError": ModuleValidationError,
+            f"{normalized_name}AuthenticationError": ModuleAuthenticationError,
+            f"{normalized_name}ProcessingError": ModuleProcessingError,
+            f"{normalized_name}TimeoutError": ModuleTimeoutError,
+        }
 
 
 __all__: FlextTypes.Core.StringList = [
     "FlextExceptions",
-    "create_module_exception_classes",
 ]

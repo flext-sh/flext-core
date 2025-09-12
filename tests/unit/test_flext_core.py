@@ -62,29 +62,44 @@ class TestFlextCore:
         """Testa criação de email válido através das classes aninhadas."""
         core = FlextCore.get_instance()
 
-        # Use a classe aninhada Models para criar EmailAddress
+        # EmailAddress was removed - use Value object pattern instead
+        class Email(core.Models.Value):
+            address: str
+
         try:
-            email = core.Models.EmailAddress("test@example.com")
+            email = Email(address="test@example.com")
             result = FlextResult.ok(email)
         except Exception as e:
-            result = FlextResult[core.Models.EmailAddress].fail(str(e))
+            result = FlextResult[Email].fail(str(e))
 
         assert result.success
         email = result.unwrap()
         assert email is not None
-        # Verificar que é uma EmailAddress real
-        assert "test@example.com" in str(email)
+        # Verificar que é uma Email real
+        assert email.address == "test@example.com"
 
     def test_create_email_address_failure(self) -> None:
         """Testa criação de email inválido."""
         core = FlextCore.get_instance()
 
-        # Use a classe aninhada Models para tentar criar EmailAddress inválido
+        # EmailAddress was removed - use Value object pattern instead
+        class Email(core.Models.Value):
+            address: str
+
+            def validate(self) -> FlextResult[None]:
+                if "@" not in self.address:
+                    return FlextResult[None].fail("Invalid email")
+                return FlextResult[None].ok(None)
+
         try:
-            email = core.Models.EmailAddress("invalid_email")
-            result = FlextResult.ok(email)
+            email = Email(address="invalid_email")
+            validation = email.validate()
+            if validation.is_failure:
+                result = FlextResult[Email].fail(validation.error or "Invalid email")
+            else:
+                result = FlextResult.ok(email)
         except Exception as e:
-            result = FlextResult[core.Models.EmailAddress].fail(str(e))
+            result = FlextResult[Email].fail(str(e))
 
         assert result.failure
         assert result.error is not None

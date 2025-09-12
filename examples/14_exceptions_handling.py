@@ -24,10 +24,7 @@ from flext_core import (
     FlextTypes,
 )
 
-try:
-    from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
-except ImportError:
-    from shared_example_strategies import DemoStrategy, ExamplePatternFactory
+from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
 
 # Age validation constants - using FlextConstants pattern
 MIN_USER_AGE: int = 18

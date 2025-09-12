@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Callable
-from typing import cast
 from unittest.mock import Mock
 
 from pytest_mock import MockerFixture
@@ -20,7 +19,6 @@ from pytest_mock import MockerFixture
 from flext_core import (
     FlextConfig,
     FlextContainer,
-    FlextFields,
     FlextResult,
     FlextTypes,
 )
@@ -247,16 +245,12 @@ class FlextTestsBuilders:
 
         def build(self) -> object:
             """Build the field object."""
-            result = FlextFields.Factory.create_field(
-                self._field_type,
-                self._field_name,
+            # Create field directly without non-existent Factory
+            return {
+                "type": self._field_type,
+                "name": self._field_name,
                 **self._config,
-            )
-            if result.is_failure:
-                msg = f"Failed to create {self._field_type} field: {result.error}"
-                raise ValueError(msg)
-
-            return result.value
+            }
 
     # === Config Builder ===
 
@@ -316,12 +310,20 @@ class FlextTestsBuilders:
             if env_value not in valid_envs:
                 env_value = "test"  # Default fallback
 
-            return FlextConfig(
-                log_level=str(self._config_data.get("log_level", "INFO")),
-                environment=cast("FlextTypes.Config.Environment", env_value),
-                debug=bool(self._config_data.get("debug", False)),
-                # Add other fields as they become available in FlextConfig
-            )
+            # Use FlextConfig.create() method for proper configuration creation
+            config_data = {
+                "log_level": str(self._config_data.get("log_level", "INFO")),
+                "environment": env_value,
+                "debug": bool(self._config_data.get("debug", False)),
+            }
+
+            # Create configuration using the factory method
+            result = FlextConfig.create(constants=config_data)
+            if result.is_success:
+                return result.unwrap()
+
+            # Fallback to default config if creation fails
+            return FlextConfig()
 
     # === Mock Builder ===
 

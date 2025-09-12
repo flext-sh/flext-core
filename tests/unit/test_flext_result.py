@@ -10,8 +10,8 @@ import json
 import tempfile
 from pathlib import Path
 from typing import TypeVar, cast
-from unittest.mock import Mock
 
+# Mock imports removed - using real objects only
 import pytest
 
 from flext_core import FlextResult, FlextTypes
@@ -71,7 +71,9 @@ class TestFlextResultComprehensive:
         """Test success results with various data types."""
         # String result
         string_result = FlextResult[str].ok("success message")
-        assert FlextTestsMatchers.is_successful_result(string_result)
+        assert FlextTestsMatchers.is_successful_result(
+            cast("FlextResult[object]", string_result)
+        )
         assert string_result.value == "success message"
 
         # Integer result
@@ -173,17 +175,25 @@ class TestFlextResultComprehensive:
 
         assert result.success
         assert len(result.value) == 10000
-        assert FlextTestsMatchers.is_successful_result(result)
+        assert FlextTestsMatchers.is_successful_result(
+            cast("FlextResult[object]", result)
+        )
 
     def test_result_serialization_edge_cases(self) -> None:
         """Test FlextResult with complex serialization scenarios."""
-        # Test with non-serializable object (Mock)
-        mock_object = Mock()
-        mock_object.name = "test_mock"
 
-        result_with_mock = FlextResult[Mock].ok(mock_object)
-        assert result_with_mock.success
-        assert result_with_mock.value.name == "test_mock"
+        # Test with non-serializable object (custom class)
+        class NonSerializableObject:
+            def __init__(self) -> None:
+                self.name = "test_object"
+
+        non_serializable_object = NonSerializableObject()
+
+        result_with_object = FlextResult[NonSerializableObject].ok(
+            non_serializable_object
+        )
+        assert result_with_object.success
+        assert result_with_object.value.name == "test_object"
 
         # Test with nested complex data
         complex_data: FlextTypes.Core.Dict = {
@@ -256,12 +266,16 @@ class TestFlextResultComprehensive:
         failure_result = FlextResult[str].fail("test_error", error_code="ERR_001")
 
         # Success matchers - using correct API
-        FlextTestsMatchers.assert_result_success(success_result, "test_data")
+        FlextTestsMatchers.assert_result_success(
+            cast("FlextResult[object]", success_result), "test_data"
+        )
         assert success_result.is_success
         assert isinstance(success_result.value, str)
 
         # Failure matchers - using correct API
-        FlextTestsMatchers.assert_result_failure(failure_result)
+        FlextTestsMatchers.assert_result_failure(
+            cast("FlextResult[object]", failure_result)
+        )
         assert failure_result.is_failure
         assert failure_result.error_code == "ERR_001"
         assert "test_error" in (failure_result.error or "")

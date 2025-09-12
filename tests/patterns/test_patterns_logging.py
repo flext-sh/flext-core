@@ -290,7 +290,7 @@ class TestFlextLoggerUsage:
     def test_basic_logging(self) -> None:
         """Test basic logging functionality."""
         # Use FlextLogger constructor directly, not FlextLogger()
-        logger = FlextLogger("usage_test", "DEBUG")
+        logger = FlextLogger("usage_test")
 
         # These should not raise errors
         logger.info("Test info message", test=True)
@@ -301,7 +301,7 @@ class TestFlextLoggerUsage:
 
     def test_logging_with_context(self) -> None:
         """Test logging with context data."""
-        logger = FlextLogger("context_test", "DEBUG")
+        logger = FlextLogger("context_test")
 
         # These should not raise errors
         logger.info("User action", user_id="123", action="login")
@@ -318,7 +318,7 @@ class TestFlextLoggerUsage:
 
     def test_context_manager_style(self) -> None:
         """Test context manager style usage."""
-        logger = FlextLogger("context_mgr_test", "DEBUG")
+        logger = FlextLogger("context_mgr_test")
 
         # Bind context for a series of operations
         bound_logger = logger.bind(operation="batch_process", batch_id="batch-123")
@@ -393,7 +393,7 @@ class TestFlextLoggerIntegration:
 
     def test_complex_logging_scenario(self) -> None:
         """Test complex logging scenario with multiple contexts."""
-        logger = FlextLogger("complex_test", "DEBUG")
+        logger = FlextLogger("complex_test")
 
         # Simulate a complex operation with nested contexts
         bound_logger = logger.bind(operation="user_registration", request_id="req-789")
@@ -414,7 +414,7 @@ class TestFlextLoggerIntegration:
 
     def test_error_logging_with_context(self) -> None:
         """Test error logging with rich context."""
-        logger = FlextLogger("error_test", "DEBUG")
+        logger = FlextLogger("error_test")
 
         def _raise_test_error() -> None:
             """Raise test error for exception logging tests."""
@@ -437,7 +437,7 @@ class TestFlextLoggerIntegration:
     @pytest.mark.performance
     def test_performance_logging_integration(self) -> None:
         """Test performance logging integration."""
-        logger = FlextLogger("perf_integration_test", "DEBUG")
+        logger = FlextLogger("perf_integration_test")
 
         start_time = time.time()
 

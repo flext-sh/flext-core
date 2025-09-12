@@ -83,7 +83,7 @@ class TestConstantsLogLevel100PercentCoverage:
             (FlextConstants.Config.LogLevel.WARNING, "WARNING"),
             (FlextConstants.Config.LogLevel.ERROR, "ERROR"),
             (FlextConstants.Config.LogLevel.CRITICAL, "CRITICAL"),
-            (FlextConstants.Config.LogLevel.TRACE, "TRACE"),
+            # TRACE was removed from LogLevel enum
         ]
 
         for log_level, expected_string in test_cases:

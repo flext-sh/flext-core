@@ -19,12 +19,18 @@ from typing import Literal, ParamSpec, TypeVar
 class FlextTypes:
     """Hierarchical type system for FLEXT types."""
 
+    # TYPE COMPLEXITY: Still complex with 10+ specialized TypeVars and hierarchical organization
+    # Most projects need just T, U, V - not 10 specialized domain-specific type variables
+
     # =========================================================================
 
     # =========================================================================
 
     class TypeVars:
         """Generic type variables for ecosystem-wide use."""
+
+        # OVER-ENGINEERED: 10 specialized TypeVars when T, U, V would be enough
+        # TEntity, TValueObject, TAggregate etc. are premature domain abstractions
 
         # Specialized type variables
         TEntity = TypeVar("TEntity")  # Entity types
@@ -81,6 +87,8 @@ class FlextTypes:
         )
 
         # JSON types (used in handlers, commands, result serialization)
+        # OVER-COMPLEX: This JsonValue union is insane - just use dict[str, Any] or object
+        # The nested list[str | int | float | bool | None | list[object] | dict[str, object]] is unreadable
         type JsonValue = (
             str
             | int
@@ -246,20 +254,28 @@ class FlextTypes:
     # =========================================================================
     # LEGACY COMPATIBILITY - Types that modules still reference
     # =========================================================================
+    # LEGACY HELL: Multiple compatibility classes with duplicate ConfigValue definitions
+    # This creates 4 different ConfigDict types that are all the same - architectural mess!
 
     class Aggregates:
         """Aggregate types for core.py compatibility."""
 
+        # DUPLICATE: ConfigValue defined again - same as Core.ConfigValue, Models.ConfigValue, Commands.ConfigValue
+
         type ConfigValue = str | int | float | bool | list[object] | dict[str, object]
         type ConfigDict = dict[str, ConfigValue]
-        type AggregatesConfigDict = dict[str, ConfigValue]
-        type AggregatesConfig = dict[str, ConfigValue]
-        type SystemConfig = dict[str, ConfigValue]
-        type PerformanceConfig = dict[str, ConfigValue]
+        type AggregatesConfigDict = dict[
+            str, ConfigValue
+        ]  # DUPLICATE: Same as ConfigDict
+        type AggregatesConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
+        type SystemConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
+        type PerformanceConfig = dict[str, ConfigValue]  # DUPLICATE: Same as ConfigDict
         type PerformanceLevel = Literal["low", "balanced", "high", "extreme"]
 
     class Commands:
         """Command types for core.py compatibility."""
+
+        # DUPLICATE: Same ConfigValue definition as Aggregates, Core, Models - consolidate this!
 
         type CommandsConfigDict = dict[
             str, str | int | float | bool | list[object] | dict[str, object]
@@ -308,11 +324,7 @@ K = TypeVar("K")  # Generic key type
 P = ParamSpec("P")  # Parameter specification
 
 
-# Convenience top-level aliases for common types used in tests/examples
-type ConfigDict = FlextTypes.Config.ConfigDict
-
 __all__: list[str] = [
-    "ConfigDict",
     "E",
     "F",
     "FlextTypes",

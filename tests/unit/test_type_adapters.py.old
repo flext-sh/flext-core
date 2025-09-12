@@ -13,8 +13,7 @@ from typing import cast
 import pytest
 from pydantic import TypeAdapter
 
-from flext_core import FlextModels, FlextTypeAdapters
-from flext_core.typings import FlextTypes
+from flext_core import FlextModels, FlextTypeAdapters, FlextTypes
 
 
 class TestBasicAdapters:
@@ -196,7 +195,7 @@ class TestSerializers:
     def test_serialize_to_dict(self) -> None:
         """Test dict serialization."""
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             value: int
 
@@ -215,7 +214,7 @@ class TestSerializers:
         """Test JSON deserialization."""
         json_str = '{"name": "FromJSON", "value": 200}'
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             value: int
 
@@ -237,7 +236,7 @@ class TestSerializers:
         """Test dict deserialization."""
         data_dict = {"name": "FromDict", "value": 300}
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             value: int
 
@@ -273,7 +272,7 @@ class TestSchemaGenerators:
     def test_generate_schema(self) -> None:
         """Test schema generation."""
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             age: int
             email: str | None = None
@@ -295,10 +294,10 @@ class TestSchemaGenerators:
     def test_generate_multiple_schemas(self) -> None:
         """Test generating multiple schemas."""
 
-        class Model1(FlextModels.Config):
+        class Model1(FlextModels.BaseModel):
             field1: str
 
-        class Model2(FlextModels.Config):
+        class Model2(FlextModels.BaseModel):
             field2: int
 
         types = [Model1, Model2]
@@ -319,7 +318,7 @@ class TestBatchOperations:
     def test_validate_batch(self) -> None:
         """Test batch validation."""
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             value: int
 
@@ -346,7 +345,7 @@ class TestBatchOperations:
     def test_validate_batch_with_errors(self) -> None:
         """Test batch validation with some invalid items."""
 
-        class TestModel(FlextModels.Config):
+        class TestModel(FlextModels.BaseModel):
             name: str
             value: int
 
@@ -411,7 +410,7 @@ class TestAdapterRegistry:
     def test_create_adapter_for_type(self) -> None:
         """Test creating adapter for specific type."""
 
-        class CustomModel(FlextModels.Config):
+        class CustomModel(FlextModels.BaseModel):
             field: str
 
         adapter_result = FlextTypeAdapters.AdvancedAdapters.create_adapter_for_type(

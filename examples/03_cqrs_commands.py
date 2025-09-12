@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from typing import cast, override
 
+from pydantic import BaseModel
+
 from flext_core import (
     FlextCommands,
     FlextContainer,
     FlextDecorators,
     FlextLogger,
-    FlextModels,
     FlextResult,
     FlextTypes,
     FlextUtilities,
@@ -25,7 +26,7 @@ logger = FlextLogger(__name__)  # FlextLogger structured output
 container = FlextContainer.get_global()  # FlextContainer dependency injection
 
 
-class Email(FlextModels.Config):
+class Email(BaseModel):
     """Email with FlextResult validation."""
 
     address: str
@@ -40,7 +41,7 @@ class Email(FlextModels.Config):
         return cls(address=address)
 
 
-class User(FlextModels.Config):
+class User(BaseModel):
     """User entity with FlextUtilities integration."""
 
     id: str | None = None
@@ -80,18 +81,18 @@ class UserCommandHandler(
     @override
     def handle(self, command: CreateUserCommand) -> FlextResult[User]:
         """🚀 5 FlextCore features in 6 lines of code!."""
-        return (
-            Email.create(command.email)  # FlextResult + safe_result
-            .map(
-                lambda e: User(
-                    id=FlextUtilities.Generators.generate_uuid(),  # FlextUtilities UUID
-                    name=command.name,
-                    email=e,
-                    age=command.age,
-                ),
+        try:
+            email = Email.create(command.email)
+            user = User(
+                id=FlextUtilities.Generators.generate_uuid(),
+                name=command.name,
+                email=email,
+                age=command.age,
             )
-            .tap(self._save_user)  # FlextResult tap
-        )
+            self._save_user(user)
+            return FlextResult[User].ok(user)
+        except ValueError:
+            return FlextResult[User].fail("Invalid email")
 
     def _save_user(self, user: User) -> None:
         """FlextContainer + FlextLogger integration."""

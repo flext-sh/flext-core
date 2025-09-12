@@ -84,8 +84,8 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_result_success(
-            result: FlextResult[object],
-            expected_data: object = None,
+            result: FlextResult[T],
+            expected_data: T | None = None,
         ) -> None:
             """Assert FlextResult is successful using FlextResult validation."""
             if not result.success:
@@ -500,8 +500,8 @@ class FlextTestsMatchers:
     @classmethod
     def assert_result_success(
         cls,
-        result: FlextResult[object],
-        expected_data: object = None,
+        result: FlextResult[T],
+        expected_data: T | None = None,
     ) -> None:
         """Assert FlextResult is successful quickly."""
         cls.CoreMatchers.assert_result_success(result, expected_data)

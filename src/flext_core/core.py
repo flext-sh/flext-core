@@ -15,28 +15,30 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
-from flext_core.decorators import FlextDecorators
-from flext_core.delegation import FlextDelegationSystem
 from flext_core.exceptions import FlextExceptions
-from flext_core.fields import FlextFields
-from flext_core.guards import FlextGuards
-from flext_core.handlers import FlextHandlers
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
 from flext_core.models import FlextModels
-from flext_core.processors import FlextProcessors
+from flext_core.processing import FlextProcessing
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
-from flext_core.services import FlextServices
 from flext_core.utilities import FlextUtilities
 from flext_core.validations import FlextValidations
 
 
 class FlextCore:
-    """Minimal orchestration facade for FLEXT ecosystem - DIRECT ACCESS ONLY.
+    """GOD OBJECT ALERT: Massive facade importing 21+ modules - ARCHITECTURAL SIN.
 
-    Pure facade pattern - NO duplicated methods, just direct access to real classes.
-    Use: core.Utilities.method(), core.Validations.method(), etc.
+    # OVER-ENGINEERED AS FUCK: This is the definition of a god object:
+    # - Imports 21 different modules
+    # - Exposes EVERYTHING through one massive interface
+    # - Has 4 overlapping request processors: Commands, Handlers, Services, Processors
+    # - Utilities module is MASSIVE and should be multiple modules
+    # - Delegation system is completely over-engineered
+    # - Users could just import FlextResult, FlextValidations etc directly
+
+    # ARCHITECTURAL VIOLATION: Single Responsibility Principle completely violated
+    # This class knows about EVERYTHING in the entire system
     """
 
     _instance: FlextCore | None = None
@@ -47,26 +49,33 @@ class FlextCore:
         self._container = FlextContainer.get_global()
         self._session_id = self._generate_session_id()
 
+        # Get global configuration singleton
+        self._config = FlextConfig.get_global_instance()
+
         # For test compatibility only
         self._specialized_configs: dict[str, object] = {}
 
-        # DIRECT ACCESS ONLY - use these directly, no wrapper methods
+        # GOD OBJECT VIOLATION: Exposing 21+ modules through single interface!
+        # DUPLICATE FUNCTIONALITY: 4 modules do the SAME SHIT - request processing:
+
         self.Config = FlextConfig
         self.Models = FlextModels
-        self.Commands = FlextCommands
-        self.Handlers = FlextHandlers
+
+        # REQUEST PROCESSING HELL - CHOOSE ONE, NOT FOUR:
+        self.Commands = FlextCommands      # ← CQRS patterns
+        self.Processors = FlextProcessing   # ← Processing patterns
+        # ALL FOUR DO THE SAME REQUEST→RESPONSE PROCESSING!
+
         self.Validations = FlextValidations
-        self.Utilities = FlextUtilities
-        self.Adapters = FlextTypeAdapters
-        self.Services = FlextServices
-        self.Decorators = FlextDecorators
-        self.Processors = FlextProcessors
-        self.Guards = FlextGuards
-        self.Fields = FlextFields
-        self.Mixins = FlextMixins
+        self.Utilities = FlextUtilities    # MASSIVE 1000+ line monster - should be 5+ modules
+        self.Adapters = FlextTypeAdapters  # Over-abstracted wrapper hell
+        # self.Decorators = FlextDecorators  # Temporarily disabled
+        self.Guards = FlextValidations.Guards  # At least consolidated now
+        self.Fields = FlextValidations.FieldValidators  # At least consolidated now
+        self.Mixins = FlextMixins          # Responsibility violations everywhere
         self.Protocols = FlextProtocols
         self.Exceptions = FlextExceptions
-        self.Delegation = FlextDelegationSystem
+        # self.Delegation = FlextDelegationSystem  # Module doesn't exist
         self.Result = FlextResult
         self.Container = FlextContainer
         self.Context = FlextContext
@@ -83,6 +92,10 @@ class FlextCore:
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+    def get_config(self) -> FlextConfig:
+        """Get the global configuration singleton."""
+        return self._config
 
     @classmethod
     def reset_instance(cls) -> None:

@@ -140,7 +140,7 @@ class UserEntity(FlextModels.Entity):
         return FlextResult[None].ok(None)
 
 
-class ConfigurationModel(FlextModels.Config):
+class ConfigurationModel(FlextModels.TimestampedModel):
     """Real configuration model for testing FlextModels."""
 
     database_url: str = Field(..., description="Database connection URL")
