@@ -24,6 +24,7 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.typings import FlextTypes
+from flext_core.utilities import FlextUtilities
 
 
 class FlextLogger:
@@ -41,13 +42,19 @@ class FlextLogger:
     _global_correlation_id: ClassVar[str | None] = None  # Global correlation ID - WHY?
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
-    _performance_tracking: ClassVar[dict[str, float]] = {}  # Performance tracking in LOGGING!
+    _performance_tracking: ClassVar[
+        dict[str, float]
+    ] = {}  # Performance tracking in LOGGING!
 
     # Logger instance cache for singleton pattern
-    _instances: ClassVar[dict[str, FlextLogger]] = {}  # Instance caching - over-engineering
+    _instances: ClassVar[
+        dict[str, FlextLogger]
+    ] = {}  # Instance caching - over-engineering
 
     # Thread-local storage for per-request context
-    _local = internal.invalid()  # Thread-local for logging - most apps are single-threaded!
+    _local = (
+        internal.invalid()
+    )  # Thread-local for logging - most apps are single-threaded!
 
     # Instance attributes type declarations
     _name: str
@@ -74,7 +81,6 @@ class FlextLogger:
         service_name: str | None = None,
         service_version: str | None = None,
         correlation_id: str | None = None,
-        environment: str | None = None,  # Deprecated - will be taken from singleton  # noqa: ARG002
         *,
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
@@ -195,7 +201,7 @@ class FlextLogger:
 
     def _generate_correlation_id(self) -> str:
         """Generate unique correlation ID."""
-        return f"corr_{uuid.uuid4().hex[:16]}"
+        return FlextUtilities.Generators.generate_correlation_id()
 
     def _get_current_timestamp(self) -> str:
         """Get current ISO timestamp."""
@@ -348,7 +354,6 @@ class FlextLogger:
             service_name=getattr(self, "_service_name", None),
             service_version=getattr(self, "_service_version", None),
             correlation_id=getattr(self, "_correlation_id", None),
-            environment=None,  # Will use singleton config
             _force_new=True,
         )
 

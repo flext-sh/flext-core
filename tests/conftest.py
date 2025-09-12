@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+import os
 import shutil
 import tempfile
 from collections.abc import Generator
@@ -18,8 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextContainer, FlextCore
-from flext_core.typings import FlextTypes
+from flext_core import FlextConfig, FlextContainer, FlextCore, FlextLogger, FlextTypes
 from flext_tests import FlextTestsAsyncs
 
 
@@ -250,10 +250,42 @@ def _isolate_flext_core_state() -> None:
     Prevents cross-test leakage of database/security/logging configs that could
     make property-default tests flaky or order-dependent.
     """
-    core = FlextCore.get_instance()
-    core._specialized_configs.pop("database_config", None)
-    core._specialized_configs.pop("security_config", None)
-    core._specialized_configs.pop("logging_config", None)
+    # FlextCore was simplified - no longer has _specialized_configs
+    # Just reset the singleton instance
+    FlextCore.reset_instance()
+
+
+@pytest.fixture
+def logging_test_env() -> Generator[None]:
+    """Set up test environment for logging tests.
+
+    Ensures logging tests get consistent log level by temporarily overriding
+    the FLEXT_LOG_LEVEL environment variable to WARNING as expected by tests.
+    """
+    # Save original value
+    original_log_level = os.environ.get("FLEXT_LOG_LEVEL")
+
+    try:
+        # Clear both config and logger singleton states
+        FlextConfig.clear_global_instance()
+
+        # Reset logger singleton state
+        FlextLogger._configured = False
+        FlextLogger._instances.clear()
+
+        # Set the expected log level for logging tests
+        os.environ["FLEXT_LOG_LEVEL"] = "WARNING"
+        yield
+    finally:
+        # Clear both singleton states again and restore original value
+        FlextConfig.clear_global_instance()
+        FlextLogger._configured = False
+        FlextLogger._instances.clear()
+
+        if original_log_level is not None:
+            os.environ["FLEXT_LOG_LEVEL"] = original_log_level
+        elif "FLEXT_LOG_LEVEL" in os.environ:
+            del os.environ["FLEXT_LOG_LEVEL"]
 
 
 # Performance Testing Fixtures

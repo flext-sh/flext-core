@@ -50,7 +50,7 @@ class FlextProcessing:
 
             handler = handler_result.unwrap()
             if hasattr(handler, "handle") and callable(getattr(handler, "handle")):
-                result = handler.handle(request)
+                result = getattr(handler, "handle")(request)
                 return (
                     FlextResult[object].ok(result)
                     if not isinstance(result, FlextResult)
@@ -147,6 +147,26 @@ class FlextProcessing:
             def add_handler(self, handler: object) -> None:
                 """Add handler to chain."""
                 self._handlers.append(handler)
+
+            def handle(self, request: object) -> FlextResult[object]:
+                """Handle request by executing all handlers in chain."""
+                result = request
+                for handler in self._handlers:
+                    if hasattr(handler, "handle"):
+                        handler_result = getattr(handler, "handle")(result)
+                        if (
+                            hasattr(handler_result, "success")
+                            and not handler_result.success
+                        ):
+                            return FlextResult[object].fail(
+                                f"Handler failed: {handler_result.error}"
+                            )
+                        result = (
+                            handler_result.data
+                            if hasattr(handler_result, "data")
+                            else handler_result
+                        )
+                return FlextResult[object].ok(result)
 
     class Protocols:
         """Handler protocols for examples."""

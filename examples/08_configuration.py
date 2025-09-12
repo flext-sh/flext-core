@@ -74,7 +74,13 @@ def create_enterprise_config(
 
 def get_connection_string_example(config: FlextConfig) -> FlextResult[str]:
     """Get connection string using FlextConfig's built-in methods."""
-    return config.get_connection_string("database")
+    # Simplified example - in real usage you'd construct connection string from config
+    db_config = getattr(config, "database", {})
+    if isinstance(db_config, dict):
+        host = db_config.get("host", "localhost")
+        port = db_config.get("port", 5432)
+        return FlextResult[str].ok(f"postgresql://{host}:{port}/mydb")
+    return FlextResult[str].ok("postgresql://localhost:5432/mydb")
 
 
 def demonstrate_config_validation(config: FlextConfig) -> FlextResult[None]:
@@ -124,9 +130,12 @@ def demonstrate_basic_configuration() -> FlextResult[None]:
         else:
             print("Database connection not configured")
 
-        # Demonstrate feature flags
-        feature_flags = config.get_feature_flags()
-        print(f"Feature flags: {len(feature_flags)} available")
+        # Demonstrate feature flags (simplified)
+        feature_flags = getattr(config, "feature_flags", {})
+        if isinstance(feature_flags, dict):
+            print(f"Feature flags: {len(feature_flags)} available")
+        else:
+            print("Feature flags: 0 available")
 
         # Validate configuration using unified validation system
         validation = demonstrate_config_validation(config)
@@ -184,11 +193,11 @@ def demonstrate_environment_configuration() -> FlextResult[None]:
         print(f"Metrics enabled: {config.enable_metrics}")
 
         # Demonstrate production readiness check
-        production_check = config.is_production_ready()
-        if production_check.is_success and production_check.value:
+        is_production = getattr(config, "environment", "development") == "production"
+        if is_production:
             print("✅ Configuration is production-ready")
         else:
-            print(f"⚠️  Production readiness check: {production_check.error}")
+            print("⚠️  Configuration is for development/testing")
 
         # Validate configuration using unified validation
         validation = demonstrate_config_validation(config)
@@ -269,7 +278,9 @@ def demonstrate_file_configuration() -> FlextResult[None]:
 
             config = config_result.value
             print(f"✅ Configuration loaded from: {config_file}")
-            print(f"Configuration profile: {config.get_profile()}")
+            print(
+                f"Configuration profile: {getattr(config, 'environment', 'development')}"
+            )
             print(
                 f"Created from file: {config.get_metadata().get('loaded_from_file', 'unknown')}"
             )
@@ -389,7 +400,9 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
                 print(f"⚠️  Serialization failed: {serial_result.error}")
 
             # Show configuration profile
-            print(f"📋 Configuration profile: {config.get_profile()}")
+            print(
+                f"📋 Configuration profile: {getattr(config, 'environment', 'development')}"
+            )
         else:
             print(f"❌ Merged configuration invalid: {validation.error}")
             return FlextResult[None].fail(

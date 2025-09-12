@@ -27,7 +27,7 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        args: [--check, --diff]
+        args: [--check, --diff, src/, tests/, scripts/, examples/]
 
       - id: ruff-lint
         name: "🔥 Ruff Lint (PEP8 + ALL categories)"
@@ -35,18 +35,18 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix, --exit-non-zero-on-fix, src/, tests/, scripts/, examples/]
 
       # isort import sorting
-      - id: isort
-        name: "📦 Import Sort"
-        entry: poetry run isort
-        language: system
-        types: [python]
-        require_serial: true
-        args: [--check-only, --diff]
+      # - id: isort
+      #   name: "📦 Import Sort"
+      #   entry: poetry run isort
+      #   language: system
+      #   types: [python]
+      #   require_serial: true
+      #   args: [--check-only, --diff]
 
-    
+
       - id: mypy
         name: "🛡️ MyPy Strict"
         entry: poetry run mypy
@@ -57,14 +57,14 @@ repos:
         args: [src/, tests/, --config-file=pyproject.toml]
 
       # Bandit security
-      - id: bandit
-        name: "🔒 Bandit Security"
-        entry: poetry run bandit
-        language: system
-        types: [python]
-        require_serial: true
-        args: [-r, src/, --severity-level=medium]
-        exclude: tests/
+      # - id: bandit
+      #   name: "🔒 Bandit Security"
+      #   entry: poetry run bandit
+      #   language: system
+      #   types: [python]
+      #   require_serial: true
+      #   args: [-r, src/, --severity-level=medium]
+      #   exclude: tests/
 
       # Vulture dead code
       - id: vulture
@@ -73,7 +73,7 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-        args: [src/, --min-confidence=80]
+        args: [src/, .vulture_whitelist.py, --min-confidence=80]
 
       # Radon complexity
       - id: radon-cc

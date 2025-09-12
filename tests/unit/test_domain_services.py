@@ -356,8 +356,9 @@ class TestDomainServicesFixed:
         service = TestUserService(user_id="123", email="test@example.com")
 
         # Test serialization methods from mixins
-        assert hasattr(service, "to_dict")
-        serialized = service.to_dict()
+        # to_dict was removed - use model_dump instead
+        assert hasattr(service, "model_dump")
+        serialized = service.model_dump()
         assert isinstance(serialized, dict)
         assert "user_id" in serialized
         assert serialized["user_id"] == "123"
@@ -466,6 +467,7 @@ class TestDomainServiceStaticMethods:
 
     def test_configure_domain_services_system(self) -> None:
         """Test domain service configuration through inheritance."""
+
         class TestDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Executed successfully")
@@ -480,6 +482,7 @@ class TestDomainServiceStaticMethods:
 
     def test_configure_domain_services_system_invalid_config(self) -> None:
         """Test domain service with invalid configuration."""
+
         class InvalidDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].fail("Invalid operation")
@@ -492,6 +495,7 @@ class TestDomainServiceStaticMethods:
 
     def test_get_domain_services_system_config(self) -> None:
         """Test domain service configuration access."""
+
         class ConfigDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Configured service")
@@ -504,6 +508,7 @@ class TestDomainServiceStaticMethods:
 
     def test_create_environment_domain_services_config(self) -> None:
         """Test domain service environment configuration."""
+
         class DevDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 return FlextResult[str].ok("Dev: test")
@@ -526,6 +531,7 @@ class TestDomainServiceStaticMethods:
 
     def test_optimize_domain_services_performance(self) -> None:
         """Test domain service performance optimization."""
+
         class OptimizedDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 # Simulate optimized execution
@@ -538,6 +544,7 @@ class TestDomainServiceStaticMethods:
 
     def test_optimize_domain_services_performance_invalid_config(self) -> None:
         """Test domain service with invalid operation."""
+
         class ErrorDomainService(FlextDomainService[str]):
             def execute(self) -> FlextResult[str]:
                 # Simulate invalid operation for testing

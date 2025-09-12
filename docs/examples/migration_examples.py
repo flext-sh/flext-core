@@ -70,7 +70,7 @@ def configure_logging_old(
 
 
 # ✅ AFTER: Pydantic model with automatic validation
-class LoggingConfig(FlextModels.SystemConfigs.BaseSystemConfig):
+class LoggingConfig(FlextModels.SystemConfigs.LoggingConfig):
     """New approach with Pydantic validation."""
 
     log_format: str = Field(default="json", pattern="^(json|text|structured)$")
@@ -211,9 +211,10 @@ class DatabaseConfig(BaseModel):
     pool: DatabasePoolConfig = Field(default_factory=DatabasePoolConfig)
 
 
-class SystemConfigWithDatabase(FlextModels.SystemConfigs.BaseSystemConfig):
+class SystemConfigWithDatabase(FlextModels.SystemConfigs.DatabaseConfig):
     """System configuration with database."""
 
+    environment: str = Field(default="development")
     database: DatabaseConfig
 
     @model_validator(mode="after")
@@ -292,7 +293,7 @@ def configure_commands_old(
 
 
 # ✅ AFTER: Pydantic with dynamic fields support
-class CommandsConfig(FlextModels.SystemConfigs.BaseSystemConfig):
+class CommandsConfig(FlextModels.SystemConfigs.MiddlewareConfig):
     """Commands configuration with dynamic fields."""
 
     # Static fields with validation
@@ -370,7 +371,9 @@ def configure_mixins_with_compatibility(
                 config["log_level"] = "INFO"
 
         # Validate using Pydantic model
-        mixins_config = FlextModels.SystemConfigs.MixinsConfig.model_validate(config)
+        mixins_config = FlextModels.SystemConfigs.MiddlewareConfig.model_validate(
+            config
+        )
 
         # Convert to dict for backward compatibility
         result = mixins_config.model_dump()
@@ -432,7 +435,7 @@ def migration_step_by_step() -> None:
     # Step 3: Create Pydantic model
     print("\n3. CREATE PYDANTIC MODEL")
 
-    class ExampleConfig(FlextModels.SystemConfigs.BaseSystemConfig):
+    class ExampleConfig(FlextModels.SystemConfigs.SecurityConfig):
         """Example configuration model."""
 
         # Replace manual checks with Field constraints

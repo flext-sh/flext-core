@@ -1,7 +1,7 @@
 # FlextObservability Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.observability`  
+**Version**: 0.9.0
+**Module**: `flext_core.observability`
 **Target Audience**: Senior Developers, Platform Engineers, DevOps Engineers
 
 ## Quick Start
@@ -500,7 +500,7 @@ if __name__ == "__main__":
 
 ```python
 from functools import wraps
-from typing import TypeVar, Callable, object
+from typing import TypeVar, Callable
 
 F = TypeVar('F', bound=Callable[..., object])
 
@@ -841,7 +841,7 @@ except ValueError:
 
 ```python
 import os
-from typing import Dict, object
+from typing import Dict
 
 def get_observability_config(service_name: str) -> Dict[str, object]:
     """Get environment-specific observability configuration."""

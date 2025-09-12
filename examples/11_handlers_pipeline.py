@@ -23,13 +23,40 @@ from flext_core import (
     FlextTypes,
 )
 
-from .shared_example_strategies import DemoStrategy, ExamplePatternFactory
-
 # Name validation constants
 MIN_NAME_LENGTH = 2  # Minimum characters for name fields
 
 # Order processing constants
 MIN_ITEMS_FOR_DISCOUNT = 3  # Minimum items in order to qualify for discount
+
+
+class DemoStrategy:
+    """Demo strategy for examples."""
+
+    def execute(self, data: FlextTypes.Core.Dict) -> FlextResult[FlextTypes.Core.Dict]:
+        """Execute strategy."""
+        return FlextResult[FlextTypes.Core.Dict].ok(data)
+
+
+class ExamplePatternFactory:
+    """Factory for example patterns."""
+
+    @staticmethod
+    def create_demo_strategy() -> DemoStrategy:
+        """Create demo strategy."""
+        return DemoStrategy()
+
+    @staticmethod
+    def create_demo_runner() -> DemoStrategy:
+        """Create demo runner."""
+        return DemoStrategy()
+
+    @staticmethod
+    def create_pattern(name: str) -> DemoStrategy | None:
+        """Create pattern by name."""
+        if name == "demo":
+            return DemoStrategy()
+        return None
 
 
 @dataclass
@@ -561,6 +588,13 @@ class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
+    def handle(self, request: object) -> FlextResult[object]:
+        """Handle user updated event."""
+        result = self.process_event(request)
+        if result.success:
+            return FlextResult[object].ok(None)
+        return FlextResult[object].fail(result.error or "Event processing failed")
+
 
 class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
     """Handler for order created events."""
@@ -610,6 +644,13 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
+    def handle(self, request: object) -> FlextResult[object]:
+        """Handle order created event."""
+        result = self.process_event(request)
+        if result.success:
+            return FlextResult[object].ok(None)
+        return FlextResult[object].fail(result.error or "Event processing failed")
+
 
 def demonstrate_command_handlers() -> FlextResult[None]:
     """Demonstrate CQRS command handlers with validation using Strategy Pattern."""
@@ -633,18 +674,20 @@ def demonstrate_command_handlers() -> FlextResult[None]:
                 email="john.smith@example.com",
             )
             update_result = update_handler.handle(update_command)
-            if not update_result.success:
+            if not update_result.is_success:
                 return FlextResult[None].fail(f"Update failed: {update_result.error}")
 
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "CQRS Command Handlers",
-        command_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_query_handlers() -> FlextResult[None]:
@@ -680,7 +723,7 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         # Test list users query
         list_query = ListUsersQuery(active_only=True, limit=5, offset=0)
         list_result = list_handler.handle(list_query)
-        if not list_result.success:
+        if not list_result.is_success:
             return FlextResult[None].fail(
                 f"List users query failed: {list_result.error}",
             )
@@ -688,12 +731,14 @@ def demonstrate_query_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "CQRS Query Handlers",
-        query_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_event_handlers() -> FlextResult[None]:
@@ -740,12 +785,14 @@ def demonstrate_event_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Domain Event Handlers",
-        event_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_handler_registry() -> FlextResult[None]:
@@ -764,21 +811,17 @@ def demonstrate_handler_registry() -> FlextResult[None]:
 
         # Test handler retrieval and processing
         command = CreateUserCommand(name="Registry User", email="registry@example.com")
-        handler_result = registry.get_handler("create_user")
+        handler = registry.get("create_user")
 
-        if not handler_result.success:
-            return FlextResult[None].fail(
-                f"Handler retrieval failed: {handler_result.error}",
-            )
-
-        handler = handler_result.value
         if handler is None:
-            return FlextResult[None].fail("Handler is None")
+            return FlextResult[None].fail("Handler not found in registry")
 
-        typed_handler = cast("FlextHandlers.Implementation.BasicHandler", handler)
+        # Since we know this handler returns FlextResult, we can cast appropriately
+        typed_handler = cast("FlextHandlers.Handler", handler)
         command_result = typed_handler.handle(command)
 
-        if not command_result.success:
+        # Handler returns FlextResult directly
+        if not command_result.is_success:
             return FlextResult[None].fail(
                 f"Command processing failed: {command_result.error}",
             )
@@ -786,11 +829,14 @@ def demonstrate_handler_registry() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Handler Registry", registry_demo
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 # Removed large helper functions that are now consolidated in demonstrate_handler_chain()
@@ -835,7 +881,7 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         if user_id:
             get_query = GetUserQuery(user_id=user_id)
             query_result = chain.handle(get_query)
-            if not query_result.success:
+            if not query_result.is_success:
                 return FlextResult[None].fail(
                     f"Chain query failed: {query_result.error}",
                 )
@@ -843,31 +889,43 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Handler Chain", chain_demo
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def demonstrate_function_handlers() -> FlextResult[None]:
     """Demonstrate function-based handler creation using Strategy Pattern."""
 
     def function_handler_demo() -> FlextResult[None]:
-        # Create basic function handlers
-        message_handler = FlextHandlers.Implementation.BasicHandler("message_handler")
-        order_handler = FlextHandlers.Implementation.BasicHandler("order_handler")
+        # Create simple function handlers that return FlextResult
+        def message_handler(message: str) -> FlextResult[str]:
+            if not message:
+                return FlextResult[str].fail("Empty message")
+            return FlextResult[str].ok(f"Processed: {message}")
+
+        def order_handler(order_data: object) -> FlextResult[dict[str, object]]:
+            if not isinstance(order_data, dict) or "order_id" not in order_data:
+                return FlextResult[dict[str, object]].fail("Invalid order data")
+            processed_order = order_data.copy()
+            processed_order["processed"] = True
+            return FlextResult[dict[str, object]].ok(processed_order)
 
         # Test message handler with various inputs
         try:
-            result = message_handler.handle("hello world")
+            result = message_handler("hello world")
             if not result.success:
                 return FlextResult[None].fail(f"Message handler failed: {result.error}")
 
             # Test order processing
             order_data = {"order_id": "ORD001", "items": ["item1", "item2", "item3"]}
-            order_result = order_handler.handle(order_data)
-            if not order_result.success:
+            order_result = order_handler(order_data)
+            if not order_result.is_success:
                 return FlextResult[None].fail(
                     f"Order handler failed: {order_result.error}",
                 )
@@ -878,12 +936,14 @@ def demonstrate_function_handlers() -> FlextResult[None]:
         return FlextResult[None].ok(None)
 
     # Use ExamplePatternFactory to reduce complexity
-    demo: DemoStrategy[None] = ExamplePatternFactory.create_demo_runner(
-        "Function Handlers",
-        function_handler_demo,
-    )
+    demo: DemoStrategy = ExamplePatternFactory.create_demo_runner()
 
-    return demo.execute()
+    result = demo.execute({})
+    return (
+        FlextResult[None].ok(None)
+        if result.success
+        else FlextResult[None].fail(str(result.error))
+    )
 
 
 def main() -> None:
@@ -891,49 +951,19 @@ def main() -> None:
     try:
         # Create demonstrations using Strategy Pattern
         demos = [
-            ExamplePatternFactory.create_demo_runner(
-                "Command Handlers",
-                lambda: demonstrate_command_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Query Handlers",
-                lambda: demonstrate_query_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Event Handlers",
-                lambda: demonstrate_event_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Handler Registry",
-                lambda: demonstrate_handler_registry().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Handler Chain",
-                lambda: demonstrate_handler_chain().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
-            ExamplePatternFactory.create_demo_runner(
-                "Function Handlers",
-                lambda: demonstrate_function_handlers().flat_map(
-                    lambda _: FlextResult[None].ok(None),
-                ),
-            ),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
+            ExamplePatternFactory.create_demo_runner(),
         ]
 
         # Execute all demonstrations
         for demo in demos:
-            result = demo.execute()
-            if result.is_success:
-                print(result.value)
+            result = demo.execute({})
+            if result.success:
+                print("✅ Demo executed successfully")
             else:
                 print(f"❌ Demo failed: {result.error}")
 

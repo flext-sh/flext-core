@@ -15,6 +15,8 @@ from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
+from flext_core.decorators import FlextDecorators
+from flext_core.domain_services import FlextDomainService
 from flext_core.exceptions import FlextExceptions
 from flext_core.loggings import FlextLogger
 from flext_core.mixins import FlextMixins
@@ -27,19 +29,7 @@ from flext_core.validations import FlextValidations
 
 
 class FlextCore:
-    """GOD OBJECT ALERT: Massive facade importing 21+ modules - ARCHITECTURAL SIN.
-
-    # OVER-ENGINEERED AS FUCK: This is the definition of a god object:
-    # - Imports 21 different modules
-    # - Exposes EVERYTHING through one massive interface
-    # - Has 4 overlapping request processors: Commands, Handlers, Services, Processors
-    # - Utilities module is MASSIVE and should be multiple modules
-    # - Delegation system is completely over-engineered
-    # - Users could just import FlextResult, FlextValidations etc directly
-
-    # ARCHITECTURAL VIOLATION: Single Responsibility Principle completely violated
-    # This class knows about EVERYTHING in the entire system
-    """
+    """Core session and configuration management for FLEXT ecosystem."""
 
     _instance: FlextCore | None = None
 
@@ -55,32 +45,24 @@ class FlextCore:
         # For test compatibility only
         self._specialized_configs: dict[str, object] = {}
 
-        # GOD OBJECT VIOLATION: Exposing 21+ modules through single interface!
-        # DUPLICATE FUNCTIONALITY: 4 modules do the SAME SHIT - request processing:
-
+        self.Adapters = FlextTypeAdapters
+        self.Commandsds = FlextCommands
         self.Config = FlextConfig
-        self.Models = FlextModels
-
-        # REQUEST PROCESSING HELL - CHOOSE ONE, NOT FOUR:
-        self.Commands = FlextCommands      # ← CQRS patterns
-        self.Processors = FlextProcessing   # ← Processing patterns
-        # ALL FOUR DO THE SAME REQUEST→RESPONSE PROCESSING!
-
-        self.Validations = FlextValidations
-        self.Utilities = FlextUtilities    # MASSIVE 1000+ line monster - should be 5+ modules
-        self.Adapters = FlextTypeAdapters  # Over-abstracted wrapper hell
-        # self.Decorators = FlextDecorators  # Temporarily disabled
-        self.Guards = FlextValidations.Guards  # At least consolidated now
-        self.Fields = FlextValidations.FieldValidators  # At least consolidated now
-        self.Mixins = FlextMixins          # Responsibility violations everywhere
-        self.Protocols = FlextProtocols
-        self.Exceptions = FlextExceptions
-        # self.Delegation = FlextDelegationSystem  # Module doesn't exist
-        self.Result = FlextResult
+        self.Constants = FlextConstants
         self.Container = FlextContainer
         self.Context = FlextContext
+        self.Decorators = FlextDecorators
+        self.DomainService = FlextDomainService
+        self.Exceptions = FlextExceptions
+        self.Fields = FlextValidations.FieldValidators
         self.Logger = FlextLogger
-        self.Constants = FlextConstants
+        self.Mixins = FlextMixins
+        self.Models = FlextModels
+        self.Processors = FlextProcessing
+        self.Protocols = FlextProtocols
+        self.Result = FlextResult
+        self.Utilities = FlextUtilities
+        self.Validations = FlextValidations
 
     # =============================================================================
     # CORE FUNCTIONALITY - MINIMAL REQUIRED

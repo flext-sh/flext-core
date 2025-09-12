@@ -1,8 +1,8 @@
 # FlextHandlers - Enterprise Handler System Architecture
 
-**Version**: 0.9.0  
-**Module**: `flext_core.handlers`  
-**Classification**: Enterprise Handler Infrastructure  
+**Version**: 0.9.0
+**Module**: `flext_core.handlers`
+**Classification**: Enterprise Handler Infrastructure
 **Architectural Role**: Central Request Processing, CQRS, Chain of Responsibility, Event Sourcing
 
 ## 📖 Executive Summary
@@ -303,7 +303,7 @@ for i, test_data in enumerate(test_cases):
 #### **AuthorizingHandler** - Enterprise Security Integration
 
 ```python
-from typing import Dict, object
+from typing import Dict
 
 def role_based_authorizer(data: dict) -> bool:
     """Role-based authorization with comprehensive security checks."""

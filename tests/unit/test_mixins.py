@@ -1,4 +1,5 @@
 """Simplified mixins tests."""
+
 from flext_core import FlextMixins
 
 

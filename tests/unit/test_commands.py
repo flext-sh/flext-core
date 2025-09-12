@@ -15,8 +15,8 @@ from pydantic import Field
 from flext_core import (
     FlextCommands,
     FlextResult,
+    FlextTypes,
 )
-from flext_core.typings import FlextTypes
 
 
 class ExtendedTestCommand(FlextCommands.Models.Command):
@@ -34,13 +34,13 @@ class ExtendedTestCommand(FlextCommands.Models.Command):
         default=None, description="Additional command data"
     )
 
-    def validate_command(self) -> FlextResult[None]:
+    def validate_command(self) -> FlextResult[bool]:
         """Validate the command."""
         if not self.name:
-            return FlextResult[None].fail("Name is required")
+            return FlextResult[bool].fail("Name is required")
         if self.value < 0:
-            return FlextResult[None].fail("Value must be non-negative")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Value must be non-negative")
+        return FlextResult[bool].ok(True)
 
     def execute(self) -> FlextResult[str]:
         """Execute the command."""
@@ -62,13 +62,13 @@ class ExtendedQuery(FlextCommands.Models.Query):
     )
     limit: int = 10
 
-    def validate_query(self) -> FlextResult[None]:
+    def validate_query(self) -> FlextResult[bool]:
         """Validate the query."""
         if not self.search_term:
-            return FlextResult[None].fail("Search term required")
+            return FlextResult[bool].fail("Search term required")
         if self.limit <= 0:
-            return FlextResult[None].fail("Limit must be positive")
-        return FlextResult[None].ok(None)
+            return FlextResult[bool].fail("Limit must be positive")
+        return FlextResult[bool].ok(True)
 
 
 class TestCommandBusExtended:

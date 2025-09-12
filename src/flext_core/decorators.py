@@ -1,6 +1,7 @@
-"""FlextDecorators - Decorator utilities for FLEXT ecosystem.
+"""Decorator utilities for FLEXT ecosystem.
 
-This module provides decorator utilities for common functionality patterns.
+SIMPLIFIED: Simple stub decorators for examples and development.
+PATTERN: Minimal implementations that pass MyPy strict mode.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import ClassVar, TypeVar
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -18,47 +19,46 @@ class FlextDecorators:
     """Decorator utilities for FLEXT ecosystem."""
 
     @staticmethod
-    def retry(max_attempts: int = 3) -> Callable[[T], T]:  # noqa: ARG004
-        """Retry decorator."""
+    def retry(max_attempts: int = 3) -> Callable[[T], T]:
+        """Retry decorator stub."""
 
         def decorator(func: T) -> T:
+            _ = max_attempts  # Use parameter to avoid unused argument warning
             return func
 
         return decorator
 
     @staticmethod
-    def timeout(seconds: int) -> Callable[[T], T]:  # noqa: ARG004
-        """Timeout decorator."""
+    def timeout(seconds: int) -> Callable[[T], T]:
+        """Timeout decorator stub."""
 
         def decorator(func: T) -> T:
+            _ = seconds  # Use parameter to avoid unused argument warning
             return func
 
         return decorator
 
     @staticmethod
-    def cache(ttl: int = 300) -> Callable[[T], T]:  # noqa: ARG004
-        """Cache decorator."""
+    def cache(ttl: int = 300) -> Callable[[T], T]:
+        """Cache decorator stub."""
 
         def decorator(func: T) -> T:
+            _ = ttl  # Use parameter to avoid unused argument warning
             return func
 
         return decorator
-
-    # =========================================================================
-    # RELIABILITY DECORATORS - For examples
-    # =========================================================================
 
     class Reliability:
         """Reliability decorators for examples."""
 
         @staticmethod
         def safe_result(func: T) -> T:
-            """Safe result decorator."""
+            """Safe result decorator stub."""
             return func
 
         @staticmethod
-        def circuit_breaker(failure_threshold: int = 5) -> Callable[[T], T]:  # noqa: ARG004
-            """Circuit breaker decorator."""
+        def circuit_breaker(_failure_threshold: int = 5) -> Callable[[T], T]:
+            """Circuit breaker decorator stub."""
 
             def decorator(func: T) -> T:
                 return func
@@ -66,29 +66,25 @@ class FlextDecorators:
             return decorator
 
         @staticmethod
-        def bulkhead(max_concurrent: int = 10) -> Callable[[T], T]:  # noqa: ARG004
-            """Bulkhead decorator."""
+        def bulkhead(_max_concurrent: int = 10) -> Callable[[T], T]:
+            """Bulkhead decorator stub."""
 
             def decorator(func: T) -> T:
                 return func
 
             return decorator
-
-    # =========================================================================
-    # OBSERVABILITY DECORATORS - For examples
-    # =========================================================================
 
     class Observability:
         """Observability decorators for examples."""
 
         @staticmethod
         def trace(func: T) -> T:
-            """Trace decorator."""
+            """Trace decorator stub."""
             return func
 
         @staticmethod
-        def metrics(name: str) -> Callable[[T], T]:  # noqa: ARG004
-            """Metrics decorator."""
+        def metrics(_name: str) -> Callable[[T], T]:
+            """Metrics decorator stub."""
 
             def decorator(func: T) -> T:
                 return func
@@ -97,22 +93,15 @@ class FlextDecorators:
 
         @staticmethod
         def log_execution(func: T) -> T:
-            """Log execution decorator."""
+            """Log execution decorator stub."""
             return func
-
-    # =========================================================================
-    # PERFORMANCE DECORATORS - For examples
-    # =========================================================================
 
     class Performance:
         """Performance decorators for examples."""
 
-        cache: ClassVar[dict[str, object]] = {}
-        monitor: ClassVar[dict[str, object]] = {}
-
         @staticmethod
-        def cached(ttl: int = 300) -> Callable[[T], T]:  # noqa: ARG004
-            """Cached decorator."""
+        def cached(_ttl: int = 300) -> Callable[[T], T]:
+            """Cached decorator stub."""
 
             def decorator(func: T) -> T:
                 return func
@@ -121,5 +110,8 @@ class FlextDecorators:
 
         @staticmethod
         def monitored(func: T) -> T:
-            """Monitored decorator."""
+            """Monitored decorator stub."""
             return func
+
+
+__all__ = ["FlextDecorators"]

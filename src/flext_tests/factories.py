@@ -152,7 +152,9 @@ class FlextTestsFactories:
             return defaults
 
         @staticmethod
-        def create_batch(field_type: str, size: int, **kwargs: object) -> list[FlextTypes.Core.Dict]:
+        def create_batch(
+            field_type: str, size: int, **kwargs: object
+        ) -> list[FlextTypes.Core.Dict]:
             """Create batch of fields by type."""
             method_map = {
                 "string": FlextTestsFactories.FieldFactory.string_field,
@@ -161,7 +163,9 @@ class FlextTestsFactories:
                 "float": FlextTestsFactories.FieldFactory.float_field,
             }
 
-            field_method = method_map.get(field_type, FlextTestsFactories.FieldFactory.string_field)
+            field_method = method_map.get(
+                field_type, FlextTestsFactories.FieldFactory.string_field
+            )
             return [field_method(**kwargs) for _ in range(size)]
 
     # =========================================================================
@@ -246,17 +250,25 @@ class FlextTestsFactories:
             self._data["users"] = FlextTestsFactories.UserFactory.create_batch(count)
             return self
 
-        def with_configs(self, *, production: bool = False) -> FlextTestsFactories.TestDataBuilder:
+        def with_configs(
+            self, *, production: bool = False
+        ) -> FlextTestsFactories.TestDataBuilder:
             """Add configuration to test data."""
             if production:
-                self._data["config"] = FlextTestsFactories.ConfigFactory.production_config()
+                self._data["config"] = (
+                    FlextTestsFactories.ConfigFactory.production_config()
+                )
             else:
                 self._data["config"] = FlextTestsFactories.ConfigFactory.create()
             return self
 
-        def with_validation_fields(self, count: int = 5) -> FlextTestsFactories.TestDataBuilder:
+        def with_validation_fields(
+            self, count: int = 5
+        ) -> FlextTestsFactories.TestDataBuilder:
             """Add validation fields to test data."""
-            self._data["validation_fields"] = FlextTestsFactories.FieldFactory.create_batch("string", count)
+            self._data["validation_fields"] = (
+                FlextTestsFactories.FieldFactory.create_batch("string", count)
+            )
             return self
 
         def build(self) -> FlextTypes.Core.Dict:

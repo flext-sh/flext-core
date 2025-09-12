@@ -13,6 +13,7 @@ import time
 from typing import cast
 
 import pytest
+from pydantic import BaseModel
 
 from flext_core import (
     FlextHandlers,
@@ -59,7 +60,7 @@ class TestCleanArchitecturePatterns:
                 return self.validate_business_rules()
 
         # Application Layer - Use Cases (Commands/Handlers)
-        class CreateUserCommand(FlextModels.BaseModel):
+        class CreateUserCommand(BaseModel):
             """Application command."""
 
             name: str
@@ -119,7 +120,7 @@ class TestCleanArchitecturePatterns:
 
         # Test the full flow
         command = CreateUserCommand(name="John Doe", email="john@example.com")
-        handler = CreateUserHandler()
+        handler = CreateUserHandler("CreateUserHandler")
 
         result = handler.handle(command)
         assert result.success
@@ -269,7 +270,7 @@ class TestCleanArchitecturePatterns:
         """Test CQRS (Command Query Responsibility Segregation) pattern."""
 
         # Commands (Write Operations)
-        class UpdateUserCommand(FlextModels.BaseModel):
+        class UpdateUserCommand(BaseModel):
             """Command to update user information."""
 
             user_id: str
@@ -292,7 +293,7 @@ class TestCleanArchitecturePatterns:
                 return FlextResult[object].ok(f"User {command.user_id} updated")
 
         # Queries (Read Operations)
-        class GetUserQuery(FlextModels.BaseModel):
+        class GetUserQuery(BaseModel):
             """Query to get user information."""
 
             user_id: str
@@ -505,14 +506,14 @@ class TestEventDrivenPatterns:
         """Test Domain Event pattern implementation."""
 
         # Event classes
-        class UserCreatedEvent(FlextModels.BaseModel):
+        class UserCreatedEvent(BaseModel):
             """Domain event for user creation."""
 
             user_id: str
             user_name: str
             timestamp: float
 
-        class UserUpdatedEvent(FlextModels.BaseModel):
+        class UserUpdatedEvent(BaseModel):
             """Domain event for user updates."""
 
             user_id: str
@@ -526,7 +527,7 @@ class TestEventDrivenPatterns:
 
             def __init__(self) -> None:
                 """Initialize handler."""
-                self.processed_events: list[FlextModels.BaseModel] = []
+                self.processed_events: list[BaseModel] = []
 
             def handle_user_created(self, event: UserCreatedEvent) -> FlextResult[None]:
                 """Handle user created event."""

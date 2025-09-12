@@ -1,10 +1,5 @@
 """FLEXT Core Utilities - Refactored based on REAL usage analysis.
 
-Contains ONLY utilities that are actually used across the FLEXT ecosystem.
-Removed 13+ unused classes and 200+ unused methods.
-
-Reduced from 1425 lines to ~200 lines while maintaining API compatibility.
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -19,16 +14,15 @@ from datetime import UTC, datetime
 
 
 class FlextUtilities:
-    """Essential utilities based on REAL usage analysis across FLEXT ecosystem.
+    """Essential utilities based on REAL usage analysis across FLEXT ecosystem."""
 
-    REFACTORED: Reduced from 18 nested classes to 5 actually used classes.
-    ELIMINATED: 13 unused classes, 200+ unused methods, fake performance optimizations.
-    MAINTAINED: Full API compatibility for existing usage patterns.
-    """
+    class Validation:
+        """Centralized validation utilities to eliminate code duplication."""
 
-    # ==========================================================================
-    # ACTUALLY USED CLASS: GENERATORS (99 usages across ecosystem)
-    # ==========================================================================
+        @staticmethod
+        def is_non_empty_string(value: str | None) -> bool:
+            """Check if string is non-empty after stripping whitespace."""
+            return bool(value and value.strip())
 
     class Generators:
         """ID and timestamp generation utilities - ACTUALLY USED."""
@@ -52,6 +46,16 @@ class FlextUtilities:
         def generate_correlation_id() -> str:
             """Generate correlation ID."""
             return f"corr_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_request_id() -> str:
+            """Generate request ID."""
+            return f"req_{str(uuid.uuid4())[:12]}"
+
+        @staticmethod
+        def generate_entity_id() -> str:
+            """Generate entity ID."""
+            return f"ent_{str(uuid.uuid4())[:12]}"
 
     # ==========================================================================
     # ACTUALLY USED CLASS: TEXT PROCESSOR (96 usages across ecosystem)
@@ -78,12 +82,23 @@ class FlextUtilities:
             text = re.sub(r"\s+", " ", text.strip())
             return unicodedata.normalize("NFKD", text)
 
-    # ==========================================================================
-    # ACTUALLY USED CLASS: CONVERSIONS (37 usages across ecosystem)
-    # ==========================================================================
+        @staticmethod
+        def is_non_empty_string(value: object) -> bool:
+            """Check if value is a non-empty string."""
+            return isinstance(value, str) and len(value.strip()) > 0
+
+        @staticmethod
+        def slugify(text: str) -> str:
+            """Convert text to URL-friendly slug."""
+            if not text:
+                return ""
+            # Basic slugification - remove special chars, lowercase, replace spaces with hyphens
+            text = re.sub(r"[^\w\s-]", "", text.lower())
+            text = re.sub(r"[-\s]+", "-", text)
+            return text.strip("-")
 
     class Conversions:
-        """Type conversion utilities - ACTUALLY USED."""
+        """Type conversion utilities."""
 
         @staticmethod
         def safe_int(value: str | float, *, default: int = 0) -> int:
@@ -118,12 +133,8 @@ class FlextUtilities:
             except (ValueError, TypeError):
                 return default
 
-    # ==========================================================================
-    # ACTUALLY USED CLASS: TYPE GUARDS (24 usages across ecosystem)
-    # ==========================================================================
-
     class TypeGuards:
-        """Type checking utilities - ACTUALLY USED."""
+        """Type checking utilities."""
 
         @staticmethod
         def is_dict_non_empty(value: object) -> bool:
@@ -140,10 +151,6 @@ class FlextUtilities:
             """Check if value is non-empty list."""
             return isinstance(value, list) and len(value) > 0
 
-    # ==========================================================================
-    # ACTUALLY USED FUNCTIONS: STANDALONE UTILITIES (20+ direct usages)
-    # ==========================================================================
-
     @staticmethod
     def generate_iso_timestamp() -> str:
         """Generate ISO timestamp - direct usage compatibility."""
@@ -158,23 +165,6 @@ class FlextUtilities:
             return default
 
 
-# ==========================================================================
-# ELIMINATED CLASSES (not used in ecosystem):
-# ==========================================================================
-# - DataValidators: complex email/URL validation (use Pydantic directly)
-# - TimeUtils: complex time operations (use datetime directly)
-# - Performance: fake metrics collection (use proper observability)
-# - FieldFactory: over-engineered field creation (use Pydantic directly)
-# - Formatters: unused formatting utilities
-# - EnvironmentUtils: unused environment processing
-# - ValidationUtils: duplicates Pydantic validation
-# - ProcessingUtils: over-engineered data processing
-# - ResultUtils: unnecessary FlextResult wrappers
-# - Loggable: unused mixin pattern
-# - Service: unused service pattern
-# - Configuration: unused config utilities
-# - 1 more unnamed class
-# ==========================================================================
-# TOTAL REDUCTION: 1425 lines → ~200 lines (86% reduction)
-# API COMPATIBILITY: Maintained for all actually used methods
-# ==========================================================================
+__all__: list[str] = [
+    "FlextUtilities",
+]

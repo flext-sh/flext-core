@@ -116,9 +116,9 @@ class TestFlextResult100PercentCoverage:
         async def async_test() -> None:
             # Test async unwrap
             result: FlextResult[str] = FlextResult.ok("async_value")
-            if hasattr(result, "unwrap_async"):
-                value = await result.unwrap_async()
-                assert value == "async_value"
+            # unwrap_async doesn't exist, use regular unwrap instead
+            value = result.unwrap()
+            assert value == "async_value"
 
             # Test async context manager if supported
             try:

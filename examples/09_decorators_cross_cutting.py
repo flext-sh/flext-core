@@ -82,7 +82,7 @@ def demonstrate_cache_decorator() -> FlextResult[str]:
     """Demonstrate cache decorator using Strategy Pattern - REDUCED COMPLEXITY."""
 
     # Strategy Pattern: Use FlextUtilities.Performance for measurement
-    @FlextDecorators.Performance.cache(max_size=128)
+    @FlextDecorators.cache()
     def expensive_calculation(x: int) -> FlextResult[int]:
         """Cached calculation using FlextResult pattern."""
         return (
@@ -114,8 +114,8 @@ def demonstrate_complete_decorator() -> FlextResult[str]:
     """Demonstrate decorator composition using Strategy Pattern - REDUCED COMPLEXITY."""
 
     # Strategy Pattern: Use FlextUtilities for data generation
-    @FlextDecorators.Performance.monitor()
-    @FlextDecorators.Performance.cache(max_size=64)
+    @FlextDecorators.retry()
+    @FlextDecorators.cache()
     def business_operation(
         data: FlextTypes.Core.Dict,
     ) -> FlextResult[FlextTypes.Core.Dict]:
@@ -180,8 +180,8 @@ def demonstrate_user_creation_with_modern_decorators() -> None:
     """Demonstrate user creation with modern decorators - SIMPLIFIED."""
 
     # Strategy Pattern: Use LocalDomainFactory directly
-    @FlextDecorators.Performance.cache(max_size=32)
-    @FlextDecorators.Performance.monitor()
+    @FlextDecorators.cache()
+    @FlextDecorators.retry()
     def create_user_with_validation(
         name: str,
         email: str,
@@ -211,9 +211,9 @@ def demonstrate_decorator_categories() -> None:
     """Demonstrate decorator categories - SIMPLIFIED."""
 
     # Template Method Pattern: Use flext-core decorator composition
-    @FlextDecorators.Observability.log_execution()
-    @FlextDecorators.Performance.monitor()
-    @FlextDecorators.Performance.cache(max_size=32)
+    @FlextDecorators.Observability.log_execution
+    @FlextDecorators.retry()
+    @FlextDecorators.cache()
     def complete_example_function() -> str:
         """Complete decorator composition example."""
         return "completed"

@@ -99,7 +99,7 @@ class FlextTestsUtilities:
             if not result.success:
                 msg = f"Expected success but got failure: {result.error}"
                 raise AssertionError(msg)
-            return result.data
+            return result.value
 
         @staticmethod
         def assert_result_failure(result: FlextResult[T]) -> str:
@@ -505,6 +505,7 @@ class FlextTestsUtilities:
             exc_tb: object,
         ) -> None:
             """Exit context - restore original state."""
+            # Exception parameters available for future error handling
             if self.had_attribute:
                 setattr(self.target, self.attribute, self.original_value)
             elif self.create and hasattr(self.target, self.attribute):

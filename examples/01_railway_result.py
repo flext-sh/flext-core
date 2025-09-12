@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore, FlextResult
+from flext_core import FlextCore, FlextResult, FlextUtilities, FlextValidations
 
 
 class RailwayExample:
@@ -23,8 +23,8 @@ class RailwayExample:
         self._core = FlextCore()
 
     def validate_email(self, email: str) -> FlextResult[str]:
-        """Validate email format using FlextCore validation."""
-        return self._core.Validations.validate_email(email)
+        """Validate email format using FlextValidations."""
+        return FlextValidations.validate_email(email)
 
     def validate_age(self, age: int) -> FlextResult[int]:
         """Validate age range."""
@@ -58,7 +58,7 @@ class RailwayExample:
 
         # All validations passed, create user data
         user_data = {
-            "id": self._core.Utilities.generate_uuid()[:8],
+            "id": FlextUtilities.Generators.generate_id()[:8],
             "name": name,
             "email": email_result.value,
             "age": age_result.value,
@@ -72,8 +72,8 @@ class RailwayExample:
     ) -> FlextResult[dict[str, object]]:
         """Enrich user data with additional fields."""
         enriched = user_data.copy()
-        enriched["created_at"] = self._core.Utilities.generate_timestamp()
-        enriched["correlation_id"] = self._core.Utilities.generate_correlation_id()
+        enriched["created_at"] = FlextUtilities.generate_iso_timestamp()
+        enriched["correlation_id"] = FlextUtilities.Generators.generate_correlation_id()
         return FlextResult[dict[str, object]].ok(enriched)
 
     def save_user(self, user_data: dict[str, object]) -> FlextResult[dict[str, object]]:

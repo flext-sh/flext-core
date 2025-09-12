@@ -253,7 +253,7 @@ class FlextTestsFixtures:
             session: dict[str, object] = {
                 "id": session_id,
                 "created_at": "2024-01-01T00:00:00Z",
-                "data": session_data
+                "data": session_data,
             }
             self._data[session_id] = session
             return session

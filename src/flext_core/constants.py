@@ -36,6 +36,7 @@ class FlextConstants:
         MAX_EMAIL_LENGTH: Final[int] = 254
         MIN_PERCENTAGE: Final[float] = 0.0
         MAX_PERCENTAGE: Final[float] = 100.0
+        MIN_SECRET_KEY_LENGTH: Final[int] = 32
 
     class Errors:
         """Error codes that are actually used."""
@@ -115,7 +116,12 @@ class FlextConstants:
     class Config:
         """Config constants that are actually used."""
 
-        ENVIRONMENTS: Final[list[str]] = ["development", "staging", "production", "test"]
+        ENVIRONMENTS: Final[list[str]] = [
+            "development",
+            "staging",
+            "production",
+            "test",
+        ]
         DEFAULT_ENVIRONMENT: Final[str] = "development"
         DOTENV_FILES: Final[list[str]] = [".env", ".internal.invalid", ".env.production"]
 
@@ -212,6 +218,35 @@ class FlextConstants:
         """Reliability constants that are actually used."""
 
         MAX_RETRY_ATTEMPTS: Final[int] = 3
+
+    class Web:
+        """Web application constants that are actually used."""
+
+        MIN_PORT: Final[int] = 1024
+        MAX_PORT: Final[int] = 65535
+        DEFAULT_PORT: Final[int] = 8080
+        MIN_APP_NAME_LENGTH: Final[int] = 2
+        MAX_APP_NAME_LENGTH: Final[int] = 50
+        HTTP_OK: Final[int] = 200
+        MAX_HTTP_STATUS: Final[int] = 599
+
+    class Environment:
+        """Environment constants that are actually used."""
+
+        class ConfigEnvironment(StrEnum):
+            """Configuration environment types."""
+
+            DEVELOPMENT = "development"
+            STAGING = "staging"
+            PRODUCTION = "production"
+            TESTING = "testing"
+
+        class ValidationLevel(StrEnum):
+            """Validation level types."""
+
+            STRICT = "strict"
+            NORMAL = "normal"
+            RELAXED = "relaxed"
 
 
 __all__ = ["FlextConstants"]

@@ -58,22 +58,6 @@ _PROFILE_MICROSERVICE = "microservice"
 class FlextConfig(BaseSettings):
     """Unified configuration management system with nested specialized components."""
 
-    # CONFIGURATION HELL: 2021 LINES OF OVER-ENGINEERED CONFIGURATION MADNESS!
-    # ARCHITECTURAL CANCER: 6 nested classes, 8 factory methods, 40+ configuration fields
-    # ENTERPRISE BULLSHIT: Configuration sealing, metadata tracking, business rule validation
-    # YAGNI DISASTER: 99% of projects just need basic env vars, not this complexity monster!
-    # SINGLETON ABUSE: Thread locks for configuration - most apps are single-threaded!
-
-    """
-    Features that 99% of projects DON'T NEED:
-    - SINGLETON GLOBAL INSTANCE with thread locks (enterprise paranoia)
-    - 6 nested protocol classes (architectural masturbation)
-    - 8 specialized factory methods for different "profiles"
-    - Configuration sealing and metadata tracking (over-engineering hell)
-    - Business rule validation for config values (config is not business logic!)
-    - Support for 4 different file formats (JSON, YAML, TOML, ENV)
-    """
-
     # SINGLETON PATTERN - Global configuration instance with thread safety
     _global_instance: ClassVar[FlextConfig | None] = None
     _lock: ClassVar[threading.Lock] = threading.Lock()
@@ -81,14 +65,9 @@ class FlextConfig(BaseSettings):
     # =============================================================================
     # NESTED PROTOCOLS - Interface Segregation Principle
     # =============================================================================
-    # PROTOCOL ABUSE: 6 nested protocols for configuration - MASSIVE over-engineering!
-    # Most projects: config = {"host": "localhost", "port": 8000} - DONE!
 
     class ConfigValidator(Protocol):
         """Protocol for configuration validation strategies."""
-
-        # OVER-ENGINEERED: Configuration validation protocols when Pydantic already validates!
-        # This is validation-validation - validating the validation!
 
         def validate_runtime_requirements(self) -> FlextResult[None]:
             """Validate configuration meets runtime requirements."""
@@ -901,7 +880,7 @@ class FlextConfig(BaseSettings):
         _factory_mode: bool = False,
         _env_file: str | None = None,
         _env_format: str = "env",
-        **data: object,
+        **_data: object,
     ) -> None:
         """Override BaseSettings init to preserve pure default semantics.
 
@@ -913,7 +892,7 @@ class FlextConfig(BaseSettings):
             _factory_mode: Internal flag to indicate factory creation (allows env vars)
             _env_file: Custom .env file path (CLI can override)
             _env_format: File format - "env", "toml", "json" (CLI can specify)
-            **data: Additional configuration data
+            **_data: Additional configuration data
 
         """
         # MANDATORY: Load .env from execution directory (CWD) - NEVER override existing env vars
@@ -931,8 +910,8 @@ class FlextConfig(BaseSettings):
             # CLI or environment specified custom .env file
             env_path = Path(env_file_path)
         else:
-            # Use FlextConstants default .env file from current working directory
-            default_env_file = FlextConstants.Config.DOTENV_FILES[0]  # ".env"
+            # Use default .env file from current working directory
+            default_env_file = ".env"
             if env_file_format == "toml":
                 env_path = Path.cwd() / f"{default_env_file}.toml"
             elif env_file_format == "json":
@@ -990,9 +969,21 @@ class FlextConfig(BaseSettings):
             ):
                 load_dotenv(dotenv_path=env_specific_path, override=False)
 
-        # Call parent constructor with data to allow Pydantic to handle environment variables
-        # Pydantic will automatically load environment variables based on env_prefix
-        super().__init__(**data)  # type: ignore[arg-type]
+        # Call parent constructor - BaseSettings loads from environment variables
+        # based on model field definitions and env_prefix
+        # BaseSettings expects specific parameters, not field values
+        # Field values should be set through environment variables or defaults
+        super().__init__()
+
+        # After initialization, update fields with provided data
+        if _data:
+            # Use Pydantic's validation to set the values
+            for field_name, field_value in _data.items():
+                if (
+                    isinstance(field_name, str)
+                    and field_name in cast("BaseModel", self).model_fields
+                ):
+                    setattr(self, field_name, field_value)
 
     # =============================================================================
     # SINGLETON GLOBAL INSTANCE METHOD
@@ -1673,7 +1664,9 @@ class FlextConfig(BaseSettings):
             return FlextResult[FlextConfig].fail(f"Configuration load failed: {error}")
 
     @classmethod
-    def merge(cls, _base: FlextConfig, _override: FlextTypes.Core.Dict) -> FlextResult[FlextConfig]:
+    def merge(
+        cls, _base: FlextConfig, _override: FlextTypes.Core.Dict
+    ) -> FlextResult[FlextConfig]:
         """Merge configs - always succeeds for compatibility."""
         try:
             return FlextResult[FlextConfig].ok(cls.get_global_instance())

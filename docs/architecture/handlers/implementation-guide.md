@@ -1,8 +1,8 @@
 # FlextHandlers Implementation Guide
 
-**Version**: 0.9.0  
-**Target Audience**: FLEXT Developers, Enterprise Architects  
-**Implementation Time**: 2-4 weeks per handler ecosystem  
+**Version**: 0.9.0
+**Target Audience**: FLEXT Developers, Enterprise Architects
+**Implementation Time**: 2-4 weeks per handler ecosystem
 **Complexity**: Intermediate to Advanced
 
 ## 📖 Overview
@@ -69,7 +69,7 @@ else:
 
 ```python
 from dataclasses import dataclass
-from typing import Dict, object
+from typing import Dict
 import datetime
 
 # Define Commands and Queries
@@ -1116,7 +1116,7 @@ else:
 
 ```python
 from dataclasses import dataclass, field
-from typing import Dict, List, object, Optional
+from typing import Dict, List, Optional
 from enum import Enum
 import json
 import uuid

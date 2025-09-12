@@ -113,8 +113,8 @@ def demonstrate_basic_logging() -> None:
     logger.debug("Debug information", module="config", settings_loaded=True)
     logger.info(
         "Service started successfully",
-        port=FlextConstants.Platform.FLEXCORE_PORT,
-        version=FlextConstants.VERSION,
+        port=FlextConstants.Platform.FLEXT_API_PORT,
+        version=FlextConstants.Core.VERSION,
     )
     logger.warning("High memory usage detected", memory_usage_percent=85)
     logger.error("Database connection failed", database="users", retry_count=3)
@@ -384,7 +384,7 @@ def _unified_api_usage() -> None:
     metrics_logger = FlextLogger("myapp.metrics", level="INFO")
     api_logger.info(
         "API server starting",
-        port=FlextConstants.Platform.FLEXCORE_PORT,
+        port=FlextConstants.Platform.FLEXT_API_PORT,
         workers=4,
     )
     metrics_logger.info("Metrics collection enabled", interval_seconds=30)
