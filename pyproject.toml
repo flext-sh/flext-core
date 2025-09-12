@@ -282,3 +282,10 @@ testpaths = ["tests"]
 [tool.ruff]
 extend = "../ruff-shared.toml"
 lint.isort.known-first-party = ["flext_core", "flext_tests"]
+
+[tool.vulture]
+exclude = [
+    "src/flext_core/protocols.py",  # Protocol definitions with intentional unused parameters
+]
+min_confidence = 80
+paths = ["src/"]
