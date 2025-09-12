@@ -14,10 +14,10 @@ class FlextTypeAdapters:
     def adapt_to_dict(obj: object) -> dict[str, object]:
         """Adapt object to dictionary."""
         if hasattr(obj, "model_dump") and callable(getattr(obj, "model_dump")):
-            result = obj.model_dump()
+            result = getattr(obj, "model_dump")()
             return result if isinstance(result, dict) else {"value": result}
         if hasattr(obj, "dict") and callable(getattr(obj, "dict")):
-            result = obj.dict()
+            result = getattr(obj, "dict")()
             return result if isinstance(result, dict) else {"value": result}
         return {"value": obj}
 

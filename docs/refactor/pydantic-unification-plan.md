@@ -1,19 +1,19 @@
 # Pydantic 2.11 Unification Plan — flext-core
 
-**Status**: Fases 1–4 concluídas; Fase 5 (docs) em andamento; Fase 7 concluída ✅; Fase 8 concluída ✅  
-**Versão**: 0.9.1  
-**Última Atualização**: 2025-01-07  
+**Status**: Fases 1–4 concluídas; Fase 5 (docs) em andamento; Fase 7 concluída ✅; Fase 8 concluída ✅
+**Versão**: 0.9.1
+**Última Atualização**: 2025-01-07
 **Autoridade**: flext-core + FLEXT_REFACTORING_PROMPT.md + CLAUDE.md + README.md
 
 ## Objetivo
 
 Unificar todo o uso de Pydantic 2.11 no flext-core para:
 
-✅ **Validação Centralizada**: Todas as configurações passam por modelos Pydantic unificados (BaseModel/RootModel)  
-✅ **Zero Duplicação**: Eliminar ~500 linhas de validações manuais repetitivas em dicionários  
-✅ **Dict apenas nas bordas**: Usar `model_dump()` apenas para serialização/compatibilidade  
-✅ **APIs compatíveis**: Não quebrar APIs públicas (compatibilidade via `.model_dump()`)  
-✅ **Padrões respeitados**: Clean Architecture, FlextResult, DI, StrEnum  
+✅ **Validação Centralizada**: Todas as configurações passam por modelos Pydantic unificados (BaseModel/RootModel)
+✅ **Zero Duplicação**: Eliminar ~500 linhas de validações manuais repetitivas em dicionários
+✅ **Dict apenas nas bordas**: Usar `model_dump()` apenas para serialização/compatibilidade
+✅ **APIs compatíveis**: Não quebrar APIs públicas (compatibilidade via `.model_dump()`)
+✅ **Padrões respeitados**: Clean Architecture, FlextResult, DI, StrEnum
 ✅ **Quality Gates**: Passar `make check` e `make validate`
 
 ### Regras de Ouro
@@ -461,7 +461,7 @@ A seguir, cada módulo com: papel, uso de Pydantic, problemas/duplicações, aç
 
 ```python
 import warnings
-from typing import overload, Union, Dict, object
+from typing import overload, Union, Dict
 from pydantic import ValidationError
 
 class FlextCommands:
@@ -471,29 +471,29 @@ class FlextCommands:
     def configure_commands_system(
         cls, config: CommandsConfig
     ) -> FlextResult[CommandsConfig]: ...
-    
+
     # Assinatura antiga (compatibilidade)
     @overload
     @classmethod
     def configure_commands_system(
         cls, config: dict
     ) -> FlextResult[dict]: ...
-    
+
     @classmethod
     def configure_commands_system(
         cls, config: Union[dict, CommandsConfig]
     ) -> FlextResult[Union[dict, CommandsConfig]]:
         """Configuração com compatibilidade total.
-        
+
         Args:
             config: Dict (deprecated) ou CommandsConfig (preferido)
-            
+
         Returns:
             FlextResult com dict (se input foi dict) ou CommandsConfig
         """
         # Detectar tipo de entrada
         return_dict = isinstance(config, dict)
-        
+
         # Emitir warning se usando dict
         if return_dict:
             warnings.warn(
@@ -502,23 +502,23 @@ class FlextCommands:
                 DeprecationWarning,
                 stacklevel=2
             )
-        
+
         try:
             # Converter para modelo se necessário
             if return_dict:
                 commands_config = CommandsConfig.model_validate(config)
             else:
                 commands_config = config
-            
+
             # Processar com modelo
             # ... lógica de configuração ...
-            
+
             # Retornar no formato esperado
             if return_dict:
                 return FlextResult.ok(commands_config.model_dump())
             else:
                 return FlextResult.ok(commands_config)
-                
+
         except ValidationError as e:
             error_msg = f"Configuration validation failed: {e}"
             return FlextResult.fail(
@@ -565,13 +565,13 @@ if isinstance(config, dict):
 # Em flext_core/migration.py
 class MigrationHelpers:
     """Utilidades para facilitar migração em subprojetos."""
-    
+
     @staticmethod
     def dict_to_config(config_dict: dict, config_class: type[BaseModel]) -> BaseModel:
         """Converte dict legado para modelo com logging."""
         logger.info(f"Migrating dict to {config_class.__name__}")
         return config_class.model_validate(config_dict)
-    
+
     @staticmethod
     def auto_migrate_decorator(config_class: type[BaseModel]):
         """Decorator para auto-migrar parâmetros dict."""
@@ -647,10 +647,10 @@ result = FlextCommands.configure_commands_system(config)
 # Em flext_core/models.py
 class SystemConfigs:
     """Configurações unificadas para todos os subsistemas."""
-    
+
     class BaseSystemConfig(FlextModels.Config):
         """Base para todas as configurações de sistema."""
-        
+
         # Campos comuns a todos os subsistemas
         environment: FlextConstants.Config.ConfigEnvironment = Field(
             default=FlextConstants.Config.ConfigEnvironment.DEVELOPMENT,
@@ -664,14 +664,14 @@ class SystemConfigs:
             default=FlextConstants.Config.ValidationLevel.NORMAL,
             description="Validation strictness level"
         )
-        
+
         model_config = ConfigDict(
             validate_assignment=True,
             use_enum_values=True,
             extra='forbid',
             str_strip_whitespace=True
         )
-        
+
         @field_validator('environment', 'log_level', 'validation_level', mode='before')
         @classmethod
         def normalize_enums(cls, v, info):
@@ -687,7 +687,7 @@ class SystemConfigs:
                 elif field_name == 'validation_level':
                     return FlextConstants.Config.ValidationLevel(v.lower())
             return v
-        
+
         @classmethod
         def from_environment(cls, env: str) -> Self:
             """Factory method para criar config por ambiente."""
@@ -708,7 +708,7 @@ class SystemConfigs:
             base_config = {'environment': env}
             base_config.update(presets.get(env, {}))
             return cls(**base_config)
-        
+
         def optimize(self, level: str = 'balanced') -> Self:
             """Otimiza configuração para performance."""
             optimizations = {
@@ -736,7 +736,7 @@ class CommandsConfig(BaseSystemConfig):
     enable_performance_monitoring: bool = False
     max_concurrent_commands: int = Field(default=100, ge=1, le=1000)
     command_timeout_seconds: int = Field(default=30, ge=1, le=300)
-    
+
     @model_validator(mode='after')
     def validate_production_settings(self) -> Self:
         """Ajusta configurações para produção."""
@@ -752,7 +752,7 @@ class DomainServicesConfig(BaseSystemConfig):
     enable_caching: bool = False
     cache_ttl_seconds: int = Field(default=300, ge=0, le=86400)
     max_retry_attempts: int = Field(default=3, ge=0, le=10)
-    
+
     @field_validator('cache_ttl_seconds')
     @classmethod
     def validate_cache_when_enabled(cls, v, info):
@@ -776,7 +776,7 @@ def configure_commands_system(
     """Validação manual repetitiva e propensa a erros."""
     try:
         validated_config = dict(config)
-        
+
         # Validação manual de environment (repetida em 13+ módulos!)
         if "environment" in config:
             env_value = config["environment"]
@@ -792,7 +792,7 @@ def configure_commands_system(
             validated_config["environment"] = (
                 FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value
             )
-        
+
         # Validação manual de validation_level (mais código repetitivo)
         if "validation_level" in config:
             val_level = config["validation_level"]
@@ -806,14 +806,14 @@ def configure_commands_system(
             validated_config["validation_level"] = (
                 FlextConstants.Config.ValidationLevel.NORMAL.value
             )
-        
+
         # Mais validações manuais...
         validated_config.setdefault("enable_handler_discovery", True)
         validated_config.setdefault("max_concurrent_commands", 100)
         validated_config.setdefault("command_timeout_seconds", 30)
-        
+
         return FlextResult[dict].ok(validated_config)
-        
+
     except Exception as e:
         return FlextResult[dict].fail(f"Failed to configure: {e}")
 ```
@@ -829,10 +829,10 @@ def configure_commands_system(
     try:
         # Pydantic faz TODA a validação automaticamente!
         commands_config = CommandsConfig.model_validate(config)
-        
+
         # Retorna dict para manter compatibilidade de API
         return FlextResult[dict].ok(commands_config.model_dump())
-        
+
     except ValidationError as e:
         # Converte erro Pydantic para FlextResult mantendo detalhes
         error_details = "; ".join(
@@ -885,7 +885,7 @@ def configure_commands_system(
 
 ### 🏗️ Fase 1 — Base unificada (SystemConfigs)
 
-**Objetivo**: Criar base de modelos Pydantic unificados para configurações de subsistemas  
+**Objetivo**: Criar base de modelos Pydantic unificados para configurações de subsistemas
 **Tempo Estimado**: 2 horas
 
 #### 📋 Passos de Implementação (em `flext_core/models.py`):
@@ -900,7 +900,7 @@ def configure_commands_system(
            validation_level: FlextConstants.Config.ValidationLevel | None
            config_source: FlextConstants.Config.ConfigSource | None
            performance_level: str | Literal[...]  # Se houver enum central, usar StrEnum
-           
+
            model_config = ConfigDict(
                validate_assignment=True,
                extra='forbid',
@@ -935,7 +935,7 @@ def configure_commands_system(
    def from_environment(cls, env: str) -> Self:
        """Factory method para criar config por ambiente."""
        # Usar presets por ambiente
-       
+
    def optimize(self, level: str) -> Self:
        """Otimiza configuração usando model_copy(update=...)."""
        # Aplicar otimizações
@@ -961,8 +961,8 @@ def configure_commands_system(
 
 ### 🎯 Fase 2 — Commands (configuração via modelo)
 
-**Objetivo**: Migrar os configuradores de Commands para usar `CommandsConfig`  
-**Escopo**: `flext_core/commands.py`  
+**Objetivo**: Migrar os configuradores de Commands para usar `CommandsConfig`
+**Escopo**: `flext_core/commands.py`
 **Tempo Estimado**: 1 hora
 
 #### 📋 Passos de Migração COM Compatibilidade:
@@ -978,18 +978,18 @@ def configure_commands_system(
    @overload
    @classmethod
    def configure_commands_system(cls, config: CommandsConfig) -> FlextResult[CommandsConfig]: ...
-   
+
    @overload
    @classmethod
    def configure_commands_system(cls, config: dict) -> FlextResult[dict]: ...
-   
+
    @classmethod
    def configure_commands_system(
        cls, config: Union[dict, CommandsConfig]
    ) -> FlextResult[Union[dict, CommandsConfig]]:
        # Detectar tipo
        return_dict = isinstance(config, dict)
-       
+
        # Warning se dict
        if return_dict:
            warnings.warn(
@@ -998,19 +998,19 @@ def configure_commands_system(
                DeprecationWarning,
                stacklevel=2
            )
-       
+
        try:
            # Validação
            commands_config = (
-               CommandsConfig.model_validate(config) if return_dict 
+               CommandsConfig.model_validate(config) if return_dict
                else config
            )
-           
+
            # Processar...
-           
+
            # Retornar no formato esperado
            return FlextResult.ok(
-               commands_config.model_dump() if return_dict 
+               commands_config.model_dump() if return_dict
                else commands_config
            )
        except ValidationError as e:
@@ -1104,8 +1104,8 @@ grep -r "-> FlextTypes.Config.ConfigDict" src/
 
 ### 🎨 Fase 6 — Mixins e Decorators (✅ CONCLUÍDA)
 
-**Escopo**: `flext_core/mixins.py`, `flext_core/decorators.py`, `flext_core/core.py` wrapper  
-**Tempo Estimado**: 1 hora  
+**Escopo**: `flext_core/mixins.py`, `flext_core/decorators.py`, `flext_core/core.py` wrapper
+**Tempo Estimado**: 1 hora
 **Linhas de Validação**: ~95 lines
 **Status**: ✅ Concluída em 2025-01-07
 
@@ -1137,8 +1137,8 @@ make check
 
 ### ✅ Fase 7 — Guards, Processors, Validations, Services, Context, Delegation, Adapters, Fields [CONCLUÍDA]
 
-**Tempo Total Estimado**: 3.5 horas  
-**Prioridade**: 🟡 Média (módulos auxiliares)  
+**Tempo Total Estimado**: 3.5 horas
+**Prioridade**: 🟡 Média (módulos auxiliares)
 **Status**: ✅ CONCLUÍDA em 2025-01-07
 
 #### 📋 Módulos e Ações:
@@ -1183,9 +1183,9 @@ pytest -k adapters -k fields
 
 ### ✅ Fase 8 — Remoção de duplicações e hard-codes [CONCLUÍDA]
 
-**Objetivo**: Eliminar todas as validações/merges manuais de `environment/log_level/validation_level` e listas duplicadas  
-**Tempo Estimado**: 1 hora  
-**Prioridade**: 🔴 Alta (eliminação de débito técnico)  
+**Objetivo**: Eliminar todas as validações/merges manuais de `environment/log_level/validation_level` e listas duplicadas
+**Tempo Estimado**: 1 hora
+**Prioridade**: 🔴 Alta (eliminação de débito técnico)
 **Status**: ✅ CONCLUÍDA em 2025-01-07
 
 #### 📋 Checklist de Limpeza:
@@ -1230,8 +1230,8 @@ rg "valid_environments|valid_log_levels" src/  # Deve retornar vazio
 
 ### 🧪 Fase 9 — Ajustes de testes
 
-**Objetivo**: Alinhar expectativas dos testes com nova arquitetura  
-**Tempo Estimado**: 2 horas  
+**Objetivo**: Alinhar expectativas dos testes com nova arquitetura
+**Tempo Estimado**: 2 horas
 **Prioridade**: 🔴 Alta (garantir qualidade)
 
 #### 📋 Estratégia de Ajuste:
@@ -1261,8 +1261,8 @@ pytest tests/unit/test_commands.py -v
 
 ### 📚 Fase 10 — Documentação e exemplos
 
-**Objetivo**: Refletir o novo fluxo unificado de Pydantic  
-**Tempo Estimado**: 1 hora  
+**Objetivo**: Refletir o novo fluxo unificado de Pydantic
+**Tempo Estimado**: 1 hora
 **Prioridade**: 🟡 Média (documentação)
 
 #### 📋 Tarefas de Documentação:
@@ -1285,35 +1285,35 @@ from flext_core import FlextCommands
 
 class TestBackwardCompatibility:
     """Garante que APIs antigas continuam funcionando."""
-    
+
     def test_dict_input_still_works(self):
         """Dict input deve funcionar com warning."""
         config_dict = {
             "environment": "production",
             "log_level": "INFO"
         }
-        
+
         with pytest.warns(DeprecationWarning, match="Dict config is deprecated"):
             result = FlextCommands.configure_commands_system(config_dict)
-        
+
         assert result.success
         assert isinstance(result.value, dict)  # Retorna dict se recebeu dict
         assert result.value["environment"] == "production"
-    
+
     def test_model_input_preferred(self):
         """Model input não deve gerar warnings."""
         config = SystemConfigs.CommandsConfig(
             environment="production",
             log_level="INFO"
         )
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter("error")  # Falha se houver warning
             result = FlextCommands.configure_commands_system(config)
-        
+
         assert result.success
         assert isinstance(result.value, SystemConfigs.CommandsConfig)
-    
+
     def test_subproject_simulation(self):
         """Simula uso típico de subprojeto."""
         # Subprojetos geralmente criam dict assim
@@ -1321,11 +1321,11 @@ class TestBackwardCompatibility:
         legacy_config["environment"] = "staging"
         legacy_config["log_level"] = "DEBUG"
         legacy_config["validation_level"] = "strict"
-        
+
         # Deve continuar funcionando
         with pytest.warns(DeprecationWarning):
             result = FlextCommands.configure_commands_system(legacy_config)
-        
+
         assert result.success
         # Validações que subprojetos esperam
         assert result.value["environment"] == "staging"
@@ -1356,28 +1356,28 @@ jobs:
           - flext-ldap
           - flext-observability
         python-version: ['3.11', '3.12', '3.13']
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install flext-core locally
         run: |
           pip install -e .
-      
+
       - name: Clone and test subproject
         run: |
           git clone https://github.com/flext/${{ matrix.subproject }}.git
           cd ${{ matrix.subproject }}
           pip install -e .
-          
+
           # Capturar warnings mas não falhar
           python -W default::DeprecationWarning -m pytest tests/ || true
-          
+
           # Verificar se há erros (não warnings)
           python -W ignore::DeprecationWarning -m pytest tests/
 ```
@@ -1392,7 +1392,7 @@ from pathlib import Path
 
 SUBPROJECTS = [
     "flext-api",
-    "flext-auth", 
+    "flext-auth",
     "flext-ldap",
     "flext-observability",
     "flext-db-oracle",
@@ -1402,14 +1402,14 @@ def test_subproject_imports():
     """Verifica que subprojetos ainda importam corretamente."""
     for project in SUBPROJECTS:
         module_name = project.replace("-", "_")
-        
+
         # Tenta importar cada subprojeto
         result = subprocess.run(
             [sys.executable, "-c", f"import {module_name}"],
             capture_output=True,
             text=True
         )
-        
+
         # Deve importar sem erros (warnings OK)
         assert result.returncode == 0, (
             f"Failed to import {module_name}: {result.stderr}"
@@ -1422,7 +1422,7 @@ def test_subproject_basic_operations():
         "flext_auth": "from flext_auth import authenticate; result = authenticate({})",
         "flext_ldap": "from flext_ldap import LdapClient; client = LdapClient({})",
     }
-    
+
     for module, script in test_scripts.items():
         # Ignora warnings mas falha em erros
         result = subprocess.run(
@@ -1430,7 +1430,7 @@ def test_subproject_basic_operations():
             capture_output=True,
             text=True
         )
-        
+
         assert "Error" not in result.stderr, (
             f"{module} operation failed: {result.stderr}"
         )
@@ -1456,44 +1456,44 @@ def analyze_subproject(project_path: Path) -> Dict:
         "model_configs": 0,
         "migration_progress": 0.0
     }
-    
+
     # Buscar usos de configure_*
     for py_file in project_path.glob("**/*.py"):
         if "test" in str(py_file):
             continue
-            
+
         content = py_file.read_text()
-        
+
         # Contar dict configs
         if "configure_commands_system({" in content:
             stats["dict_configs"] += 1
-        
-        # Contar model configs  
+
+        # Contar model configs
         if "CommandsConfig(" in content:
             stats["model_configs"] += 1
-    
+
     # Calcular progresso
     total = stats["dict_configs"] + stats["model_configs"]
     if total > 0:
         stats["migration_progress"] = (
             stats["model_configs"] / total * 100
         )
-    
+
     return stats
 
 def generate_report():
     """Gera relatório de migração."""
     print("🎯 FLEXT Migration Dashboard")
     print("=" * 50)
-    
+
     subprojects = Path("../").glob("flext-*")
-    
+
     for project in subprojects:
         if project.is_dir() and (project / "pyproject.toml").exists():
             stats = analyze_subproject(project)
-            
+
             status = "✅" if stats["migration_progress"] == 100 else "⚠️"
-            
+
             print(f"\n{status} {stats['name']}")
             print(f"  Dict configs: {stats['dict_configs']}")
             print(f"  Model configs: {stats['model_configs']}")

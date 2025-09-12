@@ -27,7 +27,7 @@ class ProfessionalValidationService(FlextDomainService[object]):
 
     Eliminates ALL duplication by using FlextValidations components directly:
     - FlextValidations.create_user_validator() for user business rules
-    - FlextValidations.Rules.StringRules for string validation
+    - FlextValidations.validate_email for email validation
     - FlextValidations.validate_* convenience methods
     """
 
@@ -110,7 +110,7 @@ class ProfessionalValidationService(FlextDomainService[object]):
         for user_data in test_users:
             # Convert to dict[str, object] for validation API
             user_data_obj = dict[str, object](user_data)
-            result = self._user_validator.validate_business_rules(user_data_obj)
+            result = self._user_validator(user_data_obj)
             if result.is_success:
                 validated = result.unwrap()
                 print(f"✅ Valid: {validated.get('name')} ({validated.get('email')})")
@@ -120,8 +120,8 @@ class ProfessionalValidationService(FlextDomainService[object]):
         return FlextResult[None].ok(None)
 
     def demonstrate_email_validation(self) -> FlextResult[None]:
-        """Demonstrate email validation using FlextValidations.Rules.StringRules DIRECTLY."""
-        print("\n2. Email Validation usando FlextValidations.Rules.StringRules:")
+        """Demonstrate email validation using FlextValidations.validate_email."""
+        print("\n2. Email Validation usando FlextValidations.validate_email:")
 
         emails = [
             "valid@example.com",
@@ -132,7 +132,7 @@ class ProfessionalValidationService(FlextDomainService[object]):
         ]
 
         for email in emails:
-            result = FlextValidations.Rules.StringRules.validate_email(email)
+            result = FlextValidations.validate_email(email)
             status = "✅ Valid" if result.is_success else f"❌ {result.error}"
             print(f"Email {email}: {status}")
 
@@ -145,15 +145,21 @@ class ProfessionalValidationService(FlextDomainService[object]):
         # String field validation using FlextValidations DIRECTLY
         strings = ["Valid String", "", 123]  # Mixed types
         for string_val in strings:
-            result = FlextValidations.validate_string_field(string_val)
-            status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+            string_result = FlextValidations.validate_string_field(string_val)
+            status = (
+                "✅ Valid" if string_result.is_success else f"❌ {string_result.error}"
+            )
             print(f"String '{string_val}': {status}")
 
         # Numeric field validation using FlextValidations DIRECTLY
         numbers = [42, "not a number", math.pi]
         for number in numbers:
-            result = FlextValidations.validate_numeric_field(number)
-            status = "✅ Valid" if result.is_success else f"❌ {result.error}"
+            numeric_result = FlextValidations.validate_numeric_field(number)
+            status = (
+                "✅ Valid"
+                if numeric_result.is_success
+                else f"❌ {numeric_result.error}"
+            )
             print(f"Number '{number}': {status}")
 
         return FlextResult[None].ok(None)

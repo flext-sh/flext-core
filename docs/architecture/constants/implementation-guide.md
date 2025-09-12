@@ -1,7 +1,7 @@
 # FlextConstants Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.constants`  
+**Version**: 0.9.0
+**Module**: `flext_core.constants`
 **Target Audience**: Senior Developers, Software Architects, Platform Engineers
 
 ## Quick Start
@@ -165,7 +165,7 @@ test_user_validation()
 
 ```python
 from flext_core import FlextConstants, FlextResult
-from typing import Dict, object
+from typing import Dict
 
 class ErrorHandler:
     """Comprehensive error handling using FlextConstants error codes."""
@@ -634,7 +634,7 @@ test_meltano_constants()
 ```python
 from flext_core import FlextConstants, FlextResult
 from enum import StrEnum
-from typing import Dict, object, Final
+from typing import Dict, Final
 
 class FlextWebConstants(FlextConstants):
     """Web service constants extending FlextConstants."""

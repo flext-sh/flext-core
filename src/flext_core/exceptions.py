@@ -26,10 +26,10 @@ class FlextExceptions:
         self,
         message: str,
         *,
-        operation: str | None = None,      # POINTLESS: Operation tracking in exceptions
-        field: str | None = None,          # POINTLESS: Field tracking in exceptions
-        config_key: str | None = None,     # POINTLESS: Config key in exceptions
-        error_code: str | None = None,     # OVER-ENGINEERED: Error codes for exceptions
+        operation: str | None = None,  # POINTLESS: Operation tracking in exceptions
+        field: str | None = None,  # POINTLESS: Field tracking in exceptions
+        config_key: str | None = None,  # POINTLESS: Config key in exceptions
+        error_code: str | None = None,  # OVER-ENGINEERED: Error codes for exceptions
         **kwargs: object,
     ) -> FlextExceptions.BaseError:
         """Allow FlextExceptions() to be called directly."""

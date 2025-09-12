@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import time
 
 import pytest
@@ -117,33 +118,29 @@ class TestFlextLogLevel:
     """Test FlextLogLevel enum."""
 
     def test_log_level_values(self) -> None:
-        """Test that log levels have correct string values."""
-        if FlextLogLevel.TRACE != "TRACE":
-            raise AssertionError(f"Expected {'TRACE'}, got {FlextLogLevel.TRACE}")
-        assert FlextLogLevel.DEBUG == "DEBUG"
-        if FlextLogLevel.INFO != "INFO":
-            raise AssertionError(f"Expected {'INFO'}, got {FlextLogLevel.INFO}")
-        assert FlextLogLevel.WARNING == "WARNING"
-        if FlextLogLevel.ERROR != "ERROR":
-            raise AssertionError(f"Expected {'ERROR'}, got {FlextLogLevel.ERROR}")
-        assert FlextLogLevel.CRITICAL == "CRITICAL"
+        """Test standard logging levels - FlextLogLevel was removed."""
+        # Test standard Python logging levels instead of removed FlextLogLevel
+        assert logging.getLevelName(logging.DEBUG) == "DEBUG"
+        assert logging.getLevelName(logging.INFO) == "INFO"
+        assert logging.getLevelName(logging.WARNING) == "WARNING"
+        assert logging.getLevelName(logging.ERROR) == "ERROR"
+        assert logging.getLevelName(logging.CRITICAL) == "CRITICAL"
 
     def test_log_level_membership(self) -> None:
-        """Test log level membership."""
+        """Test standard logging level membership - FlextLogLevel was removed."""
+        # Test standard Python logging levels instead of removed FlextLogLevel
         all_levels = [
-            FlextLogLevel.TRACE,
-            FlextLogLevel.DEBUG,
-            FlextLogLevel.INFO,
-            FlextLogLevel.WARNING,
-            FlextLogLevel.ERROR,
-            FlextLogLevel.CRITICAL,
+            logging.DEBUG,
+            logging.INFO,
+            logging.WARNING,
+            logging.ERROR,
+            logging.CRITICAL,
         ]
 
+        # Validate that all levels are valid Python logging levels
         for level in all_levels:
-            if level not in FlextLogLevel.__dict__.values():
-                raise AssertionError(
-                    f"Expected {level} in {FlextLogLevel.__dict__.values()}",
-                )
+            assert isinstance(level, int), f"Level {level} should be an integer"
+            assert level >= 0, f"Level {level} should be non-negative"
 
 
 class TestFlextLogger:

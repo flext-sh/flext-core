@@ -10,19 +10,25 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
-from typing import TypeVar, cast
+from typing import Protocol, TypeVar, cast
 
 import pytest
 
 from flext_core.typings import FlextTypes
 from flext_tests import FlextTestsAsyncs, FlextTestsMatchers
 
-T = TypeVar("T")
+T_co = TypeVar("T_co", covariant=True)
 
-# Type alias for async mock functions
-AsyncMockCallable = Callable[..., Awaitable[T]]
+
+class AsyncMockCallable(Protocol[T_co]):
+    """Protocol for async mock callables."""
+
+    def __call__(self, *args: object, **kwargs: object) -> Awaitable[T_co]:
+        """Call the async mock function."""
+        ...
+
 
 # Type alias for async context managers
 AsyncTestContext = AbstractAsyncContextManager[object]
@@ -210,7 +216,7 @@ class TestAsyncMockUtils:
     async def test_create_async_mock_with_return_value(self) -> None:
         """Test creating async mock with return value."""
         mock = cast(
-            "AsyncMockCallable",
+            "AsyncMockCallable[str]",
             FlextTestsAsyncs.create_async_mock(return_value="test_result"),
         )
         result = await mock()
@@ -220,7 +226,7 @@ class TestAsyncMockUtils:
     async def test_create_async_mock_with_side_effect_list(self) -> None:
         """Test async mock with list of side effects."""
         mock = cast(
-            "AsyncMockCallable",
+            "AsyncMockCallable[int]",
             FlextTestsAsyncs.create_async_mock_with_side_effect(side_effect=[1, 2, 3]),
         )
 
@@ -232,7 +238,7 @@ class TestAsyncMockUtils:
     async def test_create_async_mock_with_side_effect_exception(self) -> None:
         """Test async mock that raises exception."""
         mock = cast(
-            "AsyncMockCallable",
+            "AsyncMockCallable[object]",
             FlextTestsAsyncs.create_async_mock(side_effect=ValueError("Test error")),
         )
 
@@ -250,7 +256,7 @@ class TestAsyncMockUtils:
             return call_count
 
         mock = cast(
-            "AsyncMockCallable",
+            "AsyncMockCallable[int]",
             FlextTestsAsyncs.create_async_mock_with_side_effect(
                 side_effect=side_effect_func
             ),
@@ -279,7 +285,7 @@ class TestAsyncMockUtils:
     async def test_create_flaky_mock(self) -> None:
         """Test creating flaky mock that fails initially."""
         mock = cast(
-            "AsyncMockCallable",
+            "AsyncMockCallable[str]",
             FlextTestsAsyncs.create_flaky_async_mock(
                 success_value="success",
                 failure_count=2,

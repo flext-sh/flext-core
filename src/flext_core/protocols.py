@@ -523,7 +523,7 @@ class FlextProtocols:
             def process(
                 self,
                 request: object,
-                next_handler: Callable[[object], object],
+                _next_handler: Callable[[object], object],
             ) -> object:
                 """Process request with middleware logic."""
                 ...
@@ -534,7 +534,7 @@ class FlextProtocols:
             async def process_async(
                 self,
                 request: object,
-                next_handler: Callable[[object], Awaitable[object]],
+                _next_handler: Callable[[object], Awaitable[object]],
             ) -> object:
                 """Process request asynchronously."""
                 ...
@@ -547,7 +547,7 @@ class FlextProtocols:
                 self,
                 name: str,
                 value: float,
-                tags: FlextTypes.Core.Headers | None = None,
+                _tags: FlextTypes.Core.Headers | None = None,
             ) -> object:
                 """Record metric value."""
                 ...

@@ -1,8 +1,8 @@
 # ETL Processing CQRS Examples
 
-**Version**: 1.0  
-**Target**: Data Engineers, ETL Developers  
-**Framework**: Meltano, Apache Airflow, Custom ETL  
+**Version**: 1.0
+**Target**: Data Engineers, ETL Developers
+**Framework**: Meltano, Apache Airflow, Custom ETL
 **Complexity**: Advanced
 
 ## 📋 Overview
@@ -24,7 +24,7 @@ This document provides practical examples of implementing FlextCommands CQRS pat
 ### Extract from Database Source
 
 ```python
-from typing import Dict, List, object, Optional
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 from flext_core import FlextCommands, FlextResult
 from enum import Enum
@@ -641,7 +641,7 @@ class TransformDataHandler(FlextCommands.Handlers.CommandHandler[TransformDataCo
                 if not expression:
                     return FlextResult[pd.DataFrame].fail("expression parameter required")
 
-              
+
                 data[rule.target_column] = data.eval(expression)
                 return FlextResult[pd.DataFrame].ok(data)
 

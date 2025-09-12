@@ -355,9 +355,13 @@ class FlextContainer:
         @staticmethod
         def _validate_service_name(name: str) -> FlextResult[str]:
             """Validate service name."""
-            if not FlextContainer.flext_validate_service_name(name):
-                return FlextResult[str].fail(FlextConstants.Messages.SERVICE_NAME_EMPTY)
-            return FlextResult[str].ok(name)
+            validation_result = FlextContainer.flext_validate_service_name(name)
+            if validation_result.is_failure:
+                return FlextResult[str].fail(
+                    validation_result.error
+                    or FlextConstants.Messages.SERVICE_NAME_EMPTY
+                )
+            return FlextResult[str].ok(name.strip())
 
         def register_service(
             self,
@@ -366,14 +370,14 @@ class FlextContainer:
         ) -> FlextResult[None]:
             """Register service instance."""
             # Fast path: simple validation without FlextResult overhead
-            if not name or not name.strip():
+            if not FlextUtilities.Validation.is_non_empty_string(name):
                 return FlextResult[None].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
 
             validated_name = name.strip()
 
-            # Store service in registry
+            # Store service in registry (overwrites are allowed)
             self._services[validated_name] = service
             return FlextResult[None].ok(None)
 
@@ -487,13 +491,17 @@ class FlextContainer:
         @staticmethod
         def _validate_service_name(name: str) -> FlextResult[str]:
             """Validate service name."""
-            if not FlextContainer.flext_validate_service_name(name):
-                return FlextResult[str].fail(FlextConstants.Messages.SERVICE_NAME_EMPTY)
-            return FlextResult[str].ok(name)
+            validation_result = FlextContainer.flext_validate_service_name(name)
+            if validation_result.is_failure:
+                return FlextResult[str].fail(
+                    validation_result.error
+                    or FlextConstants.Messages.SERVICE_NAME_EMPTY
+                )
+            return FlextResult[str].ok(name.strip())
 
         def get_service(self, name: str) -> FlextResult[object]:
             """Retrieve a registered service - Performance optimized."""
-            if not name or not name.strip():
+            if not FlextUtilities.Validation.is_non_empty_string(name):
                 return FlextResult[object].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
@@ -539,7 +547,7 @@ class FlextContainer:
                 A FlextResult containing the information about the service or factory.
 
             """
-            if not name or not name.strip():
+            if not FlextUtilities.Validation.is_non_empty_string(name):
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
                 )
@@ -630,6 +638,7 @@ class FlextContainer:
         self._database_config: FlextTypes.Core.Dict | None = None
         self._security_config: FlextTypes.Core.Dict | None = None
         self._logging_config: FlextTypes.Core.Dict | None = None
+        self._flext_config: FlextConfig | None = None
 
         # Simplified command bus - can be extended later
         self._command_bus = None
@@ -699,8 +708,7 @@ class FlextContainer:
         try:
             # Handle case when no config is set
             if self._flext_config is None:
-                # This branch returns early, so code after this if block is unreachable when config is None
-                default_config: dict[str, object] = {  # type: ignore[unreachable]
+                default_config: dict[str, object] = {
                     "environment": "development",
                     "max_services": 1000,  # Map to max_services for compatibility
                     "max_workers": 4,
@@ -743,8 +751,7 @@ class FlextContainer:
         try:
             # Handle case when no config is set
             if self._flext_config is None:
-                # This branch returns early, so code after this if block is unreachable when config is None
-                summary: dict[str, object] = {  # type: ignore[unreachable]
+                summary: dict[str, object] = {
                     "container_config": {"status": "default"},
                     "environment_info": {
                         "environment": "development",
@@ -900,6 +907,11 @@ class FlextContainer:
                     "type": "instance",
                     "class": type(service).__name__,
                 }
+
+                # If service is a dict, include its data
+                if isinstance(service, dict):
+                    service_info.update(service)
+
                 return FlextResult[FlextTypes.Core.Dict].ok(service_info)
             if name in self._registrar.get_factories_dict():
                 factory = self._registrar.get_factories_dict()[name]

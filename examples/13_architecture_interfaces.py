@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 
 from flext_core import (
-    FlextHandlers,
+    FlextCommands,
     FlextLogger,
     FlextProtocols,
     FlextResult,
@@ -52,7 +52,7 @@ class User:
             return FlextResult[User].fail("Name must be 2-100 characters")
 
         # Validate email using existing FlextValidations
-        email_result = FlextValidations.Rules.StringRules.validate_email(email)
+        email_result = FlextValidations.validate_email(email)
         if email_result.is_failure:
             return FlextResult[User].fail("Invalid email format")
 
@@ -262,7 +262,7 @@ class CreateUserCommand:
         self.command_id = FlextUtilities.Generators.generate_correlation_id()
 
 
-class CreateUserHandler(FlextHandlers.CQRS.CommandHandler[CreateUserCommand, User]):
+class CreateUserHandler(FlextCommands.Handlers.CommandHandler[CreateUserCommand, User]):
     """Create user command handler using FlextCore."""
 
     def __init__(self, user_service: UserService) -> None:
@@ -300,7 +300,7 @@ class CreateUserHandler(FlextHandlers.CQRS.CommandHandler[CreateUserCommand, Use
 
         return user_result
 
-    def can_handle(self, command_type: type) -> bool:
+    def can_handle(self, command_type: object) -> bool:
         """Check if handler can execute command type."""
         return command_type is CreateUserCommand
 

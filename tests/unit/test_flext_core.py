@@ -1,10 +1,19 @@
-"""Testes para FlextCore.
+"""Testes para FlextCore - REFACTORED to test proper API usage.
+
+BEFORE: Tests verified God Object anti-pattern (core.Models, core.Validations, etc.)
+AFTER: Tests verify proper direct imports and essential FlextCore functionality only.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextCore, FlextResult
+from flext_core import (
+    FlextCore,
+    FlextModels,
+    FlextResult,
+    FlextUtilities,
+    FlextValidations,
+)
 
 
 class TestFlextCore:
@@ -44,26 +53,31 @@ class TestFlextCore:
         assert isinstance(core.entity_id, str)
         assert len(core.entity_id) > 0
 
-    def test_direct_access_to_classes(self) -> None:
-        """Testa acesso direto às classes aninhadas - padrão FLEXT."""
-        core = FlextCore.get_instance()
+    def test_direct_imports_instead_of_god_object(self) -> None:
+        """Testa que classes devem ser importadas diretamente - NÃO através de God Object."""
+        # CORRETO: Importar diretamente
+        assert FlextResult is not None
+        assert FlextModels is not None
+        assert FlextValidations is not None
+        assert FlextUtilities is not None
 
-        # Verificar que todas as classes estão disponíveis
+        # FlextCore deve ter apenas funcionalidade essencial - session management
+        core = FlextCore.get_instance()
+        assert hasattr(core, "entity_id")
+        assert hasattr(core, "container")
+        assert hasattr(core, "_session_id")
+
+        # Interface atual está disponível
         assert hasattr(core, "Models")
         assert hasattr(core, "Validations")
         assert hasattr(core, "Utilities")
-        assert hasattr(core, "Container")
-        assert hasattr(core, "Result")
-        assert hasattr(core, "Config")
-        assert hasattr(core, "Logger")
-        assert hasattr(core, "Constants")
+        # Use: from flext_core import FlextModels, FlextValidations, FlextUtilities ou core.Models, etc.
 
     def test_create_email_address_success(self) -> None:
-        """Testa criação de email válido através das classes aninhadas."""
-        core = FlextCore.get_instance()
+        """Testa criação de email válido através de importação direta."""
 
-        # EmailAddress was removed - use Value object pattern instead
-        class Email(core.Models.Value):
+        # CORRETO: Usar importação direta ao invés de God Object
+        class Email(FlextModels.Value):
             address: str
 
         try:
@@ -80,20 +94,19 @@ class TestFlextCore:
 
     def test_create_email_address_failure(self) -> None:
         """Testa criação de email inválido."""
-        core = FlextCore.get_instance()
 
-        # EmailAddress was removed - use Value object pattern instead
-        class Email(core.Models.Value):
+        # CORRETO: Usar importação direta ao invés de God Object
+        class Email(FlextModels.Value):
             address: str
 
-            def validate(self) -> FlextResult[None]:
+            def validate_email(self) -> FlextResult[None]:
                 if "@" not in self.address:
                     return FlextResult[None].fail("Invalid email")
                 return FlextResult[None].ok(None)
 
         try:
             email = Email(address="invalid_email")
-            validation = email.validate()
+            validation = email.validate_email()
             if validation.is_failure:
                 result = FlextResult[Email].fail(validation.error or "Invalid email")
             else:
@@ -105,38 +118,50 @@ class TestFlextCore:
         assert result.error is not None
         assert len(result.error) > 0
 
-    def test_validations_access(self) -> None:
-        """Testa acesso à classe Validations através do core."""
-        core = FlextCore.get_instance()
+    def test_validations_facade_access(self) -> None:
+        """Testa acesso via fachada FlextCore - ÚTIL para acesso unificado."""
+        # CORRETO: Importar diretamente quando necessário
+        assert hasattr(FlextValidations, "validate_string")
+        assert hasattr(FlextValidations, "validate_number")
 
-        # Validations deve estar disponível
+        # Interface atual está disponível
+        core = FlextCore.get_instance()
         assert hasattr(core, "Validations")
-        assert hasattr(core.Validations, "validate_string")
-        assert hasattr(core.Validations, "validate_number")
+        # Use: from flext_core import FlextValidations ou core.Validations
 
-    def test_utilities_access(self) -> None:
-        """Testa acesso à classe Utilities através do core."""
+    def test_utilities_facade_access(self) -> None:
+        """Testa acesso via fachada FlextCore - ÚTIL para acesso unificado."""
+        # CORRETO: Importar diretamente quando necessário
+        assert hasattr(FlextUtilities, "Generators")
+        assert hasattr(FlextUtilities, "TextProcessor")
+
+        # Interface atual está disponível
         core = FlextCore.get_instance()
-
-        # Utilities deve estar disponível
         assert hasattr(core, "Utilities")
+        # Use: from flext_core import FlextUtilities ou core.Utilities
 
-    def test_container_access(self) -> None:
-        """Testa acesso ao Container através do core."""
+    def test_container_direct_access(self) -> None:
+        """Testa acesso direto ao container - funcionalidade essencial mantida."""
         core = FlextCore.get_instance()
 
-        # Container deve estar disponível
-        assert hasattr(core, "Container")
-        assert hasattr(core.Container, "get_global")
+        # Container access através da propriedade container é mantido (funcionalidade essencial)
+        assert hasattr(core, "container")
+        assert core.container is not None
 
-    def test_result_access(self) -> None:
-        """Testa acesso à classe Result através do core."""
+        # Interface atual está disponível
+        assert hasattr(core, "Container")  # Existe
+        # Use: from flext_core import FlextContainer ou core.Container
+
+    def test_result_direct_import(self) -> None:
+        """Testa importação direta de FlextResult - CORRETO ao invés de God Object."""
+        # CORRETO: Importar diretamente quando necessário
+        assert callable(FlextResult.ok)
+        assert callable(FlextResult.fail)
+
+        # Interface atual está disponível
         core = FlextCore.get_instance()
-
-        # Result deve estar disponível
         assert hasattr(core, "Result")
-        assert callable(core.Result.ok)
-        assert callable(core.Result.fail)
+        # Use: from flext_core import FlextResult ou core.Result
 
     def test_cleanup_operation(self) -> None:
         """Testa operação de cleanup do core."""
@@ -146,19 +171,17 @@ class TestFlextCore:
 
         assert result.success
 
-    def test_railway_pattern_with_result_class(self) -> None:
-        """Testa padrão railway usando a classe Result acessível."""
-        core = FlextCore.get_instance()
-
-        # Usar FlextResult para railway pattern
-        success_result = core.Result.ok(42)
+    def test_railway_pattern_with_direct_result(self) -> None:
+        """Testa padrão railway usando importação direta - CORRETO."""
+        # CORRETO: Usar importação direta ao invés de God Object
+        success_result = FlextResult.ok(42)
         mapped_result = success_result.map(lambda x: x * 2)
 
         assert mapped_result.success
         assert mapped_result.unwrap() == 84
 
         # Teste com falha
-        fail_result = core.Result[int].fail("Error occurred")
+        fail_result = FlextResult[int].fail("Error occurred")
         mapped_fail = fail_result.map(lambda x: x * 2)
 
         assert mapped_fail.failure

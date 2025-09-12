@@ -24,17 +24,15 @@ import contextlib
 from collections.abc import Callable, Iterator
 from typing import TypeGuard, TypeVar, cast, overload, override
 
-# Removed Pydantic imports - use existing utilities instead of duplicating
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes
+from flext_core.typings import FlextTypes, U, V
 
 # Local type variables for backward compatibility with existing methods
+
 T_co = TypeVar("T_co", covariant=True)  # Covariant type variable for type compatibility
-U = TypeVar("U")  # Generic type variable for transformations
 TUtil = TypeVar("TUtil")  # Utility type variable
 TItem = TypeVar("TItem")  # Item type variable
 TResult = TypeVar("TResult")  # Result type variable
-V = TypeVar("V")  # Additional type variable
 T1 = TypeVar("T1")  # First type variable for multi-arg functions
 T2 = TypeVar("T2")  # Second type variable for multi-arg functions
 T3 = TypeVar("T3")  # Third type variable for multi-arg functions
@@ -161,9 +159,11 @@ class FlextResult[T_co]:
         return cast("T_co", self._data)
 
     @property
-    def data(self) -> T_co:
-        """Alias for value property."""
-        return self.value
+    def data(self) -> T_co | None:
+        """Legacy API - returns value if success, None if failure."""
+        if self.is_success:
+            return self.value
+        return None
 
     @property
     def error(self) -> str | None:
@@ -344,9 +344,9 @@ class FlextResult[T_co]:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: object,
     ) -> None:
         """Context manager exit."""
         return
@@ -837,6 +837,10 @@ class FlextResult[T_co]:
             return FlextResult[dict[str, object]]
 
         type Success = object  # Generic success type without FlextResult dependency
+
+    # ==========================================================================
+    # COLLECTION AND TRAVERSAL OPERATIONS - Real functional programming patterns
+    # ==========================================================================
 
 
 __all__: list[str] = [

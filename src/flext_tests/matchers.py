@@ -302,7 +302,7 @@ class FlextTestsMatchers:
             )
 
         @staticmethod
-        def assert_no_deadfixtures(test_module: object) -> None:
+        def assert_no_deadfixtures(_test_module: object) -> None:
             """Assert no dead fixtures in test module (uses pytest-deadfixtures).
 
             Args:
@@ -368,8 +368,8 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_async_result(
-            async_result: object,
-            timeout_seconds: float = 5.0,
+            _async_result: object,
+            _timeout_seconds: float = 5.0,
         ) -> None:
             """Assert async operation completes within timeout.
 
@@ -759,9 +759,9 @@ class FlextTestsMatchers:
 
             async def __aexit__(
                 self,
-                exc_type: type[BaseException] | None,
-                exc_val: BaseException | None,
-                exc_tb: object,
+                _exc_type: type[BaseException] | None,
+                _exc_val: BaseException | None,
+                _exc_tb: object,
             ) -> None:
                 """__aexit__ method."""
                 if self.cleanup_func and callable(self.cleanup_func):
@@ -799,9 +799,9 @@ class FlextTestsMatchers:
 
             async def __aexit__(
                 self,
-                exc_type: type[BaseException] | None,
-                exc_val: BaseException | None,
-                exc_tb: object,
+                _exc_type: type[BaseException] | None,
+                _exc_val: BaseException | None,
+                _exc_tb: object,
             ) -> None:
                 """__aexit__ method."""
                 if self.teardown_func and self.resource is not None:

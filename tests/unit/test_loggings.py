@@ -23,7 +23,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import NoReturn, cast
 
-# Mock imports removed - using real functionality only
 import pytest
 import structlog
 from structlog.testing import LogCapture
@@ -31,8 +30,8 @@ from structlog.testing import LogCapture
 from flext_core import (
     FlextContext,
     FlextLogger,
+    FlextTypes,
 )
-from flext_core.typings import FlextTypes
 
 pytestmark = [pytest.mark.unit, pytest.mark.core]
 
@@ -80,12 +79,13 @@ def reset_logging_state() -> Generator[None]:
 class TestFlextLoggerInitialization:
     """Test FlextLogger initialization and basic functionality."""
 
+    @pytest.mark.usefixtures("logging_test_env")
     def test_logger_creation_basic(self) -> None:
         """Test basic logger creation with default parameters."""
         logger = FlextLogger("test_logger")
 
         assert logger._name == "test_logger"
-        assert logger._level == "WARNING"  # From .env file
+        assert logger._level == "WARNING"  # From test environment
         assert logger._service_name == "flext-core"
         assert logger._service_version is not None
         assert logger._correlation_id is not None
@@ -858,6 +858,7 @@ class TestLoggingConfiguration:
 class TestAdvancedLoggingFeatures:
     """Test advanced logging features and edge cases for comprehensive coverage."""
 
+    @pytest.mark.usefixtures("logging_test_env")
     def test_invalid_log_level_during_initialization(self) -> None:
         """Test handling of invalid log level during logger initialization."""
         # Test with invalid log level - should default to INFO
@@ -869,7 +870,7 @@ class TestAdvancedLoggingFeatures:
         )
 
         # Should default to INFO level
-        assert logger._level == "WARNING"  # From .env file
+        assert logger._level == "WARNING"  # From test environment
 
     def test_calling_function_extraction_error_handling(self) -> None:
         """Test error handling when extracting calling function information."""
@@ -983,6 +984,7 @@ class TestAdvancedLoggingFeatures:
         # Should log both start and completion
         assert len(output.entries) >= 2
 
+    @pytest.mark.usefixtures("logging_test_env")
     def test_log_level_validation_edge_cases(self) -> None:
         """Test log level validation with various edge cases."""
         # Test with invalid level - should default to INFO
@@ -990,14 +992,18 @@ class TestAdvancedLoggingFeatures:
         logger = FlextLogger(
             "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "INVALID_LEVEL")
         )
-        assert logger._level == "WARNING"  # From .env file  # Should default to INFO
+        assert (
+            logger._level == "WARNING"
+        )  # From test environment  # Should default to INFO
 
         # Test with empty string level - should default to INFO
         # Test with empty string level - should default to INFO
         logger = FlextLogger(
             "level_edge_test", level=cast("FlextTypes.Config.LogLevel", "")
         )
-        assert logger._level == "WARNING"  # From .env file  # Should default to INFO
+        assert (
+            logger._level == "WARNING"
+        )  # From test environment  # Should default to INFO
 
         # Test with lowercase valid level - should convert to uppercase
         # Test with lowercase valid level - should convert to uppercase

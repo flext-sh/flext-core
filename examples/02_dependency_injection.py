@@ -13,7 +13,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore, FlextDomainService, FlextResult
+from flext_core import (
+    FlextContainer,
+    FlextCore,
+    FlextDomainService,
+    FlextResult,
+    FlextUtilities,
+    FlextValidations,
+)
 
 
 class ProfessionalDependencyInjectionService(FlextDomainService[dict[str, object]]):
@@ -30,7 +37,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[dict[str, object
         """Initialize service with FlextCore facade."""
         super().__init__()
         self._core = FlextCore()
-        self._container = self._core.Container.get_global()
+        self._container = FlextContainer.get_global()
         self._users: dict[str, dict[str, object]] = {}
 
     def setup_container(self) -> FlextResult[None]:
@@ -41,7 +48,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[dict[str, object
             return FlextResult[None].fail("Failed to register user storage")
 
         # Register validator
-        validator = self._core.Validations.create_user_validator()
+        validator = FlextValidations.create_user_validator()
         validator_result = self._container.register("validator", validator)
         if validator_result.is_failure:
             return FlextResult[None].fail("Failed to register validator")
@@ -53,7 +60,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[dict[str, object
     ) -> FlextResult[dict[str, object]]:
         """Create a new user with validation using FlextCore utilities."""
         # Use FlextValidations for email validation
-        email_validation = self._core.Validations.validate_email(email)
+        email_validation = FlextValidations.validate_email(email)
         if email_validation.is_failure:
             return FlextResult[dict[str, object]].fail("Invalid email format")
 
@@ -76,7 +83,7 @@ class ProfessionalDependencyInjectionService(FlextDomainService[dict[str, object
             return FlextResult[dict[str, object]].fail(f"User {email} already exists")
 
         # Use FlextUtilities for UUID generation
-        user_id = f"user_{self._core.Utilities.Generators.generate_uuid()[:8]}"
+        user_id = f"user_{FlextUtilities.Generators.generate_id()[:8]}"
         user = {
             "id": user_id,
             "name": name,

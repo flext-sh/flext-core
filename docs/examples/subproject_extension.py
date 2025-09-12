@@ -53,7 +53,7 @@ class ApiEndpointConfig(FlextModels.Config):
         return v
 
 
-class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
+class ApiConfig(FlextModels.SystemConfigs.SecurityConfig):
     """Extended configuration for API service.
 
     This demonstrates:
@@ -63,6 +63,10 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
     4. Environment-specific adjustments
     5. Nested configuration models
     """
+
+    # Configuration fields that were expected
+    environment: str = Field(default="development")
+    log_level: str = Field(default="INFO")
 
     # API-specific fields
     api_version: str = Field(default="v1", pattern=r"^v\d+$")
@@ -129,7 +133,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
     def validate_environment_settings(self) -> ApiConfig:
         """Apply environment-specific validation and adjustments."""
         # Production requirements
-        if self.environment == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value:
+        if self.environment == "production":
             # Enforce security in production
             if not self.api_key:
                 msg = "api_key is required in production"

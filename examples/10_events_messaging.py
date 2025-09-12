@@ -40,12 +40,12 @@ def demonstrate_basic_payload_creation() -> None:
         data=user_data,
         source_service="user_service",
         message_type="user_registered",
-        headers={"version": "1.0", "timestamp": time.time()},
+        metadata={"version": "1.0", "timestamp": time.time()},
     )
 
     print(f"User ID: {user_payload.data['id']}")
-    print(f"Headers: {user_payload.headers}")
-    print(f"Priority: {user_payload.priority}")
+    print(f"Metadata: {user_payload.metadata}")
+    print(f"Created: {user_payload.timestamp}")
 
 
 def demonstrate_message_routing() -> None:
@@ -56,15 +56,18 @@ def demonstrate_message_routing() -> None:
     order_payload = FlextModels.Payload[FlextTypes.Core.Dict](
         data={"order_id": "ORD001", "amount": 99.99},
         source_service="order_service",
-        target_service="payment_service",
         message_type="process_payment",
-        priority=8,  # High priority
-        headers={"correlation_id": "req_456"},
+        metadata={
+            "target_service": "payment_service",
+            "priority": 8,
+            "correlation_id": "req_456",
+        },
     )
 
     print(f"Order: {order_payload.data}")
-    print(f"Route: {order_payload.source_service} → {order_payload.target_service}")
-    print(f"Priority: {order_payload.priority}")
+    print(f"Source: {order_payload.source_service}")
+    print(f"Target: {order_payload.metadata.get('target_service', 'unknown')}")
+    print(f"Priority: {order_payload.metadata.get('priority', 1)}")
     print(f"Created: {order_payload.timestamp}")
 
 
@@ -73,7 +76,7 @@ def demonstrate_event_messaging() -> None:
     print("\n=== Event Messaging ===")
 
     # Domain event
-    event_data: FlextTypes.Core.JsonObject = {
+    event_data: dict[str, object] = {
         "user_id": "user123",
         "action": "profile_updated",
         "fields_changed": ["email", "phone"],
@@ -81,20 +84,13 @@ def demonstrate_event_messaging() -> None:
     }
 
     domain_event = FlextModels.Event(
-        data=event_data,
-        source_service="user_service",
-        message_type="domain_event",
-        aggregate_id="user123",
-        aggregate_type="User",
-        headers={
-            "event_type": "UserProfileUpdated",
-            "version": "1",
-        },
+        event_type="UserProfileUpdated",
+        payload=event_data,
     )
 
-    print(f"Event: {domain_event.headers['event_type']}")
-    print(f"User: {domain_event.data['user_id']}")
-    print(f"Changes: {domain_event.data['fields_changed']}")
+    print(f"Event Type: {domain_event.event_type}")
+    print(f"User: {domain_event.payload['user_id']}")
+    print(f"Changes: {domain_event.payload['fields_changed']}")
 
 
 def demonstrate_payload_properties() -> None:
@@ -106,17 +102,17 @@ def demonstrate_payload_properties() -> None:
     expire_time = datetime.now(UTC) + timedelta(minutes=5)
 
     temp_message = FlextModels.Message(
-        data={"content": "Temporary notification", "type": "info"},
-        source_service="notification_service",
+        content="Temporary notification",
         message_type="temp_notification",
-        expires_at=expire_time,
-        retry_count=0,
+        priority="normal",
+        target_service="notification_service",
+        headers={"type": "info", "expires_at": expire_time.isoformat()},
     )
 
-    print(f"Message: {temp_message.data}")
+    print(f"Message: {temp_message.content}")
     print(f"Created: {temp_message.timestamp}")
-    print(f"Expires: {temp_message.expires_at}")
-    print(f"Retries: {temp_message.retry_count}")
+    print(f"Type: {temp_message.headers.get('type', 'unknown')}")
+    print(f"Priority: {temp_message.priority}")
 
 
 def demonstrate_typed_payloads() -> None:
@@ -150,16 +146,17 @@ def demonstrate_message_specialization() -> None:
     """Show the specialized Message class."""
     print("\n=== Specialized Message Class ===")
 
-    # Message is a specialized Payload for JSON data
+    # Message is a specialized class for simple string content
     json_message = FlextModels.Message(
-        data={"content": "This is a JSON message", "level": "info"},
+        content='{"content": "This is a JSON message", "level": "info"}',
         source_service="logger_service",
         message_type="log_message",
     )
 
-    print(f"JSON Message: {json_message.data}")
-    print(f"Content: {json_message.data['content']}")
-    print(f"Level: {json_message.data['level']}")
+    print(f"JSON Message: {json_message.content}")
+    print(f"Source: {json_message.source_service}")
+    print(f"Type: {json_message.message_type}")
+    print(f"Priority: {json_message.priority}")
 
 
 def main() -> None:

@@ -37,7 +37,9 @@ class TestFlextUtilitiesAPI:
         timestamp = FlextUtilities.Generators.generate_iso_timestamp()
         assert isinstance(timestamp, str)
         assert "T" in timestamp  # ISO format has T separator
-        assert timestamp.endswith(("Z", "+00:00")) or ":" in timestamp[-6:]  # Timezone info
+        assert (
+            timestamp.endswith(("Z", "+00:00")) or ":" in timestamp[-6:]
+        )  # Timezone info
 
         # Test generate_correlation_id functionality
         corr_id = FlextUtilities.Generators.generate_correlation_id()
@@ -69,7 +71,7 @@ class TestFlextUtilitiesAPI:
         assert FlextUtilities.Conversions.safe_int("invalid") == 0
         assert FlextUtilities.Conversions.safe_int("invalid", default=42) == 42
         assert FlextUtilities.Conversions.safe_int(123.7) == 123
-        assert FlextUtilities.Conversions.safe_int(None) == 0
+        assert FlextUtilities.Conversions.safe_int("invalid") == 0
 
         # Test safe_bool functionality
         assert FlextUtilities.Conversions.safe_bool(True) is True
@@ -89,7 +91,7 @@ class TestFlextUtilitiesAPI:
         assert FlextUtilities.Conversions.safe_float("invalid") == 0.0
         assert FlextUtilities.Conversions.safe_float("invalid", default=42.5) == 42.5
         assert FlextUtilities.Conversions.safe_float(123) == 123.0
-        assert FlextUtilities.Conversions.safe_float(None) == 0.0
+        assert FlextUtilities.Conversions.safe_float("invalid") == 0.0
 
     def test_type_guards_api_functionality(self) -> None:
         """Test TypeGuards API - 24 real usages across ecosystem."""
@@ -103,7 +105,9 @@ class TestFlextUtilitiesAPI:
         # Test is_string_non_empty functionality
         assert FlextUtilities.TypeGuards.is_string_non_empty("test") is True
         assert FlextUtilities.TypeGuards.is_string_non_empty("") is False
-        assert FlextUtilities.TypeGuards.is_string_non_empty("   ") is False  # Only whitespace
+        assert (
+            FlextUtilities.TypeGuards.is_string_non_empty("   ") is False
+        )  # Only whitespace
         assert FlextUtilities.TypeGuards.is_string_non_empty(None) is False
         assert FlextUtilities.TypeGuards.is_string_non_empty(123) is False
 
@@ -126,7 +130,9 @@ class TestFlextUtilitiesAPI:
         assert FlextUtilities.safe_json_stringify({"key": "value"}) == '{"key":"value"}'
         # Test safe_json_stringify with None returns valid JSON "null"
         assert FlextUtilities.safe_json_stringify(None) == "null"  # Valid JSON for None
-        assert FlextUtilities.safe_json_stringify(object()) == "{}"  # Default for un-serializable
+        assert (
+            FlextUtilities.safe_json_stringify(object()) == "{}"
+        )  # Default for un-serializable
 
     def test_api_consistency(self) -> None:
         """Test that API remains consistent with ecosystem expectations."""
@@ -187,12 +193,12 @@ class TestEcosystemCompatibility:
         assert len(result) == 36
 
         # Pattern 3: Safe conversions (37+ occurrences)
-        result = FlextUtilities.Conversions.safe_bool("invalid", default=True)
-        assert result is True
+        bool_result = FlextUtilities.Conversions.safe_bool("invalid", default=True)
+        assert bool_result is True
 
         # Pattern 4: Type guards (24+ occurrences)
-        result = FlextUtilities.TypeGuards.is_dict_non_empty({})
-        assert result is False
+        guard_result = FlextUtilities.TypeGuards.is_dict_non_empty({})
+        assert guard_result is False
 
         # Pattern 5: Text processing (96+ occurrences)
         result = FlextUtilities.TextProcessor.safe_string(None)

@@ -1,8 +1,8 @@
 # API Endpoints CQRS Examples
 
-**Version**: 1.0  
-**Target**: Backend Developers  
-**Framework**: FastAPI, Flask  
+**Version**: 1.0
+**Target**: Backend Developers
+**Framework**: FastAPI, Flask
 **Complexity**: Intermediate
 
 ## 📋 Overview
@@ -691,7 +691,7 @@ async def bulk_update_users(request: dict):
 
 ```python
 from enum import Enum
-from typing import Dict, object
+from typing import Dict
 
 class ErrorCode(Enum):
     VALIDATION_ERROR = "VALIDATION_ERROR"

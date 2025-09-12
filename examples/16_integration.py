@@ -15,11 +15,11 @@ from typing import cast
 
 from flext_core import (
     FlextContainer,
-    FlextFields,
     FlextLogger,
     FlextModels,
     FlextResult,
     FlextTypes,
+    FlextValidations,
 )
 
 # Email validation constants using proper FlextTypes annotations
@@ -95,7 +95,12 @@ def _setup_logger() -> FlextLogger:
 
 
 def _shared_domain_vo_demo() -> tuple[FlextModels.EmailAddress, Money]:
-    email = FlextModels.EmailAddress(root="customer@example.com")
+    email_result = FlextModels.EmailAddress.create("customer@example.com")
+    if email_result.is_failure:
+        error_msg = f"Invalid email: {email_result.error}"
+        raise ValueError(error_msg)
+    # After checking is_failure, we know data is not None
+    email = cast("FlextModels.EmailAddress", email_result.data)
     money = Money(amount=Decimal("100.0"), currency="USD")
     return email, money
 
@@ -103,7 +108,7 @@ def _shared_domain_vo_demo() -> tuple[FlextModels.EmailAddress, Money]:
 def _create_customer(
     email: FlextModels.EmailAddress,
 ) -> FlextResult[User]:
-    user = User(user_id="customer_123", name="John Customer", email=str(email.root))
+    user = User(user_id="customer_123", name="John Customer", email=email.value)
     return FlextResult[User].ok(user)
 
 
@@ -219,19 +224,16 @@ def _demo_container(customer: User, repository: object) -> None:
 
 
 def _demo_fields_validation() -> None:
-    """Demo fields validation using correct FlextFields API."""
-    # Use the actual FlextFields.Factory.create_field API with correct signature
-    email_field_result = FlextFields.Factory.create_field(
-        field_type="string",
-        name="email",
-        pattern=r"^[^@]+@[^@]+\.[^@]+$",
-        required=True,
-        field_id="customer_email",
-    )
+    """Demo fields validation using FlextFields validators."""
+    # Use the available FlextFields validation methods
+    test_email = "user@example.com"
+    # Use FlextValidations for email validation instead
 
-    # Test validation using the created field with FlextResult pattern
-    if email_field_result.success:
-        # Field created successfully, ready for use
+    email_result = FlextValidations.validate_email(test_email)
+    email_valid = email_result.is_success
+
+    if email_valid:
+        # Email is valid
         pass
 
 

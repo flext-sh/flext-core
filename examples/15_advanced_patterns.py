@@ -21,7 +21,6 @@ from flext_core import (
     FlextConfig,
     FlextContainer,
     FlextContext,
-    FlextMixins,
     FlextResult,
 )
 from flext_core.typings import FlextTypes
@@ -75,12 +74,11 @@ class AdvancedExamplesConfig(FlextConfig):
         return FlextResult[None].ok(None)
 
 
-class OrderProcessor(FlextMixins.Entity):
+class OrderProcessor:
     """Advanced order processing with comprehensive validation and error handling."""
 
     def __init__(self, config: AdvancedExamplesConfig) -> None:
         """Initialize order processor with configuration."""
-        super().__init__()
         self._config = config
         self.container = FlextContainer()
         self.context = FlextContext()

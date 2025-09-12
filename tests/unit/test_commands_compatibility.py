@@ -168,7 +168,7 @@ class TestCommandsCompatibility:
             middleware_id="test_mw", middleware_type="test", enabled=True, order=0
         )
 
-        bus.add_middleware(TestMiddleware(), middleware_config)
+        bus.add_middleware(TestMiddleware(), middleware_config.model_dump())
         assert len(bus._middleware) == 1
 
     def test_factories_functionality(self) -> None:

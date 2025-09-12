@@ -127,12 +127,13 @@ class FlextDataPipeline(FlextModels.Entity):
 
         self.status = "active"
         self.increment_version()
+        event_data: dict[str, object] = {
+            "type": "pipeline_activated",
+            "pipeline_id": self.id,
+            "timestamp": "2025-08-05T10:00:00Z",
+        }
         self.add_domain_event(
-            {
-                "type": "pipeline_activated",
-                "pipeline_id": self.id,
-                "timestamp": "2025-08-05T10:00:00Z",
-            },
+            FlextModels.Event(event_type="pipeline_activated", payload=event_data)
         )
 
         return FlextResult[None].ok(None)

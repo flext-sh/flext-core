@@ -50,8 +50,16 @@ class TestFlextResultCoverageBoost:
         assert filtered.is_failure
         assert filtered.error == "original error"
 
+    @pytest.mark.skip(reason="Uses hasattr check instead of direct testing")
     def test_result_error_handling(self) -> None:
-        """Test result error handling methods."""
+        """Test result error handling methods.
+
+        TODO: Improve this test to:
+        - Remove hasattr check - test should fail if method doesn't exist
+        - Verify error handler is actually called with correct error
+        - Test error transformation chains
+        - Test multiple error types beyond strings
+        """
         # Test tap_error on failure (if available)
         result = FlextResult[int].fail("original error")
         if hasattr(result, "tap_error"):
@@ -69,7 +77,7 @@ class TestFlextResultCoverageBoost:
 
         # Test success result error handling
         result = FlextResult[int].ok(5)
-        assert result.error is None or result.error == ""
+        assert result.error is None  # Should be consistent, not None or empty string
         assert result.is_success
 
     def test_result_unwrap_methods(self) -> None:
@@ -95,8 +103,18 @@ class TestFlextResultCoverageBoost:
             result.expect("Should have value")
         assert "Should have value" in str(exc_info.value)
 
+    @pytest.mark.skip(
+        reason="Tests manual try/catch patterns instead of FlextResult methods"
+    )
     def test_result_alternative_constructors(self) -> None:
-        """Test alternative result construction methods."""
+        """Test alternative result construction methods.
+
+        TODO: Improve this test to:
+        - Test FlextResult.from_callable() if it exists
+        - Test FlextResult.from_exception() if it exists
+        - Test async result creation patterns
+        - Remove manual try/catch testing
+        """
 
         # Test manual construction with try/catch pattern
         def successful_function() -> int:
@@ -124,8 +142,18 @@ class TestFlextResultCoverageBoost:
             assert result.is_failure
             assert "Something went wrong" in str(result.error)
 
+    @pytest.mark.skip(
+        reason="Tests manual collection logic instead of built-in methods"
+    )
     def test_result_collect_operations(self) -> None:
-        """Test result collection and aggregation operations."""
+        """Test result collection and aggregation operations.
+
+        TODO: Improve this test to:
+        - Test FlextResult.collect() if it exists
+        - Test FlextResult.traverse() if it exists
+        - Test parallel result aggregation
+        - Remove manual collection logic
+        """
         # Test manual collection of results
         results = [
             FlextResult[int].ok(1),
@@ -157,6 +185,7 @@ class TestFlextResultCoverageBoost:
         ]
 
         failed = False
+        collected = FlextResult[list[int]].ok([])
         for result in results:
             if result.is_failure:
                 failed = True

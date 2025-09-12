@@ -1,7 +1,7 @@
 # FlextDecorators Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.decorators`  
+**Version**: 0.9.0
+**Module**: `flext_core.decorators`
 **Target Audience**: Senior Developers, Software Architects, Platform Engineers
 
 ## Quick Start
@@ -778,7 +778,7 @@ test_enterprise_composition()
 
 ```python
 from flext_core import FlextDecorators, FlextResult
-from typing import Dict, object
+from typing import Dict
 
 # API endpoint with comprehensive enterprise enhancements
 class UserMicroservice:

@@ -568,7 +568,7 @@ class DatabaseService:
 
 ```python
 import requests
-from typing import Dict, object
+from typing import Dict
 
 class HTTPClientWithFlextExceptions:
     """HTTP client with automatic FlextException translation."""

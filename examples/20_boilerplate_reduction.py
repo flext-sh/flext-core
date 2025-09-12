@@ -23,7 +23,6 @@ from datetime import UTC, datetime
 from flext_core import (
     FlextContainer,
     FlextContext,
-    FlextMixins,
     FlextResult,
     FlextTypes,
 )
@@ -118,12 +117,11 @@ class TraditionalDatabaseService:
 # ==============================================================================
 
 
-class UltraModernDatabaseService(FlextMixins.Entity):
+class UltraModernDatabaseService:
     """ULTIMATE concise service - 20+ classes in minimal code!."""
 
     def __init__(self) -> None:
         """Initialize ultimate service with container and context."""
-        super().__init__()
         self.container = FlextContainer()
         self.context = FlextContext()
 
@@ -162,12 +160,11 @@ class UltraModernDatabaseService(FlextMixins.Entity):
 # ==============================================================================
 
 
-class EnterpriseServiceOrchestrator(FlextMixins.Entity):
+class EnterpriseServiceOrchestrator:
     """ULTIMATE Enterprise orchestrator using flext-core patterns!."""
 
     def __init__(self) -> None:
         """Initialize enterprise orchestrator with container and context."""
-        super().__init__()
         self.container = FlextContainer()
         self.context = FlextContext()
 

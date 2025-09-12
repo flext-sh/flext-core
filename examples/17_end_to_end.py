@@ -29,7 +29,7 @@ def _print_header() -> None:
 class SimpleUser(FlextModels.Config):
     """Simple user model for demonstrations."""
 
-    name: str = Field(..., min_length=1, max_length=100)
+    user_name: str = Field(..., min_length=1, max_length=100)
     email: str = Field(..., min_length=5, max_length=254)
     age: int = Field(..., ge=18, le=120)
 
@@ -40,7 +40,7 @@ class SimpleUser(FlextModels.Config):
             if "@" not in email:
                 return FlextResult[SimpleUser].fail("Invalid email format")
 
-            user = cls(name=name.strip(), email=email.lower(), age=age)
+            user = cls(user_name=name.strip(), email=email.lower(), age=age)
             return FlextResult[SimpleUser].ok(user)
         except Exception as e:
             return FlextResult[SimpleUser].fail(f"Failed to create user: {e}")
@@ -71,7 +71,7 @@ def demonstrate_basic_result_pattern() -> FlextResult[None]:
 
     if user_result.success:
         user = user_result.value
-        print(f"✅ User created: {user.name} ({user.email})")
+        print(f"✅ User created: {user.user_name} ({user.email})")
     else:
         print(f"❌ User creation failed: {user_result.error}")
         return FlextResult[None].fail("User creation failed")
@@ -177,7 +177,7 @@ def demonstrate_service_patterns() -> FlextResult[None]:
         user_result = service.add_user(name, email, age)
         if user_result.success:
             user = user_result.value
-            print(f"✅ Added user: {user.name} (age {user.age})")
+            print(f"✅ Added user: {user.user_name} (age {user.age})")
         else:
             print(f"❌ Failed to add user {name}: {user_result.error}")
 
@@ -189,7 +189,7 @@ def demonstrate_service_patterns() -> FlextResult[None]:
         young_users = young_users_result.value
         print(f"👥 Young users (20-30): {len(young_users)}")
         for user in young_users:
-            print(f"   - {user.name} (age {user.age})")
+            print(f"   - {user.user_name} (age {user.age})")
 
     # Test max users limit
     overflow_result = service.add_user("Dave Wilson", "dave@example.com", 28)
@@ -221,7 +221,7 @@ def demonstrate_error_handling() -> FlextResult[None]:
             )
 
         # Step 3: Format result
-        result = f"User {user.name} ({user.email}) processed successfully"
+        result = f"User {user.user_name} ({user.email}) processed successfully"
         return FlextResult[str].ok(result)
 
     # Test successful pipeline

@@ -12,13 +12,10 @@ class Factory[T]:
 
     @classmethod
     def create(cls, **kwargs: object) -> T: ...
-
     @classmethod
     def build(cls, **kwargs: object) -> T: ...
-
     @classmethod
     def create_batch(cls, size: int, **kwargs: object) -> list[T]: ...
-
     @classmethod
     def build_batch(cls, size: int, **kwargs: object) -> list[T]: ...
 

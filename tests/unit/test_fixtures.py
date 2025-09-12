@@ -295,7 +295,9 @@ class TestCommandFactory:
 
     def test_create_test_command(self) -> None:
         """Test creating processing command (only available method)."""
-        command = FlextTestsFixtures.CommandFactory.create_processing_command({"test": "data"})
+        command = FlextTestsFixtures.CommandFactory.create_processing_command(
+            {"test": "data"}
+        )
 
         assert isinstance(command, dict)
         assert command["command"] == "process"
@@ -305,24 +307,30 @@ class TestCommandFactory:
     def test_create_batch_command(self) -> None:
         """Test creating processing command with batch data."""
         items = ["item1", "item2", "item3"]
-        command = FlextTestsFixtures.CommandFactory.create_processing_command({"items": items})
+        command = FlextTestsFixtures.CommandFactory.create_processing_command(
+            {"items": items}
+        )
 
         assert isinstance(command, dict)
-        command_dict = cast("dict", command)
-        assert command_dict["command"] == "process"
-        assert command_dict["data"]["items"] == items
-        assert "timestamp" in command_dict
+        assert command["command"] == "process"
+        data_section = command["data"]
+        assert isinstance(data_section, dict)
+        assert data_section["items"] == items
+        assert "timestamp" in command
 
     def test_create_validation_command(self) -> None:
         """Test creating processing command with validation data."""
         rules = {"required": ["field1", "field2"]}
-        command = FlextTestsFixtures.CommandFactory.create_processing_command({"rules": rules})
+        command = FlextTestsFixtures.CommandFactory.create_processing_command(
+            {"rules": rules}
+        )
 
         assert isinstance(command, dict)
-        command_dict = cast("dict", command)
-        assert command_dict["command"] == "process"
-        assert command_dict["data"]["rules"] == rules
-        assert "timestamp" in command_dict
+        assert command["command"] == "process"
+        data_section = command["data"]
+        assert isinstance(data_section, dict)
+        assert data_section["rules"] == rules
+        assert "timestamp" in command
 
     def test_create_processing_command(self) -> None:
         """Test creating processing command."""
@@ -636,9 +644,11 @@ class TestFixturesIntegration:
 
         # Create processing command with config
         command = FlextTestsFixtures.CommandFactory.create_processing_command(
-            test_config
+            test_config.to_dict()
         )
 
         assert "config" in command
-        assert hasattr(command["config"], "environment")
-        assert hasattr(command["config"], "debug")
+        config_section = command["config"]
+        assert isinstance(config_section, dict)
+        assert "environment" in config_section
+        assert "debug" in config_section

@@ -233,7 +233,11 @@ class FlextCommands:
             @property
             def handler_name(self) -> str:
                 """Get handler name for identification."""
-                return str(self._handler_name) if self._handler_name is not None else self.__class__.__name__
+                return (
+                    str(self._handler_name)
+                    if self._handler_name is not None
+                    else self.__class__.__name__
+                )
 
             @property
             def logger(self) -> FlextLogger:
@@ -418,7 +422,11 @@ class FlextCommands:
             @property
             def handler_name(self) -> str:
                 """Get handler name for identification."""
-                return str(self._handler_name) if self._handler_name is not None else self.__class__.__name__
+                return (
+                    str(self._handler_name)
+                    if self._handler_name is not None
+                    else self.__class__.__name__
+                )
 
             def can_handle(self, query: QueryT) -> bool:
                 """Check if handler can process this query."""
@@ -554,10 +562,17 @@ class FlextCommands:
 
         def find_handler(self, command: object) -> object | None:
             """Find handler for command."""
-            # Search auto-registered handlers first (single-arg form)
+            command_type = type(command)
+            command_name = command_type.__name__
+
+            # First, try to find handler by command type name in _handlers (two-arg registration)
+            if command_name in self._handlers:
+                return self._handlers[command_name]
+
+            # Search auto-registered handlers (single-arg form)
             for handler in self._auto_handlers:
                 can_handle_method = getattr(handler, "can_handle", None)
-                if callable(can_handle_method) and can_handle_method(type(command)):
+                if callable(can_handle_method) and can_handle_method(command_type):
                     return handler
             return None
 

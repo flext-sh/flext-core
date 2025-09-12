@@ -194,13 +194,16 @@ class FlextModels:
                 default=3600, description="Session timeout in seconds"
             )
             password_policy: dict[str, object] = Field(
-                default_factory=lambda: cast("dict[str, object]", {
-                    "min_length": 8,
-                    "require_uppercase": True,
-                    "require_lowercase": True,
-                    "require_digits": True,
-                    "require_special": False,
-                })
+                default_factory=lambda: cast(
+                    "dict[str, object]",
+                    {
+                        "min_length": 8,
+                        "require_uppercase": True,
+                        "require_lowercase": True,
+                        "require_digits": True,
+                        "require_special": False,
+                    },
+                )
             )
 
         class LoggingConfig(BaseModel):

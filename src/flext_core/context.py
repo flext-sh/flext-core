@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextlib
-import uuid
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
@@ -133,7 +132,7 @@ class FlextContext:
             """Create correlation context scope."""
             # Generate correlation ID if not provided
             if correlation_id is None:
-                correlation_id = f"corr_{uuid.uuid4().hex[:16]}"
+                correlation_id = FlextUtilities.Generators.generate_correlation_id()
 
             # Save current context
             current_correlation = (
