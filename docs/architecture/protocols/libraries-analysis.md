@@ -1,7 +1,7 @@
 # FlextProtocols Libraries Analysis and Integration Opportunities
 
-**Version**: 0.9.0  
-**Module**: `flext_core.protocols`  
+**Version**: 0.9.0
+**Module**: `flext_core.protocols`
 **Target Audience**: Software Architects, Technical Leads, Platform Engineers
 
 ## Executive Summary

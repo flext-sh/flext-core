@@ -1,6 +1,6 @@
 # Documentation TODO
 
-**Last Updated**: 2025-01-10  
+**Last Updated**: 2025-01-10
 **Status**: Active Maintenance
 
 ## Current Status
@@ -166,6 +166,6 @@
 
 ---
 
-**Next Review**: 2025-01-17  
-**Owner**: Documentation Team  
+**Next Review**: 2025-01-17
+**Owner**: Documentation Team
 **Priority**: Ongoing

@@ -1,7 +1,7 @@
 # FlextFields Migration Roadmap
 
-**Version**: 0.9.0  
-**Module**: `flext_core.fields`  
+**Version**: 0.9.0
+**Module**: `flext_core.fields`
 **Target Audience**: Technical Leads, Project Managers, DevOps Engineers
 
 ## Executive Summary

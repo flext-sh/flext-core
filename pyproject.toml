@@ -223,6 +223,10 @@ disable_error_code = ["import-untyped", "no-any-unimported", "attr-defined"]
 module = "tests.patterns.test_advanced_patterns"
 disable_error_code = ["misc"]
 
+[[tool.mypy.overrides]]
+module = ".vulture_whitelist"
+ignore_errors = true
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true

@@ -1,7 +1,7 @@
 # FlextGuards Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.guards`  
+**Version**: 0.9.0
+**Module**: `flext_core.guards`
 **Target Audience**: FLEXT Developers, DevOps Engineers, Solution Architects
 
 ## Overview

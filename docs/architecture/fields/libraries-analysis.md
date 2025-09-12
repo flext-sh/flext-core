@@ -1,7 +1,7 @@
 # FlextFields Libraries Analysis and Integration Opportunities
 
-**Version**: 0.9.0  
-**Module**: `flext_core.fields`  
+**Version**: 0.9.0
+**Module**: `flext_core.fields`
 **Target Audience**: Solution Architects, Technical Leads, Library Maintainers
 
 ## Executive Summary

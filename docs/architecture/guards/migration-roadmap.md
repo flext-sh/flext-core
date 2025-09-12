@@ -1,7 +1,7 @@
 # FlextGuards Migration Roadmap
 
-**Version**: 0.9.0  
-**Module**: `flext_core.guards`  
+**Version**: 0.9.0
+**Module**: `flext_core.guards`
 **Target Audience**: Technical Leads, Project Managers, DevOps Engineers
 
 ## Executive Summary

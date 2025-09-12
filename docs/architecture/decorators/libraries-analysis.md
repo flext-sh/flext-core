@@ -1,7 +1,7 @@
 # FlextDecorators Libraries Analysis and Integration Opportunities
 
-**Version**: 0.9.0  
-**Module**: `flext_core.decorators`  
+**Version**: 0.9.0
+**Module**: `flext_core.decorators`
 **Target Audience**: Software Architects, Technical Leads, Platform Engineers
 
 ## Executive Summary

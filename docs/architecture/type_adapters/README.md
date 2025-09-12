@@ -477,7 +477,7 @@ def generate_api_documentation():
 
 ### ROI Analysis
 
-**Investment**: 8-12 weeks implementation across 25+ libraries  
+**Investment**: 8-12 weeks implementation across 25+ libraries
 **Returns**:
 
 - **40% reduction** in type-related runtime errors

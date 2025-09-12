@@ -1,7 +1,7 @@
 # FlextObservability Migration Roadmap
 
-**Version**: 0.9.0  
-**Module**: `flext_core.observability`  
+**Version**: 0.9.0
+**Module**: `flext_core.observability`
 **Target Audience**: Technical Leads, DevOps Engineers, Platform Teams
 
 ## Executive Summary

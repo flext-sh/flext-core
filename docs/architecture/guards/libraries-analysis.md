@@ -1,7 +1,7 @@
 # FlextGuards Libraries Analysis and Integration Opportunities
 
-**Version**: 0.9.0  
-**Module**: `flext_core.guards`  
+**Version**: 0.9.0
+**Module**: `flext_core.guards`
 **Target Audience**: Solution Architects, Technical Leads, Library Maintainers
 
 ## Executive Summary

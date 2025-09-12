@@ -1,8 +1,8 @@
 # CLI Commands CQRS Examples
 
-**Version**: 1.0  
-**Target**: CLI Developers  
-**Framework**: Click, Typer  
+**Version**: 1.0
+**Target**: CLI Developers
+**Framework**: Click, Typer
 **Complexity**: Intermediate
 
 ## 📋 Overview

@@ -1,7 +1,7 @@
 # FLEXT-CORE REFACTORING TODO
 
-**Status**: Sistemática melhoria de qualidade em progresso  
-**Objetivo**: 100% conformidade com padrões arquiteturais FLEXT conforme FLEXT_REFACTORING_PROMPT.md  
+**Status**: Sistemática melhoria de qualidade em progresso
+**Objetivo**: 100% conformidade com padrões arquiteturais FLEXT conforme FLEXT_REFACTORING_PROMPT.md
 **Prioridade**: Alta - Base para todo ecossistema FLEXT (33 projetos dependentes)
 
 ---
@@ -20,8 +20,8 @@
 
 #### **1. FlextCoreModels - CRÍTICO**
 
-**Arquivo**: `src/flext_core/models.py`  
-**Status**: Parcialmente consolidado - precisa completar estruturas aninhadas  
+**Arquivo**: `src/flext_core/models.py`
+**Status**: Parcialmente consolidado - precisa completar estruturas aninhadas
 **Problema**: Classes individuais (FlextModels, FlextModels.Entity, FlextModels.Value) existem, mas falta classe consolidada principal
 
 **Ação Necessária**:
@@ -46,8 +46,8 @@ class FlextCoreModels:
 
 #### **2. FlextCoreHandlers - CRÍTICO**
 
-**Arquivo**: `src/flext_core/handlers.py`  
-**Status**: Estrutura parcial existe, precisa completar consolidação  
+**Arquivo**: `src/flext_core/handlers.py`
+**Status**: Estrutura parcial existe, precisa completar consolidação
 **Problema**: FlextCoreHandlers existe mas classes aninhadas não estão completas
 
 **Ação Necessária**:
@@ -73,16 +73,16 @@ class FlextCoreHandlers:
 
 #### **3. FlextCoreDecorators - CRÍTICO**
 
-**Arquivo**: `src/flext_core/decorators.py`  
-**Status**: FlextCoreDecorators existe, precisa validar completude  
+**Arquivo**: `src/flext_core/decorators.py`
+**Status**: FlextCoreDecorators existe, precisa validar completude
 **Problema**: Verificar se todas as classes de decoradores estão consolidadas
 
 **Ação Necessária**: Auditoria completa das classes aninhadas e consolidação final
 
 #### **4. FlextCoreValidation - ALTO**
 
-**Arquivo**: `src/flext_core/validation.py`  
-**Status**: Classes individuais existem, falta consolidação principal  
+**Arquivo**: `src/flext_core/validation.py`
+**Status**: Classes individuais existem, falta consolidação principal
 **Problema**: FlextValidations, FlextValidationPipeline, FlextDomainValidator como classes separadas
 
 **Ação Necessária**:
@@ -103,30 +103,30 @@ class FlextCoreValidation:
 
 #### **5. FlextCoreExceptions - ALTO**
 
-**Arquivo**: `src/flext_core/exceptions.py`  
-**Status**: FlextExceptions existe, verificar se está completo  
+**Arquivo**: `src/flext_core/exceptions.py`
+**Status**: FlextExceptions existe, verificar se está completo
 **Problema**: Validar se todas as exceções estão consolidadas sob uma classe principal
 
 ### 🔄 PRÓXIMAS FASES - Classes Menores
 
 #### **6. FlextCoreFields - MÉDIO**
 
-**Arquivo**: `src/flext_core/fields.py`  
+**Arquivo**: `src/flext_core/fields.py`
 **Status**: FlextFields existe, verificar estrutura aninhada
 
 #### **7. FlextCoreMixins - MÉDIO**
 
-**Arquivo**: `src/flext_core/mixins.py`  
+**Arquivo**: `src/flext_core/mixins.py`
 **Status**: FlextMixins existe, verificar consolidação completa
 
 #### **8. FlextCoreGuards - MÉDIO**
 
-**Arquivo**: `src/flext_core/guards.py`  
+**Arquivo**: `src/flext_core/guards.py`
 **Status**: FlextGuards existe, validar estrutura
 
 #### **9. FlextCoreLoggings - MÉDIO**
 
-**Arquivo**: `src/flext_core.py`  
+**Arquivo**: `src/flext_core.py`
 **Status**: FlextCoreLogging existe, verificar nome e estrutura
 
 ---

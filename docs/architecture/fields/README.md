@@ -1,8 +1,8 @@
 # FlextFields - Enterprise Field Definition and Schema Management System
 
-**Version**: 0.9.0  
-**Module**: `flext_core.fields`  
-**Classification**: Enterprise Field Management Infrastructure  
+**Version**: 0.9.0
+**Module**: `flext_core.fields`
+**Classification**: Enterprise Field Management Infrastructure
 **Architectural Role**: Schema Definition, Field Validation, Metadata Management
 
 ## 📖 Executive Summary
