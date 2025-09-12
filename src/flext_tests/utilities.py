@@ -14,7 +14,6 @@ from collections.abc import Callable
 from typing import ClassVar, Generic, Protocol, TypeVar, cast, runtime_checkable
 
 from flext_core import (
-    FlextConstants,
     FlextModels,
     FlextResult,
     FlextTypes,
@@ -572,7 +571,7 @@ class FlextTestsUtilities:
 
     # === TEST MODELS ===
 
-    class TestModel(FlextModels.Config):
+    class TestModel(FlextModels.TimestampedModel):
         """Test model for testing purposes.
 
         Provides a simple model with common field types for testing.
@@ -598,7 +597,7 @@ class FlextTestsUtilities:
             self.active = False
             return FlextResult[None].ok(None)
 
-    class TestConfig(FlextModels.Config):
+    class TestConfig(FlextModels.TimestampedModel):
         """Test configuration model."""
 
         debug: bool = False
@@ -606,9 +605,7 @@ class FlextTestsUtilities:
         retries: int = 3
         # Build base_url without deep dynamic __import__ chains to avoid runtime errors
 
-        base_url: str = __import__("inspect").cleandoc(
-            f"http://{FlextConstants.Platform.DEFAULT_HOST}:{FlextConstants.Platform.FLEXT_API_PORT}",
-        )
+        base_url: str = "http://localhost:8000"
         headers: ClassVar[dict[str, str]] = {}
 
     # === UTILITY FUNCTIONS ===
@@ -815,12 +812,12 @@ class FlextTestsUtilities:
 #     ... all methods commented out
 
 # Legacy FlextTestModel class - REMOVED (commented out)
-# class FlextTestModel(FlextModels.Config):
+# class FlextTestModel(FlextModels.TimestampedModel):
 #     """Compatibility facade for FlextTestModel - use TestModel instead."""
 #     ... all methods commented out
 
 # Legacy FlextTestConfig class - REMOVED (commented out)
-# class FlextTestConfig(FlextModels.Config):
+# class FlextTestConfig(FlextModels.TimestampedModel):
 #     """Compatibility facade for FlextTestConfig - use TestConfig instead."""
 #     ... all methods commented out
 

@@ -10,11 +10,22 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Awaitable, Callable
+from contextlib import AbstractAsyncContextManager
+from typing import TypeVar, cast
 
 import pytest
 
 from flext_core.typings import FlextTypes
 from flext_tests import FlextTestsAsyncs, FlextTestsMatchers
+
+T = TypeVar("T")
+
+# Type alias for async mock functions
+AsyncMockCallable = Callable[..., Awaitable[T]]
+
+# Type alias for async context managers
+AsyncTestContext = AbstractAsyncContextManager[object]
 
 
 class TestAsyncTestUtils:
@@ -150,10 +161,8 @@ class TestAsyncTestUtils:
             msg = "Task failed"
             raise ValueError(msg)
 
-        results = await FlextTestsMatchers.run_concurrently(
-            good_task(1),
-            bad_task(),
-            good_task(2),
+        results = await FlextTestsAsyncs.run_concurrently(
+            [good_task(1), bad_task(), good_task(2)],
             return_exceptions=True,
         )
         # Only successful results should be returned
@@ -168,8 +177,8 @@ class TestAsyncTestUtils:
             raise ValueError(msg)
 
         with pytest.raises(ValueError, match="Failed"):
-            await FlextTestsMatchers.run_concurrently(
-                failing_task(),
+            await FlextTestsAsyncs.run_concurrently(
+                [failing_task()],
                 return_exceptions=False,
             )
 
@@ -200,14 +209,20 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_async_mock_with_return_value(self) -> None:
         """Test creating async mock with return value."""
-        mock = FlextTestsMatchers.create_async_mock(return_value="test_result")
+        mock = cast(
+            "AsyncMockCallable",
+            FlextTestsAsyncs.create_async_mock(return_value="test_result"),
+        )
         result = await mock()
         assert result == "test_result"
 
     @pytest.mark.asyncio
     async def test_create_async_mock_with_side_effect_list(self) -> None:
         """Test async mock with list of side effects."""
-        mock = FlextTestsMatchers.create_async_mock(side_effect=[1, 2, 3])
+        mock = cast(
+            "AsyncMockCallable",
+            FlextTestsAsyncs.create_async_mock_with_side_effect(side_effect=[1, 2, 3]),
+        )
 
         assert await mock() == 1
         assert await mock() == 2
@@ -216,8 +231,9 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_async_mock_with_side_effect_exception(self) -> None:
         """Test async mock that raises exception."""
-        mock = FlextTestsMatchers.create_async_mock(
-            side_effect=ValueError("Test error")
+        mock = cast(
+            "AsyncMockCallable",
+            FlextTestsAsyncs.create_async_mock(side_effect=ValueError("Test error")),
         )
 
         with pytest.raises(ValueError, match="Test error"):
@@ -233,7 +249,12 @@ class TestAsyncMockUtils:
             call_count += 1
             return call_count
 
-        mock = FlextTestsMatchers.create_async_mock(side_effect=side_effect_func)
+        mock = cast(
+            "AsyncMockCallable",
+            FlextTestsAsyncs.create_async_mock_with_side_effect(
+                side_effect=side_effect_func
+            ),
+        )
 
         assert await mock() == 1
         assert await mock() == 2
@@ -257,10 +278,13 @@ class TestAsyncMockUtils:
     @pytest.mark.asyncio
     async def test_create_flaky_mock(self) -> None:
         """Test creating flaky mock that fails initially."""
-        mock = FlextTestsMatchers.create_flaky_async_mock(
-            success_value="success",
-            failure_count=2,
-            exception_type=ValueError,
+        mock = cast(
+            "AsyncMockCallable",
+            FlextTestsAsyncs.create_flaky_async_mock(
+                success_value="success",
+                failure_count=2,
+                exception_type=ValueError,
+            ),
         )
 
         # First two calls should fail
@@ -287,9 +311,9 @@ class TestConcurrencyTestHelper:
                 return n * 2
             return 0
 
-        results = await FlextTestsMatchers.run_parallel_tasks(
-            task,
+        results = await FlextTestsAsyncs.run_parallel_tasks(
             [1, 2, 3, 4],
+            task,
         )
         assert results == [2, 4, 6, 8]
 
@@ -300,9 +324,9 @@ class TestConcurrencyTestHelper:
         async def task(n: object) -> object:
             return n
 
-        results = await FlextTestsMatchers.run_parallel_tasks(
-            task,
+        results = await FlextTestsAsyncs.run_parallel_tasks(
             [],
+            task,
         )
         assert results == []
 
@@ -320,7 +344,7 @@ class TestConcurrencyTestHelper:
                 shared_counter = temp + 1
                 return shared_counter
 
-        result = await FlextTestsMatchers.test_race_condition(
+        result = await FlextTestsAsyncs.test_race_condition_simple(
             safe_increment,
             concurrent_count=5,
         )
@@ -333,11 +357,10 @@ class TestConcurrencyTestHelper:
     async def test_measure_concurrency_performance(self) -> None:
         """Test measuring concurrency performance."""
 
-        async def task() -> str:
+        async def task() -> None:
             await asyncio.sleep(0.01)
-            return "done"
 
-        metrics = await FlextTestsMatchers.measure_concurrency_performance(
+        metrics = await FlextTestsAsyncs.measure_concurrency_performance(
             task,
             iterations=3,
         )
@@ -345,8 +368,12 @@ class TestConcurrencyTestHelper:
         assert "total_time" in metrics
         assert "average_time" in metrics
         assert "throughput" in metrics
-        assert metrics["average_time"] > 0
-        assert metrics["throughput"] > 0
+        avg_time = metrics["average_time"]
+        throughput = metrics["throughput"]
+        assert isinstance(avg_time, (int, float))
+        assert avg_time > 0
+        assert isinstance(throughput, (int, float))
+        assert throughput > 0
 
 
 class TestAsyncContextManager:
@@ -363,14 +390,19 @@ class TestAsyncContextManager:
             resource_created = True
             return "test_resource"
 
+        setup_coro = setup()
+
         async def teardown(resource: str) -> None:
             nonlocal resource_cleaned
             assert resource == "test_resource"
             resource_cleaned = True
 
-        context = FlextTestsMatchers.create_test_context(
-            setup_coro=setup,
-            teardown_func=teardown,
+        context = cast(
+            "AsyncTestContext",
+            FlextTestsAsyncs.create_test_context(
+                setup_coro=setup_coro,
+                teardown_func=teardown,
+            ),
         )
 
         async with context as resource:
@@ -388,13 +420,18 @@ class TestAsyncContextManager:
         async def setup() -> str:
             return "resource"
 
+        setup_coro = setup()
+
         async def teardown(_resource: str) -> None:
             nonlocal cleaned_up
             cleaned_up = True
 
-        context = FlextTestsMatchers.create_test_context(
-            setup_coro=setup,
-            teardown_func=teardown,
+        context = cast(
+            "AsyncTestContext",
+            FlextTestsAsyncs.create_test_context(
+                setup_coro=setup_coro,
+                teardown_func=teardown,
+            ),
         )
 
         error_msg = "Test error"
@@ -408,7 +445,9 @@ class TestAsyncContextManager:
     @pytest.mark.asyncio
     async def test_managed_resource_simple(self) -> None:
         """Test simple managed resource."""
-        async with FlextTestsMatchers.managed_resource("test_value") as value:
+        async with cast(
+            "AsyncTestContext", FlextTestsAsyncs.managed_resource("test_value")
+        ) as value:
             assert value == "test_value"
 
     @pytest.mark.asyncio
@@ -421,9 +460,12 @@ class TestAsyncContextManager:
             assert value == "test"
             cleaned = True
 
-        async with FlextTestsMatchers.managed_resource(
-            "test",
-            cleanup_func=cleanup,
+        async with cast(
+            "AsyncTestContext",
+            FlextTestsAsyncs.managed_resource(
+                "test",
+                cleanup_func=cleanup,
+            ),
         ) as value:
             assert value == "test"
             assert not cleaned
@@ -434,7 +476,7 @@ class TestAsyncContextManager:
     async def test_timeout_context(self) -> None:
         """Test timeout context manager."""
         # Should complete within timeout
-        async with FlextTestsMatchers.timeout_context(1.0):
+        async with cast("AsyncTestContext", FlextTestsAsyncs.timeout_context(1.0)):
             await asyncio.sleep(0.01)
             result = "completed"
 
@@ -444,5 +486,5 @@ class TestAsyncContextManager:
     async def test_timeout_context_exceeded(self) -> None:
         """Test timeout context when time is exceeded."""
         with pytest.raises(asyncio.TimeoutError):
-            async with FlextTestsMatchers.timeout_context(0.1):
+            async with cast("AsyncTestContext", FlextTestsAsyncs.timeout_context(0.1)):
                 await asyncio.sleep(1.0)

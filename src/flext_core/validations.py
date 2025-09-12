@@ -12,8 +12,9 @@ from typing import Protocol, cast
 
 from pydantic import BaseModel, ValidationError
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
-from flext_core.models import FlextModels
+from flext_core.exceptions import FlextExceptions
 from flext_core.protocols import FlextProtocols
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes, T
@@ -36,13 +37,33 @@ class SupportsFloat(Protocol):
 
 
 class FlextValidations:
-    """Advanced hierarchical validation system with performance optimizations."""
+    """Advanced hierarchical validation system with performance optimizations.
+
+    # VALIDATION HELL: 1306 lines with 17 DIFFERENT validation classes!
+    #
+    # MASSIVE DUPLICATION:
+    # - Predicates, TypeValidators, BaseValidator, UserValidator, EntityValidator
+    # - ApiRequestValidator, ConfigValidator, StringRules, NumericRules, CollectionRules
+    # - SchemaValidator, CompositeValidator, Validators, FieldValidators
+    # - PLUS the 4 email validation methods we already identified!
+    #
+    # OVER-COMPLEXITY:
+    # - Predicates with operator overloading (__and__, __or__, __invert__) - unnecessary cleverness
+    # - Multiple inheritance patterns mixing protocols and validators
+    # - 17 different ways to validate the same basic types (string, int, email, etc.)
+    #
+    # ARCHITECTURAL SIN: This should be 3-4 simple validator classes, not 17!
+    """
 
     class Core:
         """Core validation primitives and basic type checking."""
 
         class Predicates:
-            """Composable predicates for validation."""
+            """Composable predicates for validation.
+
+            # OVER-ENGINEERED: Operator overloading for predicates is unnecessarily complex.
+            # Simple functions would be clearer than (pred1 & pred2) | ~pred3 syntax.
+            """
 
             def __init__(
                 self,
@@ -220,7 +241,6 @@ class FlextValidations:
                     error_code=FlextConstants.Errors.TYPE_ERROR,
                 )
 
-
         # =========================================================================
         # ADVANCED VALIDATION METHODS - Performance optimized
         # =========================================================================
@@ -289,6 +309,16 @@ class FlextValidations:
 
         class BaseValidator:
             """Base validator for domain entities."""
+
+            def __init__(self) -> None:
+                """Initialize validator with global configuration."""
+                self._config = FlextConfig.get_global_instance()
+
+                # Get validation settings from config
+                self.validation_enabled = self._config.validation_enabled
+                self.strict_mode = self._config.validation_strict_mode
+                self.max_name_length = self._config.max_name_length
+                self.max_email_length = self._config.max_email_length
 
             def validate_entity_id(self, entity_id: object) -> FlextResult[str]:
                 """Validate entity ID format and constraints."""
@@ -942,7 +972,15 @@ class FlextValidations:
 
     @classmethod
     def validate_email(cls, email: str) -> FlextResult[str]:
-        """Validate email."""
+        """DUPLICATE VALIDATION: Validate email.
+
+        # CONSOLIDATION NEEDED: Email validation is scattered across multiple modules:
+        # - FlextValidations.FieldValidators.validate_email() (this method)
+        # - FlextUtilities.ValidationUtils.validate_email() (different return type: bool)
+        # - FlextUtilities.DataValidators.validate_email_with_pydantic() (Pydantic-based)
+        # - FlextMixins.validate_email() (delegates to ValidationUtils)
+        # Choose ONE canonical implementation and deprecate others
+        """
         validator = cls.create_email_validator()
         return validator(email)
 
@@ -1069,306 +1107,6 @@ class FlextValidations:
         validator = cls.create_schema_validator(schema)
         return validator.validate(data)
 
-    # =============================================================================
-    # CONFIGURATION MANAGEMENT - FlextTypes.Config Integration
-    # =============================================================================
-
-    @classmethod
-    def configure_validation_system(
-        cls,
-        config: FlextTypes.Config.ConfigDict,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Configure validation system using Settings → SystemConfigs bridge."""
-        try:
-            # Defaults guiados por ambiente (compatíveis com comportamento anterior)
-            env = str(
-                config.get(
-                    "environment",
-                    FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                )
-            )
-
-            # Defaults dependentes de ambiente
-            default_level = (
-                FlextConstants.Config.ValidationLevel.STRICT.value
-                if env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
-                else FlextConstants.Config.ValidationLevel.NORMAL.value
-                if env == FlextConstants.Config.ConfigEnvironment.TEST.value
-                else FlextConstants.Config.ValidationLevel.LOOSE.value
-            )
-            default_log = (
-                FlextConstants.Config.LogLevel.WARNING.value
-                if env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value
-                else FlextConstants.Config.LogLevel.DEBUG.value
-            )
-
-            # Monte base para validação via Pydantic
-            base_for_validation: FlextTypes.Config.ConfigDict = {
-                "environment": env,
-                "validation_level": str(config.get("validation_level", default_level)),
-                "log_level": str(config.get("log_level", default_log)),
-            }
-
-            # Valide via SystemConfigs
-            _ = FlextModels.SystemConfigs.ValidationSystemConfig.model_validate(
-                base_for_validation
-            )
-
-            # Chaves derivadas e adicionais (compatibilidade)
-            validated_config: FlextTypes.Config.ConfigDict = dict(base_for_validation)
-
-            validated_config["enable_detailed_errors"] = bool(
-                config.get(
-                    "enable_detailed_errors",
-                    validated_config["validation_level"] != "strict",
-                )
-            )
-            mve = config.get(
-                "max_validation_errors",
-                100 if validated_config["validation_level"] == "strict" else 1000,
-            )
-            try:
-                validated_config["max_validation_errors"] = int(cast("int", mve))
-            except Exception:
-                validated_config["max_validation_errors"] = 100
-
-            # Flags de performance por ambiente
-            validated_config["enable_performance_tracking"] = bool(
-                config.get(
-                    "enable_performance_tracking",
-                    env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-                )
-            )
-            validated_config["cache_validation_results"] = bool(
-                config.get(
-                    "cache_validation_results",
-                    env == FlextConstants.Config.ConfigEnvironment.PRODUCTION.value,
-                )
-            )
-            validated_config["fail_fast_validation"] = bool(
-                config.get(
-                    "fail_fast_validation",
-                    validated_config["validation_level"] == "strict",
-                )
-            )
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(validated_config)
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to configure validation system: {e}",
-            )
-
-    @classmethod
-    def get_validation_system_config(cls) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Get current validation system configuration."""
-        try:
-            # Build current validation configuration
-            current_config: FlextTypes.Config.ConfigDict = {
-                "environment": FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value,
-                "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                "enable_detailed_errors": True,
-                "max_validation_errors": 1000,
-                "enable_performance_tracking": True,
-                "cache_validation_results": False,
-                "fail_fast_validation": False,
-                "available_validators": [
-                    "email_validator",
-                    "url_validator",
-                    "schema_validator",
-                    "api_request_validator",
-                    "config_validator",
-                ],
-                "supported_patterns": [
-                    "email",
-                    "url",
-                    "phone",
-                    "credit_card",
-                    "ip_address",
-                    "uuid",
-                    "hex_color",
-                    "postal_code",
-                ],
-            }
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(current_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Failed to get validation config: {e}",
-            )
-
-    @classmethod
-    def create_environment_validation_config(
-        cls,
-        environment: FlextTypes.Config.Environment,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Create environment-specific validation configuration."""
-        try:
-            # Validate environment
-            valid_environments = [
-                e.value for e in FlextConstants.Config.ConfigEnvironment
-            ]
-            if environment not in valid_environments:
-                return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                    f"Invalid environment '{environment}'. Valid options: {valid_environments}",
-                )
-
-            # Create environment-specific validation configuration
-            if environment == "production":
-                config: FlextTypes.Config.ConfigDict = {
-                    "environment": environment,
-                    "validation_level": FlextConstants.Config.ValidationLevel.STRICT.value,
-                    "log_level": FlextConstants.Config.LogLevel.WARNING.value,
-                    "enable_detailed_errors": False,  # Hide detailed errors in production
-                    "max_validation_errors": 50,  # Limit error collection
-                    "enable_performance_tracking": True,
-                    "cache_validation_results": True,  # Cache for performance
-                    "fail_fast_validation": True,  # Fail fast for security
-                }
-            elif environment == "development":
-                config = {
-                    "environment": environment,
-                    "validation_level": FlextConstants.Config.ValidationLevel.LOOSE.value,
-                    "log_level": FlextConstants.Config.LogLevel.DEBUG.value,
-                    "enable_detailed_errors": True,  # Full error details for debugging
-                    "max_validation_errors": 2000,  # More errors for debugging
-                    "enable_performance_tracking": True,
-                    "cache_validation_results": False,  # No caching for development
-                    "fail_fast_validation": False,  # Continue validation for debugging
-                }
-            elif environment == "test":
-                config = {
-                    "environment": environment,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_detailed_errors": True,  # Detailed errors for test debugging
-                    "max_validation_errors": 500,
-                    "enable_performance_tracking": False,  # No performance tracking in tests
-                    "cache_validation_results": False,  # No caching in tests
-                    "fail_fast_validation": True,  # Fail fast for test efficiency
-                }
-            else:  # staging, local, etc.
-                config = {
-                    "environment": environment,
-                    "validation_level": FlextConstants.Config.ValidationLevel.NORMAL.value,
-                    "log_level": FlextConstants.Config.LogLevel.INFO.value,
-                    "enable_detailed_errors": True,
-                    "max_validation_errors": 1000,
-                    "enable_performance_tracking": True,
-                    "cache_validation_results": True,
-                    "fail_fast_validation": False,
-                }
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Environment validation config failed: {e}",
-            )
-
-    @classmethod
-    def optimize_validation_performance(
-        cls,
-        config: FlextTypes.Config.ConfigDict,
-    ) -> FlextResult[FlextTypes.Config.ConfigDict]:
-        """Optimize validation configuration for performance."""
-        try:
-            # Since config is typed as ConfigDict (dict subtype), validation is ensured
-            optimized_config = dict(config)  # Copy base config
-
-            # Performance optimizations based on environment
-            environment = optimized_config.get("environment", "development")
-            validation_level = optimized_config.get("validation_level", "normal")
-
-            if environment == "production":
-                # Production performance optimizations
-                optimized_config["cache_validation_results"] = True
-                optimized_config["fail_fast_validation"] = True
-                # Ensure we have an int for min comparison
-                current_max = optimized_config.get("max_validation_errors", 100)
-                if isinstance(current_max, int):
-                    optimized_config["max_validation_errors"] = min(current_max, 100)
-                else:
-                    optimized_config["max_validation_errors"] = 100
-                optimized_config["enable_detailed_errors"] = False
-                optimized_config["validation_timeout_ms"] = 5000  # 5 second timeout
-
-            elif validation_level == "strict":
-                # Strict validation optimizations
-                optimized_config["fail_fast_validation"] = True
-                optimized_config["max_validation_errors"] = 10
-                optimized_config["validation_timeout_ms"] = 3000  # Faster timeout
-
-            else:
-                # Development/flexible validation optimizations
-                optimized_config["cache_validation_results"] = (
-                    False  # No caching for flexibility
-                )
-                optimized_config["fail_fast_validation"] = (
-                    False  # Continue for debugging
-                )
-                optimized_config["validation_timeout_ms"] = 10000  # Longer timeout
-
-            # Add performance monitoring settings
-            optimized_config["performance_metrics_enabled"] = optimized_config.get(
-                "enable_performance_tracking",
-                True,
-            )
-            optimized_config["validation_batch_size"] = (
-                1000 if environment == "production" else 500
-            )
-            optimized_config["concurrent_validations"] = (
-                10 if environment == "production" else 5
-            )
-
-            return FlextResult[FlextTypes.Config.ConfigDict].ok(optimized_config)
-
-        except Exception as e:
-            return FlextResult[FlextTypes.Config.ConfigDict].fail(
-                f"Performance optimization failed: {e}",
-            )
-
-    # =============================================================================
-    # BACKWARD COMPATIBILITY METHODS - Direct access for legacy tests
-    # =============================================================================
-
-    @staticmethod
-    def validate_non_empty_string_func(value: object) -> bool:
-        """Validate non-empty string."""
-        return isinstance(value, str) and len(value.strip()) > 0
-
-    @staticmethod
-    def validate_email_field(value: object) -> FlextResult[None]:
-        """Validate email field."""
-        if not isinstance(value, str):
-            return FlextResult[None].fail("Email must be a string")
-
-        pattern = FlextConstants.Patterns.EMAIL_PATTERN
-        if re.match(pattern, value):
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail("Invalid email format")
-
-    @staticmethod
-    def validate_numeric_field(value: object) -> FlextResult[None]:
-        """Validate numeric field."""
-        if isinstance(value, (int, float)):
-            return FlextResult[None].ok(None)
-        if isinstance(value, str):
-            try:
-                float(value)
-                return FlextResult[None].ok(None)
-            except ValueError:
-                return FlextResult[None].fail("Value is not numeric")
-        return FlextResult[None].fail("Value is not numeric")
-
-    @staticmethod
-    def validate_string_field(value: object) -> FlextResult[None]:
-        """Validate string field."""
-        if isinstance(value, str) and len(value.strip()) > 0:
-            return FlextResult[None].ok(None)
-        return FlextResult[None].fail("Value is not a valid string")
-
     class Validators:
         """Validators nested class."""
 
@@ -1428,6 +1166,139 @@ class FlextValidations:
             except Exception as e:
                 return FlextResult[float].fail(f"Cannot convert to float: {e}")
 
+    # ==========================================================================
+    # FIELDS - Field validation from fields.py (simplified)
+    # ==========================================================================
+
+    class FieldValidators:
+        """Field validation utilities consolidated from fields.py."""
+
+        @staticmethod
+        def validate_email(value: object) -> FlextResult[str]:
+            """Validate email address format."""
+            if not isinstance(value, str):
+                return FlextResult[str].fail("Email must be a string")
+
+            # Basic email regex
+            email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            if not re.match(email_pattern, value):
+                return FlextResult[str].fail(f"Invalid email format: {value}")
+
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_uuid(value: object) -> FlextResult[str]:
+            """Validate UUID format."""
+            if not isinstance(value, str):
+                return FlextResult[str].fail("UUID must be a string")
+
+            # UUID v4 regex
+            uuid_pattern = (
+                r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            )
+            if not re.match(uuid_pattern, value.lower()):
+                return FlextResult[str].fail(f"Invalid UUID format: {value}")
+
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_url(value: object) -> FlextResult[str]:
+            """Validate URL format."""
+            if not isinstance(value, str):
+                return FlextResult[str].fail("URL must be a string")
+
+            # Basic URL pattern
+            url_pattern = r"^https?://[^\s/$.?#].[^\s]*$"
+            if not re.match(url_pattern, value):
+                return FlextResult[str].fail(f"Invalid URL format: {value}")
+
+            return FlextResult[str].ok(value)
+
+        @staticmethod
+        def validate_phone(value: object) -> FlextResult[str]:
+            """Validate phone number format."""
+            if not isinstance(value, str):
+                return FlextResult[str].fail("Phone must be a string")
+
+            # Remove non-digit characters for validation
+            digits_only = re.sub(r"\D", "", value)
+            min_phone_digits = 10
+            max_phone_digits = 15
+            if (
+                len(digits_only) < min_phone_digits
+                or len(digits_only) > max_phone_digits
+            ):
+                return FlextResult[str].fail(f"Invalid phone number: {value}")
+
+            return FlextResult[str].ok(value)
+
+    # ==========================================================================
+    # GUARDS - Type guards and validation assertions (from guards.py)
+    # ==========================================================================
+
+    class Guards:
+        """Type guards and validation assertions consolidated from guards.py."""
+
+        @staticmethod
+        def is_dict_of(obj: object, value_type: type) -> bool:
+            """Type guard to validate dictionary with homogeneous value types."""
+            if not isinstance(obj, dict):
+                return False
+            dict_obj = cast("dict[object, object]", obj)
+            return all(isinstance(value, value_type) for value in dict_obj.values())
+
+        @staticmethod
+        def is_list_of(obj: object, item_type: type) -> bool:
+            """Type guard to validate list with homogeneous item types."""
+            if not isinstance(obj, list):
+                return False
+            list_obj = cast("FlextTypes.Core.List", obj)
+            return all(isinstance(item, item_type) for item in list_obj)
+
+        @staticmethod
+        def require_not_none(
+            value: object,
+            message: str = "Value cannot be None",
+        ) -> object:
+            """Validate that a value is not None."""
+            if value is None:
+                raise FlextExceptions.ValidationError(message)
+            return value
+
+        @staticmethod
+        def require_positive(
+            value: object,
+            message: str = "Value must be positive",
+        ) -> object:
+            """Validate that a value is a positive integer."""
+            if not (isinstance(value, int) and value > 0):
+                raise FlextExceptions.ValidationError(message)
+            return value
+
+        @staticmethod
+        def require_in_range(
+            value: object,
+            min_val: int,
+            max_val: int,
+            message: str | None = None,
+        ) -> object:
+            """Validate that a numeric value falls within inclusive bounds."""
+            if not (isinstance(value, (int, float)) and min_val <= value <= max_val):
+                if not message:
+                    message = f"Value must be between {min_val} and {max_val}"
+                raise FlextExceptions.ValidationError(message)
+            return value
+
+        @staticmethod
+        def require_non_empty(
+            value: object,
+            message: str = "Value cannot be empty",
+        ) -> object:
+            """Validate that a string value is non-empty."""
+            if not isinstance(value, str) or not value.strip():
+                raise FlextExceptions.ValidationError(message)
+            return value
+
     # Convenience attributes for backward compatibility
     Fields = Rules.StringRules
     Collections = Rules.CollectionRules
@@ -1437,6 +1308,52 @@ class FlextValidations:
     def is_valid(self) -> bool:
         """Check if validation result is valid."""
         return True  # Default implementation for compatibility
+
+    @staticmethod
+    def validate_string_field(
+        value: object,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        pattern: str | None = None,
+    ) -> FlextResult[bool]:
+        """Validate string field with constraints."""
+        if not isinstance(value, str):
+            return FlextResult[bool].fail("Value must be a string")
+
+        if min_length is not None and len(value) < min_length:
+            return FlextResult[bool].fail(
+                f"String too short, minimum {min_length} characters"
+            )
+
+        if max_length is not None and len(value) > max_length:
+            return FlextResult[bool].fail(
+                f"String too long, maximum {max_length} characters"
+            )
+
+        if pattern is not None and not re.match(pattern, value):
+            return FlextResult[bool].fail(
+                f"String does not match pattern {pattern}"
+            )
+
+        return FlextResult[bool].ok(data=True)
+
+    @staticmethod
+    def validate_numeric_field(
+        value: object,
+        min_value: float | None = None,
+        max_value: float | None = None,
+    ) -> FlextResult[bool]:
+        """Validate numeric field with constraints."""
+        if not isinstance(value, (int, float)):
+            return FlextResult[bool].fail("Value must be numeric")
+
+        if min_value is not None and value < min_value:
+            return FlextResult[bool].fail(f"Value too small, minimum {min_value}")
+
+        if max_value is not None and value > max_value:
+            return FlextResult[bool].fail(f"Value too large, maximum {max_value}")
+
+        return FlextResult[bool].ok(data=True)
 
 
 __all__: FlextTypes.Core.StringList = [

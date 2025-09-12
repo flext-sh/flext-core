@@ -6,10 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core.exceptions import FlextExceptions
-from flext_core.typings import FlextTypes
 
 
 class TestExceptions100PercentCoverage:
@@ -111,49 +108,55 @@ class TestExceptions100PercentCoverage:
 
     def test_configuration_methods_lines_801_822(self) -> None:
         """Test configuration methods lines 801-822."""
-        # Test configure_error_handling
-        config = {
-            "environment": "production",  # ERROR log level is valid in production
-            "enable_metrics": True,
-            "log_level": "ERROR",
-            "context_tracking": True,
-        }
+        # Test metrics functionality
+        FlextExceptions.clear_metrics()
 
-        result = FlextExceptions.configure_error_handling(
-            cast("FlextTypes.Config.ConfigDict", config),
-        )
-        assert result.success
+        # Create some exceptions to generate metrics
+        FlextExceptions.ValidationError("Test validation error")
+        FlextExceptions.ConfigurationError("Test config error")
 
-        # Test get_error_handling_config
-        config_result = FlextExceptions.get_error_handling_config()
-        assert config_result.success
-        config_dict = config_result.unwrap()
-        assert isinstance(config_dict, dict)
+        # Test get_metrics
+        metrics = FlextExceptions.get_metrics()
+        assert isinstance(metrics, dict)
+        assert len(metrics) > 0
+
+        # Test clear_metrics
+        FlextExceptions.clear_metrics()
+        cleared_metrics = FlextExceptions.get_metrics()
+        assert len(cleared_metrics) == 0
 
     def test_create_environment_specific_config_lines_1115_1187(self) -> None:
-        """Test create_environment_specific_config lines 1115-1187."""
-        environments: list[FlextTypes.Config.Environment] = [
-            "development",
-            "production",
-            "test",
+        """Test create_module_exception_classes functionality."""
+        # Test creating module-specific exception classes
+        module_exceptions = FlextExceptions.create_module_exception_classes(
+            "test_module"
+        )
+
+        assert isinstance(module_exceptions, dict)
+        assert len(module_exceptions) > 0
+
+        # Check that expected exception types are created
+        expected_types = [
+            "TEST_MODULEBaseError",
+            "TEST_MODULEError",
+            "TEST_MODULEConfigurationError",
+            "TEST_MODULEConnectionError",
+            "TEST_MODULEValidationError",
+            "TEST_MODULEAuthenticationError",
+            "TEST_MODULEProcessingError",
+            "TEST_MODULETimeoutError",
         ]
 
-        for env in environments:
-            result = FlextExceptions.create_environment_specific_config(env)
-            assert result.success
-            config = result.unwrap()
-            assert isinstance(config, dict)
-            assert "environment" in config or len(config) > 0
+        for expected_type in expected_types:
+            assert expected_type in module_exceptions
+            assert isinstance(module_exceptions[expected_type], type)
 
     def test_invalid_environment_config(self) -> None:
-        """Test invalid environment configuration."""
-        # Use cast to test invalid environment handling
-        result = FlextExceptions.create_environment_specific_config(
-            cast("FlextTypes.Config.Environment", "invalid_env"),
-        )
-        assert result.failure
-        assert result.error is not None
-        assert "Invalid environment" in (result.error or "")
+        """Test invalid module name handling."""
+        # Test with invalid module name
+        result = FlextExceptions.create_module_exception_classes("")
+        assert isinstance(result, dict)
+        assert len(result) > 0  # Should still create exceptions even with empty name
 
     def test_exception_metrics_lines_854_855_899(self) -> None:
         """Test exception metrics collection."""
@@ -241,13 +244,8 @@ class TestExceptionsIntegration100PercentCoverage:
 
     def test_complete_exception_workflow(self) -> None:
         """Test complete exception creation and handling workflow."""
-        # Configure error handling
-        config: dict[
-            str,
-            str | int | float | bool | FlextTypes.Core.List | FlextTypes.Core.Dict,
-        ] = {"enable_metrics": True, "log_level": "DEBUG"}
-        config_result = FlextExceptions.configure_error_handling(config)
-        assert config_result.success
+        # Clear metrics to start fresh
+        FlextExceptions.clear_metrics()
 
         # Create different types of exceptions
         exceptions = [

@@ -131,7 +131,7 @@ class TestLibraryIntegration:
         assert result.value == test_value
 
         # Act - Test entity ID type system using FlextUtilities
-        entity_id = FlextUtilities.Generators.generate_entity_id()
+        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
 
         # Assert - Type system coherence
         assert isinstance(entity_id, str)
@@ -209,7 +209,7 @@ class TestLibraryIntegration:
 
     def test_entity_id_in_flext_result(self) -> None:
         """Test entity ID used in FlextResult."""
-        entity_id = FlextUtilities.Generators.generate_entity_id()
+        entity_id = FlextUtilities.Generators.generate_id()  # Use actual method name
         result = FlextResult[str].ok(entity_id)
 
         assert result.success

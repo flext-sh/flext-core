@@ -20,6 +20,7 @@ from typing import ClassVar, Self, cast
 import structlog
 from structlog.typing import EventDict, Processor
 
+from flext_core.config import FlextConfig
 from flext_core.constants import FlextConstants
 from flext_core.context import FlextContext
 from flext_core.typings import FlextTypes
@@ -28,19 +29,25 @@ from flext_core.typings import FlextTypes
 class FlextLogger:
     """Structured logger with correlation IDs, performance tracking, and data sanitization."""
 
+    # LOGGING HELL: 735 lines of over-engineered logging when logging.getLogger(name) works!
+    # SINGLETON ABUSE: Logger caching, thread-local storage, global correlation IDs
+    # ENTERPRISE PARANOIA: Performance tracking in logging, data sanitization, request context
+    # YAGNI PREMIUM: 99% of projects just need logger.info("message") - not this monster!
+
     # Class-level configuration and shared state
+    # OVER-COMPLEX: 6 different class variables for logging configuration
     _configured: ClassVar[bool] = False
     _configuration: ClassVar[dict[str, object]] = {}  # Singleton configuration storage
-    _global_correlation_id: ClassVar[str | None] = None  # Global correlation ID
+    _global_correlation_id: ClassVar[str | None] = None  # Global correlation ID - WHY?
     _service_info: ClassVar[FlextTypes.Core.Dict] = {}
     _request_context: ClassVar[FlextTypes.Core.Dict] = {}
-    _performance_tracking: ClassVar[dict[str, float]] = {}
+    _performance_tracking: ClassVar[dict[str, float]] = {}  # Performance tracking in LOGGING!
 
     # Logger instance cache for singleton pattern
-    _instances: ClassVar[dict[str, FlextLogger]] = {}
+    _instances: ClassVar[dict[str, FlextLogger]] = {}  # Instance caching - over-engineering
 
     # Thread-local storage for per-request context
-    _local = threading.local()
+    _local = threading.local()  # Thread-local for logging - most apps are single-threaded!
 
     # Instance attributes type declarations
     _name: str
@@ -63,15 +70,15 @@ class FlextLogger:
     def __init__(
         self,
         name: str,
-        level: FlextTypes.Config.LogLevel = "INFO",
+        level: FlextTypes.Config.LogLevel | None = None,
         service_name: str | None = None,
         service_version: str | None = None,
         correlation_id: str | None = None,
-        environment: FlextTypes.Config.Environment = "development",
+        environment: str | None = None,  # Deprecated - will be taken from singleton  # noqa: ARG002
         *,
         _force_new: bool = False,  # Accept but ignore this parameter
     ) -> None:
-        """Initialize structured logger instance."""
+        """Initialize structured logger instance using FlextConfig singleton."""
         if not type(self)._configured:
             # Use stored configuration if available, otherwise configure with defaults
             if type(self)._configuration:
@@ -80,18 +87,24 @@ class FlextLogger:
             else:
                 type(self).configure()
 
+        # Get config from SINGLETON
+        config = FlextConfig.get_global_instance()
+
         self._name = name
-        # Validate and set level (LogLevel is already a str type)
-        if isinstance(level, str):
+        # Use level from parameter or singleton config
+        if level and isinstance(level, str):
             valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
             upper_level = level.upper()
             if upper_level in valid_levels:
                 # Cast to proper LogLevel type after validation
                 self._level = cast("FlextTypes.Config.LogLevel", upper_level)
             else:
-                self._level = "INFO"
-        # LogLevel type is str-based, so this branch is not needed
-        self._environment = environment
+                self._level = cast("FlextTypes.Config.LogLevel", config.log_level)
+        else:
+            self._level = cast("FlextTypes.Config.LogLevel", config.log_level)
+
+        # ALWAYS use environment from singleton - ignore parameter
+        self._environment = config.environment
 
         # Initialize service context
         self._service_name = service_name or self._extract_service_name()
@@ -335,7 +348,7 @@ class FlextLogger:
             service_name=getattr(self, "_service_name", None),
             service_version=getattr(self, "_service_version", None),
             correlation_id=getattr(self, "_correlation_id", None),
-            environment=getattr(self, "_environment", "development"),
+            environment=None,  # Will use singleton config
             _force_new=True,
         )
 

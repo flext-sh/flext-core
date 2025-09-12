@@ -10,7 +10,7 @@ import asyncio
 import string
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Protocol
+from typing import Protocol, cast
 
 from pydantic import Field
 
@@ -157,11 +157,11 @@ class FlextTestsFixtures:
             """
 
             def create_nested(current_depth: int) -> dict[str, object]:
-                if current_depth <= 0:
-                    return {"value": f"leaf_{current_depth}"}
+                if current_depth <= 1:
+                    return {"value": f"depth_{current_depth}"}
 
                 return {
-                    "value": f"level_{current_depth}",
+                    "value": f"depth_{current_depth}",
                     "nested": create_nested(current_depth - 1),
                     "data": {"depth": current_depth},
                 }
@@ -201,13 +201,13 @@ class FlextTestsFixtures:
                 "ValidationError": {
                     "type": "validation",
                     "message": "Validation failed",
-                    "code": 400,
+                    "code": "VAL_001",
                     "details": {"field": "test_field", "reason": "invalid"},
                 },
                 "NetworkError": {
                     "type": "network",
-                    "message": "Network error occurred",
-                    "code": 503,
+                    "message": "Network error",
+                    "code": "NET_001",
                     "details": {"retry_after": 60},
                 },
                 "TimeoutError": {
@@ -218,15 +218,14 @@ class FlextTestsFixtures:
                 },
             }
 
-            return scenarios.get(
-                error_type,
-                {
-                    "type": "unknown",
-                    "message": f"Unknown error: {error_type}",
-                    "code": 500,
-                    "details": {},
-                },
-            )
+            if error_type in scenarios:
+                return cast("dict[str, object]", scenarios[error_type])
+            return {
+                "type": "unknown",
+                "message": "Unknown error",
+                "code": "UNK_001",
+                "details": {},
+            }
 
     class SessionTestService:
         """Service for managing test sessions."""
@@ -251,8 +250,13 @@ class FlextTestsFixtures:
             session_data = data or {}
             session_data["id"] = session_id
             session_data["created_at"] = "2024-01-01T00:00:00Z"
-            self._data[session_id] = session_data
-            return session_data
+            session: dict[str, object] = {
+                "id": session_id,
+                "created_at": "2024-01-01T00:00:00Z",
+                "data": session_data
+            }
+            self._data[session_id] = session
+            return session
 
         def get_session(self, session_id: str) -> dict[str, object] | None:
             """Get session by ID.
@@ -278,7 +282,11 @@ class FlextTestsFixtures:
 
             """
             if session_id in self._data:
-                self._data[session_id].update(data)
+                session = self._data[session_id]
+                if "data" in session and isinstance(session["data"], dict):
+                    session["data"].update(data)
+                else:
+                    session["data"] = data
                 return True
             return False
 
@@ -575,10 +583,13 @@ class FlextTestsFixtures:
             data: dict[str, object] | None = None,
         ) -> dict[str, object]:
             """Create processing command for testing."""
+            command_data = data or {"test": "value"}
+
             return {
                 "command": "process",
-                "data": data or {"test": "value"},
+                "data": command_data,
                 "timestamp": datetime.now(UTC).isoformat(),
+                "config": command_data,  # Use the data as config
             }
 
 

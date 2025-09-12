@@ -5,7 +5,8 @@ SPDX-License-Identifier: MIT
 """
 
 import asyncio
-from typing import Any
+import json
+import operator
 
 import pytest
 
@@ -54,8 +55,10 @@ class TestFlextResultCoverageBoost:
         # Test tap_error on failure (if available)
         result = FlextResult[int].fail("original error")
         if hasattr(result, "tap_error"):
+
             def error_handler(e: str) -> None:
                 pass  # Silent error handler for testing
+
             tapped = result.tap_error(error_handler)
             assert tapped.is_failure
             assert tapped.error == "original error"
@@ -94,6 +97,7 @@ class TestFlextResultCoverageBoost:
 
     def test_result_alternative_constructors(self) -> None:
         """Test alternative result construction methods."""
+
         # Test manual construction with try/catch pattern
         def successful_function() -> int:
             return 42
@@ -126,7 +130,7 @@ class TestFlextResultCoverageBoost:
         results = [
             FlextResult[int].ok(1),
             FlextResult[int].ok(2),
-            FlextResult[int].ok(3)
+            FlextResult[int].ok(3),
         ]
 
         # Manual collection logic
@@ -149,7 +153,7 @@ class TestFlextResultCoverageBoost:
         results = [
             FlextResult[int].ok(1),
             FlextResult[int].fail("error"),
-            FlextResult[int].ok(3)
+            FlextResult[int].ok(3),
         ]
 
         failed = False
@@ -165,6 +169,7 @@ class TestFlextResultCoverageBoost:
 
     def test_result_sequence_operations(self) -> None:
         """Test result sequence and traversal operations."""
+
         # Test sequence with function that can fail
         def divide_by_two(x: int) -> FlextResult[float]:
             if x == 0:
@@ -184,6 +189,7 @@ class TestFlextResultCoverageBoost:
 
     def test_result_traverse_operations(self) -> None:
         """Test result traverse operations."""
+
         # Test traverse with successful mapping
         def to_result_string(x: int) -> FlextResult[str]:
             return FlextResult[str].ok(f"value_{x}")
@@ -217,7 +223,7 @@ class TestFlextResultCoverageBoost:
         # Test monadic right identity law
         result = FlextResult[int].ok(10)
         # result >>= return === result
-        identity_mapped = result.flat_map(lambda x: FlextResult[int].ok(x))
+        identity_mapped = result.flat_map(FlextResult[int].ok)
         assert identity_mapped.unwrap() == result.unwrap()
 
     def test_result_error_codes(self) -> None:
@@ -264,14 +270,13 @@ class TestFlextResultCoverageBoost:
         """Test result conversion and transformation operations."""
         # Test conversion to optional-like behavior
         success_result = FlextResult[int].ok(42)
-        if hasattr(success_result, "to_optional"):
-            optional = success_result.to_optional()
-            assert optional is not None
+        # Use unwrap_or for optional-like behavior
+        optional_success = success_result.unwrap_or(-1)
+        assert optional_success == 42
 
         failure_result = FlextResult[int].fail("error")
-        if hasattr(failure_result, "to_optional"):
-            optional = failure_result.to_optional()
-            assert optional is None
+        optional_failure = failure_result.unwrap_or(-1)
+        assert optional_failure == -1
 
     def test_result_async_operations(self) -> None:
         """Test result async operations if available."""
@@ -300,7 +305,7 @@ class TestFlextResultCoverageBoost:
         # Test chaining performance
         chained = result
         for _ in range(10):
-            chained = chained.map(lambda x: x[:])  # Copy operation
+            chained = chained.map(operator.itemgetter(slice(None)))  # Copy operation
 
         assert chained.is_success
 
@@ -312,20 +317,21 @@ class TestFlextResultCoverageBoost:
         assert result.unwrap() is None
 
         # Test with empty collections
-        result = FlextResult[list[Any]].ok([])
-        assert result.is_success
-        assert result.unwrap() == []
+        list_result = FlextResult[list[object]].ok([])
+        assert list_result.is_success
+        assert list_result.unwrap() == []
 
         # Test with complex nested types
         nested_data = {"level1": {"level2": {"level3": "deep_value"}}}
-        result = FlextResult[dict[str, Any]].ok(nested_data)
-        assert result.is_success
+        dict_result = FlextResult[dict[str, dict[str, dict[str, str]]]].ok(nested_data)
+        assert dict_result.is_success
 
         # Test with very long error messages
         long_error = "A" * 1000
-        result = FlextResult[int].fail(long_error)
-        assert result.is_failure
-        assert len(result.error) == 1000
+        int_result = FlextResult[int].fail(long_error)
+        assert int_result.is_failure
+        if int_result.error is not None:
+            assert len(int_result.error) == 1000
 
     def test_result_string_representations(self) -> None:
         """Test result string representations and debugging."""
@@ -360,16 +366,25 @@ class TestFlextResultCoverageBoost:
     def test_result_serialization(self) -> None:
         """Test result serialization capabilities."""
         # Test if result supports serialization
-        result = FlextResult[dict[str, Any]].ok({"key": "value"})
+        result = FlextResult[dict[str, object]].ok({"key": "value"})
 
-        # Test JSON serialization if available
-        if hasattr(result, "to_dict"):
-            dict_repr = result.to_dict()
-            assert isinstance(dict_repr, dict)
+        # Test serialization capabilities
+        # FlextResult doesn't have model_dump, but we can test string representation
+        str_repr = str(result)
+        assert isinstance(str_repr, str)
 
-        if hasattr(result, "to_json"):
-            json_repr = result.to_json()
-            assert isinstance(json_repr, str)
+        # Test JSON serialization if data is serializable
+        try:
+            # Create a simple dict representation for JSON serialization
+            data_dict = {
+                "success": result.success,
+                "data": result.value if result.success else None,
+            }
+            json_str = json.dumps(data_dict, default=str)
+            assert isinstance(json_str, str)
+        except (TypeError, AttributeError):
+            # Skip if not serializable
+            pass
 
     def test_result_immutability(self) -> None:
         """Test result immutability guarantees."""

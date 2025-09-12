@@ -17,13 +17,13 @@ from flext_core import (
     FlextCommands,
     FlextConfig,
     FlextContainer,
+    FlextModels,
     FlextResult,
+    FlextTypes,
 )
-from flext_core.models import FlextModels
-from flext_core.typings import FlextTypes
 
 
-class User(FlextModels.Config):
+class User(FlextModels.TimestampedModel):
     """User domain model."""
 
     id: str
@@ -33,7 +33,7 @@ class User(FlextModels.Config):
     age: int = 18
 
 
-class CreateUserCommand(FlextModels.Config):
+class CreateUserCommand(FlextModels.TimestampedModel):
     """Command to create a user."""
 
     username: str

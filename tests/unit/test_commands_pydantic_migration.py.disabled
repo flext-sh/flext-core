@@ -65,21 +65,22 @@ class TestCommandsPydanticMigration:
         assert query.query_id.startswith("qry_")
 
     def test_command_handler_with_pydantic_config(self) -> None:
-        """Test CommandHandler with HandlerConfig."""
-        # Create handler config
-        config = FlextModels.SystemConfigs.HandlerConfig(
-            handler_id="test_handler_1",
-            handler_name="TestHandler",
-            handler_type="command",
-            can_retry=True,
-            max_retries=5,
-            timeout_seconds=60,
-            priority=8,
-        )
+        """Test CommandHandler without HandlerConfig (removed in simplification)."""
+        # HandlerConfig was removed - use simple dict instead
+        config = {
+            "handler_id": "test_handler_1",
+            "handler_name": "TestHandler",
+            "handler_type": "command",
+            "can_retry": True,
+            "max_retries": 5,
+            "timeout_seconds": 60,
+            "priority": 8,
+        }
 
         # Create handler with config
         class TestCommandHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, _command: dict) -> FlextResult[str]:
+            def handle(self, command: dict) -> FlextResult[str]:
+                _ = command  # Use command parameter
                 return FlextResult[str].ok("success")
 
         handler = TestCommandHandler(handler_config=config)
@@ -96,7 +97,8 @@ class TestCommandsPydanticMigration:
         """Test CommandHandler creates default config when not provided."""
 
         class TestCommandHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, _command: dict) -> FlextResult[str]:
+            def handle(self, command: dict) -> FlextResult[str]:
+                _ = command  # Use command parameter
                 return FlextResult[str].ok("success")
 
         handler = TestCommandHandler(handler_name="MyHandler")
@@ -121,7 +123,8 @@ class TestCommandsPydanticMigration:
         )
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[dict, list]):
-            def handle(self, _query: dict) -> FlextResult[list]:
+            def handle(self, query: dict) -> FlextResult[list]:
+                _ = query  # Use query parameter
                 return FlextResult[list].ok([])
 
         handler = TestQueryHandler(handler_config=config)
@@ -255,6 +258,7 @@ class TestCommandsPydanticMigration:
         cmd2 = ValidatedCommand(command_type="validated", action="test", count=-1)
         result2 = cmd2.validate_command()
         assert not result2.success
+        assert result2.error is not None
         assert "must be positive" in result2.error
 
     def test_query_validation_through_pydantic(self) -> None:
@@ -278,38 +282,14 @@ class TestCommandsPydanticMigration:
         query2 = ValidatedQuery(query_type="search", entity_type="user", limit=200)
         result2 = query2.validate_query()
         assert not result2.success
+        assert result2.error is not None
         assert "Limit too high" in result2.error
 
     def test_handler_config_validation(self) -> None:
-        """Test HandlerConfig validation."""
-        # Valid config
-        config = FlextModels.SystemConfigs.HandlerConfig(
-            handler_id="handler_1",
-            handler_name="TestHandler",
-            handler_type="command",
-            max_retries=5,
-            timeout_seconds=30,
-            priority=7,
-        )
-        assert config.handler_type == "command"
-        assert config.max_retries == 5
-
-        # Invalid handler type
-        with pytest.raises(Exception):  # Pydantic validation error
-            FlextModels.SystemConfigs.HandlerConfig(
-                handler_id="handler_2",
-                handler_name="BadHandler",
-                handler_type="invalid_type",  # Should fail pattern validation
-            )
-
-        # Invalid max_retries
-        with pytest.raises(Exception):
-            FlextModels.SystemConfigs.HandlerConfig(
-                handler_id="handler_3",
-                handler_name="BadHandler",
-                handler_type="query",
-                max_retries=100,  # Over limit
-            )
+        """Test that HandlerConfig was removed during simplification."""
+        # HandlerConfig was removed during simplification
+        # This test now validates that it doesn't exist
+        assert not hasattr(FlextModels.SystemConfigs, "HandlerConfig")
 
     def test_bus_config_validation(self) -> None:
         """Test BusConfig validation."""
@@ -387,7 +367,8 @@ class TestCommandsPydanticMigration:
 
         # Should succeed with Pydantic models throughout
         assert result.success
-        assert "testuser created" in result.value
+        assert result.value is not None
+        assert "testuser created" in str(result.value)
 
     def test_middleware_pipeline_with_pydantic(self) -> None:
         """Test middleware pipeline execution with Pydantic configs."""
@@ -425,7 +406,8 @@ class TestCommandsPydanticMigration:
 
         # Create handler
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, _command: dict) -> FlextResult[str]:
+            def handle(self, command: dict) -> FlextResult[str]:
+                _ = command  # Use command parameter
                 return FlextResult[str].ok("done")
 
         handler = TestHandler()

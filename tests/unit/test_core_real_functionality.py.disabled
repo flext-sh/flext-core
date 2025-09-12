@@ -3,6 +3,7 @@
 Tests only what actually exists and works - no fake methods or absurd tests.
 """
 
+
 from flext_core import FlextCore, FlextResult
 
 
@@ -51,7 +52,7 @@ class TestFlextCoreDirectAccess:
         core = FlextCore()
 
         # This is a REAL method that exists in FlextConfig
-        config_data = {"environment": "test"}
+        config_data: dict[str, object] = {"environment": "test"}
         result = core.Config.create(constants=config_data)
         assert isinstance(result, FlextResult)
 

@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import random
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import ClassVar
+
+from pydantic import Field
 
 from flext_core import FlextModels, FlextTypes
 
@@ -28,7 +30,7 @@ class FlextTestsDomains:
     class RepositoryError(Exception):
         """Custom exception for repository operations."""
 
-    class TestUser(FlextModels.Config):
+    class TestUser(FlextModels.TimestampedModel):
         """Test user model for factory testing."""
 
         id: str
@@ -36,10 +38,10 @@ class FlextTestsDomains:
         email: str
         age: int
         is_active: bool
-        created_at: datetime
+        created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
         metadata: FlextTypes.Core.Dict
 
-    class TestConfig(FlextModels.Config):
+    class TestConfig(FlextModels.TimestampedModel):
         """Test configuration model for factory testing."""
 
         database_url: str
@@ -49,7 +51,7 @@ class FlextTestsDomains:
         max_connections: int
         features: FlextTypes.Core.StringList
 
-    class TestField(FlextModels.Config):
+    class TestField(FlextModels.TimestampedModel):
         """Test field model for factory testing."""
 
         field_id: str
@@ -64,17 +66,17 @@ class FlextTestsDomains:
         default_value: object = None
         pattern: str | None = None
 
-    class BaseTestEntity(FlextModels.Config):
+    class BaseTestEntity(FlextModels.TimestampedModel):
         """Base test entity for domain testing."""
 
         id: str
         name: str
-        created_at: datetime
-        updated_at: datetime
+        created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+        updated_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
         version: int = 1
         metadata: ClassVar[FlextTypes.Core.Dict] = {}
 
-    class BaseTestValueObject(FlextModels.Config):
+    class BaseTestValueObject(FlextModels.TimestampedModel):
         """Base test value object for domain testing."""
 
         value: str
