@@ -1,7 +1,7 @@
 # FlextFields Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.fields`  
+**Version**: 0.9.0
+**Module**: `flext_core.fields`
 **Target Audience**: FLEXT Developers, Solution Architects, Form Developers
 
 ## 🎯 Overview

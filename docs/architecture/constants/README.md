@@ -1,7 +1,7 @@
 # FlextConstants - Hierarchical Enterprise Constants System
 
-**Version**: 0.9.0  
-**Module**: `flext_core.constants`  
+**Version**: 0.9.0
+**Module**: `flext_core.constants`
 **Target Audience**: Software Architects, Senior Developers, Platform Engineers
 
 ## Executive Summary

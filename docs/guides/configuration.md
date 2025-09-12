@@ -1,7 +1,7 @@
 # Configuration Guide - FLEXT Core
 
-**Version**: 0.9.1  
-**Last Updated**: 2025-01-07  
+**Version**: 0.9.1
+**Last Updated**: 2025-01-07
 **Authority**: flext-core Pydantic v2.11 Unification
 
 ## Table of Contents
@@ -63,7 +63,7 @@ from pydantic import Field
 
 class BaseSystemConfig(FlextModels.Config):
     """Base configuration with common fields."""
-    
+
     environment: str = Field(
         default="development",
         description="Deployment environment"
@@ -91,7 +91,7 @@ class CommandsConfig(BaseSystemConfig):
     command_timeout_seconds: int = 30
     max_command_retries: int = 3
 
-# Domain Services Configuration  
+# Domain Services Configuration
 class DomainServicesConfig(BaseSystemConfig):
     """Configuration for domain services."""
     service_level: str = "standard"
@@ -131,15 +131,15 @@ def configure_system(config_dict: dict) -> FlextResult[dict]:
     try:
         # Validate configuration
         config = FlextModels.SystemConfigs.CommandsConfig.model_validate(config_dict)
-        
+
         # Apply configuration logic
         if config.environment == "production":
             config.debug = False
             config.log_level = "WARNING"
-        
+
         # Return as dict for compatibility
         return FlextResult.ok(config.model_dump())
-        
+
     except ValidationError as e:
         return FlextResult.fail(
             f"Invalid configuration: {e}",
@@ -154,7 +154,7 @@ from flext_core.constants import FlextConstants
 
 class MyConfig(BaseSystemConfig):
     """Custom configuration with environment awareness."""
-    
+
     @model_validator(mode="after")
     def adjust_for_environment(self) -> "MyConfig":
         """Auto-adjust settings based on environment."""
@@ -228,23 +228,23 @@ def configure_old_system(config: dict) -> FlextResult[dict]:
     # Manual validation
     if "environment" not in config:
         return FlextResult.fail("environment required")
-    
+
     env = config["environment"]
     valid_envs = ["development", "staging", "production"]
     if env not in valid_envs:
         return FlextResult.fail(f"Invalid environment: {env}")
-    
+
     # Manual type checking
     if "port" in config:
         if not isinstance(config["port"], int):
             return FlextResult.fail("port must be integer")
         if not 1 <= config["port"] <= 65535:
             return FlextResult.fail("port out of range")
-    
+
     # Manual defaults
     config.setdefault("log_level", "INFO")
     config.setdefault("debug", False)
-    
+
     return FlextResult.ok(config)
 ```
 
@@ -308,13 +308,13 @@ from typing import Optional
 
 class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
     """API-specific configuration."""
-    
+
     # API-specific fields
     api_key: Optional[str] = Field(None, description="API authentication key")
     rate_limit: int = Field(default=100, ge=1, le=10000)
     timeout_seconds: int = Field(default=30, ge=1, le=300)
     base_url: str = Field(default="https://api.example.com")
-    
+
     # Nested configuration
     retry_config: dict = Field(
         default_factory=lambda: {
@@ -323,7 +323,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
             "max_wait": 60
         }
     )
-    
+
     @field_validator("api_key")
     @classmethod
     def validate_api_key(cls, v: Optional[str]) -> Optional[str]:
@@ -331,7 +331,7 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
         if v and not v.startswith("sk_"):
             raise ValueError("API key must start with 'sk_'")
         return v
-    
+
     @model_validator(mode="after")
     def adjust_for_production(self) -> "ApiConfig":
         """Production adjustments."""
@@ -343,11 +343,11 @@ class ApiConfig(FlextModels.SystemConfigs.BaseSystemConfig):
 
 class ApiSettings(FlextConfig.Settings):
     """Extended settings for API project."""
-    
+
     api_key: Optional[str] = None
     rate_limit: int = 100
     base_url: str = "https://api.example.com"
-    
+
     def to_config(self) -> ApiConfig:
         """Convert to ApiConfig model."""
         return ApiConfig(
@@ -369,11 +369,11 @@ from flext_core import FlextResult, FlextConfig
 
 class ApiClient:
     """API client with configuration support."""
-    
+
     def __init__(self, config: Optional[dict] = None):
         """Initialize with configuration."""
         self.config = self._load_config(config)
-    
+
     def _load_config(self, config_dict: Optional[dict]) -> ApiConfig:
         """Load and validate configuration."""
         if config_dict:
@@ -386,7 +386,7 @@ class ApiClient:
                 json_file="api_config.json"
             )
             return settings.to_config()
-    
+
     @classmethod
     def from_environment(cls) -> "ApiClient":
         """Create client from environment variables."""
@@ -403,7 +403,7 @@ class ApiClient:
 class MyConfig(BaseSystemConfig):
     email: EmailStr  # Automatic email validation
     port: int = Field(ge=1, le=65535)  # Range validation
-    
+
     @field_validator("custom_field")
     @classmethod
     def validate_custom(cls, v):
@@ -427,7 +427,7 @@ from flext_core.constants import FlextConstants
 
 class MyConfig(BaseSystemConfig):
     environment: str = Field(default=FlextConstants.Config.ConfigEnvironment.DEVELOPMENT.value)
-    
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v):
@@ -474,13 +474,13 @@ def configure_with_compatibility(config: dict) -> FlextResult[dict]:
         if config["log_level"] not in standard_levels:
             custom_log_level = config["log_level"]
             config["log_level"] = "INFO"  # Temporary for validation
-    
+
     validated = MyConfig.model_validate(config)
     result = validated.model_dump()
-    
+
     if custom_log_level:
         result["log_level"] = custom_log_level  # Restore custom value
-    
+
     return FlextResult.ok(result)
 ```
 
@@ -491,7 +491,7 @@ def configure_with_compatibility(config: dict) -> FlextResult[dict]:
 ```python
 class MyConfig(BaseSystemConfig):
     """Configuration with factory methods."""
-    
+
     @classmethod
     def for_production(cls) -> "MyConfig":
         """Create production configuration."""
@@ -501,7 +501,7 @@ class MyConfig(BaseSystemConfig):
             debug=False,
             enable_monitoring=True
         )
-    
+
     @classmethod
     def for_testing(cls) -> "MyConfig":
         """Create test configuration."""
@@ -521,7 +521,7 @@ def merge_configurations(*configs: dict) -> FlextResult[dict]:
     merged = {}
     for config in configs:
         merged.update(config)
-    
+
     try:
         validated = MyConfig.model_validate(merged)
         return FlextResult.ok(validated.model_dump())
@@ -534,10 +534,10 @@ def merge_configurations(*configs: dict) -> FlextResult[dict]:
 ```python
 class ConditionalConfig(BaseSystemConfig):
     """Config with conditional requirements."""
-    
+
     mode: str = Field(default="basic")
     advanced_option: Optional[str] = None
-    
+
     @model_validator(mode="after")
     def validate_conditional(self) -> "ConditionalConfig":
         """Validate conditional requirements."""
@@ -558,7 +558,7 @@ class DatabaseConfig(BaseModel):
 class AppConfig(BaseSystemConfig):
     """Application config with nested database config."""
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    
+
     @classmethod
     def from_flat_dict(cls, data: dict) -> "AppConfig":
         """Create from flat dictionary."""
@@ -568,11 +568,11 @@ class AppConfig(BaseSystemConfig):
             for k, v in data.items()
             if k.startswith("db_")
         }
-        
+
         # Create nested structure
         if db_config:
             data["database"] = db_config
-        
+
         return cls.model_validate(data)
 ```
 

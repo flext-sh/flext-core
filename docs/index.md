@@ -284,5 +284,5 @@ MIT License - see [LICENSE](../LICENSE) for details.
 
 ---
 
-**FLEXT Core** - Foundation for enterprise data integration  
+**FLEXT Core** - Foundation for enterprise data integration
 **Version**: 0.9.0 | **Python**: 3.13+ | **License**: MIT

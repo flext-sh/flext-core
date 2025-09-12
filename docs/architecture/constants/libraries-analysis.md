@@ -1,7 +1,7 @@
 # FlextConstants Libraries Analysis and Integration Assessment
 
-**Version**: 0.9.0  
-**Module**: `flext_core.constants`  
+**Version**: 0.9.0
+**Module**: `flext_core.constants`
 **Target Audience**: Software Architects, Technical Leads, Platform Engineers
 
 ## Executive Summary

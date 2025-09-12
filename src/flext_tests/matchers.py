@@ -310,6 +310,7 @@ class FlextTestsMatchers:
 
             Note:
                 This leverages pytest-deadfixtures plugin for fixture analysis
+                Module parameter available for future fixture analysis implementation
 
             """
 
@@ -764,6 +765,7 @@ class FlextTestsMatchers:
                 _exc_tb: object,
             ) -> None:
                 """__aexit__ method."""
+                # Exception parameters available for future error handling
                 if self.cleanup_func and callable(self.cleanup_func):
                     if asyncio.iscoroutinefunction(self.cleanup_func):
                         await self.cleanup_func(self.value)
@@ -804,6 +806,7 @@ class FlextTestsMatchers:
                 _exc_tb: object,
             ) -> None:
                 """__aexit__ method."""
+                # Exception parameters available for future error handling
                 if self.teardown_func and self.resource is not None:
                     result = self.teardown_func(self.resource)
                     if asyncio.iscoroutine(result):

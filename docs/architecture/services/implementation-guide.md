@@ -1,8 +1,8 @@
 # FlextServices Implementation Guide
 
-**Version**: 0.9.0  
-**Target Audience**: FLEXT Developers, Service Architects  
-**Implementation Time**: 2-3 weeks per service  
+**Version**: 0.9.0
+**Target Audience**: FLEXT Developers, Service Architects
+**Implementation Time**: 2-3 weeks per service
 **Complexity**: Intermediate to Advanced
 
 ## 📖 Overview

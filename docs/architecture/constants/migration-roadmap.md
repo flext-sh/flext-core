@@ -1,7 +1,7 @@
 # FlextConstants Migration Roadmap
 
-**Version**: 0.9.0  
-**Module**: `flext_core.constants`  
+**Version**: 0.9.0
+**Module**: `flext_core.constants`
 **Target Audience**: Technical Leads, Software Architects, Platform Engineers
 
 ## Executive Summary

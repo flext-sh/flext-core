@@ -1,8 +1,8 @@
 # FlextModels Implementation Guide
 
-**Version**: 0.9.0  
-**Target**: FLEXT Library Developers  
-**Complexity**: Advanced  
+**Version**: 0.9.0
+**Target**: FLEXT Library Developers
+**Complexity**: Advanced
 **Estimated Time**: 2-4 hours per library
 
 ## 📋 Overview

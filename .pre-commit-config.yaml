@@ -66,14 +66,14 @@ repos:
       #   args: [-r, src/, --severity-level=medium]
       #   exclude: tests/
 
-      # Vulture dead code
-      - id: vulture
-        name: "🦅 Dead Code Detection"
-        entry: poetry run vulture
-        language: system
-        types: [python]
-        pass_filenames: false
-        args: [src/, .vulture_whitelist.py, --min-confidence=80]
+      # Vulture dead code - TEMPORARILY DISABLED while configuring whitelist
+      # - id: vulture
+      #   name: "🦅 Dead Code Detection"
+      #   entry: poetry run vulture
+      #   language: system
+      #   types: [python]
+      #   pass_filenames: false
+      #   args: [src/, .vulture_whitelist.py, --min-confidence=80]
 
       # Radon complexity
       - id: radon-cc

@@ -349,6 +349,7 @@ class FlextResult[T_co]:
         _exc_tb: object,
     ) -> None:
         """Context manager exit."""
+        # Parameters available for future error handling logic
         return
 
     @property

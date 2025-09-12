@@ -500,9 +500,9 @@ class FlextTestsUtilities:
 
         def __exit__(
             self,
-            exc_type: type[BaseException] | None,
-            exc_val: BaseException | None,
-            exc_tb: object,
+            _exc_type: type[BaseException] | None,
+            _exc_val: BaseException | None,
+            _exc_tb: object,
         ) -> None:
             """Exit context - restore original state."""
             # Exception parameters available for future error handling

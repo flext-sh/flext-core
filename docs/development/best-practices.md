@@ -610,23 +610,23 @@ def authenticate(email: str, password: str) -> FlextResult[User]:
 
 ### DO
 
-✅ Use FlextResult for all fallible operations  
-✅ Apply comprehensive type hints  
-✅ Follow Clean Architecture layers  
-✅ Use dependency injection  
-✅ Write tests for success and failure paths  
-✅ Document public APIs  
-✅ Validate all external input  
+✅ Use FlextResult for all fallible operations
+✅ Apply comprehensive type hints
+✅ Follow Clean Architecture layers
+✅ Use dependency injection
+✅ Write tests for success and failure paths
+✅ Document public APIs
+✅ Validate all external input
 ✅ Handle errors explicitly
 
 ### DON'T
 
-❌ Use exceptions for business logic  
-❌ Create hard-coded dependencies  
-❌ Skip type annotations  
-❌ Ignore FlextResult failures  
-❌ Mix architectural layers  
-❌ Log sensitive data  
+❌ Use exceptions for business logic
+❌ Create hard-coded dependencies
+❌ Skip type annotations
+❌ Ignore FlextResult failures
+❌ Mix architectural layers
+❌ Log sensitive data
 ❌ Trust external input
 
 ---

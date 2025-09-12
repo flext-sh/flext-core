@@ -1,8 +1,8 @@
 # FlextDelegationSystem Implementation Guide
 
-**Version**: 0.9.0  
-**Target Audience**: FLEXT Developers, System Architects  
-**Implementation Time**: 2-4 weeks per library  
+**Version**: 0.9.0
+**Target Audience**: FLEXT Developers, System Architects
+**Implementation Time**: 2-4 weeks per library
 **Complexity**: Intermediate to Advanced
 
 ## 📖 Overview

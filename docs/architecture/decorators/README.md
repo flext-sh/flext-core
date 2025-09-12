@@ -1,7 +1,7 @@
 # FlextDecorators - Enterprise Decorator System for Cross-Cutting Concerns
 
-**Version**: 0.9.0  
-**Module**: `flext_core.decorators`  
+**Version**: 0.9.0
+**Module**: `flext_core.decorators`
 **Target Audience**: Software Architects, Senior Developers, Platform Engineers
 
 ## Executive Summary

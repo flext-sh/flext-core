@@ -1,8 +1,8 @@
 # FlextMixins Implementation Guide
 
-**Version**: 0.9.0  
-**Target Audience**: FLEXT Developers, System Architects  
-**Implementation Time**: 1-2 weeks per service  
+**Version**: 0.9.0
+**Target Audience**: FLEXT Developers, System Architects
+**Implementation Time**: 1-2 weeks per service
 **Complexity**: Beginner to Intermediate
 
 ## 📖 Overview

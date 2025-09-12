@@ -11,7 +11,7 @@ Phase 5 da migração Pydantic v2.11 **CONCLUÍDA COM SUCESSO**. Todos os 1942 t
 
 Removido validações manuais redundantes de:
 - `validations.py`
-- `container.py`  
+- `container.py`
 - `handlers.py`
 - `services.py`
 - `guards.py`
@@ -103,7 +103,7 @@ Todos os valores de configuração agora usam FlextConstants.Config enums:
 1. `validations.py` - Removido validações, corrigido strings
 2. `container.py` - Removido validações
 3. `handlers.py` - Removido validações, corrigido strings
-4. `services.py` - Removido validações, corrigido strings  
+4. `services.py` - Removido validações, corrigido strings
 5. `guards.py` - Removido validações, corrigido strings
 6. `exceptions.py` - Removido validações, corrigido strings
 7. `loggings.py` - Substituído listas por enums

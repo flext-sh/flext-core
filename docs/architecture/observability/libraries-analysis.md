@@ -1,7 +1,7 @@
 # FlextObservability Libraries Analysis and Integration Opportunities
 
-**Version**: 0.9.0  
-**Module**: `flext_core.observability`  
+**Version**: 0.9.0
+**Module**: `flext_core.observability`
 **Target Audience**: Technical Architects, Platform Engineers, DevOps Teams
 
 ## Executive Summary

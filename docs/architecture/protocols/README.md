@@ -1,7 +1,7 @@
 # FlextProtocols - Enterprise Protocol Architecture and Contract Management
 
-**Version**: 0.9.0  
-**Module**: `flext_core.protocols`  
+**Version**: 0.9.0
+**Module**: `flext_core.protocols`
 **Target Audience**: Software Architects, Senior Developers, Platform Engineers
 
 ## Executive Summary

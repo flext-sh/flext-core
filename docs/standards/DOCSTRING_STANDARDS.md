@@ -6,8 +6,8 @@ This document establishes docstring standards for FLEXT Core's actual implementa
 
 ## 📊 **Actual Module Status**
 
-**REAL COUNT**: 48 Python files in src/flext_core/  
-**DOCUMENTATION STATUS**: Mixed - some modules have comprehensive docstrings, others minimal  
+**REAL COUNT**: 48 Python files in src/flext_core/
+**DOCUMENTATION STATUS**: Mixed - some modules have comprehensive docstrings, others minimal
 **LANGUAGE**: English-only (standardized across repository)
 
 ## 🏗️ **Standard Docstring Template**

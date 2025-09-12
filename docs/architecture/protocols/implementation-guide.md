@@ -1,7 +1,7 @@
 # FlextProtocols Implementation Guide
 
-**Version**: 0.9.0  
-**Module**: `flext_core.protocols`  
+**Version**: 0.9.0
+**Module**: `flext_core.protocols`
 **Target Audience**: Senior Developers, Software Architects, Platform Engineers
 
 ## Quick Start

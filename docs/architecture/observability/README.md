@@ -1,7 +1,7 @@
 # FlextObservability - Enterprise Monitoring and Observability Architecture
 
-**Version**: 0.9.0  
-**Module**: `flext_core.observability`  
+**Version**: 0.9.0
+**Module**: `flext_core.observability`
 **Target Audience**: Technical Architects, DevOps Engineers, Platform Engineers
 
 ## Executive Summary

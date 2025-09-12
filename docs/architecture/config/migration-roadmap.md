@@ -1,9 +1,9 @@
 # FlextConfig Migration Roadmap
 
-**Version**: 0.9.0  
-**Timeline**: 18 weeks (4.5 months)  
-**Start Date**: February 2025  
-**Target Completion**: June 2025  
+**Version**: 0.9.0
+**Timeline**: 18 weeks (4.5 months)
+**Start Date**: February 2025
+**Target Completion**: June 2025
 **Team Size**: 2 developers
 
 ## 📋 Executive Summary
@@ -34,18 +34,18 @@ gantt
     section Phase 1: Critical Infrastructure
     flext-web           :2025-02-01, 3w
     flext-oracle-wms    :2025-02-15, 3w
-    
+
     section Phase 2: ETL Enhancement
     flext-meltano       :2025-03-01, 4w
-    
-    section Phase 3: Supporting Services  
+
+    section Phase 3: Supporting Services
     flext-observability :2025-03-29, 2w
     flext-grpc         :2025-04-12, 2w
-    
+
     section Phase 4: Specialization
     algar-oud-mig      :2025-04-26, 2w
     gruponos-meltano   :2025-05-10, 2w
-    
+
     section Phase 5: Finalization
     Documentation      :2025-05-24, 2w
     Testing            :2025-06-07, 1w
@@ -54,7 +54,7 @@ gantt
 | Phase | Duration | Libraries | Risk | Impact |
 |-------|----------|-----------|------|--------|
 | **Phase 1** | 6 weeks | 2 | Medium | Critical |
-| **Phase 2** | 4 weeks | 1 | High | High |  
+| **Phase 2** | 4 weeks | 1 | High | High |
 | **Phase 3** | 4 weeks | 2 | Low | Medium |
 | **Phase 4** | 4 weeks | 2 | Low | Low |
 
@@ -62,24 +62,24 @@ gantt
 
 ## 🚀 Phase 1: Critical Infrastructure (Weeks 1-6)
 
-**Goal**: Implement FlextConfig in libraries with no configuration system  
-**Priority**: 🔥 **CRITICAL**  
-**Risk Level**: Medium  
+**Goal**: Implement FlextConfig in libraries with no configuration system
+**Priority**: 🔥 **CRITICAL**
+**Risk Level**: Medium
 **Success Metrics**: Production-ready configuration with security validation
 
 ### Week 1-3: flext-web Configuration Implementation
 
-**Owner**: Senior Frontend Developer  
+**Owner**: Senior Frontend Developer
 **Effort**: 3 weeks full-time
 
 #### Week 1: Web Configuration Analysis & Design
 - [ ] **Web Application Audit**: Document all configuration needs
-- [ ] **Security Requirements**: Map CORS, authentication, session requirements  
+- [ ] **Security Requirements**: Map CORS, authentication, session requirements
 - [ ] **Environment Analysis**: Development vs staging vs production differences
 - [ ] **Framework Integration**: Flask/FastAPI configuration patterns
 - [ ] **Performance Settings**: Worker counts, timeout, resource limits
 
-#### Week 2: Core Web Configuration Implementation  
+#### Week 2: Core Web Configuration Implementation
 - [ ] **Base Configuration**: Implement FlextWebConfig class
   ```python
   class FlextWebConfig(FlextConfig):
@@ -87,11 +87,11 @@ gantt
       web_host: str = Field(default="127.0.0.1")
       web_port: int = Field(default=8080, ge=1024, le=65535)
       web_workers: int = Field(default=4, ge=1, le=32)
-      
-      # Security settings  
+
+      # Security settings
       secret_key: str = Field(min_length=32)
       cors_origins: FlextTypes.Core.StringList = Field(default_factory=list)
-      
+
       # Session settings
       session_timeout_minutes: int = Field(default=30, ge=5, le=1440)
   ```
@@ -113,9 +113,9 @@ gantt
 - ✅ Framework integration patterns
 - ✅ Comprehensive testing coverage
 
-### Week 3-6: flext-oracle-wms Configuration Implementation  
+### Week 3-6: flext-oracle-wms Configuration Implementation
 
-**Owner**: Database Integration Developer  
+**Owner**: Database Integration Developer
 **Effort**: 3 weeks full-time
 
 #### Week 3-4: Oracle WMS Configuration Analysis
@@ -132,13 +132,13 @@ gantt
       oracle_host: str = Field(default="localhost")
       oracle_port: int = Field(default=1521, ge=1024, le=65535)
       oracle_service: str = Field(min_length=1)
-      oracle_user: str = Field(min_length=1) 
+      oracle_user: str = Field(min_length=1)
       oracle_password: str = Field(min_length=8)
-      
+
       # Connection pooling
       pool_size: int = Field(default=10, ge=1, le=100)
       pool_timeout: int = Field(default=30, ge=5, le=300)
-      
+
       # WMS settings
       warehouse_id: str = Field(min_length=1)
       batch_size: int = Field(default=1000, ge=1, le=10000)
@@ -157,7 +157,7 @@ gantt
 **Deliverables**:
 - ✅ FlextOracleWmsConfig with 20+ configuration fields
 - ✅ Oracle connection string building and validation
-- ✅ Connection pooling configuration management  
+- ✅ Connection pooling configuration management
 - ✅ Security and performance validation rules
 - ✅ Complete integration testing
 
@@ -172,14 +172,14 @@ gantt
 
 ## 🔧 Phase 2: ETL Enhancement (Weeks 7-10)
 
-**Goal**: Refactor flext-meltano from custom pattern to FlextConfig  
-**Priority**: 🟡 **HIGH**  
-**Risk Level**: High (existing functionality preservation)  
+**Goal**: Refactor flext-meltano from custom pattern to FlextConfig
+**Priority**: 🟡 **HIGH**
+**Risk Level**: High (existing functionality preservation)
 **Success Metrics**: Backward compatibility with enhanced configuration
 
 ### Week 7-10: flext-meltano Configuration Refactoring
 
-**Owner**: ETL/Data Engineering Lead  
+**Owner**: ETL/Data Engineering Lead
 **Effort**: 4 weeks full-time
 
 #### Week 7: Current Implementation Analysis
@@ -196,12 +196,12 @@ gantt
       # Meltano project settings
       project_root: str = Field(default="./")
       meltano_environment: str = Field(default="dev")
-      
+
       # Singer protocol settings
       singer_spec_version: str = Field(default="1.5.0")
       batch_size: int = Field(default=10000, ge=1, le=100000)
-      
-      # Performance settings  
+
+      # Performance settings
       max_parallel_jobs: int = Field(default=4, ge=1, le=16)
       job_timeout_minutes: int = Field(default=60, ge=5, le=1440)
       memory_limit_mb: int = Field(default=2048, ge=512, le=8192)
@@ -217,7 +217,7 @@ gantt
 - [ ] **Meltano Integration**: Validate integration with Meltano operations
 - [ ] **Singer Protocol**: Ensure Singer specification compliance
 
-#### Week 10: Testing and Documentation  
+#### Week 10: Testing and Documentation
 - [ ] **Comprehensive Testing**: Unit tests, integration tests, performance tests
 - [ ] **Compatibility Testing**: Verify backward compatibility with existing code
 - [ ] **ETL Pipeline Testing**: End-to-end ETL operation validation
@@ -235,14 +235,14 @@ gantt
 
 ## 🛡️ Phase 3: Supporting Services (Weeks 11-14)
 
-**Goal**: Enhance configuration in supporting libraries  
-**Priority**: 🟢 **MEDIUM**  
-**Risk Level**: Low  
+**Goal**: Enhance configuration in supporting libraries
+**Priority**: 🟢 **MEDIUM**
+**Risk Level**: Low
 **Success Metrics**: Consistent configuration patterns across ecosystem
 
 ### Week 11-12: flext-observability Configuration Enhancement
 
-**Owner**: DevOps/Monitoring Developer  
+**Owner**: DevOps/Monitoring Developer
 **Effort**: 2 weeks full-time
 
 #### Week 11: Observability Configuration Design
@@ -258,11 +258,11 @@ gantt
       # Metrics
       metrics_enabled: bool = Field(default=True)
       metrics_interval_seconds: int = Field(default=60, ge=1, le=3600)
-      
-      # Logging  
+
+      # Logging
       log_level: str = Field(default="INFO")
       log_rotation_size_mb: int = Field(default=100, ge=1, le=1000)
-      
+
       # Alerting
       alert_threshold_cpu: float = Field(default=80.0, ge=0.0, le=100.0)
       alert_threshold_memory: float = Field(default=85.0, ge=0.0, le=100.0)
@@ -273,10 +273,10 @@ gantt
 
 ### Week 13-14: flext-grpc Configuration Enhancement
 
-**Owner**: Service Communication Developer  
+**Owner**: Service Communication Developer
 **Effort**: 2 weeks full-time
 
-#### Week 13: gRPC Configuration Analysis  
+#### Week 13: gRPC Configuration Analysis
 - [ ] **Service Configuration**: Server/client settings, service discovery
 - [ ] **Performance Settings**: Connection pooling, timeouts, retries
 - [ ] **Security Configuration**: TLS, authentication, authorization
@@ -299,14 +299,14 @@ gantt
 
 ## 🎯 Phase 4: Specialization (Weeks 15-18)
 
-**Goal**: Apply FlextConfig patterns to project-specific libraries  
-**Priority**: ⚫ **LOW**  
-**Risk Level**: Low  
+**Goal**: Apply FlextConfig patterns to project-specific libraries
+**Priority**: ⚫ **LOW**
+**Risk Level**: Low
 **Success Metrics**: Complete ecosystem consistency
 
 ### Week 15-16: algar-oud-mig Configuration Implementation
 
-**Owner**: Migration Specialist  
+**Owner**: Migration Specialist
 **Effort**: 2 weeks full-time
 
 #### Implementation Focus
@@ -316,7 +316,7 @@ gantt
       # Source/target LDAP settings
       source_ldap_host: str = Field(description="Source LDAP server host")
       target_ldap_host: str = Field(description="Target LDAP server host")
-      
+
       # Migration settings
       migration_batch_size: int = Field(default=100, ge=1, le=10000)
       validate_schema: bool = Field(default=True)
@@ -328,7 +328,7 @@ gantt
 
 ### Week 17-18: gruponos-meltano-native Configuration
 
-**Owner**: GrupoNos Integration Developer  
+**Owner**: GrupoNos Integration Developer
 **Effort**: 2 weeks full-time
 
 #### Implementation Focus
@@ -347,16 +347,16 @@ gantt
 
 ## 📚 Phase 5: Finalization (Weeks 19-20)
 
-**Goal**: Complete documentation, testing, and ecosystem validation  
-**Priority**: 🔄 **FINALIZATION**  
-**Risk Level**: Low  
+**Goal**: Complete documentation, testing, and ecosystem validation
+**Priority**: 🔄 **FINALIZATION**
+**Risk Level**: Low
 **Success Metrics**: Production-ready ecosystem with complete documentation
 
 ### Week 19: Documentation and Examples
 
 - [ ] **Complete Documentation**: Finalize all configuration guides
 - [ ] **Usage Examples**: Real-world configuration examples for each library
-- [ ] **Migration Guides**: Step-by-step migration instructions  
+- [ ] **Migration Guides**: Step-by-step migration instructions
 - [ ] **Best Practices**: Configuration design and usage best practices
 - [ ] **Troubleshooting**: Common issues and solutions guide
 
@@ -375,21 +375,21 @@ gantt
 ### High-Risk Areas
 
 #### 1. flext-meltano Refactoring Complexity
-**Risk**: Breaking existing ETL pipelines during configuration refactoring  
-**Mitigation**: 
+**Risk**: Breaking existing ETL pipelines during configuration refactoring
+**Mitigation**:
 - Implement parallel configuration systems during transition
 - Comprehensive backward compatibility testing
 - Gradual migration with feature flags
 
 #### 2. Oracle WMS Connection Reliability
-**Risk**: Database connection configuration affecting production systems  
+**Risk**: Database connection configuration affecting production systems
 **Mitigation**:
 - Extensive connection pooling testing
 - Failover configuration validation
 - Performance impact assessment
 
 #### 3. Environment Variable Integration
-**Risk**: Environment variable naming conflicts or missing variables  
+**Risk**: Environment variable naming conflicts or missing variables
 **Mitigation**:
 - Consistent FLEXT_* prefix enforcement
 - Comprehensive default value provision
@@ -400,7 +400,7 @@ gantt
 | Risk Category | Indicator | Threshold | Response |
 |--------------|-----------|-----------|----------|
 | **Performance** | Config load time | >100ms | Optimize loading mechanism |
-| **Compatibility** | API breaking changes | object | Implement compatibility layer |  
+| **Compatibility** | API breaking changes | object | Implement compatibility layer |
 | **Security** | Production exposure | object unsafe config | Immediate security validation |
 | **Quality** | Test coverage drop | <90% | Mandatory test completion |
 
@@ -452,13 +452,13 @@ gantt
 ```python
 class FlextConfigEcosystemAnalyzer:
     """Tool to analyze FlextConfig adoption across the ecosystem."""
-    
+
     @staticmethod
     def scan_libraries() -> dict[str, FlextTypes.Core.Dict]:
         """Scan all FLEXT libraries for configuration patterns."""
         return {
             "adoption_rate": "65%",
-            "environment_integration": "70%", 
+            "environment_integration": "70%",
             "validation_coverage": "80%",
             "libraries_analysis": {
                 "flext-web": {"status": "missing", "priority": "critical"},
@@ -472,17 +472,17 @@ class FlextConfigEcosystemAnalyzer:
 ```python
 class FlextConfigMigrationTools:
     """Tools to assist with FlextConfig migration."""
-    
+
     @staticmethod
     def generate_config_template(library_name: str, fields: list[dict]) -> str:
         """Generate FlextConfig class template."""
         pass
-    
+
     @staticmethod
     def validate_environment_variables(config_class: type) -> FlextTypes.Core.StringList:
         """Validate environment variable naming conventions."""
         pass
-    
+
     @staticmethod
     def check_business_rules_coverage(config_class: type) -> float:
         """Check business rule validation coverage percentage."""
@@ -493,7 +493,7 @@ class FlextConfigMigrationTools:
 ```python
 class FlextConfigTestingUtils:
     """Utilities for testing FlextConfig implementations."""
-    
+
     @staticmethod
     def create_test_environments() -> dict[str, FlextTypes.Core.Headers]:
         """Create test environment variable sets."""
@@ -501,7 +501,7 @@ class FlextConfigTestingUtils:
             "development": {"FLEXT_DEBUG": "true", "FLEXT_LOG_LEVEL": "DEBUG"},
             "production": {"FLEXT_DEBUG": "false", "FLEXT_LOG_LEVEL": "INFO"}
         }
-    
+
     @staticmethod
     def validate_configuration_security(config: FlextConfig) -> FlextTypes.Core.StringList:
         """Validate configuration for security issues."""
@@ -544,7 +544,7 @@ class FlextConfigTestingUtils:
 - ✅ **Type Safety**: 100% type coverage with comprehensive validation
 - ✅ **Performance Optimization**: Efficient configuration loading and management
 
-### Operational Benefits  
+### Operational Benefits
 - ✅ **Simplified Deployment**: Consistent environment variable management
 - ✅ **Enhanced Monitoring**: Configuration-driven observability settings
 - ✅ **Improved Security**: Validated secure configurations across environments

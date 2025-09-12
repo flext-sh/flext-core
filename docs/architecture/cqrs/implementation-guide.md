@@ -1,8 +1,8 @@
 # FlextCommands Implementation Guide
 
 **Version**: 0.9.0
-**Target**: FLEXT Library Developers  
-**Complexity**: Intermediate  
+**Target**: FLEXT Library Developers
+**Complexity**: Intermediate
 **Estimated Time**: 2-4 hours per library
 
 ## 📋 Overview

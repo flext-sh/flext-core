@@ -4,42 +4,48 @@ This file contains definitions for intentionally unused code that Vulture
 should not report as dead code.
 """
 
+from typing import Any
+
 # Protocol interface parameters - these are part of interface contracts
 # and are intentionally unused in abstract method definitions
 
 # Foundation Layer Protocols
-args  # *args in Protocol __call__ methods
-kwargs  # **kwargs in Protocol __call__ methods
-other  # comparison protocol parameters
-data  # validator protocol parameter
-error  # error handler protocol parameter
-name  # attribute protocol parameters
-value  # attribute protocol parameters
-obj  # validation protocol parameters
-cls  # classmethod parameters in protocols
+args: Any = None  # *args in Protocol __call__ methods
+kwargs: Any = None  # **kwargs in Protocol __call__ methods
+other: Any = None  # comparison protocol parameters
+data: Any = None  # validator protocol parameter
+error: Any = None  # error handler protocol parameter
+name: Any = None  # attribute protocol parameters
+value: Any = None  # attribute protocol parameters
+obj: Any = None  # validation protocol parameters
+cls: Any = None  # classmethod parameters in protocols
 
 # Domain Layer Protocols
-entity_id  # repository protocol parameters
-entity  # repository protocol parameters
-aggregate_id  # event store protocol parameters
-events  # event store protocol parameters
-expected_version  # event store protocol parameters
+entity_id: Any = None  # repository protocol parameters
+entity: Any = None  # repository protocol parameters
+aggregate_id: Any = None  # event store protocol parameters
+events: Any = None  # event store protocol parameters
+expected_version: Any = None  # event store protocol parameters
 
 # Application Layer Protocols
-input_data  # handler protocol parameters
-message  # message handler protocol parameters
-message_type  # handler type checking parameters
-context  # authorization protocol parameters
-event  # event processor protocol parameters
-event_type  # event processor type checking parameters
+input_data: Any = None  # handler protocol parameters
+message: Any = None  # message handler protocol parameters
+message_type: Any = None  # handler type checking parameters
+context: Any = None  # authorization protocol parameters
+event: Any = None  # event processor protocol parameters
+event_type: Any = None  # event processor type checking parameters
 
 # Infrastructure Layer Protocols
-config  # configurable protocol parameters
-service_name  # plugin context parameters
-request  # middleware protocol parameters
-operation_name  # observability protocol parameters
-exc_info  # logger protocol parameters
+config: Any = None  # configurable protocol parameters
+service_name: Any = None  # plugin context parameters
+request: Any = None  # middleware protocol parameters
+operation_name: Any = None  # observability protocol parameters
+exc_info: Any = None  # logger protocol parameters
 
-# Logger Protocol Parameters - these are standard logging interface
-# All logging methods use message and **kwargs
-message  # logging method parameter
+# Exception handling parameters (contextlib protocols)
+exc_type: Any = None  # exception type in context managers
+exc_val: Any = None  # exception value in context managers
+exc_tb: Any = None  # exception traceback in context managers
+
+# Testing framework parameters
+test_module: Any = None  # test module parameter in matchers

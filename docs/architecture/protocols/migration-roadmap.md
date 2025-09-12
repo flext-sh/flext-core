@@ -1,7 +1,7 @@
 # FlextProtocols Migration Roadmap
 
-**Version**: 0.9.0  
-**Module**: `flext_core.protocols`  
+**Version**: 0.9.0
+**Module**: `flext_core.protocols`
 **Target Audience**: Technical Leads, Software Architects, Platform Engineers
 
 ## Executive Summary
