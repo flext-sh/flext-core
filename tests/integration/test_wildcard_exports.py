@@ -18,9 +18,9 @@ from flext_core import (
     FlextConstants,
     FlextExceptions,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
 )
-from flext_core.typings import FlextTypes
 
 
 class TestFlextCoreWildcardExports:

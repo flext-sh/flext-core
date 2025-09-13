@@ -18,8 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from flext_core import FlextConstants, FlextModels, FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextConstants, FlextModels, FlextResult, FlextTypes
 
 
 def configure_logging_old(

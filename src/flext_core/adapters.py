@@ -98,7 +98,7 @@ class FlextTypeAdapters:
 #         def create_string_adapter_unwrapped() -> object:
 #             """Ultra-simple alias for test compatibility - returns unwrapped adapter directly.
 #
-#             # OVER-ENGINEERED: Having both wrapped and unwrapped versions of the same methods
+#             # Provides both wrapped (FlextResult) and direct return variants for flexibility
 #             # creates confusion and duplication. Pick one approach.
 #             """
 #             result = FlextTypeAdapters.Foundation.create_string_adapter()
@@ -108,7 +108,7 @@ class FlextTypeAdapters:
 #         def create_integer_adapter_unwrapped() -> TypeAdapter[int]:
 #             """Create TypeAdapter for integer types using FlextTypes.
 #
-#             # OVER-ENGINEERED: Another unwrapped variant. This duplication pattern is confusing.
+#             # Additional unwrapped variant for direct value access without FlextResult wrapper
 #
 #             Returns:
 #                 TypeAdapter[int]: The created TypeAdapter for direct use.
@@ -1355,7 +1355,7 @@ class FlextTypeAdapters:
 #
 #         @staticmethod
 #         def validate_example_config() -> FlextResult[object]:
-#             """Demonstrate enterprise configuration validation patterns."""
+#             """Demonstrate configuration validation patterns."""
 #
 #             # Example configuration for demonstration - defined outside try block
 #             @dataclass

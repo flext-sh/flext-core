@@ -1,15 +1,17 @@
 # Architecture Overview
 
-## Clean Architecture Implementation
+## Architecture Overview
 
-FLEXT Core implements Clean Architecture principles with clear separation of concerns and dependency rules that ensure the system remains maintainable, testable, and adaptable.
+> **Note**: For verified implementation details, see [../ACTUAL_CAPABILITIES.md](../ACTUAL_CAPABILITIES.md)
 
-### Dependency Rule
+FLEXT Core implements basic layered architecture with separation of concerns. The system provides foundation patterns for railway-oriented programming and dependency injection.
 
-Dependencies only point inward - outer layers depend on inner layers, never the reverse:
+### Layer Organization
+
+The codebase is organized into logical layers with clear boundaries:
 
 ```
-External World → Infrastructure → Application → Domain → Core
+Foundation → Domain → Application → Infrastructure
 ```
 
 ## Layer Organization

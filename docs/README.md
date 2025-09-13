@@ -1,10 +1,12 @@
 # FLEXT Core Documentation
 
-Reality-based documentation aligned with the current implementation
+Documentation based on actual implementation capabilities
+
+> **📋 IMPORTANT**: For verified functionality and accurate capability assessment, see [ACTUAL_CAPABILITIES.md](ACTUAL_CAPABILITIES.md)
 
 ## 🎯 Overview
 
-FLEXT Core is a Python library for clean architecture patterns, railway-oriented programming, and dependency injection. This documentation reflects the ACTUAL implementation in `src/flext_core/`.
+FLEXT Core is a Python library providing railway-oriented programming, basic dependency injection, and domain modeling patterns. This documentation is aligned with the actual implementation in `src/flext_core/`.
 
 ## 📖 Documentation Structure
 

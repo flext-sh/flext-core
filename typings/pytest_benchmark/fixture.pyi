@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import TypeVar
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 
 T = TypeVar("T")
 

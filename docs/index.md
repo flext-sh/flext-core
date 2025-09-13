@@ -1,10 +1,12 @@
 # FLEXT Core Documentation
 
-**Enterprise foundation library for railway-oriented programming and clean architecture**
+**Foundation library for railway-oriented programming and clean architecture**
+
+> **Note**: For verified capabilities and API examples, see [ACTUAL_CAPABILITIES.md](ACTUAL_CAPABILITIES.md)
 
 ## Overview
 
-FLEXT Core is the architectural foundation for 32+ projects in the FLEXT data integration ecosystem. It provides type-safe error handling, enterprise patterns, and clean architecture principles that eliminate common boilerplate and ensure consistency across all ecosystem projects.
+FLEXT Core is the architectural foundation for FLEXT data integration ecosystem projects. It provides type-safe error handling, practical patterns, and clean architecture principles that eliminate common boilerplate and ensure consistency across ecosystem projects.
 
 ## Quick Start
 
@@ -29,10 +31,10 @@ from flext_core import FlextResult
 
 def validate_age(age: int) -> FlextResult[int]:
     if age < 0:
-        return FlextResult[None].fail("Age cannot be negative")
+        return FlextResult[int].fail("Age cannot be negative")
     if age > 150:
-        return FlextResult[None].fail("Age seems unrealistic")
-    return FlextResult[None].ok(age)
+        return FlextResult[int].fail("Age seems unrealistic")
+    return FlextResult[int].ok(age)
 
 # Chain operations safely
 result = (

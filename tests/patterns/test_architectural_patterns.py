@@ -20,8 +20,8 @@ from flext_core import (
     FlextModels,
     FlextProcessing,
     FlextResult,
+    FlextTypes,
 )
-from flext_core.typings import FlextTypes
 
 
 class TestCleanArchitecturePatterns:

@@ -29,7 +29,7 @@ class FlextTypes:
     class TypeVars:
         """Generic type variables for ecosystem-wide use."""
 
-        # OVER-ENGINEERED: 10 specialized TypeVars when T, U, V would be enough
+        # Specialized TypeVars providing 10 specific type variables for different use cases
         # TEntity, TValueObject, TAggregate etc. are premature domain abstractions
 
         # Specialized type variables
@@ -87,7 +87,7 @@ class FlextTypes:
         )
 
         # JSON types (used in handlers, commands, result serialization)
-        # OVER-COMPLEX: This JsonValue union is insane - just use dict[str, Any] or object
+        # JsonValue union type for flexible JSON data handling
         # The nested list[str | int | float | bool | None | list[object] | dict[str, object]] is unreadable
         type JsonValue = (
             str
@@ -322,7 +322,7 @@ E = TypeVar("E", bound=Exception)  # Exception type
 F = TypeVar("F")  # Generic function type
 K = TypeVar("K")  # Generic key type
 P = ParamSpec("P")  # Parameter specification
-
+T_co = TypeVar("T_co", covariant=True)  # Covariant type variable for type compatibility
 
 __all__: list[str] = [
     "E",
@@ -332,6 +332,7 @@ __all__: list[str] = [
     "P",
     "R",
     "T",
+    "T_co",
     "U",
     "V",
 ]

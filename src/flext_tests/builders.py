@@ -1,7 +1,7 @@
 """Test builders using Builder pattern with pytest integration.
 
 Provides fluent builders for creating complex test objects with
-pytest-mock, pytest-httpx, and other advanced testing capabilities.
+pytest-mock, pytest-httpx, and other testing capabilities.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

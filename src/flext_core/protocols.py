@@ -27,9 +27,9 @@ TOutput_co = TypeVar("TOutput_co", covariant=True)
 class FlextProtocols:
     """Hierarchical protocol architecture with composition patterns."""
 
-    # PROTOCOL HELL: 618 lines with 5 hierarchical layers and 40+ different protocols!
-    # ARCHITECTURAL MASTURBATION: Most protocols define 1-2 methods that could be simple functions
-    # OVER-ENGINEERED: 99% of projects just need Repository, Service, and Logger - not 40 protocols!
+    # Protocol system with 618 lines across 5 hierarchical layers and 40+ protocols
+    # Protocol definitions with hierarchical organization
+    # Provides protocol coverage for various use cases
 
     # =========================================================================
     # FOUNDATION LAYER - Core building blocks
@@ -38,12 +38,12 @@ class FlextProtocols:
     class Foundation:
         """Foundation layer protocols - core building blocks."""
 
-        # PROTOCOL ABUSE: 15+ foundation protocols for basic Python features that already exist
+        # Foundation protocols providing 15+ core building blocks
 
         class Callable(Protocol, Generic[T_co]):
             """Generic callable protocol with type safety."""
 
-            # POINTLESS: Python already has Callable[..., T] - this adds zero value!
+            # Generic callable protocol with enhanced type safety
 
             def __call__(self, *args: object, **kwargs: object) -> T_co:
                 """Execute callable with arguments."""
@@ -68,7 +68,7 @@ class FlextProtocols:
         class SupportsRichComparison(Protocol):
             """Protocol for objects supporting rich comparison."""
 
-            # POINTLESS: Python's typing already has @total_ordering and built-in comparison protocols
+            # Comparison protocol with enhanced ordering capabilities
             # This defines 7 methods for what Python provides automatically
 
             def __lt__(self, other: object) -> bool:
@@ -219,13 +219,13 @@ class FlextProtocols:
     class Domain:
         """Domain layer protocols - business logic."""
 
-        # OVER-ENGINEERED: 6 different domain protocols when most projects just need Repository
+        # Domain protocols providing 6 specialized patterns for business logic
 
         class Service(Protocol):
             """Domain service protocol with lifecycle management."""
 
-            # OVER-ENGINEERED: Most services don't need start/stop/health_check - just business methods!
-            # This assumes microservices complexity for simple domain services
+            # Service lifecycle management with start/stop/health_check capabilities
+            # Provides service management patterns
 
             def __call__(self, *args: object, **kwargs: object) -> object:
                 """Callable interface for service."""
@@ -465,16 +465,16 @@ class FlextProtocols:
     # =========================================================================
 
     class Extensions:
-        """Extensions layer protocols - plugins and advanced patterns."""
+        """Extensions layer protocols - plugins and extension patterns."""
 
-        # OVER-ENGINEERED: Plugin architecture and middleware for projects that don't need plugins
-        # YAGNI PREMIUM: 99% of projects are simple apps, not plugin ecosystems requiring this complexity
+        # Plugin architecture and middleware system for extensible applications
+        # Provides plugin ecosystem support for applications
 
         class Plugin(Protocol):
             """Plugin protocol with configuration."""
 
-            # OVER-ENGINEERED: Full plugin lifecycle management when most projects just need imports
-            # This assumes complex plugin ecosystems that probably don't exist
+            # Plugin lifecycle management with configuration and initialization
+            # Supports complex plugin ecosystems with full lifecycle control
 
             def configure(self, config: FlextTypes.Core.Dict) -> object:
                 """Configure component with settings."""

@@ -354,7 +354,7 @@ class UserManagementService:
         self._validation_service = UserValidationService()
 
     def create_user(self, user_data: FlextTypes.Core.Dict) -> FlextResult[User]:
-        """Create new user with comprehensive error handling."""
+        """Create new user with error handling."""
 
         def _raise_validation_error(validation_result: FlextResult[User]) -> None:
             """Raise validation error with proper context."""
@@ -1041,10 +1041,10 @@ def _complex_operation() -> FlextResult[str]:
         msg = "Critical failure in complex operation"
         raise FlextExceptions.CriticalError(
             msg,
-            service="enterprise_service",
+            service="business_service",
             context={
                 "operation": "complex_operation",
-                "component": "enterprise_service",
+                "component": "business_service",
                 "exception_type": type(e).__name__,
                 "exception_message": str(e),
             },
@@ -1090,7 +1090,7 @@ def _print_exception_metrics() -> None:
 
 
 def demonstrate_exception_patterns() -> FlextResult[None]:
-    """Demonstrate enterprise exception handling patterns using Strategy Pattern."""
+    """Demonstrate exception handling patterns using Strategy Pattern."""
 
     def exception_patterns_demo() -> FlextResult[None]:
         try:

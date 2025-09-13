@@ -1,23 +1,26 @@
-"""FlextModels - SIMPLE domain models for FLEXT ecosystem.
+"""FlextModels - Domain models for FLEXT ecosystem.
 
-NO over-engineering. Just what's actually needed.
+Practical domain-driven design patterns including entities, value objects,
+and aggregate roots. For verified capabilities, see docs/ACTUAL_CAPABILITIES.md
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Generic, TypeVar, cast
+from typing import Generic, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from flext_core.result import FlextResult
+from flext_core.typings import T
 from flext_core.utilities import FlextUtilities
-
-T = TypeVar("T")
 
 
 class FlextModels:
-    """Simple, useful domain models. No DDD bullshit."""
+    """Simple, useful domain models for the FLEXT ecosystem."""
 
     class TimestampedModel(BaseModel):
         """Base model with timestamps - SIMPLE."""
@@ -49,10 +52,7 @@ class FlextModels:
     class Value(BaseModel):
         """Immutable value object."""
 
-        class Config:
-            """Configuration for Value objects."""
-
-            frozen = True
+        model_config = ConfigDict(frozen=True)
 
     class Payload(BaseModel, Generic[T]):
         """Generic payload wrapper - actually useful."""

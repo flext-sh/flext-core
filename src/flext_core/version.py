@@ -32,7 +32,7 @@ class FlextVersionManager:
         "dependency_injection": True,
         "domain_driven_design": True,
         "railway_programming": True,
-        "enterprise_logging": True,
+        "structured_logging": True,
         "performance_tracking": True,
         "decorators": True,
         "type_safety": True,

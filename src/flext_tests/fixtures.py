@@ -30,7 +30,7 @@ class FlextTestsFixtures:
 
     Consolidates all fixture patterns into a single class interface.
     Provides pytest fixtures, factory methods, and testing utilities
-    for comprehensive test coverage across the entire ecosystem.
+    for good test coverage across the ecosystem.
     """
 
     # === Protocol Definitions ===

@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from flext_core.result import FlextResult
+from flext_core import FlextResult
 
 
 class TestFlextResultRealBoost:

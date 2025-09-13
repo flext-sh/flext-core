@@ -31,8 +31,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextContainer, FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextContainer, FlextResult, FlextTypes
 
 
 class FunctionalExternalService:

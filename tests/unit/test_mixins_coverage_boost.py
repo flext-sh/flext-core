@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from flext_core.mixins import FlextMixins
+from flext_core import FlextMixins
 
 
 class TestFlextMixinsCoverageBoost:

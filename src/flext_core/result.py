@@ -1,7 +1,7 @@
 """FLEXT Core Result - Railway-oriented programming for type-safe error handling.
 
-This module provides a comprehensive Result type for functional error handling,
-following Railway-oriented Programming principles with advanced Python 3.13+ features.
+This module provides a Result type for functional error handling,
+following Railway-oriented Programming principles with Python 3.13+ features.
 
 Key Features:
 - Railway-oriented Programming (ROP) implementation
@@ -11,8 +11,10 @@ Key Features:
 - Applicative lifting for multi-argument functions
 - Caching optimizations for performance
 - Pydantic integration for schema validation
-- Advanced composition operators (>>=, >>=, @, &, ^)
-- Kleisli composition and traversable operations
+- Composition operators (>>=, >>=, @, &, ^)
+- Kleisli composition operations
+
+For verified capabilities and examples, see docs/ACTUAL_CAPABILITIES.md
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,11 +27,11 @@ from collections.abc import Callable, Iterator
 from typing import TypeGuard, TypeVar, cast, overload, override
 
 from flext_core.constants import FlextConstants
-from flext_core.typings import FlextTypes, U, V
+from flext_core.typings import FlextTypes, T_co, U, V
 
 # Local type variables for backward compatibility with existing methods
 
-T_co = TypeVar("T_co", covariant=True)  # Covariant type variable for type compatibility
+
 TUtil = TypeVar("TUtil")  # Utility type variable
 TItem = TypeVar("TItem")  # Item type variable
 TResult = TypeVar("TResult")  # Result type variable
@@ -43,16 +45,16 @@ T3 = TypeVar("T3")  # Third type variable for multi-arg functions
 
 
 class FlextResult[T_co]:
-    """Advanced Result type with Railway-oriented Programming and Python 3.13+ features.
+    """Result type for railway-oriented programming.
 
-    This class implements a comprehensive Result monad with:
-    - Type-safe discriminated unions
-    - Pattern matching support
+    This class implements a Result pattern with:
+    - Type-safe success/failure handling
     - Monadic operations (map, flat_map, bind)
-    - Applicative lifting
-    - Advanced composition operators
-    - Performance optimizations with caching
-    - Pydantic integration for validation
+    - Method chaining for composition
+    - Python 3.13+ type safety features
+
+    Commonly used with FlextContainer for service operations.
+    See also: container.py for dependency injection patterns.
     """
 
     # Removed performance optimization duplications - use FlextUtilities instead
@@ -280,11 +282,19 @@ class FlextResult[T_co]:
                 error_data=self._error_data,
             )
             return new_result
+
+        # Safety check: ensure data is not None when result is success
+        if self._data is None:
+            return FlextResult[U](
+                error="Unexpected chaining error: Internal error: data is None when result is success",
+                error_code=FlextConstants.Errors.CHAIN_ERROR,
+                error_data={"internal_inconsistency": True},
+            )
+
         try:
             # Apply function to data using discriminated union type narrowing
             # Python 3.13+ discriminated union: _data is guaranteed to be T_co for success
-            # Safe cast after success check - _data is T_co here
-            data = cast("T_co", self._data)
+            data = self._data
             return func(data)
         except (TypeError, ValueError, AttributeError, IndexError, KeyError) as e:
             # Use FLEXT Core structured error handling

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core.constants import FlextConstants
+from flext_core import FlextConstants
 
 
 class TestConstantsLogLevel100PercentCoverage:

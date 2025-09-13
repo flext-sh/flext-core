@@ -26,10 +26,10 @@ from flext_core import (
     FlextExceptions,
     FlextFields,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
     FlextValidations,
 )
-from flext_core.typings import FlextTypes
 
 
 class TestFlextCoreWildcardExports:

@@ -237,10 +237,10 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
                 return FlextResult[None].fail(f"Email {command.email} already exists")
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Create new user."""
         if not isinstance(request, CreateUserCommand):
-            return FlextResult[object].fail("Invalid command type")
+            return FlextResult[str].fail("Invalid command type")
 
         command = request
         user_id = f"user_{self._next_id}"
@@ -262,7 +262,7 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
             email=command.email,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Created user: {user.name} ({user.id})")
 
 
 class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
@@ -312,14 +312,14 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
             )
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Update user information."""
         if not isinstance(request, UpdateUserCommand):
-            return FlextResult[object].fail("Invalid command type")
+            return FlextResult[str].fail("Invalid command type")
 
         command = request
         if command.user_id not in self.users:
-            return FlextResult[object].fail(f"User {command.user_id} not found")
+            return FlextResult[str].fail(f"User {command.user_id} not found")
 
         user = self.users[command.user_id]
         changes = {}
@@ -338,7 +338,7 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
             changes=changes,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Updated user: {user.name} ({user.id})")
 
 
 class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
@@ -393,20 +393,20 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
             return FlextResult[None].fail("User ID is required for authorization")
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Retrieve user by ID."""
         if not isinstance(request, GetUserQuery):
-            return FlextResult[object].fail("Invalid query type")
+            return FlextResult[str].fail("Invalid query type")
 
         query = request
         if query.user_id not in self.users:
-            return FlextResult[object].fail(f"User {query.user_id} not found")
+            return FlextResult[str].fail(f"User {query.user_id} not found")
 
         user = self.users[query.user_id]
 
         # Check if we should include inactive users
         if not query.include_inactive and not user.is_active:
-            return FlextResult[object].fail(f"User {query.user_id} is inactive")
+            return FlextResult[str].fail(f"User {query.user_id} is inactive")
 
         self.logger.debug(
             "User retrieved successfully",
@@ -414,7 +414,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
             user_name=user.name,
         )
 
-        return FlextResult[object].ok(user)
+        return FlextResult[str].ok(f"Retrieved user: {user.name} ({user.id})")
 
 
 class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
@@ -451,10 +451,10 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
             isinstance(message_type, type) and issubclass(message_type, ListUsersQuery)
         )
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """List users with filtering and pagination."""
         if not isinstance(request, ListUsersQuery):
-            return FlextResult[object].fail("Invalid query type")
+            return FlextResult[str].fail("Invalid query type")
 
         query = request
         users = list(self.users.values())
@@ -475,7 +475,7 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
             active_only=query.active_only,
         )
 
-        return FlextResult[object].ok(paginated_users)
+        return FlextResult[str].ok(f"Listed {len(paginated_users)} users")
 
 
 class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
@@ -508,12 +508,12 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
             and issubclass(message_type, UserCreatedEvent)
         )
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Handle user created event."""
         result = self.process_event(request)
         if result.success:
-            return FlextResult[object].ok(None)
-        return FlextResult[object].fail(result.error or "Event processing failed")
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
     def process_event(self, event: object) -> FlextResult[None]:
         """Process user created event."""
@@ -588,12 +588,12 @@ class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Handle user updated event."""
         result = self.process_event(request)
         if result.success:
-            return FlextResult[object].ok(None)
-        return FlextResult[object].fail(result.error or "Event processing failed")
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
 
 class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
@@ -644,12 +644,12 @@ class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
 
         return FlextResult[None].ok(None)
 
-    def handle(self, request: object) -> FlextResult[object]:
+    def handle(self, request: object) -> FlextResult[str]:
         """Handle order created event."""
         result = self.process_event(request)
         if result.success:
-            return FlextResult[object].ok(None)
-        return FlextResult[object].fail(result.error or "Event processing failed")
+            return FlextResult[str].ok("Event processed successfully")
+        return FlextResult[str].fail(result.error or "Event processing failed")
 
 
 def demonstrate_command_handlers() -> FlextResult[None]:

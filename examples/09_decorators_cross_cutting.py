@@ -286,7 +286,7 @@ def main() -> FlextResult[str]:
         # Calculate success rate using FlextTypes
         success_rate: float = (success_count / total_operations) * 100.0
 
-        # Generate comprehensive summary using centralized patterns
+        # Generate summary using centralized patterns
         summary_lines = [
             "Example 09 Execution Summary:",
             f"Total Operations: {total_operations}",

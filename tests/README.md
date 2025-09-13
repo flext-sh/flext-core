@@ -1,6 +1,8 @@
 # Test Suite Documentation
 
-Comprehensive testing framework for FLEXT Core with 75%+ coverage requirement.
+Testing framework for FLEXT Core with 83% current coverage.
+
+> **For verified test coverage and capabilities, see [ACTUAL_CAPABILITIES.md](../docs/ACTUAL_CAPABILITIES.md)**
 
 ## Overview
 

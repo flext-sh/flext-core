@@ -4,10 +4,13 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
-from flext_core import FlextCommands, FlextModels
-from flext_core.result import FlextResult
-from flext_core.typings import FlextTypes
-from flext_core.utilities import FlextUtilities
+from flext_core import (
+    FlextCommands,
+    FlextModels,
+    FlextResult,
+    FlextTypes,
+    FlextUtilities,
+)
 
 
 class TestCommandsCompatibility:

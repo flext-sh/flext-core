@@ -3,7 +3,6 @@
 This file contains precise tests targeting the specific remaining uncovered lines
 in protocols.py focusing on FlextProtocols.Config class and protocol system methods.
 
-
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

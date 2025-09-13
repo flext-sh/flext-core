@@ -1,7 +1,7 @@
 """Testing utilities and helpers for FLEXT components.
 
 Provides consolidated test utilities, functional test implementations,
-and protocol definitions for comprehensive testing support.
+and protocol definitions for testing support.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

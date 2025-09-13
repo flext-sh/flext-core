@@ -7,8 +7,7 @@ SPDX-License-Identifier: MIT
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 
-from flext_core import FlextDomainService, FlextMixins, FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextDomainService, FlextMixins, FlextResult, FlextTypes
 
 
 # Test Domain Service Implementations

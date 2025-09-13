@@ -5,7 +5,6 @@ Just what's needed, no over-engineering.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 from flext_core.result import FlextResult
@@ -14,13 +13,12 @@ from flext_core.result import FlextResult
 class FlextProcessing:
     """Simple processing utilities."""
 
-    class Handler(ABC):
+    class Handler:
         """Base handler - actually simple."""
 
-        @abstractmethod
         def handle(self, request: object) -> FlextResult[object]:
             """Handle a request."""
-            raise NotImplementedError
+            return FlextResult[object].ok(f"Base handler processed: {request}")
 
     class HandlerRegistry:
         """Simple registry for handlers."""
@@ -49,41 +47,84 @@ class FlextProcessing:
                 return FlextResult[object].fail(handler_result.error or "Unknown error")
 
             handler = handler_result.unwrap()
-            if hasattr(handler, "handle") and callable(getattr(handler, "handle")):
-                result = getattr(handler, "handle")(request)
-                return (
-                    FlextResult[object].ok(result)
-                    if not isinstance(result, FlextResult)
-                    else result
+            try:
+                if hasattr(handler, "handle") and callable(getattr(handler, "handle")):
+                    result = getattr(handler, "handle")(request)
+                    return (
+                        FlextResult[object].ok(result)
+                        if not isinstance(result, FlextResult)
+                        else result
+                    )
+                if callable(handler):
+                    result = handler(request)
+                    return (
+                        FlextResult[object].ok(result)
+                        if not isinstance(result, FlextResult)
+                        else result
+                    )
+                return FlextResult[object].fail(
+                    f"Handler '{name}' does not implement handle method"
                 )
-            if callable(handler):
-                result = handler(request)
-                return (
-                    FlextResult[object].ok(result)
-                    if not isinstance(result, FlextResult)
-                    else result
-                )
-            return FlextResult[object].fail(f"Handler '{name}' is not callable")
+            except Exception as e:
+                return FlextResult[object].fail(f"Handler execution failed: {e}")
+
+        def count(self) -> int:
+            """Get the number of registered handlers."""
+            return len(self._handlers)
+
+        def exists(self, name: str) -> bool:
+            """Check if a handler exists."""
+            return name in self._handlers
+
+        def get_optional(self, name: str) -> object | None:
+            """Get a handler optionally, returning None if not found."""
+            return self._handlers.get(name)
 
     class Pipeline:
         """Simple processing pipeline."""
 
         def __init__(self) -> None:
             """Initialize processing pipeline."""
-            self._steps: list[Callable[[object], FlextResult[object]]] = []
+            self._steps: list[
+                Callable[[object], FlextResult[object] | object]
+                | dict[str, object]
+                | object
+            ] = []
 
-        def add_step(self, step: Callable[[object], FlextResult[object]]) -> None:
+        def add_step(
+            self,
+            step: Callable[[object], FlextResult[object] | object]
+            | dict[str, object]
+            | object,
+        ) -> None:
             """Add a processing step."""
             self._steps.append(step)
 
         def process(self, data: object) -> FlextResult[object]:
             """Process data through pipeline."""
-            current = data
+            current: object = data
+
             for step in self._steps:
-                result = step(current)
-                if result.is_failure:
-                    return result
-                current = result.unwrap()
+                # Handle callable steps
+                if callable(step):
+                    result = step(current)
+                    if isinstance(result, FlextResult):
+                        if result.is_failure:
+                            return result
+                        current = result.unwrap()
+                        continue
+
+                    # Non-FlextResult return from callable
+                    current = result
+
+                # Handle non-callable steps
+                elif isinstance(current, dict) and isinstance(step, dict):
+                    # Merge dictionaries
+                    current = {**current, **step}
+                else:
+                    # Replace current data
+                    current = step
+
             return FlextResult[object].ok(current)
 
     # Factory methods for convenience
@@ -96,6 +137,13 @@ class FlextProcessing:
     def create_pipeline() -> Pipeline:
         """Create a new processing pipeline."""
         return FlextProcessing.Pipeline()
+
+    @staticmethod
+    def is_handler_safe(handler: object) -> bool:
+        """Check if a handler is safe (has handle method or is callable)."""
+        return (
+            hasattr(handler, "handle") and callable(getattr(handler, "handle"))
+        ) or callable(handler)
 
     # =========================================================================
     # HANDLER CLASSES - For examples and demos
@@ -111,9 +159,15 @@ class FlextProcessing:
                 """Initialize basic handler with name."""
                 self.name = name
 
-            def handle(self, request: object) -> object:
+            @property
+            def handler_name(self) -> str:
+                """Get handler name."""
+                return self.name
+
+            def handle(self, request: object) -> FlextResult[str]:
                 """Handle request."""
-                return f"Handled by {self.name}: {request}"
+                result = f"Handled by {self.name}: {request}"
+                return FlextResult[str].ok(result)
 
     class Management:
         """Handler management utilities."""
@@ -131,6 +185,10 @@ class FlextProcessing:
 
             def get(self, name: str) -> object | None:
                 """Get handler by name."""
+                return self._handlers.get(name)
+
+            def get_optional(self, name: str) -> object | None:
+                """Get handler optionally, returning None if not found."""
                 return self._handlers.get(name)
 
     class Patterns:

@@ -31,7 +31,6 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "structlog>=25.4.0",
     "typing-extensions>=4.12.0",
-    "ecdsa (>=0.19.1,<0.20.0)",
 ]
 keywords = [
     "clean-architecture",

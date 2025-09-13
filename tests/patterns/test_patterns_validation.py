@@ -10,8 +10,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextResult, FlextValidations
-from flext_core.typings import FlextTypes
+from flext_core import FlextResult, FlextTypes, FlextValidations
 
 
 class TestFlextValidations:

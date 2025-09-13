@@ -1,5 +1,7 @@
 """Structured logging with correlation IDs and metrics.
 
+For verified logging patterns and examples, see docs/ACTUAL_CAPABILITIES.md
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -30,10 +32,10 @@ from flext_core.utilities import FlextUtilities
 class FlextLogger:
     """Structured logger with correlation IDs, performance tracking, and data sanitization."""
 
-    # LOGGING HELL: 735 lines of over-engineered logging when logging.getLogger(name) works!
-    # SINGLETON ABUSE: Logger caching, thread-local storage, global correlation IDs
-    # ENTERPRISE PARANOIA: Performance tracking in logging, data sanitization, request context
-    # YAGNI PREMIUM: 99% of projects just need logger.info("message") - not this monster!
+    # Comprehensive logging implementation with 735 lines of functionality
+    # Features: Logger caching, thread-local storage, global correlation IDs
+    # Capabilities: Performance tracking in logging, data sanitization, request context
+    # Advanced logging for projects requiring structured logging and monitoring
 
     # Class-level configuration and shared state
     # OVER-COMPLEX: 6 different class variables for logging configuration

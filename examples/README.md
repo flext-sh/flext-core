@@ -1,10 +1,12 @@
 # FLEXT Core Examples
 
-Comprehensive collection of working examples demonstrating FLEXT Core patterns and best practices.
+Collection of working examples demonstrating FLEXT Core patterns and best practices.
+
+> **For complete API reference and verified capabilities, see [ACTUAL_CAPABILITIES.md](../docs/ACTUAL_CAPABILITIES.md)**
 
 ## Overview
 
-This directory contains 20+ practical examples showcasing FLEXT Core's capabilities, from basic patterns to advanced enterprise architectures. Each example is self-contained, fully documented, and demonstrates real-world usage scenarios.
+This directory contains 20+ practical examples showcasing FLEXT Core's capabilities, from basic patterns to complex architectures. Each example is self-contained, fully documented, and demonstrates real-world usage scenarios.
 
 ## Example Structure
 
@@ -30,9 +32,9 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 | `07_mixins_multiple_inheritance.py` | Behavior composition     | Mixins, traits, composition             |
 | `08_configuration.py`               | Configuration management | Settings, environments, validation      |
 
-### Enterprise Features (09-14)
+### Application Features (09-14)
 
-**Production-ready patterns**
+**Production patterns**
 
 | File                             | Description               | Key Concepts                      |
 | -------------------------------- | ------------------------- | --------------------------------- |
@@ -55,16 +57,8 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 | `18_semantic_modeling.py`     | Semantic modeling     | Domain semantics, ubiquitous language |
 | `19_modern_showcase.py`       | Modern architecture   | Microservices, event sourcing         |
 | `20_boilerplate_reduction.py` | Code generation       | Reducing boilerplate, metaprogramming |
-
-### Supporting Modules
-
-| Module                              | Purpose              | Usage                                         |
-| ----------------------------------- | -------------------- | --------------------------------------------- |
-| `shared_domain.py`                  | Shared domain models | Common entities, value objects, and test data |
-| `utilities/`                        | Helper modules       | Demonstration runners, formatters, validators |
-| `utilities/demonstration_runner.py` | Example runner       | Executes and displays example results         |
-| `utilities/validation_utilities.py` | Validation helpers   | Common validation functions                   |
-| `utilities/formatting_helpers.py`   | Output formatting    | Pretty printing and display utilities         |
+| `21_monadic_composition_advanced.py` |  | |
+| `22_performance_optimization.py`  |  | |
 
 ## Learning Path
 
@@ -106,7 +100,7 @@ This directory contains 20+ practical examples showcasing FLEXT Core's capabilit
 
 ### Advanced Path
 
-**For enterprise applications**
+**For complex applications**
 
 1. **Event-Driven** (`10_events_messaging.py`)
 
@@ -189,7 +183,7 @@ python -i examples/01_railway_result.py
 - ✅ **Error Handling**: FlextResult pattern, no raw exceptions
 - ✅ **Documentation**: Docstrings for all functions and classes
 - ✅ **Self-Contained**: Each example runs independently
-- ✅ **Real-World**: Practical scenarios, not toy examples
+- ✅ **Practical**: Realistic scenarios with working code
 - ✅ **PEP 8**: 79 character line limit, consistent formatting
 
 ### Example Structure
@@ -347,7 +341,7 @@ python examples/01_railway_result.py 2>/dev/null
 When adding new examples:
 
 1. Follow the naming convention: `NN_<topic>.py` (concise and consistent)
-2. Include comprehensive docstrings
+2. Include proper docstrings
 3. Add to this README with description
 4. Ensure it passes `make validate`
 5. Test with Python 3.13+

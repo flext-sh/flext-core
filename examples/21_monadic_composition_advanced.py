@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Advanced Monadic Composition with Python 3.13 Features.
 
-Demonstrates the new advanced monadic operators implemented in FlextResult:
+Demonstrates the monadic operators implemented in FlextResult:
 - >> (rshift) for monadic bind (flat_map)
 - << (lshift) for functor map
 - @ (matmul) for applicative combination
@@ -387,7 +387,7 @@ def validate_age(age: int) -> FlextResult[int]:
 
 
 def main() -> FlextResult[str]:
-    """Main demonstration of advanced monadic composition."""
+    """Main demonstration of monadic composition."""
     logger.info("🎯 Starting Advanced Monadic Composition Demonstration")
 
     # Execute all demonstrations

@@ -1,6 +1,6 @@
-"""Advanced performance testing utilities using pytest-benchmark.
+"""Performance testing utilities using pytest-benchmark.
 
-Provides comprehensive performance testing, profiling, and benchmarking
+Provides performance testing, profiling, and benchmarking
 capabilities with memory tracking, complexity analysis, and regression detection.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,7 +20,7 @@ from typing import ParamSpec, Protocol, TypeVar
 
 import pytest
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -31,7 +31,7 @@ class FlextTestsPerformance:
 
     Consolidates all performance testing patterns, profiling, benchmarking,
     memory tracking, complexity analysis, and regression detection into
-    a single class interface. Provides comprehensive performance analysis
+    a single class interface. Provides performance analysis
     capabilities for synchronous and asynchronous code.
     """
 

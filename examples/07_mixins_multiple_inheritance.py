@@ -211,7 +211,7 @@ class ComposedUserManager:
         return FlextResult[User].ok(user)
 
     def get_user_info(self, username: str) -> FlextResult[FlextTypes.Core.Dict]:
-        """Get comprehensive user information."""
+        """Get detailed user information."""
         cache_key = f"user_{username}"
         cached_result = self._cache_service.get_cached_data(cache_key)
 

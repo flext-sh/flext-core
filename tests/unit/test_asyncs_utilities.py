@@ -16,7 +16,7 @@ from typing import Protocol, TypeVar, cast
 
 import pytest
 
-from flext_core.typings import FlextTypes
+from flext_core import FlextTypes
 from flext_tests import FlextTestsAsyncs, FlextTestsMatchers
 
 T_co = TypeVar("T_co", covariant=True)

@@ -1,5 +1,7 @@
 """Dependency injection container for service management.
 
+For verified capabilities and API examples, see docs/ACTUAL_CAPABILITIES.md
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -23,45 +25,42 @@ from flext_core.utilities import FlextUtilities
 
 
 class FlextContainer:
-    """Dependency injection container with type-safe service management."""
+    """Dependency injection container with type-safe service management.
 
-    # DEPENDENCY INJECTION HELL: 1081 LINES OF DI MADNESS!
-    # OVER-ENGINEERED: Commands, ServiceKeys, Validators, Factories, GlobalManager nested classes
-    # ENTERPRISE BULLSHIT: TypedDict command parameters, correlation IDs, timestamp tracking
-    # YAGNI DISASTER: 99% of projects just need services = {"db": database} - DONE!
+    Provides a global singleton container for managing application services
+    with type-safe registration and retrieval. Supports factory patterns,
+    service validation, and lifecycle management.
+    """
 
     # Class-level global manager instance
-    _global_manager: FlextContainer.GlobalManager | None = (
-        None  # Global manager for DI - WHY?
-    )
+    _global_manager: FlextContainer.GlobalManager | None = None
 
     # =========================================================================
     # NESTED CLASSES - Organized functionality following FLEXT patterns
     # =========================================================================
-    # ARCHITECTURAL MASTURBATION: Multiple nested classes for dependency injection
-    # Most projects: services["name"] = instance - that's it!
 
     class ServiceKey[T](UserString, FlextProtocols.Foundation.Validator[str]):
-        """Typed service key for type-safe service resolution."""
+        """Typed service key for type-safe service resolution.
 
-        # OVER-ENGINEERED: ServiceKey class that inherits from UserString AND implements Validator!
-        # This is for basic string keys - just use str keys like normal people!
+        Provides string-based service keys with type information for improved
+        type safety in dependency injection scenarios.
+        """
 
         __slots__ = ()
 
         @property
         def name(self) -> str:
             """Get service key name."""
-            return str(self)  # POINTLESS: Wrapping str(self) in a property
+            return str(self)  # Service key name as string property
 
         @classmethod
         def __class_getitem__(cls, _item: object) -> type[FlextContainer.ServiceKey[T]]:
             """Support generic subscription."""
-            return cls  # OVER-COMPLEX: Generic magic for service keys
+            return cls  # Generic subscription support for service keys
 
         def validate(self, data: str) -> object:
             """Validate service key name."""
-            # OVER-ENGINEERED: Validation for string keys - just check if empty!
+            # String key validation with empty check
             if not data or not data.strip():
                 return FlextResult[str].fail(
                     FlextConstants.Messages.SERVICE_NAME_EMPTY,
@@ -78,23 +77,23 @@ class FlextContainer:
         class RegisterService:
             """Command to register a service instance."""
 
-            # OVER-ENGINEERED: Command object for service registration with TypedDict parameters!
+            # Command object for service registration with TypedDict parameters
             # Normal people: services["database"] = db_instance - DONE!
 
             # Python 3.13 Advanced: TypedDict for command parameters
             class RegisterServiceParams(TypedDict):
                 """RegisterService command parameters."""
 
-                # ENTERPRISE PARANOIA: 7 different parameters for registering a service!
-                # Including user_id, correlation_id, timestamp - for service registration!
+                # Service registration parameters with metadata tracking
+                # Includes user_id, correlation_id, timestamp for audit trail
 
                 service_name: NotRequired[str]
                 service_instance: NotRequired[object]
-                command_type: NotRequired[str]  # POINTLESS: Command type for DI
-                command_id: NotRequired[str]  # POINTLESS: Command ID for DI
-                timestamp: NotRequired[datetime | None]  # POINTLESS: Timestamp for DI
-                user_id: NotRequired[str | None]  # POINTLESS: User ID for DI
-                correlation_id: NotRequired[str]  # POINTLESS: Correlation ID for DI
+                command_type: NotRequired[str]  # Command type identifier
+                command_id: NotRequired[str]  # Unique command identifier
+                timestamp: NotRequired[datetime | None]  # Command timestamp
+                user_id: NotRequired[str | None]  # User context identifier
+                correlation_id: NotRequired[str]  # Request correlation identifier
 
             def __init__(self, **params: Unpack[RegisterServiceParams]) -> None:
                 """Initialize RegisterService command using Python 3.13 TypedDict."""
@@ -255,7 +254,7 @@ class FlextContainer:
 
             def __init__(
                 self,
-                service_name: str = "",
+                service_name: str | None = None,
                 expected_type: str | None = None,
                 query_type: str = "get_service",
                 query_id: str = "",
@@ -767,7 +766,7 @@ class FlextContainer:
                 return FlextResult[dict[str, object]].ok(summary)
 
             # This code only executes when self._flext_config is not None
-            # Use FlextConfig for comprehensive summary
+            # Use FlextConfig for configuration summary
             config_dict = self._flext_config.to_dict()
 
             container_config = {
