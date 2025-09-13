@@ -4,7 +4,7 @@ Core implementation of FLEXT Core's foundational patterns and architectural comp
 
 ## Overview
 
-This directory contains the complete source implementation of FLEXT Core, providing railway-oriented programming, dependency injection, domain-driven design patterns, and enterprise features used across the FLEXT ecosystem.
+This directory contains the source implementation of FLEXT Core, providing railway-oriented programming, dependency injection, domain-driven design patterns, and core features used across the FLEXT ecosystem.
 
 ## Module Organization
 
@@ -150,7 +150,7 @@ class AppSettings(FlextConfig):
 ### Logging
 
 ```python
-# Correlation ID support and enterprise observability
+# Correlation ID support and structured observability
 logger = FlextLogger(__name__)
 with create_log_context(logger, request_id="123", user_id="456"):
     logger.info("Processing request", operation="create_user")
@@ -181,7 +181,7 @@ Foundation ← Core Patterns ← Configuration ← Domain ← Application ← Cr
 
 **Development dependencies:**
 
-- See `pyproject.toml` for complete list
+- See `pyproject.toml` for full list
 
 ## Development Guidelines
 

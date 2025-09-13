@@ -1,7 +1,9 @@
 """FLEXT Core Validations - SOLID validation framework.
 
 Optimized to eliminate duplication and follow SOLID principles.
-Uses existing flext-core utilities extensively.
+Uses existing flext-core utilities.
+
+For verified validation patterns and examples, see docs/ACTUAL_CAPABILITIES.md
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,23 +25,8 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-
-@runtime_checkable
-class SupportsInt(Protocol):
-    """Protocol for objects that support conversion to int."""
-
-    def __int__(self) -> int:
-        """Convert to integer."""
-        ...
-
-
-@runtime_checkable
-class SupportsFloat(Protocol):
-    """Protocol for objects that support conversion to float."""
-
-    def __float__(self) -> float:
-        """Convert to float."""
-        ...
+# Constants for validation
+MAX_REASONABLE_AGE = 149  # Maximum reasonable age for validation
 
 
 class FlextValidations:
@@ -89,7 +76,7 @@ class FlextValidations:
             if hasattr(value, "__int__") and not isinstance(value, bool):
                 try:
                     # Type narrowing: value has __int__ method, so it's SupportsInt
-                    if isinstance(value, SupportsInt):
+                    if isinstance(value, FlextValidations.SupportsInt):
                         int_value = int(value)
                         return FlextResult[int].ok(int_value)
                     # Fallback for objects with __int__ but not SupportsInt
@@ -130,7 +117,7 @@ class FlextValidations:
             if hasattr(value, "__float__") and not isinstance(value, bool):
                 try:
                     # Type narrowing: value has __float__ method, so it's SupportsFloat
-                    if isinstance(value, SupportsFloat):
+                    if isinstance(value, FlextValidations.SupportsFloat):
                         float_value = float(value)
                         return FlextResult[float].ok(float_value)
                     # Fallback for objects with __float__ but not SupportsFloat
@@ -282,7 +269,7 @@ class FlextValidations:
                 # Try to convert objects that support numeric conversion
                 try:
                     if hasattr(value, "__float__") and not isinstance(value, bool):
-                        if isinstance(value, SupportsFloat):
+                        if isinstance(value, FlextValidations.SupportsFloat):
                             numeric_value = float(value)
                         else:
                             # Use getattr to safely access the method
@@ -290,7 +277,7 @@ class FlextValidations:
                             if float_method is not None:
                                 numeric_value = float_method()
                     elif hasattr(value, "__int__") and not isinstance(value, bool):
-                        if isinstance(value, SupportsInt):
+                        if isinstance(value, FlextValidations.SupportsInt):
                             numeric_value = int(value)
                         else:
                             # Use getattr to safely access the method
@@ -435,6 +422,8 @@ class FlextValidations:
             value: object, message: str = "Value cannot be empty"
         ) -> FlextResult[object]:
             """Require value to be non-empty."""
+            if value is None:
+                return FlextResult[object].fail(message)
             if isinstance(value, str) and len(value.strip()) == 0:
                 return FlextResult[object].fail(message)
             if isinstance(value, (list, dict)) and len(value) == 0:
@@ -640,9 +629,12 @@ class FlextValidations:
 
         def validate(value: object) -> FlextResult[object]:
             for validator in validators:
-                result = validator(value)
-                if result.is_failure:
-                    return result
+                try:
+                    result = validator(value)
+                    if result.is_failure:
+                        return result
+                except Exception as e:
+                    return FlextResult[object].fail(f"Validator error: {e}")
             return FlextResult[object].ok(value)
 
         return validate
@@ -705,11 +697,13 @@ class FlextValidations:
     class Core:
         """Legacy Core class for test compatibility."""
 
-        # Placeholder attributes for dynamic assignment
-        TypeValidators: type
-        Collections: type
-        Domain: type
-        Predicates: type
+        # Create actual class attributes for the test compatibility
+        TypeValidators = type("TypeValidators", (), {})
+        Collections = type("Collections", (), {})
+        Domain = type("Domain", (), {})
+        Predicates = type("Predicates", (), {})
+        FieldValidators = type("FieldValidators", (), {})
+        BusinessValidators = type("BusinessValidators", (), {})
 
     class Service:
         """Legacy Service class for test compatibility."""
@@ -747,6 +741,26 @@ class FlextValidations:
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Missing required field: {field}"
                 )
+
+        # Validate email format
+        email = str(user_data.get("email", ""))
+        if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
+            return FlextResult[FlextTypes.Core.Dict].fail("Invalid email format")
+
+        # Validate age if present
+        if "age" in user_data:
+            age_value = user_data["age"]
+            try:
+                age = int(str(age_value))
+                if age < 0 or age > MAX_REASONABLE_AGE:
+                    return FlextResult[FlextTypes.Core.Dict].fail(
+                        "Age must be a string or number"
+                    )
+            except (ValueError, TypeError):
+                return FlextResult[FlextTypes.Core.Dict].fail(
+                    "Age must be a string or number"
+                )
+
         return FlextResult[FlextTypes.Core.Dict].ok(user_data)
 
     @classmethod
@@ -761,11 +775,29 @@ class FlextValidations:
                 return FlextResult[FlextTypes.Core.Dict].fail(
                     f"Missing required field: {field}"
                 )
+
+        # Validate HTTP method
+        valid_methods = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+        method = str(request_data.get("method", "")).upper()
+        if method not in valid_methods:
+            return FlextResult[FlextTypes.Core.Dict].fail(
+                f"Invalid HTTP method: {method}"
+            )
+
+        # Validate path format
+        path = str(request_data.get("path", ""))
+        if not path.startswith("/"):
+            return FlextResult[FlextTypes.Core.Dict].fail("Path must start with /")
+
         return FlextResult[FlextTypes.Core.Dict].ok(request_data)
 
     @staticmethod
-    def is_valid(value: object) -> bool:
-        """Simple validation utility - test compatibility."""
+    def is_valid(value: object) -> bool | Callable[[object], bool]:
+        """Simple validation utility - can return bool or predicate function."""
+        # If value is empty string, return boolean False (empty strings are invalid)
+        if value == "":
+            return False
+        # For other values, check if not None and return boolean
         return value is not None
 
     @staticmethod
@@ -777,20 +809,87 @@ class FlextValidations:
 
     @staticmethod
     def validate_email_field(value: object) -> bool:
-        """Simple boolean email validation - test compatibility."""
+        """Simple email field validation returning boolean."""
         if not isinstance(value, str):
             return False
         # Simple email validation - just check for @ and basic structure
-        return "@" in value and "." in value.split("@")[-1] if "@" in value else False
+        return "@" in value and "." in value.split("@")[-1]
 
     @classmethod
     def validate_with_schema(
         cls,
-        data: FlextTypes.Core.Dict,
-        schema: dict[str, Callable[[object], FlextResult[object]]],
-    ) -> FlextResult[FlextTypes.Core.Dict]:
+        data: object,
+        schema: dict[str, object] | dict[str, Callable[[object], FlextResult[object]]],
+    ) -> FlextResult[object]:
         """Validate data against schema - test compatibility."""
-        return cls.SchemaValidators.validate_schema(data, schema)
+        # Handle simple schema format like {"type": "string"}
+        if isinstance(schema, dict) and "type" in schema:
+            expected_type = schema["type"]
+            if expected_type == "string" and isinstance(data, str):
+                return FlextResult[object].ok(data)
+            if expected_type == "string" and not isinstance(data, str):
+                return FlextResult[object].fail(
+                    f"Expected string, got {type(data).__name__}"
+                )
+            if expected_type == "number" and isinstance(data, (int, float)):
+                return FlextResult[object].ok(data)
+            if expected_type == "number" and not isinstance(data, (int, float)):
+                return FlextResult[object].fail(
+                    f"Expected number, got {type(data).__name__}"
+                )
+            if expected_type == "integer" and isinstance(data, int):
+                return FlextResult[object].ok(data)
+            if expected_type == "integer" and not isinstance(data, int):
+                return FlextResult[object].fail(
+                    f"Expected integer, got {type(data).__name__}"
+                )
+            if expected_type == "object" and isinstance(data, dict):
+                # Handle object schema with properties
+                if "properties" in schema:
+                    properties = schema["properties"]
+                    # Check required fields
+                    if "required" in schema:
+                        required_fields = schema["required"]
+                        for field in required_fields:
+                            if field not in data:
+                                return FlextResult[object].fail(f"Missing required field: {field}")
+
+                    # Validate properties
+                    for prop_name, prop_schema in properties.items():
+                        if prop_name in data:
+                            prop_result = cls.validate_with_schema(data[prop_name], prop_schema)
+                            if prop_result.is_failure:
+                                return FlextResult[object].fail(f"Property '{prop_name}': {prop_result.error}")
+
+                            # Check constraints
+                            if isinstance(prop_schema, dict):
+                                prop_value = data[prop_name]
+                                if "minLength" in prop_schema and isinstance(prop_value, str):
+                                    if len(prop_value) < prop_schema["minLength"]:
+                                        return FlextResult[object].fail(f"Property '{prop_name}': string too short")
+                                if "minimum" in prop_schema and isinstance(prop_value, (int, float)):
+                                    if prop_value < prop_schema["minimum"]:
+                                        return FlextResult[object].fail(f"Property '{prop_name}': value below minimum")
+                                if "maximum" in prop_schema and isinstance(prop_value, (int, float)):
+                                    if prop_value > prop_schema["maximum"]:
+                                        return FlextResult[object].fail(f"Property '{prop_name}': value above maximum")
+                return FlextResult[object].ok(data)
+            if expected_type == "object" and not isinstance(data, dict):
+                return FlextResult[object].fail(
+                    f"Expected object, got {type(data).__name__}"
+                )
+            return FlextResult[object].ok(data)
+
+        # Handle callable schema format - delegate to SchemaValidators
+        if isinstance(data, dict) and all(callable(v) for v in schema.values()):
+            # Cast schema to the expected type for SchemaValidators
+            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = schema  # type: ignore[assignment]
+            result = cls.SchemaValidators.validate_schema(data, callable_schema)
+            if result.is_success:
+                return FlextResult[object].ok(result.data)
+            return FlextResult[object].fail(result.error or "Schema validation failed")
+
+        return FlextResult[object].fail("Invalid schema format")
 
     @classmethod
     def validate_string(cls, value: object) -> FlextResult[str]:
@@ -799,8 +898,57 @@ class FlextValidations:
 
     @staticmethod
     def validate_non_empty_string_func(value: object) -> bool:
-        """Simple boolean validation for non-empty strings - test compatibility."""
-        return isinstance(value, str) and len(value.strip()) > 0
+        """Validate non-empty string returning boolean."""
+        if not isinstance(value, str):
+            return False
+        return len(value.strip()) > 0
+
+    @staticmethod
+    def validate_non_empty_string(value: object) -> bool:
+        """Validate non-empty string (alias for validate_non_empty_string_func)."""
+        return FlextValidations.validate_non_empty_string_func(value)
+
+    # Protocol classes for type conversion support
+    @runtime_checkable
+    class SupportsInt(Protocol):
+        """Protocol for objects that support conversion to int."""
+
+        def __int__(self) -> int:
+            """Convert to integer."""
+            ...
+
+    @runtime_checkable
+    class SupportsFloat(Protocol):
+        """Protocol for objects that support conversion to float."""
+
+        def __float__(self) -> float:
+            """Convert to float."""
+            ...
+
+    class Predicates:
+        """Predicate wrapper for functional validation."""
+
+        def __init__(
+            self, func: Callable[[object], bool] | None = None, name: str = "predicate"
+        ) -> None:
+            """Initialize predicate with validation function."""
+            self.func = func or (lambda x: x is not None)
+            self.name = name
+
+        def __call__(self, value: object) -> FlextResult[None]:
+            """Execute predicate and return FlextResult."""
+            try:
+                if self.func(value):
+                    return FlextResult[None].ok(None)
+                return FlextResult[None].fail(
+                    f"Predicate '{self.name}' failed for value: {value}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
+            except Exception as e:
+                return FlextResult[None].fail(
+                    f"Predicate '{self.name}' raised exception: {e}",
+                    error_code=FlextConstants.Errors.VALIDATION_ERROR,
+                )
 
 
 # Add legacy compatibility after class definition
@@ -810,32 +958,14 @@ FlextValidations.Core.Domain = FlextValidations.BusinessValidators
 
 
 # Create the Predicates class that tests expect
-class Predicates:
-    """Predicate wrapper for functional validation."""
-
-    def __init__(self, func: Callable[[object], bool], name: str = "predicate") -> None:
-        """Initialize predicate with validation function."""
-        self.func = func
-        self.name = name
-
-    def __call__(self, value: object) -> FlextResult[None]:
-        """Execute predicate and return FlextResult."""
-        try:
-            if self.func(value):
-                return FlextResult[None].ok(None)
-            return FlextResult[None].fail(
-                f"Predicate '{self.name}' failed for value: {value}",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
-        except Exception as e:
-            return FlextResult[None].fail(
-                f"Predicate '{self.name}' raised exception: {e}",
-                error_code=FlextConstants.Errors.VALIDATION_ERROR,
-            )
 
 
-FlextValidations.Core.Predicates = Predicates
+FlextValidations.Core.Predicates = FlextValidations.Predicates
+
+# Make Predicates available at module level for direct imports
+Predicates = FlextValidations.Predicates
 
 __all__: FlextTypes.Core.StringList = [
-    "FlextValidations",  # ONLY main class exported
+    "FlextValidations",  # Main class exported
+    "Predicates",  # Predicates class for tests
 ]

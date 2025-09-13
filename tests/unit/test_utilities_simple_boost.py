@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from flext_core.utilities import FlextUtilities
+from flext_core import FlextUtilities
 
 
 class TestFlextUtilitiesSimpleBoost:

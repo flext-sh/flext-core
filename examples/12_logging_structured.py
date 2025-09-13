@@ -2,12 +2,12 @@
 """Structured logging system with FlextLoggerFactory.
 
 Demonstrates context management, level filtering, observability,
-and factory patterns for enterprise logging.
+and factory patterns for structured logging.
     - Level-based filtering with performance optimization
     - Global log store for testing and observability
     - Context inheritance and hierarchical logging
     - Exception logging with automatic traceback capture
-    - Enterprise logging patterns for production applications
+    - Production logging patterns for scalable applications
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -444,15 +444,15 @@ def _testing_utilities_demo() -> None:
     # FlextLoggerFactory.get_log_store() call commented out - method doesn't exist
 
 
-def demonstrate_enterprise_patterns() -> None:
-    """Demonstrate enterprise logging patterns and best practices."""
-    _print_enterprise_header()
+def demonstrate_production_patterns() -> None:
+    """Demonstrate production logging patterns and best practices."""
+    _print_production_header()
     _request_correlation_demo()
     _performance_monitoring_demo()
     _business_metrics_demo()
 
 
-def _print_enterprise_header() -> None:
+def _print_production_header() -> None:
     pass
 
 
@@ -461,10 +461,10 @@ def _process_user_request(
     request_id: str,
     operation: str,
 ) -> FlextTypes.Core.Dict:
-    gateway_logger = FlextLogger("enterprise.api_gateway", level="INFO")
-    auth_logger = FlextLogger("enterprise.auth_service", level="INFO")
-    user_logger = FlextLogger("enterprise.user_service", level="INFO")
-    db_logger = FlextLogger("enterprise.database", level="INFO")
+    gateway_logger = FlextLogger("app.api_gateway", level="INFO")
+    auth_logger = FlextLogger("app.auth_service", level="INFO")
+    user_logger = FlextLogger("app.user_service", level="INFO")
+    db_logger = FlextLogger("app.database", level="INFO")
     correlation_context = {
         "correlation_id": request_id,
         "user_id": user_id,
@@ -599,7 +599,7 @@ class PerformanceMonitor:
 
 
 def _performance_monitoring_demo() -> None:
-    perf_logger = FlextLogger("enterprise.performance", level="INFO")
+    perf_logger = FlextLogger("app.performance", level="INFO")
     operations: list[FlextTypes.Core.Dict] = [
         {"op": "database_query", "table": "users", "complexity": "simple"},
         {"op": "cache_lookup", "cache_type": "redis", "key_pattern": "user:*"},
@@ -621,7 +621,7 @@ def _performance_monitoring_demo() -> None:
 
 
 def _business_metrics_demo() -> None:
-    business_logger = FlextLogger("enterprise.business", level="INFO")
+    business_logger = FlextLogger("app.business", level="INFO")
     business_events: list[FlextTypes.Core.Dict] = [
         {
             "event": "user_registration",
@@ -633,7 +633,7 @@ def _business_metrics_demo() -> None:
         {
             "event": "subscription_renewal",
             "user_id": "user_123",
-            "plan": "enterprise",
+            "plan": "premium",
             "renewal_period": "yearly",
             "revenue_impact": 1199.99,
         },
@@ -672,7 +672,7 @@ def main() -> None:
         demonstrate_context_management()
         demonstrate_exception_logging()
         demonstrate_unified_api()
-        demonstrate_enterprise_patterns()
+        demonstrate_production_patterns()
 
         # Final log store summary
         # FlextLoggerFactory.get_log_store() - method doesn't exist in refactored system

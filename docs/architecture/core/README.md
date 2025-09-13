@@ -1,12 +1,12 @@
 # FlextCore - Enterprise Orchestration Hub
 
-**Comprehensive facade providing unified access to the complete FLEXT ecosystem through a thread-safe singleton interface with railway-oriented programming.**
+**Facade providing unified access to the FLEXT ecosystem through a thread-safe singleton interface with railway-oriented programming.**
 
 ---
 
 ## Executive Summary
 
-`FlextCore` serves as the **central orchestration hub** for all 32+ projects in the FLEXT ecosystem, providing a single point of entry for dependency injection, domain modeling, validation, logging, observability, and architectural patterns. This comprehensive facade implements enterprise-grade patterns through a thread-safe singleton interface, enabling consistent system management across all FLEXT components.
+`FlextCore` serves as the **central orchestration hub** for all 32+ projects in the FLEXT ecosystem, providing a single point of entry for dependency injection, domain modeling, validation, logging, observability, and architectural patterns. This facade implements architectural patterns through a thread-safe singleton interface, enabling consistent system management across all FLEXT components.
 
 ### Key Statistics
 
@@ -413,7 +413,7 @@ if prod_config.success and optimized.success:
 
 ## Error Handling
 
-FlextCore implements comprehensive error handling through railway-oriented programming:
+FlextCore implements error handling through railway-oriented programming:
 
 ```python
 # Composable error handling
@@ -505,4 +505,4 @@ if config.success:
 
 ---
 
-_This documentation reflects FlextCore as the central orchestration hub for the entire FLEXT ecosystem, providing unified access to all architectural patterns and enterprise functionality through a thread-safe singleton interface._
+_This documentation reflects FlextCore as the central orchestration hub for the FLEXT ecosystem, providing unified access to architectural patterns through a thread-safe singleton interface._

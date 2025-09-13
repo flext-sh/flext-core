@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.exceptions import FlextExceptions
+from flext_core import FlextExceptions
 
 
 class TestExceptions100PercentCoverage:

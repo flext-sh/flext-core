@@ -1,6 +1,6 @@
 """Advanced async testing utilities using pytest-asyncio and pytest-timeout.
 
-Provides comprehensive async testing patterns, concurrency testing,
+Provides async testing patterns, concurrency testing,
 timeout management, and async context management for robust testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -15,28 +15,20 @@ import random
 import time
 from collections.abc import AsyncGenerator, Awaitable, Callable, Coroutine
 from contextlib import asynccontextmanager, suppress
-from typing import Protocol, TypeGuard, TypeVar
+from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_core import FlextLogger, FlextTypes
+from flext_core import FlextLogger, FlextTypes, T
 
 logger = FlextLogger(__name__)
-
-T = TypeVar("T")
-
-
-class AsyncMockProtocol(Protocol):
-    """Protocol for async mock functions."""
-
-    async def __call__(self, *args: object, **kwargs: object) -> object: ...
 
 
 class FlextTestsAsyncs:
     """Unified async testing utilities for FLEXT ecosystem.
 
     Consolidates all async testing patterns, concurrency testing, timeout management,
-    async context management, and mock utilities into a single comprehensive class.
+    async context management, and mock utilities into a single unified class.
     """
 
     @staticmethod
@@ -326,7 +318,7 @@ class FlextTestsAsyncs:
     def create_async_mock(
         return_value: object | None = None,
         side_effect: Exception | None = None,
-    ) -> AsyncMockProtocol:
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
         """async_mock method."""
 
         async def async_mock(*_args: object, **_kwargs: object) -> object:
@@ -334,7 +326,7 @@ class FlextTestsAsyncs:
                 raise side_effect
             return return_value
 
-        # Return the async function directly as it's compatible with AsyncMockProtocol
+        # Return the async function directly as it's compatible with FlextTestsAsyncs.AsyncMockProtocol
         return async_mock
 
     @staticmethod
@@ -342,7 +334,7 @@ class FlextTestsAsyncs:
         delay: float,
         return_value: object | None = None,
         side_effect: Exception | None = None,
-    ) -> AsyncMockProtocol:
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
         """delayed_async_mock method."""
 
         async def delayed_async_mock(*_args: object, **_kwargs: object) -> object:
@@ -362,7 +354,7 @@ class FlextTestsAsyncs:
         success_value: object | None = None,
         failure_count: int | None = None,
         exception_type: type[Exception] | None = None,
-    ) -> AsyncMockProtocol:
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
         """Create async mock with either random failure or fixed failure count."""
         # Counter mode
         if failure_count is not None:
@@ -395,7 +387,7 @@ class FlextTestsAsyncs:
     def create_async_mock_with_side_effect(
         side_effect: object | None = None,
         return_value: object | None = None,
-    ) -> AsyncMockProtocol:
+    ) -> FlextTestsAsyncs.AsyncMockProtocol:
         """Create async mock with extended side_effect semantics."""
         # Normalize list-like side effects
         sequence: FlextTypes.Core.List | None = None
@@ -698,6 +690,13 @@ class FlextTestsAsyncs:
     def async_slow() -> pytest.MarkDecorator:
         """Ultra-simple alias for test compatibility."""
         return pytest.mark.slow
+
+    class AsyncMockProtocol(Protocol):
+        """Protocol for async mock functions."""
+
+        async def __call__(self, *args: object, **kwargs: object) -> object:
+            """Async callable interface for mock functions."""
+            ...
 
 
 # Export only the unified class

@@ -1,11 +1,13 @@
 """FLEXT Configuration Management - Type-safe configuration with environment integration.
 
-This module provides enterprise-grade configuration management using Pydantic
+This module provides configuration management using Pydantic
 settings with proper validation, environment variable integration, and
 FlextResult error handling patterns.
 
 AUTOMATIC .ENV SUPPORT: Automatically loads .env files in working directory.
 Priority order: DEFAULT CONSTANTS → .ENV FILES → CLI PARAMETERS
+
+For verified capabilities and configuration examples, see docs/ACTUAL_CAPABILITIES.md
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -90,7 +92,7 @@ class FlextConfig(BaseSettings):
             ...
 
         @classmethod
-        def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
+        def load_from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
             """Load configuration from file."""
             ...
 
@@ -101,12 +103,16 @@ class FlextConfig(BaseSettings):
         """
 
         @classmethod
-        def create_web_service_config(cls, **kwargs: object) -> FlextResult[Self]:
+        def create_web_service_config(
+            cls, **kwargs: object
+        ) -> FlextResult[FlextConfig]:
             """Create web service configuration."""
             ...
 
         @classmethod
-        def create_microservice_config(cls, **kwargs: object) -> FlextResult[Self]:
+        def create_microservice_config(
+            cls, **kwargs: object
+        ) -> FlextResult[FlextConfig]:
             """Create microservice configuration."""
             ...
 
@@ -623,6 +629,11 @@ class FlextConfig(BaseSettings):
         description="Enable debug mode and verbose logging",
     )
 
+    trace: bool = Field(
+        default=False,
+        description="Enable trace mode for detailed debugging",
+    )
+
     # Observability configuration
     log_level: str = Field(
         default=FlextConstants.Observability.DEFAULT_LOG_LEVEL,
@@ -855,7 +866,7 @@ class FlextConfig(BaseSettings):
         # Schema generation
         title="FLEXT Configuration",
         json_schema_extra={
-            "description": "FLEXT enterprise configuration with multiple sources support",
+            "description": "FLEXT configuration with multiple sources support",
             "examples": [
                 {
                     "app_name": "flext-data-processor",
@@ -1279,7 +1290,7 @@ class FlextConfig(BaseSettings):
         constants: FlextTypes.Core.Dict | None = None,
         cli_overrides: FlextTypes.Core.Dict | None = None,
         env_file: str | Path | None = None,
-    ) -> FlextResult[Self]:
+    ) -> FlextResult[FlextConfig]:
         """Create configuration instance with constants and environment integration.
 
         Args:
@@ -1304,7 +1315,7 @@ class FlextConfig(BaseSettings):
             if env_file:
                 env_path = Path(env_file)
                 if not env_path.exists():
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         f"Environment file not found: {env_file}",
                         error_code="ENV_FILE_NOT_FOUND",
                     )
@@ -1332,7 +1343,7 @@ class FlextConfig(BaseSettings):
             if env_file:
                 instance._metadata["env_file"] = str(env_file)
 
-            return FlextResult[Self].ok(instance)
+            return FlextResult["FlextConfig"].ok(instance)
 
         except ValidationError as exc:
             # Reformat environment validation errors para satisfazer testes
@@ -1343,15 +1354,15 @@ class FlextConfig(BaseSettings):
                     invalid_env = err.get("input", "unknown")
                     allowed = ", ".join(sorted(FlextConstants.Config.ENVIRONMENTS))
                     msg = f"Configuration creation failed: Invalid environment '{invalid_env}'. Environment must be one of: {allowed}"
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         msg, error_code="CONFIG_CREATION_ERROR"
                     )
-            return FlextResult[Self].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {exc}",
                 error_code="CONFIG_CREATION_ERROR",
             )
         except Exception as error:
-            return FlextResult[Self].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {error}",
                 error_code="CONFIG_CREATION_ERROR",
             )
@@ -1362,7 +1373,7 @@ class FlextConfig(BaseSettings):
         *,
         env_file: str | Path | None = None,
         extra_settings: FlextTypes.Core.Dict | None = None,
-    ) -> FlextResult[Self]:
+    ) -> FlextResult[FlextConfig]:
         """Create configuration instance from environment with validation.
 
         Args:
@@ -1384,7 +1395,7 @@ class FlextConfig(BaseSettings):
             if env_file:
                 env_path = Path(env_file)
                 if not env_path.exists():
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         f"Environment file not found: {env_file}",
                         error_code="ENV_FILE_NOT_FOUND",
                     )
@@ -1400,7 +1411,7 @@ class FlextConfig(BaseSettings):
             if env_file:
                 instance._metadata["env_file"] = str(env_file)
 
-            return FlextResult[Self].ok(instance)
+            return FlextResult["FlextConfig"].ok(instance)
 
         except ValidationError as exc:
             invalid_env = (
@@ -1411,15 +1422,15 @@ class FlextConfig(BaseSettings):
                 if loc and loc[0] == "environment":
                     allowed = ", ".join(sorted(FlextConstants.Config.ENVIRONMENTS))
                     msg = f"Invalid environment '{invalid_env}'. Environment must be one of: {allowed}"
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         msg, error_code="CONFIG_CREATION_ERROR"
                     )
-            return FlextResult[Self].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {exc}",
                 error_code="CONFIG_CREATION_ERROR",
             )
         except Exception as error:
-            return FlextResult[Self].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Configuration creation failed: {error}",
                 error_code="CONFIG_CREATION_ERROR",
             )
@@ -1451,7 +1462,7 @@ class FlextConfig(BaseSettings):
         return self.BusinessValidator.validate_business_rules(self)
 
     def validate_all(self) -> FlextResult[None]:
-        """Perform complete configuration validation using specialized validators.
+        """Perform configuration validation using specialized validators.
 
         Executes both runtime requirements and business rule validation.
         Follows Open/Closed Principle - extensible without modifying this method.
@@ -1491,7 +1502,7 @@ class FlextConfig(BaseSettings):
         return self.FilePersistence.save_to_file(self, file_path)
 
     @classmethod
-    def load_from_file(cls, file_path: str | Path) -> FlextResult[Self]:
+    def load_from_file(cls, file_path: str | Path) -> FlextResult[FlextConfig]:
         """Load configuration from JSON, YAML, or TOML file.
 
         Args:
@@ -1504,7 +1515,7 @@ class FlextConfig(BaseSettings):
         try:
             path = Path(file_path)
             if not path.exists():
-                return FlextResult[Self].fail(
+                return FlextResult["FlextConfig"].fail(
                     f"Configuration file not found: {file_path}",
                     error_code="CONFIG_FILE_NOT_FOUND",
                 )
@@ -1518,7 +1529,7 @@ class FlextConfig(BaseSettings):
                 try:
                     data = yaml.safe_load(content)
                 except NameError:
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         "YAML support not available. Install PyYAML: pip install PyYAML",
                         error_code="MISSING_DEPENDENCY",
                     )
@@ -1526,12 +1537,12 @@ class FlextConfig(BaseSettings):
                 try:
                     data = tomllib.loads(content)
                 except NameError:
-                    return FlextResult[Self].fail(
+                    return FlextResult["FlextConfig"].fail(
                         "TOML support not available. Requires Python 3.11+ or install tomli",
                         error_code="MISSING_DEPENDENCY",
                     )
             else:
-                return FlextResult[Self].fail(
+                return FlextResult["FlextConfig"].fail(
                     f"Unsupported file format: {suffix}. Supported: .json, .yaml, .yml, .toml",
                     error_code="UNSUPPORTED_FILE_FORMAT",
                 )
@@ -1545,7 +1556,7 @@ class FlextConfig(BaseSettings):
             return result
 
         except Exception as error:
-            return FlextResult[Self].fail(
+            return FlextResult["FlextConfig"].fail(
                 f"Failed to load configuration from {file_path}: {error}",
                 error_code="CONFIG_FILE_LOAD_ERROR",
             )
@@ -1610,6 +1621,7 @@ class FlextConfig(BaseSettings):
                 "app_name": self.app_name,
                 "environment": self.environment,
                 "debug": self.debug,
+                "port": self.port,
             }
             return FlextResult[FlextTypes.Core.Dict].ok(payload)
         except Exception as error:

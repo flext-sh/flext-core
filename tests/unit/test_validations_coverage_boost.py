@@ -9,8 +9,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import FlextResult, FlextValidations
-from flext_core.validations import Predicates
+from flext_core import FlextResult, FlextValidations, Predicates
 
 
 class TestFlextValidationsCoverageBoost:
@@ -64,7 +63,7 @@ class TestFlextValidationsCoverageBoost:
         result = FlextValidations.validate_number(object())
         assert result.is_failure
         assert result.error is not None
-        assert "cannot be converted to a number" in result.error
+        assert "Value cannot be converted to a number" in result.error
 
     def test_validate_number_with_conversion_errors(self) -> None:
         """Test number validation with conversion errors."""

@@ -2,6 +2,8 @@
 
 Get started with FLEXT Core in 5 minutes with practical, working examples.
 
+> **For complete API reference and advanced examples, see [ACTUAL_CAPABILITIES.md](../ACTUAL_CAPABILITIES.md) and [Core API Reference](../api/core.md)**
+
 ## Installation
 
 ### Development Setup

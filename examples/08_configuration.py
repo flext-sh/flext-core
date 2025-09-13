@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Enterprise configuration management with unified FlextConfig.
 
-Demonstrates the unified FlextConfig system with enterprise-grade features:
+Demonstrates the unified FlextConfig system with production features:
 - Automatic .env file loading and environment variable integration
 - Built-in validation with runtime and business rules
 - Multiple configuration profiles (web service, microservice, batch job, etc.)
@@ -38,13 +38,13 @@ _LOCALHOST_IP = "127.0.0.1"  # Secure localhost binding
 
 # Using the unified FlextConfig class with specialized factory methods
 # The new FlextConfig provides built-in validation, environment integration,
-# and enterprise-grade configuration management features
+# and production configuration management features
 
 
 # Utility functions leveraging the new FlextConfig capabilities
 
 
-def create_enterprise_config(
+def create_production_config(
     config_data: FlextTypes.Core.Dict | None = None,
 ) -> FlextConfig:
     """Create a FlextConfig instance using the unified configuration system.
@@ -116,7 +116,7 @@ def demonstrate_basic_configuration() -> FlextResult[None]:
 
     try:
         # Create default configuration using the unified FlextConfig
-        config = create_enterprise_config()
+        config = create_production_config()
 
         print(f"Application: {config.app_name} v{config.version}")
         print(f"Environment: {config.environment}")
@@ -387,7 +387,7 @@ def demonstrate_configuration_merging() -> FlextResult[None]:
         print(f"Keys: {list(final_config.keys())}")
 
         # Create and validate final configuration
-        config = create_enterprise_config(final_config)
+        config = create_production_config(final_config)
 
         # Validate configuration using unified validation
         validation = demonstrate_config_validation(config)

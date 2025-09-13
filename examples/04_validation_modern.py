@@ -94,8 +94,8 @@ class ProfessionalValidationService(FlextDomainService[object]):
         return FlextResult[None].ok(None)
 
     def execute(self) -> FlextResult[object]:
-        """Execute comprehensive validation - required by FlextDomainService."""
-        return self.demonstrate_comprehensive_validation()
+        """Execute validation - required by FlextDomainService."""
+        return self.demonstrate_validation()
 
     def demonstrate_user_validation(self) -> FlextResult[None]:
         """Demonstrate user validation using FlextValidations.create_user_validator() DIRECTLY."""
@@ -164,11 +164,11 @@ class ProfessionalValidationService(FlextDomainService[object]):
 
         return FlextResult[None].ok(None)
 
-    def demonstrate_comprehensive_validation(self) -> FlextResult[object]:
-        """Demonstrate comprehensive validation using FlextValidations DIRECTLY."""
+    def demonstrate_validation(self) -> FlextResult[object]:
+        """Demonstrate validation using FlextValidations DIRECTLY."""
         print("\n4. Comprehensive Validation Report using FlextValidations:")
 
-        # Test data for comprehensive validation
+        # Test data for validation
         validation_test_data = [
             ("Email format", "test@example.com", "Email"),
             ("Invalid email", "invalid-email", "Email"),
@@ -231,7 +231,7 @@ def main() -> None:
         print(f"❌ Field validation failed: {field_result.error}")
         return
 
-    # Execute comprehensive validation using FlextDomainService pattern
+    # Execute validation using FlextDomainService pattern
     execution_result = service.execute()
     if execution_result.is_failure:
         print(f"❌ Comprehensive validation failed: {execution_result.error}")

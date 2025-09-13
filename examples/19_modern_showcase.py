@@ -68,9 +68,9 @@ class Age(FlextModels.Value):
         """Create age with validation."""
         try:
             instance = cls(value=age)
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid age: {e}")
+            return FlextResult.fail(f"Invalid age: {e}")
 
 
 class Money(FlextModels.Value):
@@ -99,9 +99,9 @@ class Money(FlextModels.Value):
         try:
             decimal_amount = Decimal(str(amount))
             instance = cls(amount=decimal_amount, currency=currency.upper())
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid money: {e}")
+            return FlextResult.fail(f"Invalid money: {e}")
 
     def add(self, other: Money) -> FlextResult[Money]:
         """Add two money values."""
@@ -134,11 +134,11 @@ class EmailAddress(FlextModels.Value):
         """Create email with validation."""
         try:
             if "@" not in email or "." not in email.rsplit("@", maxsplit=1)[-1]:
-                return FlextResult[Self].fail("Invalid email format")
+                return FlextResult.fail("Invalid email format")
             instance = cls(address=email.lower())
-            return FlextResult[Self].ok(instance)
+            return FlextResult.ok(instance)
         except Exception as e:
-            return FlextResult[Self].fail(f"Invalid email: {e}")
+            return FlextResult.fail(f"Invalid email: {e}")
 
 
 class ECommerceConfig(FlextConfig):
@@ -181,7 +181,7 @@ class ECommerceConfig(FlextConfig):
 
 
 class User(FlextModels.Entity):
-    """User entity with comprehensive validation."""
+    """User entity with business validation."""
 
     email: EmailAddress
     name: str = Field(..., min_length=1, max_length=100)
@@ -351,7 +351,7 @@ class OrderItem(FlextModels.Value):
 
 
 class Order(FlextModels.AggregateRoot):
-    """Order aggregate with comprehensive business logic."""
+    """Order aggregate with business logic."""
 
     user: User
     items: list[OrderItem]

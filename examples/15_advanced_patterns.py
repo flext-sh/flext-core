@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FLEXT Core - Advanced Examples.
 
-Advanced patterns and enterprise scenarios using FLEXT Core.
+Complex patterns and production scenarios using FLEXT Core.
 This module demonstrates advanced usage patterns and can be run independently
 when flext_core is properly installed.
 
@@ -22,8 +22,8 @@ from flext_core import (
     FlextContainer,
     FlextContext,
     FlextResult,
+    FlextTypes,
 )
-from flext_core.typings import FlextTypes
 
 OrderData = FlextTypes.Core.Dict
 ItemData = FlextTypes.Core.Dict
@@ -35,7 +35,7 @@ MAX_ORDER_VALUE = Decimal("100000.00")
 
 
 class AdvancedExamplesConfig(FlextConfig):
-    """Configuration for advanced examples with enterprise validation."""
+    """Configuration for complex examples with business validation."""
 
     # Service configuration
     service_name: str = "flext-advanced-examples"
@@ -75,7 +75,7 @@ class AdvancedExamplesConfig(FlextConfig):
 
 
 class OrderProcessor:
-    """Advanced order processing with comprehensive validation and error handling."""
+    """Order processing with validation and error handling."""
 
     def __init__(self, config: AdvancedExamplesConfig) -> None:
         """Initialize order processor with configuration."""
@@ -89,7 +89,7 @@ class OrderProcessor:
         user_id: str,
         items_data: list[ItemData],
     ) -> FlextResult[OrderData]:
-        """Create and validate order with comprehensive business rules."""
+        """Create and validate order with business rules."""
         return (
             self._validate_items_count(items_data)
             .flat_map(lambda _: self._process_all_items(items_data))
@@ -224,7 +224,7 @@ class OrderProcessor:
 
 
 def demonstrate_order_processing() -> FlextResult[None]:
-    """Demonstrate advanced order processing with error handling."""
+    """Demonstrate order processing with error handling."""
     print("Starting order processing demonstration")
 
     try:
@@ -316,7 +316,7 @@ def demonstrate_configuration_validation() -> FlextResult[None]:
 
 
 def main() -> int:
-    """Main execution function with comprehensive error handling."""
+    """Main execution function with error handling."""
     print("Starting FLEXT Core Advanced Examples")
 
     try:

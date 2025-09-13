@@ -7,17 +7,18 @@
 
 ## 📖 Executive Summary
 
-`FlextHandlers` represents a **comprehensive enterprise handler system** providing sophisticated request processing capabilities through **7 architectural layers**: Constants, Types, Protocols, Implementation, CQRS, Patterns, and Management. The system implements **8 design patterns** (Chain of Responsibility, Template Method, Command Pattern, Strategy, Observer, Registry, Factory, Decorator) with **thread-safe operations**, comprehensive **performance monitoring**, and complete **FlextResult integration** for railway-oriented programming.
+> **Note**: For verified capabilities and actual implementation details, see [../../ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md)
 
-**Key Innovation**: Complete handler ecosystem consolidation with **nested component architecture**, eliminating the need for separate handler modules while providing enterprise-grade features including **validation**, **authorization**, **metrics collection**, **CQRS buses**, **handler chains**, **middleware support**, and **centralized registry management**.
+`FlextHandlers` (aliased to `FlextProcessing`) provides basic request processing capabilities through a simple handler pattern. The system includes basic registry and pipeline patterns with FlextResult integration for railway-oriented programming.
 
-### Core Value Propositions
+**Implementation**: Handler functionality is consolidated into the `processing.py` module, providing basic patterns for request processing without the complexity of enterprise-grade architectures.
 
-- 🏗️ **Complete Handler Infrastructure**: 7-layer architecture covering all enterprise handler needs
-- 🔗 **Pattern Integration Excellence**: 8 design patterns seamlessly integrated with FlextResult
-- ⚡ **High-Performance Processing**: Thread-safe operations with comprehensive metrics collection
-- 🛡️ **Enterprise Security**: Built-in validation, authorization, and access control patterns
-- 🌐 **CQRS Excellence**: Complete Command Query Responsibility Segregation implementation
+### Core Features
+
+- 🏗️ **Basic Handler Registry**: Simple service registration and discovery
+- 🔗 **FlextResult Integration**: Railway-oriented error handling
+- ⚡ **Pipeline Processing**: Basic linear processing pipeline
+- 🛡️ **Type Safety**: Python 3.13+ type annotations
 
 ---
 

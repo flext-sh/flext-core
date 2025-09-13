@@ -14,8 +14,8 @@ import pytest
 from flext_core import (
     FlextConstants,
     FlextLogger,
+    FlextTypes,
 )
-from flext_core.typings import FlextTypes
 
 # Alias for the LogLevel enum
 FlextLogLevel = FlextConstants.Config.LogLevel

@@ -2,8 +2,7 @@
 
 from collections.abc import Callable
 
-from flext_core.result import FlextResult
-from flext_core.validations import FlextValidations
+from flext_core import FlextResult, FlextValidations
 
 
 class TestFlextValidationsTargetedBoost:

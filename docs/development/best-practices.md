@@ -33,7 +33,7 @@ def process_payment_bad(amount: Decimal, card: str) -> Transaction:
 
 ### 2. Type Safety First
 
-Use comprehensive type hints with generics:
+Use detailed type hints with generics:
 
 ```python
 from typing import TypeVar, Generic
@@ -611,7 +611,7 @@ def authenticate(email: str, password: str) -> FlextResult[User]:
 ### DO
 
 ✅ Use FlextResult for all fallible operations
-✅ Apply comprehensive type hints
+✅ Apply detailed type hints
 ✅ Follow Clean Architecture layers
 ✅ Use dependency injection
 ✅ Write tests for success and failure paths

@@ -1,6 +1,6 @@
 # Core API Reference
 
-Complete reference for FLEXT Core's fundamental APIs.
+Reference for FLEXT Core's fundamental APIs.
 
 ## FlextResult[T] - Railway-Oriented Programming
 
@@ -14,8 +14,8 @@ from flext_core import FlextResult
 def divide(a: float, b: float) -> FlextResult[float]:
     """Safe division without exceptions."""
     if b == 0:
-        return FlextResult[None].fail("Cannot divide by zero")
-    return FlextResult[None].ok(a / b)
+        return FlextResult[float].fail("Cannot divide by zero")
+    return FlextResult[float].ok(a / b)
 
 # Use the result
 result = divide(10, 2)
@@ -30,7 +30,7 @@ else:
 ```python
 # Railway-oriented composition
 result = (
-    divide(10, 2)                    # FlextResult[None].ok(5.0)
+    divide(10, 2)                    # FlextResult[float].ok(5.0)
     .map(lambda x: x * 2)            # Transform: 10.0
     .flat_map(lambda x: divide(x, 4)) # Chain: 2.5
     .map_error(lambda e: f"Math error: {e}")  # Transform errors
@@ -42,7 +42,7 @@ def process_number(n: float) -> FlextResult[str]:
         validate_positive(n)
         .map(lambda x: x ** 2)
         .map(lambda x: f"Result: {x}")
-        .or_else(lambda _: FlextResult[None].ok("Using default"))
+        .or_else(lambda _: FlextResult[str].ok("Using default"))
     )
 ```
 

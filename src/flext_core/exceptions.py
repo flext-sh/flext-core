@@ -17,23 +17,22 @@ from flext_core.typings import FlextTypes
 class FlextExceptions:
     """Hierarchical exception system with error codes and metrics tracking."""
 
-    # EXCEPTION HELL: 685 lines of hierarchical exception system!
-    # OVER-ENGINEERED: Metrics tracking in exceptions, correlation IDs, context mapping
-    # ENTERPRISE PARANOIA: Error codes, operation tracking, field validation for exceptions
-    # YAGNI DISASTER: Most projects just need "raise ValueError(message)" - DONE!
+    # Hierarchical exception system with 685 lines of functionality
+    # Features: Metrics tracking in exceptions, correlation IDs, context mapping
+    # Capabilities: Error codes, operation tracking, field validation for exceptions
 
     def __call__(
         self,
         message: str,
         *,
-        operation: str | None = None,  # POINTLESS: Operation tracking in exceptions
-        field: str | None = None,  # POINTLESS: Field tracking in exceptions
-        config_key: str | None = None,  # POINTLESS: Config key in exceptions
-        error_code: str | None = None,  # OVER-ENGINEERED: Error codes for exceptions
+        operation: str | None = None,  # Operation context for error tracking
+        field: str | None = None,  # Field name for validation errors
+        config_key: str | None = None,  # Configuration key for config errors
+        error_code: str | None = None,  # Error code for categorization
         **kwargs: object,
     ) -> FlextExceptions.BaseError:
         """Allow FlextExceptions() to be called directly."""
-        # OVER-COMPLEX: Custom __call__ method to make exceptions callable
+        # Custom __call__ method to make exceptions callable
         return self.create(
             message,
             operation=operation,
@@ -46,21 +45,21 @@ class FlextExceptions:
     # =============================================================================
     # Metrics Domain: Exception metrics and monitoring functionality
     # =============================================================================
-    # METRICS IN EXCEPTIONS: Exception tracking system - ARCHITECTURAL INSANITY!
-    # Why track exception metrics in the exception system itself? Use proper observability tools!
+    # Exception tracking system for metrics collection
+    # Provides internal exception monitoring capabilities
 
     class Metrics:
         """Thread-safe exception metrics tracking system."""
 
-        # OVER-ENGINEERED: Exception metrics tracking when most projects use external monitoring
-        # Prometheus, DataDog, New Relic exist for this - don't reinvent the wheel!
+        # Exception metrics tracking system for internal monitoring
+        # Provides basic metrics collection capabilities
 
         _metrics: ClassVar[FlextTypes.Core.CounterDict] = {}  # Global exception counter
 
         @classmethod
         def record_exception(cls, exception_type: str) -> None:
             """Record exception occurrence."""
-            # POINTLESS: Manual exception counting when logging/monitoring tools do this better
+            # Manual exception counting for internal metrics
             cls._metrics[exception_type] = cls._metrics.get(exception_type, 0) + 1
 
         @classmethod

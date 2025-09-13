@@ -207,7 +207,7 @@ class FlextTestsFactories:
 
     @staticmethod
     def create_test_dataset() -> FlextTypes.Core.Dict:
-        """Create complete test dataset with all entity types."""
+        """Create test dataset with all entity types."""
         return {
             "users": FlextTestsFactories.UserFactory.create_batch(5),
             "configs": [FlextTestsFactories.ConfigFactory.create()],

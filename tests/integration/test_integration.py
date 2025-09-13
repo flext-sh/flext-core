@@ -35,10 +35,10 @@ import pytest
 from flext_core import (
     FlextContainer,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
+    __version__,
 )
-from flext_core.typings import FlextTypes
-from flext_core.version import __version__
 
 
 class FunctionalExternalService:

@@ -1,7 +1,7 @@
 """Advanced property-based testing utilities using Hypothesis.
 
-Provides comprehensive property-based testing strategies, custom generators,
-and sophisticated test data generation patterns for FlextCore testing.
+Provides property-based testing strategies, custom generators,
+and test data generation patterns for FlextCore testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,10 +27,10 @@ class FlextTestsHypothesis:
     """Unified hypothesis strategies for FLEXT ecosystem.
 
     Consolidates all property-based testing strategies, custom generators,
-    and sophisticated test data generation patterns into a single class interface.
+    and test data generation patterns into a single class interface.
     """
 
-    # Provides comprehensive strategies for business domains, edge cases, performance
+    # Provides strategies for business domains, edge cases, performance
     # testing, and composite scenarios.
 
     # Constants
@@ -590,13 +590,13 @@ class FlextTestsHypothesis:
 
         @staticmethod
         def generate_test_scenarios(
-            strategy: st.SearchStrategy[T],
+            strategy: st.SearchStrategy[object],
             scenario_name: str = "test_scenario",
             _min_examples: int = 10,
         ) -> st.SearchStrategy[FlextTypes.Core.Dict]:
             """Generate test scenarios with metadata."""
 
-            def _scenario_builder(data: T, id_val: str) -> FlextTypes.Core.Dict:
+            def _scenario_builder(data: object, id_val: str) -> FlextTypes.Core.Dict:
                 return FlextTestsHypothesis.PropertyTestHelpers._build_test_scenario(
                     data, id_val, scenario_name
                 )

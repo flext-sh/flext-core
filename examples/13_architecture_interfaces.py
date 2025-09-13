@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Advanced Architecture Patterns using FlextCore Native Features.
 
-Demonstrates Clean Architecture, Domain-Driven Design, and enterprise patterns
+Demonstrates Clean Architecture, Domain-Driven Design, and business patterns
 using FlextCore's built-in protocols, interfaces, and architectural components.
-Shows how to leverage FlextCore's comprehensive protocol system instead of
+Shows how to leverage FlextCore's protocol system instead of
 reimplementing common patterns manually.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -35,7 +35,7 @@ logger = FlextLogger("flext.examples.architecture")
 
 @dataclass
 class User:
-    """User domain model using enterprise patterns."""
+    """User domain model using business patterns."""
 
     id: str
     name: str
@@ -186,7 +186,7 @@ class UserService(FlextProtocols.Domain.Service):
         return FlextResult[object].ok("UserService called")
 
     def create_user(self, name: str, email: str, age: int) -> FlextResult[User]:
-        """Create user with enterprise validation."""
+        """Create user with business validation."""
         if not self._is_started:
             return FlextResult[User].fail("Service not started")
 
@@ -349,19 +349,19 @@ def demonstrate_domain_services() -> None:
         print("✅ User service stopped successfully")
 
 
-def demonstrate_enterprise_architecture() -> None:
-    """Demonstrate complete enterprise architecture with FlextCore."""
+def demonstrate_business_architecture() -> None:
+    """Demonstrate complete business architecture with FlextCore."""
     print("\n=== FlextCore Enterprise Architecture Demo ===")
 
     print("✅ System health: healthy")
     print("✅ Environment configuration loaded")
 
     # Performance tracking
-    def enterprise_operation() -> FlextResult[str]:
+    def business_operation() -> FlextResult[str]:
         """Enterprise operation with performance tracking."""
         return FlextResult[str].ok("Enterprise operation completed")
 
-    result = enterprise_operation()
+    result = business_operation()
     if result.success:
         print(f"✅ Performance-tracked operation: {result.value}")
 
@@ -384,10 +384,10 @@ if __name__ == "__main__":
 
     # Demonstrate FlextCore architecture patterns
     demonstrate_domain_services()
-    demonstrate_enterprise_architecture()
+    demonstrate_business_architecture()
 
     print("\n✅ All FlextCore architecture patterns demonstrated successfully!")
-    print("Key benefits: Native protocols, enterprise handlers, dependency injection,")
+    print("Key benefits: Native protocols, business handlers, dependency injection,")
     print("CQRS patterns, domain services, and railway-oriented programming.")
     print(
         "\nCode reduction: 1610 → 400 lines (75% reduction) while adding more functionality!",

@@ -16,12 +16,12 @@ from flext_core import (
     FlextConstants,
     FlextContainer,
     FlextExceptions,
-    FlextFields,  # Add missing FlextFields import
+    FlextFields,
     FlextResult,
+    FlextTypes,
     FlextUtilities,
     FlextValidations,
 )
-from flext_core.typings import FlextTypes
 
 
 class TestCompleteFlextSystemIntegration:

@@ -1,10 +1,10 @@
 """Comprehensive test for FlextDecorators to boost coverage."""
 
-from flext_core.decorators import FlextDecorators
+from flext_core import FlextDecorators
 
 
 class TestFlextDecoratorsCoverage:
-    """Test FlextDecorators comprehensive functionality for coverage."""
+    """Test FlextDecorators functionality for coverage."""
 
     def test_basic_decorators(self) -> None:
         """Test basic decorator functionality."""

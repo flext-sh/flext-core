@@ -200,7 +200,7 @@ def demonstrate_service_patterns() -> FlextResult[None]:
 
 
 def demonstrate_error_handling() -> FlextResult[None]:
-    """Demonstrate comprehensive error handling."""
+    """Demonstrate error handling."""
     print("\n🚫 Demonstrating Error Handling")
     print("-" * 40)
 

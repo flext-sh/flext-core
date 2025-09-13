@@ -1,10 +1,8 @@
 """Request context and correlation tracking.
 
-# CONTEXT HELL: 558 lines for context management - overkill!
-# OVER-ENGINEERING: Hierarchical context system with 4 nested classes
-# ENTERPRISE MADNESS: Correlation/Service/Request/Performance context variables
-# CONTEXT VAR ABUSE: ContextVar for everything - most apps don't need this!
-# DOMAIN VIOLATION: Performance timing belongs in observability, not core!
+Provides context management with 558 lines of functionality.
+Features hierarchical context system with 4 nested classes for managing
+correlation IDs, service context, request context, and performance variables.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -431,7 +429,7 @@ class FlextContext:
 
         @staticmethod
         def get_full_context() -> FlextTypes.Core.Dict:
-            """Get complete current context as dictionary."""
+            """Get current context as dictionary."""
             context_vars = FlextContext.Variables
             return {
                 "correlation_id": context_vars.Correlation.CORRELATION_ID.get(),

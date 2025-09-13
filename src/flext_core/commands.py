@@ -3,6 +3,8 @@
 Provides FlextCommands for implementing Command Query Responsibility
 Segregation patterns with type-safe handlers.
 
+For verified CQRS patterns and examples, see docs/ACTUAL_CAPABILITIES.md
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -13,7 +15,7 @@ import re
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Self, TypeVar, cast
+from typing import Self, cast
 
 from pydantic import model_validator
 
@@ -25,15 +27,11 @@ from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 from flext_core.utilities import FlextUtilities
 
-# Type variables for command system
-T = TypeVar("T")
-U = TypeVar("U")
-
 
 class FlextCommands:
     """CQRS Command and Query Processing System.
 
-    # OVER-ENGINEERED: Yet another request processing system. We already have:
+    # Request processing system with CQRS patterns
     # - handlers.py (with CQRS handlers)
     # - processors.py (with processing pipelines)
     # - services.py (with service processors)
@@ -53,7 +51,7 @@ class FlextCommands:
             # Inherit all configuration from CommandModel
             # Commands are frozen (immutable) by default
 
-            # OVER-ENGINEERED: Complex regex magic to derive command_type from class name
+            # Regex pattern to derive command_type from class name
             @model_validator(mode="before")
             @classmethod
             def _ensure_command_type(cls, data: object) -> object:
@@ -113,7 +111,6 @@ class FlextCommands:
                             "created_at",
                             "correlation_id",
                             "user_id",
-                            "command_type",
                         }
                     }
 
@@ -134,24 +131,46 @@ class FlextCommands:
             @classmethod
             def from_payload(
                 cls: type[Self],
-                payload: FlextModels.Payload[FlextTypes.Core.Dict],
-            ) -> FlextResult[Self]:
+                payload: FlextModels.Payload[FlextTypes.Core.Dict]
+                | FlextTypes.Core.Dict
+                | None,
+            ) -> FlextResult[FlextCommands.Models.Command]:
                 """Create command from payload.
+
+                Args:
+                    payload: Either a FlextModels.Payload object or a dictionary.
 
                 Returns:
                     FlextResult containing the command instance.
 
                 """
                 try:
-                    data = payload.data if hasattr(payload, "data") else None
-                    if not isinstance(data, dict):
-                        return FlextResult[Self].fail(
+                    # Handle different payload types
+                    data: FlextTypes.Core.Dict | None = None
+
+                    if payload is None:
+                        return FlextResult[FlextCommands.Models.Command].fail(
+                            "Payload cannot be None",
+                        )
+
+                    # If it's a dictionary, use it directly
+                    if isinstance(payload, dict):
+                        data = payload
+                    elif hasattr(payload, "data"):
+                        # payload is a Payload object
+                        payload_data = getattr(payload, "data", None)
+                        if isinstance(payload_data, dict):
+                            data = payload_data
+
+                    if data is None or not isinstance(data, dict):
+                        return FlextResult[FlextCommands.Models.Command].fail(
                             "FlextModels data is not compatible",
                         )
+
                     model = cls.model_validate(data)
-                    return FlextResult[Self].ok(model)
+                    return FlextResult[FlextCommands.Models.Command].ok(model)
                 except Exception as e:
-                    return FlextResult[Self].fail(str(e))
+                    return FlextResult[FlextCommands.Models.Command].fail(str(e))
 
         class Query(FlextModels.Query):
             """Query model with metadata and immutability using Pydantic."""
@@ -183,6 +202,78 @@ class FlextCommands:
             def id(self) -> str:
                 """Get query ID (alias for query_id)."""
                 return self.query_id
+
+            @classmethod
+            def from_payload(
+                cls: type[Self],
+                payload: FlextModels.Payload[FlextTypes.Core.Dict] | dict[str, object],
+            ) -> FlextResult[FlextCommands.Models.Query]:
+                """Create query from payload.
+
+                Returns:
+                    FlextResult containing the query instance.
+
+                """
+                try:
+                    # Handle different payload types
+                    data: dict[str, object] | None = None
+
+                    if isinstance(payload, dict):
+                        data = payload
+                    elif hasattr(payload, "data"):
+                        # payload is a Payload object
+                        payload_data = getattr(payload, "data", None)
+                        if isinstance(payload_data, dict):
+                            data = payload_data
+
+                    if not isinstance(data, dict):
+                        return FlextResult[FlextCommands.Models.Query].fail(
+                            "FlextModels data is not compatible",
+                        )
+
+                    model = cls.model_validate(data)
+                    return FlextResult[FlextCommands.Models.Query].ok(model)
+                except Exception as e:
+                    return FlextResult[FlextCommands.Models.Query].fail(str(e))
+
+            def to_payload(
+                self,
+            ) -> FlextModels.Payload[FlextTypes.Core.Dict]:
+                """Convert query to payload."""
+                try:
+                    data = {
+                        k: v
+                        for k, v in self.model_dump().items()
+                        if k
+                        not in {
+                            "id",
+                            "query_id",
+                            "created_at",
+                            "correlation_id",
+                            "user_id",
+                        }
+                    }
+
+                    # Create payload directly using the class
+                    return FlextModels.Payload[FlextTypes.Core.Dict](
+                        data=data,
+                        message_type=self.__class__.__name__,
+                        source_service="query_service",
+                        timestamp=datetime.now(UTC),
+                        correlation_id=FlextUtilities.Generators.generate_correlation_id(),
+                        message_id=FlextUtilities.Generators.generate_uuid(),
+                    )
+                except Exception as e:
+                    # In case of error, return payload with error in metadata
+                    return FlextModels.Payload[FlextTypes.Core.Dict](
+                        data={},
+                        message_type=self.__class__.__name__,
+                        source_service="query_service",
+                        timestamp=datetime.now(UTC),
+                        correlation_id=FlextUtilities.Generators.generate_correlation_id(),
+                        message_id=FlextUtilities.Generators.generate_uuid(),
+                        metadata={"error": str(e)},
+                    )
 
     # =========================================================================
     # HANDLERS - Command and query handler base classes
@@ -428,6 +519,11 @@ class FlextCommands:
                     else self.__class__.__name__
                 )
 
+            @property
+            def logger(self) -> FlextLogger:
+                """Get logger instance for this query handler."""
+                return FlextLogger(self.__class__.__name__)
+
             def can_handle(self, query: QueryT) -> bool:
                 """Check if handler can process this query."""
                 # Generic implementation - override in subclasses for specific logic
@@ -458,6 +554,10 @@ class FlextCommands:
                         error_code=FlextConstants.Errors.VALIDATION_ERROR,
                     )
                 return self.handle(query)
+
+            def execute(self, query: QueryT) -> FlextResult[QueryResultT]:
+                """Execute query - alias for handle_query for compatibility."""
+                return self.handle_query(query)
 
     # =========================================================================
     # BUS - Command bus for routing and execution
@@ -503,18 +603,18 @@ class FlextCommands:
             # Add logger
             self.logger = FlextLogger(self.__class__.__name__)
 
-        def register_handler(self, *args: object) -> None:
+        def register_handler(self, *args: object) -> FlextResult[None]:
             """Register command handler."""
             if len(args) == 1:
                 handler = args[0]
                 if handler is None:
                     msg = "Handler cannot be None"
-                    raise TypeError(msg)
+                    return FlextResult[None].fail(msg)
 
                 handle_method = getattr(handler, "handle", None)
                 if not callable(handle_method):
                     msg = "Invalid handler: must have callable 'handle' method"
-                    raise TypeError(msg)
+                    return FlextResult[None].fail(msg)
 
                 key = getattr(handler, "handler_id", handler.__class__.__name__)
                 if key in self._handlers:
@@ -523,7 +623,7 @@ class FlextCommands:
                         command_type=str(key),
                         existing_handler=self._handlers[key].__class__.__name__,
                     )
-                    return
+                    return FlextResult[None].ok(None)
 
                 self._handlers[key] = handler
                 self._auto_handlers.append(handler)
@@ -533,7 +633,7 @@ class FlextCommands:
                     handler_type=handler.__class__.__name__,
                     total_handlers=len(self._handlers),
                 )
-                return
+                return FlextResult[None].ok(None)
 
             # Two-arg form: (command_type, handler)
             two_arg_form = 2
@@ -541,7 +641,7 @@ class FlextCommands:
                 command_type_obj, handler = args
                 if handler is None or command_type_obj is None:
                     msg = "Invalid arguments: command_type and handler are required"
-                    raise TypeError(msg)
+                    return FlextResult[None].fail(msg)
 
                 # Compute key for local registry visibility
                 name_attr = getattr(command_type_obj, "__name__", None)
@@ -555,10 +655,10 @@ class FlextCommands:
                     handler_type=handler.__class__.__name__,
                     total_handlers=len(self._handlers),
                 )
-                return
+                return FlextResult[None].ok(None)
 
             msg = "register_handler() takes 1 or 2 positional arguments"
-            raise TypeError(msg)
+            return FlextResult[None].fail(msg)
 
         def find_handler(self, command: object) -> object | None:
             """Find handler for command."""
@@ -759,11 +859,11 @@ class FlextCommands:
             self,
             middleware: object,
             middleware_config: dict[str, object] | None = None,
-        ) -> None:
+        ) -> FlextResult[None]:
             """Add middleware to pipeline with optional Pydantic configuration."""
             if not self._config.get("enable_middleware", True):
                 # Middleware pipeline is disabled, skip adding
-                return
+                return FlextResult[None].ok(None)
 
             # Create config if not provided
             if middleware_config is None:
@@ -788,24 +888,41 @@ class FlextCommands:
                 total_middleware=len(self._middleware),
             )
 
+            return FlextResult[None].ok(None)
+
         def get_all_handlers(self) -> FlextTypes.Core.List:
             """Get all registered handlers."""
             return list(self._handlers.values())
 
-        def unregister_handler(self, command_type: str) -> bool:
+        def unregister_handler(self, command_type: type | str) -> bool:
             """Unregister command handler."""
             for key in list(self._handlers.keys()):
-                key_name = getattr(key, "__name__", None)
-                if (key_name is not None and key_name == command_type) or str(
-                    key,
-                ) == command_type:
+                # Handle both class objects and string comparisons
+                if key == command_type:
+                    # Direct match (class object)
                     del self._handlers[key]
                     self.logger.info(
                         "Handler unregistered",
-                        command_type=command_type,
+                        command_type=getattr(
+                            command_type, "__name__", str(command_type)
+                        ),
                         remaining_handlers=len(self._handlers),
                     )
                     return True
+                if isinstance(command_type, str):
+                    # String comparison
+                    key_name = getattr(key, "__name__", None)
+                    if (key_name is not None and key_name == command_type) or str(
+                        key
+                    ) == command_type:
+                        del self._handlers[key]
+                        self.logger.info(
+                            "Handler unregistered",
+                            command_type=command_type,
+                            remaining_handlers=len(self._handlers),
+                        )
+                        return True
+
             return False
 
         def send_command(self, command: object) -> FlextResult[object]:
@@ -909,6 +1026,10 @@ class FlextCommands:
                         return cast("FlextResult[object]", result)
                     return FlextResult[object].ok(result)
 
+                def __call__(self, command: object) -> FlextResult[object]:
+                    """Make the handler callable."""
+                    return self.handle(command)
+
             return SimpleHandler()
 
         @staticmethod
@@ -925,6 +1046,10 @@ class FlextCommands:
                     if isinstance(result, FlextResult):
                         return cast("FlextResult[object]", result)
                     return FlextResult[object].ok(result)
+
+                def __call__(self, query: object) -> FlextResult[object]:
+                    """Make the query handler callable."""
+                    return self.handle(query)
 
             return SimpleQueryHandler()
 

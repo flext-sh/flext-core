@@ -8,10 +8,7 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
-from flext_core import FlextCommands, FlextModels, FlextResult
-from flext_core.typings import FlextTypes
+from flext_core import FlextCommands, FlextModels, FlextResult, FlextTypes
 
 FlextCommandId = str
 FlextCommandType = str
@@ -461,12 +458,12 @@ class TestFlextCommandBus:
         """Test registering invalid handler."""
         bus = FlextCommandBus()
 
-        # Register a string that will fail - should raise TypeError immediately
-        with pytest.raises(TypeError) as exc_info:
-            bus.register_handler("not_a_handler")
+        # Register a string that will fail - should return failure result
+        result = bus.register_handler("not_a_handler")
 
-        # Verify the exception message contains expected content
-        assert "Invalid handler" in str(exc_info.value)
+        # Verify the result is a failure
+        assert result.is_failure
+        assert "Invalid handler" in result.error
 
         # Verify no handlers were registered
         assert len(bus.get_all_handlers()) == 0

@@ -1,7 +1,6 @@
 """Simple test to boost FlextProcessing coverage targeting missing lines."""
 
-from flext_core.processing import FlextProcessing
-from flext_core.result import FlextResult
+from flext_core import FlextProcessing, FlextResult
 
 
 class TestFlextProcessingCoverageBoost:

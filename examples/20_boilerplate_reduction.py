@@ -130,7 +130,7 @@ class UltraModernDatabaseService:
         query: str,
         user_id: str = "anonymous",
     ) -> FlextResult[Sequence[Mapping[str, object]]]:
-        """Complete enterprise pipeline in railway pattern."""
+        """Complete business pipeline in railway pattern."""
         return self._validate_query(query).map(lambda _: self._create_results(user_id))
 
     def _validate_query(self, query: str) -> FlextResult[str]:
@@ -164,7 +164,7 @@ class EnterpriseServiceOrchestrator:
     """ULTIMATE Enterprise orchestrator using flext-core patterns!."""
 
     def __init__(self) -> None:
-        """Initialize enterprise orchestrator with container and context."""
+        """Initialize business orchestrator with container and context."""
         self.container = FlextContainer()
         self.context = FlextContext()
 
@@ -255,7 +255,7 @@ def demonstrate_ultra_modern_approach() -> int:
     print("\n" + "=" * 80)
     print(
         "🚀 ULTRA-MODERN FLEXT APPROACH - 29 lines vs 78 traditional "
-        "with ALL enterprise features!",
+        "with all features!",
     )
     print("=" * 80)
 
@@ -263,7 +263,7 @@ def demonstrate_ultra_modern_approach() -> int:
         # Create ultra-modern service (inherits ALL behavior from mixins)
         service = UltraModernDatabaseService()
 
-        # Single method call with ALL enterprise patterns built-in:
+        # Single method call with all patterns built-in:
         # - Automatic validation via decorators
         # - Performance monitoring with thresholds
         # - Observability tracing
@@ -274,7 +274,7 @@ def demonstrate_ultra_modern_approach() -> int:
 
         if result.success:
             records = result.value
-            print(f"📋 Retrieved {len(records)} records with full enterprise features")
+            print(f"📋 Retrieved {len(records)} records with full features")
             for record in records:
                 print(f"   - {record}")
 
@@ -289,14 +289,14 @@ def demonstrate_ultra_modern_approach() -> int:
         return 1
 
 
-def demonstrate_enterprise_orchestration() -> int:
-    """Demonstrate enterprise-grade service orchestration with maximum functionality."""
+def demonstrate_business_orchestration() -> int:
+    """Demonstrate service orchestration with full functionality."""
     print("\n" + "=" * 80)
     print("🏢 ENTERPRISE ORCHESTRATION - Complete business process in 3 lines!")
     print("=" * 80)
 
     try:
-        # Create enterprise orchestrator with ALL enterprise features via decorator
+        # Create business orchestrator with all features via decorator
         orchestrator = EnterpriseServiceOrchestrator()
 
         # Complete business process with railway-oriented programming
@@ -318,7 +318,7 @@ def demonstrate_enterprise_orchestration() -> int:
 
         if result.success:
             response = result.value
-            print("✅ Complete enterprise business process executed successfully!")
+            print("✅ Complete business process executed successfully!")
             print(f"📋 Response: {response}")
             print(
                 "   🔥 Includes: validation, auth, logging, monitoring, "
@@ -390,7 +390,7 @@ def main() -> int:
             "Ultra-Modern FLEXT Approach (29 vs 78 lines)",
             demonstrate_ultra_modern_approach,
         ),
-        ("Enterprise Orchestration (3 lines)", demonstrate_enterprise_orchestration),
+        ("Business Orchestration (3 lines)", demonstrate_business_orchestration),
         ("Boilerplate Reduction Metrics", demonstrate_boilerplate_metrics),
     ]
 

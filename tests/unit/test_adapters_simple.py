@@ -1,6 +1,6 @@
 """Simple test for FlextTypeAdapters to boost coverage."""
 
-from flext_core.adapters import FlextTypeAdapters
+from flext_core import FlextTypeAdapters
 
 
 class TestFlextTypeAdaptersSimple:

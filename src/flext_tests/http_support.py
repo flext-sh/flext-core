@@ -1,6 +1,6 @@
 """HTTP testing utilities using pytest-httpx and pytest-mock.
 
-Provides comprehensive HTTP testing patterns, API client testing,
+Provides HTTP testing patterns, API client testing,
 webhook testing, and HTTP scenario building for robust testing.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -23,13 +23,13 @@ class FlextTestsHttp:
     """Unified HTTP testing utilities for FLEXT ecosystem.
 
     Consolidates all HTTP testing patterns, API client testing,
-    webhook testing, and HTTP scenario building into a single comprehensive class.
+    webhook testing, and HTTP scenario building into a single unified class.
     """
 
     # === API Test Client ===
 
     class APITestClient:
-        """API test client for comprehensive HTTP testing."""
+        """API test client for HTTP testing."""
 
         def __init__(self, base_url: str = "https://api.example.com") -> None:
             """Initialize API test client."""
@@ -40,7 +40,7 @@ class FlextTestsHttp:
             }
 
         def build_url(self, endpoint: str) -> str:
-            """Build full URL from endpoint."""
+            """Build complete URL from endpoint."""
             return urljoin(self.base_url, endpoint)
 
         def validate_response_structure(
@@ -270,7 +270,7 @@ class FlextTestsHttp:
             return self
 
         def build_scenario(self) -> FlextTypes.Core.Dict:
-            """Build complete scenario."""
+            """Build test scenario."""
             return {
                 "scenarios": self.scenarios,
                 "total_scenarios": len(self.scenarios),

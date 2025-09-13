@@ -1,10 +1,10 @@
 """Advanced test matchers and assertions using all pytest capabilities.
 
 Provides consolidated test matchers, performance testing capabilities,
-and protocol definitions for comprehensive test assertions.
+and protocol definitions for test assertions.
 
 Leverages pytest-clarity, pytest-benchmark, pytest-mock, and other plugins
-for comprehensive testing with clear error messages and performance insights.
+for testing with clear error messages and performance insights.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,8 +31,8 @@ class FlextTestsMatchers:
     """Unified test matchers for FLEXT ecosystem.
 
     Consolidates all matcher patterns into a single class interface.
-    Provides advanced matchers, performance testing, and protocol definitions
-    for comprehensive test assertions with pytest integration.
+    Provides matchers, performance testing, and protocol definitions
+    for test assertions with pytest integration.
     """
 
     # === PROTOCOL DEFINITIONS ===
