@@ -137,7 +137,7 @@ if config_result.success:
 ### 🔧 **Available API (In Development):**
 
 - Domain patterns (FlextModels.Entity, FlextModels.Value)
-- Command/Handler patterns (FlextCommands, FlextHandlers)
+- Command/Handler patterns (FlextCommands, FlextProcessing)
 - Validation patterns (FlextValidations)
 
 ### 📋 **Planned:**

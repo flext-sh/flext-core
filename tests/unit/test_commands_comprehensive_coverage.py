@@ -207,7 +207,7 @@ class TestFlextCommandsHandlers:
         """Test CommandHandler initialization with default config."""
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -225,7 +225,7 @@ class TestFlextCommandsHandlers:
         }
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler(handler_config=config)
@@ -237,7 +237,7 @@ class TestFlextCommandsHandlers:
         """Test CommandHandler logger property."""
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -253,7 +253,7 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -266,7 +266,7 @@ class TestFlextCommandsHandlers:
         """Test validate_command when command has no validate_command method."""
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[dict, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -282,7 +282,7 @@ class TestFlextCommandsHandlers:
             pass
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -298,7 +298,7 @@ class TestFlextCommandsHandlers:
             pass
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -312,7 +312,7 @@ class TestFlextCommandsHandlers:
         """Test can_handle when no type constraints can be determined."""
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[Any, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -332,10 +332,10 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
         handler = TestHandler()
@@ -353,10 +353,10 @@ class TestFlextCommandsHandlers:
             command_id = "test-command-id"
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return False  # Cannot handle
 
         handler = TestHandler()
@@ -377,10 +377,10 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].fail("Validation failed")
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("success")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
         handler = TestHandler()
@@ -401,11 +401,11 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 msg = "Handler error"
                 raise ValueError(msg)
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
         handler = TestHandler()
@@ -424,7 +424,7 @@ class TestFlextCommandsHandlers:
             pass
 
         class TestHandler(FlextCommands.Handlers.CommandHandler[TestCommand, str]):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("delegated")
 
         handler = TestHandler()
@@ -439,7 +439,7 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler initialization with default config."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -456,7 +456,7 @@ class TestFlextCommandsHandlers:
         }
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler(handler_config=config)
@@ -468,7 +468,7 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler can_handle default implementation."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -485,7 +485,7 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -498,7 +498,7 @@ class TestFlextCommandsHandlers:
         """Test validate_query when query has no validate_query method."""
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[dict, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         handler = TestHandler()
@@ -515,7 +515,7 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].ok(True)
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("query result")
 
         handler = TestHandler()
@@ -534,7 +534,7 @@ class TestFlextCommandsHandlers:
                 return FlextResult[bool].fail("Query validation failed")
 
         class TestHandler(FlextCommands.Handlers.QueryHandler[TestQuery, str]):
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("query result")
 
         handler = TestHandler()
@@ -573,7 +573,7 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -611,7 +611,7 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -630,7 +630,7 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -664,7 +664,7 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -686,10 +686,10 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return command_type == TestCommand
 
         bus = FlextCommands.Bus()
@@ -723,13 +723,13 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("executed")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
-            def execute(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def execute(self, command: dict) -> FlextResult[str]:
                 return self.handle(command)
 
         bus = FlextCommands.Bus()
@@ -765,10 +765,10 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, query: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("query result")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
             def execute(self, query: TestQuery) -> FlextResult[str]:
@@ -822,7 +822,7 @@ class TestFlextCommandsBus:
         """Test Bus _apply_middleware success path."""
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         bus = FlextCommands.Bus()
@@ -846,7 +846,7 @@ class TestFlextCommandsBus:
         """Test Bus _apply_middleware when middleware rejects command."""
 
         class RejectingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 return FlextResult[None].fail("Middleware rejected")
 
         bus = FlextCommands.Bus()
@@ -876,7 +876,7 @@ class TestFlextCommandsBus:
         """Test Bus _execute_handler with execute method."""
 
         class TestHandler:
-            def execute(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def execute(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("executed")
 
         bus = FlextCommands.Bus()
@@ -891,7 +891,7 @@ class TestFlextCommandsBus:
         """Test Bus _execute_handler with handle method."""
 
         class TestHandler:
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -923,7 +923,7 @@ class TestFlextCommandsBus:
         """Test Bus _execute_handler when handler method raises exception."""
 
         class TestHandler:
-            def execute(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def execute(self, command: dict) -> FlextResult[str]:
                 msg = "Handler failed"
                 raise RuntimeError(msg)
 
@@ -956,7 +956,7 @@ class TestFlextCommandsBus:
         """Test Bus add_middleware success path."""
 
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         bus = FlextCommands.Bus()
@@ -1008,7 +1008,7 @@ class TestFlextCommandsBus:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1028,7 +1028,7 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1070,7 +1070,7 @@ class TestFlextCommandsBus:
             pass
 
         class TestHandler:
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok("handled")
 
         bus = FlextCommands.Bus()
@@ -1250,7 +1250,7 @@ class TestFlextCommandsIntegration:
         class CreateUserHandler(
             FlextCommands.Handlers.CommandHandler[CreateUserCommand, dict]
         ):
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 user_data = {
                     "id": FlextUtilities.Generators.generate_uuid(),
                     "username": command.username,
@@ -1259,7 +1259,7 @@ class TestFlextCommandsIntegration:
                 }
                 return FlextResult[dict].ok(user_data)
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return command_type == CreateUserCommand
 
         # Create bus and register handler
@@ -1321,7 +1321,7 @@ class TestFlextCommandsIntegration:
         logged_commands = []
 
         class LoggingMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 # Debug: Let's see what attributes the command has
                 if hasattr(command, "command_type"):
                     logged_commands.append(getattr(command, "command_type"))
@@ -1332,7 +1332,7 @@ class TestFlextCommandsIntegration:
 
         # Create validation middleware
         class ValidationMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 if hasattr(command, "validate_command"):
                     validation = command.validate_command()
                     if validation.is_failure:
@@ -1351,13 +1351,13 @@ class TestFlextCommandsIntegration:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, command: dict) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Processed {command.name}")
 
-            def execute(self, command: dict) -> FlextResult[str]:  # noqa: ARG002
+            def execute(self, command: dict) -> FlextResult[str]:
                 return self.handle(command)
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
         # Setup bus with middleware

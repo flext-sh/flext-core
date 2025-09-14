@@ -12,9 +12,7 @@ from __future__ import annotations
 import json
 import tempfile
 from collections.abc import Callable
-from unittest.mock import Mock
-
-from pytest_mock import MockerFixture
+from typing import Protocol
 
 from flext_core import (
     FlextConfig,
@@ -22,6 +20,14 @@ from flext_core import (
     FlextResult,
     FlextTypes,
 )
+
+
+class _TestCallable(Protocol):
+    """Protocol for test callable objects to avoid explicit Any."""
+
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        """Call signature for test functions."""
+        ...
 
 
 class FlextTestsBuilders:
@@ -111,7 +117,7 @@ class FlextTestsBuilders:
             return self
 
         def with_database_service(self) -> FlextTestsBuilders.ContainerBuilder:
-            """Add a mock database service."""
+            """Add a real database service."""
             return self.with_service(
                 "database",
                 {
@@ -325,61 +331,87 @@ class FlextTestsBuilders:
             # Fallback to default config if creation fails
             return FlextConfig()
 
-    # === Mock Builder ===
+    # === Test Double Builder ===
 
     @classmethod
-    def mock(cls, mocker: MockerFixture) -> FlextTestsBuilders.MockBuilder:
-        """Create a mock builder."""
-        return cls.MockBuilder(mocker)
+    def test_double(cls) -> FlextTestsBuilders.TestDoubleBuilder:
+        """Create a test double builder for real test behavior."""
+        return cls.TestDoubleBuilder()
 
-    class MockBuilder:
-        """Builder for mock objects with pytest-mock integration."""
+    class TestDoubleBuilder:
+        """Builder for test double objects that provide real behavior instead of mocks."""
 
-        def __init__(self, mocker: MockerFixture) -> None:
-            """Initialize mock builder."""
-            self._mocker = mocker
-            self._mock = Mock()
+        def __init__(self) -> None:
+            """Initialize test double builder."""
             self._return_values: FlextTypes.Core.List = []
-            self._side_effects: FlextTypes.Core.List = []
+            self._side_effects: list[BaseException] = []
+            self._behavior_func: _TestCallable | None = None
 
-        def returns(self, value: object) -> FlextTestsBuilders.MockBuilder:
-            """Set return value."""
+        def returns(self, value: object) -> FlextTestsBuilders.TestDoubleBuilder:
+            """Set return value for the test double."""
             self._return_values.append(value)
             return self
 
         def returns_result_success(
             self, data: object
-        ) -> FlextTestsBuilders.MockBuilder:
+        ) -> FlextTestsBuilders.TestDoubleBuilder:
             """Return successful FlextResult."""
             result = FlextResult[object].ok(data)
             return self.returns(result)
 
-        def returns_result_failure(self, error: str) -> FlextTestsBuilders.MockBuilder:
+        def returns_result_failure(
+            self, error: str
+        ) -> FlextTestsBuilders.TestDoubleBuilder:
             """Return failed FlextResult."""
             result = FlextResult[object].fail(error)
             return self.returns(result)
 
-        def raises(self, exception: Exception) -> FlextTestsBuilders.MockBuilder:
-            """Set side effect to raise exception."""
+        def raises(
+            self, exception: BaseException
+        ) -> FlextTestsBuilders.TestDoubleBuilder:
+            """Set behavior to raise exception."""
             self._side_effects.append(exception)
             return self
 
-        def build(self) -> Mock:
-            """Build the mock object."""
-            if len(self._return_values) == 1:
-                self._mock.return_value = self._return_values[0]
-            elif len(self._return_values) > 1:
-                self._mock.side_effect = self._return_values
+        def with_behavior(
+            self, func: _TestCallable
+        ) -> FlextTestsBuilders.TestDoubleBuilder:
+            """Set custom behavior function for the test double."""
+            self._behavior_func = func
+            return self
 
-            if self._side_effects:
-                if self._return_values:
-                    # Combine returns and exceptions
-                    effects = self._return_values + self._side_effects
-                    self._mock.side_effect = effects
-                else:
-                    self._mock.side_effect = self._side_effects[0]
+        def build(self) -> _TestCallable:
+            """Build a real callable test double instead of a mock."""
 
-            return self._mock
+            class TestDouble:
+                def __init__(
+                    self, builder: FlextTestsBuilders.TestDoubleBuilder
+                ) -> None:
+                    self._builder = builder
+                    self._call_count = 0
+
+                def __call__(self, *args: object, **kwargs: object) -> object:
+                    """Real test double implementation."""
+                    if self._builder._behavior_func:
+                        return self._builder._behavior_func(*args, **kwargs)
+
+                    if self._builder._side_effects:
+                        raise self._builder._side_effects[0]
+
+                    if len(self._builder._return_values) == 1:
+                        return self._builder._return_values[0]
+                    if len(self._builder._return_values) > 1:
+                        # Cycle through return values
+                        result = self._builder._return_values[
+                            self._call_count % len(self._builder._return_values)
+                        ]
+                        self._call_count += 1
+                        return result
+
+                    # Default behavior - return None
+                    return None
+
+            return TestDouble(self)
 
     # === File Builder ===
 

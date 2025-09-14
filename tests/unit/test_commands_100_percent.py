@@ -124,13 +124,13 @@ class TestBusExecutionEdgeCasesRemaining:
         class TestHandler:
             handler_id = "test-handler"
 
-            def handle(self, query: TestQuery) -> FlextResult[str]:  # noqa: ARG002
+            def handle(self, query: TestQuery) -> FlextResult[str]:
                 return FlextResult[str].ok("query result")
 
             def execute(self, query: TestQuery) -> FlextResult[str]:
                 return self.handle(query)
 
-            def can_handle(self, query_type: type) -> bool:  # noqa: ARG002
+            def can_handle(self, query_type: type) -> bool:
                 return True
 
         handler = TestHandler()
@@ -167,12 +167,12 @@ class TestCommandsIntegrationFinal:
             def handle(self, command: CustomCommand) -> FlextResult[str]:
                 return FlextResult[str].ok(f"Handled: {command.name}")
 
-            def can_handle(self, command_type: object) -> bool:  # noqa: ARG002
+            def can_handle(self, command_type: object) -> bool:
                 return True
 
         # Test middleware with edge cases
         class TestMiddleware:
-            def process(self, command: object, handler: object) -> FlextResult[None]:  # noqa: ARG002
+            def process(self, command: object, handler: object) -> FlextResult[None]:
                 return FlextResult[None].ok(None)
 
         # Setup bus with all configurations

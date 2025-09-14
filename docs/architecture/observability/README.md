@@ -1,4 +1,4 @@
-# FlextObservability - Enterprise Monitoring and Observability Architecture
+# FlextObservability - Monitoring and Observability Architecture
 
 **Version**: 0.9.0
 **Module**: `flext_core.observability`
@@ -6,7 +6,9 @@
 
 ## Executive Summary
 
-FlextObservability represents a comprehensive enterprise-grade observability platform that serves as the central monitoring hub for the entire FLEXT ecosystem. This system consolidates metrics collection, distributed tracing, health monitoring, alerting, and structured logging into a unified, type-safe, and highly performant solution.
+FlextObservability represents an observability platform that serves as the central monitoring hub for the entire FLEXT ecosystem. This system consolidates metrics collection, distributed tracing, health monitoring, alerting, and structured logging into a unified, type-safe, and performant solution.
+
+For verified project capabilities and accurate status information, see [ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md).
 
 **Key Finding**: FlextObservability provides the foundational infrastructure for monitoring 33+ FLEXT ecosystem projects, offering both core observability patterns and a dedicated observability library (`flext-observability`) with clean architecture principles.
 
@@ -16,12 +18,12 @@ FlextObservability represents a comprehensive enterprise-grade observability pla
 
 ### Business Impact
 
-- **Operational Excellence**: Comprehensive visibility across distributed FLEXT services
+- **Operational Excellence**: Visibility across distributed FLEXT services
 - **Proactive Issue Detection**: Multi-level alerting with escalation prevents outages
 - **Performance Optimization**: Detailed metrics enable data-driven performance improvements
 - **Compliance & Audit**: Structured logging and audit trails meet regulatory requirements
 
-### Technical Excellence
+### Technical Quality
 
 - **Enterprise Scale**: Designed for 33+ microservices and high-throughput operations
 - **Type Safety**: Full Python 3.13+ generic support with Pydantic validation

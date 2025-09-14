@@ -11,24 +11,16 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import ClassVar, Generic, Protocol, TypeVar, cast, runtime_checkable
+from typing import ClassVar, Generic, Protocol, cast, runtime_checkable
 
-from flext_core import (
-    FlextModels,
-    FlextResult,
-    FlextTypes,
-)
-
-# TypeVar outside classes per user demand
-T = TypeVar("T")
-P = TypeVar("P")
+from flext_core import FlextModels, FlextResult, FlextTypes, T
 
 
 class FlextTestsUtilities:
     """Unified testing utilities for FLEXT ecosystem.
 
     Consolidates all test utility patterns into a single class interface.
-    Provides protocols, factories, assertions, mocking capabilities,
+    Provides protocols, factories, assertions, test double capabilities,
     and functional test implementations.
     """
 
@@ -62,18 +54,21 @@ class FlextTestsUtilities:
             """Assert condition is false."""
             ...
 
-    @runtime_checkable
-    class ITestMocker(Protocol):
-        """Protocol for test mockers - now supports functional implementations."""
+    class ITestDoubleProvider(Protocol):
+        """Protocol for test double providers - supports real functional implementations."""
 
         def create_functional_service(
             self, service_type: str, **config: object
         ) -> object:
-            """Create functional service implementation."""
+            """Create functional service implementation with real behavior."""
             ...
 
         def create_test_context(self, **options: object) -> object:
-            """Create test context manager."""
+            """Create test context manager with real functionality."""
+            ...
+
+        def create_test_double(self, **options: object) -> object:
+            """Create test double with real behavior instead of mock."""
             ...
 
     # === CORE UTILITIES ===
@@ -328,10 +323,10 @@ class FlextTestsUtilities:
     # === FUNCTIONAL TEST IMPLEMENTATIONS ===
 
     class FunctionalTestService:
-        """Functional test service that uses FlextServices for DI."""
+        """Functional test service that uses FlextProcessing for DI."""
 
         def __init__(self, service_type: str = "generic", **config: object) -> None:
-            """Initialize functional test service using FlextServices."""
+            """Initialize functional test service using FlextProcessing."""
             self.service_type = service_type
             self.config = config
             self.call_history: list[
@@ -513,8 +508,8 @@ class FlextTestsUtilities:
 
     # === TEST MOCKER ===
 
-    class TestMocker:
-        """Test mocker that uses FlextContainer for DI."""
+    class TestDoubleManager:
+        """Test double manager that uses FlextContainer for DI and real behavior."""
 
         @staticmethod
         def create_functional_service(
@@ -549,25 +544,20 @@ class FlextTestsUtilities:
 
         @staticmethod
         def create_test_context(
-            target: object,
-            attribute: str,
-            new_value: object = None,
-            **options: object,
+            name: str = "test_context", **config: object
         ) -> FlextTestsUtilities.FunctionalTestContext:
-            """Create a test context manager for attribute replacement.
+            """Create a functional test context with real behavior.
 
             Args:
-                target: Object to modify.
-                attribute: Attribute name to replace.
-                new_value: New value to set.
-                **options: Additional context configuration.
+                name: Context name.
+                **config: Configuration options.
 
             Returns:
-                Functional test context manager.
+                Functional test context.
 
             """
             return FlextTestsUtilities.FunctionalTestContext(
-                target, attribute, new_value, **options
+                target=None, attribute=name, **config
             )
 
     # === TEST MODELS ===
@@ -708,9 +698,9 @@ class FlextTestsUtilities:
         return cls.TestAssertion()
 
     @classmethod
-    def mocker(cls) -> FlextTestsUtilities.TestMocker:
-        """Get test mocker instance."""
-        return cls.TestMocker()
+    def test_double_manager(cls) -> FlextTestsUtilities.TestDoubleManager:
+        """Get test double manager instance."""
+        return cls.TestDoubleManager()
 
     @classmethod
     def functional_service(

@@ -1,4 +1,4 @@
-# FlextServices Implementation Guide
+# FlextProcessing Implementation Guide
 
 **Version**: 0.9.0
 **Target Audience**: FLEXT Developers, Service Architects
@@ -7,7 +7,7 @@
 
 ## 📖 Overview
 
-This guide provides comprehensive instructions for implementing the Template Method service architecture using `FlextServices` across FLEXT applications. The service framework offers Template Method patterns for boilerplate elimination, service orchestration, performance monitoring, and enterprise-grade service management.
+This guide provides comprehensive instructions for implementing the Template Method service architecture using `FlextProcessing` across FLEXT applications. The service framework offers Template Method patterns for boilerplate elimination, service orchestration, performance monitoring, and enterprise-grade service management.
 
 ### Prerequisites
 
@@ -31,13 +31,13 @@ This guide provides comprehensive instructions for implementing the Template Met
 ### Basic Template Method Service
 
 ```python
-from flext_core.services import FlextServices
+from flext_core.services import FlextProcessing
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 # Template Method service with generic type parameters
 class UserRegistrationService(
-    FlextServices.ServiceProcessor[UserRequest, User, UserResponse]
+    FlextProcessing.ServiceProcessor[UserRequest, User, UserResponse]
 ):
     """User registration using Template Method pattern."""
 
@@ -83,9 +83,9 @@ else:
 # Service orchestration with multiple services
 class OrderFulfillmentOrchestrator:
     def __init__(self):
-        self.orchestrator = FlextServices.ServiceOrchestrator()
-        self.registry = FlextServices.ServiceRegistry()
-        self.metrics = FlextServices.ServiceMetrics()
+        self.orchestrator = FlextProcessing.ServiceOrchestrator()
+        self.registry = FlextProcessing.ServiceRegistry()
+        self.metrics = FlextProcessing.ServiceMetrics()
 
         # Register services
         self._setup_services()
@@ -119,11 +119,11 @@ result = orchestrator.orchestrate_workflow(workflow)
 #### Generic Type Parameters Pattern
 
 ```python
-from flext_core.services import FlextServices
+from flext_core.services import FlextProcessing
 
 # Template Method with three generic parameters
 class DataProcessingService[TRequest, TDomain, TResult](
-    FlextServices.ServiceProcessor[TRequest, TDomain, TResult]
+    FlextProcessing.ServiceProcessor[TRequest, TDomain, TResult]
 ):
     """
     Template Method pattern with generic types:
@@ -154,7 +154,7 @@ class DataProcessingService[TRequest, TDomain, TResult](
 
 ```python
 class OrderProcessingService(
-    FlextServices.ServiceProcessor[OrderRequest, Order, OrderResponse]
+    FlextProcessing.ServiceProcessor[OrderRequest, Order, OrderResponse]
 ):
     """Order processing showing Template Method benefits."""
 
@@ -226,9 +226,9 @@ class ServiceOrchestrationService:
     """Service orchestration implementation patterns."""
 
     def __init__(self):
-        self.orchestrator = FlextServices.ServiceOrchestrator()
-        self.registry = FlextServices.ServiceRegistry()
-        self.metrics = FlextServices.ServiceMetrics()
+        self.orchestrator = FlextProcessing.ServiceOrchestrator()
+        self.registry = FlextProcessing.ServiceRegistry()
+        self.metrics = FlextProcessing.ServiceMetrics()
 
     def setup_microservices_orchestration(self):
         """Setup microservices for orchestration."""
@@ -338,7 +338,7 @@ class AdvancedServiceCoordination:
     """Advanced service coordination patterns."""
 
     def __init__(self):
-        self.orchestrator = FlextServices.ServiceOrchestrator()
+        self.orchestrator = FlextProcessing.ServiceOrchestrator()
 
     def implement_saga_pattern(
         self,
@@ -412,9 +412,9 @@ class EnterpriseServiceRegistry:
     """Enterprise service registry implementation."""
 
     def __init__(self):
-        self.registry = FlextServices.ServiceRegistry()
-        self.metrics = FlextServices.ServiceMetrics()
-        self.validator = FlextServices.ServiceValidation()
+        self.registry = FlextProcessing.ServiceRegistry()
+        self.metrics = FlextProcessing.ServiceMetrics()
+        self.validator = FlextProcessing.ServiceValidation()
 
         # Service storage and monitoring
         self._service_health: dict[str, FlextTypes.Core.Dict] = {}
@@ -437,7 +437,7 @@ class EnterpriseServiceRegistry:
         if validation_result.is_failure:
             return FlextResult[str].fail(validation_result.error)
 
-        # Register with FlextServices registry
+        # Register with FlextProcessing registry
         registration_result = self.registry.register(service_info)
         if registration_result.is_failure:
             return registration_result
@@ -585,7 +585,7 @@ class ServicePerformanceManager:
     """Comprehensive service performance monitoring."""
 
     def __init__(self):
-        self.metrics = FlextServices.ServiceMetrics()
+        self.metrics = FlextProcessing.ServiceMetrics()
 
         # Performance data storage
         self._performance_history: dict[str, list[FlextTypes.Core.Dict]] = {}
@@ -603,7 +603,7 @@ class ServicePerformanceManager:
     ) -> FlextResult[None]:
         """Track comprehensive service metrics with anomaly detection."""
 
-        # Track with FlextServices metrics
+        # Track with FlextProcessing metrics
         tracking_result = self.metrics.track_service_call(
             service_name,
             operation_name,
@@ -766,13 +766,13 @@ if report_result.success:
 
 ```python
 class ETLDataProcessingService(
-    FlextServices.ServiceProcessor[ETLRequest, ETLPipeline, ETLResponse]
+    FlextProcessing.ServiceProcessor[ETLRequest, ETLPipeline, ETLResponse]
 ):
     """Advanced ETL processing using Template Method pattern."""
 
     def __init__(self):
         super().__init__()
-        self.orchestrator = FlextServices.ServiceOrchestrator()
+        self.orchestrator = FlextProcessing.ServiceOrchestrator()
         self._setup_etl_components()
 
     def _setup_etl_components(self):
@@ -859,12 +859,12 @@ class ETLDataProcessingService(
 
 ```python
 class MicroserviceIntegrationManager:
-    """Microservice integration using FlextServices registry patterns."""
+    """Microservice integration using FlextProcessing registry patterns."""
 
     def __init__(self):
-        self.registry = FlextServices.ServiceRegistry()
-        self.orchestrator = FlextServices.ServiceOrchestrator()
-        self.validator = FlextServices.ServiceValidation()
+        self.registry = FlextProcessing.ServiceRegistry()
+        self.orchestrator = FlextProcessing.ServiceOrchestrator()
+        self.validator = FlextProcessing.ServiceValidation()
 
     def register_microservice_ecosystem(self) -> FlextResult[FlextTypes.Core.Headers]:
         """Register complete microservice ecosystem."""
@@ -971,7 +971,7 @@ class MicroserviceIntegrationManager:
 
 - [ ] **Service Architecture Analysis**: Analyze current service patterns and identify Template Method opportunities
 - [ ] **Type System Design**: Define generic type parameters [TRequest, TDomain, TResult] for each service
-- [ ] **Integration Points**: Plan FlextServices integration with existing codebase
+- [ ] **Integration Points**: Plan FlextProcessing integration with existing codebase
 - [ ] **Performance Requirements**: Determine orchestration and monitoring requirements
 
 ### Core Template Method Implementation
@@ -1009,6 +1009,6 @@ class MicroserviceIntegrationManager:
 - [ ] **Health Checks**: Implement service health monitoring and alerting
 - [ ] **Error Handling**: Validate error handling and recovery patterns
 - [ ] **Documentation**: Update service documentation with Template Method patterns
-- [ ] **Team Training**: Train team on FlextServices architecture and patterns
+- [ ] **Team Training**: Train team on FlextProcessing architecture and patterns
 
-This implementation guide provides comprehensive coverage of FlextServices Template Method patterns, from basic service processing through advanced orchestration and monitoring, ensuring consistent service architecture and boilerplate elimination across all FLEXT applications.
+This implementation guide provides comprehensive coverage of FlextProcessing Template Method patterns, from basic service processing through advanced orchestration and monitoring, ensuring consistent service architecture and boilerplate elimination across all FLEXT applications.

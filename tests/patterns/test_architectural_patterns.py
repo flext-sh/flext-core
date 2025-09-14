@@ -1,6 +1,6 @@
 """Advanced architectural pattern tests for FLEXT Core.
 
-This module contains comprehensive tests for architectural patterns including
+This module contains tests for architectural patterns including
 Clean Architecture, DDD, CQRS, and enterprise design patterns.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -16,7 +16,6 @@ import pytest
 from pydantic import BaseModel
 
 from flext_core import (
-    FlextHandlers,
     FlextModels,
     FlextProcessing,
     FlextResult,
@@ -66,7 +65,7 @@ class TestCleanArchitecturePatterns:
             name: str
             email: str
 
-        class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
+        class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
             """Application command handler."""
 
             @property

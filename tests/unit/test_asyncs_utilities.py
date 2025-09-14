@@ -12,14 +12,12 @@ import asyncio
 import time
 from collections.abc import Awaitable
 from contextlib import AbstractAsyncContextManager
-from typing import Protocol, TypeVar, cast
+from typing import Protocol, cast
 
 import pytest
 
-from flext_core import FlextTypes
+from flext_core import FlextTypes, T_co
 from flext_tests import FlextTestsAsyncs, FlextTestsMatchers
-
-T_co = TypeVar("T_co", covariant=True)
 
 
 class AsyncMockCallable(Protocol[T_co]):

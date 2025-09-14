@@ -1,4 +1,4 @@
-# FlextProcessors Migration Roadmap
+# FlextProcessing Migration Roadmap
 
 **Version**: 0.9.0
 **Timeline**: 22 weeks (5.5 months)
@@ -8,7 +8,7 @@
 
 ## 📋 Executive Summary
 
-This roadmap outlines the strategic migration of the FLEXT ecosystem to standardize data processing using FlextProcessors patterns. The plan focuses on implementing comprehensive processing systems in libraries with complex data handling requirements and migrating existing custom processing patterns to use FlextProcessors.
+This roadmap outlines the strategic migration of the FLEXT ecosystem to standardize data processing using FlextProcessing patterns. The plan focuses on implementing comprehensive processing systems in libraries with complex data handling requirements and migrating existing custom processing patterns to use FlextProcessing.
 
 **Key Objectives**:
 
@@ -20,9 +20,9 @@ This roadmap outlines the strategic migration of the FLEXT ecosystem to standard
 
 **Success Criteria**:
 
-- 85% of FLEXT libraries using FlextProcessors patterns
+- 85% of FLEXT libraries using FlextProcessing patterns
 - Complete pipeline orchestration for ETL and data processing workflows
-- Zero custom processing implementations without FlextProcessors integration
+- Zero custom processing implementations without FlextProcessing integration
 - Comprehensive validation and error handling across all processing operations
 
 ---
@@ -31,7 +31,7 @@ This roadmap outlines the strategic migration of the FLEXT ecosystem to standard
 
 ```mermaid
 gantt
-    title FlextProcessors Migration Timeline
+    title FlextProcessing Migration Timeline
     dateFormat  YYYY-MM-DD
     section Phase 1: ETL Foundation
     flext-meltano       :2025-02-01, 4w
@@ -66,7 +66,7 @@ gantt
 
 ## 🚀 Phase 1: ETL Foundation (Weeks 1-8)
 
-**Goal**: Implement FlextProcessors in core ETL and data processing libraries
+**Goal**: Implement FlextProcessing in core ETL and data processing libraries
 **Priority**: 🔥 **CRITICAL**
 **Risk Level**: High
 **Success Metrics**: Production-ready processing with pipeline orchestration
@@ -80,7 +80,7 @@ gantt
 
 - [ ] **ETL Workflow Analysis**: Document all Meltano processing workflows
 - [ ] **Singer Protocol Integration**: Map Singer record processing requirements
-- [ ] **Pipeline Design**: Design ETL pipeline using FlextProcessors
+- [ ] **Pipeline Design**: Design ETL pipeline using FlextProcessing
 - [ ] **Performance Requirements**: Define throughput and latency requirements
 - [ ] **Data Validation Strategy**: Plan Singer record validation approach
 
@@ -89,13 +89,13 @@ gantt
 - [ ] **FlextMeltanoETLProcessor**: Implement main ETL processor
 
   ```python
-  class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
+  class FlextMeltanoETLProcessor(FlextProcessing.BaseProcessor):
       def __init__(self, singer_config: dict):
-          validator = FlextProcessors.EntryValidator()
+          validator = FlextProcessing.EntryValidator()
           super().__init__(validator)
           self.singer_config = singer_config
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Singer record processing with validation
           # Schema transformation
           # ETL business rules application
@@ -103,7 +103,7 @@ gantt
   ```
 
 - [ ] **Singer Record Validation**: Implement comprehensive Singer record validation
-- [ ] **Schema Transformation**: ETL transformations using FlextProcessors patterns
+- [ ] **Schema Transformation**: ETL transformations using FlextProcessing patterns
 - [ ] **Error Handling**: FlextResult integration for all ETL operations
 
 #### Week 3: ETL Pipeline Orchestration
@@ -121,7 +121,7 @@ gantt
           transformation_step = lambda entry: self.etl_processor.process_data(entry)
           loading_step = lambda data: self._load_data(data)
 
-          pipeline_result = FlextProcessors.create_processing_pipeline(
+          pipeline_result = FlextProcessing.create_processing_pipeline(
               input_processor=extraction_step,
               output_processor=loading_step
           )
@@ -167,20 +167,20 @@ gantt
 - [ ] **FlextLDIFEntryProcessor**: Implement main LDIF entry processor
 
   ```python
-  class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
+  class FlextLDIFEntryProcessor(FlextProcessing.BaseProcessor):
       def __init__(self, ldif_config: dict = None):
-          validator = FlextProcessors.EntryValidator()
+          validator = FlextProcessing.EntryValidator()
           super().__init__(validator)
           self.regex_processor = self._create_regex_processor()
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # LDIF entry parsing and validation
           # Distinguished Name (DN) processing
           # Attribute parsing and normalization
           pass
   ```
 
-- [ ] **Regex Processing**: Implement LDIF pattern extraction using FlextProcessors.RegexProcessor
+- [ ] **Regex Processing**: Implement LDIF pattern extraction using FlextProcessing.RegexProcessor
 - [ ] **DN Processing**: Distinguished Name parsing and validation
 - [ ] **Attribute Normalization**: LDIF attribute processing and normalization
 
@@ -222,7 +222,7 @@ gantt
 
 ### Phase 1 Success Criteria
 
-- [ ] **Core libraries** have comprehensive processing systems using FlextProcessors
+- [ ] **Core libraries** have comprehensive processing systems using FlextProcessing
 - [ ] **Pipeline orchestration** implemented for complex workflows
 - [ ] **Batch processing** capabilities for high-volume operations
 - [ ] **Error handling** robust and consistent across all processing
@@ -232,7 +232,7 @@ gantt
 
 ## 🔧 Phase 2: Data Integration (Weeks 9-14)
 
-**Goal**: Migrate data integration libraries to FlextProcessors patterns
+**Goal**: Migrate data integration libraries to FlextProcessing patterns
 **Priority**: 🟡 **HIGH**
 **Risk Level**: Medium
 **Success Metrics**: Consistent processing patterns with data extraction/migration
@@ -246,7 +246,7 @@ gantt
 
 - [ ] **Current Processing Analysis**: Analyze existing LDIF tap processing
 - [ ] **Singer Integration**: Map LDIF to Singer record transformation
-- [ ] **FlextProcessors Integration**: Plan integration with flext-ldif processors
+- [ ] **FlextProcessing Integration**: Plan integration with flext-ldif processors
 - [ ] **Data Flow Design**: Design LDIF extraction to Singer record pipeline
 
 #### Week 10: Tap LDIF Processor Implementation
@@ -254,13 +254,13 @@ gantt
 - [ ] **FlextTapLDIFProcessor**: Implement LDIF tap processor
 
   ```python
-  class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
+  class FlextTapLDIFProcessor(FlextProcessing.BaseProcessor):
       def __init__(self, tap_config: dict):
-          validator = FlextProcessors.EntryValidator()
+          validator = FlextProcessing.EntryValidator()
           super().__init__(validator)
           self.ldif_processor = FlextLDIFEntryProcessor(tap_config.get("ldif_config"))
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Process LDIF entry using flext-ldif processor
           # Generate Singer record from LDIF data
           # Apply tap-specific transformations
@@ -288,21 +288,21 @@ gantt
 - [ ] **Current Analysis**: Analyze existing OUD migration processing
 - [ ] **Schema Processing**: Map schema transformation requirements
 - [ ] **Migration Phases**: Document phase-specific processing needs
-- [ ] **FlextProcessors Integration**: Plan migration to FlextProcessors
+- [ ] **FlextProcessing Integration**: Plan migration to FlextProcessing
 
 #### Week 13: OUD Migration Processor Implementation
 
 - [ ] **client-aOUDMigrationProcessor**: Implement migration processor
 
   ```python
-  class client-aOUDMigrationProcessor(FlextProcessors.BaseProcessor):
+  class client-aOUDMigrationProcessor(FlextProcessing.BaseProcessor):
       def __init__(self, migration_config: dict):
           allowed_schemas = migration_config.get("allowed_schemas", [])
-          validator = FlextProcessors.EntryValidator(whitelist=allowed_schemas)
+          validator = FlextProcessing.EntryValidator(whitelist=allowed_schemas)
           super().__init__(validator)
           self.regex_processor = self._create_migration_regex_processor()
 
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Extract migration patterns using regex processor
           # Transform for OUD migration
           # Apply client-a-specific business rules
@@ -332,7 +332,7 @@ gantt
 
 ## 🛡️ Phase 3: Target Processing (Weeks 15-18)
 
-**Goal**: Implement FlextProcessors in target and data loading libraries
+**Goal**: Implement FlextProcessing in target and data loading libraries
 **Priority**: 🟢 **MEDIUM**
 **Risk Level**: Low
 **Success Metrics**: Consistent target processing with validation
@@ -345,7 +345,7 @@ gantt
 #### Week 15: Oracle OIC Processing Analysis
 
 - [ ] **Current Processing Review**: Analyze existing Oracle OIC record processing
-- [ ] **FlextProcessors Integration**: Plan integration with existing patterns
+- [ ] **FlextProcessing Integration**: Plan integration with existing patterns
 - [ ] **Schema Validation**: Map Oracle OIC schema validation requirements
 - [ ] **Performance Requirements**: Define processing performance needs
 
@@ -354,8 +354,8 @@ gantt
 - [ ] **FlextTargetOracleOICProcessor**: Implement OIC target processor
 
   ```python
-  class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+  class FlextTargetOracleOICProcessor(FlextProcessing.BaseProcessor):
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Parse Singer record from entry
           # Transform for Oracle OIC format
           # Validate against OIC schema
@@ -375,7 +375,7 @@ gantt
 #### Week 17: Oracle WMS Processing Design
 
 - [ ] **WMS Operations Analysis**: Map WMS operation processing requirements
-- [ ] **FlextProcessors Integration**: Design WMS data processing with FlextProcessors
+- [ ] **FlextProcessing Integration**: Design WMS data processing with FlextProcessing
 - [ ] **Business Rules**: Define WMS-specific validation rules
 - [ ] **Performance Requirements**: WMS operation processing performance needs
 
@@ -384,8 +384,8 @@ gantt
 - [ ] **FlextOracleWMSProcessor**: Implement WMS data processor
 
   ```python
-  class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
-      def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+  class FlextOracleWMSProcessor(FlextProcessing.BaseProcessor):
+      def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
           # Parse WMS operation data
           # Transform for Oracle WMS format
           # Validate WMS business rules
@@ -399,7 +399,7 @@ gantt
 
 **Deliverables**:
 
-- ✅ Enhanced Oracle OIC processing with FlextProcessors
+- ✅ Enhanced Oracle OIC processing with FlextProcessing
 - ✅ New Oracle WMS processing capabilities
 - ✅ Consistent target processing patterns
 - ✅ Comprehensive validation and error handling
@@ -408,7 +408,7 @@ gantt
 
 ## 🎯 Phase 4: Ecosystem Enhancement (Weeks 19-23)
 
-**Goal**: Complete FlextProcessors adoption across supporting libraries
+**Goal**: Complete FlextProcessing adoption across supporting libraries
 **Priority**: ⚫ **LOW**
 **Risk Level**: Low
 **Success Metrics**: Complete ecosystem consistency
@@ -422,41 +422,41 @@ gantt
 
 **flext-observability** (Week 19):
 
-- [ ] **Metric Processing**: Implement FlextProcessors for metric data processing
-- [ ] **Log Processing**: Standardize log entry processing with FlextProcessors
-- [ ] **Alert Processing**: Use FlextProcessors for alert data validation
+- [ ] **Metric Processing**: Implement FlextProcessing for metric data processing
+- [ ] **Log Processing**: Standardize log entry processing with FlextProcessing
+- [ ] **Alert Processing**: Use FlextProcessing for alert data validation
 
 **flext-grpc** (Week 20):
 
-- [ ] **Message Processing**: Implement gRPC message processing with FlextProcessors
+- [ ] **Message Processing**: Implement gRPC message processing with FlextProcessing
 - [ ] **Request Validation**: Use EntryValidator for gRPC request validation
 - [ ] **Response Processing**: Standardize gRPC response processing
 
 **flext-web** (Week 21):
 
 - [ ] **Request Processing**: Implement web request processing pipeline
-- [ ] **Form Validation**: Use FlextProcessors for form data validation
+- [ ] **Form Validation**: Use FlextProcessing for form data validation
 - [ ] **Session Processing**: Standardize session data processing
 
 ### Week 22-23: Documentation and Training
 
 #### Week 22: Comprehensive Documentation
 
-- [ ] **Processing Patterns Guide**: Complete guide for FlextProcessors usage
+- [ ] **Processing Patterns Guide**: Complete guide for FlextProcessing usage
 - [ ] **Migration Documentation**: Step-by-step migration instructions
 - [ ] **Performance Guide**: Processing performance optimization guide
 - [ ] **Error Handling Manual**: Comprehensive error handling patterns
 
 #### Week 23: Developer Training and Knowledge Transfer
 
-- [ ] **Training Materials**: Create FlextProcessors training materials
+- [ ] **Training Materials**: Create FlextProcessing training materials
 - [ ] **Workshop Sessions**: Conduct developer workshops
 - [ ] **Best Practices**: Document processing best practices
 - [ ] **Code Examples**: Create comprehensive processing examples
 
 **Deliverables**:
 
-- ✅ Complete FlextProcessors adoption across all libraries
+- ✅ Complete FlextProcessing adoption across all libraries
 - ✅ Comprehensive documentation and training materials
 - ✅ Developer knowledge transfer complete
 - ✅ Processing best practices established
@@ -480,7 +480,7 @@ gantt
 
 ### Week 26: Production Rollout
 
-- [ ] **Production Deployment**: Deploy FlextProcessors across ecosystem
+- [ ] **Production Deployment**: Deploy FlextProcessing across ecosystem
 - [ ] **Monitoring Setup**: Processing monitoring and alerting
 - [ ] **Performance Monitoring**: Real-time processing performance tracking
 - [ ] **Success Validation**: Validate all success criteria met
@@ -502,7 +502,7 @@ gantt
 
 #### 2. LDIF Processing Compatibility
 
-**Risk**: FlextProcessors integration breaking existing LDIF processing
+**Risk**: FlextProcessing integration breaking existing LDIF processing
 **Mitigation**:
 
 - Extensive compatibility testing
@@ -535,7 +535,7 @@ gantt
 
 | Metric                         | Current | Target | Measurement                     |
 | ------------------------------ | ------- | ------ | ------------------------------- |
-| **FlextProcessors Adoption**   | 25%     | 85%    | Libraries using FlextProcessors |
+| **FlextProcessing Adoption**   | 25%     | 85%    | Libraries using FlextProcessing |
 | **Processing Standardization** | 30%     | 90%    | Consistent processing patterns  |
 | **Error Handling Coverage**    | 60%     | 95%    | FlextResult usage in processing |
 | **Pipeline Integration**       | 20%     | 80%    | Pipeline orchestration usage    |
@@ -566,7 +566,7 @@ gantt
 
 ```python
 class FlextProcessorsMigrationTools:
-    """Tools to assist with FlextProcessors migration."""
+    """Tools to assist with FlextProcessing migration."""
 
     @staticmethod
     def analyze_current_processing(library_path: str) -> FlextTypes.Core.Dict:
@@ -585,7 +585,7 @@ class FlextProcessorsMigrationTools:
 
     @staticmethod
     def validate_processor_implementation(processor_class: type) -> FlextTypes.Core.StringList:
-        """Validate FlextProcessors implementation."""
+        """Validate FlextProcessing implementation."""
         pass
 ```
 
@@ -593,7 +593,7 @@ class FlextProcessorsMigrationTools:
 
 ```python
 class FlextProcessorsPerformanceTester:
-    """Performance testing utilities for FlextProcessors."""
+    """Performance testing utilities for FlextProcessing."""
 
     @staticmethod
     def benchmark_processor_performance(processor, test_data: list) -> dict:
@@ -612,7 +612,7 @@ class FlextProcessorsPerformanceTester:
 
 ### Pre-Migration (Week 0)
 
-- [ ] **Team Training**: All developers trained on FlextProcessors patterns
+- [ ] **Team Training**: All developers trained on FlextProcessing patterns
 - [ ] **Environment Setup**: Development and testing environments prepared
 - [ ] **Baseline Metrics**: Current processing performance metrics established
 - [ ] **Migration Tools**: All utility tools and templates prepared
@@ -662,4 +662,4 @@ class FlextProcessorsPerformanceTester:
 - ✅ **Enhanced Debugging**: Clear validation messages and error handling
 - ✅ **Reduced Complexity**: Consistent APIs reduce learning curve
 
-This roadmap provides a comprehensive path to achieving standardized data processing across the FLEXT ecosystem using FlextProcessors while managing complexity, ensuring performance, and delivering significant operational and developer experience improvements.
+This roadmap provides a comprehensive path to achieving standardized data processing across the FLEXT ecosystem using FlextProcessing while managing complexity, ensuring performance, and delivering significant operational and developer experience improvements.

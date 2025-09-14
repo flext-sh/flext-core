@@ -1,4 +1,4 @@
-# FlextProcessors Implementation Guide
+# FlextProcessing Implementation Guide
 
 **Version**: 0.9.0
 **Target**: FLEXT Library Developers
@@ -7,7 +7,7 @@
 
 ## 📋 Overview
 
-This guide provides step-by-step instructions for implementing FlextProcessors data processing patterns in FLEXT ecosystem libraries. It covers entry modeling, processor design, pipeline orchestration, validation strategies, and integration with existing systems.
+This guide provides step-by-step instructions for implementing FlextProcessing data processing patterns in FLEXT ecosystem libraries. It covers entry modeling, processor design, pipeline orchestration, validation strategies, and integration with existing systems.
 
 ## 🎯 Implementation Phases
 
@@ -83,23 +83,23 @@ class CurrentProcessingApproach:
 ### 2.1 Entry Design Pattern
 
 ```python
-from flext_core import FlextProcessors, FlextResult
+from flext_core import FlextProcessing, FlextResult
 from typing import Dict, List, Optional
 
 # Define your entry types using the standard enumeration
 class YourLibraryEntryTypes:
-    """Extend FlextProcessors.EntryType for library-specific types."""
+    """Extend FlextProcessing.EntryType for library-specific types."""
 
     # Use standard types when possible
-    USER = FlextProcessors.EntryType.USER
-    GROUP = FlextProcessors.EntryType.GROUP
-    CONFIG = FlextProcessors.EntryType.CONFIG
+    USER = FlextProcessing.EntryType.USER
+    GROUP = FlextProcessing.EntryType.GROUP
+    CONFIG = FlextProcessing.EntryType.CONFIG
 
     # Add library-specific types if needed
     CUSTOM_TYPE = "your_custom_type"
 
 # Create entries using the standard factory method
-def create_user_entry(user_data: Dict[str, object]) -> FlextResult[FlextProcessors.Entry]:
+def create_user_entry(user_data: Dict[str, object]) -> FlextResult[FlextProcessing.Entry]:
     """Create a user entry with validation."""
     try:
         entry_data = {
@@ -115,13 +115,13 @@ def create_user_entry(user_data: Dict[str, object]) -> FlextResult[FlextProcesso
             }
         }
 
-        return FlextProcessors.create_entry(entry_data, entry_type=YourLibraryEntryTypes.USER)
+        return FlextProcessing.create_entry(entry_data, entry_type=YourLibraryEntryTypes.USER)
 
     except Exception as e:
-        return FlextResult[FlextProcessors.Entry].fail(f"Failed to create user entry: {e}")
+        return FlextResult[FlextProcessing.Entry].fail(f"Failed to create user entry: {e}")
 
 # Create configuration entries
-def create_config_entry(config_key: str, config_value: object) -> FlextResult[FlextProcessors.Entry]:
+def create_config_entry(config_key: str, config_value: object) -> FlextResult[FlextProcessing.Entry]:
     """Create a configuration entry."""
     entry_data = {
         "entry_type": YourLibraryEntryTypes.CONFIG,
@@ -135,13 +135,13 @@ def create_config_entry(config_key: str, config_value: object) -> FlextResult[Fl
         }
     }
 
-    return FlextProcessors.create_entry(entry_data, entry_type=YourLibraryEntryTypes.CONFIG)
+    return FlextProcessing.create_entry(entry_data, entry_type=YourLibraryEntryTypes.CONFIG)
 ```
 
 ### 2.2 Custom Processor Implementation
 
 ```python
-class YourLibraryProcessor(FlextProcessors.BaseProcessor):
+class YourLibraryProcessor(FlextProcessing.BaseProcessor):
     """Custom processor for your library's specific needs."""
 
     def __init__(self, library_config: Dict[str, object] = None):
@@ -150,14 +150,14 @@ class YourLibraryProcessor(FlextProcessors.BaseProcessor):
         super().__init__(validator)
         self.library_config = library_config or {}
 
-    def _create_validator(self, config: Optional[Dict[str, object]]) -> FlextProcessors.EntryValidator:
+    def _create_validator(self, config: Optional[Dict[str, object]]) -> FlextProcessing.EntryValidator:
         """Create validator with library-specific whitelist."""
         whitelist = []
         if config and "allowed_identifiers" in config:
             whitelist = config["allowed_identifiers"]
-        return FlextProcessors.EntryValidator(whitelist=whitelist)
+        return FlextProcessing.EntryValidator(whitelist=whitelist)
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[Dict[str, object]]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[Dict[str, object]]:
         """Process entry with library-specific logic."""
         try:
             # Validate entry first
@@ -177,7 +177,7 @@ class YourLibraryProcessor(FlextProcessors.BaseProcessor):
         except Exception as e:
             return FlextResult[Dict[str, object]].fail(f"Processing failed: {e}")
 
-    def _process_user_entry(self, entry: FlextProcessors.Entry) -> FlextResult[Dict[str, object]]:
+    def _process_user_entry(self, entry: FlextProcessing.Entry) -> FlextResult[Dict[str, object]]:
         """Process user-specific entry data."""
         try:
             user_data = {
@@ -200,7 +200,7 @@ class YourLibraryProcessor(FlextProcessors.BaseProcessor):
         except Exception as e:
             return FlextResult[Dict[str, object]].fail(f"User processing failed: {e}")
 
-    def _process_config_entry(self, entry: FlextProcessors.Entry) -> FlextResult[Dict[str, object]]:
+    def _process_config_entry(self, entry: FlextProcessing.Entry) -> FlextResult[Dict[str, object]]:
         """Process configuration-specific entry data."""
         try:
             config_data = {
@@ -264,11 +264,11 @@ class YourLibraryProcessor(FlextProcessors.BaseProcessor):
 ### 2.3 Regex Processor Pattern
 
 ```python
-class YourLibraryRegexProcessor(FlextProcessors.BaseProcessor):
+class YourLibraryRegexProcessor(FlextProcessing.BaseProcessor):
     """Regex processor for pattern extraction in your library."""
 
     def __init__(self, extraction_patterns: Dict[str, str]):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.patterns = extraction_patterns
         self.regex_processors = {}
@@ -277,11 +277,11 @@ class YourLibraryRegexProcessor(FlextProcessors.BaseProcessor):
     def _initialize_regex_processors(self):
         """Initialize regex processors for each pattern."""
         for pattern_name, pattern_regex in self.patterns.items():
-            regex_result = FlextProcessors.create_regex_processor(pattern_regex, self.validator)
+            regex_result = FlextProcessing.create_regex_processor(pattern_regex, self.validator)
             if regex_result.success:
                 self.regex_processors[pattern_name] = regex_result.value
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[Dict[str, object]]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[Dict[str, object]]:
         """Process entry using regex pattern matching."""
         try:
             extracted_data = {}
@@ -332,7 +332,7 @@ class YourLibraryProcessingPipeline:
 
     def __init__(self, config: Dict[str, object] = None):
         self.config = config or {}
-        self.processors = FlextProcessors()
+        self.processors = FlextProcessing()
         self.main_processor = YourLibraryProcessor(config)
         self.regex_processor = None
         self.pipeline = self._create_pipeline()
@@ -346,7 +346,7 @@ class YourLibraryProcessingPipeline:
             output_step = self._create_output_step()
 
             # Create pipeline
-            pipeline_result = FlextProcessors.create_processing_pipeline(
+            pipeline_result = FlextProcessing.create_processing_pipeline(
                 input_processor=validation_step,
                 output_processor=output_step
             )
@@ -365,24 +365,24 @@ class YourLibraryProcessingPipeline:
 
     def _create_validation_step(self) -> Callable:
         """Create validation processing step."""
-        def validation_step(entry: FlextProcessors.Entry) -> FlextResult[FlextProcessors.Entry]:
+        def validation_step(entry: FlextProcessing.Entry) -> FlextResult[FlextProcessing.Entry]:
             # Validate entry structure
             validation_result = self.main_processor.validate_input(entry)
             if validation_result.is_failure:
-                return FlextResult[FlextProcessors.Entry].fail(validation_result.error)
+                return FlextResult[FlextProcessing.Entry].fail(validation_result.error)
 
             # Additional business validation
             if entry.entry_type == YourLibraryEntryTypes.USER:
                 if not entry.clean_content or len(entry.clean_content) < 3:
-                    return FlextResult[FlextProcessors.Entry].fail("Invalid user content")
+                    return FlextResult[FlextProcessing.Entry].fail("Invalid user content")
 
-            return FlextResult[FlextProcessors.Entry].ok(entry)
+            return FlextResult[FlextProcessing.Entry].ok(entry)
 
         return validation_step
 
     def _create_transformation_step(self) -> Callable:
         """Create transformation processing step."""
-        def transformation_step(entry: FlextProcessors.Entry) -> FlextResult[FlextProcessors.Entry]:
+        def transformation_step(entry: FlextProcessing.Entry) -> FlextResult[FlextProcessing.Entry]:
             try:
                 # Apply transformations based on entry type
                 if entry.entry_type == YourLibraryEntryTypes.USER:
@@ -390,7 +390,7 @@ class YourLibraryProcessingPipeline:
                     normalized_content = entry.clean_content.lower().strip()
 
                     # Create transformed entry
-                    transformed_entry = FlextProcessors.Entry(
+                    transformed_entry = FlextProcessing.Entry(
                         entry_type=entry.entry_type,
                         identifier=entry.identifier,
                         clean_content=normalized_content,
@@ -402,19 +402,19 @@ class YourLibraryProcessingPipeline:
                         }
                     )
 
-                    return FlextResult[FlextProcessors.Entry].ok(transformed_entry)
+                    return FlextResult[FlextProcessing.Entry].ok(transformed_entry)
 
                 # Return unchanged for other types
-                return FlextResult[FlextProcessors.Entry].ok(entry)
+                return FlextResult[FlextProcessing.Entry].ok(entry)
 
             except Exception as e:
-                return FlextResult[FlextProcessors.Entry].fail(f"Transformation failed: {e}")
+                return FlextResult[FlextProcessing.Entry].fail(f"Transformation failed: {e}")
 
         return transformation_step
 
     def _create_output_step(self) -> Callable:
         """Create output processing step."""
-        def output_step(entry: FlextProcessors.Entry) -> FlextResult[Dict[str, object]]:
+        def output_step(entry: FlextProcessing.Entry) -> FlextResult[Dict[str, object]]:
             # Process entry through main processor
             return self.main_processor.process_data(entry)
 
@@ -463,7 +463,7 @@ class YourLibraryProcessingPipeline:
         except Exception as e:
             return FlextResult[List[Dict[str, object]]].fail(f"Pipeline processing failed: {e}")
 
-    def _create_entry_from_data(self, data: Dict[str, object]) -> FlextResult[FlextProcessors.Entry]:
+    def _create_entry_from_data(self, data: Dict[str, object]) -> FlextResult[FlextProcessing.Entry]:
         """Create entry from raw data."""
         try:
             entry_type = data.get("type", YourLibraryEntryTypes.USER)
@@ -480,10 +480,10 @@ class YourLibraryProcessingPipeline:
                 }
             }
 
-            return FlextProcessors.create_entry(entry_data, entry_type=entry_type)
+            return FlextProcessing.create_entry(entry_data, entry_type=entry_type)
 
         except Exception as e:
-            return FlextResult[FlextProcessors.Entry].fail(f"Entry creation failed: {e}")
+            return FlextResult[FlextProcessing.Entry].fail(f"Entry creation failed: {e}")
 ```
 
 ### 3.2 Batch Processing Pattern
@@ -673,7 +673,7 @@ class TestYourLibraryProcessors:
             "original_content": "john.doe@example.com"
         }
 
-        entry_result = FlextProcessors.create_entry(entry_data)
+        entry_result = FlextProcessing.create_entry(entry_data)
         assert entry_result.success
 
         # Process with regex
@@ -772,7 +772,7 @@ class TestProcessorIntegration:
 
     def test_processor_registry_integration(self):
         """Test processor registration and discovery."""
-        processors = FlextProcessors()
+        processors = FlextProcessing()
 
         # Register custom processor
         custom_processor = YourLibraryProcessor()
@@ -852,7 +852,7 @@ class TestProcessorIntegration:
 
 ```python
 # ❌ Don't manually create entries
-entry = FlextProcessors.Entry(
+entry = FlextProcessing.Entry(
     entry_type="user",
     identifier="user123",
     clean_content="john_doe",
@@ -860,7 +860,7 @@ entry = FlextProcessors.Entry(
 )
 
 # ✅ Use factory method with validation
-entry_result = FlextProcessors.create_entry({
+entry_result = FlextProcessing.create_entry({
     "entry_type": "user",
     "identifier": "user123",
     "clean_content": "john_doe",
@@ -883,7 +883,7 @@ def bad_processor(data):
     return processed
 
 # ✅ Separate concerns in pipeline steps
-class GoodProcessor(FlextProcessors.BaseProcessor):
+class GoodProcessor(FlextProcessing.BaseProcessor):
     def validate_input(self, entry):
         # Only validation
         return self.validator.validate_entry(entry)
@@ -934,7 +934,7 @@ def bad_validate_entry(entry):
     return True
 
 # ✅ Use EntryValidator with proper error handling
-validator = FlextProcessors.EntryValidator()
+validator = FlextProcessing.EntryValidator()
 validation_result = validator.validate_entry(entry)
 if validation_result.is_failure:
     return FlextResult.fail(validation_result.error)
@@ -974,4 +974,4 @@ Track these metrics to measure implementation success:
 4. **Enhance with Advanced Features**: Add regex processing, batch processing
 5. **Test Comprehensively**: Validate all processing scenarios and error cases
 
-This implementation guide provides the foundation for successful FlextProcessors adoption. Adapt the patterns to your specific library needs while maintaining consistency with FLEXT architectural principles and ensuring robust error handling throughout your processing pipelines.
+This implementation guide provides the foundation for successful FlextProcessing adoption. Adapt the patterns to your specific library needs while maintaining consistency with FLEXT architectural principles and ensuring robust error handling throughout your processing pipelines.

@@ -283,7 +283,7 @@ class FlextCommands:
         """Base classes for command and query handlers."""
 
         class CommandHandler[CommandT, ResultT](
-            # FlextHandlers.CQRS.CommandHandler[CommandT, ResultT],  # Temporarily disabled
+            # FlextProcessing.CQRS.CommandHandler[CommandT, ResultT],  # Temporarily disabled
             FlextMixins,
         ):
             """Generic base class for command handlers with Pydantic configuration."""
@@ -475,7 +475,7 @@ class FlextCommands:
                 return self.execute(command)
 
         class QueryHandler[QueryT, QueryResultT](
-            # FlextHandlers.CQRS.QueryHandler[QueryT, QueryResultT],  # Temporarily disabled
+            # FlextProcessing.CQRS.QueryHandler[QueryT, QueryResultT],  # Temporarily disabled
             FlextMixins,
         ):
             """Generic base class for query handlers with Pydantic configuration."""
@@ -596,7 +596,7 @@ class FlextCommands:
             # Execution counter
             self._execution_count: int = 0
             # Underlying FlextCommands CQRS bus for direct registrations
-            # # self._fb_bus  # Disabled = FlextHandlers.CQRS.CommandBus()  # Temporarily disabled
+            # # self._fb_bus  # Disabled = FlextProcessing.CQRS.CommandBus()  # Temporarily disabled
             # Auto-discovery handlers (single-arg registration)
             self._auto_handlers: FlextTypes.Core.List = []
 

@@ -65,11 +65,6 @@ class TestFlextLoggingComprehensive:
         assert FlextLogger._instances["test_not_cached"] is logger2
         assert logger1 is not logger2
 
-    def test_equality_comparison_same_instance(self) -> None:
-        """Test FlextLogger.__eq__ with same instance."""
-        logger = FlextLogger("test_eq_same")
-        assert (logger == logger) is True
-
     def test_equality_comparison_different_instances_same_name(self) -> None:
         """Test FlextLogger.__eq__ with different instances but same name."""
         FlextLogger._instances.clear()

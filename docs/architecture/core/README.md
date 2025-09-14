@@ -269,11 +269,11 @@ FlextCore provides direct access to all FLEXT subsystems through properties:
 - `core.exceptions` → FlextExceptions (Exception handling)
 - `core.fields` → FlextFields (Field validation)
 - `core.guards` → FlextGuards (Type guards and assertions)
-- `core.handlers` → FlextHandlers (Enterprise handlers)
+- `core.handlers` → FlextProcessing (Enterprise handlers)
 - `core.mixins` → FlextMixins (Behavioral patterns)
 - `core.models` → FlextModels (Domain modeling)
-- `core.processors` → FlextProcessors (Data processing)
-- `core.services` → FlextServices (Service layer)
+- `core.processors` → FlextProcessing (Data processing)
+- `core.services` → FlextProcessing (Service layer)
 - `core.utilities` → FlextUtilities (Helper functions)
 - `core.validation` → FlextValidations (Validation systems)
 
@@ -501,7 +501,7 @@ if config.success:
 - **[FlextObservability](../observability/README.md)**: Monitoring and observability
 - **[FlextValidations](../validation/README.md)**: Comprehensive validation system
 - **[FlextModels](../models/README.md)**: Domain modeling patterns
-- **[FlextHandlers](../handlers/README.md)**: Enterprise handler patterns
+- **[FlextProcessing](../handlers/README.md)**: Enterprise handler patterns
 
 ---
 

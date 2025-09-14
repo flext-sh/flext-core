@@ -1,4 +1,9 @@
-"""Dependency injection container for service management.
+"""Dependency injection container with service management.
+
+Uses Command pattern for service registration operations.
+Note: Implementation uses CQRS patterns which may be over-engineered
+for simple service registration scenarios. Consider direct dictionary
+access for simple use cases.
 
 For verified capabilities and API examples, see docs/ACTUAL_CAPABILITIES.md
 
@@ -58,7 +63,7 @@ class FlextContainer:
             """Support generic subscription."""
             return cls  # Generic subscription support for service keys
 
-        def validate(self, data: str) -> object:
+        def validate(self, data: str) -> FlextResult[str]:
             """Validate service key name."""
             # String key validation with empty check
             if not data or not data.strip():

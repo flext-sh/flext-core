@@ -33,7 +33,7 @@ class TestFlextCoreArchitecture:
         # Verifica que interface atual do FlextCore está disponível
         assert hasattr(core, "Config")
         assert hasattr(core, "Models")
-        assert hasattr(core, "Commandsds")  # nome atual
+        assert hasattr(core, "Commands")  # nome atual
         assert hasattr(core, "Processors")
         assert hasattr(core, "Validations")
         assert hasattr(core, "Utilities")

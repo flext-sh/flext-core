@@ -10,10 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 from collections.abc import (
     Callable,
 )
 from typing import Literal, ParamSpec, TypeVar
+
+# Type alias for Optional to avoid Union syntax
+type Optional[T] = T | None
+
+# Common ecosystem-wide generic parameters (exported)
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+R = TypeVar("R")
+E = TypeVar("E")
+F = TypeVar("F")
+K = TypeVar("K")  # Key type variable
+P = ParamSpec("P")
+T_co = TypeVar("T_co", covariant=True)
+T_contra = TypeVar("T_contra", contravariant=True)
 
 
 class FlextTypes:
@@ -44,22 +60,14 @@ class FlextTypes:
         TResult = TypeVar("TResult")  # Result types for handlers
         TEntry = TypeVar("TEntry")  # Entry types for schema processing
 
-        # Primary type variables for generic programming (Python 3.13+ syntax)
-        # T and P are defined at module level per user requirement
-        U = TypeVar("U")  # Secondary generic type for FLEXT ecosystem
-        V = TypeVar("V")  # Tertiary generic type
-        K = TypeVar("K")  # Key type for mappings
-        R = TypeVar("R")  # Return type for functions
-        E = TypeVar("E", bound=Exception)  # Exception type
-        F = TypeVar("F")  # Function/field type variable
-        # P is defined at module level per user requirement
-
     # =========================================================================
     # CORE TYPES - Fundamental building blocks
     # =========================================================================
 
     class Core:
         """Core fundamental types used across flext-core modules."""
+
+        # Basic functional types - use typing imports directly in code
 
         # Basic collection types (heavily used in handlers, commands, models)
         type Dict = dict[str, object]
@@ -108,10 +116,12 @@ class FlextTypes:
         type Value = str | int | float | bool | None | object
 
         # Operation callable
-        type OperationCallable = Callable[[object], object]
+        # Operation callable - specific operation type
+        OperationCallable = typing.Callable[[object], object]
 
         # Serialization
-        type Serializer = Callable[[object], dict[str, object]]
+        # Serialization function type
+        Serializer = Callable[[object], dict[str, object]]
 
     # =========================================================================
     # DOMAIN TYPES - Domain-Driven Design patterns
@@ -312,18 +322,6 @@ class FlextTypes:
         type ResultValue = object
 
 
-# Generic type variables
-
-T = TypeVar("T")  # Generic type
-U = TypeVar("U")  # Generic type
-V = TypeVar("V")  # Generic type
-R = TypeVar("R")  # Generic result type
-E = TypeVar("E", bound=Exception)  # Exception type
-F = TypeVar("F")  # Generic function type
-K = TypeVar("K")  # Generic key type
-P = ParamSpec("P")  # Parameter specification
-T_co = TypeVar("T_co", covariant=True)  # Covariant type variable for type compatibility
-
 __all__: list[str] = [
     "E",
     "F",
@@ -333,6 +331,7 @@ __all__: list[str] = [
     "R",
     "T",
     "T_co",
+    "T_contra",
     "U",
     "V",
 ]

@@ -2,7 +2,7 @@
 """FLEXT Core - Advanced Examples.
 
 Complex patterns and production scenarios using FLEXT Core.
-This module demonstrates advanced usage patterns and can be run independently
+This module demonstrates complex usage patterns and can be run independently
 when flext_core is properly installed.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

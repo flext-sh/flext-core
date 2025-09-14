@@ -105,7 +105,7 @@ class GivenWhenThenBuilder:
 
 
 class FlextTestBuilder:
-    """Builder for FLEXT test data with comprehensive metadata."""
+    """Builder for FLEXT test data with detailed metadata."""
 
     def __init__(self) -> None:
         """Initialize flexttestbuilder:."""

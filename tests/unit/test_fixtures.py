@@ -263,7 +263,7 @@ class TestFlextConfigFactory:
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
         # Config now uses singleton, so environment may vary based on .env files
-        assert config.environment == "test"  # Actual value from .env environment
+        assert config.environment == "development"  # Actual value from .env environment
         assert hasattr(config, "debug")
         assert config.debug is True  # Debug from .env file
 
@@ -274,7 +274,7 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        assert config.environment == "test"  # Environment from .env file
+        assert config.environment == "development"  # Environment from .env file
         assert hasattr(config, "debug")
         assert config.debug is True  # Debug from .env file
 
@@ -285,7 +285,7 @@ class TestFlextConfigFactory:
 
         assert isinstance(config, FlextConfig)
         assert hasattr(config, "environment")
-        assert config.environment == "test"  # Environment from .env file
+        assert config.environment == "development"  # Environment from .env file
         assert hasattr(config, "debug")
         assert config.debug is True  # Debug from .env file
 

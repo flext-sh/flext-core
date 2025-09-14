@@ -44,19 +44,19 @@ class TestSafeFloatExceptionCoverage:
         # Note: The method signature is str | float, but we need to test edge cases
 
         # Test with None (common edge case that causes TypeError)
-        result = FlextUtilities.Conversions.safe_float(None, default=42.0)  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float(None, default=42.0)
         assert result == 42.0
 
         # Test with complex number (causes TypeError)
-        result = FlextUtilities.Conversions.safe_float(complex(1, 2), default=99.9)  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float(complex(1, 2), default=99.9)
         assert result == 99.9
 
         # Test with list (causes TypeError)
-        result = FlextUtilities.Conversions.safe_float([1, 2, 3], default=33.3)  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float([1, 2, 3], default=33.3)
         assert result == 33.3
 
         # Test with dict (causes TypeError)
-        result = FlextUtilities.Conversions.safe_float({"key": "value"}, default=77.7)  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float({"key": "value"}, default=77.7)
         assert result == 77.7
 
     def test_safe_float_both_exception_types_comprehensive(self) -> None:
@@ -68,11 +68,11 @@ class TestSafeFloatExceptionCoverage:
             ("not_float", 20.0),
             ("12.34.56", 30.0),  # Multiple decimals
             # TypeError cases (wrong types)
-            (None, 40.0),  # type: ignore[arg-type]
-            (complex(1, 1), 50.0),  # type: ignore[arg-type]
-            ([1, 2], 60.0),  # type: ignore[arg-type]
-            ({"a": 1}, 70.0),  # type: ignore[arg-type]
-            (object(), 80.0),  # type: ignore[arg-type]
+            (None, 40.0),
+            (complex(1, 1), 50.0),
+            ([1, 2], 60.0),
+            ({"a": 1}, 70.0),
+            (object(), 80.0),
         ]
 
         for test_input, expected_default in test_cases:
@@ -90,10 +90,10 @@ class TestSafeFloatExceptionCoverage:
         assert result == 0.0
 
         # Test TypeError path with default 0.0
-        result = FlextUtilities.Conversions.safe_float(None)  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float(None)
         assert result == 0.0
 
-        result = FlextUtilities.Conversions.safe_float(complex(1, 2))  # type: ignore[arg-type]
+        result = FlextUtilities.Conversions.safe_float(complex(1, 2))
         assert result == 0.0
 
     def test_safe_float_successful_conversions_still_work(self) -> None:

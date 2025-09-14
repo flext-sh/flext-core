@@ -52,9 +52,7 @@ class TestFlextValidations100Percent:
         # Test with string that can be converted to float
         result1 = FlextValidations.TypeValidators.validate_float("3.14")
         assert result1.is_success
-        assert (
-            abs(result1.value - 3.14) < 0.001
-        )  # Compare with the actual expected value 3.14
+        assert result1.value == math.pi  # Compare with the actual expected value 3.14
 
         # Test with int that can be converted
         result2 = FlextValidations.TypeValidators.validate_float(42)
@@ -158,7 +156,7 @@ class TestFlextValidations100Percent:
             "3.14", min_value=0.0, max_value=10.0
         )
         assert result2.is_success
-        assert abs(result2.value - 3.14) < 0.001
+        assert result2.value == 3.14
 
         # Test with invalid conversion
         result3 = FlextValidations.BusinessValidators.validate_numeric_field(

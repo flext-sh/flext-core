@@ -10,9 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TypeVar
 
-T = TypeVar("T")
+from flext_core.typings import T
 
 
 class FlextDecorators:

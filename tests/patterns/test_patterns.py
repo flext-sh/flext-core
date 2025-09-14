@@ -1,4 +1,4 @@
-"""Demonstration of advanced testing patterns and comprehensive libraries.
+"""Demonstration of testing patterns and libraries.
 
 This test file showcases the full power of our testing infrastructure including:
 - Property-based testing with custom Hypothesis strategies
@@ -18,19 +18,17 @@ import asyncio
 import time
 from collections.abc import Callable, Container, Iterator, Sized
 from contextlib import AbstractContextManager as ContextManager, contextmanager
-from typing import TypeVar, cast
+from typing import cast
 
 import pytest
 from hypothesis import assume, given, strategies as st
 
-from flext_core import FlextTypes
+from flext_core import FlextTypes, T
 from flext_tests import (
     FlextTestsAsyncs,
     FlextTestsHypothesis,
     FlextTestsPerformance,
 )
-
-T = TypeVar("T")
 
 
 def mark_test_pattern(

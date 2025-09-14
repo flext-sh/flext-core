@@ -66,7 +66,7 @@ class TestFlextCoreSimple:
         # Interface atual do FlextCore - verifica propriedades disponíveis
         assert hasattr(core, "Config")
         assert hasattr(core, "Models")
-        assert hasattr(core, "Commandsds")  # nome atual no core.py
+        assert hasattr(core, "Commands")  # nome atual no core.py
         assert hasattr(core, "Result")
         assert hasattr(core, "Container")  # nome atual no core.py
         assert hasattr(core, "Context")

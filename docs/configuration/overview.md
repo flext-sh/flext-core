@@ -1,10 +1,12 @@
 # Configuration Management Overview
 
-Comprehensive guide to FLEXT Core's type-safe configuration system.
+Guide to FLEXT Core's type-safe configuration system.
+
+For verified project capabilities and accurate status information, see [ACTUAL_CAPABILITIES.md](../ACTUAL_CAPABILITIES.md).
 
 ## Overview
 
-FLEXT Core provides enterprise-grade configuration management through Pydantic v2 integration, offering type safety, environment variable support, and validation out of the box. The configuration system is designed to support both simple applications and complex multi-service architectures.
+FLEXT Core provides configuration management through Pydantic v2 integration, offering type safety, environment variable support, and validation out of the box. The configuration system is designed to support both simple applications and complex multi-service architectures.
 
 ## Features
 
@@ -137,7 +139,7 @@ from typing import Optional
 import re
 
 class DatabaseSettings(FlextConfig):
-    """Database configuration with comprehensive validation."""
+    """Database configuration with validation."""
 
     # Connection parameters
     host: str = Field("localhost", description="Database host")
@@ -468,7 +470,7 @@ Always document configuration options:
 
 ```python
 class DocumentedSettings(FlextConfig):
-    """Application settings with comprehensive documentation.
+    """Application settings with documentation.
 
     Environment Variables:
         APP_NAME: Application name for logging and metrics

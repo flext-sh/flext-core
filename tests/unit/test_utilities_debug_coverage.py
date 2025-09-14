@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import builtins
-from typing import Any
 
 from flext_core import FlextUtilities
 
@@ -23,7 +22,7 @@ class TestUtilitiesDebugCoverage:
         original_float = builtins.float
         exception_counter = 0
 
-        def counting_float(value: Any) -> float:  # noqa: ANN401
+        def counting_float(value: object) -> float:
             nonlocal exception_counter
             # Force exceptions for certain values to ensure coverage
             if value == "force_value_error":
@@ -38,7 +37,7 @@ class TestUtilitiesDebugCoverage:
 
         try:
             # Temporarily replace float()
-            builtins.float = counting_float  # type: ignore[assignment]
+            builtins.float = counting_float
 
             # Test forced ValueError path
             result1 = FlextUtilities.Conversions.safe_float(
@@ -93,7 +92,7 @@ class TestUtilitiesDebugCoverage:
         for test_input, expected_default in edge_cases:
             result = FlextUtilities.Conversions.safe_float(
                 test_input, default=expected_default
-            )  # type: ignore[arg-type]
+            )
             assert result == expected_default, (
                 f"safe_float({test_input!r}) should return {expected_default}, got {result}"
             )

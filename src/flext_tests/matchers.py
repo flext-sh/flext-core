@@ -17,14 +17,9 @@ import os
 import re
 import time
 from collections.abc import Awaitable, Callable, Iterator, Sequence
-from typing import Protocol, TypeGuard, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeGuard, runtime_checkable
 
-from flext_core import (
-    FlextResult,
-    FlextTypes,
-)
-
-T = TypeVar("T")
+from flext_core import FlextResult, FlextTypes, T
 
 
 class FlextTestsMatchers:
@@ -98,7 +93,7 @@ class FlextTestsMatchers:
 
         @staticmethod
         def assert_result_failure(
-            result: FlextResult[object],
+            result: FlextResult[Any],
             expected_error: str | None = None,
             expected_error_code: str | None = None,
         ) -> None:
@@ -510,7 +505,7 @@ class FlextTestsMatchers:
     @classmethod
     def assert_result_failure(
         cls,
-        result: FlextResult[object],
+        result: FlextResult[Any],
         expected_error: str | None = None,
         expected_error_code: str | None = None,
     ) -> None:

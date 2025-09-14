@@ -279,20 +279,20 @@ class TestFlextTestMocker:
 
     def test_mocker_initialization(self) -> None:
         """Test mocker initialization."""
-        mocker = FlextTestsUtilities.TestMocker()
+        mocker = FlextTestsUtilities.TestDoubleManager()
         assert mocker is not None
 
     def test_protocol_compliance(self) -> None:
         """Test that mocker implements ITestMocker protocol."""
         _ = (
-            FlextTestsUtilities.TestMocker()
+            FlextTestsUtilities.TestDoubleManager()
         )  # Create instance to verify it can be instantiated
         # Skip protocol compliance test due to incompatible method signatures
         # assert isinstance(mocker, ITestMocker)
 
     def test_create_functional_service(self) -> None:
         """Test creating functional services."""
-        mocker = FlextTestsUtilities.TestMocker()
+        mocker = FlextTestsUtilities.TestDoubleManager()
 
         # Create a functional service
         service = mocker.create_functional_service("test_service", config_key="value")
@@ -302,7 +302,7 @@ class TestFlextTestMocker:
 
     def test_patch_object(self) -> None:
         """Test patching objects with functional context."""
-        mocker = FlextTestsUtilities.TestMocker()
+        mocker = FlextTestsUtilities.TestDoubleManager()
         test_obj = type("TestObject", (), {"attr": "original"})()
 
         context = mocker.patch_object(test_obj, "attr", new="patched")
@@ -332,9 +332,9 @@ class TestProtocols:
         assert hasattr(FlextTestsUtilities.ITestAssertion, "assert_false")
 
     def test_itest_mocker_protocol(self) -> None:
-        """Test ITestMocker protocol definition."""
+        """Test ITestDoubleProvider protocol definition."""
         # Test that the protocol exists
-        assert FlextTestsUtilities.ITestMocker is not None
+        assert FlextTestsUtilities.ITestDoubleProvider is not None
 
 
 class TestIntegrationScenarios:
@@ -347,7 +347,7 @@ class TestIntegrationScenarios:
             FlextTestsUtilities.TestModel
         )
         assertions = FlextTestsUtilities.TestAssertion()
-        mocker = FlextTestsUtilities.TestMocker()
+        mocker = FlextTestsUtilities.TestDoubleManager()
 
         # Create test data
         test_data = factory.create(name="workflow_test")

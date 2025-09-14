@@ -152,7 +152,7 @@ A seguir, cada módulo com: papel, uso de Pydantic, problemas/duplicações, aç
   - Crítica: Overlap com constants/enums; migrar para modelo e usar `.model_dump()` na borda.
 
 - flext-core/src/flext_core/handlers.py
-  - Classes: **FlextHandlers** com nested `Constants`, `Types`, `Protocols`, `Implementation`.
+  - Classes: **FlextProcessing** com nested `Constants`, `Types`, `Protocols`, `Implementation`.
   - Padrões: Padrões enterprise (Chain/CQRS), métricas, thread-safe lock, Protocols alinhados ao core.
   - Lacunas: Sem configurador; quando precisar, consumir modelos de config.
   - Crítica: OK. Evitar reimplementar validações de níveis/ambiente.
@@ -226,7 +226,7 @@ A seguir, cada módulo com: papel, uso de Pydantic, problemas/duplicações, aç
   - Crítica: Fallback silencioso contraria as regras — migrar para modelo.
 
 - flext-core/src/flext_core/services.py
-  - Classes: **FlextServices**; `configure_services_system`/`get_services_system_config`/`create_environment_services_config`/`optimize_services_performance` (dicts).
+  - Classes: **FlextProcessing**; `configure_services_system`/`get_services_system_config`/`create_environment_services_config`/`optimize_services_performance` (dicts).
   - Padrões: Service orchestration; batch/caching controls.
   - Lacunas: `ServicesConfig` ausente.
   - Crítica: Defaults e níveis replicados em várias funções — migrar para modelo.
@@ -876,8 +876,8 @@ def configure_commands_system(
   - `flext_core/validations.py:949` FlextValidations.configure_validation_system
   - `flext_core/mixins.py:831` FlextMixins.configure_mixins_system
   - `flext_core/guards.py:1069` FlextGuards.configure_guards_system
-  - `flext_core/processors.py:770` FlextProcessors.configure_processors_system
-  - `flext_core/services.py:227` FlextServices.configure_services_system
+  - `flext_core/processors.py:770` FlextProcessing.configure_processors_system
+  - `flext_core/services.py:227` FlextProcessing.configure_services_system
   - `flext_core/context.py:630` FlextContext.configure_context_system
   - `flext_core/delegation.py:1477` FlextDelegationSystem.configure_delegation_system
   - `flext_core/fields.py:1790` FlextFields.configure_fields_system

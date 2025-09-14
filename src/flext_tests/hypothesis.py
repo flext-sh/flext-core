@@ -13,14 +13,11 @@ import math
 import string
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from typing import TypeVar
 from uuid import uuid4
 
 from hypothesis import strategies as st
 
 from flext_core import FlextTypes
-
-T = TypeVar("T")
 
 
 class FlextTestsHypothesis:
