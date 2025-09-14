@@ -453,31 +453,56 @@ class FlextTestsFixtures:
             """Cleanup completed tasks."""
             self._tasks.clear()
 
-    class MockDataService:
-        """Mock data service for testing."""
+    class TestDataService:
+        """Test data service for testing scenarios."""
 
         def __init__(self) -> None:
-            """Initialize mock data service."""
+            """Initialize test data service."""
             self._data_store: dict[str, object] = {}
             self._call_count = 0
+            self._operations_log: list[str] = []
 
         def store(self, key: str, value: object) -> None:
-            """Store data."""
+            """Store data and log operation."""
             self._data_store[key] = value
+            self._operations_log.append(f"store:{key}")
 
         def retrieve(self, key: str) -> object | None:
-            """Retrieve data."""
+            """Retrieve data and log operation."""
             self._call_count += 1
+            self._operations_log.append(f"retrieve:{key}")
             return self._data_store.get(key)
 
+        def exists(self, key: str) -> bool:
+            """Check if key exists."""
+            self._operations_log.append(f"exists:{key}")
+            return key in self._data_store
+
+        def delete(self, key: str) -> bool:
+            """Delete key and return success status."""
+            self._operations_log.append(f"delete:{key}")
+            if key in self._data_store:
+                del self._data_store[key]
+                return True
+            return False
+
+        def get_all_keys(self) -> list[str]:
+            """Get all stored keys."""
+            return list(self._data_store.keys())
+
         def get_call_count(self) -> int:
-            """Get number of calls made."""
+            """Get number of retrieve calls made."""
             return self._call_count
 
+        def get_operations_log(self) -> list[str]:
+            """Get log of all operations performed."""
+            return self._operations_log.copy()
+
         def reset(self) -> None:
-            """Reset service state."""
+            """Reset service state completely."""
             self._data_store.clear()
             self._call_count = 0
+            self._operations_log.clear()
 
     # === Test Data Models ===
 

@@ -184,9 +184,10 @@ class FlextExceptions:
                     "validation_details": validation_details,
                 },
             )
+            error_code = cast("str | None", kwargs.get("error_code"))
             super().__init__(
                 message,
-                code=FlextConstants.Errors.VALIDATION_ERROR,
+                code=error_code or FlextConstants.Errors.VALIDATION_ERROR,
                 context=context,
                 correlation_id=cast("str | None", kwargs.get("correlation_id")),
             )
@@ -468,6 +469,7 @@ class FlextExceptions:
             # Extract special parameters
             context = cast("Mapping[str, object] | None", kwargs.pop("context", None))
             correlation_id = cast("str | None", kwargs.pop("correlation_id", None))
+            error_code = cast("str | None", kwargs.pop("error_code", None))
 
             # Add remaining kwargs to context for full functionality
             if context is not None:
@@ -479,7 +481,7 @@ class FlextExceptions:
 
             super().__init__(
                 message,
-                code=FlextConstants.Errors.GENERIC_ERROR,
+                code=error_code or FlextConstants.Errors.GENERIC_ERROR,
                 context=context,
                 correlation_id=correlation_id,
             )

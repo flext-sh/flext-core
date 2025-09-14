@@ -176,7 +176,7 @@ class TestFlextValidationsComprehensive:
         """Test BusinessValidators.validate_numeric_field with float."""
         result = FlextValidations.BusinessValidators.validate_numeric_field(math.pi)
         FlextTestsMatchers.assert_result_success(result)
-        assert result.value == 3.14
+        assert result.value == math.pi
 
     def test_business_validators_validate_numeric_field_string_conversion(self) -> None:
         """Test BusinessValidators.validate_numeric_field string conversion."""

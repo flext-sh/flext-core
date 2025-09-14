@@ -39,7 +39,7 @@
 
 ### ✅ Processing (VERIFIED)
 
-**File**: `src/flext_core/processing.py` (aliased as FlextHandlers)
+**File**: `src/flext_core/processing.py` (aliased as FlextProcessing)
 - `Handler` - Simple handler protocol
 - `HandlerRegistry` - Basic handler registration
 - `Pipeline` - Simple pipeline pattern

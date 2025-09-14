@@ -9,20 +9,16 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import TypeVar, cast
+from typing import cast
 
-# Mock imports removed - using real objects only
 import pytest
 
-from flext_core import FlextResult, FlextTypes
+from flext_core import FlextResult, FlextTypes, T
 from flext_tests import (
     FlextTestsBuilders,
     FlextTestsFixtures,
     FlextTestsMatchers,
 )
-
-# Type variable for generic test utilities
-T = TypeVar("T")
 
 
 # Test Utilities and Matchers

@@ -1,4 +1,4 @@
-# FlextHandlers Implementation Guide
+# FlextProcessing Implementation Guide
 
 **Version**: 0.9.0
 **Target Audience**: FLEXT Developers, Enterprise Architects
@@ -7,7 +7,7 @@
 
 ## 📖 Overview
 
-This guide provides comprehensive instructions for implementing enterprise-grade handler systems using `FlextHandlers`. The framework offers **7 architectural layers**, **8 integrated design patterns**, and complete **CQRS infrastructure** for sophisticated request processing, validation, authorization, and event sourcing in enterprise applications.
+This guide provides comprehensive instructions for implementing enterprise-grade handler systems using `FlextProcessing`. The framework offers **7 architectural layers**, **8 integrated design patterns**, and complete **CQRS infrastructure** for sophisticated request processing, validation, authorization, and event sourcing in enterprise applications.
 
 ### Prerequisites
 
@@ -31,15 +31,15 @@ This guide provides comprehensive instructions for implementing enterprise-grade
 ### Basic Handler Implementation
 
 ```python
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextProcessing
 from flext_core.result import FlextResult
 from flext_core.typings import FlextTypes
 
 # Create enterprise handler with comprehensive configuration
-handler = FlextHandlers.Implementation.BasicHandler("user_service")
+handler = FlextProcessing.Implementation.BasicHandler("user_service")
 
 # Configure for production environment
-config_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("production")
+config_result = FlextProcessing.Implementation.BasicHandler.create_environment_handler_config("production")
 if config_result.success:
     production_config = config_result.value
     configure_result = handler.configure(production_config)
@@ -150,9 +150,9 @@ class UserEventHandler:
         return FlextResult[None].ok(None)
 
 # Setup Complete CQRS System
-command_bus = FlextHandlers.CQRS.CommandBus()
-query_bus = FlextHandlers.CQRS.QueryBus()
-event_bus = FlextHandlers.CQRS.EventBus()
+command_bus = FlextProcessing.CQRS.CommandBus()
+query_bus = FlextProcessing.CQRS.QueryBus()
+event_bus = FlextProcessing.CQRS.EventBus()
 
 # Initialize handlers
 command_handler = UserCommandHandler()
@@ -203,19 +203,19 @@ if command_result.success:
 #### Understanding the 7-Layer Architecture
 
 ```python
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextProcessing
 
 # Layer 1: Constants - Configuration and state management
 print("=== Constants Layer ===")
-print(f"Default timeout: {FlextHandlers.Constants.Handler.DEFAULT_TIMEOUT}ms")
-print(f"Max chain handlers: {FlextHandlers.Constants.Handler.MAX_CHAIN_HANDLERS}")
-print(f"Handler states: {FlextHandlers.Constants.Handler.States.IDLE}, {FlextHandlers.Constants.Handler.States.PROCESSING}")
+print(f"Default timeout: {FlextProcessing.Constants.Handler.DEFAULT_TIMEOUT}ms")
+print(f"Max chain handlers: {FlextProcessing.Constants.Handler.MAX_CHAIN_HANDLERS}")
+print(f"Handler states: {FlextProcessing.Constants.Handler.States.IDLE}, {FlextProcessing.Constants.Handler.States.PROCESSING}")
 
 # Layer 2: Types - Type system integration
 print("\n=== Types Layer ===")
-handler_name: FlextHandlers.Types.HandlerTypes.Name = "my_handler"
-handler_state: FlextHandlers.Types.HandlerTypes.State = FlextHandlers.Constants.Handler.States.IDLE
-handler_metrics: FlextHandlers.Types.HandlerTypes.Metrics = {"requests": 0, "successes": 0}
+handler_name: FlextProcessing.Types.HandlerTypes.Name = "my_handler"
+handler_state: FlextProcessing.Types.HandlerTypes.State = FlextProcessing.Constants.Handler.States.IDLE
+handler_metrics: FlextProcessing.Types.HandlerTypes.Metrics = {"requests": 0, "successes": 0}
 
 # Layer 3: Protocols - Contract definitions
 print("\n=== Protocols Layer ===")
@@ -224,23 +224,23 @@ print("\n=== Protocols Layer ===")
 
 # Layer 4: Implementation - Concrete handlers
 print("\n=== Implementation Layer ===")
-basic_handler = FlextHandlers.Implementation.BasicHandler("example_handler")
+basic_handler = FlextProcessing.Implementation.BasicHandler("example_handler")
 
 # Layer 5: CQRS - Command Query Responsibility Segregation
 print("\n=== CQRS Layer ===")
-command_bus = FlextHandlers.CQRS.CommandBus()
-query_bus = FlextHandlers.CQRS.QueryBus()
-event_bus = FlextHandlers.CQRS.EventBus()
+command_bus = FlextProcessing.CQRS.CommandBus()
+query_bus = FlextProcessing.CQRS.QueryBus()
+event_bus = FlextProcessing.CQRS.EventBus()
 
 # Layer 6: Patterns - Design pattern implementations
 print("\n=== Patterns Layer ===")
-handler_chain = FlextHandlers.Patterns.HandlerChain("processing_pipeline")
-pipeline = FlextHandlers.Patterns.Pipeline("data_pipeline")
-middleware = FlextHandlers.Patterns.Middleware("request_middleware")
+handler_chain = FlextProcessing.Patterns.HandlerChain("processing_pipeline")
+pipeline = FlextProcessing.Patterns.Pipeline("data_pipeline")
+middleware = FlextProcessing.Patterns.Middleware("request_middleware")
 
 # Layer 7: Management - Registry and lifecycle
 print("\n=== Management Layer ===")
-registry = FlextHandlers.Management.HandlerRegistry()
+registry = FlextProcessing.Management.HandlerRegistry()
 ```
 
 #### Creating Custom Handlers with Type Safety
@@ -253,7 +253,7 @@ from typing import TypeVar, Generic
 RequestType = TypeVar('RequestType')
 ResponseType = TypeVar('ResponseType')
 
-class OrderProcessingHandler(FlextHandlers.Implementation.AbstractHandler[dict, dict]):
+class OrderProcessingHandler(FlextProcessing.Implementation.AbstractHandler[dict, dict]):
     """Custom order processing handler with comprehensive business logic."""
 
     def __init__(self):
@@ -621,7 +621,7 @@ class BusinessLogicHandler:
 
 # Build Enterprise Processing Chain
 print("=== Building Enterprise Processing Chain ===")
-processing_chain = FlextHandlers.Patterns.HandlerChain("enterprise_api_pipeline")
+processing_chain = FlextProcessing.Patterns.HandlerChain("enterprise_api_pipeline")
 
 # Create handler instances
 auth_handler = AuthenticationHandler()
@@ -752,7 +752,7 @@ class EnterpriseHandlerManager:
     """Comprehensive handler management system with lifecycle and monitoring."""
 
     def __init__(self):
-        self.registry = FlextHandlers.Management.HandlerRegistry()
+        self.registry = FlextProcessing.Management.HandlerRegistry()
         self.handler_instances: Dict[str, object] = {}
         self.handler_configs: Dict[str, dict] = {}
         self.handler_metrics: Dict[str, dict] = {}
@@ -773,17 +773,17 @@ class EnterpriseHandlerManager:
             try:
                 # Create handler instance based on type
                 if handler_type == "basic":
-                    handler_instance = FlextHandlers.Implementation.BasicHandler(handler_name)
+                    handler_instance = FlextProcessing.Implementation.BasicHandler(handler_name)
                 elif handler_type == "validating":
                     validator_func = config.get("validator_function")
                     if not validator_func:
                         return FlextResult[Dict[str, str]].fail(f"Validator function required for {handler_name}")
-                    handler_instance = FlextHandlers.Implementation.ValidatingHandler(handler_name, validator_func)
+                    handler_instance = FlextProcessing.Implementation.ValidatingHandler(handler_name, validator_func)
                 elif handler_type == "authorizing":
                     auth_func = config.get("auth_function")
                     if not auth_func:
                         return FlextResult[Dict[str, str]].fail(f"Auth function required for {handler_name}")
-                    handler_instance = FlextHandlers.Implementation.AuthorizingHandler(handler_name, auth_func)
+                    handler_instance = FlextProcessing.Implementation.AuthorizingHandler(handler_name, auth_func)
                 elif handler_type == "custom":
                     handler_class = config.get("handler_class")
                     if not handler_class:
@@ -1493,9 +1493,9 @@ event_store.subscribe_to_event(EventType.USER_CREATED, projection_handler.handle
 event_store.subscribe_to_event(EventType.USER_UPDATED, projection_handler.handle_user_updated)
 
 # Setup CQRS buses
-command_bus = FlextHandlers.CQRS.CommandBus()
-query_bus = FlextHandlers.CQRS.QueryBus()
-event_bus = FlextHandlers.CQRS.EventBus()
+command_bus = FlextProcessing.CQRS.CommandBus()
+query_bus = FlextProcessing.CQRS.QueryBus()
+event_bus = FlextProcessing.CQRS.EventBus()
 
 # Register command handlers
 command_bus.register(CreateUserCommand, command_handler.handle_create_user_command)
@@ -1627,6 +1627,6 @@ if created_user_ids:
 - [ ] **Security Validation**: Verify security patterns and access control implementation
 - [ ] **Error Handling**: Test comprehensive error scenarios and recovery patterns
 - [ ] **Deployment**: Deploy with proper configuration for target environment
-- [ ] **Team Training**: Train development team on FlextHandlers patterns and best practices
+- [ ] **Team Training**: Train development team on FlextProcessing patterns and best practices
 
-This implementation guide provides comprehensive coverage of FlextHandlers enterprise patterns, from basic handler creation through advanced CQRS and event sourcing implementations, ensuring teams can leverage the full power of the FlextHandlers ecosystem for sophisticated request processing and enterprise architecture patterns.
+This implementation guide provides comprehensive coverage of FlextProcessing enterprise patterns, from basic handler creation through advanced CQRS and event sourcing implementations, ensuring teams can leverage the full power of the FlextProcessing ecosystem for sophisticated request processing and enterprise architecture patterns.

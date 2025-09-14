@@ -1,4 +1,4 @@
-# FlextDecorators - Enterprise Decorator System for Cross-Cutting Concerns
+# FlextDecorators - Decorator System for Cross-Cutting Concerns
 
 **Version**: 0.9.0
 **Module**: `flext_core.decorators`
@@ -6,9 +6,11 @@
 
 ## Executive Summary
 
-FlextDecorators represents a comprehensive enterprise decorator system that implements cross-cutting concerns through hierarchical organization of decorator patterns. This system provides reliability patterns, input/output validation, performance monitoring, structured observability, lifecycle management, and integrated composition patterns with comprehensive FlextResult integration for railway-oriented programming.
+FlextDecorators represents a decorator system that implements cross-cutting concerns through hierarchical organization of decorator patterns. This system provides reliability patterns, input/output validation, performance monitoring, structured observability, lifecycle management, and integrated composition patterns with FlextResult integration for railway-oriented programming.
 
-**Key Finding**: FlextDecorators provides critical infrastructure for enterprise-grade function enhancement across all FLEXT architectural layers, but is currently underutilized with limited adoption beyond core examples and CLI extensions.
+For verified project capabilities and accurate status information, see [ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md).
+
+**Key Finding**: FlextDecorators provides critical infrastructure for function enhancement across all FLEXT architectural layers, but is currently underutilized with limited adoption beyond core examples and CLI extensions.
 
 ---
 
@@ -16,15 +18,15 @@ FlextDecorators represents a comprehensive enterprise decorator system that impl
 
 ### Business Impact
 
-- **Reliability Enhancement**: Comprehensive failure handling with retry, timeout, and circuit breaker patterns
+- **Reliability Enhancement**: Failure handling with retry, timeout, and circuit breaker patterns
 - **Quality Assurance**: Type-safe validation decorators preventing runtime errors
 - **Performance Optimization**: Built-in monitoring, caching, and profiling for production systems
-- **Compliance & Observability**: Audit trails, structured logging, and tracing for enterprise requirements
+- **Compliance & Observability**: Audit trails, structured logging, and tracing for business requirements
 
-### Technical Excellence
+### Technical Quality
 
 - **SOLID Architecture**: Each decorator category follows Single Responsibility and Open/Closed principles
-- **Railway Programming**: Complete FlextResult integration for error handling consistency
+- **Railway Programming**: FlextResult integration for error handling consistency
 - **Type Safety**: Python 3.13+ generics with ParamSpec for decorator type preservation
 - **Thread Safety**: All decorators support concurrent execution with proper synchronization
 
@@ -36,7 +38,7 @@ FlextDecorators represents a comprehensive enterprise decorator system that impl
 
 ```mermaid
 graph TB
-    subgraph "FlextDecorators - Enterprise Decorator Architecture"
+    subgraph "FlextDecorators - Decorator Architecture"
         subgraph "Reliability Layer"
             R1[@safe_result - FlextResult Wrapping]
             R2[@retry - Exponential Backoff]

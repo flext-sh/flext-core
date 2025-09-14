@@ -16,14 +16,11 @@ import time
 import tracemalloc
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import _GeneratorContextManager, contextmanager
-from typing import ParamSpec, Protocol, TypeVar
+from typing import Protocol
 
 import pytest
 
-from flext_core import FlextTypes
-
-T = TypeVar("T")
-P = ParamSpec("P")
+from flext_core import FlextTypes, P, T
 
 
 class FlextTestsPerformance:

@@ -1,4 +1,4 @@
-# FlextHandlers - Enterprise Handler System Architecture
+# FlextProcessing - Enterprise Handler System Architecture
 
 **Version**: 0.9.0
 **Module**: `flext_core.handlers`
@@ -9,7 +9,7 @@
 
 > **Note**: For verified capabilities and actual implementation details, see [../../ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md)
 
-`FlextHandlers` (aliased to `FlextProcessing`) provides basic request processing capabilities through a simple handler pattern. The system includes basic registry and pipeline patterns with FlextResult integration for railway-oriented programming.
+`FlextProcessing` (aliased to `FlextProcessing`) provides basic request processing capabilities through a simple handler pattern. The system includes basic registry and pipeline patterns with FlextResult integration for railway-oriented programming.
 
 **Implementation**: Handler functionality is consolidated into the `processing.py` module, providing basic patterns for request processing without the complexity of enterprise-grade architectures.
 
@@ -28,7 +28,7 @@
 
 ```mermaid
 graph TB
-    subgraph "FlextHandlers Enterprise Architecture"
+    subgraph "FlextProcessing Enterprise Architecture"
         direction TB
 
         %% Layer 7: Management (Top)
@@ -155,10 +155,10 @@ The Implementation layer provides **6 specialized handler classes** covering all
 #### **AbstractHandler[TInput, TOutput]** - Generic Foundation
 
 ```python
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextProcessing
 from flext_core.result import FlextResult
 
-class CustomHandler(FlextHandlers.Implementation.AbstractHandler[dict, str]):
+class CustomHandler(FlextProcessing.Implementation.AbstractHandler[dict, str]):
     """Custom handler with type safety."""
 
     @property
@@ -194,10 +194,10 @@ else:
 
 ```python
 # Create handler with comprehensive configuration
-handler = FlextHandlers.Implementation.BasicHandler("user_service")
+handler = FlextProcessing.Implementation.BasicHandler("user_service")
 
 # Environment-specific configuration
-config_result = FlextHandlers.Implementation.BasicHandler.create_environment_handler_config("production")
+config_result = FlextProcessing.Implementation.BasicHandler.create_environment_handler_config("production")
 if config_result.success:
     production_config = config_result.value
     configure_result = handler.configure(production_config)
@@ -259,7 +259,7 @@ def comprehensive_user_validator(data: dict) -> FlextResult[None]:
     return FlextResult[None].ok(None)
 
 # Create validating handler with comprehensive business rules
-validating_handler = FlextHandlers.Implementation.ValidatingHandler(
+validating_handler = FlextProcessing.Implementation.ValidatingHandler(
     "user_validator",
     comprehensive_user_validator
 )
@@ -336,7 +336,7 @@ def role_based_authorizer(data: dict) -> bool:
         return False  # Deny by default
 
 # Create authorizing handler with role-based security
-auth_handler = FlextHandlers.Implementation.AuthorizingHandler(
+auth_handler = FlextProcessing.Implementation.AuthorizingHandler(
     "rbac_authorizer",
     role_based_authorizer
 )
@@ -473,7 +473,7 @@ class UserCommandHandler:
         return FlextResult[bool].ok(data=True)
 
 # Setup CQRS command bus with handler registration
-command_bus = FlextHandlers.CQRS.CommandBus()
+command_bus = FlextProcessing.CQRS.CommandBus()
 user_handler = UserCommandHandler()
 
 # Register command handlers with type mapping
@@ -603,7 +603,7 @@ class UserQueryHandler:
         return FlextResult[List[dict]].ok(paginated_users)
 
 # Setup CQRS query bus with read handlers
-query_bus = FlextHandlers.CQRS.QueryBus()
+query_bus = FlextProcessing.CQRS.QueryBus()
 query_handler = UserQueryHandler(user_handler.users_db)
 
 # Register query handlers
@@ -749,7 +749,7 @@ class UserSecurityHandler:
         return FlextResult[None].ok(None)
 
 # Setup event bus with multiple subscribers
-event_bus = FlextHandlers.CQRS.EventBus()
+event_bus = FlextProcessing.CQRS.EventBus()
 event_handlers = UserEventHandlers()
 security_handler = UserSecurityHandler()
 
@@ -920,7 +920,7 @@ class DataTransformationHandler:
 
 # Create enterprise handler chain
 print("=== Enterprise Handler Chain Processing ===")
-processing_chain = FlextHandlers.Patterns.HandlerChain("enterprise_request_pipeline")
+processing_chain = FlextProcessing.Patterns.HandlerChain("enterprise_request_pipeline")
 
 # Create specialized handlers
 security_handler = SecurityValidationHandler()
@@ -1020,14 +1020,14 @@ print(f"   Chain success rate: {(chain_metrics.get('successful_requests', 0) / m
 
 ```python
 class EnterpriseAPIProcessor:
-    """Complete enterprise API processing using FlextHandlers ecosystem."""
+    """Complete enterprise API processing using FlextProcessing ecosystem."""
 
     def __init__(self):
         # Initialize all handler components
-        self.handler_registry = FlextHandlers.Management.HandlerRegistry()
-        self.command_bus = FlextHandlers.CQRS.CommandBus()
-        self.query_bus = FlextHandlers.CQRS.QueryBus()
-        self.event_bus = FlextHandlers.CQRS.EventBus()
+        self.handler_registry = FlextProcessing.Management.HandlerRegistry()
+        self.command_bus = FlextProcessing.CQRS.CommandBus()
+        self.query_bus = FlextProcessing.CQRS.QueryBus()
+        self.event_bus = FlextProcessing.CQRS.EventBus()
 
         # Setup complete processing infrastructure
         self._setup_handlers()
@@ -1044,7 +1044,7 @@ class EnterpriseAPIProcessor:
                 return FlextResult[None].fail("Invalid authentication token")
             return FlextResult[None].ok(None)
 
-        auth_handler = FlextHandlers.Implementation.AuthorizingHandler(
+        auth_handler = FlextProcessing.Implementation.AuthorizingHandler(
             "api_authenticator",
             lambda data: data.get("auth_token") == "valid_token_123"
         )
@@ -1057,13 +1057,13 @@ class EnterpriseAPIProcessor:
                 return FlextResult[None].fail("Endpoint required")
             return FlextResult[None].ok(None)
 
-        validation_handler = FlextHandlers.Implementation.ValidatingHandler(
+        validation_handler = FlextProcessing.Implementation.ValidatingHandler(
             "input_validator",
             input_validator
         )
 
         # Business logic handler
-        business_handler = FlextHandlers.Implementation.BasicHandler("business_processor")
+        business_handler = FlextProcessing.Implementation.BasicHandler("business_processor")
 
         # Register all handlers
         self.handler_registry.register("authenticator", auth_handler)
@@ -1074,7 +1074,7 @@ class EnterpriseAPIProcessor:
         """Setup processing chains for different API endpoints."""
 
         # Create API processing chain
-        self.api_chain = FlextHandlers.Patterns.HandlerChain("api_processing")
+        self.api_chain = FlextProcessing.Patterns.HandlerChain("api_processing")
 
         # Get registered handlers
         auth_result = self.handler_registry.get_handler("authenticator")
@@ -1221,7 +1221,7 @@ for request in api_requests:
 
 ### 1. **Comprehensive Handler Ecosystem**
 
-- **Unified Architecture**: Single `FlextHandlers` class provides all enterprise handler capabilities
+- **Unified Architecture**: Single `FlextProcessing` class provides all enterprise handler capabilities
 - **Pattern Integration**: 8 design patterns seamlessly integrated with FlextResult error handling
 - **Thread Safety**: Complete concurrent operation support with reentrant locking
 - **Performance Monitoring**: Built-in metrics collection across all handler operations
@@ -1247,4 +1247,4 @@ for request in api_requests:
 - **Type Safety**: Generic type parameters ensure compile-time and runtime type safety
 - **Graceful Degradation**: Comprehensive error recovery and retry mechanisms
 
-This `FlextHandlers` architecture represents a **transformational enterprise handler system**, providing complete request processing infrastructure with unprecedented pattern integration, performance monitoring, and railway-oriented programming support, making it the definitive solution for enterprise FLEXT applications requiring sophisticated message processing capabilities.
+This `FlextProcessing` architecture represents a **transformational enterprise handler system**, providing complete request processing infrastructure with unprecedented pattern integration, performance monitoring, and railway-oriented programming support, making it the definitive solution for enterprise FLEXT applications requiring sophisticated message processing capabilities.

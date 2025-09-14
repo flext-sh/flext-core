@@ -196,7 +196,7 @@ class TestFlextFieldsComprehensive:
         """Test FlextFields with comprehensive edge cases."""
         # Test with None (this should cause TypeError in the underlying validation)
         try:
-            result = FlextFields.validate_email(None)  # type: ignore[arg-type]
+            result = FlextFields.validate_email(None)
             # If it doesn't raise, it should fail gracefully
             FlextTestsMatchers.assert_result_failure(result)
         except TypeError:
@@ -205,7 +205,7 @@ class TestFlextFieldsComprehensive:
 
         # Test with non-string types
         try:
-            result = FlextFields.validate_uuid(12345)  # type: ignore[arg-type]
+            result = FlextFields.validate_uuid(12345)
             FlextTestsMatchers.assert_result_failure(result)
         except (TypeError, AttributeError):
             # This is acceptable behavior

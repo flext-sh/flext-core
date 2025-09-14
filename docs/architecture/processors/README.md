@@ -1,4 +1,4 @@
-# FlextProcessors Data Processing Analysis & Recommendations
+# FlextProcessing Data Processing Analysis & Recommendations
 
 **Version**: 0.9.0
 **Status**: ✅ **Production Ready**
@@ -7,20 +7,20 @@
 
 ## 📋 Overview
 
-This document provides a comprehensive analysis of the `FlextProcessors` data processing system and strategic recommendations for its adoption across the FLEXT ecosystem. The analysis covers current usage, implementation quality, and identifies high-priority integration opportunities for data processing pipelines.
+This document provides an analysis of the `FlextProcessing` data processing system and strategic recommendations for its adoption across the FLEXT ecosystem. For verified capabilities and accurate module status, see [ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md). The analysis covers current usage, implementation quality, and identifies high-priority integration opportunities for data processing pipelines.
 
 ## 🎯 Executive Summary
 
-The `FlextProcessors` module is a **production-ready, enterprise-grade data processing system** with:
+The `FlextProcessing` module is a **production-ready data processing system** with:
 
 - **867 lines** of well-documented, type-safe processing code
 - **Comprehensive processing pipeline** with validation, transformation, and output handling
 - **Entry-based data model** with type enumeration and validation
 - **Regex processing capabilities** for pattern extraction and content validation
 - **Pipeline orchestration** with chainable processing steps
-- **Service integration** with FlextServices, FlextHandlers, and FlextValidations
+- **Service integration** with FlextProcessing, FlextProcessing, and FlextValidations
 
-**Key Finding**: FlextProcessors provides powerful data processing capabilities but is **significantly underutilized** across the FLEXT ecosystem, with most libraries implementing custom processing patterns instead of leveraging this centralized system.
+**Key Finding**: FlextProcessing provides powerful data processing capabilities but is **significantly underutilized** across the FLEXT ecosystem, with most libraries implementing custom processing patterns instead of leveraging this centralized system.
 
 ## 📊 Current Status Assessment
 
@@ -29,8 +29,8 @@ The `FlextProcessors` module is a **production-ready, enterprise-grade data proc
 | Aspect           | Score  | Details                                                    |
 | ---------------- | ------ | ---------------------------------------------------------- |
 | **Architecture** | 95/100 | Clean separation, nested classes, service patterns         |
-| **Code Quality** | 95/100 | Type-safe, validated, comprehensive error handling         |
-| **Integration**  | 90/100 | Deep FlextResult, FlextServices, FlextHandlers integration |
+| **Code Quality** | 95/100 | Type-safe, validated, complete error handling         |
+| **Integration**  | 90/100 | Deep FlextResult, FlextProcessing, FlextProcessing integration |
 | **Flexibility**  | 85/100 | Multiple processor types, pipeline composition, extensible |
 | **Performance**  | 80/100 | Efficient processing with validation overhead              |
 
@@ -49,7 +49,7 @@ The `FlextProcessors` module is a **production-ready, enterprise-grade data proc
 
 ```mermaid
 graph TB
-    subgraph "FlextProcessors Architecture"
+    subgraph "FlextProcessing Architecture"
         Entry[Entry<br/>Value Objects]
         EntryType[EntryType<br/>Enumeration]
         Validator[EntryValidator<br/>Validation Logic]
@@ -66,8 +66,8 @@ graph TB
 
     subgraph "Integration Points"
         FlextResult[FlextResult<br/>Error Handling]
-        FlextServices[FlextServices<br/>Service Architecture]
-        FlextHandlers[FlextHandlers<br/>Enterprise Patterns]
+        FlextProcessing[FlextProcessing<br/>Service Architecture]
+        FlextProcessing[FlextProcessing<br/>Enterprise Patterns]
         FlextValidations[FlextValidations<br/>Data Validation]
     end
 
@@ -80,8 +80,8 @@ graph TB
     Pipeline --> BaseProc
 
     BaseProc --> FlextResult
-    ValidatingProc --> FlextHandlers
-    BaseProc --> FlextServices
+    ValidatingProc --> FlextProcessing
+    BaseProc --> FlextProcessing
     Validator --> FlextValidations
 ```
 
@@ -94,7 +94,7 @@ graph TB
 - **Entry Data Model**: Immutable value objects with type safety and validation
 - **Multiple Processor Types**: Base, Regex, Config, and Validating processors
 - **Pipeline Orchestration**: Chainable processing steps with handlers
-- **Service Integration**: Deep integration with FlextServices architecture
+- **Service Integration**: Deep integration with FlextProcessing architecture
 - **Type Safety**: Full type annotations with Pydantic validation
 - **Error Handling**: Comprehensive FlextResult integration throughout
 
@@ -127,7 +127,7 @@ graph TB
 
 **Current Issues**:
 
-- Custom processing implementations instead of FlextProcessors
+- Custom processing implementations instead of FlextProcessing
 - Inconsistent data validation approaches
 - Missing pipeline orchestration capabilities
 - No standardized error handling in processing
@@ -143,19 +143,19 @@ class CustomDataProcessor:
         # No pipeline orchestration
         pass
 
-# ✅ Recommended Pattern (FlextProcessors)
+# ✅ Recommended Pattern (FlextProcessing)
 class DataProcessingService:
     def __init__(self):
-        self.processors = FlextProcessors()
+        self.processors = FlextProcessing()
         self.pipeline = self._create_processing_pipeline()
 
     def _create_processing_pipeline(self):
         # Create standardized processing pipeline
-        validator = FlextProcessors.EntryValidator()
-        base_processor = FlextProcessors.BaseProcessor(validator)
-        regex_processor = FlextProcessors.RegexProcessor(r"pattern", validator)
+        validator = FlextProcessing.EntryValidator()
+        base_processor = FlextProcessing.BaseProcessor(validator)
+        regex_processor = FlextProcessing.RegexProcessor(r"pattern", validator)
 
-        pipeline_result = FlextProcessors.create_processing_pipeline(
+        pipeline_result = FlextProcessing.create_processing_pipeline(
             input_processor=base_processor,
             output_processor=regex_processor
         )
@@ -165,8 +165,8 @@ class DataProcessingService:
         # Process using standardized pipeline
         entries = []
         for data in data_entries:
-            entry_result = FlextProcessors.create_entry(
-                data, entry_type=FlextProcessors.EntryType.DATA
+            entry_result = FlextProcessing.create_entry(
+                data, entry_type=FlextProcessing.EntryType.DATA
             )
             if entry_result.success:
                 entries.append(entry_result.value)
@@ -181,15 +181,15 @@ class DataProcessingService:
 **Implementation**:
 
 ```python
-class FlextMeltanoDataProcessor(FlextProcessors.BaseProcessor):
-    """Meltano-specific data processor using FlextProcessors."""
+class FlextMeltanoDataProcessor(FlextProcessing.BaseProcessor):
+    """Meltano-specific data processor using FlextProcessing."""
 
     def __init__(self, singer_schema: dict = None):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.singer_schema = singer_schema
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record through Meltano pipeline."""
         try:
             # Validate against Singer schema
@@ -234,12 +234,12 @@ class FlextMeltanoDataProcessor(FlextProcessors.BaseProcessor):
 #### ✅ Good Pattern - Entry-Based Processing
 
 ```python
-# FlextProcessors entry creation and processing
-processor = FlextProcessors()
+# FlextProcessing entry creation and processing
+processor = FlextProcessing()
 
 # Create validated entry
-entry_result = FlextProcessors.create_entry({
-    "entry_type": FlextProcessors.EntryType.USER,
+entry_result = FlextProcessing.create_entry({
+    "entry_type": FlextProcessing.EntryType.USER,
     "identifier": "user_123",
     "clean_content": "john_doe",
     "original_content": "John Doe",
@@ -261,7 +261,7 @@ if entry_result.success:
 
 ```python
 # Create regex processor for pattern extraction
-regex_result = FlextProcessors.create_regex_processor(r"user_(\w+)")
+regex_result = FlextProcessing.create_regex_processor(r"user_(\w+)")
 
 if regex_result.success:
     regex_processor = regex_result.value
@@ -277,7 +277,7 @@ if regex_result.success:
 
 ```python
 # Create processing pipeline with multiple steps
-pipeline_result = FlextProcessors.create_processing_pipeline(
+pipeline_result = FlextProcessing.create_processing_pipeline(
     input_processor=lambda x: FlextResult.ok(x.clean_content.upper()),
     output_processor=lambda x: FlextResult.ok(f"processed_{x}")
 )
@@ -295,7 +295,7 @@ if pipeline_result.success:
 #### ⚠️ Improvement Needed - Custom Processing Patterns
 
 ```python
-# Current: Custom processing without FlextProcessors
+# Current: Custom processing without FlextProcessing
 class CustomLDIFProcessor:
     def process_ldif_entries(self, entries):
         # Custom validation
@@ -303,14 +303,14 @@ class CustomLDIFProcessor:
         # Custom error handling
         pass
 
-# Recommended: FlextProcessors integration
-class FlextLDIFProcessor(FlextProcessors.BaseProcessor):
+# Recommended: FlextProcessing integration
+class FlextLDIFProcessor(FlextProcessing.BaseProcessor):
     def __init__(self):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
-        # Standardized LDIF processing using FlextProcessors
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+        # Standardized LDIF processing using FlextProcessing
         try:
             ldif_data = {
                 "dn": entry.identifier,
@@ -329,28 +329,28 @@ class FlextLDIFProcessor(FlextProcessors.BaseProcessor):
 ### **flext-meltano** (High Priority)
 
 **Current State**: Custom ETL processing patterns
-**Recommendation**: Integrate FlextProcessors for Singer record processing
+**Recommendation**: Integrate FlextProcessing for Singer record processing
 
 ```python
 class FlextMeltanoProcessingPipeline:
-    """Meltano processing pipeline using FlextProcessors."""
+    """Meltano processing pipeline using FlextProcessing."""
 
     def __init__(self, tap_config: dict, target_config: dict):
-        self.processors = FlextProcessors()
+        self.processors = FlextProcessing()
         self.tap_processor = self._create_tap_processor(tap_config)
         self.target_processor = self._create_target_processor(target_config)
 
     def _create_tap_processor(self, config):
-        validator = FlextProcessors.EntryValidator()
-        return FlextProcessors.BaseProcessor(validator)
+        validator = FlextProcessing.EntryValidator()
+        return FlextProcessing.BaseProcessor(validator)
 
     def process_singer_records(self, singer_records: list[dict]) -> FlextResult[list[dict]]:
-        """Process Singer records through FlextProcessors pipeline."""
+        """Process Singer records through FlextProcessing pipeline."""
         processed_records = []
 
         for record in singer_records:
             # Create entry from Singer record
-            entry_result = FlextProcessors.create_entry(
+            entry_result = FlextProcessing.create_entry(
                 {
                     "entry_type": record.get("type", "RECORD"),
                     "identifier": record.get("record", {}).get("id", "unknown"),
@@ -376,18 +376,18 @@ class FlextMeltanoProcessingPipeline:
 ### **flext-ldif** (High Priority)
 
 **Current State**: Custom LDIF processing
-**Recommendation**: Standardize LDIF processing with FlextProcessors
+**Recommendation**: Standardize LDIF processing with FlextProcessing
 
 ```python
-class FlextLDIFDataProcessor(FlextProcessors.BaseProcessor):
-    """LDIF data processor using FlextProcessors architecture."""
+class FlextLDIFDataProcessor(FlextProcessing.BaseProcessor):
+    """LDIF data processor using FlextProcessing architecture."""
 
     def __init__(self, ldif_config: dict = None):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.ldif_config = ldif_config or {}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry data."""
         try:
             # Parse LDIF content
@@ -427,20 +427,20 @@ class FlextLDIFDataProcessor(FlextProcessors.BaseProcessor):
 ### **algar-oud-mig** (High Priority)
 
 **Current State**: Custom schema processing
-**Recommendation**: Use FlextProcessors for OUD migration processing
+**Recommendation**: Use FlextProcessing for OUD migration processing
 
 ```python
-class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
-    """OUD migration processor using FlextProcessors."""
+class AlgarOUDMigrationProcessor(FlextProcessing.BaseProcessor):
+    """OUD migration processor using FlextProcessing."""
 
     def __init__(self, migration_config: dict):
-        validator = FlextProcessors.EntryValidator(
+        validator = FlextProcessing.EntryValidator(
             whitelist=migration_config.get("allowed_schemas", [])
         )
         super().__init__(validator)
         self.migration_config = migration_config
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process OUD migration entry."""
         try:
             # Validate migration entry
@@ -470,15 +470,15 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
 
 ```python
 class TestFlextProcessorsIntegration:
-    """Test FlextProcessors integration patterns."""
+    """Test FlextProcessing integration patterns."""
 
     def test_entry_processing_pipeline(self):
         """Test complete entry processing pipeline."""
-        processor = FlextProcessors()
+        processor = FlextProcessing()
 
         # Create test entry
-        entry_result = FlextProcessors.create_entry({
-            "entry_type": FlextProcessors.EntryType.USER,
+        entry_result = FlextProcessing.create_entry({
+            "entry_type": FlextProcessing.EntryType.USER,
             "identifier": "test_user_123",
             "clean_content": "john.doe@example.com",
             "original_content": "John Doe <john.doe@example.com>",
@@ -498,7 +498,7 @@ class TestFlextProcessorsIntegration:
 
     def test_regex_processor_pattern_extraction(self):
         """Test regex processor pattern extraction."""
-        regex_result = FlextProcessors.create_regex_processor(r"user_(\w+)")
+        regex_result = FlextProcessing.create_regex_processor(r"user_(\w+)")
         assert regex_result.success
 
         regex_processor = regex_result.value
@@ -511,7 +511,7 @@ class TestFlextProcessorsIntegration:
     def test_processing_pipeline_orchestration(self):
         """Test pipeline orchestration capabilities."""
         # Create processing pipeline
-        pipeline_result = FlextProcessors.create_processing_pipeline(
+        pipeline_result = FlextProcessing.create_processing_pipeline(
             input_processor=lambda x: FlextResult.ok(x.clean_content.upper()),
             output_processor=lambda x: FlextResult.ok(f"processed_{x}")
         )
@@ -520,7 +520,7 @@ class TestFlextProcessorsIntegration:
         pipeline = pipeline_result.value
 
         # Test pipeline execution
-        test_entry = FlextProcessors.Entry(
+        test_entry = FlextProcessing.Entry(
             entry_type="test",
             identifier="test_id",
             clean_content="test_content",
@@ -538,7 +538,7 @@ class TestFlextProcessorsIntegration:
 
 | Metric                         | Current | Target | Measurement                     |
 | ------------------------------ | ------- | ------ | ------------------------------- |
-| **FlextProcessors Adoption**   | 25%     | 85%    | Libraries using FlextProcessors |
+| **FlextProcessing Adoption**   | 25%     | 85%    | Libraries using FlextProcessing |
 | **Processing Standardization** | 30%     | 90%    | Consistent processing patterns  |
 | **Error Handling Coverage**    | 60%     | 95%    | FlextResult usage in processing |
 | **Pipeline Integration**       | 20%     | 80%    | Pipeline orchestration usage    |
@@ -565,13 +565,13 @@ class TestFlextProcessorsIntegration:
 
 ### Phase 1: ETL Processing (6 weeks)
 
-- **Week 1-3**: Integrate FlextProcessors into flext-meltano
+- **Week 1-3**: Integrate FlextProcessing into flext-meltano
 - **Week 4-6**: Standardize processing in flext-tap-_and flext-target-_
 
 ### Phase 2: Data Processing (6 weeks)
 
-- **Week 7-9**: Implement FlextProcessors in flext-ldif
-- **Week 10-12**: Migrate algar-oud-mig to FlextProcessors patterns
+- **Week 7-9**: Implement FlextProcessing in flext-ldif
+- **Week 10-12**: Migrate algar-oud-mig to FlextProcessing patterns
 
 ### Phase 3: Enhancement (4 weeks)
 
@@ -582,12 +582,12 @@ class TestFlextProcessorsIntegration:
 
 ### Processing Design Principles
 
-1. **✅ Use Entry Model**: Always use FlextProcessors.Entry for data representation
-2. **✅ Implement Validation**: Use EntryValidator for comprehensive data validation
+1. **✅ Use Entry Model**: Always use FlextProcessing.Entry for data representation
+2. **✅ Implement Validation**: Use EntryValidator for complete data validation
 3. **✅ Pipeline Orchestration**: Leverage ProcessingPipeline for multi-step processing
 4. **✅ Error Handling**: Return FlextResult from all processing methods
 5. **✅ Type Safety**: Use proper type annotations and Pydantic models
-6. **✅ Service Integration**: Integrate with FlextServices for enterprise patterns
+6. **✅ Service Integration**: Integrate with FlextProcessing for business patterns
 
 ### Anti-Patterns to Avoid
 
@@ -600,4 +600,4 @@ class TestFlextProcessorsIntegration:
 
 ---
 
-**Status**: FlextProcessors provides a comprehensive foundation for data processing across the FLEXT ecosystem. The recommended integration and enhancement strategies will improve consistency, reliability, and maintainability of data processing operations across all FLEXT libraries while enabling advanced features like pipeline orchestration and batch processing.
+**Status**: FlextProcessing provides a foundation for data processing across the FLEXT ecosystem. The recommended integration and enhancement strategies will improve consistency, reliability, and maintainability of data processing operations across all FLEXT libraries while enabling advanced features like pipeline orchestration and batch processing.

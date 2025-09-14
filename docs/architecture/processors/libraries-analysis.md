@@ -1,4 +1,4 @@
-# FLEXT Libraries Analysis for FlextProcessors Integration
+# FLEXT Libraries Analysis for FlextProcessing Integration
 
 **Version**: 0.9.0
 **Analysis Date**: August 2025
@@ -23,7 +23,7 @@
 
 ### 1. flext-meltano - ETL Data Processing Pipeline
 
-**Current State**: Custom processing patterns without FlextProcessors
+**Current State**: Custom processing patterns without FlextProcessing
 **Complexity**: Very High
 **Business Impact**: Critical (ETL pipeline reliability and performance)
 
@@ -45,7 +45,7 @@
 - Error handling and recovery in data pipelines
 - Performance optimization for high-throughput operations
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
 # Current Pattern (❌ Custom Processing)
@@ -56,16 +56,16 @@ class CustomMeltanoProcessor:
         # No pipeline orchestration
         pass
 
-# FlextProcessors Pattern (✅ Standardized Processing)
-class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
-    """Meltano ETL processor using FlextProcessors architecture."""
+# FlextProcessing Pattern (✅ Standardized Processing)
+class FlextMeltanoETLProcessor(FlextProcessing.BaseProcessor):
+    """Meltano ETL processor using FlextProcessing architecture."""
 
     def __init__(self, singer_config: dict = None):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.singer_config = singer_config or {}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record through Meltano ETL pipeline."""
         try:
             # Validate Singer record structure
@@ -93,7 +93,7 @@ class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
         except Exception as e:
             return FlextResult[FlextTypes.Core.Dict].fail(f"Meltano ETL processing failed: {e}")
 
-    def _validate_singer_record(self, entry: FlextProcessors.Entry) -> FlextResult[None]:
+    def _validate_singer_record(self, entry: FlextProcessing.Entry) -> FlextResult[None]:
         """Validate Singer record against schema."""
         try:
             record_data = json.loads(entry.clean_content)
@@ -121,12 +121,12 @@ class FlextMeltanoETLProcessor(FlextProcessors.BaseProcessor):
             return FlextResult[None].fail(f"Singer record validation failed: {e}")
 
 class FlextMeltanoETLPipeline:
-    """Complete Meltano ETL pipeline using FlextProcessors."""
+    """Complete Meltano ETL pipeline using FlextProcessing."""
 
     def __init__(self, tap_config: dict, target_config: dict):
         self.tap_config = tap_config
         self.target_config = target_config
-        self.processors = FlextProcessors()
+        self.processors = FlextProcessing()
         self.etl_processor = FlextMeltanoETLProcessor(tap_config)
         self.pipeline = self._create_etl_pipeline()
 
@@ -142,7 +142,7 @@ class FlextMeltanoETLPipeline:
         loading_step = lambda data: self._load_data(data)
 
         # Create pipeline
-        pipeline_result = FlextProcessors.create_processing_pipeline(
+        pipeline_result = FlextProcessing.create_processing_pipeline(
             input_processor=extraction_step,
             output_processor=loading_step
         )
@@ -202,7 +202,7 @@ class FlextMeltanoETLPipeline:
 
 ### 2. flext-ldif - LDIF Entry Processing
 
-**Current State**: Custom LDIF processing without FlextProcessors
+**Current State**: Custom LDIF processing without FlextProcessing
 **Complexity**: High
 **Business Impact**: Critical (LDAP data integrity and processing)
 
@@ -224,7 +224,7 @@ class FlextMeltanoETLPipeline:
 - Change type processing (add, modify, delete)
 - Batch processing for large LDIF datasets
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
 # Current Pattern (❌ Custom LDIF Processing)
@@ -235,12 +235,12 @@ class CustomLDIFProcessor:
         # No error handling consistency
         pass
 
-# FlextProcessors Pattern (✅ Standardized LDIF Processing)
-class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
-    """LDIF entry processor using FlextProcessors architecture."""
+# FlextProcessing Pattern (✅ Standardized LDIF Processing)
+class FlextLDIFEntryProcessor(FlextProcessing.BaseProcessor):
+    """LDIF entry processor using FlextProcessing architecture."""
 
     def __init__(self, ldif_config: dict = None):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.ldif_config = ldif_config or {}
         self.regex_processor = self._create_regex_processor()
@@ -254,14 +254,14 @@ class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
             "objectclass": r"objectClass:\s*(.+)"
         }
 
-        regex_result = FlextProcessors.create_regex_processor(
+        regex_result = FlextProcessing.create_regex_processor(
             pattern=r"(?P<attr>\w+):\s*(?P<value>.+)",
             validator=self.validator
         )
 
         return regex_result.value if regex_result.success else None
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry with comprehensive validation."""
         try:
             # Parse LDIF content
@@ -343,12 +343,12 @@ class FlextLDIFEntryProcessor(FlextProcessors.BaseProcessor):
             return self._fallback_ldif_parsing(content)
 
 class FlextLDIFBatchProcessor:
-    """Batch processor for LDIF files using FlextProcessors."""
+    """Batch processor for LDIF files using FlextProcessing."""
 
     def __init__(self, batch_size: int = 1000):
         self.batch_size = batch_size
         self.ldif_processor = FlextLDIFEntryProcessor()
-        self.processors = FlextProcessors()
+        self.processors = FlextProcessing()
 
     def process_ldif_file(self, file_path: str) -> FlextResult[FlextTypes.Core.Dict]:
         """Process complete LDIF file in batches."""
@@ -409,24 +409,24 @@ class FlextLDIFBatchProcessor:
 
 **Processing Enhancement Opportunities**:
 
-- Leverage FlextProcessors for Singer record generation
+- Leverage FlextProcessing for Singer record generation
 - Standardize LDIF to Singer schema mapping
 - Implement processing pipeline for data extraction
 - Add validation for extracted data consistency
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
-class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
-    """LDIF tap processor using FlextProcessors for Singer record generation."""
+class FlextTapLDIFProcessor(FlextProcessing.BaseProcessor):
+    """LDIF tap processor using FlextProcessing for Singer record generation."""
 
     def __init__(self, tap_config: dict):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.tap_config = tap_config
         self.ldif_processor = FlextLDIFEntryProcessor(tap_config.get("ldif_config"))
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process LDIF entry and generate Singer record."""
         try:
             # Process LDIF entry first
@@ -458,7 +458,7 @@ class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
 
 ### 4. algar-oud-mig - OUD Migration Processing
 
-**Current State**: Custom schema processing without FlextProcessors
+**Current State**: Custom schema processing without FlextProcessing
 **Complexity**: High
 **Business Impact**: High (migration data integrity)
 
@@ -471,16 +471,16 @@ class FlextTapLDIFProcessor(FlextProcessors.BaseProcessor):
 - Batch processing for large migration datasets
 - Error handling and rollback capabilities
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
-class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
-    """OUD migration processor using FlextProcessors."""
+class AlgarOUDMigrationProcessor(FlextProcessing.BaseProcessor):
+    """OUD migration processor using FlextProcessing."""
 
     def __init__(self, migration_config: dict):
         # Create validator with migration-specific whitelist
         allowed_schemas = migration_config.get("allowed_schemas", [])
-        validator = FlextProcessors.EntryValidator(whitelist=allowed_schemas)
+        validator = FlextProcessing.EntryValidator(whitelist=allowed_schemas)
         super().__init__(validator)
 
         self.migration_config = migration_config
@@ -495,14 +495,14 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
             "schema_type": r"objectClass:\s*(algar\w+)"
         }
 
-        regex_result = FlextProcessors.create_regex_processor(
+        regex_result = FlextProcessing.create_regex_processor(
             pattern=r"objectClass:\s*(algar\w+)",
             validator=self.validator
         )
 
         return regex_result.value if regex_result.success else None
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process OUD migration entry."""
         try:
             # Extract migration patterns
@@ -551,13 +551,13 @@ class AlgarOUDMigrationProcessor(FlextProcessors.BaseProcessor):
 **Complexity**: Medium
 **Business Impact**: Medium (data loading reliability)
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
-class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
-    """Oracle OIC target processor using FlextProcessors."""
+class FlextTargetOracleOICProcessor(FlextProcessing.BaseProcessor):
+    """Oracle OIC target processor using FlextProcessing."""
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process Singer record for Oracle OIC format."""
         try:
             # Parse Singer record
@@ -590,13 +590,13 @@ class FlextTargetOracleOICProcessor(FlextProcessors.BaseProcessor):
 **Complexity**: Medium
 **Business Impact**: Medium (warehouse operations)
 
-#### FlextProcessors Integration Opportunity
+#### FlextProcessing Integration Opportunity
 
 ```python
-class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
-    """Oracle WMS data processor using FlextProcessors."""
+class FlextOracleWMSProcessor(FlextProcessing.BaseProcessor):
+    """Oracle WMS data processor using FlextProcessing."""
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         """Process WMS operation data."""
         try:
             # Parse WMS operation data
@@ -632,7 +632,7 @@ class FlextOracleWMSProcessor(FlextProcessors.BaseProcessor):
 **flext-grpc**: Message processing standardization
 **flext-web**: Request processing pipeline
 
-These libraries have basic processing needs that could benefit from FlextProcessors standardization but have lower business impact.
+These libraries have basic processing needs that could benefit from FlextProcessing standardization but have lower business impact.
 
 ---
 
@@ -640,18 +640,18 @@ These libraries have basic processing needs that could benefit from FlextProcess
 
 ### Phase 1: ETL Foundation (8 weeks) 🔥
 
-- **Week 1-4**: Implement FlextProcessors in flext-meltano
+- **Week 1-4**: Implement FlextProcessing in flext-meltano
 - **Week 5-8**: Standardize LDIF processing in flext-ldif
 
 ### Phase 2: Data Integration (6 weeks) 🟡
 
-- **Week 9-11**: Migrate flext-tap-ldif to FlextProcessors patterns
-- **Week 12-14**: Implement FlextProcessors in algar-oud-mig
+- **Week 9-11**: Migrate flext-tap-ldif to FlextProcessing patterns
+- **Week 12-14**: Implement FlextProcessing in algar-oud-mig
 
 ### Phase 3: Target Processing (4 weeks) 🟢
 
 - **Week 15-16**: Enhance flext-target-oracle-oic processing
-- **Week 17-18**: Add FlextProcessors to flext-oracle-wms
+- **Week 17-18**: Add FlextProcessing to flext-oracle-wms
 
 ### Phase 4: Ecosystem Completion (4 weeks) ⚫
 
@@ -662,7 +662,7 @@ These libraries have basic processing needs that could benefit from FlextProcess
 
 ### Processing Quality Metrics
 
-- **FlextProcessors Adoption**: Target 85% of libraries using FlextProcessors
+- **FlextProcessing Adoption**: Target 85% of libraries using FlextProcessing
 - **Processing Standardization**: Target 90% consistent processing patterns
 - **Error Handling Coverage**: Target 95% FlextResult usage in processing
 - **Pipeline Integration**: Target 80% pipeline orchestration usage
@@ -722,21 +722,21 @@ class FlextProcessorsDiscovery:
 
 ```python
 class FlextProcessorsMigrationAssistant:
-    """Assistant tool for migrating to FlextProcessors patterns."""
+    """Assistant tool for migrating to FlextProcessing patterns."""
 
     @staticmethod
     def generate_processor_template(library_name: str, entry_types: FlextTypes.Core.StringList) -> str:
-        """Generate FlextProcessors implementation template."""
+        """Generate FlextProcessing implementation template."""
         return f"""
-class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
-    \"\"\"Data processor for {library_name} using FlextProcessors.\"\"\"
+class {library_name.title()}Processor(FlextProcessing.BaseProcessor):
+    \"\"\"Data processor for {library_name} using FlextProcessing.\"\"\"
 
     def __init__(self, config: dict = None):
-        validator = FlextProcessors.EntryValidator()
+        validator = FlextProcessing.EntryValidator()
         super().__init__(validator)
         self.config = config or {{}}
 
-    def process_data(self, entry: FlextProcessors.Entry) -> FlextResult[FlextTypes.Core.Dict]:
+    def process_data(self, entry: FlextProcessing.Entry) -> FlextResult[FlextTypes.Core.Dict]:
         \"\"\"Process {library_name} entry data.\"\"\"
         try:
             # Add your processing logic here
@@ -759,7 +759,7 @@ class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
 
 ### Developer Training Program
 
-- **Week 1**: FlextProcessors fundamentals and entry modeling
+- **Week 1**: FlextProcessing fundamentals and entry modeling
 - **Week 2**: Processor implementation and validation patterns
 - **Week 3**: Pipeline orchestration and batch processing
 - **Week 4**: Integration testing and performance optimization
@@ -771,4 +771,4 @@ class {library_name.title()}Processor(FlextProcessors.BaseProcessor):
 - **Performance Optimization**: Guidelines for high-throughput processing
 - **Error Handling Handbook**: Comprehensive error handling patterns
 
-This analysis provides a comprehensive foundation for FlextProcessors adoption across the FLEXT ecosystem, prioritizing libraries with complex data processing needs while ensuring consistent processing patterns and robust error handling throughout the system.
+This analysis provides a comprehensive foundation for FlextProcessing adoption across the FLEXT ecosystem, prioritizing libraries with complex data processing needs while ensuring consistent processing patterns and robust error handling throughout the system.

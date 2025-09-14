@@ -449,9 +449,9 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler.handle_query with validation failure."""
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[str, str]):
-            def handle(self, query: str) -> FlextResult[str]:
+            def handle(self, _query: str) -> FlextResult[str]:
                 # Use the query parameter to avoid unused argument warning
-                _ = query  # Acknowledge parameter usage
+                _ = _query  # Acknowledge parameter usage
                 return FlextResult[str].ok("handled")
 
         handler = TestQueryHandler()
@@ -469,8 +469,8 @@ class TestFlextCommandsHandlers:
         """Test QueryHandler.handle_query successful execution."""
 
         class TestQueryHandler(FlextCommands.Handlers.QueryHandler[str, str]):
-            def handle(self, query: str) -> FlextResult[str]:
-                return FlextResult[str].ok(f"query result: {query}")
+            def handle(self, _query: str) -> FlextResult[str]:
+                return FlextResult[str].ok(f"query result: {_query}")
 
         handler = TestQueryHandler()
 
@@ -1084,8 +1084,8 @@ class TestFlextCommandsFactories:
     def test_create_query_handler(self) -> None:
         """Test Factories.create_query_handler method."""
 
-        def query_func(query: str) -> str:
-            return f"query result: {query}"
+        def query_func(_query: str) -> str:
+            return f"query result: {_query}"
 
         handler = FlextCommands.Factories.create_query_handler(query_func)
 
@@ -1099,8 +1099,8 @@ class TestFlextCommandsFactories:
     def test_create_query_handler_with_flext_result(self) -> None:
         """Test Factories.create_query_handler with FlextResult return."""
 
-        def query_func(query: str) -> FlextResult[str]:
-            return FlextResult[str].ok(f"query processed: {query}")
+        def query_func(_query: str) -> FlextResult[str]:
+            return FlextResult[str].ok(f"query processed: {_query}")
 
         handler = FlextCommands.Factories.create_query_handler(query_func)
 

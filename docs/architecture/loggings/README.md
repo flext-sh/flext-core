@@ -6,7 +6,9 @@
 
 ## Executive Summary
 
-`FlextLogger` serves as the **logging foundation** for FLEXT ecosystem projects, providing structured JSON logging, automatic correlation ID generation, request context tracking, operation performance metrics, sensitive data sanitization, and thread-safe request context management. This logging system provides consistent, observable, and debuggable logging patterns across all FLEXT services.
+`FlextLogger` serves as the logging foundation for FLEXT ecosystem projects, providing structured JSON logging, automatic correlation ID generation, request context tracking, operation performance metrics, sensitive data sanitization, and thread-safe request context management. This logging system provides consistent, observable, and debuggable logging patterns across all FLEXT services.
+
+For verified project capabilities and accurate status information, see [ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md).
 
 ### Key Statistics
 

@@ -850,29 +850,52 @@ class FlextValidations:
                     # Check required fields
                     if "required" in schema:
                         required_fields = schema["required"]
-                        for field in required_fields:
-                            if field not in data:
-                                return FlextResult[object].fail(f"Missing required field: {field}")
+                        if isinstance(required_fields, list):
+                            for field in required_fields:
+                                if field not in data:
+                                    return FlextResult[object].fail(
+                                        f"Missing required field: {field}"
+                                    )
 
                     # Validate properties
-                    for prop_name, prop_schema in properties.items():
-                        if prop_name in data:
-                            prop_result = cls.validate_with_schema(data[prop_name], prop_schema)
-                            if prop_result.is_failure:
-                                return FlextResult[object].fail(f"Property '{prop_name}': {prop_result.error}")
+                    if isinstance(properties, dict):
+                        for prop_name, prop_schema in properties.items():
+                            if prop_name in data:
+                                prop_result = cls.validate_with_schema(
+                                    data[prop_name], prop_schema
+                                )
+                                if prop_result.is_failure:
+                                    return FlextResult[object].fail(
+                                        f"Property '{prop_name}': {prop_result.error}"
+                                    )
 
-                            # Check constraints
-                            if isinstance(prop_schema, dict):
-                                prop_value = data[prop_name]
-                                if "minLength" in prop_schema and isinstance(prop_value, str):
-                                    if len(prop_value) < prop_schema["minLength"]:
-                                        return FlextResult[object].fail(f"Property '{prop_name}': string too short")
-                                if "minimum" in prop_schema and isinstance(prop_value, (int, float)):
-                                    if prop_value < prop_schema["minimum"]:
-                                        return FlextResult[object].fail(f"Property '{prop_name}': value below minimum")
-                                if "maximum" in prop_schema and isinstance(prop_value, (int, float)):
-                                    if prop_value > prop_schema["maximum"]:
-                                        return FlextResult[object].fail(f"Property '{prop_name}': value above maximum")
+                                # Check constraints
+                                if isinstance(prop_schema, dict):
+                                    prop_value = data[prop_name]
+                                    if (
+                                        "minLength" in prop_schema
+                                        and isinstance(prop_value, str)
+                                        and len(prop_value) < prop_schema["minLength"]
+                                    ):
+                                        return FlextResult[object].fail(
+                                            f"Property '{prop_name}': string too short"
+                                        )
+                                    if (
+                                        "minimum" in prop_schema
+                                        and isinstance(prop_value, (int, float))
+                                        and prop_value < prop_schema["minimum"]
+                                    ):
+                                        return FlextResult[object].fail(
+                                            f"Property '{prop_name}': value below minimum"
+                                        )
+                                    if (
+                                        "maximum" in prop_schema
+                                        and isinstance(prop_value, (int, float))
+                                        and prop_value > prop_schema["maximum"]
+                                    ):
+                                        return FlextResult[object].fail(
+                                            f"Property '{prop_name}': value above maximum"
+                                        )
                 return FlextResult[object].ok(data)
             if expected_type == "object" and not isinstance(data, dict):
                 return FlextResult[object].fail(
@@ -883,7 +906,7 @@ class FlextValidations:
         # Handle callable schema format - delegate to SchemaValidators
         if isinstance(data, dict) and all(callable(v) for v in schema.values()):
             # Cast schema to the expected type for SchemaValidators
-            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = schema  # type: ignore[assignment]
+            callable_schema: dict[str, Callable[[object], FlextResult[object]]] = schema
             result = cls.SchemaValidators.validate_schema(data, callable_schema)
             if result.is_success:
                 return FlextResult[object].ok(result.data)

@@ -1,4 +1,7 @@
-"""Core orchestration for FLEXT foundation library.
+"""Core module aggregation for FLEXT foundation library.
+
+Simple singleton that aggregates other flext-core modules.
+Not actual "orchestration" - just property assignments.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved
 SPDX-License-Identifier: MIT
@@ -46,7 +49,7 @@ class FlextCore:
         self._specialized_configs: dict[str, object] = {}
 
         self.Adapters = FlextTypeAdapters
-        self.Commandsds = FlextCommands
+        self.Commands = FlextCommands
         self.Config = FlextConfig
         self.Constants = FlextConstants
         self.Container = FlextContainer

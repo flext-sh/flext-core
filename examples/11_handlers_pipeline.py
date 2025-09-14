@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enterprise handler patterns with FlextHandlers using Strategy Pattern.
+"""Enterprise handler patterns with FlextProcessing using Strategy Pattern.
 
 Demonstrates CQRS, event sourcing, chain of responsibility,
 and registry patterns for message processing using flext-core patterns.
@@ -16,9 +16,9 @@ from dataclasses import dataclass
 from typing import cast
 
 from flext_core import (
-    FlextHandlers,
     FlextLogger,
     FlextModels,
+    FlextProcessing,
     FlextResult,
     FlextTypes,
 )
@@ -196,7 +196,7 @@ class OrderCreatedEvent:
     timestamp: float
 
 
-class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
+class CreateUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for creating users with validation."""
 
     def __init__(self) -> None:
@@ -265,7 +265,7 @@ class CreateUserHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[str].ok(f"Created user: {user.name} ({user.id})")
 
 
-class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
+class UpdateUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for updating users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -341,7 +341,7 @@ class UpdateUserHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[str].ok(f"Updated user: {user.name} ({user.id})")
 
 
-class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
+class GetUserHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for retrieving individual users."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -417,7 +417,7 @@ class GetUserHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[str].ok(f"Retrieved user: {user.name} ({user.id})")
 
 
-class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
+class ListUsersHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for listing users with filtering."""
 
     def __init__(self, user_storage: dict[str, User]) -> None:
@@ -478,7 +478,7 @@ class ListUsersHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[str].ok(f"Listed {len(paginated_users)} users")
 
 
-class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+class UserCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for user created events."""
 
     def __init__(self) -> None:
@@ -545,7 +545,7 @@ class UserCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[None].ok(None)
 
 
-class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+class UserUpdatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for user updated events."""
 
     def __init__(self) -> None:
@@ -596,7 +596,7 @@ class UserUpdatedEventHandler(FlextHandlers.Implementation.BasicHandler):
         return FlextResult[str].fail(result.error or "Event processing failed")
 
 
-class OrderCreatedEventHandler(FlextHandlers.Implementation.BasicHandler):
+class OrderCreatedEventHandler(FlextProcessing.Implementation.BasicHandler):
     """Handler for order created events."""
 
     def __init__(self) -> None:
@@ -800,7 +800,7 @@ def demonstrate_handler_registry() -> FlextResult[None]:
 
     def registry_demo() -> FlextResult[None]:
         # Setup registry
-        registry = FlextHandlers.Management.HandlerRegistry()
+        registry = FlextProcessing.Management.HandlerRegistry()
         create_handler = CreateUserHandler()
         get_handler = GetUserHandler({})
         user_created_handler = UserCreatedEventHandler()
@@ -817,7 +817,7 @@ def demonstrate_handler_registry() -> FlextResult[None]:
             return FlextResult[None].fail("Handler not found in registry")
 
         # Since we know this handler returns FlextResult, we can cast appropriately
-        typed_handler = cast("FlextHandlers.Handler", handler)
+        typed_handler = cast("FlextProcessing.Handler", handler)
         command_result = typed_handler.handle(command)
 
         # Handler returns FlextResult directly
@@ -853,16 +853,18 @@ def demonstrate_handler_chain() -> FlextResult[None]:
         update_handler = UpdateUserHandler(user_storage)
         user_event_handler = UserCreatedEventHandler()
 
-        chain = FlextHandlers.Patterns.HandlerChain("request_chain")
+        chain = FlextProcessing.Patterns.HandlerChain("request_chain")
         chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", create_handler),
-        )
-        chain.add_handler(cast("FlextHandlers.Protocols.ChainableHandler", get_handler))
-        chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", update_handler),
+            cast("FlextProcessing.Protocols.ChainableHandler", create_handler),
         )
         chain.add_handler(
-            cast("FlextHandlers.Protocols.ChainableHandler", user_event_handler),
+            cast("FlextProcessing.Protocols.ChainableHandler", get_handler)
+        )
+        chain.add_handler(
+            cast("FlextProcessing.Protocols.ChainableHandler", update_handler),
+        )
+        chain.add_handler(
+            cast("FlextProcessing.Protocols.ChainableHandler", user_event_handler),
         )
 
         # Test create command
@@ -947,7 +949,7 @@ def demonstrate_function_handlers() -> FlextResult[None]:
 
 
 def main() -> None:
-    """Execute all FlextHandlers demonstrations using Strategy Pattern pipeline."""
+    """Execute all FlextProcessing demonstrations using Strategy Pattern pipeline."""
     try:
         # Create demonstrations using Strategy Pattern
         demos = [

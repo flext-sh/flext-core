@@ -1,13 +1,13 @@
-# FlextServices Migration Roadmap
+# FlextProcessing Migration Roadmap
 
 **Version**: 0.9.0
 **Target Timeline**: 10 weeks
-**Scope**: Complete FlextServices Template Method adoption across FLEXT ecosystem
+**Scope**: Complete FlextProcessing Template Method adoption across FLEXT ecosystem
 **Success Criteria**: 80% boilerplate elimination, enterprise service orchestration
 
 ## 📋 Executive Summary
 
-This roadmap outlines the systematic migration to `FlextServices` Template Method architecture across the FLEXT ecosystem. The migration prioritizes high-impact libraries first, focusing on ETL service standardization, web service consistency, and comprehensive service orchestration. Expected outcomes include 80% reduction in service boilerplate code and enterprise-grade service architecture.
+This roadmap outlines the systematic migration to `FlextProcessing` Template Method architecture across the FLEXT ecosystem. The migration prioritizes high-impact libraries first, focusing on ETL service standardization, web service consistency, and comprehensive service orchestration. Expected outcomes include 80% reduction in service boilerplate code and enterprise-grade service architecture.
 
 **Key Milestones**:
 
@@ -29,7 +29,7 @@ This roadmap outlines the systematic migration to `FlextServices` Template Metho
 
 ### Success Metrics
 
-- **Template Method Adoption**: 95% of services using FlextServices.ServiceProcessor
+- **Template Method Adoption**: 95% of services using FlextProcessing.ServiceProcessor
 - **Boilerplate Reduction**: 80% elimination of manual service patterns
 - **Service Orchestration**: 100% workflow coordination via ServiceOrchestrator
 - **Performance Monitoring**: Comprehensive ServiceMetrics across all services
@@ -49,7 +49,7 @@ This roadmap outlines the systematic migration to `FlextServices` Template Metho
 **Deliverables**:
 
 - [ ] Design ETL Template Method types: `[ETLRequest, ETLPipeline, ETLResponse]`
-- [ ] Implement `FlextMeltanoETLService` extending `FlextServices.ServiceProcessor`
+- [ ] Implement `FlextMeltanoETLService` extending `FlextProcessing.ServiceProcessor`
 - [ ] Create Singer schema validation business logic in `process()` method
 - [ ] Implement pure function result building in `build()` method
 
@@ -58,7 +58,7 @@ This roadmap outlines the systematic migration to `FlextServices` Template Metho
 ```python
 # Primary implementation focus
 class FlextMeltanoETLService(
-    FlextServices.ServiceProcessor[ETLRequest, ETLPipeline, ETLResponse]
+    FlextProcessing.ServiceProcessor[ETLRequest, ETLPipeline, ETLResponse]
 ):
     def process(self, request: ETLRequest) -> FlextResult[ETLPipeline]:
         """Singer schema validation and ETL pipeline creation."""
@@ -187,7 +187,7 @@ class FlextMeltanoETLService(
 ```python
 # Standard pattern for all services
 class LibraryService(
-    FlextServices.ServiceProcessor[TRequest, TDomain, TResult]
+    FlextProcessing.ServiceProcessor[TRequest, TDomain, TResult]
 ):
     """Service following Template Method pattern.
 
@@ -363,7 +363,7 @@ self.track_service_with_context(
 
 ### Quantitative Metrics
 
-- [ ] **95% Template Method Adoption**: All services use FlextServices.ServiceProcessor
+- [ ] **95% Template Method Adoption**: All services use FlextProcessing.ServiceProcessor
 - [ ] **80% Boilerplate Reduction**: Measured reduction in service implementation code
 - [ ] **100% Service Orchestration**: All workflows use ServiceOrchestrator
 - [ ] **Zero Performance Regression**: No performance degradation from migration
@@ -397,9 +397,9 @@ self.track_service_with_context(
 
 #### Week 10 Checkpoint: Complete Migration
 
-- [ ] All targeted services migrated to FlextServices Template Method
+- [ ] All targeted services migrated to FlextProcessing Template Method
 - [ ] Service orchestration patterns validated across ecosystem
 - [ ] Performance and consistency metrics meet success criteria
 - [ ] Documentation and training materials complete
 
-This migration roadmap ensures systematic, risk-managed adoption of FlextServices Template Method architecture, delivering enterprise-grade service consistency and significant boilerplate code reduction across the entire FLEXT ecosystem.
+This migration roadmap ensures systematic, risk-managed adoption of FlextProcessing Template Method architecture, delivering enterprise-grade service consistency and significant boilerplate code reduction across the entire FLEXT ecosystem.

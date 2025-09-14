@@ -145,7 +145,7 @@ class FlextConfig(BaseSettings):
         def get_env_var(self, var_name: str) -> FlextResult[str]:
             """Get environment variable with FlextResult error handling."""
             try:
-                value = os.getenv(var_name)  # Use os.getenv to match test patch
+                value = os.getenv(var_name)  # Direct environment variable access
                 if value is None:
                     return FlextResult[str].fail(
                         f"Environment variable {var_name} not found",

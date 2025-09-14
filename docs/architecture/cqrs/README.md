@@ -7,11 +7,11 @@
 
 ## 📋 Overview
 
-This document provides a comprehensive analysis of the `FlextCommands` CQRS implementation and strategic recommendations for its adoption across the FLEXT ecosystem. The analysis covers current usage, implementation quality, and identifies high-priority integration opportunities.
+This document provides an analysis of the `FlextCommands` CQRS implementation and strategic recommendations for its adoption across the FLEXT ecosystem. For verified capabilities and accurate module status, see [ACTUAL_CAPABILITIES.md](../../ACTUAL_CAPABILITIES.md). The analysis covers current usage, implementation quality, and identifies high-priority integration opportunities.
 
 ## 🎯 Executive Summary
 
-The `FlextCommands` module is a **production-ready, enterprise-grade CQRS implementation** with:
+The `FlextCommands` module is a **production-ready CQRS implementation** with:
 
 - **3,106 lines** of well-documented, type-safe code
 - **Comprehensive test coverage** across 15 test files

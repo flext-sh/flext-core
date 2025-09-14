@@ -1,13 +1,13 @@
-# FlextHandlers Migration Roadmap
+# FlextProcessing Migration Roadmap
 
 **Version**: 0.9.0
 **Target Timeline**: 12 weeks
-**Scope**: Complete FlextHandlers enterprise architecture adoption across FLEXT ecosystem
+**Scope**: Complete FlextProcessing enterprise architecture adoption across FLEXT ecosystem
 **Success Criteria**: 90% request processing standardization, comprehensive CQRS implementation
 
 ## 📋 Executive Summary
 
-This roadmap outlines the systematic migration to `FlextHandlers` enterprise architecture across the FLEXT ecosystem. The migration prioritizes high-impact web and plugin libraries first, focusing on **7-layer handler architecture**, **8 integrated design patterns**, **complete CQRS implementation**, and **enterprise security patterns**. Expected outcomes include 90% reduction in request processing boilerplate code and complete enterprise-grade handler infrastructure.
+This roadmap outlines the systematic migration to `FlextProcessing` enterprise architecture across the FLEXT ecosystem. The migration prioritizes high-impact web and plugin libraries first, focusing on **7-layer handler architecture**, **8 integrated design patterns**, **complete CQRS implementation**, and **enterprise security patterns**. Expected outcomes include 90% reduction in request processing boilerplate code and complete enterprise-grade handler infrastructure.
 
 **Key Milestones**:
 
@@ -29,7 +29,7 @@ This roadmap outlines the systematic migration to `FlextHandlers` enterprise arc
 
 ### Success Metrics
 
-- **Handler Pattern Adoption**: 95% of services using FlextHandlers 7-layer architecture
+- **Handler Pattern Adoption**: 95% of services using FlextProcessing 7-layer architecture
 - **Request Processing Standardization**: 90% elimination of manual processing patterns
 - **CQRS Implementation**: 100% command/query separation with event sourcing
 - **Security Enhancement**: Comprehensive security chains across all services
@@ -57,7 +57,7 @@ This roadmap outlines the systematic migration to `FlextHandlers` enterprise arc
 
 ```python
 # Primary implementation focus
-class FlextWebHandlers(FlextHandlers):
+class FlextWebHandlers(FlextProcessing):
     def __init__(self):
         super().__init__()
         self.security_chain = self._build_security_chain()
@@ -109,7 +109,7 @@ class FlextWebHandlers(FlextHandlers):
 
 **Deliverables**:
 
-- [ ] Implement `FlextPluginHandlers` extending FlextHandlers architecture
+- [ ] Implement `FlextPluginHandlers` extending FlextProcessing architecture
 - [ ] Create plugin registration and activation command handlers
 - [ ] Setup plugin lifecycle event sourcing with comprehensive metadata
 - [ ] Add plugin security validation chains with path traversal protection
@@ -211,7 +211,7 @@ class FlextWebHandlers(FlextHandlers):
 
 ```python
 # Standard pattern for all handler libraries
-class LibraryHandlers(FlextHandlers):
+class LibraryHandlers(FlextProcessing):
     """Library-specific handler implementation.
 
     Layers:
@@ -292,7 +292,7 @@ class LibraryEvent:
 
 ```python
 # Standard handler chain pattern
-def build_processing_chain(self, chain_name: str) -> FlextHandlers.Patterns.HandlerChain:
+def build_processing_chain(self, chain_name: str) -> FlextProcessing.Patterns.HandlerChain:
     """Build standard processing chain."""
 
     chain = self.Patterns.HandlerChain(chain_name)
@@ -315,7 +315,7 @@ def build_processing_chain(self, chain_name: str) -> FlextHandlers.Patterns.Hand
 
     return chain
 
-def _create_security_handler(self) -> FlextHandlers.Implementation.ValidatingHandler:
+def _create_security_handler(self) -> FlextProcessing.Implementation.ValidatingHandler:
     """Create security validation handler."""
 
     def security_validator(request: dict) -> FlextResult[None]:
@@ -524,7 +524,7 @@ def _handle_resource_created_event(self, event: CreatedEvent) -> FlextResult[Non
 
 ### Quantitative Metrics
 
-- [ ] **95% Handler Adoption**: All targeted services use FlextHandlers architecture
+- [ ] **95% Handler Adoption**: All targeted services use FlextProcessing architecture
 - [ ] **90% Boilerplate Reduction**: Measured reduction in request processing code
 - [ ] **100% CQRS Implementation**: All operations use Command/Query/Event patterns
 - [ ] **Zero Performance Regression**: No performance degradation from handler migration
@@ -564,9 +564,9 @@ def _handle_resource_created_event(self, event: CreatedEvent) -> FlextResult[Non
 
 #### Week 12 Checkpoint: Complete Migration
 
-- [ ] All targeted services migrated to FlextHandlers architecture
+- [ ] All targeted services migrated to FlextProcessing architecture
 - [ ] CQRS patterns validated across ecosystem with event sourcing
 - [ ] Performance and consistency metrics meet success criteria
 - [ ] Team training completed and documentation comprehensive
 
-This migration roadmap ensures systematic, risk-managed adoption of FlextHandlers enterprise architecture, delivering complete request processing standardization and comprehensive CQRS implementation across the entire FLEXT ecosystem with significant boilerplate reduction and security enhancement.
+This migration roadmap ensures systematic, risk-managed adoption of FlextProcessing enterprise architecture, delivering complete request processing standardization and comprehensive CQRS implementation across the entire FLEXT ecosystem with significant boilerplate reduction and security enhancement.

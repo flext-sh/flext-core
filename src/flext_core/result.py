@@ -1,18 +1,20 @@
-"""FLEXT Core Result - Railway-oriented programming for type-safe error handling.
+"""FLEXT Core Result - Simple success/failure wrapper for type-safe error handling.
 
-This module provides a Result type for functional error handling,
-following Railway-oriented Programming principles with Python 3.13+ features.
+This module provides a Result type for basic error handling following
+Railway-oriented Programming patterns with Python 3.13+ features.
 
 Key Features:
-- Railway-oriented Programming (ROP) implementation
+- Basic success/failure wrapper with type safety
+- Railway-oriented programming pattern (simplified implementation)
 - Type-safe error handling with discriminated unions
 - Pattern matching support for result processing
-- Monadic operations (map, flat_map, bind)
-- Applicative lifting for multi-argument functions
-- Caching optimizations for performance
+- Python 3.13+ discriminated union support
+- Unwrap() method for safe data extraction
+- Integration with FlextConstants for error codes
 - Pydantic integration for schema validation
-- Composition operators (>>=, >>=, @, &, ^)
-- Kleisli composition operations
+
+Note: This is a simplified implementation. Advanced monadic operations
+(map, flat_map, bind) and composition operators are planned for future versions.
 
 For verified capabilities and examples, see docs/ACTUAL_CAPABILITIES.md
 
@@ -30,8 +32,6 @@ from flext_core.constants import FlextConstants
 from flext_core.typings import FlextTypes, T_co, U, V
 
 # Local type variables for backward compatibility with existing methods
-
-
 TUtil = TypeVar("TUtil")  # Utility type variable
 TItem = TypeVar("TItem")  # Item type variable
 TResult = TypeVar("TResult")  # Result type variable

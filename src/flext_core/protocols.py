@@ -10,16 +10,9 @@ from abc import abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import Generic, Protocol, TypeVar, runtime_checkable
 
-from flext_core.typings import FlextTypes
-
-# Type variables for generic protocols
-T = TypeVar("T")
-U = TypeVar("U")
-V = TypeVar("V")
+from flext_core.typings import FlextTypes, T_co, T_contra
 
 # Type variables for generic protocols with correct variance
-T_co = TypeVar("T_co", covariant=True)  # For output types
-T_contra = TypeVar("T_contra", contravariant=True)  # For input types
 TInput_contra = TypeVar("TInput_contra", contravariant=True)
 TOutput_co = TypeVar("TOutput_co", covariant=True)
 

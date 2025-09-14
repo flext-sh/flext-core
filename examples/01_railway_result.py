@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""01 - Railway-Oriented Programming using FlextCore facade.
+"""01 - Basic Result Pattern using FlextCore.
 
-Demonstrates railway-oriented programming with FlextCore:
-- FlextResult for error handling
-- Composable operations
+Demonstrates basic result pattern with FlextCore:
+- FlextResult for success/failure handling
 - Clean error propagation
+- Safe data extraction with unwrap()
+- Pydantic v2 validation integration
+
+Note: This demonstrates the current basic implementation.
+Advanced railway-oriented composition is planned for future versions.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +16,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextCore, FlextResult, FlextUtilities, FlextValidations
+from pydantic import BaseModel, EmailStr, Field, ValidationError
+
+from flext_core import FlextCore, FlextResult, FlextUtilities
+
+
+class UserInput(BaseModel):
+    """Validated input for user processing (Pydantic v2)."""
+
+    name: str = Field(min_length=2)
+    email: EmailStr
+    age: int = Field(ge=0, le=150)
 
 
 class RailwayExample:
@@ -22,46 +36,25 @@ class RailwayExample:
         """Initialize with FlextCore facade."""
         self._core = FlextCore()
 
-    def validate_email(self, email: str) -> FlextResult[str]:
-        """Validate email format using FlextValidations."""
-        return FlextValidations.validate_email(email)
-
-    def validate_age(self, age: int) -> FlextResult[int]:
-        """Validate age range."""
-        if age < 0 or age > 150:
-            return FlextResult[int].fail("Age must be between 0 and 150")
-        return FlextResult[int].ok(age)
-
     def process_user_data(
         self, name: str, email: str, age: int
     ) -> FlextResult[dict[str, object]]:
-        """Process user data with railway-oriented validation."""
-        # Validate name
-        if not name or len(name) < 2:
-            return FlextResult[dict[str, object]].fail(
-                "Name must be at least 2 characters"
+        """Process user data with Pydantic validation and railway composition."""
+        try:
+            validated = UserInput.model_validate(
+                {"name": name, "email": email, "age": age}
             )
-
-        # Validate email using railway
-        email_result = self.validate_email(email)
-        if email_result.is_failure:
+        except ValidationError as exc:  # Pydantic v2
             return FlextResult[dict[str, object]].fail(
-                email_result.error or "Email validation failed"
-            )
-
-        # Validate age using railway
-        age_result = self.validate_age(age)
-        if age_result.is_failure:
-            return FlextResult[dict[str, object]].fail(
-                age_result.error or "Age validation failed"
+                f"Validation failed: {exc.errors()}"
             )
 
         # All validations passed, create user data
-        user_data = {
+        user_data: dict[str, object] = {
             "id": FlextUtilities.Generators.generate_id()[:8],
-            "name": name,
-            "email": email_result.value,
-            "age": age_result.value,
+            "name": validated.name,
+            "email": str(validated.email),
+            "age": validated.age,
             "status": "active",
         }
 

@@ -1,4 +1,4 @@
-# FLEXT Libraries Analysis for FlextHandlers Integration
+# FLEXT Libraries Analysis for FlextProcessing Integration
 
 **Version**: 0.9.0
 **Analysis Date**: August 2025
@@ -7,12 +7,12 @@
 
 ## 📋 Executive Summary
 
-This analysis reveals that `FlextHandlers` provides **exceptional enterprise handler infrastructure** with **7-layer architecture**, **8 integrated design patterns**, and **complete CQRS implementation**, but has **significant integration opportunities** across the FLEXT ecosystem. While the handler system is comprehensive and production-ready, most libraries use manual request processing patterns instead of leveraging the sophisticated **Chain of Responsibility**, **Command/Query buses**, **Event sourcing**, and **registry management** capabilities.
+This analysis reveals that `FlextProcessing` provides **exceptional enterprise handler infrastructure** with **7-layer architecture**, **8 integrated design patterns**, and **complete CQRS implementation**, but has **significant integration opportunities** across the FLEXT ecosystem. While the handler system is comprehensive and production-ready, most libraries use manual request processing patterns instead of leveraging the sophisticated **Chain of Responsibility**, **Command/Query buses**, **Event sourcing**, and **registry management** capabilities.
 
 **Key Findings**:
 
-- 🏗️ **Enterprise Excellence**: FlextHandlers provides complete 7-layer handler infrastructure with pattern integration
-- ⚠️ **Inconsistent Adoption**: Most libraries use manual processing instead of FlextHandlers patterns
+- 🏗️ **Enterprise Excellence**: FlextProcessing provides complete 7-layer handler infrastructure with pattern integration
+- ⚠️ **Inconsistent Adoption**: Most libraries use manual processing instead of FlextProcessing patterns
 - 🔥 **High Impact Potential**: 90% request processing standardization achievable with systematic adoption
 - 💡 **CQRS Opportunities**: Complete Command Query Responsibility Segregation can enhance all service libraries
 
@@ -24,7 +24,7 @@ This analysis reveals that `FlextHandlers` provides **exceptional enterprise han
 
 #### 1. **flext-web** - Web Request Handler Integration
 
-**Current State**: ❌ **Limited** - FlextWebHandlers extends FlextHandlers but lacks comprehensive implementation
+**Current State**: ❌ **Limited** - FlextWebHandlers extends FlextProcessing but lacks comprehensive implementation
 **Opportunity Level**: 🔥 **CRITICAL**
 **Expected Impact**: Complete web request processing standardization, 85% handler boilerplate elimination
 
@@ -32,21 +32,21 @@ This analysis reveals that `FlextHandlers` provides **exceptional enterprise han
 
 ```python
 # CURRENT: Basic extension without comprehensive handler implementation
-class FlextWebHandlers(FlextHandlers):
+class FlextWebHandlers(FlextProcessing):
     """Consolidated web handler system extending flext-core patterns.
 
     This class serves as the single point of access for all web-specific
     handlers, command processors, and response formatters while extending
-    FlextHandlers from flext-core for proper architectural inheritance.
+    FlextProcessing from flext-core for proper architectural inheritance.
     """
-    # Limited implementation - doesn't leverage FlextHandlers capabilities
+    # Limited implementation - doesn't leverage FlextProcessing capabilities
 ```
 
-##### Recommended FlextHandlers Integration
+##### Recommended FlextProcessing Integration
 
 ```python
 # RECOMMENDED: Complete web handler implementation with CQRS and Chain patterns
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextProcessing
 from flext_core.result import FlextResult
 from dataclasses import dataclass
 
@@ -81,7 +81,7 @@ class APIRequest:
             return FlextResult[None].fail("Endpoint required")
         return FlextResult[None].ok(None)
 
-class FlextWebHandlers(FlextHandlers):
+class FlextWebHandlers(FlextProcessing):
     """Complete web handler system with CQRS and enterprise patterns."""
 
     def __init__(self):
@@ -435,7 +435,7 @@ for i, request in enumerate(api_test_requests):
 ##### Current Implementation Analysis
 
 ```python
-# CURRENT: Basic plugin handler without comprehensive FlextHandlers integration
+# CURRENT: Basic plugin handler without comprehensive FlextProcessing integration
 class FlextPluginHandler(FlextBaseHandler):
     def __init__(self, plugin_service):
         super().__init__()
@@ -445,11 +445,11 @@ class FlextPluginRegistrationHandler(FlextPluginHandler):
     # Limited implementation without CQRS or chain patterns
 ```
 
-##### Recommended FlextHandlers Integration
+##### Recommended FlextProcessing Integration
 
 ```python
 # RECOMMENDED: Complete plugin handler system with CQRS and lifecycle management
-from flext_core.handlers import FlextHandlers
+from flext_core.handlers import FlextProcessing
 from dataclasses import dataclass
 from typing import Dict, Optional
 from enum import Enum
@@ -498,7 +498,7 @@ class PluginLifecycleEvent:
     timestamp: datetime
     metadata: Dict[str, object]
 
-class FlextPluginHandlers(FlextHandlers):
+class FlextPluginHandlers(FlextProcessing):
     """Complete plugin handler system with lifecycle management and CQRS."""
 
     def __init__(self):
@@ -942,15 +942,15 @@ if health_result.success:
 
 #### 3. **flext-grpc** - gRPC Handler Enhancement
 
-**Current State**: ⚠️ **Limited** - Basic gRPC service patterns without comprehensive FlextHandlers integration
+**Current State**: ⚠️ **Limited** - Basic gRPC service patterns without comprehensive FlextProcessing integration
 **Opportunity Level**: 🟡 **MEDIUM-HIGH**
 **Expected Impact**: gRPC service standardization, Protocol Buffer integration, streaming support
 
-##### Recommended FlextHandlers Integration
+##### Recommended FlextProcessing Integration
 
 ```python
 # RECOMMENDED: Complete gRPC handler system with streaming and Protocol Buffer integration
-class FlextGRPCHandlers(FlextHandlers):
+class FlextGRPCHandlers(FlextProcessing):
     """Complete gRPC handler system with streaming support and Protocol Buffer validation."""
 
     def __init__(self):
@@ -1066,7 +1066,7 @@ class FlextGRPCHandlers(FlextHandlers):
 
 #### 6. **flext-ldap** - Good Handler Extension Pattern (MODEL FOR OTHERS)
 
-**Current State**: ✅ **Good** - Already integrates with FlextHandlers patterns through service extension
+**Current State**: ✅ **Good** - Already integrates with FlextProcessing patterns through service extension
 **Opportunity Level**: 🟢 **LOW** - Pattern refinement and CQRS enhancement
 **Expected Impact**: CQRS integration for LDAP operations, enhanced validation chains
 
@@ -1095,7 +1095,7 @@ class FlextGRPCHandlers(FlextHandlers):
 ### Handler Pattern Enhancement Potential
 
 ```
-Current handler pattern adoption: ~30% of libraries use FlextHandlers systematically
+Current handler pattern adoption: ~30% of libraries use FlextProcessing systematically
 Estimated coverage after systematic adoption: ~95%
 Improvement: +217% handler architecture consistency across ecosystem
 ```
@@ -1104,7 +1104,7 @@ Improvement: +217% handler architecture consistency across ecosystem
 
 ```
 Current: Manual request processing with inconsistent patterns
-With FlextHandlers: Unified 7-layer architecture with CQRS and patterns
+With FlextProcessing: Unified 7-layer architecture with CQRS and patterns
 Expected improvement: 90% reduction in request processing boilerplate
 ```
 
@@ -1173,7 +1173,7 @@ class FlextUniversalSecurityChain:
     """Universal security handler chain for all FLEXT services."""
 
     def __init__(self):
-        self.security_chain = FlextHandlers.Patterns.HandlerChain("universal_security")
+        self.security_chain = FlextProcessing.Patterns.HandlerChain("universal_security")
         self._setup_security_handlers()
 
     def _setup_security_handlers(self):
@@ -1193,7 +1193,7 @@ class FlextUniversalSecurityChain:
 
             return FlextResult[None].ok(None)
 
-        sanitizer = FlextHandlers.Implementation.ValidatingHandler("input_sanitizer", input_sanitizer)
+        sanitizer = FlextProcessing.Implementation.ValidatingHandler("input_sanitizer", input_sanitizer)
 
         # Rate limiting
         def rate_limiter(request: dict) -> bool:
@@ -1202,7 +1202,7 @@ class FlextUniversalSecurityChain:
             # Mock rate limiting - would integrate with Redis
             return True  # Allow for demo
 
-        rate_handler = FlextHandlers.Implementation.AuthorizingHandler("rate_limiter", rate_limiter)
+        rate_handler = FlextProcessing.Implementation.AuthorizingHandler("rate_limiter", rate_limiter)
 
         # Add handlers to chain
         self.security_chain.add_handler(sanitizer)
@@ -1221,9 +1221,9 @@ class FlextUniversalCQRS:
     """Universal CQRS pattern for all FLEXT services."""
 
     def __init__(self):
-        self.command_bus = FlextHandlers.CQRS.CommandBus()
-        self.query_bus = FlextHandlers.CQRS.QueryBus()
-        self.event_bus = FlextHandlers.CQRS.EventBus()
+        self.command_bus = FlextProcessing.CQRS.CommandBus()
+        self.query_bus = FlextProcessing.CQRS.QueryBus()
+        self.event_bus = FlextProcessing.CQRS.EventBus()
 
         # Universal event store
         self.event_store = []
@@ -1277,7 +1277,7 @@ class FlextUniversalPerformanceMonitor:
     """Universal performance monitoring for all FLEXT handlers."""
 
     def __init__(self):
-        self.metrics = FlextHandlers.Implementation.MetricsHandler()
+        self.metrics = FlextProcessing.Implementation.MetricsHandler()
         self.performance_data = {}
 
     def monitor_handler_performance(
@@ -1348,7 +1348,7 @@ class FlextUniversalPerformanceMonitor:
 
 #### Unified Request Processing Architecture
 
-- **Consistent Handler Patterns**: All services use FlextHandlers 7-layer architecture
+- **Consistent Handler Patterns**: All services use FlextProcessing 7-layer architecture
 - **Standardized CQRS**: Command/Query/Event buses across all libraries
 - **Universal Security**: Shared security validation chains across ecosystem
 - **Performance Consistency**: ServiceMetrics and monitoring across all handlers
@@ -1367,4 +1367,4 @@ class FlextUniversalPerformanceMonitor:
 - **Event Sourcing**: Unified event store for audit trails and replay
 - **Error Management**: Railway-oriented programming across all request processing
 
-This analysis demonstrates that `FlextHandlers` integration represents a transformational opportunity for request processing architecture standardization across the FLEXT ecosystem, with the potential for 90% request processing boilerplate elimination and comprehensive CQRS implementation while ensuring high performance and consistency throughout all services.
+This analysis demonstrates that `FlextProcessing` integration represents a transformational opportunity for request processing architecture standardization across the FLEXT ecosystem, with the potential for 90% request processing boilerplate elimination and comprehensive CQRS implementation while ensuring high performance and consistency throughout all services.

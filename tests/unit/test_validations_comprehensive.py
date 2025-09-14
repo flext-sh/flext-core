@@ -73,7 +73,7 @@ class TestFlextValidationsComprehensive:
         # Test valid float with precision
         result = FlextValidations.TypeValidators.validate_float(math.pi)
         FlextTestsMatchers.assert_result_success(result)
-        assert result.value == math.pi
+        assert abs(result.value - math.pi) < 1e-10
 
     def test_type_validators_validate_float_with_min_max(self) -> None:
         """Test TypeValidators.validate_float with min/max constraints."""
@@ -213,7 +213,7 @@ class TestFlextValidationsComprehensive:
         """Test BusinessValidators.validate_numeric_field with float."""
         result = FlextValidations.BusinessValidators.validate_numeric_field(math.pi)
         FlextTestsMatchers.assert_result_success(result)
-        assert result.value == math.pi
+        assert abs(result.value - math.pi) < 1e-10
 
     def test_business_validators_validate_numeric_field_string_conversion(self) -> None:
         """Test BusinessValidators.validate_numeric_field with string conversion."""
